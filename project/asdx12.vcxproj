@@ -102,6 +102,7 @@
     <ClCompile Include="..\src\asdxQueue.cpp" />
     <ClCompile Include="..\src\asdxRandom.cpp" />
     <ClCompile Include="..\src\asdxTablet.cpp" />
+    <ClCompile Include="..\src\asdxTarget.cpp" />
     <ClCompile Include="..\src\asdxTcpConnector.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
@@ -134,6 +135,7 @@
     <ClInclude Include="..\include\asdxStepTimer.h" />
     <ClInclude Include="..\include\asdxStopWatch.h" />
     <ClInclude Include="..\include\asdxTablet.h" />
+    <ClInclude Include="..\include\asdxTarget.h" />
     <ClInclude Include="..\include\asdxTcpConnector.h" />
     <ClInclude Include="..\include\asdxTimer.h" />
   </ItemGroup>
