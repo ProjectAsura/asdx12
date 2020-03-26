@@ -76,7 +76,7 @@ bool ConstantBuffer::Init(GraphicsDevice& device, uint64_t size)
 
     for(auto i=0; i<2; ++i)
     {
-        auto hr = device.GetDevice6()->CreateCommittedResource(
+        auto hr = device.GetDevice()->CreateCommittedResource(
             &props,
             D3D12_HEAP_FLAG_NONE,
             &desc,
@@ -101,7 +101,7 @@ bool ConstantBuffer::Init(GraphicsDevice& device, uint64_t size)
         viewDesc.BufferLocation = m_Resource[i]->GetGPUVirtualAddress();
 
         m_pDescriptor[i] = device.AllocHandle(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        device.GetDevice6()->CreateConstantBufferView( &viewDesc, m_pDescriptor[i]->GetHandleCPU() );
+        device.GetDevice()->CreateConstantBufferView( &viewDesc, m_pDescriptor[i]->GetHandleCPU() );
     }
 
     m_Size = size;

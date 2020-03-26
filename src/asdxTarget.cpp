@@ -111,7 +111,7 @@ bool ColorTarget::Init(GraphicsDevice& device, const TargetDesc* pDesc, bool isS
         clearValue.Color[2] = 1.0f;
         clearValue.Color[3] = 1.0f;
 
-        hr = device.GetDevice6()->CreateCommittedResource( 
+        hr = device.GetDevice()->CreateCommittedResource( 
             &props,
             D3D12_HEAP_FLAG_NONE,
             &desc,
@@ -137,7 +137,8 @@ bool ColorTarget::Init(GraphicsDevice& device, const TargetDesc* pDesc, bool isS
             return false;
         }
 
-        device.GetDevice6()->CreateRenderTargetView( m_pResource.GetPtr(), &desc, m_pDescriptorRTV->GetHandleCPU() );
+        device.GetDevice()->CreateRenderTargetView(
+            m_pResource.GetPtr(), &desc, m_pDescriptorRTV->GetHandleCPU() );
     }
 
     {
@@ -154,7 +155,8 @@ bool ColorTarget::Init(GraphicsDevice& device, const TargetDesc* pDesc, bool isS
             return false;
         }
 
-        device.GetDevice6()->CreateShaderResourceView( m_pResource.GetPtr(), &desc, m_pDescriptorRTV->GetHandleCPU() );
+        device.GetDevice()->CreateShaderResourceView(
+            m_pResource.GetPtr(), &desc, m_pDescriptorRTV->GetHandleCPU() );
     }
 
     return true;
@@ -163,7 +165,13 @@ bool ColorTarget::Init(GraphicsDevice& device, const TargetDesc* pDesc, bool isS
 //-----------------------------------------------------------------------------
 //      初期化処理です.
 //-----------------------------------------------------------------------------
-bool ColorTarget::Init(GraphicsDevice& device, IDXGISwapChain* pSwapChain, uint32_t backBufferIndex, bool isSRGB)
+bool ColorTarget::Init
+(
+    GraphicsDevice& device,
+    IDXGISwapChain* pSwapChain,
+    uint32_t        backBufferIndex,
+    bool            isSRGB
+)
 {
     HRESULT hr = S_OK;
 
@@ -214,7 +222,8 @@ bool ColorTarget::Init(GraphicsDevice& device, IDXGISwapChain* pSwapChain, uint3
             ELOG("Error : GraphicsDevice::AllocHandle() Failed.");
             return false;
         }
-        device.GetDevice6()->CreateRenderTargetView( m_pResource.GetPtr(), nullptr, m_pDescriptorRTV->GetHandleCPU() );
+        device.GetDevice()->CreateRenderTargetView(
+            m_pResource.GetPtr(), nullptr, m_pDescriptorRTV->GetHandleCPU() );
     }
 
     {
@@ -230,7 +239,8 @@ bool ColorTarget::Init(GraphicsDevice& device, IDXGISwapChain* pSwapChain, uint3
             ELOG("Error : GraphicsDevice::AllocHandle() Failed.");
             return false;
         }
-        device.GetDevice6()->CreateShaderResourceView( m_pResource.GetPtr(), &srvDesc, m_pDescriptorSRV->GetHandleCPU() );
+        device.GetDevice()->CreateShaderResourceView(
+            m_pResource.GetPtr(), &srvDesc, m_pDescriptorSRV->GetHandleCPU() );
     }
 
     return true;
@@ -315,7 +325,7 @@ bool DepthTarget::Init(GraphicsDevice& device, const TargetDesc* pDesc)
         clearValue.DepthStencil.Depth   = 1.0f;
         clearValue.DepthStencil.Stencil = 0;
 
-        hr = device.GetDevice6()->CreateCommittedResource( 
+        hr = device.GetDevice()->CreateCommittedResource( 
             &props,
             D3D12_HEAP_FLAG_NONE,
             &desc,
@@ -341,7 +351,8 @@ bool DepthTarget::Init(GraphicsDevice& device, const TargetDesc* pDesc)
             ELOG("Error : GraphicsDevice::AllocHandle() Failed.");
             return false;
         }
-        device.GetDevice6()->CreateDepthStencilView(m_pResource.GetPtr(), &desc, m_pDescriptorDSV->GetHandleCPU());
+        device.GetDevice()->CreateDepthStencilView(
+            m_pResource.GetPtr(), &desc, m_pDescriptorDSV->GetHandleCPU());
     }
 
     {
@@ -357,7 +368,8 @@ bool DepthTarget::Init(GraphicsDevice& device, const TargetDesc* pDesc)
             ELOG("Error : GraphicsDevice::AllocHandle() Failed.");
             return false;
         }
-        device.GetDevice6()->CreateShaderResourceView(m_pResource.GetPtr(), &desc, m_pDescriptorSRV->GetHandleCPU());
+        device.GetDevice()->CreateShaderResourceView(
+            m_pResource.GetPtr(), &desc, m_pDescriptorSRV->GetHandleCPU());
     }
 
     return true;
