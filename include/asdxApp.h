@@ -10,6 +10,7 @@
 //-----------------------------------------------------------------------------
 #include <cstdint>
 #include <mutex>
+#include <vector>
 
 #include <Windows.h>
 #include <d3d12.h>
@@ -19,6 +20,8 @@
 #include <asdxTimer.h>
 #include <asdxHid.h>
 #include <asdxColorSpace.h>
+#include <asdxGraphicsDevice.h>
+#include <asdxTarget.h>
 
 
 #if defined(DEBUG) || defined(_DEBUG)
@@ -198,15 +201,13 @@ protected:
     //=========================================================================
     HINSTANCE                       m_hInst;                //!< インスタンスハンドルです.
     HWND                            m_hWnd;                 //!< ウィンドウハンドルです.
-    D3D_DRIVER_TYPE                 m_DriverType;           //!< ドライバータイプです.
-    D3D_FEATURE_LEVEL               m_FeatureLevel;         //!< 機能レベルです.
+    bool                            m_AllowTearing;         //!< ティアリングを許可するかどうか.
     uint32_t                        m_MultiSampleCount;     //!< マルチサンプリングのカウント数です.
     uint32_t                        m_MultiSampleQuality;   //!< マルチサンプリングの品質値です.
     uint32_t                        m_SwapChainCount;       //!< スワップチェインのバッファ数です.
     DXGI_FORMAT                     m_SwapChainFormat;      //!< スワップチェインのバッファフォーマットです.
     DXGI_FORMAT                     m_DepthStencilFormat;   //!< 深度ステンシルバッファのフォーマットです.
     RefPtr<IDXGIDevice>             m_pDeviceDXGI;          //!< DXGIデバイスです.
-    RefPtr<IDXGISwapChain>          m_pSwapChain;           //!< スワップチェインです.
     RefPtr<IDXGISwapChain4>         m_pSwapChain4;          //!< スワップチェイン4です.
     float                           m_BlendFactor[ 4 ];     //!< ブレンドファクターです.
     uint32_t                        m_SampleMask;           //!< サンプルマスクです.
@@ -222,12 +223,9 @@ protected:
     HICON                           m_hIcon;                //!< アイコンハンドルです.
     HMENU                           m_hMenu;                //!< メニューハンドルです.
     HACCEL                          m_hAccel;               //!< アクセレレータハンドルです.
-
-#if defined(DEBUG) || defined(_DEBUG)
-    RefPtr<ID3D12Debug>             m_pD3D12Debug;          //!< デバッグオブジェクトです.
-    RefPtr<ID3D12Debug3>            m_pD3D12Debug3;         //!< デバッグオブジェクトです.
-#endif//defined(DEBUG) || defined(_DEBUG)
-
+    GraphicsDevice::Desc            m_DeviceDesc;           //!< デバイス設定です.
+    std::vector<ColorTarget>        m_ColorTarget;          //!< カラーターゲットです.
+    DepthTarget                     m_DepthTarget;          //!< 深度ターゲットです.
 
     //=========================================================================
     // protected methods.

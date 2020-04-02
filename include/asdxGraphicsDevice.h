@@ -9,6 +9,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <d3d12.h>
+#include <dxgi1_6.h>
 #include <asdxRef.h>
 #include <asdxQueue.h>
 #include <asdxDescriptor.h>
@@ -70,11 +71,18 @@ public:
     void Term();
 
     //-------------------------------------------------------------------------
-    //! @brief      ID3D12Device6を取得します.
+    //! @brief      ID3D12Device9を取得します.
     //!
-    //! @return     ID3D12Device6を返却します.
+    //! @return     ID3D12Device9を返却します.
     //-------------------------------------------------------------------------
-    ID3D12Device6* GetDevice() const;
+    ID3D12Device9* GetDevice() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      IDXGIFactory7を取得します.
+    //!
+    //! @return     IDXGIFactory7を返却します.
+    //-------------------------------------------------------------------------
+    IDXGIFactory7* GetFactory() const;
 
     //-------------------------------------------------------------------------
     //! @brief      グラフィックスキューを取得します.
@@ -127,14 +135,20 @@ public:
     //-------------------------------------------------------------------------
     Descriptor* AllocHandle(int index);
 
+    //-------------------------------------------------------------------------
+    //! @brief      アロー演算子です.
+    //-------------------------------------------------------------------------
+    ID3D12Device9* operator-> () const;
+
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
     static GraphicsDevice   s_Instance;                 //!< シングルトンインスタンス.
-    RefPtr<ID3D12Debug3>    m_pDebug3;                  //!< デバッグオブジェクト.
+    RefPtr<IDXGIFactory7>   m_pFactory;                 //!< DXGIファクトリーです.
+    RefPtr<ID3D12Debug3>    m_pDebug;                   //!< デバッグオブジェクト.
     RefPtr<ID3D12InfoQueue> m_pInfoQueue;               //!< インフォキュー.
-    RefPtr<ID3D12Device6>   m_pDevice6;                 //!< デバイス.
+    RefPtr<ID3D12Device9>   m_pDevice;                  //!< デバイス.
     RefPtr<Queue>           m_pGraphicsQueue;           //!< グラフィックスキュー.
     RefPtr<Queue>           m_pComputeQueue;            //!< コンピュートキュー.
     RefPtr<Queue>           m_pCopyQueue;               //!< コピーキュー.

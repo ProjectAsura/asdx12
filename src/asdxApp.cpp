@@ -212,15 +212,14 @@ namespace asdx  {
 Application::Application()
 : m_hInst               ( nullptr )
 , m_hWnd                ( nullptr )
-, m_DriverType          ( D3D_DRIVER_TYPE_HARDWARE )
-, m_FeatureLevel        ( D3D_FEATURE_LEVEL_11_0 )
+, m_AllowTearing        ( false )
 , m_MultiSampleCount    ( 4 )
 , m_MultiSampleQuality  ( 0 )
 , m_SwapChainCount      ( 2 )
 , m_SwapChainFormat     ( DXGI_FORMAT_B8G8R8A8_UNORM_SRGB )
 , m_DepthStencilFormat  ( DXGI_FORMAT_D24_UNORM_S8_UINT )
 , m_pDeviceDXGI         ( nullptr )
-, m_pSwapChain          ( nullptr )
+, m_pSwapChain4         ( nullptr )
 , m_SampleMask          ( 0 )
 , m_StencilRef          ( 0 )
 , m_Width               ( 960 )
@@ -245,6 +244,16 @@ Application::Application()
     m_ClearColor[1] = 0.584313750f;
     m_ClearColor[2] = 0.929411829f;
     m_ClearColor[3] = 1.000000000f;
+
+#if ASDX_IS_DEBUG
+    m_DeviceDesc.EnableDebug = true;
+#else
+    m_DeviceDesc.EnableDebug = false;
+#endif
+    m_DeviceDesc.MaxColorTargetCount    = 128;
+    m_DeviceDesc.MaxDepthTargetCount    = 128;
+    m_DeviceDesc.MaxSamplerCount        = 128;
+    m_DeviceDesc.MaxShaderResourceCount = 4096;
 }
 
 //-----------------------------------------------------------------------------
@@ -253,15 +262,14 @@ Application::Application()
 Application::Application( LPCWSTR title, UINT width, UINT height, HICON hIcon, HMENU hMenu, HACCEL hAccel )
 : m_hInst               ( nullptr )
 , m_hWnd                ( nullptr )
-, m_DriverType          ( D3D_DRIVER_TYPE_HARDWARE )
-, m_FeatureLevel        ( D3D_FEATURE_LEVEL_11_0 )
+, m_AllowTearing        ( false )
 , m_MultiSampleCount    ( 4 )
 , m_MultiSampleQuality  ( 0 )
 , m_SwapChainCount      ( 2 )
 , m_SwapChainFormat     ( DXGI_FORMAT_B8G8R8A8_UNORM_SRGB )
 , m_DepthStencilFormat  ( DXGI_FORMAT_D24_UNORM_S8_UINT )
 , m_pDeviceDXGI         ( nullptr )
-, m_pSwapChain          ( nullptr )
+, m_pSwapChain4         ( nullptr )
 , m_Width               ( width )
 , m_Height              ( height )
 , m_AspectRatio         ( (float)width/(float)height )
@@ -284,6 +292,16 @@ Application::Application( LPCWSTR title, UINT width, UINT height, HICON hIcon, H
     m_ClearColor[1] = 0.584313750f;
     m_ClearColor[2] = 0.929411829f;
     m_ClearColor[3] = 1.000000000f;
+
+#if ASDX_IS_DEBUG
+    m_DeviceDesc.EnableDebug = true;
+#else
+    m_DeviceDesc.EnableDebug = false;
+#endif
+    m_DeviceDesc.MaxColorTargetCount    = 128;
+    m_DeviceDesc.MaxDepthTargetCount    = 128;
+    m_DeviceDesc.MaxSamplerCount        = 128;
+    m_DeviceDesc.MaxShaderResourceCount = 4096;
 }
 
 //-----------------------------------------------------------------------------
@@ -561,30 +579,119 @@ bool Application::InitD3D()
     // アスペクト比を算出します.
     m_AspectRatio = (FLOAT)w / (FLOAT)h;
 
-    // デバイス生成フラグ.
-    auto flags = 0u;
-
-#if defined(DEBUG) || defined(_DEBUG)
+    // デバイスの初期化.
+    if (!GfxDevice().Init(&m_DeviceDesc))
     {
-        auto hr = D3D12GetDebugInterface( IID_PPV_ARGS(m_pD3D12Debug.GetAddress()) );
-        if ( SUCCEEDED(hr) )
+        ELOG("Error : GraphicsDeivce::Init() Failed.");
+        return false;
+    }
+
+    // スワップチェインの初期化
+    {
+        DXGI_RATIONAL refreshRate;
+        GetDisplayRefreshRate(refreshRate);
+
+        // スワップチェインの構成設定.
+        DXGI_SWAP_CHAIN_DESC1 desc = {};
+        desc.Width              = w;
+        desc.Height             = h;
+        desc.Format             = m_SwapChainFormat;
+        desc.Stereo             = FALSE;
+        desc.SampleDesc.Count   = m_MultiSampleCount;
+        desc.SampleDesc.Quality = m_MultiSampleQuality;
+        desc.BufferCount        = m_SwapChainCount;
+        desc.Scaling            = DXGI_SCALING_STRETCH;
+        desc.SwapEffect         = DXGI_SWAP_EFFECT_DISCARD;
+        desc.Flags              = (m_AllowTearing) ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
+
+        DXGI_SWAP_CHAIN_FULLSCREEN_DESC fullScreenDesc = {};
+        fullScreenDesc.RefreshRate      = refreshRate;
+        fullScreenDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+        fullScreenDesc.Scaling          = DXGI_MODE_SCALING_STRETCHED;
+        fullScreenDesc.Windowed         = TRUE;
+
+        RefPtr<IDXGISwapChain1> pSwapChain;
+        auto pQueue = GfxDevice().GetGraphicsQueue()->GetQueue();
+        hr = GfxDevice().GetFactory()->CreateSwapChainForHwnd(pQueue, m_hWnd, &desc, &fullScreenDesc, nullptr, pSwapChain.GetAddress());
+        if (FAILED(hr))
         {
-            hr = m_pD3D12Debug->QueryInterface(IID_PPV_ARGS(m_pD3D12Debug3.GetAddress()));
-            if ( SUCCEEDED(hr) )
+            ELOG("Error : IDXGIFactory2::CreateSwapChainForHwnd() Failed. errcode = 0x&x", hr);
+            return false;
+        }
+
+        if (m_AllowTearing)
+        { GfxDevice().GetFactory()->MakeWindowAssociation(m_hWnd, DXGI_MWA_NO_ALT_ENTER); }
+
+        // IDXGISwapChain4にキャスト.
+        hr = pSwapChain->QueryInterface(IID_PPV_ARGS(m_pSwapChain4.GetAddress()));
+        if ( FAILED( hr ) )
+        {
+            m_pSwapChain4.Reset();
+            ELOG( "Warning : IDXGISwapChain4 Conversion Faild.");
+        }
+        else
+        {
+            // HDR出力チェック.
+            CheckSupportHDR();
+        }
+    }
+
+    // カラーターゲットの初期化.
+    {
+        m_ColorTarget.resize(m_SwapChainCount);
+
+        for(auto i=0u; i<m_SwapChainCount; ++i)
+        {
+            if (!m_ColorTarget[i].Init(GfxDevice(), m_pSwapChain4.GetPtr(), i, true))
             {
-                m_pD3D12Debug3->EnableDebugLayer();
-                m_pD3D12Debug3->SetEnableGPUBasedValidation(TRUE);
-                m_pD3D12Debug3->SetEnableSynchronizedCommandQueueValidation(TRUE);
-            }
-            else
-            {
-                m_pD3D12Debug->EnableDebugLayer();
+                ELOG("Error : ColorTarget::Init() Failed.");
+                return false;
             }
         }
     }
-#endif
 
+    // 深度ターゲットの初期化.
+    {
+        TargetDesc desc;
+        desc.Dimension          = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+        desc.Alignment          = 0;
+        desc.Width              = w;
+        desc.Height             = h;
+        desc.DepthOrArraySize   = 1;
+        desc.MipLevels          = 1;
+        desc.Format             = m_DepthStencilFormat;
+        desc.SampleDesc.Count   = 1;
+        desc.SampleDesc.Quality = 0;
+        desc.InitState          = D3D12_RESOURCE_STATE_DEPTH_WRITE;
 
+        if (!m_DepthTarget.Init(GfxDevice(), &desc))
+        {
+            ELOG("Error : DepthTarget::Init() Failed.");
+            return false;
+        }
+    }
+
+    // DXGIデバイスを取得.
+    hr = GfxDevice()->QueryInterface( IID_IDXGIDevice, (LPVOID*)m_pDeviceDXGI.GetAddress() );
+    if ( FAILED( hr ) )
+    {
+        ELOG( "Error : ID3D11Device::QueryInterface() Failed." );
+        return false;
+    }
+
+    // ビューポートの設定.
+    m_Viewport.Width    = (FLOAT)w;
+    m_Viewport.Height   = (FLOAT)h;
+    m_Viewport.MinDepth = 0.0f;
+    m_Viewport.MaxDepth = 1.0f;
+    m_Viewport.TopLeftX = 0;
+    m_Viewport.TopLeftY = 0;
+
+    // シザー矩形の設定.
+    m_ScissorRect.left   = 0;
+    m_ScissorRect.right  = w;
+    m_ScissorRect.top    = 0;
+    m_ScissorRect.bottom = h;
 
     return true;
 }
@@ -594,15 +701,15 @@ bool Application::InitD3D()
 //-----------------------------------------------------------------------------
 void Application::TermD3D()
 {
-
-
-#if defined(DEBUG) || defined(_DEBUG)
-    // メモリリークが出た場合は、下記をコメントアウトすれば詳細情報が表示される.
-    //if( m_pD3D12Debug )
-    //{ m_pD3D12Debug->ReportLiveDeviceObjects( D3D11_RLDO_DETAIL ); }
-
-    m_pD3D12Debug.Reset();
-#endif//ASDX_IS_DEBUG
+    for(size_t i=0; i<m_ColorTarget.size(); ++i)
+    {
+        m_ColorTarget[i].Term();
+    }
+    m_ColorTarget.clear();
+    m_DepthTarget.Term();
+    m_pSwapChain4.Reset();
+    GraphicsDevice::Instance().Term();
+    m_pDeviceDXGI.Reset();
 }
 
 
@@ -632,12 +739,6 @@ void Application::MainLoop()
         }
         else
         {
-            //// デバイス・デバイスコンテキスト・スワップチェインのいずれかがNULLであればスキップ.
-            //if ( ( m_pDevice        == nullptr )
-            //  || ( m_pDeviceContext == nullptr )
-            //  || ( m_pSwapChain     == nullptr ) )
-            //{ continue; }
-
             double time;
             double absTime;
             double elapsedTime;
@@ -711,86 +812,69 @@ void Application::KeyEvent( const KeyEventArgs& param )
 //-----------------------------------------------------------------------------
 void Application::ResizeEvent( const ResizeEventArgs& param )
 {
-    // ウインドウ非表示状態に移行する時に縦横1ピクセルのリサイズイベントが発行される
-    // マルチサンプル等の関係で縦横1ピクセルは問題が起こるので処理をスキップ
-    if ( param.Width == 1 && param.Height == 1 )
+    // マルチサンプル数以下になるとハングすることがあるので，処理をスキップする.
+    if ( param.Width  <= m_MultiSampleCount 
+      || param.Height <= m_MultiSampleCount)
     { return; }
 
     m_Width       = param.Width;
     m_Height      = param.Height;
     m_AspectRatio = param.AspectRatio;
 
-    //if ( ( m_pSwapChain     != nullptr )
-    //  && ( m_pDeviceContext != nullptr ) )
-    //{
-    //    // リサイズ前に一度コマンドを実行(実行しないとメモリリークするぽい).
-    //    m_pSwapChain->Present( 0, 0 );
+    // ビューポートの設定.
+    m_Viewport.Width    = (FLOAT)m_Width;
+    m_Viewport.Height   = (FLOAT)m_Height;
+    m_Viewport.MinDepth = 0.0f;
+    m_Viewport.MaxDepth = 1.0f;
+    m_Viewport.TopLeftX = 0;
+    m_Viewport.TopLeftY = 0;
 
-    //    ID3D11RenderTargetView* pNull = nullptr;
-    //    m_pDeviceContext->OMSetRenderTargets( 1, &pNull, nullptr );
+    // シザー矩形の設定.
+    m_ScissorRect.left   = 0;
+    m_ScissorRect.right  = m_Width;
+    m_ScissorRect.top    = 0;
+    m_ScissorRect.bottom = m_Height;
 
-    //    // 描画ターゲットを解放.
-    //    m_ColorTarget2D.Release();
+    if ( m_pSwapChain4 != nullptr )
+    {
+        // リサイズ前に一度コマンドを実行(実行しないとメモリリークするぽい).
+        m_pSwapChain4->Present( 0, 0 );
 
-    //    // 深度ステンシルバッファを解放.
-    //    m_DepthTarget2D.Release();
+        // 描画ターゲットを解放.
+        for(size_t i=0; i<m_ColorTarget.size(); ++i)
+        { m_ColorTarget[i].Term(); }
 
-    //#if defined(ASDX_ENABLE_D2D)
-    //    // D2Dビットマップを解放.
-    //    m_pBitmap2D.Reset();
-    //#endif//defined(ASDX_ENABLE_D2D)
+        // 深度ステンシルバッファを解放.
+        m_DepthTarget.Term();
 
-    //    HRESULT hr = S_OK;
+        HRESULT hr = S_OK;
 
-    //    // バッファをリサイズ.
-    //    hr = m_pSwapChain->ResizeBuffers( m_SwapChainCount, 0, 0, m_SwapChainFormat, 0 );
-    //    if ( FAILED( hr ) )
-    //    { DLOG( "Error : IDXGISwapChain::ResizeBuffer() Failed." ); }
+        // バッファをリサイズ.
+        hr = m_pSwapChain4->ResizeBuffers( m_SwapChainCount, 0, 0, m_SwapChainFormat, 0 );
+        if ( FAILED( hr ) )
+        { DLOG( "Error : IDXGISwapChain::ResizeBuffer() Failed." ); }
 
-    //    // バックバッファから描画ターゲットを生成.
-    //    if ( !m_ColorTarget2D.CreateFromBackBuffer( m_pDevice.GetPtr(), m_pSwapChain.GetPtr() ) )
-    //    { DLOG( "Error : RenderTarget2D::CreateFromBackBuffer() Failed." ); }
+        for(auto i=0u; i<m_SwapChainCount; ++i)
+        {
+            if (!m_ColorTarget[i].Init(GfxDevice(), m_pSwapChain4.GetPtr(), i, true))
+            { DLOG("Error : ColorTarget::Init() Failed."); }
+        }
 
-    //    TargetDesc2D desc;
-    //    desc.Width              = m_Width;
-    //    desc.Height             = m_Height;
-    //    desc.MipLevels          = 1;
-    //    desc.ArraySize          = 1;
-    //    desc.Format             = m_DepthStencilFormat;
-    //    desc.SampleDesc.Count   = m_MultiSampleCount;
-    //    desc.SampleDesc.Quality = m_MultiSampleQuality;
-    //    desc.CPUAccessFlags     = 0;
-    //    desc.MiscFlags          = 0;
+        TargetDesc desc;
+        desc.Dimension          = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+        desc.Alignment          = 0;
+        desc.Width              = m_Width;
+        desc.Height             = m_Height;
+        desc.DepthOrArraySize   = 1;
+        desc.MipLevels          = 1;
+        desc.Format             = m_DepthStencilFormat;
+        desc.SampleDesc.Count   = 1;
+        desc.SampleDesc.Quality = 0;
+        desc.InitState          = D3D12_RESOURCE_STATE_DEPTH_WRITE;
 
-    //    if ( !m_DepthTarget2D.Create( m_pDevice.GetPtr(), desc ) )
-    //    { DLOG( "Error : DepthStencilTarget::Create() Failed." ); }
-
-    //    // デバイスコンテキストにレンダーターゲットを設定.
-    //    ID3D11RenderTargetView* pRTV = m_ColorTarget2D.GetTargetView();
-    //    ID3D11DepthStencilView* pDSV = m_DepthTarget2D.GetTargetView();
-    //    m_pDeviceContext->OMSetRenderTargets( 1, &pRTV, pDSV );
-
-    //    // ビューポートの設定.
-    //    m_Viewport.Width    = (FLOAT)m_Width;
-    //    m_Viewport.Height   = (FLOAT)m_Height;
-    //    m_Viewport.MinDepth = 0.0f;
-    //    m_Viewport.MaxDepth = 1.0f;
-    //    m_Viewport.TopLeftX = 0;
-    //    m_Viewport.TopLeftY = 0;
-
-    //    // シザー矩形の設定.
-    //    m_ScissorRect.left   = 0;
-    //    m_ScissorRect.right  = m_Width;
-    //    m_ScissorRect.top    = 0;
-    //    m_ScissorRect.bottom = m_Height;
-
-    //    // デバイスコンテキストにビューポートを設定.
-    //    m_pDeviceContext->RSSetViewports( 1, &m_Viewport );
-
-    //    // デバイスコンテキストにシザー矩形を設定.
-    //    m_pDeviceContext->RSSetScissorRects( 1, &m_ScissorRect );
-
-    //}
+        if ( !m_DepthTarget.Init(GfxDevice(), &desc))
+        { DLOG( "Error : DepthStencilTarget::Create() Failed." ); }
+    }
 
     // リサイズイベント呼び出し.
     OnResize( param );
@@ -1043,16 +1127,7 @@ void Application::OnFrameMove( FrameEventArgs& )
 //-----------------------------------------------------------------------------
 void Application::OnFrameRender( FrameEventArgs& )
 {
-    // レンダーターゲットビュー・深度ステンシルビューを取得.
-
-
-    // 描画処理.
-    {
-        /* DO_NOTHING */
-    }
-
-    // コマンドを実行して，画面に表示.
-    //Present( 0 );
+    /* DO_NOTHING */
 }
 
 //-----------------------------------------------------------------------------
@@ -1062,15 +1137,11 @@ void Application::Present( uint32_t syncInterval )
 {
     HRESULT hr = S_OK;
 
-    auto pSwapChain = (m_pSwapChain4.GetPtr()) 
-        ? m_pSwapChain4.GetPtr()
-        : m_pSwapChain.GetPtr();
-
     // スタンバイモードかどうかチェック.
     if ( m_IsStandbyMode )
     {
         // テストする.
-        hr = pSwapChain->Present( syncInterval, DXGI_PRESENT_TEST );
+        hr = m_pSwapChain4->Present( syncInterval, DXGI_PRESENT_TEST );
 
         // スタンバイモードが解除されたかをチェック.
         if ( hr == S_OK )
@@ -1081,7 +1152,7 @@ void Application::Present( uint32_t syncInterval )
     }
 
     // 画面更新する.
-    hr = pSwapChain->Present( syncInterval, 0 );
+    hr = m_pSwapChain4->Present( syncInterval, 0 );
 
     switch( hr )
     {
@@ -1130,9 +1201,9 @@ void Application::Present( uint32_t syncInterval )
 //-----------------------------------------------------------------------------
 void Application::CheckSupportHDR()
 {
-    //// 何も作られていない場合は処理しない.
-    //if (m_pSwapChain4 == nullptr || m_pDevice == nullptr)
-    //{ return; }
+    // 何も作られていない場合は処理しない.
+    if (m_pSwapChain4 == nullptr)
+    { return; }
 
     HRESULT hr = S_OK;
 
@@ -1140,19 +1211,11 @@ void Application::CheckSupportHDR()
     RECT rect;
     GetWindowRect(m_hWnd, &rect);
 
-    RefPtr<IDXGIFactory5> pFactory;
-    hr = CreateDXGIFactory2(0, IID_PPV_ARGS(pFactory.GetAddress()));
-    if (FAILED(hr))
-    {
-        ELOG("Error : CreateDXGIFactory2() Failed.");
-        return;
-    }
-
     RefPtr<IDXGIAdapter1> pAdapter;
-    hr = pFactory->EnumAdapters1(0, pAdapter.GetAddress());
+    hr = GfxDevice().GetFactory()->EnumAdapters1(0, pAdapter.GetAddress());
     if (FAILED(hr))
     {
-        ELOG("Error : IDXGIFactory5::EnumAdapters1() Failed.");
+        ELOG("Error : IDXGIFactory1::EnumAdapters1() Failed.");
         return;
     }
 
@@ -1313,18 +1376,27 @@ bool Application::SetColorSpace(COLOR_SPACE value)
     UINT flag = 0;
     auto hr = m_pSwapChain4->CheckColorSpaceSupport(colorSpace, &flag);
     if (FAILED(hr))
-    { return false; }
+    {
+        ELOG("Error : ISwapChain4::CheckColorSpaceSupport() Failed. errcode = 0x%x", hr);
+        return false;
+    }
 
     if ((flag & DXGI_SWAP_CHAIN_COLOR_SPACE_SUPPORT_FLAG_PRESENT) != DXGI_SWAP_CHAIN_COLOR_SPACE_SUPPORT_FLAG_PRESENT)
     { return false; }
 
     hr = m_pSwapChain4->SetHDRMetaData(DXGI_HDR_METADATA_TYPE_HDR10, sizeof(metaData), &metaData);
     if (FAILED(hr))
-    { return false; }
+    {
+        ELOG("Error : ISwapChain4::SetHDRMetaData() Failed. errcode = 0x%x", hr);
+        return false;
+    }
 
     hr = m_pSwapChain4->SetColorSpace1(colorSpace);
     if (FAILED(hr))
-    { return false; }
+    {
+        ELOG("Error : ISwapChain4::SetColorSpace1() Failed. errcode = 0x%x", hr);
+        return false;
+    }
 
     return true;
 }
@@ -1335,14 +1407,20 @@ bool Application::SetColorSpace(COLOR_SPACE value)
 bool Application::GetDisplayRefreshRate(DXGI_RATIONAL& result) const
 {
     asdx::RefPtr<IDXGIOutput> output;
-    auto hr = m_pSwapChain->GetContainingOutput(output.GetAddress());
+    auto hr = m_pSwapChain4->GetContainingOutput(output.GetAddress());
     if (FAILED(hr))
-    { return false; }
+    {
+        ELOG("Error : ISwapChain::GetContainingOutput() Failed. errcode = 0x%x", hr);
+        return false;
+    }
 
     DXGI_OUTPUT_DESC outputDesc;
     hr = output->GetDesc(&outputDesc);
     if (FAILED(hr))
-    { return false; }
+    {
+        ELOG("Error : IDXGIOutput::GetDesc() Failed. errcode = 0x%x", hr);
+        return false;
+    }
 
     auto hMonitor = outputDesc.Monitor;
 
@@ -1350,14 +1428,20 @@ bool Application::GetDisplayRefreshRate(DXGI_RATIONAL& result) const
     monitorInfo.cbSize = sizeof(monitorInfo);
     auto ret = GetMonitorInfo(hMonitor, &monitorInfo);
     if (ret == 0)
-    { return false; }
+    {
+        ELOG("Error : GetMonitorInfo() Failed.");
+        return false;
+    }
     
     DEVMODE devMode;
     devMode.dmSize          = sizeof(devMode);
     devMode.dmDriverExtra   = 0;
     ret = EnumDisplaySettings(monitorInfo.szDevice, ENUM_CURRENT_SETTINGS, &devMode);
     if (ret == 0)
-    { return false; }
+    {
+        ELOG("Error : EnumDisplaySettings() Failed.");
+        return false;
+    }
     
     auto useDefaultRefreshRate = (1 == devMode.dmDisplayFrequency) || (0 == devMode.dmDisplayFrequency);
     result.Numerator   = (useDefaultRefreshRate) ? 0 : devMode.dmDisplayFrequency;

@@ -47,40 +47,64 @@ bool GraphicsDevice::Init(const Desc* pDesc)
         auto hr = D3D12GetDebugInterface(IID_PPV_ARGS(debug.GetAddress()));
         if (SUCCEEDED(hr))
         {
-            hr = debug->QueryInterface(IID_PPV_ARGS(m_pDebug3.GetAddress()));
+            hr = debug->QueryInterface(IID_PPV_ARGS(m_pDebug.GetAddress()));
             if (SUCCEEDED(hr))
             {
-                m_pDebug3->EnableDebugLayer();
-                m_pDebug3->SetEnableGPUBasedValidation(TRUE);
+                m_pDebug->EnableDebugLayer();
+                m_pDebug->SetEnableGPUBasedValidation(TRUE);
             }
         }
     }
 
-    // デバイス生成.
-    asdx::RefPtr<ID3D12Device> device;
-    auto hr = D3D12CreateDevice( nullptr, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(device.GetAddress()) );
-    if (FAILED(hr))
+    // DXGIファクトリを生成.
     {
-        ELOG("Error : D3D12CreateDevice() Failed. errcode = 0x%x", hr);
-        return false;
-    }
+        uint32_t flags = 0;
+        if (pDesc->EnableDebug)
+        { flags |= DXGI_CREATE_FACTORY_DEBUG; }
 
-    // ID3D12Device6に変換.
-    hr = device->QueryInterface(IID_PPV_ARGS(m_pDevice6.GetAddress()));
-    if (FAILED(hr))
-    {
-        ELOG("Error : QueryInterface() Failed. errcode = 0x%x", hr);
-        return false;
-    }
-
-    // ID3D12InfoQueueに変換.
-    if (pDesc->EnableDebug)
-    {
-        hr = m_pDevice6->QueryInterface(IID_PPV_ARGS(m_pInfoQueue.GetAddress()));
-        if (SUCCEEDED(hr))
+        RefPtr<IDXGIFactory2> factory;
+        auto hr = CreateDXGIFactory2( flags, IID_PPV_ARGS(factory.GetAddress()) );
+        if ( FAILED(hr) )
         {
-            // エラー発生時にブレークさせる.
-            m_pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
+            ELOG("Error : CreateDXGIFactory2() Failed. errcode = 0x%x", hr);
+            return false;
+        }
+
+        hr = factory->QueryInterface(IID_PPV_ARGS(m_pFactory.GetAddress()));
+        if ( FAILED(hr) )
+        {
+            ELOG("Error : QueryInterface() Failed. errcode = 0x%x", hr);
+            return false;
+        }
+    }
+
+    // デバイス生成.
+    {
+        asdx::RefPtr<ID3D12Device> device;
+        auto hr = D3D12CreateDevice( nullptr, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(device.GetAddress()) );
+        if (FAILED(hr))
+        {
+            ELOG("Error : D3D12CreateDevice() Failed. errcode = 0x%x", hr);
+            return false;
+        }
+
+        // ID3D12Device9に変換.
+        hr = device->QueryInterface(IID_PPV_ARGS(m_pDevice.GetAddress()));
+        if (FAILED(hr))
+        {
+            ELOG("Error : QueryInterface() Failed. errcode = 0x%x", hr);
+            return false;
+        }
+
+        // ID3D12InfoQueueに変換.
+        if (pDesc->EnableDebug)
+        {
+            hr = m_pDevice->QueryInterface(IID_PPV_ARGS(m_pInfoQueue.GetAddress()));
+            if (SUCCEEDED(hr))
+            {
+                // エラー発生時にブレークさせる.
+                m_pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
+            }
         }
     }
 
@@ -90,7 +114,7 @@ bool GraphicsDevice::Init(const Desc* pDesc)
         desc.NumDescriptors = pDesc->MaxShaderResourceCount;
         desc.Type  = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
         desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-        if ( !m_DescriptorHeap[desc.Type].Init(m_pDevice6.GetPtr(), &desc ) )
+        if ( !m_DescriptorHeap[desc.Type].Init(m_pDevice.GetPtr(), &desc ) )
         {
             ELOG("Error : DescriptorHeap::Init() Failed.");
             return false;
@@ -103,7 +127,7 @@ bool GraphicsDevice::Init(const Desc* pDesc)
         desc.NumDescriptors = pDesc->MaxSamplerCount;
         desc.Type  = D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER;
         desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-        if ( !m_DescriptorHeap[desc.Type].Init(m_pDevice6.GetPtr(), &desc ) )
+        if ( !m_DescriptorHeap[desc.Type].Init(m_pDevice.GetPtr(), &desc ) )
         {
             ELOG("Error : DescriptorHeap::Init() Failed");
             return false;
@@ -115,7 +139,7 @@ bool GraphicsDevice::Init(const Desc* pDesc)
         D3D12_DESCRIPTOR_HEAP_DESC desc = {};
         desc.NumDescriptors = pDesc->MaxColorTargetCount;
         desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-        if ( !m_DescriptorHeap[desc.Type].Init(m_pDevice6.GetPtr(), &desc ) )
+        if ( !m_DescriptorHeap[desc.Type].Init(m_pDevice.GetPtr(), &desc ) )
         {
             ELOG("Error : DescriptorHeap::Init() Failed.");
             return false;
@@ -127,7 +151,7 @@ bool GraphicsDevice::Init(const Desc* pDesc)
         D3D12_DESCRIPTOR_HEAP_DESC desc = {};
         desc.NumDescriptors = pDesc->MaxDepthTargetCount;
         desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-        if ( !m_DescriptorHeap[desc.Type].Init(m_pDevice6.GetPtr(), &desc ) )
+        if ( !m_DescriptorHeap[desc.Type].Init(m_pDevice.GetPtr(), &desc ) )
         {
             ELOG("Error : DescriptorHeap::Init() Failed");
             return false;
@@ -135,7 +159,7 @@ bool GraphicsDevice::Init(const Desc* pDesc)
     }
 
     // グラフィックスキューの生成.
-    m_pGraphicsQueue = Queue::Create(m_pDevice6.GetPtr(), D3D12_COMMAND_LIST_TYPE_DIRECT);
+    m_pGraphicsQueue = Queue::Create(m_pDevice.GetPtr(), D3D12_COMMAND_LIST_TYPE_DIRECT);
     if (m_pComputeQueue == nullptr)
     {
         ELOG("Error : Queue::Create() Failed.");
@@ -143,7 +167,7 @@ bool GraphicsDevice::Init(const Desc* pDesc)
     }
 
     // コンピュートキューの生成.
-    m_pComputeQueue = Queue::Create(m_pDevice6.GetPtr(), D3D12_COMMAND_LIST_TYPE_COMPUTE);
+    m_pComputeQueue = Queue::Create(m_pDevice.GetPtr(), D3D12_COMMAND_LIST_TYPE_COMPUTE);
     if (m_pComputeQueue == nullptr)
     {
         ELOG("Error : Queue::Create() Failed.");
@@ -151,7 +175,7 @@ bool GraphicsDevice::Init(const Desc* pDesc)
     }
 
     // コピーキューの生成.
-    m_pCopyQueue = Queue::Create(m_pDevice6.GetPtr(), D3D12_COMMAND_LIST_TYPE_COPY);
+    m_pCopyQueue = Queue::Create(m_pDevice.GetPtr(), D3D12_COMMAND_LIST_TYPE_COPY);
     if (m_pCopyQueue == nullptr)
     {
         ELOG("Error : Queue::Create() Failed.");
@@ -159,7 +183,7 @@ bool GraphicsDevice::Init(const Desc* pDesc)
     }
 
     // ビデオデコードキューの生成.
-    m_pVideoDecodeQueue = Queue::Create(m_pDevice6.GetPtr(), D3D12_COMMAND_LIST_TYPE_VIDEO_DECODE);
+    m_pVideoDecodeQueue = Queue::Create(m_pDevice.GetPtr(), D3D12_COMMAND_LIST_TYPE_VIDEO_DECODE);
     if (m_pVideoDecodeQueue == nullptr)
     {
         ELOG("Error : Queue::Create() Failed.");
@@ -167,7 +191,7 @@ bool GraphicsDevice::Init(const Desc* pDesc)
     }
 
     // ビデオプロセスキューの生成.
-    m_pVideoProcessQueue = Queue::Create(m_pDevice6.GetPtr(), D3D12_COMMAND_LIST_TYPE_VIDEO_PROCESS);
+    m_pVideoProcessQueue = Queue::Create(m_pDevice.GetPtr(), D3D12_COMMAND_LIST_TYPE_VIDEO_PROCESS);
     if (m_pVideoProcessQueue == nullptr)
     {
         ELOG("Error : Queue::Create() Failed.");
@@ -175,7 +199,7 @@ bool GraphicsDevice::Init(const Desc* pDesc)
     }
 
     // ビデオエンコードキューの生成.
-    m_pVideoEncodeQueue = Queue::Create(m_pDevice6.GetPtr(), D3D12_COMMAND_LIST_TYPE_VIDEO_ENCODE);
+    m_pVideoEncodeQueue = Queue::Create(m_pDevice.GetPtr(), D3D12_COMMAND_LIST_TYPE_VIDEO_ENCODE);
     if (m_pVideoEncodeQueue == nullptr)
     {
         ELOG("Error : Queue::Create() Failed.");
@@ -203,16 +227,23 @@ void GraphicsDevice::Term()
         m_DescriptorHeap[i].Term();
     }
 
-    m_pDevice6  .Reset();
+    m_pDevice   .Reset();
     m_pInfoQueue.Reset();
-    m_pDebug3   .Reset();
+    m_pDebug    .Reset();
+    m_pFactory  .Reset();
 }
 
 //-----------------------------------------------------------------------------
-//      ID3D12Device6を取得します.
+//      ID3D12Device9を取得します.
 //-----------------------------------------------------------------------------
-ID3D12Device6* GraphicsDevice::GetDevice() const
-{ return m_pDevice6.GetPtr(); }
+ID3D12Device9* GraphicsDevice::GetDevice() const
+{ return m_pDevice.GetPtr(); }
+
+//-----------------------------------------------------------------------------
+//      IDXGIFactory7を取得します.
+//-----------------------------------------------------------------------------
+IDXGIFactory7* GraphicsDevice::GetFactory() const
+{ return m_pFactory.GetPtr(); }
 
 //-----------------------------------------------------------------------------
 //      グラフィックスキューを取得します.
@@ -260,5 +291,11 @@ Descriptor* GraphicsDevice::AllocHandle(int index)
 
     return m_DescriptorHeap[index].CreateDescriptor();
 }
+
+//-----------------------------------------------------------------------------
+//      アロー演算子です.
+//-----------------------------------------------------------------------------
+ID3D12Device9* GraphicsDevice::operator-> () const
+{ return m_pDevice.GetPtr(); }
 
 } // namespace asdx
