@@ -30,6 +30,7 @@ namespace {
 enum ASDX_SHADER_VERSION_TYPE
 {
     // https://github.com/microsoft/DirectXShaderCompiler/blob/master/include/dxc/DXIL/DxilConstants.h
+    // Must match D3D12_SHADER_VERSION_TYPE.
     ASDX_SHVER_PIXEL = 0,
     ASDX_SHVER_VERTEX,
     ASDX_SHVER_GEOMETRY,
@@ -110,6 +111,9 @@ using PSS_DEPTH_STENCIL  = PSSubObject< D3D12_DEPTH_STENCIL_DESC,   D3D12_PIPELI
 using PSS_RTV_FORMATS    = PSSubObject< D3D12_RT_FORMAT_ARRAY,      D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_RENDER_TARGET_FORMATS >;
 using PSS_DSV_FORMAT     = PSSubObject< DXGI_FORMAT,                D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_DEPTH_STENCIL_FORMAT >;
 using PSS_SAMPLE_DESC    = PSSubObject< DXGI_SAMPLE_DESC,           D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_SAMPLE_DESC >;
+using PSS_NODE_MASK      = PSSubObject< UINT,                       D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_NODE_MASK >;
+using PSS_CACHED_PSO     = PSSubObject< D3D12_CACHED_PIPELINE_STATE,D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_CACHED_PSO >;
+using PSS_FLAGS          = PSSubObject< D3D12_PIPELINE_STATE_FLAGS, D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_FLAGS >;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -130,6 +134,9 @@ struct GPS_DESC
     PSS_RTV_FORMATS     RTVFormats;
     PSS_DSV_FORMAT      DSVFormat;
     PSS_SAMPLE_DESC     SampleDesc;
+    PSS_NODE_MASK       NodeMask;
+    PSS_CACHED_PSO      CachedPSO;
+    PSS_FLAGS           Flags;
 
     GPS_DESC()
     { /* DO_NOTHING */ }
@@ -149,6 +156,9 @@ struct GPS_DESC
         RTVFormats          = pValue->RTVFormats;
         DSVFormat           = pValue->DSVFormat;
         SampleDesc          = pValue->SampleDesc;
+        NodeMask            = pValue->NodeMask;
+        CachedPSO           = pValue->CachedPSO;
+        Flags               = pValue->Flags;
     }
 };
 
@@ -509,7 +519,6 @@ bool PipelineState::Init(ID3D12Device* pDevice, const D3D12_GRAPHICS_PIPELINE_ST
     if (denyPS)
     { flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS; }
 
-
     D3D12_ROOT_SIGNATURE_DESC sigDesc = {};
     sigDesc.NumParameters       = uint32_t(m_Entries.size());
     sigDesc.pParameters         = params.data();
@@ -660,11 +669,6 @@ bool PipelineState::Init(ID3D12Device* pDevice, const D3D12_COMPUTE_PIPELINE_STA
     }
 
     D3D12_ROOT_SIGNATURE_FLAGS flags = D3D12_ROOT_SIGNATURE_FLAG_NONE;
-    flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS;
-    flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS;
-    flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS;
-    flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
-    flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
 
     D3D12_ROOT_SIGNATURE_DESC sigDesc = {};
     sigDesc.NumParameters       = uint32_t(m_Entries.size());
@@ -808,7 +812,7 @@ bool PipelineState::Init(ID3D12Device2* pDevice, const GEOMETRY_PIPELINE_STATE_D
         {
         case D3D_SIT_CBUFFER:
             {
-                if (itr.second.BufferSize < 16)
+                if (itr.second.BufferSize <= 16)
                 {
                     params[idx].ParameterType               = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
                     params[idx].Constants.Num32BitValues    = itr.second.BufferSize / 4;

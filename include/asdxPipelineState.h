@@ -47,6 +47,9 @@ struct GEOMETRY_PIPELINE_STATE_DESC
     D3D12_RT_FORMAT_ARRAY       RTVFormats;             //!< レンダーターゲットフォーマット.
     DXGI_FORMAT                 DSVFormat;              //!< 深度ステンシルビューフォーマット.
     DXGI_SAMPLE_DESC            SampleDesc;             //!< サンプル設定.
+    UINT                        NodeMask;               //!< ノードマスク.
+    D3D12_CACHED_PIPELINE_STATE CachedPSO;              //!< キャッシュ済みPSO.
+    D3D12_PIPELINE_STATE_FLAGS  Flags;                  //!< フラグ.
 };
 
 ///////////////////////////////////////////////////////////////////////////////
