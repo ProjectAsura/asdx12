@@ -5,8 +5,6 @@
 //-----------------------------------------------------------------------------
 #pragma once
 
-//#define ASDX_ENABLE_DXC
-
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
@@ -14,18 +12,6 @@
 #include <string>
 #include <d3d12.h>
 #include <asdxRef.h>
-
-
-//-----------------------------------------------------------------------------
-// Linker
-//-----------------------------------------------------------------------------
-#ifdef ASDX_AUTO_LINK
-    #ifdef ASDX_ENABLE_DXC
-        #pragma comment(lib, "dxcompiler.lib")
-    #else
-        #pragma comment(lib, "d3dcompiler.lib")
-    #endif
-#endif//ASDX_AUTO_LINK
 
 
 namespace asdx {

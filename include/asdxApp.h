@@ -30,11 +30,17 @@
 //-----------------------------------------------------------------------------
 #ifdef ASDX_AUTO_LINK
 #pragma comment( lib, "d3d12.lib" )
-#pragma comment( lib, "dxcompiler.lib" )
 #pragma comment( lib, "dxgi.lib" )
 #pragma comment( lib, "dxguid.lib" )
 #pragma comment( lib, "winmm.lib" )
 #pragma comment( lib, "comctl32.lib" )
+
+#ifdef ASDX_ENABLE_DXC
+    #pragma comment( lib, "dxcompiler.lib" )
+#else
+    #pragma comment( lib, "d3dcompiler.lib")
+#endif
+
 #endif//ASDX_AUTO_LINK
 
 

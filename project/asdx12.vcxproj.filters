@@ -72,9 +72,6 @@
     <ClCompile Include="..\src\asdxAppHistoryMgr.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="main.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\asdxDescriptor.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>

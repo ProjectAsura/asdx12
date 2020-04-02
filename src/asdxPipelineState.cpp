@@ -14,6 +14,7 @@
 #include <asdxHashString.h>
 #include <asdxLogger.h>
 
+
 #ifdef ASDX_ENABLE_DXC
     #include <dxcapi.h>
 #else
@@ -694,20 +695,26 @@ bool PipelineState::Init(ID3D12Device2* pDevice, const GEOMETRY_PIPELINE_STATE_D
     }
 
 #ifdef ASDX_ENABLE_MESH_SHADER
-    D3D12_FEATURE_DATA_SHADER_MODEL shaderModel = { D3D_SHADER_MODEL_6_5 };
-    auto hr = pDevice->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &shaderModel, sizeof(shaderModel));
-    if (FAILED(hr) || (shaderModel.HighestShaderModel < D3D_SHADER_MODEL_6_5))
+    // シェーダモデルをチェック.
     {
-        ELOG("Error : Shader Model 6.5 is not supported.");
-        return false;
+        D3D12_FEATURE_DATA_SHADER_MODEL shaderModel = { D3D_SHADER_MODEL_6_5 };
+        auto hr = pDevice->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &shaderModel, sizeof(shaderModel));
+        if (FAILED(hr) || (shaderModel.HighestShaderModel < D3D_SHADER_MODEL_6_5))
+        {
+            ELOG("Error : Shader Model 6.5 is not supported.");
+            return false;
+        }
     }
 
-    D3D12_FEATURE_DATA_D3D12_OPTIONS7 features = {};
-    hr = pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &features, sizeof(features));
-    if (FAILED(hr) || (features.MeshShaderTier == D3D12_MESH_SHADER_TIER_NOT_SUPPORTED))
+    // メッシュシェーダをサポートしているかどうかチェック.
     {
-        ELOG("Error : Mesh Shaders aren't supported.");
-        return false;
+        D3D12_FEATURE_DATA_D3D12_OPTIONS7 features = {};
+        auto hr = pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &features, sizeof(features));
+        if (FAILED(hr) || (features.MeshShaderTier == D3D12_MESH_SHADER_TIER_NOT_SUPPORTED))
+        {
+            ELOG("Error : Mesh Shaders aren't supported.");
+            return false;
+        }
     }
 
     uint32_t rootParamIndex = 0;
@@ -850,37 +857,43 @@ bool PipelineState::Init(ID3D12Device2* pDevice, const GEOMETRY_PIPELINE_STATE_D
     sigDesc.pStaticSamplers     = nullptr;
     sigDesc.Flags               = flags;
 
-    RefPtr<ID3DBlob> pBlob;
-    RefPtr<ID3DBlob> pErrorBlob;
-    auto hr = D3D12SerializeRootSignature(
-        &sigDesc, D3D_ROOT_SIGNATURE_VERSION_1_0, pBlob.GetAddress(), pErrorBlob.GetAddress());
-    if (FAILED(hr))
+    // ルートシグニチャを生成.
     {
-        ELOG("Error : D3D12SerializeRootSignature() Failed. errcode = 0x%x, msg = %s",
-            hr, static_cast<char*>(pErrorBlob->GetBufferPointer()));
-        return false;
+        RefPtr<ID3DBlob> pBlob;
+        RefPtr<ID3DBlob> pErrorBlob;
+        auto hr = D3D12SerializeRootSignature(
+            &sigDesc, D3D_ROOT_SIGNATURE_VERSION_1_0, pBlob.GetAddress(), pErrorBlob.GetAddress());
+        if (FAILED(hr))
+        {
+            ELOG("Error : D3D12SerializeRootSignature() Failed. errcode = 0x%x, msg = %s",
+                hr, static_cast<char*>(pErrorBlob->GetBufferPointer()));
+            return false;
+        }
+
+        hr = pDevice->CreateRootSignature(
+            0, pBlob->GetBufferPointer(), pBlob->GetBufferSize(), IID_PPV_ARGS(m_pRootSig.GetAddress()));
+        if (FAILED(hr))
+        {
+            ELOG("Error : ID3D12Device::CreateRootSignature() Failed. errcode = 0x%x", hr);
+            return false;
+        }
     }
 
-    hr = pDevice->CreateRootSignature(
-        0, pBlob->GetBufferPointer(), pBlob->GetBufferSize(), IID_PPV_ARGS(m_pRootSig.GetAddress()));
-    if (FAILED(hr))
+    // ジオメトリパイプラインステートを生成.
     {
-        ELOG("Error : ID3D12Device::CreateRootSignature() Failed. errcode = 0x%x", hr);
-        return false;
-    }
+        GPS_DESC gpsDesc(pDesc);
 
-    GPS_DESC gpsDesc(pDesc);
+        D3D12_PIPELINE_STATE_STREAM_DESC pssDesc = {};
+        pssDesc.SizeInBytes = sizeof(gpsDesc);
+        pssDesc.pPipelineStateSubobjectStream = &gpsDesc;
 
-    D3D12_PIPELINE_STATE_STREAM_DESC pssDesc = {};
-    pssDesc.SizeInBytes = sizeof(gpsDesc);
-    pssDesc.pPipelineStateSubobjectStream = &gpsDesc;
-
-    // パイプラインステート生成.
-    hr = pDevice->CreatePipelineState(&pssDesc, IID_PPV_ARGS(m_pPSO.GetAddress()));
-    if (FAILED(hr))
-    {
-        ELOG("Error : ID3D12Device::CreateGraphicsPipelineState() Failed. errcode = 0x%x", hr);
-        return false;
+        // パイプラインステート生成.
+        auto hr = pDevice->CreatePipelineState(&pssDesc, IID_PPV_ARGS(m_pPSO.GetAddress()));
+        if (FAILED(hr))
+        {
+            ELOG("Error : ID3D12Device::CreateGraphicsPipelineState() Failed. errcode = 0x%x", hr);
+            return false;
+        }
     }
 
     return true;
