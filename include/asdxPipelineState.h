@@ -14,6 +14,11 @@
 #include <asdxRef.h>
 
 
+#ifdef __ID3D12GraphicsCommandList6_INTERFACE_DEFINED__
+#define ASDX_ENABLE_MESH_SHADER
+#endif//__ID3D12GraphicsCommandList6_INTERFACE_DEFINED__
+
+
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////

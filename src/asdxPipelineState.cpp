@@ -21,17 +21,37 @@
     #include <d3dcompiler.h>
 #endif//ASDX_ENABLE_DXC
 
-#ifdef ASDX_ENABLE_DXC
-//#define ASDX_ENABLE_MESH_SHADER
-#endif//ASDX_ENABLE_DXC
-
 
 namespace {
 
-#define DXIL_FOURCC(ch0, ch1, ch2, ch3) (                            \
+///////////////////////////////////////////////////////////////////////////////
+// ASDX_SHADER_VERSION_TYPE
+///////////////////////////////////////////////////////////////////////////////
+enum ASDX_SHADER_VERSION_TYPE
+{
+    // https://github.com/microsoft/DirectXShaderCompiler/blob/master/include/dxc/DXIL/DxilConstants.h
+    ASDX_SHVER_PIXEL = 0,
+    ASDX_SHVER_VERTEX,
+    ASDX_SHVER_GEOMETRY,
+    ASDX_SHVER_HULL,
+    ASDX_SHVER_DOMAIN,
+    ASDX_SHVER_COMPUTE,
+    ASDX_SHVER_LIBRARY,
+    ASDX_SHVER_RAY_GENERATION,
+    ASDX_SHVER_INTERSECTION,
+    ASDX_SHVER_ANY_HIT,
+    ASDX_SHVER_CLOSEST_HIT,
+    ASDX_SHVER_MISS,
+    ASDX_SHVER_CALLABLE,
+    ASDX_SHVER_MESH,
+    ASDX_SHVER_AMPLIFICATION,
+    ASDX_SHVER_INVALID,
+};
+
+#define ASDX_FOURCC(ch0, ch1, ch2, ch3) (                            \
   (uint32_t)(uint8_t)(ch0)        | (uint32_t)(uint8_t)(ch1) << 8  | \
   (uint32_t)(uint8_t)(ch2) << 16  | (uint32_t)(uint8_t)(ch3) << 24   \
-  )
+)
 
 ///////////////////////////////////////////////////////////////////////////////
 // PSSubObject class
@@ -139,7 +159,7 @@ HRESULT CreateReflection(const void* pBinary, size_t binarySize, ID3D12ShaderRef
 {
 #ifdef ASDX_ENABLE_DXC
     const uint32_t kDXC_CP_ACP = 0;
-    const uint32_t kDFCC_DXIL  = DXIL_FOURCC('D', 'X', 'I', 'L');
+    const uint32_t kDFCC_DXIL  = ASDX_FOURCC('D', 'X', 'I', 'L');
 
     asdx::RefPtr<IDxcLibrary> pLibrary;
     auto hr = DxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(pLibrary.GetAddress()));
@@ -190,18 +210,21 @@ void EnumerateEntries
     }
 
     D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL;
-    switch(shaderDesc.Version)
+    auto shaderType = D3D12_SHVER_GET_TYPE(shaderDesc.Version);
+    switch(shaderType)
     {
-        case D3D12_SHVER_PIXEL_SHADER           : { visibility = D3D12_SHADER_VISIBILITY_PIXEL;         } break;
-        case D3D12_SHVER_VERTEX_SHADER          : { visibility = D3D12_SHADER_VISIBILITY_VERTEX;        } break;
-        case D3D12_SHVER_GEOMETRY_SHADER        : { visibility = D3D12_SHADER_VISIBILITY_GEOMETRY;      } break;
-        case D3D12_SHVER_HULL_SHADER            : { visibility = D3D12_SHADER_VISIBILITY_HULL;          } break;
-        case D3D12_SHVER_DOMAIN_SHADER          : { visibility = D3D12_SHADER_VISIBILITY_DOMAIN;        } break;
-        case D3D12_SHVER_COMPUTE_SHADER         : { visibility = D3D12_SHADER_VISIBILITY_ALL;           } break;
+        case ASDX_SHVER_PIXEL           : { visibility = D3D12_SHADER_VISIBILITY_PIXEL;         } break;
+        case ASDX_SHVER_VERTEX          : { visibility = D3D12_SHADER_VISIBILITY_VERTEX;        } break;
+        case ASDX_SHVER_GEOMETRY        : { visibility = D3D12_SHADER_VISIBILITY_GEOMETRY;      } break;
+        case ASDX_SHVER_HULL            : { visibility = D3D12_SHADER_VISIBILITY_HULL;          } break;
+        case ASDX_SHVER_DOMAIN          : { visibility = D3D12_SHADER_VISIBILITY_DOMAIN;        } break;
+        case ASDX_SHVER_COMPUTE         : { visibility = D3D12_SHADER_VISIBILITY_ALL;           } break;
     #ifdef ASDX_ENABLE_MESH_SHADER
-        //case D3D12_SHVER_AMPLIFICATION_SHADER   : { visibility = D3D12_SHADER_VISIBILITY_AMPLITIFACTION;} break;
-        //case D3D12_SHVER_MESH_SHADER            : { visibility = D3D12_SHADER_VISIBILITY_MESH;          } break;
+        case ASDX_SHVER_AMPLIFICATION   : { visibility = D3D12_SHADER_VISIBILITY_AMPLIFICATION; } break;
+        case ASDX_SHVER_MESH            : { visibility = D3D12_SHADER_VISIBILITY_MESH;          } break;
     #endif
+        default:
+            break;
     }
 
     for(auto i=0u; i<shaderDesc.BoundResources; ++i)
@@ -845,6 +868,12 @@ bool PipelineState::Init(ID3D12Device2* pDevice, const GEOMETRY_PIPELINE_STATE_D
     }
 
     D3D12_ROOT_SIGNATURE_FLAGS flags = D3D12_ROOT_SIGNATURE_FLAG_NONE;
+
+    if (denyAS)
+    { flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_AMPLIFICATION_SHADER_ROOT_ACCESS; }
+
+    if (denyMS)
+    { flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_MESH_SHADER_ROOT_ACCESS; }
 
     if (denyPS)
     { flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS; }
