@@ -54,6 +54,45 @@ DXGI_FORMAT GetSRGBFormat(DXGI_FORMAT value)
     return result;
 }
 
+//-----------------------------------------------------------------------------
+//      深度フォーマットからリソースフォーマットに変換します.
+//-----------------------------------------------------------------------------
+DXGI_FORMAT GetResourceFormat(DXGI_FORMAT value, bool isStencil)
+{
+    DXGI_FORMAT result = value;
+
+    switch(value)
+    {
+    case DXGI_FORMAT_D16_UNORM:
+        { result = DXGI_FORMAT_R16_UNORM; }
+        break;
+
+    case DXGI_FORMAT_D24_UNORM_S8_UINT:
+        {
+            if (!isStencil)
+                result = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+            else
+                result = DXGI_FORMAT_X24_TYPELESS_G8_UINT;
+        }
+        break;
+
+    case DXGI_FORMAT_D32_FLOAT:
+        { result = DXGI_FORMAT_R32_FLOAT; }
+        break;
+
+    case DXGI_FORMAT_D32_FLOAT_S8X24_UINT:
+        {
+            if (!isStencil)
+                result = DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS;
+            else
+                result = DXGI_FORMAT_X32_TYPELESS_G8X24_UINT;
+        }
+        break;
+    }
+
+    return result;
+}
+
 } // namespace /* anonymouus */
 
 
@@ -88,7 +127,7 @@ bool ColorTarget::Init(GraphicsDevice& device, const TargetDesc* pDesc, bool isS
             D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
             D3D12_MEMORY_POOL_UNKNOWN,
             1,
-            1    
+            1
         };
 
         D3D12_RESOURCE_DESC desc = {
@@ -123,40 +162,90 @@ bool ColorTarget::Init(GraphicsDevice& device, const TargetDesc* pDesc, bool isS
             ELOG( "Error : ID3D12Device::CreateCommittedResource()" );
             return false;
         }
+
+        m_pResource->SetName(L"asdxColorTarget");
+    }
+
+    D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc = {};
+    D3D12_RENDER_TARGET_VIEW_DESC   rtv_desc = {};
+    rtv_desc.Format = ( isSRGB ) ? GetSRGBFormat(pDesc->Format) : pDesc->Format;
+    srv_desc.Format = ( isSRGB ) ? GetSRGBFormat(pDesc->Format) : pDesc->Format; 
+    srv_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    if ( pDesc->DepthOrArraySize > 1 )
+    {
+        if ( pDesc->MipLevels <= 1 )
+        {
+            rtv_desc.Texture2DMSArray.ArraySize       = pDesc->DepthOrArraySize;
+            rtv_desc.Texture2DMSArray.FirstArraySlice = 0;
+            rtv_desc.ViewDimension                    = D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY;
+
+            srv_desc.Texture2DMSArray.ArraySize       = pDesc->DepthOrArraySize;
+            srv_desc.Texture2DMSArray.FirstArraySlice = 0;
+            srv_desc.ViewDimension                    = D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY;
+        }
+        else
+        {
+            rtv_desc.Texture2DArray.ArraySize        = pDesc->DepthOrArraySize;
+            rtv_desc.Texture2DArray.FirstArraySlice  = 0;
+            rtv_desc.Texture2DArray.MipSlice         = 0;
+            rtv_desc.Texture2DArray.PlaneSlice       = 0;
+            rtv_desc.ViewDimension                   = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
+
+            srv_desc.Texture2DArray.ArraySize           = pDesc->DepthOrArraySize;
+            srv_desc.Texture2DArray.FirstArraySlice     = 0;
+            srv_desc.Texture2DArray.MipLevels           = 0;
+            srv_desc.Texture2DArray.PlaneSlice          = 0;
+            srv_desc.Texture2DArray.ResourceMinLODClamp = 0.0f;
+            srv_desc.ViewDimension                      = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
+        }
+    }
+    else
+    {
+        if ( pDesc->MipLevels <= 1 )
+        {
+            rtv_desc.Texture2D.MipSlice = 0;
+            rtv_desc.ViewDimension      = D3D12_RTV_DIMENSION_TEXTURE2DMS;
+
+            srv_desc.Texture2D.MipLevels            = pDesc->MipLevels;
+            srv_desc.Texture2D.MostDetailedMip      = 0;
+            srv_desc.Texture2D.PlaneSlice           = 0;
+            srv_desc.Texture2D.ResourceMinLODClamp  = 0.0f;
+            srv_desc.ViewDimension                  = D3D12_SRV_DIMENSION_TEXTURE2D;
+        }
+        else
+        {
+            rtv_desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DMS;
+
+            srv_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DMS;
+        }
     }
 
     {
-        D3D12_RENDER_TARGET_VIEW_DESC desc = {};
-        desc.Format             = ( isSRGB ) ? GetSRGBFormat(pDesc->Format) : pDesc->Format;
-        desc.Texture2D.MipSlice = 0;
-
-        m_pDescriptorRTV = device.AllocHandle(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-        if (m_pDescriptorRTV == nullptr)
+        auto ret = device.AllocHandle(
+            D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
+            m_pDescriptorRTV.GetAddress());
+        if (!ret)
         {
             ELOG("Error : GraphicsDevice::AllocHandle() Failed.");
             return false;
         }
 
         device.GetDevice()->CreateRenderTargetView(
-            m_pResource.GetPtr(), &desc, m_pDescriptorRTV->GetHandleCPU() );
+            m_pResource.GetPtr(), &rtv_desc, m_pDescriptorRTV->GetHandleCPU() );
     }
 
     {
-        D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
-        desc.Format                     = pDesc->Format;
-        desc.Texture2D.MipLevels        = pDesc->MipLevels;
-        desc.Texture2D.MostDetailedMip  = 0;
-        desc.Shader4ComponentMapping    = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-
-        m_pDescriptorSRV = device.AllocHandle(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        if (m_pDescriptorSRV == nullptr)
+        auto ret = device.AllocHandle(
+            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
+            m_pDescriptorSRV.GetAddress());
+        if (!ret)
         {
             ELOG("Error : GraphicsDevice::AllocHandle() Failed.");
             return false;
         }
 
         device.GetDevice()->CreateShaderResourceView(
-            m_pResource.GetPtr(), &desc, m_pDescriptorRTV->GetHandleCPU() );
+            m_pResource.GetPtr(), &srv_desc, m_pDescriptorRTV->GetHandleCPU() );
     }
 
     return true;
@@ -189,58 +278,87 @@ bool ColorTarget::Init
         return false;
     }
 
-    {
-        D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
-        rtvDesc.Format              = desc.Format;
+    D3D12_RENDER_TARGET_VIEW_DESC   rtv_desc = {};
+    D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc = {};
+    rtv_desc.Format = desc.Format;
+    srv_desc.Format = desc.Format;
+    srv_desc.Shader4ComponentMapping =D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
-        if ( desc.DepthOrArraySize > 1 )
+    if ( desc.DepthOrArraySize > 1 )
+    {
+        if ( desc.MipLevels <= 1 )
         {
-            if ( desc.MipLevels <= 1 )
-            {
-                rtvDesc.Texture2DMSArray.ArraySize       = desc.DepthOrArraySize;
-                rtvDesc.Texture2DMSArray.FirstArraySlice = 0;
-            }
-            else
-            {
-                rtvDesc.Texture2DArray.ArraySize        = desc.DepthOrArraySize;
-                rtvDesc.Texture2DArray.FirstArraySlice  = 0;
-                rtvDesc.Texture2DArray.MipSlice         = 0;
-                rtvDesc.Texture2DArray.PlaneSlice       = 0;
-            }
+            rtv_desc.Texture2DMSArray.ArraySize       = desc.DepthOrArraySize;
+            rtv_desc.Texture2DMSArray.FirstArraySlice = 0;
+            rtv_desc.ViewDimension                    = D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY;
+
+            srv_desc.Texture2DMSArray.ArraySize       = desc.DepthOrArraySize;
+            srv_desc.Texture2DMSArray.FirstArraySlice = 0;
+            srv_desc.ViewDimension                    = D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY;
         }
         else
         {
-            if ( desc.MipLevels <= 1 )
-            {
-                rtvDesc.Texture2D.MipSlice = 0;
-            }
-        }
+            rtv_desc.Texture2DArray.ArraySize        = desc.DepthOrArraySize;
+            rtv_desc.Texture2DArray.FirstArraySlice  = 0;
+            rtv_desc.Texture2DArray.MipSlice         = 0;
+            rtv_desc.Texture2DArray.PlaneSlice       = 0;
+            rtv_desc.ViewDimension                   = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
 
-        m_pDescriptorRTV = device.AllocHandle(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-        if (m_pDescriptorRTV == nullptr)
+            srv_desc.Texture2DArray.ArraySize           = desc.DepthOrArraySize;
+            srv_desc.Texture2DArray.FirstArraySlice     = 0;
+            srv_desc.Texture2DArray.MipLevels           = desc.MipLevels;
+            srv_desc.Texture2DArray.MostDetailedMip     = 0;
+            srv_desc.Texture2DArray.PlaneSlice          = 0;
+            srv_desc.Texture2DArray.ResourceMinLODClamp = 0.0f;
+        }
+    }
+    else
+    {
+        if ( desc.MipLevels <= 1 )
+        {
+            rtv_desc.Texture2D.MipSlice     = 0;
+            rtv_desc.Texture2D.PlaneSlice   = 0;
+            rtv_desc.ViewDimension          = D3D12_RTV_DIMENSION_TEXTURE2D;
+                
+            srv_desc.Texture2D.MipLevels            = desc.MipLevels;
+            srv_desc.Texture2D.MostDetailedMip      = 0;
+            srv_desc.Texture2D.PlaneSlice           = 0;
+            srv_desc.Texture2D.ResourceMinLODClamp  = 0.0f;
+            srv_desc.ViewDimension                  = D3D12_SRV_DIMENSION_TEXTURE2D;
+        }
+        else
+        {
+            rtv_desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DMS;
+
+            srv_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DMS;
+        }
+    }
+
+    {
+
+        auto ret = device.AllocHandle(
+            D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
+            m_pDescriptorRTV.GetAddress());
+        if (!ret)
         {
             ELOG("Error : GraphicsDevice::AllocHandle() Failed.");
             return false;
         }
         device.GetDevice()->CreateRenderTargetView(
-            m_pResource.GetPtr(), nullptr, m_pDescriptorRTV->GetHandleCPU() );
+            m_pResource.GetPtr(), &rtv_desc, m_pDescriptorRTV->GetHandleCPU() );
     }
 
     {
-        D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-        srvDesc.Format                    = ( isSRGB ) ? GetSRGBFormat( desc.Format) : desc.Format;
-        srvDesc.Texture2D.MipLevels       = desc.MipLevels;
-        srvDesc.Texture2D.MostDetailedMip = 0;
-        srvDesc.Shader4ComponentMapping   = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-
-        m_pDescriptorSRV = device.AllocHandle(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        if (m_pDescriptorSRV == nullptr)
+        auto ret = device.AllocHandle(
+            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
+            m_pDescriptorSRV.GetAddress());
+        if (!ret)
         {
             ELOG("Error : GraphicsDevice::AllocHandle() Failed.");
             return false;
         }
         device.GetDevice()->CreateShaderResourceView(
-            m_pResource.GetPtr(), &srvDesc, m_pDescriptorSRV->GetHandleCPU() );
+            m_pResource.GetPtr(), &srv_desc, m_pDescriptorSRV->GetHandleCPU() );
     }
 
     return true;
@@ -298,13 +416,14 @@ bool DepthTarget::Init(GraphicsDevice& device, const TargetDesc* pDesc)
 {
     HRESULT hr = S_OK;
 
+    auto format = GetResourceFormat(pDesc->Format, false);
     {
         D3D12_HEAP_PROPERTIES props = {
             D3D12_HEAP_TYPE_DEFAULT,
             D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
             D3D12_MEMORY_POOL_UNKNOWN,
             1,
-            1    
+            1
         };
 
         D3D12_RESOURCE_DESC desc = {
@@ -337,6 +456,8 @@ bool DepthTarget::Init(GraphicsDevice& device, const TargetDesc* pDesc)
             ELOG( "Error : ID3D12Device::CreateCommittedResource()" );
             return false;
         }
+
+        m_pResource->SetName(L"asdxDepthTarget");
     }
 
     {
@@ -345,8 +466,10 @@ bool DepthTarget::Init(GraphicsDevice& device, const TargetDesc* pDesc)
         desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
         desc.Flags         = D3D12_DSV_FLAG_NONE;
 
-        m_pDescriptorDSV = device.AllocHandle(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-        if (m_pDescriptorDSV == nullptr)
+        auto ret = device.AllocHandle(
+            D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
+            m_pDescriptorDSV.GetAddress());
+        if (!ret)
         {
             ELOG("Error : GraphicsDevice::AllocHandle() Failed.");
             return false;
@@ -357,13 +480,16 @@ bool DepthTarget::Init(GraphicsDevice& device, const TargetDesc* pDesc)
 
     {
         D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
-        desc.Format                    = pDesc->Format;
-        desc.Texture2D.MipLevels       = pDesc->MipLevels;
-        desc.Texture2D.MostDetailedMip = 0;
-        desc.Shader4ComponentMapping  = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+        desc.ViewDimension              = D3D12_SRV_DIMENSION_TEXTURE2D;
+        desc.Format                     = format;
+        desc.Texture2D.MipLevels        = pDesc->MipLevels;
+        desc.Texture2D.MostDetailedMip  = 0;
+        desc.Shader4ComponentMapping    = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
-        m_pDescriptorSRV = device.AllocHandle(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        if (m_pDescriptorSRV == nullptr)
+        auto ret = device.AllocHandle(
+            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
+            m_pDescriptorSRV.GetAddress());
+        if (!ret)
         {
             ELOG("Error : GraphicsDevice::AllocHandle() Failed.");
             return false;

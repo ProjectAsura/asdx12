@@ -60,6 +60,8 @@ bool Fence::Init( ID3D12Device* pDevice )
         return false;
     }
 
+    m_Fence->SetName(L"asdxFence");
+
     // カウンタ設定.
     m_Counter = 1;
 

@@ -56,6 +56,8 @@ bool Queue::Init(ID3D12Device* pDevice, D3D12_COMMAND_LIST_TYPE type)
         return false;
     }
 
+    m_Queue->SetName(L"asdxQueue");
+
     if ( !m_Fence.Init(pDevice) )
     {
         ELOG( "Error : Fence::Init() Failed." );
@@ -123,29 +125,31 @@ ID3D12Fence* Queue::GetFence() const
 //-----------------------------------------------------------------------------
 //      生成処理を行います.
 //-----------------------------------------------------------------------------
-Queue* Queue::Create(ID3D12Device* pDevice, D3D12_COMMAND_LIST_TYPE type)
+bool Queue::Create(ID3D12Device* pDevice, D3D12_COMMAND_LIST_TYPE type, Queue** ppResult)
 {
     if ( pDevice == nullptr )
     {
         ELOG( "Error : Invalid Argument." );
-        return nullptr;
+        return false;
     }
 
     auto queue = new (std::nothrow) Queue();
     if (queue == nullptr)
     {
         ELOG( "Error : Ouf of Memory." );
-        return nullptr;
+        return false;
     }
 
     if (!queue->Init(pDevice, type))
     {
         queue->Release();
         ELOG( "Error : Queue::Init() Failed." );
-        return nullptr;
+        return false;
     }
 
-    return queue;
+    *ppResult = queue;
+
+    return true;
 }
 
 } // namespace asdx

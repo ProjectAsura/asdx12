@@ -213,12 +213,11 @@ Application::Application()
 : m_hInst               ( nullptr )
 , m_hWnd                ( nullptr )
 , m_AllowTearing        ( false )
-, m_MultiSampleCount    ( 4 )
+, m_MultiSampleCount    ( 1 )
 , m_MultiSampleQuality  ( 0 )
 , m_SwapChainCount      ( 2 )
-, m_SwapChainFormat     ( DXGI_FORMAT_B8G8R8A8_UNORM_SRGB )
-, m_DepthStencilFormat  ( DXGI_FORMAT_D24_UNORM_S8_UINT )
-, m_pDeviceDXGI         ( nullptr )
+, m_SwapChainFormat     ( DXGI_FORMAT_R10G10B10A2_UNORM )
+, m_DepthStencilFormat  ( DXGI_FORMAT_D32_FLOAT )
 , m_pSwapChain4         ( nullptr )
 , m_SampleMask          ( 0 )
 , m_StencilRef          ( 0 )
@@ -235,9 +234,6 @@ Application::Application()
 , m_hIcon               ( nullptr )
 , m_hMenu               ( nullptr )
 , m_hAccel              ( nullptr )
-#if ASDX_IS_DEBUG
-, m_pD3D12Debug         ( nullptr )
-#endif//ASDX_IS_DEBUG
 {
     // Corn Flower Blue.
     m_ClearColor[0] = 0.392156899f;
@@ -245,7 +241,7 @@ Application::Application()
     m_ClearColor[2] = 0.929411829f;
     m_ClearColor[3] = 1.000000000f;
 
-#if ASDX_IS_DEBUG
+#if defined(DEBUG) || defined(_DEBUG)
     m_DeviceDesc.EnableDebug = true;
 #else
     m_DeviceDesc.EnableDebug = false;
@@ -263,12 +259,11 @@ Application::Application( LPCWSTR title, UINT width, UINT height, HICON hIcon, H
 : m_hInst               ( nullptr )
 , m_hWnd                ( nullptr )
 , m_AllowTearing        ( false )
-, m_MultiSampleCount    ( 4 )
+, m_MultiSampleCount    ( 1 )
 , m_MultiSampleQuality  ( 0 )
 , m_SwapChainCount      ( 2 )
-, m_SwapChainFormat     ( DXGI_FORMAT_B8G8R8A8_UNORM_SRGB )
-, m_DepthStencilFormat  ( DXGI_FORMAT_D24_UNORM_S8_UINT )
-, m_pDeviceDXGI         ( nullptr )
+, m_SwapChainFormat     ( DXGI_FORMAT_R10G10B10A2_UNORM )
+, m_DepthStencilFormat  ( DXGI_FORMAT_D32_FLOAT )
 , m_pSwapChain4         ( nullptr )
 , m_Width               ( width )
 , m_Height              ( height )
@@ -282,10 +277,6 @@ Application::Application( LPCWSTR title, UINT width, UINT height, HICON hIcon, H
 , m_IsStandbyMode       ( false )
 , m_hIcon               ( hIcon )
 , m_hMenu               ( hMenu )
-, m_hAccel              ( hAccel )
-#if ASDX_IS_DEBUG
-, m_pD3D11Debug         ( nullptr )
-#endif//ASDX_IS_DEBUG
 {
     // Corn Flower Blue.
     m_ClearColor[0] = 0.392156899f;
@@ -293,7 +284,7 @@ Application::Application( LPCWSTR title, UINT width, UINT height, HICON hIcon, H
     m_ClearColor[2] = 0.929411829f;
     m_ClearColor[3] = 1.000000000f;
 
-#if ASDX_IS_DEBUG
+#if defined(DEBUG) || defined(_DEBUG)
     m_DeviceDesc.EnableDebug = true;
 #else
     m_DeviceDesc.EnableDebug = false;
@@ -415,7 +406,8 @@ bool Application::InitApp()
 //-----------------------------------------------------------------------------
 void Application::TermApp()
 {
-
+    // コマンドの完了を待機.
+    // TODO:
 
     // アプリケーション固有の終了処理.
     OnTerm();
@@ -601,7 +593,7 @@ bool Application::InitD3D()
         desc.SampleDesc.Quality = m_MultiSampleQuality;
         desc.BufferCount        = m_SwapChainCount;
         desc.Scaling            = DXGI_SCALING_STRETCH;
-        desc.SwapEffect         = DXGI_SWAP_EFFECT_DISCARD;
+        desc.SwapEffect         = DXGI_SWAP_EFFECT_FLIP_DISCARD;
         desc.Flags              = (m_AllowTearing) ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
 
         DXGI_SWAP_CHAIN_FULLSCREEN_DESC fullScreenDesc = {};
@@ -610,12 +602,12 @@ bool Application::InitD3D()
         fullScreenDesc.Scaling          = DXGI_MODE_SCALING_STRETCHED;
         fullScreenDesc.Windowed         = TRUE;
 
-        RefPtr<IDXGISwapChain1> pSwapChain;
+        RefPtr<IDXGISwapChain1> pSwapChain1;
         auto pQueue = GfxDevice().GetGraphicsQueue()->GetQueue();
-        hr = GfxDevice().GetFactory()->CreateSwapChainForHwnd(pQueue, m_hWnd, &desc, &fullScreenDesc, nullptr, pSwapChain.GetAddress());
+        hr = GfxDevice().GetFactory()->CreateSwapChainForHwnd(pQueue, m_hWnd, &desc, &fullScreenDesc, nullptr, pSwapChain1.GetAddress());
         if (FAILED(hr))
         {
-            ELOG("Error : IDXGIFactory2::CreateSwapChainForHwnd() Failed. errcode = 0x&x", hr);
+            ELOG("Error : IDXGIFactory2::CreateSwapChainForHwnd() Failed. errcode = 0x%x", hr);
             return false;
         }
 
@@ -623,7 +615,7 @@ bool Application::InitD3D()
         { GfxDevice().GetFactory()->MakeWindowAssociation(m_hWnd, DXGI_MWA_NO_ALT_ENTER); }
 
         // IDXGISwapChain4にキャスト.
-        hr = pSwapChain->QueryInterface(IID_PPV_ARGS(m_pSwapChain4.GetAddress()));
+        hr = pSwapChain1->QueryInterface(IID_PPV_ARGS(m_pSwapChain4.GetAddress())); // MEMO : QueryInterface() を実行すると何故かメモリリークが発生するようになる.
         if ( FAILED( hr ) )
         {
             m_pSwapChain4.Reset();
@@ -631,6 +623,9 @@ bool Application::InitD3D()
         }
         else
         {
+            wchar_t name[] = L"asdxSwapChain4\0";
+            m_pSwapChain4->SetPrivateData(WKPDID_D3DDebugObjectNameW, sizeof(name), name);
+
             // HDR出力チェック.
             CheckSupportHDR();
         }
@@ -671,14 +666,6 @@ bool Application::InitD3D()
         }
     }
 
-    // DXGIデバイスを取得.
-    hr = GfxDevice()->QueryInterface( IID_IDXGIDevice, (LPVOID*)m_pDeviceDXGI.GetAddress() );
-    if ( FAILED( hr ) )
-    {
-        ELOG( "Error : ID3D11Device::QueryInterface() Failed." );
-        return false;
-    }
-
     // ビューポートの設定.
     m_Viewport.Width    = (FLOAT)w;
     m_Viewport.Height   = (FLOAT)h;
@@ -709,7 +696,6 @@ void Application::TermD3D()
     m_DepthTarget.Term();
     m_pSwapChain4.Reset();
     GraphicsDevice::Instance().Term();
-    m_pDeviceDXGI.Reset();
 }
 
 
@@ -791,7 +777,7 @@ void Application::Run()
     if ( InitApp() )
     {
         // メインループ処理.
-        MainLoop();
+        //MainLoop();
     }
 
     // アプリケーションの終了処理.
@@ -812,6 +798,15 @@ void Application::KeyEvent( const KeyEventArgs& param )
 //-----------------------------------------------------------------------------
 void Application::ResizeEvent( const ResizeEventArgs& param )
 {
+    //if (m_pSwapChain4.GetPtr() == nullptr)
+    { return; }
+
+    if (m_ColorTarget.empty())
+    { return; }
+
+    if (m_DepthTarget.GetResource() == nullptr)
+    { return; }
+
     // マルチサンプル数以下になるとハングすることがあるので，処理をスキップする.
     if ( param.Width  <= m_MultiSampleCount 
       || param.Height <= m_MultiSampleCount)
@@ -838,7 +833,10 @@ void Application::ResizeEvent( const ResizeEventArgs& param )
     if ( m_pSwapChain4 != nullptr )
     {
         // リサイズ前に一度コマンドを実行(実行しないとメモリリークするぽい).
-        m_pSwapChain4->Present( 0, 0 );
+        //m_pSwapChain4->Present( 0, 0 );
+
+        // コマンドの完了を待機.
+        //GfxDevice().GetGraphicsQueue()->Wait(asdx::Queue::kInfinite);
 
         // 描画ターゲットを解放.
         for(size_t i=0; i<m_ColorTarget.size(); ++i)
@@ -850,7 +848,7 @@ void Application::ResizeEvent( const ResizeEventArgs& param )
         HRESULT hr = S_OK;
 
         // バッファをリサイズ.
-        hr = m_pSwapChain4->ResizeBuffers( m_SwapChainCount, 0, 0, m_SwapChainFormat, 0 );
+        hr = m_pSwapChain4->ResizeBuffers( m_SwapChainCount, m_Width, m_Height, m_SwapChainFormat, 0 );
         if ( FAILED( hr ) )
         { DLOG( "Error : IDXGISwapChain::ResizeBuffer() Failed." ); }
 
@@ -1201,10 +1199,6 @@ void Application::Present( uint32_t syncInterval )
 //-----------------------------------------------------------------------------
 void Application::CheckSupportHDR()
 {
-    // 何も作られていない場合は処理しない.
-    if (m_pSwapChain4 == nullptr)
-    { return; }
-
     HRESULT hr = S_OK;
 
     // ウィンドウ領域を取得.
@@ -1406,23 +1400,7 @@ bool Application::SetColorSpace(COLOR_SPACE value)
 //-----------------------------------------------------------------------------
 bool Application::GetDisplayRefreshRate(DXGI_RATIONAL& result) const
 {
-    asdx::RefPtr<IDXGIOutput> output;
-    auto hr = m_pSwapChain4->GetContainingOutput(output.GetAddress());
-    if (FAILED(hr))
-    {
-        ELOG("Error : ISwapChain::GetContainingOutput() Failed. errcode = 0x%x", hr);
-        return false;
-    }
-
-    DXGI_OUTPUT_DESC outputDesc;
-    hr = output->GetDesc(&outputDesc);
-    if (FAILED(hr))
-    {
-        ELOG("Error : IDXGIOutput::GetDesc() Failed. errcode = 0x%x", hr);
-        return false;
-    }
-
-    auto hMonitor = outputDesc.Monitor;
+    auto hMonitor = MonitorFromWindow(m_hWnd, MONITOR_DEFAULTTONEAREST);
 
     MONITORINFOEX monitorInfo;
     monitorInfo.cbSize = sizeof(monitorInfo);

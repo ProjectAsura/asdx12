@@ -18,6 +18,10 @@
 #define ASDX_ENABLE_MESH_SHADER
 #endif//__ID3D12GraphicsCommandList6_INTERFACE_DEFINED__
 
+#if defined(DEBUG) || defined(_DEBUG)
+#define D3DCOMPILE_DEBUG 1      // デバッグ情報がシェーダー BLOB に出力されるようする.
+#endif//defined(DEBUG) || defined(_DEBUG)
+
 
 namespace asdx {
 

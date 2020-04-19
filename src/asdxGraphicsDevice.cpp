@@ -88,13 +88,15 @@ bool GraphicsDevice::Init(const Desc* pDesc)
             return false;
         }
 
-        // ID3D12Device9に変換.
+        // ID3D12Device8に変換.
         hr = device->QueryInterface(IID_PPV_ARGS(m_pDevice.GetAddress()));
         if (FAILED(hr))
         {
             ELOG("Error : QueryInterface() Failed. errcode = 0x%x", hr);
             return false;
         }
+
+        m_pDevice->SetName(L"asdxDevice");
 
         // ID3D12InfoQueueに変換.
         if (pDesc->EnableDebug)
@@ -159,48 +161,48 @@ bool GraphicsDevice::Init(const Desc* pDesc)
     }
 
     // グラフィックスキューの生成.
-    m_pGraphicsQueue = Queue::Create(m_pDevice.GetPtr(), D3D12_COMMAND_LIST_TYPE_DIRECT);
-    if (m_pComputeQueue == nullptr)
+    auto ret = Queue::Create(m_pDevice.GetPtr(), D3D12_COMMAND_LIST_TYPE_DIRECT, m_pGraphicsQueue.GetAddress());
+    if (!ret)
     {
         ELOG("Error : Queue::Create() Failed.");
         return false;
     }
 
     // コンピュートキューの生成.
-    m_pComputeQueue = Queue::Create(m_pDevice.GetPtr(), D3D12_COMMAND_LIST_TYPE_COMPUTE);
-    if (m_pComputeQueue == nullptr)
+    ret = Queue::Create(m_pDevice.GetPtr(), D3D12_COMMAND_LIST_TYPE_COMPUTE, m_pComputeQueue.GetAddress());
+    if (!ret)
     {
         ELOG("Error : Queue::Create() Failed.");
         return false;
     }
 
     // コピーキューの生成.
-    m_pCopyQueue = Queue::Create(m_pDevice.GetPtr(), D3D12_COMMAND_LIST_TYPE_COPY);
-    if (m_pCopyQueue == nullptr)
+    ret = Queue::Create(m_pDevice.GetPtr(), D3D12_COMMAND_LIST_TYPE_COPY, m_pCopyQueue.GetAddress());
+    if (!ret)
     {
         ELOG("Error : Queue::Create() Failed.");
         return false;
     }
 
     // ビデオデコードキューの生成.
-    m_pVideoDecodeQueue = Queue::Create(m_pDevice.GetPtr(), D3D12_COMMAND_LIST_TYPE_VIDEO_DECODE);
-    if (m_pVideoDecodeQueue == nullptr)
+    ret = Queue::Create(m_pDevice.GetPtr(), D3D12_COMMAND_LIST_TYPE_VIDEO_DECODE, m_pVideoDecodeQueue.GetAddress());
+    if (!ret)
     {
         ELOG("Error : Queue::Create() Failed.");
         return false;
     }
 
     // ビデオプロセスキューの生成.
-    m_pVideoProcessQueue = Queue::Create(m_pDevice.GetPtr(), D3D12_COMMAND_LIST_TYPE_VIDEO_PROCESS);
-    if (m_pVideoProcessQueue == nullptr)
+    ret = Queue::Create(m_pDevice.GetPtr(), D3D12_COMMAND_LIST_TYPE_VIDEO_PROCESS, m_pVideoProcessQueue.GetAddress());
+    if (!ret)
     {
         ELOG("Error : Queue::Create() Failed.");
         return false;
     }
 
     // ビデオエンコードキューの生成.
-    m_pVideoEncodeQueue = Queue::Create(m_pDevice.GetPtr(), D3D12_COMMAND_LIST_TYPE_VIDEO_ENCODE);
-    if (m_pVideoEncodeQueue == nullptr)
+    ret = Queue::Create(m_pDevice.GetPtr(), D3D12_COMMAND_LIST_TYPE_VIDEO_ENCODE, m_pVideoEncodeQueue.GetAddress());
+    if (!ret)
     {
         ELOG("Error : Queue::Create() Failed.");
         return false;
@@ -234,9 +236,9 @@ void GraphicsDevice::Term()
 }
 
 //-----------------------------------------------------------------------------
-//      ID3D12Device9を取得します.
+//      ID3D12Device8を取得します.
 //-----------------------------------------------------------------------------
-ID3D12Device9* GraphicsDevice::GetDevice() const
+ID3D12Device8* GraphicsDevice::GetDevice() const
 { return m_pDevice.GetPtr(); }
 
 //-----------------------------------------------------------------------------
@@ -284,18 +286,24 @@ Queue* GraphicsDevice::GetVideoEncodeQueue()
 //-----------------------------------------------------------------------------
 //      ディスクリプターを確保します.
 //-----------------------------------------------------------------------------
-Descriptor* GraphicsDevice::AllocHandle(int index)
+bool GraphicsDevice::AllocHandle(int index, Descriptor** ppResult)
 {
     if (index < 0 || index >= 4)
-    { return nullptr; }
+    { return false; }
 
-    return m_DescriptorHeap[index].CreateDescriptor();
+    auto descriptor = m_DescriptorHeap[index].CreateDescriptor();
+    if (descriptor == nullptr)
+    { return false; }
+
+    *ppResult = descriptor;
+
+    return true;
 }
 
 //-----------------------------------------------------------------------------
 //      アロー演算子です.
 //-----------------------------------------------------------------------------
-ID3D12Device9* GraphicsDevice::operator-> () const
+ID3D12Device8* GraphicsDevice::operator-> () const
 { return m_pDevice.GetPtr(); }
 
 } // namespace asdx

@@ -36,7 +36,7 @@ public:
     //=========================================================================
     // public methods.
     //=========================================================================
-    static Queue* Create(ID3D12Device* pDevice, D3D12_COMMAND_LIST_TYPE type);
+    static bool Create(ID3D12Device* pDevice, D3D12_COMMAND_LIST_TYPE type, Queue** ppResult);
 
     //-------------------------------------------------------------------------
     //! @brief      参照カウントを増やします.

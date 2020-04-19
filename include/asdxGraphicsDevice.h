@@ -71,11 +71,11 @@ public:
     void Term();
 
     //-------------------------------------------------------------------------
-    //! @brief      ID3D12Device9を取得します.
+    //! @brief      ID3D12Device8を取得します.
     //!
-    //! @return     ID3D12Device9を返却します.
+    //! @return     ID3D12Device8を返却します.
     //-------------------------------------------------------------------------
-    ID3D12Device9* GetDevice() const;
+    ID3D12Device8* GetDevice() const;
 
     //-------------------------------------------------------------------------
     //! @brief      IDXGIFactory7を取得します.
@@ -130,15 +130,16 @@ public:
     //! @brief      ディスクリプターを確保します.
     //!
     //! @param[in]      index       ディスクリプタタイプです.
-    //! @return     確保したディスクリプタを返却します.
-    //!             確保に失敗した場合は nullptr が返却されます.
+    //! @param[out]     ppResult    ディスクリプタの確保先です.
+    //! @retval true    確保に成功.
+    //! @retval false   確保に失敗.
     //-------------------------------------------------------------------------
-    Descriptor* AllocHandle(int index);
+    bool AllocHandle(int index, Descriptor** ppResult);
 
     //-------------------------------------------------------------------------
     //! @brief      アロー演算子です.
     //-------------------------------------------------------------------------
-    ID3D12Device9* operator-> () const;
+    ID3D12Device8* operator-> () const;
 
 private:
     //=========================================================================
@@ -148,7 +149,7 @@ private:
     RefPtr<IDXGIFactory7>   m_pFactory;                 //!< DXGIファクトリーです.
     RefPtr<ID3D12Debug3>    m_pDebug;                   //!< デバッグオブジェクト.
     RefPtr<ID3D12InfoQueue> m_pInfoQueue;               //!< インフォキュー.
-    RefPtr<ID3D12Device9>   m_pDevice;                  //!< デバイス.
+    RefPtr<ID3D12Device8>   m_pDevice;                  //!< デバイス.
     RefPtr<Queue>           m_pGraphicsQueue;           //!< グラフィックスキュー.
     RefPtr<Queue>           m_pComputeQueue;            //!< コンピュートキュー.
     RefPtr<Queue>           m_pCopyQueue;               //!< コピーキュー.

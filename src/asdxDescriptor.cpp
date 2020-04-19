@@ -104,6 +104,8 @@ bool DescriptorHeap::Init(ID3D12Device* pDevice, const D3D12_DESCRIPTOR_HEAP_DES
     if ( FAILED(hr) )
     { return false; }
 
+    m_pHeap->SetName(L"asdxDescriptorHeap");
+
     // インクリメントサイズを取得.
     m_IncrementSize = pDevice->GetDescriptorHandleIncrementSize(pDesc->Type);
 

@@ -207,7 +207,6 @@ protected:
     uint32_t                        m_SwapChainCount;       //!< スワップチェインのバッファ数です.
     DXGI_FORMAT                     m_SwapChainFormat;      //!< スワップチェインのバッファフォーマットです.
     DXGI_FORMAT                     m_DepthStencilFormat;   //!< 深度ステンシルバッファのフォーマットです.
-    RefPtr<IDXGIDevice>             m_pDeviceDXGI;          //!< DXGIデバイスです.
     RefPtr<IDXGISwapChain4>         m_pSwapChain4;          //!< スワップチェイン4です.
     float                           m_BlendFactor[ 4 ];     //!< ブレンドファクターです.
     uint32_t                        m_SampleMask;           //!< サンプルマスクです.

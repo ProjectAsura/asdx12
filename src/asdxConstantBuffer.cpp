@@ -89,6 +89,8 @@ bool ConstantBuffer::Init(GraphicsDevice& device, uint64_t size)
             return false;
         }
 
+        m_Resource[i]->SetName(L"asdxConstantBuffer");
+
         hr = m_Resource[i]->Map( 0, nullptr, reinterpret_cast<void**>( &m_pDst[i] ) );
         if ( FAILED( hr ) )
         {
@@ -100,7 +102,11 @@ bool ConstantBuffer::Init(GraphicsDevice& device, uint64_t size)
         viewDesc.SizeInBytes    = static_cast<uint32_t>(size);
         viewDesc.BufferLocation = m_Resource[i]->GetGPUVirtualAddress();
 
-        m_pDescriptor[i] = device.AllocHandle(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+        if (!device.AllocHandle(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, m_pDescriptor[i].GetAddress()))
+        {
+            ELOG("Error : GraphicsDevice::AllocHandle() Failed.");
+            return false;
+        }
         device.GetDevice()->CreateConstantBufferView( &viewDesc, m_pDescriptor[i]->GetHandleCPU() );
     }
 

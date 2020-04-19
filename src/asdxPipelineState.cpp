@@ -556,6 +556,8 @@ bool PipelineState::Init(ID3D12Device* pDevice, const D3D12_GRAPHICS_PIPELINE_ST
         return false;
     }
 
+    m_pPSO->SetName(L"asdxGraphicsPipelineState");
+
     return true;
 }
 
@@ -706,6 +708,8 @@ bool PipelineState::Init(ID3D12Device* pDevice, const D3D12_COMPUTE_PIPELINE_STA
         ELOG("Error : ID3D12Device::CreateComputePipelineState() Failed. errcode = 0x%x", hr);
         return false;
     }
+
+    m_pPSO->SetName(L"asdxComputePipelineState");
 
     return true;
 }
@@ -927,6 +931,8 @@ bool PipelineState::Init(ID3D12Device2* pDevice, const GEOMETRY_PIPELINE_STATE_D
             ELOG("Error : ID3D12Device::CreateGraphicsPipelineState() Failed. errcode = 0x%x", hr);
             return false;
         }
+
+        m_pPSO->SetName(L"asdxGeometryPipelineState");
     }
 
     return true;
