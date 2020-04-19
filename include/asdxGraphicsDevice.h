@@ -13,6 +13,7 @@
 #include <asdxRef.h>
 #include <asdxQueue.h>
 #include <asdxDescriptor.h>
+#include <mutex>
 
 
 namespace asdx {
@@ -141,6 +142,16 @@ public:
     //-------------------------------------------------------------------------
     ID3D12Device8* operator-> () const;
 
+    //-------------------------------------------------------------------------
+    //! @brief      ディスクリプタヒープを設定します.
+    //-------------------------------------------------------------------------
+    void SetDescriptorHeaps(ID3D12GraphicsCommandList* pCmdList);
+
+    //-------------------------------------------------------------------------
+    //! @brief      コマンドキューの実行完了を待機します.
+    //-------------------------------------------------------------------------
+    void WaitIdle();
+
 private:
     //=========================================================================
     // private variables.
@@ -157,6 +168,7 @@ private:
     RefPtr<Queue>           m_pVideoProcessQueue;       //!< ビデオプロセスキュー.
     RefPtr<Queue>           m_pVideoEncodeQueue;        //!< ビデオエンコードキュー.
     DescriptorHeap          m_DescriptorHeap[4];        //!< ディスクリプタヒープ.
+    std::mutex              m_Mutex;
 
     //=========================================================================
     // private methods

@@ -86,9 +86,10 @@ private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    Fence                       m_Fence;    //!< フェンスです.
-    RefPtr<ID3D12CommandQueue>  m_Queue;    //!< キューです.
-    std::atomic<uint32_t>       m_Counter;  //!< 参照カウンターです.
+    Fence                       m_Fence;        //!< フェンスです.
+    RefPtr<ID3D12CommandQueue>  m_Queue;        //!< キューです.
+    std::atomic<uint32_t>       m_Counter;      //!< 参照カウンターです.
+    std::atomic<bool>           m_IsExecuted;   //!< 実行されたかどうか?
 
     //=========================================================================
     // private methods.

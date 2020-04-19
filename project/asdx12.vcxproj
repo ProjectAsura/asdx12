@@ -91,6 +91,7 @@
     <ClCompile Include="..\src\asdxAppHistoryMgr.cpp" />
     <ClCompile Include="..\src\asdxCamera.cpp" />
     <ClCompile Include="..\src\asdxCameraUtil.cpp" />
+    <ClCompile Include="..\src\asdxCommandList.cpp" />
     <ClCompile Include="..\src\asdxConstantBuffer.cpp" />
     <ClCompile Include="..\src\asdxDescriptor.cpp" />
     <ClCompile Include="..\src\asdxEditParam.cpp" />
@@ -119,6 +120,7 @@
     <ClInclude Include="..\include\asdxCamera.h" />
     <ClInclude Include="..\include\asdxCameraUtil.h" />
     <ClInclude Include="..\include\asdxColorSpace.h" />
+    <ClInclude Include="..\include\asdxCommandList.h" />
     <ClInclude Include="..\include\asdxConstantBuffer.h" />
     <ClInclude Include="..\include\asdxDescriptor.h" />
     <ClInclude Include="..\include\asdxGraphicsDevice.h" />

@@ -64,6 +64,8 @@ bool Queue::Init(ID3D12Device* pDevice, D3D12_COMMAND_LIST_TYPE type)
         return false;
     }
 
+    m_IsExecuted = false;
+
     return true;
 }
 
@@ -74,6 +76,7 @@ void Queue::Term()
 {
     m_Queue.Reset();
     m_Fence.Term();
+    m_IsExecuted = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -102,13 +105,25 @@ uint32_t Queue::GetCount() const
 //      コマンドを実行します.
 //-----------------------------------------------------------------------------
 void Queue::Execute(uint32_t count, ID3D12CommandList** ppList)
-{ m_Queue->ExecuteCommandLists(count, ppList); }
+{
+    if(count == 0 || ppList == nullptr)
+    { return; }
+
+    m_Queue->ExecuteCommandLists(count, ppList);
+    m_IsExecuted = true;
+}
 
 //-----------------------------------------------------------------------------
 //      コマンドの完了を待機します.
 //-----------------------------------------------------------------------------
 void Queue::Wait(uint32_t msec)
-{ m_Fence.Wait( m_Queue.GetPtr(), msec ); }
+{
+    if (m_IsExecuted)
+    {
+        m_Fence.Wait( m_Queue.GetPtr(), msec );
+        m_IsExecuted = false;
+    }
+}
 
 //-----------------------------------------------------------------------------
 //      コマンドキューを取得します.

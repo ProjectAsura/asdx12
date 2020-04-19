@@ -288,6 +288,8 @@ Queue* GraphicsDevice::GetVideoEncodeQueue()
 //-----------------------------------------------------------------------------
 bool GraphicsDevice::AllocHandle(int index, Descriptor** ppResult)
 {
+    std::lock_guard<std::mutex> guard(m_Mutex);
+
     if (index < 0 || index >= 4)
     { return false; }
 
@@ -305,5 +307,46 @@ bool GraphicsDevice::AllocHandle(int index, Descriptor** ppResult)
 //-----------------------------------------------------------------------------
 ID3D12Device8* GraphicsDevice::operator-> () const
 { return m_pDevice.GetPtr(); }
+
+//-----------------------------------------------------------------------------
+//      ディスクリプタヒープを設定します.
+//-----------------------------------------------------------------------------
+void GraphicsDevice::SetDescriptorHeaps(ID3D12GraphicsCommandList* pCmdList)
+{
+    if (pCmdList == nullptr)
+    { return; }
+
+    ID3D12DescriptorHeap* pHeaps[] = {
+        m_DescriptorHeap[D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV].GetD3D12DescriptorHeap(),
+        m_DescriptorHeap[D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER].GetD3D12DescriptorHeap()
+    };
+
+    pCmdList->SetDescriptorHeaps(2, pHeaps);
+}
+
+//-----------------------------------------------------------------------------
+//      コマンドキューの実行完了を待機します.
+//-----------------------------------------------------------------------------
+void GraphicsDevice::WaitIdle()
+{
+    if (m_pGraphicsQueue.GetPtr() != nullptr)
+    { m_pGraphicsQueue->Wait(Queue::kInfinite); }
+
+    if (m_pComputeQueue.GetPtr() != nullptr)
+    { m_pComputeQueue->Wait(Queue::kInfinite); }
+
+    if (m_pCopyQueue.GetPtr() != nullptr)
+    { m_pCopyQueue->Wait(Queue::kInfinite); }
+
+    if (m_pVideoDecodeQueue.GetPtr() != nullptr)
+    { m_pVideoDecodeQueue->Wait(Queue::kInfinite); }
+
+    if (m_pVideoEncodeQueue.GetPtr() != nullptr)
+    { m_pVideoEncodeQueue->Wait(Queue::kInfinite); }
+
+    if (m_pVideoProcessQueue.GetPtr() != nullptr)
+    { m_pVideoProcessQueue->Wait(Queue::kInfinite); }
+
+}
 
 } // namespace asdx

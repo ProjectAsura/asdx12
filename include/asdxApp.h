@@ -21,6 +21,7 @@
 #include <asdxHid.h>
 #include <asdxColorSpace.h>
 #include <asdxGraphicsDevice.h>
+#include <asdxCommandList.h>
 #include <asdxTarget.h>
 
 
@@ -225,6 +226,7 @@ protected:
     GraphicsDevice::Desc            m_DeviceDesc;           //!< デバイス設定です.
     std::vector<ColorTarget>        m_ColorTarget;          //!< カラーターゲットです.
     DepthTarget                     m_DepthTarget;          //!< 深度ターゲットです.
+    CommandList                     m_GfxCmdList;           //!< グラフィックスコマンドリスト.
 
     //=========================================================================
     // protected methods.

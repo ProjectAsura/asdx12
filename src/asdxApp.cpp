@@ -407,7 +407,7 @@ bool Application::InitApp()
 void Application::TermApp()
 {
     // コマンドの完了を待機.
-    // TODO:
+    GfxDevice().WaitIdle();
 
     // アプリケーション固有の終了処理.
     OnTerm();
@@ -615,11 +615,12 @@ bool Application::InitD3D()
         { GfxDevice().GetFactory()->MakeWindowAssociation(m_hWnd, DXGI_MWA_NO_ALT_ENTER); }
 
         // IDXGISwapChain4にキャスト.
-        hr = pSwapChain1->QueryInterface(IID_PPV_ARGS(m_pSwapChain4.GetAddress())); // MEMO : QueryInterface() を実行すると何故かメモリリークが発生するようになる.
+        hr = pSwapChain1->QueryInterface(IID_PPV_ARGS(m_pSwapChain4.GetAddress()));
         if ( FAILED( hr ) )
         {
             m_pSwapChain4.Reset();
             ELOG( "Warning : IDXGISwapChain4 Conversion Faild.");
+            return false;
         }
         else
         {
@@ -666,6 +667,12 @@ bool Application::InitD3D()
         }
     }
 
+    if (!m_GfxCmdList.Init(GfxDevice(), D3D12_COMMAND_LIST_TYPE_DIRECT))
+    {
+        ELOG("Error : CommandList::Init() Failed.");
+        return false;
+    }
+
     // ビューポートの設定.
     m_Viewport.Width    = (FLOAT)w;
     m_Viewport.Height   = (FLOAT)h;
@@ -695,9 +702,9 @@ void Application::TermD3D()
     m_ColorTarget.clear();
     m_DepthTarget.Term();
     m_pSwapChain4.Reset();
+    m_GfxCmdList.Term();
     GraphicsDevice::Instance().Term();
 }
-
 
 //-----------------------------------------------------------------------------
 //      メインループ処理.
@@ -777,7 +784,7 @@ void Application::Run()
     if ( InitApp() )
     {
         // メインループ処理.
-        //MainLoop();
+        MainLoop();
     }
 
     // アプリケーションの終了処理.
@@ -798,7 +805,7 @@ void Application::KeyEvent( const KeyEventArgs& param )
 //-----------------------------------------------------------------------------
 void Application::ResizeEvent( const ResizeEventArgs& param )
 {
-    //if (m_pSwapChain4.GetPtr() == nullptr)
+    if (m_pSwapChain4.GetPtr() == nullptr)
     { return; }
 
     if (m_ColorTarget.empty())
@@ -832,11 +839,8 @@ void Application::ResizeEvent( const ResizeEventArgs& param )
 
     if ( m_pSwapChain4 != nullptr )
     {
-        // リサイズ前に一度コマンドを実行(実行しないとメモリリークするぽい).
-        //m_pSwapChain4->Present( 0, 0 );
-
         // コマンドの完了を待機.
-        //GfxDevice().GetGraphicsQueue()->Wait(asdx::Queue::kInfinite);
+        GfxDevice().WaitIdle();
 
         // 描画ターゲットを解放.
         for(size_t i=0; i<m_ColorTarget.size(); ++i)
@@ -1219,7 +1223,7 @@ void Application::CheckSupportHDR()
     int bestIntersectArea = -1;
 
     // 各ディスプレイを調べる.
-    while (pAdapter->EnumOutputs(i, currentOutput.GetAddress()) != DXGI_ERROR_NOT_FOUND)
+    while (pAdapter->EnumOutputs(i, currentOutput.ReleaseAndGetAddress()) != DXGI_ERROR_NOT_FOUND)
     {
         auto ax1 = rect.left;
         auto ay1 = rect.top;
@@ -1410,7 +1414,7 @@ bool Application::GetDisplayRefreshRate(DXGI_RATIONAL& result) const
         ELOG("Error : GetMonitorInfo() Failed.");
         return false;
     }
-    
+
     DEVMODE devMode;
     devMode.dmSize          = sizeof(devMode);
     devMode.dmDriverExtra   = 0;
