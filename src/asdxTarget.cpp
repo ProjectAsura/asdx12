@@ -166,6 +166,12 @@ bool ColorTarget::Init(GraphicsDevice& device, const TargetDesc* pDesc, bool isS
         m_pResource->SetName(L"asdxColorTarget");
     }
 
+#if ASDX_IS_SCARLETT
+    auto mostDetailedMip = (pDesc->MipLevels - 1);
+#else
+    auto mostDetailedMip = 0u;
+#endif
+
     D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc = {};
     D3D12_RENDER_TARGET_VIEW_DESC   rtv_desc = {};
     rtv_desc.Format = ( isSRGB ) ? GetSRGBFormat(pDesc->Format) : pDesc->Format;
@@ -196,6 +202,7 @@ bool ColorTarget::Init(GraphicsDevice& device, const TargetDesc* pDesc, bool isS
             srv_desc.Texture2DArray.MipLevels           = 0;
             srv_desc.Texture2DArray.PlaneSlice          = 0;
             srv_desc.Texture2DArray.ResourceMinLODClamp = 0.0f;
+            srv_desc.Texture2DArray.MostDetailedMip     = mostDetailedMip;
             srv_desc.ViewDimension                      = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
         }
     }
@@ -207,7 +214,7 @@ bool ColorTarget::Init(GraphicsDevice& device, const TargetDesc* pDesc, bool isS
             rtv_desc.ViewDimension      = D3D12_RTV_DIMENSION_TEXTURE2DMS;
 
             srv_desc.Texture2D.MipLevels            = pDesc->MipLevels;
-            srv_desc.Texture2D.MostDetailedMip      = 0;
+            srv_desc.Texture2D.MostDetailedMip      = mostDetailedMip;
             srv_desc.Texture2D.PlaneSlice           = 0;
             srv_desc.Texture2D.ResourceMinLODClamp  = 0.0f;
             srv_desc.ViewDimension                  = D3D12_SRV_DIMENSION_TEXTURE2D;
@@ -278,6 +285,12 @@ bool ColorTarget::Init
         return false;
     }
 
+#if ASDX_IS_SCARLETT
+    auto mostDetailedMip = (pDesc->MipLevels - 1);
+#else
+    auto mostDetailedMip = 0u;
+#endif
+
     D3D12_RENDER_TARGET_VIEW_DESC   rtv_desc = {};
     D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc = {};
     rtv_desc.Format = desc.Format;
@@ -307,7 +320,7 @@ bool ColorTarget::Init
             srv_desc.Texture2DArray.ArraySize           = desc.DepthOrArraySize;
             srv_desc.Texture2DArray.FirstArraySlice     = 0;
             srv_desc.Texture2DArray.MipLevels           = desc.MipLevels;
-            srv_desc.Texture2DArray.MostDetailedMip     = 0;
+            srv_desc.Texture2DArray.MostDetailedMip     = mostDetailedMip;
             srv_desc.Texture2DArray.PlaneSlice          = 0;
             srv_desc.Texture2DArray.ResourceMinLODClamp = 0.0f;
         }
@@ -321,7 +334,7 @@ bool ColorTarget::Init
             rtv_desc.ViewDimension          = D3D12_RTV_DIMENSION_TEXTURE2D;
                 
             srv_desc.Texture2D.MipLevels            = desc.MipLevels;
-            srv_desc.Texture2D.MostDetailedMip      = 0;
+            srv_desc.Texture2D.MostDetailedMip      = mostDetailedMip;
             srv_desc.Texture2D.PlaneSlice           = 0;
             srv_desc.Texture2D.ResourceMinLODClamp  = 0.0f;
             srv_desc.ViewDimension                  = D3D12_SRV_DIMENSION_TEXTURE2D;
@@ -479,11 +492,17 @@ bool DepthTarget::Init(GraphicsDevice& device, const TargetDesc* pDesc)
     }
 
     {
+    #if ASDX_IS_SCARLETT
+        auto mostDetailedMip = (pDesc->MipLevels - 1);
+    #else
+        auto mostDetailedMip = 0u;
+    #endif
+
         D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
         desc.ViewDimension              = D3D12_SRV_DIMENSION_TEXTURE2D;
         desc.Format                     = format;
         desc.Texture2D.MipLevels        = pDesc->MipLevels;
-        desc.Texture2D.MostDetailedMip  = 0;
+        desc.Texture2D.MostDetailedMip  = mostDetailedMip;
         desc.Shader4ComponentMapping    = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
         auto ret = device.AllocHandle(
