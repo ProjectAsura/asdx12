@@ -102,6 +102,7 @@
     <ClCompile Include="..\src\asdxHash.cpp" />
     <ClCompile Include="..\src\asdxHashString.cpp" />
     <ClCompile Include="..\src\asdxHistory.cpp" />
+    <ClCompile Include="..\src\asdxIndexBuffer.cpp" />
     <ClCompile Include="..\src\asdxKeyboard.cpp" />
     <ClCompile Include="..\src\asdxLogger.cpp" />
     <ClCompile Include="..\src\asdxMisc.cpp" />
@@ -114,6 +115,7 @@
     <ClCompile Include="..\src\asdxTablet.cpp" />
     <ClCompile Include="..\src\asdxTarget.cpp" />
     <ClCompile Include="..\src\asdxTcpConnector.cpp" />
+    <ClCompile Include="..\src\asdxVertexBuffer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\asdxApp.h" />
@@ -132,6 +134,7 @@
     <ClInclude Include="..\include\asdxHashString.h" />
     <ClInclude Include="..\include\asdxHid.h" />
     <ClInclude Include="..\include\asdxHistory.h" />
+    <ClInclude Include="..\include\asdxIndexBuffer.h" />
     <ClInclude Include="..\include\asdxLfuCache.h" />
     <ClInclude Include="..\include\asdxLogger.h" />
     <ClInclude Include="..\include\asdxLruCache.h" />
@@ -149,6 +152,7 @@
     <ClInclude Include="..\include\asdxTarget.h" />
     <ClInclude Include="..\include\asdxTcpConnector.h" />
     <ClInclude Include="..\include\asdxTimer.h" />
+    <ClInclude Include="..\include\asdxVertexBuffer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\include\asdxLfuCache.inl" />
