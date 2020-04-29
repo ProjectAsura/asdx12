@@ -52,7 +52,7 @@ public:
     //! @retval true    初期化に成功.
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
-    bool Init(ID3D12Device* pDevice, uint64_t size);
+    bool Init(ID3D12Device* pDevice, uint32_t size);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.

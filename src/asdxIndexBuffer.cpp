@@ -32,7 +32,7 @@ IndexBuffer::~IndexBuffer()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool IndexBuffer::Init(ID3D12Device* pDevice, uint64_t size)
+bool IndexBuffer::Init(ID3D12Device* pDevice, uint32_t size)
 {
     if (pDevice == nullptr || size == 0)
     {
