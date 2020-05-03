@@ -8,7 +8,14 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include "TestApp.h"
+#include <asdxCmdHelper.h>
 
+
+namespace {
+
+
+
+} // namespace
 
 ///////////////////////////////////////////////////////////////////////////////
 // TestApp class
@@ -34,6 +41,8 @@ TestApp::~TestApp()
 //-----------------------------------------------------------------------------
 bool TestApp::OnInit()
 {
+    m_pGraphicsQueue = asdx::GfxDevice().GetGraphicsQueue();
+
     return true;
 }
 
@@ -49,6 +58,49 @@ void TestApp::OnTerm()
 //-----------------------------------------------------------------------------
 void TestApp::OnFrameRender(asdx::FrameEventArgs& args)
 {
+    auto idx = m_pSwapChain4->GetCurrentBackBufferIndex();
+    auto pCmd = m_GfxCmdList.Reset();
+
+    asdx::BarrierTransition(
+        pCmd,
+        m_ColorTarget[idx].GetResource(),
+        0,
+        D3D12_RESOURCE_STATE_PRESENT,
+        D3D12_RESOURCE_STATE_RENDER_TARGET);
+
+    auto pRTV = m_ColorTarget[idx].GetRTV();
+    auto pDSV = m_DepthTarget.GetDSV();
+
+    asdx::ClearRTV(pCmd, pRTV, m_ClearColor);
+    asdx::ClearDSV(pCmd, pDSV, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0.0f);
+
+    asdx::SetRenderTarget(pCmd, pRTV, pDSV);
+
+    // 描画処理.
+    {
+    }
+
+    asdx::BarrierTransition(
+        pCmd,
+        m_ColorTarget[idx].GetResource(),
+        0,
+        D3D12_RESOURCE_STATE_RENDER_TARGET,
+        D3D12_RESOURCE_STATE_PRESENT);
+
+    pCmd->Close();
+
+    ID3D12CommandList* pCmds[] = {
+        pCmd
+    };
+
+    // 前フレームの描画の完了を待機.
+    m_pGraphicsQueue->WaitIdle();
+
+    // コマンドを実行.
+    m_pGraphicsQueue->Execute(1, pCmds);
+
+    // 画面に表示.
+    Present(0);
 }
 
 //-----------------------------------------------------------------------------

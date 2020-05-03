@@ -69,7 +69,7 @@ bool VertexBuffer::Init(ID3D12Device* pDevice, uint64_t size, uint32_t stride)
     { return false; }
 
     m_View.BufferLocation   = m_pResource->GetGPUVirtualAddress();
-    m_View.SizeInBytes      = size;
+    m_View.SizeInBytes      = UINT(size);
     m_View.StrideInBytes    = stride;
 
     return true;

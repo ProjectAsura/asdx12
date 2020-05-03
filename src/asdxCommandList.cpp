@@ -43,19 +43,22 @@ bool CommandList::Init(GraphicsDevice& device, D3D12_COMMAND_LIST_TYPE type)
         return false;
     }
 
-    // コマンドアロケータを生成.
-    auto hr = device->CreateCommandAllocator( type, IID_PPV_ARGS( m_Allocator.GetAddress() ) );
-    if ( FAILED( hr ) )
+    for(auto i=0; i<2; ++i)
     {
-        ELOG( "Error : ID3D12Device::CreateCommandAllocator() Failed." );
-        return false;
+        // コマンドアロケータを生成.
+        auto hr = device->CreateCommandAllocator( type, IID_PPV_ARGS( m_Allocator[i].GetAddress() ) );
+        if ( FAILED( hr ) )
+        {
+            ELOG( "Error : ID3D12Device::CreateCommandAllocator() Failed." );
+            return false;
+        }
     }
 
     // コマンドリストを生成.
-    hr = device->CreateCommandList(
+    auto hr = device->CreateCommandList(
         0,
         type,
-        m_Allocator.GetPtr(),
+        m_Allocator[0].GetPtr(),
         nullptr,
         IID_PPV_ARGS( m_CmdList.GetAddress() ) );
     if ( FAILED( hr ) )
@@ -63,6 +66,11 @@ bool CommandList::Init(GraphicsDevice& device, D3D12_COMMAND_LIST_TYPE type)
         ELOG( "Error : ID3D12Device::CreateCommandList() Failed." );
         return false;
     }
+
+    // 生成直後は開きっぱなしの扱いになっているので閉じておく.
+    m_CmdList->Close();
+
+    m_Index = 0;
 
     // 正常終了.
     return true;
@@ -73,31 +81,45 @@ bool CommandList::Init(GraphicsDevice& device, D3D12_COMMAND_LIST_TYPE type)
 //-----------------------------------------------------------------------------
 void CommandList::Term()
 {
-    m_CmdList  .Reset();
-    m_Allocator.Reset();
+    m_CmdList.Reset();
+
+    for(auto i=0; i<2; ++i)
+    { m_Allocator[i].Reset(); }
 }
 
 //-----------------------------------------------------------------------------
-//      コマンドリストをクリアします.
+//      コマンドリストをリセットします.
 //-----------------------------------------------------------------------------
-void CommandList::Clear()
+ID3D12GraphicsCommandList6* CommandList::Reset()
 {
-    m_Allocator->Reset();
-    m_CmdList->Reset( m_Allocator.GetPtr(), nullptr );
+    // ダブルバッファリング.
+    m_Index = (m_Index + 1) & 0x1;
 
+    // コマンドアロケータをリセット.
+    m_Allocator[m_Index]->Reset();
+
+    // コマンドリストをリセット.
+    m_CmdList->Reset( m_Allocator[m_Index].GetPtr(), nullptr );
+
+    // ディスクリプターヒープを設定しおく.
     GfxDevice().SetDescriptorHeaps(m_CmdList.GetPtr());
+
+    return m_CmdList.GetPtr();
 }
 
 //-----------------------------------------------------------------------------
 //      コマンドリストアロケータを取得します.
 //-----------------------------------------------------------------------------
-ID3D12CommandAllocator* CommandList::GetAllocator() const
-{ return m_Allocator.GetPtr(); }
+ID3D12CommandAllocator* CommandList::GetAllocator(uint8_t index) const
+{
+    assert(index < 2);
+    return m_Allocator[index].GetPtr();
+}
 
 //-----------------------------------------------------------------------------
 //      グラフィックスコマンドリストを取得します.
 //-----------------------------------------------------------------------------
-ID3D12GraphicsCommandList* CommandList::GetCommandList() const
+ID3D12GraphicsCommandList6* CommandList::GetCommandList() const
 { return m_CmdList.GetPtr(); }
 
 //-----------------------------------------------------------------------------
@@ -107,9 +129,9 @@ ID3D12CommandList* CommandList::Cast() const
 { return static_cast<ID3D12CommandList*>(m_CmdList.GetPtr()); }
 
 //-----------------------------------------------------------------------------
-//      アロー演算子です.
+//      現在のバッファ番号を返却します.
 //-----------------------------------------------------------------------------
-ID3D12GraphicsCommandList* CommandList::operator-> () const
-{ return m_CmdList.GetPtr(); }
+uint8_t CommandList::GetIndex() const
+{ return m_Index; }
 
 } // namespace asdx

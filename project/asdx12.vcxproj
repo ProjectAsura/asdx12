@@ -54,7 +54,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);ASDX_AUTO_LINK;ASDX_ENABLE_DXC</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\dxc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\dxc;$(ProjectDir)..\external\d3dx12;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -73,7 +73,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);ASDX_AUTO_LINK;ASDX_ENABLE_DXC</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\dxc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\dxc;$(ProjectDir)..\external\d3dx12;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -91,6 +91,7 @@
     <ClCompile Include="..\src\asdxAppHistoryMgr.cpp" />
     <ClCompile Include="..\src\asdxCamera.cpp" />
     <ClCompile Include="..\src\asdxCameraUtil.cpp" />
+    <ClCompile Include="..\src\asdxCmdHelper.cpp" />
     <ClCompile Include="..\src\asdxCommandList.cpp" />
     <ClCompile Include="..\src\asdxConstantBuffer.cpp" />
     <ClCompile Include="..\src\asdxDescriptor.cpp" />
@@ -122,6 +123,7 @@
     <ClInclude Include="..\include\asdxCamera.h" />
     <ClInclude Include="..\include\asdxCameraUtil.h" />
     <ClInclude Include="..\include\asdxColorSpace.h" />
+    <ClInclude Include="..\include\asdxCmdHelper.h" />
     <ClInclude Include="..\include\asdxCommandList.h" />
     <ClInclude Include="..\include\asdxConstantBuffer.h" />
     <ClInclude Include="..\include\asdxDescriptor.h" />
@@ -158,8 +160,16 @@
     <None Include="..\include\asdxLfuCache.inl" />
     <None Include="..\include\asdxLruCache.inl" />
     <None Include="..\include\asdxMath.inl" />
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\external\WinPixEventRuntime.1.0.200127001\build\WinPixEventRuntime.targets" Condition="Exists('..\external\WinPixEventRuntime.1.0.200127001\build\WinPixEventRuntime.targets')" />
   </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>このプロジェクトは、このコンピューター上にない NuGet パッケージを参照しています。それらのパッケージをダウンロードするには、[NuGet パッケージの復元] を使用します。詳細については、http://go.microsoft.com/fwlink/?LinkID=322105 を参照してください。見つからないファイルは {0} です。</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\external\WinPixEventRuntime.1.0.200127001\build\WinPixEventRuntime.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\external\WinPixEventRuntime.1.0.200127001\build\WinPixEventRuntime.targets'))" />
+  </Target>
 </Project>
