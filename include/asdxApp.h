@@ -23,6 +23,7 @@
 #include <asdxGraphicsDevice.h>
 #include <asdxCommandList.h>
 #include <asdxTarget.h>
+#include <asdxResourceDisposer.h>
 
 
 #if defined(DEBUG) || defined(_DEBUG)
@@ -208,7 +209,6 @@ protected:
     uint32_t                        m_SwapChainCount;       //!< スワップチェインのバッファ数です.
     DXGI_FORMAT                     m_SwapChainFormat;      //!< スワップチェインのバッファフォーマットです.
     DXGI_FORMAT                     m_DepthStencilFormat;   //!< 深度ステンシルバッファのフォーマットです.
-    RefPtr<IDXGISwapChain4>         m_pSwapChain4;          //!< スワップチェイン4です.
     float                           m_BlendFactor[ 4 ];     //!< ブレンドファクターです.
     uint32_t                        m_SampleMask;           //!< サンプルマスクです.
     uint32_t                        m_StencilRef;           //!< ステンシル参照です.
@@ -227,6 +227,7 @@ protected:
     std::vector<ColorTarget>        m_ColorTarget;          //!< カラーターゲットです.
     DepthTarget                     m_DepthTarget;          //!< 深度ターゲットです.
     CommandList                     m_GfxCmdList;           //!< グラフィックスコマンドリスト.
+    ResourceDisposer                m_Disposer;             //!< リソース遅延解放ユーティリティー.
 
     //=========================================================================
     // protected methods.
@@ -386,17 +387,26 @@ protected:
     //-------------------------------------------------------------------------
     bool GetDisplayRefreshRate(DXGI_RATIONAL& result) const;
 
+    //-------------------------------------------------------------------------
+    //! @brief      スワップチェインのバックバッファ番号を取得します.
+    //!
+    //! @return     スワップチェインのバックバッファ番号を返却します.
+    //-------------------------------------------------------------------------
+    uint32_t GetCurrentBackBufferIndex() const;
+
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    bool                m_IsStopRendering;      //!< 描画を停止するかどうかのフラグ. 停止する場合はtrueを指定.
-    bool                m_IsStandbyMode;        //!< スタンバイモードかどうかを示すフラグです.
-    DWORD               m_FrameCount;           //!< フレームカウントです.
-    float               m_FPS;                  //!< FPS(1秒あたりのフレーム描画回数)です.
-    double              m_LatestUpdateTime;     //!< 最後の更新時間です.
-    std::mutex          m_Mutex;                //!< ミューテックスです.
-    DXGI_OUTPUT_DESC1   m_DisplayDesc;          //!< 出力先の設定です.
+    bool                    m_IsStopRendering;      //!< 描画を停止するかどうかのフラグ. 停止する場合はtrueを指定.
+    bool                    m_IsStandbyMode;        //!< スタンバイモードかどうかを示すフラグです.
+    DWORD                   m_FrameCount;           //!< フレームカウントです.
+    float                   m_FPS;                  //!< FPS(1秒あたりのフレーム描画回数)です.
+    double                  m_LatestUpdateTime;     //!< 最後の更新時間です.
+    std::mutex              m_Mutex;                //!< ミューテックスです.
+    DXGI_OUTPUT_DESC1       m_DisplayDesc;          //!< 出力先の設定です.
+    RefPtr<IDXGISwapChain4> m_pSwapChain4;          //!< スワップチェイン4です.
+
 
     //=========================================================================
     // private methods.

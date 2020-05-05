@@ -58,7 +58,7 @@ void TestApp::OnTerm()
 //-----------------------------------------------------------------------------
 void TestApp::OnFrameRender(asdx::FrameEventArgs& args)
 {
-    auto idx = m_pSwapChain4->GetCurrentBackBufferIndex();
+    auto idx  = GetCurrentBackBufferIndex();
     auto pCmd = m_GfxCmdList.Reset();
 
     asdx::BarrierTransition(

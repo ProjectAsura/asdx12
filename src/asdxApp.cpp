@@ -703,6 +703,7 @@ void Application::TermD3D()
     m_DepthTarget.Term();
     m_pSwapChain4.Reset();
     m_GfxCmdList.Term();
+    m_Disposer.Clear();
     GraphicsDevice::Instance().Term();
 }
 
@@ -1196,6 +1197,9 @@ void Application::Present( uint32_t syncInterval )
         { /* DO_NOTHING */ }
         break;
     }
+
+    // フレーム同期.
+    m_Disposer.FrameSync();
 }
 
 //-----------------------------------------------------------------------------
@@ -1430,6 +1434,17 @@ bool Application::GetDisplayRefreshRate(DXGI_RATIONAL& result) const
     result.Denominator = (useDefaultRefreshRate) ? 0 : 1;
 
     return true;
+}
+
+//-----------------------------------------------------------------------------
+//      スワップチェインのバックバッファ番号を取得します.
+//-----------------------------------------------------------------------------
+uint32_t Application::GetCurrentBackBufferIndex() const
+{
+    if (m_pSwapChain4.GetPtr() == nullptr)
+    { return 0; }
+
+    return m_pSwapChain4->GetCurrentBackBufferIndex();
 }
 
 //-----------------------------------------------------------------------------
