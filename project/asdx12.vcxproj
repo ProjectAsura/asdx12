@@ -113,6 +113,7 @@
     <ClCompile Include="..\src\asdxPipelineState.cpp" />
     <ClCompile Include="..\src\asdxQueue.cpp" />
     <ClCompile Include="..\src\asdxRandom.cpp" />
+    <ClCompile Include="..\src\asdxResourceDisposer.cpp" />
     <ClCompile Include="..\src\asdxTablet.cpp" />
     <ClCompile Include="..\src\asdxTarget.cpp" />
     <ClCompile Include="..\src\asdxTcpConnector.cpp" />
@@ -148,6 +149,7 @@
     <ClInclude Include="..\include\asdxPool.h" />
     <ClInclude Include="..\include\asdxQueue.h" />
     <ClInclude Include="..\include\asdxRef.h" />
+    <ClInclude Include="..\include\asdxResourceDisposer.h" />
     <ClInclude Include="..\include\asdxStepTimer.h" />
     <ClInclude Include="..\include\asdxStopWatch.h" />
     <ClInclude Include="..\include\asdxTablet.h" />
