@@ -159,7 +159,7 @@ bool ColorTarget::Init(GraphicsDevice& device, const TargetDesc* pDesc, bool isS
             IID_PPV_ARGS(m_pResource.GetAddress()));
         if ( FAILED( hr ) )
         {
-            ELOG( "Error : ID3D12Device::CreateCommittedResource()" );
+            ELOG( "Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr );
             return false;
         }
 
@@ -274,7 +274,7 @@ bool ColorTarget::Init
     hr = pSwapChain->GetBuffer( backBufferIndex, IID_PPV_ARGS(m_pResource.GetAddress()));
     if ( FAILED( hr ) )
     {
-        ELOG( "Error : IDXGISwapChain::GetBuffer() Failed." );
+        ELOG( "Error : IDXGISwapChain::GetBuffer() Failed. errcode = 0x%x", hr );
         return false;
     }
 
@@ -466,7 +466,7 @@ bool DepthTarget::Init(GraphicsDevice& device, const TargetDesc* pDesc)
             IID_PPV_ARGS(m_pResource.GetAddress()));
         if ( FAILED( hr ) )
         {
-            ELOG( "Error : ID3D12Device::CreateCommittedResource()" );
+            ELOG( "Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr );
             return false;
         }
 

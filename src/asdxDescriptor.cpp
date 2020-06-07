@@ -9,6 +9,7 @@
 //-----------------------------------------------------------------------------
 #include <cassert>
 #include <asdxDescriptor.h>
+#include <asdxLogger.h>
 
 
 namespace asdx {
@@ -102,7 +103,10 @@ bool DescriptorHeap::Init(ID3D12Device* pDevice, const D3D12_DESCRIPTOR_HEAP_DES
 
     auto hr = pDevice->CreateDescriptorHeap(pDesc, IID_PPV_ARGS(&m_pHeap));
     if ( FAILED(hr) )
-    { return false; }
+    {
+        ELOG("Error : ID3D12Device::CreateDescriptorHeap() Failed. errcode = 0x%x", hr);
+        return false;
+    }
 
     m_pHeap->SetName(L"asdxDescriptorHeap");
 

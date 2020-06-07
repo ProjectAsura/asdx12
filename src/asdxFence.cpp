@@ -56,7 +56,7 @@ bool Fence::Init( ID3D12Device* pDevice )
     auto hr = pDevice->CreateFence( 0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS( m_Fence.GetAddress()) );
     if ( FAILED( hr ) )
     {
-        ELOG( "Error : ID3D12Device::CreateFence() Failed." );
+        ELOG( "Error : ID3D12Device::CreateFence() Failed. errcode = 0x%x", hr );
         return false;
     }
 

@@ -85,7 +85,7 @@ bool ConstantBuffer::Init(GraphicsDevice& device, uint64_t size)
             IID_PPV_ARGS(m_Resource[i].GetAddress()));
         if ( FAILED( hr ) )
         {
-            ELOG( "Error : ID3D12Device::CreateCommittedResource() Failed." );
+            ELOG( "Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr );
             return false;
         }
 
@@ -94,7 +94,7 @@ bool ConstantBuffer::Init(GraphicsDevice& device, uint64_t size)
         hr = m_Resource[i]->Map( 0, nullptr, reinterpret_cast<void**>( &m_pDst[i] ) );
         if ( FAILED( hr ) )
         {
-            ELOG( "Error : ID3D12Resource::Map() Failed." );
+            ELOG( "Error : ID3D12Resource::Map() Failed. errcode = 0x%x", hr );
             return false;
         }
 

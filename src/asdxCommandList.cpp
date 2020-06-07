@@ -49,7 +49,7 @@ bool CommandList::Init(GraphicsDevice& device, D3D12_COMMAND_LIST_TYPE type)
         auto hr = device->CreateCommandAllocator( type, IID_PPV_ARGS( m_Allocator[i].GetAddress() ) );
         if ( FAILED( hr ) )
         {
-            ELOG( "Error : ID3D12Device::CreateCommandAllocator() Failed." );
+            ELOG( "Error : ID3D12Device::CreateCommandAllocator() Failed. errcode = 0x%x", hr );
             return false;
         }
     }
@@ -63,7 +63,7 @@ bool CommandList::Init(GraphicsDevice& device, D3D12_COMMAND_LIST_TYPE type)
         IID_PPV_ARGS( m_CmdList.GetAddress() ) );
     if ( FAILED( hr ) )
     {
-        ELOG( "Error : ID3D12Device::CreateCommandList() Failed." );
+        ELOG( "Error : ID3D12Device::CreateCommandList() Failed. errcode = 0x%x", hr );
         return false;
     }
 

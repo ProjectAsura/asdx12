@@ -72,7 +72,7 @@ void TestApp::OnFrameRender(asdx::FrameEventArgs& args)
     auto pDSV = m_DepthTarget.GetDSV();
 
     asdx::ClearRTV(pCmd, pRTV, m_ClearColor);
-    asdx::ClearDSV(pCmd, pDSV, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0.0f);
+    asdx::ClearDSV(pCmd, pDSV, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0);
 
     asdx::SetRenderTarget(pCmd, pRTV, pDSV);
 

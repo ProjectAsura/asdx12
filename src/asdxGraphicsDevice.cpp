@@ -250,37 +250,37 @@ IDXGIFactory7* GraphicsDevice::GetFactory() const
 //-----------------------------------------------------------------------------
 //      グラフィックスキューを取得します.
 //-----------------------------------------------------------------------------
-Queue* GraphicsDevice::GetGraphicsQueue()
+Queue* GraphicsDevice::GetGraphicsQueue() const
 { return m_pGraphicsQueue.GetPtr(); }
 
 //-----------------------------------------------------------------------------
 //      コンピュートキューを取得します.
 //-----------------------------------------------------------------------------
-Queue* GraphicsDevice::GetComputeQueue()
+Queue* GraphicsDevice::GetComputeQueue() const
 { return m_pComputeQueue.GetPtr(); }
 
 //-----------------------------------------------------------------------------
 //      コピーキューを取得します.
 //-----------------------------------------------------------------------------
-Queue* GraphicsDevice::GetCopyQueue()
+Queue* GraphicsDevice::GetCopyQueue() const
 { return m_pCopyQueue.GetPtr(); }
 
 //-----------------------------------------------------------------------------
 //      ビデオデコードキューを取得します.
 //-----------------------------------------------------------------------------
-Queue* GraphicsDevice::GetVideoDecodeQueue()
+Queue* GraphicsDevice::GetVideoDecodeQueue() const
 { return m_pVideoDecodeQueue.GetPtr(); }
 
 //-----------------------------------------------------------------------------
 //      ビデオプロセスキューを取得します.
 //-----------------------------------------------------------------------------
-Queue* GraphicsDevice::GetVideoProcessQueue()
+Queue* GraphicsDevice::GetVideoProcessQueue() const
 { return m_pVideoProcessQueue.GetPtr(); }
 
 //-----------------------------------------------------------------------------
 //      ビデオエンコードキューを取得します.
 //-----------------------------------------------------------------------------
-Queue* GraphicsDevice::GetVideoEncodeQueue() 
+Queue* GraphicsDevice::GetVideoEncodeQueue() const
 { return m_pVideoEncodeQueue.GetPtr(); }
 
 //-----------------------------------------------------------------------------

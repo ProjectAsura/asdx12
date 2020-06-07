@@ -52,7 +52,7 @@ bool Queue::Init(ID3D12Device* pDevice, D3D12_COMMAND_LIST_TYPE type)
     auto hr = pDevice->CreateCommandQueue( &desc, IID_PPV_ARGS(m_Queue.GetAddress()) );
     if ( FAILED(hr) )
     {
-        ELOG( "Error : ID3D12Device::CreateCommandQueue() Failed." );
+        ELOG( "Error : ID3D12Device::CreateCommandQueue() Failed. errcodes = 0x%x", hr );
         return false;
     }
 

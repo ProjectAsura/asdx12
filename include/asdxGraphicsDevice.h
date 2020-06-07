@@ -8,12 +8,12 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
+#include <mutex>
 #include <d3d12.h>
 #include <dxgi1_6.h>
 #include <asdxRef.h>
 #include <asdxQueue.h>
 #include <asdxDescriptor.h>
-#include <mutex>
 
 
 namespace asdx {
@@ -90,42 +90,42 @@ public:
     //!
     //! @return     グラフィックスキューを返却します.
     //-------------------------------------------------------------------------
-    Queue* GetGraphicsQueue();
+    Queue* GetGraphicsQueue() const;
 
     //-------------------------------------------------------------------------
     //! @brief      コンピュートキューを取得します.
     //!
     //! @return     コンピュートキューを返却します.
     //-------------------------------------------------------------------------
-    Queue* GetComputeQueue();
+    Queue* GetComputeQueue() const;
 
     //-------------------------------------------------------------------------
     //! @brief      コピーキューを取得します.
     //!
     //! @return     コピーキューを返却します.
     //-------------------------------------------------------------------------
-    Queue* GetCopyQueue();
+    Queue* GetCopyQueue() const;
 
     //-------------------------------------------------------------------------
     //! @brief      ビデオデコードキューを取得します.
     //!
     //! @return     ビデオデコードキューを返却します.
     //-------------------------------------------------------------------------
-    Queue* GetVideoDecodeQueue();
+    Queue* GetVideoDecodeQueue() const;
 
     //-------------------------------------------------------------------------
     //! @brief      ビデオプロセスキューを取得します.
     //!
     //! @return     ビデオプロセスキューを返却します.
     //-------------------------------------------------------------------------
-    Queue* GetVideoProcessQueue();
+    Queue* GetVideoProcessQueue() const;
 
     //-------------------------------------------------------------------------
     //! @brief      ビデオエンコードキューを取得します.
     //!
     //! @return     ビデオエンコードキューを返却します.
     //-------------------------------------------------------------------------
-    Queue* GetVideoEncodeQueue();
+    Queue* GetVideoEncodeQueue() const;
 
     //-------------------------------------------------------------------------
     //! @brief      ディスクリプターを確保します.
@@ -156,19 +156,19 @@ private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    static GraphicsDevice   s_Instance;                 //!< シングルトンインスタンス.
-    RefPtr<IDXGIFactory7>   m_pFactory;                 //!< DXGIファクトリーです.
-    RefPtr<ID3D12Debug3>    m_pDebug;                   //!< デバッグオブジェクト.
-    RefPtr<ID3D12InfoQueue> m_pInfoQueue;               //!< インフォキュー.
-    RefPtr<ID3D12Device8>   m_pDevice;                  //!< デバイス.
-    RefPtr<Queue>           m_pGraphicsQueue;           //!< グラフィックスキュー.
-    RefPtr<Queue>           m_pComputeQueue;            //!< コンピュートキュー.
-    RefPtr<Queue>           m_pCopyQueue;               //!< コピーキュー.
-    RefPtr<Queue>           m_pVideoDecodeQueue;        //!< ビデオデコードキュー.
-    RefPtr<Queue>           m_pVideoProcessQueue;       //!< ビデオプロセスキュー.
-    RefPtr<Queue>           m_pVideoEncodeQueue;        //!< ビデオエンコードキュー.
-    DescriptorHeap          m_DescriptorHeap[4];        //!< ディスクリプタヒープ.
-    std::mutex              m_Mutex;
+    static GraphicsDevice       s_Instance;                 //!< シングルトンインスタンス.
+    RefPtr<IDXGIFactory7>       m_pFactory;                 //!< DXGIファクトリーです.
+    RefPtr<ID3D12Debug3>        m_pDebug;                   //!< デバッグオブジェクト.
+    RefPtr<ID3D12InfoQueue>     m_pInfoQueue;               //!< インフォキュー.
+    RefPtr<ID3D12Device8>       m_pDevice;                  //!< デバイス.
+    RefPtr<Queue>               m_pGraphicsQueue;           //!< グラフィックスキュー.
+    RefPtr<Queue>               m_pComputeQueue;            //!< コンピュートキュー.
+    RefPtr<Queue>               m_pCopyQueue;               //!< コピーキュー.
+    RefPtr<Queue>               m_pVideoDecodeQueue;        //!< ビデオデコードキュー.
+    RefPtr<Queue>               m_pVideoProcessQueue;       //!< ビデオプロセスキュー.
+    RefPtr<Queue>               m_pVideoEncodeQueue;        //!< ビデオエンコードキュー.
+    DescriptorHeap              m_DescriptorHeap[4];        //!< ディスクリプタヒープ.
+    std::mutex                  m_Mutex;
 
     //=========================================================================
     // private methods

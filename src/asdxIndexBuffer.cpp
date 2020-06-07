@@ -70,7 +70,10 @@ bool IndexBuffer::Init(ID3D12Device* pDevice, uint32_t size)
         nullptr,
         IID_PPV_ARGS(m_pResource.GetAddress()));
     if ( FAILED(hr) )
-    { return false; }
+    {
+        ELOG("Error : ID3D12Device::CreateCommittedResource() Failed. errode = 0x%x", hr);
+        return false;
+    }
 
     m_View.BufferLocation   = m_pResource->GetGPUVirtualAddress();
     m_View.SizeInBytes      = size;
@@ -99,7 +102,10 @@ void* IndexBuffer::Map()
     void* ptr = nullptr;
     auto hr = m_pResource->Map(0, nullptr, &ptr);
     if (FAILED(hr))
-    { return nullptr; }
+    {
+        ELOG("Error : ID3D12Resource::Map() Failed. errcode = 0x%x", hr);
+        return nullptr;
+    }
 
     return ptr;
 }

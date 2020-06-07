@@ -378,5 +378,4 @@ Fnv1a& Fnv1a::operator = ( const Fnv1a& value )
     return (*this);
 }
 
-
 } // namespace asdx

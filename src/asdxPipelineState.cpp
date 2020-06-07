@@ -174,26 +174,41 @@ HRESULT CreateReflection(const void* pBinary, size_t binarySize, ID3D12ShaderRef
     asdx::RefPtr<IDxcLibrary> pLibrary;
     auto hr = DxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(pLibrary.GetAddress()));
     if (FAILED(hr))
-    { return hr; }
+    {
+        ELOG("Error : DxcCreateInstance() Failed. errcode = 0x%x", hr);
+        return hr;
+    }
 
     asdx::RefPtr<IDxcBlobEncoding> blobEncoding;
-    hr = pLibrary->CreateBlobWithEncodingFromPinned(pBinary, uint32_t(binarySize), kDXC_CP_ACP, blobEncoding.GetAddress());
+    hr = pLibrary->CreateBlobWithEncodingOnHeapCopy(pBinary, uint32_t(binarySize), kDXC_CP_ACP, blobEncoding.GetAddress());
     if (FAILED(hr))
-    { return hr; }
+    {
+        ELOG("Error : IDxcLibrary::CreateBlobWithEncodingOnHeapCopy() Faield. errcode = 0x%x", hr);
+        return hr;
+    }
 
     asdx::RefPtr<IDxcContainerReflection> containerReflection;
     hr = DxcCreateInstance(CLSID_DxcContainerReflection, IID_PPV_ARGS(containerReflection.GetAddress()));
     if (FAILED(hr))
-    { return hr; }
+    {
+        ELOG("Error : DxcCreateInstance() Failed. errcode = 0x%x", hr);
+        return hr;
+    }
 
     uint32_t shaderIdx = 0;
     hr = containerReflection->Load(blobEncoding.GetPtr());
     if (FAILED(hr))
-    { return hr; }
+    {
+        ELOG("Error : IDxcContainerReflection::Load() Failed. errcode = 0x%x", hr);
+        return hr;
+    }
 
     hr = containerReflection->FindFirstPartKind(kDFCC_DXIL, &shaderIdx);
     if (FAILED(hr))
-    { return hr; }
+    {
+        ELOG("Error : IDxcContainerReflection::FindFirstPartKind() Failed. errcode = 0x%x", hr);
+        return hr;
+    }
 
     return containerReflection->GetPartReflection(shaderIdx, IID_PPV_ARGS(ppReflection));
 #else
@@ -215,7 +230,7 @@ void EnumerateEntries
     auto hr = pReflection->GetDesc(&shaderDesc);
     if (FAILED(hr))
     {
-        ELOG("Error : ID3D12ShaderReflection::GetDesc() Failed.");
+        ELOG("Error : ID3D12ShaderReflection::GetDesc() Failed. errcode = 0x%x", hr);
         return;
     }
 
@@ -244,7 +259,7 @@ void EnumerateEntries
         hr = pReflection->GetResourceBindingDesc(i, &bindDesc);
         if (FAILED(hr))
         {
-            ELOG("Error : ID3D12ShaderReflection::GetResourceBindingDesc() Failed.");
+            ELOG("Error : ID3D12ShaderReflection::GetResourceBindingDesc() Failed. errcode = 0x%x", hr);
             continue;
         }
 

@@ -66,7 +66,10 @@ bool VertexBuffer::Init(ID3D12Device* pDevice, uint64_t size, uint32_t stride)
         nullptr,
         IID_PPV_ARGS(m_pResource.GetAddress()));
     if ( FAILED(hr) )
-    { return false; }
+    {
+        ELOG("Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr);
+        return false;
+    }
 
     m_View.BufferLocation   = m_pResource->GetGPUVirtualAddress();
     m_View.SizeInBytes      = UINT(size);
@@ -95,7 +98,10 @@ void* VertexBuffer::Map()
     void* ptr = nullptr;
     auto hr = m_pResource->Map(0, nullptr, &ptr);
     if (FAILED(hr))
-    { return nullptr; }
+    {
+        ELOG("Error : ID3D12Resource::Map() Failed. errcode = 0x%x", hr);
+        return nullptr;
+    }
 
     return ptr;
 }
