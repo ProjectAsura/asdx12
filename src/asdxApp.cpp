@@ -122,8 +122,95 @@ private:
     /* NOTHING */
 };
 
+///////////////////////////////////////////////////////////////////////////////
+// AllocationTypeTable structure
+///////////////////////////////////////////////////////////////////////////////
+struct AllocationTypeTable
+{
+    D3D12_DRED_ALLOCATION_TYPE  Type;
+    const char*                 Tag;
+};
+
 // アプリケーションリスト.
 ApplicationList     g_AppList;
+
+// オペレーションテーブル.
+static const char* g_BreadcrumTable[] = {
+    "SETMARKER",                                        // 0
+    "BEGINEVENT",                                       // 1
+    "ENDEVENT",                                         // 2
+    "DRAWINSTANCED",                                    // 3
+    "DRAWINDEXEDINSTANCED",                             // 4
+    "EXECUTEINDIRECT",                                  // 5
+    "DISPATCH",                                         // 6
+    "COPYBUFFERREGION",                                 // 7
+    "COPYTEXTUREREGION",                                // 8
+    "COPYRESOURCE",                                     // 9
+    "COPYTILES",                                        // 10
+    "RESOLVESUBRESOURCE",                               // 11
+    "CLEARRENDERTARGETVIEW",                            // 12
+    "CLEARUNORDEREDACCESSVIEW",                         // 13
+    "CLEARDEPTHSTENCILVIEW",                            // 14
+    "RESOURCEBARRIER",                                  // 15
+    "EXECUTEBUNDLE",                                    // 16
+    "PRESENT",                                          // 17
+    "RESOLVEQUERYDATA",                                 // 18
+    "BEGINSUBMISSION",                                  // 19
+    "ENDSUBMISSION",                                    // 20
+    "DECODEFRAME",                                      // 21
+    "PROCESSFRAMES",                                    // 22
+    "ATOMICCOPYBUFFERUINT",                             // 23
+    "ATOMICCOPYBUFFERUINT64",                           // 24
+    "RESOLVESUBRESOURCEREGION",                         // 25
+    "WRITEBUFFERIMMEDIATE",                             // 26
+    "DECODEFRAME1",                                     // 27
+    "SETPROTECTEDRESOURCESESSION",                      // 28
+    "DECODEFRAME2",                                     // 29
+    "PROCESSFRAMES1",                                   // 30
+    "BUILDRAYTRACINGACCELERATIONSTRUCTURE",             // 31
+    "EMITRAYTRACINGACCELERATIONSTRUCTUREPOSTBUILDINFO", // 32
+    "COPYRAYTRACINGACCELERATIONSTRUCTURE",              // 33
+    "DISPATCHRAYS",                                     // 34
+    "INITIALIZEMETACOMMAND",                            // 35
+    "EXECUTEMETACOMMAND",                               // 36
+    "ESTIMATEMOTION",                                   // 37
+    "RESOLVEMOTIONVECTORHEAP",                          // 38
+    "SETPIPELINESTATE1",                                // 39
+    "INITIALIZEEXTENSIONCOMMAND",                       // 40
+    "EXECUTEEXTENSIONCOMMAND",                          // 41
+    "DISPATCHMESH",                                     // 42
+};
+
+// アロケーションタイプテーブル.
+static const AllocationTypeTable g_AllocationTypeTable[] = {
+    { D3D12_DRED_ALLOCATION_TYPE_COMMAND_QUEUE              , "COMMAND_QUEUE"               }, // 19
+    { D3D12_DRED_ALLOCATION_TYPE_COMMAND_ALLOCATOR          , "COMMAND_ALLOCATOR"           }, // 20
+    { D3D12_DRED_ALLOCATION_TYPE_PIPELINE_STATE             , "PIPELINE_STATE"              }, // 21
+    { D3D12_DRED_ALLOCATION_TYPE_COMMAND_LIST               , "COMMAND_LIST"                }, // 22
+    { D3D12_DRED_ALLOCATION_TYPE_FENCE                      , "FENCE"                       }, // 23
+    { D3D12_DRED_ALLOCATION_TYPE_DESCRIPTOR_HEAP            , "DESCRIPTOR_HEAP"             }, // 24
+    { D3D12_DRED_ALLOCATION_TYPE_HEAP                       , "HEAP"                        }, // 25
+    { D3D12_DRED_ALLOCATION_TYPE_QUERY_HEAP                 , "QUERY_HEAP"                  }, // 27
+    { D3D12_DRED_ALLOCATION_TYPE_COMMAND_SIGNATURE          , "COMMAND_SIGNATURE"           }, // 28
+    { D3D12_DRED_ALLOCATION_TYPE_PIPELINE_LIBRARY           , "PIPELINE_LIBRARY"            }, // 29
+    { D3D12_DRED_ALLOCATION_TYPE_VIDEO_DECODER              , "VIDEO_DECODER"               }, // 30
+    { D3D12_DRED_ALLOCATION_TYPE_VIDEO_PROCESSOR            , "VIDEO_PROCESSOR"             }, // 32
+    { D3D12_DRED_ALLOCATION_TYPE_RESOURCE                   , "RESOURCE"                    }, // 34
+    { D3D12_DRED_ALLOCATION_TYPE_PASS                       , "PASS"                        }, // 35
+    { D3D12_DRED_ALLOCATION_TYPE_CRYPTOSESSION              , "CRYPTOSESSION"               }, // 36
+    { D3D12_DRED_ALLOCATION_TYPE_CRYPTOSESSIONPOLICY        , "CRYPTOSESSIONPOLICY"         }, // 37
+    { D3D12_DRED_ALLOCATION_TYPE_PROTECTEDRESOURCESESSION   , "PROTECTEDRESOURCESESSION"    }, // 38
+    { D3D12_DRED_ALLOCATION_TYPE_VIDEO_DECODER_HEAP         , "VIDEO_DECODER_HEAP"          }, // 39
+    { D3D12_DRED_ALLOCATION_TYPE_COMMAND_POOL               , "COMMAND_POOL"                }, // 40
+    { D3D12_DRED_ALLOCATION_TYPE_COMMAND_RECORDER           , "COMMAND_RECORDER"            }, // 41
+    { D3D12_DRED_ALLOCATION_TYPE_STATE_OBJECT               , "STATE_OBJECT"                }, // 42
+    { D3D12_DRED_ALLOCATION_TYPE_METACOMMAND                , "METACOMMAND"                 }, // 43
+    { D3D12_DRED_ALLOCATION_TYPE_SCHEDULINGGROUP            , "SCHEDULINGGROUP"             }, // 44
+    { D3D12_DRED_ALLOCATION_TYPE_VIDEO_MOTION_ESTIMATOR     , "VIDEO_MOTION_ESTIMATOR"      }, // 45
+    { D3D12_DRED_ALLOCATION_TYPE_VIDEO_MOTION_VECTOR_HEAP   , "VIDEO_MOTION_VECTOR_HEAP"    }, // 46
+    { D3D12_DRED_ALLOCATION_TYPE_VIDEO_EXTENSION_COMMAND    , "VIDEO_EXTENSION_COMMAND"     }, // 47
+    { D3D12_DRED_ALLOCATION_TYPE_INVALID                    , "INVALID"                     }, // 0xffffffff
+};
 
 //-----------------------------------------------------------------------------
 //      領域の交差を計算します.
@@ -190,6 +277,113 @@ inline UINT GetCoord(float value)
 //-----------------------------------------------------------------------------
 inline UINT GetLuma(float value)
 { return static_cast<UINT>(value * 10000.0f); }
+
+//-----------------------------------------------------------------------------
+//      D3D12_AUTO_BREADCRUMB_OPに対応する文字列を取得します.
+//-----------------------------------------------------------------------------
+const char* ToString(D3D12_AUTO_BREADCRUMB_OP value)
+{ return g_BreadcrumTable[value]; }
+
+//-----------------------------------------------------------------------------
+//      D3D12_DREAD_ALLOCATION_TYPEに対応する文字列を取得します.
+//-----------------------------------------------------------------------------
+const char* ToString(D3D12_DRED_ALLOCATION_TYPE value)
+{
+    auto count = sizeof(g_AllocationTypeTable) / sizeof(g_AllocationTypeTable[0]);
+    for(auto i=0; i<count; ++i)
+    {
+        if (value == g_AllocationTypeTable[i].Type)
+        { return g_AllocationTypeTable[i].Tag; }
+    }
+
+    // バージョンアップとかで列挙体が増えた場合にここに来る可能性がある.
+    return "UNKNOWN";
+}
+
+//-----------------------------------------------------------------------------
+//      ログ出力を行います.
+//-----------------------------------------------------------------------------
+void OutputLog(const D3D12_AUTO_BREADCRUMB_NODE* pNode)
+{
+    if (pNode == nullptr)
+    { return; }
+
+    ILOGA("Breadcrumb Node 0x%x :", pNode);
+    ILOGA("    pCommandListDebugNameA  = %s"   , pNode->pCommandListDebugNameA);
+    ILOGW("    pCommandListDebugNameW  = %ls"  , pNode->pCommandListDebugNameW);
+    ILOGA("    pCommandQueueDebugNameA = %s"   , pNode->pCommandQueueDebugNameA);
+    ILOGW("    pCommandQueueDebugNameW = %ls"  , pNode->pCommandQueueDebugNameW);
+    ILOGA("    pCommandList            = 0x%x" , pNode->pCommandList);
+    ILOGA("    pCommandQueue           = 0x%x" , pNode->pCommandQueue);
+    ILOGA("    BreadcrumbCount         = %u"   , pNode->BreadcrumbCount);
+    ILOGA("    pLastBreadcrumbValue    = 0x%x (%u)",   pNode->pLastBreadcrumbValue, *pNode->pLastBreadcrumbValue);
+    ILOGA("    pCommandHistory : ");
+
+    for(auto i=0u; i<pNode->BreadcrumbCount; ++i)
+    { ILOGA("        Op[%u] = %s", i, ToString(pNode->pCommandHistory[i]));  }
+
+    ILOGA("    pNext                   = 0x%x" , pNode->pNext);
+}
+
+//-----------------------------------------------------------------------------
+//      ログ出力を行います.
+//-----------------------------------------------------------------------------
+void OutputLog(const D3D12_DRED_ALLOCATION_NODE* pNode)
+{
+    if (pNode == nullptr)
+    { return; }
+
+    ILOGA("Allocation Node 0x%x : " , pNode);
+    ILOGA("    ObjectNameA   = %s"  , pNode->ObjectNameA);
+    ILOGW("    ObjectNameW   = %ls" , pNode->ObjectNameW);
+    ILOGA("    AllcationType = %s"  , ToString(pNode->AllocationType));
+    ILOGA("    pNext         = 0x%x", pNode->pNext);
+}
+
+//-----------------------------------------------------------------------------
+//      デバイス削除にエラーメッセージを表示します.
+//-----------------------------------------------------------------------------
+void DeviceRemovedHandler(ID3D12Device* pDevice)
+{
+    asdx::RefPtr<ID3D12DeviceRemovedExtendedData> pDred;
+    auto hr = pDevice->QueryInterface(IID_PPV_ARGS(pDred.GetAddress()));
+    if (FAILED(hr))
+    {
+        ELOG("Error : ID3D12Device::QueryInterface() Failed. errcode = 0x%x", hr);
+        return;
+    }
+
+    D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT autoBreadcrumbsOutput = {};
+    hr = pDred->GetAutoBreadcrumbsOutput(&autoBreadcrumbsOutput);
+    if (SUCCEEDED(hr))
+    {
+        auto pNode = autoBreadcrumbsOutput.pHeadAutoBreadcrumbNode;
+        while(pNode != nullptr)
+        {
+            OutputLog(pNode);
+            pNode = pNode->pNext;
+        }
+    }
+
+    D3D12_DRED_PAGE_FAULT_OUTPUT pageFaultOutput = {};
+    hr = pDred->GetPageFaultAllocationOutput(&pageFaultOutput);
+    if (SUCCEEDED(hr))
+    {
+        auto pNode = pageFaultOutput.pHeadRecentFreedAllocationNode;
+        while(pNode != nullptr)
+        {
+            OutputLog(pNode);
+            pNode = pNode->pNext;
+        }
+
+        pNode = pageFaultOutput.pHeadExistingAllocationNode;
+        while(pNode != nullptr)
+        {
+            OutputLog(pNode);
+            pNode = pNode->pNext;
+        }
+    }
+}
 
 } // namespace /* anonymous */
 
@@ -1165,6 +1359,9 @@ void Application::Present( uint32_t syncInterval )
             // エラーログ出力.
             ELOG( "Fatal Error : IDXGISwapChain::Present() Failed. ErrorCode = DXGI_ERROR_DEVICE_RESET." );
 
+            // エラー表示.
+            DeviceRemovedHandler(GfxDevice().GetDevice());
+
             // 続行できないのでダイアログを表示.
             MessageBoxW( m_hWnd, L"A Fatal Error Occured. Shutting down.", L"FATAL ERROR", MB_OK | MB_ICONERROR );
 
@@ -1178,6 +1375,9 @@ void Application::Present( uint32_t syncInterval )
         {
             // エラーログ出力.
             ELOG( "Fatal Error : IDXGISwapChain::Present() Failed. ErrorCode = DXGI_ERROR_DEVICE_REMOVED." );
+
+            // エラー表示.
+            DeviceRemovedHandler(GfxDevice().GetDevice());
 
             // 続行できないのでダイアログを表示.
             MessageBoxW( m_hWnd, L"A Fatal Error Occured. Shutting down.", L"FATAL ERROR", MB_OK | MB_ICONERROR );

@@ -54,6 +54,15 @@ bool GraphicsDevice::Init(const Desc* pDesc)
                 m_pDebug->SetEnableGPUBasedValidation(TRUE);
             }
         }
+
+        // DRED有効化.
+        asdx::RefPtr<ID3D12DeviceRemovedExtendedDataSettings> dred;
+        hr = D3D12GetDebugInterface(IID_PPV_ARGS(dred.GetAddress()));
+        if (SUCCEEDED(hr))
+        {
+            dred->SetAutoBreadcrumbsEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
+            dred->SetPageFaultEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
+        }
     }
 
     // DXGIファクトリを生成.
