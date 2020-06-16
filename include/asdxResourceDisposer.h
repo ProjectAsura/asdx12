@@ -69,15 +69,15 @@ private:
     ///////////////////////////////////////////////////////////////////////////
     struct Item
     {
-        ID3D12Resource*     pResource;
-        uint32_t            LifeTime;
+        ID3D12Resource*     pResource;      //!< 破棄リソース.
+        uint32_t            LifeTime;       //!< 生存フレーム数.
     };
 
     //=========================================================================
     // private variables.
     //=========================================================================
-    std::list<Item>         m_List;
-    std::recursive_mutex    m_Mutex;
+    std::list<Item>         m_List;         //!< 破棄リスト.
+    std::recursive_mutex    m_Mutex;        //!< 排他制御用.
 
     //=========================================================================
     // private methods.
