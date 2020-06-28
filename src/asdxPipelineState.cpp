@@ -168,7 +168,6 @@ struct GPS_DESC
 HRESULT CreateReflection(const void* pBinary, size_t binarySize, ID3D12ShaderReflection** ppReflection)
 {
 #ifdef ASDX_ENABLE_DXC
-    const uint32_t kDXC_CP_ACP = 0;
     const uint32_t kDFCC_DXIL  = ASDX_FOURCC('D', 'X', 'I', 'L');
 
     asdx::RefPtr<IDxcLibrary> pLibrary;
@@ -180,7 +179,7 @@ HRESULT CreateReflection(const void* pBinary, size_t binarySize, ID3D12ShaderRef
     }
 
     asdx::RefPtr<IDxcBlobEncoding> blobEncoding;
-    hr = pLibrary->CreateBlobWithEncodingOnHeapCopy(pBinary, uint32_t(binarySize), kDXC_CP_ACP, blobEncoding.GetAddress());
+    hr = pLibrary->CreateBlobWithEncodingOnHeapCopy(pBinary, uint32_t(binarySize), CP_ACP, blobEncoding.GetAddress());
     if (FAILED(hr))
     {
         ELOG("Error : IDxcLibrary::CreateBlobWithEncodingOnHeapCopy() Faield. errcode = 0x%x", hr);
@@ -285,7 +284,7 @@ void EnumerateEntries
         }
 
         asdx::HashString key(bindDesc.Name);
-        if (rangeTable.find(key.hash()) != rangeTable.end())
+        if (rangeTable.find(key.hash()) == rangeTable.end())
         { rangeTable[key.hash()] = entry; }
     }
 }
@@ -413,165 +412,179 @@ bool PipelineState::Init(ID3D12Device* pDevice, const D3D12_GRAPHICS_PIPELINE_ST
         EnumerateEntries(pReflectionPS.GetPtr(), m_Entries, rootParamIndex);
     }
 
+    ID3D12RootSignature* pRootSig = pDesc->pRootSignature;
 
-    // ルートシグニチャ生成.
-    std::vector<D3D12_ROOT_PARAMETER>   params;
-    std::vector<D3D12_DESCRIPTOR_RANGE> ranges;
-    params.resize(m_Entries.size());
-    ranges.resize(m_Entries.size());
-
-    auto denyVS = true;
-    auto denyHS = true;
-    auto denyDS = true;
-    auto denyGS = true;
-    auto denyPS = true;
-
-    for(auto& itr : m_Entries)
+    if (pRootSig == nullptr)
     {
-        auto idx = itr.second.RootParameterIndex;
-        switch(itr.second.Visibility)
+        // ルートシグニチャ生成.
+        std::vector<D3D12_ROOT_PARAMETER>   params;
+        std::vector<D3D12_DESCRIPTOR_RANGE> ranges;
+        params.resize(m_Entries.size());
+        ranges.resize(m_Entries.size());
+
+        auto denyVS = true;
+        auto denyHS = true;
+        auto denyDS = true;
+        auto denyGS = true;
+        auto denyPS = true;
+
+        for(auto& itr : m_Entries)
         {
-        case D3D12_SHADER_VISIBILITY_VERTEX:
-            denyVS = false;
-            break;
-
-        case D3D12_SHADER_VISIBILITY_HULL:
-            denyHS = false;
-            break;
-
-        case D3D12_SHADER_VISIBILITY_DOMAIN:
-            denyDS = false;
-            break;
-
-        case D3D12_SHADER_VISIBILITY_GEOMETRY:
-            denyGS = false;
-            break;
-
-        case D3D12_SHADER_VISIBILITY_PIXEL:
-            denyPS = false;
-            break;
-        }
-
-        switch(itr.second.Type)
-        {
-        case D3D_SIT_CBUFFER:
+            auto idx = itr.second.RootParameterIndex;
+            switch(itr.second.Visibility)
             {
-                if (itr.second.BufferSize < 16)
+            case D3D12_SHADER_VISIBILITY_VERTEX:
+                denyVS = false;
+                break;
+
+            case D3D12_SHADER_VISIBILITY_HULL:
+                denyHS = false;
+                break;
+
+            case D3D12_SHADER_VISIBILITY_DOMAIN:
+                denyDS = false;
+                break;
+
+            case D3D12_SHADER_VISIBILITY_GEOMETRY:
+                denyGS = false;
+                break;
+
+            case D3D12_SHADER_VISIBILITY_PIXEL:
+                denyPS = false;
+                break;
+            }
+
+            switch(itr.second.Type)
+            {
+            case D3D_SIT_CBUFFER:
+            case D3D_SIT_TBUFFER:
                 {
-                    params[idx].ParameterType               = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-                    params[idx].Constants.Num32BitValues    = itr.second.BufferSize / 4;
-                    params[idx].Constants.RegisterSpace     = itr.second.RegisterSpace;
-                    params[idx].Constants.ShaderRegister    = itr.second.BindPoint;
-                    params[idx].ShaderVisibility            = itr.second.Visibility;
+                    if (itr.second.BufferSize < 16)
+                    {
+                        params[idx].ParameterType               = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+                        params[idx].Constants.Num32BitValues    = itr.second.BufferSize / 4;
+                        params[idx].Constants.RegisterSpace     = itr.second.RegisterSpace;
+                        params[idx].Constants.ShaderRegister    = itr.second.BindPoint;
+                        params[idx].ShaderVisibility            = itr.second.Visibility;
+                    }
+                    else
+                    {
+                        params[idx].ParameterType               = D3D12_ROOT_PARAMETER_TYPE_CBV;
+                        params[idx].Descriptor.RegisterSpace    = itr.second.RegisterSpace;
+                        params[idx].Descriptor.ShaderRegister   = itr.second.BindPoint;
+                        params[idx].ShaderVisibility            = itr.second.Visibility;
+                    }
                 }
-                else
+                break;
+
+            case D3D_SIT_TEXTURE:
                 {
-                    params[idx].ParameterType               = D3D12_ROOT_PARAMETER_TYPE_CBV;
+                    ranges[idx].RangeType           = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+                    ranges[idx].NumDescriptors      = itr.second.BindCount;
+                    ranges[idx].BaseShaderRegister  = itr.second.BindPoint;
+                    ranges[idx].RegisterSpace       = itr.second.RegisterSpace;
+                    ranges[idx].OffsetInDescriptorsFromTableStart = 0;
+
+                    params[idx].ParameterType                       = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+                    params[idx].DescriptorTable.NumDescriptorRanges = 1;
+                    params[idx].DescriptorTable.pDescriptorRanges   = &ranges[idx];
+                    params[idx].ShaderVisibility                    = itr.second.Visibility;
+                }
+                break;
+
+            case D3D_SIT_SAMPLER:
+                {
+                    ranges[idx].RangeType           = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
+                    ranges[idx].NumDescriptors      = itr.second.BindCount;
+                    ranges[idx].BaseShaderRegister  = itr.second.BindPoint;
+                    ranges[idx].RegisterSpace       = itr.second.RegisterSpace;
+                    ranges[idx].OffsetInDescriptorsFromTableStart = 0;
+
+                    params[idx].ParameterType                       = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+                    params[idx].DescriptorTable.NumDescriptorRanges = 1;
+                    params[idx].DescriptorTable.pDescriptorRanges   = &ranges[idx];
+                    params[idx].ShaderVisibility                    = itr.second.Visibility;
+                }
+                break;
+
+            case D3D_SIT_UAV_RWTYPED:
+            case D3D_SIT_UAV_RWSTRUCTURED:
+            case D3D_SIT_UAV_RWBYTEADDRESS:
+            case D3D_SIT_UAV_APPEND_STRUCTURED:
+            case D3D_SIT_UAV_CONSUME_STRUCTURED:
+            case D3D_SIT_UAV_RWSTRUCTURED_WITH_COUNTER:
+                {
+                    params[idx].ParameterType               = D3D12_ROOT_PARAMETER_TYPE_UAV;
                     params[idx].Descriptor.RegisterSpace    = itr.second.RegisterSpace;
                     params[idx].Descriptor.ShaderRegister   = itr.second.BindPoint;
                     params[idx].ShaderVisibility            = itr.second.Visibility;
                 }
+                break;
             }
-            break;
-
-        case D3D_SIT_TBUFFER:
-        case D3D_SIT_TEXTURE:
-            {
-                params[idx].ParameterType               = D3D12_ROOT_PARAMETER_TYPE_SRV;
-                params[idx].Descriptor.RegisterSpace    = itr.second.RegisterSpace;
-                params[idx].Descriptor.ShaderRegister   = itr.second.BindPoint;
-                params[idx].ShaderVisibility            = itr.second.Visibility;
-            }
-            break;
-
-        case D3D_SIT_SAMPLER:
-            {
-                ranges[idx].RangeType           = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
-                ranges[idx].NumDescriptors      = itr.second.BindCount;
-                ranges[idx].BaseShaderRegister  = itr.second.BindPoint;
-                ranges[idx].RegisterSpace       = itr.second.RegisterSpace;
-                ranges[idx].OffsetInDescriptorsFromTableStart = 0;
-
-                params[idx].ParameterType                       = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-                params[idx].DescriptorTable.NumDescriptorRanges = 1;
-                params[idx].DescriptorTable.pDescriptorRanges   = &ranges[idx];
-                params[idx].ShaderVisibility                    = itr.second.Visibility;
-            }
-            break;
-
-        case D3D_SIT_UAV_RWTYPED:
-        case D3D_SIT_UAV_RWSTRUCTURED:
-        case D3D_SIT_UAV_RWBYTEADDRESS:
-        case D3D_SIT_UAV_APPEND_STRUCTURED:
-        case D3D_SIT_UAV_CONSUME_STRUCTURED:
-        case D3D_SIT_UAV_RWSTRUCTURED_WITH_COUNTER:
-            {
-                params[idx].ParameterType               = D3D12_ROOT_PARAMETER_TYPE_UAV;
-                params[idx].Descriptor.RegisterSpace    = itr.second.RegisterSpace;
-                params[idx].Descriptor.ShaderRegister   = itr.second.BindPoint;
-                params[idx].ShaderVisibility            = itr.second.Visibility;
-            }
-            break;
         }
+
+        D3D12_ROOT_SIGNATURE_FLAGS flags = D3D12_ROOT_SIGNATURE_FLAG_NONE;
+
+        if (!denyVS)
+        { flags |= D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT; }
+        else
+        { flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS; }
+
+        if (denyHS)
+        { flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS; }
+
+        if (denyDS)
+        { flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS; }
+
+        if (denyGS)
+        { flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS; }
+
+        if (denyPS)
+        { flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS; }
+
+        D3D12_ROOT_SIGNATURE_DESC sigDesc = {};
+        sigDesc.NumParameters       = uint32_t(m_Entries.size());
+        sigDesc.pParameters         = params.data();
+        sigDesc.NumStaticSamplers   = 0;
+        sigDesc.pStaticSamplers     = nullptr;
+        sigDesc.Flags               = flags;
+
+        RefPtr<ID3DBlob> pBlob;
+        RefPtr<ID3DBlob> pErrorBlob;
+        auto hr = D3D12SerializeRootSignature(
+            &sigDesc, D3D_ROOT_SIGNATURE_VERSION_1_0, pBlob.GetAddress(), pErrorBlob.GetAddress());
+        if (FAILED(hr))
+        {
+            ELOG("Error : D3D12SerializeRootSignature() Failed. errcode = 0x%x, msg = %s",
+                hr, static_cast<char*>(pErrorBlob->GetBufferPointer()));
+            return false;
+        }
+
+        hr = pDevice->CreateRootSignature(
+            0, pBlob->GetBufferPointer(), pBlob->GetBufferSize(), IID_PPV_ARGS(m_pRootSig.GetAddress()));
+        if (FAILED(hr))
+        {
+            ELOG("Error : ID3D12Device::CreateRootSignature() Failed. errcode = 0x%x", hr);
+            return false;
+        }
+
+        pRootSig = m_pRootSig.GetPtr();
     }
-
-    D3D12_ROOT_SIGNATURE_FLAGS flags = D3D12_ROOT_SIGNATURE_FLAG_NONE;
-
-    if (!denyVS)
-    { flags |= D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT; }
-    else
-    { flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS; }
-
-    if (denyHS)
-    { flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS; }
-
-    if (denyDS)
-    { flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS; }
-
-    if (denyGS)
-    { flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS; }
-
-    if (denyPS)
-    { flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS; }
-
-    D3D12_ROOT_SIGNATURE_DESC sigDesc = {};
-    sigDesc.NumParameters       = uint32_t(m_Entries.size());
-    sigDesc.pParameters         = params.data();
-    sigDesc.NumStaticSamplers   = 0;
-    sigDesc.pStaticSamplers     = nullptr;
-    sigDesc.Flags               = flags;
-
-    RefPtr<ID3DBlob> pBlob;
-    RefPtr<ID3DBlob> pErrorBlob;
-    auto hr = D3D12SerializeRootSignature(
-        &sigDesc, D3D_ROOT_SIGNATURE_VERSION_1_0, pBlob.GetAddress(), pErrorBlob.GetAddress());
-    if (FAILED(hr))
-    {
-        ELOG("Error : D3D12SerializeRootSignature() Failed. errcode = 0x%x, msg = %s",
-            hr, static_cast<char*>(pErrorBlob->GetBufferPointer()));
-        return false;
-    }
-
-    hr = pDevice->CreateRootSignature(
-        0, pBlob->GetBufferPointer(), pBlob->GetBufferSize(), IID_PPV_ARGS(m_pRootSig.GetAddress()));
-    if (FAILED(hr))
-    {
-        ELOG("Error : ID3D12Device::CreateRootSignature() Failed. errcode = 0x%x", hr);
-        return false;
-    }
-
-    D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = *pDesc;
-    psoDesc.pRootSignature = m_pRootSig.GetPtr();
 
     // パイプラインステート生成.
-    hr = pDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(m_pPSO.GetAddress()));
-    if (FAILED(hr))
     {
-        ELOG("Error : ID3D12Device::CreateGraphicsPipelineState() Failed. errcode = 0x%x", hr);
-        return false;
-    }
+        D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = *pDesc;
+        psoDesc.pRootSignature = pRootSig;
 
-    m_pPSO->SetName(L"asdxGraphicsPipelineState");
+        auto hr = pDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(m_pPSO.GetAddress()));
+        if (FAILED(hr))
+        {
+            ELOG("Error : ID3D12Device::CreateGraphicsPipelineState() Failed. errcode = 0x%x", hr);
+            return false;
+        }
+
+        m_pPSO->SetName(L"asdxGraphicsPipelineState");
+    }
 
     return true;
 }
@@ -685,46 +698,55 @@ bool PipelineState::Init(ID3D12Device* pDevice, const D3D12_COMPUTE_PIPELINE_STA
         }
     }
 
-    D3D12_ROOT_SIGNATURE_FLAGS flags = D3D12_ROOT_SIGNATURE_FLAG_NONE;
+    ID3D12RootSignature* pRootSig = pDesc->pRootSignature;
 
-    D3D12_ROOT_SIGNATURE_DESC sigDesc = {};
-    sigDesc.NumParameters       = uint32_t(m_Entries.size());
-    sigDesc.pParameters         = params.data();
-    sigDesc.NumStaticSamplers   = 0;
-    sigDesc.pStaticSamplers     = nullptr;
-    sigDesc.Flags               = flags;
-
-    RefPtr<ID3DBlob> pBlob;
-    RefPtr<ID3DBlob> pErrorBlob;
-    auto hr = D3D12SerializeRootSignature(
-        &sigDesc, D3D_ROOT_SIGNATURE_VERSION_1_0, pBlob.GetAddress(), pErrorBlob.GetAddress());
-    if (FAILED(hr))
+    if (pRootSig == nullptr)
     {
-        ELOG("Error : D3D12SerializeRootSignature() Failed. errcode = 0x%x, msg = %s",
-            hr, static_cast<char*>(pErrorBlob->GetBufferPointer()));
-        return false;
-    }
+        D3D12_ROOT_SIGNATURE_FLAGS flags = D3D12_ROOT_SIGNATURE_FLAG_NONE;
 
-    hr = pDevice->CreateRootSignature(
-        0, pBlob->GetBufferPointer(), pBlob->GetBufferSize(), IID_PPV_ARGS(m_pRootSig.GetAddress()));
-    if (FAILED(hr))
-    {
-        ELOG("Error : ID3D12Device::CreateRootSignature() Failed. errcode = 0x%x", hr);
-        return false;
-    }
+        D3D12_ROOT_SIGNATURE_DESC sigDesc = {};
+        sigDesc.NumParameters       = uint32_t(m_Entries.size());
+        sigDesc.pParameters         = params.data();
+        sigDesc.NumStaticSamplers   = 0;
+        sigDesc.pStaticSamplers     = nullptr;
+        sigDesc.Flags               = flags;
 
-    D3D12_COMPUTE_PIPELINE_STATE_DESC psoDesc = *pDesc;
-    psoDesc.pRootSignature = m_pRootSig.GetPtr();
+        RefPtr<ID3DBlob> pBlob;
+        RefPtr<ID3DBlob> pErrorBlob;
+        auto hr = D3D12SerializeRootSignature(
+            &sigDesc, D3D_ROOT_SIGNATURE_VERSION_1_0, pBlob.GetAddress(), pErrorBlob.GetAddress());
+        if (FAILED(hr))
+        {
+            ELOG("Error : D3D12SerializeRootSignature() Failed. errcode = 0x%x, msg = %s",
+                hr, static_cast<char*>(pErrorBlob->GetBufferPointer()));
+            return false;
+        }
+
+        hr = pDevice->CreateRootSignature(
+            0, pBlob->GetBufferPointer(), pBlob->GetBufferSize(), IID_PPV_ARGS(m_pRootSig.GetAddress()));
+        if (FAILED(hr))
+        {
+            ELOG("Error : ID3D12Device::CreateRootSignature() Failed. errcode = 0x%x", hr);
+            return false;
+        }
+
+        pRootSig = m_pRootSig.GetPtr();
+    }
 
     // パイプラインステート生成.
-    hr = pDevice->CreateComputePipelineState(&psoDesc, IID_PPV_ARGS(m_pPSO.GetAddress()));
-    if (FAILED(hr))
     {
-        ELOG("Error : ID3D12Device::CreateComputePipelineState() Failed. errcode = 0x%x", hr);
-        return false;
-    }
+        D3D12_COMPUTE_PIPELINE_STATE_DESC psoDesc = *pDesc;
+        psoDesc.pRootSignature = pRootSig;
 
-    m_pPSO->SetName(L"asdxComputePipelineState");
+        auto hr = pDevice->CreateComputePipelineState(&psoDesc, IID_PPV_ARGS(m_pPSO.GetAddress()));
+        if (FAILED(hr))
+        {
+            ELOG("Error : ID3D12Device::CreateComputePipelineState() Failed. errcode = 0x%x", hr);
+            return false;
+        }
+
+        m_pPSO->SetName(L"asdxComputePipelineState");
+    }
 
     return true;
 }
@@ -799,141 +821,151 @@ bool PipelineState::Init(ID3D12Device2* pDevice, const GEOMETRY_PIPELINE_STATE_D
         pReflectionMS->GetThreadGroupSize(&m_ThreadX, &m_ThreadY, &m_ThreadZ);
     }
 
-    // ルートシグニチャ生成.
-    std::vector<D3D12_ROOT_PARAMETER>   params;
-    std::vector<D3D12_DESCRIPTOR_RANGE> ranges;
-    params.resize(m_Entries.size());
-    ranges.resize(m_Entries.size());
+    ID3D12RootSignature* pRootSig = pDesc->pRootSignature;
 
-    auto denyAS = true;
-    auto denyMS = true;
-    auto denyPS = true;
-
-    for(auto& itr : m_Entries)
+    if (pRootSig == nullptr)
     {
-        auto idx = itr.second.RootParameterIndex;
-        switch(itr.second.Visibility)
+        // ルートシグニチャ生成.
+        std::vector<D3D12_ROOT_PARAMETER>   params;
+        std::vector<D3D12_DESCRIPTOR_RANGE> ranges;
+        params.resize(m_Entries.size());
+        ranges.resize(m_Entries.size());
+
+        auto denyAS = true;
+        auto denyMS = true;
+        auto denyPS = true;
+
+        for(auto& itr : m_Entries)
         {
-        case D3D12_SHADER_VISIBILITY_AMPLIFICATION:
-            denyAS = false;
-            break;
-
-        case D3D12_SHADER_VISIBILITY_MESH:
-            denyMS = false;
-            break;
-
-        case D3D12_SHADER_VISIBILITY_PIXEL:
-            denyPS = false;
-            break;
-        }
-
-        switch(itr.second.Type)
-        {
-        case D3D_SIT_CBUFFER:
+            auto idx = itr.second.RootParameterIndex;
+            switch(itr.second.Visibility)
             {
-                if (itr.second.BufferSize <= 16)
+            case D3D12_SHADER_VISIBILITY_AMPLIFICATION:
+                denyAS = false;
+                break;
+
+            case D3D12_SHADER_VISIBILITY_MESH:
+                denyMS = false;
+                break;
+
+            case D3D12_SHADER_VISIBILITY_PIXEL:
+                denyPS = false;
+                break;
+            }
+
+            switch(itr.second.Type)
+            {
+            case D3D_SIT_CBUFFER:
                 {
-                    params[idx].ParameterType               = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-                    params[idx].Constants.Num32BitValues    = itr.second.BufferSize / 4;
-                    params[idx].Constants.RegisterSpace     = itr.second.RegisterSpace;
-                    params[idx].Constants.ShaderRegister    = itr.second.BindPoint;
-                    params[idx].ShaderVisibility            = itr.second.Visibility;
+                    if (itr.second.BufferSize <= 16)
+                    {
+                        params[idx].ParameterType               = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+                        params[idx].Constants.Num32BitValues    = itr.second.BufferSize / 4;
+                        params[idx].Constants.RegisterSpace     = itr.second.RegisterSpace;
+                        params[idx].Constants.ShaderRegister    = itr.second.BindPoint;
+                        params[idx].ShaderVisibility            = itr.second.Visibility;
+                    }
+                    else
+                    {
+                        params[idx].ParameterType               = D3D12_ROOT_PARAMETER_TYPE_CBV;
+                        params[idx].Descriptor.RegisterSpace    = itr.second.RegisterSpace;
+                        params[idx].Descriptor.ShaderRegister   = itr.second.BindPoint;
+                        params[idx].ShaderVisibility            = itr.second.Visibility;
+                    }
                 }
-                else
+                break;
+
+            case D3D_SIT_TBUFFER:
+            case D3D_SIT_TEXTURE:
                 {
-                    params[idx].ParameterType               = D3D12_ROOT_PARAMETER_TYPE_CBV;
+                    params[idx].ParameterType               = D3D12_ROOT_PARAMETER_TYPE_SRV;
                     params[idx].Descriptor.RegisterSpace    = itr.second.RegisterSpace;
                     params[idx].Descriptor.ShaderRegister   = itr.second.BindPoint;
                     params[idx].ShaderVisibility            = itr.second.Visibility;
                 }
-            }
-            break;
+                break;
 
-        case D3D_SIT_TBUFFER:
-        case D3D_SIT_TEXTURE:
-            {
-                params[idx].ParameterType               = D3D12_ROOT_PARAMETER_TYPE_SRV;
-                params[idx].Descriptor.RegisterSpace    = itr.second.RegisterSpace;
-                params[idx].Descriptor.ShaderRegister   = itr.second.BindPoint;
-                params[idx].ShaderVisibility            = itr.second.Visibility;
-            }
-            break;
+            case D3D_SIT_SAMPLER:
+                {
+                    ranges[idx].RangeType           = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
+                    ranges[idx].NumDescriptors      = itr.second.BindCount;
+                    ranges[idx].BaseShaderRegister  = itr.second.BindPoint;
+                    ranges[idx].RegisterSpace       = itr.second.RegisterSpace;
+                    ranges[idx].OffsetInDescriptorsFromTableStart = 0;
 
-        case D3D_SIT_SAMPLER:
-            {
-                ranges[idx].RangeType           = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
-                ranges[idx].NumDescriptors      = itr.second.BindCount;
-                ranges[idx].BaseShaderRegister  = itr.second.BindPoint;
-                ranges[idx].RegisterSpace       = itr.second.RegisterSpace;
-                ranges[idx].OffsetInDescriptorsFromTableStart = 0;
+                    params[idx].ParameterType                       = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+                    params[idx].DescriptorTable.NumDescriptorRanges = 1;
+                    params[idx].DescriptorTable.pDescriptorRanges   = &ranges[idx];
+                    params[idx].ShaderVisibility                    = itr.second.Visibility;
+                }
+                break;
 
-                params[idx].ParameterType                       = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-                params[idx].DescriptorTable.NumDescriptorRanges = 1;
-                params[idx].DescriptorTable.pDescriptorRanges   = &ranges[idx];
-                params[idx].ShaderVisibility                    = itr.second.Visibility;
+            case D3D_SIT_UAV_RWTYPED:
+            case D3D_SIT_UAV_RWSTRUCTURED:
+            case D3D_SIT_UAV_RWBYTEADDRESS:
+            case D3D_SIT_UAV_APPEND_STRUCTURED:
+            case D3D_SIT_UAV_CONSUME_STRUCTURED:
+            case D3D_SIT_UAV_RWSTRUCTURED_WITH_COUNTER:
+                {
+                    params[idx].ParameterType               = D3D12_ROOT_PARAMETER_TYPE_UAV;
+                    params[idx].Descriptor.RegisterSpace    = itr.second.RegisterSpace;
+                    params[idx].Descriptor.ShaderRegister   = itr.second.BindPoint;
+                    params[idx].ShaderVisibility            = itr.second.Visibility;
+                }
+                break;
             }
-            break;
-
-        case D3D_SIT_UAV_RWTYPED:
-        case D3D_SIT_UAV_RWSTRUCTURED:
-        case D3D_SIT_UAV_RWBYTEADDRESS:
-        case D3D_SIT_UAV_APPEND_STRUCTURED:
-        case D3D_SIT_UAV_CONSUME_STRUCTURED:
-        case D3D_SIT_UAV_RWSTRUCTURED_WITH_COUNTER:
-            {
-                params[idx].ParameterType               = D3D12_ROOT_PARAMETER_TYPE_UAV;
-                params[idx].Descriptor.RegisterSpace    = itr.second.RegisterSpace;
-                params[idx].Descriptor.ShaderRegister   = itr.second.BindPoint;
-                params[idx].ShaderVisibility            = itr.second.Visibility;
-            }
-            break;
         }
-    }
 
-    D3D12_ROOT_SIGNATURE_FLAGS flags = D3D12_ROOT_SIGNATURE_FLAG_NONE;
+        D3D12_ROOT_SIGNATURE_FLAGS flags = D3D12_ROOT_SIGNATURE_FLAG_NONE;
 
-    if (denyAS)
-    { flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_AMPLIFICATION_SHADER_ROOT_ACCESS; }
+        if (denyAS)
+        { flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_AMPLIFICATION_SHADER_ROOT_ACCESS; }
 
-    if (denyMS)
-    { flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_MESH_SHADER_ROOT_ACCESS; }
+        if (denyMS)
+        { flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_MESH_SHADER_ROOT_ACCESS; }
 
-    if (denyPS)
-    { flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS; }
+        if (denyPS)
+        { flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS; }
 
 
-    D3D12_ROOT_SIGNATURE_DESC sigDesc = {};
-    sigDesc.NumParameters       = uint32_t(m_Entries.size());
-    sigDesc.pParameters         = params.data();
-    sigDesc.NumStaticSamplers   = 0;
-    sigDesc.pStaticSamplers     = nullptr;
-    sigDesc.Flags               = flags;
+        D3D12_ROOT_SIGNATURE_DESC sigDesc = {};
+        sigDesc.NumParameters       = uint32_t(m_Entries.size());
+        sigDesc.pParameters         = params.data();
+        sigDesc.NumStaticSamplers   = 0;
+        sigDesc.pStaticSamplers     = nullptr;
+        sigDesc.Flags               = flags;
 
-    // ルートシグニチャを生成.
-    {
-        RefPtr<ID3DBlob> pBlob;
-        RefPtr<ID3DBlob> pErrorBlob;
-        auto hr = D3D12SerializeRootSignature(
-            &sigDesc, D3D_ROOT_SIGNATURE_VERSION_1_0, pBlob.GetAddress(), pErrorBlob.GetAddress());
-        if (FAILED(hr))
+        // ルートシグニチャを生成.
         {
-            ELOG("Error : D3D12SerializeRootSignature() Failed. errcode = 0x%x, msg = %s",
-                hr, static_cast<char*>(pErrorBlob->GetBufferPointer()));
-            return false;
+            RefPtr<ID3DBlob> pBlob;
+            RefPtr<ID3DBlob> pErrorBlob;
+            auto hr = D3D12SerializeRootSignature(
+                &sigDesc, D3D_ROOT_SIGNATURE_VERSION_1_0, pBlob.GetAddress(), pErrorBlob.GetAddress());
+            if (FAILED(hr))
+            {
+                ELOG("Error : D3D12SerializeRootSignature() Failed. errcode = 0x%x, msg = %s",
+                    hr, static_cast<char*>(pErrorBlob->GetBufferPointer()));
+                return false;
+            }
+
+            hr = pDevice->CreateRootSignature(
+                0, pBlob->GetBufferPointer(), pBlob->GetBufferSize(), IID_PPV_ARGS(m_pRootSig.GetAddress()));
+            if (FAILED(hr))
+            {
+                ELOG("Error : ID3D12Device::CreateRootSignature() Failed. errcode = 0x%x", hr);
+                return false;
+            }
         }
 
-        hr = pDevice->CreateRootSignature(
-            0, pBlob->GetBufferPointer(), pBlob->GetBufferSize(), IID_PPV_ARGS(m_pRootSig.GetAddress()));
-        if (FAILED(hr))
-        {
-            ELOG("Error : ID3D12Device::CreateRootSignature() Failed. errcode = 0x%x", hr);
-            return false;
-        }
+        pRootSig = m_pRootSig.GetPtr();
     }
 
     // ジオメトリパイプラインステートを生成.
     {
-        GPS_DESC gpsDesc(pDesc);
+        GEOMETRY_PIPELINE_STATE_DESC desc = *pDesc;
+        desc.pRootSignature = pRootSig;
+    
+        GPS_DESC gpsDesc(&desc);
 
         D3D12_PIPELINE_STATE_STREAM_DESC pssDesc = {};
         pssDesc.SizeInBytes = sizeof(gpsDesc);
@@ -1080,5 +1112,193 @@ uint32_t PipelineState::GetThreadY() const
 uint32_t PipelineState::GetThreadZ() const
 { return m_ThreadZ; }
 
+//-----------------------------------------------------------------------------
+//      深度ステンシルステートを取得します.
+//-----------------------------------------------------------------------------
+D3D12_DEPTH_STENCIL_DESC PipelineState::GetDSS(DEPTH_STATE_TYPE type, D3D12_COMPARISON_FUNC func)
+{
+    D3D12_DEPTH_STENCIL_DESC result = {};
+
+    result.StencilEnable                = FALSE;
+    result.StencilReadMask              = D3D12_DEFAULT_STENCIL_READ_MASK;
+    result.StencilWriteMask             = D3D12_DEFAULT_STENCIL_WRITE_MASK;
+    result.FrontFace.StencilFailOp      = D3D12_STENCIL_OP_KEEP;
+    result.FrontFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
+    result.FrontFace.StencilPassOp      = D3D12_STENCIL_OP_KEEP;
+    result.FrontFace.StencilFunc        = D3D12_COMPARISON_FUNC_ALWAYS;
+    result.BackFace.StencilFailOp       = D3D12_STENCIL_OP_KEEP;
+    result.BackFace.StencilDepthFailOp  = D3D12_STENCIL_OP_KEEP;
+    result.BackFace.StencilPassOp       = D3D12_STENCIL_OP_KEEP;
+    result.BackFace.StencilFunc         = D3D12_COMPARISON_FUNC_ALWAYS;
+
+    switch(type)
+    {
+    case DEPTH_STATE_DEFAULT:
+        {
+            result.DepthEnable      = TRUE;
+            result.DepthWriteMask   = D3D12_DEPTH_WRITE_MASK_ALL;
+            result.DepthFunc        = func;
+        }
+        break;
+
+    case DEPTH_STATE_NONE:
+        {
+            result.DepthEnable      = FALSE;
+            result.DepthWriteMask   = D3D12_DEPTH_WRITE_MASK_ZERO;
+            result.DepthFunc        = D3D12_COMPARISON_FUNC_ALWAYS;
+        }
+        break;
+
+    case DEPTH_STATE_READ_ONLY:
+        {
+            result.DepthEnable      = TRUE;
+            result.DepthWriteMask   = D3D12_DEPTH_WRITE_MASK_ZERO;
+            result.DepthFunc        = func;
+        }
+        break;
+
+    case DEPTH_STATE_WRITE_ONLY:
+        {
+            result.DepthEnable      = FALSE;
+            result.DepthWriteMask   = D3D12_DEPTH_WRITE_MASK_ALL;
+            result.DepthFunc        = func;
+        }
+        break;
+    }
+
+    return result;
+}
+
+//-----------------------------------------------------------------------------
+//      ラスタライザーステートを取得します.
+//-----------------------------------------------------------------------------
+D3D12_RASTERIZER_DESC PipelineState::GetRS(RASTERIZER_STATE_TYPE type)
+{
+    D3D12_RASTERIZER_DESC result = {};
+
+    result.FrontCounterClockwise    = FALSE;
+    result.DepthBias                = 0;
+    result.DepthBiasClamp           = 0.0f;
+    result.DepthClipEnable          = TRUE;
+    result.MultisampleEnable        = FALSE;
+    result.AntialiasedLineEnable    = FALSE;
+    result.ForcedSampleCount        = 0;
+    result.ConservativeRaster       = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
+
+    switch(type)
+    {
+    case RASTERIZER_STATE_CULL_NONE:
+        {
+            result.FillMode = D3D12_FILL_MODE_SOLID;
+            result.CullMode = D3D12_CULL_MODE_NONE;
+        }
+        break;
+
+    case RASTERIZER_STATE_CULL_BACK:
+        {
+            result.FillMode = D3D12_FILL_MODE_SOLID;
+            result.CullMode = D3D12_CULL_MODE_BACK;
+        }
+        break;
+
+    case RASTERIZER_STATE_CULL_FRONT:
+        {
+            result.FillMode = D3D12_FILL_MODE_SOLID;
+            result.CullMode = D3D12_CULL_MODE_FRONT;
+        }
+        break;
+
+    case RASTERIZER_STATE_WIREFRAME:
+        {
+            result.FillMode = D3D12_FILL_MODE_WIREFRAME;
+            result.CullMode = D3D12_CULL_MODE_NONE;
+        }
+        break;
+    }
+
+    return result;
+}
+
+//-----------------------------------------------------------------------------
+//      ブレンドステートを取得します.
+//-----------------------------------------------------------------------------
+D3D12_BLEND_DESC PipelineState::GetBS(BLEND_STATE_TYPE type)
+{
+    D3D12_BLEND_DESC result = {};
+
+    result.AlphaToCoverageEnable    = FALSE;
+    result.IndependentBlendEnable   = FALSE;
+    result.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+
+    switch(type)
+    {
+    case BLEND_STATE_OPAQUE:
+        {
+            result.RenderTarget[0].BlendEnable = FALSE;
+            result.RenderTarget[0].SrcBlend    = result.RenderTarget[0].SrcBlendAlpha    = D3D12_BLEND_ONE;
+            result.RenderTarget[0].DestBlend   = result.RenderTarget[0].DestBlendAlpha   = D3D12_BLEND_ZERO;
+            result.RenderTarget[0].BlendOp     = result.RenderTarget[0].BlendOpAlpha     = D3D12_BLEND_OP_ADD;
+        }
+        break;
+
+    case BLEND_STATE_ALPHABLEND:
+        {
+            result.RenderTarget[0].BlendEnable = TRUE;
+            result.RenderTarget[0].SrcBlend    = result.RenderTarget[0].SrcBlendAlpha    = D3D12_BLEND_SRC_ALPHA;
+            result.RenderTarget[0].DestBlend   = result.RenderTarget[0].DestBlendAlpha   = D3D12_BLEND_INV_SRC_ALPHA;
+            result.RenderTarget[0].BlendOp     = result.RenderTarget[0].BlendOpAlpha     = D3D12_BLEND_OP_ADD;
+        }
+        break;
+
+    case BLEND_STATE_ADDITIVE:
+        {
+            result.RenderTarget[0].BlendEnable = TRUE;
+            result.RenderTarget[0].SrcBlend    = result.RenderTarget[0].SrcBlendAlpha    = D3D12_BLEND_SRC_ALPHA;
+            result.RenderTarget[0].DestBlend   = result.RenderTarget[0].DestBlendAlpha   = D3D12_BLEND_ONE;
+            result.RenderTarget[0].BlendOp     = result.RenderTarget[0].BlendOpAlpha     = D3D12_BLEND_OP_ADD;
+        }
+        break;
+
+    case BLEND_STATE_SUBTRACT:
+        {
+            result.RenderTarget[0].BlendEnable = TRUE;
+            result.RenderTarget[0].SrcBlend    = result.RenderTarget[0].SrcBlendAlpha    = D3D12_BLEND_SRC_ALPHA;
+            result.RenderTarget[0].DestBlend   = result.RenderTarget[0].DestBlendAlpha   = D3D12_BLEND_ONE;
+            result.RenderTarget[0].BlendOp     = result.RenderTarget[0].BlendOpAlpha     = D3D12_BLEND_OP_REV_SUBTRACT;
+        }
+        break;
+
+    case BLEND_STATE_PREMULTIPLIED:
+        {
+            result.RenderTarget[0].BlendEnable = TRUE;
+            result.RenderTarget[0].SrcBlend    = result.RenderTarget[0].SrcBlendAlpha    = D3D12_BLEND_ONE;
+            result.RenderTarget[0].DestBlend   = result.RenderTarget[0].DestBlendAlpha   = D3D12_BLEND_INV_SRC_ALPHA;
+            result.RenderTarget[0].BlendOp     = result.RenderTarget[0].BlendOpAlpha     = D3D12_BLEND_OP_ADD;
+        }
+        break;
+
+    case BLEND_STATE_MULTIPLY:
+        {
+            result.RenderTarget[0].BlendEnable    = TRUE;
+            result.RenderTarget[0].SrcBlend       = result.RenderTarget[0].SrcBlendAlpha    = D3D12_BLEND_ZERO;
+            result.RenderTarget[0].DestBlend      = D3D12_BLEND_SRC_COLOR;
+            result.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_SRC_ALPHA;
+            result.RenderTarget[0].BlendOp        = result.RenderTarget[0].BlendOpAlpha     = D3D12_BLEND_OP_ADD;
+        }
+        break;
+
+    case BLEND_STATE_SCREEN:
+        {
+            result.RenderTarget[0].BlendEnable    = TRUE;
+            result.RenderTarget[0].SrcBlend       = D3D12_BLEND_DEST_COLOR;
+            result.RenderTarget[0].SrcBlendAlpha  = D3D12_BLEND_DEST_ALPHA;
+            result.RenderTarget[0].DestBlend      = result.RenderTarget[0].DestBlendAlpha   = D3D12_BLEND_ONE;
+            result.RenderTarget[0].BlendOp        = result.RenderTarget[0].BlendOpAlpha     = D3D12_BLEND_OP_ADD;
+        }
+        break;
+    }
+
+    return result;
+}
 
 } // namespace asdx

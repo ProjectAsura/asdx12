@@ -1,4 +1,4 @@
-//-------------------------------------------------------------------------------------------------
+﻿//-------------------------------------------------------------------------------------------------
 // File : CopyPS.hlsl
 // Desc : Pixel Shader For Copy.
 // Copyright(c) Project Asura. All right resreved.
@@ -25,5 +25,5 @@ SamplerState    ColorSmp : register(s0);
 //-------------------------------------------------------------------------------------------------
 float4 main(const VSOutput input) : SV_TARGET
 {
-    return ColorMap.SampleLevel(ColorSmp, input.TexCoord, 0);
+    return ColorMap.Sample(ColorSmp, input.TexCoord);
 }

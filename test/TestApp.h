@@ -9,6 +9,9 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <asdxApp.h>
+#include <asdxConstantBuffer.h>
+#include <asdxVertexBuffer.h>
+#include <asdxPipelineState.h>
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -37,7 +40,9 @@ private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    asdx::Queue*  m_pGraphicsQueue = nullptr;
+    asdx::Queue*            m_pGraphicsQueue = nullptr;
+    asdx::VertexBuffer      m_TriangleVB;
+    asdx::PipelineState     m_PSO;
 
     //=========================================================================
     // private methods.

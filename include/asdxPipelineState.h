@@ -22,6 +22,17 @@
 #define D3DCOMPILE_DEBUG 1      // デバッグ情報がシェーダー BLOB に出力されるようする.
 #endif//defined(DEBUG) || defined(_DEBUG)
 
+//-----------------------------------------------------------------------------
+// Linker
+//-----------------------------------------------------------------------------
+#ifdef ASDX_AUTO_LINK
+    #ifdef ASDX_ENABLE_DXC
+        #pragma comment( lib, "dxcompiler.lib" )
+    #else
+        #pragma comment( lib, "d3dcompiler.lib")
+    #endif
+#endif
+
 
 namespace asdx {
 
@@ -33,6 +44,48 @@ enum PIPELINE_TYPE
     PIPELINE_TYPE_GRAPHICS,     //!< Legacy Graphics Pipeline.
     PIPELINE_TYPE_COMPUTE,      //!< Compute Pipeline.
     PIPELINE_TYPE_GEOMETRY,     //!< Mesh Shader Pipeline.
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// DEPTH_STATE_TYPE
+///////////////////////////////////////////////////////////////////////////////
+enum DEPTH_STATE_TYPE
+{
+    DEPTH_STATE_DEFAULT,
+    DEPTH_STATE_NONE,
+    DEPTH_STATE_READ_ONLY,
+    DEPTH_STATE_WRITE_ONLY,
+
+    MAX_COUNT_DEPTH_STATE_TYPE
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// RASTERIZER_STATE_TYPE
+///////////////////////////////////////////////////////////////////////////////
+enum RASTERIZER_STATE_TYPE
+{
+    RASTERIZER_STATE_CULL_NONE,
+    RASTERIZER_STATE_CULL_BACK,
+    RASTERIZER_STATE_CULL_FRONT,
+    RASTERIZER_STATE_WIREFRAME,
+
+    MAX_COUNT_RASTERIZER_STATE_TYPE
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// BLEND_STATE_TYPE
+///////////////////////////////////////////////////////////////////////////////
+enum BLEND_STATE_TYPE
+{
+    BLEND_STATE_OPAQUE,
+    BLEND_STATE_ALPHABLEND,
+    BLEND_STATE_ADDITIVE,
+    BLEND_STATE_SUBTRACT,
+    BLEND_STATE_PREMULTIPLIED,
+    BLEND_STATE_MULTIPLY,
+    BLEND_STATE_SCREEN,
+
+    MAX_COUNT_BLEND_STATE_TYPE
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -55,6 +108,7 @@ struct GEOMETRY_PIPELINE_STATE_DESC
     D3D12_CACHED_PIPELINE_STATE CachedPSO;              //!< キャッシュ済みPSO.
     D3D12_PIPELINE_STATE_FLAGS  Flags;                  //!< フラグ.
 };
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // PipelineState class
@@ -222,6 +276,33 @@ public:
     //! @return     Z方向のスレッドサイズを返却します.
     //-------------------------------------------------------------------------
     uint32_t GetThreadZ() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      深度ステンシルステートを取得します.
+    //!
+    //! @param[in]      type        深度ステンシルステートタイプ.
+    //! @param[in]      func        深度比較関数です.
+    //! @return     深度ステンシルステートを返却します.
+    //-------------------------------------------------------------------------
+    static D3D12_DEPTH_STENCIL_DESC GetDSS(
+        DEPTH_STATE_TYPE        type,
+        D3D12_COMPARISON_FUNC   func = D3D12_COMPARISON_FUNC_LESS_EQUAL);
+
+    //-------------------------------------------------------------------------
+    //! @brief      ラスタライザーステートを取得します.
+    //!
+    //! @param[in]      type        ラスタライザーステートタイプ.
+    //! @return     ラスタライザーステートを返却します.
+    //-------------------------------------------------------------------------
+    static D3D12_RASTERIZER_DESC GetRS(RASTERIZER_STATE_TYPE type);
+
+    //-------------------------------------------------------------------------
+    //! @brief      ブレンドステートを取得します.
+    //!
+    //! @param[in]      type        ブレンドステートタイプ.
+    //! @return     ブレンドステートを返却します.
+    //-------------------------------------------------------------------------
+    static D3D12_BLEND_DESC GetBS(BLEND_STATE_TYPE type);
 
 private:
     //=========================================================================

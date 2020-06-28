@@ -1,4 +1,4 @@
-//-----------------------------------------------------------------------------
+﻿//-----------------------------------------------------------------------------
 // File : BRDF.hlsli
 // Desc : BRDF.
 // Copyright(c) Project Asura. All right reserved.
@@ -560,9 +560,9 @@ void EvaluateThinGlass
     const float cosRefractedTheta  = sqrt(1 - sinRefractedTheta2);
 
     const float q0 = mad(eta, cosRefractedTheta, -NoV);
-    const float q1 = mad(eta, cosRefractedTheta, NoV);
+    const float q1 = mad(eta, cosRefractedTheta,  NoV);
     const float q2 = mad(eta, NoV, -cosRefractedTheta);
-    const float q3 = mad(eta, NoV, cosRefractedTheta);
+    const float q3 = mad(eta, NoV,  cosRefractedTheta);
 
     const float r0 = q0 / q1;
     const float r1 = q2 / q3;
@@ -645,9 +645,8 @@ float3 BRDFSampleGGX(float2 u, float roughness)
 
     return float3(
         sinTheta * cos(phi),
-        sinTehta * sin(phi),
+        sinTheta * sin(phi),
         cosTheta);
 }
-
 
 #endif//ADX_BRDF_HLSLI

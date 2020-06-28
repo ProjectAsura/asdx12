@@ -1,4 +1,4 @@
-//-----------------------------------------------------------------------------
+﻿//-----------------------------------------------------------------------------
 // File : SkySphereVS.hlsl
 // Desc : Vertex Shader For SkySphere.
 // Copyright(c) Project Asura. All right reserved.

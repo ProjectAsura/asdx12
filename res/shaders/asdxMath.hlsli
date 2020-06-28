@@ -10,6 +10,7 @@
 // Constant Values.
 //-----------------------------------------------------------------------------
 static const float HALF_MAX = 65504.0f;         // 半精度浮動小数の最大値.
+static const float FLT_NAN  = 0x7fc00000;       // qNaN
 static const float FLT_MAX  = 3.402823466e+38f; // 浮動小数の最大値.
 static const float F_PI     = 3.1415926535897932384626433832795f;
 static const float F_1DIVPI = 0.31830988618379067153776752674503f;
@@ -670,28 +671,9 @@ float3 RecalcTangent(float3 normalMappedN, float3 T)
 float Random(float2 value)
 { return frac(sin(dot(value.xy, float2(12.9898, 78.233))) * 43758.5453); }
 
-float GoldNoise(float2 value, float time)
-{
-    const float F_PHI    = 1.61803398874989484820459 * 0.1;
-    const float F_SQ2    = 1.41421356237309504880169 * 10000.0;
-
-    return frac(tan(distance(value * (time + F_PHI), float2(F_PHI, F_PI))) * F_SQ2);
-}
-
-float InvErrorFunction(float x)
-{
-    float y = log(1.0f - x * x);
-    float z = 2.0f / (F_PI * 0.14f);
-    return sqrt(sqrt(z * z - y * 1.0f / 0.14f) - z) * sign(x);
-}
-
-float GaussianNoise(float2 value, float time)
-{
-    float t = frac(time);
-    float x = Random(value + 0.07f * t);
-    return InvErrorFunction(x * 2.0f - 1.0f) * 0.15f + 0.5f;
-}
-
+//-----------------------------------------------------------------------------
+//      バリューノイズを生成します.
+//-----------------------------------------------------------------------------
 float ValueNoise(float2 p)
 {
     float2 i = floor(p);
@@ -703,155 +685,29 @@ float ValueNoise(float2 p)
     return lerp(nx0, nx1, s.y);
 }
 
-float BitsTo01(uint bits)
-{
-    uint div = 0xffffffff;
-    return bits * (1.0 / float(div));
-}
-
-uint Rotl32(uint var, uint hops)
-{
-    return (var << hops) | (var >> (32 - hops));
-}
-
-void Bjmix(inout uint a, inout uint b, inout uint c)
-{
-    a -= c;  a ^= Rotl32(c, 4);  c += b;
-    b -= a;  b ^= Rotl32(a, 6);  a += c;
-    c -= b;  c ^= Rotl32(b, 8);  b += a;
-    a -= c;  a ^= Rotl32(c, 16);  c += b;
-    b -= a;  b ^= Rotl32(a, 19);  a += c;
-    c -= b;  c ^= Rotl32(b, 4);  b += a;
-}
-
-uint Bjfinal(uint a, uint b, uint c)
-{
-    c ^= b; c -= Rotl32(b, 14);
-    a ^= c; a -= Rotl32(c, 11);
-    b ^= a; b -= Rotl32(a, 25);
-    c ^= b; c -= Rotl32(b, 16);
-    a ^= c; a -= Rotl32(c, 4);
-    b ^= a; b -= Rotl32(a, 14);
-    c ^= b; c -= Rotl32(b, 24);
-    return c;
-}
-
-uint Inthash(uint4 k)
-{
-    int N = 4;
-
-    uint len = N;
-    uint a = 0xdeadbeef + (len << 2) + 13;
-    uint b = 0xdeadbeef + (len << 2) + 13;
-    uint c = 0xdeadbeef + (len << 2) + 13;
-
-    a += k[0];
-    b += k[1];
-    c += k[2];
-    Bjmix(a, b, c);
-
-    a += k[3];
-    c = Bjfinal(a, b, c);
-
-    return c;
-}
-
-float3 Hash3(uint4 k)
-{
-    int N = 4;
-    float3 result;
-    k[N - 1] = 0;   result.x = BitsTo01(Inthash(k));
-    k[N - 1] = 1;   result.y = BitsTo01(Inthash(k));
-    k[N - 1] = 2;   result.z = BitsTo01(Inthash(k));
-    return result;
-}
-
-float3 CellNoise(float3 p)
-{
-    uint4 iv;
-    iv[0] = uint(floor(p.x));
-    iv[1] = uint(floor(p.y));
-    iv[2] = uint(floor(p.z));
-    return Hash3(iv);
-}
-
 //-----------------------------------------------------------------------------
-//      フレーク法線を生成します.
+//      オーバーレイします.
 //-----------------------------------------------------------------------------
-void Flakes
-(
-    float2      uv,
-    float       scale,
-    float       variance,
-    float       size,
-    float       orientation,
-    out float3  normal,
-    out float   alpha
-)
-{
-    float safe_flake_size_variance = clamp(variance, 0.1, 1.0);
-
-    const float3 cellCenters[9] = {
-        float3( 0.5,  0.5, 0.0),
-        float3( 1.5,  0.5, 0.0),
-        float3( 1.5,  1.5, 0.0),
-        float3( 0.5,  1.5, 0.0),
-        float3(-0.5,  1.5, 0.0),
-        float3(-0.5,  0.5, 0.0),
-        float3(-0.5, -0.5, 0.0),
-        float3( 0.5, -0.5, 0.0),
-        float3( 1.5, -0.5, 0.0)
-    };
-
-    float3 position = float3(uv, 0.0);
-    position = scale * position;
-
-    float3 base = floor(position);
-
-    float3 nearestCell = float3(0.0, 0.0, 1.0);
-    int nearestCellIndex = -1;
-
-    [unroll]
-    for (int i = 0; i < 9; ++i)
-    {
-        float3 cellCenter = base + cellCenters[i];
-
-        float3 centerOffset = CellNoise(cellCenter) * 2.0 - 1.0;
-        centerOffset[2] *= safe_flake_size_variance;
-        centerOffset = normalize(centerOffset);
-
-        cellCenter += 0.5 * centerOffset;
-        float cellDistance = distance(position, cellCenter);
-
-        if (cellDistance < size && cellCenter[2] < nearestCell[2])
-        {
-            nearestCell = cellCenter;
-            nearestCellIndex = i;
-        }
-    }
-
-    normal = float3(0.5, 0.5, 1.0);
-    alpha  = 0.0;
-
-    float3 I = float3(0, 0, 1);
-
-    if (nearestCellIndex != -1)
-    {
-        float3 randomNormal = CellNoise(base + cellCenters[nearestCellIndex] + float3(0.0, 0.0, 1.5));
-        randomNormal = 2.0 * randomNormal - 1.0;
-        randomNormal = faceforward(randomNormal, I, randomNormal);
-        randomNormal = normalize(lerp(randomNormal, float3(0.0, 0.0, 1.0), orientation));
-
-        normal = float3(0.5 * randomNormal[0] + 0.5, -0.5 * randomNormal[1] + 0.5, randomNormal[2]);
-        alpha  = 1.0;
-    }
-}
-
 float Overlay(float v0, float v1)
 { return v0 * (v0 + 2.f * v1 * (1.f - v0)); }
 
+//-----------------------------------------------------------------------------
+//      オーバーレイします.
+//-----------------------------------------------------------------------------
+float2 Overlay(float2 v0, float2 v1)
+{ return v0 * (v0 + 2.f.xx * v1 * (1.f.xx - v0)); }
+
+//-----------------------------------------------------------------------------
+//      オーバーレイします.
+//-----------------------------------------------------------------------------
 float3 Overlay(float3 v0, float3 v1)
 { return v0 * (v0 + 2.f.xxx * v1 * (1.f.xxx - v0)); }
+
+//-----------------------------------------------------------------------------
+//      オーバーレイします.
+//-----------------------------------------------------------------------------
+float4 Overlay(float4 v0, float4 v1)
+{ return v0 * (v0 + 2.f.xxxx * v1 * (1.f.xxxx - v0)); }
 
 //-----------------------------------------------------------------------------
 //      3要素の合計を求めます.
@@ -864,39 +720,6 @@ float Sum(float3 v)
 //-----------------------------------------------------------------------------
 float Sum(float4 v)
 { return v.x + v.y + v.z + v.w; }
-
-//-----------------------------------------------------------------------------
-//      リピートが目立たないようにテクスチャをサンプリングします.
-//-----------------------------------------------------------------------------
-float4 TextureNoTile
-(
-    Texture2D       colorMap,
-    SamplerState    colorSmp,
-    Texture2D       randomMap,
-    SamplerState    randomSmp,
-    float2          uv, 
-    float           v
-)
-{
-    // http://www.iquilezles.org/www/articles/texturerepetition/texturerepetition.htm
-
-    float k = randomMap.Sample(randomSmp, 0.005 * uv).x; // cheap (cache friendly) lookup
-
-    float2 duvdx = ddx(uv);
-    float2 duvdy = ddy(uv);
- 
-    float l = k * 16.0;
-    float i = floor( l );
-    float f = frac( l );
-
-    float2 offa = sin(float2(7.0f, 5.0f) * (i + 0.0)); // can replace with any other hash
-    float2 offb = sin(float2(7.0f, 5.0f) * (i + 1.0)); // can replace with any other hash
-
-    float4 cola = colorMap.SampleGrad(colorSmp, uv + v * offa, duvdx, duvdy );
-    float4 colb = colorMap.SampleGrad(colorSmp, uv + v * offb, duvdx, duvdy );
-
-    return lerp( cola, colb, smoothstep(0.2, 0.8, f - 0.1 * Sum(cola - colb)) );
-}
 
 //-----------------------------------------------------------------------------
 //      UVアニメーションを行います.
@@ -923,6 +746,23 @@ float ToksvigRoughness(float3 normal, float roughness)
     float shininess     = 1.0f - roughness;
     float toksvig_shininess = length_normal * shininess / (length_normal + shininess * (1.0f - length_normal));
     return 1.0f - toksvig_shininess;
+}
+
+//-----------------------------------------------------------------------------
+//      Toku-Kaplanyanフィルタを適用します.
+//-----------------------------------------------------------------------------
+float TokuyoshiRoughness(float3 normal, float roughness, float sigma2, float kappa)
+{
+    // Yusuke Tokuyoshi and Anton S. Kaplanyan, "Improved Geometric Specular Antialiasing",
+    // ACM SIGGRAPH Symposium on Interactive 3D Graphics and Games 2019, 
+    // sigma2 : screen-space variance.
+    // kappa  : clamping threshold.
+    // ※ sigma^2 = 0.25, kappa = 0.18 in the paper.
+    float3 dndu = ddx(normal);
+    float3 dndv = ddy(normal);
+    float variance = sigma2 * (dot(dndu, dndu) + dot(dndv, dndv));
+    float kernelRoughness2 = min(2.0f * variance, kappa);
+    return sqrt(saturate(roughness * roughness + kernelRoughness2));
 }
 
 //-----------------------------------------------------------------------------
@@ -1460,6 +1300,7 @@ float3 UniformSampleSphere(float2 u)
 {
     float z = 1.0f - 2.0f * u.x;
     float r = sqrt(max(0.0f, 1.0f - z * z));
+    float phi = 2.0f * F_PI * u.y;
 
     return float3(r * cos(phi), r * sin(phi), z);
 }
@@ -1504,6 +1345,72 @@ float PowerHeuristic(float nf, float pf, float ng, float pg)
     float f = nf * pf;
     float g = ng * pg;
     return (f * f) / (f * f + g * g);
+}
+
+//-----------------------------------------------------------------------------
+//      X軸を取得します.
+//-----------------------------------------------------------------------------
+float3 GetAxisX(float4x4 view)
+{ return normalize(view._11_12_13); }
+
+//-----------------------------------------------------------------------------
+//      Y軸を取得します.
+//-----------------------------------------------------------------------------
+float3 GetAxisY(float4x4 view)
+{ return normalize(view._21_22_23); }
+
+//-----------------------------------------------------------------------------
+//      Z軸を取得します.
+//-----------------------------------------------------------------------------
+float3 GetAxisZ(float4x4 view)
+{ return normalize(view._31_32_33); }
+
+//-----------------------------------------------------------------------------
+//      平行移動成分を取得します.
+//-----------------------------------------------------------------------------
+float3 GetTranslate(float4x4 view)
+{ return view._41_42_43; }
+
+//-----------------------------------------------------------------------------
+//      X軸周りの回転行列を生成します.
+//-----------------------------------------------------------------------------
+float4x4 CreateRotationX(float radian)
+{
+    float sinRad, cosRad;
+    sincos(radian, sinRad, cosRad);
+    return float4x4(
+        1.0f,     0.0f,     0.0f,   0.0f,
+        0.0f,    cosRad,  sinRad,   0.0f,
+        0.0f,   -sinRad,  cosRad,   0.0f,
+        0.0f,      0.0f,    0.0f,   1.0f);
+}
+
+//-----------------------------------------------------------------------------
+//      Y軸周りの回転行列を生成します.
+//-----------------------------------------------------------------------------
+float4x4 CreateRotationY(float radian)
+{
+    float sinRad, cosRad;
+    sincos(radian, sinRad, cosRad);
+    return float4x4(
+        cosRad,     0.0f,   -sinRad,    0.0f,
+          0.0f,     1.0f,      0.0f,    0.0f,
+        sinRad,     0.0f,    cosRad,    0.0f,
+          0.0f,     0.0f,      0.0f,    1.0f);
+}
+
+//-----------------------------------------------------------------------------
+//      Z軸周りの回転行列を生成します.
+//-----------------------------------------------------------------------------
+float4x4 CreateRotationZ(float radian)
+{
+    float sinRad, cosRad;
+    sincos(radian, sinRad, cosRad);
+    return float4x4(
+      cosRad,   sinRad,     0.0f,   0.0f,
+     -sinRad,   cosRad,     0.0f,   0.0f,
+        0.0f,     0.0f,     1.0f,   0.0f,
+        0.0f,     0.0f,     0.0f,   1.0f);
 }
 
 #endif//ASDX_MATH_HLSLI

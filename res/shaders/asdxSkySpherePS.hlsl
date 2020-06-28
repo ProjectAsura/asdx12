@@ -1,4 +1,4 @@
-//-----------------------------------------------------------------------------
+﻿//-----------------------------------------------------------------------------
 // File : SkySpherePS.hlsl
 // Desc : Pixel Shader For SkySphere.
 // Copyright(c) Project Asura. All right reserved.
@@ -26,6 +26,6 @@ SamplerState SphereSmp : register(s0);
 //-----------------------------------------------------------------------------
 float4 main(const VSOutput input) : SV_TARGET
 {
-    float3 color = SphereMap.SampleLevel(SphereSmp, input.TexCoord, 0).rgb;
-    return float4(color, 0.0f);
+    float3 color = SphereMap.Sample(SphereSmp, input.TexCoord).rgb;
+    return float4(color, 1.0f);
 }
