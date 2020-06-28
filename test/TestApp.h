@@ -12,6 +12,7 @@
 #include <asdxConstantBuffer.h>
 #include <asdxVertexBuffer.h>
 #include <asdxPipelineState.h>
+#include <asdxResourceDisposer.h>
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -43,6 +44,7 @@ private:
     asdx::Queue*            m_pGraphicsQueue = nullptr;
     asdx::VertexBuffer      m_TriangleVB;
     asdx::PipelineState     m_PSO;
+    asdx::ResourceDisposer  m_Disposer;
 
     //=========================================================================
     // private methods.

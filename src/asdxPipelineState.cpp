@@ -514,10 +514,16 @@ bool PipelineState::Init(ID3D12Device* pDevice, const D3D12_GRAPHICS_PIPELINE_ST
             case D3D_SIT_UAV_CONSUME_STRUCTURED:
             case D3D_SIT_UAV_RWSTRUCTURED_WITH_COUNTER:
                 {
-                    params[idx].ParameterType               = D3D12_ROOT_PARAMETER_TYPE_UAV;
-                    params[idx].Descriptor.RegisterSpace    = itr.second.RegisterSpace;
-                    params[idx].Descriptor.ShaderRegister   = itr.second.BindPoint;
-                    params[idx].ShaderVisibility            = itr.second.Visibility;
+                    ranges[idx].RangeType           = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+                    ranges[idx].NumDescriptors      = itr.second.BindCount;
+                    ranges[idx].BaseShaderRegister  = itr.second.BindPoint;
+                    ranges[idx].RegisterSpace       = itr.second.RegisterSpace;
+                    ranges[idx].OffsetInDescriptorsFromTableStart = 0;
+
+                    params[idx].ParameterType                       = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+                    params[idx].DescriptorTable.NumDescriptorRanges = 1;
+                    params[idx].DescriptorTable.pDescriptorRanges   = &ranges[idx];
+                    params[idx].ShaderVisibility                    = itr.second.Visibility;
                 }
                 break;
             }

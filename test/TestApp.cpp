@@ -62,9 +62,9 @@ bool TestApp::OnInit()
     // 頂点データ
     {
         const Vertex vertices[] = {
-            { asdx::Vector3( 0.0f, 1.0f, 0.0f), asdx::Vector2(0.5f, 1.0f) },
-            { asdx::Vector3( 1.0f, 0.0f, 0.0f), asdx::Vector2(1.0f, 0.0f) },
-            { asdx::Vector3(-1.0f, 0.0f, 0.0f), asdx::Vector2(0.0f, 0.0f) },
+            { asdx::Vector3( 0.0f,  0.5f, 0.0f), asdx::Vector2(0.5f, 1.0f) },
+            { asdx::Vector3( 0.5f, -0.5f, 0.0f), asdx::Vector2(1.0f, 0.0f) },
+            { asdx::Vector3(-0.5f, -0.5f, 0.0f), asdx::Vector2(0.0f, 0.0f) },
         };
 
         if (!m_TriangleVB.Init(pDevice, sizeof(vertices), sizeof(Vertex)))
@@ -85,7 +85,7 @@ bool TestApp::OnInit()
         desc.VS                     = { TestVS, sizeof(TestVS) };
         desc.PS                     = { TestPS, sizeof(TestPS) };
         desc.BlendState             = asdx::PipelineState::GetBS(asdx::BLEND_STATE_OPAQUE);
-        desc.RasterizerState        = asdx::PipelineState::GetRS(asdx::RASTERIZER_STATE_CULL_NONE);
+        desc.RasterizerState        = asdx::PipelineState::GetRS(asdx::RASTERIZER_STATE_CULL_BACK);
         desc.DepthStencilState      = asdx::PipelineState::GetDSS(asdx::DEPTH_STATE_DEFAULT);
         desc.InputLayout            = { elements, 2 };
         desc.PrimitiveTopologyType  = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
@@ -112,6 +112,7 @@ void TestApp::OnTerm()
 {
     m_TriangleVB.Term();
     m_PSO.Term();
+    m_Disposer.Clear();
 }
 
 //-----------------------------------------------------------------------------
@@ -162,6 +163,9 @@ void TestApp::OnFrameRender(asdx::FrameEventArgs& args)
 
     // 画面に表示.
     Present(0);
+
+    // フレーム同期.
+    m_Disposer.FrameSync();
 }
 
 //-----------------------------------------------------------------------------
