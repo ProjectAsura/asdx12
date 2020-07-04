@@ -22,7 +22,7 @@ SamplerState    LinearClamp : register(s0);
 //-----------------------------------------------------------------------------
 //      メインエントリーポイントです.
 //-----------------------------------------------------------------------------
-float4 main(const VSOutput input) : SV_TARGET
+float4 main(const VSOutput input) : SV_TARGET0
 {
     return ColorMap.Sample(LinearClamp, input.TexCoord);
 }

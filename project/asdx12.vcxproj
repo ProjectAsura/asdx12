@@ -54,7 +54,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);ASDX_AUTO_LINK;ASDX_ENABLE_DXC</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\dxc;$(ProjectDir)..\external\d3dx12;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\d3dx12;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -76,7 +76,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);ASDX_AUTO_LINK;ASDX_ENABLE_DXC</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\dxc;$(ProjectDir)..\external\d3dx12;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\d3dx12;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -120,6 +120,9 @@
     <ClCompile Include="..\src\asdxQueue.cpp" />
     <ClCompile Include="..\src\asdxRandom.cpp" />
     <ClCompile Include="..\src\asdxResourceDisposer.cpp" />
+    <ClCompile Include="..\src\asdxResTexture.cpp" />
+    <ClCompile Include="..\src\asdxRootSignature.cpp" />
+    <ClCompile Include="..\src\asdxShaderReflection.cpp" />
     <ClCompile Include="..\src\asdxTablet.cpp" />
     <ClCompile Include="..\src\asdxTarget.cpp" />
     <ClCompile Include="..\src\asdxTcpConnector.cpp" />
@@ -156,6 +159,9 @@
     <ClInclude Include="..\include\asdxQueue.h" />
     <ClInclude Include="..\include\asdxRef.h" />
     <ClInclude Include="..\include\asdxResourceDisposer.h" />
+    <ClInclude Include="..\include\asdxResTexture.h" />
+    <ClInclude Include="..\include\asdxRootSignature.h" />
+    <ClInclude Include="..\include\asdxShaderReflection.h" />
     <ClInclude Include="..\include\asdxStepTimer.h" />
     <ClInclude Include="..\include\asdxStopWatch.h" />
     <ClInclude Include="..\include\asdxTablet.h" />

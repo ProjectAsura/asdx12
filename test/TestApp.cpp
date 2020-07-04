@@ -29,6 +29,23 @@ struct Vertex
     asdx::Vector2 TexCoord;
 };
 
+///////////////////////////////////////////////////////////////////////////////
+// CbMesh structure
+///////////////////////////////////////////////////////////////////////////////
+struct alignas(256) CbMesh
+{
+    asdx::Matrix    World;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// CbScene structure
+///////////////////////////////////////////////////////////////////////////////
+struct alignas(256) CbScene
+{
+    asdx::Matrix    View;
+    asdx::Matrix    Proj;
+};
+
 } // namespace
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -74,6 +91,29 @@ bool TestApp::OnInit()
         }
     }
 
+    // ルートシグニチャ.
+    {
+        auto flag = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+        flag |= D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
+        flag |= D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS;
+        flag |= D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS;
+        flag |= D3D12_ROOT_SIGNATURE_FLAG_DENY_MESH_SHADER_ROOT_ACCESS;
+        flag |= D3D12_ROOT_SIGNATURE_FLAG_DENY_AMPLIFICATION_SHADER_ROOT_ACCESS;
+
+        asdx::RootSignatureDesc desc;
+        m_IndexCBMesh       = desc.AddCBV(asdx::SV_VS, 0);
+        m_IndexCBScene      = desc.AddCBV(asdx::SV_VS, 1);
+        m_IndexColorMap     = desc.AddSRV(asdx::SV_PS, 0);
+        m_IndexLinearClamp  = desc.AddStaticSampler(asdx::SV_PS, asdx::SS_LINEAR_CLAMP, 0);
+        desc.SetFlag(flag);
+
+        if (!m_RootSignature.Init(pDevice, desc))
+        {
+            ELOG("Error : RootSignature::Init() Failed.");
+            return false;
+        }
+    }
+
     // パイプラインステート.
     {
         D3D12_INPUT_ELEMENT_DESC elements[] = {
@@ -82,6 +122,7 @@ bool TestApp::OnInit()
         };
 
         D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = {};
+        desc.pRootSignature         = m_RootSignature.GetPtr();
         desc.VS                     = { TestVS, sizeof(TestVS) };
         desc.PS                     = { TestPS, sizeof(TestPS) };
         desc.BlendState             = asdx::PipelineState::GetBS(asdx::BLEND_STATE_OPAQUE);
@@ -102,6 +143,18 @@ bool TestApp::OnInit()
         }
     }
 
+    if (!m_CbMesh.Init(asdx::GfxDevice(), sizeof(CbMesh)))
+    {
+        ELOG("Error : CbMesh Initialize Failed");
+        return false;
+    }
+
+    if (!m_CbScene.Init(asdx::GfxDevice(), sizeof(CbScene)))
+    {
+        ELOG("Error : CbScene Initialize Failed.");
+        return false;
+    }
+
     return true;
 }
 
@@ -110,9 +163,12 @@ bool TestApp::OnInit()
 //-----------------------------------------------------------------------------
 void TestApp::OnTerm()
 {
-    m_TriangleVB.Term();
-    m_PSO.Term();
-    m_Disposer.Clear();
+    m_TriangleVB    .Term();
+    m_PSO           .Term();
+    m_RootSignature .Term();
+    m_CbMesh        .Term();
+    m_CbScene       .Term();
+    m_Disposer      .Clear();
 }
 
 //-----------------------------------------------------------------------------
@@ -138,9 +194,18 @@ void TestApp::OnFrameRender(asdx::FrameEventArgs& args)
 
     asdx::SetRenderTarget(pCmd, pRTV, pDSV);
 
-    // 描画処理.
-    {
-    }
+    //// 描画処理.
+    //{
+    //    auto vbv = m_TriangleVB.GetView();
+    //    pCmd->SetGraphicsRootSignature(m_RootSignature.GetPtr());
+    //    pCmd->SetPipelineState(m_PSO.GetPtr());
+    //    pCmd->SetGraphicsRootConstantBufferView(m_IndexCBMesh, m_CbMesh.GetResource()->GetGPUVirtualAddress());
+    //    pCmd->SetGraphicsRootConstantBufferView(m_IndexCBScene, m_CbScene.GetResource()->GetGPUVirtualAddress());
+    //    //pCmd->SetGraphicsRootDescriptorTable(m_IndexColorMap, );
+
+    //    pCmd->IASetVertexBuffers(0, 1, &vbv);
+    //    pCmd->DrawInstanced(3, 1, 0, 0);
+    //}
 
     asdx::BarrierTransition(
         pCmd,
