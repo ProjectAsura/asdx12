@@ -126,6 +126,7 @@
     <ClCompile Include="..\src\asdxTablet.cpp" />
     <ClCompile Include="..\src\asdxTarget.cpp" />
     <ClCompile Include="..\src\asdxTcpConnector.cpp" />
+    <ClCompile Include="..\src\asdxTexture.cpp" />
     <ClCompile Include="..\src\asdxVertexBuffer.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -167,6 +168,7 @@
     <ClInclude Include="..\include\asdxTablet.h" />
     <ClInclude Include="..\include\asdxTarget.h" />
     <ClInclude Include="..\include\asdxTcpConnector.h" />
+    <ClInclude Include="..\include\asdxTexture.h" />
     <ClInclude Include="..\include\asdxTimer.h" />
     <ClInclude Include="..\include\asdxVertexBuffer.h" />
   </ItemGroup>

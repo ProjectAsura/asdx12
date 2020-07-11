@@ -1001,40 +1001,6 @@ void Parse16BitsGrayScaleRLE( FILE* pFile, uint32_t size, uint8_t* pPixles )
 namespace asdx {
 
 //-------------------------------------------------------------------------------------------------
-//      ダミーのリソーステクスチャを生成します.
-//-------------------------------------------------------------------------------------------------
-bool CreateDummyResTexture( asdx::ResTexture& resTexture )
-{
-    resTexture.pResources = new(std::nothrow) asdx::SubResource[1];
-    if ( !resTexture.pResources )
-    { return false; }
-
-    resTexture.pResources[0].pPixels = new (std::nothrow) uint8_t [ 4096 ];
-    if ( !resTexture.pResources[0].pPixels )
-    {
-        SafeDeleteArray( resTexture.pResources );
-        return false;
-    }
-
-    // リソーステクスチャの設定.
-    resTexture.Width        = 32;
-    resTexture.Height       = 32;
-    resTexture.Depth        = 0;
-    resTexture.Format       = uint32_t( DXGI_FORMAT_R8G8B8A8_UNORM );
-    resTexture.MipMapCount  = 1;
-    resTexture.SurfaceCount = 1;
-
-    // サブリソースの設定.
-    resTexture.pResources[0].Width      = 32;
-    resTexture.pResources[0].Height     = 32;
-    resTexture.pResources[0].Pitch      = 128;
-    resTexture.pResources[0].SlicePitch = 4096;
-    memset( resTexture.pResources[0].pPixels, 255, sizeof(uint8_t) * 4096 );
-
-    return true;
-}
-
-//-------------------------------------------------------------------------------------------------
 //      WICからリソーステクスチャを生成します.
 //      (BMP, JPEG, PNG, TIFF, GIF, HD Photoファイルからリソーステクスチャを生成します).
 //-------------------------------------------------------------------------------------------------
@@ -1337,6 +1303,7 @@ bool CreateResTextureFromWICFileW( const wchar_t* filename, asdx::ResTexture& re
     pRes->pPixels    = pPixels;
 
     // リソーステクスチャを設定.
+    resTexture.Dimension    = TEXTURE_DIMENSION_2D;
     resTexture.Width        = width;
     resTexture.Height       = height;
     resTexture.Depth        = 0;
@@ -1669,6 +1636,7 @@ bool CreateResTextureFromWICMemory(const uint8_t* pBinary, uint32_t bufferSize, 
     pRes->pPixels    = pPixels;
 
     // リソーステクスチャを設定.
+    resTexture.Dimension    = TEXTURE_DIMENSION_2D;
     resTexture.Width        = width;
     resTexture.Height       = height;
     resTexture.Depth        = 0;
@@ -1727,13 +1695,19 @@ bool CreateResTextureFromDDSFileW(const wchar_t* filename, asdx::ResTexture& res
     // サーフェイスデスクリプションを読み込み.
     fread( &ddsd, sizeof( DDSurfaceDesc ), 1, pFile );
 
-    // 高さ有効.
-    if ( ddsd.flags & DDSD_HEIGHT )
-    { height = ddsd.height; }
-
     // 幅有効.
     if ( ddsd.flags & DDSD_WIDTH )
-    { width = ddsd.width; }
+    {
+        width = ddsd.width;
+        resTexture.Dimension = TEXTURE_DIMENSION_1D;
+    }
+
+    // 高さ有効.
+    if ( ddsd.flags & DDSD_HEIGHT )
+    {
+        height = ddsd.height;
+        resTexture.Dimension = TEXTURE_DIMENSION_2D;
+    }
 
     // 奥行有効.
     if ( ddsd.flags & DDSD_DEPTH )
@@ -1770,14 +1744,15 @@ bool CreateResTextureFromDDSFileW(const wchar_t* filename, asdx::ResTexture& res
 
             // サーフェイス数を設定.
             resTexture.SurfaceCount = surfaceCount;
-            resTexture.Option |= SUBRESOURCE_OPTION_CUBEMAP;
+            resTexture.Dimension    = TEXTURE_DIMENSION_CUBE;
+            resTexture.Depth        = 1;
         }
         // ボリュームテクスチャの場合.
         else if ( ddsd.caps2 & DDSCAPS2_VOLUME )
         {
             // 奥行の値を設定.
             resTexture.Depth = depth;
-            resTexture.Option |= SUBRESOURCE_OPTION_VOLUME;
+            resTexture.Dimension = TEXTURE_DIMENSION_3D;
         }
     }
 
@@ -2319,13 +2294,19 @@ bool CreateResTextureFromDDSMemory(const uint8_t* pBinary, uint32_t bufferSize, 
     }
     pCur += sizeof(DDSurfaceDesc);
 
-    // 高さ有効.
-    if ( ddsd->flags & DDSD_HEIGHT )
-    { height = ddsd->height; }
-
     // 幅有効.
     if ( ddsd->flags & DDSD_WIDTH )
-    { width = ddsd->width; }
+    {
+        width = ddsd->width;
+        resTexture.Dimension = TEXTURE_DIMENSION_1D;
+    }
+
+    // 高さ有効.
+    if ( ddsd->flags & DDSD_HEIGHT )
+    {
+        height = ddsd->height;
+        resTexture.Dimension = TEXTURE_DIMENSION_2D;
+    }
 
     // 奥行有効.
     if ( ddsd->flags & DDSD_DEPTH )
@@ -2362,14 +2343,14 @@ bool CreateResTextureFromDDSMemory(const uint8_t* pBinary, uint32_t bufferSize, 
 
             // サーフェイス数を設定.
             resTexture.SurfaceCount = surfaceCount;
-            resTexture.Option |= SUBRESOURCE_OPTION_CUBEMAP;
+            resTexture.Dimension = TEXTURE_DIMENSION_CUBE;
         }
         // ボリュームテクスチャの場合.
         else if ( ddsd->caps2 & DDSCAPS2_VOLUME )
         {
             // 奥行の値を設定.
             resTexture.Depth = depth;
-            resTexture.Option |= SUBRESOURCE_OPTION_VOLUME;
+            resTexture.Dimension = TEXTURE_DIMENSION_3D;
         }
     }
 
@@ -3060,6 +3041,7 @@ bool CreateResTextureFromTGAFileW(const wchar_t* filename, asdx::ResTexture& res
     surface->SlicePitch = width * height * bpp;
     surface->pPixels    = pPixels;
 
+    resTexture.Dimension    = TEXTURE_DIMENSION_2D;
     resTexture.Width        = width;
     resTexture.Height       = height;
     resTexture.Depth        = 1;

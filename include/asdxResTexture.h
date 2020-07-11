@@ -27,12 +27,15 @@ void SafeDeleteArray(T*&ptr)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// SUBRESOURCE_OPTION enum
+// TEXTURE_DIMENSION enum
 ///////////////////////////////////////////////////////////////////////////////
-enum SUBRESOURCE_OPTION
+enum TEXTURE_DIMENSION
 {
-    SUBRESOURCE_OPTION_CUBEMAP = 0x1 << 0,      //!< キューブマップです.
-    SUBRESOURCE_OPTION_VOLUME  = 0x1 << 1,      //!< ボリュームテクスチャです.
+    TEXTURE_DIMENSION_UNKNOWN,
+    TEXTURE_DIMENSION_1D,
+    TEXTURE_DIMENSION_2D,
+    TEXTURE_DIMENSION_3D,
+    TEXTURE_DIMENSION_CUBE
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -72,12 +75,13 @@ struct SubResource
 ///////////////////////////////////////////////////////////////////////////////
 struct ResTexture
 {
+    TEXTURE_DIMENSION    Dimension;      //!< 次元です.
     uint32_t             Width;          //!< 画像の横幅です.
     uint32_t             Height;         //!< 画像の縦幅です.
     uint32_t             Depth;          //!< 画像の奥行です.
     uint32_t             Format;         //!< 画像のフォーマットです.
     uint32_t             MipMapCount;    //!< ミップマップ数です.
-    uint32_t             SurfaceCount;   //!< サーフェイス数です(1次元配列テクスチャ, 2次元配列テクスチャ, キューブマップの場合のみ1以上の数が入ります).
+    uint32_t             SurfaceCount;   //!< サーフェイス数です(1次元配列テクスチャ, 2次元配列テクスチャ, キューブマップの場合のみ6以上の数が入ります).
     uint32_t             Option;         //!< オプションフラグです.
     SubResource*         pResources;     //!< サブリソースです.
 
@@ -85,7 +89,8 @@ struct ResTexture
     //! @brief      コンストラクタです.
     //-------------------------------------------------------------------------
     ResTexture()
-    : Width         ( 0 )
+    : Dimension     ( TEXTURE_DIMENSION_UNKNOWN )
+    , Width         ( 0 )
     , Height        ( 0 )
     , Depth         ( 0 )
     , Format        ( 0 )
