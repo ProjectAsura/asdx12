@@ -84,11 +84,15 @@ bool TestApp::OnInit()
             { asdx::Vector3(-0.5f, -0.5f, 0.0f), asdx::Vector2(0.0f, 0.0f) },
         };
 
-        if (!m_TriangleVB.Init(pDevice, sizeof(vertices), sizeof(Vertex)))
+        if (!m_TriangleVB.Init(asdx::GfxDevice(), sizeof(vertices), sizeof(Vertex), false))
         {
             ELOG("Error : VertexBuffer::Init() Failed.");
             return false;
         }
+
+        auto ptr = m_TriangleVB.Map<Vertex>();
+        memcpy(ptr, vertices, sizeof(vertices));
+        m_TriangleVB.Unmap();
     }
 
     // ルートシグニチャ.
@@ -130,6 +134,7 @@ bool TestApp::OnInit()
         desc.DepthStencilState      = asdx::PipelineState::GetDSS(asdx::DEPTH_STATE_DEFAULT);
         desc.InputLayout            = { elements, 2 };
         desc.PrimitiveTopologyType  = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+        desc.SampleMask             = UINT_MAX;
         desc.NumRenderTargets       = 1;
         desc.RTVFormats[0]          = m_SwapChainFormat;
         desc.DSVFormat              = DXGI_FORMAT_D32_FLOAT;
@@ -193,19 +198,21 @@ void TestApp::OnFrameRender(asdx::FrameEventArgs& args)
     asdx::ClearDSV(pCmd, pDSV, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0);
 
     asdx::SetRenderTarget(pCmd, pRTV, pDSV);
+    asdx::SetViewport(pCmd, m_ColorTarget[idx].GetResource());
 
-    //// 描画処理.
-    //{
-    //    auto vbv = m_TriangleVB.GetView();
-    //    pCmd->SetGraphicsRootSignature(m_RootSignature.GetPtr());
-    //    pCmd->SetPipelineState(m_PSO.GetPtr());
-    //    pCmd->SetGraphicsRootConstantBufferView(m_IndexCBMesh, m_CbMesh.GetResource()->GetGPUVirtualAddress());
-    //    pCmd->SetGraphicsRootConstantBufferView(m_IndexCBScene, m_CbScene.GetResource()->GetGPUVirtualAddress());
-    //    //pCmd->SetGraphicsRootDescriptorTable(m_IndexColorMap, );
+    // 描画処理.
+    {
+        auto vbv = m_TriangleVB.GetView();
+        pCmd->SetGraphicsRootSignature(m_RootSignature.GetPtr());
+        pCmd->SetPipelineState(m_PSO.GetPtr());
+        pCmd->SetGraphicsRootConstantBufferView(m_IndexCBMesh, m_CbMesh.GetResource()->GetGPUVirtualAddress());
+        pCmd->SetGraphicsRootConstantBufferView(m_IndexCBScene, m_CbScene.GetResource()->GetGPUVirtualAddress());
+        //pCmd->SetGraphicsRootDescriptorTable(m_IndexColorMap, );
 
-    //    pCmd->IASetVertexBuffers(0, 1, &vbv);
-    //    pCmd->DrawInstanced(3, 1, 0, 0);
-    //}
+        pCmd->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        pCmd->IASetVertexBuffers(0, 1, &vbv);
+        pCmd->DrawInstanced(3, 1, 0, 0);
+    }
 
     asdx::BarrierTransition(
         pCmd,

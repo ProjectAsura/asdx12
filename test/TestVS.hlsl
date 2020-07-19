@@ -48,11 +48,11 @@ VSOutput main(const Vertex input)
     VSOutput output = (VSOutput) 0;
 
     float4 localPos = float4(input.Position, 1.0f);
-    float4 worldPos = mul(localPos, gWorld);
-    float4 viewPos  = mul(worldPos, gView);
-    float4 projPos  = mul(viewPos,  gProj);
+    //float4 worldPos = mul(localPos, gWorld);
+    //float4 viewPos  = mul(worldPos, gView);
+    //float4 projPos  = mul(viewPos,  gProj);
 
-    output.Position = projPos;
+    output.Position = localPos;//projPos;
     output.TexCoord = input.TexCoord;
     
     return output;

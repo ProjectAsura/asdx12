@@ -28,8 +28,10 @@ VertexBuffer::~VertexBuffer()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool VertexBuffer::Init(ID3D12Device* pDevice, uint64_t size, uint32_t stride)
+bool VertexBuffer::Init(GraphicsDevice& device, uint64_t size, uint32_t stride, bool enableSRV)
 {
+    auto pDevice = device.GetDevice();
+
     if (pDevice == nullptr || size == 0 || stride == 0)
     {
         ELOG("Error : Invalid Argument.");
@@ -75,6 +77,26 @@ bool VertexBuffer::Init(ID3D12Device* pDevice, uint64_t size, uint32_t stride)
     m_View.SizeInBytes      = UINT(size);
     m_View.StrideInBytes    = stride;
 
+    if (enableSRV)
+    {
+        D3D12_SHADER_RESOURCE_VIEW_DESC viewDesc = {};
+        viewDesc.Format                     = DXGI_FORMAT_UNKNOWN;
+        viewDesc.ViewDimension              = D3D12_SRV_DIMENSION_BUFFER;
+        viewDesc.Shader4ComponentMapping    = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+        viewDesc.Buffer.FirstElement        = 0;
+        viewDesc.Buffer.NumElements         = m_View.SizeInBytes / m_View.StrideInBytes;
+        viewDesc.Buffer.StructureByteStride = m_View.StrideInBytes;
+        viewDesc.Buffer.Flags               = D3D12_BUFFER_SRV_FLAG_NONE;
+
+        auto ret = device.AllocHandle(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, m_pDescriptor.GetAddress());
+        if (!ret)
+        {
+            ELOG("Error : GraphicsDevice::AllocHandle() Failed.");
+            return false;
+        }
+        pDevice->CreateShaderResourceView(m_pResource.GetPtr(), &viewDesc, m_pDescriptor->GetHandleCPU());
+    }
+
     return true;
 }
 
@@ -84,6 +106,7 @@ bool VertexBuffer::Init(ID3D12Device* pDevice, uint64_t size, uint32_t stride)
 void VertexBuffer::Term()
 {
     m_pResource.Reset();
+    m_pDescriptor.Reset();
     memset(&m_View, 0, sizeof(m_View));
 }
 
@@ -128,5 +151,11 @@ D3D12_VERTEX_BUFFER_VIEW VertexBuffer::GetView() const
 //-----------------------------------------------------------------------------
 ID3D12Resource* VertexBuffer::GetResource() const
 { return m_pResource.GetPtr(); }
+
+//-----------------------------------------------------------------------------
+//      ディスクリプタを取得します.
+//-----------------------------------------------------------------------------
+const Descriptor* VertexBuffer::GetDescriptor() const
+{ return m_pDescriptor.GetPtr(); }
 
 } // namespace asdx
