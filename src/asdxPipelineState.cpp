@@ -20,63 +20,64 @@ namespace {
 ///////////////////////////////////////////////////////////////////////////////
 // PSSubObject class
 ///////////////////////////////////////////////////////////////////////////////
-#pragma warning(push)
-#pragma warning(disable : 4324)
-template<typename InnerStructType, D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type, typename DefaultArg = InnerStructType>
-class alignas(void*) PSSubObject
+template<typename StructType, D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type>
+class alignas(void*) SubObject
 {
 public:
-    PSSubObject() noexcept
+    SubObject() noexcept
     : m_Type    (Type)
-    , m_Inner   (DefaultArg())
+    , m_Value   (StructType())
     { /* DO_NOTHING */ }
 
-    PSSubObject(InnerStructType const& value) noexcept
+    SubObject(StructType const& value) noexcept
     : m_Type    (Type)
-    , m_Inner   (value)
+    , m_Value   (value)
     { /* DO_NOTHING */ }
 
-    PSSubObject& operator = (InnerStructType const& value) noexcept
+    SubObject& operator = (StructType const& value) noexcept
     {
         m_Type  = Type;
-        m_Inner = value;
+        m_Value = value;
         return *this;
     }
 
-    operator InnerStructType const&() const noexcept 
-    { return m_Inner; }
+    operator StructType const&() const noexcept 
+    { return m_Value; }
 
-    operator InnerStructType&() noexcept 
-    { return m_Inner; }
+    operator StructType&() noexcept 
+    { return m_Value; }
 
-    InnerStructType* operator&() noexcept
-    { return &m_Inner; }
+    StructType* operator&() noexcept
+    { return &m_Value; }
 
-    InnerStructType const* operator&() const noexcept
-    { return &m_Inner; }
+    StructType const* operator&() const noexcept
+    { return &m_Value; }
 
 private:
     D3D12_PIPELINE_STATE_SUBOBJECT_TYPE m_Type;
-    InnerStructType                     m_Inner;
+    StructType                          m_Value;
 };
-#pragma warning(pop)
 
-using PSS_ROOT_SIGNATURE = PSSubObject< ID3D12RootSignature*,       D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_ROOT_SIGNATURE >;
+#define PSST(x) D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_##x
+
+using PSS_ROOT_SIGNATURE = SubObject< ID3D12RootSignature*,        PSST(ROOT_SIGNATURE) >;
 #ifdef ASDX_ENABLE_MESH_SHADER
-using PSS_AS             = PSSubObject< D3D12_SHADER_BYTECODE,      D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_AS >;
-using PSS_MS             = PSSubObject< D3D12_SHADER_BYTECODE,      D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_MS >;
+using PSS_AS             = SubObject< D3D12_SHADER_BYTECODE,       PSST(AS) >;
+using PSS_MS             = SubObject< D3D12_SHADER_BYTECODE,       PSST(MS) >;
 #endif//ASDX_ENABLE_MESH_SHADER
-using PSS_PS             = PSSubObject< D3D12_SHADER_BYTECODE,      D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_PS >;
-using PSS_BLEND          = PSSubObject< D3D12_BLEND_DESC,           D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_BLEND >;
-using PSS_SAMPLE_MASK    = PSSubObject< UINT,                       D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_SAMPLE_MASK >;
-using PSS_RASTERIZER     = PSSubObject< D3D12_RASTERIZER_DESC,      D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_RASTERIZER >;
-using PSS_DEPTH_STENCIL  = PSSubObject< D3D12_DEPTH_STENCIL_DESC,   D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_DEPTH_STENCIL >;
-using PSS_RTV_FORMATS    = PSSubObject< D3D12_RT_FORMAT_ARRAY,      D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_RENDER_TARGET_FORMATS >;
-using PSS_DSV_FORMAT     = PSSubObject< DXGI_FORMAT,                D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_DEPTH_STENCIL_FORMAT >;
-using PSS_SAMPLE_DESC    = PSSubObject< DXGI_SAMPLE_DESC,           D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_SAMPLE_DESC >;
-using PSS_NODE_MASK      = PSSubObject< UINT,                       D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_NODE_MASK >;
-using PSS_CACHED_PSO     = PSSubObject< D3D12_CACHED_PIPELINE_STATE,D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_CACHED_PSO >;
-using PSS_FLAGS          = PSSubObject< D3D12_PIPELINE_STATE_FLAGS, D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_FLAGS >;
+using PSS_PS             = SubObject< D3D12_SHADER_BYTECODE,       PSST(PS) >;
+using PSS_BLEND          = SubObject< D3D12_BLEND_DESC,            PSST(BLEND) >;
+using PSS_SAMPLE_MASK    = SubObject< UINT,                        PSST(SAMPLE_MASK) >;
+using PSS_RASTERIZER     = SubObject< D3D12_RASTERIZER_DESC,       PSST(RASTERIZER) >;
+using PSS_DEPTH_STENCIL  = SubObject< D3D12_DEPTH_STENCIL_DESC,    PSST(DEPTH_STENCIL) >;
+using PSS_RTV_FORMATS    = SubObject< D3D12_RT_FORMAT_ARRAY,       PSST(RENDER_TARGET_FORMATS) >;
+using PSS_DSV_FORMAT     = SubObject< DXGI_FORMAT,                 PSST(DEPTH_STENCIL_FORMAT) >;
+using PSS_SAMPLE_DESC    = SubObject< DXGI_SAMPLE_DESC,            PSST(SAMPLE_DESC) >;
+using PSS_NODE_MASK      = SubObject< UINT,                        PSST(NODE_MASK) >;
+using PSS_CACHED_PSO     = SubObject< D3D12_CACHED_PIPELINE_STATE, PSST(CACHED_PSO) >;
+using PSS_FLAGS          = SubObject< D3D12_PIPELINE_STATE_FLAGS,  PSST(FLAGS) >;
+
+#undef PSST
 
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -157,8 +157,8 @@ bool Texture::Init
             0,
             resource.Width,
             resource.Height,
-            depth,
-            resource.MipMapCount,
+            UINT16(depth),
+            UINT16(resource.MipMapCount),
             format,
             { 1, 0 },
             D3D12_TEXTURE_LAYOUT_UNKNOWN,
@@ -218,8 +218,8 @@ bool Texture::Init
             0,
             resource.Width,
             resource.Height,
-            depth,
-            resource.MipMapCount,
+            UINT16(depth),
+            UINT16(resource.MipMapCount),
             format,
             { 1, 0 },
             D3D12_TEXTURE_LAYOUT_UNKNOWN,
@@ -261,7 +261,7 @@ bool Texture::Init
     #else
         auto count = resource.MipMapCount * resource.SurfaceCount;
 
-        for(auto i=0; i<count; ++i)
+        for(auto i=0u; i<count; ++i)
         {
             uint8_t* ptr = nullptr;
             hr = pUpload->Map(i, nullptr, reinterpret_cast<void**>(&ptr));
