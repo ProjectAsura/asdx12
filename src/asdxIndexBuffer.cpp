@@ -32,7 +32,7 @@ IndexBuffer::~IndexBuffer()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool IndexBuffer::Init(GraphicsDevice& device, uint32_t size, bool enableSRV)
+bool IndexBuffer::Init(GraphicsDevice& device, uint32_t size)
 {
     auto pDevice = device.GetDevice();
 
@@ -81,26 +81,6 @@ bool IndexBuffer::Init(GraphicsDevice& device, uint32_t size, bool enableSRV)
     m_View.SizeInBytes      = size;
     m_View.Format           = DXGI_FORMAT_R32_UINT;
 
-    if (enableSRV)
-    {
-        D3D12_SHADER_RESOURCE_VIEW_DESC viewDesc = {};
-        viewDesc.Format                     = DXGI_FORMAT_UNKNOWN;
-        viewDesc.ViewDimension              = D3D12_SRV_DIMENSION_BUFFER;
-        viewDesc.Shader4ComponentMapping    = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-        viewDesc.Buffer.FirstElement        = 0;
-        viewDesc.Buffer.NumElements         = m_View.SizeInBytes / sizeof(uint32_t);
-        viewDesc.Buffer.StructureByteStride = sizeof(uint32_t);
-        viewDesc.Buffer.Flags               = D3D12_BUFFER_SRV_FLAG_NONE;
-
-        auto ret = device.AllocHandle(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, m_pDescriptor.GetAddress());
-        if (!ret)
-        {
-            ELOG("Error : GraphicsDevice::AllocHandle() Failed.");
-            return false;
-        }
-        pDevice->CreateShaderResourceView(m_pResource.GetPtr(), &viewDesc, m_pDescriptor->GetHandleCPU());
-    }
-
     return true;
 }
 
@@ -110,7 +90,6 @@ bool IndexBuffer::Init(GraphicsDevice& device, uint32_t size, bool enableSRV)
 void IndexBuffer::Term()
 {
     m_pResource.Reset();
-    m_pDescriptor.Reset();
     memset(&m_View, 0, sizeof(m_View));
 }
 
@@ -155,11 +134,5 @@ D3D12_INDEX_BUFFER_VIEW IndexBuffer::GetView() const
 //-----------------------------------------------------------------------------
 ID3D12Resource* IndexBuffer::GetResource() const
 { return m_pResource.GetPtr(); }
-
-//-----------------------------------------------------------------------------
-//      ディスクリプタを取得します.
-//-----------------------------------------------------------------------------
-const Descriptor* IndexBuffer::GetDescriptor() const
-{ return m_pDescriptor.GetPtr(); }
 
 } // namespace asdx
