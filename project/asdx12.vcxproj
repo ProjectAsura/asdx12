@@ -123,6 +123,7 @@
     <ClCompile Include="..\src\asdxResTexture.cpp" />
     <ClCompile Include="..\src\asdxRootSignature.cpp" />
     <ClCompile Include="..\src\asdxShaderReflection.cpp" />
+    <ClCompile Include="..\src\asdxStructuredBuffer.cpp" />
     <ClCompile Include="..\src\asdxTablet.cpp" />
     <ClCompile Include="..\src\asdxTarget.cpp" />
     <ClCompile Include="..\src\asdxTcpConnector.cpp" />
@@ -159,12 +160,15 @@
     <ClInclude Include="..\include\asdxPool.h" />
     <ClInclude Include="..\include\asdxQueue.h" />
     <ClInclude Include="..\include\asdxRef.h" />
+    <ClInclude Include="..\include\asdxResMaterial.h" />
+    <ClInclude Include="..\include\asdxResModel.h" />
     <ClInclude Include="..\include\asdxResourceDisposer.h" />
     <ClInclude Include="..\include\asdxResTexture.h" />
     <ClInclude Include="..\include\asdxRootSignature.h" />
     <ClInclude Include="..\include\asdxShaderReflection.h" />
     <ClInclude Include="..\include\asdxStepTimer.h" />
     <ClInclude Include="..\include\asdxStopWatch.h" />
+    <ClInclude Include="..\include\asdxStructuredBuffer.h" />
     <ClInclude Include="..\include\asdxTablet.h" />
     <ClInclude Include="..\include\asdxTarget.h" />
     <ClInclude Include="..\include\asdxTcpConnector.h" />

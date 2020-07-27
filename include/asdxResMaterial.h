@@ -1,5 +1,5 @@
 ﻿//-----------------------------------------------------------------------------
-// File : ResMaterial.h
+// File : asdxResMaterial.h
 // Desc : Material Resource.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
@@ -27,6 +27,31 @@ enum MATERIAL_PARAMETER_TYPE
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+// MATERIAL_STATE enum
+///////////////////////////////////////////////////////////////////////////////
+enum MATERIAL_STATE
+{
+    MATERIAL_STATE_OPAQUE,          //!< 不透明.
+    MATERIAL_STATE_ALPHABLEND,      //!< アルファブレンド.
+    MATERIAL_STATE_ADDTIVE,         //!< 加算.
+    MATERIAL_STATE_SUBTRACT,        //!< 減算.
+    MATERIAL_STATE_PREMULTIPLIED,   //!< 事前乗算済みアルファ.
+    MATERIAL_STATE_MULTIPLY,        //!< 乗算.
+    MATERIAL_STATE_SCREEN,          //!< スクリーン合成.
+    MATERIAL_STATE_DISTORTION,      //!< 歪み.
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// DISPLAY_FACE enum
+///////////////////////////////////////////////////////////////////////////////
+enum DISPLAY_FACE
+{
+    DISPLAY_FACE_BOTH,      //!< 両面表示.
+    DISPLAY_FACE_FRONT,     //!< 表面表示.
+    DISPLAY_FACE_BACK,      //!< 裏面表示.
+};
+
+///////////////////////////////////////////////////////////////////////////////
 // ResMaterialParameter structure
 ///////////////////////////////////////////////////////////////////////////////
 struct ResMaterialParameter
@@ -42,7 +67,11 @@ struct ResMaterialParameter
 ///////////////////////////////////////////////////////////////////////////////
 struct ResMaterial
 {
-    uint32_t    MaterialHash;       //!< マテリアル名を表すハッシュ値です.
+    uint32_t    lHash;              //!< マテリアル名を表すハッシュ値です.
+    uint8_t     State;              //!< マテリアルステートです.
+    uint8_t     DisplayFace;        //!< 表示面設定です.
+    uint8_t     ShadowCast;         //!< シャドウキャスト.
+    uint8_t     ShadowReceive;      //!< シャドウレシーブ.
     uint32_t    ParameterCount;     //!< パラメータ数です.
     uint32_t    TextureCount;       //!< テクスチャ数です.
     uint32_t    BufferSize;         //!< 定数バッファサイズです.

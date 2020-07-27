@@ -84,7 +84,7 @@ bool TestApp::OnInit()
             { asdx::Vector3(-0.5f, -0.5f, 0.0f), asdx::Vector2(0.0f, 0.0f) },
         };
 
-        if (!m_TriangleVB.Init(asdx::GfxDevice(), sizeof(vertices), sizeof(Vertex), false))
+        if (!m_TriangleVB.Init(asdx::GfxDevice(), sizeof(vertices), sizeof(Vertex)))
         {
             ELOG("Error : VertexBuffer::Init() Failed.");
             return false;
