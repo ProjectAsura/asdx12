@@ -97,12 +97,12 @@ bool TestApp::OnInit()
 
     // ルートシグニチャ.
     {
-        auto flag = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
-        flag |= D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
-        flag |= D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS;
-        flag |= D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS;
-        flag |= D3D12_ROOT_SIGNATURE_FLAG_DENY_MESH_SHADER_ROOT_ACCESS;
-        flag |= D3D12_ROOT_SIGNATURE_FLAG_DENY_AMPLIFICATION_SHADER_ROOT_ACCESS;
+        uint32_t flag = asdx::RSF_ALLOW_IA;
+        flag |= asdx::RSF_DENY_GS;
+        flag |= asdx::RSF_DENY_DS;
+        flag |= asdx::RSF_DENY_HS;
+        flag |= asdx::RSF_DENY_AS;
+        flag |= asdx::RSF_DENY_MS;
 
         asdx::RootSignatureDesc desc;
         m_IndexCBMesh       = desc.AddCBV(asdx::SV_VS, 0);

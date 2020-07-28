@@ -308,8 +308,8 @@ uint32_t RootSignatureDesc::AddStaticSampler(D3D12_STATIC_SAMPLER_DESC desc)
 //-----------------------------------------------------------------------------
 //      フラグを設定します.
 //-----------------------------------------------------------------------------
-void RootSignatureDesc::SetFlag(D3D12_ROOT_SIGNATURE_FLAGS flags)
-{ m_Flags = flags; }
+void RootSignatureDesc::SetFlag(uint32_t flags)
+{ m_Flags = D3D12_ROOT_SIGNATURE_FLAGS(flags); }
 
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -48,6 +48,23 @@ enum STATIC_SAMPLER_TYPE
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+// ROOT_SIGNATURE_FLAG enum
+///////////////////////////////////////////////////////////////////////////////
+enum ROOT_SIGNATURE_FLAG
+{
+    RSF_NONE        = D3D12_ROOT_SIGNATURE_FLAG_NONE,
+    RSF_DENY_VS     = D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS,
+    RSF_DENY_GS     = D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS,
+    RSF_DENY_HS     = D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS,
+    RSF_DENY_DS     = D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS,
+    RSF_DENY_PS     = D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS,
+    RSF_DENY_AS     = D3D12_ROOT_SIGNATURE_FLAG_DENY_AMPLIFICATION_SHADER_ROOT_ACCESS,
+    RSF_DENY_MS     = D3D12_ROOT_SIGNATURE_FLAG_DENY_MESH_SHADER_ROOT_ACCESS,
+    RSF_ALLOW_IA    = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT,
+    RSF_ALLOW_SO    = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_STREAM_OUTPUT,
+};
+
+///////////////////////////////////////////////////////////////////////////////
 // RootSignatureDesc class
 ///////////////////////////////////////////////////////////////////////////////
 class RootSignatureDesc
@@ -172,7 +189,7 @@ public:
     //!
     //! @param[in]      flags           設定するフラグ.
     //-------------------------------------------------------------------------
-    void SetFlag(D3D12_ROOT_SIGNATURE_FLAGS flags);
+    void SetFlag(uint32_t flags);
 
 private:
     //=========================================================================
