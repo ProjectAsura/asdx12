@@ -12,6 +12,7 @@
 #include <mutex>
 #include <d3d12.h>
 #include <asdxRef.h>
+#include <asdxSpinLock.h>
 
 
 namespace asdx {
@@ -51,7 +52,7 @@ public:
     //!
     //! @param[in]      pResource       登録するリソース.
     //-------------------------------------------------------------------------
-    void Add(ID3D12Resource*& pResource);
+    void Push(ID3D12Resource*& pResource);
 
     //-------------------------------------------------------------------------
     //! @brief      フレーム同期し，遅延解放を実行します.
@@ -77,7 +78,7 @@ private:
     // private variables.
     //=========================================================================
     std::list<Item>         m_List;         //!< 破棄リスト.
-    std::recursive_mutex    m_Mutex;        //!< 排他制御用.
+    SpinLock                m_SpinLock;     //!< スピンロック.
 
     //=========================================================================
     // private methods.

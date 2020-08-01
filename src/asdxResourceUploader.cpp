@@ -1,13 +1,13 @@
 ﻿//-----------------------------------------------------------------------------
-// File : asdxResourceDisposer.cpp
-// Desc : Resource Disposer.
+// File : asdxResourceUploader.cpp
+// Desc : Resource Uploader.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <asdxResourceDisposer.h>
+#include <asdxResourceUploader.h>
 
 
 namespace {
@@ -23,47 +23,58 @@ constexpr uint32_t kLifeTime = 4;    // 4フレーム分
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
-// ResourceDisposer class
+// ResourceUploader class
 ///////////////////////////////////////////////////////////////////////////////
 
 //-----------------------------------------------------------------------------
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
-ResourceDisposer::ResourceDisposer()
+ResourceUploader::ResourceUploader()
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      デストラクタです.
 //-----------------------------------------------------------------------------
-ResourceDisposer::~ResourceDisposer()
+ResourceUploader::~ResourceUploader()
 { Clear(); }
 
 //-----------------------------------------------------------------------------
 //      リソースを登録します.
 //-----------------------------------------------------------------------------
-void ResourceDisposer::Push(ID3D12Resource*& pResource)
+void ResourceUploader::Push(IUploadResource* pItem)
 {
-    if (pResource == nullptr)
+    if (pItem == nullptr)
     { return; }
 
-    std::lock_guard<SpinLock> locker(m_SpinLock);
-
-    Item item;
-    item.pResource = pResource;
-    item.LifeTime  = kLifeTime;
-
-    m_List.push_back(item);
-
-    pResource = nullptr;
+    m_Queue.push(pItem);
 }
 
 //-----------------------------------------------------------------------------
-//      フレーム同期し，遅延解放を実行します.
+//      アップロード処理を行います.
 //-----------------------------------------------------------------------------
-void ResourceDisposer::FrameSync()
+void ResourceUploader::Upload(ID3D12GraphicsCommandList* pCmdList)
 {
-    std::lock_guard<SpinLock> locker(m_SpinLock);
+    auto count = m_Queue.size();
+    for(size_t i=0; i<count; ++i)
+    {
+        IUploadResource* resource = m_Queue.front();
+        m_Queue.pop();
 
+        resource->Upload(pCmdList);
+
+        Item item;
+        item.pResource = resource;
+        item.LifeTime  = kLifeTime;
+
+        m_List.push_back(item);
+    }
+}
+
+//-----------------------------------------------------------------------------
+//      フレーム同期を行い，遅延解放を実行します.
+//-----------------------------------------------------------------------------
+void ResourceUploader::FrameSync()
+{
     auto itr = m_List.begin();
     while(itr != m_List.end())
     {
@@ -88,17 +99,23 @@ void ResourceDisposer::FrameSync()
 //-----------------------------------------------------------------------------
 //      強制破棄を実行します.
 //-----------------------------------------------------------------------------
-void ResourceDisposer::Clear()
+void ResourceUploader::Clear()
 {
-    std::lock_guard<SpinLock> locker(m_SpinLock);
+    auto count = m_Queue.size();
+    for(size_t i=0; i<count; ++i)
+    {
+        IUploadResource* resource = m_Queue.front();
+        m_Queue.pop();
+
+        resource->Release();
+        resource = nullptr;
+    }
 
     auto itr = m_List.begin();
     while(itr != m_List.end())
     {
         if (itr->pResource != nullptr)
         {
-            // GPUが実行中だとここで落ちるはずなので，
-            // GPUの処理が終わるの確認してから呼んでね.
             itr->pResource->Release();
             itr->pResource = nullptr;
             itr->LifeTime  = 0;
@@ -110,5 +127,6 @@ void ResourceDisposer::Clear()
     // 念のため.
     m_List.clear();
 }
+
 
 } // namespace asdx

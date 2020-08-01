@@ -86,7 +86,7 @@ bool StructuredBuffer::Init(GraphicsDevice& device, uint64_t count, uint32_t str
     viewDesc.ViewDimension              = D3D12_SRV_DIMENSION_BUFFER;
     viewDesc.Shader4ComponentMapping    = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
     viewDesc.Buffer.FirstElement        = 0;
-    viewDesc.Buffer.NumElements         = count;
+    viewDesc.Buffer.NumElements         = UINT(count);
     viewDesc.Buffer.StructureByteStride = stride;
     viewDesc.Buffer.Flags               = D3D12_BUFFER_SRV_FLAG_NONE;
 

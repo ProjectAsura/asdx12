@@ -1,6 +1,6 @@
-//-----------------------------------------------------------------------------
-// File : TestApp.h
-// Desc : Test Application.
+﻿//-----------------------------------------------------------------------------
+// File : asdxSpinLock
+// Desc : Spin Lock
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 #pragma once
@@ -8,20 +8,15 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <asdxApp.h>
-#include <asdxConstantBuffer.h>
-#include <asdxVertexBuffer.h>
-#include <asdxPipelineState.h>
-#include <asdxRootSignature.h>
-#include <asdxResourceDisposer.h>
-#include <asdxResourceUploader.h>
-#include <asdxTexture.h>
+#include <atomic>
 
 
+namespace asdx {
+
 ///////////////////////////////////////////////////////////////////////////////
-// TestApp class
+// SpinLock class
 ///////////////////////////////////////////////////////////////////////////////
-class TestApp : public asdx::Application
+class SpinLock
 {
     //=========================================================================
     // list of friend classes and methods.
@@ -37,36 +32,32 @@ public:
     //=========================================================================
     // public methods.
     //=========================================================================
-    TestApp();
-    ~TestApp();
+
+    //-------------------------------------------------------------------------
+    //! @brief      ロックします.
+    //-------------------------------------------------------------------------
+    void lock()
+    {
+        while (m_State.test_and_set(std::memory_order_acquire))
+        { /* DO_NOTHING */ }
+    }
+
+    //-------------------------------------------------------------------------
+    //! @brief      ロックを解除します.
+    //-------------------------------------------------------------------------
+    void unlock()
+    { m_State.clear(std::memory_order_release); }
 
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    asdx::Queue*            m_pGraphicsQueue = nullptr;
-    asdx::VertexBuffer      m_TriangleVB;
-    asdx::RootSignature     m_RootSignature;
-    asdx::PipelineState     m_PSO;
-    asdx::ResourceDisposer  m_Disposer;
-    asdx::ResourceUploader  m_Uploader;
-    asdx::ConstantBuffer    m_CbMesh;
-    asdx::ConstantBuffer    m_CbScene;
-    asdx::Texture           m_Texture;
-
-    uint32_t                m_IndexCBMesh;
-    uint32_t                m_IndexCBScene;
-    uint32_t                m_IndexColorMap;
-    uint32_t                m_IndexLinearClamp;
+    std::atomic_flag    m_State = ATOMIC_FLAG_INIT;
 
     //=========================================================================
     // private methods.
     //=========================================================================
-    bool OnInit() override;
-    void OnTerm() override;
-    void OnFrameRender(asdx::FrameEventArgs& args) override;
-    void OnResize(const asdx::ResizeEventArgs& args) override;
-    void OnKey(const asdx::KeyEventArgs& args) override;
-    void OnMouse(const asdx::MouseEventArgs& args) override;
-    void OnTyping(uint32_t keyCode) override;
+    /* NOTHING */
 };
+
+} // namespace asdx

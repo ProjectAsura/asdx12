@@ -160,6 +160,24 @@ bool TestApp::OnInit()
         return false;
     }
 
+    {
+        asdx::ResTexture res;
+        if (!res.LoadFromFileA("./test.tga"))
+        {
+            ELOG("Error : ResTexture::LoadFromFileA() Failed.");
+            return false;
+        }
+
+        asdx::IUploadResource* pUpdateResource = nullptr;
+        if (!m_Texture.Init(asdx::GfxDevice(), res, &pUpdateResource))
+        {
+            ELOG("Error : Texture::Init() Failed.");
+            return false;
+        }
+
+        m_Uploader.Push(pUpdateResource);
+    }
+
     return true;
 }
 
@@ -173,7 +191,9 @@ void TestApp::OnTerm()
     m_RootSignature .Term();
     m_CbMesh        .Term();
     m_CbScene       .Term();
+    m_Texture       .Term();
     m_Disposer      .Clear();
+    m_Uploader      .Clear();
 }
 
 //-----------------------------------------------------------------------------
@@ -183,6 +203,8 @@ void TestApp::OnFrameRender(asdx::FrameEventArgs& args)
 {
     auto idx  = GetCurrentBackBufferIndex();
     auto pCmd = m_GfxCmdList.Reset();
+
+    m_Uploader.Upload(pCmd);
 
     asdx::BarrierTransition(
         pCmd,
@@ -207,7 +229,7 @@ void TestApp::OnFrameRender(asdx::FrameEventArgs& args)
         pCmd->SetPipelineState(m_PSO.GetPtr());
         pCmd->SetGraphicsRootConstantBufferView(m_IndexCBMesh, m_CbMesh.GetResource()->GetGPUVirtualAddress());
         pCmd->SetGraphicsRootConstantBufferView(m_IndexCBScene, m_CbScene.GetResource()->GetGPUVirtualAddress());
-        //pCmd->SetGraphicsRootDescriptorTable(m_IndexColorMap, );
+        pCmd->SetGraphicsRootDescriptorTable(m_IndexColorMap, m_Texture.GetDescriptor()->GetHandleGPU());
 
         pCmd->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         pCmd->IASetVertexBuffers(0, 1, &vbv);
@@ -238,6 +260,7 @@ void TestApp::OnFrameRender(asdx::FrameEventArgs& args)
 
     // ƒtƒŒ[ƒ€“¯Šú.
     m_Disposer.FrameSync();
+    m_Uploader.FrameSync();
 }
 
 //-----------------------------------------------------------------------------
