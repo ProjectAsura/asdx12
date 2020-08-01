@@ -177,7 +177,7 @@
     <ClInclude Include="..\include\asdxTcpConnector.h" />
     <ClInclude Include="..\include\asdxTexture.h" />
     <ClInclude Include="..\include\asdxTimer.h" />
-    <ClInclude Include="..\include\asdxUpdateResource.h" />
+    <ClInclude Include="..\include\asdxUploadResource.h" />
     <ClInclude Include="..\include\asdxVertexBuffer.h" />
   </ItemGroup>
   <ItemGroup>

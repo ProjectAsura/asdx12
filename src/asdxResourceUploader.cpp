@@ -10,16 +10,6 @@
 #include <asdxResourceUploader.h>
 
 
-namespace {
-
-//-----------------------------------------------------------------------------
-// Constant Values.
-//-----------------------------------------------------------------------------
-constexpr uint32_t kLifeTime = 4;    // 4フレーム分
-
-} // namespace
-
-
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -41,12 +31,16 @@ ResourceUploader::~ResourceUploader()
 //-----------------------------------------------------------------------------
 //      リソースを登録します.
 //-----------------------------------------------------------------------------
-void ResourceUploader::Push(IUploadResource* pItem)
+void ResourceUploader::Push(IUploadResource* pResource, uint8_t lifeTime)
 {
-    if (pItem == nullptr)
+    if (pResource == nullptr)
     { return; }
 
-    m_Queue.push(pItem);
+    Item item;
+    item.pResource = pResource;
+    item.LifeTime  = lifeTime;
+
+    m_Queue.push(item);
 }
 
 //-----------------------------------------------------------------------------
@@ -57,14 +51,10 @@ void ResourceUploader::Upload(ID3D12GraphicsCommandList* pCmdList)
     auto count = m_Queue.size();
     for(size_t i=0; i<count; ++i)
     {
-        IUploadResource* resource = m_Queue.front();
+        auto item = m_Queue.front();
         m_Queue.pop();
 
-        resource->Upload(pCmdList);
-
-        Item item;
-        item.pResource = resource;
-        item.LifeTime  = kLifeTime;
+        item.pResource->Upload(pCmdList);
 
         m_List.push_back(item);
     }
@@ -104,11 +94,12 @@ void ResourceUploader::Clear()
     auto count = m_Queue.size();
     for(size_t i=0; i<count; ++i)
     {
-        IUploadResource* resource = m_Queue.front();
+        auto item = m_Queue.front();
         m_Queue.pop();
 
-        resource->Release();
-        resource = nullptr;
+        item.pResource->Release();
+        item.pResource = nullptr;
+        item.LifeTime  = 0;
     }
 
     auto itr = m_List.begin();
@@ -127,6 +118,5 @@ void ResourceUploader::Clear()
     // 念のため.
     m_List.clear();
 }
-
 
 } // namespace asdx

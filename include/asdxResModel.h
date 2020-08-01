@@ -88,5 +88,4 @@ struct ResModel
     std::vector<ResMesh>        Meshes;         //!< メッシュです.
 };
 
-
 } // namespace asdx

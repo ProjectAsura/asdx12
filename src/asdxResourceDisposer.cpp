@@ -10,16 +10,6 @@
 #include <asdxResourceDisposer.h>
 
 
-namespace {
-
-//-----------------------------------------------------------------------------
-// Constant Values.
-//-----------------------------------------------------------------------------
-constexpr uint32_t kLifeTime = 4;    // 4フレーム分
-
-} // namespace
-
-
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -41,7 +31,7 @@ ResourceDisposer::~ResourceDisposer()
 //-----------------------------------------------------------------------------
 //      リソースを登録します.
 //-----------------------------------------------------------------------------
-void ResourceDisposer::Push(ID3D12Resource*& pResource)
+void ResourceDisposer::Push(ID3D12Resource*& pResource, uint8_t lifeTime)
 {
     if (pResource == nullptr)
     { return; }
@@ -50,7 +40,7 @@ void ResourceDisposer::Push(ID3D12Resource*& pResource)
 
     Item item;
     item.pResource = pResource;
-    item.LifeTime  = kLifeTime;
+    item.LifeTime  = lifeTime;
 
     m_List.push_back(item);
 

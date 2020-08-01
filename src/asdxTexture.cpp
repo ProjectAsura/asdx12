@@ -185,7 +185,8 @@ public:
             m_Commands.resize(count);
 
             UINT64 requiredSize = 0;
-            pDevice->GetCopyableFootprints(&dstDesc, 0, count, 0, layouts.data(), rows.data(), rowSizeInBytes.data(), &requiredSize);
+            pDevice->GetCopyableFootprints(
+                &dstDesc, 0, count, 0, layouts.data(), rows.data(), rowSizeInBytes.data(), &requiredSize);
 
             BYTE* pData = nullptr;
             auto hr = m_pSrcResource->Map(0, nullptr, reinterpret_cast<void**>(&pData));
@@ -215,7 +216,12 @@ public:
                     dstData.RowPitch    = layouts[idx].Footprint.RowPitch;
                     dstData.SlicePitch  = SIZE_T(layouts[idx].Footprint.RowPitch) * SIZE_T(rows[idx]);
 
-                    CopySubresource(&dstData, &srcData, SIZE_T(rowSizeInBytes[idx]), rows[idx], layouts[idx].Footprint.Depth);
+                    CopySubresource(
+                        &dstData,
+                        &srcData,
+                        SIZE_T(rowSizeInBytes[idx]),
+                        rows[idx],
+                        layouts[idx].Footprint.Depth);
 
                     m_Commands[idx].Dst.pResource           = m_pDstResource;
                     m_Commands[idx].Dst.Type                = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
@@ -305,7 +311,7 @@ public:
 
         barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
         barrier.Transition.StateAfter  = D3D12_RESOURCE_STATE_GENERIC_READ;
-        pCmdList->ResourceBarrier( 1, &barrier );    
+        pCmdList->ResourceBarrier( 1, &barrier );
     }
 
 private:

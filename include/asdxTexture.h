@@ -10,7 +10,7 @@
 //-----------------------------------------------------------------------------
 #include <asdxResTexture.h>
 #include <asdxGraphicsDevice.h>
-#include <asdxUpdateResource.h>
+#include <asdxUploadResource.h>
 
 
 namespace asdx {

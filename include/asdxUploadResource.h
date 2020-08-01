@@ -1,6 +1,6 @@
 ﻿//-----------------------------------------------------------------------------
-// File : asdxUpdateResource.h
-// Desc : Update Resource Interface.
+// File : asdxUploadResource.h
+// Desc : Upload Resource Interface.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 #pragma once

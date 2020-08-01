@@ -11,7 +11,7 @@
 #include <queue>
 #include <list>
 #include <mutex>
-#include <asdxUpdateResource.h>
+#include <asdxUploadResource.h>
 
 
 namespace asdx {
@@ -30,6 +30,7 @@ public:
     //=========================================================================
     // public variables.
     //=========================================================================
+    static constexpr uint8_t kDefaultLifeTime = 4;     //!< 4フレーム.
 
     //-------------------------------------------------------------------------
     //! @brief      コンストラクタです.
@@ -44,10 +45,11 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      リソースを登録します.
     //!
-    //! @param[in]      pItem       登録するリソース.
+    //! @param[in]      pResource   登録するリソース.
+    //! @param[in]      lifeTime    生存フレーム数.
     //! @note       内部で参照カウントは上げません.
     //-------------------------------------------------------------------------
-    void Push(IUploadResource* pItem);
+    void Push(IUploadResource* pResource, uint8_t lifeTime = kDefaultLifeTime);
 
     //-------------------------------------------------------------------------
     //! @brief      アップロード処理を実行します.
@@ -75,14 +77,14 @@ private:
     struct Item
     {
         IUploadResource*    pResource;      //!< 破棄リソース.
-        uint32_t            LifeTime;       //!< 生存フレーム数.
+        uint8_t             LifeTime;       //!< 生存フレーム数.
     };
 
     //=========================================================================
     // private varaibles.
     //=========================================================================
-    std::queue<IUploadResource*>    m_Queue;        //!< リソースキュー.
-    std::list<Item>                 m_List;         //!< 破棄リスト.
+    std::queue<Item>    m_Queue;        //!< リソースキュー.
+    std::list<Item>     m_List;         //!< 破棄リスト.
 
     //=========================================================================
     // private methods.

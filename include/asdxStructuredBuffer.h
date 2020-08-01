@@ -9,6 +9,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <asdxGraphicsDevice.h>
+#include <asdxUploadResource.h>
 
 
 namespace asdx {
@@ -47,12 +48,31 @@ public:
     //! @brief      初期化処理を行います.
     //!
     //! @param[in]      device      グラフィックスデバイスです.
-    //! @param[in]      count       要素数です.
+    //! @param[in]      count       配列数です.
     //! @param[in]      stride      構造体のサイズです.
+    //! @param[in]      state       リソースステートです.
     //! @retval true    初期化に成功.
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
-    bool Init(GraphicsDevice& device, uint64_t count, uint32_t stride);
+    bool Init(GraphicsDevice& device, uint64_t count, uint32_t stride, D3D12_RESOURCE_STATES state);
+
+    //-------------------------------------------------------------------------
+    //! @brief      初期化処理を行います.
+    //!
+    //! @param[in]      device              グラフィックスデバイスです.
+    //! @param[in]      count               配列数です.
+    //! @param[in]      stride              構造体のサイズです.
+    //! @param[in]      pInitData           初期化データです.
+    //! @param[out]     ppUploadResource    アップロードリソースの格納先です.
+    //! @retval true    初期化に成功.
+    //! @retval false   初期化に失敗.
+    //-------------------------------------------------------------------------
+    bool Init(
+        GraphicsDevice&     device,
+        uint64_t            count,
+        uint32_t            stride,
+        void*               pInitData,
+        IUploadResource**   ppUploadResource);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.
