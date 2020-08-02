@@ -20,10 +20,10 @@ namespace asdx {
 ///////////////////////////////////////////////////////////////////////////////
 struct ResBoneIndex
 {
-    uint32_t     Index0;    //!< ボーン番号0.
-    uint32_t     Index1;    //!< ボーン番号1.
-    uint32_t     Index2;    //!< ボーン番号2.
-    uint32_t     Index3;    //!< ボーン番号3.
+    uint8_t     Index0;    //!< ボーン番号0.
+    uint8_t     Index1;    //!< ボーン番号1.
+    uint8_t     Index2;    //!< ボーン番号2.
+    uint8_t     Index3;    //!< ボーン番号3.
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -42,9 +42,8 @@ struct ResMeshlet
 ///////////////////////////////////////////////////////////////////////////////
 struct ResCulling
 {
-    uint32_t    DisplayFace;        //!< 表示面情報(0 : 両面表示, 1: 表面表示, 2 : 背面表示).
     Vector4     BoundingSphere;     //!< バウンディングスフィアです.
-    Vector4     NormalCone;         //!< 法錐です.
+    uint32_t    NormalCone;         //!< 圧縮済み法錐です.
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -55,7 +54,7 @@ struct ResPrimitive
     uint32_t    Index0   : 10;      //!< 出力頂点番号0
     uint32_t    Index1   : 10;      //!< 出力頂点番号1
     uint32_t    Index2   : 10;      //!< 出力頂点番号2
-    uint32_t    Reserved : 2;       //!< 出力頂点番号3
+    uint32_t    Reserved : 2;       //!< 予約領域.
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -64,8 +63,7 @@ struct ResPrimitive
 struct ResMesh
 {
     std::vector<Vector3>        Positions;      //!< 位置座標.
-    std::vector<Vector3>        Normals;        //!< 法線ベクトル.
-    std::vector<Vector3>        Tangents;       //!< 接線ベクトル.
+    std::vector<uint32_t>       TangentSpace;   //!< R10G10B10A2圧縮済み接線空間.
     std::vector<Vector2>        TexCoord0;      //!< テクスチャ座標0です.
     std::vector<Vector2>        TexCoord1;      //!< テクスチャ座標1です.
     std::vector<Vector2>        TexCoord2;      //!< テクスチャ座標2です.

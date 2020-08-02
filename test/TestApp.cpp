@@ -176,6 +176,8 @@ bool TestApp::OnInit()
         }
 
         m_Uploader.Push(pUpdateResource);
+
+        res.Release();
     }
 
     return true;

@@ -196,7 +196,6 @@ public:
                 return false;
             }
 
-
             auto idx = 0;
         #if ASDX_IS_SCARLETT
             for(auto m=int(resource.MipCount)-1; m>=0; m--)
@@ -417,46 +416,23 @@ bool Texture::Init
                 dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
                 if (resource.SurfaceCount > 1)
                 {
-                    if (resource.MipMapCount > 1)
-                    {
-                        viewDesc.ViewDimension                      = D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY;
-                        viewDesc.Format                             = format;
-                        viewDesc.Texture2DMSArray.ArraySize         = resource.SurfaceCount;
-                        viewDesc.Texture2DMSArray.FirstArraySlice   = 0;
-                    }
-                    else
-                    {
-                        viewDesc.ViewDimension                      = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
-                        viewDesc.Format                             = format;
-                        viewDesc.Texture2DArray.ArraySize           = resource.SurfaceCount;
-                        viewDesc.Texture2DArray.FirstArraySlice     = 0;
-                        viewDesc.Texture2DArray.MipLevels           = resource.MipMapCount;
-                        viewDesc.Texture2DArray.MostDetailedMip     = mostDetailedMip;
-                        viewDesc.Texture2DArray.PlaneSlice          = 0;
-                        viewDesc.Texture2DArray.ResourceMinLODClamp = 0;
-                    }
+                    viewDesc.ViewDimension                      = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
+                    viewDesc.Format                             = format;
+                    viewDesc.Texture2DArray.ArraySize           = resource.SurfaceCount;
+                    viewDesc.Texture2DArray.FirstArraySlice     = 0;
+                    viewDesc.Texture2DArray.MipLevels           = resource.MipMapCount;
+                    viewDesc.Texture2DArray.MostDetailedMip     = mostDetailedMip;
+                    viewDesc.Texture2DArray.PlaneSlice          = 0;
+                    viewDesc.Texture2DArray.ResourceMinLODClamp = 0;
                 }
                 else
                 {
-                    if (resource.MipMapCount > 1)
-                    {
-                        viewDesc.ViewDimension                      = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
-                        viewDesc.Format                             = format;
-                        viewDesc.Texture2DArray.ArraySize           = resource.SurfaceCount;
-                        viewDesc.Texture2DArray.FirstArraySlice     = 0;
-                        viewDesc.Texture2DArray.MostDetailedMip     = mostDetailedMip;
-                        viewDesc.Texture2DArray.PlaneSlice          = 0;
-                        viewDesc.Texture2DArray.ResourceMinLODClamp = 0;
-                    }
-                    else
-                    {
-                        viewDesc.ViewDimension                      = D3D12_SRV_DIMENSION_TEXTURE2D;
-                        viewDesc.Format                             = format;
-                        viewDesc.Texture2D.MipLevels                = resource.MipMapCount;
-                        viewDesc.Texture2D.MostDetailedMip          = mostDetailedMip;
-                        viewDesc.Texture2D.PlaneSlice               = 0;
-                        viewDesc.Texture2D.ResourceMinLODClamp      = 0;
-                    }
+                    viewDesc.ViewDimension                      = D3D12_SRV_DIMENSION_TEXTURE2D;
+                    viewDesc.Format                             = format;
+                    viewDesc.Texture2D.MipLevels                = resource.MipMapCount;
+                    viewDesc.Texture2D.MostDetailedMip          = mostDetailedMip;
+                    viewDesc.Texture2D.PlaneSlice               = 0;
+                    viewDesc.Texture2D.ResourceMinLODClamp      = 0;
                 }
             }
             break;

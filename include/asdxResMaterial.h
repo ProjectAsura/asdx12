@@ -67,7 +67,7 @@ struct ResMaterialParameter
 ///////////////////////////////////////////////////////////////////////////////
 struct ResMaterial
 {
-    uint32_t    lHash;              //!< マテリアル名を表すハッシュ値です.
+    uint32_t    Hash;               //!< マテリアル名を表すハッシュ値です.
     uint8_t     State;              //!< マテリアルステートです.
     uint8_t     DisplayFace;        //!< 表示面設定です.
     uint8_t     ShadowCast;         //!< シャドウキャスト.

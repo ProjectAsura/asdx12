@@ -299,7 +299,7 @@ bool ColorTarget::Init
 
     if ( desc.DepthOrArraySize > 1 )
     {
-        if ( desc.MipLevels <= 1 )
+        if ( desc.SampleDesc.Count >= 1 )
         {
             rtv_desc.Texture2DMSArray.ArraySize       = desc.DepthOrArraySize;
             rtv_desc.Texture2DMSArray.FirstArraySlice = 0;
@@ -327,7 +327,7 @@ bool ColorTarget::Init
     }
     else
     {
-        if ( desc.MipLevels <= 1 )
+        if ( desc.SampleDesc.Count <= 1 )
         {
             rtv_desc.Texture2D.MipSlice     = 0;
             rtv_desc.Texture2D.PlaneSlice   = 0;
