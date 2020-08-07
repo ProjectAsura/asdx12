@@ -280,7 +280,6 @@
     <None Include="..\include\asdxMath.inl">
       <Filter>ヘッダー ファイル</Filter>
     </None>
-    <None Include="packages.config" />
     <None Include="..\res\shaders\asdxBRDF.hlsli">
       <Filter>リソース ファイル</Filter>
     </None>

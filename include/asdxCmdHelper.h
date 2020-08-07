@@ -9,7 +9,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <asdxDescriptor.h>
-#include <pix3.h>
+#include <pix_win.h>
 
 
 namespace asdx {
