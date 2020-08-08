@@ -550,7 +550,7 @@ static const ImWchar glyphRangesJapanese[] = {
 ///////////////////////////////////////////////////////////////////////////////
 // TransformBuffer
 ///////////////////////////////////////////////////////////////////////////////
-struct TransformBuffer
+struct alignas(256) TransformBuffer
 {
     float WorldViewProjection[ 4 ][ 4 ];
 };
@@ -856,6 +856,14 @@ bool GuiMgr::Init
     }
 
     {
+        if (!m_CB.Init(device, sizeof(TransformBuffer)))
+        {
+            ELOG("Error : ConstantBuffer::Init() Failed.");
+            return false;
+        }
+    }
+
+    {
         io.KeyMap[ ImGuiKey_Tab ]       = VK_TAB;
         io.KeyMap[ ImGuiKey_LeftArrow ] = VK_LEFT;
         io.KeyMap[ ImGuiKey_RightArrow ]= VK_RIGHT;
@@ -1054,6 +1062,7 @@ void GuiMgr::OnDraw( ImDrawData* pDrawData )
         m_pCmdList->SetPipelineState(m_PSO.GetPtr());
         m_pCmdList->SetGraphicsRootConstantBufferView(0, m_CB.GetResource()->GetGPUVirtualAddress());
         m_pCmdList->SetGraphicsRootDescriptorTable(1, m_FontTexture.GetDescriptor()->GetHandleGPU());
+        m_pCmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         m_pCmdList->IASetVertexBuffers(0, 1, &vbv);
         m_pCmdList->IASetIndexBuffer(&ibv);
     }
@@ -1100,7 +1109,7 @@ void GuiMgr::OnDraw( ImDrawData* pDrawData )
                     };
 
                     m_pCmdList->RSSetScissorRects(1, &rc);
-                    m_pCmdList->DrawIndexedInstanced(0, 1, pCmd->ElemCount, offsetIdx, offsetVtx);
+                    m_pCmdList->DrawIndexedInstanced(pCmd->ElemCount, 1, offsetIdx, offsetVtx, 0);
                 }
                 offsetIdx += pCmd->ElemCount;
             }

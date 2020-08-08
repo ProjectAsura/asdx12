@@ -631,7 +631,17 @@ bool Application::InitWnd()
 
     // アイコンなしの場合はロード.
     if ( m_hIcon == nullptr )
-    { m_hIcon = LoadIcon( hInst, IDI_APPLICATION ); }
+    {
+        // 最初にみつかったものをアイコンとして設定する.
+        WCHAR exePath[MAX_PATH];
+        GetModuleFileName( NULL, exePath, MAX_PATH );
+        m_hIcon = ExtractIcon( hInst, exePath, 0 );
+
+        // それでも見つからなった場合.
+        if (m_hIcon == nullptr)
+        { m_hIcon = LoadIcon( hInst, IDI_APPLICATION ); }
+    }
+
 
     // 拡張ウィンドウクラスの設定.
     WNDCLASSEXW wc;
