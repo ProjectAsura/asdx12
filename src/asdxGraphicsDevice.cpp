@@ -355,7 +355,6 @@ void GraphicsDevice::WaitIdle()
 
     if (m_pVideoProcessQueue.GetPtr() != nullptr)
     { m_pVideoProcessQueue->Wait(Queue::kInfinite); }
-
 }
 
 } // namespace asdx

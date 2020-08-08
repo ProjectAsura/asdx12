@@ -14,7 +14,6 @@
 #include <asdxRef.h>
 #include <asdxQueue.h>
 #include <asdxDescriptor.h>
-#include <asdxResourceDisposer.h>
 
 
 namespace asdx {

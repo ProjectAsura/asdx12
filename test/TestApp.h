@@ -13,7 +13,7 @@
 #include <asdxVertexBuffer.h>
 #include <asdxPipelineState.h>
 #include <asdxRootSignature.h>
-#include <asdxResourceDisposer.h>
+#include <asdxDisposer.h>
 #include <asdxResourceUploader.h>
 #include <asdxTexture.h>
 
@@ -48,7 +48,7 @@ private:
     asdx::VertexBuffer      m_TriangleVB;
     asdx::RootSignature     m_RootSignature;
     asdx::PipelineState     m_PSO;
-    asdx::ResourceDisposer  m_Disposer;
+    asdx::Disposer          m_Disposer;
     asdx::ResourceUploader  m_Uploader;
     asdx::ConstantBuffer    m_CbMesh;
     asdx::ConstantBuffer    m_CbScene;

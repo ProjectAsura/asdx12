@@ -32,7 +32,7 @@ IndexBuffer::~IndexBuffer()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool IndexBuffer::Init(GraphicsDevice& device, uint32_t size)
+bool IndexBuffer::Init(GraphicsDevice& device, uint32_t size, bool isShortFormat)
 {
     auto pDevice = device.GetDevice();
 
@@ -79,7 +79,7 @@ bool IndexBuffer::Init(GraphicsDevice& device, uint32_t size)
 
     m_View.BufferLocation   = m_pResource->GetGPUVirtualAddress();
     m_View.SizeInBytes      = size;
-    m_View.Format           = DXGI_FORMAT_R32_UINT;
+    m_View.Format           = (isShortFormat) ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
 
     return true;
 }

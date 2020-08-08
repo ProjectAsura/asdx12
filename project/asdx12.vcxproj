@@ -101,11 +101,13 @@
     <ClCompile Include="..\src\asdxCommandList.cpp" />
     <ClCompile Include="..\src\asdxConstantBuffer.cpp" />
     <ClCompile Include="..\src\asdxDescriptor.cpp" />
+    <ClCompile Include="..\src\asdxDisposer.cpp" />
     <ClCompile Include="..\src\asdxEditParam.cpp" />
     <ClCompile Include="..\src\asdxFence.cpp" />
     <ClCompile Include="..\src\asdxFileWatcher.cpp" />
     <ClCompile Include="..\src\asdxFrameHeap.cpp" />
     <ClCompile Include="..\src\asdxGraphicsDevice.cpp" />
+    <ClCompile Include="..\src\asdxGuiMgr.cpp" />
     <ClCompile Include="..\src\asdxHash.cpp" />
     <ClCompile Include="..\src\asdxHashString.cpp" />
     <ClCompile Include="..\src\asdxHistory.cpp" />
@@ -119,7 +121,6 @@
     <ClCompile Include="..\src\asdxPipelineState.cpp" />
     <ClCompile Include="..\src\asdxQueue.cpp" />
     <ClCompile Include="..\src\asdxRandom.cpp" />
-    <ClCompile Include="..\src\asdxResourceDisposer.cpp" />
     <ClCompile Include="..\src\asdxResourceUploader.cpp" />
     <ClCompile Include="..\src\asdxResTexture.cpp" />
     <ClCompile Include="..\src\asdxRootSignature.cpp" />
@@ -140,11 +141,13 @@
     <ClInclude Include="..\include\asdxCommandList.h" />
     <ClInclude Include="..\include\asdxConstantBuffer.h" />
     <ClInclude Include="..\include\asdxDescriptor.h" />
+    <ClInclude Include="..\include\asdxDisposer.h" />
     <ClInclude Include="..\include\asdxGraphicsDevice.h" />
     <ClInclude Include="..\include\asdxEditParam.h" />
     <ClInclude Include="..\include\asdxFence.h" />
     <ClInclude Include="..\include\asdxFileWatcher.h" />
     <ClInclude Include="..\include\asdxFrameHeap.h" />
+    <ClInclude Include="..\include\asdxGuiMgr.h" />
     <ClInclude Include="..\include\asdxHash.h" />
     <ClInclude Include="..\include\asdxHashString.h" />
     <ClInclude Include="..\include\asdxHid.h" />
@@ -163,7 +166,6 @@
     <ClInclude Include="..\include\asdxRef.h" />
     <ClInclude Include="..\include\asdxResMaterial.h" />
     <ClInclude Include="..\include\asdxResModel.h" />
-    <ClInclude Include="..\include\asdxResourceDisposer.h" />
     <ClInclude Include="..\include\asdxResourceUploader.h" />
     <ClInclude Include="..\include\asdxResTexture.h" />
     <ClInclude Include="..\include\asdxRootSignature.h" />
@@ -195,6 +197,18 @@
     <FxCompile Include="..\res\shaders\asdxFullScreenVS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxImGuiPS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.4</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.4</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxImGuiVS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.4</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.4</ShaderModel>
     </FxCompile>
     <FxCompile Include="..\res\shaders\asdxSkyBoxPS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>

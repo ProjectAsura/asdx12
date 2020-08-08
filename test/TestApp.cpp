@@ -13,6 +13,7 @@
 #include <asdxGraphicsDevice.h>
 #include <asdxLogger.h>
 #include <asdxMisc.h>
+#include <asdxGuiMgr.h>
 
 #include "TestVS.inc"
 #include "TestPS.inc"
@@ -179,6 +180,7 @@ bool TestApp::OnInit()
 
         res.Release();
     }
+
 
     return true;
 }

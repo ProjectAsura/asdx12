@@ -175,7 +175,7 @@ void* ConstantBuffer::Map(uint32_t index)
         return nullptr;
     }
 
-    pData;
+    return pData;
 }
 
 //-----------------------------------------------------------------------------

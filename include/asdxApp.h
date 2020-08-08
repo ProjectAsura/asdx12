@@ -23,7 +23,7 @@
 #include <asdxGraphicsDevice.h>
 #include <asdxCommandList.h>
 #include <asdxTarget.h>
-#include <asdxResourceDisposer.h>
+#include <asdxDisposer.h>
 
 
 #if defined(DEBUG) || defined(_DEBUG)
@@ -227,7 +227,7 @@ protected:
     std::vector<ColorTarget>        m_ColorTarget;          //!< カラーターゲットです.
     DepthTarget                     m_DepthTarget;          //!< 深度ターゲットです.
     CommandList                     m_GfxCmdList;           //!< グラフィックスコマンドリスト.
-    ResourceDisposer                m_Disposer;             //!< リソース遅延解放ユーティリティー.
+    Disposer                        m_Disposer;             //!< リソース遅延解放ユーティリティー.
 
     //=========================================================================
     // protected methods.

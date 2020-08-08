@@ -1,56 +1,56 @@
 ﻿//-----------------------------------------------------------------------------
-// File : asdxResourceDisposer.cpp
-// Desc : Resource Disposer.
+// File : asdxDisposer.cpp
+// Desc : Object Disposer.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <asdxResourceDisposer.h>
+#include <asdxDisposer.h>
 
 
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
-// ResourceDisposer class
+// Disposer class
 ///////////////////////////////////////////////////////////////////////////////
 
 //-----------------------------------------------------------------------------
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
-ResourceDisposer::ResourceDisposer()
+Disposer::Disposer()
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      デストラクタです.
 //-----------------------------------------------------------------------------
-ResourceDisposer::~ResourceDisposer()
+Disposer::~Disposer()
 { Clear(); }
 
 //-----------------------------------------------------------------------------
-//      リソースを登録します.
+//      オブジェクトを登録します.
 //-----------------------------------------------------------------------------
-void ResourceDisposer::Push(ID3D12Resource*& pResource, uint8_t lifeTime)
+void Disposer::Push(ID3D12Object*& pObject, uint8_t lifeTime)
 {
-    if (pResource == nullptr)
+    if (pObject == nullptr)
     { return; }
 
     std::lock_guard<SpinLock> locker(m_SpinLock);
 
     Item item;
-    item.pResource = pResource;
-    item.LifeTime  = lifeTime;
+    item.pObject    = pObject;
+    item.LifeTime   = lifeTime;
 
     m_List.push_back(item);
 
-    pResource = nullptr;
+    pObject = nullptr;
 }
 
 //-----------------------------------------------------------------------------
 //      フレーム同期し，遅延解放を実行します.
 //-----------------------------------------------------------------------------
-void ResourceDisposer::FrameSync()
+void Disposer::FrameSync()
 {
     std::lock_guard<SpinLock> locker(m_SpinLock);
 
@@ -60,10 +60,10 @@ void ResourceDisposer::FrameSync()
         itr->LifeTime--;
         if (itr->LifeTime <= 0)
         {
-            if (itr->pResource != nullptr)
+            if (itr->pObject != nullptr)
             {
-                itr->pResource->Release();
-                itr->pResource = nullptr;
+                itr->pObject->Release();
+                itr->pObject = nullptr;
             }
 
             itr = m_List.erase(itr);
@@ -78,19 +78,19 @@ void ResourceDisposer::FrameSync()
 //-----------------------------------------------------------------------------
 //      強制破棄を実行します.
 //-----------------------------------------------------------------------------
-void ResourceDisposer::Clear()
+void Disposer::Clear()
 {
     std::lock_guard<SpinLock> locker(m_SpinLock);
 
     auto itr = m_List.begin();
     while(itr != m_List.end())
     {
-        if (itr->pResource != nullptr)
+        if (itr->pObject != nullptr)
         {
             // GPUが実行中だとここで落ちるはずなので，
             // GPUの処理が終わるの確認してから呼んでね.
-            itr->pResource->Release();
-            itr->pResource = nullptr;
+            itr->pObject->Release();
+            itr->pObject = nullptr;
             itr->LifeTime  = 0;
         }
 
