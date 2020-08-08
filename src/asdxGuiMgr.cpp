@@ -701,7 +701,7 @@ bool GuiMgr::Init
 
     // ルートシグニチャの生成.
     {
-        D3D12_DESCRIPTOR_RANGE range;
+        D3D12_DESCRIPTOR_RANGE range = {};
         range.RangeType                         = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
         range.NumDescriptors                    = 1;
         range.BaseShaderRegister                = 0;
@@ -751,10 +751,10 @@ bool GuiMgr::Init
         desc.Flags              = flags;
 
         auto hr = D3D12SerializeRootSignature(
-            &desc, D3D_ROOT_SIGNATURE_VERSION_1_1, pBlob.GetAddress(), pErrorBlob.GetAddress());
+            &desc, D3D_ROOT_SIGNATURE_VERSION_1_0, pBlob.GetAddress(), pErrorBlob.GetAddress());
         if (FAILED(hr))
         {
-            ELOG("Error : D3D12SerializeRootSignature() Failed. errcode = 0x%x", hr);
+            ELOG("Error : D3D12SerializeRootSignature() Failed. errcode = 0x%x, msg = %s", hr, (char*)pErrorBlob->GetBufferPointer());
             return false;
         }
 
@@ -893,7 +893,6 @@ bool GuiMgr::Init
         style.Colors[ ImGuiCol_Text ]                   = ImVec4( 1.000000f, 1.000000f, 1.000000f, 1.000000f );
         style.Colors[ ImGuiCol_TextDisabled ]           = ImVec4( 0.400000f, 0.400000f, 0.400000f, 1.000000f );
         style.Colors[ ImGuiCol_WindowBg ]               = ImVec4( 0.060000f, 0.060000f, 0.060000f, 0.752000f );
-        //style.Colors[ ImGuiCol_ChildWindowBg ]          = ImVec4( 1.000000f, 1.000000f, 1.000000f, 0.000000f );
         style.Colors[ ImGuiCol_PopupBg ]                = ImVec4( 0.000000f, 0.000000f, 0.000000f, 0.752000f );
         style.Colors[ ImGuiCol_Border ]                 = ImVec4( 1.000000f, 1.000000f, 1.000000f, 0.312000f );
         style.Colors[ ImGuiCol_BorderShadow ]           = ImVec4( 0.000000f, 0.000000f, 0.000000f, 0.080000f );
@@ -917,27 +916,18 @@ bool GuiMgr::Init
         style.Colors[ ImGuiCol_Header ]                 = ImVec4( 0.260000f, 0.590000f, 0.980000f, 0.248000f );
         style.Colors[ ImGuiCol_HeaderHovered ]          = ImVec4( 0.260000f, 0.590000f, 0.980000f, 0.640000f );
         style.Colors[ ImGuiCol_HeaderActive ]           = ImVec4( 0.260000f, 0.590000f, 0.980000f, 1.000000f );
-        //style.Colors[ ImGuiCol_Column ]                 = ImVec4( 0.610000f, 0.610000f, 0.610000f, 1.000000f );
-        //style.Colors[ ImGuiCol_ColumnHovered ]          = ImVec4( 0.260000f, 0.590000f, 0.980000f, 0.624000f );
-        //style.Colors[ ImGuiCol_ColumnActive ]           = ImVec4( 0.260000f, 0.590000f, 0.980000f, 1.000000f );
         style.Colors[ ImGuiCol_ResizeGrip ]             = ImVec4( 0.000000f, 0.000000f, 0.000000f, 0.400000f );
         style.Colors[ ImGuiCol_ResizeGripHovered ]      = ImVec4( 0.260000f, 0.590000f, 0.980000f, 0.536000f );
         style.Colors[ ImGuiCol_ResizeGripActive ]       = ImVec4( 0.260000f, 0.590000f, 0.980000f, 0.760000f );
-        //style.Colors[ ImGuiCol_CloseButton ]            = ImVec4( 0.410000f, 0.410000f, 0.410000f, 0.400000f );
-        //style.Colors[ ImGuiCol_CloseButtonHovered ]     = ImVec4( 0.980000f, 0.390000f, 0.360000f, 1.000000f );
-        //style.Colors[ ImGuiCol_CloseButtonActive ]      = ImVec4( 0.980000f, 0.390000f, 0.360000f, 1.000000f );
         style.Colors[ ImGuiCol_PlotLines ]              = ImVec4( 0.610000f, 0.610000f, 0.610000f, 1.000000f );
         style.Colors[ ImGuiCol_PlotLinesHovered ]       = ImVec4( 1.000000f, 0.430000f, 0.350000f, 1.000000f );
         style.Colors[ ImGuiCol_PlotHistogram ]          = ImVec4( 0.900000f, 0.700000f, 0.000000f, 1.000000f );
         style.Colors[ ImGuiCol_PlotHistogramHovered ]   = ImVec4( 1.000000f, 0.600000f, 0.000000f, 1.000000f );
         style.Colors[ ImGuiCol_TextSelectedBg ]         = ImVec4( 0.260000f, 0.590000f, 0.980000f, 0.280000f );
         style.Colors[ ImGuiCol_ModalWindowDarkening ]   = ImVec4( 0.800000f, 0.800000f, 0.800000f, 0.280000f );
-
-
     }
 
     return true;
-
 }
 
 //-----------------------------------------------------------------------------
@@ -945,7 +935,16 @@ bool GuiMgr::Init
 //-----------------------------------------------------------------------------
 void GuiMgr::Term()
 {
+    m_VB.Term();
+    m_IB.Term();
+    m_CB.Term();
+    m_FontTexture.Term();
+
+    m_RootSig.Reset();
+    m_PSO    .Reset();
+
     ImGui::DestroyContext();
+    m_pCmdList = nullptr;
 }
 
 //-----------------------------------------------------------------------------
@@ -986,6 +985,9 @@ void GuiMgr::Draw(ID3D12GraphicsCommandList* pCmdList)
 //-----------------------------------------------------------------------------
 void GuiMgr::OnDraw( ImDrawData* pDrawData )
 {
+    if (m_pCmdList == nullptr)
+    { return; }
+
     if ( uint32_t( pDrawData->TotalVtxCount ) >= m_SizeVB )
     {
         m_VB.Term();
