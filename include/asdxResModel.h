@@ -38,12 +38,12 @@ struct ResMeshlet
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-// ResCulling structure
+// ResCullingInfo structure
 ///////////////////////////////////////////////////////////////////////////////
-struct ResCulling
+struct ResCullingInfo
 {
     Vector4     BoundingSphere;     //!< バウンディングスフィアです.
-    uint32_t    NormalCone;         //!< 圧縮済み法錐です.
+    Vector4     NormalCone;         //!< 圧縮済み法錐です.
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -63,18 +63,16 @@ struct ResPrimitive
 struct ResMesh
 {
     std::vector<Vector3>        Positions;      //!< 位置座標.
-    std::vector<uint32_t>       TangentSpace;   //!< R10G10B10A2圧縮済み接線空間.
+    std::vector<Vector3>        Normals;        //!< 法線ベクトルです.
+    std::vector<Vector3>        Tangents;       //!< 接線ベクトルです.
     std::vector<Vector2>        TexCoord0;      //!< テクスチャ座標0です.
     std::vector<Vector2>        TexCoord1;      //!< テクスチャ座標1です.
     std::vector<Vector2>        TexCoord2;      //!< テクスチャ座標2です.
     std::vector<Vector2>        TexCoord3;      //!< テクスチャ座標3です.
     std::vector<Vector4>        BoneWeights;    //!< ボーンの重みです.
     std::vector<ResBoneIndex>   BoneIndices;    //!< ボーン番号ですです.
-
-    std::vector<ResMeshlet>     Meshlets;       //!< メッシュレットです.
+    std::vector<Vector4>        Colors;         //!< カラーデータです.
     std::vector<uint32_t>       Indices;        //!< ユニーク頂点番号です.
-    std::vector<ResPrimitive>   Primitives;     //!< 出力頂点番号です.
-
     uint32_t                    MaterialHash;   //!< マテリアルハッシュです.
 };
 
@@ -85,5 +83,48 @@ struct ResModel
 {
     std::vector<ResMesh>        Meshes;         //!< メッシュです.
 };
+
+//-----------------------------------------------------------------------------
+//      メッシュの破棄処理を行います.
+//-----------------------------------------------------------------------------
+inline void Dispose(asdx::ResMesh& resource)
+{
+    resource.Positions.clear();
+    resource.Positions.shrink_to_fit();
+
+    resource.TexCoord0.clear();
+    resource.TexCoord0.shrink_to_fit();
+
+    resource.TexCoord1.clear();
+    resource.TexCoord1.shrink_to_fit();
+
+    resource.TexCoord2.clear();
+    resource.TexCoord2.shrink_to_fit();
+
+    resource.TexCoord3.clear();
+    resource.TexCoord3.shrink_to_fit();
+
+    resource.BoneIndices.clear();
+    resource.BoneIndices.shrink_to_fit();
+
+    resource.BoneWeights.clear();
+    resource.BoneWeights.shrink_to_fit();
+
+    resource.Indices.clear();
+    resource.Indices.shrink_to_fit();
+}
+
+//-----------------------------------------------------------------------------
+//      モデルの破棄処理を行います.
+//-----------------------------------------------------------------------------
+inline void Dispose(asdx::ResModel& resource)
+{
+    for(size_t i=0; i<resource.Meshes.size(); ++i)
+    { Dispose(resource.Meshes[i]); }
+
+    resource.Meshes.clear();
+    resource.Meshes.shrink_to_fit();
+}
+
 
 } // namespace asdx

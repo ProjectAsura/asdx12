@@ -161,4 +161,30 @@ const Descriptor* ConstantBuffer::GetDescriptor() const
 void ConstantBuffer::SwapBuffer()
 { m_Index = (m_Index + 1) & 0x1; }
 
+//-----------------------------------------------------------------------------
+//      メモリマッピングを行います.
+//-----------------------------------------------------------------------------
+void* ConstantBuffer::Map(uint32_t index)
+{
+    assert(index < 2);
+    void* pData = nullptr;
+    auto hr = m_Resource[index]->Map(0, nullptr, &pData);
+    if (FAILED(hr))
+    {
+        ELOG("Error : ID3D12Resource::Map() Failed. errcode = 0x%x", hr);
+        return nullptr;
+    }
+
+    pData;
+}
+
+//-----------------------------------------------------------------------------
+//      メモリマッピングを解除します.
+//-----------------------------------------------------------------------------
+void ConstantBuffer::Unmap(uint32_t index)
+{
+    assert(index < 2);
+    m_Resource[index]->Unmap(0, nullptr);
+}
+
 } // namespace asdx
