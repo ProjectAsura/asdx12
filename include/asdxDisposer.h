@@ -20,6 +20,7 @@ namespace asdx {
 ///////////////////////////////////////////////////////////////////////////////
 // Disposer class
 ///////////////////////////////////////////////////////////////////////////////
+template<typename T>
 class Disposer
 {
     //=========================================================================
@@ -40,12 +41,14 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      コンストラクタです.
     //-------------------------------------------------------------------------
-    Disposer();
+    Disposer()
+    { /* DO_NOTHING */ }
 
     //-------------------------------------------------------------------------
     //! @brief      デストラクタです.
     //-------------------------------------------------------------------------
-    ~Disposer();
+    ~Disposer()
+    { Clear(); }
 
     //-------------------------------------------------------------------------
     //! @brief      オブジェクトを登録します.
@@ -53,17 +56,74 @@ public:
     //! @param[in]      pObject     登録するオブジェクト.
     //! @param[in]      lifeTime    生存フレーム数.
     //-------------------------------------------------------------------------
-    void Push(ID3D12Object*& pObject, uint8_t lifeTime = kDefaultLifeTime);
+    void Push(T*& pObject, uint8_t lifeTime = kDefaultLifeTime)
+    {
+        if (pObject == nullptr)
+        { return; }
+
+        std::lock_guard<SpinLock> locker(m_SpinLock);
+
+        Item item;
+        item.pObject    = pObject;
+        item.LifeTime   = lifeTime;
+        m_List.push_back(item);
+
+        pObject = nullptr;
+    }
 
     //-------------------------------------------------------------------------
     //! @brief      フレーム同期し，遅延解放を実行します.
     //-------------------------------------------------------------------------
-    void FrameSync();
+    void FrameSync()
+    {
+        std::lock_guard<SpinLock> locker(m_SpinLock);
+
+        auto itr = m_List.begin();
+        while(itr != m_List.end())
+        {
+            itr->LifeTime--;
+            if (itr->LifeTime <= 0)
+            {
+                if (itr->pObject != nullptr)
+                {
+                    itr->pObject->Release();
+                    itr->pObject = nullptr;
+                }
+
+                itr = m_List.erase(itr);
+            }
+            else
+            {
+                itr++;
+            }
+        }
+    }
 
     //-------------------------------------------------------------------------
     //! @brief      強制破棄を実行します.
     //-------------------------------------------------------------------------
-    void Clear();
+    void Clear()
+    {
+        std::lock_guard<SpinLock> locker(m_SpinLock);
+
+        auto itr = m_List.begin();
+        while(itr != m_List.end())
+        {
+            if (itr->pObject != nullptr)
+            {
+                // GPUが実行中だとここで落ちるはずなので，
+                // GPUの処理が終わるの確認してから呼んでね.
+                itr->pObject->Release();
+                itr->pObject = nullptr;
+                itr->LifeTime  = 0;
+            }
+
+            itr = m_List.erase(itr);
+        }
+
+        // 念のため.
+        m_List.clear();
+    }
 
 private:
     ///////////////////////////////////////////////////////////////////////////
@@ -71,8 +131,8 @@ private:
     ///////////////////////////////////////////////////////////////////////////
     struct Item
     {
-        ID3D12Object*   pObject;    //!< 破棄オブジェクト.
-        uint8_t         LifeTime;   //!< 生存フレーム数.
+        T*          pObject;    //!< 破棄オブジェクト.
+        uint8_t     LifeTime;   //!< 生存フレーム数.
     };
 
     //=========================================================================

@@ -101,7 +101,6 @@
     <ClCompile Include="..\src\asdxCommandList.cpp" />
     <ClCompile Include="..\src\asdxConstantBuffer.cpp" />
     <ClCompile Include="..\src\asdxDescriptor.cpp" />
-    <ClCompile Include="..\src\asdxDisposer.cpp" />
     <ClCompile Include="..\src\asdxFence.cpp" />
     <ClCompile Include="..\src\asdxFileWatcher.cpp" />
     <ClCompile Include="..\src\asdxFrameHeap.cpp" />
