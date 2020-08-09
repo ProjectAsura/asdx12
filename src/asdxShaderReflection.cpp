@@ -27,7 +27,7 @@ namespace {
 //-----------------------------------------------------------------------------
 //      シェーダリフレクションを生成します.
 //-----------------------------------------------------------------------------
-HRESULT CreateShaderReflectionOld(const void* pData, uint32_t size, ID3D12ShaderReflection** ppResult)
+HRESULT CreateShaderReflectionOld(const void* pData, size_t size, ID3D12ShaderReflection** ppResult)
 {
     // DirectX ShaderCompiler before March 2020.
 
@@ -42,7 +42,7 @@ HRESULT CreateShaderReflectionOld(const void* pData, uint32_t size, ID3D12Shader
     }
 
     asdx::RefPtr<IDxcBlobEncoding> blobEncoding;
-    hr = pLibrary->CreateBlobWithEncodingOnHeapCopy(pData, size, CP_ACP, blobEncoding.GetAddress());
+    hr = pLibrary->CreateBlobWithEncodingOnHeapCopy(pData, UINT32(size), CP_ACP, blobEncoding.GetAddress());
     if (FAILED(hr))
     {
         ELOG("Error : IDxcLibrary::CreateBlobWithEncodingOnHeapCopy() Faield. errcode = 0x%x", hr);
@@ -99,7 +99,7 @@ ShaderReflection::~ShaderReflection()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool ShaderReflection::Init(const void* pData, uint32_t size)
+bool ShaderReflection::Init(const void* pData, size_t size)
 {
 #ifdef ASDX_ENABLE_DXC
     asdx::RefPtr<IDxcUtils> pUtil;
@@ -112,7 +112,7 @@ bool ShaderReflection::Init(const void* pData, uint32_t size)
 
     DxcBuffer buf = {};
     buf.Ptr      = pData;
-    buf.Size     = SIZE_T(size);
+    buf.Size     = size;
     buf.Encoding = CP_ACP;
 
     hr = pUtil->CreateReflection(&buf, IID_PPV_ARGS(m_pReflection.GetAddress()));

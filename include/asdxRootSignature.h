@@ -10,6 +10,8 @@
 //-----------------------------------------------------------------------------
 #include <vector>
 #include <list>
+#include <map>
+#include <string>
 #include <d3d12.h>
 #include <asdxRef.h>
 
@@ -36,15 +38,15 @@ enum SHADER_VISIBILITY
 ///////////////////////////////////////////////////////////////////////////////
 enum STATIC_SAMPLER_TYPE
 {
-    SS_POINT_CLAMP,
-    SS_POINT_WRAP,
-    SS_POINT_MIRROR,
-    SS_LINEAR_CLAMP,
-    SS_LINEAR_WRAP,
-    SS_LINEAR_MIRROR,
-    SS_ANISOTROPIC_CLAMP,
-    SS_ANISOTROPIC_WRAP,
-    SS_ANISOTROPIC_MIRROR,
+    SST_POINT_CLAMP,
+    SST_POINT_WRAP,
+    SST_POINT_MIRROR,
+    SST_LINEAR_CLAMP,
+    SST_LINEAR_WRAP,
+    SST_LINEAR_MIRROR,
+    SST_ANISOTROPIC_CLAMP,
+    SST_ANISOTROPIC_WRAP,
+    SST_ANISOTROPIC_MIRROR,
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -103,6 +105,7 @@ public:
     //! @return     ルートパラメータ番号を返却します.
     //-------------------------------------------------------------------------
     uint32_t AddCBV(
+        const char*         tag,
         SHADER_VISIBILITY   visibility,
         uint32_t            shaderRegister,
         uint32_t            registerSpace = 0);
@@ -116,6 +119,7 @@ public:
     //! @return     ルートパラメータ番号を返却します.
     //-------------------------------------------------------------------------
     uint32_t AddSRV(
+        const char*         tag,
         SHADER_VISIBILITY   visibility,
         uint32_t            shaderRegister,
         uint32_t            registerSpace = 0);
@@ -129,6 +133,7 @@ public:
     //! @return     ルートパラメータ番号を返却します.
     //-------------------------------------------------------------------------
     uint32_t AddUAV(
+        const char*         tag,
         SHADER_VISIBILITY   visibility,
         uint32_t            shaderRegister,
         uint32_t            registerSpace = 0);
@@ -142,6 +147,7 @@ public:
     //! @return     ルートパラメータ番号を返却します.
     //-------------------------------------------------------------------------
     uint32_t AddSampler(
+        const char*         tag,
         SHADER_VISIBILITY   visibility,
         uint32_t            shaderRegister,
         uint32_t            registerSpace = 0);
@@ -156,6 +162,7 @@ public:
     //! @return     ルートパラメータ番号を返却します.
     //-------------------------------------------------------------------------
     uint32_t AddConstant(
+        const char*         tag,
         SHADER_VISIBILITY   visibility,
         uint32_t            count32BitValues,
         uint32_t            shaderRegister,
@@ -191,6 +198,14 @@ public:
     //-------------------------------------------------------------------------
     void SetFlag(uint32_t flags);
 
+    //-------------------------------------------------------------------------
+    //! @brief      シェーダコードからルートパラメータを追加します.
+    //!
+    //! @param[in]      pByteCode       シェーダバイトコードです.
+    //! @param[in]      byteCodeSize    バイトコードサイズです.
+    //-------------------------------------------------------------------------
+    RootSignatureDesc& AddFromShader(const void* pByteCode, size_t byteCodeSize);
+
 private:
     //=========================================================================
     // private variables.
@@ -199,6 +214,7 @@ private:
     std::vector<D3D12_STATIC_SAMPLER_DESC>  m_Samplers;
     std::list<D3D12_DESCRIPTOR_RANGE*>      m_pRange;
     D3D12_ROOT_SIGNATURE_FLAGS              m_Flags;
+    std::vector<std::string>                m_Tags;
 
     //=========================================================================
     // private methods.
@@ -252,6 +268,15 @@ public:
     void Term();
 
     //-------------------------------------------------------------------------
+    //! @brief      ルートパラメータ番号を探索します.
+    //!
+    //! @param[in]      tag     タグ名です.
+    //! @return     ルートパラメータ番号を返却します. 
+    //!             見つからなかった場合はUINT32_MAXを返却します.
+    //-------------------------------------------------------------------------
+    uint32_t Find(const char* tag) const;
+
+    //-------------------------------------------------------------------------
     //! @brief      ルートシグニチャを取得します.
     //!
     //! @return     ルートシグニチャを返却します.
@@ -263,6 +288,7 @@ private:
     // private variables.
     //=========================================================================
     asdx::RefPtr<ID3D12RootSignature>   m_RootSignature;
+    std::map<std::string, uint32_t>     m_RootParamIndex;
 
     //=========================================================================
     // private methods.

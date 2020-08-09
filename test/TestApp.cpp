@@ -14,6 +14,7 @@
 #include <asdxLogger.h>
 #include <asdxMisc.h>
 #include <asdxGuiMgr.h>
+#include <d3d12.h>
 
 #include "TestVS.inc"
 #include "TestPS.inc"
@@ -106,10 +107,12 @@ bool TestApp::OnInit()
         flag |= asdx::RSF_DENY_MS;
 
         asdx::RootSignatureDesc desc;
-        m_IndexCBMesh       = desc.AddCBV(asdx::SV_VS, 0);
-        m_IndexCBScene      = desc.AddCBV(asdx::SV_VS, 1);
-        m_IndexColorMap     = desc.AddSRV(asdx::SV_PS, 0);
-        m_IndexLinearClamp  = desc.AddStaticSampler(asdx::SV_PS, asdx::SS_LINEAR_CLAMP, 0);
+        desc.AddFromShader(TestVS, sizeof(TestVS))
+            .AddFromShader(TestPS, sizeof(TestPS));
+        //m_IndexCBMesh       = desc.AddCBV(asdx::SV_VS, 0);
+        //m_IndexCBScene      = desc.AddCBV(asdx::SV_VS, 1);
+        //m_IndexColorMap     = desc.AddSRV(asdx::SV_PS, 0);
+        //m_IndexLinearClamp  = desc.AddStaticSampler(asdx::SV_PS, asdx::SS_LINEAR_CLAMP, 0);
         desc.SetFlag(flag);
 
         if (!m_RootSignature.Init(pDevice, desc))
@@ -117,6 +120,11 @@ bool TestApp::OnInit()
             ELOG("Error : RootSignature::Init() Failed.");
             return false;
         }
+
+        m_IndexCBMesh       = m_RootSignature.Find("CbMesh");
+        m_IndexCBScene      = m_RootSignature.Find("CbScene");
+        m_IndexColorMap     = m_RootSignature.Find("ColorMap");
+        m_IndexLinearClamp  = m_RootSignature.Find("LinearClamp");
     }
 
     // パイプラインステート.
@@ -181,6 +189,13 @@ bool TestApp::OnInit()
         res.Release();
     }
 
+    {
+        if (!m_Sampler.Init(asdx::GfxDevice(), asdx::ST_LINEAR_CLAMP))
+        {
+            ELOG("Error : Sampler::Init() Failed.");
+            return false;
+        }
+    }
 
     return true;
 }
@@ -196,6 +211,7 @@ void TestApp::OnTerm()
     m_CbMesh        .Term();
     m_CbScene       .Term();
     m_Texture       .Term();
+    m_Sampler       .Term();
     m_Disposer      .Clear();
     m_Uploader      .Clear();
 }
@@ -231,9 +247,10 @@ void TestApp::OnFrameRender(asdx::FrameEventArgs& args)
         auto vbv = m_TriangleVB.GetView();
         pCmd->SetGraphicsRootSignature(m_RootSignature.GetPtr());
         pCmd->SetPipelineState(m_PSO.GetPtr());
-        pCmd->SetGraphicsRootConstantBufferView(m_IndexCBMesh, m_CbMesh.GetResource()->GetGPUVirtualAddress());
-        pCmd->SetGraphicsRootConstantBufferView(m_IndexCBScene, m_CbScene.GetResource()->GetGPUVirtualAddress());
+        //pCmd->SetGraphicsRootConstantBufferView(m_IndexCBMesh, m_CbMesh.GetResource()->GetGPUVirtualAddress());
+        //pCmd->SetGraphicsRootConstantBufferView(m_IndexCBScene, m_CbScene.GetResource()->GetGPUVirtualAddress());
         pCmd->SetGraphicsRootDescriptorTable(m_IndexColorMap, m_Texture.GetDescriptor()->GetHandleGPU());
+        pCmd->SetGraphicsRootDescriptorTable(m_IndexLinearClamp, m_Sampler.GetDescriptor()->GetHandleGPU());
 
         pCmd->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         pCmd->IASetVertexBuffers(0, 1, &vbv);

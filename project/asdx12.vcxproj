@@ -123,6 +123,7 @@
     <ClCompile Include="..\src\asdxResourceUploader.cpp" />
     <ClCompile Include="..\src\asdxResTexture.cpp" />
     <ClCompile Include="..\src\asdxRootSignature.cpp" />
+    <ClCompile Include="..\src\asdxSampler.cpp" />
     <ClCompile Include="..\src\asdxShaderReflection.cpp" />
     <ClCompile Include="..\src\asdxStructuredBuffer.cpp" />
     <ClCompile Include="..\src\asdxTablet.cpp" />
@@ -167,6 +168,7 @@
     <ClInclude Include="..\include\asdxResourceUploader.h" />
     <ClInclude Include="..\include\asdxResTexture.h" />
     <ClInclude Include="..\include\asdxRootSignature.h" />
+    <ClInclude Include="..\include\asdxSampler.h" />
     <ClInclude Include="..\include\asdxShaderReflection.h" />
     <ClInclude Include="..\include\asdxSpinLock.h" />
     <ClInclude Include="..\include\asdxStepTimer.h" />

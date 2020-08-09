@@ -9,6 +9,7 @@
 //-----------------------------------------------------------------------------
 #include <asdxRootSignature.h>
 #include <asdxLogger.h>
+#include <asdxShaderReflection.h>
 
 
 namespace asdx {
@@ -51,6 +52,7 @@ RootSignatureDesc::~RootSignatureDesc()
     }
     m_pRange.clear();
 
+    m_Tags.clear();
 }
 
 //-----------------------------------------------------------------------------
@@ -58,6 +60,7 @@ RootSignatureDesc::~RootSignatureDesc()
 //-----------------------------------------------------------------------------
 uint32_t RootSignatureDesc::AddCBV
 (
+    const char*         tag,
     SHADER_VISIBILITY   visibility,
     uint32_t            shaderRegister,
     uint32_t            registerSpace
@@ -71,6 +74,7 @@ uint32_t RootSignatureDesc::AddCBV
 
     auto result = uint32_t(m_Params.size());
     m_Params.push_back(param);
+    m_Tags.push_back(tag);
 
     return result;
 }
@@ -80,6 +84,7 @@ uint32_t RootSignatureDesc::AddCBV
 //-----------------------------------------------------------------------------
 uint32_t RootSignatureDesc::AddSRV
 (
+    const char*         tag,
     SHADER_VISIBILITY   visibility,
     uint32_t            shaderRegister,
     uint32_t            registerSpace
@@ -101,6 +106,7 @@ uint32_t RootSignatureDesc::AddSRV
     auto result = uint32_t(m_Params.size());
     m_Params.push_back(param);
     m_pRange.push_back(range);
+    m_Tags.push_back(tag);
 
     return result;
 }
@@ -110,6 +116,7 @@ uint32_t RootSignatureDesc::AddSRV
 //-----------------------------------------------------------------------------
 uint32_t RootSignatureDesc::AddUAV
 (
+    const char*         tag,
     SHADER_VISIBILITY   visibility,
     uint32_t            shaderRegister,
     uint32_t            registerSpace
@@ -123,6 +130,7 @@ uint32_t RootSignatureDesc::AddUAV
 
     auto result = uint32_t(m_Params.size());
     m_Params.push_back(param);
+    m_Tags.push_back(tag);
 
     return result;
 }
@@ -132,6 +140,7 @@ uint32_t RootSignatureDesc::AddUAV
 //-----------------------------------------------------------------------------
 uint32_t RootSignatureDesc::AddSampler
 (
+    const char*         tag,
     SHADER_VISIBILITY   visibility,
     uint32_t            shaderRegister,
     uint32_t            registerSpace
@@ -153,6 +162,7 @@ uint32_t RootSignatureDesc::AddSampler
     auto result = uint32_t(m_Params.size());
     m_Params.push_back(param);
     m_pRange.push_back(range);
+    m_Tags.push_back(tag);
 
     return result;
 }
@@ -162,6 +172,7 @@ uint32_t RootSignatureDesc::AddSampler
 //-----------------------------------------------------------------------------
 uint32_t RootSignatureDesc::AddConstant
 (
+    const char*         tag,
     SHADER_VISIBILITY   visibility,
     uint32_t            count32BitValues,
     uint32_t            shaderRegister,
@@ -177,6 +188,7 @@ uint32_t RootSignatureDesc::AddConstant
 
     auto result = uint32_t(m_Params.size());
     m_Params.push_back(param);
+    m_Tags.push_back(tag);
 
     return result;
 }
@@ -206,7 +218,7 @@ uint32_t RootSignatureDesc::AddStaticSampler
 
     switch(type)
     {
-    case SS_POINT_CLAMP:
+    case SST_POINT_CLAMP:
         {
             desc.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
             desc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
@@ -215,7 +227,7 @@ uint32_t RootSignatureDesc::AddStaticSampler
         }
         break;
 
-    case SS_POINT_WRAP:
+    case SST_POINT_WRAP:
         {
             desc.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
             desc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
@@ -224,7 +236,7 @@ uint32_t RootSignatureDesc::AddStaticSampler
         }
         break;
 
-    case SS_POINT_MIRROR:
+    case SST_POINT_MIRROR:
         {
             desc.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
             desc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
@@ -233,7 +245,7 @@ uint32_t RootSignatureDesc::AddStaticSampler
         }
         break;
 
-    case SS_LINEAR_CLAMP:
+    case SST_LINEAR_CLAMP:
         {
             desc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
             desc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
@@ -242,7 +254,7 @@ uint32_t RootSignatureDesc::AddStaticSampler
         }
         break;
 
-    case SS_LINEAR_WRAP:
+    case SST_LINEAR_WRAP:
         {
             desc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
             desc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
@@ -251,7 +263,7 @@ uint32_t RootSignatureDesc::AddStaticSampler
         }
         break;
 
-    case SS_LINEAR_MIRROR:
+    case SST_LINEAR_MIRROR:
         {
             desc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
             desc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
@@ -260,7 +272,7 @@ uint32_t RootSignatureDesc::AddStaticSampler
         }
         break;
 
-    case SS_ANISOTROPIC_CLAMP:
+    case SST_ANISOTROPIC_CLAMP:
         {
             desc.Filter = D3D12_FILTER_ANISOTROPIC;
             desc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
@@ -270,7 +282,7 @@ uint32_t RootSignatureDesc::AddStaticSampler
         }
         break;
 
-    case SS_ANISOTROPIC_WRAP:
+    case SST_ANISOTROPIC_WRAP:
         {
             desc.Filter = D3D12_FILTER_ANISOTROPIC;
             desc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
@@ -280,7 +292,7 @@ uint32_t RootSignatureDesc::AddStaticSampler
         }
         break;
 
-    case SS_ANISOTROPIC_MIRROR:
+    case SST_ANISOTROPIC_MIRROR:
         {
             desc.Filter = D3D12_FILTER_ANISOTROPIC;
             desc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
@@ -310,6 +322,109 @@ uint32_t RootSignatureDesc::AddStaticSampler(D3D12_STATIC_SAMPLER_DESC desc)
 //-----------------------------------------------------------------------------
 void RootSignatureDesc::SetFlag(uint32_t flags)
 { m_Flags = D3D12_ROOT_SIGNATURE_FLAGS(flags); }
+
+//-----------------------------------------------------------------------------
+//      シェーダからルートパラメータを追加します.
+//-----------------------------------------------------------------------------
+RootSignatureDesc& RootSignatureDesc::AddFromShader
+(
+    const void* pByteCode,
+    size_t      byteCodeSize
+)
+{
+    ShaderReflection wrapper;
+    if (!wrapper.Init(pByteCode, byteCodeSize))
+    { return *this; }
+
+    D3D12_SHADER_DESC shaderDesc;
+    auto hr = wrapper->GetDesc(&shaderDesc);
+    if (FAILED(hr))
+    { return *this; }
+
+    auto shaderType = D3D12_SHVER_GET_TYPE(shaderDesc.Version);
+    SHADER_VISIBILITY visibility = SV_ALL;
+    switch(shaderType)
+    {
+    case D3D12_SHVER_PIXEL_SHADER:
+        visibility = SV_PS;
+        break;
+
+    case D3D12_SHVER_VERTEX_SHADER:
+        visibility = SV_VS;
+        break;
+
+    case D3D12_SHVER_GEOMETRY_SHADER:
+        visibility = SV_GS;
+        break;
+
+    case D3D12_SHVER_HULL_SHADER:
+        visibility = SV_HS;
+        break;
+
+    case D3D12_SHVER_DOMAIN_SHADER:
+        visibility = SV_DS;
+        break;
+
+    case D3D12_SHVER_COMPUTE_SHADER:
+        visibility = SV_ALL;
+        break;
+
+    case SHVER_LIBRARY:
+    case SHVER_RAY_GENERATION:
+    case SHVER_INTERSECTION:
+    case SHVER_ANY_HIT:
+    case SHVER_CLOSEST_HIT:
+    case SHVER_MISS:
+    case SHVER_CALLABLE:
+        visibility = SV_ALL;
+        break;
+
+    case SHVER_MS:
+        visibility = SV_MS;
+        break;
+
+    case SHVER_AS:
+        visibility = SV_AS;
+        break;
+    }
+
+    for(auto i=0u; i<shaderDesc.BoundResources; ++i)
+    {
+        D3D12_SHADER_INPUT_BIND_DESC bindDesc = {};
+        hr = wrapper->GetResourceBindingDesc(i, &bindDesc);
+        if (FAILED(hr))
+        { continue; }
+
+        switch(bindDesc.Type)
+        {
+        case D3D_SIT_CBUFFER:
+            AddCBV(bindDesc.Name, visibility, bindDesc.BindPoint, bindDesc.Space);
+            break;
+
+        case D3D_SIT_TBUFFER:
+        case D3D_SIT_TEXTURE:
+        case D3D_SIT_STRUCTURED:
+        case D3D_SIT_BYTEADDRESS:
+            AddSRV(bindDesc.Name, visibility, bindDesc.BindPoint, bindDesc.Space);
+            break;
+
+        case D3D_SIT_SAMPLER:
+            AddSampler(bindDesc.Name, visibility, bindDesc.BindPoint, bindDesc.Space);
+            break;
+
+        case D3D_SIT_UAV_RWTYPED:
+        case D3D_SIT_UAV_RWSTRUCTURED:
+        case D3D_SIT_UAV_RWBYTEADDRESS:
+        case D3D_SIT_UAV_APPEND_STRUCTURED:
+        case D3D_SIT_UAV_CONSUME_STRUCTURED:
+        case D3D_SIT_UAV_RWSTRUCTURED_WITH_COUNTER:
+            AddUAV(bindDesc.Name, visibility, bindDesc.BindPoint, bindDesc.Space);
+            break;
+        }
+    }
+
+    return *this;
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -369,6 +484,9 @@ bool RootSignature::Init(ID3D12Device* pDevice, RootSignatureDesc& desc)
         return false;
     }
 
+    for(size_t i=0; i<desc.m_Tags.size(); ++i)
+    { m_RootParamIndex[desc.m_Tags[i]] = uint32_t(i); }
+
     return true;
 }
 
@@ -377,6 +495,18 @@ bool RootSignature::Init(ID3D12Device* pDevice, RootSignatureDesc& desc)
 //-----------------------------------------------------------------------------
 void RootSignature::Term()
 { m_RootSignature.Reset(); }
+
+//-----------------------------------------------------------------------------
+//      ルートパラメータ番号を探索します.
+//-----------------------------------------------------------------------------
+uint32_t RootSignature::Find(const char* tag) const
+{
+    auto itr = m_RootParamIndex.find(tag);
+    if (itr == m_RootParamIndex.end())
+    { return UINT32_MAX; }
+
+    return itr->second;
+}
 
 //-----------------------------------------------------------------------------
 //      ルートシグニチャを取得します.

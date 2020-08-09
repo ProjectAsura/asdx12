@@ -16,6 +16,7 @@
 #include <asdxDisposer.h>
 #include <asdxResourceUploader.h>
 #include <asdxTexture.h>
+#include <asdxSampler.h>
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -53,6 +54,7 @@ private:
     asdx::ConstantBuffer    m_CbMesh;
     asdx::ConstantBuffer    m_CbScene;
     asdx::Texture           m_Texture;
+    asdx::Sampler           m_Sampler;
 
     uint32_t                m_IndexCBMesh;
     uint32_t                m_IndexCBScene;

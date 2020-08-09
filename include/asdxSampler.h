@@ -1,6 +1,6 @@
 ﻿//-----------------------------------------------------------------------------
-// File : asdxShaderReflection.h
-// Desc : Shader Reflection.
+// File : asdxSampler.h
+// Desc : Sampler.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 #pragma once
@@ -8,51 +8,31 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <d3d12shader.h>
-#include <asdxRef.h>
-
-
-//-----------------------------------------------------------------------------
-// Linker
-//-----------------------------------------------------------------------------
-#ifdef ASDX_AUTO_LINK
-    #ifdef ASDX_ENABLE_DXC
-        #pragma comment( lib, "dxcompiler.lib" )
-    #else
-        #pragma comment( lib, "d3dcompiler.lib")
-    #endif
-#endif
+#include <asdxGraphicsDevice.h>
 
 
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
-// SHADER_VERSION_TYPE enum
+// SAMPLER_TYPE enum
 ///////////////////////////////////////////////////////////////////////////////
-enum SHADER_VERSION_TYPE
+enum SAMPLER_TYPE
 {
-    SHVER_PS = D3D12_SHVER_PIXEL_SHADER,
-    SHVER_VS = D3D12_SHVER_VERTEX_SHADER,
-    SHVER_GS = D3D12_SHVER_GEOMETRY_SHADER,
-    SHVER_HS = D3D12_SHVER_HULL_SHADER,
-    SHVER_DS = D3D12_SHVER_DOMAIN_SHADER,
-    SHVER_CS = D3D12_SHVER_COMPUTE_SHADER,
-    SHVER_LIBRARY,
-    SHVER_RAY_GENERATION,
-    SHVER_INTERSECTION,
-    SHVER_ANY_HIT,
-    SHVER_CLOSEST_HIT,
-    SHVER_MISS,
-    SHVER_CALLABLE,
-    SHVER_MS,
-    SHVER_AS,
-    SHVER_INVALID,
+    ST_POINT_CLAMP,
+    ST_POINT_WRAP,
+    ST_POINT_MIRROR,
+    ST_LINEAR_CLAMP,
+    ST_LINEAR_WRAP,
+    ST_LINEAR_MIRROR,
+    ST_ANISOTROPIC_CLAMP,
+    ST_ANISOTROPIC_WRAP,
+    ST_ANISOTROPIC_MIRROR,
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-// ShaderReflection class
+// Sampler class
 ///////////////////////////////////////////////////////////////////////////////
-class ShaderReflection
+class Sampler
 {
     //=========================================================================
     // list of friend classes and methods.
@@ -72,22 +52,36 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      コンストラクタです.
     //-------------------------------------------------------------------------
-    ShaderReflection();
+    Sampler();
 
     //-------------------------------------------------------------------------
     //! @brief      デストラクタです.
     //-------------------------------------------------------------------------
-    ~ShaderReflection();
+    ~Sampler();
 
     //-------------------------------------------------------------------------
     //! @brief      初期化処理を行います.
     //!
-    //! @param[in]      pData       リフレクションデータ.
-    //! @param[in]      size        リフレクションデータサイズ(バイト単位).
+    //! @param[in]      device          グラフィックスデバイスです.
+    //! @param[in]      type            サンプラータイプです.
+    //! @param[in]      compareFunc     比較関数.
     //! @retval true    初期化に成功.
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
-    bool Init(const void* pData, size_t size);
+    bool Init(
+        GraphicsDevice&         device,
+        SAMPLER_TYPE            type,
+        D3D12_COMPARISON_FUNC   compareFunc = D3D12_COMPARISON_FUNC_ALWAYS);
+
+    //-------------------------------------------------------------------------
+    //! @brief      初期化処理を行います.
+    //!
+    //! @param[in]      device      グラフィックスデバイスです.
+    //! @param[in]      pDesc       構成設定です.
+    //! @retval true    初期化に成功.
+    //! @retval false   初期化に失敗.
+    //-------------------------------------------------------------------------
+    bool Init(GraphicsDevice& device, const D3D12_SAMPLER_DESC* pDesc);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.
@@ -95,22 +89,17 @@ public:
     void Term();
 
     //-------------------------------------------------------------------------
-    //! @brief      シェーダリフレクションを取得します.
+    //! @brief      ディスクリプターを取得します.
     //!
-    //! @return     シェーダリフレクションを返却します.
+    //! @return     ディスクリプターを返却します.
     //-------------------------------------------------------------------------
-    ID3D12ShaderReflection* GetPtr() const;
-
-    //-------------------------------------------------------------------------
-    //! @brief      アロー演算子です.
-    //-------------------------------------------------------------------------
-    ID3D12ShaderReflection* operator ->();
+    const Descriptor* GetDescriptor() const;
 
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    RefPtr<ID3D12ShaderReflection> m_pReflection;
+    asdx::RefPtr<Descriptor>    m_Descriptor;
 
     //=========================================================================
     // private methods.
