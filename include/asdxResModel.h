@@ -20,10 +20,33 @@ namespace asdx {
 ///////////////////////////////////////////////////////////////////////////////
 struct ResBoneIndex
 {
-    uint8_t     Index0;    //!< ボーン番号0.
-    uint8_t     Index1;    //!< ボーン番号1.
-    uint8_t     Index2;    //!< ボーン番号2.
-    uint8_t     Index3;    //!< ボーン番号3.
+    uint16_t     Index0;    //!< ボーン番号0.
+    uint16_t     Index1;    //!< ボーン番号1.
+    uint16_t     Index2;    //!< ボーン番号2.
+    uint16_t     Index3;    //!< ボーン番号3.
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// ResMeshVertex structure
+///////////////////////////////////////////////////////////////////////////////
+struct ResMeshVertex
+{
+    asdx::Vector3   Position;
+    uint32_t        TexCoord0;
+    uint32_t        TexCoord1;
+    uint32_t        TexCoord2;
+    uint32_t        TexCoord3;
+    uint32_t        TangentSpace;
+    uint32_t        Color;
+};
+
+//////////////////////////////////////////////////////////////////////////////
+// ResSkinningMeshVertex structure
+///////////////////////////////////////////////////////////////////////////////
+struct ResSkinningMeshVertex : public ResMeshVertex
+{
+    ResBoneIndex    BoneIndex;
+    asdx::Vector4   BoneWeights;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -43,7 +66,7 @@ struct ResMeshlet
 struct ResCullingInfo
 {
     Vector4     BoundingSphere;     //!< バウンディングスフィアです.
-    Vector4     NormalCone;         //!< 圧縮済み法錐です.
+    uint32_t    NormalCone;         //!< 圧縮済み法錐です.
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -58,22 +81,29 @@ struct ResPrimitive
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-// ResMesh structure
+// ResStaticMesh structure
 ///////////////////////////////////////////////////////////////////////////////
-struct ResMesh
+struct ResStaticMesh
 {
-    std::vector<Vector3>        Positions;      //!< 位置座標.
-    std::vector<Vector3>        Normals;        //!< 法線ベクトルです.
-    std::vector<Vector3>        Tangents;       //!< 接線ベクトルです.
-    std::vector<Vector2>        TexCoord0;      //!< テクスチャ座標0です.
-    std::vector<Vector2>        TexCoord1;      //!< テクスチャ座標1です.
-    std::vector<Vector2>        TexCoord2;      //!< テクスチャ座標2です.
-    std::vector<Vector2>        TexCoord3;      //!< テクスチャ座標3です.
-    std::vector<Vector4>        BoneWeights;    //!< ボーンの重みです.
-    std::vector<ResBoneIndex>   BoneIndices;    //!< ボーン番号ですです.
-    std::vector<Vector4>        Colors;         //!< カラーデータです.
-    std::vector<uint32_t>       Indices;        //!< ユニーク頂点番号です.
-    uint32_t                    MaterialHash;   //!< マテリアルハッシュです.
+    std::vector<ResMeshVertex>  Vertices;
+    std::vector<uint32_t>       Indices;
+    std::vector<ResPrimitive>   Primitives;
+    std::vector<ResMeshlet>     Meshlets;
+    std::vector<ResCullingInfo> CullingInfos;
+    uint32_t                    MatrerialHash;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// ResSkinningMesh structure
+///////////////////////////////////////////////////////////////////////////////
+struct ResSkinningMesh
+{
+    std::vector<ResSkinningMeshVertex>  Vertices;
+    std::vector<uint32_t>               Indices;
+    std::vector<ResPrimitive>           Primitives;
+    std::vector<ResMeshlet>             Meshlets;
+    std::vector<ResCullingInfo>         CullingInfos;
+    uint32_t                            MatrerialHash;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -81,50 +111,85 @@ struct ResMesh
 ///////////////////////////////////////////////////////////////////////////////
 struct ResModel
 {
-    std::vector<ResMesh>        Meshes;         //!< メッシュです.
+    std::vector<ResStaticMesh>      StaticMeshes;
+    std::vector<ResSkinningMesh>    SkinningMeshes;
 };
 
 //-----------------------------------------------------------------------------
 //      メッシュの破棄処理を行います.
 //-----------------------------------------------------------------------------
-inline void Dispose(asdx::ResMesh& resource)
-{
-    resource.Positions.clear();
-    resource.Positions.shrink_to_fit();
+void Dispose(ResStaticMesh& resource);
 
-    resource.TexCoord0.clear();
-    resource.TexCoord0.shrink_to_fit();
-
-    resource.TexCoord1.clear();
-    resource.TexCoord1.shrink_to_fit();
-
-    resource.TexCoord2.clear();
-    resource.TexCoord2.shrink_to_fit();
-
-    resource.TexCoord3.clear();
-    resource.TexCoord3.shrink_to_fit();
-
-    resource.BoneIndices.clear();
-    resource.BoneIndices.shrink_to_fit();
-
-    resource.BoneWeights.clear();
-    resource.BoneWeights.shrink_to_fit();
-
-    resource.Indices.clear();
-    resource.Indices.shrink_to_fit();
-}
+//-----------------------------------------------------------------------------
+//      メッシュの破棄処理を行います.
+//-----------------------------------------------------------------------------
+void Dispose(ResSkinningMesh& resource);
 
 //-----------------------------------------------------------------------------
 //      モデルの破棄処理を行います.
 //-----------------------------------------------------------------------------
-inline void Dispose(asdx::ResModel& resource)
-{
-    for(size_t i=0; i<resource.Meshes.size(); ++i)
-    { Dispose(resource.Meshes[i]); }
+void Dispose(ResModel& resource);
 
-    resource.Meshes.clear();
-    resource.Meshes.shrink_to_fit();
-}
+//-----------------------------------------------------------------------------
+//      半精度浮動小数点形式に変換します.
+//-----------------------------------------------------------------------------
+uint16_t ToHalf(float value);
 
+//-----------------------------------------------------------------------------
+//      単精度浮動小数点形式に変換します.
+//-----------------------------------------------------------------------------
+float ToFloat(uint16_t value);
+
+//-----------------------------------------------------------------------------
+//      R8G8B8A8_UNORM形式に変換します.
+//-----------------------------------------------------------------------------
+uint32_t ToUnorm(const Vector4& value);
+
+//-----------------------------------------------------------------------------
+//      R8G8B8A8_UNORM形式からVector4に変換します.
+//-----------------------------------------------------------------------------
+Vector4 FromUnorm(uint32_t value);
+
+//-----------------------------------------------------------------------------
+//      テクスチャ座標を圧縮します.
+//-----------------------------------------------------------------------------
+uint32_t EncodeTexCoord(const Vector2& value);
+
+//-----------------------------------------------------------------------------
+//      圧縮されたテクスチャ座標を展開します.
+//-----------------------------------------------------------------------------
+Vector2 DecodeTexCoord(uint32_t encoded);
+
+//-----------------------------------------------------------------------------
+//      八面体ラップ処理を行います.
+//-----------------------------------------------------------------------------
+Vector2 OctWrap(const Vector2& value);
+
+//-----------------------------------------------------------------------------
+//      法線ベクトルをパッキングします.
+//-----------------------------------------------------------------------------
+Vector2 PackNormal(const Vector3& value);
+
+//-----------------------------------------------------------------------------
+//      法線ベクトルをアンパッキングします.
+//-----------------------------------------------------------------------------
+Vector3 UnpackNormal(const Vector2& value);
+
+//-----------------------------------------------------------------------------
+//      接線空間を圧縮します.
+//-----------------------------------------------------------------------------
+uint32_t EncodeTBN(
+    const Vector3& normal,
+    const Vector3& tangent,
+    uint8_t binormalHandedeness);
+
+//-----------------------------------------------------------------------------
+//      圧縮された接線空間を展開します.
+//-----------------------------------------------------------------------------
+void DecodeTBN(
+    uint32_t encoded,
+    Vector3& tangent,
+    Vector3& bitangent,
+    Vector3& normal);
 
 } // namespace asdx

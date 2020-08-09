@@ -11,37 +11,6 @@
 #include <asdxMath.h>
 #include <asdxHistory.h>
 
-#ifdef ASDX_ENABLE_TINYXML2
-#include <tinyxml2.h>
-
-
-#ifndef ASDX_TO_STR
-#define ASDX_TO_STR(x) #x
-#endif//ASDX_TO_STR
-
-#ifndef ASDX_XML_SERIALIZE
-#define ASDX_XML_SERIALIZE(doc, var) \
-    var.Serialize(doc, ASDX_TO_STR(var))
-#endif//ASDX_XML_SERIALIZE
-
-#ifndef ASDX_XML_DESERIALIZE
-#define ASDX_XML_DESERIALIZE_E(elem, var) \
-    var.Deserialize(elem, ASDX_TO_STR(var))
-#endif//ASDX_XML_DESERIALIZE
-
-#ifndef ASDX_XML_PUSH_BACK
-#define ASDX_XML_PUSH_BACK(doc, elem, var) \
-    elem->InsertEndChild(ASDX_ELEMENT_SERIALIZE(doc, var))
-#endif//ASDX_XML_PUSH_BACK
-
-#ifndef ASDX_XML_PUSH_FRONT
-#define ASDX_XML_PUSH_FRONT(doc, elem, var) \
-    elem->InsertFirstChild(ASDX_ELEMENT_SERIALIZE(doc, var))
-#endif//ASDX_XML_PUSH_FRONT
-
-
-#endif//ASDX_ENABLE_TINYXML2
-
 
 namespace asdx {
 
@@ -89,13 +58,6 @@ public:
     bool GetValue() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      値へのポインタを取得します.
-    //!
-    //! @return     値へのポインタを返却します.
-    //-------------------------------------------------------------------------
-    const bool* GetValuePtr() const;
-
-    //-------------------------------------------------------------------------
     //! @brief      グループヒストリー用履歴を作成します.
     //!
     //! @param[in]      nexe        次に設定する値.
@@ -103,31 +65,12 @@ public:
     //-------------------------------------------------------------------------
     asdx::IHistory* CreateHistory(bool next);
 
-    #ifdef ASDX_ENABLE_IMGUI
-        //---------------------------------------------------------------------
-        //! @brief      描画します.
-        //!
-        //! @param[in]      label       表示ラベル名.
-        //---------------------------------------------------------------------
-        void DrawCheckbox(const char* label);
-    #endif
-
-    #ifdef ASDX_ENABLE_TINYXML2
-        //---------------------------------------------------------------------
-        //! @brief      XML要素を生成します.
-        //!
-        //! @param[in]      doc         XMLドキュメント.
-        //! @return     生成されたXML要素を返却します.
-        //---------------------------------------------------------------------
-        tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag);
-
-        //---------------------------------------------------------------------
-        //! @brief      XML要素を読み取ります.
-        //!
-        //! @param[in]      element     XML要素.
-        //---------------------------------------------------------------------
-        void Deserialize(tinyxml2::XMLElement* element, const char* tag);
-    #endif//ASDX_ENABLE_TINYXML2
+    //-------------------------------------------------------------------------
+    //! @brief      描画します.
+    //!
+    //! @param[in]      label       表示ラベル名.
+    //-------------------------------------------------------------------------
+    void DrawCheckbox(const char* label);
 
 private:
     //=========================================================================
@@ -184,13 +127,6 @@ public:
     int GetValue() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      値へのポインタを取得します.
-    //!
-    //! @return     値へのポインタを返却します.
-    //-------------------------------------------------------------------------
-    const int* GetValuePtr() const;
-
-    //-------------------------------------------------------------------------
     //! @brief      グループヒストリー用履歴を作成します.
     //!
     //! @param[in]      nexe        次に設定する値.
@@ -198,60 +134,38 @@ public:
     //-------------------------------------------------------------------------
     asdx::IHistory* CreateHistory(int next);
 
-    #ifdef ASDX_ENABLE_IMGUI
-        //---------------------------------------------------------------------
-        //! @brief      描画します.
-        //!
-        //! @param[in]      label       表示名.
-        //---------------------------------------------------------------------
-        void DrawSlider(const char* label, int step = 1, int mini = 0, int maxi = 0);
+    //-------------------------------------------------------------------------
+    //! @brief      スライダーを描画します.
+    //!
+    //! @param[in]      label       表示名.
+    //-------------------------------------------------------------------------
+    void DrawSlider(const char* label, int step = 1, int mini = 0, int maxi = 0);
 
-        //---------------------------------------------------------------------
-        //! @brief      コンボボックスを描画します.
-        //!
-        //! @param[in]      label       表示名.
-        //! @param[in]      count       アイテム数.
-        //! @param[in]      items       アイテム名.
-        //---------------------------------------------------------------------
-        void DrawCombo(const char* label, int count, const char** items);
+    //-------------------------------------------------------------------------
+    //! @brief      コンボボックスを描画します.
+    //!
+    //! @param[in]      label       表示名.
+    //! @param[in]      count       アイテム数.
+    //! @param[in]      items       アイテム名.
+    //-------------------------------------------------------------------------
+    void DrawCombo(const char* label, int count, const char** items);
 
-        //----------------------------------------------------------------------
-        //! @brief      コンボボックスを描画します.
-        //!
-        //! @param[in]      label           表示名.
-        //! @param[in]      items_getter    アイテム取得関数.
-        //! @param[in]      count           アイテム数.
-        //---------------------------------------------------------------------
-        void DrawCombo(const char* label, bool (*items_getter)(void* data, int idx, const char** out_text), int count);
-    #endif
-
-    #ifdef ASDX_ENABLE_TINYXML2
-        //---------------------------------------------------------------------
-        //! @brief      XML要素を生成します.
-        //!
-        //! @param[in]      doc         XMLドキュメント.
-        //! @return     生成されたXML要素を返却します.
-        //---------------------------------------------------------------------
-        tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag);
-
-        //---------------------------------------------------------------------
-        //! @brief      XML要素を読み取ります.
-        //!
-        //! @param[in]      element     XML要素.
-        //---------------------------------------------------------------------
-        void Deserialize(tinyxml2::XMLElement* element, const char* tag);
-    #endif//ASDX_ENABLE_TINYXML2
+    //-------------------------------------------------------------------------
+    //! @brief      コンボボックスを描画します.
+    //!
+    //! @param[in]      label           表示名.
+    //! @param[in]      items_getter    アイテム取得関数.
+    //! @param[in]      count           アイテム数.
+    //-------------------------------------------------------------------------
+    void DrawCombo(const char* label, bool (*items_getter)(void* data, int idx, const char** out_text), int count);
 
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
     int         m_Value;    //!< 値です.
-
-    #ifdef ASDX_ENABLE_IMGUI
-        int         m_Prev;     //!< 前の値.
-        bool        m_Dragged;  //!< ドラッグ中かどうか?
-    #endif//ASDX_ENABLE_IMGUI
+    int         m_Prev;     //!< 前の値.
+    bool        m_Dragged;  //!< ドラッグ中かどうか?
 
     //=========================================================================
     // private methods.
@@ -303,13 +217,6 @@ public:
     float GetValue() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      値へのポインタを取得します.
-    //!
-    //! @return     値へのポインタを返却します.
-    //-------------------------------------------------------------------------
-    const float* GetValuePtr() const;
-
-    //-------------------------------------------------------------------------
     //! @brief      グループヒストリー用履歴を作成します.
     //!
     //! @param[in]      nexe        次に設定する値.
@@ -317,42 +224,20 @@ public:
     //-------------------------------------------------------------------------
     asdx::IHistory* CreateHistory(float next);
 
-    #ifdef ASDX_ENABLE_IMGUI
-        //---------------------------------------------------------------------
-        //! @brief      描画します.
-        //!
-        //! @param[in]      label       表示名.
-        //---------------------------------------------------------------------
-        void DrawSlider(const char* label, float step = 0.1f, float mini = 0.0f, float maxi = 0.0f);
-    #endif
-
-    #ifdef ASDX_ENABLE_TINYXML2
-        //---------------------------------------------------------------------
-        //! @brief      XML要素を生成します.
-        //!
-        //! @param[in]      doc         XMLドキュメント.
-        //! @return     生成されたXML要素を返却します.
-        //---------------------------------------------------------------------
-        tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag);
-
-        //---------------------------------------------------------------------
-        //! @brief      XML要素を読み取ります.
-        //!
-        //! @param[in]      element     XML要素.
-        //---------------------------------------------------------------------
-        void Deserialize(tinyxml2::XMLElement* element, const char* tag);
-    #endif//ASDX_ENABLE_TINYXML2
+    //-------------------------------------------------------------------------
+    //! @brief      描画します.
+    //!
+    //! @param[in]      label       表示名.
+    //-------------------------------------------------------------------------
+    void DrawSlider(const char* label, float step = 0.1f, float mini = 0.0f, float maxi = 0.0f);
 
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
     float       m_Value;    //!< 値です.
-
-    #ifdef ASDX_ENABLE_IMGUI
-        float       m_Prev;     //!< 前の値.
-        bool        m_Dragged;  //!< ドラッグ中かどうか?
-    #endif//ASDX_ENABLE_IMGUI
+    float       m_Prev;     //!< 前の値.
+    bool        m_Dragged;  //!< ドラッグ中かどうか?
 
     //=========================================================================
     // private methods.
@@ -404,13 +289,6 @@ public:
     const asdx::Vector2& GetValue() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      値へのポインタを取得します.
-    //!
-    //! @return     値へのポインタを返却します.
-    //-------------------------------------------------------------------------
-    const asdx::Vector2* GetValuePtr() const;
-
-    //-------------------------------------------------------------------------
     //! @brief      グループヒストリー用履歴を作成します.
     //!
     //! @param[in]      nexe        次に設定する値.
@@ -418,42 +296,20 @@ public:
     //-------------------------------------------------------------------------
     asdx::IHistory* CreateHistory(const asdx::Vector2& next);
 
-    #ifdef ASDX_ENABLE_IMGUI
-        //---------------------------------------------------------------------
-        //! @brief      描画します.
-        //!
-        //! @param[in]      label       表示名.
-        //---------------------------------------------------------------------
-        void DrawSlider(const char* label, float step = 0.1f, float mini = 0.0f, float maxi = 0.0f);
-    #endif
-
-    #ifdef ASDX_ENABLE_TINYXML2
-        //---------------------------------------------------------------------
-        //! @brief      XML要素を生成します.
-        //!
-        //! @param[in]      doc         XMLドキュメント.
-        //! @return     生成されたXML要素を返却します.
-        //---------------------------------------------------------------------
-        tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag);
-
-        //---------------------------------------------------------------------
-        //! @brief      XML要素を読み取ります.
-        //!
-        //! @param[in]      element     XML要素.
-        //---------------------------------------------------------------------
-        void Deserialize(tinyxml2::XMLElement* element, const char* tag);
-    #endif//ASDX_ENABLE_TINYXML2
+    //---------------------------------------------------------------------
+    //! @brief      描画します.
+    //!
+    //! @param[in]      label       表示名.
+    //---------------------------------------------------------------------
+    void DrawSlider(const char* label, float step = 0.1f, float mini = 0.0f, float maxi = 0.0f);
 
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
     asdx::Vector2   m_Value;    //!< 値です.
-
-    #ifdef ASDX_ENABLE_IMGUI
-        asdx::Vector2   m_Prev;     //!< 前の値.
-        bool            m_Dragged;  //!< ドラッグ中かどうか?
-    #endif//ASDX_ENABLE_IMGUI
+    asdx::Vector2   m_Prev;     //!< 前の値.
+    bool            m_Dragged;  //!< ドラッグ中かどうか?
 
     //=========================================================================
     // private methods.
@@ -505,13 +361,6 @@ public:
     const asdx::Vector3& GetValue() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      値へのポインタを取得します.
-    //!
-    //! @return     値へのポインタを返却します.
-    //-------------------------------------------------------------------------
-    const asdx::Vector3* GetValuePtr() const;
-
-    //-------------------------------------------------------------------------
     //! @brief      グループヒストリー用履歴を作成します.
     //!
     //! @param[in]      nexe        次に設定する値.
@@ -519,42 +368,20 @@ public:
     //-------------------------------------------------------------------------
     asdx::IHistory* CreateHistory(const asdx::Vector3& next);
 
-    #ifdef ASDX_ENABLE_IMGUI
-        //---------------------------------------------------------------------
-        //! @brief      描画します.
-        //!
-        //! @param[in]      label       表示名.
-        //---------------------------------------------------------------------
-        void DrawSlider(const char* label, float step = 0.1f, float mini = 0.0f, float maxi = 0.0f);
-    #endif
-
-    #ifdef ASDX_ENABLE_TINYXML2
-        //---------------------------------------------------------------------
-        //! @brief      XML要素を生成します.
-        //!
-        //! @param[in]      doc         XMLドキュメント.
-        //! @return     生成されたXML要素を返却します.
-        //---------------------------------------------------------------------
-        tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag);
-
-        //---------------------------------------------------------------------
-        //! @brief      XML要素を読み取ります.
-        //!
-        //! @param[in]      element     XML要素.
-        //---------------------------------------------------------------------
-        void Deserialize(tinyxml2::XMLElement* element, const char* tag);
-    #endif//ASDX_ENABLE_TINYXML2
+    //---------------------------------------------------------------------
+    //! @brief      描画します.
+    //!
+    //! @param[in]      label       表示名.
+    //---------------------------------------------------------------------
+    void DrawSlider(const char* label, float step = 0.1f, float mini = 0.0f, float maxi = 0.0f);
 
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
     asdx::Vector3   m_Value;    //!< 値です.
-
-    #ifdef ASDX_ENABLE_IMGUI
-        asdx::Vector3   m_Prev;     //!< 前の値.
-        bool            m_Dragged;  //!< ドラッグ中かどうか?
-    #endif//ASDX_ENABLE_IMGUI
+    asdx::Vector3   m_Prev;     //!< 前の値.
+    bool            m_Dragged;  //!< ドラッグ中かどうか?
 
     //=========================================================================
     // private methods.
@@ -605,13 +432,6 @@ public:
     const asdx::Vector4& GetValue() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      値へのポインタを取得します.
-    //!
-    //! @return     値へのポインタを返却します.
-    //-------------------------------------------------------------------------
-    const asdx::Vector4* GetValuePtr() const;
-
-    //-------------------------------------------------------------------------
     //! @brief      グループヒストリー用履歴を作成します.
     //!
     //! @param[in]      nexe        次に設定する値.
@@ -619,42 +439,20 @@ public:
     //-------------------------------------------------------------------------
     asdx::IHistory* CreateHistory(const asdx::Vector4& next);
 
-    #ifdef ASDX_ENABLE_IMGUI
-        //---------------------------------------------------------------------
-        //! @brief      描画します.
-        //!
-        //! @param[in]      label       表示名.
-        //---------------------------------------------------------------------
-        void DrawSlider(const char* label, float step = 0.1f, float mini = 0.0f, float maxi = 0.0f);
-    #endif
-
-    #ifdef ASDX_ENABLE_TINYXML2
-        //---------------------------------------------------------------------
-        //! @brief      XML要素を生成します.
-        //!
-        //! @param[in]      doc         XMLドキュメント.
-        //! @return     生成されたXML要素を返却します.
-        //---------------------------------------------------------------------
-        tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag);
-
-        //---------------------------------------------------------------------
-        //! @brief      XML要素を読み取ります.
-        //!
-        //! @param[in]      element     XML要素.
-        //---------------------------------------------------------------------
-        void Deserialize(tinyxml2::XMLElement* element, const char* tag);
-    #endif//ASDX_ENABLE_TINYXML2
+    //-------------------------------------------------------------------------
+    //! @brief      描画します.
+    //!
+    //! @param[in]      label       表示名.
+    //-------------------------------------------------------------------------
+    void DrawSlider(const char* label, float step = 0.1f, float mini = 0.0f, float maxi = 0.0f);
 
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
     asdx::Vector4   m_Value;    //!< 値です.
-
-    #ifdef ASDX_ENABLE_IMGUI
-        asdx::Vector4   m_Prev;     //!< 前の値.
-        bool            m_Dragged;  //!< ドラッグ中かどうか?
-    #endif//ASDX_ENABLE_IMGUI
+    asdx::Vector4   m_Prev;     //!< 前の値.
+    bool            m_Dragged;  //!< ドラッグ中かどうか?
 
     //=========================================================================
     // private methods.
@@ -706,13 +504,6 @@ public:
     const asdx::Vector3& GetValue() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      値へのポインタを取得します.
-    //!
-    //! @return     値へのポインタを返却します.
-    //-------------------------------------------------------------------------
-    const asdx::Vector3* GetValuePtr() const;
-
-    //-------------------------------------------------------------------------
     //! @brief      グループヒストリー用履歴を作成します.
     //!
     //! @param[in]      nexe        次に設定する値.
@@ -720,43 +511,20 @@ public:
     //-------------------------------------------------------------------------
     asdx::IHistory* CreateHistory(const asdx::Vector3& next);
 
-    #ifdef ASDX_ENABLE_IMGUI
-        //---------------------------------------------------------------------
-        //! @brief      描画します.
-        //!
-        //! @param[in]      label       表示名.
-        //---------------------------------------------------------------------
-        void DrawPicker(const char* label);
-    #endif
-
-    #ifdef ASDX_ENABLE_TINYXML2
-        //---------------------------------------------------------------------
-        //! @brief      XML要素を生成します.
-        //!
-        //! @param[in]      doc         XMLドキュメント.
-        //! @return     生成されたXML要素を返却します.
-        //---------------------------------------------------------------------
-        tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag);
-
-        //---------------------------------------------------------------------
-        //! @brief      XML要素を読み取ります.
-        //!
-        //! @param[in]      element     XML要素.
-        //---------------------------------------------------------------------
-        void Deserialize(tinyxml2::XMLElement* element, const char* tag);
-    #endif//ASDX_ENABLE_TINYXML2
+    //-------------------------------------------------------------------------
+    //! @brief      描画します.
+    //!
+    //! @param[in]      label       表示名.
+    //-------------------------------------------------------------------------
+    void DrawPicker(const char* label);
 
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    const char*     m_Tag;      //!< 識別用タグです.
     asdx::Vector3   m_Value;    //!< 値です.
-
-    #ifdef ASDX_ENABLE_IMGUI
-        asdx::Vector3   m_Prev;     //!< 前の値.
-        bool            m_Dragged;  //!< ドラッグ中かどうか?
-    #endif//ASDX_ENABLE_IMGUI
+    asdx::Vector3   m_Prev;     //!< 前の値.
+    bool            m_Dragged;  //!< ドラッグ中かどうか?
 
     //=========================================================================
     // private methods.
@@ -808,13 +576,6 @@ public:
     const asdx::Vector4& GetValue() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      値へのポインタを取得します.
-    //!
-    //! @return     値へのポインタを返却します.
-    //-------------------------------------------------------------------------
-    const asdx::Vector4* GetValuePtr() const;
-
-    //-------------------------------------------------------------------------
     //! @brief      グループヒストリー用履歴を作成します.
     //!
     //! @param[in]      nexe        次に設定する値.
@@ -822,42 +583,20 @@ public:
     //-------------------------------------------------------------------------
     asdx::IHistory* CreateHistory(const asdx::Vector4& next);
 
-    #ifdef ASDX_ENABLE_IMGUI
-        //---------------------------------------------------------------------
-        //! @brief      描画します.
-        //!
-        //! @param[in]      label       表示名.
-        //---------------------------------------------------------------------
-        void DrawPicker(const char* label);
-    #endif
-
-    #ifdef ASDX_ENABLE_TINYXML2
-        //---------------------------------------------------------------------
-        //! @brief      XML要素を生成します.
-        //!
-        //! @param[in]      doc         XMLドキュメント.
-        //! @return     生成されたXML要素を返却します.
-        //---------------------------------------------------------------------
-        tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag);
-
-        //---------------------------------------------------------------------
-        //! @brief      XML要素を読み取ります.
-        //!
-        //! @param[in]      element     XML要素.
-        //---------------------------------------------------------------------
-        void Deserialize(tinyxml2::XMLElement* element, const char* tag);
-    #endif//ASDX_ENABLE_TINYXML2
+    //-------------------------------------------------------------------------
+    //! @brief      描画します.
+    //!
+    //! @param[in]      label       表示名.
+    //-------------------------------------------------------------------------
+    void DrawPicker(const char* label);
 
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
     asdx::Vector4   m_Value;    //!< 値です.
-
-    #ifdef ASDX_ENABLE_IMGUI
-        asdx::Vector4   m_Prev;     //!< 前の値.
-        bool            m_Dragged;  //!< ドラッグ中かどうか?
-    #endif//ASDX_ENABLE_IMGUI
+    asdx::Vector4   m_Prev;     //!< 前の値.
+    bool            m_Dragged;  //!< ドラッグ中かどうか?
 
     //=========================================================================
     // private methods.
@@ -866,3 +605,30 @@ private:
 };
 
 } // namespace asdx
+
+
+#ifdef ASDX_ENABLE_TINYXML2
+#include <tinyxml2.h>
+
+namespace asdx {
+
+tinyxml2::XMLElement* Serialize(tiyxml2::XMLDocument* doc, const char* tag, const EditBool&   control);
+tinyxml2::XMLElement* Serialize(tiyxml2::XMLDocument* doc, const char* tag, const EditInt&    control);
+tinyxml2::XMLElement* Serialize(tiyxml2::XMLDocument* doc, const char* tag, const EditFloat&  control);
+tinyxml2::XMLElement* Serialize(tiyxml2::XMLDocument* doc, const char* tag, const EditFloat2& control);
+tinyxml2::XMLElement* Serialize(tiyxml2::XMLDocument* doc, const char* tag, const EditFloat3& control);
+tinyxml2::XMLElement* Serialize(tiyxml2::XMLDocument* doc, const char* tag, const EditFloat4& control);
+tinyxml2::XMLElement* Serialize(tiyxml2::XMLDocument* doc, const char* tag, const EditColor3& control);
+tinyxml2::XMLElement* Serialize(tiyxml2::XMLDocument* doc, const char* tag, const EditColor4& control);
+
+void Deserialize(tinxyml2::XMLElement* element, const char* tag, EditBool&   control);
+void Deserialize(tinxyml2::XMLElement* element, const char* tag, EditInt&    control);
+void Deserialize(tinxyml2::XMLElement* element, const char* tag, EditFloat&  control);
+void Deserialize(tinxyml2::XMLElement* element, const char* tag, EditFloat2& control);
+void Deserialize(tinxyml2::XMLElement* element, const char* tag, EditFloat3& control);
+void Deserialize(tinxyml2::XMLElement* element, const char* tag, EditFloat4& control);
+void Deserialize(tinxyml2::XMLElement* element, const char* tag, EditColor3& control);
+void Deserialize(tinxyml2::XMLElement* element, const char* tag, EditColor4& control);
+
+} // namespace asdx
+#endif//ASDX_ENABLE_TINYXML2

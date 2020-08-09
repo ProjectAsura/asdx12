@@ -16,6 +16,11 @@
 #endif//ASDX_ENABLE_IMGUI
 
 
+#ifndef ASDX_UNUSED
+#define ASDX_UNUSED(x) ((void)x)
+#endif//ASDX_UNUSED
+
+
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -59,49 +64,20 @@ bool EditBool::GetValue() const
 { return m_Value; }
 
 //-----------------------------------------------------------------------------
-//      値へのポインタ取得します.
-//-----------------------------------------------------------------------------
-const bool* EditBool::GetValuePtr() const
-{ return &m_Value; }
-
-#ifdef ASDX_ENABLE_IMGUI
-//-----------------------------------------------------------------------------
 //      チェックボックスを描画します.
 //-----------------------------------------------------------------------------
 void EditBool::DrawCheckbox(const char* tag)
 {
+#ifdef ASDX_ENABLE_IMGUI
     auto prev = m_Value;
     if (ImGui::Checkbox(tag, &m_Value))
     {
         AppHistoryMgr::GetInstance().Add(new ParamHistory<bool>(&m_Value, m_Value, prev), false);
     }
+#else
+    ASDX_UNUSED(tag);
+#endif
 }
-#endif//ASDX_ENABLE_IMGUI
-
-#ifdef ASDX_ENABLE_TINYXML2
-//-----------------------------------------------------------------------------
-//      XMLエレメントを生成します.
-//-----------------------------------------------------------------------------
-tinyxml2::XMLElement* EditBool::Serialize(tinyxml2::XMLDocument* doc, const char* tag)
-{
-    auto element = doc->NewElement(tag);
-    element->SetAttribute("value", m_Value);
-    return element;
-}
-
-//-----------------------------------------------------------------------------
-//      XMLエレメントを解析します.
-//-----------------------------------------------------------------------------
-void EditBool::Deserialize(tinyxml2::XMLElement* element, const char* tag)
-{
-    auto e = element->FirstChildElement(tag);
-    if (e == nullptr)
-    { return; }
-
-    m_Value = e->BoolAttribute("value");
-    element = e;
-}
-#endif//ASDX_ENABLE_TINYXML2
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -113,10 +89,8 @@ void EditBool::Deserialize(tinyxml2::XMLElement* element, const char* tag)
 //-----------------------------------------------------------------------------
 EditInt::EditInt(int value)
 : m_Value   (value)
-#ifdef ASDX_ENABLE_IMGUI
 , m_Prev    (value)
 , m_Dragged (false)
-#endif//ASDX_ENABLE_IMGUI
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
@@ -143,23 +117,17 @@ int EditInt::GetValue() const
 { return m_Value; }
 
 //-----------------------------------------------------------------------------
-//      値へのポインタを取得します.
-//-----------------------------------------------------------------------------
-const int* EditInt::GetValuePtr() const
-{ return &m_Value; }
-
-//-----------------------------------------------------------------------------
 //      グループヒストリー用のヒストリーを作成します.
 //-----------------------------------------------------------------------------
 asdx::IHistory* EditInt::CreateHistory(int value)
 { return new ParamHistory<int>(&m_Value, m_Value, value); }
 
-#ifdef ASDX_ENABLE_IMGUI
 //-----------------------------------------------------------------------------
 //      スライダーを描画します.
 //-----------------------------------------------------------------------------
 void EditInt::DrawSlider(const char* tag, int step, int mini, int maxi)
 {
+#ifdef ASDX_ENABLE_IMGUI
     auto prev = m_Value;
     auto flag = ImGui::DragInt(tag, &m_Value, float(step), mini, maxi);
 
@@ -186,6 +154,12 @@ void EditInt::DrawSlider(const char* tag, int step, int mini, int maxi)
     {
         m_Dragged = ImGui::IsMouseDragging(0);
     }
+#else
+    ASDX_UNUSED(tag);
+    ASDX_UNUSED(step);
+    ASDX_UNUSED(mini);
+    ASDX_UNUSED(maxi);
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -193,11 +167,17 @@ void EditInt::DrawSlider(const char* tag, int step, int mini, int maxi)
 //-----------------------------------------------------------------------------
 void EditInt::DrawCombo(const char* tag, int count, const char** items)
 {
+#ifdef ASDX_ENABLE_IMGUI
     auto value = m_Value;
     if (ImGui::Combo(tag, &value, items, count))
     {
         AppHistoryMgr::GetInstance().Add(new ParamHistory<int>(&m_Value, value, m_Prev));
     }
+#else
+    ASDX_UNUSED(tag);
+    ASDX_UNUSED(count);
+    ASDX_UNUSED(items);
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -205,39 +185,17 @@ void EditInt::DrawCombo(const char* tag, int count, const char** items)
 //-----------------------------------------------------------------------------
 void EditInt::DrawCombo(const char* tag, bool (*items_getter)(void* data, int idx, const char** out_text), int count)
 {
+#ifdef ASDX_ENABLE_IMGUI
     auto value = m_Value;
     if (ImGui::Combo(tag, &value, items_getter, &value, count))
     {
         AppHistoryMgr::GetInstance().Add(new ParamHistory<int>(&m_Value, value, m_Prev));
     }
+#else
+    ASDX_UNUSED(tag);
+    ASDX_UNUSED(items_getter);
+#endif
 }
-
-#endif//ASDX_ENABLE_IMGUI
-
-#ifdef ASDX_ENABLE_TINYXML2
-//-----------------------------------------------------------------------------
-//      XMLエレメントを生成します.
-//-----------------------------------------------------------------------------
-tinyxml2::XMLElement* EditInt::Serialize(tinyxml2::XMLDocument* doc, const char* tag)
-{
-    auto element = doc->NewElement(tag);
-    element->SetAttribute("value", m_Value);
-    return element;
-}
-
-//-----------------------------------------------------------------------------
-//      XMLエレメントを解析します.
-//-----------------------------------------------------------------------------
-void EditInt::Deserialize(tinyxml2::XMLElement* element, const char* tag)
-{
-    auto e = element->FirstChildElement(tag);
-    if (e == nullptr)
-    { return; }
-
-    m_Value = m_Prev = e->IntAttribute("value");
-    element = e;
-}
-#endif//ASDX_ENABLE_TINYXML2
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -249,10 +207,8 @@ void EditInt::Deserialize(tinyxml2::XMLElement* element, const char* tag)
 //-----------------------------------------------------------------------------
 EditFloat::EditFloat(float value)
 : m_Value  (value)
-#ifdef ASDX_ENABLE_IMGUI
 , m_Prev   (0.0f)
 , m_Dragged(false)
-#endif//ASDX_ENABLE_IMGUI
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
@@ -279,23 +235,17 @@ float EditFloat::GetValue() const
 { return m_Value; }
 
 //-----------------------------------------------------------------------------
-//      値へのポインタを取得します.
-//-----------------------------------------------------------------------------
-const float* EditFloat::GetValuePtr() const
-{ return &m_Value; }
-
-//-----------------------------------------------------------------------------
 //      グループヒストリー用のヒストリーを作成します.
 //-----------------------------------------------------------------------------
 asdx::IHistory* EditFloat::CreateHistory(float value)
 { return new ParamHistory<float>(&m_Value, value); }
 
-#ifdef ASDX_ENABLE_IMGUI
 //-----------------------------------------------------------------------------
 //      スライダーを描画します.
 //-----------------------------------------------------------------------------
 void EditFloat::DrawSlider(const char* tag, float step, float mini, float maxi)
 {
+#ifdef ASDX_ENABLE_IMGUI
     auto prev = m_Value;
     auto flag = ImGui::DragFloat(tag, &m_Value, step, mini, maxi, "%.5f");
 
@@ -322,32 +272,13 @@ void EditFloat::DrawSlider(const char* tag, float step, float mini, float maxi)
     {
         m_Dragged = ImGui::IsMouseDragging(0);
     }
+#else
+    ASDX_UNUSED(tag);
+    ASDX_UNUSED(step);
+    ASDX_UNUSED(mini);
+    ASDX_UNUSED(maxi);
+#endif
 }
-#endif//ASDX_ENABLE_IMGUI
-
-#ifdef ASDX_ENABLE_TINYXML2
-//-----------------------------------------------------------------------------
-//      XMLエレメントを生成します.
-//-----------------------------------------------------------------------------
-tinyxml2::XMLElement* EditFloat::Serialize(tinyxml2::XMLDocument* doc, const char* tag)
-{
-    auto element = doc->NewElement(tag);
-    element->SetAttribute("value", m_Value);
-    return element;
-}
-
-//-----------------------------------------------------------------------------
-//      XMLエレメントを解析します.
-//-----------------------------------------------------------------------------
-void EditFloat::Deserialize(tinyxml2::XMLElement* element, const char* tag)
-{
-    auto e = element->FirstChildElement(tag);
-    if (e == nullptr)
-    { return; }
-
-    m_Value = m_Prev = e->FloatAttribute("value");
-}
-#endif//ASDX_ENABLE_TINYXML2
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -359,10 +290,8 @@ void EditFloat::Deserialize(tinyxml2::XMLElement* element, const char* tag)
 //-----------------------------------------------------------------------------
 EditFloat2::EditFloat2(float x, float y)
 : m_Value  (x, y)
-#ifdef ASDX_ENABLE_IMGUI
 , m_Prev   (x, y)
 , m_Dragged(false)
-#endif//ASDX_ENABLE_IMGUI
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
@@ -389,23 +318,17 @@ const asdx::Vector2& EditFloat2::GetValue() const
 { return m_Value; }
 
 //-----------------------------------------------------------------------------
-//      値へのポインタを取得します.
-//-----------------------------------------------------------------------------
-const asdx::Vector2* EditFloat2::GetValuePtr() const
-{ return &m_Value; }
-
-//-----------------------------------------------------------------------------
 //      グループヒストリー用のヒストリーを作成します.
 //-----------------------------------------------------------------------------
 asdx::IHistory* EditFloat2::CreateHistory(const asdx::Vector2& value)
 { return new ParamHistory<asdx::Vector2>(&m_Value, value); }
 
-#ifdef ASDX_ENABLE_IMGUI
 //-----------------------------------------------------------------------------
 //      スライダーを描画します.
 //-----------------------------------------------------------------------------
 void EditFloat2::DrawSlider(const char* tag, float step, float mini, float maxi)
 {
+#ifdef ASDX_ENABLE_IMGUI
     auto prev = m_Value;
     auto flag = ImGui::DragFloat2(tag, m_Value, step, mini, maxi);
 
@@ -432,34 +355,13 @@ void EditFloat2::DrawSlider(const char* tag, float step, float mini, float maxi)
     {
         m_Dragged = ImGui::IsMouseDragging(0);
     }
+#else
+    ASDX_UNUSED(tag);
+    ASDX_UNUSED(step);
+    ASDX_UNUSED(mini);
+    ASDX_UNUSED(maxi);
+#endif
 }
-#endif//ASDX_ENABLE_IMGUI
-
-#ifdef ASDX_ENABLE_TINYXML2
-//-----------------------------------------------------------------------------
-//      XMLエレメントを生成します.
-//-----------------------------------------------------------------------------
-tinyxml2::XMLElement* EditFloat2::Serialize(tinyxml2::XMLDocument* doc, const char* tag)
-{
-    auto element = doc->NewElement(tag);
-    element->SetAttribute("x", m_Value.x);
-    element->SetAttribute("y", m_Value.y);
-    return element;
-}
-
-//-----------------------------------------------------------------------------
-//      XMLエレメントを解析します.
-//-----------------------------------------------------------------------------
-void EditFloat2::Deserialize(tinyxml2::XMLElement* element, const char* tag)
-{
-    auto e = element->FirstChildElement(tag);
-    if (e == nullptr)
-    { return; }
-
-    m_Value.x = m_Prev.x = e->FloatAttribute("x");
-    m_Value.y = m_Prev.y = e->FloatAttribute("y");
-}
-#endif//ASDX_ENABLE_TINYXML2
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -471,10 +373,8 @@ void EditFloat2::Deserialize(tinyxml2::XMLElement* element, const char* tag)
 //-----------------------------------------------------------------------------
 EditFloat3::EditFloat3(float x, float y, float z)
 : m_Value   (x, y, z)
-#ifdef ASDX_ENABLE_IMGUI
 , m_Prev    (x, y, z)
 , m_Dragged (false)
-#endif//ASDX_ENABLE_IMGUI
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
@@ -501,23 +401,17 @@ const asdx::Vector3& EditFloat3::GetValue() const
 { return m_Value; }
 
 //-----------------------------------------------------------------------------
-//      値へのポインタを取得します.
-//-----------------------------------------------------------------------------
-const asdx::Vector3* EditFloat3::GetValuePtr() const
-{ return &m_Value; }
-
-//-----------------------------------------------------------------------------
 //      グループヒストリー用のヒストリーを作成します.
 //-----------------------------------------------------------------------------
 asdx::IHistory* EditFloat3::CreateHistory(const asdx::Vector3& value)
 { return new ParamHistory<asdx::Vector3>(&m_Value, value); }
 
-#ifdef ASDX_ENABLE_IMGUI
 //-----------------------------------------------------------------------------
 //      スライダーを描画します.
 //-----------------------------------------------------------------------------
 void EditFloat3::DrawSlider(const char* tag, float step, float mini, float maxi)
 {
+#ifdef ASDX_ENABLE_IMGUI
     auto prev = m_Value;
     auto flag = ImGui::DragFloat3(tag, m_Value, step, mini, maxi);
 
@@ -544,36 +438,13 @@ void EditFloat3::DrawSlider(const char* tag, float step, float mini, float maxi)
     {
         m_Dragged = ImGui::IsMouseDragging(0);
     }
+#else
+    ASDX_UNUSED(tag);
+    ASDX_UNUSED(step);
+    ASDX_UNUSED(mini);
+    ASDX_UNUSED(maxi);
+#endif
 }
-#endif//ASDX_ENABLE_IMGUI
-
-#ifdef ASDX_ENABLE_TINYXML2
-//-----------------------------------------------------------------------------
-//      XMLエレメントを生成します.
-//-----------------------------------------------------------------------------
-tinyxml2::XMLElement* EditFloat3::Serialize(tinyxml2::XMLDocument* doc, const char* tag)
-{
-    auto element = doc->NewElement(tag);
-    element->SetAttribute("x", m_Value.x);
-    element->SetAttribute("y", m_Value.y);
-    element->SetAttribute("z", m_Value.z);
-    return element;
-}
-
-//-----------------------------------------------------------------------------
-//      XMLエレメントを解析します.
-//-----------------------------------------------------------------------------
-void EditFloat3::Deserialize(tinyxml2::XMLElement* element, const char* tag)
-{
-    auto e = element->FirstChildElement(tag);
-    if (e == nullptr)
-    { return; }
-
-    m_Value.x = m_Prev.x = e->FloatAttribute("x");
-    m_Value.y = m_Prev.y = e->FloatAttribute("y");
-    m_Value.z = m_Prev.z = e->FloatAttribute("z");
-}
-#endif//ASDX_ENABLE_TINYXML2
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -585,12 +456,9 @@ void EditFloat3::Deserialize(tinyxml2::XMLElement* element, const char* tag)
 //-----------------------------------------------------------------------------
 EditFloat4::EditFloat4(float x, float y, float z, float w)
 : m_Value   (x, y, z, w)
-#ifdef ASDX_ENABLE_IMGUI
 , m_Prev    (x, y, z, w)
 , m_Dragged (false)
-#endif//ASDX_ENABLE_IMGUI
 { /* DO_NOTHING */ }
-
 
 //-----------------------------------------------------------------------------
 //      値を設定します.
@@ -616,23 +484,17 @@ const asdx::Vector4& EditFloat4::GetValue() const
 { return m_Value; }
 
 //-----------------------------------------------------------------------------
-//      値へのポインタを取得します.
-//-----------------------------------------------------------------------------
-const asdx::Vector4* EditFloat4::GetValuePtr() const
-{ return &m_Value; }
-
-//-----------------------------------------------------------------------------
 //      グループヒストリー用のヒストリーを作成します.
 //-----------------------------------------------------------------------------
 asdx::IHistory* EditFloat4::CreateHistory(const asdx::Vector4& value)
 { return new ParamHistory<asdx::Vector4>(&m_Value, value); }
 
-#ifdef ASDX_ENABLE_IMGUI
 //-----------------------------------------------------------------------------
 //      スライダーを描画します.
 //-----------------------------------------------------------------------------
 void EditFloat4::DrawSlider(const char* tag, float step, float mini, float maxi)
 {
+#ifdef ASDX_ENABLE_IMGUI
     auto prev = m_Value;
     auto flag = ImGui::DragFloat4(tag, m_Value, step, mini, maxi);
 
@@ -659,38 +521,13 @@ void EditFloat4::DrawSlider(const char* tag, float step, float mini, float maxi)
     {
         m_Dragged = ImGui::IsMouseDragging(0);
     }
-}
+#else
+    ASDX_UNUSED(tag);
+    ASDX_UNUSED(step);
+    ASDX_UNUSED(mini);
+    ASDX_UNUSED(maxi);
 #endif
-
-#ifdef ASDX_ENABLE_TINYXML2
-//-----------------------------------------------------------------------------
-//      XMLエレメントを生成します.
-//-----------------------------------------------------------------------------
-tinyxml2::XMLElement* EditFloat4::Serialize(tinyxml2::XMLDocument* doc, const char* tag)
-{
-    auto element = doc->NewElement(tag);
-    element->SetAttribute("x", m_Value.x);
-    element->SetAttribute("y", m_Value.y);
-    element->SetAttribute("z", m_Value.z);
-    element->SetAttribute("w", m_Value.w);
-    return element;
 }
-
-//-----------------------------------------------------------------------------
-//      XMLエレメントを解析します.
-//-----------------------------------------------------------------------------
-void EditFloat4::Deserialize(tinyxml2::XMLElement* element, const char* tag)
-{
-    auto e = element->FirstChildElement(tag);
-    if (e == nullptr)
-    { return; }
-
-    m_Value.x = m_Prev.x = e->FloatAttribute("x");
-    m_Value.y = m_Prev.y = e->FloatAttribute("y");
-    m_Value.z = m_Prev.z = e->FloatAttribute("z");
-    m_Value.w = m_Prev.w = e->FloatAttribute("w");
-}
-#endif//ASDX_ENABLE_TINYXML2
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -702,10 +539,8 @@ void EditFloat4::Deserialize(tinyxml2::XMLElement* element, const char* tag)
 //-----------------------------------------------------------------------------
 EditColor3::EditColor3(float r, float g, float b)
 : m_Value   (r, g, b)
-#ifdef ASDX_ENABLE_IMGUI
 , m_Prev    (r, g, b)
 , m_Dragged (false)
-#endif//ASDX_ENABLE_IMGUI
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
@@ -732,23 +567,17 @@ const asdx::Vector3& EditColor3::GetValue() const
 { return m_Value; }
 
 //-----------------------------------------------------------------------------
-//      値へのポインタを取得します.
-//-----------------------------------------------------------------------------
-const asdx::Vector3* EditColor3::GetValuePtr() const
-{ return &m_Value; }
-
-//-----------------------------------------------------------------------------
 //      グループヒストリー用のヒストリーを作成します.
 //-----------------------------------------------------------------------------
 asdx::IHistory* EditColor3::CreateHistory(const asdx::Vector3& value)
 { return new ParamHistory<asdx::Vector3>(&m_Value, value); }
 
-#ifdef ASDX_ENABLE_IMGUI
 //-----------------------------------------------------------------------------
 //      スライダーを描画します.
 //-----------------------------------------------------------------------------
 void EditColor3::DrawPicker(const char* tag)
 {
+#ifdef ASDX_ENABLE_IMGUI
     auto prev = m_Value;
     auto flag = ImGui::ColorEdit3(tag, m_Value, ImGuiColorEditFlags_Float);
 
@@ -775,36 +604,10 @@ void EditColor3::DrawPicker(const char* tag)
     {
         m_Dragged = ImGui::IsMouseDragging(0);
     }
+#else
+    ASDX_UNUSED(tag);
+#endif
 }
-#endif//ASDX_ENABLE_IMGUI
-
-#ifdef ASDX_ENABLE_TINYXML2
-//-----------------------------------------------------------------------------
-//      XMLエレメントを生成します.
-//-----------------------------------------------------------------------------
-tinyxml2::XMLElement* EditColor3::Serialize(tinyxml2::XMLDocument* doc, const char* tag)
-{
-    auto element = doc->NewElement(tag);
-    element->SetAttribute("r", m_Value.x);
-    element->SetAttribute("g", m_Value.y);
-    element->SetAttribute("b", m_Value.z);
-    return element;
-}
-
-//-----------------------------------------------------------------------------
-//      XMLエレメントを解析します.
-//-----------------------------------------------------------------------------
-void EditColor3::Deserialize(tinyxml2::XMLElement* element, const char* tag)
-{
-    auto e = element->FirstChildElement(tag);
-    if (e == nullptr)
-    { return; }
-
-    m_Value.x = m_Prev.x = e->FloatAttribute("r");
-    m_Value.y = m_Prev.y = e->FloatAttribute("g");
-    m_Value.z = m_Prev.z = e->FloatAttribute("b");
-}
-#endif//ASDX_ENABLE_TINYXML2
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -816,10 +619,8 @@ void EditColor3::Deserialize(tinyxml2::XMLElement* element, const char* tag)
 //-----------------------------------------------------------------------------
 EditColor4::EditColor4(float r, float g, float b, float a)
 : m_Value   (r, g, b, a)
-#ifdef ASDX_ENABLE_IMGUI
 , m_Prev    (r, g, b, a)
 , m_Dragged (false)
-#endif//ASDX_ENABLE_IMGUI
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
@@ -846,23 +647,17 @@ const asdx::Vector4& EditColor4::GetValue() const
 { return m_Value; }
 
 //-----------------------------------------------------------------------------
-//      値へのポインタを取得します.
-//-----------------------------------------------------------------------------
-const asdx::Vector4* EditColor4::GetValuePtr() const
-{ return &m_Value; }
-
-//-----------------------------------------------------------------------------
 //      グループヒストリー用のヒストリーを作成します.
 //-----------------------------------------------------------------------------
 asdx::IHistory* EditColor4::CreateHistory(const asdx::Vector4& value)
 { return new ParamHistory<asdx::Vector4>(&m_Value, value); }
 
-#ifdef ASDX_ENABLE_IMGUI
 //-----------------------------------------------------------------------------
 //      スライダーを描画します.
 //-----------------------------------------------------------------------------
 void EditColor4::DrawPicker(const char* tag)
 {
+#ifdef ASDX_ENABLE_IMGUI
     auto prev = m_Value;
     auto flag = ImGui::ColorEdit4(tag, m_Value, ImGuiColorEditFlags_Float);
 
@@ -889,37 +684,235 @@ void EditColor4::DrawPicker(const char* tag)
     {
         m_Dragged = ImGui::IsMouseDragging(0);
     }
+#else
+    ASDX_UNUSED(tag);
+#endif
 }
-#endif//ASDX_ENABLE_IMGUI
+
+} // namespace asdx
+
 
 #ifdef ASDX_ENABLE_TINYXML2
+namespace asdx {
+
 //-----------------------------------------------------------------------------
 //      XMLエレメントを生成します.
 //-----------------------------------------------------------------------------
-tinyxml2::XMLElement* EditColor4::Serialize(tinyxml2::XMLDocument* doc, const char* tag)
+tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditorBool& control)
 {
+    auto value = control.GetValue();
     auto element = doc->NewElement(tag);
-    element->SetAttribute("r", m_Value.x);
-    element->SetAttribute("g", m_Value.y);
-    element->SetAttribute("b", m_Value.z);
-    element->SetAttribute("a", m_Value.w);
+    element->SetAttribute("value", value);
+    return element;
+}
+
+//-----------------------------------------------------------------------------
+//      XMLエレメントを生成します.
+//-----------------------------------------------------------------------------
+tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditorInt& control)
+{
+    auto value = control.GetValue();
+    auto element = doc->NewElement(tag);
+    element->SetAttribute("value", value);
+    return element;
+}
+
+//-----------------------------------------------------------------------------
+//      XMLエレメントを生成します.
+//-----------------------------------------------------------------------------
+tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditorFloat& control)
+{
+    auto value = control.GetValue();
+    auto element = doc->NewElement(tag);
+    element->SetAttribute("value", value);
+    return element;
+}
+
+//-----------------------------------------------------------------------------
+//      XMLエレメントを生成します.
+//-----------------------------------------------------------------------------
+tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditorFloat2& control)
+{
+    auto value = control.GetValue();
+    auto element = doc->NewElement(tag);
+    element->SetAttribute("x", value.x);
+    element->SetAttribute("y", value.y);
+    return element;
+}
+
+//-----------------------------------------------------------------------------
+//      XMLエレメントを生成します.
+//-----------------------------------------------------------------------------
+tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditorFloat3& control)
+{
+    auto value = control.GetValue();
+    auto element = doc->NewElement(tag);
+    element->SetAttribute("x", value.x);
+    element->SetAttribute("y", value.y);
+    element->SetAttribute("z", value.z);
+    return element;
+}
+
+//-----------------------------------------------------------------------------
+//      XMLエレメントを生成します.
+//-----------------------------------------------------------------------------
+tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditorFloat4& control)
+{
+    auto value = control.GetValue();
+    auto element = doc->NewElement(tag);
+    element->SetAttribute("x", value.x);
+    element->SetAttribute("y", value.y);
+    element->SetAttribute("z", value.z);
+    element->SetAttribute("w", value.w);
+    return element;
+}
+
+//-----------------------------------------------------------------------------
+//      XMLエレメントを生成します.
+//-----------------------------------------------------------------------------
+tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditColor3& control)
+{
+    auto value = control.GetValue();
+    auto element = doc->NewElement(tag);
+    element->SetAttribute("r", value.x);
+    element->SetAttribute("g", value.y);
+    element->SetAttribute("b", value.z);
+    return element;
+}
+
+//-----------------------------------------------------------------------------
+//      XMLエレメントを生成します.
+//-----------------------------------------------------------------------------
+tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditColor4& control)
+{
+    auto value = control.GetValue();
+    auto element = doc->NewElement(tag);
+    element->SetAttribute("r", value.x);
+    element->SetAttribute("g", value.y);
+    element->SetAttribute("b", value.z);
+    element->SetAttribute("a", value.w);
     return element;
 }
 
 //-----------------------------------------------------------------------------
 //      XMLエレメントを解析します.
 //-----------------------------------------------------------------------------
-void EditColor4::Deserialize(tinyxml2::XMLElement* element, const char* tag)
+void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditorBool& contorl)
 {
     auto e = element->FirstChildElement(tag);
     if (e == nullptr)
     { return; }
 
-    m_Value.x = m_Prev.x = e->FloatAttribute("r");
-    m_Value.y = m_Prev.y = e->FloatAttribute("g");
-    m_Value.z = m_Prev.z = e->FloatAttribute("b");
-    m_Value.w = m_Prev.w = e->FloatAttribute("a");
+    auto value = e->BoolAttribute("value");
+    control = EditorBool(value);
 }
-#endif//ASDX_ENABLE_TINYXML2
+
+//-----------------------------------------------------------------------------
+//      XMLエレメントを解析します.
+//-----------------------------------------------------------------------------
+void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditorInt& contorl)
+{
+    auto e = element->FirstChildElement(tag);
+    if (e == nullptr)
+    { return; }
+
+    auto value = e->IntAttribute("value");
+    control = EditorInt(value);
+}
+
+//-----------------------------------------------------------------------------
+//      XMLエレメントを解析します.
+//-----------------------------------------------------------------------------
+void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditorFloat& contorl)
+{
+    auto e = element->FirstChildElement(tag);
+    if (e == nullptr)
+    { return; }
+
+    auto value = e->FloatAttribute("value");
+    control = EditorFloat(value);
+}
+
+//-----------------------------------------------------------------------------
+//      XMLエレメントを解析します.
+//-----------------------------------------------------------------------------
+void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditorFloat2& contorl)
+{
+    auto e = element->FirstChildElement(tag);
+    if (e == nullptr)
+    { return; }
+
+    asdx::Vector2 value;
+    value.x = e->FloatAttribute("x");
+    value.y = e->FloatAttribute("y");
+    control = EditorFloat2(value.x, value.y);
+}
+
+//-----------------------------------------------------------------------------
+//      XMLエレメントを解析します.
+//-----------------------------------------------------------------------------
+void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditorFloat3& contorl)
+{
+    auto e = element->FirstChildElement(tag);
+    if (e == nullptr)
+    { return; }
+
+    asdx::Vector3 value;
+    value.x = e->FloatAttribute("x");
+    value.y = e->FloatAttribute("y");
+    value.z = e->FloatAttribute("z");
+    control = EditorFloat3(value.x, value.y, value.z);
+}
+
+//-----------------------------------------------------------------------------
+//      XMLエレメントを解析します.
+//-----------------------------------------------------------------------------
+void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditorFloat4& contorl)
+{
+    auto e = element->FirstChildElement(tag);
+    if (e == nullptr)
+    { return; }
+
+    asdx::Vector4 value;
+    value.x = e->FloatAttribute("x");
+    value.y = e->FloatAttribute("y");
+    value.z = e->FloatAttribute("z");
+    value.w = e->FloatAttribute("w");
+    control = EditorFloat4(value.x, value.y, value.z, value.w);
+}
+
+//-----------------------------------------------------------------------------
+//      XMLエレメントを解析します.
+//-----------------------------------------------------------------------------
+void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditorColor3& control)
+{
+    auto e = element->FirstChildElement(tag);
+    if (e == nullptr)
+    { return; }
+
+    asdx::Vector3 value;
+    value.x = e->FloatAttribute("r");
+    value.y = e->FloatAttribute("g");
+    value.z = e->FloatAttribute("b");
+    control = EditColor3(value.x, value.y, value.z);
+}
+
+//-----------------------------------------------------------------------------
+//      XMLエレメントを解析します.
+//-----------------------------------------------------------------------------
+void EditColor4::Deserialize(tinyxml2::XMLElement* element, const char* tag, EditorColor4& control)
+{
+    auto e = element->FirstChildElement(tag);
+    if (e == nullptr)
+    { return; }
+
+    asdx::Vector4 value;
+    value.x = e->FloatAttribute("r");
+    value.y = e->FloatAttribute("g");
+    value.z = e->FloatAttribute("b");
+    value.w = e->FloatAttribute("a");
+    control = EditorColor4(value.x, value.y, value.z, value.w);
+}
 
 } // namespace asdx
+#endif//ASDX_ENABLE_TINYXML2
