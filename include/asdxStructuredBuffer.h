@@ -71,7 +71,7 @@ public:
         GraphicsDevice&     device,
         uint64_t            count,
         uint32_t            stride,
-        void*               pInitData,
+        const void*         pInitData,
         IUploadResource**   ppUploadResource);
 
     //-------------------------------------------------------------------------

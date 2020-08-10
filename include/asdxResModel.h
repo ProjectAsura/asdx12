@@ -24,6 +24,18 @@ struct ResBoneIndex
     uint16_t     Index1;    //!< ボーン番号1.
     uint16_t     Index2;    //!< ボーン番号2.
     uint16_t     Index3;    //!< ボーン番号3.
+
+    //-------------------------------------------------------------------------
+    //! @brief      コンストラクタです.
+    //-------------------------------------------------------------------------
+    ResBoneIndex() = default;
+
+    //-------------------------------------------------------------------------
+    //! @brief      引数付きコンストラクタです.
+    //-------------------------------------------------------------------------
+    ResBoneIndex(uint16_t i0, uint16_t i1, uint16_t i2, uint16_t i3)
+   : Index0(i0), Index1(i1), Index2(i2), Index3(i3)
+    { /* DO_NOTHING */ }
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -85,12 +97,12 @@ struct ResPrimitive
 ///////////////////////////////////////////////////////////////////////////////
 struct ResStaticMesh
 {
+    uint32_t                    MatrerialHash;
     std::vector<ResMeshVertex>  Vertices;
     std::vector<uint32_t>       Indices;
     std::vector<ResPrimitive>   Primitives;
     std::vector<ResMeshlet>     Meshlets;
     std::vector<ResCullingInfo> CullingInfos;
-    uint32_t                    MatrerialHash;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -98,12 +110,12 @@ struct ResStaticMesh
 ///////////////////////////////////////////////////////////////////////////////
 struct ResSkinningMesh
 {
+    uint32_t                            MatrerialHash;
     std::vector<ResSkinningMeshVertex>  Vertices;
     std::vector<uint32_t>               Indices;
     std::vector<ResPrimitive>           Primitives;
     std::vector<ResMeshlet>             Meshlets;
     std::vector<ResCullingInfo>         CullingInfos;
-    uint32_t                            MatrerialHash;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -111,6 +123,7 @@ struct ResSkinningMesh
 ///////////////////////////////////////////////////////////////////////////////
 struct ResModel
 {
+    uint32_t                        ModelHash;
     std::vector<ResStaticMesh>      StaticMeshes;
     std::vector<ResSkinningMesh>    SkinningMeshes;
 };
@@ -191,5 +204,15 @@ void DecodeTBN(
     Vector3& tangent,
     Vector3& bitangent,
     Vector3& normal);
+
+//-----------------------------------------------------------------------------
+//      モデルを書き出します.
+//-----------------------------------------------------------------------------
+bool SaveModel(const char* path, const ResModel& model);
+
+//-----------------------------------------------------------------------------
+//      モデルを読み込みます.
+//-----------------------------------------------------------------------------
+bool LoadModel(const char* path, ResModel& model);
 
 } // namespace asdx

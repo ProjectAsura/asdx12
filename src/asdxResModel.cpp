@@ -86,6 +86,31 @@ union FP16
     };
 };
 
+///////////////////////////////////////////////////////////////////////////////
+// ModelHeader structure
+///////////////////////////////////////////////////////////////////////////////
+struct ModelHeader
+{
+    uint8_t     Magic[4];
+    uint32_t    Version;
+    uint32_t    ModelHash;
+    uint32_t    StaticMeshCount;
+    uint32_t    SkinningMeshCount;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// MeshHeader structure
+///////////////////////////////////////////////////////////////////////////////
+struct MeshHeader
+{
+    uint32_t    MaterialHash;
+    uint32_t    VertexCount;
+    uint32_t    IndexCount;
+    uint32_t    PrimitiveCount;
+    uint32_t    MeshletCount;
+    uint32_t    CullingInfoCount;
+};
+
 static const FP32       kMagic      = { 113 << 23 };
 static const uint32_t   kShiftedExp = 0x7c00 << 13;
 
@@ -411,6 +436,176 @@ void DecodeTBN(uint32_t encoded, Vector3& tangent, Vector3& bitangent, Vector3& 
 
     bitangent = Vector3::Cross(normal, tangent);
     bitangent = (packed.BinormalHandedness == 0) ? bitangent : -bitangent; 
+}
+
+//-----------------------------------------------------------------------------
+//      モデルを保存します.
+//-----------------------------------------------------------------------------
+bool SaveModel(const char* path, const ResModel& model)
+{
+    FILE* pFile;
+    auto err = fopen_s(&pFile, path, "wb");
+    if (err != 0)
+    { return false; }
+
+    ModelHeader header;
+    header.Magic[0] = 'M';
+    header.Magic[1] = 'D';
+    header.Magic[2] = 'L';
+    header.Magic[3] = '\0';
+    header.Version = 0x1;
+
+    header.ModelHash            = model.ModelHash;
+    header.StaticMeshCount      = uint32_t(model.StaticMeshes.size());
+    header.SkinningMeshCount    = uint32_t(model.SkinningMeshes.size());
+
+    fwrite(&header, sizeof(header), 1, pFile);
+
+    for(size_t i=0; i<model.StaticMeshes.size(); ++i)
+    {
+        auto& mesh = model.StaticMeshes[i];
+
+        MeshHeader meshHeader;
+        meshHeader.MaterialHash     = mesh.MatrerialHash;
+        meshHeader.VertexCount      = uint32_t(mesh.Vertices.size());
+        meshHeader.IndexCount       = uint32_t(mesh.Indices.size());
+        meshHeader.PrimitiveCount   = uint32_t(mesh.Primitives.size());
+        meshHeader.MeshletCount     = uint32_t(mesh.Meshlets.size());
+        meshHeader.CullingInfoCount = uint32_t(mesh.CullingInfos.size());
+
+        fwrite(&meshHeader, sizeof(meshHeader), 1, pFile);
+
+        for(size_t j=0; j<mesh.Vertices.size(); ++j)
+        { fwrite(&mesh.Vertices[j], sizeof(mesh.Vertices[j]), 1, pFile); }
+
+        for(size_t j=0; j<mesh.Indices.size(); ++j)
+        { fwrite(&mesh.Indices[j], sizeof(mesh.Indices[j]), 1, pFile); }
+
+        for(size_t j=0; j<mesh.Primitives.size(); ++j)
+        { fwrite(&mesh.Primitives[j], sizeof(mesh.Primitives[j]), 1, pFile); }
+
+        for(size_t j=0; j<mesh.Meshlets.size(); ++j)
+        { fwrite(&mesh.Meshlets[j], sizeof(mesh.Meshlets[j]), 1, pFile); }
+
+        for(size_t j=0; j<mesh.CullingInfos.size(); ++j)
+        { fwrite(&mesh.CullingInfos[j], sizeof(mesh.CullingInfos[j]), 1, pFile); }
+    }
+
+    for(size_t i=0; i<model.SkinningMeshes.size(); ++i)
+    {
+        auto& mesh = model.SkinningMeshes[i];
+
+        MeshHeader meshHeader;
+        meshHeader.MaterialHash     = mesh.MatrerialHash;
+        meshHeader.VertexCount      = uint32_t(mesh.Vertices.size());
+        meshHeader.IndexCount       = uint32_t(mesh.Indices.size());
+        meshHeader.PrimitiveCount   = uint32_t(mesh.Primitives.size());
+        meshHeader.MeshletCount     = uint32_t(mesh.Meshlets.size());
+        meshHeader.CullingInfoCount = uint32_t(mesh.CullingInfos.size());
+
+        fwrite(&meshHeader, sizeof(meshHeader), 1, pFile);
+
+        for(size_t j=0; j<mesh.Vertices.size(); ++j)
+        { fwrite(&mesh.Vertices[j], sizeof(mesh.Vertices[j]), 1, pFile); }
+
+        for(size_t j=0; j<mesh.Indices.size(); ++j)
+        { fwrite(&mesh.Indices[j], sizeof(mesh.Indices[j]), 1, pFile); }
+
+        for(size_t j=0; j<mesh.Primitives.size(); ++j)
+        { fwrite(&mesh.Primitives[j], sizeof(mesh.Primitives[j]), 1, pFile); }
+
+        for(size_t j=0; j<mesh.Meshlets.size(); ++j)
+        { fwrite(&mesh.Meshlets[j], sizeof(mesh.Meshlets[j]), 1, pFile); }
+
+        for(size_t j=0; j<mesh.CullingInfos.size(); ++j)
+        { fwrite(&mesh.CullingInfos[j], sizeof(mesh.CullingInfos[j]), 1, pFile); }
+    }
+
+    fclose(pFile);
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      モデルを読込します.
+//-----------------------------------------------------------------------------
+bool LoadModel(const char* path, ResModel& model)
+{
+    FILE* pFile;
+    auto err = fopen_s(&pFile, path, "rb");
+    if (err != 0)
+    {
+        return false;
+    }
+
+    ModelHeader modelHeader;
+    fread(&modelHeader, sizeof(modelHeader), 1, pFile);
+
+    model.ModelHash = modelHeader.ModelHash;
+    model.StaticMeshes.resize(modelHeader.StaticMeshCount);
+    model.SkinningMeshes.resize(modelHeader.SkinningMeshCount);
+
+    for(size_t i=0; i<model.StaticMeshes.size(); ++i)
+    {
+        MeshHeader meshHeader;
+        fread(&meshHeader, sizeof(meshHeader), 1, pFile);
+
+        auto& mesh = model.StaticMeshes[i];
+
+        mesh.MatrerialHash = meshHeader.MaterialHash;
+        mesh.Vertices    .resize(meshHeader.VertexCount);
+        mesh.Indices     .resize(meshHeader.IndexCount);
+        mesh.Primitives  .resize(meshHeader.PrimitiveCount);
+        mesh.Meshlets    .resize(meshHeader.MeshletCount);
+        mesh.CullingInfos.resize(meshHeader.CullingInfoCount);
+
+        for(size_t j=0; j<mesh.Vertices.size(); ++j)
+        { fread(&mesh.Vertices[j], sizeof(mesh.Vertices[j]), 1, pFile); }
+
+        for(size_t j=0; j<mesh.Indices.size(); ++j)
+        { fread(&mesh.Indices[j], sizeof(mesh.Indices[j]), 1, pFile); }
+
+        for(size_t j=0; j<mesh.Primitives.size(); ++j)
+        { fread(&mesh.Primitives[j], sizeof(mesh.Primitives[j]), 1, pFile); }
+
+        for(size_t j=0; j<mesh.Meshlets.size(); ++j)
+        { fread(&mesh.Meshlets[j], sizeof(mesh.Meshlets[j]), 1, pFile); }
+
+        for(size_t j=0; j<mesh.CullingInfos.size(); ++j)
+        { fread(&mesh.CullingInfos[j], sizeof(mesh.CullingInfos[j]), 1, pFile); }
+    }
+
+    for(size_t i=0; i<model.SkinningMeshes.size(); ++i)
+    {
+        MeshHeader meshHeader;
+        fread(&meshHeader, sizeof(meshHeader), 1, pFile);
+
+        auto& mesh = model.SkinningMeshes[i];
+
+        mesh.MatrerialHash = meshHeader.MaterialHash;
+        mesh.Vertices    .resize(meshHeader.VertexCount);
+        mesh.Indices     .resize(meshHeader.IndexCount);
+        mesh.Primitives  .resize(meshHeader.PrimitiveCount);
+        mesh.Meshlets    .resize(meshHeader.MeshletCount);
+        mesh.CullingInfos.resize(meshHeader.CullingInfoCount);
+
+        for(size_t j=0; j<mesh.Vertices.size(); ++j)
+        { fread(&mesh.Vertices[j], sizeof(mesh.Vertices[j]), 1, pFile); }
+
+        for(size_t j=0; j<mesh.Indices.size(); ++j)
+        { fread(&mesh.Indices[j], sizeof(mesh.Indices[j]), 1, pFile); }
+
+        for(size_t j=0; j<mesh.Primitives.size(); ++j)
+        { fread(&mesh.Primitives[j], sizeof(mesh.Primitives[j]), 1, pFile); }
+
+        for(size_t j=0; j<mesh.Meshlets.size(); ++j)
+        { fread(&mesh.Meshlets[j], sizeof(mesh.Meshlets[j]), 1, pFile); }
+
+        for(size_t j=0; j<mesh.CullingInfos.size(); ++j)
+        { fread(&mesh.CullingInfos[j], sizeof(mesh.CullingInfos[j]), 1, pFile); }
+    }
+
+    fclose(pFile);
+    return true;
 }
 
 } // namespace asdx

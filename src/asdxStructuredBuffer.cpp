@@ -108,7 +108,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      初期化処理を行います.
     //-------------------------------------------------------------------------
-    bool Init(ID3D12Device* pDevice, ID3D12Resource* pDstResource, void* pInitData)
+    bool Init(ID3D12Device* pDevice, ID3D12Resource* pDstResource, const void* pInitData)
     {
         if (pDevice == nullptr || pDstResource == nullptr || pInitData == nullptr)
         {
@@ -377,7 +377,7 @@ bool StructuredBuffer::Init
     GraphicsDevice&     device,
     uint64_t            count,
     uint32_t            stride,
-    void*               pInitData,
+    const void*         pInitData,
     IUploadResource**   ppUploadResource
 )
 {

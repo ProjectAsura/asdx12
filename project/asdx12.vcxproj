@@ -113,6 +113,7 @@
     <ClCompile Include="..\src\asdxKeyboard.cpp" />
     <ClCompile Include="..\src\asdxLogger.cpp" />
     <ClCompile Include="..\src\asdxMisc.cpp" />
+    <ClCompile Include="..\src\asdxModel.cpp" />
     <ClCompile Include="..\src\asdxMouse.cpp" />
     <ClCompile Include="..\src\asdxP4VHelper.cpp" />
     <ClCompile Include="..\src\asdxPad.cpp" />
@@ -157,6 +158,7 @@
     <ClInclude Include="..\include\asdxLruCache.h" />
     <ClInclude Include="..\include\asdxMath.h" />
     <ClInclude Include="..\include\asdxMisc.h" />
+    <ClInclude Include="..\include\asdxModel.h" />
     <ClInclude Include="..\include\asdxP4VHelper.h" />
     <ClInclude Include="..\include\asdxParamHistory.h" />
     <ClInclude Include="..\include\asdxPipelineState.h" />
