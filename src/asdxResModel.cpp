@@ -334,12 +334,10 @@ Vector2 OctWrap(const Vector2& value)
 //-----------------------------------------------------------------------------
 Vector2 PackNormal(const Vector3& value)
 {
-    auto mag = abs(value.x) + abs(value.y) + abs(value.z);
-    auto n = value / mag;
+    auto n = value / (abs(value.x) + abs(value.y) + abs(value.z));
     Vector2 result(n.x, n.y);
     result = (n.z >= 0.0f) ? result : OctWrap(result);
-    result *= 0.5f;
-    result += Vector2(0.5f, 0.5f);
+    result = result * 0.5f + Vector2(0.5f, 0.5f);
     return result;
 }
 
