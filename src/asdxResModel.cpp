@@ -8,6 +8,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <asdxResModel.h>
+#include <asdxLogger.h>
 
 
 namespace {
@@ -93,18 +94,18 @@ struct ModelHeader
 {
     uint8_t     Magic[4];
     uint32_t    Version;
-    uint32_t    ModelHash;
-    uint32_t    StaticMeshCount;
-    uint32_t    SkinningMeshCount;
+    uint32_t    MeshCount;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// MeshHeader structure
 ///////////////////////////////////////////////////////////////////////////////
-struct MeshHeader
+struct MeshHeaderV1
 {
+    uint32_t    MeshHash;
     uint32_t    MaterialHash;
     uint32_t    VertexCount;
+    uint32_t    SkinVertexCount;
     uint32_t    IndexCount;
     uint32_t    PrimitiveCount;
     uint32_t    MeshletCount;
@@ -129,10 +130,13 @@ namespace asdx {
 //-----------------------------------------------------------------------------
 //      メッシュの破棄処理を行います.
 //-----------------------------------------------------------------------------
-void Dispose(ResStaticMesh& resource)
+void Dispose(ResMesh& resource)
 {
     resource.Vertices.clear();
     resource.Vertices.shrink_to_fit();
+
+    resource.SkinVertices.clear();
+    resource.SkinVertices.shrink_to_fit();
 
     resource.Indices.clear();
     resource.Indices.shrink_to_fit();
@@ -149,45 +153,17 @@ void Dispose(ResStaticMesh& resource)
     resource.MatrerialHash = 0;
 }
 
-//-----------------------------------------------------------------------------
-//      メッシュの破棄処理を行います.
-//-----------------------------------------------------------------------------
-void Dispose(ResSkinningMesh& resource)
-{
-    resource.Vertices.clear();
-    resource.Vertices.shrink_to_fit();
-
-    resource.Indices.clear();
-    resource.Indices.shrink_to_fit();
-
-    resource.Primitives.clear();
-    resource.Primitives.shrink_to_fit();
-
-    resource.Meshlets.clear();
-    resource.Meshlets.shrink_to_fit();
-
-    resource.CullingInfos.clear();
-    resource.CullingInfos.shrink_to_fit();
-
-    resource.MatrerialHash = 0;
-}
 
 //-----------------------------------------------------------------------------
 //      モデルの破棄処理を行います.
 //-----------------------------------------------------------------------------
 void Dispose(ResModel& resource)
 {
-    for(size_t i=0; i<resource.StaticMeshes.size(); ++i)
-    { Dispose(resource.StaticMeshes[i]); }
+    for(size_t i=0; i<resource.Meshes.size(); ++i)
+    { Dispose(resource.Meshes[i]); }
 
-    for(size_t i=0; i<resource.SkinningMeshes.size(); ++i)
-    { Dispose(resource.SkinningMeshes[i]); }
-
-    resource.StaticMeshes.clear();
-    resource.StaticMeshes.shrink_to_fit();
-
-    resource.SkinningMeshes.clear();
-    resource.SkinningMeshes.shrink_to_fit();
+    resource.Meshes.clear();
+    resource.Meshes.shrink_to_fit();
 }
 
 //-----------------------------------------------------------------------------
@@ -444,28 +420,29 @@ bool SaveModel(const char* path, const ResModel& model)
     FILE* pFile;
     auto err = fopen_s(&pFile, path, "wb");
     if (err != 0)
-    { return false; }
+    {
+        ELOGA("Error : File Open Failed. path = %s", path);
+        return false;
+    }
 
     ModelHeader header;
-    header.Magic[0] = 'M';
-    header.Magic[1] = 'D';
-    header.Magic[2] = 'L';
-    header.Magic[3] = '\0';
-    header.Version = 0x1;
-
-    header.ModelHash            = model.ModelHash;
-    header.StaticMeshCount      = uint32_t(model.StaticMeshes.size());
-    header.SkinningMeshCount    = uint32_t(model.SkinningMeshes.size());
+    header.Magic[0]  = 'M';
+    header.Magic[1]  = 'D';
+    header.Magic[2]  = 'L';
+    header.Magic[3]  = '\0';
+    header.Version   = 0x1;
+    header.MeshCount = uint32_t(model.Meshes.size());
 
     fwrite(&header, sizeof(header), 1, pFile);
 
-    for(size_t i=0; i<model.StaticMeshes.size(); ++i)
+    for(size_t i=0; i<model.Meshes.size(); ++i)
     {
-        auto& mesh = model.StaticMeshes[i];
+        auto& mesh = model.Meshes[i];
 
-        MeshHeader meshHeader;
+        MeshHeaderV1 meshHeader;
         meshHeader.MaterialHash     = mesh.MatrerialHash;
         meshHeader.VertexCount      = uint32_t(mesh.Vertices.size());
+        meshHeader.SkinVertexCount  = uint32_t(mesh.SkinVertices.size());
         meshHeader.IndexCount       = uint32_t(mesh.Indices.size());
         meshHeader.PrimitiveCount   = uint32_t(mesh.Primitives.size());
         meshHeader.MeshletCount     = uint32_t(mesh.Meshlets.size());
@@ -476,35 +453,8 @@ bool SaveModel(const char* path, const ResModel& model)
         for(size_t j=0; j<mesh.Vertices.size(); ++j)
         { fwrite(&mesh.Vertices[j], sizeof(mesh.Vertices[j]), 1, pFile); }
 
-        for(size_t j=0; j<mesh.Indices.size(); ++j)
-        { fwrite(&mesh.Indices[j], sizeof(mesh.Indices[j]), 1, pFile); }
-
-        for(size_t j=0; j<mesh.Primitives.size(); ++j)
-        { fwrite(&mesh.Primitives[j], sizeof(mesh.Primitives[j]), 1, pFile); }
-
-        for(size_t j=0; j<mesh.Meshlets.size(); ++j)
-        { fwrite(&mesh.Meshlets[j], sizeof(mesh.Meshlets[j]), 1, pFile); }
-
-        for(size_t j=0; j<mesh.CullingInfos.size(); ++j)
-        { fwrite(&mesh.CullingInfos[j], sizeof(mesh.CullingInfos[j]), 1, pFile); }
-    }
-
-    for(size_t i=0; i<model.SkinningMeshes.size(); ++i)
-    {
-        auto& mesh = model.SkinningMeshes[i];
-
-        MeshHeader meshHeader;
-        meshHeader.MaterialHash     = mesh.MatrerialHash;
-        meshHeader.VertexCount      = uint32_t(mesh.Vertices.size());
-        meshHeader.IndexCount       = uint32_t(mesh.Indices.size());
-        meshHeader.PrimitiveCount   = uint32_t(mesh.Primitives.size());
-        meshHeader.MeshletCount     = uint32_t(mesh.Meshlets.size());
-        meshHeader.CullingInfoCount = uint32_t(mesh.CullingInfos.size());
-
-        fwrite(&meshHeader, sizeof(meshHeader), 1, pFile);
-
-        for(size_t j=0; j<mesh.Vertices.size(); ++j)
-        { fwrite(&mesh.Vertices[j], sizeof(mesh.Vertices[j]), 1, pFile); }
+        for(size_t j=0; j<mesh.SkinVertices.size(); ++j)
+        { fwrite(&mesh.SkinVertices[j], sizeof(mesh.SkinVertices[j]), 1, pFile); }
 
         for(size_t j=0; j<mesh.Indices.size(); ++j)
         { fwrite(&mesh.Indices[j], sizeof(mesh.Indices[j]), 1, pFile); }
@@ -532,74 +482,67 @@ bool LoadModel(const char* path, ResModel& model)
     auto err = fopen_s(&pFile, path, "rb");
     if (err != 0)
     {
+        ELOGA("Error : File Open Failed. path = %s", path);
         return false;
     }
 
     ModelHeader modelHeader;
     fread(&modelHeader, sizeof(modelHeader), 1, pFile);
 
-    model.ModelHash = modelHeader.ModelHash;
-    model.StaticMeshes.resize(modelHeader.StaticMeshCount);
-    model.SkinningMeshes.resize(modelHeader.SkinningMeshCount);
-
-    for(size_t i=0; i<model.StaticMeshes.size(); ++i)
+    if (modelHeader.Magic[0] != 'M'
+     || modelHeader.Magic[1] != 'D'
+     || modelHeader.Magic[2] != 'L'
+     || modelHeader.Magic[3] != '\0')
     {
-        MeshHeader meshHeader;
-        fread(&meshHeader, sizeof(meshHeader), 1, pFile);
-
-        auto& mesh = model.StaticMeshes[i];
-
-        mesh.MatrerialHash = meshHeader.MaterialHash;
-        mesh.Vertices    .resize(meshHeader.VertexCount);
-        mesh.Indices     .resize(meshHeader.IndexCount);
-        mesh.Primitives  .resize(meshHeader.PrimitiveCount);
-        mesh.Meshlets    .resize(meshHeader.MeshletCount);
-        mesh.CullingInfos.resize(meshHeader.CullingInfoCount);
-
-        for(size_t j=0; j<mesh.Vertices.size(); ++j)
-        { fread(&mesh.Vertices[j], sizeof(mesh.Vertices[j]), 1, pFile); }
-
-        for(size_t j=0; j<mesh.Indices.size(); ++j)
-        { fread(&mesh.Indices[j], sizeof(mesh.Indices[j]), 1, pFile); }
-
-        for(size_t j=0; j<mesh.Primitives.size(); ++j)
-        { fread(&mesh.Primitives[j], sizeof(mesh.Primitives[j]), 1, pFile); }
-
-        for(size_t j=0; j<mesh.Meshlets.size(); ++j)
-        { fread(&mesh.Meshlets[j], sizeof(mesh.Meshlets[j]), 1, pFile); }
-
-        for(size_t j=0; j<mesh.CullingInfos.size(); ++j)
-        { fread(&mesh.CullingInfos[j], sizeof(mesh.CullingInfos[j]), 1, pFile); }
+        ELOGA("Error : Invalid File. path = %s", path);
+        fclose(pFile);
+        return false;
     }
 
-    for(size_t i=0; i<model.SkinningMeshes.size(); ++i)
+    // Version 1.0f
+    if (modelHeader.Version == 0x1)
     {
-        MeshHeader meshHeader;
-        fread(&meshHeader, sizeof(meshHeader), 1, pFile);
+        model.Meshes.resize(modelHeader.MeshCount);
 
-        auto& mesh = model.SkinningMeshes[i];
+        for(size_t i=0; i<model.Meshes.size(); ++i)
+        {
+            MeshHeaderV1 meshHeader;
+            fread(&meshHeader, sizeof(meshHeader), 1, pFile);
 
-        mesh.MatrerialHash = meshHeader.MaterialHash;
-        mesh.Vertices    .resize(meshHeader.VertexCount);
-        mesh.Indices     .resize(meshHeader.IndexCount);
-        mesh.Primitives  .resize(meshHeader.PrimitiveCount);
-        mesh.Meshlets    .resize(meshHeader.MeshletCount);
-        mesh.CullingInfos.resize(meshHeader.CullingInfoCount);
+            auto& mesh = model.Meshes[i];
 
-        for(size_t j=0; j<mesh.Vertices.size(); ++j)
-        { fread(&mesh.Vertices[j], sizeof(mesh.Vertices[j]), 1, pFile); }
+            mesh.MatrerialHash = meshHeader.MaterialHash;
+            mesh.Vertices    .resize(meshHeader.VertexCount);
+            mesh.SkinVertices.resize(meshHeader.SkinVertexCount);
+            mesh.Indices     .resize(meshHeader.IndexCount);
+            mesh.Primitives  .resize(meshHeader.PrimitiveCount);
+            mesh.Meshlets    .resize(meshHeader.MeshletCount);
+            mesh.CullingInfos.resize(meshHeader.CullingInfoCount);
 
-        for(size_t j=0; j<mesh.Indices.size(); ++j)
-        { fread(&mesh.Indices[j], sizeof(mesh.Indices[j]), 1, pFile); }
+            for(size_t j=0; j<mesh.Vertices.size(); ++j)
+            { fread(&mesh.Vertices[j], sizeof(mesh.Vertices[j]), 1, pFile); }
 
-        for(size_t j=0; j<mesh.Primitives.size(); ++j)
-        { fread(&mesh.Primitives[j], sizeof(mesh.Primitives[j]), 1, pFile); }
+            for(size_t j=0; j<mesh.SkinVertices.size(); ++j)
+            { fread(&mesh.SkinVertices[j], sizeof(mesh.SkinVertices[j]), 1, pFile); }
 
-        for(size_t j=0; j<mesh.Meshlets.size(); ++j)
-        { fread(&mesh.Meshlets[j], sizeof(mesh.Meshlets[j]), 1, pFile); }
+            for(size_t j=0; j<mesh.Indices.size(); ++j)
+            { fread(&mesh.Indices[j], sizeof(mesh.Indices[j]), 1, pFile); }
 
-        for(size_t j=0; j<mesh.CullingInfos.size(); ++j)
-        { fread(&mesh.CullingInfos[j], sizeof(mesh.CullingInfos[j]), 1, pFile); }
+            for(size_t j=0; j<mesh.Primitives.size(); ++j)
+            { fread(&mesh.Primitives[j], sizeof(mesh.Primitives[j]), 1, pFile); }
+
+            for(size_t j=0; j<mesh.Meshlets.size(); ++j)
+            { fread(&mesh.Meshlets[j], sizeof(mesh.Meshlets[j]), 1, pFile); }
+
+            for(size_t j=0; j<mesh.CullingInfos.size(); ++j)
+            { fread(&mesh.CullingInfos[j], sizeof(mesh.CullingInfos[j]), 1, pFile); }
+        }
+    }
+    else
+    {
+        ELOGA("Error : Invalid Version. path = %s", path);
+        fclose(pFile);
+        return false;
     }
 
     fclose(pFile);

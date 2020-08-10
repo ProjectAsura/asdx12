@@ -52,10 +52,10 @@ struct ResMeshVertex
     uint32_t        Color;
 };
 
-//////////////////////////////////////////////////////////////////////////////
-// ResSkinningMeshVertex structure
 ///////////////////////////////////////////////////////////////////////////////
-struct ResSkinningMeshVertex : public ResMeshVertex
+// ResMeshSkinVertex structure
+///////////////////////////////////////////////////////////////////////////////
+struct ResMeshSkinVertex
 {
     ResBoneIndex    BoneIndex;
     asdx::Vector4   BoneWeights;
@@ -93,50 +93,33 @@ struct ResPrimitive
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-// ResStaticMesh structure
+// ResMesh structure
 ///////////////////////////////////////////////////////////////////////////////
-struct ResStaticMesh
+struct ResMesh
 {
-    uint32_t                    MatrerialHash;
-    std::vector<ResMeshVertex>  Vertices;
-    std::vector<uint32_t>       Indices;
-    std::vector<ResPrimitive>   Primitives;
-    std::vector<ResMeshlet>     Meshlets;
-    std::vector<ResCullingInfo> CullingInfos;
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// ResSkinningMesh structure
-///////////////////////////////////////////////////////////////////////////////
-struct ResSkinningMesh
-{
+    uint32_t                            MeshHash;
     uint32_t                            MatrerialHash;
-    std::vector<ResSkinningMeshVertex>  Vertices;
+    std::vector<ResMeshVertex>          Vertices;
+    std::vector<ResMeshSkinVertex>      SkinVertices;
     std::vector<uint32_t>               Indices;
     std::vector<ResPrimitive>           Primitives;
     std::vector<ResMeshlet>             Meshlets;
     std::vector<ResCullingInfo>         CullingInfos;
 };
 
+
 ///////////////////////////////////////////////////////////////////////////////
 // ResModel structure
 ///////////////////////////////////////////////////////////////////////////////
 struct ResModel
 {
-    uint32_t                        ModelHash;
-    std::vector<ResStaticMesh>      StaticMeshes;
-    std::vector<ResSkinningMesh>    SkinningMeshes;
+    std::vector<ResMesh>        Meshes;
 };
 
 //-----------------------------------------------------------------------------
 //      メッシュの破棄処理を行います.
 //-----------------------------------------------------------------------------
-void Dispose(ResStaticMesh& resource);
-
-//-----------------------------------------------------------------------------
-//      メッシュの破棄処理を行います.
-//-----------------------------------------------------------------------------
-void Dispose(ResSkinningMesh& resource);
+void Dispose(ResMesh& resource);
 
 //-----------------------------------------------------------------------------
 //      モデルの破棄処理を行います.
