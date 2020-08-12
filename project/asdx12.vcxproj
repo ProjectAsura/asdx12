@@ -190,6 +190,7 @@
     <None Include="..\include\asdxMath.inl" />
     <None Include="..\res\shaders\asdxBRDF.hlsli" />
     <None Include="..\res\shaders\asdxMath.hlsli" />
+    <None Include="..\res\shaders\asdxShadow.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\res\shaders\asdxCopyPS.hlsl">

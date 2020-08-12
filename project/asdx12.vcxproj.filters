@@ -298,6 +298,9 @@
     <None Include="..\res\shaders\asdxMath.hlsli">
       <Filter>リソース ファイル</Filter>
     </None>
+    <None Include="..\res\shaders\asdxShadow.hlsli">
+      <Filter>リソース ファイル</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\res\shaders\asdxFullScreenVS.hlsl">

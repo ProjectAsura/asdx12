@@ -36,14 +36,14 @@ float3 DrawGrid
 //-----------------------------------------------------------------------------
 float3 VisualizeError
 (
-    Texture2D       errorMap,      // 誤差を表す色が格納されたテクスチャ.
-    SamplerState    errorSmp,      // クランプサンプラー.
-    float2          texcoord,      // シャドウマップテクスチャ座標.
-    float2          map_size       // シャドウマップサイズ.
+    Texture2D       errorMap,   // 誤差を表す色が格納されたテクスチャ.
+    SamplerState    errorSmp,   // クランプサンプラー.
+    float2          texcoord,   // シャドウマップテクスチャ座標.
+    float2          mapSize     // シャドウマップサイズ.
 )
 {
-    float2 ds = map_size.x * ddx_fine(texcoord);
-    float2 dt = map_size.y * ddy_fine(texcoord);
+    float2 ds = mapSize.x * ddx_fine(texcoord);
+    float2 dt = mapSize.y * ddy_fine(texcoord);
     float s = 0.1f; // [0, 10.0]の値を[0, 1]にマッピングするので0.1倍.
     float error = max(length(ds + dt), length(ds - dt)) * s;
     return errorMap.Sample(errorSmp, error).rgb;
