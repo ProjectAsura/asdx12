@@ -1437,7 +1437,6 @@ bool TraceScreenSpaceRay
     float               thicknessZ,     // カメラ空間での厚み(1.0とか).
     float               nearClip,       // ニアクリップ平面までの距離.
     float               stride,         // stride = 1.0f, 1.0より大きくすると効率は良くなるが品質が低下する.
-    float               jitter,         // ジッタ。範囲は[0, 1]。(InterleavedGradientNoise()の返り値などを渡す)
     float               maxDistance,    // カメラ空間での最大トレース距離.
     const int           maxSteps,       // 最大ステップ数. 8などを指定.
     out float2          hitPixel,       // 交差したピクセル位置.
@@ -1462,6 +1461,9 @@ bool TraceScreenSpaceRay
     float  k1 = 1.0f / h1.w;
     float3 q0 = rayPosVS * k0;
     float3 q1 = endPosVS * k1;
+
+    float2 svPos = (q0.xy * 0.5f + 0.5f) * bufferSize;
+    float jitter = InterleavedGradientNoise(svPos);
 
     // スクリーン空間の終点.
     float2 p0 = h0.xy * k0;
@@ -1555,6 +1557,140 @@ bool TraceScreenSpaceRay
     hitPos = q / k;
  
     return all(abs(hitPixel - (bufferSize * 0.5)) <= bufferSize * 0.5);
+}
+
+//-----------------------------------------------------------------------------
+//      スクリーン空間でシャドウ判定用のレイを追跡します.
+//-----------------------------------------------------------------------------
+float ScreenSpaceShadowRay
+(
+    Texture2D<float>    depthBuffer,    // 深度バッファ.
+    float2              bufferSize,     // 深度バッファのサイズ.
+    float3              rayPosVS,       // レイの原点.
+    float3              rayDirVS,       // レイの方向ベクトル(正規化済み).
+    float4x4            proj,           // 射影行列.
+    float               nearClip,       // ニアクリップ平面までの距離.
+    float               stride,         // stride = 1.0f, 1.0より大きくすると効率は良くなるが品質が低下する.
+    float               maxDistance,    // カメラ空間での最大トレース距離.
+    const int           maxSteps,       // 最大ステップ数. 8などを指定.
+)
+{
+    // McGuire and Mara, "Efficient GPU Screen-Space Ray Tracing",
+    // Journal of Computer Graphics Techniques (JCGT), vol.3, no.4, 73-85, 2014,
+    // http://jcgt.org/published/0003/04/04/
+
+    // ニア平面でクリップ.
+    float rayLength = ((rayPosVS.z + rayDirVS.z * maxDistance) > nearClip)
+        ? (nearClip - rayPosVS.z) / rayDirVS.z : maxDistance;
+
+    float3 endPosVS = rayPosVS + rayDirVS * rayLength;
+    float2 hitPixel = float2(-1.0f, -1.0f); // 初期化.
+ 
+    // スクリーン空間に変換.
+    float4 h0 = mul(proj, float4(rayPosVS, 1.0f));
+    float4 h1 = mul(proj, float4(endPosVS, 1.0f));
+    float  k0 = 1.0f / h0.w;
+    float  k1 = 1.0f / h1.w;
+    float3 q0 = rayPosVS * k0;
+    float3 q1 = endPosVS * k1;
+
+    float2 svPos = (q0.xy * 0.5f + 0.5f) * bufferSize;
+    float jitter = InterleavedGradientNoise(svPos);
+
+    // スクリーン空間の終点.
+    float2 p0 = h0.xy * k0;
+    float2 p1 = h1.xy * k1;
+
+    // ビューポートクリッピング.
+    {
+        float maxX = bufferSize.x - 0.5f;
+        float minX = 0.5f;
+        float maxY = bufferSize.y - 0.5f;
+        float minY = 0.5f;
+        float alpha = 0.0f;
+        if ((p1.y > maxY) || (p1.y < minY))
+        { alpha = (p1.y - ((p1.y > maxY) ? maxY : minY)) / (p1.y - p0.y); }
+        
+        if ((p1.x > maxX) || (p1.x < minX))
+        { alpha = max(alpha, (p1.x - ((p1.x > maxX) ? maxX : minX)) / (p1.x - p0.x)); }
+        
+        p1 = lerp(p1, p0, alpha);
+        k1 = lerp(k1, k0, alpha);
+        q1 = lerp(q1, q0, alpha);
+     }
+
+    // 線分になるように，ちろっと伸ばす.
+    float2 delta = p1 - p0;
+    p1 += (dot(delta, delta) < 0.0001f) ? 0.01f : 0.0f;
+    delta = p1 - p0;
+
+    bool permute = false;
+    if (abs(delta.x) < abs(delta.y))
+    {
+        permute = true;
+        delta = delta.yx;
+        p0 = p0.yx;
+        p1 = p1.yx;
+    }
+
+    float stepDir = sign(delta.x);
+    float invdx   = stepDir / delta.x;
+
+    // q と k の微分を記録.
+    float3 dq = (q1 - q0) * invdx;
+    float  dk = (k1 - k0) * invdx;
+    float2 dp = float2(stepDir, delta.y * invdx);
+
+    dp *= stride;
+    dq *= stride;
+    dk *= stride;
+    
+    p0 += dp * jitter;
+    q0 += dq * jitter;
+    k0 += dk * jitter;
+    
+    float2 p = p0;
+    float3 q = q0;
+    float  k = k0;
+    
+    float end      = p1.x * stepDir;
+    float prevMaxZ = rayPosVS.z;
+    int   count    = 0;
+
+    const float thicknessZ = 2.0f * abs(endPosVS.z - rayPosVS.z) / maxSteps; // モアレを抑えるために2倍.
+
+    while(((p.x * stepDir) <= end) && (count < maxSteps))
+    {
+        hitPixel = permute ? p.yx : p;
+
+        float rayMinZ = prevMaxZ;
+        float rayMaxZ = (dq.z * 0.5f + q.z) / (dk * 0.5 + k);
+        prevMaxZ = rayMaxZ;
+
+        // 入れ替え.
+        if (rayMinZ > rayMaxZ)
+        {
+            float t = rayMaxZ;
+            rayMaxZ = rayMinZ;
+            rayMinZ = t;
+        }
+
+        float sceneMaxZ = depthBuffer[int2(hitPixel)];
+        float sceneMinZ = sceneMaxZ - thicknessZ;
+
+        if ((rayMaxZ >= sceneMinZ) && (rayMinZ <= sceneMaxZ) || (sceneMaxZ == 0))
+        { break; }
+ 
+        p   += dp;
+        q.z += dq.z;
+        k   += dk;
+        ++count;
+    }
+ 
+    float shadow = all(abs(hitPixel - (bufferSize * 0.5)) <= bufferSize * 0.5) ? 1.0f : 0.0f;   
+    float2 vignette = max(6.0f * abs(hitPixel - (bufferSize * 0.5)) - bufferSize * 0.5, 0.0f);   
+    shadow *= saturate(1.0f - dot(vignette, vignette));
+    return 1.0f - shadow;
 }
 
 #endif//ASDX_MATH_HLSLI
