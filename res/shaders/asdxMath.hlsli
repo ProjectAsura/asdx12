@@ -1633,7 +1633,7 @@ float ScreenSpaceShadowRay
         p1 = p1.yx;
     }
 
-    float stepDir = sign(delta.x);
+    float stepDir = float(sign(delta.x));
     float invdx   = stepDir / delta.x;
 
     // q と k の微分を記録.
@@ -1678,7 +1678,7 @@ float ScreenSpaceShadowRay
         float sceneMaxZ = depthBuffer[int2(hitPixel)];
         float sceneMinZ = sceneMaxZ - thicknessZ;
 
-        if ((rayMaxZ >= sceneMinZ) && (rayMinZ <= sceneMaxZ) || (sceneMaxZ == 0))
+        if (((rayMaxZ >= sceneMinZ) && (rayMinZ <= sceneMaxZ)) || (sceneMaxZ == 0))
         { break; }
  
         p   += dp;
