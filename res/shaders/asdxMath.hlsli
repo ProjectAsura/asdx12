@@ -1414,283 +1414,69 @@ float4x4 CreateRotationZ(float radian)
 }
 
 //-----------------------------------------------------------------------------
-//      インタリーブドグラディエントノイズを求めます.
+//      スレッドグループのタイリングを行いスレッドIDを再マッピングします.
 //-----------------------------------------------------------------------------
-float InterleavedGradientNoise(float2 svPosition)
-{
-    // Jorge Jimenez, "Next Generation Post Processing in Call of Duty Advanced Warfare",
-    // SIGGRAPH 2014: Advances in Real-Time Rendering, Slide. 123
-    float3 magic = float3(0.06711056f, 0.00583715f, 52.9829189f);
-    return frac(magic.z * frac(dot(svPosition, magic.xy)));
-}
-
-//-----------------------------------------------------------------------------
-//      スクリーン空間でレイを追跡します.
-//-----------------------------------------------------------------------------
-bool TraceScreenSpaceRay
+uint2 RemapThreadId
 (
-    Texture2D<float>    depthBuffer,    // 深度バッファ.
-    float2              bufferSize,     // 深度バッファのサイズ.
-    float3              rayPosVS,       // レイの原点.
-    float3              rayDirVS,       // レイの方向ベクトル(正規化済み).
-    float4x4            proj,           // 射影行列.
-    float               thicknessZ,     // カメラ空間での厚み(1.0とか).
-    float               nearClip,       // ニアクリップ平面までの距離.
-    float               stride,         // stride = 1.0f, 1.0より大きくすると効率は良くなるが品質が低下する.
-    float               maxDistance,    // カメラ空間での最大トレース距離.
-    const int           maxSteps,       // 最大ステップ数. 8などを指定.
-    out float2          hitPixel,       // 交差したピクセル位置.
-    out float3          hitPos          // 交差したカメラ空間位置.
+    const uint2 threadGroupDim,     // [numthreads(A, B, 1)]のAとBの値. (8, 8, 1)の64で起動するのが推奨.
+    uint2       dispatchDim,        // ID3D12GraphicsCommandList::Dipatch(X, Y, Z)で渡した(X, Y)の値.
+    uint2       groupId,            // グループID(SV_GroupID).
+    uint2       groupThreadId       // グループスレッドID(SV_GroupThreadID).
 )
 {
-    // McGuire and Mara, "Efficient GPU Screen-Space Ray Tracing",
-    // Journal of Computer Graphics Techniques (JCGT), vol.3, no.4, 73-85, 2014,
-    // http://jcgt.org/published/0003/04/04/
+    // Louis Bavoil, "Optimizing Compute Shaders for L2 Locality using Thread-Group ID Swizzling"
+    // https://developer.nvidia.com/blog/optimizing-compute-shaders-for-l2-locality-using-thread-group-id-swizzling/
+    // July 16, 2020.
+    
+    const uint N = 16; // タイルの横幅.
 
-    // ニア平面でクリップ.
-    float rayLength = ((rayPosVS.z + rayDirVS.z * maxDistance) > nearClip)
-        ? (nearClip - rayPosVS.z) / rayDirVS.z : maxDistance;
+    // 1タイル内のスレッドグループの総数.
+    const uint countThreadGroups = N * dispatchDim.y;
 
-    float3 endPosVS = rayPosVS + rayDirVS * rayLength;
-    hitPixel = float2(-1.0f, -1.0f); // 初期化.
+    // 考えうる完全なタイルの数.
+    const uint countPerfectTiles = dispatchDim.x / N;
+
+    // 完全なタイルにおけるスレッドグループの総数.
+    const uint totalThreadGroups = countPerfectTiles * N * dispatchDim.y - 1;
  
-    // スクリーン空間に変換.
-    float4 h0 = mul(proj, float4(rayPosVS, 1.0f));
-    float4 h1 = mul(proj, float4(endPosVS, 1.0f));
-    float  k0 = 1.0f / h0.w;
-    float  k1 = 1.0f / h1.w;
-    float3 q0 = rayPosVS * k0;
-    float3 q1 = endPosVS * k1;
+    // 1次元にする.
+    const uint threadGroupIdFlattened = dispatchDim.x * groupId.y + groupId.x;
 
-    float2 svPos = (q0.xy * 0.5f + 0.5f) * bufferSize;
-    float jitter = InterleavedGradientNoise(svPos);
+    // 現在のスレッドグループからタイルIDへのマッピング.
+    const uint tileId             = threadGroupIdFlattened / countThreadGroups;
+    const uint localThreadGroupId = threadGroupIdFlattened % countThreadGroups;
 
-    // スクリーン空間の終点.
-    float2 p0 = h0.xy * k0;
-    float2 p1 = h1.xy * k1;
-
-    // ビューポートクリッピング.
+    // タイルの横幅で除算と剰余算を行って X と Y を算出.
+    uint localThreadGroupIdY = localThreadGroupId / N;
+    uint localThreadGroupIdX = localThreadGroupId % N;
+ 
+    if(totalThreadGroups < threadGroupIdFlattened)
     {
-        float maxX = bufferSize.x - 0.5f;
-        float minX = 0.5f;
-        float maxY = bufferSize.y - 0.5f;
-        float minY = 0.5f;
-        float alpha = 0.0f;
-        if ((p1.y > maxY) || (p1.y < minY))
-        { alpha = (p1.y - ((p1.y > maxY) ? maxY : minY)) / (p1.y - p0.y); }
-        
-        if ((p1.x > maxX) || (p1.x < minX))
-        { alpha = max(alpha, (p1.x - ((p1.x > maxX) ? maxX : minX)) / (p1.x - p0.x)); }
-        
-        p1 = lerp(p1, p0, alpha);
-        k1 = lerp(k1, k0, alpha);
-        q1 = lerp(q1, q0, alpha);
-     }
-
-    // 線分になるように，ちろっと伸ばす.
-    float2 delta = p1 - p0;
-    p1 += (dot(delta, delta) < 0.0001f) ? 0.01f : 0.0f;
-    delta = p1 - p0;
-
-    bool permute = false;
-    if (abs(delta.x) < abs(delta.y))
-    {
-        permute = true;
-        delta = delta.yx;
-        p0 = p0.yx;
-        p1 = p1.yx;
-    }
-
-    float stepDir = sign(delta.x);
-    float invdx   = stepDir / delta.x;
-
-    // q と k の微分を記録.
-    float3 dq = (q1 - q0) * invdx;
-    float  dk = (k1 - k0) * invdx;
-    float2 dp = float2(stepDir, delta.y * invdx);
-
-    dp *= stride;
-    dq *= stride;
-    dk *= stride;
-    
-    p0 += dp * jitter;
-    q0 += dq * jitter;
-    k0 += dk * jitter;
-    
-    float2 p = p0;
-    float3 q = q0;
-    float  k = k0;
-    
-    float end      = p1.x * stepDir;
-    float prevMaxZ = rayPosVS.z;
-    int   count    = 0;
-
-    while(((p.x * stepDir) <= end) && (count < maxSteps))
-    {
-        hitPixel = permute ? p.yx : p;
-
-        float rayMinZ = prevMaxZ;
-        float rayMaxZ = (dq.z * 0.5f + q.z) / (dk * 0.5 + k);
-        prevMaxZ = rayMaxZ;
-
-        // 入れ替え.
-        if (rayMinZ > rayMaxZ)
+        // 最後のタイルに不完全な次元があり、最後のタイルからのCTAが起動された場合にのみ実行されるパス.
+        uint lastTile = dispatchDim.x % N;
+        if (lastTile > 0)
         {
-            float t = rayMaxZ;
-            rayMaxZ = rayMinZ;
-            rayMinZ = t;
+            localThreadGroupIdY = localThreadGroupId / lastTile;
+            localThreadGroupIdX = localThreadGroupId % lastTile;
         }
-
-        float sceneMaxZ = depthBuffer[int2(hitPixel)];
-        float sceneMinZ = sceneMaxZ - thicknessZ;
-
-        if ((rayMaxZ >= sceneMinZ) && (rayMinZ <= sceneMaxZ) || (sceneMaxZ == 0))
-        { break; }
- 
-        p   += dp;
-        q.z += dq.z;
-        k   += dk;
-        ++count;
     }
 
-    q.xy += dq.xy * count;
-    hitPos = q / k;
- 
-    return all(abs(hitPixel - (bufferSize * 0.5)) <= bufferSize * 0.5);
-}
+    // 1次元にする.
+    const uint swizzledThreadGroupIdFlattened = tileId * N
+      + localThreadGroupIdY * dispatchDim.x
+      + localThreadGroupIdX;
 
-//-----------------------------------------------------------------------------
-//      スクリーン空間でシャドウ判定用のレイを追跡します.
-//-----------------------------------------------------------------------------
-float ScreenSpaceShadowRay
-(
-    Texture2D<float>    depthBuffer,    // 深度バッファ.
-    float2              bufferSize,     // 深度バッファのサイズ.
-    float3              rayPosVS,       // レイの原点.
-    float3              rayDirVS,       // レイの方向ベクトル(正規化済み).
-    float4x4            proj,           // 射影行列.
-    float               nearClip,       // ニアクリップ平面までの距離.
-    float               stride,         // stride = 1.0f, 1.0より大きくすると効率は良くなるが品質が低下する.
-    float               maxDistance,    // カメラ空間での最大トレース距離.
-    const int           maxSteps,       // 最大ステップ数. 8などを指定.
-)
-{
-    // McGuire and Mara, "Efficient GPU Screen-Space Ray Tracing",
-    // Journal of Computer Graphics Techniques (JCGT), vol.3, no.4, 73-85, 2014,
-    // http://jcgt.org/published/0003/04/04/
+    // 起動数で割り，グループIDを求める.
+    uint2 swizzledThreadGroupId;
+    swizzledThreadGroupId.y = swizzledThreadGroupIdFlattened / dispatchDim.x;
+    swizzledThreadGroupId.x = swizzledThreadGroupIdFlattened % dispatchDim.x;
 
-    // ニア平面でクリップ.
-    float rayLength = ((rayPosVS.z + rayDirVS.z * maxDistance) > nearClip)
-        ? (nearClip - rayPosVS.z) / rayDirVS.z : maxDistance;
+    // スレッドグループ数から起動スレッドIDを求める.
+    uint2 swizzledThreadId;
+    swizzledThreadId.x = threadGroupDim.x * swizzledThreadGroupId.x + groupThreadId.x;
+    swizzledThreadId.y = threadGroupDim.y * swizzledThreadGroupId.y + groupThreadId.y;
 
-    float3 endPosVS = rayPosVS + rayDirVS * rayLength;
-    float2 hitPixel = float2(-1.0f, -1.0f); // 初期化.
- 
-    // スクリーン空間に変換.
-    float4 h0 = mul(proj, float4(rayPosVS, 1.0f));
-    float4 h1 = mul(proj, float4(endPosVS, 1.0f));
-    float  k0 = 1.0f / h0.w;
-    float  k1 = 1.0f / h1.w;
-    float3 q0 = rayPosVS * k0;
-    float3 q1 = endPosVS * k1;
-
-    float2 svPos = (q0.xy * 0.5f + 0.5f) * bufferSize;
-    float jitter = InterleavedGradientNoise(svPos);
-
-    // スクリーン空間の終点.
-    float2 p0 = h0.xy * k0;
-    float2 p1 = h1.xy * k1;
-
-    // ビューポートクリッピング.
-    {
-        float maxX = bufferSize.x - 0.5f;
-        float minX = 0.5f;
-        float maxY = bufferSize.y - 0.5f;
-        float minY = 0.5f;
-        float alpha = 0.0f;
-        if ((p1.y > maxY) || (p1.y < minY))
-        { alpha = (p1.y - ((p1.y > maxY) ? maxY : minY)) / (p1.y - p0.y); }
-        
-        if ((p1.x > maxX) || (p1.x < minX))
-        { alpha = max(alpha, (p1.x - ((p1.x > maxX) ? maxX : minX)) / (p1.x - p0.x)); }
-        
-        p1 = lerp(p1, p0, alpha);
-        k1 = lerp(k1, k0, alpha);
-        q1 = lerp(q1, q0, alpha);
-     }
-
-    // 線分になるように，ちろっと伸ばす.
-    float2 delta = p1 - p0;
-    p1 += (dot(delta, delta) < 0.0001f) ? 0.01f : 0.0f;
-    delta = p1 - p0;
-
-    bool permute = false;
-    if (abs(delta.x) < abs(delta.y))
-    {
-        permute = true;
-        delta = delta.yx;
-        p0 = p0.yx;
-        p1 = p1.yx;
-    }
-
-    float stepDir = float(sign(delta.x));
-    float invdx   = stepDir / delta.x;
-
-    // q と k の微分を記録.
-    float3 dq = (q1 - q0) * invdx;
-    float  dk = (k1 - k0) * invdx;
-    float2 dp = float2(stepDir, delta.y * invdx);
-
-    dp *= stride;
-    dq *= stride;
-    dk *= stride;
-    
-    p0 += dp * jitter;
-    q0 += dq * jitter;
-    k0 += dk * jitter;
-    
-    float2 p = p0;
-    float3 q = q0;
-    float  k = k0;
-    
-    float end      = p1.x * stepDir;
-    float prevMaxZ = rayPosVS.z;
-    int   count    = 0;
-
-    const float thicknessZ = 2.0f * abs(endPosVS.z - rayPosVS.z) / maxSteps; // モアレを抑えるために2倍.
-
-    while(((p.x * stepDir) <= end) && (count < maxSteps))
-    {
-        hitPixel = permute ? p.yx : p;
-
-        float rayMinZ = prevMaxZ;
-        float rayMaxZ = (dq.z * 0.5f + q.z) / (dk * 0.5 + k);
-        prevMaxZ = rayMaxZ;
-
-        // 入れ替え.
-        if (rayMinZ > rayMaxZ)
-        {
-            float t = rayMaxZ;
-            rayMaxZ = rayMinZ;
-            rayMinZ = t;
-        }
-
-        float sceneMaxZ = depthBuffer[int2(hitPixel)];
-        float sceneMinZ = sceneMaxZ - thicknessZ;
-
-        if (((rayMaxZ >= sceneMinZ) && (rayMinZ <= sceneMaxZ)) || (sceneMaxZ == 0))
-        { break; }
- 
-        p   += dp;
-        q.z += dq.z;
-        k   += dk;
-        ++count;
-    }
- 
-    float shadow = all(abs(hitPixel - (bufferSize * 0.5)) <= bufferSize * 0.5) ? 1.0f : 0.0f;   
-    float2 vignette = max(6.0f * abs(hitPixel - (bufferSize * 0.5)) - bufferSize * 0.5, 0.0f);   
-    shadow *= saturate(1.0f - dot(vignette, vignette));
-    return 1.0f - shadow;
+    return swizzledThreadId;
 }
 
 #endif//ASDX_MATH_HLSLI
