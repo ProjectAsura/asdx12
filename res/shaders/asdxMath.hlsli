@@ -389,114 +389,12 @@ float3 ToNormal(float3 p0, float3 pr, float3 pl, float3 pt, float3 pb)
 }
 
 //-----------------------------------------------------------------------------
-//      接線空間を圧縮します.
-//      ※データを格納する際は DXGI_FORMAT_R10G10B10A2_UINTを使用してください.
-//-----------------------------------------------------------------------------
-uint4 EncodeTBN
-(
-    in float3   normal,                 // 法線ベクトル.
-    in float3   tangent,                // 接線ベクトル.
-    in uint     binomralHandedeness     // 従法線の向き(通常は1，向きを逆にしたい場合は0).
-)
-{
-    // octahedron normal vector encoding
-    uint2 encodedNormal = uint2(PackNormal(normal) * 1023.0f);
-
-    // find largest component of tangent
-    float3 tangentAbs = abs(tangent);
-    float  maxComp    = Max3(tangentAbs);
-
-    float3 refVector;
-    uint   compIndex;
-    if (maxComp == tangentAbs.x)
-    {
-        refVector = float3(1.0f, 0.0f, 0.0f);
-        compIndex = 0;
-    }
-    else if (maxComp == tangentAbs.y)
-    {
-        refVector = float3(0.0f, 1.0f, 0.0f);
-        compIndex = 1;
-    }
-    else
-    {
-        refVector = float3(0.0f, 0.0f, 1.0f);
-        compIndex = 2;
-    }
-
-    // compute cosAngle and handedness of tangent.
-    float3 orthoA = normalize(cross(normal, refVector));
-    float3 orthoB = cross(normal, orthoA);
-    uint cosAngle = uint((dot(tangent, orthoA) * 0.5f + 0.5f) * 255.0f);
-    uint tangentHandedness = (dot(tangent, orthoB) > 0.0001f) ? 2 : 0;
-
-    return uint4(encodedNormal, (cosAngle << 2u) | compIndex, tangentHandedness | binomralHandedeness);
-}
-
-//-----------------------------------------------------------------------------
-//      圧縮した接線空間を展開します.
-//      ※入力データはDXGI_FORMAT_R10G10B10A2_UINTに格納されているものとします.
-//-----------------------------------------------------------------------------
-void DecodeTBN
-(
-    in  uint4   encodedTBN,     // 圧縮している接線空間.
-    out float3  normal,         // 法線ベクトル.
-    out float3  tangent,        // 接線ベクトル.
-    out float3  binormal        // 従法線ベクトル.
-)
-{
-    // octahedron normal vector decoding.
-    normal = UnpackNormal(encodedTBN.xy / 1023.0f);
-
-    // get reference vector
-    float3 refVector;
-    uint compIndex = (encodedTBN.z & 0x3);
-    if (compIndex == 0)
-    {
-        refVector = float3(1.0f, 0.0f, 0.0f);
-    }
-    else if (compIndex == 1)
-    {
-        refVector = float3(0.0f, 1.0f, 0.0f);
-    }
-    else
-    {
-        refVector = float3(0.0f, 0.0f, 1.0f);
-    }
-
-    // decode tangent
-    uint cosAngleUint = ((encodedTBN.z >> 2u) & 0xff);
-    float cosAngle = (cosAngleUint / 255.0f) * 2.0f - 1.0f;
-    float sinAngle = sqrt(saturate(1.0f - (cosAngle * cosAngle)));
-
-    sinAngle = ((encodedTBN.w & 0x2) == 0) ? -sinAngle : sinAngle;
-    float3 orthoA = normalize(cross(normal, refVector));
-    float3 orthoB = cross(normal, orthoA);
-    tangent = (cosAngle * orthoA) + (sinAngle * orthoB);
-
-    // decode binormal
-    binormal = cross(normal, tangent);
-    binormal = ((encodedTBN.w & 0x1) == 0) ? binormal : -binormal;
-}
-
-//-----------------------------------------------------------------------------
 //      Hammersleyサンプリング.
 //-----------------------------------------------------------------------------
 float2 Hammersley(uint i, uint N)
 {
-    // Shader Model 5以上が必要.
     float ri = reversebits(i) * 2.3283064365386963e-10f;
     return float2(float(i) / float(N), ri);
-//#if 0
-//    // Shader Model 5未満.
-//    uint bits = (bits << 16u) | (bits >> 16u);
-//    uint bits = ((bits & 0x55555555u) << 1u) | ((bits & 0xAAAAAAAAu) >> 1u);
-//    uint bits = ((bits & 0x33333333u) << 2u) | ((bits & 0xCCCCCCCCu) >> 2u);
-//    uint bits = ((bits & 0x0F0F0F0Fu) << 4u) | ((bits & 0xF0F0F0F0u) >> 4u);
-//    uint bits = ((bits & 0x00FF00FFu) << 8u) | ((bits & 0xFF00FF00u) >> 8u);
-//    float ri = float(bits) * 2.3283064365386963e-10f;
-//    return float2(float(i) / float(N), ri);
-//#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1477,6 +1375,184 @@ uint2 RemapThreadId
     swizzledThreadId.y = threadGroupDim.y * swizzledThreadGroupId.y + groupThreadId.y;
 
     return swizzledThreadId;
+}
+
+//-----------------------------------------------------------------------------
+//      パッキングされたプリミティブ番号を展開します.
+//-----------------------------------------------------------------------------
+uint3 UnpackPrimitiveIndex(uint packed)
+{
+    return uint3(
+        packed & 0x3FF,
+        (packed >> 10) & 0x3FF,
+        (packed >> 20) & 0x3FF);    
+}
+
+//-----------------------------------------------------------------------------
+//      パッキングされた法錐を展開します.
+//-----------------------------------------------------------------------------
+float4 UnpackCone(uint packed)
+{
+    float4 v;
+    v.x = float((packed >> 0) & 0xFF);
+    v.y = float((packed >> 8) & 0xFF);
+    v.z = float((packed >> 16) & 0xFF);
+    v.w = float((packed >> 24) & 0xFF);
+
+    v = v / 255.0;
+    v.xyz = v.xyz * 2.0 - 1.0;
+    return v;
+}
+
+//-----------------------------------------------------------------------------
+//      パッキングされたテクスチャ座標を展開します.
+//-----------------------------------------------------------------------------
+float2 UnpackTexCoord(uint packed)
+{
+    float2 result;
+    result.x = f16tof32(packed & 0xffff);
+    result.y = f16tof32((packed >> 16) & 0xffff);
+    return result;
+}
+
+//-----------------------------------------------------------------------------
+//      パッキングされた接線空間を展開します.
+//-----------------------------------------------------------------------------
+void UnpackTBN
+(
+    in  uint    encodedTBN,     // 圧縮している接線空間(32bit).
+    out float3  tangent,        // 接線ベクトル.
+    out float3  bitangent,      // 従接線ベクトル.
+    out float3  normal          // 法線ベクトル.
+)
+{
+    uint2 packedN;
+    packedN.x = encodedTBN & 0x3FF;
+    packedN.y = (encodedTBN >> 10) & 0x3FF;
+
+    // octahedron normal vector decoding.
+    normal = UnpackNormal(packedN / 1023.0f);
+    
+    uint cosAngleUint = (encodedTBN >> 20) & 0xFF;
+    uint compIndex    = (encodedTBN >> 28) & 0x3;
+
+    // get reference vector
+    float3 refVector;
+    if (compIndex == 0)
+    { refVector = float3(1.0f, 0.0f, 0.0f); }
+    else if (compIndex == 1)
+    { refVector = float3(0.0f, 1.0f, 0.0f); }
+    else
+    { refVector = float3(0.0f, 0.0f, 1.0f); }
+
+    // decode tangent
+    float cosAngle = (float(cosAngleUint) / 255.0f) * 2.0f - 1.0f;
+    float sinAngle = sqrt(saturate(1.0f - (cosAngle * cosAngle)));
+    
+    uint handedness = (encodedTBN >> 30) & 0x3;
+
+    sinAngle = ((handedness& 0x2) == 0) ? -sinAngle : sinAngle;
+    float3 orthoA = normalize(cross(normal, refVector));
+    float3 orthoB = cross(normal, orthoA);
+    tangent = (cosAngle * orthoA) + (sinAngle * orthoB);
+
+    // decode bitangent
+    bitangent = cross(normal, tangent);
+    bitangent = ((handedness & 0x1) == 0) ? bitangent : -bitangent;
+}
+
+//-----------------------------------------------------------------------------
+//      接線空間を32bitにパッキングします.
+//-----------------------------------------------------------------------------
+uint PackTBN(float3 normal, float3 tangent, uint binormalHandedness)
+{
+    uint result = 0;
+    float2 packNormal = PackNormal(normal);
+    result |= uint(packNormal.x * 1023.0f);
+    result |= uint(packNormal.y * 1023.0f) << 10;
+
+    float3 tangentAbs = abs(tangent);
+    float maxComp = Max3(tangentAbs);
+
+    float3 refVector;
+    uint3 compIndex = 0;
+    if (maxComp == tangentAbs.x)
+    {
+        refVector = float3(1.0f, 0.0f, 0.0f);
+        compIndex = 0;
+    }
+    else if (maxComp == tangentAbs.y)
+    {
+        refVector = float3(0.0f, 1.0f, 0.0f);
+        compIndex = 1;
+    }
+    else if (maxComp == tangentAbs.z)
+    {
+        refVector = float3(0.0f, 0.0f, 1.0f);
+        compIndex = 2;
+    }
+    
+    float3 orthoA = normalize(cross(normal, refVector));
+    float3 orthoB = cross(normal, orthoA);
+    uint cosAngle = uint((dot(tangent, orthoA) * 0.5f + 0.5f) * 255.0f);
+    uint tangentHandedness = (dot(tangent, orthoB) > 0.0001f) ? 1 : 0;
+    
+    result |= (cosAngle & 0xff) << 20;
+    result |= (compIndex & 0x3) << 28;
+    result |= (tangentHandedness & 0x1) << 30;
+    result |= (binormalHandedness & 0x1) << 31;
+    
+    return result;
+}
+
+//-----------------------------------------------------------------------------
+//      パッキングされたカラーを展開します.
+//-----------------------------------------------------------------------------
+float4 UnpackColor(uint packed)
+{
+    float4 v;
+    v.x = float((packed >> 0) & 0xFF);
+    v.y = float((packed >> 8) & 0xFF);
+    v.z = float((packed >> 16) & 0xFF);
+    v.w = float((packed >> 24) & 0xFF);
+    v = v / 255.0;
+    return v;
+}
+
+//-----------------------------------------------------------------------------
+//      パッキングされたボーン番号を取得します.
+//-----------------------------------------------------------------------------
+uint4 UnpackBoneIndex(uint2 packed)
+{
+    return uint4(
+        packed.x & 0xffff,
+        (packed.x >> 16) & 0xffff,
+        packed.y & 0xffff,
+        (packed.y >> 16) & 0xffff);
+}
+
+//-----------------------------------------------------------------------------
+//      法錐が縮退しているかどうかチェックします.
+//-----------------------------------------------------------------------------
+bool IsConeDegenerate(uint packedCone)
+{ return (packedCone >> 24) == 0xff; }
+
+//-----------------------------------------------------------------------------
+//      視錐台カリングを行います.
+//-----------------------------------------------------------------------------
+bool IsCull(float4 planes[6], float4 sphere)
+{
+    // sphereは事前に位置座標がワールド変換済み，半径もスケール適用済みとします.
+    float4 center = float4(sphere.xyz, 1.0f);
+
+    for(int i=0; i<6; ++i)
+    {
+        if (dot(center, planes[i]) < -sphere.w)
+        { return true; }
+    }
+
+    // カリングしない.
+    return false;
 }
 
 #endif//ASDX_MATH_HLSLI

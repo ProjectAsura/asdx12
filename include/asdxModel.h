@@ -78,14 +78,42 @@ public:
     //!
     //! @return     頂点データのGPU仮想アドレスを返却します.
     //-------------------------------------------------------------------------
-    D3D12_GPU_VIRTUAL_ADDRESS GetVertices() const;
+    D3D12_GPU_VIRTUAL_ADDRESS GetPositions() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      スケルトンデータのGPU仮想アドレスを取得します.
+    //! @brief      接線空間のGPU仮想アドレスを取得します.
     //!
-    //! @return     スケルトンデータのGPU仮想アドレスを取得します.
+    //! @return     接線空間のGPU仮想アドレスを返却します.
     //-------------------------------------------------------------------------
-    D3D12_GPU_VIRTUAL_ADDRESS GetSkinVertices() const;
+    D3D12_GPU_VIRTUAL_ADDRESS GetTangentSpaces() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      頂点カラーのGPU仮想アドレスを取得します.
+    //!
+    //! @return     頂点カラーのGPU仮想アドレスを返却します.
+    //-------------------------------------------------------------------------
+    D3D12_GPU_VIRTUAL_ADDRESS GetColors() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      テクスチャ座標のGPU仮想アドレスを取得します.
+    //!
+    //! @return     テクスチャ座標のGPU仮想アドレスを返却します.
+    //-------------------------------------------------------------------------
+    D3D12_GPU_VIRTUAL_ADDRESS GetTexCoords(uint8_t index) const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      ボーン番号のGPU仮想アドレスを取得します.
+    //!
+    //! @return     ボーン番号のGPU仮想アドレスを返却します.
+    //-------------------------------------------------------------------------
+    D3D12_GPU_VIRTUAL_ADDRESS GetBoneIndices() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      ボーン重みのGPU仮想アドレスを取得します.
+    //!
+    //! @return     ボーン重みのGPU仮想アドレスを返却します.
+    //-------------------------------------------------------------------------
+    D3D12_GPU_VIRTUAL_ADDRESS GetBoneWeights() const;
 
     //-------------------------------------------------------------------------
     //! @brief      インデックスデータのGPU仮想アドレスを取得します.
@@ -144,6 +172,31 @@ public:
     const BoundingBox& GetBox() const;
 
     //-------------------------------------------------------------------------
+    //! @brief      接線空間データを持つかどうか?
+    //!
+    //! @retval true    接線空間データを持ちます.
+    //! @retval false   接線空間データを持ちません.
+    //-------------------------------------------------------------------------
+    bool HasTangentSpace() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      頂点カラーをもつかどうか?
+    //!
+    //! @retval true    頂点カラーを持ちます.
+    //! @retval false   頂点カラーを持ちません.
+    //------------------------------------------------------------------------
+    bool HasColor() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      テクスチャ座標を持つかどうか.
+    //!
+    //! @param[in]      index       テクスチャ座標チャンネル.
+    //! @retval true    テクスチャ座標を持ちます.
+    //! @retval false   テクスチャ座標を持ちません.
+    //-------------------------------------------------------------------------
+    bool HasTexCoord(uint8_t index) const;
+
+    //-------------------------------------------------------------------------
     //! @brief      ボーンを持つかどうか?
     //!
     //! @retval true    ボーンを持ちます.
@@ -159,13 +212,16 @@ private:
     uint32_t            m_MaterialHash;
     uint32_t            m_MeshletCount;
     BoundingBox         m_Box;
-    StructuredBuffer    m_Vertices;
-    StructuredBuffer    m_SkinVertices;
+    StructuredBuffer    m_Positions;
+    StructuredBuffer    m_TangentSpaces;
+    StructuredBuffer    m_TexCoord[4];
+    StructuredBuffer    m_Colors;
+    StructuredBuffer    m_BoneIndices;
+    StructuredBuffer    m_BoneWeights;
     StructuredBuffer    m_Indices;
     StructuredBuffer    m_Primitives;
     StructuredBuffer    m_Meshlets;
     StructuredBuffer    m_CullingInfos;
-    bool                m_HasBone;
 
     //=========================================================================
     // private methods.

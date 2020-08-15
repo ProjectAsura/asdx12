@@ -19,12 +19,12 @@ namespace {
 union TangentSpace
 {
     struct {
-    uint32_t    NormalX             : 10;
-    uint32_t    NormalY             : 10;
-    uint32_t    CosAngle            : 8;
-    uint32_t    CompIndex           : 2;
-    uint32_t    TangentHandedness   : 1;
-    uint32_t    BinormalHandedness  : 1;
+        uint32_t    NormalX             : 10;
+        uint32_t    NormalY             : 10;
+        uint32_t    CosAngle            : 8;
+        uint32_t    CompIndex           : 2;
+        uint32_t    TangentHandedness   : 1;
+        uint32_t    BinormalHandedness  : 1;
     };
     uint32_t u;
 };
@@ -104,8 +104,12 @@ struct MeshHeaderV1
 {
     uint32_t    MeshHash;
     uint32_t    MaterialHash;
-    uint32_t    VertexCount;
-    uint32_t    SkinVertexCount;
+    uint32_t    PositionCount;
+    uint32_t    TangentSpaceCount;
+    uint32_t    ColorCount;
+    uint32_t    TexCoordCount[4];
+    uint32_t    BoneIndexCount;
+    uint32_t    BoneWeightCount;
     uint32_t    IndexCount;
     uint32_t    PrimitiveCount;
     uint32_t    MeshletCount;
@@ -132,11 +136,26 @@ namespace asdx {
 //-----------------------------------------------------------------------------
 void Dispose(ResMesh& resource)
 {
-    resource.Vertices.clear();
-    resource.Vertices.shrink_to_fit();
+    resource.Positions.clear();
+    resource.Positions.shrink_to_fit();
 
-    resource.SkinVertices.clear();
-    resource.SkinVertices.shrink_to_fit();
+    resource.TangentSpaces.clear();
+    resource.TangentSpaces.shrink_to_fit();
+
+    resource.Colors.clear();
+    resource.Colors.shrink_to_fit();
+
+    for(auto i=0; i<4; ++i)
+    {
+        resource.TexCoords[i].clear();
+        resource.TexCoords[i].shrink_to_fit();
+    }
+
+    resource.BoneIndices.clear();
+    resource.BoneIndices.shrink_to_fit();
+
+    resource.BoneWeights.clear();
+    resource.BoneWeights.shrink_to_fit();
 
     resource.Indices.clear();
     resource.Indices.shrink_to_fit();
@@ -388,17 +407,11 @@ void DecodeTBN(uint32_t encoded, Vector3& tangent, Vector3& bitangent, Vector3& 
     Vector3 refVector;
     uint8_t compIndex = (packed.CompIndex);
     if (compIndex == 0)
-    {
-        refVector = Vector3(1.0f, 0.0f, 0.0f);
-    }
+    { refVector = Vector3(1.0f, 0.0f, 0.0f); }
     else if (compIndex == 1)
-    {
-        refVector = Vector3(0.0f, 1.0f, 0.0f);
-    }
+    { refVector = Vector3(0.0f, 1.0f, 0.0f); }
     else if (compIndex == 2)
-    {
-        refVector = Vector3(0.0f, 0.0f, 1.0f);
-    }
+    { refVector = Vector3(0.0f, 0.0f, 1.0f); }
 
     float cosAngle = (packed.CosAngle / 255.0f) * 2.0f - 1.0f;
     float sinAngle = sqrt(Saturate(1.0f - cosAngle * cosAngle));
@@ -440,21 +453,41 @@ bool SaveModel(const char* path, const ResModel& model)
         auto& mesh = model.Meshes[i];
 
         MeshHeaderV1 meshHeader;
-        meshHeader.MaterialHash     = mesh.MatrerialHash;
-        meshHeader.VertexCount      = uint32_t(mesh.Vertices.size());
-        meshHeader.SkinVertexCount  = uint32_t(mesh.SkinVertices.size());
-        meshHeader.IndexCount       = uint32_t(mesh.Indices.size());
-        meshHeader.PrimitiveCount   = uint32_t(mesh.Primitives.size());
-        meshHeader.MeshletCount     = uint32_t(mesh.Meshlets.size());
-        meshHeader.CullingInfoCount = uint32_t(mesh.CullingInfos.size());
+        meshHeader.MaterialHash         = mesh.MatrerialHash;
+        meshHeader.PositionCount        = uint32_t(mesh.Positions.size());
+        meshHeader.TangentSpaceCount    = uint32_t(mesh.TangentSpaces.size());
+        meshHeader.ColorCount           = uint32_t(mesh.Colors.size());       
+        for(auto i=0; i<4; ++i)
+        { meshHeader.TexCoordCount[i] = uint32_t(mesh.TexCoords[i].size()); }
+        meshHeader.BoneIndexCount       = uint32_t(mesh.BoneIndices.size());
+        meshHeader.BoneWeightCount      = uint32_t(mesh.BoneWeights.size());
+        meshHeader.IndexCount           = uint32_t(mesh.Indices.size());
+        meshHeader.PrimitiveCount       = uint32_t(mesh.Primitives.size());
+        meshHeader.MeshletCount         = uint32_t(mesh.Meshlets.size());
+        meshHeader.CullingInfoCount     = uint32_t(mesh.CullingInfos.size());
 
         fwrite(&meshHeader, sizeof(meshHeader), 1, pFile);
 
-        for(size_t j=0; j<mesh.Vertices.size(); ++j)
-        { fwrite(&mesh.Vertices[j], sizeof(mesh.Vertices[j]), 1, pFile); }
+        for(size_t j=0; j<mesh.Positions.size(); ++j)
+        { fwrite(&mesh.Positions[j], sizeof(mesh.Positions[j]), 1, pFile); }
 
-        for(size_t j=0; j<mesh.SkinVertices.size(); ++j)
-        { fwrite(&mesh.SkinVertices[j], sizeof(mesh.SkinVertices[j]), 1, pFile); }
+        for(size_t j=0; j<mesh.TangentSpaces.size(); ++j)
+        { fwrite(&mesh.TangentSpaces[j], sizeof(mesh.TangentSpaces[j]), 1, pFile); }
+
+        for(size_t j=0; j<mesh.Colors.size(); ++j)
+        { fwrite(&mesh.Colors[j], sizeof(mesh.Colors[j]), 1, pFile); }
+
+        for(auto ch=0; ch<4; ++ch)
+        {
+            for(size_t j=0; j<mesh.TexCoords[ch].size(); ++j)
+            { fwrite(&mesh.TexCoords[ch][j], sizeof(mesh.TexCoords[ch][j]), 1, pFile); }
+        }
+
+        for(size_t j=0; j<mesh.BoneIndices.size(); ++j)
+        { fwrite(&mesh.BoneIndices[j], sizeof(mesh.BoneIndices[j]), 1, pFile); }
+
+        for(size_t j=0; j<mesh.BoneWeights.size(); ++j)
+        { fwrite(&mesh.BoneWeights[j], sizeof(mesh.BoneWeights[j]), 1, pFile); }
 
         for(size_t j=0; j<mesh.Indices.size(); ++j)
         { fwrite(&mesh.Indices[j], sizeof(mesh.Indices[j]), 1, pFile); }
@@ -512,18 +545,38 @@ bool LoadModel(const char* path, ResModel& model)
             auto& mesh = model.Meshes[i];
 
             mesh.MatrerialHash = meshHeader.MaterialHash;
-            mesh.Vertices    .resize(meshHeader.VertexCount);
-            mesh.SkinVertices.resize(meshHeader.SkinVertexCount);
-            mesh.Indices     .resize(meshHeader.IndexCount);
-            mesh.Primitives  .resize(meshHeader.PrimitiveCount);
-            mesh.Meshlets    .resize(meshHeader.MeshletCount);
-            mesh.CullingInfos.resize(meshHeader.CullingInfoCount);
+            mesh.Positions      .resize(meshHeader.PositionCount);
+            mesh.TangentSpaces  .resize(meshHeader.TangentSpaceCount);
+            mesh.Colors         .resize(meshHeader.ColorCount);
+            for(auto ch=0; ch<4; ++ch)
+            { mesh.TexCoords[ch].resize(meshHeader.TexCoordCount[ch]); }
+            mesh.BoneIndices    .resize(meshHeader.BoneIndexCount);
+            mesh.BoneWeights    .resize(meshHeader.BoneWeightCount);
+            mesh.Indices        .resize(meshHeader.IndexCount);
+            mesh.Primitives     .resize(meshHeader.PrimitiveCount);
+            mesh.Meshlets       .resize(meshHeader.MeshletCount);
+            mesh.CullingInfos   .resize(meshHeader.CullingInfoCount);
 
-            for(size_t j=0; j<mesh.Vertices.size(); ++j)
-            { fread(&mesh.Vertices[j], sizeof(mesh.Vertices[j]), 1, pFile); }
+            for(size_t j=0; j<mesh.Positions.size(); ++j)
+            { fread(&mesh.Positions[j], sizeof(mesh.Positions[j]), 1, pFile); }
 
-            for(size_t j=0; j<mesh.SkinVertices.size(); ++j)
-            { fread(&mesh.SkinVertices[j], sizeof(mesh.SkinVertices[j]), 1, pFile); }
+            for(size_t j=0; j<mesh.TangentSpaces.size(); ++j)
+            { fread(&mesh.TangentSpaces[j], sizeof(mesh.TangentSpaces[j]), 1, pFile); }
+
+            for(size_t j=0; j<mesh.Colors.size(); ++j)
+            { fread(&mesh.Colors[j], sizeof(mesh.Colors[j]), 1, pFile); }
+
+            for(auto ch=0; ch<4; ++ch)
+            {
+                for(size_t j=0; j<mesh.TexCoords[ch].size(); ++j)
+                { fread(&mesh.TexCoords[ch][j], sizeof(mesh.TexCoords[ch][j]), 1, pFile); }
+            }
+
+            for(size_t j=0; j<mesh.BoneIndices.size(); ++j)
+            { fread(&mesh.BoneIndices[j], sizeof(mesh.BoneIndices[j]), 1, pFile); }
+
+            for(size_t j=0; j<mesh.BoneWeights.size(); ++j)
+            { fread(&mesh.BoneWeights[j], sizeof(mesh.BoneWeights[j]), 1, pFile); }
 
             for(size_t j=0; j<mesh.Indices.size(); ++j)
             { fread(&mesh.Indices[j], sizeof(mesh.Indices[j]), 1, pFile); }

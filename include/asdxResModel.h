@@ -39,29 +39,6 @@ struct ResBoneIndex
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-// ResMeshVertex structure
-///////////////////////////////////////////////////////////////////////////////
-struct ResMeshVertex
-{
-    asdx::Vector3   Position;
-    uint32_t        TexCoord0;
-    uint32_t        TexCoord1;
-    uint32_t        TexCoord2;
-    uint32_t        TexCoord3;
-    uint32_t        TangentSpace;
-    uint32_t        Color;
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// ResMeshSkinVertex structure
-///////////////////////////////////////////////////////////////////////////////
-struct ResMeshSkinVertex
-{
-    ResBoneIndex    BoneIndex;
-    asdx::Vector4   BoneWeights;
-};
-
-///////////////////////////////////////////////////////////////////////////////
 // ResMeshlet structure
 ///////////////////////////////////////////////////////////////////////////////
 struct ResMeshlet
@@ -99,8 +76,12 @@ struct ResMesh
 {
     uint32_t                            MeshHash;
     uint32_t                            MatrerialHash;
-    std::vector<ResMeshVertex>          Vertices;
-    std::vector<ResMeshSkinVertex>      SkinVertices;
+    std::vector<asdx::Vector3>          Positions;          // R32G32B32A32_FLOAT
+    std::vector<uint32_t>               TangentSpaces;      // R10B10G10A2_UINTで圧縮済み.
+    std::vector<uint32_t>               Colors;             // R8G8B8A8_UNORMで圧縮済み.
+    std::vector<uint32_t>               TexCoords[4];       // R16R16_FLOATで圧縮済み.
+    std::vector<ResBoneIndex>           BoneIndices;        // R16G16B16A16_UINT.
+    std::vector<asdx::Vector4>          BoneWeights;        // R32G32B32A32_FLOAT
     std::vector<uint32_t>               Indices;
     std::vector<ResPrimitive>           Primitives;
     std::vector<ResMeshlet>             Meshlets;

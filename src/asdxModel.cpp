@@ -39,11 +39,11 @@ bool Mesh::Init(GraphicsDevice& device, const ResMesh& resource, ResourceUploade
 {
     {
         asdx::IUploadResource* pUpload = nullptr;
-        if (!m_Vertices.Init(
+        if (!m_Positions.Init(
             device,
-            uint64_t(resource.Vertices.size()),
-            uint32_t(sizeof(resource.Vertices[0])),
-            resource.Vertices.data(),
+            uint64_t(resource.Positions.size()),
+            uint32_t(sizeof(resource.Positions[0])),
+            resource.Positions.data(),
             &pUpload))
         {
             ELOG("Error : StructuredBuffer::Init() Failed.");
@@ -52,17 +52,84 @@ bool Mesh::Init(GraphicsDevice& device, const ResMesh& resource, ResourceUploade
         uploader.Push(pUpload);
     }
 
-    if (resource.SkinVertices.size() > 0)
+    if (resource.TangentSpaces.size() > 0)
     {
         asdx::IUploadResource* pUpload = nullptr;
-        if (!m_SkinVertices.Init(
+        if (!m_TangentSpaces.Init(
             device,
-            uint64_t(resource.SkinVertices.size()),
-            uint32_t(sizeof(resource.SkinVertices[0])),
-            resource.SkinVertices.data(),
+            uint64_t(resource.TangentSpaces.size()),
+            uint32_t(sizeof(resource.TangentSpaces[0])),
+            resource.TangentSpaces.data(),
             &pUpload))
         {
-            ELOG("Error : StructuredBuffer::Init() Failed");
+            ELOG("Error : StructuredBuffer::Init() Failed.");
+            return false;
+        }
+        uploader.Push(pUpload);
+    }
+
+    if (resource.Colors.size() > 0)
+    {
+        asdx::IUploadResource* pUpload = nullptr;
+        if (!m_Colors.Init(
+            device,
+            uint64_t(resource.Colors.size()),
+            uint32_t(sizeof(resource.Colors[0])),
+            resource.Colors.data(),
+            &pUpload))
+        {
+            ELOG("Error : StructuredBuffer::Init() Failed.");
+            return false;
+        }
+        uploader.Push(pUpload);
+    }
+
+    for(auto i=0; i<4; ++i)
+    {
+        if (resource.TexCoords[i].size() > 0)
+        {
+            asdx::IUploadResource* pUpload = nullptr;
+            if (!m_TexCoord[i].Init(
+                device,
+                uint64_t(resource.TexCoords[i].size()),
+                uint32_t(resource.TexCoords[i][0]),
+                resource.TexCoords[i].data(),
+                &pUpload))
+            {
+                ELOG("Error : StructuredBuffer:Init() Failed.");
+                return false;
+            }
+            uploader.Push(pUpload);
+        }
+    }
+
+    if (resource.BoneIndices.size() > 0)
+    {
+        asdx::IUploadResource* pUpload = nullptr;
+        if (!m_BoneIndices.Init(
+            device,
+            uint64_t(resource.BoneIndices.size()),
+            uint32_t(sizeof(resource.BoneIndices[0])),
+            resource.BoneIndices.data(),
+            &pUpload))
+        {
+            ELOG("Error : StructuredBuffer::Init() Failed.");
+            return false;
+        }
+        uploader.Push(pUpload);
+    }
+
+    if (resource.BoneWeights.size() > 0)
+    {
+        asdx::IUploadResource* pUpload = nullptr;
+        if (!m_BoneWeights.Init(
+            device,
+            uint64_t(resource.BoneWeights.size()),
+            uint32_t(sizeof(resource.BoneWeights[0])),
+            resource.BoneWeights.data(),
+            &pUpload))
+        {
+            ELOG("Error : StructuredBuffer::Init() Failed.");
             return false;
         }
         uploader.Push(pUpload);
@@ -127,17 +194,15 @@ bool Mesh::Init(GraphicsDevice& device, const ResMesh& resource, ResourceUploade
         uploader.Push(pUpload);
     }
 
-    m_Box.mini = m_Box.maxi = resource.Vertices[0].Position;
-    for(auto i=1; i<resource.Vertices.size(); ++i)
+    m_Box.mini = m_Box.maxi = resource.Positions[0];
+    for(auto i=1; i<resource.Positions.size(); ++i)
     {
-        m_Box.mini = asdx::Vector3::Min(m_Box.mini, resource.Vertices[i].Position);
-        m_Box.maxi = asdx::Vector3::Max(m_Box.maxi, resource.Vertices[i].Position);
+        m_Box.mini = asdx::Vector3::Min(m_Box.mini, resource.Positions[i]);
+        m_Box.maxi = asdx::Vector3::Max(m_Box.maxi, resource.Positions[i]);
     }
 
     m_MaterialHash = resource.MatrerialHash;
     m_MeshletCount = uint32_t(resource.Meshlets.size());
-    m_HasBone      = resource.SkinVertices.size() > 0;
-    m_HasBone       = false;
 
     return true;
 }
@@ -147,12 +212,18 @@ bool Mesh::Init(GraphicsDevice& device, const ResMesh& resource, ResourceUploade
 //-----------------------------------------------------------------------------
 void Mesh::Term()
 {
-    m_Vertices      .Term();
-    m_SkinVertices  .Term();
+    m_Positions     .Term();
+    m_TangentSpaces .Term();
+    m_Colors        .Term();
+    m_BoneIndices   .Term();
+    m_BoneWeights   .Term();
     m_Indices       .Term();
     m_Primitives    .Term();
     m_Meshlets      .Term();
     m_CullingInfos  .Term();
+
+    for(auto i=0; i<4; ++i)
+    { m_TexCoord[i].Term(); }
 
     m_MeshletCount = 0;
     m_MaterialHash = 0;
@@ -164,21 +235,66 @@ void Mesh::Term()
 //-----------------------------------------------------------------------------
 //      頂点データのGPU仮想アドレスを取得します.
 //-----------------------------------------------------------------------------
-D3D12_GPU_VIRTUAL_ADDRESS Mesh::GetVertices() const
+D3D12_GPU_VIRTUAL_ADDRESS Mesh::GetPositions() const
 {
-    if (m_Vertices.GetResource() != nullptr)
-    { return m_Vertices.GetResource()->GetGPUVirtualAddress(); }
+    if (m_Positions.GetResource() != nullptr)
+    { return m_Positions.GetResource()->GetGPUVirtualAddress(); }
 
     return D3D12_GPU_VIRTUAL_ADDRESS();
 }
 
-//----------------------------------------------------------------------------
-//      スキニング頂点データのGPU仮想アドレスを取得します.
-//----------------------------------------------------------------------------
-D3D12_GPU_VIRTUAL_ADDRESS Mesh::GetSkinVertices() const
+//-----------------------------------------------------------------------------
+//      接線空間のGPU仮想アドレスを取得します.
+//-----------------------------------------------------------------------------
+D3D12_GPU_VIRTUAL_ADDRESS Mesh::GetTangentSpaces() const
 {
-    if (m_SkinVertices.GetResource() != nullptr)
-    { return m_SkinVertices.GetResource()->GetGPUVirtualAddress(); }
+    if (m_TangentSpaces.GetResource() != nullptr)
+    { return m_TangentSpaces.GetResource()->GetGPUVirtualAddress(); }
+
+    return D3D12_GPU_VIRTUAL_ADDRESS();
+}
+
+//-----------------------------------------------------------------------------
+//      頂点カラーのGPU仮想アドレスを取得します.
+//-----------------------------------------------------------------------------
+D3D12_GPU_VIRTUAL_ADDRESS Mesh::GetColors() const
+{
+    if (m_Colors.GetResource() != nullptr)
+    { return m_Colors.GetResource()->GetGPUVirtualAddress(); }
+
+    return D3D12_GPU_VIRTUAL_ADDRESS();
+}
+
+//-----------------------------------------------------------------------------
+//      テクスチャ座標のGPU仮想アドレスを取得します.
+//-----------------------------------------------------------------------------
+D3D12_GPU_VIRTUAL_ADDRESS Mesh::GetTexCoords(uint8_t index) const
+{
+    assert(index < 4);
+    if (m_TexCoord[index].GetResource() != nullptr)
+    { return m_TexCoord[index].GetResource()->GetGPUVirtualAddress(); }
+
+    return D3D12_GPU_VIRTUAL_ADDRESS();
+}
+
+//-----------------------------------------------------------------------------
+//      ボーン番号のGPU仮想アドレスを取得します.
+//-----------------------------------------------------------------------------
+D3D12_GPU_VIRTUAL_ADDRESS Mesh::GetBoneIndices() const
+{
+    if (m_BoneIndices.GetResource() != nullptr)
+    { return m_BoneIndices.GetResource()->GetGPUVirtualAddress(); }
+
+    return D3D12_GPU_VIRTUAL_ADDRESS();
+}
+
+//-----------------------------------------------------------------------------
+//      ボーンの重みのGPU仮想アドレスを取得します.
+//-----------------------------------------------------------------------------
+D3D12_GPU_VIRTUAL_ADDRESS Mesh::GetBoneWeights() const
+{
+    if (m_BoneWeights.GetResource() != nullptr)
+    { return m_BoneWeights.GetResource()->GetGPUVirtualAddress(); }
 
     return D3D12_GPU_VIRTUAL_ADDRESS();
 }
@@ -255,7 +371,28 @@ const BoundingBox& Mesh::GetBox() const
 //      ボーンを持つかどうか?
 //-----------------------------------------------------------------------------
 bool Mesh::HasBone() const
-{ return m_HasBone; }
+{ return m_BoneWeights.GetResource() != nullptr; }
+
+//-----------------------------------------------------------------------------
+//      接線空間を持つかどうか?
+//-----------------------------------------------------------------------------
+bool Mesh::HasTangentSpace() const
+{ return m_TangentSpaces.GetResource() != nullptr; }
+
+//-----------------------------------------------------------------------------
+//      頂点カラーを持つかどうか?
+//-----------------------------------------------------------------------------
+bool Mesh::HasColor() const
+{ return m_Colors.GetResource() != nullptr; }
+
+//-----------------------------------------------------------------------------
+//      テクスチャ座標を持つかどうか?
+//-----------------------------------------------------------------------------
+bool Mesh::HasTexCoord(uint8_t index) const
+{
+    assert(index < 4);
+    return m_TexCoord[index].GetResource() != nullptr;
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////
