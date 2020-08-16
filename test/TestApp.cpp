@@ -19,6 +19,11 @@
 #include "TestVS.inc"
 #include "TestPS.inc"
 
+#include "MeshletTestMS.inc"
+#include "MeshletTestPS.inc"
+
+//#define TEST_TRIANGLE   (1)
+#define TEST_MESHLET    (1)
 
 namespace {
 
@@ -73,6 +78,111 @@ TestApp::~TestApp()
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
 bool TestApp::OnInit()
+{
+#if TEST_TRIANGLE
+    if (!TriangleTestInit())
+    { return false; }
+#endif
+
+#if TEST_MESHLET
+    if (!MeshletTestInit())
+    { return false; }
+#endif
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      終了処理を行います.
+//-----------------------------------------------------------------------------
+void TestApp::OnTerm()
+{
+    m_Model         .Term();
+    m_TriangleVB    .Term();
+    m_PSO           .Term();
+    m_RootSignature .Term();
+    m_CbMesh        .Term();
+    m_CbScene       .Term();
+    m_Texture       .Term();
+    m_Sampler       .Term();
+    m_Disposer      .Clear();
+    m_Uploader      .Clear();
+}
+
+//-----------------------------------------------------------------------------
+//      フレーム描画を行います.
+//-----------------------------------------------------------------------------
+void TestApp::OnFrameRender(asdx::FrameEventArgs& args)
+{
+    auto idx  = GetCurrentBackBufferIndex();
+    auto pCmd = m_GfxCmdList.Reset();
+
+    m_Uploader.Upload(pCmd);
+
+#if TEST_TRIANGLE
+    // 三角形描画.
+    TriangleTestRender(pCmd, idx);
+#endif
+
+#if TEST_MESHLET
+    // メッシュレット描画.
+    MeshletTestRender(pCmd, idx);
+#endif
+
+
+
+    pCmd->Close();
+
+    ID3D12CommandList* pCmds[] = {
+        pCmd
+    };
+
+    // 前フレームの描画の完了を待機.
+    m_pGraphicsQueue->WaitIdle();
+
+    // コマンドを実行.
+    m_pGraphicsQueue->Execute(1, pCmds);
+
+    // 画面に表示.
+    Present(0);
+
+    // フレーム同期.
+    m_Disposer.FrameSync();
+    m_Uploader.FrameSync();
+}
+
+//-----------------------------------------------------------------------------
+//      リサイズ処理を行います.
+//-----------------------------------------------------------------------------
+void TestApp::OnResize(const asdx::ResizeEventArgs& args)
+{
+}
+
+//-----------------------------------------------------------------------------
+//      キー処理を行います.
+//-----------------------------------------------------------------------------
+void TestApp::OnKey(const asdx::KeyEventArgs& args)
+{
+}
+
+//-----------------------------------------------------------------------------
+//      マウス処理を行います.
+//-----------------------------------------------------------------------------
+void TestApp::OnMouse(const asdx::MouseEventArgs& args)
+{
+}
+
+//-----------------------------------------------------------------------------
+//      タイピング処理を行います.
+//-----------------------------------------------------------------------------
+void TestApp::OnTyping(uint32_t keyCode)
+{
+}
+
+//-----------------------------------------------------------------------------
+//      三角形描画用の初期化処理です.
+//-----------------------------------------------------------------------------
+bool TestApp::TriangleTestInit()
 {
     m_pGraphicsQueue = asdx::GfxDevice().GetGraphicsQueue();
 
@@ -201,31 +311,10 @@ bool TestApp::OnInit()
 }
 
 //-----------------------------------------------------------------------------
-//      終了処理を行います.
+//      三角形の描画関数です.
 //-----------------------------------------------------------------------------
-void TestApp::OnTerm()
+void TestApp::TriangleTestRender(ID3D12GraphicsCommandList6* pCmd, uint8_t idx)
 {
-    m_TriangleVB    .Term();
-    m_PSO           .Term();
-    m_RootSignature .Term();
-    m_CbMesh        .Term();
-    m_CbScene       .Term();
-    m_Texture       .Term();
-    m_Sampler       .Term();
-    m_Disposer      .Clear();
-    m_Uploader      .Clear();
-}
-
-//-----------------------------------------------------------------------------
-//      フレーム描画を行います.
-//-----------------------------------------------------------------------------
-void TestApp::OnFrameRender(asdx::FrameEventArgs& args)
-{
-    auto idx  = GetCurrentBackBufferIndex();
-    auto pCmd = m_GfxCmdList.Reset();
-
-    m_Uploader.Upload(pCmd);
-
     asdx::BarrierTransition(
         pCmd,
         m_ColorTarget[idx].GetResource(),
@@ -263,51 +352,177 @@ void TestApp::OnFrameRender(asdx::FrameEventArgs& args)
         0,
         D3D12_RESOURCE_STATE_RENDER_TARGET,
         D3D12_RESOURCE_STATE_PRESENT);
-
-    pCmd->Close();
-
-    ID3D12CommandList* pCmds[] = {
-        pCmd
-    };
-
-    // 前フレームの描画の完了を待機.
-    m_pGraphicsQueue->WaitIdle();
-
-    // コマンドを実行.
-    m_pGraphicsQueue->Execute(1, pCmds);
-
-    // 画面に表示.
-    Present(0);
-
-    // フレーム同期.
-    m_Disposer.FrameSync();
-    m_Uploader.FrameSync();
 }
 
 //-----------------------------------------------------------------------------
-//      リサイズ処理を行います.
+//      メッシュレットの初期化処理です.
 //-----------------------------------------------------------------------------
-void TestApp::OnResize(const asdx::ResizeEventArgs& args)
+bool TestApp::MeshletTestInit()
 {
+    m_pGraphicsQueue = asdx::GfxDevice().GetGraphicsQueue();
+
+    auto pDevice = asdx::GfxDevice().GetDevice();
+
+    {
+        asdx::ResModel resource;
+        if (!asdx::LoadModel("teapot.mdl", resource))
+        {
+            ELOG("Error : LoadModel() Failed.");
+            return false;
+        }
+
+        if (!m_Model.Init(asdx::GfxDevice(), resource, m_Uploader))
+        {
+            ELOG("Error : Model::Init() Failed.");
+            return false;
+        }
+    }
+
+    // ルートシグニチャ.
+    {
+        uint32_t flag = 0;
+        flag |= asdx::RSF_DENY_AS;
+        flag |= asdx::RSF_DENY_VS;
+        flag |= asdx::RSF_DENY_GS;
+        flag |= asdx::RSF_DENY_DS;
+        flag |= asdx::RSF_DENY_HS;
+
+        asdx::RootSignatureDesc desc;
+        desc.AddFromShader(MeshletTestMS, sizeof(MeshletTestMS))
+            .AddFromShader(MeshletTestPS, sizeof(MeshletTestPS));
+        desc.SetFlag(flag);
+
+        if (!m_RootSignature.Init(pDevice, desc))
+        {
+            ELOG("Error : RootSignature::Init() Failed.");
+            return false;
+        }
+    }
+
+    // パイプラインステート.
+    {
+        asdx::GEOMETRY_PIPELINE_STATE_DESC desc = {};
+        desc.pRootSignature = m_RootSignature.GetPtr();
+        desc.MS                             = { MeshletTestMS, sizeof(MeshletTestMS) };
+        desc.PS                             = { MeshletTestPS, sizeof(MeshletTestPS) };
+        desc.BlendState                     = asdx::PipelineState::GetBS(asdx::BLEND_STATE_OPAQUE);
+        desc.RasterizerState                = asdx::PipelineState::GetRS(asdx::RASTERIZER_STATE_CULL_BACK);
+        desc.DepthStencilState              = asdx::PipelineState::GetDSS(asdx::DEPTH_STATE_DEFAULT);
+        desc.SampleMask                     = UINT_MAX;
+        desc.RTVFormats.NumRenderTargets    = 1;
+        desc.RTVFormats.RTFormats[0]        = m_SwapChainFormat;
+        desc.DSVFormat                      = DXGI_FORMAT_D32_FLOAT;
+        desc.SampleDesc.Count               = 1;
+        desc.SampleDesc.Quality             = 0;
+
+        if (!m_PSO.Init(pDevice, &desc))
+        {
+            ELOG("Error : PipelineState::Init() Failed.");
+            return false;
+        }
+    }
+
+    if (!m_CbMesh.Init(asdx::GfxDevice(), sizeof(CbMesh)))
+    {
+        ELOG("Error : CbMesh Initialize Failed");
+        return false;
+    }
+
+    if (!m_CbScene.Init(asdx::GfxDevice(), sizeof(CbScene)))
+    {
+        ELOG("Error : CbScene Initialize Failed.");
+        return false;
+    }
+
+    return true;
 }
 
 //-----------------------------------------------------------------------------
-//      キー処理を行います.
+//      メッシュレットの描画処理です.
 //-----------------------------------------------------------------------------
-void TestApp::OnKey(const asdx::KeyEventArgs& args)
+void TestApp::MeshletTestRender(ID3D12GraphicsCommandList6* pCmd, uint8_t idx)
 {
-}
+    asdx::BarrierTransition(
+        pCmd,
+        m_ColorTarget[idx].GetResource(),
+        0,
+        D3D12_RESOURCE_STATE_PRESENT,
+        D3D12_RESOURCE_STATE_RENDER_TARGET);
 
-//-----------------------------------------------------------------------------
-//      マウス処理を行います.
-//-----------------------------------------------------------------------------
-void TestApp::OnMouse(const asdx::MouseEventArgs& args)
-{
-}
+    auto pRTV = m_ColorTarget[idx].GetRTV();
+    auto pDSV = m_DepthTarget.GetDSV();
 
-//-----------------------------------------------------------------------------
-//      タイピング処理を行います.
-//-----------------------------------------------------------------------------
-void TestApp::OnTyping(uint32_t keyCode)
-{
+    asdx::ClearRTV(pCmd, pRTV, m_ClearColor);
+    asdx::ClearDSV(pCmd, pDSV, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0);
+
+    asdx::SetRenderTarget(pCmd, pRTV, pDSV);
+    asdx::SetViewport(pCmd, m_ColorTarget[idx].GetResource());
+
+    {
+        CbMesh res = {};
+        auto world = asdx::Matrix::CreateIdentity();
+        m_CbMesh.Update(&res, sizeof(res));
+    }
+
+    {
+        CbScene res = {};
+        res.View = asdx::Matrix::CreateLookAt(
+            asdx::Vector3(0.0f, 0.0f, -1.0f),
+            asdx::Vector3(0.0f, 0.0f, 0.0f),
+            asdx::Vector3(0.0f, 1.0f, 0.0f));
+
+        auto aspect = float(m_Width) / float(m_Height);
+        res.Proj = asdx::Matrix::CreatePerspectiveFieldOfView(
+            asdx::F_PIDIV4,
+            aspect,
+            0.1f,
+            1000.0f);
+
+        m_CbScene.Update(&res, sizeof(res));
+    }
+
+    auto paramSRV0 = m_RootSignature.Find("Positions");
+    auto paramSRV1 = m_RootSignature.Find("TangentSpaces");
+    auto paramSRV2 = m_RootSignature.Find("TexCoords");
+    auto paramSRV3 = m_RootSignature.Find("Indices");
+    auto paramSRV4 = m_RootSignature.Find("Primitives");
+    auto paramSRV5 = m_RootSignature.Find("Meshlets");
+    auto paramCBV0 = m_RootSignature.Find("CbMesh");
+    auto paramCBV1 = m_RootSignature.Find("CbScene");
+
+    auto pCBV0 = m_CbMesh .GetResource()->GetGPUVirtualAddress();
+    auto pCBV1 = m_CbScene.GetResource()->GetGPUVirtualAddress();
+
+    pCmd->SetGraphicsRootSignature(m_RootSignature.GetPtr());
+    pCmd->SetPipelineState(m_PSO.GetPtr());
+
+    for(auto i=0u; i<m_Model.GetMeshCount(); ++i)
+    {
+        auto& mesh = m_Model.GetMesh(i);
+        
+        auto pSRV0 = mesh.GetPositions    ().GetDescriptor()->GetHandleGPU();
+        auto pSRV1 = mesh.GetTangentSpaces().GetDescriptor()->GetHandleGPU();
+        auto pSRV2 = mesh.GetTexCoords   (0).GetDescriptor()->GetHandleGPU();
+        auto pSRV3 = mesh.GetInindices    ().GetDescriptor()->GetHandleGPU();
+        auto pSRV4 = mesh.GetPrimitives   ().GetDescriptor()->GetHandleGPU();
+        auto pSRV5 = mesh.GetMeshlets     ().GetDescriptor()->GetHandleGPU();
+
+        pCmd->SetGraphicsRootDescriptorTable(paramSRV0, pSRV0);
+        pCmd->SetGraphicsRootDescriptorTable(paramSRV1, pSRV1);
+        pCmd->SetGraphicsRootDescriptorTable(paramSRV2, pSRV2);
+        pCmd->SetGraphicsRootDescriptorTable(paramSRV3, pSRV3);
+        pCmd->SetGraphicsRootDescriptorTable(paramSRV4, pSRV4);
+        pCmd->SetGraphicsRootDescriptorTable(paramSRV5, pSRV5);
+        pCmd->SetGraphicsRootConstantBufferView(paramCBV0, pCBV0);
+        pCmd->SetGraphicsRootConstantBufferView(paramCBV1, pCBV1);
+
+        pCmd->DispatchMesh(mesh.GetMeshletCount(), 1, 1);
+    }
+
+    asdx::BarrierTransition(
+        pCmd,
+        m_ColorTarget[idx].GetResource(),
+        0,
+        D3D12_RESOURCE_STATE_RENDER_TARGET,
+        D3D12_RESOURCE_STATE_PRESENT);
 }

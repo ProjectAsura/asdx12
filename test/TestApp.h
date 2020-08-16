@@ -17,6 +17,7 @@
 #include <asdxResourceUploader.h>
 #include <asdxTexture.h>
 #include <asdxSampler.h>
+#include <asdxModel.h>
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -54,6 +55,7 @@ private:
     asdx::ConstantBuffer    m_CbScene;
     asdx::Texture           m_Texture;
     asdx::Sampler           m_Sampler;
+    asdx::Model             m_Model;
 
     uint32_t                m_IndexCBMesh;
     uint32_t                m_IndexCBScene;
@@ -70,4 +72,9 @@ private:
     void OnKey(const asdx::KeyEventArgs& args) override;
     void OnMouse(const asdx::MouseEventArgs& args) override;
     void OnTyping(uint32_t keyCode) override;
+
+    bool TriangleTestInit();
+    void TriangleTestRender(ID3D12GraphicsCommandList6* pCmd, uint8_t idx);
+    bool MeshletTestInit();
+    void MeshletTestRender(ID3D12GraphicsCommandList6* pCmd, uint8_t idx);
 };

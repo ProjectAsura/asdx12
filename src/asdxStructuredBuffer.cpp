@@ -251,7 +251,7 @@ public:
         barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
         barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COMMON;
         barrier.Transition.StateAfter  = D3D12_RESOURCE_STATE_COPY_DEST;
-        pCmdList->ResourceBarrier( 1, &barrier );
+        //pCmdList->ResourceBarrier( 1, &barrier );
 
         pCmdList->CopyBufferRegion(
             m_pDstResource,
@@ -316,7 +316,7 @@ bool StructuredBuffer::Init(GraphicsDevice& device, uint64_t count, uint32_t str
     uint64_t size = count * stride;
 
     D3D12_HEAP_PROPERTIES prop = {};
-    prop.Type                   = D3D12_HEAP_TYPE_UPLOAD;
+    prop.Type                   = D3D12_HEAP_TYPE_DEFAULT;
     prop.CPUPageProperty        = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
     prop.MemoryPoolPreference   = D3D12_MEMORY_POOL_UNKNOWN;
     prop.VisibleNodeMask        = 1;
@@ -381,7 +381,7 @@ bool StructuredBuffer::Init
     IUploadResource**   ppUploadResource
 )
 {
-    if (!Init(device, count, stride, D3D12_RESOURCE_STATE_COMMON))
+    if (!Init(device, count, stride, D3D12_RESOURCE_STATE_COPY_DEST))
     { return false;  }
 
     auto uploadResource = new BufferUploadResource();

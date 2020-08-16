@@ -74,74 +74,74 @@ public:
     void Term();
 
     //-------------------------------------------------------------------------
-    //! @brief      頂点データのGPU仮想アドレスを取得します.
+    //! @brief      頂点データを取得します.
     //!
-    //! @return     頂点データのGPU仮想アドレスを返却します.
+    //! @return     頂点データを返却します.
     //-------------------------------------------------------------------------
-    D3D12_GPU_VIRTUAL_ADDRESS GetPositions() const;
+    const StructuredBuffer& GetPositions() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      接線空間のGPU仮想アドレスを取得します.
+    //! @brief      接線空間を取得します.
     //!
-    //! @return     接線空間のGPU仮想アドレスを返却します.
+    //! @return     接線空間を返却します.
     //-------------------------------------------------------------------------
-    D3D12_GPU_VIRTUAL_ADDRESS GetTangentSpaces() const;
+    const StructuredBuffer& GetTangentSpaces() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      頂点カラーのGPU仮想アドレスを取得します.
+    //! @brief      頂点カラーを取得します.
     //!
-    //! @return     頂点カラーのGPU仮想アドレスを返却します.
+    //! @return     頂点カラー返却します.
     //-------------------------------------------------------------------------
-    D3D12_GPU_VIRTUAL_ADDRESS GetColors() const;
+    const StructuredBuffer& GetColors() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      テクスチャ座標のGPU仮想アドレスを取得します.
+    //! @brief      テクスチャ座標を取得します.
     //!
-    //! @return     テクスチャ座標のGPU仮想アドレスを返却します.
+    //! @return     テクスチャ座標を返却します.
     //-------------------------------------------------------------------------
-    D3D12_GPU_VIRTUAL_ADDRESS GetTexCoords(uint8_t index) const;
+    const StructuredBuffer& GetTexCoords(uint8_t index) const;
 
     //-------------------------------------------------------------------------
-    //! @brief      ボーン番号のGPU仮想アドレスを取得します.
+    //! @brief      ボーン番号を取得します.
     //!
-    //! @return     ボーン番号のGPU仮想アドレスを返却します.
+    //! @return     ボーン番号を返却します.
     //-------------------------------------------------------------------------
-    D3D12_GPU_VIRTUAL_ADDRESS GetBoneIndices() const;
+    const StructuredBuffer& GetBoneIndices() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      ボーン重みのGPU仮想アドレスを取得します.
+    //! @brief      ボーン重みを取得します.
     //!
-    //! @return     ボーン重みのGPU仮想アドレスを返却します.
+    //! @return     ボーン重みを返却します.
     //-------------------------------------------------------------------------
-    D3D12_GPU_VIRTUAL_ADDRESS GetBoneWeights() const;
+    const StructuredBuffer& GetBoneWeights() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      インデックスデータのGPU仮想アドレスを取得します.
+    //! @brief      インデックスデータを取得します.
     //!
-    //! @return     インデックスデータのGPU仮想アドレスを返却します.
+    //! @return     インデックスデータを返却します.
     //-------------------------------------------------------------------------
-    D3D12_GPU_VIRTUAL_ADDRESS GetInindices() const;
+    const StructuredBuffer& GetInindices() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      プリミティブデータのGPU仮想アドレスを取得します.
+    //! @brief      プリミティブデータを取得します.
     //!
-    //! @return     プリミティブデータのGPU仮想アドレスを返却します.
+    //! @return     プリミティブデータを返却します.
     //-------------------------------------------------------------------------
-    D3D12_GPU_VIRTUAL_ADDRESS GetPrimitives() const;
+    const StructuredBuffer& GetPrimitives() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      メッシュレットデータのGPU仮想アドレスを取得します.
+    //! @brief      メッシュレットデータを取得します.
     //!
-    //! @return     メッシュレットデータのGPU仮想アドレスを返却します.
+    //! @return     メッシュレットデータを返却します.
     //-------------------------------------------------------------------------
-    D3D12_GPU_VIRTUAL_ADDRESS GetMeshlets() const;
+    const StructuredBuffer& GetMeshlets() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      カリング情報のGPU仮想アドレスを取得します.
+    //! @brief      カリング情報を取得します.
     //!
-    //! @return     カリング情報のGPU仮想アドレスを返却します.
+    //! @return     カリング情報を返却します.
     //-------------------------------------------------------------------------
-    D3D12_GPU_VIRTUAL_ADDRESS GetCullingInfos() const;
+    const StructuredBuffer& GetCullingInfos() const;
 
     //-------------------------------------------------------------------------
     //! @brief      メッシュハッシュを取得します.
@@ -214,7 +214,7 @@ private:
     BoundingBox         m_Box;
     StructuredBuffer    m_Positions;
     StructuredBuffer    m_TangentSpaces;
-    StructuredBuffer    m_TexCoord[4];
+    StructuredBuffer    m_TexCoords[4];
     StructuredBuffer    m_Colors;
     StructuredBuffer    m_BoneIndices;
     StructuredBuffer    m_BoneWeights;

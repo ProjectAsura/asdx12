@@ -1,4 +1,4 @@
-ï»¿//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 // File : BRDF.hlsli
 // Desc : BRDF.
 // Copyright(c) Project Asura. All right reserved.
@@ -13,7 +13,7 @@
 
 
 //-----------------------------------------------------------------------------
-//      ãƒ©ãƒ•ãƒã‚¹ã‹ã‚‰ã‚¹ãƒšã‚­ãƒ¥ãƒ©ãƒ¼æŒ‡æ•°ã‚’æ±‚ã‚ã¾ã™.
+//      ƒ‰ƒtƒlƒX‚©‚çƒXƒyƒLƒ…ƒ‰[w”‚ğ‹‚ß‚Ü‚·.
 //-----------------------------------------------------------------------------
 float ToSpecularPower(float roughness)
 {
@@ -24,7 +24,7 @@ float ToSpecularPower(float roughness)
 }
 
 //-----------------------------------------------------------------------------
-//      ã‚¹ãƒšã‚­ãƒ¥ãƒ©ãƒ¼æŒ‡æ•°ã‹ã‚‰ãƒ©ãƒ•ãƒã‚¹å€¤ã‚’æ±‚ã‚ã¾ã™.
+//      ƒXƒyƒLƒ…ƒ‰[w”‚©‚çƒ‰ƒtƒlƒX’l‚ğ‹‚ß‚Ü‚·.
 //-----------------------------------------------------------------------------
 float ToRoughness(float specularPower)
 {
@@ -34,49 +34,49 @@ float ToRoughness(float specularPower)
 }
 
 //-----------------------------------------------------------------------------
-//      ãƒ‡ã‚£ãƒ•ãƒ¥ãƒ¼ã‚ºåå°„ç‡ã‚’æ±‚ã‚ã¾ã™.
+//      ƒfƒBƒtƒ…[ƒY”½Ë—¦‚ğ‹‚ß‚Ü‚·.
 //-----------------------------------------------------------------------------
 float3 ToKd(float3 baseColor, float metallic)
 { return (1.0f - metallic) * baseColor; }
 
 //-----------------------------------------------------------------------------
-//      ã‚¹ãƒšã‚­ãƒ¥ãƒ©ãƒ¼åå°„ç‡ã‚’æ±‚ã‚ã¾ã™.
+//      ƒXƒyƒLƒ…ƒ‰[”½Ë—¦‚ğ‹‚ß‚Ü‚·.
 //-----------------------------------------------------------------------------
 float3 ToKs(float3 baseColor, float metallic)
 { return lerp(0.03f, baseColor, metallic); }
 
 //-----------------------------------------------------------------------------
-//      éé‡‘å±å‘ã‘.
+//      ”ñ‹à‘®Œü‚¯.
 //-----------------------------------------------------------------------------
 float3 ToKsDielectics(float3 baseColor, float metallic, float reflectance)
 { return lerp(0.16f * reflectance * reflectance, baseColor, metallic); }
 
 //-----------------------------------------------------------------------------
-//      é‡‘å±å‘ã‘.
+//      ‹à‘®Œü‚¯.
 //-----------------------------------------------------------------------------
 float3 ToKsConductors(float3 baseColor, float metallic)
 { return baseColor * metallic; }
 
 //-----------------------------------------------------------------------------
-//      90åº¦å…¥å°„ã«ãŠã‘ã‚‹ãƒ•ãƒ¬ãƒãƒ«åå°„ç‡ã‚’æ±‚ã‚ã¾ã™.
+//      90“x“üË‚É‚¨‚¯‚éƒtƒŒƒlƒ‹”½Ë—¦‚ğ‹‚ß‚Ü‚·.
 //-----------------------------------------------------------------------------
 float CalcF90(in float3 f0)
 { return saturate(50.0f * dot(f0, 0.33f)); }
 
 //-----------------------------------------------------------------------------
-//      Schlickã«ã‚ˆã‚‹ãƒ•ãƒ¬ãƒãƒ«åå°„ã®è¿‘ä¼¼å€¤ã‚’æ±‚ã‚ã‚‹.
+//      Schlick‚É‚æ‚éƒtƒŒƒlƒ‹”½Ë‚Ì‹ß—’l‚ğ‹‚ß‚é.
 //-----------------------------------------------------------------------------
 float3 F_Schlick(in float3 f0, in float f90, in float u)
 { return f0 + (f90 - f0) * Pow5(1.0f - u); }
 
 //-----------------------------------------------------------------------------
-//      Schlickã«ã‚ˆã‚‹ãƒ•ãƒ¬ãƒãƒ«åå°„ã®è¿‘ä¼¼å€¤ã‚’æ±‚ã‚ã‚‹.
+//      Schlick‚É‚æ‚éƒtƒŒƒlƒ‹”½Ë‚Ì‹ß—’l‚ğ‹‚ß‚é.
 //-----------------------------------------------------------------------------
 float F_Schlick(in float f0, in float f90, in float u)
 { return f0 + (f90 - f0) * Pow5(1.0f - u); }
 
 //-----------------------------------------------------------------------------
-//      ãƒ•ãƒ¬ãƒãƒ«é …ã‚’è¨ˆç®—ã—ã¾ã™.
+//      ƒtƒŒƒlƒ‹€‚ğŒvZ‚µ‚Ü‚·.
 //-----------------------------------------------------------------------------
 float3 F_Schlick(const float3 f0, float VoH)
 {
@@ -85,7 +85,7 @@ float3 F_Schlick(const float3 f0, float VoH)
 }
 
 //-----------------------------------------------------------------------------
-//      ãƒ•ãƒ¬ãƒãƒ«é …ã‚’è¨ˆç®—ã—ã¾ã™.
+//      ƒtƒŒƒlƒ‹€‚ğŒvZ‚µ‚Ü‚·.
 //-----------------------------------------------------------------------------
 float F_Schlick(const float f0, float VoH)
 {
@@ -94,7 +94,7 @@ float F_Schlick(const float f0, float VoH)
 }
 
 //-----------------------------------------------------------------------------
-//      ãƒ‡ã‚£ãƒ•ãƒ¥ãƒ¼ã‚ºã®æ”¯é…çš„ãªæ–¹å‘ã‚’æ±‚ã‚ã¾ã™.
+//      ƒfƒBƒtƒ…[ƒY‚Ìx”z“I‚È•ûŒü‚ğ‹‚ß‚Ü‚·.
 //-----------------------------------------------------------------------------
 float3 GetDiffuseDominantDir(float3 N, float3 V, float NoV, float roughness)
 {
@@ -105,7 +105,7 @@ float3 GetDiffuseDominantDir(float3 N, float3 V, float NoV, float roughness)
 }
 
 //-----------------------------------------------------------------------------
-//      ã‚¹ãƒšã‚­ãƒ¥ãƒ©ãƒ¼ã®æ”¯é…çš„ãªæ–¹å‘ã‚’æ±‚ã‚ã¾ã™.
+//      ƒXƒyƒLƒ…ƒ‰[‚Ìx”z“I‚È•ûŒü‚ğ‹‚ß‚Ü‚·.
 //-----------------------------------------------------------------------------
 float3 GetSpecularDomiantDir(float3 N, float3 R, float roughness)
 {
@@ -115,23 +115,23 @@ float3 GetSpecularDomiantDir(float3 N, float3 R, float roughness)
 }
 
 //-----------------------------------------------------------------------------
-//      ã‚¹ãƒšã‚­ãƒ¥ãƒ©ãƒ¼AOã‚’è¨ˆç®—ã—ã¾ã™.
+//      ƒXƒyƒLƒ…ƒ‰[AO‚ğŒvZ‚µ‚Ü‚·.
 //-----------------------------------------------------------------------------
 float CalcSpecularAO(float NoV, float ao, float roughness)
 { return saturate(Pow(max(NoV + ao, 0.0f), exp2(-16.0f * roughness - 1.0f)) - 1.0f + ao); }
 
 //-----------------------------------------------------------------------------
-//      æ°´å¹³ã‚¹ãƒšã‚­ãƒ¥ãƒ©ãƒ¼AOã‚’è¨ˆç®—ã—ã¾ã™.
+//      …•½ƒXƒyƒLƒ…ƒ‰[AO‚ğŒvZ‚µ‚Ü‚·.
 //-----------------------------------------------------------------------------
 float CalcHorizonAO(float RoN)
 {
-    // CalcSpecularAOãŒãƒ‘ãƒ•ã‚©ãƒ¼ãƒãƒ³ã‚¹çš„ã«å›°ã‚‹å ´åˆã«ï¼Œç°¡æ˜“ãªè¿‘ä¼¼ã¨ã—ã¦ä½¿ç”¨ã™ã‚‹.
+    // CalcSpecularAO‚ªƒpƒtƒH[ƒ}ƒ“ƒX“I‚É¢‚éê‡‚ÉCŠÈˆÕ‚È‹ß—‚Æ‚µ‚Äg—p‚·‚é.
     float horizon = min(1.0f + RoN, 1.0f);
     return horizon * horizon;
 }
 
 //-----------------------------------------------------------------------------
-//      ãƒã‚¤ã‚¯ãƒ­ã‚·ãƒ£ãƒ‰ã‚¦ã‚’è¨ˆç®—ã—ã¾ã™.
+//      ƒ}ƒCƒNƒƒVƒƒƒhƒE‚ğŒvZ‚µ‚Ü‚·.
 //-----------------------------------------------------------------------------
 float ApplyMicroShadow(float ao, float NoL, float shadow)
 {
@@ -142,13 +142,13 @@ float ApplyMicroShadow(float ao, float NoL, float shadow)
 }
 
 //-----------------------------------------------------------------------------
-//      Lambert Diffuseã‚’æ±‚ã‚ã¾ã™.
+//      Lambert Diffuse‚ğ‹‚ß‚Ü‚·.
 //-----------------------------------------------------------------------------
 float LambertDiffuse(float NoL)
 { return NoL / F_PI; }
 
 //-----------------------------------------------------------------------------
-//      Half-Lambert Diffuseã‚’æ±‚ã‚ã¾ã™.
+//      Half-Lambert Diffuse‚ğ‹‚ß‚Ü‚·.
 //-----------------------------------------------------------------------------
 float HalfLambertDiffuse(float NoL)
 {
@@ -157,7 +157,7 @@ float HalfLambertDiffuse(float NoL)
 }
 
 //-----------------------------------------------------------------------------
-//      Disney Diffuseã‚’æ±‚ã‚ã¾ã™.
+//      Disney Diffuse‚ğ‹‚ß‚Ü‚·.
 //-----------------------------------------------------------------------------
 float DisneyDiffuse(float NdotV, float NdotL, float LdotH, float roughness)
 {
@@ -171,7 +171,7 @@ float DisneyDiffuse(float NdotV, float NdotL, float LdotH, float roughness)
 }
 
 //-----------------------------------------------------------------------------
-//      Phong Specularã‚’æ±‚ã‚ã¾ã™.
+//      Phong Specular‚ğ‹‚ß‚Ü‚·.
 //-----------------------------------------------------------------------------
 float PhongSpecular(float3 N, float3 V, float3 L, float shininess)
 {
@@ -180,7 +180,7 @@ float PhongSpecular(float3 N, float3 V, float3 L, float shininess)
 }
 
 //-----------------------------------------------------------------------------
-//      GGXã®Dé …ã‚’æ±‚ã‚ã¾ã™.
+//      GGX‚ÌD€‚ğ‹‚ß‚Ü‚·.
 //-----------------------------------------------------------------------------
 float D_GGX(float NdotH, float m)
 {
@@ -191,7 +191,7 @@ float D_GGX(float NdotH, float m)
 }
 
 //-----------------------------------------------------------------------------
-//      Height Correlated Smithã«ã‚ˆã‚‹Gé …ã‚’æ±‚ã‚ã¾ã™.
+//      Height Correlated Smith‚É‚æ‚éG€‚ğ‹‚ß‚Ü‚·.
 //-----------------------------------------------------------------------------
 float G_SmithGGX(float NdotL, float NdotV, float alphaG)
 {
@@ -201,7 +201,7 @@ float G_SmithGGX(float NdotL, float NdotV, float alphaG)
     float GGXL = NdotV * sqrt(NdotL * NdotL * (1.0f - a2) + a2);
     return 0.5f / (Lambda_GGXV + Lambda_GGXL);
 #else
-    // sqrt()ãŒãªã„æœ€é©åŒ–ãƒãƒ¼ã‚¸ãƒ§ãƒ³.
+    // sqrt()‚ª‚È‚¢Å“K‰»ƒo[ƒWƒ‡ƒ“.
     float a = alphaG;
     float GGXV = NdotL * (NdotV * (1.0f - a) + a);
     float GGXL = NdotV * (NdotL * (1.0f - a) + a);
@@ -210,7 +210,7 @@ float G_SmithGGX(float NdotL, float NdotV, float alphaG)
 }
 
 //-----------------------------------------------------------------------------
-//      Dé …ã‚’è¨ˆç®—ã—ã¾ã™.
+//      D€‚ğŒvZ‚µ‚Ü‚·.
 //-----------------------------------------------------------------------------
 float D_Ashikhmin(float linearRoughness, float NoH)
 {
@@ -224,7 +224,7 @@ float D_Ashikhmin(float linearRoughness, float NoH)
 }
 
 //-----------------------------------------------------------------------------
-//      Dé …ã‚’è¨ˆç®—ã—ã¾ã™.
+//      D€‚ğŒvZ‚µ‚Ü‚·.
 //-----------------------------------------------------------------------------
 float D_Charlie(float linearRoughness, float NoH)
 {
@@ -236,7 +236,7 @@ float D_Charlie(float linearRoughness, float NoH)
 }
 
 //-----------------------------------------------------------------------------
-//      Vé …ã‚’è¨ˆç®—ã—ã¾ã™.
+//      V€‚ğŒvZ‚µ‚Ü‚·.
 //-----------------------------------------------------------------------------
 float V_Neubelt(float NoV, float NoL)
 {
@@ -245,7 +245,7 @@ float V_Neubelt(float NoV, float NoL)
 }
 
 //-----------------------------------------------------------------------------
-//      å¸ƒç”¨ãƒ‡ã‚£ãƒ•ãƒ¥ãƒ¼ã‚ºé …ã‚’è©•ä¾¡ã—ã¾ã™.
+//      •z—pƒfƒBƒtƒ…[ƒY€‚ğ•]‰¿‚µ‚Ü‚·.
 //-----------------------------------------------------------------------------
 float3 EvaluateClothDiffuse(float3 diffuseColor, float sheen, float3 subsurfaceColor, float NoL)
 { 
@@ -257,7 +257,7 @@ float3 EvaluateClothDiffuse(float3 diffuseColor, float sheen, float3 subsurfaceC
 }
 
 //-----------------------------------------------------------------------------
-//      å¸ƒç”¨ã‚¹ãƒšã‚­ãƒ¥ãƒ©ãƒ¼é …ã‚’è©•ä¾¡ã—ã¾ã™.
+//      •z—pƒXƒyƒLƒ…ƒ‰[€‚ğ•]‰¿‚µ‚Ü‚·.
 //-----------------------------------------------------------------------------
 float3 EvaluateClothSpecular
 (
@@ -275,49 +275,49 @@ float3 EvaluateClothSpecular
 }
 
 //-----------------------------------------------------------------------------
-//      ãƒ˜ã‚¢ã®ã‚¹ãƒšã‚­ãƒ¥ãƒ©ãƒ¼é …ã‚’æ±‚ã‚ã¾ã™.
+//      ƒwƒA‚ÌƒXƒyƒLƒ…ƒ‰[€‚ğ‹‚ß‚Ü‚·.
 //-----------------------------------------------------------------------------
 float ScheuermannSingleSpecularTerm(float3 T, float3 H, float exponent)
 {
-    // Thorsten Scheuermann, "Hair Rendering and Shading", ShaderX 3, p.244ã€€å‚ç…§.
+    // Thorsten Scheuermann, "Hair Rendering and Shading", ShaderX 3, p.244@QÆ.
     float ToH   = dot(T, H);
     float sinTH = sqrt(1.0f - ToH * ToH);
     return Pow(sinTH, exponent);
 }
 
 //-----------------------------------------------------------------------------
-//      ãƒ˜ã‚¢ã®ã‚¹ãƒšã‚­ãƒ¥ãƒ©ãƒ¼æ¸›è¡°ã‚’æ±‚ã‚ã¾ã™.
+//      ƒwƒA‚ÌƒXƒyƒLƒ…ƒ‰[Œ¸Š‚ğ‹‚ß‚Ü‚·.
 //-----------------------------------------------------------------------------
 float ScheuermannSpecularAttenuation(float NoL)
 {
-    // Thorsten Scheuermann, "Hair Rendering and Shading", ShaderX 3. p.246 å‚ç…§.
+    // Thorsten Scheuermann, "Hair Rendering and Shading", ShaderX 3. p.246 QÆ.
     return saturate(1.75f * NoL + 0.25f);
 }
 
 //-----------------------------------------------------------------------------
-//      Kajiya-Keyãƒ‡ã‚£ãƒ•ãƒ¥ãƒ¼ã‚ºé …ã‚’è©•ä¾¡ã—ã¾ã™.
+//      Kajiya-KeyƒfƒBƒtƒ…[ƒY€‚ğ•]‰¿‚µ‚Ü‚·.
 //-----------------------------------------------------------------------------
 float EvaluateScheuermannDiffuse(float NoL)
 {
-    // Thorsten Scheuermann, "Hair Rendering and Shading", ShaderX 3, p.243 å‚ç…§.
+    // Thorsten Scheuermann, "Hair Rendering and Shading", ShaderX 3, p.243 QÆ.
     return saturate(0.75f * NoL + 0.25f);
 }
 
 //-----------------------------------------------------------------------------
-//      Scheuermannã‚¹ãƒšã‚­ãƒ¥ãƒ©ãƒ¼é …ã‚’è©•ä¾¡ã—ã¾ã™.
+//      ScheuermannƒXƒyƒLƒ…ƒ‰[€‚ğ•]‰¿‚µ‚Ü‚·.
 //-----------------------------------------------------------------------------
 float3 EvaluateScheuermannSpecular
 (
-    float3  T,              // æ¥ç·šãƒ™ã‚¯ãƒˆãƒ«.
-    float3  N,              // æ³•ç·šãƒ™ã‚¯ãƒˆãƒ«.
-    float3  H,              // è¦–ç·šãƒ™ã‚¯ãƒˆãƒ«ã¨ãƒ©ã‚¤ãƒˆãƒ™ã‚¯ãƒˆãƒ«ã®ãƒãƒ¼ãƒ•ãƒ™ã‚¯ãƒˆãƒ«.
-    float   NoL,            // æ³•ç·šã¨ãƒ©ã‚¤ãƒˆãƒ™ã‚¯ãƒˆãƒ«ã®å†…ç©.
-    float4  specularColor0, // RGB : ã‚¹ãƒšã‚­ãƒ¥ãƒ©ãƒ¼ã‚«ãƒ©ãƒ¼, A : åå°„å¼·åº¦.
-    float4  specularColor1, // RGB : ã‚¹ãƒšã‚­ãƒ¥ãƒ©ãƒ¼ã‚«ãƒ©ãƒ¼, A : åå°„å¼·åº¦.
-    float   specularShift0, // ã‚·ãƒ•ãƒˆé‡.
-    float   specularShift1, // ã‚·ãƒ•ãƒˆé‡.
-    float   shiftValue,     // ã‚·ãƒ•ãƒˆãƒ†ã‚¯ã‚¹ãƒãƒ£ã®å€¤.
-    float   noise           // ãƒã‚¤ã‚ºãƒ†ã‚¯ã‚¹ãƒãƒ£ã®å€¤.
+    float3  T,              // ÚüƒxƒNƒgƒ‹.
+    float3  N,              // –@üƒxƒNƒgƒ‹.
+    float3  H,              // ‹üƒxƒNƒgƒ‹‚Æƒ‰ƒCƒgƒxƒNƒgƒ‹‚Ìƒn[ƒtƒxƒNƒgƒ‹.
+    float   NoL,            // –@ü‚Æƒ‰ƒCƒgƒxƒNƒgƒ‹‚Ì“àÏ.
+    float4  specularColor0, // RGB : ƒXƒyƒLƒ…ƒ‰[ƒJƒ‰[, A : ”½Ë‹­“x.
+    float4  specularColor1, // RGB : ƒXƒyƒLƒ…ƒ‰[ƒJƒ‰[, A : ”½Ë‹­“x.
+    float   specularShift0, // ƒVƒtƒg—Ê.
+    float   specularShift1, // ƒVƒtƒg—Ê.
+    float   shiftValue,     // ƒVƒtƒgƒeƒNƒXƒ`ƒƒ‚Ì’l.
+    float   noise           // ƒmƒCƒYƒeƒNƒXƒ`ƒƒ‚Ì’l.
 )
 {
     float3 T0 = ShiftTangent(T, N, specularShift0 + shiftValue);
@@ -332,25 +332,25 @@ float3 EvaluateScheuermannSpecular
 }
 
 //-----------------------------------------------------------------------------
-//      Kajiya-Kay BRDFã‚’è©•ä¾¡ã—ã¾ã™.
+//      Kajiya-Kay BRDF‚ğ•]‰¿‚µ‚Ü‚·.
 //-----------------------------------------------------------------------------
 float3 EvaluateKajiyaKay
 (
-    float3  T,              // æ¥ç·šãƒ™ã‚¯ãƒˆãƒ«.
-    float3  N,              // æ³•ç·šãƒ™ã‚¯ãƒˆãƒ«.
-    float3  V,              // è¦–ç·šãƒ™ã‚¯ãƒˆãƒ«.
-    float3  L,              // ãƒ©ã‚¤ãƒˆãƒ™ã‚¯ãƒˆãƒ«.
-    float3  Kd,             // ãƒ‡ã‚£ãƒ•ãƒ¥ãƒ¼ã‚ºã‚«ãƒ©ãƒ¼.
-    float3  Ks,             // ã‚¹ãƒšã‚­ãƒ¥ãƒ©ãƒ¼ã‚«ãƒ©ãƒ¼.
-    float   noise,          // ãƒã‚¤ã‚ºãƒ†ã‚¯ã‚¹ãƒãƒ£ã®å€¤.
-    float   primaryScale,   // ãƒ—ãƒ©ã‚¤ãƒãƒªãƒ¼ãƒã‚¤ãƒ©ã‚¤ãƒˆå¼·åº¦.
-    float   secondaryWidth  // ã‚»ã‚«ãƒ³ãƒ€ãƒªãƒ¼ãƒã‚¤ãƒ©ã‚¤ãƒˆå¹….
+    float3  T,              // ÚüƒxƒNƒgƒ‹.
+    float3  N,              // –@üƒxƒNƒgƒ‹.
+    float3  V,              // ‹üƒxƒNƒgƒ‹.
+    float3  L,              // ƒ‰ƒCƒgƒxƒNƒgƒ‹.
+    float3  Kd,             // ƒfƒBƒtƒ…[ƒYƒJƒ‰[.
+    float3  Ks,             // ƒXƒyƒLƒ…ƒ‰[ƒJƒ‰[.
+    float   noise,          // ƒmƒCƒYƒeƒNƒXƒ`ƒƒ‚Ì’l.
+    float   primaryScale,   // ƒvƒ‰ƒCƒ}ƒŠ[ƒnƒCƒ‰ƒCƒg‹­“x.
+    float   secondaryWidth  // ƒZƒJƒ“ƒ_ƒŠ[ƒnƒCƒ‰ƒCƒg•.
 )
 {
     // James T. Kajiya, Timothy L. Kay, "RENDERING FUR WITH THREE DIMENSIONAL TEXTURES",
     // Computer Graphics, Volume 23, Number 3, July 1989,
-    // Diffuse  ã¯ Equation (14) å‚ç…§.
-    // Specular ã¯ Equation (16) å‚ç…§.
+    // Diffuse  ‚Í Equation (14) QÆ.
+    // Specular ‚Í Equation (16) QÆ.
 
     float SpecularPower0  = 80.0f * primaryScale;
     float SpecularPower1  = max(0.04f, SpecularPower0 / secondaryWidth * 4.0f);
@@ -361,57 +361,57 @@ float3 EvaluateKajiyaKay
     float sinTL = ToSin(cosTL);
 
     float diffuse = max(sinTL, 0.0f);
-    float alpha   = radians(noise * 10.0f); // ãƒãƒ«ãƒˆè§’(5 - 10 åº¦)
+    float alpha   = radians(noise * 10.0f); // ƒ`ƒ‹ƒgŠp(5 - 10 “x)
 
     float cosTRL = -cosTL;
     float sinTRL =  sinTL;
     float cosTV  = dot(T, V);
     float sinTV  = ToSin(cosTV);
 
-    // ãƒ—ãƒ©ã‚¤ãƒãƒªãƒ¼ã‚«ãƒ©ãƒ¼ã‚’æ±‚ã‚ã‚‹.
+    // ƒvƒ‰ƒCƒ}ƒŠ[ƒJƒ‰[‚ğ‹‚ß‚é.
     float cosTRL0   = cosTRL * cos(2.0f * alpha) - sinTRL * sin(2.0f * alpha);
     float sinTRL0   = ToSin(cosTRL0);
     float specular0 = max(0, cosTRL0 * cosTV + sinTRL0 * sinTV);
 
-    // ã‚»ã‚«ãƒ³ãƒ€ãƒªãƒ¼ã‚«ãƒ©ãƒ¼ã‚’æ±‚ã‚ã‚‹.
+    // ƒZƒJƒ“ƒ_ƒŠ[ƒJƒ‰[‚ğ‹‚ß‚é.
     float cosTRL1   = cosTRL * cos(-3.0f * alpha) - sinTRL * sin(-3.0f * alpha);
     float sinTRL1   = ToSin(cosTRL1);
     float specular1 = max(0, cosTRL1 * cosTV + sinTRL1 * sinTV);
 
-    // ã‚¹ãƒšã‚­ãƒ¥ãƒ©ãƒ¼å€¤.
+    // ƒXƒyƒLƒ…ƒ‰[’l.
     float power0 = Pow(specular0, SpecularPower0) * Normalize0;
     float power1 = Pow(specular1, SpecularPower1) * Normalize1;
 
-    // ãƒ¬ãƒ³ãƒ€ãƒªãƒ³ã‚°æ–¹ç¨‹å¼ã®ä½™å¼¦é ….
+    // ƒŒƒ“ƒ_ƒŠƒ“ƒO•û’ö®‚Ì—]Œ·€.
     float NoL = saturate(dot(N, L));
 
-    // BRDFã‚’è©•ä¾¡.
+    // BRDF‚ğ•]‰¿.
     float3 fd = Kd * diffuse / F_PI;
-    float3 fs = SaturateHalf(Ks * (power0 + power1) * 0.5f);  // 2ç¯ç„šã„ã¦ã„ã‚‹ã®ã§2ã§å‰²ã‚‹(=0.5ã‚’æ›ã‘ã‚‹).
+    float3 fs = SaturateHalf(Ks * (power0 + power1) * 0.5f);  // 2“”•°‚¢‚Ä‚¢‚é‚Ì‚Å2‚ÅŠ„‚é(=0.5‚ğŠ|‚¯‚é).
 
     return (fd + fs) * NoL;
 }
 
 //-----------------------------------------------------------------------------
-//      Vé …ã‚’è¨ˆç®—ã—ã¾ã™.
+//      V€‚ğŒvZ‚µ‚Ü‚·.
 //-----------------------------------------------------------------------------
 float V_Kelemen(float LoH)
 { return 0.25f / (LoH * LoH); }
 
 //-----------------------------------------------------------------------------
-//      ã‚¯ãƒªã‚¢ã‚³ãƒ¼ãƒˆã®ãƒ©ãƒ•ãƒã‚¹ã‚’æ±‚ã‚ã¾ã™.
+//      ƒNƒŠƒAƒR[ƒg‚Ìƒ‰ƒtƒlƒX‚ğ‹‚ß‚Ü‚·.
 //-----------------------------------------------------------------------------
 float GetClearCoatRoughness(float clearCoatRoughness)
 { return lerp(0.089f, 0.6f, clearCoatRoughness); }
 
 //-----------------------------------------------------------------------------
-//      ã‚¯ãƒªã‚¢ã‚³ãƒ¼ãƒˆã®ãƒ•ãƒ¬ãƒãƒ«é …ã‚’æ±‚ã‚ã¾ã™.
+//      ƒNƒŠƒAƒR[ƒg‚ÌƒtƒŒƒlƒ‹€‚ğ‹‚ß‚Ü‚·.
 //-----------------------------------------------------------------------------
 float GetClearCoatFresnel(float LoH, float clearCoat)
 { return F_Schlick(0.04f, 1.0f, LoH) * clearCoat; }
 
 //-----------------------------------------------------------------------------
-//      ç•°æ–¹æ€§GGXã®Dé …ã‚’æ±‚ã‚ã¾ã™.
+//      ˆÙ•û«GGX‚ÌD€‚ğ‹‚ß‚Ü‚·.
 //-----------------------------------------------------------------------------
 float D_GGXAnisotropic
 (
@@ -436,7 +436,7 @@ float D_GGXAnisotropic
 }
 
 //-----------------------------------------------------------------------------
-//      ç•°æ–¹æ€§GGXã®Vé …ã‚’æ±‚ã‚ã¾ã™.
+//      ˆÙ•û«GGX‚ÌV€‚ğ‹‚ß‚Ü‚·.
 //-----------------------------------------------------------------------------
 float V_SmithGGXHeightCorrelatedAnisotropic
 (
@@ -464,44 +464,44 @@ float V_SmithGGXHeightCorrelatedAnisotropic
 }
 
 //-----------------------------------------------------------------------------
-//      è¨ˆç®—ã«ã‚ˆã‚Šçœ¼çƒç”¨ã®é«˜ã•ã‚’æ±‚ã‚ã¾ã™.
+//      ŒvZ‚É‚æ‚èŠá‹…—p‚Ì‚‚³‚ğ‹‚ß‚Ü‚·.
 //-----------------------------------------------------------------------------
 float ProcedualHeightForEye(float radius, float anteriorChamberDepth)
 {
     // Jorge Jimenez, Javier von der Pahlen,
     // "Next-Generation Character Rendering", GDC 2013
-    // Eye Rendering ã‚»ã‚¯ã‚·ãƒ§ãƒ³å‚ç…§.
+    // Eye Rendering ƒZƒNƒVƒ‡ƒ“QÆ.
     //const float anteriorChamberDepth = 3.23f; // 3.23[nm] from [Lackner 2005]
     return anteriorChamberDepth * saturate(1.0f - 18.4f * radius * radius);
 }
 
 //-----------------------------------------------------------------------------
-//      å±ˆæŠ˜ãƒ™ã‚¯ãƒˆãƒ«ã‚’è¨ˆç®—ã—ã¾ã™.
+//      ‹üÜƒxƒNƒgƒ‹‚ğŒvZ‚µ‚Ü‚·.
 //-----------------------------------------------------------------------------
 float3 CalcRefraction(float ior, float3 N, float3 V)
 {
     // "Real-time Rendering Third Edition", 9.5 Refraction, p.396
-    // å¼(9.31), å¼(9.32)å‚ç…§.
+    // ®(9.31), ®(9.32)QÆ.
     float w = ior * dot(N, V);
     float k = sqrt(1.0f + (w - ior) * (w + ior));
     return (w - k) * N - ior * V;
 }
 
 //-----------------------------------------------------------------------------
-//      è¦–å·®ãƒãƒƒãƒ”ãƒ³ã‚°ã«ã‚ˆã‚‹å±ˆæŠ˜å¾Œã®ãƒ†ã‚¯ã‚¹ãƒãƒ£åº§æ¨™ã‚’è¨ˆç®—ã—ã¾ã™.
+//      ‹·ƒ}ƒbƒsƒ“ƒO‚É‚æ‚é‹üÜŒã‚ÌƒeƒNƒXƒ`ƒƒÀ•W‚ğŒvZ‚µ‚Ü‚·.
 //-----------------------------------------------------------------------------
 float2 ParallaxRefraction
 (
-    float2      texcoord,               // ãƒ†ã‚¯ã‚¹ãƒãƒ£åº§æ¨™.
-    float       height,                 // é«˜ã•.
-    float       parallaxScale,          // è¦–å·®ã‚¹ã‚±ãƒ¼ãƒ«.
-    float3      viewW,                  // ãƒ¯ãƒ¼ãƒ«ãƒ‰ç©ºé–“ã®è¦–ç·šãƒ™ã‚¯ãƒˆãƒ«.
-    float3x3    world                   // ãƒ¯ãƒ¼ãƒ«ãƒ‰è¡Œåˆ—.
+    float2      texcoord,               // ƒeƒNƒXƒ`ƒƒÀ•W.
+    float       height,                 // ‚‚³.
+    float       parallaxScale,          // ‹·ƒXƒP[ƒ‹.
+    float3      viewW,                  // ƒ[ƒ‹ƒh‹óŠÔ‚Ì‹üƒxƒNƒgƒ‹.
+    float3x3    world                   // ƒ[ƒ‹ƒhs—ñ.
 )
 {
     // Jorge Jimenez, Javier von der Pahlen,
     // "Next-Generation Character Rendering", GDC 2013
-    // Eye Rendering ã‚»ã‚¯ã‚·ãƒ§ãƒ³å‚ç…§.
+    // Eye Rendering ƒZƒNƒVƒ‡ƒ“QÆ.
     float2 viewL = mul(viewW, (float3x2)world);
     float2 offset = height * viewL;
     offset.y = -offset.y;
@@ -509,49 +509,49 @@ float2 ParallaxRefraction
 }
 
 //-----------------------------------------------------------------------------
-//      ç‰©ç†ãƒ™ãƒ¼ã‚¹ã«ã‚ˆã‚‹å±ˆæŠ˜å¾Œã®ãƒ†ã‚¯ã‚¹ãƒãƒ£åº§æ¨™ã‚’è¨ˆç®—ã—ã¾ã™.
+//      •¨—ƒx[ƒX‚É‚æ‚é‹üÜŒã‚ÌƒeƒNƒXƒ`ƒƒÀ•W‚ğŒvZ‚µ‚Ü‚·.
 //-----------------------------------------------------------------------------
 float2 PhysicallyBasedRefraction
 (
-    float2      texcoord,           // ãƒ†ã‚¯ã‚¹ãƒãƒ£åº§æ¨™.
-    float       height,             // é«˜ã•.
-    float       mask,               // ç¶²è†œã‹ã‚‰å¼·è†œã¸ã®è£œé–“å€¤.
-    float       ior,                // å±ˆæŠ˜ç‡.
-    float3      normalW,            // æ³•ç·šãƒ™ã‚¯ãƒˆãƒ«.
-    float3      viewW,              // ãƒ¯ãƒ¼ãƒ«ãƒ‰ç©ºé–“ã§ã®è¦–ç·šãƒ™ã‚¯ãƒˆãƒ«.
-    float3      frontNormalW,       // çœ¼çƒã®è¦–ç·šãƒ™ã‚¯ãƒˆãƒ«
-    float3x3    world               // ãƒ¯ãƒ¼ãƒ«ãƒ‰è¡Œåˆ—
+    float2      texcoord,           // ƒeƒNƒXƒ`ƒƒÀ•W.
+    float       height,             // ‚‚³.
+    float       mask,               // –Ô–Œ‚©‚ç‹­–Œ‚Ö‚Ì•âŠÔ’l.
+    float       ior,                // ‹üÜ—¦.
+    float3      normalW,            // –@üƒxƒNƒgƒ‹.
+    float3      viewW,              // ƒ[ƒ‹ƒh‹óŠÔ‚Å‚Ì‹üƒxƒNƒgƒ‹.
+    float3      frontNormalW,       // Šá‹…‚Ì‹üƒxƒNƒgƒ‹
+    float3x3    world               // ƒ[ƒ‹ƒhs—ñ
 )
 {
-    // å‚è€ƒ. Real-Time Rendering Third Edition, Section 9.5 Refractions.
+    // Ql. Real-Time Rendering Third Edition, Section 9.5 Refractions.
     float w = ior * dot(normalW, viewW);
     float k = sqrt(max(1.0f + (w - ior) * (w + ior), 0.0f));
     float3 refractedW = (w - k) * normalW - ior * viewW;
 
     // Jorge Jimenez, Javier von der Pahlen,
     // "Next-Generation Character Rendering", GDC 2013
-    // Eye Rendering ã‚»ã‚¯ã‚·ãƒ§ãƒ³å‚ç…§.
+    // Eye Rendering ƒZƒNƒVƒ‡ƒ“QÆ.
     float  cosAlpha = dot(frontNormalW, -refractedW);
     float  dist     = height / cosAlpha;
     float3 offsetW  = dist * refractedW;
 
-    // ãƒ­ãƒ¼ã‚«ãƒ«ã«å¤‰æ›
+    // ƒ[ƒJƒ‹‚É•ÏŠ·
     float2 offsetL = mul(offsetW, world).xy;
 
     return texcoord + float2(mask, -mask) * offsetL;
 }
 
 //-----------------------------------------------------------------------------
-//      è–„ã‚¬ãƒ©ã‚¹ã‚’è©•ä¾¡ã—ã¾ã™.
+//      ”–ƒKƒ‰ƒX‚ğ•]‰¿‚µ‚Ü‚·.
 //-----------------------------------------------------------------------------
 void EvaluateThinGlass
 (
-    in  float   eta,                // å±ˆæŠ˜ç‡.
-    in  float   NoV,                // æ³•ç·šã¨è¦–ç·šãƒ™ã‚¯ãƒˆãƒ«ã®å†…ç©.
-    in  float3  baseColor,          // ãƒ™ãƒ¼ã‚¹ã‚«ãƒ©ãƒ¼.
-    out float3  transmittance,      // ãƒˆãƒ©ãƒ³ã‚¹ãƒŸãƒƒã‚¿ãƒ³ã‚¹.
-    out float3  reflectance,        // ãƒªãƒ•ãƒ¬ã‚¯ã‚¿ãƒ³ã‚¹.
-    out float3  absorptionRatio     // å¸åç‡.
+    in  float   eta,                // ‹üÜ—¦.
+    in  float   NoV,                // –@ü‚Æ‹üƒxƒNƒgƒ‹‚Ì“àÏ.
+    in  float3  baseColor,          // ƒx[ƒXƒJƒ‰[.
+    out float3  transmittance,      // ƒgƒ‰ƒ“ƒXƒ~ƒbƒ^ƒ“ƒX.
+    out float3  reflectance,        // ƒŠƒtƒŒƒNƒ^ƒ“ƒX.
+    out float3  absorptionRatio     // ‹zû—¦.
 )
 {
     float sinTheta2 = 1.0f - NoV * NoV;
@@ -567,16 +567,16 @@ void EvaluateThinGlass
     const float r0 = q0 / q1;
     const float r1 = q2 / q3;
 
-    // å…¥å°„é¢ã«ãŠã‘ã‚‹ãƒ•ãƒ¬ãƒãƒ«ãƒªãƒ•ãƒ¬ã‚¯ã‚¿ãƒ³ã‚¹.
+    // “üË–Ê‚É‚¨‚¯‚éƒtƒŒƒlƒ‹ƒŠƒtƒŒƒNƒ^ƒ“ƒX.
     const float R0 = 0.5 * saturate(r0 * r0 + r1 * r1);
-    // å…¥å°„é¢ã«ãŠã‘ã‚‹ãƒ•ãƒ¬ãƒãƒ«ãƒˆãƒ©ãƒ³ã‚¹ãƒŸãƒƒã‚¿ãƒ³ã‚¹.
+    // “üË–Ê‚É‚¨‚¯‚éƒtƒŒƒlƒ‹ƒgƒ‰ƒ“ƒXƒ~ƒbƒ^ƒ“ƒX.
     const float T0 = 1 - R0;
 
     const float3 R = float3(R0, R0, R0);
     const float3 T = float3(T0, T0, T0);
     const float3 C = float3(cosRefractedTheta, cosRefractedTheta, cosRefractedTheta);
 
-    // å¸åã‚’è€ƒæ…®ã™ã‚‹ãŸã‚ã®ä¿‚æ•°.
+    // ‹zû‚ğl—¶‚·‚é‚½‚ß‚ÌŒW”.
     const float3 K = Pow(max(baseColor, 0.001), 1 / C);
     const float3 RK = R * K;
 
@@ -584,14 +584,14 @@ void EvaluateThinGlass
     reflectance     = saturate(RK  * transmittance + R);
     absorptionRatio = saturate(-(1 + RK) * transmittance + T);
 
-    // reflectanceã‚’å‡ºåŠ›ã‚«ãƒ©ãƒ¼ã«ä¹—ç®—.
-    // transmittanceã¯åˆæˆã™ã‚‹èƒŒæ™¯è‰²ã‚’ä¸‹è¨˜å¼ã‚’ç”¨ã„ã¦å¤‰æ›´.
+    // reflectance‚ğo—ÍƒJƒ‰[‚ÉæZ.
+    // transmittance‚Í‡¬‚·‚é”wŒiF‚ğ‰º‹L®‚ğ—p‚¢‚Ä•ÏX.
     // backGround = lerp(1.0, transmittance, alpha);
-    // ã“ã‚Œã‚’ä½¿ã£ã¦ã‚¢ãƒ«ãƒ•ã‚¡ãƒ–ãƒ¬ãƒ³ãƒ‡ã‚£ãƒ³ã‚°ã™ã‚‹.
+    // ‚±‚ê‚ğg‚Á‚ÄƒAƒ‹ƒtƒ@ƒuƒŒƒ“ƒfƒBƒ“ƒO‚·‚é.
 }
 
 //-----------------------------------------------------------------------------
-//      ã‚¯ãƒªã‚¢ã‚³ãƒ¼ãƒˆã®ç›´æ¥å…‰ã‚’è©•ä¾¡ã—ã¾ã™.
+//      ƒNƒŠƒAƒR[ƒg‚Ì’¼ÚŒõ‚ğ•]‰¿‚µ‚Ü‚·.
 //-----------------------------------------------------------------------------
 float3 EvaluateDirectLightClearCoat
 (
@@ -633,7 +633,7 @@ float3 EvaluateDirectLightClearCoat
 }
 
 //-----------------------------------------------------------------------------
-//      GGX BRDFã®å½¢çŠ¶ã«ã‚‚ã¨ã¥ãã‚µãƒ³ãƒ—ãƒªãƒ³ã‚°ã‚’è¡Œã„ã¾ã™.
+//      GGX BRDF‚ÌŒ`ó‚É‚à‚Æ‚Ã‚­ƒTƒ“ƒvƒŠƒ“ƒO‚ğs‚¢‚Ü‚·.
 //-----------------------------------------------------------------------------
 float3 BRDFSampleGGX(float2 u, float roughness)
 {

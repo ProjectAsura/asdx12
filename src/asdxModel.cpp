@@ -89,10 +89,10 @@ bool Mesh::Init(GraphicsDevice& device, const ResMesh& resource, ResourceUploade
         if (resource.TexCoords[i].size() > 0)
         {
             asdx::IUploadResource* pUpload = nullptr;
-            if (!m_TexCoord[i].Init(
+            if (!m_TexCoords[i].Init(
                 device,
                 uint64_t(resource.TexCoords[i].size()),
-                uint32_t(resource.TexCoords[i][0]),
+                uint32_t(sizeof(resource.TexCoords[i][0])),
                 resource.TexCoords[i].data(),
                 &pUpload))
             {
@@ -223,7 +223,7 @@ void Mesh::Term()
     m_CullingInfos  .Term();
 
     for(auto i=0; i<4; ++i)
-    { m_TexCoord[i].Term(); }
+    { m_TexCoords[i].Term(); }
 
     m_MeshletCount = 0;
     m_MaterialHash = 0;
@@ -233,115 +233,67 @@ void Mesh::Term()
 }
 
 //-----------------------------------------------------------------------------
-//      頂点データのGPU仮想アドレスを取得します.
+//      頂点データを取得します.
 //-----------------------------------------------------------------------------
-D3D12_GPU_VIRTUAL_ADDRESS Mesh::GetPositions() const
-{
-    if (m_Positions.GetResource() != nullptr)
-    { return m_Positions.GetResource()->GetGPUVirtualAddress(); }
-
-    return D3D12_GPU_VIRTUAL_ADDRESS();
-}
+const StructuredBuffer& Mesh::GetPositions() const
+{ return m_Positions; }
 
 //-----------------------------------------------------------------------------
-//      接線空間のGPU仮想アドレスを取得します.
+//      接線空間を取得します.
 //-----------------------------------------------------------------------------
-D3D12_GPU_VIRTUAL_ADDRESS Mesh::GetTangentSpaces() const
-{
-    if (m_TangentSpaces.GetResource() != nullptr)
-    { return m_TangentSpaces.GetResource()->GetGPUVirtualAddress(); }
-
-    return D3D12_GPU_VIRTUAL_ADDRESS();
-}
+const StructuredBuffer& Mesh::GetTangentSpaces() const
+{ return m_TangentSpaces; }
 
 //-----------------------------------------------------------------------------
-//      頂点カラーのGPU仮想アドレスを取得します.
+//      頂点カラーを取得します.
 //-----------------------------------------------------------------------------
-D3D12_GPU_VIRTUAL_ADDRESS Mesh::GetColors() const
-{
-    if (m_Colors.GetResource() != nullptr)
-    { return m_Colors.GetResource()->GetGPUVirtualAddress(); }
-
-    return D3D12_GPU_VIRTUAL_ADDRESS();
-}
+const StructuredBuffer& Mesh::GetColors() const
+{ return m_Colors; }
 
 //-----------------------------------------------------------------------------
-//      テクスチャ座標のGPU仮想アドレスを取得します.
+//      テクスチャ座標を取得します.
 //-----------------------------------------------------------------------------
-D3D12_GPU_VIRTUAL_ADDRESS Mesh::GetTexCoords(uint8_t index) const
+const StructuredBuffer& Mesh::GetTexCoords(uint8_t index) const
 {
     assert(index < 4);
-    if (m_TexCoord[index].GetResource() != nullptr)
-    { return m_TexCoord[index].GetResource()->GetGPUVirtualAddress(); }
-
-    return D3D12_GPU_VIRTUAL_ADDRESS();
+    return m_TexCoords[index];
 }
 
 //-----------------------------------------------------------------------------
-//      ボーン番号のGPU仮想アドレスを取得します.
+//      ボーン番号を取得します.
 //-----------------------------------------------------------------------------
-D3D12_GPU_VIRTUAL_ADDRESS Mesh::GetBoneIndices() const
-{
-    if (m_BoneIndices.GetResource() != nullptr)
-    { return m_BoneIndices.GetResource()->GetGPUVirtualAddress(); }
-
-    return D3D12_GPU_VIRTUAL_ADDRESS();
-}
+const StructuredBuffer& Mesh::GetBoneIndices() const
+{ return m_BoneIndices; }
 
 //-----------------------------------------------------------------------------
-//      ボーンの重みのGPU仮想アドレスを取得します.
+//      ボーンの重みを取得します.
 //-----------------------------------------------------------------------------
-D3D12_GPU_VIRTUAL_ADDRESS Mesh::GetBoneWeights() const
-{
-    if (m_BoneWeights.GetResource() != nullptr)
-    { return m_BoneWeights.GetResource()->GetGPUVirtualAddress(); }
-
-    return D3D12_GPU_VIRTUAL_ADDRESS();
-}
+const StructuredBuffer& Mesh::GetBoneWeights() const
+{ return m_BoneWeights; }
 
 //-----------------------------------------------------------------------------
-//      インデックスデータのGPU仮想アドレスを取得します.
+//      インデックスデータを取得します.
 //-----------------------------------------------------------------------------
-D3D12_GPU_VIRTUAL_ADDRESS Mesh::GetInindices() const
-{
-    if (m_Indices.GetResource() != nullptr)
-    { return m_Indices.GetResource()->GetGPUVirtualAddress(); }
-
-    return D3D12_GPU_VIRTUAL_ADDRESS();
-}
+const StructuredBuffer& Mesh::GetInindices() const
+{ return m_Indices; }
 
 //-----------------------------------------------------------------------------
-//      プリミティブデータのGPU仮想アドレスを取得します.
+//      プリミティブデータを取得します.
 //-----------------------------------------------------------------------------
-D3D12_GPU_VIRTUAL_ADDRESS Mesh::GetPrimitives() const
-{
-    if (m_Primitives.GetResource() != nullptr)
-    { return m_Primitives.GetResource()->GetGPUVirtualAddress(); }
-
-    return D3D12_GPU_VIRTUAL_ADDRESS();
-}
+const StructuredBuffer& Mesh::GetPrimitives() const
+{ return m_Primitives; }
 
 //-----------------------------------------------------------------------------
 //      メッシュレットデータのGPU仮想アドレスを取得します.
 //-----------------------------------------------------------------------------
-D3D12_GPU_VIRTUAL_ADDRESS Mesh::GetMeshlets() const
-{
-    if (m_Meshlets.GetResource() != nullptr)
-    { return m_Meshlets.GetResource()->GetGPUVirtualAddress(); }
-
-    return D3D12_GPU_VIRTUAL_ADDRESS();
-}
+const StructuredBuffer& Mesh::GetMeshlets() const
+{ return m_Meshlets; }
 
 //-----------------------------------------------------------------------------
-//      カリング情報のGPU仮想アドレスを取得します.
+//      カリング情報を取得します.
 //-----------------------------------------------------------------------------
-D3D12_GPU_VIRTUAL_ADDRESS Mesh::GetCullingInfos() const
-{
-    if (m_CullingInfos.GetResource() != nullptr)
-    { return m_CullingInfos.GetResource()->GetGPUVirtualAddress(); }
-
-    return D3D12_GPU_VIRTUAL_ADDRESS();
-}
+const StructuredBuffer& Mesh::GetCullingInfos() const
+{ return m_CullingInfos; }
 
 //-----------------------------------------------------------------------------
 //      メッシュハッシュを取得します.
@@ -391,7 +343,7 @@ bool Mesh::HasColor() const
 bool Mesh::HasTexCoord(uint8_t index) const
 {
     assert(index < 4);
-    return m_TexCoord[index].GetResource() != nullptr;
+    return m_TexCoords[index].GetResource() != nullptr;
 }
 
 
@@ -438,6 +390,18 @@ bool Model::Init(GraphicsDevice& device, const ResModel& model, ResourceUploader
     }
 
     return true;
+}
+
+//-----------------------------------------------------------------------------
+//      終了処理を行います.
+//-----------------------------------------------------------------------------
+void Model::Term()
+{
+    for(size_t i=0; i<m_Meshes.size(); ++i)
+    { m_Meshes[i].Term(); }
+
+    m_Meshes.clear();
+    m_Meshes.shrink_to_fit();
 }
 
 //-----------------------------------------------------------------------------
