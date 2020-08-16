@@ -19,11 +19,14 @@
 #include "TestVS.inc"
 #include "TestPS.inc"
 
+#include "TestMS.inc"
+
 #include "MeshletTestMS.inc"
 #include "MeshletTestPS.inc"
 
 //#define TEST_TRIANGLE   (1)
-#define TEST_MESHLET    (1)
+#define TEST_MESH_SHADER (1)
+//#define TEST_MESHLET    (1)
 
 namespace {
 
@@ -84,6 +87,11 @@ bool TestApp::OnInit()
     { return false; }
 #endif
 
+#if TEST_MESH_SHADER
+    if (!MeshShaderTestInit())
+    { return false; }
+#endif
+
 #if TEST_MESHLET
     if (!MeshletTestInit())
     { return false; }
@@ -97,6 +105,9 @@ bool TestApp::OnInit()
 //-----------------------------------------------------------------------------
 void TestApp::OnTerm()
 {
+    m_TriangleIndexBuffer.Term();
+    m_TriangleVertexBuffer.Term();
+
     m_Model         .Term();
     m_TriangleVB    .Term();
     m_PSO           .Term();
@@ -122,6 +133,10 @@ void TestApp::OnFrameRender(asdx::FrameEventArgs& args)
 #if TEST_TRIANGLE
     // 三角形描画.
     TriangleTestRender(pCmd, idx);
+#endif
+
+#if TEST_MESH_SHADER
+    MeshShaderTestRender(pCmd, idx);
 #endif
 
 #if TEST_MESHLET
@@ -354,6 +369,185 @@ void TestApp::TriangleTestRender(ID3D12GraphicsCommandList6* pCmd, uint8_t idx)
         D3D12_RESOURCE_STATE_PRESENT);
 }
 
+
+//-----------------------------------------------------------------------------
+//      メッシュシェーダ描画用の初期化処理です.
+//-----------------------------------------------------------------------------
+bool TestApp::MeshShaderTestInit()
+{
+    m_pGraphicsQueue = asdx::GfxDevice().GetGraphicsQueue();
+
+    auto pDevice = asdx::GfxDevice().GetDevice();
+
+    // 頂点データ
+    {
+        const Vertex vertices[] = {
+            { asdx::Vector3( 0.0f,  0.5f, 0.0f), asdx::Vector2(0.5f, 1.0f) },
+            { asdx::Vector3( 0.5f, -0.5f, 0.0f), asdx::Vector2(1.0f, 0.0f) },
+            { asdx::Vector3(-0.5f, -0.5f, 0.0f), asdx::Vector2(0.0f, 0.0f) },
+        };
+
+        asdx::IUploadResource* pUpload;
+        if (!m_TriangleVertexBuffer.Init(asdx::GfxDevice(), 3, sizeof(vertices[0]), vertices, &pUpload))
+        {
+            ELOG("Error : StructuredBuffer::Init() Failed.");
+            return false;
+        }
+        m_Uploader.Push(pUpload);
+    }
+
+    // 出力番号データ.
+    {
+        const uint32_t indices[] = { 0, 1, 2 };
+
+        asdx::IUploadResource* pUpload;
+        if (!m_TriangleIndexBuffer.Init(asdx::GfxDevice(), 3, sizeof(indices[0]), indices, &pUpload))
+        {
+            ELOG("Error : StructuredBuffer::Init() Failed.");
+            return false;
+        }
+        m_Uploader.Push(pUpload);
+    }
+
+    // ルートシグニチャ.
+    {
+        uint32_t flag = 0;
+        flag |= asdx::RSF_DENY_VS;
+        flag |= asdx::RSF_DENY_GS;
+        flag |= asdx::RSF_DENY_DS;
+        flag |= asdx::RSF_DENY_HS;
+        flag |= asdx::RSF_DENY_AS;
+
+        asdx::RootSignatureDesc desc;
+        desc.AddFromShader(TestMS, sizeof(TestMS))
+            .AddFromShader(TestPS, sizeof(TestPS));
+        desc.SetFlag(flag);
+
+        if (!m_RootSignature.Init(pDevice, desc))
+        {
+            ELOG("Error : RootSignature::Init() Failed.");
+            return false;
+        }
+    }
+
+    // パイプラインステート.
+    {
+        asdx::GEOMETRY_PIPELINE_STATE_DESC desc = {};
+        desc.pRootSignature             = m_RootSignature.GetPtr();
+        desc.MS                         = { TestMS, sizeof(TestMS) };
+        desc.PS                         = { TestPS, sizeof(TestPS) };
+        desc.BlendState                 = asdx::PipelineState::GetBS(asdx::BLEND_STATE_OPAQUE);
+        desc.RasterizerState            = asdx::PipelineState::GetRS(asdx::RASTERIZER_STATE_CULL_BACK);
+        desc.DepthStencilState          = asdx::PipelineState::GetDSS(asdx::DEPTH_STATE_DEFAULT);
+        desc.SampleMask                 = UINT_MAX;
+        desc.RTVFormats.NumRenderTargets = 1;
+        desc.RTVFormats.RTFormats[0]     = m_SwapChainFormat;
+        desc.DSVFormat                  = DXGI_FORMAT_D32_FLOAT;
+        desc.SampleDesc.Count           = 1;
+        desc.SampleDesc.Quality         = 0;
+
+        if (!m_PSO.Init(pDevice, &desc))
+        {
+            ELOG("Error : PipelineState::Init() Failed.");
+            return false;
+        }
+    }
+
+    if (!m_CbMesh.Init(asdx::GfxDevice(), sizeof(CbMesh)))
+    {
+        ELOG("Error : CbMesh Initialize Failed");
+        return false;
+    }
+
+    if (!m_CbScene.Init(asdx::GfxDevice(), sizeof(CbScene)))
+    {
+        ELOG("Error : CbScene Initialize Failed.");
+        return false;
+    }
+
+    {
+        asdx::ResTexture res;
+        if (!res.LoadFromFileA("./test.tga"))
+        {
+            ELOG("Error : ResTexture::LoadFromFileA() Failed.");
+            return false;
+        }
+
+        asdx::IUploadResource* pUpdateResource = nullptr;
+        if (!m_Texture.Init(asdx::GfxDevice(), res, &pUpdateResource))
+        {
+            ELOG("Error : Texture::Init() Failed.");
+            return false;
+        }
+
+        m_Uploader.Push(pUpdateResource);
+
+        res.Release();
+    }
+
+    {
+        if (!m_Sampler.Init(asdx::GfxDevice(), asdx::ST_LINEAR_CLAMP))
+        {
+            ELOG("Error : Sampler::Init() Failed.");
+            return false;
+        }
+    }
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      三角形の描画関数です.
+//-----------------------------------------------------------------------------
+void TestApp::MeshShaderTestRender(ID3D12GraphicsCommandList6* pCmd, uint8_t idx)
+{
+    asdx::BarrierTransition(
+        pCmd,
+        m_ColorTarget[idx].GetResource(),
+        0,
+        D3D12_RESOURCE_STATE_PRESENT,
+        D3D12_RESOURCE_STATE_RENDER_TARGET);
+
+    auto pRTV = m_ColorTarget[idx].GetRTV();
+    auto pDSV = m_DepthTarget.GetDSV();
+
+    asdx::ClearRTV(pCmd, pRTV, m_ClearColor);
+    asdx::ClearDSV(pCmd, pDSV, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0);
+
+    asdx::SetRenderTarget(pCmd, pRTV, pDSV);
+    asdx::SetViewport(pCmd, m_ColorTarget[idx].GetResource());
+
+    // 描画処理.
+    {
+        auto idxSRV0 = m_RootSignature.Find("Vertices");
+        auto idxSRV1 = m_RootSignature.Find("Indices");
+        auto idxSRV2 = m_RootSignature.Find("ColorMap");
+        auto idxSmp0 = m_RootSignature.Find("LinearClamp");
+
+        auto srv0 = m_TriangleVertexBuffer.GetDescriptor()->GetHandleGPU();
+        auto srv1 = m_TriangleIndexBuffer.GetDescriptor()->GetHandleGPU();
+        auto srv2 = m_Texture.GetDescriptor()->GetHandleGPU();
+        auto smp0 = m_Sampler.GetDescriptor()->GetHandleGPU();
+
+        pCmd->SetGraphicsRootSignature(m_RootSignature.GetPtr());
+        pCmd->SetPipelineState(m_PSO.GetPtr());
+
+        pCmd->SetGraphicsRootDescriptorTable(idxSRV0, srv0);
+        pCmd->SetGraphicsRootDescriptorTable(idxSRV1, srv1);
+        pCmd->SetGraphicsRootDescriptorTable(idxSRV2, srv2);
+        pCmd->SetGraphicsRootDescriptorTable(idxSmp0, smp0);
+
+        pCmd->DispatchMesh(1, 1, 1);
+    }
+
+    asdx::BarrierTransition(
+        pCmd,
+        m_ColorTarget[idx].GetResource(),
+        0,
+        D3D12_RESOURCE_STATE_RENDER_TARGET,
+        D3D12_RESOURCE_STATE_PRESENT);
+}
+
 //-----------------------------------------------------------------------------
 //      メッシュレットの初期化処理です.
 //-----------------------------------------------------------------------------
@@ -406,9 +600,9 @@ bool TestApp::MeshletTestInit()
         desc.MS                             = { MeshletTestMS, sizeof(MeshletTestMS) };
         desc.PS                             = { MeshletTestPS, sizeof(MeshletTestPS) };
         desc.BlendState                     = asdx::PipelineState::GetBS(asdx::BLEND_STATE_OPAQUE);
-        desc.RasterizerState                = asdx::PipelineState::GetRS(asdx::RASTERIZER_STATE_CULL_BACK);
-        desc.DepthStencilState              = asdx::PipelineState::GetDSS(asdx::DEPTH_STATE_DEFAULT);
         desc.SampleMask                     = UINT_MAX;
+        desc.RasterizerState                = asdx::PipelineState::GetRS(asdx::RASTERIZER_STATE_CULL_NONE);
+        desc.DepthStencilState              = asdx::PipelineState::GetDSS(asdx::DEPTH_STATE_DEFAULT);
         desc.RTVFormats.NumRenderTargets    = 1;
         desc.RTVFormats.RTFormats[0]        = m_SwapChainFormat;
         desc.DSVFormat                      = DXGI_FORMAT_D32_FLOAT;

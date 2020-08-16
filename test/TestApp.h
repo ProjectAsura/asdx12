@@ -61,6 +61,8 @@ private:
     uint32_t                m_IndexCBScene;
     uint32_t                m_IndexColorMap;
     uint32_t                m_IndexLinearClamp;
+    asdx::StructuredBuffer  m_TriangleVertexBuffer;
+    asdx::StructuredBuffer  m_TriangleIndexBuffer;
 
     //=========================================================================
     // private methods.
@@ -75,6 +77,8 @@ private:
 
     bool TriangleTestInit();
     void TriangleTestRender(ID3D12GraphicsCommandList6* pCmd, uint8_t idx);
+    bool MeshShaderTestInit();
+    void MeshShaderTestRender(ID3D12GraphicsCommandList6* pCmd, uint8_t idx);
     bool MeshletTestInit();
     void MeshletTestRender(ID3D12GraphicsCommandList6* pCmd, uint8_t idx);
 };
