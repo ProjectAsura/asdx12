@@ -234,10 +234,6 @@ bool TestApp::TriangleTestInit()
         asdx::RootSignatureDesc desc;
         desc.AddFromShader(TestVS, sizeof(TestVS))
             .AddFromShader(TestPS, sizeof(TestPS));
-        //m_IndexCBMesh       = desc.AddCBV(asdx::SV_VS, 0);
-        //m_IndexCBScene      = desc.AddCBV(asdx::SV_VS, 1);
-        //m_IndexColorMap     = desc.AddSRV(asdx::SV_PS, 0);
-        //m_IndexLinearClamp  = desc.AddStaticSampler(asdx::SV_PS, asdx::SS_LINEAR_CLAMP, 0);
         desc.SetFlag(flag);
 
         if (!m_RootSignature.Init(pDevice, desc))
@@ -351,8 +347,6 @@ void TestApp::TriangleTestRender(ID3D12GraphicsCommandList6* pCmd, uint8_t idx)
         auto vbv = m_TriangleVB.GetView();
         pCmd->SetGraphicsRootSignature(m_RootSignature.GetPtr());
         pCmd->SetPipelineState(m_PSO.GetPtr());
-        //pCmd->SetGraphicsRootConstantBufferView(m_IndexCBMesh, m_CbMesh.GetResource()->GetGPUVirtualAddress());
-        //pCmd->SetGraphicsRootConstantBufferView(m_IndexCBScene, m_CbScene.GetResource()->GetGPUVirtualAddress());
         pCmd->SetGraphicsRootDescriptorTable(m_IndexColorMap, m_Texture.GetDescriptor()->GetHandleGPU());
         pCmd->SetGraphicsRootDescriptorTable(m_IndexLinearClamp, m_Sampler.GetDescriptor()->GetHandleGPU());
 

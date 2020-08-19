@@ -343,8 +343,9 @@ D3D12_RASTERIZER_DESC PipelineState::GetRS(RASTERIZER_STATE_TYPE type)
     D3D12_RASTERIZER_DESC result = {};
 
     result.FrontCounterClockwise    = FALSE;
-    result.DepthBias                = 0;
-    result.DepthBiasClamp           = 0.0f;
+    result.DepthBias                = D3D12_DEFAULT_DEPTH_BIAS;
+    result.DepthBiasClamp           = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
+    result.SlopeScaledDepthBias     = D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;
     result.DepthClipEnable          = TRUE;
     result.MultisampleEnable        = FALSE;
     result.AntialiasedLineEnable    = FALSE;
@@ -394,7 +395,9 @@ D3D12_BLEND_DESC PipelineState::GetBS(BLEND_STATE_TYPE type)
 
     result.AlphaToCoverageEnable    = FALSE;
     result.IndependentBlendEnable   = FALSE;
-    result.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+    result.RenderTarget[0].RenderTargetWriteMask    = D3D12_COLOR_WRITE_ENABLE_ALL;
+    result.RenderTarget[0].LogicOpEnable            = FALSE;
+    result.RenderTarget[0].LogicOp                  = D3D12_LOGIC_OP_NOOP;
 
     switch(type)
     {
