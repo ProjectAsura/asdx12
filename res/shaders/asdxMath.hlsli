@@ -1393,7 +1393,7 @@ uint3 UnpackPrimitiveIndex(uint packed)
     return uint3(
         packed & 0x3FF,
         (packed >> 10) & 0x3FF,
-        (packed >> 20) & 0x3FF);    
+        (packed >> 20) & 0x3FF);
 }
 
 //-----------------------------------------------------------------------------
