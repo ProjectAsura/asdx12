@@ -16,9 +16,7 @@
 struct MSOutput
 {
     float4  Position     : SV_POSITION;
-    uint    TexCoord     : TEXCOORD;
-    uint    TangentSpace : TANGENT_SPACE;
-    uint    MeshletId    : MESHLET_ID;
+    uint3   TexCoord     : TEXCOORD;    // x : TexCoord0, y : TangentSpace, z : MeshletId
 };
 
 //-----------------------------------------------------------------------------
@@ -37,6 +35,6 @@ float3 DebugColor(uint index)
 //-----------------------------------------------------------------------------
 float4 main(const MSOutput input) : SV_TARGET
 {
-    return float4(DebugColor(input.MeshletId), 1.0f);
+    return float4(DebugColor(input.TexCoord.z), 1.0f);
     //return float4(1.0f, 0.0f, 0.0f, 1.0f);
 }

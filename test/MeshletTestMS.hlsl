@@ -16,9 +16,7 @@
 struct MSOutput
 {
     float4  Position     : SV_POSITION;
-    uint    TexCoord     : TEXCOORD;
-    uint    TangentSpace : TANGENT_SPACE;
-    uint    MeshletId    : MESHLET_ID;
+    uint3   TexCoord     : TEXCOORD;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -102,9 +100,9 @@ void main
 
         MSOutput output = (MSOutput)0;
         output.Position     = projPos;
-        output.TexCoord     = TexCoords[index];
-        output.TangentSpace = worldEncodedTBN;
-        output.MeshletId    = groupId;
+        output.TexCoord.x   = TexCoords[index];
+        output.TexCoord.y   = worldEncodedTBN;
+        output.TexCoord.z   = groupId;
 
         verts[groupThreadId] = output;
     }
