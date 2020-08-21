@@ -10,7 +10,7 @@
 #include <asdxQuad.h>
 #include <asdxMath.h>
 #include <asdxLogger.h>
-#include <asdxResModel.h>
+#include <asdxHalf.h>
 
 
 namespace {
@@ -32,8 +32,8 @@ struct Vertex
     uint32_t TexCoord; //!< テクスチャ座標.
 
     Vertex(float x, float y, float u, float v)
-    : Position(asdx::EncodeHalf2(asdx::Vector2(x, y)))
-    , TexCoord(asdx::EncodeHalf2(asdx::Vector2(u, v)))
+    : Position(asdx::EncodeHalf2(asdx::Vector2(x, y)).u)
+    , TexCoord(asdx::EncodeHalf2(asdx::Vector2(u, v)).u)
     { /* DO_NOTHING */}
 };
 

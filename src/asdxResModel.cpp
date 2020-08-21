@@ -59,35 +59,6 @@ union Unorm8888
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-// FP32 
-///////////////////////////////////////////////////////////////////////////////
-union FP32
-{
-    uint32_t    u;
-    float       f;
-    struct
-    {
-        uint32_t Mantissa   : 23;
-        uint32_t Exponent   : 8;
-        uint32_t Sign       : 1;
-    };
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// FP16
-///////////////////////////////////////////////////////////////////////////////
-union FP16
-{
-    uint16_t u;
-    struct
-    {
-        uint32_t Mantissa   : 10;
-        uint32_t Exponent   : 5;
-        uint32_t Sign       : 1;
-    };
-};
-
-///////////////////////////////////////////////////////////////////////////////
 // ModelHeader structure
 ///////////////////////////////////////////////////////////////////////////////
 struct ModelHeader
@@ -115,10 +86,6 @@ struct MeshHeaderV1
     uint32_t    MeshletCount;
     uint32_t    CullingInfoCount;
 };
-
-static const FP32       kMagic      = { 113 << 23 };
-static const uint32_t   kShiftedExp = 0x7c00 << 13;
-
 
 //-----------------------------------------------------------------------------
 //      最大成分を取得します.
@@ -185,79 +152,6 @@ void Dispose(ResModel& resource)
     resource.Meshes.shrink_to_fit();
 }
 
-//-----------------------------------------------------------------------------
-//      半精度浮動小数に変換します.
-//-----------------------------------------------------------------------------
-uint16_t ToHalf(float value)
-{
-    FP32 f;
-    f.f = value;
-
-    FP16 o = { 0 };
-
-    if (f.Exponent == 0)
-    { o.Exponent = 0; }
-
-    else if (f.Exponent == 255)
-    {
-        o.Exponent = 31;
-        o.Mantissa = f.Mantissa ? 0x200 : 0;
-    }
-    else
-    {
-        int newexp = f.Exponent - 127 + 15;
-        
-        if (newexp >= 31)
-        { o.Exponent = 31; }
- 
-        else if (newexp <= 0)
-        {
-            if ((14 - newexp) <= 24)
-            {
-                uint16_t mant = f.Mantissa | 0x800000;
-                o.Mantissa = mant >> (14 - newexp);
-                if ((mant >> (13 - newexp)) & 1)
-                { o.u++; }
-            }
-        }
-        else
-        {
-            o.Exponent = newexp;
-            o.Mantissa = f.Mantissa >> 13;
-            if (f.Mantissa & 0x1000)
-            { o.u++; }
-        }
-    }
-
-    o.Sign = f.Sign;
-    return o.u;
-}
-
-//-----------------------------------------------------------------------------
-//      単精度浮動小数に変換します.
-//-----------------------------------------------------------------------------
-float ToFloat(uint16_t v)
-{
-    FP16 h;
-    h.u = v;
-
-    FP32 o;
-
-    o.u = (h.u & 0x7fff) << 13;
-    uint32_t exp = kShiftedExp & o.u;
-    o.u += (127 - 15) << 23;
-
-    if (exp == kShiftedExp)
-    { o.u += (128 - 16) << 23; }
-    else if (exp == 0)
-    {
-        o.u += 1 << 23;
-        o.f -= kMagic.f;
-    }
-
-    o.u |= (h.u & 0x8000) << 16;
-    return o.f;
-}
 
 //-----------------------------------------------------------------------------
 //      R8G8B8A8_UNORM形式に変換します.
@@ -285,31 +179,6 @@ Vector4 FromUnorm(uint32_t value)
     result.y = float(packed.g) / 255.0f;
     result.z = float(packed.b) / 255.0f;
     result.w = float(packed.a) / 255.0f;
-    return result;
-}
-
-//-----------------------------------------------------------------------------
-//      Vector2をhalf2に圧縮します.
-//-----------------------------------------------------------------------------
-uint32_t EncodeHalf2(const Vector2& value)
-{
-    TexCoord packed;
-    packed.x = ToHalf(value.x);
-    packed.y = ToHalf(value.y);
-    return packed.u;
-}
-
-//-----------------------------------------------------------------------------
-//     half2をfloat2に展開します.
-//-----------------------------------------------------------------------------
-Vector2 DecodeHalf2(uint32_t value)
-{
-    TexCoord packed;
-    packed.u = value;
-
-    Vector2 result;
-    result.x = ToFloat(packed.x);
-    result.y = ToFloat(packed.y);
     return result;
 }
 
