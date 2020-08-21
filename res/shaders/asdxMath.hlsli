@@ -1458,10 +1458,10 @@ void UnpackTN
     
     uint handedness = (encodedTBN >> 30) & 0x3;
 
-    sinAngle = ((handedness& 0x2) == 0) ? -sinAngle : sinAngle;
+    sinAngle = ((handedness & 0x2) == 0) ? -sinAngle : sinAngle;
     float3 orthoA = normalize(cross(normal, refVector));
     float3 orthoB = cross(normal, orthoA);
-    tangent = (cosAngle * orthoA) + (sinAngle * orthoB);
+    tangent = normalize((cosAngle * orthoA) + (sinAngle * orthoB));
 }
 
 //-----------------------------------------------------------------------------
@@ -1500,10 +1500,10 @@ void UnpackTBN
     
     uint handedness = (encodedTBN >> 30) & 0x3;
 
-    sinAngle = ((handedness& 0x2) == 0) ? -sinAngle : sinAngle;
+    sinAngle = ((handedness & 0x2) == 0) ? -sinAngle : sinAngle;
     float3 orthoA = normalize(cross(normal, refVector));
     float3 orthoB = cross(normal, orthoA);
-    tangent = (cosAngle * orthoA) + (sinAngle * orthoB);
+    tangent = normalize((cosAngle * orthoA) + (sinAngle * orthoB));
 
     // decode bitangent
     bitangent = cross(normal, tangent);

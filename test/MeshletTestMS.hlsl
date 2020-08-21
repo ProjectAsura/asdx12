@@ -15,8 +15,10 @@
 ///////////////////////////////////////////////////////////////////////////////
 struct MSOutput
 {
-    float4  Position     : SV_POSITION;
-    uint3   TexCoord     : TEXCOORD;
+    float4  Position    : SV_POSITION;
+    float2  TexCoord    : TEXCOORD;
+    float3  Normal      : NORMAL;
+    float3  Tangent     : TANGENT;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -94,15 +96,14 @@ void main
         uint encodedTBN = TangentSpaces[index];
         UnpackTN(encodedTBN, T, N);
 
-        float3 worldT = mul((float3x3)CbMesh.World, T);
-        float3 worldN = mul((float3x3)CbMesh.World, N);
-        uint worldEncodedTBN = PackTBN(N, T, 0);
+        float3 worldT = normalize(mul((float3x3)CbMesh.World, T));
+        float3 worldN = normalize(mul((float3x3)CbMesh.World, N));
 
         MSOutput output = (MSOutput)0;
         output.Position     = projPos;
-        output.TexCoord.x   = TexCoords[index];
-        output.TexCoord.y   = worldEncodedTBN;
-        output.TexCoord.z   = groupId;
+        output.TexCoord     = UnpackTexCoord(TexCoords[index]);
+        output.Normal       = worldN;
+        output.Tangent      = worldT;
 
         verts[groupThreadId] = output;
     }

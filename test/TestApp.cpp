@@ -655,7 +655,7 @@ void TestApp::MeshletTestRender(ID3D12GraphicsCommandList6* pCmd, uint8_t idx)
     {
         CbScene res = {};
         res.View = asdx::Matrix::CreateLookAt(
-            asdx::Vector3(0.0f, 0.0f, -2.0f),
+            asdx::Vector3(0.0f, 1.0f, -2.0f),
             asdx::Vector3(0.0f, 0.0f, 0.0f),
             asdx::Vector3(0.0f, 1.0f, 0.0f));
 
