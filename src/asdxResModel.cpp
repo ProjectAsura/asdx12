@@ -289,9 +289,9 @@ Vector4 FromUnorm(uint32_t value)
 }
 
 //-----------------------------------------------------------------------------
-//      テクスチャ座標を圧縮します.
+//      Vector2をhalf2に圧縮します.
 //-----------------------------------------------------------------------------
-uint32_t EncodeTexCoord(const Vector2& value)
+uint32_t EncodeHalf2(const Vector2& value)
 {
     TexCoord packed;
     packed.x = ToHalf(value.x);
@@ -300,9 +300,9 @@ uint32_t EncodeTexCoord(const Vector2& value)
 }
 
 //-----------------------------------------------------------------------------
-//      圧縮されたテクスチャ座標を展開します.
+//     half2をfloat2に展開します.
 //-----------------------------------------------------------------------------
-Vector2 DecodeTexCoord(uint32_t value)
+Vector2 DecodeHalf2(uint32_t value)
 {
     TexCoord packed;
     packed.u = value;

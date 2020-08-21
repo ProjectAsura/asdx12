@@ -10,6 +10,7 @@
 #include <asdxQuad.h>
 #include <asdxMath.h>
 #include <asdxLogger.h>
+#include <asdxResModel.h>
 
 
 namespace {
@@ -18,8 +19,8 @@ namespace {
 // Constant Values.
 //-----------------------------------------------------------------------------
 static const D3D12_INPUT_ELEMENT_DESC kElements[] = {
-    { "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-    { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 8, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+    { "POSITION", 0, DXGI_FORMAT_R16G16_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+    { "TEXCOORD", 0, DXGI_FORMAT_R16G16_FLOAT, 0, 4, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -27,16 +28,17 @@ static const D3D12_INPUT_ELEMENT_DESC kElements[] = {
 ///////////////////////////////////////////////////////////////////////////////
 struct Vertex 
 {
-    asdx::Vector2 Position;
-    asdx::Vector2 TexCoord;
-        
+    uint32_t Position; //!< 位置座標.
+    uint32_t TexCoord; //!< テクスチャ座標.
+
     Vertex(float x, float y, float u, float v)
-    : Position(x, y)
-    , TexCoord(u, v)
+    : Position(asdx::EncodeHalf2(asdx::Vector2(x, y)))
+    , TexCoord(asdx::EncodeHalf2(asdx::Vector2(u, v)))
     { /* DO_NOTHING */}
 };
 
 } // namespace
+
 
 namespace asdx {
 

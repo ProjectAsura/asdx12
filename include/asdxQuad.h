@@ -95,5 +95,4 @@ private:
     Quad& operator = (const Quad&) = delete;    // アクセス禁止.
 };
 
-
 } // namespace asdx
