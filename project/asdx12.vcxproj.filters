@@ -307,6 +307,9 @@
     <None Include="..\res\shaders\Shadow.hlsli">
       <Filter>リソース ファイル</Filter>
     </None>
+    <None Include="..\res\shaders\DepthDownSample.hlsli">
+      <Filter>リソース ファイル</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\res\shaders\CopyPS.hlsl">
