@@ -77,8 +77,14 @@ private:
 
     bool TriangleTestInit();
     void TriangleTestRender(ID3D12GraphicsCommandList6* pCmd, uint8_t idx);
+
     bool MeshShaderTestInit();
     void MeshShaderTestRender(ID3D12GraphicsCommandList6* pCmd, uint8_t idx);
+
     bool MeshletTestInit();
     void MeshletTestRender(ID3D12GraphicsCommandList6* pCmd, uint8_t idx);
+
+    bool QuadTestInit();
+    void QuadTestRender(ID3D12GraphicsCommandList6* pCmd, uint8_t idex);
+
 };

@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-// File : asdxImGuiVS.hlsl
+// File : ImGuiVS.hlsl
 // Desc : Vertex Shader For ImGui.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------

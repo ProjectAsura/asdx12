@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-// File : asdxShadow.hlsli
+// File : Shadow.hlsli
 // Desc : Shadowing Utility.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------

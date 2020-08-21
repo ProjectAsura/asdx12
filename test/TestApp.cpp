@@ -14,6 +14,7 @@
 #include <asdxLogger.h>
 #include <asdxMisc.h>
 #include <asdxGuiMgr.h>
+#include <asdxQuad.h>
 #include <d3d12.h>
 
 #include "TestVS.inc"
@@ -24,9 +25,10 @@
 #include "MeshletTestMS.inc"
 #include "MeshletTestPS.inc"
 
-//#define TEST_TRIANGLE   (1)
-//#define TEST_MESH_SHADER (1)
-#define TEST_MESHLET    (1)
+//#define TEST_TRIANGLE     (1)
+//#define TEST_MESH_SHADER  (1)
+//#define TEST_MESHLET      (1)
+#define TEST_QUAD         (1)
 
 namespace {
 
@@ -97,6 +99,11 @@ bool TestApp::OnInit()
     { return false; }
 #endif
 
+#if TEST_QUAD
+    if (!QuadTestInit())
+    { return false; }
+#endif
+
     return true;
 }
 
@@ -144,7 +151,10 @@ void TestApp::OnFrameRender(asdx::FrameEventArgs& args)
     MeshletTestRender(pCmd, idx);
 #endif
 
-
+#if TEST_QUAD
+    // 矩形の描画
+    QuadTestRender(pCmd, idx);
+#endif
 
     pCmd->Close();
 
@@ -705,6 +715,144 @@ void TestApp::MeshletTestRender(ID3D12GraphicsCommandList6* pCmd, uint8_t idx)
         pCmd->SetGraphicsRootConstantBufferView(paramCBV1, pCBV1);
 
         pCmd->DispatchMesh(mesh.GetMeshletCount(), 1, 1);
+    }
+
+    asdx::BarrierTransition(
+        pCmd,
+        m_ColorTarget[idx].GetResource(),
+        0,
+        D3D12_RESOURCE_STATE_RENDER_TARGET,
+        D3D12_RESOURCE_STATE_PRESENT);
+}
+
+
+
+//-----------------------------------------------------------------------------
+//      フルスクリーン三角形描画用の初期化処理です.
+//-----------------------------------------------------------------------------
+bool TestApp::QuadTestInit()
+{
+    m_pGraphicsQueue = asdx::GfxDevice().GetGraphicsQueue();
+
+    auto pDevice = asdx::GfxDevice().GetDevice();
+
+    if (!asdx::Quad::Instance().Init(asdx::GfxDevice()))
+    {
+        ELOG("Error : Quad::Init() Failed");
+        return false;
+    }
+
+    // ルートシグニチャ.
+    {
+        uint32_t flag = asdx::RSF_ALLOW_IA;
+        flag |= asdx::RSF_DENY_GS;
+        flag |= asdx::RSF_DENY_DS;
+        flag |= asdx::RSF_DENY_HS;
+        flag |= asdx::RSF_DENY_AS;
+        flag |= asdx::RSF_DENY_MS;
+
+        asdx::RootSignatureDesc desc;
+        desc.AddFromShader(TestVS, sizeof(TestVS))
+            .AddFromShader(TestPS, sizeof(TestPS));
+        desc.SetFlag(flag);
+
+        if (!m_RootSignature.Init(pDevice, desc))
+        {
+            ELOG("Error : RootSignature::Init() Failed.");
+            return false;
+        }
+
+        m_IndexCBMesh       = m_RootSignature.Find("CbMesh");
+        m_IndexCBScene      = m_RootSignature.Find("CbScene");
+        m_IndexColorMap     = m_RootSignature.Find("ColorMap");
+        m_IndexLinearClamp  = m_RootSignature.Find("LinearClamp");
+    }
+
+    // パイプラインステート.
+    {
+        D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = {};
+        desc.pRootSignature         = m_RootSignature.GetPtr();
+        desc.VS                     = { TestVS, sizeof(TestVS) };
+        desc.PS                     = { TestPS, sizeof(TestPS) };
+        desc.BlendState             = asdx::PipelineState::GetBS(asdx::BLEND_STATE_OPAQUE);
+        desc.RasterizerState        = asdx::PipelineState::GetRS(asdx::RASTERIZER_STATE_CULL_BACK);
+        desc.DepthStencilState      = asdx::PipelineState::GetDSS(asdx::DEPTH_STATE_DEFAULT);
+        desc.InputLayout            = asdx::Quad::InputLayout;
+        desc.PrimitiveTopologyType  = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+        desc.SampleMask             = UINT_MAX;
+        desc.NumRenderTargets       = 1;
+        desc.RTVFormats[0]          = m_SwapChainFormat;
+        desc.DSVFormat              = DXGI_FORMAT_D32_FLOAT;
+        desc.SampleDesc.Count       = 1;
+        desc.SampleDesc.Quality     = 0;
+
+        if (!m_PSO.Init(pDevice, &desc))
+        {
+            ELOG("Error : PipelineState::Init() Failed.");
+            return false;
+        }
+    }
+
+    {
+        asdx::ResTexture res;
+        if (!res.LoadFromFileA("./test.tga"))
+        {
+            ELOG("Error : ResTexture::LoadFromFileA() Failed.");
+            return false;
+        }
+
+        asdx::IUploadResource* pUpdateResource = nullptr;
+        if (!m_Texture.Init(asdx::GfxDevice(), res, &pUpdateResource))
+        {
+            ELOG("Error : Texture::Init() Failed.");
+            return false;
+        }
+
+        m_Uploader.Push(pUpdateResource);
+
+        res.Release();
+    }
+
+    {
+        if (!m_Sampler.Init(asdx::GfxDevice(), asdx::ST_LINEAR_CLAMP))
+        {
+            ELOG("Error : Sampler::Init() Failed.");
+            return false;
+        }
+    }
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      フルスクリーン三角形の描画関数です.
+//-----------------------------------------------------------------------------
+void TestApp::QuadTestRender(ID3D12GraphicsCommandList6* pCmd, uint8_t idx)
+{
+    asdx::BarrierTransition(
+        pCmd,
+        m_ColorTarget[idx].GetResource(),
+        0,
+        D3D12_RESOURCE_STATE_PRESENT,
+        D3D12_RESOURCE_STATE_RENDER_TARGET);
+
+    auto pRTV = m_ColorTarget[idx].GetRTV();
+    auto pDSV = m_DepthTarget.GetDSV();
+
+    asdx::ClearRTV(pCmd, pRTV, m_ClearColor);
+    asdx::ClearDSV(pCmd, pDSV, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0);
+
+    asdx::SetRenderTarget(pCmd, pRTV, pDSV);
+    asdx::SetViewport(pCmd, m_ColorTarget[idx].GetResource());
+
+    // 描画処理.
+    {
+        pCmd->SetGraphicsRootSignature(m_RootSignature.GetPtr());
+        pCmd->SetPipelineState(m_PSO.GetPtr());
+        pCmd->SetGraphicsRootDescriptorTable(m_IndexColorMap, m_Texture.GetDescriptor()->GetHandleGPU());
+        pCmd->SetGraphicsRootDescriptorTable(m_IndexLinearClamp, m_Sampler.GetDescriptor()->GetHandleGPU());
+
+        asdx::Quad::Instance().Draw(pCmd);
     }
 
     asdx::BarrierTransition(

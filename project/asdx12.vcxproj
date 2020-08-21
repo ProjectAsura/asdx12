@@ -119,6 +119,7 @@
     <ClCompile Include="..\src\asdxP4VHelper.cpp" />
     <ClCompile Include="..\src\asdxPad.cpp" />
     <ClCompile Include="..\src\asdxPipelineState.cpp" />
+    <ClCompile Include="..\src\asdxQuad.cpp" />
     <ClCompile Include="..\src\asdxQueue.cpp" />
     <ClCompile Include="..\src\asdxRandom.cpp" />
     <ClCompile Include="..\src\asdxResModel.cpp" />
@@ -164,6 +165,7 @@
     <ClInclude Include="..\include\asdxParamHistory.h" />
     <ClInclude Include="..\include\asdxPipelineState.h" />
     <ClInclude Include="..\include\asdxPool.h" />
+    <ClInclude Include="..\include\asdxQuad.h" />
     <ClInclude Include="..\include\asdxQueue.h" />
     <ClInclude Include="..\include\asdxRef.h" />
     <ClInclude Include="..\include\asdxResMaterial.h" />
@@ -189,48 +191,48 @@
     <None Include="..\include\asdxLfuCache.inl" />
     <None Include="..\include\asdxLruCache.inl" />
     <None Include="..\include\asdxMath.inl" />
-    <None Include="..\res\shaders\asdxBRDF.hlsli" />
-    <None Include="..\res\shaders\asdxMath.hlsli" />
-    <None Include="..\res\shaders\asdxShadow.hlsli" />
+    <None Include="..\res\shaders\BRDF.hlsli" />
+    <None Include="..\res\shaders\Math.hlsli" />
+    <None Include="..\res\shaders\Shadow.hlsli" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="..\res\shaders\asdxCopyPS.hlsl">
+    <FxCompile Include="..\res\shaders\CopyPS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
     </FxCompile>
-    <FxCompile Include="..\res\shaders\asdxFullScreenVS.hlsl">
+    <FxCompile Include="..\res\shaders\FullScreenVS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
     </FxCompile>
-    <FxCompile Include="..\res\shaders\asdxImGuiPS.hlsl">
+    <FxCompile Include="..\res\shaders\ImGuiPS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.4</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.4</ShaderModel>
     </FxCompile>
-    <FxCompile Include="..\res\shaders\asdxImGuiVS.hlsl">
+    <FxCompile Include="..\res\shaders\ImGuiVS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.4</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.4</ShaderModel>
     </FxCompile>
-    <FxCompile Include="..\res\shaders\asdxSkyBoxPS.hlsl">
+    <FxCompile Include="..\res\shaders\SkyBoxPS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
     </FxCompile>
-    <FxCompile Include="..\res\shaders\asdxSkyBoxVS.hlsl">
+    <FxCompile Include="..\res\shaders\SkyBoxVS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
     </FxCompile>
-    <FxCompile Include="..\res\shaders\asdxSkySpherePS.hlsl">
+    <FxCompile Include="..\res\shaders\SkySpherePS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
     </FxCompile>
-    <FxCompile Include="..\res\shaders\asdxSkySphereVS.hlsl">
+    <FxCompile Include="..\res\shaders\SkySphereVS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
     </FxCompile>
-    <FxCompile Include="..\res\shaders\asdxTaaPS.hlsl">
+    <FxCompile Include="..\res\shaders\TaaPS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
     </FxCompile>
