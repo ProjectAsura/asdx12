@@ -1397,9 +1397,9 @@ uint3 UnpackPrimitiveIndex(uint packed)
 }
 
 //-----------------------------------------------------------------------------
-//      パッキングされた法錐を展開します.
+//      R8G8B8A8_SNORMを展開します.
 //-----------------------------------------------------------------------------
-float4 UnpackCone(uint packed)
+float4 UnpackSnorm(uint packed)
 {
     float4 v;
     v.x = float((packed >> 0) & 0xFF);
@@ -1413,14 +1413,40 @@ float4 UnpackCone(uint packed)
 }
 
 //-----------------------------------------------------------------------------
-//      パッキングされたテクスチャ座標を展開します.
+//      R8G8B8A8_UNORMを展開します.
 //-----------------------------------------------------------------------------
-float2 UnpackTexCoord(uint packed)
+float4 UnpackUnorm(uint packed)
+{
+    float4 v;
+    v.x = float((packed >> 0) & 0xFF);
+    v.y = float((packed >> 8) & 0xFF);
+    v.z = float((packed >> 16) & 0xFF);
+    v.w = float((packed >> 24) & 0xFF);
+    v = v / 255.0;
+    return v;
+}
+
+//-----------------------------------------------------------------------------
+//      R16G16_FLOATを展開します.
+//-----------------------------------------------------------------------------
+float2 UnpackHalf2(uint packed)
 {
     float2 result;
     result.x = f16tof32(packed & 0xffff);
     result.y = f16tof32((packed >> 16) & 0xffff);
     return result;
+}
+
+//-----------------------------------------------------------------------------
+//      R16G16B16A16_UINTを展開します.
+//-----------------------------------------------------------------------------
+uint4 UnpackUshort4(uint2 packed)
+{
+    return uint4(
+        packed.x & 0xffff,
+        (packed.x >> 16) & 0xffff,
+        packed.y & 0xffff,
+        (packed.y >> 16) & 0xffff);
 }
 
 //-----------------------------------------------------------------------------
@@ -1552,32 +1578,6 @@ uint PackTBN(float3 normal, float3 tangent, uint binormalHandedness)
     result |= (binormalHandedness & 0x1) << 31;
     
     return result;
-}
-
-//-----------------------------------------------------------------------------
-//      パッキングされたカラーを展開します.
-//-----------------------------------------------------------------------------
-float4 UnpackColor(uint packed)
-{
-    float4 v;
-    v.x = float((packed >> 0) & 0xFF);
-    v.y = float((packed >> 8) & 0xFF);
-    v.z = float((packed >> 16) & 0xFF);
-    v.w = float((packed >> 24) & 0xFF);
-    v = v / 255.0;
-    return v;
-}
-
-//-----------------------------------------------------------------------------
-//      パッキングされたボーン番号を取得します.
-//-----------------------------------------------------------------------------
-uint4 UnpackBoneIndex(uint2 packed)
-{
-    return uint4(
-        packed.x & 0xffff,
-        (packed.x >> 16) & 0xffff,
-        packed.y & 0xffff,
-        (packed.y >> 16) & 0xffff);
 }
 
 //-----------------------------------------------------------------------------

@@ -698,7 +698,7 @@ namespace asdx {
 //-----------------------------------------------------------------------------
 //      XMLエレメントを生成します.
 //-----------------------------------------------------------------------------
-tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditorBool& control)
+tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditBool& control)
 {
     auto value = control.GetValue();
     auto element = doc->NewElement(tag);
@@ -709,7 +709,7 @@ tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, con
 //-----------------------------------------------------------------------------
 //      XMLエレメントを生成します.
 //-----------------------------------------------------------------------------
-tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditorInt& control)
+tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditInt& control)
 {
     auto value = control.GetValue();
     auto element = doc->NewElement(tag);
@@ -720,7 +720,7 @@ tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, con
 //-----------------------------------------------------------------------------
 //      XMLエレメントを生成します.
 //-----------------------------------------------------------------------------
-tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditorFloat& control)
+tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditFloat& control)
 {
     auto value = control.GetValue();
     auto element = doc->NewElement(tag);
@@ -731,7 +731,7 @@ tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, con
 //-----------------------------------------------------------------------------
 //      XMLエレメントを生成します.
 //-----------------------------------------------------------------------------
-tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditorFloat2& control)
+tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditFloat2& control)
 {
     auto value = control.GetValue();
     auto element = doc->NewElement(tag);
@@ -743,7 +743,7 @@ tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, con
 //-----------------------------------------------------------------------------
 //      XMLエレメントを生成します.
 //-----------------------------------------------------------------------------
-tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditorFloat3& control)
+tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditFloat3& control)
 {
     auto value = control.GetValue();
     auto element = doc->NewElement(tag);
@@ -756,7 +756,7 @@ tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, con
 //-----------------------------------------------------------------------------
 //      XMLエレメントを生成します.
 //-----------------------------------------------------------------------------
-tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditorFloat4& control)
+tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditFloat4& control)
 {
     auto value = control.GetValue();
     auto element = doc->NewElement(tag);
@@ -797,46 +797,46 @@ tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, con
 //-----------------------------------------------------------------------------
 //      XMLエレメントを解析します.
 //-----------------------------------------------------------------------------
-void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditorBool& contorl)
+void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditBool& control)
 {
     auto e = element->FirstChildElement(tag);
     if (e == nullptr)
     { return; }
 
     auto value = e->BoolAttribute("value");
-    control = EditorBool(value);
+    control = EditBool(value);
 }
 
 //-----------------------------------------------------------------------------
 //      XMLエレメントを解析します.
 //-----------------------------------------------------------------------------
-void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditorInt& contorl)
+void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditInt& control)
 {
     auto e = element->FirstChildElement(tag);
     if (e == nullptr)
     { return; }
 
     auto value = e->IntAttribute("value");
-    control = EditorInt(value);
+    control = EditInt(value);
 }
 
 //-----------------------------------------------------------------------------
 //      XMLエレメントを解析します.
 //-----------------------------------------------------------------------------
-void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditorFloat& contorl)
+void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditFloat& control)
 {
     auto e = element->FirstChildElement(tag);
     if (e == nullptr)
     { return; }
 
     auto value = e->FloatAttribute("value");
-    control = EditorFloat(value);
+    control = EditFloat(value);
 }
 
 //-----------------------------------------------------------------------------
 //      XMLエレメントを解析します.
 //-----------------------------------------------------------------------------
-void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditorFloat2& contorl)
+void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditFloat2& control)
 {
     auto e = element->FirstChildElement(tag);
     if (e == nullptr)
@@ -845,13 +845,13 @@ void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditorFloat2& c
     asdx::Vector2 value;
     value.x = e->FloatAttribute("x");
     value.y = e->FloatAttribute("y");
-    control = EditorFloat2(value.x, value.y);
+    control = EditFloat2(value.x, value.y);
 }
 
 //-----------------------------------------------------------------------------
 //      XMLエレメントを解析します.
 //-----------------------------------------------------------------------------
-void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditorFloat3& contorl)
+void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditFloat3& control)
 {
     auto e = element->FirstChildElement(tag);
     if (e == nullptr)
@@ -861,13 +861,13 @@ void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditorFloat3& c
     value.x = e->FloatAttribute("x");
     value.y = e->FloatAttribute("y");
     value.z = e->FloatAttribute("z");
-    control = EditorFloat3(value.x, value.y, value.z);
+    control = EditFloat3(value.x, value.y, value.z);
 }
 
 //-----------------------------------------------------------------------------
 //      XMLエレメントを解析します.
 //-----------------------------------------------------------------------------
-void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditorFloat4& contorl)
+void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditFloat4& control)
 {
     auto e = element->FirstChildElement(tag);
     if (e == nullptr)
@@ -878,13 +878,13 @@ void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditorFloat4& c
     value.y = e->FloatAttribute("y");
     value.z = e->FloatAttribute("z");
     value.w = e->FloatAttribute("w");
-    control = EditorFloat4(value.x, value.y, value.z, value.w);
+    control = EditFloat4(value.x, value.y, value.z, value.w);
 }
 
 //-----------------------------------------------------------------------------
 //      XMLエレメントを解析します.
 //-----------------------------------------------------------------------------
-void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditorColor3& control)
+void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditColor3& control)
 {
     auto e = element->FirstChildElement(tag);
     if (e == nullptr)
@@ -900,7 +900,7 @@ void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditorColor3& c
 //-----------------------------------------------------------------------------
 //      XMLエレメントを解析します.
 //-----------------------------------------------------------------------------
-void EditColor4::Deserialize(tinyxml2::XMLElement* element, const char* tag, EditorColor4& control)
+void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditColor4& control)
 {
     auto e = element->FirstChildElement(tag);
     if (e == nullptr)
@@ -911,7 +911,7 @@ void EditColor4::Deserialize(tinyxml2::XMLElement* element, const char* tag, Edi
     value.y = e->FloatAttribute("g");
     value.z = e->FloatAttribute("b");
     value.w = e->FloatAttribute("a");
-    control = EditorColor4(value.x, value.y, value.z, value.w);
+    control = EditColor4(value.x, value.y, value.z, value.w);
 }
 
 } // namespace asdx
