@@ -18,6 +18,7 @@
 #include <asdxTexture.h>
 #include <asdxSampler.h>
 #include <asdxModel.h>
+#include <asdxCameraController.h>
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -62,6 +63,7 @@ private:
     uint32_t                m_IndexLinearClamp;
     asdx::StructuredBuffer  m_TriangleVertexBuffer;
     asdx::StructuredBuffer  m_TriangleIndexBuffer;
+    asdx::CameraController  m_CameraController;
 
     //=========================================================================
     // private methods.

@@ -84,6 +84,13 @@ TestApp::~TestApp()
 //-----------------------------------------------------------------------------
 bool TestApp::OnInit()
 {
+    m_CameraController.Init(asdx::Vector3(0.0f, 0.0f, 2.0f),
+        asdx::Vector3(0.0f, 0.0f, 0.0f),
+        asdx::Vector3(0.0f, 1.0f, 0.0f),
+        0.1f,
+        1000.0f);
+    m_CameraController.Present();
+
 #if TEST_TRIANGLE
     if (!TriangleTestInit())
     { return false; }
@@ -193,6 +200,15 @@ void TestApp::OnKey(const asdx::KeyEventArgs& args)
 //-----------------------------------------------------------------------------
 void TestApp::OnMouse(const asdx::MouseEventArgs& args)
 {
+    m_CameraController.OnMouse(
+        args.X,
+        args.Y,
+        args.WheelDelta,
+        args.IsLeftButtonDown,
+        args.IsRightButtonDown,
+        args.IsMiddleButtonDown,
+        args.IsSideButton1Down,
+        args.IsSideButton2Down);
 }
 
 //-----------------------------------------------------------------------------
@@ -651,17 +667,14 @@ void TestApp::MeshletTestRender(ID3D12GraphicsCommandList6* pCmd, uint8_t idx)
 
     {
         CbScene res = {};
-        res.View = asdx::Matrix::CreateLookAt(
-            asdx::Vector3(0.0f, 1.0f, -2.0f),
-            asdx::Vector3(0.0f, 0.0f, 0.0f),
-            asdx::Vector3(0.0f, 1.0f, 0.0f));
+        res.View = m_CameraController.GetView();
 
         auto aspect = float(m_Width) / float(m_Height);
         res.Proj = asdx::Matrix::CreatePerspectiveFieldOfView(
             asdx::F_PIDIV4,
             aspect,
-            0.1f,
-            1000.0f);
+            m_CameraController.GetNearClip(),
+            m_CameraController.GetFarClip());
 
         m_CbScene.Update(&res, sizeof(res));
     }
