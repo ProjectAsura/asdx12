@@ -50,7 +50,6 @@ private:
     asdx::VertexBuffer      m_TriangleVB;
     asdx::RootSignature     m_RootSignature;
     asdx::PipelineState     m_PSO;
-    asdx::ResourceUploader  m_Uploader;
     asdx::ConstantBuffer    m_CbMesh;
     asdx::ConstantBuffer    m_CbScene;
     asdx::Texture           m_Texture;

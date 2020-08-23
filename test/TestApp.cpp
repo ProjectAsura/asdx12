@@ -124,7 +124,6 @@ void TestApp::OnTerm()
     m_Texture       .Term();
     m_Sampler       .Term();
     m_Disposer      .Clear();
-    m_Uploader      .Clear();
 }
 
 //-----------------------------------------------------------------------------
@@ -135,7 +134,7 @@ void TestApp::OnFrameRender(asdx::FrameEventArgs& args)
     auto idx  = GetCurrentBackBufferIndex();
     auto pCmd = m_GfxCmdList.Reset();
 
-    m_Uploader.Upload(pCmd);
+    asdx::GfxDevice().SetUploadCommand(pCmd);
 
 #if TEST_TRIANGLE
     // 三角形描画.
@@ -172,8 +171,7 @@ void TestApp::OnFrameRender(asdx::FrameEventArgs& args)
     Present(0);
 
     // フレーム同期.
-    m_Disposer.FrameSync();
-    m_Uploader.FrameSync();
+    asdx::GfxDevice().FrameSync();
 }
 
 //-----------------------------------------------------------------------------
@@ -221,7 +219,7 @@ bool TestApp::TriangleTestInit()
             { asdx::Vector3(-0.5f, -0.5f, 0.0f), asdx::Vector2(0.0f, 0.0f) },
         };
 
-        if (!m_TriangleVB.Init(asdx::GfxDevice(), sizeof(vertices), sizeof(Vertex)))
+        if (!m_TriangleVB.Init(pDevice, sizeof(vertices), sizeof(Vertex)))
         {
             ELOG("Error : VertexBuffer::Init() Failed.");
             return false;
@@ -288,13 +286,13 @@ bool TestApp::TriangleTestInit()
         }
     }
 
-    if (!m_CbMesh.Init(asdx::GfxDevice(), sizeof(CbMesh)))
+    if (!m_CbMesh.Init(sizeof(CbMesh)))
     {
         ELOG("Error : CbMesh Initialize Failed");
         return false;
     }
 
-    if (!m_CbScene.Init(asdx::GfxDevice(), sizeof(CbScene)))
+    if (!m_CbScene.Init(sizeof(CbScene)))
     {
         ELOG("Error : CbScene Initialize Failed.");
         return false;
@@ -308,15 +306,11 @@ bool TestApp::TriangleTestInit()
             return false;
         }
 
-        asdx::IUploadResource* pUpdateResource = nullptr;
-        if (!m_Texture.Init(asdx::GfxDevice(), res, &pUpdateResource))
+        if (!m_Texture.Init(res))
         {
             ELOG("Error : Texture::Init() Failed.");
             return false;
         }
-
-        m_Uploader.Push(pUpdateResource);
-
         res.Release();
     }
 
@@ -391,26 +385,22 @@ bool TestApp::MeshShaderTestInit()
             { asdx::Vector3(-0.5f, -0.5f, 0.0f), asdx::Vector2(0.0f, 0.0f) },
         };
 
-        asdx::IUploadResource* pUpload;
-        if (!m_TriangleVertexBuffer.Init(asdx::GfxDevice(), 3, sizeof(vertices[0]), vertices, &pUpload))
+        if (!m_TriangleVertexBuffer.Init(3, sizeof(vertices[0]), vertices))
         {
             ELOG("Error : StructuredBuffer::Init() Failed.");
             return false;
         }
-        m_Uploader.Push(pUpload);
     }
 
     // 出力番号データ.
     {
         const uint32_t indices[] = { 0, 1, 2 };
 
-        asdx::IUploadResource* pUpload;
-        if (!m_TriangleIndexBuffer.Init(asdx::GfxDevice(), 3, sizeof(indices[0]), indices, &pUpload))
+        if (!m_TriangleIndexBuffer.Init(3, sizeof(indices[0]), indices))
         {
             ELOG("Error : StructuredBuffer::Init() Failed.");
             return false;
         }
-        m_Uploader.Push(pUpload);
     }
 
     // ルートシグニチャ.
@@ -457,13 +447,13 @@ bool TestApp::MeshShaderTestInit()
         }
     }
 
-    if (!m_CbMesh.Init(asdx::GfxDevice(), sizeof(CbMesh)))
+    if (!m_CbMesh.Init(sizeof(CbMesh)))
     {
         ELOG("Error : CbMesh Initialize Failed");
         return false;
     }
 
-    if (!m_CbScene.Init(asdx::GfxDevice(), sizeof(CbScene)))
+    if (!m_CbScene.Init(sizeof(CbScene)))
     {
         ELOG("Error : CbScene Initialize Failed.");
         return false;
@@ -477,14 +467,11 @@ bool TestApp::MeshShaderTestInit()
             return false;
         }
 
-        asdx::IUploadResource* pUpdateResource = nullptr;
-        if (!m_Texture.Init(asdx::GfxDevice(), res, &pUpdateResource))
+        if (!m_Texture.Init(res))
         {
             ELOG("Error : Texture::Init() Failed.");
             return false;
         }
-
-        m_Uploader.Push(pUpdateResource);
 
         res.Release();
     }
@@ -569,7 +556,7 @@ bool TestApp::MeshletTestInit()
             return false;
         }
 
-        if (!m_Model.Init(asdx::GfxDevice(), resource, m_Uploader))
+        if (!m_Model.Init(resource))
         {
             ELOG("Error : Model::Init() Failed.");
             return false;
@@ -620,13 +607,13 @@ bool TestApp::MeshletTestInit()
         }
     }
 
-    if (!m_CbMesh.Init(asdx::GfxDevice(), sizeof(CbMesh)))
+    if (!m_CbMesh.Init(sizeof(CbMesh)))
     {
         ELOG("Error : CbMesh Initialize Failed");
         return false;
     }
 
-    if (!m_CbScene.Init(asdx::GfxDevice(), sizeof(CbScene)))
+    if (!m_CbScene.Init(sizeof(CbScene)))
     {
         ELOG("Error : CbScene Initialize Failed.");
         return false;
@@ -736,7 +723,7 @@ bool TestApp::QuadTestInit()
 
     auto pDevice = asdx::GfxDevice().GetDevice();
 
-    if (!asdx::Quad::Instance().Init(asdx::GfxDevice()))
+    if (!asdx::Quad::Instance().Init(asdx::GfxDevice().GetDevice()))
     {
         ELOG("Error : Quad::Init() Failed");
         return false;
@@ -801,15 +788,11 @@ bool TestApp::QuadTestInit()
             return false;
         }
 
-        asdx::IUploadResource* pUpdateResource = nullptr;
-        if (!m_Texture.Init(asdx::GfxDevice(), res, &pUpdateResource))
+        if (!m_Texture.Init(res))
         {
             ELOG("Error : Texture::Init() Failed.");
             return false;
         }
-
-        m_Uploader.Push(pUpdateResource);
-
         res.Release();
     }
 

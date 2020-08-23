@@ -130,7 +130,7 @@ Half2 EncodeHalf2(const Vector2& value)
 {
     Half2 packed;
     packed.x = ToHalf(value.x);
-    packed.u = ToHalf(value.y);
+    packed.y = ToHalf(value.y);
     return packed;
 }
 

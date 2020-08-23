@@ -101,7 +101,7 @@ void main
 
         MSOutput output = (MSOutput)0;
         output.Position     = projPos;
-        output.TexCoord     = UnpackTexCoord(TexCoords[index]);
+        output.TexCoord     = UnpackHalf2(TexCoords[index]);
         output.Normal       = worldN;
         output.Tangent      = worldT;
 
