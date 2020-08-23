@@ -11,6 +11,17 @@
 #include <asdxRef.h>
 
 
+//-----------------------------------------------------------------------------
+// Linker
+//-----------------------------------------------------------------------------
+#ifdef ASDX_AUTO_LINK
+    #ifdef ASDX_ENABLE_DXC
+        #pragma comment( lib, "dxcompiler.lib" )
+    #else
+        #pragma comment( lib, "d3dcompiler.lib")
+    #endif
+#endif
+
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
