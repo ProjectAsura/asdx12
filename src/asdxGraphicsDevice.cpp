@@ -228,6 +228,10 @@ bool GraphicsDevice::Init(const Desc* pDesc)
 //-----------------------------------------------------------------------------
 void GraphicsDevice::Term()
 {
+    m_ResourceUploader.Clear();
+    m_ResourceDisposer.Clear();
+    m_DescriptorDisposer.Clear();
+
     m_pGraphicsQueue    .Reset();
     m_pComputeQueue     .Reset();
     m_pCopyQueue        .Reset();
@@ -357,6 +361,40 @@ void GraphicsDevice::WaitIdle()
 
     if (m_pVideoProcessQueue.GetPtr() != nullptr)
     { m_pVideoProcessQueue->Wait(Queue::kInfinite); }
+}
+
+//-----------------------------------------------------------------------------
+//      リソースアップローダーに追加します.
+//-----------------------------------------------------------------------------
+void GraphicsDevice::PushToResourceUploader(IUploadResource* pResource, uint8_t lifeTime)
+{ m_ResourceUploader.Push(pResource, lifeTime); }
+
+//-----------------------------------------------------------------------------
+//      リソースディスポーザーに追加します.
+//-----------------------------------------------------------------------------
+void GraphicsDevice::PushToResourceDisposer(ID3D12Resource* pResource, uint8_t lifeTime)
+{ m_ResourceDisposer.Push(pResource, lifeTime); }
+
+//-----------------------------------------------------------------------------
+//      ディスクリプタディスポーザーに追加します.
+//-----------------------------------------------------------------------------
+void GraphicsDevice::PushToDescriptorDisposer(Descriptor* pDescriptor, uint8_t lifeTime)
+{ m_DescriptorDisposer.Push(pDescriptor, lifeTime); }
+
+//-----------------------------------------------------------------------------
+//      アップロードコマンドを設定します.
+//-----------------------------------------------------------------------------
+void GraphicsDevice::SetUploadCommand(ID3D12GraphicsCommandList* pCmdList)
+{ m_ResourceUploader.Upload(pCmdList); }
+
+//-----------------------------------------------------------------------------
+//      フレーム同期を取ります.
+//-----------------------------------------------------------------------------
+void GraphicsDevice::FrameSync()
+{
+    m_ResourceUploader.FrameSync();
+    m_ResourceDisposer.FrameSync();
+    m_DescriptorDisposer.FrameSync();
 }
 
 } // namespace asdx

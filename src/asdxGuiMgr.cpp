@@ -543,8 +543,8 @@ static const ImWchar glyphRangesJapanese[] = {
 //-----------------------------------------------------------------------------
 // Global Varaibles.
 //-----------------------------------------------------------------------------
-#include "../res/shaders/Compiled/asdxImGuiVS.inc"
-#include "../res/shaders/Compiled/asdxImGuiPS.inc"
+#include "../res/shaders/Compiled/ImGuiVS.inc"
+#include "../res/shaders/Compiled/ImGuiPS.inc"
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -641,13 +641,11 @@ GuiMgr& GuiMgr::Instance()
 //-----------------------------------------------------------------------------
 bool GuiMgr::Init
 (
-    GraphicsDevice& device,
     HWND            hWnd,
     uint32_t        width,
     uint32_t        height,
     DXGI_FORMAT     format,
-    const char*     fontPath,
-    ResourceUploader& uploader
+    const char*     fontPath
 )
 {
     m_LastTime = std::chrono::system_clock::now();
@@ -688,16 +686,16 @@ bool GuiMgr::Init
         res.Option          = 0;
         res.pResources      = &subRes;
 
-        asdx::IUploadResource* pUploadResource;
-        if (!m_FontTexture.Init(device, res, &pUploadResource))
+        if (!m_FontTexture.Init(res))
         {
             ELOG("Error : Texture::Init() Failed.");
             return false;
         }
 
-        uploader.Push(pUploadResource);
         io.Fonts->TexID = (void*)m_FontTexture.GetDescriptor();
     }
+
+    auto pDevice = GfxDevice().GetDevice();
 
     // ルートシグニチャの生成.
     {
@@ -758,7 +756,7 @@ bool GuiMgr::Init
             return false;
         }
 
-        hr = device->CreateRootSignature(
+        hr = GfxDevice()->CreateRootSignature(
             0, pBlob->GetBufferPointer(), pBlob->GetBufferSize(), IID_PPV_ARGS(m_RootSig.GetAddress()));
         if (FAILED(hr))
         {
@@ -812,8 +810,8 @@ bool GuiMgr::Init
 
         D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = {};
         desc.pRootSignature         = m_RootSig.GetPtr();
-        desc.VS                     = { asdxImGuiVS, sizeof(asdxImGuiVS) };
-        desc.PS                     = { asdxImGuiPS, sizeof(asdxImGuiPS) };
+        desc.VS                     = { ImGuiVS, sizeof(ImGuiVS) };
+        desc.PS                     = { ImGuiPS, sizeof(ImGuiPS) };
         desc.BlendState             = blendDesc;
         desc.SampleMask             = D3D12_DEFAULT_SAMPLE_MASK;
         desc.RasterizerState        = rasterizerDesc;
@@ -827,7 +825,7 @@ bool GuiMgr::Init
         desc.SampleDesc.Quality     = 0;
         desc.Flags                  = D3D12_PIPELINE_STATE_FLAG_NONE;
 
-        auto hr = device->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(m_PSO.GetAddress()));
+        auto hr = pDevice->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(m_PSO.GetAddress()));
         if (FAILED(hr))
         {
             ELOG("Error : ID3D12Device::CreateGraphicsPipelineState() Failed. errcode = 0x%x", hr);
@@ -838,7 +836,7 @@ bool GuiMgr::Init
     {
         m_VB.Term();
         m_SizeVB = MaxPrimitiveCount * 4;
-        if (!m_VB.Init(device, m_SizeVB * sizeof(ImDrawVert), sizeof(ImDrawVert)))
+        if (!m_VB.Init(pDevice, m_SizeVB * sizeof(ImDrawVert), sizeof(ImDrawVert)))
         {
             ELOG("Error : VertexBuffer::Init() Failed.");
             return false;
@@ -848,7 +846,7 @@ bool GuiMgr::Init
     {
         m_IB.Term();
         m_SizeIB = MaxPrimitiveCount * 6;
-        if (!m_IB.Init(device, sizeof(ImDrawIdx) * m_SizeIB, true))
+        if (!m_IB.Init(pDevice, sizeof(ImDrawIdx) * m_SizeIB, true))
         {
             ELOG("Error : IndexBuffer::Init() Failed.");
             return false;
@@ -856,7 +854,7 @@ bool GuiMgr::Init
     }
 
     {
-        if (!m_CB.Init(device, sizeof(TransformBuffer)))
+        if (!m_CB.Init(sizeof(TransformBuffer)))
         {
             ELOG("Error : ConstantBuffer::Init() Failed.");
             return false;
@@ -898,6 +896,7 @@ bool GuiMgr::Init
         auto& style = ImGui::GetStyle();
         style.WindowRounding = 2.0f;
 
+#if 0
         style.Colors[ ImGuiCol_Text ]                   = ImVec4( 1.000000f, 1.000000f, 1.000000f, 1.000000f );
         style.Colors[ ImGuiCol_TextDisabled ]           = ImVec4( 0.400000f, 0.400000f, 0.400000f, 1.000000f );
         style.Colors[ ImGuiCol_WindowBg ]               = ImVec4( 0.060000f, 0.060000f, 0.060000f, 0.752000f );
@@ -933,6 +932,7 @@ bool GuiMgr::Init
         style.Colors[ ImGuiCol_PlotHistogramHovered ]   = ImVec4( 1.000000f, 0.600000f, 0.000000f, 1.000000f );
         style.Colors[ ImGuiCol_TextSelectedBg ]         = ImVec4( 0.260000f, 0.590000f, 0.980000f, 0.280000f );
         style.Colors[ ImGuiCol_ModalWindowDarkening ]   = ImVec4( 0.800000f, 0.800000f, 0.800000f, 0.280000f );
+#endif
     }
 
     return true;
@@ -998,17 +998,31 @@ void GuiMgr::OnDraw( ImDrawData* pDrawData )
 
     if ( uint32_t( pDrawData->TotalVtxCount ) >= m_SizeVB )
     {
+        auto resource = m_VB.GetResource();
+        if (resource != nullptr)
+        {
+            resource->AddRef();
+            GfxDevice().PushToResourceDisposer(resource);
+        }
+
         m_VB.Term();
         m_SizeVB = pDrawData->TotalVtxCount + 5000;
-        if (!m_VB.Init(GfxDevice(), m_SizeVB * sizeof(ImDrawVert), sizeof(ImDrawVert)))
+        if (!m_VB.Init(GfxDevice().GetDevice(), m_SizeVB * sizeof(ImDrawVert), sizeof(ImDrawVert)))
         { return; }
     }
 
     if ( pDrawData->TotalIdxCount >= MaxPrimitiveCount * 6 )
     {
+        auto resource = m_IB.GetResource();
+        if (resource != nullptr)
+        {
+            resource->AddRef();
+            GfxDevice().PushToResourceDisposer(resource);
+        }
+
         m_IB.Term();
         m_SizeIB = pDrawData->TotalIdxCount + 10000;
-        if (!m_IB.Init(GfxDevice(), m_SizeIB * sizeof(uint32_t), true))
+        if (!m_IB.Init(GfxDevice().GetDevice(), m_SizeIB * sizeof(uint32_t), true))
         { return; }
     }
 

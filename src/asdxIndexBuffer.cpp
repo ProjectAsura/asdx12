@@ -32,10 +32,8 @@ IndexBuffer::~IndexBuffer()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool IndexBuffer::Init(GraphicsDevice& device, uint32_t size, bool isShortFormat)
+bool IndexBuffer::Init(ID3D12Device* pDevice, uint32_t size, bool isShortFormat)
 {
-    auto pDevice = device.GetDevice();
-
     if (pDevice == nullptr || size == 0)
     {
         ELOG("Error : Invalid Argument.");

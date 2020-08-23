@@ -57,16 +57,11 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      初期化処理を行います.
     //!
-    //! @param[in]      device          グラフィックスデバイスです.
     //! @param[in]      resource        スタティックメッシュリソースです.
-    //! @param[in]      uploader        リソースアップローダです.
     //! @retval true    初期化成功.
     //! @retval false   初期化失敗.
     //-------------------------------------------------------------------------
-    bool Init(
-        GraphicsDevice&     device,
-        const ResMesh&      resource,
-        ResourceUploader&   uploader);
+    bool Init(const ResMesh& resource);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.
@@ -263,13 +258,11 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      初期化処理を行います.
     //!
-    //! @param[in]      device      デバイスです.
     //! @param[in]      model       モデルリソースです.
-    //! @param[in]      uploader    リソースアップローダーです.
     //! @retval true    初期化に成功.
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
-    bool Init(GraphicsDevice& device, const ResModel& model, ResourceUploader& uploader);
+    bool Init(const ResModel& model);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.

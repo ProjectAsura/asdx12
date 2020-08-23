@@ -8,8 +8,9 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <asdxEditParam.h>
-#include <asdxParamHistory.h>
 #include <asdxAppHistoryMgr.h>
+#include <asdxResourceUploader.h>
+#include <asdxMisc.h>
 
 #ifdef ASDX_ENABLE_IMGUI
 #include <imgui.h>
@@ -19,6 +20,171 @@
 #ifndef ASDX_UNUSED
 #define ASDX_UNUSED(x) ((void)x)
 #endif//ASDX_UNUSED
+
+
+namespace {
+
+///////////////////////////////////////////////////////////////////////////////
+// ParamHistory
+///////////////////////////////////////////////////////////////////////////////
+template<typename T>
+class ParamHistory : public asdx::IHistory
+{
+    //=========================================================================
+    // list of friend classes and methods.
+    //=========================================================================
+    /* NOTHING */
+
+public:
+    //=========================================================================
+    // public variables.
+    //=========================================================================
+    /* NOTHING */
+
+    //=========================================================================
+    // public methods.
+    //=========================================================================
+
+    //-------------------------------------------------------------------------
+    //! @brief      コンストラクタです.
+    //-------------------------------------------------------------------------
+    ParamHistory(T* target, const T& value)
+    : m_pTarget (target)
+    , m_Curr    (value)
+    , m_Prev    (*target)
+    { /* DO_NOTHING */ }
+
+    ParamHistory(T* target, const T& nextValue, const T& prevValue)
+    : m_pTarget (target)
+    , m_Curr    (nextValue)
+    , m_Prev    (prevValue)
+    { /* DO_NOTHING */ }
+
+    //-------------------------------------------------------------------------
+    //! @brief      やり直します.
+    //-------------------------------------------------------------------------
+    void Redo() override
+    { *m_pTarget = m_Curr; }
+
+    //-------------------------------------------------------------------------
+    //! @brief      元に戻します.
+    //-------------------------------------------------------------------------
+    void Undo() override
+    { *m_pTarget = m_Prev; }
+
+private:
+    //=========================================================================
+    // private variables.
+    //=========================================================================
+    T*      m_pTarget;  //!< 変更対象.
+    T       m_Prev;     //!< 変更前の値.
+    T       m_Curr;     //!< 変更後の値.
+
+    //=========================================================================
+    // private methods.
+    //=========================================================================
+    /* NOTHING */
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// TextureHistory class
+///////////////////////////////////////////////////////////////////////////////
+class TextureHistory : public asdx::IHistory
+{
+    //=========================================================================
+    // list of friend classes and methods.
+    //=========================================================================
+    /* NOTHING */
+
+public:
+    //=========================================================================
+    // public variables.
+    //=========================================================================
+    /* NOTHING */
+
+    //=========================================================================
+    // public methods.
+    //=========================================================================
+
+    //-------------------------------------------------------------------------
+    //      コンストラクタです.
+    //-------------------------------------------------------------------------
+    TextureHistory
+    (
+        asdx::Texture*      pTexture,
+        const std::string&  nextValue,
+        const std::string&  prevValue
+    )
+    : m_pTexture    (pTexture)
+    , m_NextPath    (nextValue)
+    , m_PrevPath    (prevValue)
+    { /* DO_NOTHING */ }
+
+    //-------------------------------------------------------------------------
+    //      やり直しを実行します.
+    //-------------------------------------------------------------------------
+    void Redo() override
+    {
+        if (m_pTexture == nullptr)
+        { return; }
+
+        if (m_NextPath == "" || m_NextPath.empty())
+        {
+            m_pTexture->Term();
+        }
+        else
+        {
+            asdx::ResTexture res;
+            if (!res.LoadFromFileA(m_NextPath.c_str()))
+            { return; }
+
+            m_pTexture->Term();
+                
+            if (!m_pTexture->Init(res))
+            { return; }
+        }
+    }
+
+    //-------------------------------------------------------------------------
+    //      元に戻すを実行します.
+    //-------------------------------------------------------------------------
+    void Undo() override
+    {
+        if (m_pTexture == nullptr)
+        { return; }
+
+        if (m_PrevPath == "" || m_PrevPath.empty())
+        {
+            m_pTexture->Term();
+        }
+        else
+        {
+            asdx::ResTexture res;
+            if (!res.LoadFromFileA(m_PrevPath.c_str()))
+            { return; }
+
+            m_pTexture->Term();
+
+            if (!m_pTexture->Init(res))
+            { return; }
+        }
+    }
+
+private:
+    //=========================================================================
+    // private variables.
+    //=========================================================================
+    asdx::Texture*          m_pTexture  = nullptr;
+    std::string             m_NextPath;
+    std::string             m_PrevPath;
+
+    //=========================================================================
+    // private methods.
+    //=========================================================================
+    /* NOTHING */
+};
+
+} // namespace 
 
 
 namespace asdx {
@@ -71,9 +237,7 @@ void EditBool::DrawCheckbox(const char* tag)
 #ifdef ASDX_ENABLE_IMGUI
     auto prev = m_Value;
     if (ImGui::Checkbox(tag, &m_Value))
-    {
-        AppHistoryMgr::GetInstance().Add(new ParamHistory<bool>(&m_Value, m_Value, prev), false);
-    }
+    { AppHistoryMgr::GetInstance().Add(new ParamHistory<bool>(&m_Value, m_Value, prev), false); }
 #else
     ASDX_UNUSED(tag);
 #endif
@@ -689,6 +853,122 @@ void EditColor4::DrawPicker(const char* tag)
 #endif
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// EditTexture class
+///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      コンストラクタです.
+//-----------------------------------------------------------------------------
+EditTexture::EditTexture(const std::string& value)
+: m_Path        (value)
+, m_pUploader   (nullptr)
+{ /* DO_NOTHING */ }
+
+//-----------------------------------------------------------------------------
+//      デストラクタです.
+//-----------------------------------------------------------------------------
+EditTexture::~EditTexture()
+{ Term(); }
+
+//-----------------------------------------------------------------------------
+//      終了処理を行います.
+//-----------------------------------------------------------------------------
+void EditTexture::Term()
+{ m_Texture.Term(); }
+
+//-----------------------------------------------------------------------------
+//      パスを設定します.
+//-----------------------------------------------------------------------------
+void EditTexture::SetPath(const std::string& value, bool history)
+{
+    if (!history)
+    {
+        m_Path = value;
+        return;
+    }
+
+    if (m_Path == value)
+    { return; }
+
+    AppHistoryMgr::GetInstance().Add(CreateHistory(value));
+}
+
+//-----------------------------------------------------------------------------
+//      パスを取得します.
+//-----------------------------------------------------------------------------
+const std::string& EditTexture::GetPath() const
+{ return m_Path; }
+
+//-----------------------------------------------------------------------------
+//      グループヒストリー用のヒストリーを作成します.
+//-----------------------------------------------------------------------------
+IHistory* EditTexture::CreateHistory(const std::string& next)
+{ return new TextureHistory(&m_Texture, next, m_Path); }
+
+//-----------------------------------------------------------------------------
+//      コントールを描画します.
+//-----------------------------------------------------------------------------
+void EditTexture::DrawControl
+(
+    const char* label,
+    const char* defaultPath,
+    uint32_t    width,
+    uint32_t    height
+)
+{
+#if ASDX_ENABLE_IMGUI
+    ImGui::PushID(label);
+    {
+        auto descriptor = m_Texture.GetDescriptor();
+        if (descriptor != nullptr)
+        {
+            ImTextureID texture = (void*)descriptor;
+            ImGui::Image(texture, ImVec2(float(width), float(height)));
+
+            if (ImGui::IsItemHovered())
+            { ImGui::SetTooltip("%s", m_Path.c_str()); }
+        }
+        else
+        { ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), u8"NO TEXTURE"); }
+
+        if (ImGui::Button(u8"Setting"))
+        {
+            std::string path;
+            if (OpenFileDlg(
+                "Texture(*.tga, *.dds)\0*.tga;*.dds\0\0",
+                path, defaultPath))
+            { SetPath(path.c_str(), true); }
+        }
+
+        if (descriptor != nullptr)
+        {
+            ImGui::SameLine();
+            if (ImGui::Button(u8"Delete"))
+            { SetPath("", true); }
+        }
+    }
+    ImGui::PopID();
+#else
+    ASDX_UNUSED(label);
+    ASDX_UNUSED(defaultPath);
+    ASDX_UNUSED(width);
+    ASDX_UNUSED(height);
+#endif
+}
+
+//-----------------------------------------------------------------------------
+//      リソースを取得します.
+//-----------------------------------------------------------------------------
+ID3D12Resource* EditTexture::GetResource() const
+{ return m_Texture.GetResource(); }
+
+//-----------------------------------------------------------------------------
+//      ディスクリプタを取得します.
+//-----------------------------------------------------------------------------
+const Descriptor* EditTexture::GetDescriptor() const
+{ return m_Texture.GetDescriptor(); }
+
 } // namespace asdx
 
 
@@ -791,6 +1071,16 @@ tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, con
     element->SetAttribute("g", value.y);
     element->SetAttribute("b", value.z);
     element->SetAttribute("a", value.w);
+    return element;
+}
+
+//-----------------------------------------------------------------------------
+//      XMLエレメントを生成します.
+//-----------------------------------------------------------------------------
+tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditTexture& control)
+{
+    auto element = doc->NewElement(tag);
+    element->SetAttribute("path", control.GetPath().c_str());
     return element;
 }
 
@@ -912,6 +1202,19 @@ void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditColor4& con
     value.z = e->FloatAttribute("b");
     value.w = e->FloatAttribute("a");
     control = EditColor4(value.x, value.y, value.z, value.w);
+}
+
+//-----------------------------------------------------------------------------
+//      XMLエレメントを解析します.
+//-----------------------------------------------------------------------------
+void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditTexture& control)
+{
+    auto e = element->FirstChildElement(tag);
+    if (e == nullptr)
+    { return; }
+
+    auto path = e->Attribute("path");
+    control.SetPath(path);
 }
 
 } // namespace asdx

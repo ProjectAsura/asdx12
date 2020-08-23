@@ -51,7 +51,7 @@ public:
     //! @retval true    初期化に成功.
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
-    bool Init(GraphicsDevice& device, D3D12_COMMAND_LIST_TYPE type);
+    bool Init(ID3D12Device* pDevice, D3D12_COMMAND_LIST_TYPE type);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.

@@ -871,7 +871,7 @@ bool Application::InitD3D()
         }
     }
 
-    if (!m_GfxCmdList.Init(GfxDevice(), D3D12_COMMAND_LIST_TYPE_DIRECT))
+    if (!m_GfxCmdList.Init(GfxDevice().GetDevice(), D3D12_COMMAND_LIST_TYPE_DIRECT))
     {
         ELOG("Error : CommandList::Init() Failed.");
         return false;

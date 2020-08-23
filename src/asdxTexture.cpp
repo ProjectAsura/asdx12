@@ -347,20 +347,9 @@ Texture::~Texture()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool Texture::Init
-(
-    GraphicsDevice&     device,
-    const ResTexture&   resource,
-    IUploadResource**   ppUploadResource
-)
+bool Texture::Init(const ResTexture& resource)
 {
-    if (ppUploadResource == nullptr)
-    {
-        ELOG("Error : Invalid Argument.");
-        return false;
-    }
-
-    auto pD3DDevice = device.GetDevice();
+    auto pD3DDevice = GfxDevice().GetDevice();
 
     auto dimension  = D3D12_RESOURCE_DIMENSION_UNKNOWN;
     auto isCube     = false;
@@ -483,7 +472,7 @@ bool Texture::Init
 
     // シェーダリソースビューの生成.
     {
-        auto ret = device.AllocHandle(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, m_pDescriptor.GetAddress());
+        auto ret = GfxDevice().AllocHandle(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, m_pDescriptor.GetAddress());
         if (!ret)
         {
             ELOG("Error : GraphicsDevice::AllocHandle() Failed.");
@@ -495,14 +484,14 @@ bool Texture::Init
 
     // テクスチャアップロードリソースを生成します.
     auto uploadResource = new TextureUploadResource();
-    if (!uploadResource->Init(device.GetDevice(), m_pResource.GetPtr(), resource))
+    if (!uploadResource->Init(pD3DDevice, m_pResource.GetPtr(), resource))
     {
         uploadResource->Release();
         uploadResource = nullptr;
         return false;
     }
 
-    *ppUploadResource = uploadResource;
+    GfxDevice().PushToResourceUploader(uploadResource);
 
     return true;
 }
@@ -512,6 +501,20 @@ bool Texture::Init
 //-----------------------------------------------------------------------------
 void Texture::Term()
 {
+    auto pDescriptor = m_pDescriptor.GetPtr();
+    if (pDescriptor != nullptr)
+    {
+        pDescriptor->AddRef();
+        GfxDevice().PushToDescriptorDisposer(pDescriptor);
+    }
+
+    auto pResource = m_pResource.GetPtr();
+    if (pResource != nullptr)
+    {
+        pResource->AddRef();
+        GfxDevice().PushToResourceDisposer(pResource);
+    }
+
     m_pDescriptor.Reset();
     m_pResource  .Reset();
 }

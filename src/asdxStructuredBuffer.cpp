@@ -303,9 +303,9 @@ StructuredBuffer::~StructuredBuffer()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool StructuredBuffer::Init(GraphicsDevice& device, uint64_t count, uint32_t stride, D3D12_RESOURCE_STATES state)
+bool StructuredBuffer::Init(uint64_t count, uint32_t stride, D3D12_RESOURCE_STATES state)
 {
-    auto pDevice = device.GetDevice();
+    auto pDevice = GfxDevice().GetDevice();
 
     if (pDevice == nullptr || count == 0 || stride == 0)
     {
@@ -358,13 +358,13 @@ bool StructuredBuffer::Init(GraphicsDevice& device, uint64_t count, uint32_t str
     viewDesc.Buffer.StructureByteStride = stride;
     viewDesc.Buffer.Flags               = D3D12_BUFFER_SRV_FLAG_NONE;
 
-    if (!device.AllocHandle(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, m_pDescriptor.GetAddress()))
+    if (!GfxDevice().AllocHandle(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, m_pDescriptor.GetAddress()))
     {
         ELOG("Error : GraphicsDevice::AllocHandle() Failed.");
         return false;
     }
 
-    device->CreateShaderResourceView(m_pResource.GetPtr(), &viewDesc, m_pDescriptor->GetHandleCPU());
+    pDevice->CreateShaderResourceView(m_pResource.GetPtr(), &viewDesc, m_pDescriptor->GetHandleCPU());
 
     return true;
 }
@@ -374,25 +374,23 @@ bool StructuredBuffer::Init(GraphicsDevice& device, uint64_t count, uint32_t str
 //-----------------------------------------------------------------------------
 bool StructuredBuffer::Init
 (
-    GraphicsDevice&     device,
     uint64_t            count,
     uint32_t            stride,
-    const void*         pInitData,
-    IUploadResource**   ppUploadResource
+    const void*         pInitData
 )
 {
-    if (!Init(device, count, stride, D3D12_RESOURCE_STATE_COPY_DEST))
+    if (!Init(count, stride, D3D12_RESOURCE_STATE_COPY_DEST))
     { return false;  }
 
     auto uploadResource = new BufferUploadResource();
-    if (!uploadResource->Init(device.GetDevice(), m_pResource.GetPtr(), pInitData))
+    if (!uploadResource->Init(GfxDevice().GetDevice(), m_pResource.GetPtr(), pInitData))
     {
         uploadResource->Release();
         uploadResource = nullptr;
         return false;
     }
 
-    *ppUploadResource = uploadResource;
+    GfxDevice().PushToResourceUploader(uploadResource);
 
     return true;
 }
@@ -402,6 +400,20 @@ bool StructuredBuffer::Init
 //-----------------------------------------------------------------------------
 void StructuredBuffer::Term()
 {
+    auto descriptor = m_pDescriptor.GetPtr();
+    if (descriptor != nullptr)
+    {
+        descriptor->AddRef();
+        GfxDevice().PushToDescriptorDisposer(descriptor);
+    }
+
+    auto resource = m_pResource.GetPtr();
+    if (resource != nullptr)
+    {
+        resource->AddRef();
+        GfxDevice().PushToResourceDisposer(resource);
+    }
+
     m_pResource  .Reset();
     m_pDescriptor.Reset();
 }

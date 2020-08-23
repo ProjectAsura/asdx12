@@ -14,6 +14,8 @@
 #include <asdxRef.h>
 #include <asdxQueue.h>
 #include <asdxDescriptor.h>
+#include <asdxResourceUploader.h>
+#include <asdxDisposer.h>
 
 
 namespace asdx {
@@ -44,7 +46,7 @@ public:
     //=========================================================================
     // public variables.
     //=========================================================================
-    /* NOTHING */
+    static const uint8_t kDefaultLiftTime = 4;
 
     //=========================================================================
     // public methods.
@@ -152,6 +154,48 @@ public:
     //-------------------------------------------------------------------------
     void WaitIdle();
 
+    //-------------------------------------------------------------------------
+    //! @brief      リソースアップローダーに追加します.
+    //!
+    //! @param[in]      pResource       アップロードリソース.
+    //! @param[in]      lifeTime        生存フレーム数です.
+    //-------------------------------------------------------------------------
+    void PushToResourceUploader(
+        IUploadResource* pResource,
+        uint8_t lifeTime = kDefaultLiftTime);
+
+    //-------------------------------------------------------------------------
+    //! @brief      リソースディスポーザーに追加します.
+    //!
+    //! @param[in]      pResource       破棄リソース.
+    //! @param[in]      lifeTime        生存フレーム数です.
+    //--------------------------------------------------------------------------
+    void PushToResourceDisposer(
+        ID3D12Resource* pResource, 
+        uint8_t lifeTime = kDefaultLiftTime);
+
+    //-------------------------------------------------------------------------
+    //! @brief      ディスクリプタディスポーザーに追加します.
+    //!
+    //! @param[in]      pDescriptor     破棄ディスクリプタ.
+    //! @param[in]      lifeTime        生存フレーム数です.
+    //-------------------------------------------------------------------------
+    void PushToDescriptorDisposer(
+        Descriptor* pDescriptor,
+        uint8_t lifeTime = kDefaultLiftTime);
+
+    //-------------------------------------------------------------------------
+    //! @brief      アップロードコマンドを設定します.
+    //!
+    //! @param[in]      pCmdList        コマンドリストです.
+    //-------------------------------------------------------------------------
+    void SetUploadCommand(ID3D12GraphicsCommandList* pCmdList);
+
+    //-------------------------------------------------------------------------
+    //! @brief      フレーム同期を行います.
+    //-------------------------------------------------------------------------
+    void FrameSync();
+
 private:
     //=========================================================================
     // private variables.
@@ -168,6 +212,9 @@ private:
     RefPtr<Queue>               m_pVideoProcessQueue;       //!< ビデオプロセスキュー.
     RefPtr<Queue>               m_pVideoEncodeQueue;        //!< ビデオエンコードキュー.
     DescriptorHeap              m_DescriptorHeap[4];        //!< ディスクリプタヒープ.
+    ResourceUploader            m_ResourceUploader;         //!< リソースアップローダー.
+    Disposer<ID3D12Resource>    m_ResourceDisposer;         //!< リソースディスポーザー.
+    Disposer<Descriptor>        m_DescriptorDisposer;       //!< ディスクリプタディスポーザー.
     std::mutex                  m_Mutex;
 
     //=========================================================================

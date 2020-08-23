@@ -48,16 +48,11 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      初期化処理を行います.
     //!
-    //! @param[in]      device              グラフィックスデバイスです.
     //! @param[in]      resource            リソーステクスチャです.
-    //! @param[out]     ppUploadResource    テクスチャアップロードリソースの格納先です.
     //! @retval true    初期化に成功.
     //! @retval fasle   初期化に失敗.
     //-------------------------------------------------------------------------
-    bool Init(
-        GraphicsDevice&     device,
-        const ResTexture&   resource,
-        IUploadResource**   ppUploadResource);
+    bool Init(const ResTexture& resource);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.

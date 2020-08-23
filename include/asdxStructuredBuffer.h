@@ -47,32 +47,24 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      初期化処理を行います.
     //!
-    //! @param[in]      device      グラフィックスデバイスです.
     //! @param[in]      count       配列数です.
     //! @param[in]      stride      構造体のサイズです.
     //! @param[in]      state       リソースステートです.
     //! @retval true    初期化に成功.
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
-    bool Init(GraphicsDevice& device, uint64_t count, uint32_t stride, D3D12_RESOURCE_STATES state);
+    bool Init(uint64_t count, uint32_t stride, D3D12_RESOURCE_STATES state);
 
     //-------------------------------------------------------------------------
     //! @brief      初期化処理を行います.
     //!
-    //! @param[in]      device              グラフィックスデバイスです.
     //! @param[in]      count               配列数です.
     //! @param[in]      stride              構造体のサイズです.
     //! @param[in]      pInitData           初期化データです.
-    //! @param[out]     ppUploadResource    アップロードリソースの格納先です.
     //! @retval true    初期化に成功.
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
-    bool Init(
-        GraphicsDevice&     device,
-        uint64_t            count,
-        uint32_t            stride,
-        const void*         pInitData,
-        IUploadResource**   ppUploadResource);
+    bool Init(uint64_t count, uint32_t stride, const void* pInitData);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.

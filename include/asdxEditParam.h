@@ -9,10 +9,16 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <asdxMath.h>
-#include <asdxHistory.h>
+#include <asdxTexture.h>
 
 
 namespace asdx {
+
+//-----------------------------------------------------------------------------
+// Forward Declarations.
+//-----------------------------------------------------------------------------
+struct IHistory;
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // EditBool class
@@ -60,7 +66,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      グループヒストリー用履歴を作成します.
     //!
-    //! @param[in]      nexe        次に設定する値.
+    //! @param[in]      next        次に設定する値.
     //! @return     生成した履歴を返却します.
     //-------------------------------------------------------------------------
     asdx::IHistory* CreateHistory(bool next);
@@ -129,7 +135,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      グループヒストリー用履歴を作成します.
     //!
-    //! @param[in]      nexe        次に設定する値.
+    //! @param[in]      next        次に設定する値.
     //! @return     生成した履歴を返却します.
     //-------------------------------------------------------------------------
     asdx::IHistory* CreateHistory(int next);
@@ -219,7 +225,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      グループヒストリー用履歴を作成します.
     //!
-    //! @param[in]      nexe        次に設定する値.
+    //! @param[in]      next        次に設定する値.
     //! @return     生成した履歴を返却します.
     //-------------------------------------------------------------------------
     asdx::IHistory* CreateHistory(float next);
@@ -291,7 +297,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      グループヒストリー用履歴を作成します.
     //!
-    //! @param[in]      nexe        次に設定する値.
+    //! @param[in]      next        次に設定する値.
     //! @return     生成した履歴を返却します.
     //-------------------------------------------------------------------------
     asdx::IHistory* CreateHistory(const asdx::Vector2& next);
@@ -363,7 +369,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      グループヒストリー用履歴を作成します.
     //!
-    //! @param[in]      nexe        次に設定する値.
+    //! @param[in]      next        次に設定する値.
     //! @return     生成した履歴を返却します.
     //-------------------------------------------------------------------------
     asdx::IHistory* CreateHistory(const asdx::Vector3& next);
@@ -434,7 +440,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      グループヒストリー用履歴を作成します.
     //!
-    //! @param[in]      nexe        次に設定する値.
+    //! @param[in]      next        次に設定する値.
     //! @return     生成した履歴を返却します.
     //-------------------------------------------------------------------------
     asdx::IHistory* CreateHistory(const asdx::Vector4& next);
@@ -506,7 +512,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      グループヒストリー用履歴を作成します.
     //!
-    //! @param[in]      nexe        次に設定する値.
+    //! @param[in]      next        次に設定する値.
     //! @return     生成した履歴を返却します.
     //-------------------------------------------------------------------------
     asdx::IHistory* CreateHistory(const asdx::Vector3& next);
@@ -578,7 +584,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      グループヒストリー用履歴を作成します.
     //!
-    //! @param[in]      nexe        次に設定する値.
+    //! @param[in]      next        次に設定する値.
     //! @return     生成した履歴を返却します.
     //-------------------------------------------------------------------------
     asdx::IHistory* CreateHistory(const asdx::Vector4& next);
@@ -604,6 +610,106 @@ private:
     /* NOTHING */
 };
 
+///////////////////////////////////////////////////////////////////////////////
+// EditTexture class
+///////////////////////////////////////////////////////////////////////////////
+class EditTexture
+{
+    //=========================================================================
+    // list of friend classes and methods.
+    //=========================================================================
+    /* NOTHING */
+
+public:
+    //=========================================================================
+    // public variables.
+    //=========================================================================
+    /* NOTHING */
+
+    //=========================================================================
+    // public methods.
+    //=========================================================================
+
+    //-------------------------------------------------------------------------
+    //! @brief      コンストラクタです.
+    //-------------------------------------------------------------------------
+    EditTexture(const std::string& value = "");
+
+    //-------------------------------------------------------------------------
+    //! @brief      デストラクタです.
+    //-------------------------------------------------------------------------
+    ~EditTexture();
+
+    //-------------------------------------------------------------------------
+    //! @brief      終了処理を行います.
+    //-------------------------------------------------------------------------
+    void Term();
+
+    //-------------------------------------------------------------------------
+    //! @brief      ファイルパスを設定します.
+    //!
+    //! @param[in]      value       設定するファイルパスです.
+    //! @param[in]      history     ヒストリー登録する場合は true を指定.
+    //-------------------------------------------------------------------------
+    void SetPath(const std::string& value, bool history = false);
+
+    //-------------------------------------------------------------------------
+    //! @brief      ファイルパスを取得します.
+    //!
+    //! @return     ファイルパスを返却します.
+    //-------------------------------------------------------------------------
+    const std::string& GetPath() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      グループヒストリー用履歴を作成します.
+    //!
+    //! @param[in]      next        次に設定する値.
+    //! @return     生成した履歴を返却します.
+    //-------------------------------------------------------------------------
+    asdx::IHistory* CreateHistory(const std::string& next);
+
+    //-------------------------------------------------------------------------
+    //! @brief      コントロールを描画します.
+    //!
+    //! @param[in]      label           表示名です.
+    //! @param[in]      defaultPath     デフォルトパスです.
+    //! @param[in]      width           表示する横幅.
+    //! @param[in]      height          表示する縦幅
+    //-------------------------------------------------------------------------
+    void DrawControl(
+        const char* label,
+        const char* defaultPath,
+        uint32_t width  = 64,
+        uint32_t height = 64);
+
+    //-------------------------------------------------------------------------
+    //! @brief      リソースを取得します.
+    //!
+    //! @return     リソースを返却します.
+    //-------------------------------------------------------------------------
+    ID3D12Resource* GetResource() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      ディスクリプターを取得します.
+    //!
+    //! @return     ディスクリプターを返却します.
+    //-------------------------------------------------------------------------
+    const Descriptor* GetDescriptor() const;
+
+private:
+    //=========================================================================
+    // private variables.
+    //=========================================================================
+    asdx::Texture           m_Texture;      //!< テクスチャです.
+    std::string             m_Path;         //!< ファイルパスです.
+    asdx::ResourceUploader* m_pUploader;    //!< アップローダーです.
+
+    //=========================================================================
+    // private methods.
+    //=========================================================================
+    /* NOTHING */
+};
+
 } // namespace asdx
 
 
@@ -612,23 +718,25 @@ private:
 
 namespace asdx {
 
-tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditBool&   control);
-tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditInt&    control);
-tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditFloat&  control);
-tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditFloat2& control);
-tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditFloat3& control);
-tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditFloat4& control);
-tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditColor3& control);
-tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditColor4& control);
+tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditBool&    control);
+tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditInt&     control);
+tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditFloat&   control);
+tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditFloat2&  control);
+tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditFloat3&  control);
+tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditFloat4&  control);
+tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditColor3&  control);
+tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditColor4&  control);
+tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditTexture& control);
 
-void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditBool&   control);
-void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditInt&    control);
-void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditFloat&  control);
-void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditFloat2& control);
-void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditFloat3& control);
-void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditFloat4& control);
-void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditColor3& control);
-void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditColor4& control);
+void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditBool&    control);
+void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditInt&     control);
+void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditFloat&   control);
+void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditFloat2&  control);
+void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditFloat3&  control);
+void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditFloat4&  control);
+void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditColor3&  control);
+void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditColor4&  control);
+void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditTexture& control);
 
 } // namespace asdx
 #endif//ASDX_ENABLE_TINYXML2

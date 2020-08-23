@@ -35,163 +35,124 @@ Mesh::~Mesh()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool Mesh::Init(GraphicsDevice& device, const ResMesh& resource, ResourceUploader& uploader)
+bool Mesh::Init(const ResMesh& resource)
 {
     {
-        asdx::IUploadResource* pUpload = nullptr;
         if (!m_Positions.Init(
-            device,
             uint64_t(resource.Positions.size()),
             uint32_t(sizeof(resource.Positions[0])),
-            resource.Positions.data(),
-            &pUpload))
+            resource.Positions.data()))
         {
             ELOG("Error : StructuredBuffer::Init() Failed.");
             return false;
         }
-        uploader.Push(pUpload);
     }
 
     if (resource.TangentSpaces.size() > 0)
     {
-        asdx::IUploadResource* pUpload = nullptr;
         if (!m_TangentSpaces.Init(
-            device,
             uint64_t(resource.TangentSpaces.size()),
             uint32_t(sizeof(resource.TangentSpaces[0])),
-            resource.TangentSpaces.data(),
-            &pUpload))
+            resource.TangentSpaces.data()))
         {
             ELOG("Error : StructuredBuffer::Init() Failed.");
             return false;
         }
-        uploader.Push(pUpload);
     }
 
     if (resource.Colors.size() > 0)
     {
-        asdx::IUploadResource* pUpload = nullptr;
         if (!m_Colors.Init(
-            device,
             uint64_t(resource.Colors.size()),
             uint32_t(sizeof(resource.Colors[0])),
-            resource.Colors.data(),
-            &pUpload))
+            resource.Colors.data()))
         {
             ELOG("Error : StructuredBuffer::Init() Failed.");
             return false;
         }
-        uploader.Push(pUpload);
     }
 
     for(auto i=0; i<4; ++i)
     {
         if (resource.TexCoords[i].size() > 0)
         {
-            asdx::IUploadResource* pUpload = nullptr;
             if (!m_TexCoords[i].Init(
-                device,
                 uint64_t(resource.TexCoords[i].size()),
                 uint32_t(sizeof(resource.TexCoords[i][0])),
-                resource.TexCoords[i].data(),
-                &pUpload))
+                resource.TexCoords[i].data()))
             {
                 ELOG("Error : StructuredBuffer:Init() Failed.");
                 return false;
             }
-            uploader.Push(pUpload);
         }
     }
 
     if (resource.BoneIndices.size() > 0)
     {
-        asdx::IUploadResource* pUpload = nullptr;
         if (!m_BoneIndices.Init(
-            device,
             uint64_t(resource.BoneIndices.size()),
             uint32_t(sizeof(resource.BoneIndices[0])),
-            resource.BoneIndices.data(),
-            &pUpload))
+            resource.BoneIndices.data()))
         {
             ELOG("Error : StructuredBuffer::Init() Failed.");
             return false;
         }
-        uploader.Push(pUpload);
     }
 
     if (resource.BoneWeights.size() > 0)
     {
-        asdx::IUploadResource* pUpload = nullptr;
         if (!m_BoneWeights.Init(
-            device,
             uint64_t(resource.BoneWeights.size()),
             uint32_t(sizeof(resource.BoneWeights[0])),
-            resource.BoneWeights.data(),
-            &pUpload))
+            resource.BoneWeights.data()))
         {
             ELOG("Error : StructuredBuffer::Init() Failed.");
             return false;
         }
-        uploader.Push(pUpload);
     }
 
     {
-        asdx::IUploadResource* pUpload = nullptr;
         if (!m_Indices.Init(
-            device,
             uint64_t(resource.Indices.size()),
             uint32_t(sizeof(resource.Indices[0])),
-            resource.Indices.data(),
-            &pUpload))
+            resource.Indices.data()))
         {
             ELOG("Error : StructuredBuffer::Init() Failed.");
             return false;
         }
-        uploader.Push(pUpload);
     }
 
     {
-        asdx::IUploadResource* pUpload = nullptr;
-        if (!m_Primitives.Init(device,
+        if (!m_Primitives.Init(
             uint64_t(resource.Primitives.size()),
             uint32_t(sizeof(resource.Primitives[0])),
-            resource.Primitives.data(),
-            &pUpload))
+            resource.Primitives.data()))
         {
             ELOG("Error : StructuredBuffer::Init() Failed.");
             return false;
         }
-        uploader.Push(pUpload);
     }
 
     {
-        asdx::IUploadResource* pUpload = nullptr;
         if (!m_Meshlets.Init(
-            device,
             uint64_t(resource.Meshlets.size()),
             uint32_t(sizeof(resource.Meshlets[0])),
-            resource.Meshlets.data(),
-            &pUpload))
+            resource.Meshlets.data()))
         {
             ELOG("Error : StructuredBuffer::Init() Failed");
             return false;
         }
-        uploader.Push(pUpload);
     }
 
     {
-        asdx::IUploadResource* pUpload = nullptr;
         if (!m_CullingInfos.Init(
-            device,
             uint64_t(resource.CullingInfos.size()),
             uint32_t(sizeof(resource.CullingInfos[0])),
-            resource.CullingInfos.data(),
-            &pUpload))
+            resource.CullingInfos.data()))
         {
             ELOG("Error : StructuredBuffer::Init() Failed.");
             return false;
         }
-        uploader.Push(pUpload);
     }
 
     m_Box.mini = m_Box.maxi = resource.Positions[0];
@@ -367,14 +328,14 @@ Model::~Model()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool Model::Init(GraphicsDevice& device, const ResModel& model, ResourceUploader& uploader)
+bool Model::Init(const ResModel& model)
 {
     auto index = 0;
     m_Meshes.resize(model.Meshes.size());
 
     for(size_t i=0; i<model.Meshes.size(); ++i)
     {
-        if (!m_Meshes[index].Init(device, model.Meshes[i], uploader))
+        if (!m_Meshes[index].Init(model.Meshes[i]))
         { return false; }
 
         auto& box = m_Meshes[index].GetBox();

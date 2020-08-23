@@ -34,10 +34,10 @@ CommandList::~CommandList()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool CommandList::Init(GraphicsDevice& device, D3D12_COMMAND_LIST_TYPE type)
+bool CommandList::Init(ID3D12Device* pDevice, D3D12_COMMAND_LIST_TYPE type)
 {
     // 引数チェック.
-    if ( device.GetDevice() == nullptr )
+    if (pDevice == nullptr)
     {
         ELOG( "Error : Invalid Argument." );
         return false;
@@ -46,7 +46,7 @@ bool CommandList::Init(GraphicsDevice& device, D3D12_COMMAND_LIST_TYPE type)
     for(auto i=0; i<2; ++i)
     {
         // コマンドアロケータを生成.
-        auto hr = device->CreateCommandAllocator( type, IID_PPV_ARGS( m_Allocator[i].GetAddress() ) );
+        auto hr = pDevice->CreateCommandAllocator( type, IID_PPV_ARGS( m_Allocator[i].GetAddress() ) );
         if ( FAILED( hr ) )
         {
             ELOG( "Error : ID3D12Device::CreateCommandAllocator() Failed. errcode = 0x%x", hr );
@@ -55,7 +55,7 @@ bool CommandList::Init(GraphicsDevice& device, D3D12_COMMAND_LIST_TYPE type)
     }
 
     // コマンドリストを生成.
-    auto hr = device->CreateCommandList(
+    auto hr = pDevice->CreateCommandList(
         0,
         type,
         m_Allocator[0].GetPtr(),

@@ -76,7 +76,7 @@ bool Quad::IsInit() const
 //-----------------------------------------------------------------------------
 //      初期化処理です.
 //-----------------------------------------------------------------------------
-bool Quad::Init(GraphicsDevice& device)
+bool Quad::Init(ID3D12Device* pDevice)
 {
     Vertex vertices[] = {
         Vertex(-1.0f,  1.0f, 0.0f,  0.0f),
@@ -87,7 +87,7 @@ bool Quad::Init(GraphicsDevice& device)
     auto size   = uint64_t(sizeof(vertices));
     auto stride = uint32_t(sizeof(vertices[0]));
 
-    if (!m_VB.Init(device, size, stride))
+    if (!m_VB.Init(pDevice, size, stride))
     {
         ELOG("Error : VertexBuffer::Init() Failed.");
         return false;

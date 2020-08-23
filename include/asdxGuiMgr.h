@@ -56,24 +56,20 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      初期化処理を行います.
     //!
-    //! @param[in]      device      グラフィックスデバイスです.
     //! @param[in]      hWnd        ウィンドウハンドルです.
     //! @param[in]      width       ウィンドウの横幅です.
     //! @param[in]      height      ウィンドウの縦幅です.
     //! @param[in]      format      出力ターゲットのフォーマットです.
     //! @param[in]      fontPath    フォントファイルパスです.
-    //! @param[in]      uploader    リソースアップローダーです.
     //! @retval true    初期化に成功.
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
     bool Init(
-        GraphicsDevice&     device,
         HWND                hWnd,
         uint32_t            width,
         uint32_t            height,
         DXGI_FORMAT         format,
-        const char*         fontPath,
-        ResourceUploader&   uploader);
+        const char*         fontPath);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.

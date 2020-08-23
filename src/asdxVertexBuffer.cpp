@@ -28,10 +28,8 @@ VertexBuffer::~VertexBuffer()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool VertexBuffer::Init(GraphicsDevice& device, uint64_t size, uint32_t stride)
+bool VertexBuffer::Init(ID3D12Device* pDevice, uint64_t size, uint32_t stride)
 {
-    auto pDevice = device.GetDevice();
-
     if (pDevice == nullptr || size == 0 || stride == 0)
     {
         ELOG("Error : Invalid Argument.");

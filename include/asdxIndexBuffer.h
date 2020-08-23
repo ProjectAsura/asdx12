@@ -46,13 +46,12 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      初期化処理を行います.
     //!
-    //! @param[in]      device          グラフィックスデバイスです.
     //! @param[in]      size            バッファサイズです.
     //! @param[in]      isShortFormat   16bitフォーマットを使用する場合は trueを，32bitフォーマットを使用する場合はfalseを指定します
     //! @retval true    初期化に成功.
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
-    bool Init(GraphicsDevice& device, uint32_t size, bool isShortFormat = false);
+    bool Init(ID3D12Device* pDevice, uint32_t size, bool isShortFormat = false);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.

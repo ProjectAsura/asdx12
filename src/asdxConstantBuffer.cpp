@@ -38,7 +38,7 @@ ConstantBuffer::~ConstantBuffer()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool ConstantBuffer::Init(GraphicsDevice& device, uint64_t size)
+bool ConstantBuffer::Init(uint64_t size)
 {
     if ( size == 0 )
     {
@@ -76,7 +76,7 @@ bool ConstantBuffer::Init(GraphicsDevice& device, uint64_t size)
 
     for(auto i=0; i<2; ++i)
     {
-        auto hr = device.GetDevice()->CreateCommittedResource(
+        auto hr = GfxDevice()->CreateCommittedResource(
             &props,
             D3D12_HEAP_FLAG_NONE,
             &desc,
@@ -102,12 +102,12 @@ bool ConstantBuffer::Init(GraphicsDevice& device, uint64_t size)
         viewDesc.SizeInBytes    = static_cast<uint32_t>(size);
         viewDesc.BufferLocation = m_Resource[i]->GetGPUVirtualAddress();
 
-        if (!device.AllocHandle(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, m_pDescriptor[i].GetAddress()))
+        if (!GfxDevice().AllocHandle(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, m_pDescriptor[i].GetAddress()))
         {
             ELOG("Error : GraphicsDevice::AllocHandle() Failed.");
             return false;
         }
-        device.GetDevice()->CreateConstantBufferView( &viewDesc, m_pDescriptor[i]->GetHandleCPU() );
+        GfxDevice()->CreateConstantBufferView( &viewDesc, m_pDescriptor[i]->GetHandleCPU() );
     }
 
     m_Size = size;
@@ -122,6 +122,20 @@ void ConstantBuffer::Term()
 {
     for(auto i=0; i<2; ++i)
     {
+        auto descriptor = m_pDescriptor[i].GetPtr();
+        if (descriptor != nullptr)
+        {
+            descriptor->AddRef();
+            GfxDevice().PushToDescriptorDisposer(descriptor);
+        }
+
+        auto resource = m_Resource[i].GetPtr();
+        if (resource != nullptr)
+        {
+            resource->AddRef();
+            GfxDevice().PushToResourceDisposer(resource);
+        }
+
         m_pDescriptor[i].Reset();
         m_Resource[i].Reset();
         m_pDst[i] = nullptr;
