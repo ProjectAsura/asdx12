@@ -194,12 +194,20 @@ uint32_t Comb( uint32_t n, uint32_t r )
 //      32bit 浮動小数から 16bit 浮動小数に変換します.
 //-------------------------------------------------------------------------------------------------
 inline 
-half floatToF16( float value )
+half ToHalf( float value )
 {
+    union FP32
+    {
+        uint32_t u;
+        float    f;
+    };
+
     half result;
 
     // ビット列を崩さないままuint32_t型に変換.
-    uint32_t bit = *reinterpret_cast<uint32_t*>( &value );
+    FP32 fp32;
+    fp32.f = value;
+    uint32_t bit = fp32.u;
 
     // float表現の符号bitを取り出し.
     uint32_t sign   = ( bit & 0x80000000U) >> 16U;
@@ -236,8 +244,14 @@ half floatToF16( float value )
 //      16bit 浮動小数から　32bit 浮動小数に変換します.
 //-------------------------------------------------------------------------------------------------
 inline 
-float F16Tofloat( half value )
+float ToFloat( half value )
 {
+    union FP32 
+    {
+        uint32_t u;
+        float f;
+    };
+
     uint32_t exponent;
     uint32_t result;
 
@@ -274,7 +288,10 @@ float F16Tofloat( half value )
              ( ( exponent + 112 ) << 23) | // 指数部.
              ( mantissa << 13 );           // 仮数部.
 
-    return *reinterpret_cast<float*>( &result );
+    FP32 fp32;
+    fp32.u = result;
+
+    return fp32.f;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -5832,7 +5849,7 @@ void Quaternion::Squad
     const Quaternion&   a,
     const Quaternion&   b,
     const Quaternion&   c,
-    float                 amount,
+    float               amount,
     Quaternion&         result
 )
 {
@@ -5870,6 +5887,288 @@ Vector2 Hammersley( uint32_t i, uint32_t numSamples )
     float result = float(bits) * 2.3283064365386963e-10f; // / 0x100000000
 
     return Vector2( float(i)/float(numSamples), result );
+}
+
+//-----------------------------------------------------------------------------
+//      半精度浮動小数に変換します.
+//-----------------------------------------------------------------------------
+inline
+Half2 EncodeHalf2(const Vector2& value)
+{
+    Half2 packed;
+    packed.x = ToHalf(value.x);
+    packed.y = ToHalf(value.y);
+    return packed;
+}
+
+//-----------------------------------------------------------------------------
+//      単精度浮動小数に変換します.
+//-----------------------------------------------------------------------------
+inline
+Vector2 DecodeHalf2(const Half2& value)
+{
+    Vector2 unpacked;
+    unpacked.x = ToFloat(value.x);
+    unpacked.y = ToFloat(value.y);
+    return unpacked;
+}
+
+//-----------------------------------------------------------------------------
+//      半精度浮動小数に変換します.
+//-----------------------------------------------------------------------------
+inline
+Half3 EncodeHalf3(const Vector3& value)
+{
+    Half3 packed;
+    packed.x = ToHalf(value.x);
+    packed.y = ToHalf(value.y);
+    packed.z = ToHalf(value.z);
+    return packed;
+}
+
+//-----------------------------------------------------------------------------
+//      単精度浮動小数に変換します.
+//-----------------------------------------------------------------------------
+inline
+Vector3 DecodeHalf3(const Half3& value)
+{
+    Vector3 unpacked;
+    unpacked.x = ToFloat(value.x);
+    unpacked.y = ToFloat(value.y);
+    unpacked.z = ToFloat(value.z);
+    return unpacked;
+}
+
+//-----------------------------------------------------------------------------
+//      半精度浮動小数に変換します.
+//-----------------------------------------------------------------------------
+inline
+Half4 EncodeHalf4(const Vector4& value)
+{
+    Half4 packed;
+    packed.x = ToHalf(value.x);
+    packed.y = ToHalf(value.y);
+    packed.z = ToHalf(value.z);
+    packed.w = ToHalf(value.w);
+    return packed;
+}
+
+//-----------------------------------------------------------------------------
+//      単精度浮動小数に変換します.
+//-----------------------------------------------------------------------------
+inline
+Vector4 DecodeHalf4(const Half4& value)
+{
+    Vector4 unpacked;
+    unpacked.x = ToFloat(value.x);
+    unpacked.y = ToFloat(value.y);
+    unpacked.z = ToFloat(value.z);
+    unpacked.w = ToFloat(value.w);
+    return unpacked;
+}
+
+//-----------------------------------------------------------------------------
+//      4要素UNORM形式に変換します.
+//-----------------------------------------------------------------------------
+inline
+uint32_t EncodeUnorm4(const Vector4& value)
+{
+    union Unorm4
+    {
+        struct
+        {
+            uint8_t x;
+            uint8_t y;
+            uint8_t z;
+            uint8_t w;
+        };
+        uint32_t u;
+    };
+
+    Unorm4 result;
+    result.x = uint8_t(Saturate(value.x) * 255.0f);
+    result.y = uint8_t(Saturate(value.y) * 255.0f);
+    result.z = uint8_t(Saturate(value.z) * 255.0f);
+    result.w = uint8_t(Saturate(value.w) * 255.0f);
+    return result.u;
+}
+
+//-----------------------------------------------------------------------------
+//      4要素UNORM形式を展開します.
+//-----------------------------------------------------------------------------
+inline
+Vector4 DecodeUnorm4(uint32_t value)
+{
+    union Unorm4
+    {
+        struct
+        {
+            uint8_t x;
+            uint8_t y;
+            uint8_t z;
+            uint8_t w;
+        };
+        uint32_t u;
+    };
+
+    Unorm4 packed;
+    packed.u = value;
+
+    Vector4 result;
+    result.x = float(packed.x) / 255.0f;
+    result.y = float(packed.y) / 255.0f;
+    result.z = float(packed.z) / 255.0f;
+    result.w = float(packed.w) / 255.0f;
+    return result;
+}
+
+//-----------------------------------------------------------------------------
+//      2要素UNORM形式に変換します.
+//-----------------------------------------------------------------------------
+inline
+uint16_t EncodeUnorm2(const Vector2& value)
+{
+    union Unorm2
+    {
+        struct
+        {
+            uint8_t x;
+            uint8_t y;
+        };
+        uint16_t u;
+    };
+
+    Unorm2 result;
+    result.x = uint8_t(value.x * 255.0f);
+    result.y = uint8_t(value.y * 255.0f);
+    return result.u;
+}
+
+//-----------------------------------------------------------------------------
+//      2要素UNORM形式を展開します.
+//-----------------------------------------------------------------------------
+inline
+Vector2 DecodeUnorm2(uint16_t value)
+{
+    union Unorm2
+    {
+        struct
+        {
+            uint8_t x;
+            uint8_t y;
+        };
+        uint16_t u;
+    };
+
+    Unorm2 packed;
+    packed.u = value;
+
+    Vector2 result;
+    result.x = float(packed.x) / 255.0f;
+    result.y = float(packed.y) / 255.0f;
+    return result;
+}
+
+//-----------------------------------------------------------------------------
+//      4要素SNORM形式に変換します.
+//-----------------------------------------------------------------------------
+inline
+uint32_t EncodeSnorm4(const Vector4& value)
+{
+    union Snorm4
+    {
+        struct
+        {
+            uint8_t x;
+            uint8_t y;
+            uint8_t z;
+            uint8_t w;
+        };
+        uint32_t u;
+    };
+
+    Snorm4 result;
+    result.x = uint8_t((Clamp(value.x, -1.0f, 1.0f) * 0.5f + 0.5f) * 255.0f);
+    result.y = uint8_t((Clamp(value.y, -1.0f, 1.0f) * 0.5f + 0.5f) * 255.0f);
+    result.z = uint8_t((Clamp(value.z, -1.0f, 1.0f) * 0.5f + 0.5f) * 255.0f);
+    result.w = uint8_t((Clamp(value.w, -1.0f, 1.0f) * 0.5f + 0.5f) * 255.0f);
+    return result.u;
+}
+
+//-----------------------------------------------------------------------------
+//      4要素SNORM形式を展開します.
+//-----------------------------------------------------------------------------
+inline
+Vector4 DecodeSnorm4(uint32_t value)
+{
+    union Snorm4
+    {
+        struct
+        {
+            uint8_t x;
+            uint8_t y;
+            uint8_t z;
+            uint8_t w;
+        };
+        uint32_t u;
+    };
+
+    Snorm4 packed;
+    packed.u = value;
+
+    Vector4 result;
+    result.x = (float(packed.x) / 255.0f) * 2.0f - 1.0f;
+    result.y = (float(packed.y) / 255.0f) * 2.0f - 1.0f;
+    result.z = (float(packed.z) / 255.0f) * 2.0f - 1.0f;
+    result.w = (float(packed.w) / 255.0f) * 2.0f - 1.0f;
+    return result;
+}
+
+//-----------------------------------------------------------------------------
+//      2要素SNORM形式に変換します.
+//-----------------------------------------------------------------------------
+inline
+uint16_t EncodeSnorm2(const Vector2& value)
+{
+    union Snorm2
+    {
+        struct
+        {
+            uint8_t x;
+            uint8_t y;
+        };
+        uint32_t u;
+    };
+
+    Snorm2 result;
+    result.x = uint8_t((Clamp(value.x, -1.0f, 1.0f) * 0.5f + 0.5f) * 255.0f);
+    result.y = uint8_t((Clamp(value.y, -1.0f, 1.0f) * 0.5f + 0.5f) * 255.0f);
+    return result.u;
+}
+
+//-----------------------------------------------------------------------------
+//      2要素SNORM形式を展開します.
+//-----------------------------------------------------------------------------
+inline
+Vector2 DecodeSnorm2(uint16_t value)
+{
+    union Snorm2
+    {
+        struct
+        {
+            uint8_t x;
+            uint8_t y;
+        };
+        uint32_t u;
+    };
+
+    Snorm2 packed;
+    packed.u = value;
+
+    Vector2 result;
+    result.x = (float(packed.x) / 255.0f) * 2.0f - 1.0f;
+    result.y = (float(packed.y) / 255.0f) * 2.0f - 1.0f;
+    return result;
 }
 
 } // namespace asdx

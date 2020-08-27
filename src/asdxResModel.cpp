@@ -152,36 +152,6 @@ void Dispose(ResModel& resource)
     resource.Meshes.shrink_to_fit();
 }
 
-
-//-----------------------------------------------------------------------------
-//      R8G8B8A8_UNORM形式に変換します.
-//-----------------------------------------------------------------------------
-uint32_t ToUnorm(const Vector4& value)
-{
-    Unorm8888 result;
-    result.r = uint8_t(value.x * 255.0f);
-    result.g = uint8_t(value.y * 255.0f);
-    result.b = uint8_t(value.z * 255.0f);
-    result.a = uint8_t(value.w * 255.0f);
-    return result.c;
-}
-
-//-----------------------------------------------------------------------------
-//      R8G8B8A8_UNORM形式からVector4に変換します.
-//-----------------------------------------------------------------------------
-Vector4 FromUnorm(uint32_t value)
-{
-    Unorm8888 packed;
-    packed.c = value;
-
-    Vector4 result;
-    result.x = float(packed.r) / 255.0f;
-    result.y = float(packed.g) / 255.0f;
-    result.z = float(packed.b) / 255.0f;
-    result.w = float(packed.a) / 255.0f;
-    return result;
-}
-
 //-----------------------------------------------------------------------------
 //      八面体ラップ処理を行います.
 //-----------------------------------------------------------------------------
@@ -291,7 +261,7 @@ void DecodeTBN(uint32_t encoded, Vector3& tangent, Vector3& bitangent, Vector3& 
     tangent = Vector3::Normalize((cosAngle * orthoA) + (sinAngle * orhotB));
 
     bitangent = Vector3::Cross(normal, tangent);
-    bitangent = (packed.BinormalHandedness == 0) ? bitangent : -bitangent; 
+    bitangent = (packed.BinormalHandedness == 0) ? bitangent : -bitangent;
 }
 
 //-----------------------------------------------------------------------------
