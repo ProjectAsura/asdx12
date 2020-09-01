@@ -1399,23 +1399,22 @@ uint3 UnpackPrimitiveIndex(uint packed)
 //-----------------------------------------------------------------------------
 //      R8G8B8A8_SNORMを展開します.
 //-----------------------------------------------------------------------------
-float4 UnpackSnorm(uint packed)
+float4 UnpackSnorm4(uint packed)
 {
     float4 v;
     v.x = float((packed >> 0) & 0xFF);
     v.y = float((packed >> 8) & 0xFF);
     v.z = float((packed >> 16) & 0xFF);
     v.w = float((packed >> 24) & 0xFF);
-
     v = v / 255.0;
-    v.xyz = v.xyz * 2.0 - 1.0;
+    v = v * 2.0 - 1.0;
     return v;
 }
 
 //-----------------------------------------------------------------------------
 //      R8G8B8A8_UNORMを展開します.
 //-----------------------------------------------------------------------------
-float4 UnpackUnorm(uint packed)
+float4 UnpackUnorm4(uint packed)
 {
     float4 v;
     v.x = float((packed >> 0) & 0xFF);
@@ -1438,15 +1437,30 @@ float2 UnpackHalf2(uint packed)
 }
 
 //-----------------------------------------------------------------------------
+//      R16G16_UINTを展開します.
+//-----------------------------------------------------------------------------
+uint2 UnpackUshort2(uint packed)
+{
+    return uint2(
+        packed & 0xffff,
+        (packed >> 16) & 0xffff);
+}
+
+//-----------------------------------------------------------------------------
 //      R16G16B16A16_UINTを展開します.
 //-----------------------------------------------------------------------------
 uint4 UnpackUshort4(uint2 packed)
 {
     return uint4(
-        packed.x & 0xffff,
-        (packed.x >> 16) & 0xffff,
-        packed.y & 0xffff,
-        (packed.y >> 16) & 0xffff);
+        UnpackUshort2(packed.x),
+        UnpackUshort2(packed.y));
+#if 0
+//    return uint4(
+//        packed.x & 0xffff,
+//        (packed.x >> 16) & 0xffff,
+//        packed.y & 0xffff,
+//        (packed.y >> 16) & 0xffff);
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1572,12 +1586,24 @@ uint PackTBN(float3 normal, float3 tangent, uint binormalHandedness)
     uint cosAngle = uint((dot(tangent, orthoA) * 0.5f + 0.5f) * 255.0f);
     uint tangentHandedness = (dot(tangent, orthoB) > 0.0001f) ? 1 : 0;
     
-    result |= (cosAngle & 0xff) << 20;
-    result |= (compIndex & 0x3) << 28;
-    result |= (tangentHandedness & 0x1) << 30;
+    result |= (cosAngle  & 0xff) << 20;
+    result |= (compIndex & 0x3)  << 28;
+    result |= (tangentHandedness  & 0x1) << 30;
     result |= (binormalHandedness & 0x1) << 31;
     
     return result;
+}
+
+//-----------------------------------------------------------------------------
+//      R10G10B10A2_UINTフォーマットを展開します.
+//-----------------------------------------------------------------------------
+uint4 DecodeR10G10B10A2(uint packed)
+{
+    return uint4(
+        packed & 0x3FF,
+        (packed >> 10) & 0x3FF,
+        (packed >> 20) & 0x3FF,
+        (packed >> 30) & 0x2);
 }
 
 //-----------------------------------------------------------------------------

@@ -10,7 +10,6 @@
 #include <asdxQuad.h>
 #include <asdxMath.h>
 #include <asdxLogger.h>
-#include <asdxHalf.h>
 
 
 namespace {
@@ -22,6 +21,9 @@ static const D3D12_INPUT_ELEMENT_DESC kElements[] = {
     { "POSITION", 0, DXGI_FORMAT_R16G16_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
     { "TEXCOORD", 0, DXGI_FORMAT_R16G16_FLOAT, 0, 4, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 };
+
+// FullScreenVS
+#include "../res/shaders/Compiled/FullScreenVS.inc"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Vertex structure
@@ -116,6 +118,17 @@ void Quad::Draw(ID3D12GraphicsCommandList* pCmd)
     pCmd->IASetIndexBuffer(nullptr);
     pCmd->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     pCmd->DrawInstanced(3, 1, 0, 0);
+}
+
+//-----------------------------------------------------------------------------
+//      頂点シェーダを取得します.
+//-----------------------------------------------------------------------------
+D3D12_SHADER_BYTECODE Quad::GetVS()
+{
+    D3D12_SHADER_BYTECODE result;
+    result.pShaderBytecode = FullScreenVS;
+    result.BytecodeLength = sizeof(FullScreenVS);
+    return result;
 }
 
 } // namespace asdx
