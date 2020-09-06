@@ -34,8 +34,8 @@ Descriptor::Descriptor()
 Descriptor::~Descriptor()
 {
     auto pHeap = m_pHeap;
-    assert(pHeap != nullptr);
-    pHeap->DisposeDescriptor(this);
+    if (pHeap != nullptr)
+    { pHeap->DisposeDescriptor(this); }
 }
 
 //-----------------------------------------------------------------------------

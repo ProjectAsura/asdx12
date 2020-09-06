@@ -118,6 +118,7 @@
     <ClCompile Include="..\src\asdxMouse.cpp" />
     <ClCompile Include="..\src\asdxP4VHelper.cpp" />
     <ClCompile Include="..\src\asdxPad.cpp" />
+    <ClCompile Include="..\src\asdxPassGraph.cpp" />
     <ClCompile Include="..\src\asdxPipelineState.cpp" />
     <ClCompile Include="..\src\asdxQuad.cpp" />
     <ClCompile Include="..\src\asdxQueue.cpp" />
@@ -163,6 +164,7 @@
     <ClInclude Include="..\include\asdxMisc.h" />
     <ClInclude Include="..\include\asdxModel.h" />
     <ClInclude Include="..\include\asdxP4VHelper.h" />
+    <ClInclude Include="..\include\asdxPassGraph.h" />
     <ClInclude Include="..\include\asdxPipelineState.h" />
     <ClInclude Include="..\include\asdxPool.h" />
     <ClInclude Include="..\include\asdxQuad.h" />
