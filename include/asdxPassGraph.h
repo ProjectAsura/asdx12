@@ -21,8 +21,8 @@ namespace asdx {
 //-----------------------------------------------------------------------------
 struct IPassGraphBuilder;
 struct IPassGraphContext;
+class  PassResource;
 
-using ResourceHandle    = uint32_t;
 using PassSetup         = void (*) (IPassGraphBuilder* builder);
 using PassExecute       = void (*) (IPassGraphContext* context);
 
@@ -57,6 +57,36 @@ enum PASS_RESOURCE_USAGE
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+// CLEAR_TYPE
+///////////////////////////////////////////////////////////////////////////////
+enum CLEAR_TYPE
+{
+    CLEAR_TYPE_RTV,
+    CLEAR_TYPE_DSV,
+    CLEAR_TYPE_UAV_FLOAT,
+    CLEAR_TYPE_UAV_UINT
+};
+
+////////////////////////////////////////////////////////////////////////////////
+// ClearValue structure
+///////////////////////////////////////////////////////////////////////////////
+struct ClearValue
+{
+    CLEAR_TYPE Type;
+    union
+    {
+        float Color[4];
+        struct 
+        {
+            float   Depth;
+            uint8_t Stencil;
+        };
+        float    Float[4];
+        uint32_t Uint[4];
+    };
+};
+
+///////////////////////////////////////////////////////////////////////////////
 // PassResourceDesc enum
 ///////////////////////////////////////////////////////////////////////////////
 struct PassResourceDesc
@@ -67,9 +97,7 @@ struct PassResourceDesc
     uint16_t                DepthOrArraySize    = 1;
     uint16_t                MipLevels           = 1;
     DXGI_FORMAT             Format              = DXGI_FORMAT_UNKNOWN;
-    Vector4                 ClearColor          = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-    float                   ClearDepth          = 1.0f;
-    uint32_t                ClearStencil        = 0;
+    ClearValue              ClearValue          = {};
     uint32_t                Stride              = 1;
     PASS_RESOURCE_STATE     InitState           = PASS_RESOURCE_STATE_NONE;
     uint8_t                 Usage               = PASS_RESOURCE_USAGE_RTV;
@@ -96,11 +124,10 @@ private:
 struct IPassGraphBuilder
 {
     virtual ~IPassGraphBuilder() {}
-    virtual ResourceHandle Read(ResourceHandle resource, uint32_t flag) = 0;
-    virtual ResourceHandle Write(ResourceHandle resource, uint32_t flag) = 0;
-    virtual ResourceHandle Create(PassResourceDesc& desc) = 0;
-    virtual ResourceHandle Import(ID3D12Resource* resource, D3D12_RESOURCE_STATES state) = 0;
-    virtual ResourceHandle Import(ID3D12Resource* resource, Descriptor* descriptor, D3D12_RESOURCE_STATES state) = 0;
+    virtual PassResource* Read(PassResource* resource, uint32_t flag) = 0;
+    virtual PassResource* Write(PassResource* resource, uint32_t flag) = 0;
+    virtual PassResource* Create(PassResourceDesc& desc) = 0;
+    virtual PassResource* Import(ID3D12Resource* resource, D3D12_RESOURCE_STATES state) = 0;
     virtual void AsyncComputeEnable(bool value) = 0;
 };
 
@@ -110,11 +137,11 @@ struct IPassGraphBuilder
 struct IPassGraphContext
 {
     virtual ~IPassGraphContext() {}
-    virtual D3D12_CPU_DESCRIPTOR_HANDLE GetRTV(ResourceHandle resource) const = 0;
-    virtual D3D12_CPU_DESCRIPTOR_HANDLE GetDSV(ResourceHandle resource) const = 0;
-    virtual D3D12_GPU_DESCRIPTOR_HANDLE GetRes(ResourceHandle resource) const = 0;
-    virtual D3D12_GPU_VIRTUAL_ADDRESS GetVirtualAddress(ResourceHandle resource) const = 0;
-    virtual D3D12_RESOURCE_DESC GetDesc(ResourceHandle resource) const = 0;
+    virtual D3D12_CPU_DESCRIPTOR_HANDLE GetRTV(PassResource* resource, uint16_t index = 0) const = 0;
+    virtual D3D12_CPU_DESCRIPTOR_HANDLE GetDSV(PassResource* resource, uint16_t index = 0) const = 0;
+    virtual D3D12_GPU_DESCRIPTOR_HANDLE GetRes(PassResource* resource) const = 0;
+    virtual D3D12_GPU_VIRTUAL_ADDRESS GetVirtualAddress(PassResource* resource) const = 0;
+    virtual D3D12_RESOURCE_DESC GetDesc(PassResource* resource) const = 0;
     virtual ID3D12GraphicsCommandList6* GetCommandList() const = 0;
 };
 
@@ -130,6 +157,6 @@ struct IPassGraph
     virtual void Execute(ID3D12CommandQueue* pGraphics, ID3D12CommandQueue* pCompute) = 0;
 };
 
-bool CreatePassGraph(uint32_t maxPassCount);
+bool CreatePassGraph(uint32_t maxPassCount, uint32_t maxResourceCount);
 
 } // namespace asdx
