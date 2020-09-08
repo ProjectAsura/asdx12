@@ -677,9 +677,9 @@ float TokuyoshiRoughness(float3 normal, float roughness, float sigma2, float kap
 float3 Linear_To_SRGB(float3 color)
 {
     float3 result;
-    result.x  = (color.x < 0.0031308) ? 12.92 : 1.055 * pow(abs(color.x), 1.0f / 2.4) - 0.05f;
-    result.y  = (color.y < 0.0031308) ? 12.92 : 1.055 * pow(abs(color.y), 1.0f / 2.4) - 0.05f;
-    result.z  = (color.z < 0.0031308) ? 12.92 : 1.055 * pow(abs(color.z), 1.0f / 2.4) - 0.05f;
+    result.x  = (color.x < 0.0031308) ? 12.92 * color.x : 1.055 * pow(abs(color.x), 1.0f / 2.4) - 0.05f;
+    result.y  = (color.y < 0.0031308) ? 12.92 * color.y : 1.055 * pow(abs(color.y), 1.0f / 2.4) - 0.05f;
+    result.z  = (color.z < 0.0031308) ? 12.92 * color.z : 1.055 * pow(abs(color.z), 1.0f / 2.4) - 0.05f;
 
     return result;
 }

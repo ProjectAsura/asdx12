@@ -158,6 +158,7 @@
     <ClInclude Include="..\include\asdxHistory.h" />
     <ClInclude Include="..\include\asdxIndexBuffer.h" />
     <ClInclude Include="..\include\asdxLfuCache.h" />
+    <ClInclude Include="..\include\asdxList.h" />
     <ClInclude Include="..\include\asdxLogger.h" />
     <ClInclude Include="..\include\asdxLruCache.h" />
     <ClInclude Include="..\include\asdxMath.h" />

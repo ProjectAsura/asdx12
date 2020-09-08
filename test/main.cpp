@@ -16,6 +16,7 @@
 #include "TestApp.h"
 #include <asdxResModel.h>
 #include <asdxLogger.h>
+#include <asdxList.h>
 
 int main(int argc, char** argv)
 {
@@ -50,6 +51,73 @@ int main(int argc, char** argv)
         auto packedT = asdx::EncodeHalf2(t);
         auto decodeT = asdx::DecodeHalf2(packedT);
         ILOGA("decodedT(%f, %f)", decodeT.x, decodeT.y);
+    }
+#endif
+
+#if 1
+    {
+        struct Node : public asdx::ListNode<Node>
+        {
+            int value;
+
+            Node(int val)
+            : asdx::ListNode<Node>()
+            , value(val)
+            {
+            }
+        };
+
+        auto node1 = Node(1);
+        auto node2 = Node(2);
+        auto node3 = Node(3);
+
+        asdx::List<Node> list;
+        list.PushBack(&node1);
+        list.PushBack(&node2);
+        list.PushBack(&node3);
+
+        printf("size : %zu\n", list.GetCount());
+
+        auto itr = list.GetHead();
+        assert(itr->value == 1);
+        itr = itr->GetNext();
+        assert(itr->value == 2);
+        itr = itr->GetNext();
+        assert(itr->value == 3);
+        assert(itr->HasNext() == false);
+
+        assert(list.Contains(&node1) == true);
+        assert(list.Contains(&node2) == true);
+        assert(list.Contains(&node3) == true);
+
+        list.Remove(&node2);
+        printf("size : %zu\n", list.GetCount());
+
+        assert(list.Contains(&node1) == true);
+        assert(list.Contains(&node2) == false);
+        assert(list.Contains(&node3) == true);
+
+
+        itr = list.GetHead();
+        assert(itr->value == 1);
+        itr = itr->GetNext();
+        assert(itr->value == 3);
+        assert(itr->HasNext() == false);
+
+        list.Clear();
+        printf("size : %zu\n", list.GetCount());
+
+        assert(node1.HasNext() == false);
+        assert(node1.HasPrev() == false);
+
+        assert(node2.HasNext() == false);
+        assert(node2.HasPrev() == false);
+
+        assert(node3.HasNext() == false);
+        assert(node3.HasPrev() == false);
+
+        assert(list.GetHead() == nullptr);
+        assert(list.GetTail() == nullptr);
     }
 #endif
 
