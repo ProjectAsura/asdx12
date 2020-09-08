@@ -781,7 +781,7 @@ float3 DCI_P3_To_XYZ(float3 color)
         0.000000f, 0.047061f, 0.907355f
     };
 
-    return mul(conversion, color);    
+    return mul(conversion, color);
 }
 
 //-----------------------------------------------------------------------------

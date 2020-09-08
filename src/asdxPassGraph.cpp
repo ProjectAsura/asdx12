@@ -15,6 +15,7 @@
 #include <asdxHash.h>
 #include <asdxLogger.h>
 #include <asdxGraphicsDevice.h>
+#include <asdxList.h>
 
 // パスで生成可能な最大リソース数.
 #define MAX_PASS_RESOURCE_COUNT (16)
@@ -31,7 +32,7 @@ class RenderPass;
 ///////////////////////////////////////////////////////////////////////////////
 // PassResource class
 ///////////////////////////////////////////////////////////////////////////////
-class PassResource
+class PassResource : public ListNode<PassResource>
 {
     //=========================================================================
     // list of friend classes and methods.
@@ -52,7 +53,8 @@ public:
     //! @brief      コンストラクタです.
     //-------------------------------------------------------------------------
     PassResource()
-    : m_RefCount        (0)
+    : ListNode<PassResource>()
+    , m_RefCount        (0)
     , m_DescriptorRTV   (nullptr)
     , m_DescriptorDSV   (nullptr)
     , m_DescriptorRes   (nullptr)
@@ -435,51 +437,6 @@ public:
     { return m_Import; }
 
     //-------------------------------------------------------------------------
-    //! @brief      リスト末尾に追加します.
-    //-------------------------------------------------------------------------
-    void AddNext(PassResource* node)
-    {
-        assert(node != nullptr);
-        if (node == nullptr)
-        { return; }
-
-        auto next = m_Prev;
-        m_Next = node;
-        node->m_Prev = this;
-        node->m_Next = next;
-    }
-
-    //-------------------------------------------------------------------------
-    //! @brief      リストの接続解除します.
-    //-------------------------------------------------------------------------
-    void Unlink()
-    {
-        auto prev = m_Prev;
-        auto next = m_Next;
-
-        if (prev != nullptr)
-        { prev->m_Next = next; }
-        if (next != nullptr)
-        { next->m_Prev = prev; }
-
-        m_Prev = nullptr;
-        m_Next = nullptr;
-    }
-
-
-    //-------------------------------------------------------------------------
-    //! @brief      次のノードを取得します.
-    //-------------------------------------------------------------------------
-    PassResource* GetNext() const
-    { return m_Next; }
-
-    //-------------------------------------------------------------------------
-    //! @brief      前のノードを取得します.
-    //-------------------------------------------------------------------------
-    PassResource* GetPrev() const
-    { return m_Prev; }
-
-    //-------------------------------------------------------------------------
     //! @brief      生成パスを取得します.
     //-------------------------------------------------------------------------
     RenderPass* GetProducer() const
@@ -498,8 +455,6 @@ private:
     bool                m_Import        = false;
     bool                m_Stencil       = false;
     ClearValue          m_ClearValue    = {};
-    PassResource*       m_Next          = nullptr;  // リスト用.
-    PassResource*       m_Prev          = nullptr;  // リスト用.
     PassResource*       m_NextItem      = nullptr;  // スタック用.
     RenderPass*         m_Producer      = nullptr;
 
@@ -904,11 +859,15 @@ public:
     {
         // 全部を突っ込む.
         auto itr = m_Head;
-        while(itr != m_Tail)
+        while(itr != nullptr)
         {
             auto node = itr;
-            itr = node->GetNext();
             m_Dispoer.Push(node);
+
+            if (!itr->HasNext())
+            { break; }
+
+            itr = itr->GetNext();
         }
 
         // クリア.
@@ -958,13 +917,16 @@ private:
     bool Contains(const PassResourceDesc& value, PassResource** node)
     {
         auto itr = m_Head;
-        while(itr != m_Tail)
+        while(itr != nullptr)
         {
             if (itr->Match(value))
             {
                 *node = itr;
                 return true;
             }
+
+            if (!itr->HasNext())
+            { break; }
 
             itr = itr->GetNext();
         }
@@ -977,7 +939,7 @@ private:
     //-------------------------------------------------------------------------
     void Remove(PassResource* node)
     {
-        node->Unlink();
+        PassResource::Unlink(node);
         m_CacheCount--;
     }
 
@@ -993,7 +955,8 @@ private:
         }
         else
         {
-            m_Tail->AddNext(node);
+            PassResource::Link(m_Tail, node);
+            m_Tail = node;
         }
         m_CacheCount++;
     }
@@ -1005,7 +968,7 @@ private:
     {
         auto head = m_Head;
         auto next = m_Head->GetNext();
-        head->Unlink();
+        PassResource::Unlink(head);
         m_Head = next;
         m_CacheCount--;
         return head;
@@ -1035,7 +998,7 @@ private:
 ///////////////////////////////////////////////////////////////////////////////
 // RenderPass class
 ///////////////////////////////////////////////////////////////////////////////
-class RenderPass
+class RenderPass : public ListNode<RenderPass>
 {
     //=========================================================================
     // list of friend classes and methods.
@@ -1079,12 +1042,11 @@ public:
     //! @brief      コンストラクタです.
     //-------------------------------------------------------------------------
     RenderPass()
-    : m_Setup           (nullptr)
+    : ListNode<RenderPass>()
+    , m_Setup           (nullptr)
     , m_Execute         (nullptr)
     , m_AsyncCompute    (false)
     , m_RefCount        (1)
-    , m_Next            (nullptr)
-    , m_Prev            (nullptr)
     { /* DO_NOTHING */ }
 
     //-------------------------------------------------------------------------
@@ -1106,51 +1068,6 @@ public:
     { return m_RefCount; }
 
     //-------------------------------------------------------------------------
-    //! @brief      リスト末尾に追加します.
-    //-------------------------------------------------------------------------
-    void AddNext(RenderPass* node)
-    {
-        assert(node != nullptr);
-        if (node == nullptr)
-        { return; }
-
-        auto next = m_Prev;
-        m_Next = node;
-        node->m_Prev = this;
-        node->m_Next = next;
-    }
-
-    //-------------------------------------------------------------------------
-    //! @brief      リストの接続解除します.
-    //-------------------------------------------------------------------------
-    void Unlink()
-    {
-        auto prev = m_Prev;
-        auto next = m_Next;
-
-        if (prev != nullptr)
-        { prev->m_Next = next; }
-
-        if (next != nullptr)
-        { next->m_Prev = prev; }
-
-        m_Prev = nullptr;
-        m_Next = nullptr;
-    }
-
-    //-------------------------------------------------------------------------
-    //! @brief      次のノードを取得します.
-    //-------------------------------------------------------------------------
-    RenderPass* GetNext() const
-    { return m_Next; }
-
-    //-------------------------------------------------------------------------
-    //! @brief      前のノードを取得します.
-    //-------------------------------------------------------------------------
-    RenderPass* GetPrev() const
-    { return m_Prev; }
-
-    //-------------------------------------------------------------------------
     //! @brief      リソースバリアを設定します.
     //-------------------------------------------------------------------------
     void ResourceBarrier(ID3D12GraphicsCommandList6* pCmd)
@@ -1170,8 +1087,6 @@ private:
     // private variables.
     //=========================================================================
     std::atomic<int>    m_RefCount;
-    RenderPass*         m_Next;
-    RenderPass*         m_Prev;
 
     //=========================================================================
     // private methods.
@@ -1545,7 +1460,8 @@ bool PassGraph::AddPass(PassTag& tag, PassSetup setup, PassExecute execute)
     }
     else
     {
-        m_Tail->AddNext(pass);
+        RenderPass::Link(m_Tail, pass);
+        m_Tail = pass;
     }
     m_PassCount++;
 
@@ -1560,10 +1476,14 @@ void PassGraph::Compile()
     // 各パスについて処理.
     {
         auto itr = m_Head;
-        while(itr != m_Tail)
+        while(itr != nullptr)
         {
             PassGraphBuilder builder(this, itr);
             itr->m_Setup(&builder);
+
+            if (!itr->HasNext())
+            { break; }
+
             itr = itr->GetNext();
         }
     }
@@ -1571,12 +1491,17 @@ void PassGraph::Compile()
     // 参照カウントがゼロのリソースを見つける.
     {
         auto itr = m_Registry.GetHead();
-        while(itr != m_Registry.GetTail())
+        while(itr != nullptr)
         {
             if (itr->GetRefCount() == 0)
             {
                 // スタックに積む.
             }
+
+            if (!itr->HasNext())
+            { break; }
+
+            itr = itr->GetNext();
         }
     }
 
@@ -1624,7 +1549,6 @@ void PassGraph::Execute(ID3D12CommandQueue* pGraphics, ID3D12CommandQueue* pComp
 //-----------------------------------------------------------------------------
 PassResource* PassGraph::AllocResource(const PassResourceDesc& desc, RenderPass* producer)
 { return m_Registry.GetOrCreate(desc, producer); }
-
 
 //-----------------------------------------------------------------------------
 //      パスグラフを生成します.
