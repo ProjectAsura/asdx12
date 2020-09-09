@@ -12,7 +12,7 @@
 #include <d3d12.h>
 #include <dxgi1_6.h>
 #include <asdxRef.h>
-#include <asdxQueue.h>
+#include <asdxCommandQueue.h>
 #include <asdxDescriptor.h>
 #include <asdxResourceUploader.h>
 #include <asdxDisposer.h>
@@ -92,42 +92,42 @@ public:
     //!
     //! @return     グラフィックスキューを返却します.
     //-------------------------------------------------------------------------
-    Queue* GetGraphicsQueue() const;
+    CommandQueue* GetGraphicsQueue() const;
 
     //-------------------------------------------------------------------------
     //! @brief      コンピュートキューを取得します.
     //!
     //! @return     コンピュートキューを返却します.
     //-------------------------------------------------------------------------
-    Queue* GetComputeQueue() const;
+    CommandQueue* GetComputeQueue() const;
 
     //-------------------------------------------------------------------------
     //! @brief      コピーキューを取得します.
     //!
     //! @return     コピーキューを返却します.
     //-------------------------------------------------------------------------
-    Queue* GetCopyQueue() const;
+    CommandQueue* GetCopyQueue() const;
 
     //-------------------------------------------------------------------------
     //! @brief      ビデオデコードキューを取得します.
     //!
     //! @return     ビデオデコードキューを返却します.
     //-------------------------------------------------------------------------
-    Queue* GetVideoDecodeQueue() const;
+    CommandQueue* GetVideoDecodeQueue() const;
 
     //-------------------------------------------------------------------------
     //! @brief      ビデオプロセスキューを取得します.
     //!
     //! @return     ビデオプロセスキューを返却します.
     //-------------------------------------------------------------------------
-    Queue* GetVideoProcessQueue() const;
+    CommandQueue* GetVideoProcessQueue() const;
 
     //-------------------------------------------------------------------------
     //! @brief      ビデオエンコードキューを取得します.
     //!
     //! @return     ビデオエンコードキューを返却します.
     //-------------------------------------------------------------------------
-    Queue* GetVideoEncodeQueue() const;
+    CommandQueue* GetVideoEncodeQueue() const;
 
     //-------------------------------------------------------------------------
     //! @brief      ディスクリプターを確保します.
@@ -205,12 +205,12 @@ private:
     RefPtr<ID3D12Debug3>        m_pDebug;                   //!< デバッグオブジェクト.
     RefPtr<ID3D12InfoQueue>     m_pInfoQueue;               //!< インフォキュー.
     RefPtr<ID3D12Device8>       m_pDevice;                  //!< デバイス.
-    RefPtr<Queue>               m_pGraphicsQueue;           //!< グラフィックスキュー.
-    RefPtr<Queue>               m_pComputeQueue;            //!< コンピュートキュー.
-    RefPtr<Queue>               m_pCopyQueue;               //!< コピーキュー.
-    RefPtr<Queue>               m_pVideoDecodeQueue;        //!< ビデオデコードキュー.
-    RefPtr<Queue>               m_pVideoProcessQueue;       //!< ビデオプロセスキュー.
-    RefPtr<Queue>               m_pVideoEncodeQueue;        //!< ビデオエンコードキュー.
+    RefPtr<CommandQueue>        m_pGraphicsQueue;           //!< グラフィックスキュー.
+    RefPtr<CommandQueue>        m_pComputeQueue;            //!< コンピュートキュー.
+    RefPtr<CommandQueue>        m_pCopyQueue;               //!< コピーキュー.
+    RefPtr<CommandQueue>        m_pVideoDecodeQueue;        //!< ビデオデコードキュー.
+    RefPtr<CommandQueue>        m_pVideoProcessQueue;       //!< ビデオプロセスキュー.
+    RefPtr<CommandQueue>        m_pVideoEncodeQueue;        //!< ビデオエンコードキュー.
     DescriptorHeap              m_DescriptorHeap[4];        //!< ディスクリプタヒープ.
     ResourceUploader            m_ResourceUploader;         //!< リソースアップローダー.
     Disposer<ID3D12Resource>    m_ResourceDisposer;         //!< リソースディスポーザー.

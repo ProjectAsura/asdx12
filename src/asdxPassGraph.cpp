@@ -1226,14 +1226,6 @@ public:
         uint8_t flag = RESOURCE_INFO_FLAG_READ;
         auto index = m_Pass->m_Infos.Count;
 
-        auto prevState = resource->ResourceState;
-        if (prevState != D3D12_RESOURCE_STATE_GENERIC_READ)
-        {
-            // バリア設定.
-
-            // ステート変更.
-        }
-
         m_Pass->m_Infos.Resources[index] = resource;
         m_Pass->m_Infos.Flags    [index] = flag;
         m_Pass->m_Infos.Count++;
@@ -1250,36 +1242,6 @@ public:
         uint8_t flag = RESOURCE_INFO_FLAG_WRITE;
 
         auto index     = m_Pass->m_Infos.Count;
-        auto prevState = resource->ResourceState;
-
-        auto desc = resource->GetDesc();
-        if (desc.Usage & PASS_RESOURCE_USAGE_RTV)
-        {
-            if (prevState != D3D12_RESOURCE_STATE_RENDER_TARGET)
-            {
-                // バリア設定.
-
-                // ステート変更.
-            }
-        }
-        else if (desc.Usage & PASS_RESOURCE_USAGE_DSV)
-        {
-            if (prevState != D3D12_RESOURCE_STATE_DEPTH_WRITE)
-            {
-                // バリア設定.
-
-                // ステート変更.
-            }
-        }
-        else if (desc.Usage & PASS_RESOURCE_USAGE_UAV)
-        {
-            if (prevState != D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
-            {
-                // バリア設定.
-
-                // ステート変更.
-            }
-        }
 
         m_Pass->m_Infos.Resources[index] = resource;
         m_Pass->m_Infos.Flags    [index] = flag;
@@ -1601,7 +1563,7 @@ void PassGraph::Compile()
     // スタックが空でない場合
     while(!stack.IsEmpty())
     {
-        // リソースをpop() 生成したproducerの参照カウントを下げる.
+        // リソースをpopし，生成したproducerの参照カウントを下げる.
         auto resource = stack.Pop();
         auto producer = resource->GetProducer();
         producer->Decrement();
@@ -1610,10 +1572,48 @@ void PassGraph::Compile()
         if (producer->GetRefCount() == 0)
         {
             // 読み取りするリソースの参照カウントを下げる.
+            for(auto i=0u; i<producer->m_Infos.Count; ++i)
+            {
+                if (producer->m_Infos.Flags[i] & RESOURCE_INFO_FLAG_READ)
+                {
+                    auto readResource = producer->m_Infos.Resources[i];
+                    readResource->Decrement();
+
+                    // 参照カウントがゼロのときにそれらのリソースをスタックに積む.
+                    if (readResource->GetRefCount() == 0)
+                    { stack.Push(readResource); }
+                }
+            }
+        }
+    }
+
+    // 依存解決が出来たら，ステート遷移を解決する
+    {
+        auto itr = m_PassList.GetHead();
+        while(itr != nullptr)
+        {
+            if (itr->GetRefCount() == 0)
+            {
+                auto node = itr;
+
+                auto hasNext = itr->HasNext();
+                if (hasNext)
+                { itr = itr->GetNext(); }
+                m_PassList.Remove(node);
+
+                if (!hasNext)
+                { break; }
+            }
+            else
+            {
+                // ステート解決.
 
 
-            // 参照カウントがゼロのときにそれらのリソースをスタックに積む.
+                if (!itr->HasNext())
+                { break; }
 
+                itr = itr->GetNext();
+            }
         }
     }
 }

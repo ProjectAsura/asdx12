@@ -69,9 +69,6 @@
     <ClCompile Include="..\src\asdxDescriptor.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\asdxQueue.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\asdxFence.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -139,6 +136,9 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="..\src\asdxPassGraph.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\asdxCommandQueue.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
@@ -210,9 +210,6 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="..\include\asdxDescriptor.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxQueue.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="..\include\asdxFence.h">
@@ -300,6 +297,9 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="..\include\asdxStack.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\asdxCommandQueue.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>

@@ -172,7 +172,8 @@ bool GraphicsDevice::Init(const Desc* pDesc)
     }
 
     // グラフィックスキューの生成.
-    auto ret = Queue::Create(m_pDevice.GetPtr(), D3D12_COMMAND_LIST_TYPE_DIRECT, m_pGraphicsQueue.GetAddress());
+    auto ret = CommandQueue::Create(
+        m_pDevice.GetPtr(), D3D12_COMMAND_LIST_TYPE_DIRECT, m_pGraphicsQueue.GetAddress());
     if (!ret)
     {
         ELOG("Error : Queue::Create() Failed.");
@@ -180,7 +181,8 @@ bool GraphicsDevice::Init(const Desc* pDesc)
     }
 
     // コンピュートキューの生成.
-    ret = Queue::Create(m_pDevice.GetPtr(), D3D12_COMMAND_LIST_TYPE_COMPUTE, m_pComputeQueue.GetAddress());
+    ret = CommandQueue::Create(
+        m_pDevice.GetPtr(), D3D12_COMMAND_LIST_TYPE_COMPUTE, m_pComputeQueue.GetAddress());
     if (!ret)
     {
         ELOG("Error : Queue::Create() Failed.");
@@ -188,7 +190,8 @@ bool GraphicsDevice::Init(const Desc* pDesc)
     }
 
     // コピーキューの生成.
-    ret = Queue::Create(m_pDevice.GetPtr(), D3D12_COMMAND_LIST_TYPE_COPY, m_pCopyQueue.GetAddress());
+    ret = CommandQueue::Create(
+        m_pDevice.GetPtr(), D3D12_COMMAND_LIST_TYPE_COPY, m_pCopyQueue.GetAddress());
     if (!ret)
     {
         ELOG("Error : Queue::Create() Failed.");
@@ -196,7 +199,8 @@ bool GraphicsDevice::Init(const Desc* pDesc)
     }
 
     // ビデオデコードキューの生成.
-    ret = Queue::Create(m_pDevice.GetPtr(), D3D12_COMMAND_LIST_TYPE_VIDEO_DECODE, m_pVideoDecodeQueue.GetAddress());
+    ret = CommandQueue::Create(
+        m_pDevice.GetPtr(), D3D12_COMMAND_LIST_TYPE_VIDEO_DECODE, m_pVideoDecodeQueue.GetAddress());
     if (!ret)
     {
         ELOG("Error : Queue::Create() Failed.");
@@ -204,7 +208,8 @@ bool GraphicsDevice::Init(const Desc* pDesc)
     }
 
     // ビデオプロセスキューの生成.
-    ret = Queue::Create(m_pDevice.GetPtr(), D3D12_COMMAND_LIST_TYPE_VIDEO_PROCESS, m_pVideoProcessQueue.GetAddress());
+    ret = CommandQueue::Create(
+        m_pDevice.GetPtr(), D3D12_COMMAND_LIST_TYPE_VIDEO_PROCESS, m_pVideoProcessQueue.GetAddress());
     if (!ret)
     {
         ELOG("Error : Queue::Create() Failed.");
@@ -212,7 +217,8 @@ bool GraphicsDevice::Init(const Desc* pDesc)
     }
 
     // ビデオエンコードキューの生成.
-    ret = Queue::Create(m_pDevice.GetPtr(), D3D12_COMMAND_LIST_TYPE_VIDEO_ENCODE, m_pVideoEncodeQueue.GetAddress());
+    ret = CommandQueue::Create(
+        m_pDevice.GetPtr(), D3D12_COMMAND_LIST_TYPE_VIDEO_ENCODE, m_pVideoEncodeQueue.GetAddress());
     if (!ret)
     {
         ELOG("Error : Queue::Create() Failed.");
@@ -265,37 +271,37 @@ IDXGIFactory7* GraphicsDevice::GetFactory() const
 //-----------------------------------------------------------------------------
 //      グラフィックスキューを取得します.
 //-----------------------------------------------------------------------------
-Queue* GraphicsDevice::GetGraphicsQueue() const
+CommandQueue* GraphicsDevice::GetGraphicsQueue() const
 { return m_pGraphicsQueue.GetPtr(); }
 
 //-----------------------------------------------------------------------------
 //      コンピュートキューを取得します.
 //-----------------------------------------------------------------------------
-Queue* GraphicsDevice::GetComputeQueue() const
+CommandQueue* GraphicsDevice::GetComputeQueue() const
 { return m_pComputeQueue.GetPtr(); }
 
 //-----------------------------------------------------------------------------
 //      コピーキューを取得します.
 //-----------------------------------------------------------------------------
-Queue* GraphicsDevice::GetCopyQueue() const
+CommandQueue* GraphicsDevice::GetCopyQueue() const
 { return m_pCopyQueue.GetPtr(); }
 
 //-----------------------------------------------------------------------------
 //      ビデオデコードキューを取得します.
 //-----------------------------------------------------------------------------
-Queue* GraphicsDevice::GetVideoDecodeQueue() const
+CommandQueue* GraphicsDevice::GetVideoDecodeQueue() const
 { return m_pVideoDecodeQueue.GetPtr(); }
 
 //-----------------------------------------------------------------------------
 //      ビデオプロセスキューを取得します.
 //-----------------------------------------------------------------------------
-Queue* GraphicsDevice::GetVideoProcessQueue() const
+CommandQueue* GraphicsDevice::GetVideoProcessQueue() const
 { return m_pVideoProcessQueue.GetPtr(); }
 
 //-----------------------------------------------------------------------------
 //      ビデオエンコードキューを取得します.
 //-----------------------------------------------------------------------------
-Queue* GraphicsDevice::GetVideoEncodeQueue() const
+CommandQueue* GraphicsDevice::GetVideoEncodeQueue() const
 { return m_pVideoEncodeQueue.GetPtr(); }
 
 //-----------------------------------------------------------------------------
@@ -345,22 +351,22 @@ void GraphicsDevice::SetDescriptorHeaps(ID3D12GraphicsCommandList* pCmdList)
 void GraphicsDevice::WaitIdle()
 {
     if (m_pGraphicsQueue.GetPtr() != nullptr)
-    { m_pGraphicsQueue->Wait(Queue::kInfinite); }
+    { m_pGraphicsQueue->Wait(CommandQueue::kInfinite); }
 
     if (m_pComputeQueue.GetPtr() != nullptr)
-    { m_pComputeQueue->Wait(Queue::kInfinite); }
+    { m_pComputeQueue->Wait(CommandQueue::kInfinite); }
 
     if (m_pCopyQueue.GetPtr() != nullptr)
-    { m_pCopyQueue->Wait(Queue::kInfinite); }
+    { m_pCopyQueue->Wait(CommandQueue::kInfinite); }
 
     if (m_pVideoDecodeQueue.GetPtr() != nullptr)
-    { m_pVideoDecodeQueue->Wait(Queue::kInfinite); }
+    { m_pVideoDecodeQueue->Wait(CommandQueue::kInfinite); }
 
     if (m_pVideoEncodeQueue.GetPtr() != nullptr)
-    { m_pVideoEncodeQueue->Wait(Queue::kInfinite); }
+    { m_pVideoEncodeQueue->Wait(CommandQueue::kInfinite); }
 
     if (m_pVideoProcessQueue.GetPtr() != nullptr)
-    { m_pVideoProcessQueue->Wait(Queue::kInfinite); }
+    { m_pVideoProcessQueue->Wait(CommandQueue::kInfinite); }
 }
 
 //-----------------------------------------------------------------------------
