@@ -180,6 +180,7 @@
     <ClInclude Include="..\include\asdxShaderCompiler.h" />
     <ClInclude Include="..\include\asdxShaderReflection.h" />
     <ClInclude Include="..\include\asdxSpinLock.h" />
+    <ClInclude Include="..\include\asdxStack.h" />
     <ClInclude Include="..\include\asdxStepTimer.h" />
     <ClInclude Include="..\include\asdxStopWatch.h" />
     <ClInclude Include="..\include\asdxStructuredBuffer.h" />

@@ -16,12 +16,25 @@
 #include <asdxLogger.h>
 #include <asdxGraphicsDevice.h>
 #include <asdxList.h>
+#include <asdxStack.h>
+
 
 // パスで生成可能な最大リソース数.
 #define MAX_PASS_RESOURCE_COUNT (16)
 
 
 namespace asdx {
+
+///////////////////////////////////////////////////////////////////////////////
+// RESORUCE_INFO_FLAGS
+///////////////////////////////////////////////////////////////////////////////
+enum RESOURCE_INFO_FLAGS
+{
+    RESOURCE_INFO_FLAG_NONE     = 0,
+    RESOURCE_INFO_FLAG_READ     = 0x1 << 0,
+    RESOURCE_INFO_FLAG_WRITE    = 0x1 << 1,
+    RESOURCE_INFO_FLAG_BARRIER  = 0x1 << 2,
+};
 
 //-----------------------------------------------------------------------------
 // Forward Declarations.
@@ -32,7 +45,9 @@ class RenderPass;
 ///////////////////////////////////////////////////////////////////////////////
 // PassResource class
 ///////////////////////////////////////////////////////////////////////////////
-class PassResource : public ListNode<PassResource>
+class PassResource 
+: public List<PassResource>::Node
+, public Stack<PassResource>::Node
 {
     //=========================================================================
     // list of friend classes and methods.
@@ -43,7 +58,7 @@ public:
     //=========================================================================
     // public variables.
     //=========================================================================
-    /* NOTHING */
+    D3D12_RESOURCE_STATES   ResourceState;
 
     //=========================================================================
     // public methods.
@@ -53,7 +68,7 @@ public:
     //! @brief      コンストラクタです.
     //-------------------------------------------------------------------------
     PassResource()
-    : ListNode<PassResource>()
+    : List<PassResource>::Node()
     , m_RefCount        (0)
     , m_DescriptorRTV   (nullptr)
     , m_DescriptorDSV   (nullptr)
@@ -142,8 +157,6 @@ public:
                 clearValue.Color[3] = value.ClearValue.Color[3];
             }
 
-            memcpy(&m_ClearValue, &value.ClearValue, sizeof(m_ClearValue));
-
             m_Stencil = false;
             if (value.Format == DXGI_FORMAT_D24_UNORM_S8_UINT)
             { m_Stencil = true; }
@@ -169,6 +182,8 @@ public:
                 ELOG("Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr);
                 return false;
             }
+
+            ResourceState = D3D12_RESOURCE_STATE_COMMON;
 
             if (rtv)
             {
@@ -328,20 +343,20 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      ビューをクリアします.
     //-------------------------------------------------------------------------
-    void ClearView(ID3D12GraphicsCommandList6* pCmd)
+    void ClearView(ID3D12GraphicsCommandList6* pCmd, ClearValue& value)
     {
-        if (m_ClearValue.Type == CLEAR_TYPE_RTV)
+        if (value.Type == CLEAR_TYPE_RTV)
         {
             for(auto i=0; i<m_Desc.DepthOrArraySize; ++i)
             {
                 pCmd->ClearRenderTargetView(
                     m_DescriptorRTV[i]->GetHandleCPU(),
-                    m_ClearValue.Color,
+                    value.Color,
                     0,
                     nullptr);
             }
         }
-        else if (m_ClearValue.Type == CLEAR_TYPE_DSV)
+        else if (value.Type == CLEAR_TYPE_DSV)
         {
             auto flag = D3D12_CLEAR_FLAG_DEPTH;
             if (m_Stencil)
@@ -352,29 +367,29 @@ public:
                 pCmd->ClearDepthStencilView(
                     m_DescriptorDSV[i]->GetHandleCPU(),
                     flag,
-                    m_ClearValue.Depth,
-                    m_ClearValue.Stencil,
+                    value.Depth,
+                    value.Stencil,
                     0,
                     nullptr);
             }
         }
-        else if (m_ClearValue.Type == CLEAR_TYPE_UAV_FLOAT)
+        else if (value.Type == CLEAR_TYPE_UAV_FLOAT)
         {
             pCmd->ClearUnorderedAccessViewFloat(
                 m_DescriptorRes->GetHandleGPU(),
                 m_DescriptorRes->GetHandleCPU(),
                 m_Resource,
-                m_ClearValue.Float,
+                value.Float,
                 0,
                 nullptr);
         }
-        else if (m_ClearValue.Type == CLEAR_TYPE_UAV_UINT)
+        else if (value.Type == CLEAR_TYPE_UAV_UINT)
         {
             pCmd->ClearUnorderedAccessViewUint(
                 m_DescriptorRes->GetHandleGPU(),
                 m_DescriptorRes->GetHandleCPU(),
                 m_Resource,
-                m_ClearValue.Uint,
+                value.Uint,
                 0,
                 nullptr);
         }
@@ -385,6 +400,9 @@ public:
     //-------------------------------------------------------------------------
     bool Import(ID3D12Resource* pResource, D3D12_RESOURCE_STATES state)
     {
+        // TODO : Implement.
+        assert(false);
+
         m_Import = true;
         m_Resource = pResource;
 
@@ -454,8 +472,6 @@ private:
     PassResourceDesc    m_Desc          = {};
     bool                m_Import        = false;
     bool                m_Stencil       = false;
-    ClearValue          m_ClearValue    = {};
-    PassResource*       m_NextItem      = nullptr;  // スタック用.
     RenderPass*         m_Producer      = nullptr;
 
     //=========================================================================
@@ -801,9 +817,7 @@ public:
     //-------------------------------------------------------------------------
     PassResourceRegistry()
     : m_Capacity    (0)
-    , m_CacheCount  (0)
-    , m_Head        (nullptr)
-    , m_Tail        (nullptr)
+    , m_Cache       ()
     { /* DO_NOTHING */ }
 
     //-------------------------------------------------------------------------
@@ -818,9 +832,7 @@ public:
     void Init(uint32_t capacity)
     {
         m_Capacity   = capacity;
-        m_CacheCount = 0;
-        m_Head       = nullptr;
-        m_Tail       = nullptr;
+        m_Cache.Clear();
     }
 
     //-------------------------------------------------------------------------
@@ -835,7 +847,7 @@ public:
             Remove(node);
             PushBack(node);
         }
-        else if(m_CacheCount < m_Capacity)
+        else if(m_Cache.GetCount() < m_Capacity)
         {
             node = CreateResource(value, producer);
             PushBack(node);
@@ -858,7 +870,7 @@ public:
     void Clear()
     {
         // 全部を突っ込む.
-        auto itr = m_Head;
+        auto itr = m_Cache.GetHead();
         while(itr != nullptr)
         {
             auto node = itr;
@@ -870,10 +882,7 @@ public:
             itr = itr->GetNext();
         }
 
-        // クリア.
-        m_Head = nullptr;
-        m_Tail = nullptr;
-        m_CacheCount = 0;
+        m_Cache.Clear();
 
         // 強制破棄.
         m_Dispoer.Clear();
@@ -889,23 +898,21 @@ public:
     //! @brief      リスト先頭ポインタを取得します.
     //-------------------------------------------------------------------------
     PassResource* GetHead() const
-    { return m_Head; }
+    { return m_Cache.GetHead(); }
 
     //-------------------------------------------------------------------------
     //! @brief      リスト末尾ポインタを取得します.
     //-------------------------------------------------------------------------
     PassResource* GetTail() const
-    { return m_Tail;}
+    { return m_Cache.GetTail();}
 
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
     Disposer<PassResource>  m_Dispoer;
-    uint32_t                m_Capacity      = 0;
-    uint32_t                m_CacheCount    = 0;
-    PassResource*           m_Head          = nullptr;
-    PassResource*           m_Tail          = nullptr;
+    uint32_t                m_Capacity = 0;
+    List<PassResource>      m_Cache;
 
     //=========================================================================
     // private methods.
@@ -916,7 +923,7 @@ private:
     //-------------------------------------------------------------------------
     bool Contains(const PassResourceDesc& value, PassResource** node)
     {
-        auto itr = m_Head;
+        auto itr = m_Cache.GetHead();
         while(itr != nullptr)
         {
             if (itr->Match(value))
@@ -939,8 +946,7 @@ private:
     //-------------------------------------------------------------------------
     void Remove(PassResource* node)
     {
-        PassResource::Unlink(node);
-        m_CacheCount--;
+        m_Cache.Remove(node);
     }
 
     //-------------------------------------------------------------------------
@@ -948,17 +954,7 @@ private:
     //-------------------------------------------------------------------------
     void PushBack(PassResource* node)
     {
-        if (m_Head == nullptr)
-        {
-            m_Head = node;
-            m_Tail = node;
-        }
-        else
-        {
-            PassResource::Link(m_Tail, node);
-            m_Tail = node;
-        }
-        m_CacheCount++;
+        m_Cache.PushBack(node);
     }
 
     //-------------------------------------------------------------------------
@@ -966,12 +962,7 @@ private:
     //-------------------------------------------------------------------------
     PassResource* PopFront()
     {
-        auto head = m_Head;
-        auto next = m_Head->GetNext();
-        PassResource::Unlink(head);
-        m_Head = next;
-        m_CacheCount--;
-        return head;
+        return m_Cache.PopFront();
     }
 
     //-------------------------------------------------------------------------
@@ -998,7 +989,7 @@ private:
 ///////////////////////////////////////////////////////////////////////////////
 // RenderPass class
 ///////////////////////////////////////////////////////////////////////////////
-class RenderPass : public ListNode<RenderPass>
+class RenderPass : public List<RenderPass>::Node
 {
     //=========================================================================
     // list of friend classes and methods.
@@ -1007,12 +998,14 @@ class RenderPass : public ListNode<RenderPass>
 
 public:
     ///////////////////////////////////////////////////////////////////////////
-    // BarrierInfo
+    // ResourceInfo
     ///////////////////////////////////////////////////////////////////////////
-    struct BarrierInfo
+    struct ResourceInfo
     {
-        uint32_t                Count;
-        D3D12_RESOURCE_BARRIER  Values[MAX_PASS_RESOURCE_COUNT];
+        uint32_t                Count = 0;
+        uint8_t                 Flags      [MAX_PASS_RESOURCE_COUNT] = {};
+        PassResource*           Resources  [MAX_PASS_RESOURCE_COUNT] = {};
+        D3D12_RESOURCE_BARRIER  Barriers   [MAX_PASS_RESOURCE_COUNT] = {};
     };
 
     ///////////////////////////////////////////////////////////////////////////
@@ -1020,19 +1013,20 @@ public:
     ///////////////////////////////////////////////////////////////////////////
     struct ClearInfo
     {
-        uint32_t        Count;
-        PassResource*   Resources[MAX_PASS_RESOURCE_COUNT];
+        uint32_t        Count = 0;
+        ClearValue      Values   [MAX_PASS_RESOURCE_COUNT] = {};
+        PassResource*   Resources[MAX_PASS_RESOURCE_COUNT] = {};
     };
 
     //=========================================================================
     // public variables.
     //=========================================================================
     PassTag         m_Tag;
-    PassSetup       m_Setup                                 = nullptr;
-    PassExecute     m_Execute                               = nullptr;
-    bool            m_AsyncCompute                          = false;
-    BarrierInfo     m_Barriers                              = {};
-    ClearInfo       m_Clears                                = {};
+    PassSetup       m_Setup         = nullptr;
+    PassExecute     m_Execute       = nullptr;
+    bool            m_AsyncCompute  = false;
+    ResourceInfo    m_Infos         = {};
+    ClearInfo       m_ClearInfos    = {};
 
     //=========================================================================
     // public methods.
@@ -1042,7 +1036,7 @@ public:
     //! @brief      コンストラクタです.
     //-------------------------------------------------------------------------
     RenderPass()
-    : ListNode<RenderPass>()
+    : List<RenderPass>::Node()
     , m_Setup           (nullptr)
     , m_Execute         (nullptr)
     , m_AsyncCompute    (false)
@@ -1071,15 +1065,28 @@ public:
     //! @brief      リソースバリアを設定します.
     //-------------------------------------------------------------------------
     void ResourceBarrier(ID3D12GraphicsCommandList6* pCmd)
-    { pCmd->ResourceBarrier(m_Barriers.Count, m_Barriers.Values); }
+    {
+        D3D12_RESOURCE_BARRIER barriers[MAX_PASS_RESOURCE_COUNT];
+        auto count = 0u;
+        for(auto i=0u; i<m_Infos.Count; ++i)
+        {
+            if (m_Infos.Flags[i] & RESOURCE_INFO_FLAG_BARRIER)
+            {
+                barriers[count] = m_Infos.Barriers[i];
+                count++;
+            }
+        }
+
+        pCmd->ResourceBarrier(count, barriers);
+    }
 
     //-------------------------------------------------------------------------
     //! @brief      ビューをクリアします.
     //-------------------------------------------------------------------------
     void ClearViews(ID3D12GraphicsCommandList6* pCmd)
     {
-        for(auto i=0u; i<m_Clears.Count; ++i)
-        { m_Clears.Resources[i]->ClearView(pCmd); }
+        for(auto i=0u; i<m_ClearInfos.Count; ++i)
+        { m_ClearInfos.Resources[i]->ClearView(pCmd, m_ClearInfos.Values[i]); }
     }
 
 private:
@@ -1171,10 +1178,9 @@ private:
     //=========================================================================
     FrameHeap               m_FrameHeap[2];
     uint8_t                 m_BufferIndex   = 0;
-    RenderPass*             m_Head          = nullptr;
-    RenderPass*             m_Tail          = nullptr;
-    uint32_t                m_PassCount     = 0;
-    CommandList*            m_CommandLists  = nullptr;
+    List<RenderPass>        m_PassList;
+    CommandList*            m_GraphicsCommandLists  = nullptr;
+    CommandList*            m_ComputeCommandLists   = nullptr;
     uint32_t                m_MaxPassCount  = 0;
     PassResourceRegistry    m_Registry;
 
@@ -1215,8 +1221,23 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      Readリソースを登録します.
     //-------------------------------------------------------------------------
-    PassResource* Read(PassResource* resource, uint32_t flag) override
+    PassResource* Read(PassResource* resource) override
     {
+        uint8_t flag = RESOURCE_INFO_FLAG_READ;
+        auto index = m_Pass->m_Infos.Count;
+
+        auto prevState = resource->ResourceState;
+        if (prevState != D3D12_RESOURCE_STATE_GENERIC_READ)
+        {
+            // バリア設定.
+
+            // ステート変更.
+        }
+
+        m_Pass->m_Infos.Resources[index] = resource;
+        m_Pass->m_Infos.Flags    [index] = flag;
+        m_Pass->m_Infos.Count++;
+
         resource->Increment();
         return resource;
     }
@@ -1224,8 +1245,46 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      Writeリソースを登録します.
     //-------------------------------------------------------------------------
-    PassResource* Write(PassResource* resource, uint32_t flag) override
+    PassResource* Write(PassResource* resource) override
     {
+        uint8_t flag = RESOURCE_INFO_FLAG_WRITE;
+
+        auto index     = m_Pass->m_Infos.Count;
+        auto prevState = resource->ResourceState;
+
+        auto desc = resource->GetDesc();
+        if (desc.Usage & PASS_RESOURCE_USAGE_RTV)
+        {
+            if (prevState != D3D12_RESOURCE_STATE_RENDER_TARGET)
+            {
+                // バリア設定.
+
+                // ステート変更.
+            }
+        }
+        else if (desc.Usage & PASS_RESOURCE_USAGE_DSV)
+        {
+            if (prevState != D3D12_RESOURCE_STATE_DEPTH_WRITE)
+            {
+                // バリア設定.
+
+                // ステート変更.
+            }
+        }
+        else if (desc.Usage & PASS_RESOURCE_USAGE_UAV)
+        {
+            if (prevState != D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
+            {
+                // バリア設定.
+
+                // ステート変更.
+            }
+        }
+
+        m_Pass->m_Infos.Resources[index] = resource;
+        m_Pass->m_Infos.Flags    [index] = flag;
+        m_Pass->m_Infos.Count++;
+
         m_Pass->Increment();
         return resource;
     }
@@ -1234,7 +1293,19 @@ public:
     //! @brief      リソースを生成します.
     //-------------------------------------------------------------------------
     PassResource* Create(PassResourceDesc& desc) override
-    { return m_Graph->AllocResource(desc, m_Pass); }
+    {
+        auto resource = m_Graph->AllocResource(desc, m_Pass);
+
+        if (desc.InitState == PASS_RESOURCE_STATE_CLEAR)
+        {
+            auto index = m_Pass->m_ClearInfos.Count;
+            m_Pass->m_ClearInfos.Resources[index] = resource;
+            m_Pass->m_ClearInfos.Values   [index] = desc.ClearValue;
+            m_Pass->m_ClearInfos.Count++;
+        }
+
+        return resource;
+    }
 
     //-------------------------------------------------------------------------
     //! @brief      リソースをインポートします.
@@ -1380,13 +1451,22 @@ PassGraph::~PassGraph()
     for(auto i=0; i<2; ++i)
     { m_FrameHeap[i].Term(); }
 
-    if (m_CommandLists != nullptr)
+    if (m_GraphicsCommandLists != nullptr)
     {
         for(auto i=0u; i<m_MaxPassCount; ++i)
-        { m_CommandLists[i].Term(); }
+        { m_GraphicsCommandLists[i].Term(); }
 
-        delete[] m_CommandLists;
-        m_CommandLists = nullptr;
+        delete[] m_GraphicsCommandLists;
+        m_GraphicsCommandLists = nullptr;
+    }
+
+    if (m_ComputeCommandLists != nullptr)
+    {
+        for(auto i=0u; i<m_MaxPassCount; ++i)
+        { m_ComputeCommandLists[i].Term(); }
+
+        delete[] m_ComputeCommandLists;
+        m_ComputeCommandLists = nullptr;
     }
 
     m_Registry.Clear();
@@ -1399,7 +1479,7 @@ bool PassGraph::Init(uint32_t maxPassCount, uint32_t maxResourceCount)
 {
     // パス数 + 最大リソース数で確保.
     auto frameHeapSize = sizeof(RenderPass) * maxPassCount
-                        + sizeof(PassResource) * maxResourceCount;
+                       + sizeof(PassResource) * maxResourceCount;
     for(auto i=0; i<2; ++i)
     {
         if (!m_FrameHeap[i].Init(frameHeapSize))
@@ -1411,9 +1491,9 @@ bool PassGraph::Init(uint32_t maxPassCount, uint32_t maxResourceCount)
 
     m_Registry.Init(maxResourceCount);
 
-    m_CommandLists = new(std::nothrow) CommandList[maxPassCount];
-    assert(m_CommandLists != nullptr);
-    if (m_CommandLists == nullptr)
+    m_GraphicsCommandLists = new(std::nothrow) CommandList[maxPassCount];
+    assert(m_GraphicsCommandLists != nullptr);
+    if (m_GraphicsCommandLists == nullptr)
     {
         ELOG("Error : Out of Memory.");
         return false;
@@ -1421,9 +1501,28 @@ bool PassGraph::Init(uint32_t maxPassCount, uint32_t maxResourceCount)
 
     for(auto i=0u; i<maxPassCount; ++i)
     {
-        if (!m_CommandLists[i].Init(
+        if (!m_GraphicsCommandLists[i].Init(
             GfxDevice().GetDevice(),
             D3D12_COMMAND_LIST_TYPE_DIRECT))
+        {
+            ELOG("Error : CommandList::Init() Failed.");
+            return false;
+        }
+    }
+
+    m_ComputeCommandLists = new(std::nothrow) CommandList[maxPassCount];
+    assert(m_ComputeCommandLists != nullptr);
+    if (m_ComputeCommandLists == nullptr)
+    {
+        ELOG("Error : Out of Memory.");
+        return false;
+    }
+
+    for(auto i=0u; i<maxPassCount; ++i)
+    {
+        if (!m_ComputeCommandLists[i].Init(
+            GfxDevice().GetDevice(),
+            D3D12_COMMAND_LIST_TYPE_COMPUTE))
         {
             ELOG("Error : CommandList::Init() Failed.");
             return false;
@@ -1444,8 +1543,8 @@ void PassGraph::Release()
 //-----------------------------------------------------------------------------
 bool PassGraph::AddPass(PassTag& tag, PassSetup setup, PassExecute execute)
 {
-    assert(m_PassCount < m_MaxPassCount);
-    if (m_PassCount >= m_MaxPassCount)
+    assert(m_PassList.GetCount() < m_MaxPassCount);
+    if (m_PassList.GetCount() >= m_MaxPassCount)
     { return false; }
 
     auto pass = FrameAlloc<RenderPass>();
@@ -1453,17 +1552,7 @@ bool PassGraph::AddPass(PassTag& tag, PassSetup setup, PassExecute execute)
     pass->m_Setup       = setup;
     pass->m_Execute     = execute;
 
-    if (m_Head == nullptr)
-    {
-        m_Head = pass;
-        m_Tail = pass;
-    }
-    else
-    {
-        RenderPass::Link(m_Tail, pass);
-        m_Tail = pass;
-    }
-    m_PassCount++;
+    m_PassList.PushBack(pass);
 
     return true;
 }
@@ -1475,7 +1564,7 @@ void PassGraph::Compile()
 {
     // 各パスについて処理.
     {
-        auto itr = m_Head;
+        auto itr = m_PassList.GetHead();
         while(itr != nullptr)
         {
             PassGraphBuilder builder(this, itr);
@@ -1488,6 +1577,9 @@ void PassGraph::Compile()
         }
     }
 
+    // 参照カウントゼロのリソースを格納するスタック. 
+    Stack<PassResource> stack;
+
     // 参照カウントがゼロのリソースを見つける.
     {
         auto itr = m_Registry.GetHead();
@@ -1496,6 +1588,7 @@ void PassGraph::Compile()
             if (itr->GetRefCount() == 0)
             {
                 // スタックに積む.
+                stack.Push(itr);
             }
 
             if (!itr->HasNext())
@@ -1505,13 +1598,23 @@ void PassGraph::Compile()
         }
     }
 
-    // while(スタックが空でない場合)
+    // スタックが空でない場合
+    while(!stack.IsEmpty())
     {
         // リソースをpop() 生成したproducerの参照カウントを下げる.
+        auto resource = stack.Pop();
+        auto producer = resource->GetProducer();
+        producer->Decrement();
 
-        // producerの参照カウントが0なら，読み取りするリソースの参照カウントを下げる.
+        // producerの参照カウントが0の場合.
+        if (producer->GetRefCount() == 0)
+        {
+            // 読み取りするリソースの参照カウントを下げる.
 
-        // 参照カウントがゼロのときにそれらのリソースをスタックに積む.
+
+            // 参照カウントがゼロのときにそれらのリソースをスタックに積む.
+
+        }
     }
 }
 
@@ -1522,20 +1625,53 @@ void PassGraph::Execute(ID3D12CommandQueue* pGraphics, ID3D12CommandQueue* pComp
 {
     // コマンドリストをリセット.
     for(auto i=0u; i<m_MaxPassCount; ++i)
-    { m_CommandLists[i].Reset(); }
+    {
+        m_GraphicsCommandLists[i].Reset();
+        m_ComputeCommandLists[i].Reset();
+    }
+
+    // 有効なコマンドリストの数.
+    auto graphisIndex = 0u;
+    auto computeIndex = 0u;
+
+    auto itr = m_PassList.GetHead();
+    while(itr != nullptr)
+    {
+        if (itr->GetRefCount() != 0)
+        {
+            // コマンドリスト割り当て
+            ID3D12GraphicsCommandList* pCmd = nullptr;
+            if (itr->m_AsyncCompute)
+            {
+                pCmd = m_GraphicsCommandLists[graphisIndex].GetCommandList();
+                graphisIndex++;
+            }
+            else
+            {
+                pCmd = m_GraphicsCommandLists[computeIndex].GetCommandList();
+                computeIndex++;
+            }
+
+            // スレッド割り当て.
+        }
+
+        if (!itr->HasNext())
+        { break; }
+
+        itr = itr->GetNext();
+    }
+
+    // スレッド実行!!
 
 
-    // Pass.m_RefCount != 0　に対してスレッド実行.
-
-        
     // コマンドキューに積む.
 
 
     // コマンドキュー実行.
 
+
     // パスをクリア.
-    m_Head = nullptr;
-    m_Tail = nullptr;
+    m_PassList.Clear();
 
     // ダブルバッファリング.
     m_BufferIndex = (m_BufferIndex + 1) & 0x1;

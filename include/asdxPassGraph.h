@@ -124,8 +124,8 @@ private:
 struct IPassGraphBuilder
 {
     virtual ~IPassGraphBuilder() {}
-    virtual PassResource* Read(PassResource* resource, uint32_t flag) = 0;
-    virtual PassResource* Write(PassResource* resource, uint32_t flag) = 0;
+    virtual PassResource* Read(PassResource* resource) = 0;
+    virtual PassResource* Write(PassResource* resource) = 0;
     virtual PassResource* Create(PassResourceDesc& desc) = 0;
     virtual PassResource* Import(ID3D12Resource* resource, D3D12_RESOURCE_STATES state) = 0;
     virtual void AsyncComputeEnable(bool value) = 0;

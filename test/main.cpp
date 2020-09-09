@@ -17,6 +17,7 @@
 #include <asdxResModel.h>
 #include <asdxLogger.h>
 #include <asdxList.h>
+#include <asdxStack.h>
 
 int main(int argc, char** argv)
 {
@@ -56,12 +57,12 @@ int main(int argc, char** argv)
 
 #if 1
     {
-        struct Node : public asdx::ListNode<Node>
+        struct Node : public asdx::List<Node>::Node
         {
             int value;
 
             Node(int val)
-            : asdx::ListNode<Node>()
+            : asdx::List<Node>::Node()
             , value(val)
             {
             }
@@ -118,6 +119,39 @@ int main(int argc, char** argv)
 
         assert(list.GetHead() == nullptr);
         assert(list.GetTail() == nullptr);
+        assert(list.IsEmpty() == true);
+    }
+
+    {
+        struct StackNode : public asdx::Stack<StackNode>::Node
+        {
+            int value;
+
+            StackNode(int val)
+            : value(val)
+            {}
+        };
+
+        auto node1 = StackNode(1);
+        auto node2 = StackNode(2);
+        auto node3 = StackNode(3);
+
+        auto stack = asdx::Stack<StackNode>();
+        stack.Push(&node1);
+        stack.Push(&node2);
+        stack.Push(&node3);
+
+        assert(stack.GetCount() == 3);
+        auto pop1 = stack.Pop();
+        assert(pop1->value == 3);
+
+        auto pop2 = stack.Pop();
+        assert(pop2->value == 2);
+
+        auto pop3 = stack.Pop();
+        assert(pop3->value == 1);
+
+        assert(stack.IsEmpty() == true);
     }
 #endif
 
