@@ -18,6 +18,7 @@
 #include <asdxLogger.h>
 #include <asdxList.h>
 #include <asdxStack.h>
+#include <asdxQueue.h>
 
 int main(int argc, char** argv)
 {
@@ -55,7 +56,7 @@ int main(int argc, char** argv)
     }
 #endif
 
-#if 1
+#if 0
     {
         struct Node : public asdx::List<Node>::Node
         {
@@ -120,6 +121,40 @@ int main(int argc, char** argv)
         assert(list.GetHead() == nullptr);
         assert(list.GetTail() == nullptr);
         assert(list.IsEmpty() == true);
+
+        list.PushBack(&node1);
+        list.PushBack(&node2);
+        list.PushBack(&node3);
+
+        printf("size : %zu\n", list.GetCount());
+
+        itr = list.GetHead();
+        assert(itr->value == 1);
+        itr = itr->GetNext();
+        assert(itr->value == 2);
+        itr = itr->GetNext();
+        assert(itr->value == 3);
+        assert(itr->HasNext() == false);
+
+        assert(list.Contains(&node1) == true);
+        assert(list.Contains(&node2) == true);
+        assert(list.Contains(&node3) == true);
+
+        list.Remove(&node2);
+        printf("size : %zu\n", list.GetCount());
+
+        assert(list.Contains(&node1) == true);
+        assert(list.Contains(&node2) == false);
+        assert(list.Contains(&node3) == true);
+
+
+        itr = list.GetHead();
+        assert(itr->value == 1);
+        itr = itr->GetNext();
+        assert(itr->value == 3);
+        assert(itr->HasNext() == false);
+
+        list.Clear();
     }
 
     {
@@ -152,6 +187,68 @@ int main(int argc, char** argv)
         assert(pop3->value == 1);
 
         assert(stack.IsEmpty() == true);
+
+        stack.Push(&node1);
+        stack.Push(&node2);
+        stack.Push(&node3);
+
+        assert(stack.GetCount() == 3);
+        pop1 = stack.Pop();
+        assert(pop1->value == 3);
+
+        pop2 = stack.Pop();
+        assert(pop2->value == 2);
+
+        pop3 = stack.Pop();
+        assert(pop3->value == 1);
+    }
+
+    {
+        struct QueueNode : public asdx::Queue<QueueNode>::Node
+        {
+            int value;
+
+            QueueNode(int val)
+            : value(val)
+            {}
+        };
+
+        auto node1 = QueueNode(1);
+        auto node2 = QueueNode(2);
+        auto node3 = QueueNode(3);
+
+        auto queue = asdx::Queue<QueueNode>();
+        queue.Push(&node1);
+        queue.Push(&node2);
+        queue.Push(&node3);
+
+        assert(queue.GetCount() == 3);
+        auto pop1 = queue.Pop();
+        assert(pop1->value == 1);
+
+        auto pop2 = queue.Pop();
+        assert(pop2->value == 2);
+
+        auto pop3 = queue.Pop();
+        assert(pop3->value == 3);
+
+        assert(queue.IsEmpty() == true);
+
+        queue.Push(&node1);
+        queue.Push(&node2);
+        queue.Push(&node3);
+
+        assert(queue.GetCount() == 3);
+        pop1 = queue.Pop();
+        assert(pop1->value == 1);
+
+        pop2 = queue.Pop();
+        assert(pop2->value == 2);
+
+        pop3 = queue.Pop();
+        assert(pop3->value == 3);
+
+        assert(queue.IsEmpty() == true);
     }
 #endif
 

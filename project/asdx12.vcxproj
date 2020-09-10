@@ -148,6 +148,7 @@
     <ClInclude Include="..\include\asdxConstantBuffer.h" />
     <ClInclude Include="..\include\asdxDescriptor.h" />
     <ClInclude Include="..\include\asdxDisposer.h" />
+    <ClInclude Include="..\include\asdxEditParam.h" />
     <ClInclude Include="..\include\asdxGraphicsDevice.h" />
     <ClInclude Include="..\include\asdxFence.h" />
     <ClInclude Include="..\include\asdxFileWatcher.h" />
@@ -170,6 +171,7 @@
     <ClInclude Include="..\include\asdxPool.h" />
     <ClInclude Include="..\include\asdxQuad.h" />
     <ClInclude Include="..\include\asdxCommandQueue.h" />
+    <ClInclude Include="..\include\asdxQueue.h" />
     <ClInclude Include="..\include\asdxRef.h" />
     <ClInclude Include="..\include\asdxResMaterial.h" />
     <ClInclude Include="..\include\asdxResModel.h" />
