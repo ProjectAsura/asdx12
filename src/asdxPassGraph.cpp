@@ -1325,12 +1325,10 @@ public:
     //-------------------------------------------------------------------------
     PassGraphContext
     (
-        PassGraph*                  graph,
         RenderPass*                 pass,
         ID3D12GraphicsCommandList6* commandList
     )
-    : m_Graph       (graph)
-    , m_Pass        (pass)
+    : m_Pass        (pass)
     , m_CommandList (commandList)
     { /* DO_NOTHING */ }
 
@@ -1389,7 +1387,6 @@ private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    PassGraph*                  m_Graph         = nullptr;
     RenderPass*                 m_Pass          = nullptr;
     ID3D12GraphicsCommandList6* m_CommandList   = nullptr;
 
@@ -1637,23 +1634,23 @@ void PassGraph::Execute(ID3D12CommandQueue* pGraphics, ID3D12CommandQueue* pComp
     auto itr = m_PassList.GetHead();
     while(itr != nullptr)
     {
-        if (itr->GetRefCount() != 0)
+        // コマンドリスト割り当て
+        ID3D12GraphicsCommandList6* pCmd = nullptr;
+        if (itr->m_AsyncCompute)
         {
-            // コマンドリスト割り当て
-            ID3D12GraphicsCommandList* pCmd = nullptr;
-            if (itr->m_AsyncCompute)
-            {
-                pCmd = m_GraphicsCommandLists[graphisIndex].GetCommandList();
-                graphisIndex++;
-            }
-            else
-            {
-                pCmd = m_GraphicsCommandLists[computeIndex].GetCommandList();
-                computeIndex++;
-            }
-
-            // スレッド割り当て.
+            pCmd = m_GraphicsCommandLists[graphisIndex].GetCommandList();
+            graphisIndex++;
         }
+        else
+        {
+            pCmd = m_GraphicsCommandLists[computeIndex].GetCommandList();
+            computeIndex++;
+        }
+
+        // コンテキスト
+        PassGraphContext context(itr, pCmd);
+
+        // スレッド割り当て.
 
         if (!itr->HasNext())
         { break; }

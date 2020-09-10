@@ -89,30 +89,46 @@ void Fence::Term()
 }
 
 //-----------------------------------------------------------------------------
-//      コマンドの完了を待機します.
+//      フェンスに値を設定します.
 //-----------------------------------------------------------------------------
-void Fence::Wait( ID3D12CommandQueue* pQueue, uint32_t mesc )
+UINT64 Fence::Signal(ID3D12CommandQueue* pQueue)
 {
     const auto fence = m_Counter;
     auto hr = pQueue->Signal( m_Fence.GetPtr(), fence );
     if ( FAILED( hr ) )
     {
         ELOG( "Error : ID3D12CommandQueue::Signal() Failed." );
-        return;
+        return 0;
     }
     m_Counter++;
+    return fence;
+}
 
-    if ( m_Fence->GetCompletedValue() < fence )
+//-----------------------------------------------------------------------------
+//      フェンスが指定された値に達するまで待機します.
+//-----------------------------------------------------------------------------
+void Fence::Wait(UINT64 fenceValue, uint32_t msec)
+{
+    if ( m_Fence->GetCompletedValue() < fenceValue )
     {
-        hr = m_Fence->SetEventOnCompletion( fence, m_Handle );
+        auto hr = m_Fence->SetEventOnCompletion( fenceValue, m_Handle );
         if ( FAILED( hr ) )
         {
             ELOG( "Error : ID3D12Fence::SetEventOnCompletation() Failed." );
             return;
         }
 
-        WaitForSingleObject( m_Handle, mesc );
+        WaitForSingleObject( m_Handle, msec );
     }
+}
+
+//-----------------------------------------------------------------------------
+//      コマンドの完了を待機します.
+//-----------------------------------------------------------------------------
+void Fence::SignalAndWait( ID3D12CommandQueue* pQueue, uint32_t msec )
+{
+    auto fence = Signal(pQueue);
+    Wait(fence, msec);
 }
 
 //-----------------------------------------------------------------------------

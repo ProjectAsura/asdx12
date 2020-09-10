@@ -120,7 +120,7 @@ void CommandQueue::Wait(uint32_t msec)
 {
     if (m_IsExecuted)
     {
-        m_Fence.Wait( m_Queue.GetPtr(), msec );
+        m_Fence.SignalAndWait(m_Queue.GetPtr(), msec);
         m_IsExecuted = false;
     }
 }

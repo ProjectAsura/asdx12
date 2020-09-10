@@ -47,7 +47,7 @@ private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    asdx::Queue*            m_pGraphicsQueue = nullptr;
+    asdx::CommandQueue*     m_pGraphicsQueue = nullptr;
     asdx::VertexBuffer      m_TriangleVB;
     asdx::RootSignature     m_RootSignature;
     asdx::PipelineState     m_PSO;
