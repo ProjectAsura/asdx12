@@ -17,6 +17,7 @@
 #include <asdxGraphicsDevice.h>
 #include <asdxList.h>
 #include <asdxStack.h>
+#include <asdxThreadPool.h>
 
 
 // パスで生成可能な最大リソース数.
@@ -989,7 +990,7 @@ private:
 ///////////////////////////////////////////////////////////////////////////////
 // RenderPass class
 ///////////////////////////////////////////////////////////////////////////////
-class RenderPass : public List<RenderPass>::Node
+class RenderPass : public List<RenderPass>::Node, public IRunnable
 {
     //=========================================================================
     // list of friend classes and methods.
@@ -1089,11 +1090,24 @@ public:
         { m_ClearInfos.Resources[i]->ClearView(pCmd, m_ClearInfos.Values[i]); }
     }
 
+    //-------------------------------------------------------------------------
+    //! @brief      コンテキストを設定します.
+    //-------------------------------------------------------------------------
+    void SetContext(IPassGraphContext* context)
+    { m_Context = context; }
+
+    //-------------------------------------------------------------------------
+    //! @brief      ジョブを実行します.
+    //-------------------------------------------------------------------------
+    void Run() override
+    { m_Execute(m_Context); }
+
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    std::atomic<int>    m_RefCount;
+    std::atomic<int>            m_RefCount = {};
+    IPassGraphContext*          m_Context  = nullptr;
 
     //=========================================================================
     // private methods.
@@ -1134,7 +1148,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      初期化処理を行います.
     //-------------------------------------------------------------------------
-    bool Init(uint32_t maxPassCount, uint32_t maxResourceCount);
+    bool Init(const PassGraphDesc& desc);
 
     //-------------------------------------------------------------------------
     //! @brief      解放処理を行います.
@@ -1177,12 +1191,13 @@ private:
     // private variables.
     //=========================================================================
     FrameHeap               m_FrameHeap[2];
-    uint8_t                 m_BufferIndex   = 0;
+    PassResourceRegistry    m_Registry;
     List<RenderPass>        m_PassList;
+    uint8_t                 m_BufferIndex           = 0;
     CommandList*            m_GraphicsCommandLists  = nullptr;
     CommandList*            m_ComputeCommandLists   = nullptr;
-    uint32_t                m_MaxPassCount  = 0;
-    PassResourceRegistry    m_Registry;
+    uint32_t                m_MaxPassCount          = 0;
+    IThreadPool*            m_ThreadPool            = nullptr;
 
     //=========================================================================
     // private methods.
@@ -1323,14 +1338,16 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      コンストラクタです.
     //-------------------------------------------------------------------------
-    PassGraphContext
-    (
-        RenderPass*                 pass,
-        ID3D12GraphicsCommandList6* commandList
-    )
-    : m_Pass        (pass)
-    , m_CommandList (commandList)
+    PassGraphContext()
+    : m_CommandList (nullptr)
     { /* DO_NOTHING */ }
+
+    //-------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
+    //! @brief      コマンドリストを設定します.
+    //-------------------------------------------------------------------------
+    void SetCommandList(ID3D12GraphicsCommandList6* pCmd)
+    { m_CommandList = pCmd; }
 
     //-------------------------------------------------------------------------
     //! @brief      RTV用ディスクリプタハンドルを取得します.
@@ -1387,7 +1404,6 @@ private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    RenderPass*                 m_Pass          = nullptr;
     ID3D12GraphicsCommandList6* m_CommandList   = nullptr;
 
     //=========================================================================
@@ -1407,6 +1423,12 @@ PassGraph::PassGraph()
 //-----------------------------------------------------------------------------
 PassGraph::~PassGraph()
 {
+    if (m_ThreadPool != nullptr)
+    {
+        m_ThreadPool->Release();
+        m_ThreadPool = nullptr;
+    }
+
     for(auto i=0; i<2; ++i)
     { m_FrameHeap[i].Term(); }
 
@@ -1434,11 +1456,22 @@ PassGraph::~PassGraph()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool PassGraph::Init(uint32_t maxPassCount, uint32_t maxResourceCount)
+bool PassGraph::Init(const PassGraphDesc& desc)
 {
-    // パス数 + 最大リソース数で確保.
-    auto frameHeapSize = sizeof(RenderPass) * maxPassCount
-                       + sizeof(PassResource) * maxResourceCount;
+    if (!CreateThreadPool(desc.MaxThreadCount, &m_ThreadPool))
+    {
+        ELOG("Error : CreateThreadPool() Failed.");
+        return false;
+    }
+
+    m_MaxPassCount = desc.MaxPassCount;
+
+    // 必要なメモリを計算.
+    auto frameHeapSize = sizeof(RenderPass) * desc.MaxPassCount
+                       + sizeof(PassResource) * desc.MaxResourceCount
+                       + sizeof(PassGraphContext) * desc.MaxPassCount;
+
+    // 念のためにダブルバッファにしているけど、必要ないかもしれない.
     for(auto i=0; i<2; ++i)
     {
         if (!m_FrameHeap[i].Init(frameHeapSize))
@@ -1448,9 +1481,9 @@ bool PassGraph::Init(uint32_t maxPassCount, uint32_t maxResourceCount)
         }
     }
 
-    m_Registry.Init(maxResourceCount);
+    m_Registry.Init(desc.MaxResourceCount);
 
-    m_GraphicsCommandLists = new(std::nothrow) CommandList[maxPassCount];
+    m_GraphicsCommandLists = new(std::nothrow) CommandList[m_MaxPassCount];
     assert(m_GraphicsCommandLists != nullptr);
     if (m_GraphicsCommandLists == nullptr)
     {
@@ -1458,7 +1491,7 @@ bool PassGraph::Init(uint32_t maxPassCount, uint32_t maxResourceCount)
         return false;
     }
 
-    for(auto i=0u; i<maxPassCount; ++i)
+    for(auto i=0u; i<m_MaxPassCount; ++i)
     {
         if (!m_GraphicsCommandLists[i].Init(
             GfxDevice().GetDevice(),
@@ -1469,7 +1502,7 @@ bool PassGraph::Init(uint32_t maxPassCount, uint32_t maxResourceCount)
         }
     }
 
-    m_ComputeCommandLists = new(std::nothrow) CommandList[maxPassCount];
+    m_ComputeCommandLists = new(std::nothrow) CommandList[m_MaxPassCount];
     assert(m_ComputeCommandLists != nullptr);
     if (m_ComputeCommandLists == nullptr)
     {
@@ -1477,7 +1510,7 @@ bool PassGraph::Init(uint32_t maxPassCount, uint32_t maxResourceCount)
         return false;
     }
 
-    for(auto i=0u; i<maxPassCount; ++i)
+    for(auto i=0u; i<m_MaxPassCount; ++i)
     {
         if (!m_ComputeCommandLists[i].Init(
             GfxDevice().GetDevice(),
@@ -1647,10 +1680,15 @@ void PassGraph::Execute(ID3D12CommandQueue* pGraphics, ID3D12CommandQueue* pComp
             computeIndex++;
         }
 
-        // コンテキスト
-        PassGraphContext context(itr, pCmd);
+        // コンテキスト生成.
+        auto context = m_FrameHeap->Alloc<PassGraphContext>();
+        context->SetCommandList(pCmd);
 
-        // スレッド割り当て.
+        // レンダリングパスにコンテキストを設定.
+        itr->SetContext(context);
+
+        // スレッド実行.
+        m_ThreadPool->Push(itr);
 
         if (!itr->HasNext())
         { break; }
@@ -1658,8 +1696,8 @@ void PassGraph::Execute(ID3D12CommandQueue* pGraphics, ID3D12CommandQueue* pComp
         itr = itr->GetNext();
     }
 
-    // スレッド実行!!
-
+    // レンダリングパスの完了を待機.
+    m_ThreadPool->Wait();
 
     // コマンドキューに積む.
 
@@ -1686,7 +1724,7 @@ PassResource* PassGraph::AllocResource(const PassResourceDesc& desc, RenderPass*
 //-----------------------------------------------------------------------------
 //      パスグラフを生成します.
 //-----------------------------------------------------------------------------
-bool CreatePassGraph(uint32_t maxPassCount, uint32_t maxResourceCount)
+bool CreatePassGraph(const PassGraphDesc& desc, IPassGraph** ppGraph)
 {
     auto instance = new(std::nothrow) PassGraph;
     if (instance == nullptr)
@@ -1695,13 +1733,15 @@ bool CreatePassGraph(uint32_t maxPassCount, uint32_t maxResourceCount)
         return false;
     }
 
-    if (!instance->Init(maxPassCount, maxResourceCount))
+    if (!instance->Init(desc))
     {
         ELOG("Error : Init() Failed.");
         return false;
     }
 
-    return false;
+    *ppGraph = instance;
+
+    return true;
 }
 
 } // namespace asdx

@@ -171,6 +171,9 @@
     <ClCompile Include="..\src\asdxFileWatcher.cpp">
       <Filter>ソース ファイル\res</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\asdxThreadPool.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\asdxApp.h">
@@ -337,6 +340,9 @@
     </ClInclude>
     <ClInclude Include="..\include\asdxFileWatcher.h">
       <Filter>ヘッダー ファイル\res</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\asdxThreadPool.h">
+      <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

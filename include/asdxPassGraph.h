@@ -157,6 +157,16 @@ struct IPassGraph
     virtual void Execute(ID3D12CommandQueue* pGraphics, ID3D12CommandQueue* pCompute) = 0;
 };
 
-bool CreatePassGraph(uint32_t maxPassCount, uint32_t maxResourceCount);
+///////////////////////////////////////////////////////////////////////////////
+// PassGraphDesc structure
+///////////////////////////////////////////////////////////////////////////////
+struct PassGraphDesc
+{
+    uint32_t    MaxPassCount;
+    uint32_t    MaxResourceCount;
+    uint8_t     MaxThreadCount;
+};
+
+bool CreatePassGraph(const PassGraphDesc& desc, IPassGraph** ppGraph);
 
 } // namespace asdx
