@@ -163,6 +163,7 @@
     <ClInclude Include="..\include\asdxList.h" />
     <ClInclude Include="..\include\asdxLogger.h" />
     <ClInclude Include="..\include\asdxLruCache.h" />
+    <ClInclude Include="..\include\asdxMacro.h" />
     <ClInclude Include="..\include\asdxMath.h" />
     <ClInclude Include="..\include\asdxMisc.h" />
     <ClInclude Include="..\include\asdxModel.h" />

@@ -21,9 +21,10 @@ namespace asdx {
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
 CommandQueue::CommandQueue()
-: m_Fence   ()
-, m_Queue   ()
-, m_Counter (1)
+: m_Fence       ()
+, m_Queue       ()
+, m_Counter     (1)
+, m_FenceValue  (0)
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
@@ -65,6 +66,7 @@ bool CommandQueue::Init(ID3D12Device* pDevice, D3D12_COMMAND_LIST_TYPE type)
     }
 
     m_IsExecuted = false;
+    m_FenceValue = 1;
 
     return true;
 }
@@ -77,6 +79,7 @@ void CommandQueue::Term()
     m_Queue.Reset();
     m_Fence.Term();
     m_IsExecuted = false;
+    m_FenceValue = 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -114,34 +117,58 @@ void CommandQueue::Execute(uint32_t count, ID3D12CommandList** ppList)
 }
 
 //-----------------------------------------------------------------------------
-//      コマンドの完了を待機します.
+//      フェンスの値を更新します.
 //-----------------------------------------------------------------------------
-void CommandQueue::Wait(uint32_t msec)
+WaitPoint CommandQueue::Signal()
 {
-    if (m_IsExecuted)
+    WaitPoint result;
+
+    const auto fence = m_FenceValue;
+    auto hr = m_Queue->Signal(m_Fence.GetPtr(), fence);
+    if (FAILED(hr))
     {
-        m_Fence.SignalAndWait(m_Queue.GetPtr(), msec);
-        m_IsExecuted = false;
+        ELOG("Error : ID3D12CommandQueue::Signal() Failed.");
+        return result;
     }
+    m_FenceValue++;
+
+    result.m_FenceValue = fence;
+    result.m_pFence     = m_Fence.GetPtr();
+
+    return result;
 }
 
 //-----------------------------------------------------------------------------
-//      コマンドの完了を待機します.
+//      GPU上での待機点を設定します.
 //-----------------------------------------------------------------------------
-void CommandQueue::WaitIdle()
-{ Wait(kInfinite); }
+bool CommandQueue::Wait(const WaitPoint& value)
+{
+    auto hr = m_Queue->Wait(value.m_pFence, value.m_FenceValue);
+    if (FAILED(hr))
+    {
+        ELOG("Error : ID3D12CommandQueue::Wait() Failed.");
+        return false;
+    }
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      CPU上でコマンドの完了を待機します.
+//-----------------------------------------------------------------------------
+void CommandQueue::Sync(const WaitPoint& value, uint32_t msec)
+{
+    if (!m_IsExecuted)
+    { return; }
+
+    m_Fence.Wait(value.m_FenceValue, msec);
+}
 
 //-----------------------------------------------------------------------------
 //      コマンドキューを取得します.
 //-----------------------------------------------------------------------------
 ID3D12CommandQueue* CommandQueue::GetQueue() const
 { return m_Queue.GetPtr(); }
-
-//-----------------------------------------------------------------------------
-//      フェンスを取得します.
-//-----------------------------------------------------------------------------
-ID3D12Fence* CommandQueue::GetFence() const
-{ return m_Fence.GetPtr(); }
 
 //-----------------------------------------------------------------------------
 //      生成処理を行います.

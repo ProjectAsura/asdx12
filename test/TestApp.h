@@ -64,6 +64,7 @@ private:
     asdx::StructuredBuffer  m_TriangleVertexBuffer;
     asdx::StructuredBuffer  m_TriangleIndexBuffer;
     asdx::CameraController  m_CameraController;
+    asdx::WaitPoint         m_WaitPoint;
 
     //=========================================================================
     // private methods.

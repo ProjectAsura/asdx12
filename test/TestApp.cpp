@@ -138,6 +138,9 @@ void TestApp::OnTerm()
 //-----------------------------------------------------------------------------
 void TestApp::OnFrameRender(asdx::FrameEventArgs& args)
 {
+    if (m_pGraphicsQueue == nullptr)
+    { return; }
+
     auto idx  = GetCurrentBackBufferIndex();
     auto pCmd = m_GfxCmdList.Reset();
 
@@ -169,10 +172,14 @@ void TestApp::OnFrameRender(asdx::FrameEventArgs& args)
     };
 
     // 前フレームの描画の完了を待機.
-    m_pGraphicsQueue->WaitIdle();
+    if (m_WaitPoint.IsValid())
+    { m_pGraphicsQueue->Sync(m_WaitPoint); }
 
     // コマンドを実行.
     m_pGraphicsQueue->Execute(1, pCmds);
+
+    // 待機点を発行.
+    m_WaitPoint = m_pGraphicsQueue->Signal();
 
     // 画面に表示.
     Present(0);

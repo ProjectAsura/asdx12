@@ -9,6 +9,7 @@
 //-----------------------------------------------------------------------------
 #include <list>
 #include <cassert>
+#include <asdxMacro.h>
 #include <asdxApp.h>
 #include <asdxMath.h>
 #include <asdxLogger.h>
@@ -435,11 +436,7 @@ Application::Application()
     m_ClearColor[2] = 0.929411829f;
     m_ClearColor[3] = 1.000000000f;
 
-#if defined(DEBUG) || defined(_DEBUG)
-    m_DeviceDesc.EnableDebug = true;
-#else
-    m_DeviceDesc.EnableDebug = false;
-#endif
+    m_DeviceDesc.EnableDebug            = ASDX_DEVELOP_IF(true, false);
     m_DeviceDesc.MaxColorTargetCount    = 128;
     m_DeviceDesc.MaxDepthTargetCount    = 128;
     m_DeviceDesc.MaxSamplerCount        = 128;
@@ -478,11 +475,7 @@ Application::Application( LPCWSTR title, UINT width, UINT height, HICON hIcon, H
     m_ClearColor[2] = 0.929411829f;
     m_ClearColor[3] = 1.000000000f;
 
-#if defined(DEBUG) || defined(_DEBUG)
-    m_DeviceDesc.EnableDebug = true;
-#else
-    m_DeviceDesc.EnableDebug = false;
-#endif
+    m_DeviceDesc.EnableDebug            = ASDX_DEVELOP_IF(true, false);
     m_DeviceDesc.MaxColorTargetCount    = 128;
     m_DeviceDesc.MaxDepthTargetCount    = 128;
     m_DeviceDesc.MaxSamplerCount        = 128;

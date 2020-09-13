@@ -351,22 +351,40 @@ void GraphicsDevice::SetDescriptorHeaps(ID3D12GraphicsCommandList* pCmdList)
 void GraphicsDevice::WaitIdle()
 {
     if (m_pGraphicsQueue.GetPtr() != nullptr)
-    { m_pGraphicsQueue->Wait(CommandQueue::kInfinite); }
+    {
+        auto waitPoint = m_pGraphicsQueue->Signal();
+        m_pGraphicsQueue->Sync(waitPoint);
+    }
 
     if (m_pComputeQueue.GetPtr() != nullptr)
-    { m_pComputeQueue->Wait(CommandQueue::kInfinite); }
+    {
+        auto waitPoint = m_pComputeQueue->Signal();
+        m_pComputeQueue->Sync(waitPoint);
+    }
 
     if (m_pCopyQueue.GetPtr() != nullptr)
-    { m_pCopyQueue->Wait(CommandQueue::kInfinite); }
+    {
+        auto waitPoint = m_pCopyQueue->Signal();
+        m_pCopyQueue->Sync(waitPoint);
+    }
 
     if (m_pVideoDecodeQueue.GetPtr() != nullptr)
-    { m_pVideoDecodeQueue->Wait(CommandQueue::kInfinite); }
+    {
+        auto waitPoint = m_pVideoDecodeQueue->Signal();
+        m_pVideoDecodeQueue->Sync(waitPoint);
+    }
 
     if (m_pVideoEncodeQueue.GetPtr() != nullptr)
-    { m_pVideoEncodeQueue->Wait(CommandQueue::kInfinite); }
+    {
+        auto waitPoint = m_pVideoEncodeQueue->Signal();
+        m_pVideoEncodeQueue->Sync(waitPoint);
+    }
 
     if (m_pVideoProcessQueue.GetPtr() != nullptr)
-    { m_pVideoProcessQueue->Wait(CommandQueue::kInfinite); }
+    {
+        auto waitPoint = m_pVideoProcessQueue->Signal();
+        m_pVideoProcessQueue->Sync(waitPoint);
+    }
 }
 
 //-----------------------------------------------------------------------------

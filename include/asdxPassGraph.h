@@ -12,6 +12,7 @@
 #include <d3d12.h>
 #include <asdxTarget.h>
 #include <asdxMath.h>
+#include <asdxCommandQueue.h>
 
 
 namespace asdx {
@@ -124,11 +125,18 @@ private:
 struct IPassGraphBuilder
 {
     virtual ~IPassGraphBuilder() {}
+    virtual void AsyncComputeEnable(bool value) = 0;
     virtual PassResource* Read(PassResource* resource) = 0;
     virtual PassResource* Write(PassResource* resource) = 0;
     virtual PassResource* Create(PassResourceDesc& desc) = 0;
-    virtual PassResource* Import(ID3D12Resource* resource, D3D12_RESOURCE_STATES state) = 0;
-    virtual void AsyncComputeEnable(bool value) = 0;
+
+    virtual PassResource* Import(
+        ID3D12Resource*         resource,
+        D3D12_RESOURCE_STATES   state,
+        bool                    uav,
+        Descriptor*             pDescriptorRes,
+        Descriptor**            pDescriptorRTVs,
+        Descriptor**            pDescriptorDSVs) = 0;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -154,7 +162,7 @@ struct IPassGraph
     virtual void Release() = 0;
     virtual bool AddPass(PassTag& tag, PassSetup setup, PassExecute execute) = 0;
     virtual void Compile() = 0;
-    virtual void Execute(ID3D12CommandQueue* pGraphics, ID3D12CommandQueue* pCompute) = 0;
+    virtual WaitPoint Execute(const WaitPoint& value) = 0;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -162,9 +170,11 @@ struct IPassGraph
 ///////////////////////////////////////////////////////////////////////////////
 struct PassGraphDesc
 {
-    uint32_t    MaxPassCount;
-    uint32_t    MaxResourceCount;
-    uint8_t     MaxThreadCount;
+    uint32_t        MaxPassCount;
+    uint32_t        MaxResourceCount;
+    uint8_t         MaxThreadCount;
+    CommandQueue*   pGraphicsQueue;
+    CommandQueue*   pComputeQueue;
 };
 
 bool CreatePassGraph(const PassGraphDesc& desc, IPassGraph** ppGraph);
