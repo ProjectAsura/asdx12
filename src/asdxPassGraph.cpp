@@ -143,7 +143,8 @@ public:
     , m_RefCount        (0)
     , m_DescriptorRTV   (nullptr)
     , m_DescriptorDSV   (nullptr)
-    , m_DescriptorRes   (nullptr)
+    , m_DescriptorUAV   (nullptr)
+    , m_DescriptorSRV   (nullptr)
     , m_Resource        (nullptr)
     , m_Import          (false)
     { /* DO_NOTHING */ }
@@ -304,7 +305,8 @@ public:
             m_Resource      = nullptr;
             m_DescriptorRTV = nullptr;
             m_DescriptorDSV = nullptr;
-            m_DescriptorRes = nullptr;
+            m_DescriptorUAV = nullptr;
+            m_DescriptorSRV = nullptr;
             return;
         }
 
@@ -335,10 +337,16 @@ public:
             m_DescriptorDSV = nullptr;
         }
 
-        if (m_DescriptorRes != nullptr)
+        if (m_DescriptorUAV != nullptr)
         {
-            m_DescriptorRes->Release();
-            m_DescriptorRes = nullptr;
+            m_DescriptorUAV->Release();
+            m_DescriptorUAV = nullptr;
+        }
+
+        if (m_DescriptorSRV != nullptr)
+        {
+            m_DescriptorSRV->Release();
+            m_DescriptorSRV = nullptr;
         }
     }
 
@@ -376,12 +384,23 @@ public:
     }
 
     //-------------------------------------------------------------------------
-    //! @brief      UAV/SRVのディスクリプタハンドルを取得します.
+    //! @brief      UAVのディスクリプタハンドルを取得します.
     //-------------------------------------------------------------------------
-    D3D12_GPU_DESCRIPTOR_HANDLE GetHandleRes() const
+    D3D12_GPU_DESCRIPTOR_HANDLE GetHandleUAV() const
     {
-        if (m_DescriptorRes != nullptr)
-        { return m_DescriptorRes->GetHandleGPU(); }
+        if (m_DescriptorUAV != nullptr)
+        { return m_DescriptorUAV->GetHandleGPU(); }
+
+        return D3D12_GPU_DESCRIPTOR_HANDLE();
+    }
+
+    //-------------------------------------------------------------------------
+    //! @brief      SRVのディスクリプタハンドルを取得します.
+    //-------------------------------------------------------------------------
+    D3D12_GPU_DESCRIPTOR_HANDLE GetHandleSRV() const
+    {
+        if (m_DescriptorSRV != nullptr)
+        { return m_DescriptorSRV->GetHandleGPU(); }
 
         return D3D12_GPU_DESCRIPTOR_HANDLE();
     }
@@ -450,8 +469,8 @@ public:
         else if (value.Type == CLEAR_TYPE_UAV_FLOAT)
         {
             pCmd->ClearUnorderedAccessViewFloat(
-                m_DescriptorRes->GetHandleGPU(),
-                m_DescriptorRes->GetHandleCPU(),
+                m_DescriptorUAV->GetHandleGPU(),
+                m_DescriptorUAV->GetHandleCPU(),
                 m_Resource,
                 value.Float,
                 0,
@@ -460,8 +479,8 @@ public:
         else if (value.Type == CLEAR_TYPE_UAV_UINT)
         {
             pCmd->ClearUnorderedAccessViewUint(
-                m_DescriptorRes->GetHandleGPU(),
-                m_DescriptorRes->GetHandleCPU(),
+                m_DescriptorUAV->GetHandleGPU(),
+                m_DescriptorUAV->GetHandleCPU(),
                 m_Resource,
                 value.Uint,
                 0,
@@ -476,8 +495,8 @@ public:
     (
         ID3D12Resource*         pResource,
         D3D12_RESOURCE_STATES   state,
-        bool                    uav,
-        Descriptor*             pDescriptorRes,
+        Descriptor*             pDescriptorSRV,
+        Descriptor*             pDescriptorUAV,
         Descriptor**            pDescriptorRTVs,
         Descriptor**            pDescriptorDSVs
     )
@@ -524,12 +543,12 @@ public:
 
         PrevCompute = false;
 
-        PASS_RESOURCE_USAGE usage;
+        auto usage = PASS_RESOURCE_USAGE_NONE;
         if (pDescriptorRTVs != nullptr)
         { usage = PASS_RESOURCE_USAGE_RTV; }
         else if (pDescriptorDSVs != nullptr)
         { usage = PASS_RESOURCE_USAGE_DSV; }
-        else if (uav)
+        else if (pDescriptorUAV != nullptr)
         { usage = PASS_RESOURCE_USAGE_UAV; }
 
         m_Desc.Dimension        = dimension;
@@ -543,7 +562,8 @@ public:
 
         m_DescriptorRTV = pDescriptorRTVs;
         m_DescriptorDSV = pDescriptorDSVs;
-        m_DescriptorRes = pDescriptorRes;
+        m_DescriptorSRV = pDescriptorSRV;
+        m_DescriptorUAV = pDescriptorUAV;
 
         return true;
     }
@@ -668,7 +688,8 @@ private:
     std::atomic<int>    m_RefCount      = 1;
     Descriptor**        m_DescriptorRTV = nullptr;
     Descriptor**        m_DescriptorDSV = nullptr;
-    Descriptor*         m_DescriptorRes = nullptr;
+    Descriptor*         m_DescriptorUAV = nullptr;
+    Descriptor*         m_DescriptorSRV = nullptr;
     ID3D12Resource*     m_Resource      = nullptr;
     PassResourceDesc    m_Desc          = {};
     bool                m_Import        = false;
@@ -891,14 +912,14 @@ private:
         }
 
         if (!GfxDevice().AllocHandle(
-            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, &m_DescriptorRes))
+            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, &m_DescriptorUAV))
         {
             ELOG("Error : GraphicsDevice::AllocHandle() Failed.");
             return false;
         }
 
         GfxDevice()->CreateUnorderedAccessView(
-            m_Resource, nullptr, &viewDesc, m_DescriptorRes->GetHandleCPU());
+            m_Resource, nullptr, &viewDesc, m_DescriptorUAV->GetHandleCPU());
         return true;
     }
 
@@ -976,18 +997,15 @@ private:
             break;
         }
 
-        if (m_DescriptorRes == nullptr)
+        if (!GfxDevice().AllocHandle(
+            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, &m_DescriptorSRV))
         {
-            if (!GfxDevice().AllocHandle(
-                D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, &m_DescriptorRes))
-            {
-                ELOG("Error : GraphicsDevice::AllocHandle() Failed.");
-                return false;
-            }
+            ELOG("Error : GraphicsDevice::AllocHandle() Failed.");
+            return false;
         }
 
         GfxDevice()->CreateShaderResourceView(
-            m_Resource, &viewDesc, m_DescriptorRes->GetHandleCPU());
+            m_Resource, &viewDesc, m_DescriptorSRV->GetHandleCPU());
         return true;
     }
 };
@@ -1226,12 +1244,21 @@ public:
     }
 
     //-------------------------------------------------------------------------
-    //! @brief      UAV/SRV用ディスクリプタハンドルを取得します.
+    //! @brief      UAV用ディスクリプタハンドルを取得します.
     //-------------------------------------------------------------------------
-    D3D12_GPU_DESCRIPTOR_HANDLE GetRes(PassResource* resource) const override
+    D3D12_GPU_DESCRIPTOR_HANDLE GetUAV(PassResource* resource) const override
     {
         assert(resource != nullptr);
-        return resource->GetHandleRes();
+        return resource->GetHandleUAV();
+    }
+
+    //-------------------------------------------------------------------------
+    //! @brief      SRV用ディスクリプタハンドルを取得します.
+    //-------------------------------------------------------------------------
+    D3D12_GPU_DESCRIPTOR_HANDLE GetSRV(PassResource* resource) const override
+    {
+        assert(resource != nullptr);
+        return resource->GetHandleSRV();
     }
 
     //-------------------------------------------------------------------------
@@ -1470,6 +1497,11 @@ public:
     void Compile() override;
 
     //-------------------------------------------------------------------------
+    //! @brief      Graphviz形式に出力します.
+    //-------------------------------------------------------------------------
+    bool Export(const char* filename) override;
+
+    //-------------------------------------------------------------------------
     //! @brief      レンダーパスを実行します。
     //-------------------------------------------------------------------------
     WaitPoint Execute(const WaitPoint& waitPoint) override;
@@ -1485,7 +1517,7 @@ public:
     template<typename T>
     T* FrameAlloc()
     {
-        auto ptr = m_FrameHeap[m_BufferIndex].Alloc<T>();
+        auto ptr = m_FrameHeap.Alloc<T>();
         assert(ptr != nullptr);
         return ptr;
     }
@@ -1494,7 +1526,7 @@ private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    FrameHeap               m_FrameHeap[2];
+    FrameHeap               m_FrameHeap;
     PassResourceRegistry    m_Registry;
     List<RenderPass>        m_PassList;
     uint8_t                 m_BufferIndex           = 0;
@@ -1597,8 +1629,8 @@ public:
     (
         ID3D12Resource*         resource,
         D3D12_RESOURCE_STATES   state,
-        bool                    uav,
-        Descriptor*             pDescriptorRes,
+        Descriptor*             pDescriptorSRV,
+        Descriptor*             pDescriptorUAV,
         Descriptor**            pDescriptorRTVs,
         Descriptor**            pDescriptorDSVs
     ) override
@@ -1607,8 +1639,8 @@ public:
         if (!importResource->Import(
             resource,
             state,
-            uav,
-            pDescriptorRes,
+            pDescriptorSRV,
+            pDescriptorUAV,
             pDescriptorRTVs,
             pDescriptorDSVs))
         { return nullptr; }
@@ -1652,8 +1684,7 @@ PassGraph::~PassGraph()
         m_ThreadPool = nullptr;
     }
 
-    for(auto i=0; i<2; ++i)
-    { m_FrameHeap[i].Term(); }
+    m_FrameHeap.Term();
 
     if (m_GraphicsCommandLists != nullptr)
     {
@@ -1696,14 +1727,10 @@ bool PassGraph::Init(const PassGraphDesc& desc)
     auto frameHeapSize = sizeof(RenderPass)   * desc.MaxPassCount
                        + sizeof(PassResource) * desc.MaxResourceCount;
 
-    // 念のためにダブルバッファにしているけど、必要ないかもしれない.
-    for(auto i=0; i<2; ++i)
+    if (!m_FrameHeap.Init(frameHeapSize))
     {
-        if (!m_FrameHeap[i].Init(frameHeapSize))
-        {
-            ELOG("Error : FrameHeap::Init() Failed.");
-            return false;
-        }
+        ELOG("Error : FrameHeap::Init() Failed.");
+        return false;
     }
 
     m_Registry.Init(desc.MaxResourceCount);
@@ -1860,7 +1887,6 @@ void PassGraph::Compile()
                 { break; }
 
                 itr = itr->GetNext();
-                m_PassList.Remove(node);
             }
 
             auto count = itr->m_ResourceCount;
@@ -1946,6 +1972,15 @@ WaitPoint PassGraph::Execute(const WaitPoint& waitPoint)
     auto itr = m_PassList.GetHead();
     while(itr != nullptr)
     {
+        // カリング.
+        if (itr->GetRefCount() == 0)
+        {
+            if (!itr->HasNext())
+            { break; }
+
+            itr = itr->GetNext();
+        }
+
         // コマンドリスト割り当て
         ID3D12GraphicsCommandList6* pCmd = nullptr;
         if (!itr->m_AsyncCompute)
@@ -2046,7 +2081,7 @@ WaitPoint PassGraph::Execute(const WaitPoint& waitPoint)
     m_BufferIndex = (m_BufferIndex + 1) & 0x1;
 
     // ヒープリセット.
-    m_FrameHeap[m_BufferIndex].Reset();
+    m_FrameHeap.Reset();
 
     return graphicsWaitPoint;
 }
@@ -2056,6 +2091,26 @@ WaitPoint PassGraph::Execute(const WaitPoint& waitPoint)
 //-----------------------------------------------------------------------------
 PassResource* PassGraph::AllocResource(const PassResourceDesc& desc, RenderPass* producer)
 { return m_Registry.GetOrCreate(desc, producer); }
+
+//-----------------------------------------------------------------------------
+//      Graphviz形式に出力します.
+//-----------------------------------------------------------------------------
+bool PassGraph::Export(const char* filename)
+{
+    FILE* pFile;
+    auto err = fopen_s(&pFile, filename, "w");
+    if (err != 0)
+    {
+        ELOG("Error : File Open Failed. path = %s", filename);
+        return false;
+    }
+
+    // TODO : Implement.
+
+    fclose(pFile);
+
+    return true;
+}
 
 //-----------------------------------------------------------------------------
 //      パスグラフを生成します.

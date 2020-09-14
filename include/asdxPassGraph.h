@@ -52,6 +52,7 @@ enum PASS_RESOURCE_STATE
 ///////////////////////////////////////////////////////////////////////////////
 enum PASS_RESOURCE_USAGE
 {
+    PASS_RESOURCE_USAGE_NONE    = 0x0,
     PASS_RESOURCE_USAGE_RTV     = 0x1,
     PASS_RESOURCE_USAGE_DSV     = 0x2,
     PASS_RESOURCE_USAGE_UAV     = 0x4,
@@ -133,8 +134,8 @@ struct IPassGraphBuilder
     virtual PassResource* Import(
         ID3D12Resource*         resource,
         D3D12_RESOURCE_STATES   state,
-        bool                    uav,
-        Descriptor*             pDescriptorRes,
+        Descriptor*             pDescriptorSRV,
+        Descriptor*             pDescriptorUAV,
         Descriptor**            pDescriptorRTVs,
         Descriptor**            pDescriptorDSVs) = 0;
 };
@@ -147,7 +148,8 @@ struct IPassGraphContext
     virtual ~IPassGraphContext() {}
     virtual D3D12_CPU_DESCRIPTOR_HANDLE GetRTV(PassResource* resource, uint16_t index = 0) const = 0;
     virtual D3D12_CPU_DESCRIPTOR_HANDLE GetDSV(PassResource* resource, uint16_t index = 0) const = 0;
-    virtual D3D12_GPU_DESCRIPTOR_HANDLE GetRes(PassResource* resource) const = 0;
+    virtual D3D12_GPU_DESCRIPTOR_HANDLE GetUAV(PassResource* resource) const = 0;
+    virtual D3D12_GPU_DESCRIPTOR_HANDLE GetSRV(PassResource* resource) const = 0;
     virtual D3D12_GPU_VIRTUAL_ADDRESS GetVirtualAddress(PassResource* resource) const = 0;
     virtual D3D12_RESOURCE_DESC GetDesc(PassResource* resource) const = 0;
     virtual ID3D12GraphicsCommandList6* GetCommandList() const = 0;
@@ -162,6 +164,7 @@ struct IPassGraph
     virtual void Release() = 0;
     virtual bool AddPass(PassTag& tag, PassSetup setup, PassExecute execute) = 0;
     virtual void Compile() = 0;
+    virtual bool Export(const char* filename) = 0;
     virtual WaitPoint Execute(const WaitPoint& value) = 0;
 };
 
