@@ -121,6 +121,36 @@ private:
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+// IBlackboard structure
+//////////////////////////////////////////////////////////////////////////////
+struct IBlackboard
+{
+    virtual ~IBlackboard() {}
+    virtual void Set(const char* tag, const void* data) = 0;    // 実体は保持しません.
+    virtual void Set(uint32_t key, const void* data) = 0;       // 実体は保持しません.
+    virtual const void* Get(const char* tag) const = 0;
+    virtual const void* Get(uint32_t key) const = 0;
+    virtual bool Contains(const char* tag) const = 0;
+    virtual bool Contains(uint32_t key) const = 0;
+
+    template<typename T>
+    void Set(const char* tag, const T* data)
+    { Set(tag, reinterpret_cast<const void*>(data)); }
+
+    template<typename T>
+    void Set(uint32_t key, const T* data)
+    { Set(key, reinterpret_cast<const void*>(data)); }
+
+    template<typename T>
+    const T* Get(const char* tag)
+    { return reinterpret_cast<T*>(Get(tag));}
+
+    template<typename T>
+    const T* Get(uint32_t key)
+    { return reinterpret_cast<T*>(Get(key)); }
+};
+
+///////////////////////////////////////////////////////////////////////////////
 // IPassGraphBuilder interface
 ///////////////////////////////////////////////////////////////////////////////
 struct IPassGraphBuilder
