@@ -1039,64 +1039,6 @@ void Dithering(float2 sv_position, float alpha)
     if (alpha < F_DITHER_LIST[screenPos.x][screenPos.y])
     { discard; }
 }
-
-//-----------------------------------------------------------------------------
-//      単なる視差マッピング.
-//-----------------------------------------------------------------------------
-float2 ParallaxMapping
-(
-    Texture2D       heightMap,      // 高さマップ.
-    SamplerState    heightSmp,      // サンプラー.
-    float2          texcoord,       // テクスチャ座標.
-    float3          V,              // 視線ベクトル.
-    float           heightScale     // 高さスケール.
-)
-{
-    float  h = heightMap.Sample(heightSmp, texcoord).r;
-    float2 p = (V.xy / V.z) * (h * heightScale);
-    return texcoord - p;
-}
-
-//-----------------------------------------------------------------------------
-//      視差遮断マッピング.
-//-----------------------------------------------------------------------------
-float2 ParallxOcclusionMapping
-(
-    Texture2D           heightMap,      // 高さマップ.
-    SamplerState        heightSmp,      // 高さマップ用サンプラー.
-    Texture2D<float>    depthMap,       // 深度マップ.
-    SamplerState        depthSmp,       // 深度マップ用サンプラー.
-    float2              texcoord,       // テクスチャ座標.
-    float3              V,              // 視線ベクトル.
-    float               heightScale,    // 高さスケール.
-    const float         layerCount      // レイヤー数.
-)
-{
-    float layerDepth     = 1.0f / layerCount; 
-    float currLayerDepth = 0.0f;
-
-    float2 p = V.xy * heightScale;
-    float2 delta = p / layerCount;
-
-    float2 currUV = texcoord;
-    float currDepth = depthMap.Sample(depthSmp, currUV);
-
-    [loop]
-    while(currLayerDepth < currDepth)
-    {
-        currUV -= delta;
-        currDepth = depthMap.Sample(depthSmp, currUV);
-        currLayerDepth += layerDepth;
-    }
-
-    float2 prevUV = currUV + delta;
-    float afterDepth = currDepth - currLayerDepth;
-    float beforeDepth = depthMap.Sample(depthSmp, prevUV) - currLayerDepth + layerDepth;
-
-    float weight = afterDepth / (afterDepth - beforeDepth);
-    return lerp(currUV, prevUV, weight);
-}
-
 //-----------------------------------------------------------------------------
 //      Ray vs Sphereの交差判定を行います.
 //-----------------------------------------------------------------------------
@@ -1628,6 +1570,37 @@ bool IsCull(float4 planes[6], float4 sphere)
 
     // カリングしない.
     return false;
+}
+
+//-----------------------------------------------------------------------------
+//      ポリゴン単位のバックフェースカリングを行います.
+//-----------------------------------------------------------------------------
+bool OrientationCulling(float3 p0, float3 p1, float3 p2)
+{
+    float det = determinant(float3x3(p0, p1, p2));
+    return -det <= 0.0f; // true でカリング.
+}
+
+//-----------------------------------------------------------------------------
+//      極小プリミティブカリングを行います.
+//-----------------------------------------------------------------------------
+bool SmallPrimitiveCulling(float2 vmin, float2 vmax)
+{
+    // vmin, vmaxは NDC(正規化デバイス座標系).
+    return any(round(vmin) == round(vmax)); // true でカリング.
+}
+
+//-----------------------------------------------------------------------------
+//      ポリゴン単位の錐台カリングを行います.
+//-----------------------------------------------------------------------------
+bool FrustumCulling(float3 p0, float3 p1, float3 p2)
+{
+    // p0, p1, p2 は NDC(正規化デバイス座標系).
+    float3 pmin = min(p0, min(p1, p2));
+    float3 pmax = max(p0, max(p1, p2));
+
+    // true でカリング.
+    return (any(pmax.xy < -1.0f) || any(pmin.xy > 1.0f) || pmax.z < 0.0f || pmax.z > 1.0f);
 }
 
 #endif//ASDX_MATH_HLSLI

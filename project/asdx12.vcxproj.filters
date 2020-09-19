@@ -361,14 +361,14 @@
     <None Include="..\res\shaders\Shadow.hlsli">
       <Filter>リソース ファイル</Filter>
     </None>
-    <None Include="..\res\shaders\DepthDownSample.hlsli">
-      <Filter>リソース ファイル</Filter>
-    </None>
     <None Include="..\include\asdxLfuCache.inl">
       <Filter>ヘッダー ファイル\container</Filter>
     </None>
     <None Include="..\include\asdxLruCache.inl">
       <Filter>ヘッダー ファイル\container</Filter>
+    </None>
+    <None Include="..\res\shaders\TextureUtil.hlsli">
+      <Filter>リソース ファイル</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

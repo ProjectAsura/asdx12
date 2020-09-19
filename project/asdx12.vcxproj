@@ -202,9 +202,9 @@
     <None Include="..\include\asdxLruCache.inl" />
     <None Include="..\include\asdxMath.inl" />
     <None Include="..\res\shaders\BRDF.hlsli" />
-    <None Include="..\res\shaders\DepthDownSample.hlsli" />
     <None Include="..\res\shaders\Math.hlsli" />
     <None Include="..\res\shaders\Shadow.hlsli" />
+    <None Include="..\res\shaders\TextureUtil.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\res\shaders\CopyPS.hlsl">
