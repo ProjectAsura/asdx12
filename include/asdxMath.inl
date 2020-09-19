@@ -5890,6 +5890,67 @@ Vector2 Hammersley( uint32_t i, uint32_t numSamples )
 }
 
 //-----------------------------------------------------------------------------
+//      3点を通る平面を求めます.
+//-----------------------------------------------------------------------------
+inline
+Vector4 CalcPlane(const Vector3& p0, const Vector3& p1, const Vector3& p2)
+{
+    auto normal = Vector3::ComputeNormal(p0, p1, p2);
+    auto dist   = -Vector3::Dot(normal, p0);
+    return Vector4(normal.x, normal.y, normal.z, dist);
+}
+
+//-----------------------------------------------------------------------------
+//      視錐台を構成する6平面を求めます.
+//-----------------------------------------------------------------------------
+inline
+void CalcFrustumPlanes(const Matrix& view, const Matrix& proj, Vector4* planes)
+{
+    // 精度を上げるために１つずつ逆行列を求める.
+    auto inv_view = Matrix::Invert(view);
+    auto inv_proj = Matrix::Invert(proj);
+    auto inv_viewproj = inv_view * inv_proj;
+
+    Vector3 corners[8];
+    corners[0] = Vector3::TransformCoord(Vector3(-1.0f,  1.0f, 1.0f), inv_viewproj);    // 左上奥.
+    corners[1] = Vector3::TransformCoord(Vector3( 1.0f,  1.0f, 1.0f), inv_viewproj);    // 右上奥.
+    corners[2] = Vector3::TransformCoord(Vector3( 1.0f,  1.0f, 0.0f), inv_viewproj);    // 右上手前.
+    corners[3] = Vector3::TransformCoord(Vector3(-1.0f,  1.0f, 0.0f), inv_viewproj);    // 左上手前.
+    corners[4] = Vector3::TransformCoord(Vector3(-1.0f, -1.0f, 1.0f), inv_viewproj);    // 左下奥.
+    corners[5] = Vector3::TransformCoord(Vector3( 1.0f, -1.0f, 1.0f), inv_viewproj);    // 右下奥.
+    corners[6] = Vector3::TransformCoord(Vector3( 1.0f, -1.0f, 0.0f), inv_viewproj);    // 右下手前.
+    corners[7] = Vector3::TransformCoord(Vector3(-1.0f, -1.0f, 0.0f), inv_viewproj);    // 左下手前.
+
+    planes[0] = CalcPlane(corners[3], corners[2], corners[7]);
+    planes[1] = CalcPlane(corners[4], corners[0], corners[3]);
+    planes[2] = CalcPlane(corners[1], corners[5], corners[2]);
+    planes[3] = CalcPlane(corners[1], corners[0], corners[4]);
+    planes[4] = CalcPlane(corners[6], corners[7], corners[4]);
+    planes[5] = CalcPlane(corners[3], corners[2], corners[1]);
+}
+
+//-----------------------------------------------------------------------------
+//      視錐台の8角を求めます.
+//-----------------------------------------------------------------------------
+inline
+void CalcFrustumCorners(const Matrix& view, const Matrix& proj, Vector3* corners)
+{
+    // 精度を上げるために１つずつ逆行列を求める.
+    auto inv_view = Matrix::Invert(view);
+    auto inv_proj = Matrix::Invert(proj);
+    auto inv_viewproj = inv_view * inv_proj;
+
+    corners[0] = Vector3::TransformCoord(Vector3(-1.0f,  1.0f, 1.0f), inv_viewproj);    // 左上奥.
+    corners[1] = Vector3::TransformCoord(Vector3( 1.0f,  1.0f, 1.0f), inv_viewproj);    // 右上奥.
+    corners[2] = Vector3::TransformCoord(Vector3( 1.0f,  1.0f, 0.0f), inv_viewproj);    // 右上手前.
+    corners[3] = Vector3::TransformCoord(Vector3(-1.0f,  1.0f, 0.0f), inv_viewproj);    // 左上手前.
+    corners[4] = Vector3::TransformCoord(Vector3(-1.0f, -1.0f, 1.0f), inv_viewproj);    // 左下奥.
+    corners[5] = Vector3::TransformCoord(Vector3( 1.0f, -1.0f, 1.0f), inv_viewproj);    // 右下奥.
+    corners[6] = Vector3::TransformCoord(Vector3( 1.0f, -1.0f, 0.0f), inv_viewproj);    // 右下手前.
+    corners[7] = Vector3::TransformCoord(Vector3(-1.0f, -1.0f, 0.0f), inv_viewproj);    // 左下手前.
+}
+
+//-----------------------------------------------------------------------------
 //      半精度浮動小数に変換します.
 //-----------------------------------------------------------------------------
 inline

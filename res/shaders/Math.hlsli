@@ -1555,6 +1555,15 @@ bool IsConeDegenerate(uint packedCone)
 { return (packedCone >> 24) == 0xff; }
 
 //-----------------------------------------------------------------------------
+//      法錐カリングを行います.
+//-----------------------------------------------------------------------------
+bool IsNormalConeCull(uint packedCone, float3 viewDir)
+{
+    float4 normalCone = UnpackUnorm4(packedCone);
+    return dot(normalCone.xyz, -viewDir) > normalCone.w;
+}
+
+//-----------------------------------------------------------------------------
 //      視錐台カリングを行います.
 //-----------------------------------------------------------------------------
 bool IsCull(float4 planes[6], float4 sphere)
