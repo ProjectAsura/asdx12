@@ -28,7 +28,8 @@
 //#define TEST_TRIANGLE     (1)
 //#define TEST_MESH_SHADER  (1)
 //#define TEST_MESHLET      (1)
-#define TEST_QUAD         (1)
+//#define TEST_QUAD         (1)
+#define TEST_PASSGRAPH    (1)
 
 namespace {
 
@@ -111,6 +112,11 @@ bool TestApp::OnInit()
     { return false; }
 #endif
 
+#if TEST_PASSGRAPH
+    if (!PassGraphTestInit())
+    { return false; }
+#endif
+
     return true;
 }
 
@@ -119,6 +125,10 @@ bool TestApp::OnInit()
 //-----------------------------------------------------------------------------
 void TestApp::OnTerm()
 {
+#if TEST_PASSGRAPH
+    PassGraphTestTerm();
+#endif
+
     m_TriangleIndexBuffer.Term();
     m_TriangleVertexBuffer.Term();
 
@@ -163,6 +173,10 @@ void TestApp::OnFrameRender(asdx::FrameEventArgs& args)
 #if TEST_QUAD
     // 矩形の描画
     QuadTestRender(pCmd, idx);
+#endif
+
+#if TEST_PASSGRAPH
+    PassGraphTestRender(pCmd, idx);
 #endif
 
     pCmd->Close();
@@ -864,4 +878,29 @@ void TestApp::QuadTestRender(ID3D12GraphicsCommandList6* pCmd, uint8_t idx)
         0,
         D3D12_RESOURCE_STATE_RENDER_TARGET,
         D3D12_RESOURCE_STATE_PRESENT);
+}
+
+
+//-----------------------------------------------------------------------------
+//      パスグラフの初期化です.
+//-----------------------------------------------------------------------------
+bool TestApp::PassGraphTestInit()
+{
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      パスグラフの終了処理です.
+//-----------------------------------------------------------------------------
+void TestApp::PassGraphTestTerm()
+{
+}
+
+//-----------------------------------------------------------------------------
+//      パスグラフの描画処理です.
+//-----------------------------------------------------------------------------
+void TestApp::PassGraphTestRender(ID3D12GraphicsCommandList6* pCmd, uint8_t idx)
+{
+
+
 }

@@ -89,4 +89,7 @@ private:
     bool QuadTestInit();
     void QuadTestRender(ID3D12GraphicsCommandList6* pCmd, uint8_t idex);
 
+    bool PassGraphTestInit();
+    void PassGraphTestTerm();
+    void PassGraphTestRender(ID3D12GraphicsCommandList6* pCmd, uint8_t index);
 };

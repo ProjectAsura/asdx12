@@ -148,40 +148,52 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      ポインタを設定します.
     //-------------------------------------------------------------------------
-    void Set(const char* tag, const void* data) override
+    void Set(const char* tag, const void* data, size_t size) override
     {
         auto key = Fnv1a(tag).GetHash();
-        m_Map[key] = data;
+        BufferHolder holder;
+        holder.pData = data;
+        holder.size  = size;
+        m_Map[key] = holder;
     }
 
     //-------------------------------------------------------------------------
     //! @brief      ポインタを設定します.
     //-------------------------------------------------------------------------
-    void Set(uint32_t key, const void* data) override
-    { m_Map[key] = data; }
+    void Set(uint32_t key, const void* data, size_t size) override
+    {
+        BufferHolder holder;
+        holder.pData = data;
+        holder.size  = size;
+        m_Map[key] = holder;
+    }
 
     //-------------------------------------------------------------------------
     //! @brief      ポインタを取得します.
     //-------------------------------------------------------------------------
-    const void* Get(const char* tag) const override
+    const void* Get(const char* tag, size_t& size) const override
     {
         auto key = Fnv1a(tag).GetHash();
 
         if (!Contains(key))
         { return nullptr; }
 
-        return m_Map.at(key);
+        auto holder = m_Map.at(key);
+        size = holder.size;
+        return holder.pData;
     }
 
     //-------------------------------------------------------------------------
     //! @brief      ポインタを取得します.
     //-------------------------------------------------------------------------
-    const void* Get(uint32_t key) const override
+    const void* Get(uint32_t key, size_t& size) const override
     {
         if (!Contains(key))
         { return nullptr; }
 
-        return m_Map.at(key);
+        auto holder = m_Map.at(key);
+        size = holder.size;
+        return holder.pData;
     }
 
     //-------------------------------------------------------------------------
@@ -200,10 +212,19 @@ public:
     { return m_Map.find(key) != m_Map.end(); }
 
 private:
+    ///////////////////////////////////////////////////////////////////////////
+    // BufferHolder structure
+    ///////////////////////////////////////////////////////////////////////////
+    struct BufferHolder
+    {
+        const void* pData;
+        size_t      size;
+    };
+
     //=========================================================================
     // private variables.
     //=========================================================================
-    std::map<uint32_t, const void*>  m_Map;
+    std::map<uint32_t, BufferHolder>  m_Map;
 
     //=========================================================================
     // private methods.
@@ -1596,14 +1617,20 @@ public:
     void Compile() override;
 
     //-------------------------------------------------------------------------
+    //! @brief      レンダーパスを実行します。
+    //-------------------------------------------------------------------------
+    WaitPoint Execute(const WaitPoint& waitPoint) override;
+
+    //-------------------------------------------------------------------------
     //! @brief      Graphviz形式に出力します.
     //-------------------------------------------------------------------------
     bool Export(const char* filename) override;
 
     //-------------------------------------------------------------------------
-    //! @brief      レンダーパスを実行します。
+    //! @brief      ブラックボードを取得します.
     //-------------------------------------------------------------------------
-    WaitPoint Execute(const WaitPoint& waitPoint) override;
+    IBlackboard* GetBlackboard()
+    { return &m_Blackboard; }
 
     //-------------------------------------------------------------------------
     //! @brief      リソースを確保します.
@@ -1635,6 +1662,7 @@ private:
     IThreadPool*            m_ThreadPool            = nullptr;
     CommandQueue*           m_GraphicsQueue         = nullptr;
     CommandQueue*           m_ComputeQueue          = nullptr;
+    Blackboard              m_Blackboard;
 
     //=========================================================================
     // private methods.
@@ -1669,6 +1697,12 @@ public:
     : m_Graph(graph)
     , m_Pass (pass)
     { /* DO_NOTHING */ }
+
+    //-------------------------------------------------------------------------
+    //! @brief      非同期コンピュートを設定します.
+    //-------------------------------------------------------------------------
+    void AsyncComputeEnable(bool value) override
+    { m_Pass->m_AsyncCompute = value; }
 
     //-------------------------------------------------------------------------
     //! @brief      Readリソースを登録します.
@@ -1748,10 +1782,10 @@ public:
     }
 
     //-------------------------------------------------------------------------
-    //! @brief      非同期コンピュートを設定します.
+    //! @brief      ブラックボードを取得します.
     //-------------------------------------------------------------------------
-    void AsyncComputeEnable(bool value) override
-    { m_Pass->m_AsyncCompute = value; }
+    IBlackboard* GetBlackboard() override
+    { return m_Graph->GetBlackboard(); }
 
 private:
     //=========================================================================
