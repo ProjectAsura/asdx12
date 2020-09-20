@@ -200,4 +200,127 @@ void SetRenderTarget
     pCmd->OMSetRenderTargets(1, &handleRTV, FALSE, &handleDSV);
 }
 
+//-----------------------------------------------------------------------------
+//      ディスクリプタテーブルを設定します.
+//-----------------------------------------------------------------------------
+void SetDescriptorTable
+(
+    ID3D12GraphicsCommandList*  pCmd,
+    bool                        compute,
+    uint32_t                    index,
+    const Descriptor*           pDescriptor
+)
+{
+    if (pDescriptor == nullptr || index == UINT32_MAX)
+    { return; }
+
+    if (compute)
+    { pCmd->SetComputeRootDescriptorTable(index, pDescriptor->GetHandleGPU()); }
+    else
+    { pCmd->SetGraphicsRootDescriptorTable(index, pDescriptor->GetHandleGPU()); }
+}
+
+//-----------------------------------------------------------------------------
+//      定数バッファビューを設定します.
+//-----------------------------------------------------------------------------
+void SetCBV
+(
+    ID3D12GraphicsCommandList*  pCmd,
+    bool                        compute,
+    uint32_t                    index,
+    D3D12_GPU_VIRTUAL_ADDRESS   addr
+)
+{
+    if (addr == 0 || index == UINT32_MAX)
+    { return; }
+
+    if (compute)
+    { pCmd->SetComputeRootConstantBufferView(index, addr); }
+    else
+    { pCmd->SetGraphicsRootConstantBufferView(index, addr); }
+}
+
+//-----------------------------------------------------------------------------
+//      シェーダリソースビューを設定します.
+//-----------------------------------------------------------------------------
+void SetSRV
+(
+    ID3D12GraphicsCommandList*  pCmd,
+    bool                        compute,
+    uint32_t                    index,
+    D3D12_GPU_VIRTUAL_ADDRESS   addr
+)
+{
+    if (addr == 0 || index == UINT32_MAX)
+    { return; }
+
+    if (compute)
+    { pCmd->SetComputeRootShaderResourceView(index, addr); }
+    else
+    { pCmd->SetGraphicsRootShaderResourceView(index, addr); }
+}
+
+//-----------------------------------------------------------------------------
+//      アンオーダードアクセスビューを設定します.
+//-----------------------------------------------------------------------------
+void SetUAV
+(
+    ID3D12GraphicsCommandList*  pCmd,
+    bool                        compute,
+    uint32_t                    index,
+    D3D12_GPU_VIRTUAL_ADDRESS   addr
+)
+{
+    if (addr == 0 || index == UINT32_MAX)
+    { return; }
+
+    if (compute)
+    { pCmd->SetComputeRootUnorderedAccessView(index, addr); }
+    else
+    { pCmd->SetGraphicsRootUnorderedAccessView(index, addr); }
+}
+
+//-----------------------------------------------------------------------------
+//      32bit定数を設定します.
+//-----------------------------------------------------------------------------
+void SetConstant
+(
+    ID3D12GraphicsCommandList*  pCmd,
+    bool                        compute,
+    uint32_t                    index,
+    uint32_t                    data,
+    uint32_t                    offset
+)
+{
+    if (index == UINT32_MAX)
+    { return; }
+
+    if (compute)
+    { pCmd->SetComputeRoot32BitConstant(index, data, offset); }
+    else
+    { pCmd->SetGraphicsRoot32BitConstant(index, data, offset); }
+}
+
+//-----------------------------------------------------------------------------
+//      32bit定数を設定します.
+//-----------------------------------------------------------------------------
+void SetConstants
+(
+    ID3D12GraphicsCommandList*  pCmd,
+    bool                        compute,
+    uint32_t                    index,
+    uint32_t                    count,
+    const void*                 data,
+    uint32_t                    offset
+)
+{
+    if (index == UINT32_MAX || count == 0 || data == nullptr)
+    { return; }
+
+    if (compute)
+    { pCmd->SetComputeRoot32BitConstants(index, count, data, offset); }
+    else
+    { pCmd->SetGraphicsRoot32BitConstants(index, count, data, offset); }
+}
+
 } // namespace asdx

@@ -7,6 +7,7 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
+#include <cassert>
 #include <asdxRootSignature.h>
 #include <asdxLogger.h>
 #include <asdxShaderReflection.h>
@@ -66,15 +67,26 @@ uint32_t RootSignatureDesc::AddCBV
     uint32_t            registerSpace
 )
 {
-    D3D12_ROOT_PARAMETER param = {};
-    param.ParameterType             = D3D12_ROOT_PARAMETER_TYPE_CBV;
-    param.Descriptor.ShaderRegister = shaderRegister;
-    param.Descriptor.RegisterSpace  = registerSpace;
-    param.ShaderVisibility          = D3D12_SHADER_VISIBILITY(visibility);
+    uint32_t result;
+    if (!Contains(tag, result))
+    {
+        D3D12_ROOT_PARAMETER param = {};
+        param.ParameterType             = D3D12_ROOT_PARAMETER_TYPE_CBV;
+        param.Descriptor.ShaderRegister = shaderRegister;
+        param.Descriptor.RegisterSpace  = registerSpace;
+        param.ShaderVisibility          = D3D12_SHADER_VISIBILITY(visibility);
 
-    auto result = uint32_t(m_Params.size());
-    m_Params.push_back(param);
-    m_Tags.push_back(tag);
+        result = uint32_t(m_Params.size());
+        m_Params.push_back(param);
+        m_Tags.push_back(tag);
+    }
+    else
+    {
+        assert(m_Params[result].Descriptor.ShaderRegister == shaderRegister);
+        assert(m_Params[result].Descriptor.RegisterSpace == registerSpace);
+
+        m_Params[result].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+    }
 
     return result;
 }
@@ -90,23 +102,34 @@ uint32_t RootSignatureDesc::AddSRV
     uint32_t            registerSpace
 )
 {
-    auto range = new D3D12_DESCRIPTOR_RANGE;
-    range->BaseShaderRegister                   = shaderRegister;
-    range->NumDescriptors                       = 1;
-    range->OffsetInDescriptorsFromTableStart    = 0;
-    range->RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-    range->RegisterSpace                        = registerSpace;
+    uint32_t result;
+    if (!Contains(tag, result))
+    {
+        auto range = new D3D12_DESCRIPTOR_RANGE;
+        range->BaseShaderRegister                   = shaderRegister;
+        range->NumDescriptors                       = 1;
+        range->OffsetInDescriptorsFromTableStart    = 0;
+        range->RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+        range->RegisterSpace                        = registerSpace;
 
-    D3D12_ROOT_PARAMETER param = {};
-    param.ParameterType                         = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-    param.DescriptorTable.NumDescriptorRanges   = 1;
-    param.DescriptorTable.pDescriptorRanges     = range;
-    param.ShaderVisibility                      = D3D12_SHADER_VISIBILITY(visibility);
+        D3D12_ROOT_PARAMETER param = {};
+        param.ParameterType                         = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+        param.DescriptorTable.NumDescriptorRanges   = 1;
+        param.DescriptorTable.pDescriptorRanges     = range;
+        param.ShaderVisibility                      = D3D12_SHADER_VISIBILITY(visibility);
 
-    auto result = uint32_t(m_Params.size());
-    m_Params.push_back(param);
-    m_pRange.push_back(range);
-    m_Tags.push_back(tag);
+        auto result = uint32_t(m_Params.size());
+        m_Params.push_back(param);
+        m_pRange.push_back(range);
+        m_Tags.push_back(tag);
+    }
+    else
+    {
+        assert(m_Params[result].DescriptorTable.pDescriptorRanges->BaseShaderRegister == shaderRegister);
+        assert(m_Params[result].DescriptorTable.pDescriptorRanges->RegisterSpace == registerSpace);
+
+        m_Params[result].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+    }
 
     return result;
 }
@@ -122,15 +145,26 @@ uint32_t RootSignatureDesc::AddUAV
     uint32_t            registerSpace
 )
 {
-    D3D12_ROOT_PARAMETER param = {};
-    param.ParameterType             = D3D12_ROOT_PARAMETER_TYPE_UAV;
-    param.Descriptor.ShaderRegister = shaderRegister;
-    param.Descriptor.RegisterSpace  = registerSpace;
-    param.ShaderVisibility          = D3D12_SHADER_VISIBILITY(visibility);
+    uint32_t result;
+    if (!Contains(tag, result))
+    {
+        D3D12_ROOT_PARAMETER param = {};
+        param.ParameterType             = D3D12_ROOT_PARAMETER_TYPE_UAV;
+        param.Descriptor.ShaderRegister = shaderRegister;
+        param.Descriptor.RegisterSpace  = registerSpace;
+        param.ShaderVisibility          = D3D12_SHADER_VISIBILITY(visibility);
 
-    auto result = uint32_t(m_Params.size());
-    m_Params.push_back(param);
-    m_Tags.push_back(tag);
+        auto result = uint32_t(m_Params.size());
+        m_Params.push_back(param);
+        m_Tags.push_back(tag);
+    }
+    else
+    {
+        assert(m_Params[result].Descriptor.ShaderRegister == shaderRegister);
+        assert(m_Params[result].Descriptor.RegisterSpace == registerSpace);
+
+        m_Params[result].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+    }
 
     return result;
 }
@@ -146,23 +180,34 @@ uint32_t RootSignatureDesc::AddSampler
     uint32_t            registerSpace
 )
 {
-    auto range = new D3D12_DESCRIPTOR_RANGE;
-    range->BaseShaderRegister                   = shaderRegister;
-    range->NumDescriptors                       = 1;
-    range->OffsetInDescriptorsFromTableStart    = 0;
-    range->RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
-    range->RegisterSpace                        = registerSpace;
+    uint32_t result;
+    if (!Contains(tag, result))
+    {
+        auto range = new D3D12_DESCRIPTOR_RANGE;
+        range->BaseShaderRegister                   = shaderRegister;
+        range->NumDescriptors                       = 1;
+        range->OffsetInDescriptorsFromTableStart    = 0;
+        range->RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
+        range->RegisterSpace                        = registerSpace;
 
-    D3D12_ROOT_PARAMETER param = {};
-    param.ParameterType                         = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-    param.DescriptorTable.NumDescriptorRanges   = 1;
-    param.DescriptorTable.pDescriptorRanges     = range;
-    param.ShaderVisibility                      = D3D12_SHADER_VISIBILITY(visibility);
+        D3D12_ROOT_PARAMETER param = {};
+        param.ParameterType                         = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+        param.DescriptorTable.NumDescriptorRanges   = 1;
+        param.DescriptorTable.pDescriptorRanges     = range;
+        param.ShaderVisibility                      = D3D12_SHADER_VISIBILITY(visibility);
 
-    auto result = uint32_t(m_Params.size());
-    m_Params.push_back(param);
-    m_pRange.push_back(range);
-    m_Tags.push_back(tag);
+        auto result = uint32_t(m_Params.size());
+        m_Params.push_back(param);
+        m_pRange.push_back(range);
+        m_Tags.push_back(tag);
+    }
+    else
+    {
+        assert(m_Params[result].DescriptorTable.pDescriptorRanges->BaseShaderRegister == shaderRegister);
+        assert(m_Params[result].DescriptorTable.pDescriptorRanges->RegisterSpace == registerSpace);
+
+        m_Params[result].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+    }
 
     return result;
 }
@@ -179,16 +224,28 @@ uint32_t RootSignatureDesc::AddConstant
     uint32_t            registerSpace
 )
 {
-    D3D12_ROOT_PARAMETER param = {};
-    param.ParameterType             = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-    param.Constants.Num32BitValues  = count32BitValues;
-    param.Constants.ShaderRegister  = shaderRegister;
-    param.Constants.RegisterSpace   = registerSpace;
-    param.ShaderVisibility          = D3D12_SHADER_VISIBILITY(visibility);
+    uint32_t result;
+    if (!Contains(tag, result))
+    {
+        D3D12_ROOT_PARAMETER param = {};
+        param.ParameterType             = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+        param.Constants.Num32BitValues  = count32BitValues;
+        param.Constants.ShaderRegister  = shaderRegister;
+        param.Constants.RegisterSpace   = registerSpace;
+        param.ShaderVisibility          = D3D12_SHADER_VISIBILITY(visibility);
 
-    auto result = uint32_t(m_Params.size());
-    m_Params.push_back(param);
-    m_Tags.push_back(tag);
+        auto result = uint32_t(m_Params.size());
+        m_Params.push_back(param);
+        m_Tags.push_back(tag);
+    }
+    else
+    {
+        assert(m_Params[result].Constants.Num32BitValues == count32BitValues);
+        assert(m_Params[result].Constants.ShaderRegister == shaderRegister);
+        assert(m_Params[result].Constants.RegisterSpace == registerSpace);
+
+        m_Params[result].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+    }
 
     return result;
 }
@@ -398,7 +455,16 @@ RootSignatureDesc& RootSignatureDesc::AddFromShader
         switch(bindDesc.Type)
         {
         case D3D_SIT_CBUFFER:
-            AddCBV(bindDesc.Name, visibility, bindDesc.BindPoint, bindDesc.Space);
+            {
+                auto cbv = wrapper->GetConstantBufferByName(bindDesc.Name);
+                D3D12_SHADER_BUFFER_DESC bufDesc;
+                cbv->GetDesc(&bufDesc);
+
+                if (bufDesc.Size <= 16u)
+                { AddConstant(bindDesc.Name, visibility, bufDesc.Size / 4, bindDesc.BindPoint, bindDesc.Space); }
+                else
+                { AddCBV(bindDesc.Name, visibility, bindDesc.BindPoint, bindDesc.Space); }
+            }
             break;
 
         case D3D_SIT_TBUFFER:
@@ -424,6 +490,24 @@ RootSignatureDesc& RootSignatureDesc::AddFromShader
     }
 
     return *this;
+}
+
+//-----------------------------------------------------------------------------
+//      指定したタグが含まれるかチェックします.
+//-----------------------------------------------------------------------------
+bool RootSignatureDesc::Contains(const std::string& value, uint32_t& index)
+{
+    for(size_t i=0; i<m_Tags.size(); ++i)
+    {
+        if (m_Tags[i] == value)
+        {
+            index = uint32_t(i);
+            return true;
+        }
+    }
+
+    index = UINT32_MAX;
+    return false;
 }
 
 
@@ -469,7 +553,7 @@ bool RootSignature::Init(ID3D12Device* pDevice, RootSignatureDesc& desc)
         if (pErrorBlob != nullptr)
         { msg = static_cast<const char*>(pErrorBlob->GetBufferPointer()); }
 
-        ELOG("Error : D3D12SerializeRootSignature() Failed. errcode = 0x%x, msg = %s", hr, msg);
+        ELOGA("Error : D3D12SerializeRootSignature() Failed. errcode = 0x%x, msg = %s", hr, msg);
         return false;
     }
 
@@ -513,5 +597,14 @@ uint32_t RootSignature::Find(const char* tag) const
 //-----------------------------------------------------------------------------
 ID3D12RootSignature* RootSignature::GetPtr() const
 { return m_RootSignature.GetPtr(); }
+
+//-----------------------------------------------------------------------------
+//      ルートパラメータをログに表示します.
+//-----------------------------------------------------------------------------
+void RootSignature::Dump()
+{
+    for(auto& itr : m_RootParamIndex)
+    { ILOGA("RootParam index = %3d, name = %s", itr.second, itr.first.c_str()); }
+}
 
 } // namespace asdx

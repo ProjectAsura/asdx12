@@ -61,5 +61,46 @@ void SetRenderTarget(
     const Descriptor*               pRTV,
     const Descriptor*               pDSV);
 
+void SetDescriptorTable(
+    ID3D12GraphicsCommandList*      pCmd,
+    bool                            compute,
+    uint32_t                        index,
+    const Descriptor*               pDescriptor);
+
+void SetCBV(
+    ID3D12GraphicsCommandList*      pCmd,
+    bool                            compute,
+    uint32_t                        index,
+    D3D12_GPU_VIRTUAL_ADDRESS       addr);
+
+void SetSRV(
+    ID3D12GraphicsCommandList*      pCmd,
+    bool                            compute,
+    uint32_t                        index,
+    D3D12_GPU_VIRTUAL_ADDRESS       addr);
+
+void SetUAV(
+    ID3D12GraphicsCommandList*      pCmd,
+    bool                            compute,
+    uint32_t                        index,
+    D3D12_GPU_VIRTUAL_ADDRESS       addr);
+
+void SetConstant(
+    ID3D12GraphicsCommandList*      pCmd,
+    bool                            compute,
+    uint32_t                        index,
+    uint32_t                        data,
+    uint32_t                        offset);
+
+void SetConstants(
+    ID3D12GraphicsCommandList*      pCmd,
+    bool                            compute,
+    uint32_t                        index,
+    uint32_t                        count,
+    const void*                     data,
+    uint32_t                        offset);
+
+inline uint32_t DivRoundUp(uint32_t count, uint32_t div)
+{ return (count + div - 1) / div; }
 
 } // namespace asdx

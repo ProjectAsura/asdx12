@@ -28,8 +28,8 @@
 //#define TEST_TRIANGLE     (1)
 //#define TEST_MESH_SHADER  (1)
 //#define TEST_MESHLET      (1)
-//#define TEST_QUAD         (1)
-#define TEST_PASSGRAPH    (1)
+#define TEST_QUAD         (1)
+//#define TEST_PASSGRAPH    (1)
 
 namespace {
 

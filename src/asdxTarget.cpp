@@ -291,6 +291,10 @@ bool ColorTarget::Init
     auto mostDetailedMip = 0u;
 #endif
 
+    auto format = desc.Format;
+    if (isSRGB)
+    { format = GetSRGBFormat(desc.Format); }
+
     D3D12_RENDER_TARGET_VIEW_DESC   rtv_desc = {};
     D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc = {};
     rtv_desc.Format = desc.Format;

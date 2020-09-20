@@ -1517,7 +1517,7 @@ uint PackTBN(float3 normal, float3 tangent, uint binormalHandedness)
         refVector = float3(0.0f, 1.0f, 0.0f);
         compIndex = 1;
     }
-    else if (maxComp == tangentAbs.z)
+    else // (maxComp == tangentAbs.z)
     {
         refVector = float3(0.0f, 0.0f, 1.0f);
         compIndex = 2;
@@ -1557,9 +1557,9 @@ bool IsConeDegenerate(uint packedCone)
 //-----------------------------------------------------------------------------
 //      法錐カリングを行います.
 //-----------------------------------------------------------------------------
-bool IsNormalConeCull(uint packedCone, float3 viewDir)
+bool IsNormalConeCull(float4 normalCone, float3 viewDir)
 {
-    float4 normalCone = UnpackUnorm4(packedCone);
+    // normalConeはワールド変換済みとします.
     return dot(normalCone.xyz, -viewDir) > normalCone.w;
 }
 

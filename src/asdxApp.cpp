@@ -386,6 +386,87 @@ void DeviceRemovedHandler(ID3D12Device* pDevice)
     }
 }
 
+//-----------------------------------------------------------------------------
+//      sRGBフォーマットかどうかチェックします.
+//-----------------------------------------------------------------------------
+bool IsSRGBFormat(DXGI_FORMAT value)
+{
+    bool result = false;
+    switch(value)
+    {
+    case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+        { result = true; }
+        break;
+
+    case DXGI_FORMAT_BC1_UNORM_SRGB:
+        { result = true; }
+        break;
+
+    case DXGI_FORMAT_BC2_UNORM_SRGB:
+        { result = true; }
+        break;
+
+    case DXGI_FORMAT_BC3_UNORM_SRGB:
+        { result = true; }
+        break;
+
+    case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
+        { result = true; }
+        break;
+
+    case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
+        { result = true; }
+        break;
+
+    case DXGI_FORMAT_BC7_UNORM_SRGB:
+        { result = true; }
+        break;
+    }
+
+    return result;
+}
+
+//-----------------------------------------------------------------------------
+//      非sRGBフォーマットに変換します.
+//-----------------------------------------------------------------------------
+DXGI_FORMAT GetNoSRGBFormat(DXGI_FORMAT value)
+{
+    DXGI_FORMAT result = value;
+
+    switch( value )
+    {
+    case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+        { result = DXGI_FORMAT_R8G8B8A8_UNORM; }
+        break;
+
+    case DXGI_FORMAT_BC1_UNORM_SRGB:
+        { result = DXGI_FORMAT_BC1_UNORM; }
+        break;
+
+    case DXGI_FORMAT_BC2_UNORM_SRGB:
+        { result = DXGI_FORMAT_BC2_UNORM; }
+        break;
+
+    case DXGI_FORMAT_BC3_UNORM_SRGB:
+        { result = DXGI_FORMAT_BC3_UNORM; }
+        break;
+
+    case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
+        { result = DXGI_FORMAT_B8G8R8A8_UNORM; }
+        break;
+
+    case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
+        { result = DXGI_FORMAT_B8G8R8X8_UNORM; }
+        break;
+
+    case DXGI_FORMAT_BC7_UNORM_SRGB:
+        { result = DXGI_FORMAT_BC7_UNORM; }
+        break;
+    }
+
+    return result;
+}
+
 } // namespace /* anonymous */
 
 
@@ -775,6 +856,8 @@ bool Application::InitD3D()
         return false;
     }
 
+    auto isSRGB = IsSRGBFormat(m_SwapChainFormat);
+
     // スワップチェインの初期化
     {
         DXGI_RATIONAL refreshRate;
@@ -784,7 +867,7 @@ bool Application::InitD3D()
         DXGI_SWAP_CHAIN_DESC1 desc = {};
         desc.Width              = w;
         desc.Height             = h;
-        desc.Format             = m_SwapChainFormat;
+        desc.Format             = GetNoSRGBFormat(m_SwapChainFormat);
         desc.Stereo             = FALSE;
         desc.SampleDesc.Count   = m_MultiSampleCount;
         desc.SampleDesc.Quality = m_MultiSampleQuality;
@@ -835,7 +918,7 @@ bool Application::InitD3D()
 
         for(auto i=0u; i<m_SwapChainCount; ++i)
         {
-            if (!m_ColorTarget[i].Init(GfxDevice(), m_pSwapChain4.GetPtr(), i, true))
+            if (!m_ColorTarget[i].Init(GfxDevice(), m_pSwapChain4.GetPtr(), i, isSRGB))
             {
                 ELOG("Error : ColorTarget::Init() Failed.");
                 return false;
@@ -1049,14 +1132,17 @@ void Application::ResizeEvent( const ResizeEventArgs& param )
 
         HRESULT hr = S_OK;
 
+        auto isSRGB = IsSRGBFormat(m_SwapChainFormat);
+        auto format = GetNoSRGBFormat(m_SwapChainFormat);
+
         // バッファをリサイズ.
-        hr = m_pSwapChain4->ResizeBuffers( m_SwapChainCount, m_Width, m_Height, m_SwapChainFormat, 0 );
+        hr = m_pSwapChain4->ResizeBuffers( m_SwapChainCount, m_Width, m_Height, format, 0 );
         if ( FAILED( hr ) )
         { DLOG( "Error : IDXGISwapChain::ResizeBuffer() Failed." ); }
 
         for(auto i=0u; i<m_SwapChainCount; ++i)
         {
-            if (!m_ColorTarget[i].Init(GfxDevice(), m_pSwapChain4.GetPtr(), i, true))
+            if (!m_ColorTarget[i].Init(GfxDevice(), m_pSwapChain4.GetPtr(), i, isSRGB))
             { DLOG("Error : ColorTarget::Init() Failed."); }
         }
 
