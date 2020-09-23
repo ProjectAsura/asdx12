@@ -43,6 +43,7 @@ static const auto RES_STATE_WRITE_UAV = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 static const auto RES_STATE_READ      = D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE;
 static const auto RES_STATE_READ_DSV  = D3D12_RESOURCE_STATE_DEPTH_READ | RES_STATE_READ;
 
+
 ///////////////////////////////////////////////////////////////////////////////
 // RESORUCE_INFO_FLAGS
 ///////////////////////////////////////////////////////////////////////////////
@@ -1450,7 +1451,6 @@ public:
     //=========================================================================
     // public variables.
     //=========================================================================
-    PassTag         m_Tag;
     PassSetup       m_Setup         = nullptr;
     PassExecute     m_Execute       = nullptr;
     uint8_t         m_SyncFlag      = SYNC_FLAG_NONE;
@@ -1609,7 +1609,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      パスを追加します.
     //-------------------------------------------------------------------------
-    bool AddPass(PassTag& tag, PassSetup setup, PassExecute execute) override;
+    bool AddPass(PassSetup setup, PassExecute execute) override;
 
     //-------------------------------------------------------------------------
     //! @brief      ビルドします.
@@ -1620,11 +1620,6 @@ public:
     //! @brief      レンダーパスを実行します。
     //-------------------------------------------------------------------------
     WaitPoint Execute(const WaitPoint& waitPoint) override;
-
-    //-------------------------------------------------------------------------
-    //! @brief      Graphviz形式に出力します.
-    //-------------------------------------------------------------------------
-    bool Export(const char* filename) override;
 
     //-------------------------------------------------------------------------
     //! @brief      ブラックボードを取得します.
@@ -1921,7 +1916,7 @@ void PassGraph::Release()
 //-----------------------------------------------------------------------------
 //      パスを追加します.
 //-----------------------------------------------------------------------------
-bool PassGraph::AddPass(PassTag& tag, PassSetup setup, PassExecute execute)
+bool PassGraph::AddPass(PassSetup setup, PassExecute execute)
 {
     assert(m_PassList.GetCount() < m_MaxPassCount);
     if (m_PassList.GetCount() >= m_MaxPassCount)
@@ -1931,7 +1926,6 @@ bool PassGraph::AddPass(PassTag& tag, PassSetup setup, PassExecute execute)
     }
 
     auto pass = FrameAlloc<RenderPass>();
-    pass->m_Tag     = tag;
     pass->m_Setup   = setup;
     pass->m_Execute = execute;
 
@@ -2028,7 +2022,6 @@ void PassGraph::Compile()
             if (itr->m_AsyncCompute)
             {
                 auto pass = FrameAlloc<RenderPass>();
-                pass->m_Tag             = "BarrierForCompute";
                 pass->m_AsyncCompute    = false;
                 pass->m_ResourceCount   = count;
                 pass->m_SyncFlag        = SYNC_FLAG_GRAPHICS_TO_COMPUTE;
@@ -2224,26 +2217,6 @@ WaitPoint PassGraph::Execute(const WaitPoint& waitPoint)
 //-----------------------------------------------------------------------------
 PassResource* PassGraph::AllocResource(const PassResourceDesc& desc, RenderPass* producer)
 { return m_Registry.GetOrCreate(desc, producer); }
-
-//-----------------------------------------------------------------------------
-//      Graphviz形式に出力します.
-//-----------------------------------------------------------------------------
-bool PassGraph::Export(const char* filename)
-{
-    FILE* pFile;
-    auto err = fopen_s(&pFile, filename, "w");
-    if (err != 0)
-    {
-        ELOG("Error : File Open Failed. path = %s", filename);
-        return false;
-    }
-
-    // TODO : Implement.
-
-    fclose(pFile);
-
-    return true;
-}
 
 //-----------------------------------------------------------------------------
 //      パスグラフを生成します.
