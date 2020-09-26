@@ -106,6 +106,17 @@ D3D12_RESOURCE_STATES GetStateUAV(const RESOURCE_INFO_FLAGS& flags)
     return D3D12_RESOURCE_STATE_COMMON;
 }
 
+//-----------------------------------------------------------------------------
+//      文字列をコピーします.
+//-----------------------------------------------------------------------------
+void CopyString(char* dst, const char* src, size_t maxSize)
+{
+    auto size = Min<size_t>(strlen(src), maxSize - 1);
+    for(size_t i=0; i<size; ++i)
+    { dst[i] = src[i]; }
+    dst[size] = '\0';
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Transition structure
 ///////////////////////////////////////////////////////////////////////////////
@@ -1451,6 +1462,7 @@ public:
     //=========================================================================
     // public variables.
     //=========================================================================
+    char            m_Tag[64]       = {};
     PassSetup       m_Setup         = nullptr;
     PassExecute     m_Execute       = nullptr;
     uint8_t         m_SyncFlag      = SYNC_FLAG_NONE;
@@ -1609,7 +1621,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      パスを追加します.
     //-------------------------------------------------------------------------
-    bool AddPass(PassSetup setup, PassExecute execute) override;
+    bool AddPass(const char* tag, PassSetup setup, PassExecute execute) override;
 
     //-------------------------------------------------------------------------
     //! @brief      ビルドします.
@@ -1916,7 +1928,7 @@ void PassGraph::Release()
 //-----------------------------------------------------------------------------
 //      パスを追加します.
 //-----------------------------------------------------------------------------
-bool PassGraph::AddPass(PassSetup setup, PassExecute execute)
+bool PassGraph::AddPass(const char* tag, PassSetup setup, PassExecute execute)
 {
     assert(m_PassList.GetCount() < m_MaxPassCount);
     if (m_PassList.GetCount() >= m_MaxPassCount)
@@ -1928,6 +1940,7 @@ bool PassGraph::AddPass(PassSetup setup, PassExecute execute)
     auto pass = FrameAlloc<RenderPass>();
     pass->m_Setup   = setup;
     pass->m_Execute = execute;
+    CopyString(pass->m_Tag, tag, 63);
 
     m_PassList.PushBack(pass);
 

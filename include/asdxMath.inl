@@ -5890,19 +5890,32 @@ Vector2 Hammersley( uint32_t i, uint32_t numSamples )
 }
 
 //-----------------------------------------------------------------------------
+//      平面式を正規化します.
+//-----------------------------------------------------------------------------
+inline
+Vector4 NormalizePlane(const Vector4& value)
+{
+    auto mag = sqrt(value.x * value.x + value.y * value.y + value.z * value.z);
+    return Vector4(value.x / mag, value.y / mag, value.z / mag, value.w / mag);
+}
+
+//-----------------------------------------------------------------------------
 //      視錐台を構成する6平面を求めます.
 //-----------------------------------------------------------------------------
 inline
 void CalcFrustumPlanes(const Matrix& view, const Matrix& proj, Vector4* planes)
 {
+    // Gil Gribb, Klaus Hartmann,
+    // "Fast Extraction of Viewing Frustum Planes from the World-View-Projection Matrix"
+    // https://www.gamedevs.org/
     auto vp = Matrix::MultiplyTranspose(view, proj);
 
-    planes[0] = Vector4::Normalize(vp.row[3] + vp.row[0]);
-    planes[1] = Vector4::Normalize(vp.row[3] - vp.row[0]);
-    planes[2] = Vector4::Normalize(vp.row[3] + vp.row[1]);
-    planes[3] = Vector4::Normalize(vp.row[3] - vp.row[1]);
-    planes[4] = Vector4::Normalize(vp.row[2]);
-    planes[5] = Vector4::Normalize(vp.row[3] - vp.row[2]);
+    planes[0] = NormalizePlane(vp.row[3] + vp.row[0]);
+    planes[1] = NormalizePlane(vp.row[3] - vp.row[0]);
+    planes[2] = NormalizePlane(vp.row[3] + vp.row[1]);
+    planes[3] = NormalizePlane(vp.row[3] - vp.row[1]);
+    planes[4] = NormalizePlane(vp.row[2]);
+    planes[5] = NormalizePlane(vp.row[3] - vp.row[2]);
 }
 
 //-----------------------------------------------------------------------------

@@ -328,12 +328,13 @@ struct IPassGraph
     //-------------------------------------------------------------------------
     //! @brief      レンダーパスを追加します.
     //!
+    //! @param[in]      tag         タグ名です.
     //! @param[in]      setup       セットアップ処理です.
     //! @param[in]      execute     実行処理です.
     //! @retval true    追加に成功しました.
     //! @retval false   追加に失敗しました.
     //-------------------------------------------------------------------------
-    virtual bool AddPass(PassSetup setup, PassExecute execute) = 0;
+    virtual bool AddPass(const char* tag, PassSetup setup, PassExecute execute) = 0;
 
     //-------------------------------------------------------------------------
     //! @brief      コンパイルします.
