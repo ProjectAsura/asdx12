@@ -635,8 +635,9 @@ float3 EvaluateDirectLightClearCoat
 //-----------------------------------------------------------------------------
 //      GGX BRDFの形状にもとづくサンプリングを行います.
 //-----------------------------------------------------------------------------
-float3 BRDFSampleGGX(float2 u, float roughness)
+float3 SampleGGX(float2 u, float roughness)
 {
+    // roughnessは線形roughnessとします.
     float a = roughness * roughness;
 
     float phi = 2.0 * F_PI * u.x;
@@ -648,5 +649,12 @@ float3 BRDFSampleGGX(float2 u, float roughness)
         sinTheta * sin(phi),
         cosTheta);
 }
+
+//-----------------------------------------------------------------------------
+//      Lambert BRDFの形状にもとづくサンプリングを行います.
+//-----------------------------------------------------------------------------
+float3 SampleLambert(float2 u)
+{ return UniformSampleHemisphere(u); }
+
 
 #endif//ADX_BRDF_HLSLI

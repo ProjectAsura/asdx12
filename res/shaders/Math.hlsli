@@ -326,51 +326,64 @@ float3 UnpackNormal(float2 packed)
 }
 
 //-----------------------------------------------------------------------------
-//      ハードウェアから出力された非線形深度を線形深度に変換します.
+//      ハードウェアから出力された深度を線形深度に変換します.
 //-----------------------------------------------------------------------------
-float ToLinearDepth(float hardware_depth, float near_clip, float far_clip)
-{ return near_clip / (hardware_depth * (near_clip - far_clip) + far_clip); }
+float ToLinearDepth(float hardwareDepth, float nearClip, float farClip)
+{ return nearClip / (hardwareDepth * (nearClip - farClip) + farClip); }
 
 //-----------------------------------------------------------------------------
-//      far_clip=∞とする射影行列でハードウェアから出力された非線形深度をビュー空間深度に変換します.
+//      ハードウェアから出力された深度をビュー空間深度に変換します.
 //-----------------------------------------------------------------------------
-float ToViewDepth(float hardware_depth, float near_clip)
-{ return near_clip / (hardware_depth - 1.0f); }
+float ToViewDepth(float hardwareDepth, float nearClip, float farClip)
+{ return -nearClip * farClip / (hardwareDepth * (nearClip - farClip) + farClip); }
 
 //-----------------------------------------------------------------------------
-//      far_clip=∞とするReverse-Z射影行列でハードウェアから出力された非線形深度をビュー空間深度に変換します.
+//      ハードウェアから出力されたリバース深度を線形深度に変換します.
 //-----------------------------------------------------------------------------
-float ToViewDepthFromReverseZ(float hardware_depth, float near_clip)
-{ return -near_clip / hardware_depth; }
+float ToLinearDepthFromReverseZ(float hardwareDepth, float nearClip, float farClip)
+{ return -nearClip / (hardwareDepth * (nearClip - farClip) + nearClip); }
 
 //-----------------------------------------------------------------------------
-//      UVからビュー空間位置を求めます.
+//      ハードウェアから出力されたリバース深度をビュー空間深度に変換します.
 //-----------------------------------------------------------------------------
-float3 UVToViewPos(float2 uv, float linear_depth, float3 param)
+float ToViewDepthFromReveseZ(float hardwareDepth, float nearClip, float farClip)
+{ return -farClip * nearClip / (hardwareDepth * (nearClip - farClip) + nearClip); }
+
+//-----------------------------------------------------------------------------
+//      ビュー空間深度から線形深度に変換します.
+//-----------------------------------------------------------------------------
+float ToLinearDepth(float viewDepth, float farClip)
+{ return viewDepth / farClip; }
+
+//-----------------------------------------------------------------------------
+//      線形深度からビュー空間深度に変換します.
+//-----------------------------------------------------------------------------
+float ToViewDepth(float linearDepth, float farClip)
+{ return linearDepth * farClip; }
+
+//-----------------------------------------------------------------------------
+//      ビュー空間位置からテクスチャ座標を求めます.
+//-----------------------------------------------------------------------------
+float2 ToTexCoord(float3 viewPos, float2 param)
 {
-     // paramはCPU側で以下を計算して渡されたものです.
-     // param.z = far_clip;
-     // param.y = param.z / proj._22;
-     // param.x = param.y * proj._22 / proj._11;
-     // ※ proj._22 = 1.0f / tanf(fovy * 0.5f);
-     // ※ proj._11 = 1.0f / (tanf(fovy * 0.5f) * aspectRatio);
-     float2 st = uv * float2(2.0f, -2.0f) - float2(1.0f, -1.0f);
-     float3 view_dir = float3(st.x * param.x, st.y * param.y, -param.z);
-     return linear_depth * view_dir;
+    // param.x = 1.0f / proj[0][0];
+    // param.y = 1.0f / proj[1][1];
+    float2 p;
+    p.x = (-viewPos.x / (viewPos.z * param.x)) * ( 0.5f) + 0.5f;
+    p.y = (-viewPos.y / (viewPos.z * param.y)) * (-0.5f) + 0.5f;
+    return p;
 }
 
 //-----------------------------------------------------------------------------
-//      UVとビュー空間深度からビュー空間位置を求めます.
+//      ビュー空間位置を求めます.
 //-----------------------------------------------------------------------------
-float3 UVToViewPos(float2 uv, float view_depth, float2 param)
+float3 ToViewPos(float2 uv, float viewZ, float2 param)
 {
-    // param.y = 1.0f / proj._22;
-    // param.x = 1.0f / proj._11;
-    // ※ proj._22 = 1.0f / tanf(fovy * 0.5f);
-    // ※ proj._11 = 1.0f / (tanf(fovy * 0.5f) * aspectRatio);
-    float2 st = uv * float2(2.0f, -2.0f) - float2(1.0f, -1.0f);
-    float3 view_dir = float3(st.x * param.x, st.y * param.y, -1.0f);
-    return view_depth * view_dir;
+    // param.x = 1.0f / proj[0][0];
+    // param.y = 1.0f / proj[1][1];
+    float2 p = uv * float2(2.0f, -2.0f) + float2(-1.0f, 1.0f);
+    p *= -viewZ * param;
+    return float3(p, viewZ);
 }
 
 //-----------------------------------------------------------------------------
@@ -1557,16 +1570,16 @@ bool IsConeDegenerate(uint packedCone)
 //-----------------------------------------------------------------------------
 //      法錐カリングを行います.
 //-----------------------------------------------------------------------------
-bool IsNormalConeCull(float4 normalCone, float3 viewDir)
+bool NormalConeCulling(float4 normalCone, float3 viewDir)
 {
     // normalConeはワールド変換済みとします.
     return dot(normalCone.xyz, -viewDir) > normalCone.w;
 }
 
 //-----------------------------------------------------------------------------
-//      視錐台カリングを行います.
+//      視錐台の中にスフィアが含まれるかどうかチェックします.
 //-----------------------------------------------------------------------------
-bool IsCull(float4 planes[6], float4 sphere)
+bool Contains(float4 planes[6], float4 sphere)
 {
     // sphereは事前に位置座標がワールド変換済み，半径もスケール適用済みとします.
     float4 center = float4(sphere.xyz, 1.0f);
@@ -1574,11 +1587,14 @@ bool IsCull(float4 planes[6], float4 sphere)
     for(int i=0; i<6; ++i)
     {
         if (dot(center, planes[i]) < -sphere.w)
-        { return true; }
+        {
+            // カリングする.
+            return false;
+        }
     }
 
     // カリングしない.
-    return false;
+    return true;
 }
 
 //-----------------------------------------------------------------------------

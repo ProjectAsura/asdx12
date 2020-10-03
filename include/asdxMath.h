@@ -3871,6 +3871,24 @@ Vector4 NormalizePlane(const Vector4& value);
 //------------------------------------------------------------------------------
 void CalcFrustumPlanes(const Matrix& view, const Matrix& proj, Vector4* planes);
 
+//-----------------------------------------------------------------------------
+//! @brief      平面とレイの交差点を求めます.
+//!
+//! @param[in]      plane       平面式です.
+//! @param[in]      orig        レイの原点です.
+//! @param[in]      dir         レイの方向ベクトルです.
+//! @return     交差点を返却します.
+//-----------------------------------------------------------------------------
+Vector3 ComputeIntersection(const Vector4& plane, const Vector3& orig, const Vector3& dir);
+
+//-----------------------------------------------------------------------------
+//! @brief      視錐台の8角を求めます.
+//!
+//! @param[in]      planes      錐台を構成する6平面です.
+//! @param[out]     corners     錐台の8角を返却します.
+//-----------------------------------------------------------------------------
+void GetCorners(const Vector4* planes, Vector3* corners);
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Half2 union

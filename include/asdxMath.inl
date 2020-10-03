@@ -5919,6 +5919,54 @@ void CalcFrustumPlanes(const Matrix& view, const Matrix& proj, Vector4* planes)
 }
 
 //-----------------------------------------------------------------------------
+//      交差線を求めます.
+//-----------------------------------------------------------------------------
+inline
+void ComputeIntersectionLine(const Vector4& p1, const Vector4& p2, Vector3& orig, Vector3& dir)
+{
+    auto n1 = Vector3(p1.x, p1.y, p1.z);
+    auto n2 = Vector3(p2.x, p2.y, p2.z);
+    dir = Vector3::Cross(n1, n2);
+    auto divider = Vector3::Dot(dir, dir);
+    orig = Vector3::Cross(p1.w * n2 + p2.w * n1, dir) / divider;
+}
+
+//-----------------------------------------------------------------------------
+//      平面とレイの交差点を求めます.
+//-----------------------------------------------------------------------------
+inline
+Vector3 ComputeIntersection(const Vector4& plane, const Vector3& orig, const Vector3& dir)
+{
+    auto normal = Vector3(plane.x, plane.y, plane.z);
+    auto t = (-plane.w - Vector3::Dot(normal, orig)) / Vector3::Dot(normal, dir);
+    return orig + dir * t;
+}
+
+//-----------------------------------------------------------------------------
+//      視錐台の8角を求めます.
+//-----------------------------------------------------------------------------
+inline
+void GetCorners(const Vector4* planes, Vector3* corners)
+{
+    Vector3 orig, dir;
+    ComputeIntersectionLine(planes[0], planes[2], orig, dir);
+    corners[0] = ComputeIntersection(planes[4], orig, dir);
+    corners[3] = ComputeIntersection(planes[5], orig, dir);
+ 
+    ComputeIntersectionLine(planes[3], planes[0], orig, dir);
+    corners[1] = ComputeIntersection(planes[4], orig, dir);
+    corners[2] = ComputeIntersection(planes[5], orig, dir);
+
+    ComputeIntersectionLine(planes[2], planes[1], orig, dir);
+    corners[4] = ComputeIntersection(planes[4], orig, dir);
+    corners[7] = ComputeIntersection(planes[5], orig, dir);
+
+    ComputeIntersectionLine(planes[1], planes[3], orig, dir);
+    corners[5] = ComputeIntersection(planes[4], orig, dir);
+    corners[6] = ComputeIntersection(planes[5], orig, dir);
+}
+
+//-----------------------------------------------------------------------------
 //      半精度浮動小数に変換します.
 //-----------------------------------------------------------------------------
 inline
