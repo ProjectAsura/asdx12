@@ -8,12 +8,9 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
+#include <asdxMacro.h>
 #include <asdxMath.h>
 
-
-#ifndef ASDX_UNUSED
-#define ASDX_UNUSED(x)  (void)x
-#endif//ASDX_UNUSED
 
 namespace asdx {
 

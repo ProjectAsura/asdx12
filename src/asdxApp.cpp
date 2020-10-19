@@ -517,7 +517,7 @@ Application::Application()
     m_ClearColor[2] = 0.929411829f;
     m_ClearColor[3] = 1.000000000f;
 
-    m_DeviceDesc.EnableDebug            = ASDX_DEVELOP_IF(true, false);
+    m_DeviceDesc.EnableDebug            = ASDX_DEV_VAR(true, false);
     m_DeviceDesc.MaxColorTargetCount    = 128;
     m_DeviceDesc.MaxDepthTargetCount    = 128;
     m_DeviceDesc.MaxSamplerCount        = 128;
@@ -556,7 +556,7 @@ Application::Application( LPCWSTR title, UINT width, UINT height, HICON hIcon, H
     m_ClearColor[2] = 0.929411829f;
     m_ClearColor[3] = 1.000000000f;
 
-    m_DeviceDesc.EnableDebug            = ASDX_DEVELOP_IF(true, false);
+    m_DeviceDesc.EnableDebug            = ASDX_DEV_VAR(true, false);
     m_DeviceDesc.MaxColorTargetCount    = 128;
     m_DeviceDesc.MaxDepthTargetCount    = 128;
     m_DeviceDesc.MaxSamplerCount        = 128;

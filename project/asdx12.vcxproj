@@ -123,6 +123,7 @@
     <ClCompile Include="..\src\asdxQuad.cpp" />
     <ClCompile Include="..\src\asdxCommandQueue.cpp" />
     <ClCompile Include="..\src\asdxRandom.cpp" />
+    <ClCompile Include="..\src\asdxResMaterial.cpp" />
     <ClCompile Include="..\src\asdxResModel.cpp" />
     <ClCompile Include="..\src\asdxResourceUploader.cpp" />
     <ClCompile Include="..\src\asdxResTexture.cpp" />
@@ -175,6 +176,7 @@
     <ClInclude Include="..\include\asdxCommandQueue.h" />
     <ClInclude Include="..\include\asdxQueue.h" />
     <ClInclude Include="..\include\asdxRef.h" />
+    <ClInclude Include="..\include\asdxRenderable.h" />
     <ClInclude Include="..\include\asdxResMaterial.h" />
     <ClInclude Include="..\include\asdxResModel.h" />
     <ClInclude Include="..\include\asdxResourceUploader.h" />

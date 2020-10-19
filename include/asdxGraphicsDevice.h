@@ -41,6 +41,7 @@ public:
         uint32_t    MaxColorTargetCount;            //!< 最大カラーターゲット数です.
         uint32_t    MaxDepthTargetCount;            //!< 最大深度ターゲット数です.
         bool        EnableDebug;                    //!< デバッグモードを有効にします.
+        bool        EnableDRED;                     //!< DREDを有効にします
     };
 
     //=========================================================================

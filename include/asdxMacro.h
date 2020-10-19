@@ -27,11 +27,11 @@
 #define ASDX_COUNT_OF(arr) (sizeof(arr) / sizeof(arr[0]))
 #endif//ASDX_COUNT_OF
 
-#ifndef ASDX_DEVELOP_IF
+#ifndef ASDX_DEV_VAR
     #ifndef ASDX_RELEASE
-        #define ASDX_DEVELOP_IF(develop, release) develop
+        #define ASDX_DEV_VAR(develop, release) develop
     #else
-        #define ASDX_DEVELOP_IF(develop, release) release
+        #define ASDX_DEV_VAR(develop, release) release
     #endif
 #endif
 

@@ -1428,6 +1428,9 @@ void UnpackTN
     out float3  normal          // 法線ベクトル.
 )
 {
+    // Hawar Doghramachi and Jean-Normand Bucci, 
+    // "Deferred+: Next-Gen Culling and Rendering for the Dawn Engine"
+    // GPU Zen, pp.89-91, 2017.
     uint2 packedN;
     packedN.x = encodedTBN & 0x3FF;
     packedN.y = (encodedTBN >> 10) & 0x3FF;
@@ -1470,6 +1473,9 @@ void UnpackTBN
     out float3  normal          // 法線ベクトル.
 )
 {
+    // Hawar Doghramachi and Jean-Normand Bucci, 
+    // "Deferred+: Next-Gen Culling and Rendering for the Dawn Engine"
+    // GPU Zen, pp.89-91, 2017.
     uint2 packedN;
     packedN.x = encodedTBN & 0x3FF;
     packedN.y = (encodedTBN >> 10) & 0x3FF;
@@ -1510,6 +1516,9 @@ void UnpackTBN
 //-----------------------------------------------------------------------------
 uint PackTBN(float3 normal, float3 tangent, uint binormalHandedness)
 {
+    // Hawar Doghramachi and Jean-Normand Bucci, 
+    // "Deferred+: Next-Gen Culling and Rendering for the Dawn Engine"
+    // GPU Zen, pp.89-91, 2017.
     uint result = 0;
     float2 packNormal = PackNormal(normal);
     result |= uint(packNormal.x * 1023.0f);
@@ -1530,7 +1539,7 @@ uint PackTBN(float3 normal, float3 tangent, uint binormalHandedness)
         refVector = float3(0.0f, 1.0f, 0.0f);
         compIndex = 1;
     }
-    else // (maxComp == tangentAbs.z)
+    else
     {
         refVector = float3(0.0f, 0.0f, 1.0f);
         compIndex = 2;

@@ -56,10 +56,13 @@ bool GraphicsDevice::Init(const Desc* pDesc)
             #endif
             }
         }
+    }
 
+    if (pDesc->EnableDRED)
+    {
         // DRED有効化.
         asdx::RefPtr<ID3D12DeviceRemovedExtendedDataSettings> dred;
-        hr = D3D12GetDebugInterface(IID_PPV_ARGS(dred.GetAddress()));
+        auto hr = D3D12GetDebugInterface(IID_PPV_ARGS(dred.GetAddress()));
         if (SUCCEEDED(hr))
         {
             dred->SetAutoBreadcrumbsEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
@@ -117,6 +120,13 @@ bool GraphicsDevice::Init(const Desc* pDesc)
             {
                 // エラー発生時にブレークさせる.
                 m_pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
+
+                // 警告発生時にブレークさせる.
+                m_pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE);
+
+                // クリア値が違うという警告は無効化しておく.
+                m_pInfoQueue->SetBreakOnID(D3D12_MESSAGE_ID_CLEARRENDERTARGETVIEW_MISMATCHINGCLEARVALUE, FALSE);
+                m_pInfoQueue->SetBreakOnID(D3D12_MESSAGE_ID_CLEARDEPTHSTENCILVIEW_MISMATCHINGCLEARVALUE, FALSE);
             }
         }
     }

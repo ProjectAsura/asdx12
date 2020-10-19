@@ -89,4 +89,24 @@ struct ResMaterials
     std::vector<ResMaterial>        Materials;  //!< マテリアルです.
 };
 
+//-----------------------------------------------------------------------------
+//! @brief      マテリアルを保存します.
+//!
+//! @param[in]      path        出力パス.
+//! @param[in]      materials   保存するマテリアルデータ.
+//! @retval true    保存に成功.
+//! @retval fasel   保存に失敗.
+//-----------------------------------------------------------------------------
+bool SaveMaterials(const char* path, const ResMaterials& materials);
+
+//-----------------------------------------------------------------------------
+//! @brief      マテリアルを読み込みます.
+//!
+//! @param[in]      path        入力パス.
+//! @param[out]     materials   マテリアルデータの格納先.
+//! @retval true    読み込みに成功.
+//! @retval false   読み込みに失敗.
+//-----------------------------------------------------------------------------
+bool LoadMaterials(const char* path, ResMaterials& materials);
+
 } // namespace asdx

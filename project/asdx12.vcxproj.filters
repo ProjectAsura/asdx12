@@ -22,17 +22,11 @@
     <Filter Include="ヘッダー ファイル\allocator">
       <UniqueIdentifier>{778f8b71-61d0-4456-b576-2ac5b02cdae6}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ソース ファイル\history">
-      <UniqueIdentifier>{3109205d-44f8-4f6a-873a-1a2c2114e8d7}</UniqueIdentifier>
-    </Filter>
     <Filter Include="ソース ファイル\allocator">
       <UniqueIdentifier>{17a7ce92-3f8c-47a4-801f-064c070a65ca}</UniqueIdentifier>
     </Filter>
     <Filter Include="ソース ファイル\res">
       <UniqueIdentifier>{3d08882a-c208-42ee-aa33-3d1c10608b81}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\history">
-      <UniqueIdentifier>{5844286c-c68c-494c-b554-973b151d6f5f}</UniqueIdentifier>
     </Filter>
     <Filter Include="ソース ファイル\hid">
       <UniqueIdentifier>{223f2a38-e971-4ba2-a361-c02fb0579b16}</UniqueIdentifier>
@@ -42,6 +36,12 @@
     </Filter>
     <Filter Include="ヘッダー ファイル\camera">
       <UniqueIdentifier>{f91f2a19-29d0-4215-8b26-3accb6008ba3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\edit">
+      <UniqueIdentifier>{3109205d-44f8-4f6a-873a-1a2c2114e8d7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\edit">
+      <UniqueIdentifier>{5844286c-c68c-494c-b554-973b151d6f5f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -66,9 +66,6 @@
     <ClCompile Include="..\src\asdxRandom.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\asdxTcpConnector.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\asdxFence.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -91,10 +88,10 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="..\src\asdxAppHistoryMgr.cpp">
-      <Filter>ソース ファイル\history</Filter>
+      <Filter>ソース ファイル\edit</Filter>
     </ClCompile>
     <ClCompile Include="..\src\asdxHistory.cpp">
-      <Filter>ソース ファイル\history</Filter>
+      <Filter>ソース ファイル\edit</Filter>
     </ClCompile>
     <ClCompile Include="..\src\asdxFrameHeap.cpp">
       <Filter>ソース ファイル\allocator</Filter>
@@ -106,7 +103,7 @@
       <Filter>ソース ファイル\res</Filter>
     </ClCompile>
     <ClCompile Include="..\src\asdxEditParam.cpp">
-      <Filter>ソース ファイル\history</Filter>
+      <Filter>ソース ファイル\edit</Filter>
     </ClCompile>
     <ClCompile Include="..\src\asdxKeyboard.cpp">
       <Filter>ソース ファイル\hid</Filter>
@@ -174,6 +171,12 @@
     <ClCompile Include="..\src\asdxThreadPool.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\asdxTcpConnector.cpp">
+      <Filter>ソース ファイル\edit</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\asdxResMaterial.cpp">
+      <Filter>ソース ファイル\res</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\asdxApp.h">
@@ -207,9 +210,6 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="..\include\asdxTablet.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxTcpConnector.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="..\include\asdxTimer.h">
@@ -261,10 +261,10 @@
       <Filter>ヘッダー ファイル\container</Filter>
     </ClInclude>
     <ClInclude Include="..\include\asdxHistory.h">
-      <Filter>ヘッダー ファイル\history</Filter>
+      <Filter>ヘッダー ファイル\edit</Filter>
     </ClInclude>
     <ClInclude Include="..\include\asdxAppHistoryMgr.h">
-      <Filter>ヘッダー ファイル\history</Filter>
+      <Filter>ヘッダー ファイル\edit</Filter>
     </ClInclude>
     <ClInclude Include="..\include\asdxResMaterial.h">
       <Filter>ヘッダー ファイル\res</Filter>
@@ -279,7 +279,7 @@
       <Filter>ヘッダー ファイル\allocator</Filter>
     </ClInclude>
     <ClInclude Include="..\include\asdxEditParam.h">
-      <Filter>ヘッダー ファイル\history</Filter>
+      <Filter>ヘッダー ファイル\edit</Filter>
     </ClInclude>
     <ClInclude Include="..\include\asdxQueue.h">
       <Filter>ヘッダー ファイル\container</Filter>
@@ -346,6 +346,12 @@
     </ClInclude>
     <ClInclude Include="..\include\asdxMacro.h">
       <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\asdxRenderable.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\asdxTcpConnector.h">
+      <Filter>ヘッダー ファイル\edit</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
