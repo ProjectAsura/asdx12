@@ -1,4 +1,4 @@
-//-----------------------------------------------------------------------------
+ï»¿//-----------------------------------------------------------------------------
 // File : asdxResMaterial.cpp
 // Desc : Material Resource.
 // Copyright(c) Project Asura. All right reserved.
@@ -23,22 +23,22 @@ struct MaterialHeader
 
 struct MaterialHeaderV1
 {
-    uint32_t    Hash;               //!< ƒ}ƒeƒŠƒAƒ‹–¼‚ð•\‚·ƒnƒbƒVƒ…’l‚Å‚·.
-    uint8_t     State;              //!< ƒ}ƒeƒŠƒAƒ‹ƒXƒe[ƒg‚Å‚·.
-    uint8_t     DisplayFace;        //!< •\Ž¦–ÊÝ’è‚Å‚·.
-    uint8_t     ShadowCast;         //!< ƒVƒƒƒhƒEƒLƒƒƒXƒg.
-    uint8_t     ShadowReceive;      //!< ƒVƒƒƒhƒEƒŒƒV[ƒu.
-    uint32_t    ParameterCount;     //!< ƒpƒ‰ƒ[ƒ^”‚Å‚·.
-    uint32_t    TextureCount;       //!< ƒeƒNƒXƒ`ƒƒ”‚Å‚·.
-    uint32_t    BufferSize;         //!< ’è”ƒoƒbƒtƒ@ƒTƒCƒY‚Å‚·.
+    uint32_t    Hash;               //!< ãƒžãƒ†ãƒªã‚¢ãƒ«åã‚’è¡¨ã™ãƒãƒƒã‚·ãƒ¥å€¤ã§ã™.
+    uint8_t     State;              //!< ãƒžãƒ†ãƒªã‚¢ãƒ«ã‚¹ãƒ†ãƒ¼ãƒˆã§ã™.
+    uint8_t     DisplayFace;        //!< è¡¨ç¤ºé¢è¨­å®šã§ã™.
+    uint8_t     ShadowCast;         //!< ã‚·ãƒ£ãƒ‰ã‚¦ã‚­ãƒ£ã‚¹ãƒˆ.
+    uint8_t     ShadowReceive;      //!< ã‚·ãƒ£ãƒ‰ã‚¦ãƒ¬ã‚·ãƒ¼ãƒ–.
+    uint32_t    ParameterCount;     //!< ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿æ•°ã§ã™.
+    uint32_t    TextureCount;       //!< ãƒ†ã‚¯ã‚¹ãƒãƒ£æ•°ã§ã™.
+    uint32_t    BufferSize;         //!< å®šæ•°ãƒãƒƒãƒ•ã‚¡ã‚µã‚¤ã‚ºã§ã™.
 };
 
 struct MaterialParameterV1
 {
-    uint32_t    Type;       //!< ƒf[ƒ^Œ^‚Å‚·.
-    uint32_t    Hash;       //!< –¼‘O‚ð•\‚·ƒnƒbƒVƒ…’l‚Å‚·.
-    uint32_t    Count;      //!< —v‘f”‚Å‚·.
-    uint32_t    Offset;     //!< ƒoƒbƒtƒ@æ“ª‚©‚ç‚ÌƒIƒtƒZƒbƒg‚Å‚·.
+    uint32_t    Type;       //!< ãƒ‡ãƒ¼ã‚¿åž‹ã§ã™.
+    uint32_t    Hash;       //!< åå‰ã‚’è¡¨ã™ãƒãƒƒã‚·ãƒ¥å€¤ã§ã™.
+    uint32_t    Count;      //!< è¦ç´ æ•°ã§ã™.
+    uint32_t    Offset;     //!< ãƒãƒƒãƒ•ã‚¡å…ˆé ­ã‹ã‚‰ã®ã‚ªãƒ•ã‚»ãƒƒãƒˆã§ã™.
 };
 
 } // namespace
