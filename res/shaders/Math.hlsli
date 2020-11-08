@@ -23,11 +23,11 @@ static const float FLT_MAX  = 3.402823466e+38f; // 浮動小数の最大値.
 static const float F_PI     = 3.1415926535897932384626433832795f;
 static const float F_1DIVPI = 0.31830988618379067153776752674503f;
 static const float F_DITHER_LIST[4][4] = {
-        { 0.37647f, 0.87450f, 0.50196f, 0.99000f },
-        { 0.62352f, 0.12549f, 0.75294f, 0.25098f },
-        { 0.43921f, 0.93725f, 0.31372f, 0.81568f },
-        { 0.68627f, 0.18823f, 0.56470f, 0.06274f },
-    };
+    { 0.37647f, 0.87450f, 0.50196f, 0.99000f },
+    { 0.62352f, 0.12549f, 0.75294f, 0.25098f },
+    { 0.43921f, 0.93725f, 0.31372f, 0.81568f },
+    { 0.68627f, 0.18823f, 0.56470f, 0.06274f },
+};
 
 
 //-----------------------------------------------------------------------------
@@ -1636,5 +1636,22 @@ bool FrustumCulling(float3 p0, float3 p1, float3 p2)
     // true でカリング.
     return (any(pmax.xy < -1.0f) || any(pmin.xy > 1.0f) || pmax.z < 0.0f || pmax.z > 1.0f);
 }
+
+//-----------------------------------------------------------------------------
+//      スフィアマップのテクスチャ座標を求めます.
+//-----------------------------------------------------------------------------
+float2 ToSphereMapCoord(float3 reflectDir)
+{
+    // https://www.clicktorelease.com/blog/creating-spherical-environment-mapping-shader/
+    // Pierre Lepers氏のコメントを参照.
+    // 計算式導出についてには，Jaume Sanchez Elias氏の画像を参照.
+    const float kSqrt8 = 2.82842712474619;
+    float s = 1.0f / (kSqrt8 * sqrt(abs(reflectDir.z) + 1.0f));
+
+    return float2(
+        reflectDir.x * s + 0.5f,
+        reflectDir.y * s + 0.5f);
+}
+
 
 #endif//ASDX_MATH_HLSLI

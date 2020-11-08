@@ -6248,5 +6248,6 @@ Vector2 DecodeSnorm2(uint16_t value)
     return result;
 }
 
+
 } // namespace asdx
 
