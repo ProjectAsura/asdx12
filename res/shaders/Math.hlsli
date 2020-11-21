@@ -1653,5 +1653,121 @@ float2 ToSphereMapCoord(float3 reflectDir)
         reflectDir.y * s + 0.5f);
 }
 
+//-----------------------------------------------------------------------------
+//      ビットを2分割します.
+//-----------------------------------------------------------------------------
+uint BitSeparate2(uint value)
+{
+    // 本多圭, "フラスタムカリング入門, 良いフラスタムの作り方", CEDEC 2019.
+    value = (value | (value << 8)) & 0x00ff00ff;
+    value = (value | (value << 4)) & 0x0f0f0f0f;
+    value = (value | (value << 2)) & 0x33333333;
+    value = (value | (value << 1)) & 0x55555555;
+    return value;
+}
+
+//-----------------------------------------------------------------------------
+//      ビットを3分割します.
+//-----------------------------------------------------------------------------
+uint BitSeparate3(uint value)
+{
+    // 本多圭, "フラスタムカリング入門, 良いフラスタムの作り方", CEDEC 2019.
+    value = (value | (value << 8)) & 0x000f000f;
+    value = (value | (value << 4)) & 0x000c30c3;
+    value = (value | (value << 2)) & 0x00249249;
+    return value;
+}
+
+//-----------------------------------------------------------------------------
+//      2次元のモートンコードを求めます.
+//-----------------------------------------------------------------------------
+uint CalcMortonOrder2(uint x, uint y)
+{
+    // 本多圭, "フラスタムカリング入門, 良いフラスタムの作り方", CEDEC 2019.
+    return BitSeparate2(x) | (BitSeparate2(y) << 1);
+}
+
+//-----------------------------------------------------------------------------
+//      3次元のモートンコードを求めます.
+//-----------------------------------------------------------------------------
+uint CalcMortonOrder3(uint x, uint y, uint z)
+{
+    // 本多圭, "フラスタムカリング入門, 良いフラスタムの作り方", CEDEC 2019.
+    return BitSeparate3(x) | (BitSeparate3(y) << 1) | (BitSeparate3(z) << 2);
+}
+
+//-----------------------------------------------------------------------------
+//      ノードレベルを求めます.
+//-----------------------------------------------------------------------------
+uint CalcNodeLevel(float2 size, const float lastLevelSize, const uint levelMax)
+{
+    // 本多圭, "フラスタムカリング入門, 良いフラスタムの作り方", CEDEC 2019.
+    float sizeMax = max(size.x, size.y);
+    uint levelOffset = 0;
+    if (lastLevelSize <= sizeMax)
+    { levelOffset = log2(asuint(sizeMax / lastLevelSize)); }
+
+    // ルート.
+    if (levelMax < leveloffset)
+    { return 0; }
+
+    return levelMax - levelOffset;
+}
+
+//-----------------------------------------------------------------------------
+//      ノードレベルを求めます.
+//-----------------------------------------------------------------------------
+uint CalcNodeLevel(float3 size, const float lastLevelSize, const uint levelMax)
+{
+    // 本多圭, "フラスタムカリング入門, 良いフラスタムの作り方", CEDEC 2019.
+    float sizeMax = max(size.x, max(size.y, size.z));
+    uint levelOffset = 0;
+    if (lastLevelSize <= sizeMax)
+    { levelOffset = log2(asuint(sizeMax / lastLevelSize)); }
+
+    // ルート.
+    if (levelMax < leveloffset)
+    { return 0; }
+
+    return levelMax - levelOffset;
+}
+
+//-----------------------------------------------------------------------------
+//      ノードを求めます.
+//-----------------------------------------------------------------------------
+uint CalcNode(float2 pos, uint level, const float lastLevelSize, const uint levelMax)
+{
+    // 本多圭, "フラスタムカリング入門, 良いフラスタムの作り方", CEDEC 2019.
+    uint currentSize = lastLevelSize << (levelMax - level);
+    uint rootSize = lastLevelSize << levelMax;
+    uint maxCount = 1 << level;
+
+    uint2 levelPos = asuint(pos + rootSize / 2) / currentSize;
+
+    // 範囲外.
+    if (any(maxCount <= levelPos))
+    { return ~0; }
+
+    return CalcMortonCode2(levelPos.x, levelPos.y);
+}
+
+//-----------------------------------------------------------------------------
+//      ノードを求めます.
+//-----------------------------------------------------------------------------
+uint CalcNode(float4 pos, uint level, float lastLevelSize, uint levelMax)
+{
+    // 本多圭, "フラスタムカリング入門, 良いフラスタムの作り方", CEDEC 2019.
+    uint currentSize = lastLevelSize << (levelMax - level);
+    uint rootSize = lastLevelSize << levelMax;
+    uint maxCount = 1 << level;
+
+    uint4 levelPos = asuint(pos + rootSize / 2) / currentSize;
+
+    // 範囲外.
+    if (any(maxCount <= levelPos))
+    { return ~0; }
+
+    return CalcMortonCode3(levelPos.x, levelPos.y, levelPos.z);
+}
 
 #endif//ASDX_MATH_HLSLI
