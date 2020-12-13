@@ -110,7 +110,7 @@ bool StructuredBuffer::Init
     const void*         pInitData
 )
 {
-    if (!Init(count, stride, D3D12_RESOURCE_STATE_COPY_DEST))
+    if (!Init(count, stride, D3D12_RESOURCE_STATE_GENERIC_READ))
     { return false;  }
 
     if (!GfxDevice().UpdateBuffer(m_Resource.GetPtr(), pInitData))

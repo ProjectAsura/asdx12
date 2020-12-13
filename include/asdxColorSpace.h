@@ -20,5 +20,4 @@ enum COLOR_SPACE
     COLOR_SPACE_BT2100_HLG,     // ITU-R BT.2100 Hybrid Log Gamma
 };
 
-
 } // namespace asdx

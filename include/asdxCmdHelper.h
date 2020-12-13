@@ -8,7 +8,7 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <asdxDescriptor.h>
+#include <asdxView.h>
 #include <pix_win.h>
 
 
@@ -29,25 +29,25 @@ void BarrierUAV(
 
 void ClearRTV(
     ID3D12GraphicsCommandList*      pCmd,
-    const Descriptor*               pDescriptor,
+    const IRenderTargetView*        pView,
     const float*                    pClearColor);
 
 void ClearDSV(
     ID3D12GraphicsCommandList*      pCmd,
-    const Descriptor*               pDescriptor,
+    const IDepthStencilView*        pView,
     D3D12_CLEAR_FLAGS               flag,
     float                           clearDepth,
     uint8_t                         clearStencil);
 
 void ClearUAV(
     ID3D12GraphicsCommandList*      pCmd,
-    const Descriptor*               pDescriptor,
+    const IUnorderedAccessView*     pView,
     ID3D12Resource*                 pResource,
     const uint32_t*                 pClearValues);
 
 void ClearUAV(
     ID3D12GraphicsCommandList*      pCmd,
-    const Descriptor*               pDescriptor,
+    const IUnorderedAccessView*     pView,
     ID3D12Resource*                 pResource,
     const float*                    pClearValues);
 
@@ -58,14 +58,14 @@ void SetViewport(
 
 void SetRenderTarget(
     ID3D12GraphicsCommandList*      pCmd,
-    const Descriptor*               pRTV,
-    const Descriptor*               pDSV);
+    const IRenderTargetView*        pRTV,
+    const IDepthStencilView*        pDSV);
 
 void SetDescriptorTable(
     ID3D12GraphicsCommandList*      pCmd,
     bool                            compute,
     uint32_t                        index,
-    const Descriptor*               pDescriptor);
+    const IView*                    pView);
 
 void SetCBV(
     ID3D12GraphicsCommandList*      pCmd,

@@ -1138,7 +1138,7 @@ void Application::ResizeEvent( const ResizeEventArgs& param )
         // バッファをリサイズ.
         hr = m_pSwapChain4->ResizeBuffers( m_SwapChainCount, m_Width, m_Height, format, 0 );
         if ( FAILED( hr ) )
-        { DLOG( "Error : IDXGISwapChain::ResizeBuffer() Failed." ); }
+        { DLOG( "Error : IDXGISwapChain::ResizeBuffer() Failed. errcode = 0x%x", hr ); }
 
         for(auto i=0u; i<m_SwapChainCount; ++i)
         {

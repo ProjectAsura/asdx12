@@ -137,6 +137,7 @@
     <ClCompile Include="..\src\asdxTcpConnector.cpp" />
     <ClCompile Include="..\src\asdxTexture.cpp" />
     <ClCompile Include="..\src\asdxThreadPool.cpp" />
+    <ClCompile Include="..\src\asdxUploadResource.cpp" />
     <ClCompile Include="..\src\asdxVertexBuffer.cpp" />
     <ClCompile Include="..\src\asdxView.cpp" />
   </ItemGroup>
@@ -197,6 +198,7 @@
     <ClInclude Include="..\include\asdxTexture.h" />
     <ClInclude Include="..\include\asdxThreadPool.h" />
     <ClInclude Include="..\include\asdxTimer.h" />
+    <ClInclude Include="..\include\asdxUploadResource.h" />
     <ClInclude Include="..\include\asdxVertexBuffer.h" />
     <ClInclude Include="..\include\asdxView.h" />
   </ItemGroup>

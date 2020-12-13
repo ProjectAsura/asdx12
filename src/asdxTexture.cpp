@@ -146,7 +146,7 @@ bool Texture::Init(const ResTexture& resource)
             &props,
             D3D12_HEAP_FLAG_NONE,
             &desc,
-            D3D12_RESOURCE_STATE_COMMON,
+            D3D12_RESOURCE_STATE_GENERIC_READ,
             nullptr,
             IID_PPV_ARGS(&pResource));
         if (FAILED(hr))

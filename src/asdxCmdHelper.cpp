@@ -67,14 +67,14 @@ void BarrierUAV
 void ClearRTV
 (
     ID3D12GraphicsCommandList*  pCmd,
-    const Descriptor*           pDescriptor,
+    const IRenderTargetView*    pView,
     const float*                pClearColor)
 {
     assert(pCmd != nullptr);
-    assert(pDescriptor != nullptr);
+    assert(pView != nullptr);
     assert(pClearColor != nullptr);
 
-    auto handle = pDescriptor->GetHandleCPU();
+    auto handle = pView->GetHandleCPU();
     pCmd->ClearRenderTargetView(handle, pClearColor, 0, nullptr);
 }
 
@@ -84,16 +84,16 @@ void ClearRTV
 void ClearDSV
 (
     ID3D12GraphicsCommandList*  pCmd,
-    const Descriptor*           pDescriptor,
+    const IDepthStencilView*    pView,
     D3D12_CLEAR_FLAGS           flags,
     float                       clearDepth,
     uint8_t                     clearStencil
 )
 {
-    assert(pCmd != nullptr);
-    assert(pDescriptor != nullptr);
+    assert(pCmd  != nullptr);
+    assert(pView != nullptr);
 
-    auto handle = pDescriptor->GetHandleCPU();
+    auto handle = pView->GetHandleCPU();
     pCmd->ClearDepthStencilView(handle, flags, clearDepth, clearStencil, 0, nullptr);
 }
 
@@ -103,19 +103,19 @@ void ClearDSV
 void ClearUAV
 (
     ID3D12GraphicsCommandList*  pCmd,
-    const Descriptor*           pDescriptor,
+    const IUnorderedAccessView* pView,
     ID3D12Resource*             pResource,
     const uint32_t*             pClearValues
 )
 {
     assert(pCmd         != nullptr);
-    assert(pDescriptor  != nullptr);
+    assert(pView        != nullptr);
     assert(pResource    != nullptr);
     assert(pClearValues != nullptr);
 
     pCmd->ClearUnorderedAccessViewUint(
-        pDescriptor->GetHandleGPU(),
-        pDescriptor->GetHandleCPU(),
+        pView->GetHandleGPU(),
+        pView->GetHandleCPU(),
         pResource,
         pClearValues,
         0,
@@ -128,19 +128,19 @@ void ClearUAV
 void ClearUAV
 (
     ID3D12GraphicsCommandList*  pCmd,
-    const Descriptor*           pDescriptor,
+    const IUnorderedAccessView* pView,
     ID3D12Resource*             pResource,
     const float*                pClearValues
 )
 {
     assert(pCmd         != nullptr);
-    assert(pDescriptor  != nullptr);
+    assert(pView        != nullptr);
     assert(pResource    != nullptr);
     assert(pClearValues != nullptr);
 
     pCmd->ClearUnorderedAccessViewFloat(
-        pDescriptor->GetHandleGPU(),
-        pDescriptor->GetHandleCPU(),
+        pView->GetHandleGPU(),
+        pView->GetHandleCPU(),
         pResource,
         pClearValues,
         0,
@@ -187,8 +187,8 @@ void SetViewport
 void SetRenderTarget
 (
     ID3D12GraphicsCommandList*  pCmd,
-    const Descriptor*           pRTV,
-    const Descriptor*           pDSV
+    const IRenderTargetView*    pRTV,
+    const IDepthStencilView*    pDSV
 )
 {
     assert(pCmd != nullptr);
@@ -208,16 +208,16 @@ void SetDescriptorTable
     ID3D12GraphicsCommandList*  pCmd,
     bool                        compute,
     uint32_t                    index,
-    const Descriptor*           pDescriptor
+    const IView*                pView
 )
 {
-    if (pDescriptor == nullptr || index == UINT32_MAX)
+    if (pView == nullptr || index == UINT32_MAX)
     { return; }
 
     if (compute)
-    { pCmd->SetComputeRootDescriptorTable(index, pDescriptor->GetHandleGPU()); }
+    { pCmd->SetComputeRootDescriptorTable(index, pView->GetHandleGPU()); }
     else
-    { pCmd->SetGraphicsRootDescriptorTable(index, pDescriptor->GetHandleGPU()); }
+    { pCmd->SetGraphicsRootDescriptorTable(index, pView->GetHandleGPU()); }
 }
 
 //-----------------------------------------------------------------------------

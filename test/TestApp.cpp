@@ -304,9 +304,9 @@ bool TestApp::TriangleTestInit()
         desc.pRootSignature         = m_RootSignature.GetPtr();
         desc.VS                     = { TestVS, sizeof(TestVS) };
         desc.PS                     = { TestPS, sizeof(TestPS) };
-        desc.BlendState             = asdx::PipelineState::GetBS(asdx::BLEND_STATE_OPAQUE);
-        desc.RasterizerState        = asdx::PipelineState::GetRS(asdx::RASTERIZER_STATE_CULL_BACK);
-        desc.DepthStencilState      = asdx::PipelineState::GetDSS(asdx::DEPTH_STATE_DEFAULT);
+        desc.BlendState             = asdx::GetBS(asdx::BLEND_STATE_OPAQUE);
+        desc.RasterizerState        = asdx::GetRS(asdx::RASTERIZER_STATE_CULL_BACK);
+        desc.DepthStencilState      = asdx::GetDSS(asdx::DEPTH_STATE_DEFAULT);
         desc.InputLayout            = { elements, 2 };
         desc.PrimitiveTopologyType  = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
         desc.SampleMask             = UINT_MAX;
@@ -388,7 +388,7 @@ void TestApp::TriangleTestRender(ID3D12GraphicsCommandList6* pCmd, uint8_t idx)
         auto vbv = m_TriangleVB.GetView();
         pCmd->SetGraphicsRootSignature(m_RootSignature.GetPtr());
         pCmd->SetPipelineState(m_PSO.GetPtr());
-        pCmd->SetGraphicsRootDescriptorTable(m_IndexColorMap, m_Texture.GetDescriptor()->GetHandleGPU());
+        pCmd->SetGraphicsRootDescriptorTable(m_IndexColorMap, m_Texture.GetView()->GetHandleGPU());
         pCmd->SetGraphicsRootDescriptorTable(m_IndexLinearClamp, m_Sampler.GetDescriptor()->GetHandleGPU());
 
         pCmd->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -467,9 +467,9 @@ bool TestApp::MeshShaderTestInit()
         desc.pRootSignature             = m_RootSignature.GetPtr();
         desc.MS                         = { TestMS, sizeof(TestMS) };
         desc.PS                         = { TestPS, sizeof(TestPS) };
-        desc.BlendState                 = asdx::PipelineState::GetBS(asdx::BLEND_STATE_OPAQUE);
-        desc.RasterizerState            = asdx::PipelineState::GetRS(asdx::RASTERIZER_STATE_CULL_BACK);
-        desc.DepthStencilState          = asdx::PipelineState::GetDSS(asdx::DEPTH_STATE_DEFAULT);
+        desc.BlendState                 = asdx::GetBS(asdx::BLEND_STATE_OPAQUE);
+        desc.RasterizerState            = asdx::GetRS(asdx::RASTERIZER_STATE_CULL_BACK);
+        desc.DepthStencilState          = asdx::GetDSS(asdx::DEPTH_STATE_DEFAULT);
         desc.SampleMask                 = UINT_MAX;
         desc.RTVFormats.NumRenderTargets = 1;
         desc.RTVFormats.RTFormats[0]     = m_SwapChainFormat;
@@ -552,9 +552,9 @@ void TestApp::MeshShaderTestRender(ID3D12GraphicsCommandList6* pCmd, uint8_t idx
         auto idxSRV2 = m_RootSignature.Find("ColorMap");
         auto idxSmp0 = m_RootSignature.Find("LinearClamp");
 
-        auto srv0 = m_TriangleVertexBuffer.GetDescriptor()->GetHandleGPU();
-        auto srv1 = m_TriangleIndexBuffer.GetDescriptor()->GetHandleGPU();
-        auto srv2 = m_Texture.GetDescriptor()->GetHandleGPU();
+        auto srv0 = m_TriangleVertexBuffer.GetView()->GetHandleGPU();
+        auto srv1 = m_TriangleIndexBuffer.GetView()->GetHandleGPU();
+        auto srv2 = m_Texture.GetView()->GetHandleGPU();
         auto smp0 = m_Sampler.GetDescriptor()->GetHandleGPU();
 
         pCmd->SetGraphicsRootSignature(m_RootSignature.GetPtr());
@@ -627,10 +627,10 @@ bool TestApp::MeshletTestInit()
         desc.pRootSignature = m_RootSignature.GetPtr();
         desc.MS                             = { MeshletTestMS, sizeof(MeshletTestMS) };
         desc.PS                             = { MeshletTestPS, sizeof(MeshletTestPS) };
-        desc.BlendState                     = asdx::PipelineState::GetBS(asdx::BLEND_STATE_OPAQUE);
+        desc.BlendState                     = asdx::GetBS(asdx::BLEND_STATE_OPAQUE);
         desc.SampleMask                     = UINT_MAX;
-        desc.RasterizerState                = asdx::PipelineState::GetRS(asdx::RASTERIZER_STATE_CULL_NONE);
-        desc.DepthStencilState              = asdx::PipelineState::GetDSS(asdx::DEPTH_STATE_DEFAULT);
+        desc.RasterizerState                = asdx::GetRS(asdx::RASTERIZER_STATE_CULL_NONE);
+        desc.DepthStencilState              = asdx::GetDSS(asdx::DEPTH_STATE_DEFAULT);
         desc.RTVFormats.NumRenderTargets    = 1;
         desc.RTVFormats.RTFormats[0]        = m_SwapChainFormat;
         desc.DSVFormat                      = DXGI_FORMAT_D32_FLOAT;
@@ -719,12 +719,12 @@ void TestApp::MeshletTestRender(ID3D12GraphicsCommandList6* pCmd, uint8_t idx)
     {
         auto& mesh = m_Model.GetMesh(i);
         
-        auto pSRV0 = mesh.GetPositions    ().GetDescriptor()->GetHandleGPU();
-        auto pSRV1 = mesh.GetTangentSpaces().GetDescriptor()->GetHandleGPU();
-        auto pSRV2 = mesh.GetTexCoords   (0).GetDescriptor()->GetHandleGPU();
-        auto pSRV3 = mesh.GetInindices    ().GetDescriptor()->GetHandleGPU();
-        auto pSRV4 = mesh.GetPrimitives   ().GetDescriptor()->GetHandleGPU();
-        auto pSRV5 = mesh.GetMeshlets     ().GetDescriptor()->GetHandleGPU();
+        auto pSRV0 = mesh.GetPositions    ().GetView()->GetHandleGPU();
+        auto pSRV1 = mesh.GetTangentSpaces().GetView()->GetHandleGPU();
+        auto pSRV2 = mesh.GetTexCoords   (0).GetView()->GetHandleGPU();
+        auto pSRV3 = mesh.GetInindices    ().GetView()->GetHandleGPU();
+        auto pSRV4 = mesh.GetPrimitives   ().GetView()->GetHandleGPU();
+        auto pSRV5 = mesh.GetMeshlets     ().GetView()->GetHandleGPU();
 
         pCmd->SetGraphicsRootDescriptorTable(paramSRV0, pSRV0);
         pCmd->SetGraphicsRootDescriptorTable(paramSRV1, pSRV1);
@@ -795,9 +795,9 @@ bool TestApp::QuadTestInit()
         desc.pRootSignature         = m_RootSignature.GetPtr();
         desc.VS                     = { TestVS, sizeof(TestVS) };
         desc.PS                     = { TestPS, sizeof(TestPS) };
-        desc.BlendState             = asdx::PipelineState::GetBS(asdx::BLEND_STATE_OPAQUE);
-        desc.RasterizerState        = asdx::PipelineState::GetRS(asdx::RASTERIZER_STATE_CULL_BACK);
-        desc.DepthStencilState      = asdx::PipelineState::GetDSS(asdx::DEPTH_STATE_DEFAULT);
+        desc.BlendState             = asdx::GetBS(asdx::BLEND_STATE_OPAQUE);
+        desc.RasterizerState        = asdx::GetRS(asdx::RASTERIZER_STATE_CULL_BACK);
+        desc.DepthStencilState      = asdx::GetDSS(asdx::DEPTH_STATE_DEFAULT);
         desc.InputLayout            = asdx::Quad::InputLayout;
         desc.PrimitiveTopologyType  = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
         desc.SampleMask             = UINT_MAX;
@@ -866,7 +866,7 @@ void TestApp::QuadTestRender(ID3D12GraphicsCommandList6* pCmd, uint8_t idx)
     {
         pCmd->SetGraphicsRootSignature(m_RootSignature.GetPtr());
         pCmd->SetPipelineState(m_PSO.GetPtr());
-        pCmd->SetGraphicsRootDescriptorTable(m_IndexColorMap, m_Texture.GetDescriptor()->GetHandleGPU());
+        pCmd->SetGraphicsRootDescriptorTable(m_IndexColorMap, m_Texture.GetView()->GetHandleGPU());
         pCmd->SetGraphicsRootDescriptorTable(m_IndexLinearClamp, m_Sampler.GetDescriptor()->GetHandleGPU());
 
         asdx::Quad::Instance().Draw(pCmd);

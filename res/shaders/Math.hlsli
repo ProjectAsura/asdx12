@@ -1681,7 +1681,7 @@ uint BitSeparate3(uint value)
 //-----------------------------------------------------------------------------
 //      2次元のモートンコードを求めます.
 //-----------------------------------------------------------------------------
-uint CalcMortonOrder2(uint x, uint y)
+uint CalcMortonCode2(uint x, uint y)
 {
     // 本多圭, "フラスタムカリング入門, 良いフラスタムの作り方", CEDEC 2019.
     return BitSeparate2(x) | (BitSeparate2(y) << 1);
@@ -1690,12 +1690,13 @@ uint CalcMortonOrder2(uint x, uint y)
 //-----------------------------------------------------------------------------
 //      3次元のモートンコードを求めます.
 //-----------------------------------------------------------------------------
-uint CalcMortonOrder3(uint x, uint y, uint z)
+uint CalcMortonCode3(uint x, uint y, uint z)
 {
     // 本多圭, "フラスタムカリング入門, 良いフラスタムの作り方", CEDEC 2019.
     return BitSeparate3(x) | (BitSeparate3(y) << 1) | (BitSeparate3(z) << 2);
 }
 
+#if 0
 //-----------------------------------------------------------------------------
 //      ノードレベルを求めます.
 //-----------------------------------------------------------------------------
@@ -1708,7 +1709,7 @@ uint CalcNodeLevel(float2 size, const float lastLevelSize, const uint levelMax)
     { levelOffset = log2(asuint(sizeMax / lastLevelSize)); }
 
     // ルート.
-    if (levelMax < leveloffset)
+    if (levelMax < levelOffset)
     { return 0; }
 
     return levelMax - levelOffset;
@@ -1726,7 +1727,7 @@ uint CalcNodeLevel(float3 size, const float lastLevelSize, const uint levelMax)
     { levelOffset = log2(asuint(sizeMax / lastLevelSize)); }
 
     // ルート.
-    if (levelMax < leveloffset)
+    if (levelMax < levelOffset)
     { return 0; }
 
     return levelMax - levelOffset;
@@ -1769,5 +1770,6 @@ uint CalcNode(float4 pos, uint level, float lastLevelSize, uint levelMax)
 
     return CalcMortonCode3(levelPos.x, levelPos.y, levelPos.z);
 }
+#endif
 
 #endif//ASDX_MATH_HLSLI
