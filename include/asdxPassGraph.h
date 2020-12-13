@@ -224,20 +224,20 @@ struct IPassGraphBuilder
     //-------------------------------------------------------------------------
     //! @brief      リソースをインポートします.
     //!
-    //! @param[in]      resource            インポートするリソースです.
-    //! @param[in]      state               リソースステートです.
-    //! @param[in]      pDescriptorSRV      SRVのディスクリプターです.
-    //! @param[in]      pDescriptorUAV      UAVのディスクリプターです.
-    //! @param[in]      pDescriptorRTVs     RTVのディスクリプター配列です.
-    //! @param[in]      pDescriptorDSVs     DSVのディスクリプター配列です.
+    //! @param[in]      resource    インポートするリソースです.
+    //! @param[in]      state       リソースステートです.
+    //! @param[in]      pSRV        SRVです.
+    //! @param[in]      pUAV        UAVです.
+    //! @param[in]      pRTVs       RTV配列です.
+    //! @param[in]      pDSVs       DSV配列です.
     //-------------------------------------------------------------------------
     virtual PassResource* Import(
         ID3D12Resource*         resource,
         D3D12_RESOURCE_STATES   state,
-        Descriptor*             pDescriptorSRV,
-        Descriptor*             pDescriptorUAV,
-        Descriptor**            pDescriptorRTVs,
-        Descriptor**            pDescriptorDSVs) = 0;
+        IShaderResourceView*    pSRV,
+        IUnorderedAccessView*   pUAV,
+        IRenderTargetView**     pRTVs,
+        IDepthStencilView**     pDSVs) = 0;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -258,7 +258,7 @@ struct IPassGraphContext
     //! @param[in]      index           インデックス.
     //! @return     CPUディスクリプタハンドルを返却します.
     //-------------------------------------------------------------------------
-    virtual D3D12_CPU_DESCRIPTOR_HANDLE GetRTV(PassResource* resource, uint16_t index = 0) const = 0;
+    virtual const IRenderTargetView* GetRTV(PassResource* resource, uint16_t index = 0) const = 0;
 
     //-------------------------------------------------------------------------
     //! @brief      RTV用ディスクリプタハンドルを取得します.
@@ -267,7 +267,7 @@ struct IPassGraphContext
     //! @param[in]      index           インデックス.
     //! @return     CPUディスクリプタハンドルを返却します.
     //-------------------------------------------------------------------------
-    virtual D3D12_CPU_DESCRIPTOR_HANDLE GetDSV(PassResource* resource, uint16_t index = 0) const = 0;
+    virtual const IDepthStencilView* GetDSV(PassResource* resource, uint16_t index = 0) const = 0;
 
     //-------------------------------------------------------------------------
     //! @brief      UAV用ディスクリプタハンドルを取得します.
@@ -275,7 +275,7 @@ struct IPassGraphContext
     //! @param[in]      resource        リソースです.
     //! @return     GPUディスクリプタハンドルを返却します.
     //-------------------------------------------------------------------------
-    virtual D3D12_GPU_DESCRIPTOR_HANDLE GetUAV(PassResource* resource) const = 0;
+    virtual const IUnorderedAccessView* GetUAV(PassResource* resource) const = 0;
 
     //-------------------------------------------------------------------------
     //! @brief      SRV用ディスクリプタハンドルを取得します.
@@ -283,15 +283,7 @@ struct IPassGraphContext
     //! @param[in]      resource        リソースです.
     //! @return     GPUディスクリプタハンドルを返却します.
     //-------------------------------------------------------------------------
-    virtual D3D12_GPU_DESCRIPTOR_HANDLE GetSRV(PassResource* resource) const = 0;
-
-    //-------------------------------------------------------------------------
-    //! @brief      GPU仮想アドレスを取得します.
-    //!
-    //! @param[in]      resource        リソースです.
-    //! @return     GPU仮想アドレスを返却します.
-    //-------------------------------------------------------------------------
-    virtual D3D12_GPU_VIRTUAL_ADDRESS GetVirtualAddress(PassResource* resource) const = 0;
+    virtual const IShaderResourceView* GetSRV(PassResource* resource) const = 0;
 
     //-------------------------------------------------------------------------
     //! @brief      構成設定を取得します.

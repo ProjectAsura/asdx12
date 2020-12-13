@@ -190,7 +190,7 @@ public:
         if (!Contains(key))
         { return nullptr; }
 
-        auto holder = m_Map.at(key);
+        auto& holder = m_Map.at(key);
         size = holder.size;
         return holder.pData;
     }
@@ -203,7 +203,7 @@ public:
         if (!Contains(key))
         { return nullptr; }
 
-        auto holder = m_Map.at(key);
+        auto& holder = m_Map.at(key);
         size = holder.size;
         return holder.pData;
     }
@@ -273,10 +273,10 @@ public:
     PassResource()
     : List<PassResource>::Node()
     , m_RefCount        (0)
-    , m_DescriptorRTV   (nullptr)
-    , m_DescriptorDSV   (nullptr)
-    , m_DescriptorUAV   (nullptr)
-    , m_DescriptorSRV   (nullptr)
+    , m_RTV   (nullptr)
+    , m_DSV   (nullptr)
+    , m_UAV   (nullptr)
+    , m_SRV   (nullptr)
     , m_Resource        (nullptr)
     , m_Import          (false)
     { /* DO_NOTHING */ }
@@ -391,7 +391,7 @@ public:
 
             if (rtv)
             {
-                m_DescriptorRTV = new Descriptor* [value.DepthOrArraySize];
+                m_RTV = new IRenderTargetView* [value.DepthOrArraySize];
 
                 for(auto i=0; i<value.DepthOrArraySize; ++i)
                 {
@@ -401,7 +401,7 @@ public:
             }
             else if (dsv)
             {
-                m_DescriptorDSV = new Descriptor* [value.DepthOrArraySize];
+                m_DSV = new IDepthStencilView* [value.DepthOrArraySize];
 
                 for(auto i=0; i<value.DepthOrArraySize; ++i)
                 {
@@ -435,50 +435,50 @@ public:
         if (m_Import)
         {
             m_Resource      = nullptr;
-            m_DescriptorRTV = nullptr;
-            m_DescriptorDSV = nullptr;
-            m_DescriptorUAV = nullptr;
-            m_DescriptorSRV = nullptr;
+            m_RTV = nullptr;
+            m_DSV = nullptr;
+            m_UAV = nullptr;
+            m_SRV = nullptr;
             return;
         }
 
         for(auto i=0; i<m_Desc.DepthOrArraySize; ++i)
         {
-            if (m_DescriptorRTV[i] != nullptr)
+            if (m_RTV[i] != nullptr)
             {
-                m_DescriptorRTV[i]->Release();
-                m_DescriptorRTV[i] = nullptr;
+                m_RTV[i]->Release();
+                m_RTV[i] = nullptr;
             }
 
-            if (m_DescriptorDSV != nullptr)
+            if (m_DSV != nullptr)
             {
-                m_DescriptorDSV[i]->Release();
-                m_DescriptorDSV[i] = nullptr;
+                m_DSV[i]->Release();
+                m_DSV[i] = nullptr;
             }
         }
 
-        if (m_DescriptorRTV != nullptr)
+        if (m_RTV != nullptr)
         {
-            delete[] m_DescriptorRTV;
-            m_DescriptorRTV = nullptr;
+            delete[] m_RTV;
+            m_RTV = nullptr;
         }
 
-        if (m_DescriptorDSV != nullptr)
+        if (m_DSV != nullptr)
         {
-            delete[] m_DescriptorDSV;
-            m_DescriptorDSV = nullptr;
+            delete[] m_DSV;
+            m_DSV = nullptr;
         }
 
-        if (m_DescriptorUAV != nullptr)
+        if (m_UAV != nullptr)
         {
-            m_DescriptorUAV->Release();
-            m_DescriptorUAV = nullptr;
+            m_UAV->Release();
+            m_UAV = nullptr;
         }
 
-        if (m_DescriptorSRV != nullptr)
+        if (m_SRV != nullptr)
         {
-            m_DescriptorSRV->Release();
-            m_DescriptorSRV = nullptr;
+            m_SRV->Release();
+            m_SRV = nullptr;
         }
     }
 
@@ -492,60 +492,49 @@ public:
     }
 
     //-------------------------------------------------------------------------
-    //! @brief      レンダーターゲットビューのディスクリプタハンドルを取得します.
+    //! @brief      レンダーターゲットビューを取得します.
     //-------------------------------------------------------------------------
-    D3D12_CPU_DESCRIPTOR_HANDLE GetHandleRTV(uint16_t index) const
+    const IRenderTargetView* GetRTV(uint16_t index) const
     {
         assert(index < m_Desc.DepthOrArraySize);
-        if (m_DescriptorRTV[index] != nullptr)
-        { return m_DescriptorRTV[index]->GetHandleCPU(); }
+        if (m_RTV[index] != nullptr)
+        { return m_RTV[index]; }
 
-        return D3D12_CPU_DESCRIPTOR_HANDLE();
+        return nullptr;
     }
 
     //-------------------------------------------------------------------------
-    //! @brief      深度ステンシルビューのディスクリプタハンドルを取得します.
+    //! @brief      深度ステンシルビューを取得します.
     //-------------------------------------------------------------------------
-    D3D12_CPU_DESCRIPTOR_HANDLE GetHandleDSV(uint16_t index) const
+    const IDepthStencilView* GetDSV(uint16_t index) const
     {
         assert(index < m_Desc.DepthOrArraySize);
-        if (m_DescriptorDSV[index] != nullptr)
-        { return m_DescriptorDSV[index]->GetHandleCPU(); }
+        if (m_DSV[index] != nullptr)
+        { return m_DSV[index]; }
 
-        return D3D12_CPU_DESCRIPTOR_HANDLE();
+        return nullptr;
     }
 
     //-------------------------------------------------------------------------
     //! @brief      UAVのディスクリプタハンドルを取得します.
     //-------------------------------------------------------------------------
-    D3D12_GPU_DESCRIPTOR_HANDLE GetHandleUAV() const
+    const IUnorderedAccessView* GetUAV() const
     {
-        if (m_DescriptorUAV != nullptr)
-        { return m_DescriptorUAV->GetHandleGPU(); }
+        if (m_UAV != nullptr)
+        { return m_UAV; }
 
-        return D3D12_GPU_DESCRIPTOR_HANDLE();
+        return nullptr;
     }
 
     //-------------------------------------------------------------------------
     //! @brief      SRVのディスクリプタハンドルを取得します.
     //-------------------------------------------------------------------------
-    D3D12_GPU_DESCRIPTOR_HANDLE GetHandleSRV() const
+    const IShaderResourceView* GetSRV() const
     {
-        if (m_DescriptorSRV != nullptr)
-        { return m_DescriptorSRV->GetHandleGPU(); }
+        if (m_SRV != nullptr)
+        { return m_SRV; }
 
-        return D3D12_GPU_DESCRIPTOR_HANDLE();
-    }
-
-    //-------------------------------------------------------------------------
-    //! @brief      GPU仮想アドレスを取得します.
-    //-------------------------------------------------------------------------
-    D3D12_GPU_VIRTUAL_ADDRESS GetVirtualAddress() const
-    {
-        if (m_Resource != nullptr)
-        { return m_Resource->GetGPUVirtualAddress(); }
-
-        return D3D12_GPU_VIRTUAL_ADDRESS();
+        return nullptr;
     }
 
     //-------------------------------------------------------------------------
@@ -575,7 +564,7 @@ public:
             for(auto i=0; i<m_Desc.DepthOrArraySize; ++i)
             {
                 pCmd->ClearRenderTargetView(
-                    m_DescriptorRTV[i]->GetHandleCPU(),
+                    m_RTV[i]->GetHandleCPU(),
                     value.Color,
                     0,
                     nullptr);
@@ -590,7 +579,7 @@ public:
             for(auto i=0; i<m_Desc.DepthOrArraySize; ++i)
             {
                 pCmd->ClearDepthStencilView(
-                    m_DescriptorDSV[i]->GetHandleCPU(),
+                    m_DSV[i]->GetHandleCPU(),
                     flag,
                     value.Depth,
                     value.Stencil,
@@ -601,8 +590,8 @@ public:
         else if (value.Type == CLEAR_TYPE_UAV_FLOAT)
         {
             pCmd->ClearUnorderedAccessViewFloat(
-                m_DescriptorUAV->GetHandleGPU(),
-                m_DescriptorUAV->GetHandleCPU(),
+                m_UAV->GetHandleGPU(),
+                m_UAV->GetHandleCPU(),
                 m_Resource,
                 value.Float,
                 0,
@@ -611,8 +600,8 @@ public:
         else if (value.Type == CLEAR_TYPE_UAV_UINT)
         {
             pCmd->ClearUnorderedAccessViewUint(
-                m_DescriptorUAV->GetHandleGPU(),
-                m_DescriptorUAV->GetHandleCPU(),
+                m_UAV->GetHandleGPU(),
+                m_UAV->GetHandleCPU(),
                 m_Resource,
                 value.Uint,
                 0,
@@ -627,10 +616,10 @@ public:
     (
         ID3D12Resource*         pResource,
         D3D12_RESOURCE_STATES   state,
-        Descriptor*             pDescriptorSRV,
-        Descriptor*             pDescriptorUAV,
-        Descriptor**            pDescriptorRTVs,
-        Descriptor**            pDescriptorDSVs
+        IShaderResourceView*    pSRV,
+        IUnorderedAccessView*   pUAV,
+        IRenderTargetView**     pRTVs,
+        IDepthStencilView**     pDSVs
     )
     {
         if (pResource == nullptr)
@@ -676,11 +665,11 @@ public:
         PrevCompute = false;
 
         auto usage = PASS_RESOURCE_USAGE_NONE;
-        if (pDescriptorRTVs != nullptr)
+        if (pRTVs != nullptr)
         { usage = PASS_RESOURCE_USAGE_RTV; }
-        else if (pDescriptorDSVs != nullptr)
+        else if (pDSVs != nullptr)
         { usage = PASS_RESOURCE_USAGE_DSV; }
-        else if (pDescriptorUAV != nullptr)
+        else if (pUAV != nullptr)
         { usage = PASS_RESOURCE_USAGE_UAV; }
 
         m_Desc.Dimension        = dimension;
@@ -692,10 +681,10 @@ public:
         m_Desc.Usage            = usage;
         m_RefCount              = 1;
 
-        m_DescriptorRTV = pDescriptorRTVs;
-        m_DescriptorDSV = pDescriptorDSVs;
-        m_DescriptorSRV = pDescriptorSRV;
-        m_DescriptorUAV = pDescriptorUAV;
+        m_RTV = pRTVs;
+        m_DSV = pDSVs;
+        m_SRV = pSRV;
+        m_UAV = pUAV;
 
         return true;
     }
@@ -817,16 +806,16 @@ private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    std::atomic<int>    m_RefCount      = 1;
-    Descriptor**        m_DescriptorRTV = nullptr;
-    Descriptor**        m_DescriptorDSV = nullptr;
-    Descriptor*         m_DescriptorUAV = nullptr;
-    Descriptor*         m_DescriptorSRV = nullptr;
-    ID3D12Resource*     m_Resource      = nullptr;
-    PassResourceDesc    m_Desc          = {};
-    bool                m_Import        = false;
-    bool                m_Stencil       = false;
-    RenderPass*         m_Producer      = nullptr;
+    std::atomic<int>        m_RefCount  = 1;
+    IRenderTargetView**     m_RTV       = nullptr;
+    IDepthStencilView**     m_DSV       = nullptr;
+    IUnorderedAccessView*   m_UAV       = nullptr;
+    IShaderResourceView*    m_SRV       = nullptr;
+    ID3D12Resource*         m_Resource  = nullptr;
+    PassResourceDesc        m_Desc      = {};
+    bool                    m_Import    = false;
+    bool                    m_Stencil   = false;
+    RenderPass*             m_Producer  = nullptr;
 
     //=========================================================================
     // private methods.
@@ -896,17 +885,11 @@ private:
             break;
         }
 
-        Descriptor* descriptor = nullptr;
-        if (!GfxDevice().AllocHandle(
-            D3D12_DESCRIPTOR_HEAP_TYPE_RTV, &descriptor))
+        if (!CreateRenderTargetView(m_Resource, &viewDesc, &m_RTV[arrayIndex]))
         {
-            ELOG("Error : GraphicsDevice::AllocHandle() Failed.");
+            ELOG("Error : CreateRenderTargetView() Failed.");
             return false;
         }
-
-        GfxDevice()->CreateRenderTargetView(
-            m_Resource, &viewDesc, descriptor->GetHandleCPU());
-        m_DescriptorRTV[arrayIndex] = descriptor;
 
         return true;
     }
@@ -962,17 +945,12 @@ private:
             return false;
         }
 
-        Descriptor* descriptor = nullptr;
-        if (!GfxDevice().AllocHandle(
-            D3D12_DESCRIPTOR_HEAP_TYPE_DSV, &descriptor))
+        if (!CreateDepthStencilView(m_Resource, &viewDesc, &m_DSV[arrayIndex]))
         {
-            ELOG("Error : GfxDevice::AllocHandle() Failed.");
+            ELOG("Error : CreateDepthStencilView() Failed.");
             return false;
         }
 
-        GfxDevice()->CreateDepthStencilView(
-            m_Resource, &viewDesc, descriptor->GetHandleCPU());
-        m_DescriptorDSV[arrayIndex] = descriptor;
         return true;
     }
 
@@ -1043,15 +1021,12 @@ private:
             break;
         }
 
-        if (!GfxDevice().AllocHandle(
-            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, &m_DescriptorUAV))
+        if (!CreateUnorderedAccessView(m_Resource, nullptr, &viewDesc, &m_UAV))
         {
-            ELOG("Error : GraphicsDevice::AllocHandle() Failed.");
+            ELOG("Error : CreateUnorderedAcessView() Failed.");
             return false;
         }
 
-        GfxDevice()->CreateUnorderedAccessView(
-            m_Resource, nullptr, &viewDesc, m_DescriptorUAV->GetHandleCPU());
         return true;
     }
 
@@ -1129,15 +1104,12 @@ private:
             break;
         }
 
-        if (!GfxDevice().AllocHandle(
-            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, &m_DescriptorSRV))
+        if (!CreateShaderResourceView(m_Resource, &viewDesc, &m_SRV))
         {
-            ELOG("Error : GraphicsDevice::AllocHandle() Failed.");
+            ELOG("Error : CreateShaderResourceView() Failed.");
             return false;
         }
 
-        GfxDevice()->CreateShaderResourceView(
-            m_Resource, &viewDesc, m_DescriptorSRV->GetHandleCPU());
         return true;
     }
 };
@@ -1360,46 +1332,37 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      RTV用ディスクリプタハンドルを取得します.
     //-------------------------------------------------------------------------
-    D3D12_CPU_DESCRIPTOR_HANDLE GetRTV(PassResource* resource, uint16_t index) const override
+    const IRenderTargetView* GetRTV(PassResource* resource, uint16_t index) const override
     {
         assert(resource != nullptr);
-        return resource->GetHandleRTV(index);
+        return resource->GetRTV(index);
     }
 
     //-------------------------------------------------------------------------
     //! @brief      DSV用ディスクリプタハンドルを取得します.
     //-------------------------------------------------------------------------
-    D3D12_CPU_DESCRIPTOR_HANDLE GetDSV(PassResource* resource, uint16_t index) const override
+    const IDepthStencilView* GetDSV(PassResource* resource, uint16_t index) const override
     {
         assert(resource != nullptr);
-        return resource->GetHandleDSV(index);
+        return resource->GetDSV(index);
     }
 
     //-------------------------------------------------------------------------
     //! @brief      UAV用ディスクリプタハンドルを取得します.
     //-------------------------------------------------------------------------
-    D3D12_GPU_DESCRIPTOR_HANDLE GetUAV(PassResource* resource) const override
+    const IUnorderedAccessView* GetUAV(PassResource* resource) const override
     {
         assert(resource != nullptr);
-        return resource->GetHandleUAV();
+        return resource->GetUAV();
     }
 
     //-------------------------------------------------------------------------
     //! @brief      SRV用ディスクリプタハンドルを取得します.
     //-------------------------------------------------------------------------
-    D3D12_GPU_DESCRIPTOR_HANDLE GetSRV(PassResource* resource) const override
+    const IShaderResourceView* GetSRV(PassResource* resource) const override
     {
         assert(resource != nullptr);
-        return resource->GetHandleSRV();
-    }
-
-    //-------------------------------------------------------------------------
-    //! @brief      GPU仮想アドレスを取得します.
-    //-------------------------------------------------------------------------
-    D3D12_GPU_VIRTUAL_ADDRESS GetVirtualAddress(PassResource* resource) const override
-    {
-        assert(resource != nullptr);
-        return resource->GetVirtualAddress();
+        return resource->GetSRV();
     }
 
     //-------------------------------------------------------------------------
@@ -1510,7 +1473,7 @@ public:
     //-------------------------------------------------------------------------
     void ResourceBarrier(ID3D12GraphicsCommandList6* pCmd)
     {
-        D3D12_RESOURCE_BARRIER barriers[MAX_PASS_RESOURCE_COUNT];
+        D3D12_RESOURCE_BARRIER barriers[MAX_PASS_RESOURCE_COUNT] = {};
         auto count = 0u;
         for(auto i=0u; i<m_ResourceCount; ++i)
         {
@@ -1769,20 +1732,20 @@ public:
     (
         ID3D12Resource*         resource,
         D3D12_RESOURCE_STATES   state,
-        Descriptor*             pDescriptorSRV,
-        Descriptor*             pDescriptorUAV,
-        Descriptor**            pDescriptorRTVs,
-        Descriptor**            pDescriptorDSVs
+        IShaderResourceView*    pSRV,
+        IUnorderedAccessView*   pUAV,
+        IRenderTargetView**     pRTVs,
+        IDepthStencilView**     pDSVs
     ) override
     {
         auto importResource = m_Graph->FrameAlloc<PassResource>();
         if (!importResource->Import(
             resource,
             state,
-            pDescriptorSRV,
-            pDescriptorUAV,
-            pDescriptorRTVs,
-            pDescriptorDSVs))
+            pSRV,
+            pUAV,
+            pRTVs,
+            pDSVs))
         { return nullptr; }
 
         return importResource;

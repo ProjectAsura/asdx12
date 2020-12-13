@@ -16,6 +16,7 @@
 #include <asdxDescriptor.h>
 #include <asdxResourceUploader.h>
 #include <asdxDisposer.h>
+#include <asdxResTexture.h>
 
 
 namespace asdx {
@@ -156,23 +157,13 @@ public:
     void WaitIdle();
 
     //-------------------------------------------------------------------------
-    //! @brief      リソースアップローダーに追加します.
-    //!
-    //! @param[in]      pResource       アップロードリソース.
-    //! @param[in]      lifeTime        生存フレーム数です.
-    //-------------------------------------------------------------------------
-    void PushToResourceUploader(
-        IUploadResource* pResource,
-        uint8_t lifeTime = kDefaultLiftTime);
-
-    //-------------------------------------------------------------------------
     //! @brief      リソースディスポーザーに追加します.
     //!
     //! @param[in]      pResource       破棄リソース.
     //! @param[in]      lifeTime        生存フレーム数です.
     //--------------------------------------------------------------------------
-    void PushToResourceDisposer(
-        ID3D12Resource* pResource, 
+    void PushToDisposer(
+        ID3D12Resource*& pResource, 
         uint8_t lifeTime = kDefaultLiftTime);
 
     //-------------------------------------------------------------------------
@@ -181,8 +172,18 @@ public:
     //! @param[in]      pDescriptor     破棄ディスクリプタ.
     //! @param[in]      lifeTime        生存フレーム数です.
     //-------------------------------------------------------------------------
-    void PushToDescriptorDisposer(
-        Descriptor* pDescriptor,
+    void PushToDisposer(
+        Descriptor*& pDescriptor,
+        uint8_t lifeTime = kDefaultLiftTime);
+
+    //-------------------------------------------------------------------------
+    //! @brief      パイプラインステートディスポーザーに追加します.
+    //!
+    //! @param[in]      pPipelineState  破棄パイプラインステート.
+    //! @param[in]      lifeTime        生存フレーム数です.
+    //-------------------------------------------------------------------------
+    void PushToDisposer(
+        ID3D12PipelineState*& pPipelineState,
         uint8_t lifeTime = kDefaultLiftTime);
 
     //-------------------------------------------------------------------------
@@ -197,26 +198,37 @@ public:
     //-------------------------------------------------------------------------
     void FrameSync();
 
+    //-------------------------------------------------------------------------
+    //! @brief      バッファ更新リソースを生成し，登録します.
+    //-------------------------------------------------------------------------
+    bool UpdateBuffer(ID3D12Resource* pDstResource, const void* pInitData);
+
+    //-------------------------------------------------------------------------
+    //! @brief      テクスチャ更新リソースを生成し，登録します.
+    //-------------------------------------------------------------------------
+    bool UpdateTexture(ID3D12Resource* pDstResource, const ResTexture& resource);
+
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    static GraphicsDevice       s_Instance;                 //!< シングルトンインスタンス.
-    RefPtr<IDXGIFactory7>       m_pFactory;                 //!< DXGIファクトリーです.
-    RefPtr<ID3D12Debug3>        m_pDebug;                   //!< デバッグオブジェクト.
-    RefPtr<ID3D12InfoQueue>     m_pInfoQueue;               //!< インフォキュー.
-    RefPtr<ID3D12Device8>       m_pDevice;                  //!< デバイス.
-    RefPtr<CommandQueue>        m_pGraphicsQueue;           //!< グラフィックスキュー.
-    RefPtr<CommandQueue>        m_pComputeQueue;            //!< コンピュートキュー.
-    RefPtr<CommandQueue>        m_pCopyQueue;               //!< コピーキュー.
-    RefPtr<CommandQueue>        m_pVideoDecodeQueue;        //!< ビデオデコードキュー.
-    RefPtr<CommandQueue>        m_pVideoProcessQueue;       //!< ビデオプロセスキュー.
-    RefPtr<CommandQueue>        m_pVideoEncodeQueue;        //!< ビデオエンコードキュー.
-    DescriptorHeap              m_DescriptorHeap[4];        //!< ディスクリプタヒープ.
-    ResourceUploader            m_ResourceUploader;         //!< リソースアップローダー.
-    Disposer<ID3D12Resource>    m_ResourceDisposer;         //!< リソースディスポーザー.
-    Disposer<Descriptor>        m_DescriptorDisposer;       //!< ディスクリプタディスポーザー.
-    std::mutex                  m_Mutex;
+    static GraphicsDevice           s_Instance;                 //!< シングルトンインスタンス.
+    RefPtr<IDXGIFactory7>           m_pFactory;                 //!< DXGIファクトリーです.
+    RefPtr<ID3D12Debug3>            m_pDebug;                   //!< デバッグオブジェクト.
+    RefPtr<ID3D12InfoQueue>         m_pInfoQueue;               //!< インフォキュー.
+    RefPtr<ID3D12Device8>           m_pDevice;                  //!< デバイス.
+    RefPtr<CommandQueue>            m_pGraphicsQueue;           //!< グラフィックスキュー.
+    RefPtr<CommandQueue>            m_pComputeQueue;            //!< コンピュートキュー.
+    RefPtr<CommandQueue>            m_pCopyQueue;               //!< コピーキュー.
+    RefPtr<CommandQueue>            m_pVideoDecodeQueue;        //!< ビデオデコードキュー.
+    RefPtr<CommandQueue>            m_pVideoProcessQueue;       //!< ビデオプロセスキュー.
+    RefPtr<CommandQueue>            m_pVideoEncodeQueue;        //!< ビデオエンコードキュー.
+    DescriptorHeap                  m_DescriptorHeap[4];        //!< ディスクリプタヒープ.
+    ResourceUploader                m_ResourceUploader;         //!< リソースアップローダー.
+    Disposer<ID3D12Resource>        m_ResourceDisposer;         //!< リソースディスポーザー.
+    Disposer<Descriptor>            m_DescriptorDisposer;       //!< ディスクリプタディスポーザー.
+    Disposer<ID3D12PipelineState>   m_PipelineStateDisposer;    //!< パイプラインステートディスポーザー.
+    std::mutex                      m_Mutex;
 
     //=========================================================================
     // private methods
@@ -232,6 +244,16 @@ private:
     //-------------------------------------------------------------------------
     ~GraphicsDevice();
 
+    //-------------------------------------------------------------------------
+    //! @brief      リソースアップローダーに追加します.
+    //!
+    //! @param[in]      pResource       アップロードリソース.
+    //! @param[in]      lifeTime        生存フレーム数です.
+    //-------------------------------------------------------------------------
+    void PushToUploader(
+        IUploadResource* pResource,
+        uint8_t lifeTime = kDefaultLiftTime);
+
     GraphicsDevice              (const GraphicsDevice&) = delete;   // アクセス禁止.
     GraphicsDevice& operator =  (const GraphicsDevice&) = delete;   // アクセス禁止.
 };
@@ -243,5 +265,13 @@ private:
 //-----------------------------------------------------------------------------
 inline GraphicsDevice& GfxDevice()
 { return GraphicsDevice::Instance(); }
+
+//-----------------------------------------------------------------------------
+//! @brief      D3D12デバイスを取得します.
+//! 
+//! @return     D3D12デバイスを返却します.
+//-----------------------------------------------------------------------------
+inline ID3D12Device8* GetD3D12Device()
+{ return GraphicsDevice::Instance().GetDevice(); }
 
 } // namespace asdx

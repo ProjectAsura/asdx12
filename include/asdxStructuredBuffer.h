@@ -8,8 +8,7 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <asdxGraphicsDevice.h>
-#include <asdxUploadResource.h>
+#include <asdxView.h>
 
 
 namespace asdx {
@@ -79,18 +78,18 @@ public:
     ID3D12Resource* GetResource() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      ディスクリプタを取得します.
-    //!
-    //! @return     ディスクリプタを返却します.
+    //! @brief      シェーダリソースビューを取得します.
+    //! 
+    //! @return     シェーダリソースビューを返却します.
     //-------------------------------------------------------------------------
-    const Descriptor* GetDescriptor() const;
+    IShaderResourceView* GetView() const;
 
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    RefPtr<ID3D12Resource>  m_pResource;        //!< リソースです.
-    RefPtr<Descriptor>      m_pDescriptor;      //!< ディスクリプタです.
+    RefPtr<ID3D12Resource>          m_Resource;
+    RefPtr<IShaderResourceView>     m_View;
 
     //=========================================================================
     // private methods.

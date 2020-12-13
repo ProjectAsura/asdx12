@@ -918,7 +918,7 @@ bool Application::InitD3D()
 
         for(auto i=0u; i<m_SwapChainCount; ++i)
         {
-            if (!m_ColorTarget[i].Init(GfxDevice(), m_pSwapChain4.GetPtr(), i, isSRGB))
+            if (!m_ColorTarget[i].Init(m_pSwapChain4.GetPtr(), i, isSRGB))
             {
                 ELOG("Error : ColorTarget::Init() Failed.");
                 return false;
@@ -940,7 +940,7 @@ bool Application::InitD3D()
         desc.SampleDesc.Quality = 0;
         desc.InitState          = D3D12_RESOURCE_STATE_DEPTH_WRITE;
 
-        if (!m_DepthTarget.Init(GfxDevice(), &desc))
+        if (!m_DepthTarget.Init(&desc))
         {
             ELOG("Error : DepthTarget::Init() Failed.");
             return false;
@@ -1142,7 +1142,7 @@ void Application::ResizeEvent( const ResizeEventArgs& param )
 
         for(auto i=0u; i<m_SwapChainCount; ++i)
         {
-            if (!m_ColorTarget[i].Init(GfxDevice(), m_pSwapChain4.GetPtr(), i, isSRGB))
+            if (!m_ColorTarget[i].Init(m_pSwapChain4.GetPtr(), i, isSRGB))
             { DLOG("Error : ColorTarget::Init() Failed."); }
         }
 
@@ -1158,7 +1158,7 @@ void Application::ResizeEvent( const ResizeEventArgs& param )
         desc.SampleDesc.Quality = 0;
         desc.InitState          = D3D12_RESOURCE_STATE_DEPTH_WRITE;
 
-        if ( !m_DepthTarget.Init(GfxDevice(), &desc))
+        if ( !m_DepthTarget.Init(&desc))
         { DLOG( "Error : DepthStencilTarget::Create() Failed." ); }
     }
 

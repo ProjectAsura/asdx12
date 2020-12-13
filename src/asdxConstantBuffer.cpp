@@ -8,6 +8,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <asdxConstantBuffer.h>
+#include <asdxGraphicsDevice.h>
 #include <asdxLogger.h>
 
 
@@ -23,10 +24,12 @@ namespace asdx {
 ConstantBuffer::ConstantBuffer()
 : m_Index(0)
 {
-    m_pDst[0] = nullptr;
-    m_pDst[1] = nullptr;
-    m_pDescriptor[0] = nullptr;
-    m_pDescriptor[1] = nullptr;
+    m_Dst[0] = nullptr;
+    m_Dst[1] = nullptr;
+    m_View[0] = nullptr;
+    m_View[1] = nullptr;
+    m_Resource[0] = nullptr;
+    m_Resource[1] = nullptr;
 }
 
 //-----------------------------------------------------------------------------
@@ -91,7 +94,7 @@ bool ConstantBuffer::Init(uint64_t size)
 
         m_Resource[i]->SetName(L"asdxConstantBuffer");
 
-        hr = m_Resource[i]->Map( 0, nullptr, reinterpret_cast<void**>( &m_pDst[i] ) );
+        hr = m_Resource[i]->Map( 0, nullptr, reinterpret_cast<void**>( &m_Dst[i] ) );
         if ( FAILED( hr ) )
         {
             ELOG( "Error : ID3D12Resource::Map() Failed. errcode = 0x%x", hr );
@@ -102,12 +105,11 @@ bool ConstantBuffer::Init(uint64_t size)
         viewDesc.SizeInBytes    = static_cast<uint32_t>(size);
         viewDesc.BufferLocation = m_Resource[i]->GetGPUVirtualAddress();
 
-        if (!GfxDevice().AllocHandle(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, m_pDescriptor[i].GetAddress()))
+        if (!CreateConstantBufferView(&viewDesc, m_View[i].GetAddress()))
         {
-            ELOG("Error : GraphicsDevice::AllocHandle() Failed.");
+            ELOGA("Erorr : CreateConstantBufferView() Failed.");
             return false;
         }
-        GfxDevice()->CreateConstantBufferView( &viewDesc, m_pDescriptor[i]->GetHandleCPU() );
     }
 
     m_Size = size;
@@ -122,23 +124,9 @@ void ConstantBuffer::Term()
 {
     for(auto i=0; i<2; ++i)
     {
-        auto descriptor = m_pDescriptor[i].GetPtr();
-        if (descriptor != nullptr)
-        {
-            descriptor->AddRef();
-            GfxDevice().PushToDescriptorDisposer(descriptor);
-        }
-
-        auto resource = m_Resource[i].GetPtr();
-        if (resource != nullptr)
-        {
-            resource->AddRef();
-            GfxDevice().PushToResourceDisposer(resource);
-        }
-
-        m_pDescriptor[i].Reset();
+        m_View[i].Reset();
         m_Resource[i].Reset();
-        m_pDst[i] = nullptr;
+        m_Dst[i] = nullptr;
     }
 
     m_Size  = 0;
@@ -150,7 +138,7 @@ void ConstantBuffer::Term()
 //-----------------------------------------------------------------------------
 void ConstantBuffer::Update(const void* pSrc, uint64_t size, uint64_t srcOffset, uint64_t dstOffset)
 {
-    auto dst = m_pDst[m_Index] + dstOffset;
+    auto dst = m_Dst[m_Index] + dstOffset;
     auto src = reinterpret_cast<const uint8_t*>(pSrc) + srcOffset;
     auto copy_size = (size > m_Size) ? m_Size : size;
 
@@ -164,10 +152,16 @@ ID3D12Resource* ConstantBuffer::GetResource() const
 { return m_Resource[m_Index].GetPtr(); }
 
 //-----------------------------------------------------------------------------
-//      ディスクリプタを取得します.
+//      CPUディスクリプタハンドルを取得します.
 //-----------------------------------------------------------------------------
-const Descriptor* ConstantBuffer::GetDescriptor() const
-{ return m_pDescriptor[m_Index].GetPtr(); }
+D3D12_CPU_DESCRIPTOR_HANDLE ConstantBuffer::GetHandleCPU() const
+{ return m_View[m_Index]->GetHandleCPU(); }
+
+//-----------------------------------------------------------------------------
+//      CPUディスクリプタハンドルを取得します.
+//-----------------------------------------------------------------------------
+D3D12_GPU_DESCRIPTOR_HANDLE ConstantBuffer::GetHandleGPU() const
+{ return m_View[m_Index]->GetHandleGPU(); }
 
 //-----------------------------------------------------------------------------
 //      バッファを入れ替えます.

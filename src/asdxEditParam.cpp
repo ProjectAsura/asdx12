@@ -861,8 +861,7 @@ void EditColor4::DrawPicker(const char* tag)
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
 EditTexture::EditTexture(const std::string& value)
-: m_Path        (value)
-, m_pUploader   (nullptr)
+: m_Path(value)
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
@@ -920,10 +919,10 @@ void EditTexture::DrawControl
 #if ASDX_ENABLE_IMGUI
     ImGui::PushID(label);
     {
-        auto descriptor = m_Texture.GetDescriptor();
-        if (descriptor != nullptr)
+        auto view = m_Texture.GetView();
+        if (view != nullptr)
         {
-            ImTextureID texture = (void*)descriptor;
+            ImTextureID texture = (void*)view;
             ImGui::Image(texture, ImVec2(float(width), float(height)));
 
             if (ImGui::IsItemHovered())
@@ -941,7 +940,7 @@ void EditTexture::DrawControl
             { SetPath(path.c_str(), true); }
         }
 
-        if (descriptor != nullptr)
+        if (view != nullptr)
         {
             ImGui::SameLine();
             if (ImGui::Button(u8"Delete"))
@@ -958,16 +957,10 @@ void EditTexture::DrawControl
 }
 
 //-----------------------------------------------------------------------------
-//      リソースを取得します.
+//      ビューを取得します.
 //-----------------------------------------------------------------------------
-ID3D12Resource* EditTexture::GetResource() const
-{ return m_Texture.GetResource(); }
-
-//-----------------------------------------------------------------------------
-//      ディスクリプタを取得します.
-//-----------------------------------------------------------------------------
-const Descriptor* EditTexture::GetDescriptor() const
-{ return m_Texture.GetDescriptor(); }
+IShaderResourceView* EditTexture::GetView() const
+{ return m_Texture.GetView(); }
 
 } // namespace asdx
 

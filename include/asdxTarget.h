@@ -9,7 +9,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <dxgi1_6.h>
-#include <asdxGraphicsDevice.h>
+#include <asdxView.h>
 
 
 namespace asdx {
@@ -80,30 +80,38 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      初期化処理を行います.
     //!
-    //! @param[in]      device      グラフィックスデバイスです.
     //! @param[in]      pDesc       構成設定です.
     //! @param[in]      isSRGB      sRGBフォーマットに設定する場合は true (ただし，設定可能な場合に限る).
     //! @retval true    初期化成功.
     //! @retval false   初期化失敗.
     //-------------------------------------------------------------------------
-    bool Init(GraphicsDevice& device, const TargetDesc* pDesc, bool isSRGB);
+    bool Init(const TargetDesc* pDesc, bool isSRGB);
 
     //-------------------------------------------------------------------------
     //! @brief      初期化処理を行います.
     //!
-    //! @param[in]      device              グラフィックスデバイスです.
     //! @param[in]      pSwapChain          スワップチェインです.
     //! @param[in]      backbufferIndex     バックバッファ番号です.
     //! @param[in]      isSRGB              sRGBフォーマットに設定する場合は true (ただし設定可能な場合に限る).
     //! @retval true    初期化成功.
     //! @retval false   初期化失敗.
     //-------------------------------------------------------------------------
-    bool Init(GraphicsDevice& device, IDXGISwapChain* pSwapChain, uint32_t backbufferIndex, bool isSRGB);
+    bool Init(IDXGISwapChain* pSwapChain, uint32_t backbufferIndex, bool isSRGB);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.
     //-------------------------------------------------------------------------
     void Term();
+
+    //-------------------------------------------------------------------------
+    //! @brief      リサイズ処理を行います.
+    //! 
+    //! @param[in]      width       横幅
+    //! @param[in]      height      縦幅.
+    //! @retval true    リサイズに成功.
+    //! @retval false   リサイズに失敗.
+    //-------------------------------------------------------------------------
+    bool Resize(uint32_t width, uint32_t height);
 
     //-------------------------------------------------------------------------
     //! @brief      リソースを取得します.
@@ -117,22 +125,38 @@ public:
     //!
     //! @return     レンダーターゲットビュー用ディスクリプタを返却します.
     //-------------------------------------------------------------------------
-    const Descriptor* GetRTV() const;
+    const IRenderTargetView* GetRTV() const;
 
     //-------------------------------------------------------------------------
     //! @brief      シェーダリソースビュー用ディスクリプタを取得します.
     //!
     //! @return     シェーダリソースビュー用ディスクリプタを返却します.
     //-------------------------------------------------------------------------
-    const Descriptor* GetSRV() const;
+    const IShaderResourceView* GetSRV() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      構成設定を取得します.
+    //!
+    //! @return     構成設定を返却します.
+    //-------------------------------------------------------------------------
+    TargetDesc GetDesc() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      sRGBフラグを取得します.
+    //! 
+    //! @return     sRGBフラグを返却します.
+    //-------------------------------------------------------------------------
+    bool IsSRGB() const;
 
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    RefPtr<ID3D12Resource>  m_pResource;
-    RefPtr<Descriptor>      m_pDescriptorRTV;
-    RefPtr<Descriptor>      m_pDescriptorSRV;
+    RefPtr<ID3D12Resource>      m_pResource;
+    RefPtr<IRenderTargetView>   m_pRTV;
+    RefPtr<IShaderResourceView> m_pSRV;
+    TargetDesc                  m_Desc;
+    bool                        m_IsSRGB;
 
     //=========================================================================
     // private methods.
@@ -179,12 +203,22 @@ public:
     //! @retval true    初期化に成功.
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
-    bool Init(GraphicsDevice& device, const TargetDesc* pDesc);
+    bool Init(const TargetDesc* pDesc);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.
     //-------------------------------------------------------------------------
     void Term();
+
+    //-------------------------------------------------------------------------
+    //! @brief      リサイズ処理を行います.
+    //! 
+    //! @param[in]      width       横幅.
+    //! @param[in]      height      縦幅.
+    //! @retval true    リサイズに成功
+    //! @retval false   リサイズに失敗.
+    //-------------------------------------------------------------------------
+    bool Resize(uint32_t width, uint32_t height);
 
     //-------------------------------------------------------------------------
     //! @brief      リソースを取得します.
@@ -198,22 +232,30 @@ public:
     //!
     //! @return     深度ステンシルビュー用ディスクリプターを返却します.
     //-------------------------------------------------------------------------
-    const Descriptor* GetDSV() const;
+    const IDepthStencilView* GetDSV() const;
 
     //-------------------------------------------------------------------------
     //! @brief      シェーダリソースビュー用ディスクリプターを取得します.
     //!
     //! @return     シェーダリソースビュー用ディスクリプターを返却します.
     //-------------------------------------------------------------------------
-    const Descriptor* GetSRV() const;
+    const IShaderResourceView* GetSRV() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      構成設定を取得します.
+    //! 
+    //! @return     構成設定を返却します.
+    //-------------------------------------------------------------------------
+    TargetDesc GetDesc() const;
 
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    RefPtr<ID3D12Resource>  m_pResource;
-    RefPtr<Descriptor>      m_pDescriptorDSV;
-    RefPtr<Descriptor>      m_pDescriptorSRV;
+    RefPtr<ID3D12Resource>      m_pResource;
+    RefPtr<IDepthStencilView>   m_pDSV;
+    RefPtr<IShaderResourceView> m_pSRV;
+    TargetDesc                  m_Desc;
 
     //=========================================================================
     // private methods.

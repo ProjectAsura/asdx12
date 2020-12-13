@@ -13,6 +13,7 @@
 #include <asdxPipelineState.h>
 #include <asdxHashString.h>
 #include <asdxLogger.h>
+#include <asdxGraphicsDevice.h>
 
 
 namespace {
@@ -171,6 +172,17 @@ bool PipelineState::Init(ID3D12Device* pDevice, const D3D12_GRAPHICS_PIPELINE_ST
         m_pPSO->SetName(L"asdxGraphicsPipelineState");
     }
 
+    m_VS.resize(pDesc->VS.BytecodeLength);
+    memcpy(m_VS.data(), pDesc->VS.pShaderBytecode, m_VS.size());
+
+    m_PS.resize(pDesc->PS.BytecodeLength);
+    memcpy(m_PS.data(), pDesc->PS.pShaderBytecode, m_PS.size());
+
+    m_Type = PIPELINE_TYPE_GRAPHICS;
+    m_Desc.Graphics = *pDesc;
+    m_Desc.Graphics.VS.pShaderBytecode = m_VS.data();
+    m_Desc.Graphics.PS.pShaderBytecode = m_PS.data();
+
     return true;
 }
 
@@ -196,6 +208,13 @@ bool PipelineState::Init(ID3D12Device* pDevice, const D3D12_COMPUTE_PIPELINE_STA
 
         m_pPSO->SetName(L"asdxComputePipelineState");
     }
+
+    m_CS.resize(pDesc->CS.BytecodeLength);
+    memcpy(m_CS.data(), pDesc->CS.pShaderBytecode, m_CS.size());
+
+    m_Type = PIPELINE_TYPE_COMPUTE;
+    m_Desc.Compute = *pDesc;
+    m_Desc.Compute.CS.pShaderBytecode = m_CS.data();
 
     return true;
 }
@@ -253,6 +272,31 @@ bool PipelineState::Init(ID3D12Device2* pDevice, const GEOMETRY_PIPELINE_STATE_D
         m_pPSO->SetName(L"asdxGeometryPipelineState");
     }
 
+    m_MS.resize(pDesc->MS.BytecodeLength);
+    memcpy(m_MS.data(), pDesc->MS.pShaderBytecode, m_MS.size());
+
+    if (pDesc->AS.BytecodeLength > 0)
+    {
+        m_AS.resize(pDesc->AS.BytecodeLength);
+        memcpy(m_AS.data(), pDesc->AS.pShaderBytecode, m_AS.size());
+    }
+    else
+    {
+        m_AS.clear();
+    }
+
+    m_PS.resize(pDesc->PS.BytecodeLength);
+    memcpy(m_PS.data(), pDesc->PS.pShaderBytecode, m_PS.size());
+
+    m_Type = PIPELINE_TYPE_GEOMETRY;
+    m_Desc.Geometry = *pDesc;
+
+    m_Desc.Geometry.MS.pShaderBytecode = m_MS.data();
+    m_Desc.Geometry.PS.pShaderBytecode = m_PS.data();
+
+    if (pDesc->AS.BytecodeLength > 0)
+    { m_Desc.Geometry.AS.pShaderBytecode = m_AS.data(); }
+
     return true;
 #else
     ELOG("Error : Not Support Geometry Pipeline.");
@@ -264,13 +308,162 @@ bool PipelineState::Init(ID3D12Device2* pDevice, const GEOMETRY_PIPELINE_STATE_D
 //      終了処理を行います.
 //-----------------------------------------------------------------------------
 void PipelineState::Term()
-{ m_pPSO.Reset(); }
+{
+    m_pRecreatePSO.Reset();
+    m_pPSO.Reset();
+    m_VS.clear();
+    m_PS.clear();
+    m_CS.clear();
+    m_MS.clear();
+    m_AS.clear();
+}
+
+//-----------------------------------------------------------------------------
+//      頂点シェーダを差し替えます.
+//-----------------------------------------------------------------------------
+void PipelineState::ReplaceVS(const void* pBinary, size_t binarySize)
+{
+    if (m_Type != PIPELINE_TYPE_GRAPHICS)
+    { return; }
+
+    m_VS.resize(binarySize);
+    memcpy(m_VS.data(), pBinary, binarySize);
+
+    m_Desc.Graphics.VS.pShaderBytecode = m_VS.data();
+    m_Desc.Graphics.VS.BytecodeLength  = m_VS.size();
+}
+
+//-----------------------------------------------------------------------------
+//      ピクセルシェーダを差し替えます.
+//-----------------------------------------------------------------------------
+void PipelineState::ReplacePS(const void* pBinary, size_t binarySize)
+{
+    if (m_Type == PIPELINE_TYPE_COMPUTE)
+    { return; }
+
+    m_PS.resize(binarySize);
+    memcpy(m_PS.data(), pBinary, binarySize);
+
+    if (m_Type == PIPELINE_TYPE_GRAPHICS)
+    {
+        m_Desc.Graphics.PS.pShaderBytecode = m_PS.data();
+        m_Desc.Graphics.PS.BytecodeLength  = m_PS.size();
+    }
+    else if (m_Type == PIPELINE_TYPE_GEOMETRY)
+    {
+        m_Desc.Geometry.PS.pShaderBytecode = m_PS.data();
+        m_Desc.Geometry.PS.BytecodeLength  = m_PS.size();
+    }
+}
+
+//-----------------------------------------------------------------------------
+//      コンピュートシェーダを差し替えます.
+//-----------------------------------------------------------------------------
+void PipelineState::ReplaceCS(const void* pBinary, size_t binarySize)
+{
+    if (m_Type != PIPELINE_TYPE_COMPUTE)
+    { return; }
+
+    m_CS.resize(binarySize);
+    memcpy(m_CS.data(), pBinary, binarySize);
+
+    m_Desc.Compute.CS.pShaderBytecode = m_CS.data();
+    m_Desc.Compute.CS.BytecodeLength  = m_CS.size();
+}
+
+//-----------------------------------------------------------------------------
+//      メッシュシェーダを差し替えます.
+//-----------------------------------------------------------------------------
+void PipelineState::ReplaceMS(const void* pBinary, size_t binarySize)
+{
+    if (m_Type != PIPELINE_TYPE_GEOMETRY)
+    { return; }
+
+    m_MS.resize(binarySize);
+    memcpy(m_MS.data(), pBinary, binarySize);
+
+    m_Desc.Geometry.MS.pShaderBytecode = m_MS.data();
+    m_Desc.Geometry.MS.BytecodeLength  = m_MS.size();
+}
+
+//-----------------------------------------------------------------------------
+//      増幅シェーダを差し替えます.
+//-----------------------------------------------------------------------------
+void PipelineState::ReplaceAS(const void* pBinary, size_t binarySize)
+{
+    if (m_Type != PIPELINE_TYPE_GEOMETRY)
+    { return; }
+
+    m_AS.resize(binarySize);
+    memcpy(m_AS.data(), pBinary, binarySize);
+
+    m_Desc.Geometry.AS.pShaderBytecode = m_AS.data();
+    m_Desc.Geometry.AS.BytecodeLength  = m_AS.size();
+}
+
+//-----------------------------------------------------------------------------
+//      パイプラインステートを再生成します.
+//-----------------------------------------------------------------------------
+void PipelineState::Recreate()
+{
+    if (!m_pRecreatePSO.GetPtr())
+    {
+        auto pso = m_pRecreatePSO.Detach();
+        GfxDevice().PushToDisposer(pso);
+    }
+
+    if (m_Type == PIPELINE_TYPE_GRAPHICS)
+    {
+        auto hr = GetD3D12Device()->CreateGraphicsPipelineState(&m_Desc.Graphics, IID_PPV_ARGS(m_pRecreatePSO.GetAddress()));
+        if (FAILED(hr))
+        {
+            ELOGA("Error : ID3D12Device::CreateGraphicsPipelineState() Failed. errcode = 0x%x", hr);
+            return;
+        }
+
+         m_pRecreatePSO->SetName(L"asdxGraphicsPipelineState_Reload");
+    }
+    else if (m_Type == PIPELINE_TYPE_COMPUTE)
+    {
+        auto hr = GetD3D12Device()->CreateComputePipelineState(&m_Desc.Compute, IID_PPV_ARGS(m_pRecreatePSO.GetAddress()));
+        if (FAILED(hr))
+        {
+            ELOGA("Error : ID3D12Device::CreateComputePipelineState() Failed. errcode = 0x%x", hr);
+            return;
+        }
+
+        m_pRecreatePSO->SetName(L"asdxComputePipelineState_Reload");
+    }
+    else
+    {
+        GPS_DESC gpsDesc(&m_Desc.Geometry);
+
+        D3D12_PIPELINE_STATE_STREAM_DESC pssDesc = {};
+        pssDesc.SizeInBytes = sizeof(gpsDesc);
+        pssDesc.pPipelineStateSubobjectStream = &gpsDesc;
+
+        // パイプラインステート生成.
+        auto hr = GetD3D12Device()->CreatePipelineState(&pssDesc, IID_PPV_ARGS(m_pRecreatePSO.GetAddress()));
+        if (FAILED(hr))
+        {
+            ELOGA("Error : ID3D12Device::CreateGraphicsPipelineState() Failed. errcode = 0x%x", hr);
+            return;
+        }
+
+        m_pRecreatePSO->SetName(L"asdxGeometryPipelineState_Reload");
+    }
+}
 
 //-----------------------------------------------------------------------------
 //      パイプラインステートを取得します.
 //-----------------------------------------------------------------------------
 ID3D12PipelineState* PipelineState::GetPtr() const
-{ return m_pPSO.GetPtr(); }
+{
+    if (m_pRecreatePSO.GetPtr() != nullptr)
+    { return m_pRecreatePSO.GetPtr(); }
+
+    return m_pPSO.GetPtr();
+}
 
 //-----------------------------------------------------------------------------
 //      パイプラインタイプを取得します.
@@ -281,7 +474,7 @@ PIPELINE_TYPE PipelineState::GetType() const
 //-----------------------------------------------------------------------------
 //      深度ステンシルステートを取得します.
 //-----------------------------------------------------------------------------
-D3D12_DEPTH_STENCIL_DESC PipelineState::GetDSS(DEPTH_STATE_TYPE type, D3D12_COMPARISON_FUNC func)
+D3D12_DEPTH_STENCIL_DESC PipelineState::GetDepthStencilState(DEPTH_STATE_TYPE type, D3D12_COMPARISON_FUNC func)
 {
     D3D12_DEPTH_STENCIL_DESC result = {};
 
@@ -338,7 +531,7 @@ D3D12_DEPTH_STENCIL_DESC PipelineState::GetDSS(DEPTH_STATE_TYPE type, D3D12_COMP
 //-----------------------------------------------------------------------------
 //      ラスタライザーステートを取得します.
 //-----------------------------------------------------------------------------
-D3D12_RASTERIZER_DESC PipelineState::GetRS(RASTERIZER_STATE_TYPE type)
+D3D12_RASTERIZER_DESC PipelineState::GetRasterizerState(RASTERIZER_STATE_TYPE type)
 {
     D3D12_RASTERIZER_DESC result = {};
 
@@ -389,7 +582,7 @@ D3D12_RASTERIZER_DESC PipelineState::GetRS(RASTERIZER_STATE_TYPE type)
 //-----------------------------------------------------------------------------
 //      ブレンドステートを取得します.
 //-----------------------------------------------------------------------------
-D3D12_BLEND_DESC PipelineState::GetBS(BLEND_STATE_TYPE type)
+D3D12_BLEND_DESC PipelineState::GetBlendState(BLEND_STATE_TYPE type)
 {
     D3D12_BLEND_DESC result = {};
 

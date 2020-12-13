@@ -8,8 +8,7 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <map>
-#include <string>
+#include <vector>
 #include <d3d12.h>
 #include <asdxRef.h>
 
@@ -164,6 +163,36 @@ public:
     void Term();
 
     //-------------------------------------------------------------------------
+    //! @brief      頂点シェーダを差し替えます.
+    //-------------------------------------------------------------------------
+    void ReplaceVS(const void* pBinary, size_t binarySize);
+
+    //-------------------------------------------------------------------------
+    //! @brief      ピクセルシェーダを差し替えます.
+    //-------------------------------------------------------------------------
+    void ReplacePS(const void* pBinary, size_t binarySize);
+
+    //-------------------------------------------------------------------------
+    //! @brief      コンピュートシェーダを差し替えます.
+    //-------------------------------------------------------------------------
+    void ReplaceCS(const void* pBinary, size_t binarySize);
+
+    //-------------------------------------------------------------------------
+    //! @brief      メッシュシェーダを差し替えます.
+    //-------------------------------------------------------------------------
+    void ReplaceMS(const void* pBinary, size_t binarySize);
+
+    //-------------------------------------------------------------------------
+    //! @brief      増幅シェーダを差し替えます.
+    //-------------------------------------------------------------------------
+    void ReplaceAS(const void* pBinary, size_t binarySize);
+
+    //-------------------------------------------------------------------------
+    //! @brief      パイプラインステートを再生成します.
+    //-------------------------------------------------------------------------
+    void Recreate();
+
+    //-------------------------------------------------------------------------
     //! @brief      パイプラインステートを取得します.
     //!
     //! @return     パイプラインステートを返却します.
@@ -184,9 +213,9 @@ public:
     //! @param[in]      func        深度比較関数です.
     //! @return     深度ステンシルステートを返却します.
     //-------------------------------------------------------------------------
-    static D3D12_DEPTH_STENCIL_DESC GetDSS(
+    static D3D12_DEPTH_STENCIL_DESC GetDepthStencilState(
         DEPTH_STATE_TYPE        type,
-        D3D12_COMPARISON_FUNC   func = D3D12_COMPARISON_FUNC_LESS_EQUAL);
+        D3D12_COMPARISON_FUNC   func);
 
     //-------------------------------------------------------------------------
     //! @brief      ラスタライザーステートを取得します.
@@ -194,7 +223,7 @@ public:
     //! @param[in]      type        ラスタライザーステートタイプ.
     //! @return     ラスタライザーステートを返却します.
     //-------------------------------------------------------------------------
-    static D3D12_RASTERIZER_DESC GetRS(RASTERIZER_STATE_TYPE type);
+    static D3D12_RASTERIZER_DESC GetRasterizerState(RASTERIZER_STATE_TYPE type);
 
     //-------------------------------------------------------------------------
     //! @brief      ブレンドステートを取得します.
@@ -202,19 +231,46 @@ public:
     //! @param[in]      type        ブレンドステートタイプ.
     //! @return     ブレンドステートを返却します.
     //-------------------------------------------------------------------------
-    static D3D12_BLEND_DESC GetBS(BLEND_STATE_TYPE type);
+    static D3D12_BLEND_DESC GetBlendState(BLEND_STATE_TYPE type);
 
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
     RefPtr<ID3D12PipelineState>     m_pPSO;
+    RefPtr<ID3D12PipelineState>     m_pRecreatePSO;
     PIPELINE_TYPE                   m_Type;
+
+    union Desc
+    {
+        D3D12_GRAPHICS_PIPELINE_STATE_DESC  Graphics;
+        D3D12_COMPUTE_PIPELINE_STATE_DESC   Compute;
+        GEOMETRY_PIPELINE_STATE_DESC        Geometry;
+    } m_Desc;
+
+    std::vector<uint8_t>    m_VS;
+    std::vector<uint8_t>    m_PS;
+    std::vector<uint8_t>    m_CS;
+    std::vector<uint8_t>    m_MS;
+    std::vector<uint8_t>    m_AS;
 
     //=========================================================================
     // private methods.
     //=========================================================================
     /* DO_NOTHING */
 };
+
+inline D3D12_DEPTH_STENCIL_DESC GetDSS
+(
+    DEPTH_STATE_TYPE      type,
+    D3D12_COMPARISON_FUNC func = D3D12_COMPARISON_FUNC_LESS_EQUAL
+)
+{ return PipelineState::GetDepthStencilState(type, func); }
+
+inline D3D12_RASTERIZER_DESC GetRS(RASTERIZER_STATE_TYPE type)
+{ return PipelineState::GetRasterizerState(type); }
+
+inline D3D12_BLEND_DESC GetBS(BLEND_STATE_TYPE type)
+{ return PipelineState::GetBlendState(type); }
 
 } // namespace asdx

@@ -9,6 +9,7 @@
 //-----------------------------------------------------------------------------
 #include <asdxTarget.h>
 #include <asdxLogger.h>
+#include <asdxGraphicsDevice.h>
 
 
 namespace /* anonymous */ {
@@ -106,6 +107,7 @@ namespace asdx {
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
 ColorTarget::ColorTarget()
+: m_IsSRGB(false)
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
@@ -117,7 +119,7 @@ ColorTarget::~ColorTarget()
 //-----------------------------------------------------------------------------
 //      初期化処理です.
 //-----------------------------------------------------------------------------
-bool ColorTarget::Init(GraphicsDevice& device, const TargetDesc* pDesc, bool isSRGB)
+bool ColorTarget::Init(const TargetDesc* pDesc, bool isSRGB)
 {
     HRESULT hr = S_OK;
 
@@ -150,7 +152,7 @@ bool ColorTarget::Init(GraphicsDevice& device, const TargetDesc* pDesc, bool isS
         clearValue.Color[2] = 1.0f;
         clearValue.Color[3] = 1.0f;
 
-        hr = device.GetDevice()->CreateCommittedResource( 
+        hr = GetD3D12Device()->CreateCommittedResource( 
             &props,
             D3D12_HEAP_FLAG_NONE,
             &desc,
@@ -227,33 +229,20 @@ bool ColorTarget::Init(GraphicsDevice& device, const TargetDesc* pDesc, bool isS
         }
     }
 
+    if (!CreateRenderTargetView(m_pResource.GetPtr(), &rtv_desc, m_pRTV.GetAddress()))
     {
-        auto ret = device.AllocHandle(
-            D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
-            m_pDescriptorRTV.GetAddress());
-        if (!ret)
-        {
-            ELOG("Error : GraphicsDevice::AllocHandle() Failed.");
-            return false;
-        }
-
-        device.GetDevice()->CreateRenderTargetView(
-            m_pResource.GetPtr(), &rtv_desc, m_pDescriptorRTV->GetHandleCPU() );
+        ELOG("Error : CreateRenderTargetView() Failed.");
+        return false;
     }
 
+    if (!CreateShaderResourceView(m_pResource.GetPtr(), &srv_desc, m_pSRV.GetAddress()))
     {
-        auto ret = device.AllocHandle(
-            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
-            m_pDescriptorSRV.GetAddress());
-        if (!ret)
-        {
-            ELOG("Error : GraphicsDevice::AllocHandle() Failed.");
-            return false;
-        }
-
-        device.GetDevice()->CreateShaderResourceView(
-            m_pResource.GetPtr(), &srv_desc, m_pDescriptorRTV->GetHandleCPU() );
+        ELOG("Error : CreateShaderResourceView() Failed.");
+        return false;
     }
+
+    memcpy(&m_Desc, pDesc, sizeof(m_Desc));
+    m_IsSRGB = isSRGB;
 
     return true;
 }
@@ -263,7 +252,6 @@ bool ColorTarget::Init(GraphicsDevice& device, const TargetDesc* pDesc, bool isS
 //-----------------------------------------------------------------------------
 bool ColorTarget::Init
 (
-    GraphicsDevice& device,
     IDXGISwapChain* pSwapChain,
     uint32_t        backBufferIndex,
     bool            isSRGB
@@ -351,32 +339,19 @@ bool ColorTarget::Init
         }
     }
 
+    if (!CreateRenderTargetView(m_pResource.GetPtr(), &rtv_desc, m_pRTV.GetAddress()))
     {
-
-        auto ret = device.AllocHandle(
-            D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
-            m_pDescriptorRTV.GetAddress());
-        if (!ret)
-        {
-            ELOG("Error : GraphicsDevice::AllocHandle() Failed.");
-            return false;
-        }
-        device.GetDevice()->CreateRenderTargetView(
-            m_pResource.GetPtr(), &rtv_desc, m_pDescriptorRTV->GetHandleCPU() );
+        ELOG("Error : CreateRenderTargetView() Failed.");
+        return false;
     }
 
+    if (!CreateShaderResourceView(m_pResource.GetPtr(), &srv_desc, m_pSRV.GetAddress()))
     {
-        auto ret = device.AllocHandle(
-            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
-            m_pDescriptorSRV.GetAddress());
-        if (!ret)
-        {
-            ELOG("Error : GraphicsDevice::AllocHandle() Failed.");
-            return false;
-        }
-        device.GetDevice()->CreateShaderResourceView(
-            m_pResource.GetPtr(), &srv_desc, m_pDescriptorSRV->GetHandleCPU() );
+        ELOG("Error : CreateShaderResourceView() Failed.");
+        return false;
     }
+
+    m_IsSRGB = true;
 
     return true;
 }
@@ -386,9 +361,26 @@ bool ColorTarget::Init
 //-----------------------------------------------------------------------------
 void ColorTarget::Term()
 {
-    m_pDescriptorRTV.Reset();
-    m_pDescriptorSRV.Reset();
+    m_pSRV.Reset();
+    m_pRTV.Reset();
     m_pResource.Reset();
+
+    memset(&m_Desc, 0, sizeof(m_Desc));
+    m_IsSRGB = false;
+}
+
+//-----------------------------------------------------------------------------
+//      リサイズ処理を行います.
+//-----------------------------------------------------------------------------
+bool ColorTarget::Resize(uint32_t width, uint32_t height)
+{
+    auto desc = m_Desc;
+    auto srgb = m_IsSRGB;
+    Term();
+
+    desc.Width  = width;
+    desc.Height = height;
+    return Init(&desc, srgb);
 }
 
 //-----------------------------------------------------------------------------
@@ -398,16 +390,28 @@ ID3D12Resource* ColorTarget::GetResource() const
 { return m_pResource.GetPtr(); }
 
 //-----------------------------------------------------------------------------
-//      レンダーターゲットビュー用ディスクリプタを取得します.
+//      レンダーターゲットビューを取得します.
 //-----------------------------------------------------------------------------
-const Descriptor* ColorTarget::GetRTV() const
-{ return m_pDescriptorRTV.GetPtr(); }
+const IRenderTargetView* ColorTarget::GetRTV() const
+{ return m_pRTV.GetPtr(); }
 
 //-----------------------------------------------------------------------------
-//      シェーダリソースビュー用ディスクリプタを取得します.
+//      シェーダリソースビューを取得します.
 //-----------------------------------------------------------------------------
-const Descriptor* ColorTarget::GetSRV() const
-{ return m_pDescriptorSRV.GetPtr(); }
+const IShaderResourceView* ColorTarget::GetSRV() const
+{ return m_pSRV.GetPtr(); }
+
+//-----------------------------------------------------------------------------
+//      構成設定を取得します.
+//-----------------------------------------------------------------------------
+TargetDesc ColorTarget::GetDesc() const
+{ return m_Desc; }
+
+//-----------------------------------------------------------------------------
+//      sRGBフラグを取得します.
+//-----------------------------------------------------------------------------
+bool ColorTarget::IsSRGB() const
+{ return m_IsSRGB; }
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -429,7 +433,7 @@ DepthTarget::~DepthTarget()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool DepthTarget::Init(GraphicsDevice& device, const TargetDesc* pDesc)
+bool DepthTarget::Init(const TargetDesc* pDesc)
 {
     HRESULT hr = S_OK;
 
@@ -461,7 +465,7 @@ bool DepthTarget::Init(GraphicsDevice& device, const TargetDesc* pDesc)
         clearValue.DepthStencil.Depth   = 1.0f;
         clearValue.DepthStencil.Stencil = 0;
 
-        hr = device.GetDevice()->CreateCommittedResource( 
+        hr = GetD3D12Device()->CreateCommittedResource( 
             &props,
             D3D12_HEAP_FLAG_NONE,
             &desc,
@@ -483,16 +487,11 @@ bool DepthTarget::Init(GraphicsDevice& device, const TargetDesc* pDesc)
         desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
         desc.Flags         = D3D12_DSV_FLAG_NONE;
 
-        auto ret = device.AllocHandle(
-            D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
-            m_pDescriptorDSV.GetAddress());
-        if (!ret)
+        if (!CreateDepthStencilView(m_pResource.GetPtr(), &desc, m_pDSV.GetAddress()))
         {
-            ELOG("Error : GraphicsDevice::AllocHandle() Failed.");
+            ELOG("Error : CreateDepthStencilView() Failed.");
             return false;
         }
-        device.GetDevice()->CreateDepthStencilView(
-            m_pResource.GetPtr(), &desc, m_pDescriptorDSV->GetHandleCPU());
     }
 
     {
@@ -509,17 +508,14 @@ bool DepthTarget::Init(GraphicsDevice& device, const TargetDesc* pDesc)
         desc.Texture2D.MostDetailedMip  = mostDetailedMip;
         desc.Shader4ComponentMapping    = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
-        auto ret = device.AllocHandle(
-            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
-            m_pDescriptorSRV.GetAddress());
-        if (!ret)
+        if (!CreateShaderResourceView(m_pResource.GetPtr(), &desc, m_pSRV.GetAddress()))
         {
-            ELOG("Error : GraphicsDevice::AllocHandle() Failed.");
+            ELOG("Error : CreateShaderResourceView() Failed.");
             return false;
         }
-        device.GetDevice()->CreateShaderResourceView(
-            m_pResource.GetPtr(), &desc, m_pDescriptorSRV->GetHandleCPU());
     }
+
+    memcpy(&m_Desc, pDesc, sizeof(m_Desc));
 
     return true;
 }
@@ -529,8 +525,8 @@ bool DepthTarget::Init(GraphicsDevice& device, const TargetDesc* pDesc)
 //-----------------------------------------------------------------------------
 void DepthTarget::Term()
 {
-    m_pDescriptorDSV.Reset();
-    m_pDescriptorSRV.Reset();
+    m_pDSV.Reset();
+    m_pSRV.Reset();
     m_pResource.Reset();
 }
 
@@ -541,15 +537,15 @@ ID3D12Resource* DepthTarget::GetResource() const
 { return m_pResource.GetPtr(); }
 
 //-----------------------------------------------------------------------------
-//      深度ステンシルビュー用ディスクリプターを取得します.
+//      深度ステンシルビューを取得します.
 //-----------------------------------------------------------------------------
-const Descriptor* DepthTarget::GetDSV() const
-{ return m_pDescriptorDSV.GetPtr(); }
+const IDepthStencilView* DepthTarget::GetDSV() const
+{ return m_pDSV.GetPtr(); }
 
 //-----------------------------------------------------------------------------
-//      シェーダリソースビュー用ディスクリプターを取得します.
+//      シェーダリソースビューを取得します.
 //-----------------------------------------------------------------------------
-const Descriptor* DepthTarget::GetSRV() const
-{ return m_pDescriptorSRV.GetPtr(); }
+const IShaderResourceView* DepthTarget::GetSRV() const
+{ return m_pSRV.GetPtr(); }
 
 } // namespace asdx

@@ -1101,8 +1101,8 @@ void GuiMgr::OnDraw( ImDrawData* pDrawData )
                     // テクスチャが渡された場合は変更.
                     if (pCmd->TextureId != nullptr)
                     {
-                        auto pDescriptor = reinterpret_cast<Descriptor*>(pCmd->TextureId);
-                        m_pCmdList->SetGraphicsRootDescriptorTable(1, pDescriptor->GetHandleGPU());
+                        auto pSRV = reinterpret_cast<IShaderResource*>(pCmd->TextureId);
+                        m_pCmdList->SetGraphicsRootDescriptorTable(1, pSRV->GetHandleGPU());
                         changeTexture = true;
                     }
                     else
@@ -1110,7 +1110,7 @@ void GuiMgr::OnDraw( ImDrawData* pDrawData )
                         // フォントのテクスチャに戻す.
                         if (changeTexture)
                         {
-                            m_pCmdList->SetGraphicsRootDescriptorTable(1, m_FontTexture.GetDescriptor()->GetHandleGPU());
+                            m_pCmdList->SetGraphicsRootDescriptorTable(1, m_FontTexture.GetView()->GetHandleGPU());
                             changeTexture = false;
                         }
                     }
