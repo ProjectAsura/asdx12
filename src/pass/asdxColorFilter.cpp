@@ -8,6 +8,31 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <pass/asdxColorFilter.h>
+#include <asdxLogger.h>
+
+
+namespace {
+
+//-----------------------------------------------------------------------------
+// Constant Values.
+//-----------------------------------------------------------------------------
+#include "../res/shaders/Compiled/ColorFilterCS.inc"
+
+static const uint32_t kThreadSize = 8;
+
+
+///////////////////////////////////////////////////////////////////////////////
+// CbColorFilter structure
+///////////////////////////////////////////////////////////////////////////////
+struct CbColorFilter
+{
+    uint32_t        DispatchX;
+    uint32_t        DispatchY;
+    asdx::Vector2   InvTargetSize;
+    asdx::Matrix    ColorMatrix;
+};
+
+} // namespace
 
 
 namespace asdx {
@@ -46,6 +71,11 @@ bool ColorFilter::Init()
 
     // 定数バッファ初期化.
     {
+        if (!m_CB.Init(sizeof(CbColorFilter)))
+        {
+            ELOG("Error : ConstantBuffer::Init() Failed.");
+            return false;
+        }
     }
 
     return true;
@@ -118,8 +148,31 @@ void ColorFilter::Draw(IPassGraphContext* context)
     auto srv = context->GetSRV(m_Input);
     auto uav = context->GetUAV(m_Output);
 
+    uint32_t dispatchX = 0;
+    uint32_t dispatchY = 0;
+
     // 定数バッファ更新.
     {
+        auto desc = GetDesc(m_Input);
+
+        auto w = uint32_t(desc.Width);
+        auto h = desc.Height;
+
+        dispatchX = (w + kThreadSize - 1) / kThreadSize;
+        dispatchY = (h + kThreadSize - 1) / kThreadSize;
+
+        CbColorFilter res = {};
+        res.DispatchX       = dispatchX;
+        res.DispatchY       = dispatchY;
+        res.InvTargetSize.x = 1.0f / float(w);
+        res.InvTargetSize.y = 1.0f / float(h);
+        res.ColorMatrix     = asdx::Matrix::CreateIdentity();
+
+        m_CB.SwapBuffer();
+
+        auto ptr = m_CB.Map();
+        memcpy(ptr, &res, sizeof(res));
+        m_CB.Unmap();
     }
 
     // リソース設定.
