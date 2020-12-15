@@ -43,6 +43,21 @@
     <Filter Include="ヘッダー ファイル\edit">
       <UniqueIdentifier>{5844286c-c68c-494c-b554-973b151d6f5f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ソース ファイル\external">
+      <UniqueIdentifier>{9fd8262d-c14d-4dae-bdcb-d5e06b7ce6af}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\external\imgui">
+      <UniqueIdentifier>{2ff19ec3-05b3-4fbd-9605-ee6c04e16b3b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\external\tinyxml2">
+      <UniqueIdentifier>{eccfe766-36ea-4686-bea7-47c33ff9efb2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\pass">
+      <UniqueIdentifier>{e2bbd350-c762-42b9-a8f6-83de375abb19}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\pass">
+      <UniqueIdentifier>{67ede3f3-453b-4d05-914b-315af8241a22}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\asdxApp.cpp">
@@ -182,6 +197,27 @@
     </ClCompile>
     <ClCompile Include="..\src\asdxUploadResource.cpp">
       <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\imgui\imgui.cpp">
+      <Filter>ソース ファイル\external\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\imgui\imgui_draw.cpp">
+      <Filter>ソース ファイル\external\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\imgui\imgui_widgets.cpp">
+      <Filter>ソース ファイル\external\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\tinyxml2\tinyxml2.cpp">
+      <Filter>ソース ファイル\external\tinyxml2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\asdxGuiMgr.cpp">
+      <Filter>ソース ファイル\edit</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\asdxFont.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pass\asdxColorFilter.cpp">
+      <Filter>ソース ファイル\pass</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -361,6 +397,39 @@
     </ClInclude>
     <ClInclude Include="..\include\asdxUploadResource.h">
       <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="..\external\imgui\imconfig.h">
+      <Filter>ソース ファイル\external\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\external\imgui\imgui.h">
+      <Filter>ソース ファイル\external\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\external\imgui\imgui_internal.h">
+      <Filter>ソース ファイル\external\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\external\imgui\imstb_rectpack.h">
+      <Filter>ソース ファイル\external\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\external\imgui\imstb_textedit.h">
+      <Filter>ソース ファイル\external\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\external\imgui\imstb_truetype.h">
+      <Filter>ソース ファイル\external\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\external\tinyxml2\tinyxml2.h">
+      <Filter>ソース ファイル\external\tinyxml2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\asdxGuiMgr.h">
+      <Filter>ヘッダー ファイル\edit</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\asdxFont.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\asdxColorMatrix.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\pass\asdxColorFilter.h">
+      <Filter>ヘッダー ファイル\pass</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

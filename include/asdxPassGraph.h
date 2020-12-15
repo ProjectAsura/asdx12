@@ -9,6 +9,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <cstdint>
+#include <functional>
 #include <d3d12.h>
 #include <asdxTarget.h>
 #include <asdxMath.h>
@@ -24,8 +25,8 @@ struct IPassGraphBuilder;
 struct IPassGraphContext;
 class  PassResource;
 
-using PassSetup         = void (*) (IPassGraphBuilder* builder);
-using PassExecute       = void (*) (IPassGraphContext* context);
+using PassSetup     = std::function<void(IPassGraphBuilder*)>;
+using PassExecute   = std::function<void(IPassGraphContext*)>;
 
 ///////////////////////////////////////////////////////////////////////////////
 // PASS_RESOURCE_DIMENSION enum
@@ -212,7 +213,7 @@ struct IPassGraphBuilder
     //! @param[in]      desc        リソース設定です.
     //! @return     生成リソースを返却します.
     //-------------------------------------------------------------------------
-    virtual PassResource* Create(PassResourceDesc& desc) = 0;
+    virtual PassResource* Create(const PassResourceDesc& desc) = 0;
 
     //-------------------------------------------------------------------------
     //! @brief      ブラックボードを取得します.
@@ -363,5 +364,13 @@ struct PassGraphDesc
 //! @retval false   生成に失敗.
 //-----------------------------------------------------------------------------
 bool CreatePassGraph(const PassGraphDesc& desc, IPassGraph** ppGraph);
+
+//-----------------------------------------------------------------------------
+//! @brief      構成設定を取得します.
+//! 
+//! @param[in]      pResource   パスリソースです.
+//! @return     構成設定を返却します.
+//-----------------------------------------------------------------------------
+PassResourceDesc GetDesc(PassResource* pResource);
 
 } // namespace asdx

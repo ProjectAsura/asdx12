@@ -1710,7 +1710,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      リソースを生成します.
     //-------------------------------------------------------------------------
-    PassResource* Create(PassResourceDesc& desc) override
+    PassResource* Create(const PassResourceDesc& desc) override
     {
         auto resource = m_Graph->AllocResource(desc, m_Pass);
 
@@ -2215,6 +2215,17 @@ bool CreatePassGraph(const PassGraphDesc& desc, IPassGraph** ppGraph)
     *ppGraph = instance;
 
     return true;
+}
+
+//-----------------------------------------------------------------------------
+//      構成設定を取得します.
+//-----------------------------------------------------------------------------
+PassResourceDesc GetDesc(PassResource* resource)
+{
+    if (resource == nullptr)
+    { return PassResourceDesc(); }
+
+    return resource->GetDesc();
 }
 
 } // namespace asdx

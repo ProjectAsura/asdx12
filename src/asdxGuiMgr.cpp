@@ -692,7 +692,7 @@ bool GuiMgr::Init
             return false;
         }
 
-        io.Fonts->TexID = (void*)m_FontTexture.GetDescriptor();
+        io.Fonts->TexID = (void*)m_FontTexture.GetView();
     }
 
     auto pDevice = GfxDevice().GetDevice();
@@ -1002,7 +1002,7 @@ void GuiMgr::OnDraw( ImDrawData* pDrawData )
         if (resource != nullptr)
         {
             resource->AddRef();
-            GfxDevice().PushToResourceDisposer(resource);
+            GfxDevice().PushToDisposer(resource);
         }
 
         m_VB.Term();
@@ -1017,7 +1017,7 @@ void GuiMgr::OnDraw( ImDrawData* pDrawData )
         if (resource != nullptr)
         {
             resource->AddRef();
-            GfxDevice().PushToResourceDisposer(resource);
+            GfxDevice().PushToDisposer(resource);
         }
 
         m_IB.Term();
@@ -1075,7 +1075,7 @@ void GuiMgr::OnDraw( ImDrawData* pDrawData )
         m_pCmdList->SetGraphicsRootSignature(m_RootSig.GetPtr());
         m_pCmdList->SetPipelineState(m_PSO.GetPtr());
         m_pCmdList->SetGraphicsRootConstantBufferView(0, m_CB.GetResource()->GetGPUVirtualAddress());
-        m_pCmdList->SetGraphicsRootDescriptorTable(1, m_FontTexture.GetDescriptor()->GetHandleGPU());
+        m_pCmdList->SetGraphicsRootDescriptorTable(1, m_FontTexture.GetView()->GetHandleGPU());
         m_pCmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         m_pCmdList->IASetVertexBuffers(0, 1, &vbv);
         m_pCmdList->IASetIndexBuffer(&ibv);
@@ -1101,7 +1101,7 @@ void GuiMgr::OnDraw( ImDrawData* pDrawData )
                     // テクスチャが渡された場合は変更.
                     if (pCmd->TextureId != nullptr)
                     {
-                        auto pSRV = reinterpret_cast<IShaderResource*>(pCmd->TextureId);
+                        auto pSRV = reinterpret_cast<IShaderResourceView*>(pCmd->TextureId);
                         m_pCmdList->SetGraphicsRootDescriptorTable(1, pSRV->GetHandleGPU());
                         changeTexture = true;
                     }
