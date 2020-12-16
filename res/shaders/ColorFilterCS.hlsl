@@ -21,7 +21,7 @@ static const uint2 kThreadSize = uint2(THREAD_SIZE, THREAD_SIZE);
 ///////////////////////////////////////////////////////////////////////////////
 // CbColorFilter constant buffer.
 ///////////////////////////////////////////////////////////////////////////////
-cbuffer CbColorFilter
+cbuffer CbColorFilter : register(b0)
 {
     uint2       DispatchDim;
     float2      InvTargetSize;

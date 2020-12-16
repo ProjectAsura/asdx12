@@ -7,8 +7,9 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <pass/asdxColorFilter.h>
 #include <asdxLogger.h>
+#include <asdxGraphicsDevice.h>
+#include <pass/asdxColorFilter.h>
 
 
 namespace {
@@ -63,10 +64,30 @@ bool ColorFilter::Init()
 {
     // ルートシグニチャ初期化.
     {
+        asdx::RootSignatureDesc desc;
+        desc.AddCBV("CbColorFilter", asdx::SV_ALL, 0);
+        desc.AddSRV("Input",  asdx::SV_ALL, 0);
+        desc.AddUAV("Output", asdx::SV_ALL, 0);
+
+        if (!m_RootSig.Init(GetD3D12Device(), desc))
+        {
+            ELOG("Error : RootSignature::Init() Failed.");
+            return false;
+        }
     }
 
     // パイプラインステート初期化.
     {
+        D3D12_COMPUTE_PIPELINE_STATE_DESC desc = {};
+        desc.pRootSignature     = m_RootSig.GetPtr();
+        desc.CS.pShaderBytecode = ColorFilterCS;
+        desc.CS.BytecodeLength  = sizeof(ColorFilterCS);
+
+        if (!m_PSO.Init(GetD3D12Device(), &desc))
+        {
+            ELOG("Error : PipelineState::Init() Failed.");
+            return false;
+        }
     }
 
     // 定数バッファ初期化.
@@ -161,12 +182,14 @@ void ColorFilter::Draw(IPassGraphContext* context)
         dispatchX = (w + kThreadSize - 1) / kThreadSize;
         dispatchY = (h + kThreadSize - 1) / kThreadSize;
 
+        asdx::Matrix matrix = asdx::Matrix::CreateIdentity();
+
         CbColorFilter res = {};
         res.DispatchX       = dispatchX;
         res.DispatchY       = dispatchY;
         res.InvTargetSize.x = 1.0f / float(w);
         res.InvTargetSize.y = 1.0f / float(h);
-        res.ColorMatrix     = asdx::Matrix::CreateIdentity();
+        res.ColorMatrix     = matrix;
 
         m_CB.SwapBuffer();
 
@@ -176,9 +199,14 @@ void ColorFilter::Draw(IPassGraphContext* context)
     }
 
     // リソース設定.
-
+    cmd->SetComputeRootSignature(m_RootSig.GetPtr());
+    cmd->SetPipelineState(m_PSO.GetPtr());
+    cmd->SetGraphicsRootConstantBufferView(0, m_CB.GetHandleCPU().ptr);
+    cmd->SetGraphicsRootShaderResourceView(1, srv->GetHandleGPU().ptr);
+    cmd->SetGraphicsRootUnorderedAccessView(2, uav->GetHandleGPU().ptr);
 
     // 描画キック.
+    cmd->Dispatch(dispatchX, dispatchY, 1);
 }
 
 } // namespace asdx
