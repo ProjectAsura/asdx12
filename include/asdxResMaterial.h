@@ -18,7 +18,7 @@ namespace asdx {
 ///////////////////////////////////////////////////////////////////////////////
 // MATERIAL_PARAMTERE_TYPE enum
 ///////////////////////////////////////////////////////////////////////////////
-enum MATERIAL_PARAMETER_TYPE
+enum MATERIAL_PARAMETER_TYPE : uint32_t
 {
     MATERIAL_PARAMETER_BOOL,        // bool型です.
     MATERIAL_PARAMETER_FLOAT,       // float型です.
@@ -29,7 +29,7 @@ enum MATERIAL_PARAMETER_TYPE
 ///////////////////////////////////////////////////////////////////////////////
 // MATERIAL_STATE enum
 ///////////////////////////////////////////////////////////////////////////////
-enum MATERIAL_STATE
+enum MATERIAL_STATE : uint8_t
 {
     MATERIAL_STATE_OPAQUE,          //!< 不透明.
     MATERIAL_STATE_ALPHABLEND,      //!< アルファブレンド.
@@ -44,7 +44,7 @@ enum MATERIAL_STATE
 ///////////////////////////////////////////////////////////////////////////////
 // DISPLAY_FACE enum
 ///////////////////////////////////////////////////////////////////////////////
-enum DISPLAY_FACE
+enum DISPLAY_FACE : uint8_t
 {
     DISPLAY_FACE_BOTH,      //!< 両面表示.
     DISPLAY_FACE_FRONT,     //!< 表面表示.
@@ -52,14 +52,49 @@ enum DISPLAY_FACE
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+// TEXTURE_USAGE enum
+///////////////////////////////////////////////////////////////////////////////
+enum TEXTURE_USAGE : uint8_t
+{
+    TEXTURE_USAGE_BASE_COLOR,       //!< ベースカラー.
+    TEXTURE_USAGE_MRO,              //!< メタルネス/ラフネス/オクルージョン.
+    TEXTURE_USAGE_NORMAL,           //!< 法線マップ.
+    TEXTURE_USAGE_TANGENT,          //!< 接線マップ.
+    TEXTURE_USAGE_EMISSIVE,         //!< エミッシブ.
+    TEXTURE_USAGE_VELOCITY,         //!< 速度マップ.
+    TEXTURE_USAGE_FLOW,             //!< フローマップ.
+    TEXTURE_USAGE_ALPHA,            //!< アルファマップ.
+    TEXTURE_USAGE_HEIGHT,           //!< ハイトマップ.
+    TEXTURE_USAGE_DIFFUSE,          //!< ディフューズカラー.
+    TEXTURE_USAGE_SPECULAR,         //!< スペキュラーカラー.
+    TEXTURE_USAGE_GLOSS,            //!< グロスマップ.
+    TEXTURE_USAGE_SMOOTHNESS,       //!< スムースネスマップ.
+    TEXTURE_USAGE_OCCLUSION,        //!< オクルージョン.
+    TEXTURE_USAGE_ROUGHNESS,        //!< ラフネス.
+    TEXTURE_USAGE_METALLNESS,       //!< メタルネス.
+    TEXTURE_USAGE_COLOR,            //!< カラーマップ.
+    TEXTURE_USAGE_VAT,              //!< 頂点アニメーションテクスチャ.,
+    TEXTURE_USAGE_CUSTOM,           //!< カスタム.
+};
+
+///////////////////////////////////////////////////////////////////////////////
 // ResMaterialParameter structure
 ///////////////////////////////////////////////////////////////////////////////
 struct ResMaterialParameter
 {
-    MATERIAL_PARAMETER_TYPE Type;       //!< データ型です.
-    uint32_t                Hash;       //!< 名前を表すハッシュ値です.
-    uint32_t                Count;      //!< 要素数です.
-    uint32_t                Offset;     //!< バッファ先頭からのオフセットです.
+    uint32_t    Type;       //!< データ型です.
+    uint32_t    Hash;       //!< 名前を表すハッシュ値です.
+    uint32_t    Count;      //!< 要素数です.
+    uint32_t    Offset;     //!< バッファ先頭からのオフセットです.
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// ResTexture structure
+///////////////////////////////////////////////////////////////////////////////
+struct ResMaterialTexture
+{
+    TEXTURE_USAGE   Usage;  //!< 使用用途.
+    std::string     Path;   //!< ファイルパス.
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -77,16 +112,8 @@ struct ResMaterial
     uint32_t    BufferSize;         //!< 定数バッファサイズです.
 
     std::vector<ResMaterialParameter>   Parameters;     //!< マテリアルパラメータ定義です.
-    std::vector<std::string>            Textures;       //!< テクスチャファイルパスです.
-    std::vector<uint8_t>                pBuffer;        //!< 定数バッファデータです.
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// ResMaterials structure
-///////////////////////////////////////////////////////////////////////////////
-struct ResMaterials
-{
-    std::vector<ResMaterial>        Materials;  //!< マテリアルです.
+    std::vector<ResMaterialTexture>     Textures;       //!< テクスチャです.
+    std::vector<uint8_t>                Buffer;         //!< 定数バッファデータです.
 };
 
 //-----------------------------------------------------------------------------
@@ -97,7 +124,7 @@ struct ResMaterials
 //! @retval true    保存に成功.
 //! @retval fasel   保存に失敗.
 //-----------------------------------------------------------------------------
-bool SaveMaterials(const char* path, const ResMaterials& materials);
+bool SaveMaterial(const char* path, const ResMaterial& materials);
 
 //-----------------------------------------------------------------------------
 //! @brief      マテリアルを読み込みます.
@@ -107,6 +134,6 @@ bool SaveMaterials(const char* path, const ResMaterials& materials);
 //! @retval true    読み込みに成功.
 //! @retval false   読み込みに失敗.
 //-----------------------------------------------------------------------------
-bool LoadMaterials(const char* path, ResMaterials& materials);
+bool LoadMaterial(const char* path, ResMaterial& materials);
 
 } // namespace asdx

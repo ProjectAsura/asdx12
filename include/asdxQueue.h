@@ -147,7 +147,7 @@ public:
             auto node = itr;
             Node::Unlink(node);
 
-            if (itr != itr->m_NextQueueNode)
+            if (itr->m_NextQueueNode == nullptr)
             { break; }
 
             itr = itr->m_NextQueueNode;

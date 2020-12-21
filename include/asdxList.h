@@ -171,10 +171,10 @@ public:
             auto node = itr;
             Node::Unlink(node);
 
-            if (!itr->HasNext())
+            if (itr->m_NextListNode == nullptr)
             { break; }
 
-            itr = itr->GetNext();
+            itr = itr->m_NextListNode;
         }
 
         m_Head = nullptr;
@@ -240,7 +240,7 @@ public:
         { return nullptr; }
 
         auto head = m_Head;
-        auto next = m_Head->GetNext();
+        auto next = m_Head->m_NextListNode;
         Node::Unlink(head);
         m_Head = next;
         m_Count--;
@@ -256,7 +256,7 @@ public:
         { return nullptr; }
 
         auto tail = m_Tail;
-        auto prev = m_Tail->GetPrev();
+        auto prev = m_Tail->m_PrevListNode;
         Node::Unlink(tail);
         m_Tail = prev;
         m_Count--;
@@ -301,10 +301,10 @@ public:
             if (itr == node)
             { return true; }
 
-            if (!itr->HasNext())
+            if (itr->m_NextListNode == nullptr)
             { break; }
 
-            itr = itr->GetNext();
+            itr = itr->m_NextListNode;
         }
 
         return false;

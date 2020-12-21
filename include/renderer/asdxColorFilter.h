@@ -8,7 +8,6 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <asdxPassGraph.h>
 #include <asdxPipelineState.h>
 #include <asdxRootSignature.h>
 #include <asdxConstantBuffer.h>
@@ -32,13 +31,13 @@ public:
     ///////////////////////////////////////////////////////////////////////////
     struct Param
     {
-        bool    Enable;
-        float   Brightness;
-        float   Saturation;
-        float   Contrast;
-        float   Hue;
-        float   SepiaTone;
-        float   GrayScale;
+        bool    Enable;         //!< 有効フラグ.
+        float   Brightness;     //!< 輝度.
+        float   Saturation;     //!< 彩度.
+        float   Contrast;       //!< コントラスト.
+        float   Hue;            //!< 色相.
+        float   SepiaTone;      //!< セピアトーン.
+        float   GrayScale;      //!< グレースケール.
     };
 
     //=========================================================================
@@ -71,14 +70,21 @@ public:
     void Term();
 
     //-------------------------------------------------------------------------
-    //! @brief      パスグラフビルド時の処理です.
-    //-------------------------------------------------------------------------
-    PassResource* OnBuild(IPassGraph* graph, PassResource* input);
-
-    //-------------------------------------------------------------------------
     //! @brief      パラメータを取得します.
     //-------------------------------------------------------------------------
     Param& GetParam();
+
+    //-------------------------------------------------------------------------
+    //! @brief      描画処理です.
+    //! 
+    //! @param[in]      pCmdList        コマンドリストです
+    //! @param[in]      pUAV            出力先データです
+    //! @param[in]      pSRV            入力データです.
+    //-------------------------------------------------------------------------
+    void Draw(
+        ID3D12GraphicsCommandList6* pCmdList,
+        IUnorderedAccessView*       pUAV,
+        IShaderResourceView*        pSRV);
 
 private:
     //=========================================================================
@@ -88,17 +94,11 @@ private:
     RootSignature       m_RootSig;
     ConstantBuffer      m_CB;
     Param               m_Param;
-    PassResource*       m_Input;
-    PassResource*       m_Output;
 
     //=========================================================================
     // private methods.
     //=========================================================================
-
-    //-------------------------------------------------------------------------
-    //! @brief      描画処理です.
-    //-------------------------------------------------------------------------
-    void Draw(IPassGraphContext* context);
+    /* NOTHING */
 };
 
 } // namespace asdx

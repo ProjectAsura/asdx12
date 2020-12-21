@@ -272,13 +272,14 @@ public:
     //-------------------------------------------------------------------------
     PassResource()
     : List<PassResource>::Node()
-    , m_RefCount        (0)
-    , m_RTV   (nullptr)
-    , m_DSV   (nullptr)
-    , m_UAV   (nullptr)
-    , m_SRV   (nullptr)
-    , m_Resource        (nullptr)
-    , m_Import          (false)
+    , Stack<PassResource>::Node()
+    , m_RefCount    (0)
+    , m_RTV         (nullptr)
+    , m_DSV         (nullptr)
+    , m_UAV         (nullptr)
+    , m_SRV         (nullptr)
+    , m_Resource    (nullptr)
+    , m_Import      (false)
     { /* DO_NOTHING */ }
 
     //-------------------------------------------------------------------------
@@ -1202,7 +1203,7 @@ public:
             if (!itr->HasNext())
             { break; }
 
-            itr = itr->GetNext();
+            itr = itr->List<PassResource>::Node::GetNext();
         }
 
         m_Cache.Clear();
@@ -1258,7 +1259,7 @@ private:
             if (!itr->HasNext())
             { break; }
 
-            itr = itr->GetNext();
+            itr = itr->List<PassResource>::Node::GetNext();
         }
 
         return false;
@@ -1947,7 +1948,7 @@ void PassGraph::Compile()
             if (!itr->HasNext())
             { break; }
 
-            itr = itr->GetNext();
+            itr = itr->List<PassResource>::Node::GetNext();
         }
     }
 

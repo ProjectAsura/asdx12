@@ -121,6 +121,7 @@
     <ClCompile Include="..\src\asdxIndexBuffer.cpp" />
     <ClCompile Include="..\src\asdxKeyboard.cpp" />
     <ClCompile Include="..\src\asdxLogger.cpp" />
+    <ClCompile Include="..\src\asdxMaterial.cpp" />
     <ClCompile Include="..\src\asdxMisc.cpp" />
     <ClCompile Include="..\src\asdxModel.cpp" />
     <ClCompile Include="..\src\asdxMouse.cpp" />
@@ -148,7 +149,8 @@
     <ClCompile Include="..\src\asdxUploadResource.cpp" />
     <ClCompile Include="..\src\asdxVertexBuffer.cpp" />
     <ClCompile Include="..\src\asdxView.cpp" />
-    <ClCompile Include="..\src\pass\asdxColorFilter.cpp" />
+    <ClCompile Include="..\src\renderer\asdxColorFilter.cpp" />
+    <ClCompile Include="..\src\renderer\asdxCrossBilateralFilter.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\external\imgui\imconfig.h" />
@@ -186,6 +188,7 @@
     <ClInclude Include="..\include\asdxLogger.h" />
     <ClInclude Include="..\include\asdxLruCache.h" />
     <ClInclude Include="..\include\asdxMacro.h" />
+    <ClInclude Include="..\include\asdxMaterial.h" />
     <ClInclude Include="..\include\asdxMath.h" />
     <ClInclude Include="..\include\asdxMisc.h" />
     <ClInclude Include="..\include\asdxModel.h" />
@@ -220,7 +223,8 @@
     <ClInclude Include="..\include\asdxUploadResource.h" />
     <ClInclude Include="..\include\asdxVertexBuffer.h" />
     <ClInclude Include="..\include\asdxView.h" />
-    <ClInclude Include="..\include\pass\asdxColorFilter.h" />
+    <ClInclude Include="..\include\renderer\asdxColorFilter.h" />
+    <ClInclude Include="..\include\renderer\asdxCrossBilateralFilter.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\include\asdxLfuCache.inl" />
@@ -241,6 +245,12 @@
     <FxCompile Include="..\res\shaders\CopyPS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\CrossBilateralFilterCS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.0</ShaderModel>
     </FxCompile>
     <FxCompile Include="..\res\shaders\FullScreenVS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>

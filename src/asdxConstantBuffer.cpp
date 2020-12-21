@@ -152,16 +152,28 @@ ID3D12Resource* ConstantBuffer::GetResource() const
 { return m_Resource[m_Index].GetPtr(); }
 
 //-----------------------------------------------------------------------------
-//      CPUディスクリプタハンドルを取得します.
+//      リソースを取得します.
 //-----------------------------------------------------------------------------
-D3D12_CPU_DESCRIPTOR_HANDLE ConstantBuffer::GetHandleCPU() const
-{ return m_View[m_Index]->GetHandleCPU(); }
+ID3D12Resource* ConstantBuffer::GetResource(uint32_t index) const
+{
+    assert(index < 2);
+    return m_Resource[index].GetPtr();
+}
 
 //-----------------------------------------------------------------------------
-//      CPUディスクリプタハンドルを取得します.
+//      定数バッファビューを取得します.
 //-----------------------------------------------------------------------------
-D3D12_GPU_DESCRIPTOR_HANDLE ConstantBuffer::GetHandleGPU() const
-{ return m_View[m_Index]->GetHandleGPU(); }
+IConstantBufferView* ConstantBuffer::GetView() const
+{ return m_View[m_Index].GetPtr(); }
+
+//-----------------------------------------------------------------------------
+//      定数バッファビューを取得します.
+//-----------------------------------------------------------------------------
+IConstantBufferView* ConstantBuffer::GetView(uint32_t index) const
+{
+    assert(index < 2);
+    return m_View[index].GetPtr();;
+}
 
 //-----------------------------------------------------------------------------
 //      バッファを入れ替えます.

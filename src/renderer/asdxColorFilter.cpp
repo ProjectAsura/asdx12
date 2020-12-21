@@ -9,16 +9,17 @@
 //-----------------------------------------------------------------------------
 #include <asdxLogger.h>
 #include <asdxGraphicsDevice.h>
-#include <pass/asdxColorFilter.h>
+#include <asdxColorMatrix.h>
+#include <renderer/asdxColorFilter.h>
 
 
 namespace {
 
+#include "../res/shaders/Compiled/ColorFilterCS.inc"
+
 //-----------------------------------------------------------------------------
 // Constant Values.
 //-----------------------------------------------------------------------------
-#include "../res/shaders/Compiled/ColorFilterCS.inc"
-
 static const uint32_t kThreadSize = 8;
 
 
@@ -47,8 +48,6 @@ namespace asdx {
 //-----------------------------------------------------------------------------
 ColorFilter::ColorFilter()
 : m_Param ()
-, m_Input (nullptr)
-, m_Output(nullptr)
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
@@ -107,51 +106,9 @@ bool ColorFilter::Init()
 //-----------------------------------------------------------------------------
 void ColorFilter::Term()
 {
-    m_Input  = nullptr;
-    m_Output = nullptr;
-
     m_PSO    .Term();
     m_RootSig.Term();
     m_CB     .Term();
-}
-
-//-----------------------------------------------------------------------------
-//      ビルド時の処理です.
-//-----------------------------------------------------------------------------
-PassResource* ColorFilter::OnBuild(IPassGraph* graph, PassResource* input)
-{
-    if (!m_Param.Enable)
-    { return input; }
-
-    m_Input = input;
-
-    struct PassHolder
-    {
-        ColorFilter* Pass;
-    };
-
-    PassHolder holder = {};
-    holder.Pass = this;
-
-    graph->AddPass(
-        "ColorFilter",
-        [&holder](IPassGraphBuilder* builder){
-            auto pass = holder.Pass;
-            auto desc = GetDesc(pass->m_Input);
-            desc.Usage      = PASS_RESOURCE_USAGE_UAV;
-            desc.InitState  = PASS_RESOURCE_STATE_NONE;
-
-            pass->m_Output = builder->Create(desc);
-
-            builder->Read (pass->m_Input);
-            builder->Write(pass->m_Output);
-       },
-        [&holder](IPassGraphContext* context){
-           holder.Pass->Draw(context);
-       }
-    );
-
-    return m_Output;
 }
 
 //-----------------------------------------------------------------------------
@@ -161,20 +118,21 @@ ColorFilter::Param& ColorFilter::GetParam()
 { return m_Param; }
 
 //-----------------------------------------------------------------------------
-//      描画時の処理です.
+//      描画処理です.
 //-----------------------------------------------------------------------------
-void ColorFilter::Draw(IPassGraphContext* context)
+void ColorFilter::Draw
+(
+    ID3D12GraphicsCommandList6* pCmdList,
+    IUnorderedAccessView*       pUAV,
+    IShaderResourceView*        pSRV
+)
 {
-    auto cmd = context->GetCommandList();
-    auto srv = context->GetSRV(m_Input);
-    auto uav = context->GetUAV(m_Output);
-
     uint32_t dispatchX = 0;
     uint32_t dispatchY = 0;
 
     // 定数バッファ更新.
     {
-        auto desc = GetDesc(m_Input);
+        auto desc = pSRV->GetResource()->GetDesc();
 
         auto w = uint32_t(desc.Width);
         auto h = desc.Height;
@@ -183,6 +141,15 @@ void ColorFilter::Draw(IPassGraphContext* context)
         dispatchY = (h + kThreadSize - 1) / kThreadSize;
 
         asdx::Matrix matrix = asdx::Matrix::CreateIdentity();
+        if (m_Param.Enable)
+        {
+            matrix *= asdx::CreateBrightnessMatrix(m_Param.Brightness);
+            matrix *= asdx::CreateSaturationMatrix(m_Param.Saturation);
+            matrix *= asdx::CreateContrastMatrix(m_Param.Contrast);
+            matrix *= asdx::CreateHueMatrix(m_Param.Hue);
+            matrix *= asdx::CreateSepiaMatrix(m_Param.SepiaTone);
+            matrix *= asdx::CreateGrayScaleMatrix(m_Param.GrayScale);
+        }
 
         CbColorFilter res = {};
         res.DispatchX       = dispatchX;
@@ -199,14 +166,14 @@ void ColorFilter::Draw(IPassGraphContext* context)
     }
 
     // リソース設定.
-    cmd->SetComputeRootSignature(m_RootSig.GetPtr());
-    cmd->SetPipelineState(m_PSO.GetPtr());
-    cmd->SetGraphicsRootConstantBufferView(0, m_CB.GetHandleCPU().ptr);
-    cmd->SetGraphicsRootShaderResourceView(1, srv->GetHandleGPU().ptr);
-    cmd->SetGraphicsRootUnorderedAccessView(2, uav->GetHandleGPU().ptr);
+    pCmdList->SetComputeRootSignature(m_RootSig.GetPtr());
+    pCmdList->SetPipelineState(m_PSO.GetPtr());
+    pCmdList->SetGraphicsRootConstantBufferView (0, m_CB.GetView()->GetHandleCPU().ptr);
+    pCmdList->SetGraphicsRootShaderResourceView (1, pSRV->GetHandleGPU().ptr);
+    pCmdList->SetGraphicsRootUnorderedAccessView(2, pUAV->GetHandleGPU().ptr);
 
     // 描画キック.
-    cmd->Dispatch(dispatchX, dispatchY, 1);
+    pCmdList->Dispatch(dispatchX, dispatchY, 1);
 }
 
 } // namespace asdx

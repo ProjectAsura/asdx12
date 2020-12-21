@@ -181,7 +181,7 @@ public:
             auto node = itr;
             Node::Unlink(node);
             
-            if (itr->m_PrevStackNode != nullptr)
+            if (itr->m_PrevStackNode == nullptr)
             { break; }
 
             itr = itr->m_PrevStackNode;

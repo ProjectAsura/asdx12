@@ -19,6 +19,8 @@
 #include <asdxSampler.h>
 #include <asdxModel.h>
 #include <asdxCameraController.h>
+#include <asdxPassGraph.h>
+#include <pass/asdxColorFilter.h>
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -48,6 +50,7 @@ private:
     // private variables.
     //=========================================================================
     asdx::CommandQueue*     m_pGraphicsQueue = nullptr;
+    asdx::CommandQueue*     m_pComputeQueue = nullptr;
     asdx::VertexBuffer      m_TriangleVB;
     asdx::RootSignature     m_RootSignature;
     asdx::PipelineState     m_PSO;
@@ -65,6 +68,9 @@ private:
     asdx::StructuredBuffer  m_TriangleIndexBuffer;
     asdx::CameraController  m_CameraController;
     asdx::WaitPoint         m_WaitPoint;
+
+    asdx::IPassGraph*       m_PassGraph;
+    asdx::ColorFilter       m_ColorFilter;
 
     //=========================================================================
     // private methods.

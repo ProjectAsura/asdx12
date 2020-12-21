@@ -14,14 +14,19 @@
 
 namespace {
 
-struct MaterialHeader
+///////////////////////////////////////////////////////////////////////////////
+// MaterialFileHeader structure
+///////////////////////////////////////////////////////////////////////////////
+struct MaterialFileHeader
 {
     uint8_t     Magic[4];
     uint32_t    Version;
-    uint32_t    MaterialCount;
 };
 
-struct MaterialHeaderV1
+///////////////////////////////////////////////////////////////////////////////
+// MaterialHeader structure
+///////////////////////////////////////////////////////////////////////////////
+struct MaterialHeader
 {
     uint32_t    Hash;               //!< マテリアル名を表すハッシュ値です.
     uint8_t     State;              //!< マテリアルステートです.
@@ -33,7 +38,10 @@ struct MaterialHeaderV1
     uint32_t    BufferSize;         //!< 定数バッファサイズです.
 };
 
-struct MaterialParameterV1
+///////////////////////////////////////////////////////////////////////////////
+// MaterialParameter structure
+///////////////////////////////////////////////////////////////////////////////
+struct MaterialParameter
 {
     uint32_t    Type;       //!< データ型です.
     uint32_t    Hash;       //!< 名前を表すハッシュ値です.
@@ -41,11 +49,24 @@ struct MaterialParameterV1
     uint32_t    Offset;     //!< バッファ先頭からのオフセットです.
 };
 
+///////////////////////////////////////////////////////////////////////////////
+// MaterialTextureHeader
+///////////////////////////////////////////////////////////////////////////////
+struct MaterialTextureHeader
+{
+    uint8_t     Usage;      //!< テクスチャの使用用途.
+    uint32_t    Size;       //!< 文字列サイズ.
+};
+
 } // namespace
+
 
 namespace asdx {
 
-bool SaveMaterials(const char* path, const ResMaterials& materials)
+//-----------------------------------------------------------------------------
+//      マテリアルを保存します.
+//-----------------------------------------------------------------------------
+bool SaveMaterial(const char* path, const ResMaterial& material)
 {
     FILE* pFile;
     auto err = fopen_s(&pFile, path, "wb");
@@ -55,21 +76,17 @@ bool SaveMaterials(const char* path, const ResMaterials& materials)
         return false;
     }
 
-    MaterialHeader header;
+    MaterialFileHeader header;
     header.Magic[0] = 'M';
     header.Magic[1] = 'T';
     header.Magic[2] = 'L';
     header.Magic[3] = '\0';
     header.Version  = 0x1;
-    header.MaterialCount = uint32_t(materials.Materials.size());
 
     fwrite(&header, sizeof(header), 1, pFile);
 
-    for(size_t i=0; i<materials.Materials.size(); ++i)
     {
-        auto& material = materials.Materials[i];
-
-        MaterialHeaderV1 materialHeader = {};
+        MaterialHeader materialHeader = {};
         materialHeader.Hash             = material.Hash;
         materialHeader.State            = material.State;
         materialHeader.DisplayFace      = material.DisplayFace;
@@ -85,7 +102,7 @@ bool SaveMaterials(const char* path, const ResMaterials& materials)
         {
             auto& param = material.Parameters[j];
 
-            MaterialParameterV1 paramHeader = {};
+            MaterialParameter paramHeader = {};
             paramHeader.Type    = uint32_t(param.Type);
             paramHeader.Hash    = param.Hash;
             paramHeader.Count   = param.Count;
@@ -96,13 +113,16 @@ bool SaveMaterials(const char* path, const ResMaterials& materials)
 
         for(size_t j=0; j<material.Textures.size(); ++j)
         {
-            char path[256] = {};
-            strcpy_s(path, material.Textures[j].c_str());
+            auto& texture = material.Textures[j];
 
-            fwrite(path, sizeof(char), 256, pFile);
+            MaterialTextureHeader textureHeader = {};
+            textureHeader.Usage = texture.Usage;
+            textureHeader.Size  = uint32_t(texture.Path.size());
+            fwrite(&textureHeader, sizeof(textureHeader), 1, pFile);
+            fwrite(texture.Path.data(), texture.Path.size(), 1, pFile);
         }
 
-        fwrite(material.pBuffer.data(), material.pBuffer.size(), 1, pFile);
+        fwrite(material.Buffer.data(), material.Buffer.size(), 1, pFile);
     }
 
     fclose(pFile);
@@ -110,7 +130,10 @@ bool SaveMaterials(const char* path, const ResMaterials& materials)
     return true;
 }
 
-bool LoadMaterials(const char* path, ResMaterials& materials)
+//-----------------------------------------------------------------------------
+//      マテリアルを読み込みます.
+//-----------------------------------------------------------------------------
+bool LoadMaterial(const char* path, ResMaterial& material)
 {
     FILE* pFile;
     auto err = fopen_s(&pFile, path, "rb");
@@ -120,7 +143,7 @@ bool LoadMaterials(const char* path, ResMaterials& materials)
         return false;
     }
 
-    MaterialHeader header;
+    MaterialFileHeader header;
     fread(&header, sizeof(header), 1, pFile);
 
     if (header.Magic[0] != 'M'
@@ -134,6 +157,51 @@ bool LoadMaterials(const char* path, ResMaterials& materials)
 
     if (header.Version == 0x1)
     {
+        MaterialHeader materialHeader = {};
+        fread(&materialHeader, sizeof(materialHeader), 1, pFile);
+
+        material.Hash           = materialHeader.Hash;
+        material.State          = materialHeader.State;
+        material.DisplayFace    = materialHeader.DisplayFace;
+        material.ShadowCast     = materialHeader.ShadowCast;
+        material.ShadowReceive  = materialHeader.ShadowReceive;
+        material.ParameterCount = materialHeader.ParameterCount;
+        material.TextureCount   = materialHeader.TextureCount;
+        material.BufferSize     = materialHeader.BufferSize;
+
+        material.Parameters .resize(material.ParameterCount);
+        material.Textures   .resize(material.TextureCount);
+        material.Buffer     .resize(material.BufferSize);
+
+        for(auto i=0u; i<material.ParameterCount; ++i)
+        {
+            auto& p = material.Parameters[i];
+
+            MaterialParameter param = {};
+            fread(&param, sizeof(param), 1, pFile);
+
+            p.Type   = param.Type;
+            p.Hash   = param.Hash;
+            p.Count  = param.Count;
+            p.Offset = param.Offset;
+        }
+
+        for(auto i=0u; i<material.TextureCount; ++i)
+        {
+            MaterialTextureHeader texture = {};
+            fread(&texture, sizeof(texture), 1, pFile);
+
+            if (texture.Size > 512)
+            { texture.Size = 512; }
+            
+            char buf[512] = {};
+            fread(buf, texture.Size, 1, pFile);
+
+            material.Textures[i].Usage = TEXTURE_USAGE(texture.Usage);
+            material.Textures[i].Path  = buf;
+        }
+
+        fread(material.Buffer.data(), material.BufferSize, 1, pFile);
     }
     else
     {

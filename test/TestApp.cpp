@@ -886,6 +886,30 @@ void TestApp::QuadTestRender(ID3D12GraphicsCommandList6* pCmd, uint8_t idx)
 //-----------------------------------------------------------------------------
 bool TestApp::PassGraphTestInit()
 {
+    m_pGraphicsQueue = asdx::GfxDevice().GetGraphicsQueue();
+    m_pComputeQueue  = asdx::GfxDevice().GetComputeQueue();
+
+    {
+        asdx::PassGraphDesc desc = {};
+        desc.MaxPassCount       = 255;
+        desc.MaxResourceCount   = 255 * 16;
+        desc.MaxThreadCount     = 1;
+        desc.pGraphicsQueue     = m_pGraphicsQueue;
+        desc.pComputeQueue      = m_pComputeQueue;
+
+        if (!asdx::CreatePassGraph(desc, &m_PassGraph))
+        {
+            ELOGA("Error : CreatePassGraph() Failed.");
+            return false;
+        }
+    }
+
+    if (!m_ColorFilter.Init())
+    {
+        ELOGA("Error : ColorFilter::Init() Failed.");
+        return false;
+    }
+
     return true;
 }
 
@@ -894,6 +918,13 @@ bool TestApp::PassGraphTestInit()
 //-----------------------------------------------------------------------------
 void TestApp::PassGraphTestTerm()
 {
+    if (m_PassGraph != nullptr)
+    {
+        m_PassGraph->Release();
+        m_PassGraph = nullptr;
+    }
+
+    m_ColorFilter.Term();
 }
 
 //-----------------------------------------------------------------------------
@@ -901,6 +932,14 @@ void TestApp::PassGraphTestTerm()
 //-----------------------------------------------------------------------------
 void TestApp::PassGraphTestRender(ID3D12GraphicsCommandList6* pCmd, uint8_t idx)
 {
+    // ビルド.
+    {
+        //output = m_ColorFilter.OnBuild(m_PassGraph, input);
+    }
 
+    // コンパイル.
+    //m_PassGraph->Compile();
 
+    // レンダーパス実行.
+    //m_WaitPoint = m_PassGraph->Execute(m_WaitPoint);
 }

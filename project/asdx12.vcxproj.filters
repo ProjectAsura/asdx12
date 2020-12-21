@@ -52,11 +52,11 @@
     <Filter Include="ソース ファイル\external\tinyxml2">
       <UniqueIdentifier>{eccfe766-36ea-4686-bea7-47c33ff9efb2}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ソース ファイル\pass">
-      <UniqueIdentifier>{e2bbd350-c762-42b9-a8f6-83de375abb19}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\pass">
+    <Filter Include="ヘッダー ファイル\renderer">
       <UniqueIdentifier>{67ede3f3-453b-4d05-914b-315af8241a22}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\renderer">
+      <UniqueIdentifier>{7ea0c44f-6969-402e-8bb6-da2af02adb61}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -216,8 +216,14 @@
     <ClCompile Include="..\src\asdxFont.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\pass\asdxColorFilter.cpp">
-      <Filter>ソース ファイル\pass</Filter>
+    <ClCompile Include="..\src\asdxMaterial.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\renderer\asdxColorFilter.cpp">
+      <Filter>ソース ファイル\renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\renderer\asdxCrossBilateralFilter.cpp">
+      <Filter>ソース ファイル\renderer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -428,8 +434,14 @@
     <ClInclude Include="..\include\asdxColorMatrix.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\pass\asdxColorFilter.h">
-      <Filter>ヘッダー ファイル\pass</Filter>
+    <ClInclude Include="..\include\asdxMaterial.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\renderer\asdxColorFilter.h">
+      <Filter>ヘッダー ファイル\renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\renderer\asdxCrossBilateralFilter.h">
+      <Filter>ヘッダー ファイル\renderer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -484,6 +496,9 @@
       <Filter>リソース ファイル</Filter>
     </FxCompile>
     <FxCompile Include="..\res\shaders\ColorFilterCS.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\CrossBilateralFilterCS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
   </ItemGroup>
