@@ -225,6 +225,9 @@
     <ClCompile Include="..\src\renderer\asdxCrossBilateralFilter.cpp">
       <Filter>ソース ファイル\renderer</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\asdxRayTracing.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\asdxApp.h">
@@ -442,6 +445,9 @@
     </ClInclude>
     <ClInclude Include="..\include\renderer\asdxCrossBilateralFilter.h">
       <Filter>ヘッダー ファイル\renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\asdxRayTracing.h">
+      <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -21,13 +21,25 @@ namespace asdx {
 class ConstantBufferView : public IConstantBufferView
 {
 public:
-    ConstantBufferView(const D3D12_CONSTANT_BUFFER_VIEW_DESC* pDesc, Descriptor* pDescriptor)
+    ConstantBufferView
+    (
+        ID3D12Resource*                         pResource,
+        const D3D12_CONSTANT_BUFFER_VIEW_DESC*  pDesc,
+        Descriptor*                             pDescriptor
+    )
     : m_RefCount  (1)
+    , m_Resource  (pResource)
     , m_Descriptor(pDescriptor)
-    { memcpy(&m_Desc, pDesc, sizeof(m_Desc)); }
+    {
+        m_Resource->AddRef();
+        memcpy(&m_Desc, pDesc, sizeof(m_Desc));
+    }
 
     ~ConstantBufferView()
-    { GfxDevice().PushToDisposer(m_Descriptor); }
+    {
+        GfxDevice().PushToDisposer(m_Descriptor);
+        GfxDevice().PushToDisposer(m_Resource); 
+    }
 
     void AddRef() override
     { m_RefCount++; }
@@ -48,11 +60,15 @@ public:
     D3D12_GPU_DESCRIPTOR_HANDLE GetHandleGPU() const override
     { return m_Descriptor->GetHandleGPU(); }
 
+    ID3D12Resource* GetResource() const override
+    { return m_Resource; }
+
     D3D12_CONSTANT_BUFFER_VIEW_DESC GetDesc() const override
     { return m_Desc; }
 
 private:
     std::atomic<uint32_t>           m_RefCount;
+    ID3D12Resource*                 m_Resource;
     Descriptor*                     m_Descriptor;
     D3D12_CONSTANT_BUFFER_VIEW_DESC m_Desc;
 };
@@ -306,6 +322,7 @@ private:
 //-----------------------------------------------------------------------------
 bool CreateConstantBufferView
 (
+    ID3D12Resource*                         pResource,
     const D3D12_CONSTANT_BUFFER_VIEW_DESC*  pDesc,
     IConstantBufferView**                   ppView
 )
@@ -317,7 +334,7 @@ bool CreateConstantBufferView
 
     GetD3D12Device()->CreateConstantBufferView(pDesc, pDescriptor->GetHandleCPU());
 
-    auto instance = new ConstantBufferView(pDesc, pDescriptor);
+    auto instance = new ConstantBufferView(pResource, pDesc, pDescriptor);
     *ppView = instance;
 
     return true;

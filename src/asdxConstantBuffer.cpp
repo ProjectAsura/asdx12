@@ -105,7 +105,7 @@ bool ConstantBuffer::Init(uint64_t size)
         viewDesc.SizeInBytes    = static_cast<uint32_t>(size);
         viewDesc.BufferLocation = m_Resource[i]->GetGPUVirtualAddress();
 
-        if (!CreateConstantBufferView(&viewDesc, m_View[i].GetAddress()))
+        if (!CreateConstantBufferView(m_Resource[i].GetPtr(), &viewDesc, m_View[i].GetAddress()))
         {
             ELOGA("Erorr : CreateConstantBufferView() Failed.");
             return false;

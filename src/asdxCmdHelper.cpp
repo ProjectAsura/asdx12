@@ -104,19 +104,17 @@ void ClearUAV
 (
     ID3D12GraphicsCommandList*  pCmd,
     const IUnorderedAccessView* pView,
-    ID3D12Resource*             pResource,
     const uint32_t*             pClearValues
 )
 {
     assert(pCmd         != nullptr);
     assert(pView        != nullptr);
-    assert(pResource    != nullptr);
     assert(pClearValues != nullptr);
 
     pCmd->ClearUnorderedAccessViewUint(
         pView->GetHandleGPU(),
         pView->GetHandleCPU(),
-        pResource,
+        pView->GetResource(),
         pClearValues,
         0,
         nullptr);
@@ -129,22 +127,33 @@ void ClearUAV
 (
     ID3D12GraphicsCommandList*  pCmd,
     const IUnorderedAccessView* pView,
-    ID3D12Resource*             pResource,
     const float*                pClearValues
 )
 {
     assert(pCmd         != nullptr);
     assert(pView        != nullptr);
-    assert(pResource    != nullptr);
     assert(pClearValues != nullptr);
 
     pCmd->ClearUnorderedAccessViewFloat(
         pView->GetHandleGPU(),
         pView->GetHandleCPU(),
-        pResource,
+        pView->GetResource(),
         pClearValues,
         0,
         nullptr);
+}
+
+//-----------------------------------------------------------------------------
+//      ビューポートを設定します.
+//-----------------------------------------------------------------------------
+void SetViewport
+(
+    ID3D12GraphicsCommandList*  pCmd,
+    IView*                      pView,
+    bool                        setScissor
+)
+{
+    SetViewport(pCmd, pView->GetResource(), setScissor);
 }
 
 //-----------------------------------------------------------------------------
@@ -203,7 +212,7 @@ void SetRenderTarget
 //-----------------------------------------------------------------------------
 //      ディスクリプタテーブルを設定します.
 //-----------------------------------------------------------------------------
-void SetDescriptorTable
+void SetTable
 (
     ID3D12GraphicsCommandList*  pCmd,
     bool                        compute,
@@ -228,11 +237,30 @@ void SetCBV
     ID3D12GraphicsCommandList*  pCmd,
     bool                        compute,
     uint32_t                    index,
-    D3D12_GPU_VIRTUAL_ADDRESS   addr
+    IConstantBufferView*        view
 )
 {
-    if (addr == 0 || index == UINT32_MAX)
+    if (view == nullptr)
     { return; }
+
+    SetCBV(pCmd, compute, index, view->GetResource());
+}
+
+//-----------------------------------------------------------------------------
+//      定数バッファビューを設定します.
+//-----------------------------------------------------------------------------
+void SetCBV
+(
+    ID3D12GraphicsCommandList*  pCmd,
+    bool                        compute,
+    uint32_t                    index,
+    ID3D12Resource*             resource
+)
+{
+    if (resource == nullptr)
+    { return; }
+
+    auto addr = resource->GetGPUVirtualAddress();
 
     if (compute)
     { pCmd->SetComputeRootConstantBufferView(index, addr); }
@@ -248,11 +276,30 @@ void SetSRV
     ID3D12GraphicsCommandList*  pCmd,
     bool                        compute,
     uint32_t                    index,
-    D3D12_GPU_VIRTUAL_ADDRESS   addr
+    IShaderResourceView*        view
 )
 {
-    if (addr == 0 || index == UINT32_MAX)
+    if (view == nullptr)
     { return; }
+
+    SetSRV(pCmd, compute, index, view->GetResource());
+}
+
+//-----------------------------------------------------------------------------
+//      シェーダリソースビューを設定します.
+//-----------------------------------------------------------------------------
+void SetSRV
+(
+    ID3D12GraphicsCommandList*  pCmd,
+    bool                        compute,
+    uint32_t                    index,
+    ID3D12Resource*             resource
+)
+{
+    if (resource == nullptr || index == UINT32_MAX)
+    { return; }
+
+    auto addr = resource->GetGPUVirtualAddress();
 
     if (compute)
     { pCmd->SetComputeRootShaderResourceView(index, addr); }
@@ -268,11 +315,30 @@ void SetUAV
     ID3D12GraphicsCommandList*  pCmd,
     bool                        compute,
     uint32_t                    index,
-    D3D12_GPU_VIRTUAL_ADDRESS   addr
+    IUnorderedAccessView*       view
 )
 {
-    if (addr == 0 || index == UINT32_MAX)
+    if (view == nullptr)
     { return; }
+
+    SetUAV(pCmd, compute, index, view->GetResource());
+}
+
+//-----------------------------------------------------------------------------
+//      アンオーダードアクセスビューを設定します.
+//-----------------------------------------------------------------------------
+void SetUAV
+(
+    ID3D12GraphicsCommandList*  pCmd,
+    bool                        compute,
+    uint32_t                    index,
+    ID3D12Resource*             resource
+)
+{
+    if (resource == 0 || index == UINT32_MAX)
+    { return; }
+
+    auto addr = resource->GetGPUVirtualAddress();
 
     if (compute)
     { pCmd->SetComputeRootUnorderedAccessView(index, addr); }

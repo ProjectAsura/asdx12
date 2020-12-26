@@ -42,14 +42,17 @@ void ClearDSV(
 void ClearUAV(
     ID3D12GraphicsCommandList*      pCmd,
     const IUnorderedAccessView*     pView,
-    ID3D12Resource*                 pResource,
     const uint32_t*                 pClearValues);
 
 void ClearUAV(
     ID3D12GraphicsCommandList*      pCmd,
     const IUnorderedAccessView*     pView,
-    ID3D12Resource*                 pResource,
     const float*                    pClearValues);
+
+void SetViewport(
+    ID3D12GraphicsCommandList*      pCmd,
+    IView*                          pView,
+    bool                            setScissor = true);
 
 void SetViewport(
     ID3D12GraphicsCommandList*      pCmd,
@@ -61,7 +64,7 @@ void SetRenderTarget(
     const IRenderTargetView*        pRTV,
     const IDepthStencilView*        pDSV);
 
-void SetDescriptorTable(
+void SetTable(
     ID3D12GraphicsCommandList*      pCmd,
     bool                            compute,
     uint32_t                        index,
@@ -71,19 +74,38 @@ void SetCBV(
     ID3D12GraphicsCommandList*      pCmd,
     bool                            compute,
     uint32_t                        index,
-    D3D12_GPU_VIRTUAL_ADDRESS       addr);
+    IConstantBufferView*            view);
+
+void SetCBV(
+    ID3D12GraphicsCommandList*      pCmd,
+    bool                            compute,
+    uint32_t                        index,
+    ID3D12Resource*                 resource);
 
 void SetSRV(
     ID3D12GraphicsCommandList*      pCmd,
     bool                            compute,
     uint32_t                        index,
-    D3D12_GPU_VIRTUAL_ADDRESS       addr);
+    IShaderResourceView*            view);
+
+void SetSRV(
+    ID3D12GraphicsCommandList*      pCmd,
+    bool                            compute,
+    uint32_t                        index,
+    ID3D12Resource*                 resource);
+
 
 void SetUAV(
     ID3D12GraphicsCommandList*      pCmd,
     bool                            compute,
     uint32_t                        index,
-    D3D12_GPU_VIRTUAL_ADDRESS       addr);
+    IUnorderedAccessView*           view);
+
+void SetUAV(
+    ID3D12GraphicsCommandList*      pCmd,
+    bool                            compute,
+    uint32_t                        index,
+    ID3D12Resource*                 resource);
 
 void SetConstant(
     ID3D12GraphicsCommandList*      pCmd,
