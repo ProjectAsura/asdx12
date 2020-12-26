@@ -40,6 +40,7 @@ namespace asdx {
 using DXR_GEOMETRY_DESC = D3D12_RAYTRACING_GEOMETRY_DESC;
 using DXR_BUILD_FLAGS   = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS;
 using DXR_BUILD_DESC    = D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC;
+using DXR_INSTANCE_DESC = D3D12_RAYTRACING_INSTANCE_DESC;
 
 
 //-----------------------------------------------------------------------------
@@ -50,6 +51,57 @@ using DXR_BUILD_DESC    = D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC;
 //! @retval false   DXR非サポート.
 //-----------------------------------------------------------------------------
 bool IsSupportDXR(ID3D12Device6* pDevice);
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Transform3x4 structure
+///////////////////////////////////////////////////////////////////////////////
+struct Transform3x4
+{
+    float m[3][4] = {};
+
+    Transform3x4()
+    {
+        m[0][0] = 1.0f; m[0][1] = 0.0f, m[0][2] = 0.0f; m[0][3] = 0.0f;
+        m[1][0] = 0.0f; m[1][1] = 1.0f, m[1][2] = 0.0f; m[1][3] = 0.0f;
+        m[2][0] = 0.0f; m[2][1] = 0.0f, m[2][2] = 1.0f; m[2][3] = 0.0f;
+    }
+
+    explicit Transform3x4(
+        float m00, float m01, float m02, float m03,
+        float m10, float m11, float m12, float m13,
+        float m20, float m21, float m22, float m23)
+    {
+        m[0][0] = m00, m[0][1] = m01, m[0][2] = m02, m[0][3] = m03;
+        m[1][0] = m10, m[1][1] = m11, m[1][2] = m12, m[1][3] = m13;
+        m[2][0] = m20, m[2][1] = m21, m[2][2] = m22, m[2][3] = m23;
+    }
+};
+
+//-----------------------------------------------------------------------------
+//! @brief      Matrix型に変換します.
+//-----------------------------------------------------------------------------
+inline Matrix ToMatrix(const Transform3x4& value)
+{
+    // 転置しながら格納.
+    return Matrix(
+        value.m[0][0], value.m[1][0], value.m[2][0], 0.0f,
+        value.m[0][1], value.m[1][1], value.m[2][1], 0.0f,
+        value.m[0][2], value.m[1][2], value.m[2][2], 0.0f,
+        value.m[0][3], value.m[1][3], value.m[2][3], 1.0f );
+}
+
+//-----------------------------------------------------------------------------
+//! @brief      Transform3x4型に変換します.
+//-----------------------------------------------------------------------------
+inline Transform3x4 FromMatrix(const Matrix& value)
+{
+    // 転置しながら格納.
+    return Transform3x4(
+        value.m[0][0], value.m[1][0], value.m[2][0], value.m[3][0],
+        value.m[0][1], value.m[1][1], value.m[2][1], value.m[3][1],
+        value.m[0][2], value.m[1][2], value.m[2][2], value.m[3][2]);
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Blas class
@@ -101,17 +153,28 @@ public:
     void Build(ID3D12GraphicsCommandList6* pCmd);
 
     //-------------------------------------------------------------------------
-    //! @brief      ビルド設定を取得します.
+    //! @brief      ジオメトリ数を取得します.
     //-------------------------------------------------------------------------
-    DXR_BUILD_DESC GetDesc() const;
+    uint32_t GetGeometryCount() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      ジオメトリ構成を取得します.
+    //-------------------------------------------------------------------------
+    const DXR_GEOMETRY_DESC& GetGeometry(uint32_t index) const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      ジオメトリ構成を設定します.
+    //-------------------------------------------------------------------------
+    void SetGeometry(uint32_t index, const DXR_GEOMETRY_DESC& desc);
 
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    RefPtr<ID3D12Resource>  m_Scratch;
-    RefPtr<ID3D12Resource>  m_Structure;
-    DXR_BUILD_DESC          m_BuildDesc;
+    RefPtr<ID3D12Resource>          m_Scratch;
+    RefPtr<ID3D12Resource>          m_Structure;
+    DXR_BUILD_DESC                  m_BuildDesc;
+    std::vector<DXR_GEOMETRY_DESC>  m_GeometryDesc;
 
     //=========================================================================
     // private methods.
@@ -154,7 +217,8 @@ public:
     //-------------------------------------------------------------------------
     bool Init(
         ID3D12Device6*              pDevice, 
-        D3D12_GPU_VIRTUAL_ADDRESS   instanceDescs,
+        uint32_t                    instanceCount,
+        const DXR_INSTANCE_DESC*    pInstanceDescs,
         DXR_BUILD_FLAGS             flags);
 
     //-------------------------------------------------------------------------
@@ -168,9 +232,14 @@ public:
     void Build(ID3D12GraphicsCommandList6* pCmd);
 
     //-------------------------------------------------------------------------
-    //! @brief      ビルド設定を取得します.
+    //! @brief      メモリマッピングを行います.
     //-------------------------------------------------------------------------
-    DXR_BUILD_DESC GetDesc() const;
+    DXR_INSTANCE_DESC* Map();
+
+    //-------------------------------------------------------------------------
+    //! @brief      メモリマッピングを解除します.
+    //-------------------------------------------------------------------------
+    void Unmap();
 
 private:
     //=========================================================================
@@ -178,6 +247,7 @@ private:
     //=========================================================================
     RefPtr<ID3D12Resource>  m_Scratch;
     RefPtr<ID3D12Resource>  m_Structure;
+    RefPtr<ID3D12Resource>  m_Instances;
     DXR_BUILD_DESC          m_BuildDesc;
 
     //=========================================================================
@@ -215,7 +285,6 @@ public:
     //! @brief      デストラクタです.
     //-------------------------------------------------------------------------
     ~SubObjects();
-
 
     //-------------------------------------------------------------------------
     //! @brief      メモリを解放します.
@@ -289,7 +358,6 @@ private:
     T* CreateAs(D3D12_STATE_SUBOBJECT_TYPE type)
     { return reinterpret_cast<T*>(Create(type, sizeof(T))); }
 };
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // ShaderRecord structure

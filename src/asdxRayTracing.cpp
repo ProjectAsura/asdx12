@@ -157,11 +157,18 @@ bool Blas::Init
     if (pDevice == nullptr)
     { return false; }
 
+    m_GeometryDesc.resize(count);
+    if (pDescs != nullptr)
+    {
+        for(auto i=0u; i<count; ++i)
+        { m_GeometryDesc[i] = pDescs[i]; }
+    }
+
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
     inputs.DescsLayout      = D3D12_ELEMENTS_LAYOUT_ARRAY;
     inputs.Flags            = flags;
     inputs.NumDescs         = count;
-    inputs.pGeometryDescs   = pDescs;
+    inputs.pGeometryDescs   = m_GeometryDesc.data();
     inputs.Type             = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
 
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO prebuildInfo = {};
@@ -203,21 +210,47 @@ bool Blas::Init
 //-----------------------------------------------------------------------------
 void Blas::Term()
 {
+    m_GeometryDesc.clear();
     m_Scratch   .Reset();
     m_Structure .Reset();
 }
 
 //-----------------------------------------------------------------------------
-//      リソースを取得します.
+//      ジオメトリ数を取得します.
 //-----------------------------------------------------------------------------
-DXR_BUILD_DESC Blas::GetDesc() const
-{ return m_BuildDesc; }
+uint32_t Blas::GetGeometryCount() const
+{ return uint32_t(m_GeometryDesc.size()); }
+
+//-----------------------------------------------------------------------------
+//      ジオメトリ構成を取得します.
+//-----------------------------------------------------------------------------
+const DXR_GEOMETRY_DESC& Blas::GetGeometry(uint32_t index) const
+{
+    assert(index < uint32_t(m_GeometryDesc.size()));
+    return m_GeometryDesc[index];
+}
+
+//-----------------------------------------------------------------------------
+//      ジオメトリ構成を設定します.
+//-----------------------------------------------------------------------------
+void Blas::SetGeometry(uint32_t index, const DXR_GEOMETRY_DESC& desc)
+{
+    assert(index < uint32_t(m_GeometryDesc.size()));
+    m_GeometryDesc[index] = desc;
+}
 
 //-----------------------------------------------------------------------------
 //      ビルドします.
 //-----------------------------------------------------------------------------
 void Blas::Build(ID3D12GraphicsCommandList6* pCmd)
-{ pCmd->BuildRaytracingAccelerationStructure(&m_BuildDesc, 0, nullptr); }
+{
+    pCmd->BuildRaytracingAccelerationStructure(&m_BuildDesc, 0, nullptr);
+
+    D3D12_RESOURCE_BARRIER barrier = {};
+    barrier.Type            = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+    barrier.UAV.pResource   = m_Structure.GetPtr();
+    pCmd->ResourceBarrier(1, &barrier);
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -242,15 +275,39 @@ Tlas::~Tlas()
 bool Tlas::Init
 (
     ID3D12Device6*              pDevice,
-    D3D12_GPU_VIRTUAL_ADDRESS   instanceDescs,
+    uint32_t                    instanceDescCount,
+    const DXR_INSTANCE_DESC*    pInstanceDescs,
     DXR_BUILD_FLAGS             flags
 )
 {
+    if (!CreateUploadBuffer(
+        pDevice, sizeof(DXR_INSTANCE_DESC) * instanceDescCount, 
+        m_Instances.GetAddress()))
+    {
+        ELOGA("Error : CreateUploadBuffer() Failed.");
+        return false;
+    }
+
+    // インスタンス設定をコピー.
+    {
+        DXR_INSTANCE_DESC* ptr = nullptr;
+        auto hr = m_Instances->Map(0, nullptr, reinterpret_cast<void**>(&ptr));
+        if (FAILED(hr))
+        {
+            ELOGA("Error : ID3D12Resource::Map() Failed. errcode = 0x%x", hr);
+            return false;
+        }
+
+        memcpy(ptr, pInstanceDescs, sizeof(DXR_INSTANCE_DESC) * instanceDescCount);
+
+        m_Instances->Unmap(0, nullptr);
+    }
+
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
     inputs.DescsLayout      = D3D12_ELEMENTS_LAYOUT_ARRAY;
     inputs.Flags            = flags;
-    inputs.NumDescs         = 1;
-    inputs.InstanceDescs    = instanceDescs;
+    inputs.NumDescs         = instanceDescCount;
+    inputs.InstanceDescs    = m_Instances->GetGPUVirtualAddress();
     inputs.Type             = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
 
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO prebuildInfo = {};
@@ -292,21 +349,42 @@ bool Tlas::Init
 //-----------------------------------------------------------------------------
 void Tlas::Term()
 {
+    m_Instances .Reset();
     m_Scratch   .Reset();
     m_Structure .Reset();
 }
 
 //-----------------------------------------------------------------------------
-//      リソースを取得します.
+//      メモリマッピングを行います.
 //-----------------------------------------------------------------------------
-DXR_BUILD_DESC Tlas::GetDesc() const
-{ return m_BuildDesc; }
+DXR_INSTANCE_DESC* Tlas::Map()
+{
+    DXR_INSTANCE_DESC* ptr = nullptr;
+    auto hr = m_Instances->Map(0, nullptr, reinterpret_cast<void**>(&ptr));
+    if (FAILED(hr))
+    { return nullptr; }
+
+    return ptr;
+}
+
+//-----------------------------------------------------------------------------
+//      メモリマッピングを解除します.
+//-----------------------------------------------------------------------------
+void Tlas::Unmap()
+{ m_Instances->Unmap(0, nullptr); }
 
 //-----------------------------------------------------------------------------
 //      ビルドします.
 //-----------------------------------------------------------------------------
 void Tlas::Build(ID3D12GraphicsCommandList6* pCmd)
-{ pCmd->BuildRaytracingAccelerationStructure(&m_BuildDesc, 0, nullptr); }
+{
+    pCmd->BuildRaytracingAccelerationStructure(&m_BuildDesc, 0, nullptr);
+
+    D3D12_RESOURCE_BARRIER barrier = {};
+    barrier.Type            = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+    barrier.UAV.pResource   = m_Structure.GetPtr();
+    pCmd->ResourceBarrier(1, &barrier);
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////
