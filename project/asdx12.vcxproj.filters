@@ -228,6 +228,9 @@
     <ClCompile Include="..\src\asdxRayTracing.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\asdxScreenCapture.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\asdxApp.h">
@@ -447,6 +450,9 @@
       <Filter>ヘッダー ファイル\renderer</Filter>
     </ClInclude>
     <ClInclude Include="..\include\asdxRayTracing.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\asdxScreenCpature.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
