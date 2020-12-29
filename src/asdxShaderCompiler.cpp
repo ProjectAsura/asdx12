@@ -7,11 +7,17 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <atomic>
 #include <cstdio>
+#include <cassert>
+#include <atomic>
+#include <asdxMisc.h>
 #include <asdxShaderCompiler.h>
 #include <d3d12.h>
-#include <dxcapi.h>
+#ifdef ASDX_ENABLE_DXC
+    #include <dxcapi.h>
+#else
+    #include <d3dcompiler.h>
+#endif//ASDX_ENABLE_DXC
 
 
 namespace asdx {
@@ -197,6 +203,7 @@ bool CompileFromFile
     IBlob**         ppResult
 )
 {
+#ifdef ASDX_ENABLE_DXC
     HRESULT hr = S_OK;
     RefPtr<IDxcUtils> pUtils;
     RefPtr<IDxcCompiler3> pCompiler;
@@ -255,6 +262,83 @@ bool CompileFromFile
     *ppResult = blob;
 
     return true;
+#else
+    std::string entryPoint = "main";
+    std::string shaderModel = "vs_5_0";
+    UINT flags = 0;
+
+    for(auto i=0u; i<countCompileArgs; ++i)
+    {
+        if (wcscmp(compileArgs[i], L"-D") == 0)
+        {
+        }
+        // エントリーポイント.
+        else if (wcscmp(compileArgs[i], L"-E") == 0)
+        {
+            i++;
+            entryPoint = asdx::ToStringA(compileArgs[i]);
+        }
+        else if (wcscmp(compileArgs[i], L"-Fd") == 0)
+        {
+        }
+        else if (wcscmp(compileArgs[i], L"-Fo") == 0)
+        {
+        }
+        else if (wcscmp(compileArgs[i], L"-Gec") == 0)
+        {
+        }
+        else if (wcscmp(compileArgs[i], L"-HV") == 0)
+        {
+        }
+        else if (wcscmp(compileArgs[i], L"-Od") == 0)
+        {
+        }
+        // シェーダプロファイル.
+        else if (wcscmp(compileArgs[i], L"-T") == 0)
+        {
+            i++;
+            shaderModel = asdx::ToStringA(compileArgs[i]);
+        }
+        else if (wcscmp(compileArgs[i], L"-Vd") == 0)
+        {
+        }
+        else if (wcscmp(compileArgs[i], L"-Zi") == 0)
+        {
+        }
+        else if (wcscmp(compileArgs[i], L"-Zpc") == 0)
+        {
+        }
+        else if (wcscmp(compileArgs[i], L"-Zpr") == 0)
+        {
+        }
+    }
+
+    RefPtr<ID3DBlob> pShader;
+    RefPtr<ID3DBlob> pError;
+    auto hr = D3DCompileFromFile(
+        filename,
+        nullptr,
+        D3D_COMPILE_STANDARD_FILE_INCLUDE,
+        entryPoint.c_str(),
+        shaderModel.c_str(),
+        flags,
+        0,
+        pShader.GetAddress(),
+        pError.GetAddress());
+    if (FAILED(hr))
+    {
+        return false;
+    }
+
+    auto blob = new Blob();
+    blob->m_Buffer = malloc(pShader->GetBufferSize());
+    blob->m_Size = pShader->GetBufferSize();
+    assert(blob->m_Buffer != nullptr);
+    memcpy(blob->m_Buffer, pShader->GetBufferPointer(), pShader->GetBufferSize());
+    *ppResult = blob;    
+
+    return true;
+#endif
 }
 
 } // namespace asdx

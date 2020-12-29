@@ -25,6 +25,9 @@ class Stack
     /* NOTHING */
 
 public:
+    class Node;
+    typedef Stack<T>::Node StackNode;
+
     ///////////////////////////////////////////////////////////////////////////
     // Node class
     ///////////////////////////////////////////////////////////////////////////
@@ -45,8 +48,8 @@ public:
         //! @brief      コンストラクタです.
         //---------------------------------------------------------------------
         Node()
-        : m_NextStackNode(nullptr)
-        , m_PrevStackNode(nullptr)
+        : m_Next(nullptr)
+        , m_Prev(nullptr)
         { /* DO_NOTHING */ }
 
         //---------------------------------------------------------------------
@@ -54,25 +57,25 @@ public:
         //---------------------------------------------------------------------
         ~Node()
         {
-            auto prev = m_PrevStackNode;
-            auto next = m_NextStackNode;
+            auto prev = StackNode::m_Prev;
+            auto next = StackNode::m_Next;
 
             if (prev != nullptr)
-            { prev->m_NextStackNode = next; }
+            { prev->StackNode::m_Next = next; }
 
             if (next != nullptr)
-            { next->m_PrevStackNode = prev; }
+            { next->StackNode::m_Prev = prev; }
 
-            m_PrevStackNode = nullptr;
-            m_NextStackNode = nullptr;
+            StackNode::m_Prev = nullptr;
+            StackNode::m_Next = nullptr;
         }
 
     private:
         //=====================================================================
         // private variables.
         //=====================================================================
-        T*  m_NextStackNode = nullptr;   //!< 次のノードです.
-        T*  m_PrevStackNode = nullptr;   //!< 前のノードです.
+        T*  m_Next = nullptr;   //!< 次のノードです.
+        T*  m_Prev = nullptr;   //!< 前のノードです.
 
         //---------------------------------------------------------------------
         //! @brief      リンクを設定します.
@@ -82,8 +85,8 @@ public:
             if (lhs == nullptr || rhs == nullptr)
             { return; }
 
-            lhs->m_NextStackNode = rhs;
-            rhs->m_PrevStackNode = lhs;
+            lhs->StackNode::m_Next = rhs;
+            rhs->StackNode::m_Prev = lhs;
         }
 
         //---------------------------------------------------------------------
@@ -94,17 +97,17 @@ public:
             if (node == nullptr)
             { return; }
 
-            auto prev = node->m_PrevStackNode;
-            auto next = node->m_NextStackNode;
+            auto prev = node->StackNode::m_Prev;
+            auto next = node->StackNode::m_Next;
 
             if (prev != nullptr)
-            { prev->m_NextStackNode = next; }
+            { prev->StackNode::m_Next = next; }
 
             if (next != nullptr)
-            { next->m_PrevStackNode = prev; }
+            { next->StackNode::m_Prev = prev; }
 
-            node->m_PrevStackNode = nullptr;
-            node->m_NextStackNode = nullptr;
+            node->StackNode::m_Prev = nullptr;
+            node->StackNode::m_Next = nullptr;
         }
     };
 
@@ -140,7 +143,7 @@ public:
         { return; }
 
         // 継承チェック.
-        assert(static_cast<Stack<T>::Node*>(node) != nullptr);
+        assert(static_cast<StackNode*>(node) != nullptr);
 
         if (m_Head == nullptr)
         {
@@ -148,7 +151,7 @@ public:
         }
         else
         {
-            Node::Link(m_Head, node);
+            StackNode::Link(m_Head, node);
             m_Head = node;
         }
         m_Count++;
@@ -163,8 +166,8 @@ public:
         { return nullptr; }
 
         auto head = m_Head;
-        auto prev = m_Head->m_PrevStackNode;
-        Node::Unlink(head);
+        auto prev = m_Head->StackNode::m_Prev;
+        StackNode::Unlink(head);
         m_Head = prev;
         m_Count--;
         return head;
@@ -179,12 +182,12 @@ public:
         while(itr != nullptr)
         {
             auto node = itr;
-            Node::Unlink(node);
+            StackNode::Unlink(node);
             
-            if (itr->m_PrevStackNode == nullptr)
+            if (itr->StackNode::m_Prev == nullptr)
             { break; }
 
-            itr = itr->m_PrevStackNode;
+            itr = itr->StackNode::m_Prev;
         }
 
         m_Count = 0;

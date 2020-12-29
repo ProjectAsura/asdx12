@@ -25,6 +25,9 @@ class Queue
     /* NOTHING */
 
 public:
+    class Node;
+    typedef Queue<T>::Node QueueNode;
+
     ///////////////////////////////////////////////////////////////////////////
     // Node clas
     ///////////////////////////////////////////////////////////////////////////
@@ -49,8 +52,8 @@ public:
         //! @brief      コンストラクタです.
         //---------------------------------------------------------------------
         Node()
-        : m_NextQueueNode(nullptr)
-        , m_PrevQueueNode(nullptr)
+        : m_Next(nullptr)
+        , m_Prev(nullptr)
         { /* DO_NOTHING */ }
 
         //---------------------------------------------------------------------
@@ -58,25 +61,25 @@ public:
         //---------------------------------------------------------------------
         ~Node()
         {
-            auto prev = m_PrevQueueNode;
-            auto next = m_NextQueueNode;
+            auto prev = QueueNode::m_Prev;
+            auto next = QueueNode::m_Next;
 
             if (prev != nullptr)
-            { prev->m_NextQueueNode = next; }
+            { prev->QueueNode::m_Next = next; }
 
             if (next != nullptr)
-            { next->m_PrevQueueNode = prev; }
+            { next->QueueNode::m_Prev = prev; }
 
-            m_PrevQueueNode = nullptr;
-            m_NextQueueNode = nullptr;
+            QueueNode::m_Prev = nullptr;
+            QueueNode::m_Next = nullptr;
         }
 
     private:
         //=====================================================================
         // private variables.
         //=====================================================================
-        T*  m_NextQueueNode = nullptr;       //!< 次のノード.
-        T*  m_PrevQueueNode = nullptr;       //!< 前のノード.
+        T*  m_Next = nullptr;       //!< 次のノード.
+        T*  m_Prev = nullptr;       //!< 前のノード.
 
         //---------------------------------------------------------------------
         //! @brief      リンクを設定します.
@@ -86,8 +89,8 @@ public:
             if (lhs == nullptr || rhs == nullptr)
             { return; }
 
-            lhs->m_NextQueueNode = rhs;
-            rhs->m_PrevQueueNode = lhs;
+            lhs->QueueNode::m_Next = rhs;
+            rhs->QueueNode::m_Prev = lhs;
         }
 
         //---------------------------------------------------------------------
@@ -98,17 +101,17 @@ public:
             if (node == nullptr)
             { return; }
 
-            auto prev = node->m_PrevQueueNode;
-            auto next = node->m_NextQueueNode;
+            auto prev = node->QueueNode::m_Prev;
+            auto next = node->QueueNode::m_Next;
 
             if (prev != nullptr)
-            { prev->m_NextQueueNode = next; }
+            { prev->QueueNode::m_Next = next; }
 
             if (next != nullptr)
-            { next->m_PrevQueueNode = prev; }
+            { next->QueueNode::m_Prev = prev; }
 
-            node->m_PrevQueueNode = nullptr;
-            node->m_NextQueueNode = nullptr;
+            node->QueueNode::m_Prev = nullptr;
+            node->QueueNode::m_Next = nullptr;
         }
     };
 
@@ -145,12 +148,12 @@ public:
         while(itr != nullptr)
         {
             auto node = itr;
-            Node::Unlink(node);
+            QueueNode::Unlink(node);
 
-            if (itr->m_NextQueueNode == nullptr)
+            if (itr->QueueNode::m_Next == nullptr)
             { break; }
 
-            itr = itr->m_NextQueueNode;
+            itr = itr->QueueNode::m_Next;
         }
 
         m_Head = nullptr;
@@ -168,7 +171,7 @@ public:
         { return; }
 
         // 継承チェック.
-        assert(static_cast<Queue<T>::Node*>(node) != nullptr);
+        assert(static_cast<QueueNode*>(node) != nullptr);
 
         if (m_Head == nullptr)
         {
@@ -177,7 +180,7 @@ public:
         }
         else
         {
-            Node::Link(m_Tail, node);
+            QueueNode::Link(m_Tail, node);
             m_Tail = node;
         }
         m_Count++;
@@ -192,8 +195,8 @@ public:
         { return nullptr; }
 
         auto head = m_Head;
-        auto next = m_Head->m_NextQueueNode;
-        Node::Unlink(head);
+        auto next = m_Head->QueueNode::m_Next;
+        QueueNode::Unlink(head);
         m_Head = next;
         m_Count--;
         return head;

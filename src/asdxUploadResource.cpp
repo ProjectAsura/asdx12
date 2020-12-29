@@ -555,7 +555,7 @@ private:
 //-----------------------------------------------------------------------------
 //      アップロードテクスチャリソースを生成します.
 //-----------------------------------------------------------------------------
-bool CreateUploadTextureResource
+bool CreateUploadTexture
 (
     ID3D12Resource*     pDest,
     const ResTexture&   resource,
@@ -576,7 +576,7 @@ bool CreateUploadTextureResource
 //-----------------------------------------------------------------------------
 //      アップロードバッファリソースを生成します.
 //-----------------------------------------------------------------------------
-bool CreateUploadBufferResource
+bool CreateUploadBuffer
 (
     ID3D12Resource*     pDest,
     const void*         resource,

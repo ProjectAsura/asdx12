@@ -280,7 +280,7 @@ bool Tlas::Init
     DXR_BUILD_FLAGS             flags
 )
 {
-    if (!CreateUploadBuffer(
+    if (!::CreateUploadBuffer(
         pDevice, sizeof(DXR_INSTANCE_DESC) * instanceDescCount, 
         m_Instances.GetAddress()))
     {
@@ -315,7 +315,7 @@ bool Tlas::Init
     if (prebuildInfo.ResultDataMaxSizeInBytes == 0)
     { return false; }
 
-    if (!CreateUAVBuffer(
+    if (!::CreateUAVBuffer(
         pDevice,
         prebuildInfo.ScratchDataSizeInBytes,
         m_Scratch.GetAddress(),
@@ -488,7 +488,7 @@ bool ShaderTable::Init
 
     auto bufferSize = m_RecordSize * recordCount;
 
-    if (!CreateUploadBuffer(pDevice, bufferSize, m_Resource.GetAddress()))
+    if (!::CreateUploadBuffer(pDevice, bufferSize, m_Resource.GetAddress()))
     {
         ELOGA("Error : CreateUploadBuffer() Failed.");
         return false;

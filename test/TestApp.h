@@ -20,7 +20,7 @@
 #include <asdxModel.h>
 #include <asdxCameraController.h>
 #include <asdxPassGraph.h>
-#include <pass/asdxColorFilter.h>
+#include <renderer/asdxColorFilter.h>
 
 
 ///////////////////////////////////////////////////////////////////////////////

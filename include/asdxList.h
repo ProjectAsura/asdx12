@@ -25,6 +25,9 @@ class List
     /* NOTHING */
 
 public:
+    class Node;
+    typedef List<T>::Node ListNode;
+
     ///////////////////////////////////////////////////////////////////////////
     // Node class
     ///////////////////////////////////////////////////////////////////////////
@@ -49,8 +52,8 @@ public:
         //! @brief      コンストラクタです.
         //---------------------------------------------------------------------
         Node()
-        : m_NextListNode(nullptr)
-        , m_PrevListNode(nullptr)
+        : m_Next(nullptr)
+        , m_Prev(nullptr)
         { /* DO_NOTHING */ }
 
         //---------------------------------------------------------------------
@@ -58,49 +61,49 @@ public:
         //---------------------------------------------------------------------
         ~Node()
         {
-            auto prev = m_PrevListNode;
-            auto next = m_NextListNode;
+            auto prev = ListNode::m_Prev;
+            auto next = ListNode::m_Next;
 
             if (prev != nullptr)
-            { prev->m_NextListNode = next; }
+            { prev->ListNode::m_Next = next; }
 
             if (next != nullptr)
-            { next->m_PrevListNode = prev; }
+            { next->ListNode::m_Prev = prev; }
 
-            m_PrevListNode = nullptr;
-            m_NextListNode = nullptr;
+            ListNode::m_Prev = nullptr;
+            ListNode::m_Next = nullptr;
         }
 
         //---------------------------------------------------------------------
         //! @brief      次のノードを取得します.
         //---------------------------------------------------------------------
         T* GetNext() const
-        { return m_NextListNode; }
+        { return ListNode::m_Next; }
 
         //---------------------------------------------------------------------
         //! @brief      前のノードを取得します.
         //---------------------------------------------------------------------
         T* GetPrev() const
-        { return m_PrevListNode; }
+        { return ListNode::m_Prev; }
 
         //---------------------------------------------------------------------
         //! @brief      次のノードを持つかチェックします.
         //---------------------------------------------------------------------
         bool HasNext() const
-        { return m_NextListNode != nullptr; }
+        { return ListNode::m_Next != nullptr; }
 
         //---------------------------------------------------------------------
         //! @brief      前のノードを持つかチェックします.
         //---------------------------------------------------------------------
         bool HasPrev() const
-        { return m_PrevListNode != nullptr; }
+        { return ListNode::m_Prev != nullptr; }
 
     private:
         //=====================================================================
         // private variables.
         //=====================================================================
-        T*  m_NextListNode = nullptr;       //!< 次のノード.
-        T*  m_PrevListNode = nullptr;       //!< 前のノード.
+        T*  m_Next = nullptr;       //!< 次のノード.
+        T*  m_Prev = nullptr;       //!< 前のノード.
 
         //---------------------------------------------------------------------
         //! @brief      リンクを設定します.
@@ -110,8 +113,8 @@ public:
             if (lhs == nullptr || rhs == nullptr)
             { return; }
 
-            lhs->m_NextListNode = rhs;
-            rhs->m_PrevListNode = lhs;
+            lhs->ListNode::m_Next = rhs;
+            rhs->ListNode::m_Prev = lhs;
         }
 
         //---------------------------------------------------------------------
@@ -122,17 +125,17 @@ public:
             if (node == nullptr)
             { return; }
 
-            auto prev = node->m_PrevListNode;
-            auto next = node->m_NextListNode;
+            auto prev = node->ListNode::m_Prev;
+            auto next = node->ListNode::m_Next;
 
             if (prev != nullptr)
-            { prev->m_NextListNode = next; }
+            { prev->ListNode::m_Next = next; }
 
             if (next != nullptr)
-            { next->m_PrevListNode = prev; }
+            { next->ListNode::m_Prev = prev; }
 
-            node->m_PrevListNode = nullptr;
-            node->m_NextListNode = nullptr;
+            node->ListNode::m_Prev = nullptr;
+            node->ListNode::m_Next = nullptr;
         }
     };
 
@@ -169,12 +172,12 @@ public:
         while(itr != nullptr)
         {
             auto node = itr;
-            Node::Unlink(node);
+            ListNode::Unlink(node);
 
-            if (itr->m_NextListNode == nullptr)
+            if (itr->ListNode::m_Next == nullptr)
             { break; }
 
-            itr = itr->m_NextListNode;
+            itr = itr->ListNode::m_Next;
         }
 
         m_Head = nullptr;
@@ -192,7 +195,7 @@ public:
         { return; }
 
         // 継承チェック.
-        assert(static_cast<List<T>::Node*>(node) != nullptr);
+        assert(static_cast<ListNode*>(node) != nullptr);
 
         if (m_Head == nullptr)
         {
@@ -201,7 +204,7 @@ public:
         }
         else
         {
-            Node::Link(node, m_Head);
+            ListNode::Link(node, m_Head);
             m_Head = node;
         }
         m_Count++;
@@ -216,7 +219,7 @@ public:
         { return; }
 
         // 継承チェック.
-        assert(static_cast<List<T>::Node*>(node) != nullptr);
+        assert(static_cast<ListNode*>(node) != nullptr);
 
         if (m_Head == nullptr)
         {
@@ -225,7 +228,7 @@ public:
         }
         else
         {
-            Node::Link(m_Tail, node);
+            ListNode::Link(m_Tail, node);
             m_Tail = node;
         }
         m_Count++;
@@ -240,8 +243,8 @@ public:
         { return nullptr; }
 
         auto head = m_Head;
-        auto next = m_Head->m_NextListNode;
-        Node::Unlink(head);
+        auto next = m_Head->ListNode::m_Next;
+        ListNode::Unlink(head);
         m_Head = next;
         m_Count--;
         return head;
@@ -256,8 +259,8 @@ public:
         { return nullptr; }
 
         auto tail = m_Tail;
-        auto prev = m_Tail->m_PrevListNode;
-        Node::Unlink(tail);
+        auto prev = m_Tail->ListNode::m_Prev;
+        ListNode::Unlink(tail);
         m_Tail = prev;
         m_Count--;
         return tail;
@@ -271,7 +274,7 @@ public:
         if (target == nullptr || node == nullptr)
         { return; }
 
-        Node::Link(target, node);
+        ListNode::Link(target, node);
         m_Count++;
     }
 
@@ -283,7 +286,7 @@ public:
         if (node == nullptr)
         { return; }
 
-        Node::Unlink(node);
+        ListNode::Unlink(node);
         m_Count--;
     }
 
@@ -301,10 +304,10 @@ public:
             if (itr == node)
             { return true; }
 
-            if (itr->m_NextListNode == nullptr)
+            if (itr->ListNode::m_Next == nullptr)
             { break; }
 
-            itr = itr->m_NextListNode;
+            itr = itr->ListNode::m_Next;
         }
 
         return false;

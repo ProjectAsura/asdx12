@@ -24,6 +24,7 @@
 
 namespace {
 
+#ifdef ASDX_EANBLE_DXC
 //-----------------------------------------------------------------------------
 //      シェーダリフレクションを生成します.
 //-----------------------------------------------------------------------------
@@ -74,6 +75,7 @@ HRESULT CreateShaderReflectionOld(const void* pData, size_t size, ID3D12ShaderRe
 
     return containerReflection->GetPartReflection(shaderIdx, IID_PPV_ARGS(ppResult));
 }
+#endif
 
 } // namespace
 
@@ -136,7 +138,7 @@ bool ShaderReflection::Init(const void* pData, size_t size)
 
     return true;
 #else
-    auto hr = D3DReflect(pBinary, binarySize, IID_PPV_ARGS(m_pReflection.GetAddress()));
+    auto hr = D3DReflect(pData, size, IID_PPV_ARGS(m_pReflection.GetAddress()));
     if (FAILED(hr))
     {
         ELOG("Error : D3DReflect() Failed. errcode = 0x%x", hr);

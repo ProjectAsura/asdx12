@@ -43,7 +43,7 @@ struct IUploadResource : public IReference
 //! @retval true    生成に成功.
 //! @retval fasle   生成に失敗.
 //-----------------------------------------------------------------------------
-bool CreateUploadTextureResource(
+bool CreateUploadTexture(
     ID3D12Resource*     pDest,
     const ResTexture&   resource,
     IUploadResource**   ppResource);
@@ -57,7 +57,7 @@ bool CreateUploadTextureResource(
 //! @retval true    生成に成功.
 //! @retval false   生成に失敗.
 //-----------------------------------------------------------------------------
-bool CreateUploadBufferResource(
+bool CreateUploadBuffer(
     ID3D12Resource* pDest,
     const void* resource,
     IUploadResource** ppResource);
