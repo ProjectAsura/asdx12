@@ -119,7 +119,7 @@ namespace asdx {
 bool IsSupportDXR(ID3D12Device6* pDevice)
 {
     D3D12_FEATURE_DATA_D3D12_OPTIONS5 options = {};
-    auto hr = pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &options, sizeof(options));
+    auto hr = pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &options, sizeof(options));
     if (FAILED(hr))
     { return false; }
 

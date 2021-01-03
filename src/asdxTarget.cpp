@@ -740,19 +740,12 @@ bool ComputeTarget::Init(const TargetDesc* pDesc, uint32_t stride)
             D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS
         };
 
-        D3D12_CLEAR_VALUE clearValue;
-        clearValue.Format = pDesc->Format,
-        clearValue.Color[0] = 1.0f;
-        clearValue.Color[1] = 1.0f;
-        clearValue.Color[2] = 1.0f;
-        clearValue.Color[3] = 1.0f;
-
         hr = GetD3D12Device()->CreateCommittedResource( 
             &props,
             D3D12_HEAP_FLAG_NONE,
             &desc,
             pDesc->InitState,
-            &clearValue,
+            nullptr,
             IID_PPV_ARGS(m_pResource.GetAddress()));
         if ( FAILED( hr ) )
         {
