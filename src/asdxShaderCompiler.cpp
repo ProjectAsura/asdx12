@@ -198,129 +198,86 @@ bool WriteBlobToFile(IBlob* pBlob, const char* filename)
 bool CompileFromFile
 (
     const wchar_t*  filename,
-    const wchar_t** compileArgs,
-    uint32_t        countCompileArgs,
+    const char*     entryPoint,
+    const char*     shaderModel,
     IBlob**         ppResult
 )
 {
 #ifdef ASDX_ENABLE_DXC
-    HRESULT hr = S_OK;
-    RefPtr<IDxcUtils> pUtils;
-    RefPtr<IDxcCompiler3> pCompiler;
-    DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(pUtils.GetAddress()));
-    DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(pCompiler.GetAddress()));
+    //HRESULT hr = S_OK;
+    //RefPtr<IDxcCompiler> pCompiler;
+    //RefPtr<IDxcLibrary> pLibrary;
+    //DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(pCompiler.GetAddress()));
+    //DxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(pLibrary.GetAddress()));
 
-    RefPtr<IDxcIncludeHandler> pIncludeHandler;
-    hr = pUtils->CreateDefaultIncludeHandler(pIncludeHandler.GetAddress());
-    if (FAILED(hr))
-    { return false; }
+    //UINT32 codePage = CP_ACP;
+    //auto hr = pLibrary->CreateBlobFromFile(filename, &codePage);
+    //if (FAILED(hr))
+    //{ return false; }
+  
+    //RefPtr<IDxcBlobEncoding> pSource;
+    //pLibrary->GetBlobAsUtf8(p
 
-    RefPtr<IDxcBlobEncoding> pSource;
-    pUtils->LoadFile(filename, nullptr, pSource.GetAddress());
 
-    BOOL known;
-    UINT32 codePage;
-    pSource->GetEncoding(&known, &codePage);
+    //RefPtr<IDxcBlobEncoding> pSource;
+    //pUtils->LoadFile(filename, nullptr, pSource.GetAddress());
 
-    DxcBuffer source;
-    source.Ptr = pSource->GetBufferPointer();
-    source.Size = pSource->GetBufferSize();
-    source.Encoding = (known == TRUE) ? codePage : DXC_CP_ACP;
+    //BOOL known;
+    //UINT32 codePage;
+    //pSource->GetEncoding(&known, &codePage);
 
-    RefPtr<IDxcResult> pResults;
-    pCompiler->Compile(
-        &source,
-        compileArgs,
-        countCompileArgs,
-        pIncludeHandler.GetPtr(),
-        IID_PPV_ARGS(pResults.GetAddress()));
+    //DxcBuffer source;
+    //source.Ptr = pSource->GetBufferPointer();
+    //source.Size = pSource->GetBufferSize();
+    //source.Encoding = (known == TRUE) ? codePage : DXC_CP_ACP;
 
-    RefPtr<IDxcBlobUtf8> pErrors;
-    pResults->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(pErrors.GetAddress()), nullptr);
-    if (pErrors.GetPtr() != nullptr && pErrors->GetStringLength() != 0)
-    {
-        wprintf(L"Warnings and Errors:\n%S\n", pErrors->GetStringPointer());
-    }
+    //RefPtr<IDxcResult> pResults;
+    //pCompiler->Compile(
+    //    &source,
+    //    compileArgs,
+    //    countCompileArgs,
+    //    pIncludeHandler.GetPtr(),
+    //    IID_PPV_ARGS(pResults.GetAddress()));
 
-    HRESULT ret;
-    pResults->GetStatus(&ret);
-    if (FAILED(ret))
-    {
-        wprintf(L"Compilation Failed. errcode = 0x%x", ret);
-        return false;
-    }
+    //RefPtr<IDxcBlobUtf8> pErrors;
+    //pResults->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(pErrors.GetAddress()), nullptr);
+    //if (pErrors.GetPtr() != nullptr && pErrors->GetStringLength() != 0)
+    //{
+    //    wprintf(L"Warnings and Errors:\n%S\n", pErrors->GetStringPointer());
+    //}
 
-    RefPtr<IDxcBlob> pShader;
-    RefPtr<IDxcBlobUtf16> pShaderName;
-    pResults->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(pShader.GetAddress()), pShaderName.GetAddress());
+    //HRESULT ret;
+    //pResults->GetStatus(&ret);
+    //if (FAILED(ret))
+    //{
+    //    wprintf(L"Compilation Failed. errcode = 0x%x", ret);
+    //    return false;
+    //}
 
-    auto blob = new Blob();
-    blob->m_Buffer = malloc(pShader->GetBufferSize());
-    blob->m_Size = pShader->GetBufferSize();
+    //pCompiler->Compile(pSource, filename, entry.c_str(), profile.c_str(), nullptr, 0, 
 
-    memcpy(blob->m_Buffer, pShader->GetBufferPointer(), pShader->GetBufferSize());
-    *ppResult = blob;
+
+    //RefPtr<IDxcBlob> pShader;
+    ////RefPtr<IDxcBlobUtf16> pShaderName;
+    ////pResults->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(pShader.GetAddress()), pShaderName.GetAddress());
+
+    //auto blob = new Blob();
+    //blob->m_Buffer = malloc(pShader->GetBufferSize());
+    //blob->m_Size = pShader->GetBufferSize();
+
+    //memcpy(blob->m_Buffer, pShader->GetBufferPointer(), pShader->GetBufferSize());
+    //*ppResult = blob;
 
     return true;
 #else
-    std::string entryPoint = "main";
-    std::string shaderModel = "vs_5_0";
-    UINT flags = 0;
-
-    for(auto i=0u; i<countCompileArgs; ++i)
-    {
-        if (wcscmp(compileArgs[i], L"-D") == 0)
-        {
-        }
-        // エントリーポイント.
-        else if (wcscmp(compileArgs[i], L"-E") == 0)
-        {
-            i++;
-            entryPoint = asdx::ToStringA(compileArgs[i]);
-        }
-        else if (wcscmp(compileArgs[i], L"-Fd") == 0)
-        {
-        }
-        else if (wcscmp(compileArgs[i], L"-Fo") == 0)
-        {
-        }
-        else if (wcscmp(compileArgs[i], L"-Gec") == 0)
-        {
-        }
-        else if (wcscmp(compileArgs[i], L"-HV") == 0)
-        {
-        }
-        else if (wcscmp(compileArgs[i], L"-Od") == 0)
-        {
-        }
-        // シェーダプロファイル.
-        else if (wcscmp(compileArgs[i], L"-T") == 0)
-        {
-            i++;
-            shaderModel = asdx::ToStringA(compileArgs[i]);
-        }
-        else if (wcscmp(compileArgs[i], L"-Vd") == 0)
-        {
-        }
-        else if (wcscmp(compileArgs[i], L"-Zi") == 0)
-        {
-        }
-        else if (wcscmp(compileArgs[i], L"-Zpc") == 0)
-        {
-        }
-        else if (wcscmp(compileArgs[i], L"-Zpr") == 0)
-        {
-        }
-    }
-
     RefPtr<ID3DBlob> pShader;
     RefPtr<ID3DBlob> pError;
     auto hr = D3DCompileFromFile(
         filename,
         nullptr,
         D3D_COMPILE_STANDARD_FILE_INCLUDE,
-        entryPoint.c_str(),
-        shaderModel.c_str(),
+        entryPoint,
+        shaderModel,
         flags,
         0,
         pShader.GetAddress(),
@@ -335,9 +292,128 @@ bool CompileFromFile
     blob->m_Size = pShader->GetBufferSize();
     assert(blob->m_Buffer != nullptr);
     memcpy(blob->m_Buffer, pShader->GetBufferPointer(), pShader->GetBufferSize());
-    *ppResult = blob;    
+    *ppResult = blob;
 
     return true;
+#endif
+}
+
+//-----------------------------------------------------------------------------
+//      シェーダコンパイルします.
+//-----------------------------------------------------------------------------
+bool CompileFromFile
+(
+    const wchar_t*  filename,
+    const wchar_t** compileArgs,
+    uint32_t        countCompileArgs,
+    IBlob**         ppResult
+)
+{
+#ifdef ASDX_ENABLE_DXC
+    #if 0
+        HRESULT hr = S_OK;
+        RefPtr<IDxcUtils> pUtils;
+        RefPtr<IDxcCompiler3> pCompiler;
+        DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(pUtils.GetAddress()));
+        DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(pCompiler.GetAddress()));
+
+        RefPtr<IDxcIncludeHandler> pIncludeHandler;
+        hr = pUtils->CreateDefaultIncludeHandler(pIncludeHandler.GetAddress());
+        if (FAILED(hr))
+        { return false; }
+
+        RefPtr<IDxcBlobEncoding> pSource;
+        pUtils->LoadFile(filename, nullptr, pSource.GetAddress());
+
+        BOOL known;
+        UINT32 codePage;
+        pSource->GetEncoding(&known, &codePage);
+
+        DxcBuffer source;
+        source.Ptr = pSource->GetBufferPointer();
+        source.Size = pSource->GetBufferSize();
+        source.Encoding = (known == TRUE) ? codePage : DXC_CP_ACP;
+
+        RefPtr<IDxcResult> pResults;
+        pCompiler->Compile(
+            &source,
+            compileArgs,
+            countCompileArgs,
+            pIncludeHandler.GetPtr(),
+            IID_PPV_ARGS(pResults.GetAddress()));
+
+        RefPtr<IDxcBlobUtf8> pErrors;
+        pResults->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(pErrors.GetAddress()), nullptr);
+        if (pErrors.GetPtr() != nullptr && pErrors->GetStringLength() != 0)
+        {
+            wprintf(L"Warnings and Errors:\n%S\n", pErrors->GetStringPointer());
+        }
+
+        HRESULT ret;
+        pResults->GetStatus(&ret);
+        if (FAILED(ret))
+        {
+            wprintf(L"Compilation Failed. errcode = 0x%x", ret);
+            return false;
+        }
+
+        RefPtr<IDxcBlob> pShader;
+        RefPtr<IDxcBlobUtf16> pShaderName;
+        pResults->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(pShader.GetAddress()), pShaderName.GetAddress());
+
+        auto blob = new Blob();
+        blob->m_Buffer = malloc(pShader->GetBufferSize());
+        blob->m_Size = pShader->GetBufferSize();
+
+        memcpy(blob->m_Buffer, pShader->GetBufferPointer(), pShader->GetBufferSize());
+        *ppResult = blob;
+
+        return true;
+    #else
+        std::string entryPoint = "main";
+        std::string shaderModel = "vs_5_0";
+        UINT flags = 0;
+
+        for(auto i=0u; i<countCompileArgs; ++i)
+        {
+            // エントリーポイント.
+            if (wcscmp(compileArgs[i], L"-E") == 0)
+            {
+                i++;
+                entryPoint = asdx::ToStringA(compileArgs[i]);
+            }
+            // シェーダプロファイル.
+            else if (wcscmp(compileArgs[i], L"-T") == 0)
+            {
+                i++;
+                shaderModel = asdx::ToStringA(compileArgs[i]);
+            }
+        }
+
+        return CompileFromFile(filename, entryPoint.c_str(), shaderModel.c_str(), ppResult);
+    #endif
+#else
+    std::string entryPoint = "main";
+    std::string shaderModel = "vs_5_0";
+    UINT flags = 0;
+
+    for(auto i=0u; i<countCompileArgs; ++i)
+    {
+        // エントリーポイント.
+        if (wcscmp(compileArgs[i], L"-E") == 0)
+        {
+            i++;
+            entryPoint = asdx::ToStringA(compileArgs[i]);
+        }
+        // シェーダプロファイル.
+        else if (wcscmp(compileArgs[i], L"-T") == 0)
+        {
+            i++;
+            shaderModel = asdx::ToStringA(compileArgs[i]);
+        }
+    }
+
+    return CompileFromFile(filename, entryPoint.c_str(), shaderModel.c_str(), ppResult);
 #endif
 }
 

@@ -17,7 +17,7 @@
 #include <dxgi1_6.h>
 
 #include <asdxRef.h>
-#include <asdxTimer.h>
+#include <asdxStepTimer.h>
 #include <asdxHid.h>
 #include <asdxColorSpace.h>
 #include <asdxGraphicsDevice.h>
@@ -217,7 +217,7 @@ protected:
     uint32_t                        m_Height;               //!< 画面の縦幅です.
     float                           m_AspectRatio;          //!< 画面のアスペクト比です.
     LPCWSTR                         m_Title;                //!< アプリケーションのタイトル名です.
-    Timer                           m_Timer;                //!< タイマーです.
+    StepTimer                       m_Timer;                //!< タイマーです.
     D3D12_VIEWPORT                  m_Viewport;             //!< ビューポートです.
     D3D12_RECT                      m_ScissorRect;          //!< シザー矩形です.
     HICON                           m_hIcon;                //!< アイコンハンドルです.
@@ -227,7 +227,6 @@ protected:
     std::vector<ColorTarget>        m_ColorTarget;          //!< カラーターゲットです.
     DepthTarget                     m_DepthTarget;          //!< 深度ターゲットです.
     CommandList                     m_GfxCmdList;           //!< グラフィックスコマンドリスト.
-    Disposer<ID3D12Resource>        m_Disposer;             //!< リソース遅延解放ユーティリティー.
 
     //=========================================================================
     // protected methods.

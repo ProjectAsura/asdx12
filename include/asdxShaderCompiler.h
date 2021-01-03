@@ -92,8 +92,8 @@ bool WriteBlobToFile(IBlob* pBlob, const char* filename);
 //-----------------------------------------------------------------------------
 bool CompileFromFile(
     const wchar_t*  filename,
-    const wchar_t** compileArgs,
-    uint32_t        countCompileArgs,
+    const char*     entryPoint,
+    const char*     shaderModel,
     IBlob**         ppResult);
 
 } // namespace

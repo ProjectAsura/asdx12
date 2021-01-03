@@ -788,7 +788,7 @@ bool Application::InitWnd()
     m_Timer.Start();
 
     // 開始時刻を取得.
-    m_LatestUpdateTime = m_Timer.GetElapsedTime();
+    m_LatestUpdateTime = m_Timer.GetElapsedSec();
 
     // 正常終了.
     return true;
@@ -983,7 +983,6 @@ void Application::TermD3D()
     m_DepthTarget.Term();
     m_pSwapChain4.Reset();
     m_GfxCmdList.Term();
-    m_Disposer.Clear();
     GraphicsDevice::Instance().Term();
 }
 
@@ -1018,7 +1017,7 @@ void Application::MainLoop()
             double elapsedTime;
 
             // 時間を取得.
-            m_Timer.Update( time, absTime, elapsedTime );
+            m_Timer.GetValues( time, absTime, elapsedTime );
 
             // 0.5秒ごとにFPSを更新.
             auto interval = float( time - m_LatestUpdateTime );
@@ -1486,9 +1485,6 @@ void Application::Present( uint32_t syncInterval )
         { /* DO_NOTHING */ }
         break;
     }
-
-    // フレーム同期.
-    m_Disposer.FrameSync();
 }
 
 //-----------------------------------------------------------------------------

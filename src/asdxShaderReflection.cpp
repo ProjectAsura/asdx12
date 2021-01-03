@@ -24,7 +24,7 @@
 
 namespace {
 
-#ifdef ASDX_EANBLE_DXC
+#ifdef ASDX_ENABLE_DXC
 //-----------------------------------------------------------------------------
 //      シェーダリフレクションを生成します.
 //-----------------------------------------------------------------------------
@@ -104,6 +104,8 @@ ShaderReflection::~ShaderReflection()
 bool ShaderReflection::Init(const void* pData, size_t size)
 {
 #ifdef ASDX_ENABLE_DXC
+
+#if 0 // 新しいやつ.
     asdx::RefPtr<IDxcUtils> pUtil;
     auto hr = DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(pUtil.GetAddress()));
     if (FAILED(hr))
@@ -135,6 +137,15 @@ bool ShaderReflection::Init(const void* pData, size_t size)
             return false;
         }
     }
+#else
+    // コンパイルエラーが出る場合は古いリフレクションに変更.
+    auto hr = CreateShaderReflectionOld(pData, size, m_pReflection.GetAddress());
+    if (FAILED(hr))
+    {
+        ELOG("Error : CreateShaderReflectionOld() Failed.");
+        return false;
+    }
+#endif
 
     return true;
 #else
