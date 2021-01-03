@@ -51,7 +51,7 @@ void ClearUAV(
 
 void SetViewport(
     ID3D12GraphicsCommandList*      pCmd,
-    IView*                          pView,
+    const IView*                    pView,
     bool                            setScissor = true);
 
 void SetViewport(
