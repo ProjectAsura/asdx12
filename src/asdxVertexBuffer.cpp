@@ -83,7 +83,9 @@ bool VertexBuffer::Init(ID3D12Device* pDevice, uint64_t size, uint32_t stride)
 //-----------------------------------------------------------------------------
 void VertexBuffer::Term()
 {
-    m_pResource.Reset();
+    auto resource = m_pResource.Detach();
+    if (resource != nullptr)
+    { GfxDevice().PushToDisposer(resource); }
     memset(&m_View, 0, sizeof(m_View));
 }
 

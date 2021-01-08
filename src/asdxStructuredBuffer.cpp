@@ -127,7 +127,9 @@ bool StructuredBuffer::Init
 //-----------------------------------------------------------------------------
 void StructuredBuffer::Term()
 {
-    m_Resource.Reset();
+    auto resource = m_Resource.Detach();
+    if (resource != nullptr)
+    { GfxDevice().PushToDisposer(resource); }
     m_View.Reset();
 }
 

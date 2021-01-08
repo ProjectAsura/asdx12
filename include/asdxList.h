@@ -275,6 +275,9 @@ public:
         { return; }
 
         ListNode::Link(target, node);
+        if (target == m_Tail)
+        { m_Tail = node; }
+
         m_Count++;
     }
 
@@ -286,6 +289,8 @@ public:
         if (node == nullptr)
         { return; }
 
+        if (node == m_Tail)
+        { m_Tail = node->ListNode::m_Prev; }
         ListNode::Unlink(node);
         m_Count--;
     }

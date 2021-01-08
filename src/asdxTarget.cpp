@@ -408,7 +408,10 @@ void ColorTarget::Term()
 {
     m_pSRV.Reset();
     m_pRTV.Reset();
-    m_pResource.Reset();
+
+    auto resource = m_pResource.Detach();
+    if (resource != nullptr)
+    { GfxDevice().PushToDisposer(resource); }
 
     memset(&m_Desc, 0, sizeof(m_Desc));
     m_IsSRGB = false;
@@ -654,7 +657,11 @@ void DepthTarget::Term()
 {
     m_pDSV.Reset();
     m_pSRV.Reset();
-    m_pResource.Reset();
+
+    auto resource = m_pResource.Detach();
+    if (resource != nullptr)
+    { GfxDevice().PushToDisposer(resource); }
+
     memset(&m_Desc, 0, sizeof(m_Desc));
 }
 
@@ -882,7 +889,11 @@ void ComputeTarget::Term()
 {
     m_pUAV.Reset();
     m_pSRV.Reset();
-    m_pResource.Reset();
+
+    auto resource = m_pResource.Detach();
+    if (resource != nullptr)
+    { GfxDevice().PushToDisposer(resource); }
+ 
     memset(&m_Desc, 0, sizeof(m_Desc));
 }
 

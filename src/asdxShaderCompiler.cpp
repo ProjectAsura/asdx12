@@ -204,69 +204,83 @@ bool CompileFromFile
 )
 {
 #ifdef ASDX_ENABLE_DXC
-    //HRESULT hr = S_OK;
-    //RefPtr<IDxcCompiler> pCompiler;
-    //RefPtr<IDxcLibrary> pLibrary;
-    //DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(pCompiler.GetAddress()));
-    //DxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(pLibrary.GetAddress()));
+    FILE* pFile = nullptr;
+    std::vector<uint8_t> buffer;
+    auto err = _wfopen_s(&pFile, filename, L"rb");
+    if (err != 0)
+    {
+        return false;
+    }
 
-    //UINT32 codePage = CP_ACP;
-    //auto hr = pLibrary->CreateBlobFromFile(filename, &codePage);
-    //if (FAILED(hr))
-    //{ return false; }
-  
-    //RefPtr<IDxcBlobEncoding> pSource;
-    //pLibrary->GetBlobAsUtf8(p
-
-
-    //RefPtr<IDxcBlobEncoding> pSource;
-    //pUtils->LoadFile(filename, nullptr, pSource.GetAddress());
-
-    //BOOL known;
-    //UINT32 codePage;
-    //pSource->GetEncoding(&known, &codePage);
-
-    //DxcBuffer source;
-    //source.Ptr = pSource->GetBufferPointer();
-    //source.Size = pSource->GetBufferSize();
-    //source.Encoding = (known == TRUE) ? codePage : DXC_CP_ACP;
-
-    //RefPtr<IDxcResult> pResults;
-    //pCompiler->Compile(
-    //    &source,
-    //    compileArgs,
-    //    countCompileArgs,
-    //    pIncludeHandler.GetPtr(),
-    //    IID_PPV_ARGS(pResults.GetAddress()));
-
-    //RefPtr<IDxcBlobUtf8> pErrors;
-    //pResults->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(pErrors.GetAddress()), nullptr);
-    //if (pErrors.GetPtr() != nullptr && pErrors->GetStringLength() != 0)
-    //{
-    //    wprintf(L"Warnings and Errors:\n%S\n", pErrors->GetStringPointer());
-    //}
-
-    //HRESULT ret;
-    //pResults->GetStatus(&ret);
-    //if (FAILED(ret))
-    //{
-    //    wprintf(L"Compilation Failed. errcode = 0x%x", ret);
-    //    return false;
-    //}
-
-    //pCompiler->Compile(pSource, filename, entry.c_str(), profile.c_str(), nullptr, 0, 
+    auto cur = ftell(pFile);
+    fseek(pFile, 0, SEEK_END);
+    auto end = ftell(pFile);
+    fseek(pFile, 0, SEEK_SET);
+    auto size = end - cur;
+    buffer.resize(end - cur + 1);
+    fread(buffer.data(), size, 1, pFile);
+    fclose(pFile);
 
 
-    //RefPtr<IDxcBlob> pShader;
-    ////RefPtr<IDxcBlobUtf16> pShaderName;
-    ////pResults->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(pShader.GetAddress()), pShaderName.GetAddress());
+    HRESULT hr = S_OK;
+    RefPtr<IDxcCompiler> pCompiler;
+    RefPtr<IDxcLibrary> pLibrary;
+    DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(pCompiler.GetAddress()));
+    DxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(pLibrary.GetAddress()));
 
-    //auto blob = new Blob();
-    //blob->m_Buffer = malloc(pShader->GetBufferSize());
-    //blob->m_Size = pShader->GetBufferSize();
+    RefPtr<IDxcBlobEncoding> pSource;
+    hr = pLibrary->CreateBlobWithEncodingFromPinned(buffer.data(), UINT32(buffer.size()), CP_ACP, pSource.GetAddress());
+    if (FAILED(hr))
+    {
+        return false;
+    }
 
-    //memcpy(blob->m_Buffer, pShader->GetBufferPointer(), pShader->GetBufferSize());
-    //*ppResult = blob;
+    LPCWSTR args[] = {
+#if defined(DEBUG) || defined(_DEBUG)
+        L"/Zi",
+        L"/O0",
+#else
+        L"/O2"
+#endif
+    };
+
+    auto ep = asdx::ToStringW(entryPoint);
+    auto sm = asdx::ToStringW(shaderModel);
+
+    RefPtr<IDxcOperationResult> pResults;
+    pCompiler->Compile(
+        pSource.GetPtr(),
+        filename,
+        ep.c_str(),
+        sm.c_str(),
+        args,
+        _countof(args),
+        nullptr,
+        0,
+        nullptr,
+        pResults.GetAddress());
+
+    HRESULT ret;
+    pResults->GetStatus(&ret);
+    if (FAILED(ret))
+    {
+        RefPtr<IDxcBlobEncoding> pErrorBlob;
+        pResults->GetErrorBuffer(pErrorBlob.GetAddress());
+        wprintf(L"Compilation Failed. errcode = 0x%x, msg = %lS",
+            ret, reinterpret_cast<const wchar_t*>(pErrorBlob->GetBufferPointer()));
+        
+        return false;
+    }
+
+    RefPtr<IDxcBlob> pShader;
+    pResults->GetResult(pShader.GetAddress());
+
+    auto blob = new Blob();
+    blob->m_Buffer = malloc(pShader->GetBufferSize());
+    blob->m_Size   = pShader->GetBufferSize();
+
+    memcpy(blob->m_Buffer, pShader->GetBufferPointer(), pShader->GetBufferSize());
+    *ppResult = blob;
 
     return true;
 #else
@@ -310,7 +324,7 @@ bool CompileFromFile
 )
 {
 #ifdef ASDX_ENABLE_DXC
-    #if 0
+    #if 1
         HRESULT hr = S_OK;
         RefPtr<IDxcUtils> pUtils;
         RefPtr<IDxcCompiler3> pCompiler;

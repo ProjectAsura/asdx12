@@ -204,7 +204,6 @@
     <ClInclude Include="..\include\asdxQueue.h" />
     <ClInclude Include="..\include\asdxRayTracing.h" />
     <ClInclude Include="..\include\asdxRef.h" />
-    <ClInclude Include="..\include\asdxRenderable.h" />
     <ClInclude Include="..\include\asdxResMaterial.h" />
     <ClInclude Include="..\include\asdxResModel.h" />
     <ClInclude Include="..\include\asdxResourceUploader.h" />
