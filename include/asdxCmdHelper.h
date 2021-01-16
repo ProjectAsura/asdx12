@@ -38,7 +38,7 @@ constexpr D3D12_RESOURCE_STATES STATE_VIDEO_ENCODE_WRITE    = D3D12_RESOURCE_STA
 
 void BarrierTransition(
     ID3D12GraphicsCommandList*      pCmd,
-    IView*                          pView,
+    const IView*                    pView,
     uint32_t                        subresource,
     D3D12_RESOURCE_STATES           stateBefore,
     D3D12_RESOURCE_STATES           stateAfter,
@@ -54,7 +54,7 @@ void BarrierTransition(
 
 void BarrierUAV(
     ID3D12GraphicsCommandList*      pCmd,
-    IUnorderedAccessView*           pView,
+    const IUnorderedAccessView*     pView,
     D3D12_RESOURCE_BARRIER_FLAGS    flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
 
 void BarrierUAV(
@@ -114,7 +114,7 @@ void SetTable(
 void SetCBV(
     ID3D12GraphicsCommandList*      pCmd,
     uint32_t                        index,
-    IConstantBufferView*            view,
+    const IConstantBufferView*      view,
     bool                            compute = false);
 
 void SetCBV(
@@ -126,7 +126,7 @@ void SetCBV(
 void SetSRV(
     ID3D12GraphicsCommandList*      pCmd,
     uint32_t                        index,
-    IShaderResourceView*            view,
+    const IShaderResourceView*      view,
     bool                            compute = false);
 
 void SetSRV(
@@ -138,7 +138,7 @@ void SetSRV(
 void SetUAV(
     ID3D12GraphicsCommandList*      pCmd,
     uint32_t                        index,
-    IUnorderedAccessView*           view,
+    const IUnorderedAccessView*     view,
     bool                            compute = false);
 
 void SetUAV(
@@ -151,6 +151,20 @@ void SetConstant(
     ID3D12GraphicsCommandList*      pCmd,
     uint32_t                        index,
     uint32_t                        data,
+    uint32_t                        offset,
+    bool                            compute = false);
+
+void SetConstant(
+    ID3D12GraphicsCommandList*      pCmd,
+    uint32_t                        index,
+    float                           data,
+    uint32_t                        offset,
+    bool                            compute = false);
+
+void SetConstant(
+    ID3D12GraphicsCommandList*      pCmd,
+    uint32_t                        index,
+    int                             data,
     uint32_t                        offset,
     bool                            compute = false);
 
@@ -177,35 +191,40 @@ public:
         ID3D12GraphicsCommandList*  pCmd,
         ID3D12Resource*             pResource,
         D3D12_RESOURCE_STATES       before,
-        D3D12_RESOURCE_STATES       after
+        D3D12_RESOURCE_STATES       after,
+        uint32_t                    subResource = 0
     )
     : m_pCmd        (pCmd)
     , m_pResource   (pResource)
     , m_StateBefore (before)
     , m_StateAfter  (after)
-    { BarrierTransition(m_pCmd, m_pResource, 0, m_StateBefore, m_StateAfter); }
+    , m_SubResource (subResource)
+    { BarrierTransition(m_pCmd, m_pResource, m_SubResource, m_StateBefore, m_StateAfter); }
 
     ScopedTransition
     (
         ID3D12GraphicsCommandList*  pCmd,
-        IView*                      pView,
+        const IView*                pView,
         D3D12_RESOURCE_STATES       before,
-        D3D12_RESOURCE_STATES       after
+        D3D12_RESOURCE_STATES       after,
+        uint32_t                    subResource = 0
     )
     : m_pCmd        (pCmd)
     , m_pResource   (pView->GetResource())
     , m_StateBefore (before)
     , m_StateAfter  (after)
-    { BarrierTransition(m_pCmd, m_pResource, 0, m_StateBefore, m_StateAfter); }
+    , m_SubResource (subResource)
+    { BarrierTransition(m_pCmd, m_pResource, m_SubResource, m_StateBefore, m_StateAfter); }
 
     ~ScopedTransition()
-    { BarrierTransition(m_pCmd, m_pResource, 0, m_StateAfter, m_StateBefore); }
+    { BarrierTransition(m_pCmd, m_pResource, m_SubResource, m_StateAfter, m_StateBefore); }
 
 private:
     ID3D12GraphicsCommandList* m_pCmd;
     ID3D12Resource*            m_pResource;
     D3D12_RESOURCE_STATES      m_StateBefore;
     D3D12_RESOURCE_STATES      m_StateAfter;
+    uint32_t                   m_SubResource;
 };
 
 class ScopedMarker

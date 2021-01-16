@@ -19,7 +19,7 @@ namespace asdx {
 void BarrierTransition
 (
     ID3D12GraphicsCommandList*      pCmd,
-    IView*                          pView,
+    const IView*                    pView,
     uint32_t                        subresource,
     D3D12_RESOURCE_STATES           stateBefore,
     D3D12_RESOURCE_STATES           stateAfter,
@@ -69,7 +69,7 @@ void BarrierTransition
 void BarrierUAV
 (
     ID3D12GraphicsCommandList*      pCmd,
-    IUnorderedAccessView*           pView,
+    const IUnorderedAccessView*     pView,
     D3D12_RESOURCE_BARRIER_FLAGS    flags
 )
 {
@@ -299,7 +299,7 @@ void SetCBV
 (
     ID3D12GraphicsCommandList*  pCmd,
     uint32_t                    index,
-    IConstantBufferView*        view,
+    const IConstantBufferView*  view,
     bool                        compute
 )
 {
@@ -338,7 +338,7 @@ void SetSRV
 (
     ID3D12GraphicsCommandList*  pCmd,
     uint32_t                    index,
-    IShaderResourceView*        view,
+    const IShaderResourceView*  view,
     bool                        compute
 )
 {
@@ -377,7 +377,7 @@ void SetUAV
 (
     ID3D12GraphicsCommandList*  pCmd,
     uint32_t                    index,
-    IUnorderedAccessView*       view,
+    const IUnorderedAccessView* view,
     bool                        compute
 )
 {
@@ -428,6 +428,64 @@ void SetConstant
     { pCmd->SetComputeRoot32BitConstant(index, data, offset); }
     else
     { pCmd->SetGraphicsRoot32BitConstant(index, data, offset); }
+}
+
+//-----------------------------------------------------------------------------
+//      32bit定数を設定します.
+//-----------------------------------------------------------------------------
+void SetConstant
+(
+    ID3D12GraphicsCommandList*  pCmd,
+    uint32_t                    index,
+    float                       data,
+    uint32_t                    offset,
+    bool                        compute
+)
+{
+    union Data
+    {
+        float       f;
+        uint32_t    u;
+    };
+    Data value = {};
+    value.f = data;
+
+    if (index == UINT32_MAX)
+    { return; }
+
+    if (compute)
+    { pCmd->SetComputeRoot32BitConstant(index, value.u, offset); }
+    else
+    { pCmd->SetGraphicsRoot32BitConstant(index, value.u, offset); }
+}
+
+//-----------------------------------------------------------------------------
+//      32bit定数を設定します.
+//-----------------------------------------------------------------------------
+void SetConstant
+(
+    ID3D12GraphicsCommandList*  pCmd,
+    uint32_t                    index,
+    int                         data,
+    uint32_t                    offset,
+    bool                        compute
+)
+{
+    union Data
+    {
+        int         i;
+        uint32_t    u;
+    };
+    Data value = {};
+    value.i = data;
+
+    if (index == UINT32_MAX)
+    { return; }
+
+    if (compute)
+    { pCmd->SetComputeRoot32BitConstant(index, value.u, offset); }
+    else
+    { pCmd->SetGraphicsRoot32BitConstant(index, value.u, offset); }
 }
 
 //-----------------------------------------------------------------------------
