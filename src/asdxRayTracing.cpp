@@ -240,6 +240,17 @@ void Blas::SetGeometry(uint32_t index, const DXR_GEOMETRY_DESC& desc)
 }
 
 //-----------------------------------------------------------------------------
+//      GPU仮想アドレスを取得します.
+//-----------------------------------------------------------------------------
+D3D12_GPU_VIRTUAL_ADDRESS Blas::GetGPUVirtualAddress() const
+{
+    if (m_Structure.GetPtr() == nullptr)
+    { return D3D12_GPU_VIRTUAL_ADDRESS(); }
+
+    return m_Structure->GetGPUVirtualAddress();
+}
+
+//-----------------------------------------------------------------------------
 //      ビルドします.
 //-----------------------------------------------------------------------------
 void Blas::Build(ID3D12GraphicsCommandList6* pCmd)
