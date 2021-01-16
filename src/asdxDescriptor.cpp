@@ -72,6 +72,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE Descriptor::GetHandleCPU() const
 D3D12_GPU_DESCRIPTOR_HANDLE Descriptor::GetHandleGPU() const
 { return m_HandleGPU; }
 
+
 ///////////////////////////////////////////////////////////////////////////////
 // DescritptorHeap class
 ///////////////////////////////////////////////////////////////////////////////
@@ -80,8 +81,9 @@ D3D12_GPU_DESCRIPTOR_HANDLE Descriptor::GetHandleGPU() const
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
 DescriptorHeap::DescriptorHeap()
-: m_pHeap   (nullptr)
-, m_Pool    ()
+: m_pHeap           (nullptr)
+, m_Pool            ()
+, m_IncrementSize   (0)
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
@@ -148,7 +150,7 @@ Descriptor* DescriptorHeap::CreateDescriptor()
         // CPUハンドルをディスクリプタを割り当て.
         {
             auto handleCPU = m_pHeap->GetCPUDescriptorHandleForHeapStart();
-            handleCPU.ptr += m_IncrementSize * index;
+            handleCPU.ptr += UINT64(m_IncrementSize) * index;
             value->m_HandleCPU = handleCPU;
         }
 
@@ -156,7 +158,7 @@ Descriptor* DescriptorHeap::CreateDescriptor()
         if (hasHandleGPU)
         {
             auto handleGPU = m_pHeap->GetGPUDescriptorHandleForHeapStart();
-            handleGPU.ptr += m_IncrementSize * index;
+            handleGPU.ptr += UINT64(m_IncrementSize) * index;
             value->m_HandleGPU = handleGPU;
         }
     };

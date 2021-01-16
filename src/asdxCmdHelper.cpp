@@ -19,6 +19,29 @@ namespace asdx {
 void BarrierTransition
 (
     ID3D12GraphicsCommandList*      pCmd,
+    IView*                          pView,
+    uint32_t                        subresource,
+    D3D12_RESOURCE_STATES           stateBefore,
+    D3D12_RESOURCE_STATES           stateAfter,
+    D3D12_RESOURCE_BARRIER_FLAGS    flags
+)
+{
+    assert(pView != nullptr);
+    BarrierTransition(
+        pCmd,
+        pView->GetResource(),
+        subresource,
+        stateBefore,
+        stateAfter,
+        flags);
+}
+
+//-----------------------------------------------------------------------------
+//      遷移バリアを発行します.
+//-----------------------------------------------------------------------------
+void BarrierTransition
+(
+    ID3D12GraphicsCommandList*      pCmd,
     ID3D12Resource*                 pResource,
     uint32_t                        subresource,
     D3D12_RESOURCE_STATES           stateBefore,
@@ -38,6 +61,20 @@ void BarrierTransition
     barrier.Transition.StateAfter   = stateAfter;
 
     pCmd->ResourceBarrier(1, &barrier);
+}
+
+//-----------------------------------------------------------------------------
+//      UAVバリアを発行します.
+//-----------------------------------------------------------------------------
+void BarrierUAV
+(
+    ID3D12GraphicsCommandList*      pCmd,
+    IUnorderedAccessView*           pView,
+    D3D12_RESOURCE_BARRIER_FLAGS    flags
+)
+{
+    assert(pView != nullptr);
+    BarrierUAV(pCmd, pView->GetResource(), flags);
 }
 
 //-----------------------------------------------------------------------------
@@ -70,8 +107,8 @@ void ClearRTV
     const IRenderTargetView*    pView,
     const float*                pClearColor)
 {
-    assert(pCmd != nullptr);
-    assert(pView != nullptr);
+    assert(pCmd        != nullptr);
+    assert(pView       != nullptr);
     assert(pClearColor != nullptr);
 
     auto handle = pView->GetHandleCPU();
@@ -168,7 +205,7 @@ void SetViewport
 {
     auto desc = pResource->GetDesc();
 
-    D3D12_VIEWPORT viewport;
+    D3D12_VIEWPORT viewport = {};
     viewport.TopLeftX = 0;
     viewport.TopLeftY = 0;
     viewport.Width    = float(desc.Width);
@@ -181,7 +218,7 @@ void SetViewport
     if (setScissor == false)
     { return; }
 
-    D3D12_RECT scissor;
+    D3D12_RECT scissor = {};
     scissor.left    = 0;
     scissor.right   = LONG(desc.Width);
     scissor.top     = 0;
@@ -210,14 +247,40 @@ void SetRenderTarget
 }
 
 //-----------------------------------------------------------------------------
+//      レンダーターゲットを設定します.
+//-----------------------------------------------------------------------------
+void SetRenderTargets
+(
+    ID3D12GraphicsCommandList*  pCmd,
+    uint32_t                    count,
+    const IRenderTargetView**   pRTVs,
+    const IDepthStencilView*    pDSV
+)
+{
+    assert(pCmd  != nullptr);
+    assert(pRTVs != nullptr);
+    assert(pDSV  != nullptr);
+
+    D3D12_CPU_DESCRIPTOR_HANDLE handleRTVs[8] = {};
+    for(auto i=0u; i<count; ++i)
+    {
+        assert(pRTVs[i] != nullptr);
+        handleRTVs[i] = pRTVs[i]->GetHandleCPU();
+    }
+
+    auto handleDSV = pDSV->GetHandleCPU();
+    pCmd->OMSetRenderTargets(count, handleRTVs, FALSE, &handleDSV);
+}
+
+//-----------------------------------------------------------------------------
 //      ディスクリプタテーブルを設定します.
 //-----------------------------------------------------------------------------
 void SetTable
 (
     ID3D12GraphicsCommandList*  pCmd,
-    bool                        compute,
     uint32_t                    index,
-    const IView*                pView
+    const IView*                pView,
+    bool                        compute
 )
 {
     if (pView == nullptr || index == UINT32_MAX)
@@ -235,15 +298,15 @@ void SetTable
 void SetCBV
 (
     ID3D12GraphicsCommandList*  pCmd,
-    bool                        compute,
     uint32_t                    index,
-    IConstantBufferView*        view
+    IConstantBufferView*        view,
+    bool                        compute
 )
 {
     if (view == nullptr)
     { return; }
 
-    SetCBV(pCmd, compute, index, view->GetResource());
+    SetCBV(pCmd, index, view->GetResource(), compute);
 }
 
 //-----------------------------------------------------------------------------
@@ -252,9 +315,9 @@ void SetCBV
 void SetCBV
 (
     ID3D12GraphicsCommandList*  pCmd,
-    bool                        compute,
     uint32_t                    index,
-    ID3D12Resource*             resource
+    ID3D12Resource*             resource,
+    bool                        compute
 )
 {
     if (resource == nullptr)
@@ -274,15 +337,15 @@ void SetCBV
 void SetSRV
 (
     ID3D12GraphicsCommandList*  pCmd,
-    bool                        compute,
     uint32_t                    index,
-    IShaderResourceView*        view
+    IShaderResourceView*        view,
+    bool                        compute
 )
 {
     if (view == nullptr)
     { return; }
 
-    SetSRV(pCmd, compute, index, view->GetResource());
+    SetSRV(pCmd, index, view->GetResource(), compute);
 }
 
 //-----------------------------------------------------------------------------
@@ -291,9 +354,9 @@ void SetSRV
 void SetSRV
 (
     ID3D12GraphicsCommandList*  pCmd,
-    bool                        compute,
     uint32_t                    index,
-    ID3D12Resource*             resource
+    ID3D12Resource*             resource,
+    bool                        compute
 )
 {
     if (resource == nullptr || index == UINT32_MAX)
@@ -313,15 +376,15 @@ void SetSRV
 void SetUAV
 (
     ID3D12GraphicsCommandList*  pCmd,
-    bool                        compute,
     uint32_t                    index,
-    IUnorderedAccessView*       view
+    IUnorderedAccessView*       view,
+    bool                        compute
 )
 {
     if (view == nullptr)
     { return; }
 
-    SetUAV(pCmd, compute, index, view->GetResource());
+    SetUAV(pCmd, index, view->GetResource(), compute);
 }
 
 //-----------------------------------------------------------------------------
@@ -330,9 +393,9 @@ void SetUAV
 void SetUAV
 (
     ID3D12GraphicsCommandList*  pCmd,
-    bool                        compute,
     uint32_t                    index,
-    ID3D12Resource*             resource
+    ID3D12Resource*             resource,
+    bool                        compute
 )
 {
     if (resource == 0 || index == UINT32_MAX)
@@ -352,10 +415,10 @@ void SetUAV
 void SetConstant
 (
     ID3D12GraphicsCommandList*  pCmd,
-    bool                        compute,
     uint32_t                    index,
     uint32_t                    data,
-    uint32_t                    offset
+    uint32_t                    offset,
+    bool                        compute
 )
 {
     if (index == UINT32_MAX)
@@ -373,11 +436,11 @@ void SetConstant
 void SetConstants
 (
     ID3D12GraphicsCommandList*  pCmd,
-    bool                        compute,
     uint32_t                    index,
     uint32_t                    count,
     const void*                 data,
-    uint32_t                    offset
+    uint32_t                    offset,
+    bool                        compute
 )
 {
     if (index == UINT32_MAX || count == 0 || data == nullptr)
@@ -388,5 +451,26 @@ void SetConstants
     else
     { pCmd->SetGraphicsRoot32BitConstants(index, count, data, offset); }
 }
+
+//-----------------------------------------------------------------------------
+//      イベントを開始します.
+//-----------------------------------------------------------------------------
+void BeginEvent
+(
+    ID3D12GraphicsCommandList* pCmd,
+    const char*                text
+)
+{
+    assert(text != nullptr);
+    static const UINT PIX_EVENT_ANSI_VERSION = 1;
+    auto size = UINT((strlen(text) + 1) * sizeof(char));
+    pCmd->BeginEvent(PIX_EVENT_ANSI_VERSION, text, size);
+}
+
+//-----------------------------------------------------------------------------
+//      イベントを終了します.
+//-----------------------------------------------------------------------------
+void EndEvent(ID3D12GraphicsCommandList* pCmd)
+{ pCmd->EndEvent(); }
 
 } // namespace asdx
