@@ -1650,7 +1650,7 @@ float2 ToSphereMapCoord(float3 reflectDir)
 
     return float2(
         reflectDir.x * s + 0.5f,
-        reflectDir.y * s + 0.5f);
+        1.0f - (reflectDir.y * s + 0.5f)); // DirectXÇ»ÇÃÇ≈è„â∫îΩì].
 }
 
 //-----------------------------------------------------------------------------
