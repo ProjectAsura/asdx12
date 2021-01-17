@@ -11,7 +11,7 @@
 #include <vector>
 #include <d3d12.h>
 #include <asdxMath.h>
-#include <asdxRef.h>
+#include <asdxView.h>
 
 
 namespace asdx {
@@ -62,11 +62,29 @@ bool IsSupportDXR(ID3D12Device6* pDevice);
 //! @retval true    生成に成功.
 //! @retval false   生成に失敗.
 //-----------------------------------------------------------------------------
-bool CreateUAVBuffer(
+bool CreateBufferUAV(
     ID3D12Device*           pDevice,
     UINT64                  bufferSize,
     ID3D12Resource**        ppResource,
     D3D12_RESOURCE_STATES   initState = D3D12_RESOURCE_STATE_COMMON);
+
+//-----------------------------------------------------------------------------
+//! @brief      SRVバッファを生成します.
+//!
+//! @param[in]      pDevice         デバイス
+//! @param[in]      pResource       リソース
+//! @param[in]      elementCount    要素数.
+//! @param[in]      elementSize     要素サイズ.
+//! @param[out]     ppSRV           ビュー格納先.
+//! @retval true    生成に成功.
+//! @retval false   生成に失敗.
+//-----------------------------------------------------------------------------
+bool CreateBufferSRV(
+    ID3D12Device*           pDevice,
+    ID3D12Resource*         pResource,
+    UINT                    elementCount,
+    UINT                    elementSize,
+    IShaderResourceView**   ppSRV);
 
 //-----------------------------------------------------------------------------
 //! @brief      アップロードバッファを生成します.

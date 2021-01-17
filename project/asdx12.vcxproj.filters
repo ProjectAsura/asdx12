@@ -467,6 +467,9 @@
     <ClInclude Include="..\include\asdxByteAddressBuffer.h">
       <Filter>ヘッダー ファイル\wrapper</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\asdxAnyList.h">
+      <Filter>ヘッダー ファイル\container</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\include\asdxMath.inl">

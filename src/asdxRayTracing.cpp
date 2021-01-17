@@ -29,9 +29,9 @@ bool IsSupportDXR(ID3D12Device6* pDevice)
 }
 
 //-----------------------------------------------------------------------------
-//      UAVバッファを生成します.
+//      バッファUAVを生成します.
 //-----------------------------------------------------------------------------
-bool CreateUAVBuffer
+bool CreateBufferUAV
 (
     ID3D12Device*           pDevice,
     UINT64                  bufferSize,
@@ -73,6 +73,38 @@ bool CreateUAVBuffer
     }
 
     return true;
+}
+
+//-----------------------------------------------------------------------------
+//      バッファSRVを生成します.
+//-----------------------------------------------------------------------------
+bool CreateBufferSRV
+(
+    ID3D12Device*           pDevice,
+    ID3D12Resource*         pResource,
+    UINT                    elementCount,
+    UINT                    elementSize,
+    IShaderResourceView**   ppView
+)
+{
+    D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
+    desc.ViewDimension           = D3D12_SRV_DIMENSION_BUFFER;
+    desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    desc.Buffer.NumElements      = elementCount;
+    if (elementSize == 0)
+    {
+        desc.Format                     = DXGI_FORMAT_R32_TYPELESS;
+        desc.Buffer.Flags               = D3D12_BUFFER_SRV_FLAG_RAW;
+        desc.Buffer.StructureByteStride = 0;
+    }
+    else
+    {
+        desc.Format                     = DXGI_FORMAT_UNKNOWN;
+        desc.Buffer.Flags               = D3D12_BUFFER_SRV_FLAG_NONE;
+        desc.Buffer.StructureByteStride = elementSize;
+    }
+
+    return asdx::CreateShaderResourceView(pResource, &desc, ppView);
 }
 
 //-----------------------------------------------------------------------------
@@ -165,7 +197,7 @@ bool Blas::Init
     if (prebuildInfo.ResultDataMaxSizeInBytes == 0)
     { return false; }
 
-    if (!CreateUAVBuffer(
+    if (!CreateBufferUAV(
         pDevice,
         prebuildInfo.ScratchDataSizeInBytes,
         m_Scratch.GetAddress(),
@@ -176,7 +208,7 @@ bool Blas::Init
     }
     m_Scratch->SetName(L"asdxBlasScratch");
 
-    if (!CreateUAVBuffer(
+    if (!CreateBufferUAV(
         pDevice,
         prebuildInfo.ResultDataMaxSizeInBytes,
         m_Structure.GetAddress(),
@@ -309,7 +341,7 @@ bool Tlas::Init
     if (prebuildInfo.ResultDataMaxSizeInBytes == 0)
     { return false; }
 
-    if (!CreateUAVBuffer(
+    if (!CreateBufferUAV(
         pDevice,
         prebuildInfo.ScratchDataSizeInBytes,
         m_Scratch.GetAddress(),
@@ -320,7 +352,7 @@ bool Tlas::Init
     }
     m_Scratch->SetName(L"asdxTlasScratch");
 
-    if (!CreateUAVBuffer(
+    if (!CreateBufferUAV(
         pDevice,
         prebuildInfo.ResultDataMaxSizeInBytes,
         m_Structure.GetAddress(),
