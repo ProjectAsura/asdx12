@@ -219,6 +219,7 @@ bool Blas::Init
     }
     m_Structure->SetName(L"asdxBlas");
 
+    memset(&m_BuildDesc, 0, sizeof(m_BuildDesc));
     m_BuildDesc.Inputs                              = inputs;
     m_BuildDesc.ScratchAccelerationStructureData    = m_Scratch->GetGPUVirtualAddress();
     m_BuildDesc.DestAccelerationStructureData       = m_Structure->GetGPUVirtualAddress();
@@ -363,6 +364,7 @@ bool Tlas::Init
     }
     m_Structure->SetName(L"asdxTlas");
 
+    memset(&m_BuildDesc, 0, sizeof(m_BuildDesc));
     m_BuildDesc.Inputs                              = inputs;
     m_BuildDesc.ScratchAccelerationStructureData    = m_Scratch->GetGPUVirtualAddress();
     m_BuildDesc.DestAccelerationStructureData       = m_Structure->GetGPUVirtualAddress();

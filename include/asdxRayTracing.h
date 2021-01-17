@@ -450,7 +450,10 @@ private:
     //-------------------------------------------------------------------------
     template<typename T>
     T* CreateAs(D3D12_STATE_SUBOBJECT_TYPE type)
-    { return reinterpret_cast<T*>(Create(type, sizeof(T))); }
+    {
+        auto buf = Create(type, sizeof(T));
+        return new(buf) T();
+    }
 };
 
 ///////////////////////////////////////////////////////////////////////////////
