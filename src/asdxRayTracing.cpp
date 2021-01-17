@@ -178,6 +178,7 @@ bool Blas::Init
     if (pDevice == nullptr)
     { return false; }
 
+    // 設定をコピっておく.
     m_GeometryDesc.resize(count);
     if (pDescs != nullptr)
     {
@@ -185,6 +186,7 @@ bool Blas::Init
         { m_GeometryDesc[i] = pDescs[i]; }
     }
 
+    // 高速化機構の入力設定.
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
     inputs.DescsLayout      = D3D12_ELEMENTS_LAYOUT_ARRAY;
     inputs.Flags            = flags;
@@ -192,11 +194,13 @@ bool Blas::Init
     inputs.pGeometryDescs   = m_GeometryDesc.data();
     inputs.Type             = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
 
+    // ビルド前情報を取得.
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO prebuildInfo = {};
     pDevice->GetRaytracingAccelerationStructurePrebuildInfo(&inputs, &prebuildInfo);
     if (prebuildInfo.ResultDataMaxSizeInBytes == 0)
     { return false; }
 
+    // スクラッチバッファ生成.
     if (!CreateBufferUAV(
         pDevice,
         prebuildInfo.ScratchDataSizeInBytes,
@@ -208,6 +212,7 @@ bool Blas::Init
     }
     m_Scratch->SetName(L"asdxBlasScratch");
 
+    // 高速化機構用バッファ生成.
     if (!CreateBufferUAV(
         pDevice,
         prebuildInfo.ResultDataMaxSizeInBytes,
@@ -219,11 +224,13 @@ bool Blas::Init
     }
     m_Structure->SetName(L"asdxBlas");
 
+    // ビルド設定.
     memset(&m_BuildDesc, 0, sizeof(m_BuildDesc));
     m_BuildDesc.Inputs                              = inputs;
     m_BuildDesc.ScratchAccelerationStructureData    = m_Scratch->GetGPUVirtualAddress();
     m_BuildDesc.DestAccelerationStructureData       = m_Structure->GetGPUVirtualAddress();
 
+    // 正常終了.
     return true;
 }
 
@@ -272,8 +279,10 @@ ID3D12Resource* Blas::GetResource() const
 //-----------------------------------------------------------------------------
 void Blas::Build(ID3D12GraphicsCommandList6* pCmd)
 {
+    // 高速化機構を構築.
     pCmd->BuildRaytracingAccelerationStructure(&m_BuildDesc, 0, nullptr);
 
+    // バリアを張っておく.
     D3D12_RESOURCE_BARRIER barrier = {};
     barrier.Type            = D3D12_RESOURCE_BARRIER_TYPE_UAV;
     barrier.UAV.pResource   = m_Structure.GetPtr();
@@ -302,6 +311,7 @@ bool Tlas::Init
     DXR_BUILD_FLAGS             flags
 )
 {
+    // アップロードバッファ生成.
     if (!CreateUploadBuffer(
         pDevice, sizeof(DXR_INSTANCE_DESC) * instanceDescCount, 
         m_Instances.GetAddress()))
@@ -325,6 +335,7 @@ bool Tlas::Init
         m_Instances->Unmap(0, nullptr);
     }
 
+    // 高速化機構の入力設定.
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
     inputs.DescsLayout      = D3D12_ELEMENTS_LAYOUT_ARRAY;
     inputs.Flags            = flags;
@@ -332,11 +343,13 @@ bool Tlas::Init
     inputs.InstanceDescs    = m_Instances->GetGPUVirtualAddress();
     inputs.Type             = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
 
+    // ビルド前情報を取得.
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO prebuildInfo = {};
     pDevice->GetRaytracingAccelerationStructurePrebuildInfo(&inputs, &prebuildInfo);
     if (prebuildInfo.ResultDataMaxSizeInBytes == 0)
     { return false; }
 
+    // スクラッチバッファ生成.
     if (!CreateBufferUAV(
         pDevice,
         prebuildInfo.ScratchDataSizeInBytes,
@@ -348,6 +361,7 @@ bool Tlas::Init
     }
     m_Scratch->SetName(L"asdxTlasScratch");
 
+    // 高速化機構用バッファ生成.
     if (!CreateBufferUAV(
         pDevice,
         prebuildInfo.ResultDataMaxSizeInBytes,
@@ -359,11 +373,13 @@ bool Tlas::Init
     }
     m_Structure->SetName(L"asdxTlas");
 
+    // ビルド設定.
     memset(&m_BuildDesc, 0, sizeof(m_BuildDesc));
     m_BuildDesc.Inputs                              = inputs;
     m_BuildDesc.ScratchAccelerationStructureData    = m_Scratch->GetGPUVirtualAddress();
     m_BuildDesc.DestAccelerationStructureData       = m_Structure->GetGPUVirtualAddress();
 
+    // 正常終了.
     return true;
 }
 
@@ -407,8 +423,10 @@ ID3D12Resource* Tlas::GetResource() const
 //-----------------------------------------------------------------------------
 void Tlas::Build(ID3D12GraphicsCommandList6* pCmd)
 {
+    // 高速化機構を構築.
     pCmd->BuildRaytracingAccelerationStructure(&m_BuildDesc, 0, nullptr);
 
+    // バリアを張っておく.
     D3D12_RESOURCE_BARRIER barrier = {};
     barrier.Type            = D3D12_RESOURCE_BARRIER_TYPE_UAV;
     barrier.UAV.pResource   = m_Structure.GetPtr();
@@ -621,12 +639,14 @@ bool ShaderTable::Init
 
     auto bufferSize = m_RecordSize * recordCount;
 
+    // アップロードバッファ生成.
     if (!CreateUploadBuffer(pDevice, bufferSize, m_Resource.GetAddress()))
     {
         ELOGA("Error : CreateUploadBuffer() Failed.");
         return false;
     }
 
+    // メモリマッピング.
     uint8_t* ptr = nullptr;
     auto hr = m_Resource->Map(0, nullptr, reinterpret_cast<void**>(&ptr));
     if (FAILED(hr))
@@ -656,8 +676,10 @@ bool ShaderTable::Init
         }
     }
 
+    // メモリマッピング解除.
     m_Resource->Unmap(0, nullptr);
 
+    // 正常終了.
     return true;
 }
 
