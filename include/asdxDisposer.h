@@ -110,8 +110,8 @@ public:
         {
             if (itr->pObject != nullptr)
             {
-                // GPUが実行中だとここで落ちるはずなので，
-                // GPUの処理が終わるの確認してから呼んでね.
+                // GPUが実行中 or メモリ解法漏れ があるとここで落ちるはずなので，
+                // 終了処理に問題がないか再チェックしようね!
                 itr->pObject->Release();
                 itr->pObject = nullptr;
                 itr->LifeTime  = 0;
