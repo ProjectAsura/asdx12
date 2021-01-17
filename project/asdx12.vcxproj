@@ -102,6 +102,7 @@
     <ClCompile Include="..\external\tinyxml2\tinyxml2.cpp" />
     <ClCompile Include="..\src\asdxApp.cpp" />
     <ClCompile Include="..\src\asdxAppHistoryMgr.cpp" />
+    <ClCompile Include="..\src\asdxByteAddressBuffer.cpp" />
     <ClCompile Include="..\src\asdxCamera.cpp" />
     <ClCompile Include="..\src\asdxCameraController.cpp" />
     <ClCompile Include="..\src\asdxCmdHelper.cpp" />
@@ -165,6 +166,7 @@
     <ClInclude Include="..\external\tinyxml2\tinyxml2.h" />
     <ClInclude Include="..\include\asdxApp.h" />
     <ClInclude Include="..\include\asdxAppHistoryMgr.h" />
+    <ClInclude Include="..\include\asdxByteAddressBuffer.h" />
     <ClInclude Include="..\include\asdxCamera.h" />
     <ClInclude Include="..\include\asdxCameraController.h" />
     <ClInclude Include="..\include\asdxColorMatrix.h" />

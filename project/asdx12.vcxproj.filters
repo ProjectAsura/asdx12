@@ -240,6 +240,9 @@
     <ClCompile Include="..\src\asdxQuad.cpp">
       <Filter>ソース ファイル\wrapper</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\asdxByteAddressBuffer.cpp">
+      <Filter>ソース ファイル\wrapper</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\asdxApp.h">
@@ -459,6 +462,9 @@
       <Filter>ヘッダー ファイル\wrapper</Filter>
     </ClInclude>
     <ClInclude Include="..\include\asdxScreenCpature.h">
+      <Filter>ヘッダー ファイル\wrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\asdxByteAddressBuffer.h">
       <Filter>ヘッダー ファイル\wrapper</Filter>
     </ClInclude>
   </ItemGroup>
