@@ -24,19 +24,6 @@ constexpr D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS DXR_BUILD_FLAG_PRE
 constexpr D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS DXR_BUILD_FLAG_MINIMIZE_MEMORY    = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_MINIMIZE_MEMORY;
 constexpr D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS DXR_BUILD_FLAG_PERFORM_UPDATE     = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE;
 
-constexpr D3D12_STATE_SUBOBJECT_TYPE DXR_SST_STATE_OBJECT_CONFIG                   =  D3D12_STATE_SUBOBJECT_TYPE_STATE_OBJECT_CONFIG;
-constexpr D3D12_STATE_SUBOBJECT_TYPE DXR_SST_GLOBAL_ROOT_SIGNATURE                 =  D3D12_STATE_SUBOBJECT_TYPE_GLOBAL_ROOT_SIGNATURE;
-constexpr D3D12_STATE_SUBOBJECT_TYPE DXR_SST_LOCAL_ROOT_SIGNATURE                  =  D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE;
-constexpr D3D12_STATE_SUBOBJECT_TYPE DXR_SST_NODE_MASK                             =  D3D12_STATE_SUBOBJECT_TYPE_NODE_MASK;
-constexpr D3D12_STATE_SUBOBJECT_TYPE DXR_SST_DXIL_LIBRARY                          =  D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY;
-constexpr D3D12_STATE_SUBOBJECT_TYPE DXR_SST_EXISTING_COLLECTION                   =  D3D12_STATE_SUBOBJECT_TYPE_EXISTING_COLLECTION;
-constexpr D3D12_STATE_SUBOBJECT_TYPE DXR_SST_SUBOBJECT_TO_EXPORTS_ASSOCIATION      =  D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION;
-constexpr D3D12_STATE_SUBOBJECT_TYPE DXR_SST_DXIL_SUBOBJECT_TO_EXPORTS_ASSOCIATION =  D3D12_STATE_SUBOBJECT_TYPE_DXIL_SUBOBJECT_TO_EXPORTS_ASSOCIATION;
-constexpr D3D12_STATE_SUBOBJECT_TYPE DXR_SST_RAYTRACING_SHADER_CONFIG              =  D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_SHADER_CONFIG;
-constexpr D3D12_STATE_SUBOBJECT_TYPE DXR_SST_RAYTRACING_PIPELINE_CONFIG            =  D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_PIPELINE_CONFIG;
-constexpr D3D12_STATE_SUBOBJECT_TYPE DXR_SST_HIT_GROUP                             =  D3D12_STATE_SUBOBJECT_TYPE_HIT_GROUP;
-constexpr D3D12_STATE_SUBOBJECT_TYPE DXR_SST_RAYTRACING_PIPELINE_CONFIG1           =  D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_PIPELINE_CONFIG1;
-
 using DXR_GEOMETRY_DESC = D3D12_RAYTRACING_GEOMETRY_DESC;
 using DXR_BUILD_FLAGS   = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS;
 using DXR_BUILD_DESC    = D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC;
@@ -216,9 +203,9 @@ public:
     void SetGeometry(uint32_t index, const DXR_GEOMETRY_DESC& desc);
 
     //-------------------------------------------------------------------------
-    //! @brief      GPU仮想アドレスを取得します.
+    //! @brief      リソースを取得します.
     //-------------------------------------------------------------------------
-    D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const;
+    ID3D12Resource* GetResource() const;
 
 private:
     //=========================================================================
@@ -295,9 +282,9 @@ public:
     void Unmap();
 
     //-------------------------------------------------------------------------
-    //! @brief      GPU仮想アドレスを取得します.
+    //! @brief      リソースを取得します.
     //-------------------------------------------------------------------------
-    D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const;
+    ID3D12Resource* GetResource() const;
 
 private:
     //=========================================================================
@@ -342,10 +329,10 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      デストラクタです.
     //-------------------------------------------------------------------------
-    ~SubObjects();
+    ~SubObjects() = default;
 
     //-------------------------------------------------------------------------
-    //! @brief      メモリを解放します.
+    //! @brief      クリアします.
     //-------------------------------------------------------------------------
     void Clear();
 
@@ -355,105 +342,77 @@ public:
     D3D12_STATE_OBJECT_DESC GetDesc() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      ステートオブジェクト設定を生成します.
+    //! @brief      ステートオブジェクト設定を追加します.
     //-------------------------------------------------------------------------
-    D3D12_STATE_OBJECT_CONFIG* CreateObjectConfig()
-    { return CreateAs<D3D12_STATE_OBJECT_CONFIG>(DXR_SST_STATE_OBJECT_CONFIG); }
+    void Push(const D3D12_STATE_OBJECT_CONFIG* pDesc);
 
     //-------------------------------------------------------------------------
-    //! @brief      グローバルルートシグニチャを生成します.
+    //! @brief      グローバルルートシグニチャを追加します.
     //-------------------------------------------------------------------------
-    D3D12_GLOBAL_ROOT_SIGNATURE* CreateGlobalRootSignature()
-    { return CreateAs<D3D12_GLOBAL_ROOT_SIGNATURE>(DXR_SST_GLOBAL_ROOT_SIGNATURE); }
+    void Push(const D3D12_GLOBAL_ROOT_SIGNATURE* pDesc);
 
     //-------------------------------------------------------------------------
-    //! @brief      ローカルルートシグニチャを生成します.
+    //! @brief      ローカルルートシグニチャを追加します.
     //-------------------------------------------------------------------------
-    D3D12_LOCAL_ROOT_SIGNATURE* CreateLocalRootSignature()
-    { return CreateAs<D3D12_LOCAL_ROOT_SIGNATURE>(DXR_SST_LOCAL_ROOT_SIGNATURE); }
+    void Push(const D3D12_LOCAL_ROOT_SIGNATURE* pDesc);
 
     //-------------------------------------------------------------------------
-    //! @brief      ノードマスクを生成します.
+    //! @brief      ノードマスクを追加します.
     //-------------------------------------------------------------------------
-    D3D12_NODE_MASK* CreateNodeMask()
-    { return CreateAs<D3D12_NODE_MASK>(DXR_SST_NODE_MASK); }
+    void Push(const D3D12_NODE_MASK* pDesc);
 
     //-------------------------------------------------------------------------
-    //! @brief      DXILライブラリ設定を生成します.
+    //! @brief      DXILライブラリ設定を追加します.
     //-------------------------------------------------------------------------
-    D3D12_DXIL_LIBRARY_DESC* CreateDXILLibrary()
-    { return CreateAs<D3D12_DXIL_LIBRARY_DESC>(DXR_SST_DXIL_LIBRARY); }
+    void Push(const D3D12_DXIL_LIBRARY_DESC* pDesc);
 
     //-------------------------------------------------------------------------
-    //! @brief      既存コレクション設定を生成します.
+    //! @brief      既存コレクション設定を追加します.
     //-------------------------------------------------------------------------
-    D3D12_EXISTING_COLLECTION_DESC* CreateExistingCollectionDesc()
-    { return CreateAs<D3D12_EXISTING_COLLECTION_DESC>(DXR_SST_EXISTING_COLLECTION); }
+    void Push(const D3D12_EXISTING_COLLECTION_DESC* pDesc);
 
     //-------------------------------------------------------------------------
-    //! @brief      エクスポートを関連付けるサブジェクトを生成します.
+    //! @brief      エクスポートを関連付けるサブオブジェクト設定を追加します.
     //-------------------------------------------------------------------------
-    D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION* CreateSubObjectToExportsAssociation()
-    { return CreateAs<D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION>(DXR_SST_SUBOBJECT_TO_EXPORTS_ASSOCIATION); }
+    void Push(const D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION* pDesc);
 
     //-------------------------------------------------------------------------
-    //! @brief      エクスポートを関連付けるDXILサブオブジェクトを生成します.
+    //! @brief      エクスポートを関連付けるDXILサブオブジェクト設定を追加します.
     //-------------------------------------------------------------------------
-    D3D12_DXIL_SUBOBJECT_TO_EXPORTS_ASSOCIATION* CreateDXILSubOBjectToExportAssociation()
-    { return CreateAs<D3D12_DXIL_SUBOBJECT_TO_EXPORTS_ASSOCIATION>(DXR_SST_DXIL_SUBOBJECT_TO_EXPORTS_ASSOCIATION); }
+    void Push(const D3D12_DXIL_SUBOBJECT_TO_EXPORTS_ASSOCIATION* pDesc);
 
     //-------------------------------------------------------------------------
-    //! @brief      ヒットグループ設定を生成します.
+    //! @brief      ヒットグループ設定を追加します.
     //-------------------------------------------------------------------------
-    D3D12_HIT_GROUP_DESC* CreateHitGroupDesc()
-    { return CreateAs<D3D12_HIT_GROUP_DESC>(DXR_SST_HIT_GROUP); }
+    void Push(const D3D12_HIT_GROUP_DESC* pDesc);
 
     //-------------------------------------------------------------------------
-    //! @brief      シェーダ設定を生成します.
+    //! @brief      シェーダ設定を追加します.
     //-------------------------------------------------------------------------
-    D3D12_RAYTRACING_SHADER_CONFIG* CreateShaderConfig()
-    { return CreateAs<D3D12_RAYTRACING_SHADER_CONFIG>(DXR_SST_RAYTRACING_SHADER_CONFIG); }
+    void Push(const D3D12_RAYTRACING_SHADER_CONFIG* pDesc);
 
     //-------------------------------------------------------------------------
-    //! @brief      パイプライン設定を生成します.
+    //! @brief      パイプライン設定を追加します.
     //-------------------------------------------------------------------------
-    D3D12_RAYTRACING_PIPELINE_CONFIG* CreatePipelineConfig()
-    { return CreateAs<D3D12_RAYTRACING_PIPELINE_CONFIG>(DXR_SST_RAYTRACING_PIPELINE_CONFIG); }
+    void Push(const D3D12_RAYTRACING_PIPELINE_CONFIG* pDesc);
 
     //-------------------------------------------------------------------------
-    //! @brief      パイプライン設定1を生成します.
+    //! @brief      パイプライン設定を追加します.
     //-------------------------------------------------------------------------
-    D3D12_RAYTRACING_PIPELINE_CONFIG1* CreatePipelineConfig1()
-    { return CreateAs<D3D12_RAYTRACING_PIPELINE_CONFIG1>(DXR_SST_RAYTRACING_PIPELINE_CONFIG1); }
+    void Push(const D3D12_RAYTRACING_PIPELINE_CONFIG1* pDesc);
 
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    std::vector<D3D12_STATE_SUBOBJECT>  m_Objects;
+    static const uint32_t  kMaxCount = 12;
+    D3D12_STATE_SUBOBJECT  m_Objects[kMaxCount] = {};
+    uint32_t               m_Count              = 0;
 
     //=========================================================================
     // private methods.
     //=========================================================================
-
-    //-------------------------------------------------------------------------
-    //! @brief      サブオブジェクトを生成します.
-    //! 
-    //! @param[in]      type        サブオブジェクトタイプ.
-    //! @param[in]      size        構造体サイズ.
-    //! @return     アロケートしたメモリを返却します.
-    //-------------------------------------------------------------------------
-    void* Create(D3D12_STATE_SUBOBJECT_TYPE type, size_t size);
-
-    //-------------------------------------------------------------------------
-    //! @brief      型を指定してサブオブジェクトを生成します.
-    //-------------------------------------------------------------------------
-    template<typename T>
-    T* CreateAs(D3D12_STATE_SUBOBJECT_TYPE type)
-    {
-        auto buf = Create(type, sizeof(T));
-        return new(buf) T();
-    }
+    /* NOTHING */
 };
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -262,15 +262,10 @@ void Blas::SetGeometry(uint32_t index, const DXR_GEOMETRY_DESC& desc)
 }
 
 //-----------------------------------------------------------------------------
-//      GPU仮想アドレスを取得します.
+//      リソースを取得します.
 //-----------------------------------------------------------------------------
-D3D12_GPU_VIRTUAL_ADDRESS Blas::GetGPUVirtualAddress() const
-{
-    if (m_Structure.GetPtr() == nullptr)
-    { return D3D12_GPU_VIRTUAL_ADDRESS(); }
-
-    return m_Structure->GetGPUVirtualAddress();
-}
+ID3D12Resource* Blas::GetResource() const
+{ return m_Structure.GetPtr(); }
 
 //-----------------------------------------------------------------------------
 //      ビルドします.
@@ -402,15 +397,10 @@ void Tlas::Unmap()
 { m_Instances->Unmap(0, nullptr); }
 
 //-----------------------------------------------------------------------------
-//      GPU仮想アドレスを取得します.
+//      リソースを取得します.
 //-----------------------------------------------------------------------------
-D3D12_GPU_VIRTUAL_ADDRESS Tlas::GetGPUVirtualAddress() const
-{
-    if (m_Structure.GetPtr() == nullptr)
-    { return D3D12_GPU_VIRTUAL_ADDRESS(); }
-
-    return m_Structure->GetGPUVirtualAddress();
-}
+ID3D12Resource* Tlas::GetResource() const
+{ return m_Structure.GetPtr(); }
 
 //-----------------------------------------------------------------------------
 //      ビルドします.
@@ -431,46 +421,156 @@ void Tlas::Build(ID3D12GraphicsCommandList6* pCmd)
 ///////////////////////////////////////////////////////////////////////////////
 
 //-----------------------------------------------------------------------------
-//      デストラクタです.
-//-----------------------------------------------------------------------------
-SubObjects::~SubObjects()
-{ Clear(); }
-
-//-----------------------------------------------------------------------------
-//      サブオブジェクトを生成します.
-//-----------------------------------------------------------------------------
-void* SubObjects::Create(D3D12_STATE_SUBOBJECT_TYPE type, size_t size)
-{
-    auto ptr = malloc(size);
-    if (ptr == nullptr)
-    { return nullptr; }
-
-    D3D12_STATE_SUBOBJECT item = {};
-    item.Type  = type;
-    item.pDesc = ptr;
-    m_Objects.push_back(item);
-
-    return ptr;
-}
-
-//-----------------------------------------------------------------------------
-//      メモリを解放します.
+//      クリアします.
 //-----------------------------------------------------------------------------
 void SubObjects::Clear()
 {
-    for(auto& itr : m_Objects)
-    {
-        if (itr.pDesc != nullptr)
-        {
-            // 別メモリ持って管理するの面倒だから..
-            auto ptr = const_cast<void*>(itr.pDesc);
+    memset(m_Objects, 0, sizeof(m_Objects));
+    m_Count = 0;
+}
 
-            free(ptr);
-            itr.pDesc = nullptr;
-        }
-    }
+//-----------------------------------------------------------------------------
+//      ステートオブジェクト設定を追加します.
+//-----------------------------------------------------------------------------
+void SubObjects::Push(const D3D12_STATE_OBJECT_CONFIG* pDesc)
+{
+    assert(m_Count + 1 < kMaxCount);
+    auto idx = m_Count;
+    m_Objects[idx].pDesc = pDesc;
+    m_Objects[idx].Type = D3D12_STATE_SUBOBJECT_TYPE_STATE_OBJECT_CONFIG;
+    m_Count++;
+}
 
-    m_Objects.clear();
+//-----------------------------------------------------------------------------
+//      グローバルルートシグニチャ設定を追加します.
+//-----------------------------------------------------------------------------
+void SubObjects::Push(const D3D12_GLOBAL_ROOT_SIGNATURE* pDesc)
+{
+    assert(m_Count + 1 < kMaxCount);
+    auto idx = m_Count;
+    m_Objects[idx].pDesc = pDesc;
+    m_Objects[idx].Type = D3D12_STATE_SUBOBJECT_TYPE_GLOBAL_ROOT_SIGNATURE;
+    m_Count++;
+}
+
+//-----------------------------------------------------------------------------
+//      ローカルルートシグニチャ設定を追加します.
+//-----------------------------------------------------------------------------
+void SubObjects::Push(const D3D12_LOCAL_ROOT_SIGNATURE* pDesc)
+{
+    assert(m_Count + 1 < kMaxCount);
+    auto idx = m_Count;
+    m_Objects[idx].pDesc = pDesc;
+    m_Objects[idx].Type = D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE;
+    m_Count++;
+}
+
+//-----------------------------------------------------------------------------
+//      ノードマスク設定を追加します.
+//-----------------------------------------------------------------------------
+void SubObjects::Push(const D3D12_NODE_MASK* pDesc)
+{
+    assert(m_Count + 1 < kMaxCount);
+    auto idx = m_Count;
+    m_Objects[idx].pDesc = pDesc;
+    m_Objects[idx].Type = D3D12_STATE_SUBOBJECT_TYPE_NODE_MASK;
+    m_Count++;
+}
+
+//-----------------------------------------------------------------------------
+//      DXILライブラリ設定を追加します.
+//-----------------------------------------------------------------------------
+void SubObjects::Push(const D3D12_DXIL_LIBRARY_DESC* pDesc)
+{
+    assert(m_Count + 1 < kMaxCount);
+    auto idx = m_Count;
+    m_Objects[idx].pDesc = pDesc;
+    m_Objects[idx].Type = D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY;
+    m_Count++;
+}
+
+//-----------------------------------------------------------------------------
+//      既存コレクション設定を追加します.
+//-----------------------------------------------------------------------------
+void SubObjects::Push(const D3D12_EXISTING_COLLECTION_DESC* pDesc)
+{
+    assert(m_Count + 1 < kMaxCount);
+    auto idx = m_Count;
+    m_Objects[idx].pDesc = pDesc;
+    m_Objects[idx].Type = D3D12_STATE_SUBOBJECT_TYPE_EXISTING_COLLECTION;
+    m_Count++;
+}
+
+//-----------------------------------------------------------------------------
+//      エクスポートを関連付けるサブオブジェクト設定を追加します.
+//-----------------------------------------------------------------------------
+void SubObjects::Push(const D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION* pDesc)
+{
+    assert(m_Count + 1 < kMaxCount);
+    auto idx = m_Count;
+    m_Objects[idx].pDesc = pDesc;
+    m_Objects[idx].Type = D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION;
+    m_Count++;
+}
+
+//-----------------------------------------------------------------------------
+//      エクスポートを関連付けるDXILサブオブジェクト設定を追加します.
+//-----------------------------------------------------------------------------
+void SubObjects::Push(const D3D12_DXIL_SUBOBJECT_TO_EXPORTS_ASSOCIATION* pDesc)
+{
+    assert(m_Count + 1 < kMaxCount);
+    auto idx = m_Count;
+    m_Objects[idx].pDesc = pDesc;
+    m_Objects[idx].Type = D3D12_STATE_SUBOBJECT_TYPE_DXIL_SUBOBJECT_TO_EXPORTS_ASSOCIATION;
+    m_Count++;
+}
+
+//-----------------------------------------------------------------------------
+//      ヒットグループ設定を追加します.
+//-----------------------------------------------------------------------------
+void SubObjects::Push(const D3D12_HIT_GROUP_DESC* pDesc)
+{
+    assert(m_Count + 1 < kMaxCount);
+    auto idx = m_Count;
+    m_Objects[idx].pDesc = pDesc;
+    m_Objects[idx].Type = D3D12_STATE_SUBOBJECT_TYPE_HIT_GROUP;
+    m_Count++;
+}
+
+//-----------------------------------------------------------------------------
+//      シェーダ設定を追加します.
+//-----------------------------------------------------------------------------
+void SubObjects::Push(const D3D12_RAYTRACING_SHADER_CONFIG* pDesc)
+{
+    assert(m_Count + 1 < kMaxCount);
+    auto idx = m_Count;
+    m_Objects[idx].pDesc = pDesc;
+    m_Objects[idx].Type = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_SHADER_CONFIG;
+    m_Count++;
+}
+
+//-----------------------------------------------------------------------------
+//      パイプライン設定を追加します.
+//-----------------------------------------------------------------------------
+void SubObjects::Push(const D3D12_RAYTRACING_PIPELINE_CONFIG* pDesc)
+{
+    assert(m_Count + 1 < kMaxCount);
+    auto idx = m_Count;
+    m_Objects[idx].pDesc = pDesc;
+    m_Objects[idx].Type = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_PIPELINE_CONFIG;
+    m_Count++;
+}
+
+//-----------------------------------------------------------------------------
+//      パイプライン設定を追加します.
+//-----------------------------------------------------------------------------
+void SubObjects::Push(const D3D12_RAYTRACING_PIPELINE_CONFIG1* pDesc)
+{
+    assert(m_Count + 1 < kMaxCount);
+    auto idx = m_Count;
+    m_Objects[idx].pDesc = pDesc;
+    m_Objects[idx].Type = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_PIPELINE_CONFIG1;
+    m_Count++;
 }
 
 //-----------------------------------------------------------------------------
@@ -480,8 +580,8 @@ D3D12_STATE_OBJECT_DESC SubObjects::GetDesc() const
 {
     D3D12_STATE_OBJECT_DESC result = {};
     result.Type          = D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE;
-    result.NumSubobjects = UINT(m_Objects.size());
-    result.pSubobjects   = m_Objects.data();
+    result.NumSubobjects = m_Count;
+    result.pSubobjects   = m_Objects;
 
     return result;
 }
