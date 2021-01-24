@@ -478,12 +478,15 @@ float ProcedualHeightForEye(float radius, float anteriorChamberDepth)
 //-----------------------------------------------------------------------------
 //      屈折ベクトルを計算します.
 //-----------------------------------------------------------------------------
-float3 CalcRefraction(float n, float3 N, float3 V)
+float3 CalcRefraction(float n1, float n2 float3 N, float3 V)
 {
+    float NdotV = dot(N, V);
+    float n = (NdotV > 0.0f) ? (n1 / n2) : (n2 / n1); 
+
     // "Real-time Rendering Third Edition", 9.5 Refraction, p.396
     // 式(9.31), 式(9.32)参照.
     // 相対屈折率 n = (媒質1の屈折率 n1 / 媒質2の屈折率 n2).
-    float w = n * dot(N, V);
+    float w = n * NdotV;
     float k = sqrt(1.0f + (w - n) * (w + n));
     return (w - k) * N - n * V;
 }
@@ -517,17 +520,16 @@ float2 PhysicallyBasedRefraction
     float2      texcoord,           // テクスチャ座標.
     float       height,             // 高さ.
     float       mask,               // 網膜から強膜への補間値.
-    float       n,                  // 相対屈折率 = (媒質1の屈折率/媒質2の屈折率).
+    float       n1,                 // 媒質1の屈折率.
+    float       n2,                 // 媒質2の屈折率.
     float3      normalW,            // 法線ベクトル.
     float3      viewW,              // ワールド空間での視線ベクトル.
     float3      frontNormalW,       // 眼球の視線ベクトル
     float3x3    world               // ワールド行列
 )
 {
-    // 参考. Real-Time Rendering Third Edition, Section 9.5 Refractions.
-    float w = n * dot(normalW, viewW);
-    float k = sqrt(max(1.0f + (w - n) * (w + n), 0.0f));
-    float3 refractedW = (w - k) * normalW - n * viewW;
+    // 屈折ベクトルを求める.
+    float3 refractedW = CalcRefraction(n1, n2, normalW, viewW);
 
     // Jorge Jimenez, Javier von der Pahlen,
     // "Next-Generation Character Rendering", GDC 2013
