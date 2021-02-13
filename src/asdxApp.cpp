@@ -1129,6 +1129,9 @@ void Application::ResizeEvent( const ResizeEventArgs& param )
         // 深度ステンシルバッファを解放.
         m_DepthTarget.Term();
 
+        // 強制破棄.
+        GraphicsDevice::Instance().ForceDispose();
+
         HRESULT hr = S_OK;
 
         auto isSRGB = IsSRGBFormat(m_SwapChainFormat);

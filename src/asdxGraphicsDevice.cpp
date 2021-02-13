@@ -441,6 +441,17 @@ void GraphicsDevice::FrameSync()
 }
 
 //-----------------------------------------------------------------------------
+//      強制破棄を行います.
+//-----------------------------------------------------------------------------
+void GraphicsDevice::ForceDispose()
+{
+    m_ResourceUploader      .Clear();
+    m_ResourceDisposer      .Clear();
+    m_DescriptorDisposer    .Clear();
+    m_PipelineStateDisposer .Clear();
+}
+
+//-----------------------------------------------------------------------------
 //      バッファ更新リソースを生成し登録します.
 //-----------------------------------------------------------------------------
 bool GraphicsDevice::UpdateBuffer(ID3D12Resource* pDstResource, const void* pInitData)
