@@ -57,12 +57,13 @@ RootSignatureDesc::~RootSignatureDesc()
 }
 
 //-----------------------------------------------------------------------------
-//      定数バッファビューを追加します.
+//      ルートパラメータを追加します.
 //-----------------------------------------------------------------------------
-uint32_t RootSignatureDesc::AddCBV
+uint32_t RootSignatureDesc::AddParam
 (
     const char*         tag,
     SHADER_VISIBILITY   visibility,
+    D3D12_ROOT_PARAMETER_TYPE type,
     uint32_t            shaderRegister,
     uint32_t            registerSpace
 )
@@ -71,85 +72,7 @@ uint32_t RootSignatureDesc::AddCBV
     if (!Contains(tag, result))
     {
         D3D12_ROOT_PARAMETER param = {};
-        param.ParameterType             = D3D12_ROOT_PARAMETER_TYPE_CBV;
-        param.Descriptor.ShaderRegister = shaderRegister;
-        param.Descriptor.RegisterSpace  = registerSpace;
-        param.ShaderVisibility          = D3D12_SHADER_VISIBILITY(visibility);
-
-        result = uint32_t(m_Params.size());
-        m_Params.push_back(param);
-        m_Tags.push_back(tag);
-    }
-    else
-    {
-        assert(m_Params[result].Descriptor.ShaderRegister == shaderRegister);
-        assert(m_Params[result].Descriptor.RegisterSpace == registerSpace);
-
-        m_Params[result].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-    }
-
-    return result;
-}
-
-//-----------------------------------------------------------------------------
-//      シェーダリソースビューを追加します.
-//-----------------------------------------------------------------------------
-uint32_t RootSignatureDesc::AddSRV
-(
-    const char*         tag,
-    SHADER_VISIBILITY   visibility,
-    uint32_t            shaderRegister,
-    uint32_t            registerSpace
-)
-{
-    uint32_t result;
-    if (!Contains(tag, result))
-    {
-        auto range = new D3D12_DESCRIPTOR_RANGE;
-        range->BaseShaderRegister                   = shaderRegister;
-        range->NumDescriptors                       = 1;
-        range->OffsetInDescriptorsFromTableStart    = 0;
-        range->RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-        range->RegisterSpace                        = registerSpace;
-
-        D3D12_ROOT_PARAMETER param = {};
-        param.ParameterType                         = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-        param.DescriptorTable.NumDescriptorRanges   = 1;
-        param.DescriptorTable.pDescriptorRanges     = range;
-        param.ShaderVisibility                      = D3D12_SHADER_VISIBILITY(visibility);
-
-        auto result = uint32_t(m_Params.size());
-        m_Params.push_back(param);
-        m_pRange.push_back(range);
-        m_Tags.push_back(tag);
-    }
-    else
-    {
-        assert(m_Params[result].DescriptorTable.pDescriptorRanges->BaseShaderRegister == shaderRegister);
-        assert(m_Params[result].DescriptorTable.pDescriptorRanges->RegisterSpace == registerSpace);
-
-        m_Params[result].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-    }
-
-    return result;
-}
-
-//-----------------------------------------------------------------------------
-//      アンオーダードアクセスビューを追加します.
-//-----------------------------------------------------------------------------
-uint32_t RootSignatureDesc::AddUAV
-(
-    const char*         tag,
-    SHADER_VISIBILITY   visibility,
-    uint32_t            shaderRegister,
-    uint32_t            registerSpace
-)
-{
-    uint32_t result;
-    if (!Contains(tag, result))
-    {
-        D3D12_ROOT_PARAMETER param = {};
-        param.ParameterType             = D3D12_ROOT_PARAMETER_TYPE_UAV;
+        param.ParameterType             = type;
         param.Descriptor.ShaderRegister = shaderRegister;
         param.Descriptor.RegisterSpace  = registerSpace;
         param.ShaderVisibility          = D3D12_SHADER_VISIBILITY(visibility);
@@ -170,14 +93,15 @@ uint32_t RootSignatureDesc::AddUAV
 }
 
 //-----------------------------------------------------------------------------
-//      サンプラーを追加します.
+//      ディスクリプタテーブルを追加します.
 //-----------------------------------------------------------------------------
-uint32_t RootSignatureDesc::AddSampler
+uint32_t RootSignatureDesc::AddTable
 (
-    const char*         tag,
-    SHADER_VISIBILITY   visibility,
-    uint32_t            shaderRegister,
-    uint32_t            registerSpace
+    const char*                 tag,
+    SHADER_VISIBILITY           visibility,
+    D3D12_DESCRIPTOR_RANGE_TYPE type,
+    uint32_t                    shaderRegister,
+    uint32_t                    registerSpace
 )
 {
     uint32_t result;
@@ -187,7 +111,7 @@ uint32_t RootSignatureDesc::AddSampler
         range->BaseShaderRegister                   = shaderRegister;
         range->NumDescriptors                       = 1;
         range->OffsetInDescriptorsFromTableStart    = 0;
-        range->RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
+        range->RangeType                            = type;
         range->RegisterSpace                        = registerSpace;
 
         D3D12_ROOT_PARAMETER param = {};
@@ -208,9 +132,9 @@ uint32_t RootSignatureDesc::AddSampler
 
         m_Params[result].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
     }
-
     return result;
 }
+
 
 //-----------------------------------------------------------------------------
 //      32bit定数を追加します.
@@ -471,11 +395,11 @@ RootSignatureDesc& RootSignatureDesc::AddFromShader
         case D3D_SIT_TEXTURE:
         case D3D_SIT_STRUCTURED:
         case D3D_SIT_BYTEADDRESS:
-            AddSRV(bindDesc.Name, visibility, bindDesc.BindPoint, bindDesc.Space);
+            AddTableSRV(bindDesc.Name, visibility, bindDesc.BindPoint, bindDesc.Space);
             break;
 
         case D3D_SIT_SAMPLER:
-            AddSampler(bindDesc.Name, visibility, bindDesc.BindPoint, bindDesc.Space);
+            AddTableSmp(bindDesc.Name, visibility, bindDesc.BindPoint, bindDesc.Space);
             break;
 
         case D3D_SIT_UAV_RWTYPED:
@@ -484,7 +408,7 @@ RootSignatureDesc& RootSignatureDesc::AddFromShader
         case D3D_SIT_UAV_APPEND_STRUCTURED:
         case D3D_SIT_UAV_CONSUME_STRUCTURED:
         case D3D_SIT_UAV_RWSTRUCTURED_WITH_COUNTER:
-            AddUAV(bindDesc.Name, visibility, bindDesc.BindPoint, bindDesc.Space);
+            AddTableUAV(bindDesc.Name, visibility, bindDesc.BindPoint, bindDesc.Space);
             break;
         }
     }

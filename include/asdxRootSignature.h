@@ -97,60 +97,36 @@ public:
     ~RootSignatureDesc();
 
     //-------------------------------------------------------------------------
-    //! @brief      定数バッファビューを追加します.
-    //!
+    //! @brief      ルートパラメータを追加します.
+    //! 
     //! @param[in]      visibility      シェーダアクセス設定.
+    //! @param[in]      type            ルートパラメータタイプ.
     //! @param[in]      shaderRegister  レジスタ番号.
     //! @param[in]      registerSpace   レジスタスペース.
-    //! @return     ルートパラメータ番号を返却します.
+    //! @return     ルートパラメータ番号を返却します. 
     //-------------------------------------------------------------------------
-    uint32_t AddCBV(
-        const char*         tag,
-        SHADER_VISIBILITY   visibility,
-        uint32_t            shaderRegister,
-        uint32_t            registerSpace = 0);
+    uint32_t AddParam(
+        const char*                 tag,
+        SHADER_VISIBILITY           visibility,
+        D3D12_ROOT_PARAMETER_TYPE   type,
+        uint32_t                    shaderRegister,
+        uint32_t                    registerSpace = 0);
 
     //-------------------------------------------------------------------------
-    //! @brief      シェーダリソースビューを追加します.
-    //!
+    //! @brief      ディスクリプタテーブルを追加します.
+    //! 
     //! @param[in]      visibility      シェーダアクセス設定.
+    //! @param[in]      type            レンジタイプ.
     //! @param[in]      shaderRegister  レジスタ番号.
     //! @param[in]      registerSpace   レジスタスペース.
     //! @return     ルートパラメータ番号を返却します.
     //-------------------------------------------------------------------------
-    uint32_t AddSRV(
-        const char*         tag,
-        SHADER_VISIBILITY   visibility,
-        uint32_t            shaderRegister,
-        uint32_t            registerSpace = 0);
-
-    //-------------------------------------------------------------------------
-    //! @brief      アンオーダードアクセスビューを追加します.
-    //!
-    //! @param[in]      visibility      シェーダアクセス設定.
-    //! @param[in]      shaderRegister  レジスタ番号.
-    //! @param[in]      registerSpace   レジスタスペース.
-    //! @return     ルートパラメータ番号を返却します.
-    //-------------------------------------------------------------------------
-    uint32_t AddUAV(
-        const char*         tag,
-        SHADER_VISIBILITY   visibility,
-        uint32_t            shaderRegister,
-        uint32_t            registerSpace = 0);
-
-    //-------------------------------------------------------------------------
-    //! @brief      サンプラーを追加します.
-    //!
-    //! @param[in]      visibility      シェーダアクセス設定.
-    //! @param[in]      shaderRegister  レジスタ番号.
-    //! @param[in]      registerSpace   レジスタスペース.
-    //! @return     ルートパラメータ番号を返却します.
-    //-------------------------------------------------------------------------
-    uint32_t AddSampler(
-        const char*         tag,
-        SHADER_VISIBILITY   visibility,
-        uint32_t            shaderRegister,
-        uint32_t            registerSpace = 0);
+    uint32_t AddTable(
+        const char*                 tag,
+        SHADER_VISIBILITY           visibility,
+        D3D12_DESCRIPTOR_RANGE_TYPE type,
+        uint32_t                    shaderRegister,
+        uint32_t                    registerSpace = 0);
 
     //-------------------------------------------------------------------------
     //! @brief      32bit定数を追加します.
@@ -205,6 +181,138 @@ public:
     //! @param[in]      byteCodeSize    バイトコードサイズです.
     //-------------------------------------------------------------------------
     RootSignatureDesc& AddFromShader(const void* pByteCode, size_t byteCodeSize);
+
+    //-------------------------------------------------------------------------
+    //! @brief      定数バッファビューを追加します.
+    //!
+    //! @param[in]      visibility      シェーダアクセス設定.
+    //! @param[in]      shaderRegister  レジスタ番号.
+    //! @param[in]      registerSpace   レジスタスペース.
+    //! @return     ルートパラメータ番号を返却します.
+    //-------------------------------------------------------------------------
+    uint32_t AddCBV(
+        const char*         tag,
+        SHADER_VISIBILITY   visibility,
+        uint32_t            shaderRegister,
+        uint32_t            registerSpace = 0)
+    {
+        return AddParam(
+            tag, visibility, D3D12_ROOT_PARAMETER_TYPE_CBV, shaderRegister, registerSpace);
+    }
+
+    //-------------------------------------------------------------------------
+    //! @brief      シェーダリソースビューを追加します.
+    //!
+    //! @param[in]      visibility      シェーダアクセス設定.
+    //! @param[in]      shaderRegister  レジスタ番号.
+    //! @param[in]      registerSpace   レジスタスペース.
+    //! @return     ルートパラメータ番号を返却します.
+    //-------------------------------------------------------------------------
+    uint32_t AddSRV(
+        const char*         tag,
+        SHADER_VISIBILITY   visibility,
+        uint32_t            shaderRegister,
+        uint32_t            registerSpace = 0)
+    {
+        return AddParam(
+            tag, visibility, D3D12_ROOT_PARAMETER_TYPE_SRV, shaderRegister, registerSpace);
+    }
+
+    //-------------------------------------------------------------------------
+    //! @brief      アンオーダードアクセスビューを追加します.
+    //!
+    //! @param[in]      visibility      シェーダアクセス設定.
+    //! @param[in]      shaderRegister  レジスタ番号.
+    //! @param[in]      registerSpace   レジスタスペース.
+    //! @return     ルートパラメータ番号を返却します.
+    //-------------------------------------------------------------------------
+    uint32_t AddUAV(
+        const char*         tag,
+        SHADER_VISIBILITY   visibility,
+        uint32_t            shaderRegister,
+        uint32_t            registerSpace = 0)
+    {
+        return AddParam(
+            tag, visibility, D3D12_ROOT_PARAMETER_TYPE_UAV, shaderRegister, registerSpace);
+    }
+
+    //-------------------------------------------------------------------------
+    //! @brief      SRVとしてディスクリプタテーブルを追加します.
+    //! 
+    //! @param[in]      visibility      シェーダアクセス設定.
+    //! @param[in]      shaderRegister  レジスタ番号.
+    //! @param[in]      registerSpace   レジスタスペース.
+    //! @return     ルートパラメータ番号を返却します.
+    //-------------------------------------------------------------------------
+    uint32_t AddTableSRV
+    (
+        const char*         tag,
+        SHADER_VISIBILITY   visibility,
+        uint32_t            shaderRegister,
+        uint32_t            registerSpace = 0
+    )
+    {
+        return AddTable(
+            tag, visibility, D3D12_DESCRIPTOR_RANGE_TYPE_SRV, shaderRegister, registerSpace);
+    }
+
+    //-------------------------------------------------------------------------
+    //! @brief      UAVとしてディスクリプタテーブルを追加します.
+    //! 
+    //! @param[in]      visibility      シェーダアクセス設定.
+    //! @param[in]      shaderRegister  レジスタ番号.
+    //! @param[in]      registerSpace   レジスタスペース.
+    //! @return     ルートパラメータ番号を返却します.
+    //-------------------------------------------------------------------------
+    uint32_t AddTableUAV
+    (
+        const char*         tag,
+        SHADER_VISIBILITY   visibility,
+        uint32_t            shaderRegister,
+        uint32_t            registerSpace = 0
+    )
+    {
+        return AddTable(
+            tag, visibility, D3D12_DESCRIPTOR_RANGE_TYPE_UAV, shaderRegister, registerSpace);
+    }
+
+    //-------------------------------------------------------------------------
+    //! @brief      CBVとしてディスクリプタテーブルを追加します.
+    //! 
+    //! @param[in]      visibility      シェーダアクセス設定.
+    //! @param[in]      shaderRegister  レジスタ番号.
+    //! @param[in]      registerSpace   レジスタスペース.
+    //! @return     ルートパラメータ番号を返却します.
+    //-------------------------------------------------------------------------
+    uint32_t AddTableCBV
+    (
+        const char*         tag,
+        SHADER_VISIBILITY   visibility,
+        uint32_t            shaderRegister,
+        uint32_t            registerSpace = 0
+    )
+    {
+        return AddTable(
+            tag, visibility, D3D12_DESCRIPTOR_RANGE_TYPE_CBV, shaderRegister, registerSpace);
+    }
+
+    //-------------------------------------------------------------------------
+    //! @brief      サンプラーを追加します.
+    //!
+    //! @param[in]      visibility      シェーダアクセス設定.
+    //! @param[in]      shaderRegister  レジスタ番号.
+    //! @param[in]      registerSpace   レジスタスペース.
+    //! @return     ルートパラメータ番号を返却します.
+    //-------------------------------------------------------------------------
+    uint32_t AddTableSmp(
+        const char*         tag,
+        SHADER_VISIBILITY   visibility,
+        uint32_t            shaderRegister,
+        uint32_t            registerSpace = 0)
+    {
+        return AddTable(
+            tag, visibility, D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, shaderRegister, registerSpace);
+    }
 
 private:
     //=========================================================================
