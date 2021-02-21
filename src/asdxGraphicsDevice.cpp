@@ -445,7 +445,6 @@ void GraphicsDevice::FrameSync()
 //-----------------------------------------------------------------------------
 void GraphicsDevice::ForceDispose()
 {
-    m_ResourceUploader      .Clear();
     m_ResourceDisposer      .Clear();
     m_DescriptorDisposer    .Clear();
     m_PipelineStateDisposer .Clear();
