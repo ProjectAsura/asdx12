@@ -665,7 +665,7 @@ public:
 
         PrevCompute = false;
 
-        auto usage = PASS_RESOURCE_USAGE_NONE;
+        uint8_t usage = PASS_RESOURCE_USAGE_NONE;
         if (pRTVs != nullptr)
         { usage = PASS_RESOURCE_USAGE_RTV; }
         else if (pDSVs != nullptr)
@@ -2127,46 +2127,56 @@ WaitPoint PassGraph::Execute(const WaitPoint& waitPoint)
     {
         auto pCmd = itr->GetCommandList();
 
-        if (itr->m_SyncFlag == SYNC_FLAG_NONE)
+        switch(itr->m_SyncFlag)
         {
-            // コマンドリスト実行.
-            m_GraphicsQueue->Execute(1, &pCmd);
-        }
-        else if (itr->m_SyncFlag == SYNC_FLAG_GRAPHICS_TO_COMPUTE)
-        {
-            if (!graphicsWaitPoint.IsValid())
-            { graphicsWaitPoint = m_GraphicsQueue->Signal(); }
+            case SYNC_FLAG_NONE:
+            {
+                // コマンドリスト実行.
+                m_GraphicsQueue->Execute(1, &pCmd);
+            }
+            break;
 
-            // グラフィックスキューの完了を待機.
-            m_ComputeQueue->Wait(graphicsWaitPoint);
+            case SYNC_FLAG_GRAPHICS_TO_COMPUTE:
+            {
+                if (!graphicsWaitPoint.IsValid())
+                { graphicsWaitPoint = m_GraphicsQueue->Signal(); }
 
-            // コマンドリスト実行.
-            m_ComputeQueue->Execute(1, &pCmd);
+                // グラフィックスキューの完了を待機.
+                m_ComputeQueue->Wait(graphicsWaitPoint);
 
-            // 待機点を取得.
-            computeWaitPoint = m_ComputeQueue->Signal();
-        }
-        else if (itr->m_SyncFlag == SYNC_FLAG_COMPUTE_TO_GRAPHICS)
-        {
-            if (!computeWaitPoint.IsValid())
-            { computeWaitPoint = m_ComputeQueue->Signal(); }
+                // コマンドリスト実行.
+                m_ComputeQueue->Execute(1, &pCmd);
 
-            // コンピュートキューの完了を待機.
-            m_GraphicsQueue->Wait(computeWaitPoint);
+                // 待機点を取得.
+                computeWaitPoint = m_ComputeQueue->Signal();
+            }
+            break;
 
-            // コマンドリスト実行.
-            m_GraphicsQueue->Execute(1, &pCmd);
-        }
-        else if (itr->m_SyncFlag == SYNC_FLAG_COMPUTE_TO_COMPUTE)
-        {
-            // 直前に絶対実行しているので待機点があるはず.
-            assert(computeWaitPoint.IsValid());
+            case SYNC_FLAG_COMPUTE_TO_GRAPHICS:
+            {
+                if (!computeWaitPoint.IsValid())
+                { computeWaitPoint = m_ComputeQueue->Signal(); }
 
-            // コンピュートキューの完了を待機.
-            m_ComputeQueue->Wait(computeWaitPoint);
+                // コンピュートキューの完了を待機.
+                m_GraphicsQueue->Wait(computeWaitPoint);
 
-            // コマンドリスト実行.
-            m_ComputeQueue->Execute(1, &pCmd);
+                // コマンドリスト実行.
+                m_GraphicsQueue->Execute(1, &pCmd);
+            }
+            break;
+
+            case SYNC_FLAG_COMPUTE_TO_COMPUTE:
+            {
+                // 直前に絶対実行しているので待機点があるはず.
+                assert(computeWaitPoint.IsValid());
+
+                // コンピュートキューの完了を待機.
+                m_ComputeQueue->Wait(computeWaitPoint);
+
+                // コマンドリスト実行.
+                m_ComputeQueue->Execute(1, &pCmd);
+            }
+            break;
         }
 
         if (!itr->HasNext())

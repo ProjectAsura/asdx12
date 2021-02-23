@@ -435,6 +435,16 @@ class ShaderTable
     /* NOTHING */
 
 public:
+    ///////////////////////////////////////////////////////////////////////////
+    // Desc structure
+    ///////////////////////////////////////////////////////////////////////////
+    struct Desc
+    {
+        uint32_t            RecordCount             = 0;
+        uint32_t            LocalRootArgumentSize   = 0;
+        const ShaderRecord* pRecords                = nullptr;
+    };
+
     //=========================================================================
     // public variables.
     //=========================================================================
@@ -457,11 +467,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      初期化処理を行います.
     //-------------------------------------------------------------------------
-    bool Init(
-        ID3D12Device*       pDevice,
-        uint32_t            recordCount,
-        const ShaderRecord* records,
-        uint32_t            localRootArgumentSize = 0);
+    bool Init(ID3D12Device* pDevice, const Desc* pDesc);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.

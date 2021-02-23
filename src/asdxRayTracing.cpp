@@ -624,20 +624,14 @@ ShaderTable::~ShaderTable()
 //-----------------------------------------------------------------------------
 //      初期化処理です.
 //-----------------------------------------------------------------------------
-bool ShaderTable::Init
-(
-    ID3D12Device*       pDevice,
-    uint32_t            recordCount,
-    const ShaderRecord* records,
-    uint32_t            localRootArgumentSize
-)
+bool ShaderTable::Init(ID3D12Device* pDevice, const Desc* pDesc)
 {
     // アライメントを揃える.
     m_RecordSize = RoundUp(
-        D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + localRootArgumentSize,
+        D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + pDesc->LocalRootArgumentSize,
         D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT);
 
-    auto bufferSize = m_RecordSize * recordCount;
+    auto bufferSize = m_RecordSize * pDesc->RecordCount;
 
     // アップロードバッファ生成.
     if (!CreateUploadBuffer(pDevice, bufferSize, m_Resource.GetAddress()))
@@ -656,22 +650,22 @@ bool ShaderTable::Init
     }
 
     // 大きく分岐して高速化.
-    if (localRootArgumentSize == 0)
+    if (pDesc->LocalRootArgumentSize == 0)
     {
-        for(auto i=0u; i<recordCount; ++i)
+        for(auto i=0u; i<pDesc->RecordCount; ++i)
         {
-            auto record = records[i];
+            auto record = pDesc->pRecords[i];
             memcpy(ptr, record.ShaderIdentifier, D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
             ptr += m_RecordSize;
         }
     }
     else
     {
-        for(auto i=0u; i<recordCount; ++i)
+        for(auto i=0u; i<pDesc->RecordCount; ++i)
         {
-            auto record = records[i];
+            auto record = pDesc->pRecords[i];
             memcpy(ptr, record.ShaderIdentifier, D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
-            memcpy(ptr + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES, record.LocalRootArguments, localRootArgumentSize);
+            memcpy(ptr + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES, record.LocalRootArguments, pDesc->LocalRootArgumentSize);
             ptr += m_RecordSize;
         }
     }
