@@ -304,7 +304,7 @@ const char* ToString(D3D12_DRED_ALLOCATION_TYPE value)
 //-----------------------------------------------------------------------------
 //      ログ出力を行います.
 //-----------------------------------------------------------------------------
-void OutputLog(const D3D12_AUTO_BREADCRUMB_NODE* pNode)
+void OutputLog(const D3D12_AUTO_BREADCRUMB_NODE1* pNode)
 {
     if (pNode == nullptr)
     { return; }
@@ -317,11 +317,19 @@ void OutputLog(const D3D12_AUTO_BREADCRUMB_NODE* pNode)
     ILOGA("    pCommandList            = 0x%x" , pNode->pCommandList);
     ILOGA("    pCommandQueue           = 0x%x" , pNode->pCommandQueue);
     ILOGA("    BreadcrumbCount         = %u"   , pNode->BreadcrumbCount);
+    ILOGA("    BreadcrumbContextCount  = %u"   , pNode->BreadcrumbContextsCount);
     ILOGA("    pLastBreadcrumbValue    = 0x%x (%u)",   pNode->pLastBreadcrumbValue, *pNode->pLastBreadcrumbValue);
     ILOGA("    pCommandHistory : ");
 
     for(auto i=0u; i<pNode->BreadcrumbCount; ++i)
-    { ILOGA("        Op[%u] = %s", i, ToString(pNode->pCommandHistory[i]));  }
+    { ILOGA("        %c Op[%u] = %s", ((i == *pNode->pLastBreadcrumbValue) ? '*' : ' '), i, ToString(pNode->pCommandHistory[i]));  }
+
+    for(auto i=0u; i<pNode->BreadcrumbContextsCount; ++i)
+    {
+        auto ctx = pNode->pBreadcrumbContexts[i];
+        ILOGA("        Bredcrumb index = %u, string = %ls", ctx.BreadcrumbIndex, ctx.pContextString);
+    }
+
 
     ILOGA("    pNext                   = 0x%x" , pNode->pNext);
 }
@@ -329,7 +337,7 @@ void OutputLog(const D3D12_AUTO_BREADCRUMB_NODE* pNode)
 //-----------------------------------------------------------------------------
 //      ログ出力を行います.
 //-----------------------------------------------------------------------------
-void OutputLog(const D3D12_DRED_ALLOCATION_NODE* pNode)
+void OutputLog(const D3D12_DRED_ALLOCATION_NODE1* pNode)
 {
     if (pNode == nullptr)
     { return; }
@@ -346,7 +354,7 @@ void OutputLog(const D3D12_DRED_ALLOCATION_NODE* pNode)
 //-----------------------------------------------------------------------------
 void DeviceRemovedHandler(ID3D12Device* pDevice)
 {
-    asdx::RefPtr<ID3D12DeviceRemovedExtendedData> pDred;
+    asdx::RefPtr<ID3D12DeviceRemovedExtendedData1> pDred;
     auto hr = pDevice->QueryInterface(IID_PPV_ARGS(pDred.GetAddress()));
     if (FAILED(hr))
     {
@@ -354,8 +362,8 @@ void DeviceRemovedHandler(ID3D12Device* pDevice)
         return;
     }
 
-    D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT autoBreadcrumbsOutput = {};
-    hr = pDred->GetAutoBreadcrumbsOutput(&autoBreadcrumbsOutput);
+    D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT1 autoBreadcrumbsOutput = {};
+    hr = pDred->GetAutoBreadcrumbsOutput1(&autoBreadcrumbsOutput);
     if (SUCCEEDED(hr))
     {
         auto pNode = autoBreadcrumbsOutput.pHeadAutoBreadcrumbNode;
@@ -366,8 +374,8 @@ void DeviceRemovedHandler(ID3D12Device* pDevice)
         }
     }
 
-    D3D12_DRED_PAGE_FAULT_OUTPUT pageFaultOutput = {};
-    hr = pDred->GetPageFaultAllocationOutput(&pageFaultOutput);
+    D3D12_DRED_PAGE_FAULT_OUTPUT1 pageFaultOutput = {};
+    hr = pDred->GetPageFaultAllocationOutput1(&pageFaultOutput);
     if (SUCCEEDED(hr))
     {
         auto pNode = pageFaultOutput.pHeadRecentFreedAllocationNode;
@@ -1461,7 +1469,7 @@ void Application::Present( uint32_t syncInterval )
         }
         break;
 
-    // デバイスが削除された場合(=GPUがぶっこ抜かれた場合かドライバーアップデート中)
+    // デバイスが削除された場合(=GPUがぶっこ抜かれた場合かドライバーアップデート中，またはGPUクラッシュ時.)
     case DXGI_ERROR_DEVICE_REMOVED:
         {
             // エラーログ出力.

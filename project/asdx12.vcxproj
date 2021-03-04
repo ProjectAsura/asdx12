@@ -144,6 +144,7 @@
     <ClCompile Include="..\src\asdxScreenCapture.cpp" />
     <ClCompile Include="..\src\asdxShaderCompiler.cpp" />
     <ClCompile Include="..\src\asdxShaderReflection.cpp" />
+    <ClCompile Include="..\src\asdxSprite.cpp" />
     <ClCompile Include="..\src\asdxStructuredBuffer.cpp" />
     <ClCompile Include="..\src\asdxTablet.cpp" />
     <ClCompile Include="..\src\asdxTarget.cpp" />
@@ -219,6 +220,7 @@
     <ClInclude Include="..\include\asdxShaderCompiler.h" />
     <ClInclude Include="..\include\asdxShaderReflection.h" />
     <ClInclude Include="..\include\asdxSpinLock.h" />
+    <ClInclude Include="..\include\asdxSprite.h" />
     <ClInclude Include="..\include\asdxStack.h" />
     <ClInclude Include="..\include\asdxStepTimer.h" />
     <ClInclude Include="..\include\asdxStopWatch.h" />
@@ -290,6 +292,14 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
     </FxCompile>
     <FxCompile Include="..\res\shaders\SkySphereVS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\SpritePS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\SpriteVS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
     </FxCompile>
