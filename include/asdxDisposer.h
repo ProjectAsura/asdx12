@@ -11,7 +11,7 @@
 #include <list>
 #include <d3d12.h>
 #include <asdxRef.h>
-#include <asdxSpinLock.h>
+#include <core/asdxSpinLock.h>
 
 
 namespace asdx {

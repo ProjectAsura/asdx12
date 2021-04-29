@@ -13,30 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="ヘッダー ファイル\container">
-      <UniqueIdentifier>{ef7ef08a-d4c0-4c8d-93dc-7c706f6c47cf}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\res">
-      <UniqueIdentifier>{21ddbdf9-2137-474e-ac44-33244dd9a7d1}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\allocator">
-      <UniqueIdentifier>{778f8b71-61d0-4456-b576-2ac5b02cdae6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ソース ファイル\allocator">
-      <UniqueIdentifier>{17a7ce92-3f8c-47a4-801f-064c070a65ca}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ソース ファイル\res">
-      <UniqueIdentifier>{3d08882a-c208-42ee-aa33-3d1c10608b81}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ソース ファイル\hid">
-      <UniqueIdentifier>{223f2a38-e971-4ba2-a361-c02fb0579b16}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ソース ファイル\camera">
-      <UniqueIdentifier>{3ce8ed5c-1680-4ebe-84c9-6bf069e27482}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\camera">
-      <UniqueIdentifier>{f91f2a19-29d0-4215-8b26-3accb6008ba3}</UniqueIdentifier>
-    </Filter>
     <Filter Include="ソース ファイル\edit">
       <UniqueIdentifier>{3109205d-44f8-4f6a-873a-1a2c2114e8d7}</UniqueIdentifier>
     </Filter>
@@ -52,95 +28,20 @@
     <Filter Include="ソース ファイル\external\tinyxml2">
       <UniqueIdentifier>{eccfe766-36ea-4686-bea7-47c33ff9efb2}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ヘッダー ファイル\renderer">
-      <UniqueIdentifier>{67ede3f3-453b-4d05-914b-315af8241a22}</UniqueIdentifier>
+    <Filter Include="ソース ファイル\core">
+      <UniqueIdentifier>{a60684e9-49f0-4707-9b5e-7575a5aa87dc}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ソース ファイル\renderer">
-      <UniqueIdentifier>{7ea0c44f-6969-402e-8bb6-da2af02adb61}</UniqueIdentifier>
+    <Filter Include="ヘッダー ファイル\core">
+      <UniqueIdentifier>{17814e84-80c0-4d80-9375-aed24ea4b115}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ヘッダー ファイル\wrapper">
-      <UniqueIdentifier>{0a8517d9-8953-49e7-a65c-17e2063bb18f}</UniqueIdentifier>
+    <Filter Include="ヘッダー ファイル\fw">
+      <UniqueIdentifier>{ebcf41ae-6a63-44f6-8c83-c608f82d136e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ソース ファイル\wrapper">
-      <UniqueIdentifier>{fcb92abb-7c11-4f96-b4e5-997ef42bbfd9}</UniqueIdentifier>
+    <Filter Include="ソース ファイル\fw">
+      <UniqueIdentifier>{1bd64746-6373-4cbb-b9c9-aa9e450b10fd}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\asdxApp.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxHash.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxHashString.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxLogger.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxMisc.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxP4VHelper.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxRandom.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxPassGraph.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxAppHistoryMgr.cpp">
-      <Filter>ソース ファイル\edit</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxHistory.cpp">
-      <Filter>ソース ファイル\edit</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxFrameHeap.cpp">
-      <Filter>ソース ファイル\allocator</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxResModel.cpp">
-      <Filter>ソース ファイル\res</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxResTexture.cpp">
-      <Filter>ソース ファイル\res</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxEditParam.cpp">
-      <Filter>ソース ファイル\edit</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxKeyboard.cpp">
-      <Filter>ソース ファイル\hid</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxTablet.cpp">
-      <Filter>ソース ファイル\hid</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxPad.cpp">
-      <Filter>ソース ファイル\hid</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxMouse.cpp">
-      <Filter>ソース ファイル\hid</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxCamera.cpp">
-      <Filter>ソース ファイル\camera</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxCameraController.cpp">
-      <Filter>ソース ファイル\camera</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxThreadPool.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxTcpConnector.cpp">
-      <Filter>ソース ファイル\edit</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxResMaterial.cpp">
-      <Filter>ソース ファイル\res</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxFileWatcher.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxModel.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="..\external\imgui\imgui.cpp">
       <Filter>ソース ファイル\external\imgui</Filter>
     </ClCompile>
@@ -153,212 +54,62 @@
     <ClCompile Include="..\external\tinyxml2\tinyxml2.cpp">
       <Filter>ソース ファイル\external\tinyxml2</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\asdxGuiMgr.cpp">
+    <ClCompile Include="..\src\core\asdxFrameHeap.cpp">
+      <Filter>ソース ファイル\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\core\asdxGamePad.cpp">
+      <Filter>ソース ファイル\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\core\asdxKeyboard.cpp">
+      <Filter>ソース ファイル\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\core\asdxLogger.cpp">
+      <Filter>ソース ファイル\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\core\asdxMisc.cpp">
+      <Filter>ソース ファイル\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\core\asdxMouse.cpp">
+      <Filter>ソース ファイル\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\core\asdxRandom.cpp">
+      <Filter>ソース ファイル\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\core\asdxTablet.cpp">
+      <Filter>ソース ファイル\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\core\asdxThread.cpp">
+      <Filter>ソース ファイル\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\core\asdxThreadPool.cpp">
+      <Filter>ソース ファイル\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\edit\asdxEditParam.cpp">
       <Filter>ソース ファイル\edit</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\asdxFont.cpp">
-      <Filter>ソース ファイル</Filter>
+    <ClCompile Include="..\src\edit\asdxFileWatcher.cpp">
+      <Filter>ソース ファイル\edit</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\asdxMaterial.cpp">
-      <Filter>ソース ファイル</Filter>
+    <ClCompile Include="..\src\edit\asdxGuiMgr.cpp">
+      <Filter>ソース ファイル\edit</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\renderer\asdxColorFilter.cpp">
-      <Filter>ソース ファイル\renderer</Filter>
+    <ClCompile Include="..\src\edit\asdxHistory.cpp">
+      <Filter>ソース ファイル\edit</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\renderer\asdxCrossBilateralFilter.cpp">
-      <Filter>ソース ファイル\renderer</Filter>
+    <ClCompile Include="..\src\edit\asdxP4VHelper.cpp">
+      <Filter>ソース ファイル\edit</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\asdxThread.cpp">
-      <Filter>ソース ファイル</Filter>
+    <ClCompile Include="..\src\edit\asdxTcpConnector.cpp">
+      <Filter>ソース ファイル\edit</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\asdxCmdHelper.cpp">
-      <Filter>ソース ファイル\wrapper</Filter>
+    <ClCompile Include="..\src\fw\asdxApp.cpp">
+      <Filter>ソース ファイル\fw</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\asdxCommandList.cpp">
-      <Filter>ソース ファイル\wrapper</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxCommandQueue.cpp">
-      <Filter>ソース ファイル\wrapper</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxConstantBuffer.cpp">
-      <Filter>ソース ファイル\wrapper</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxDescriptor.cpp">
-      <Filter>ソース ファイル\wrapper</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxFence.cpp">
-      <Filter>ソース ファイル\wrapper</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxGraphicsDevice.cpp">
-      <Filter>ソース ファイル\wrapper</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxIndexBuffer.cpp">
-      <Filter>ソース ファイル\wrapper</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxPipelineState.cpp">
-      <Filter>ソース ファイル\wrapper</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxRayTracing.cpp">
-      <Filter>ソース ファイル\wrapper</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxResourceUploader.cpp">
-      <Filter>ソース ファイル\wrapper</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxSampler.cpp">
-      <Filter>ソース ファイル\wrapper</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxStructuredBuffer.cpp">
-      <Filter>ソース ファイル\wrapper</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxShaderCompiler.cpp">
-      <Filter>ソース ファイル\wrapper</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxShaderReflection.cpp">
-      <Filter>ソース ファイル\wrapper</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxTarget.cpp">
-      <Filter>ソース ファイル\wrapper</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxTexture.cpp">
-      <Filter>ソース ファイル\wrapper</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxRootSignature.cpp">
-      <Filter>ソース ファイル\wrapper</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxUploadResource.cpp">
-      <Filter>ソース ファイル\wrapper</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxVertexBuffer.cpp">
-      <Filter>ソース ファイル\wrapper</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxView.cpp">
-      <Filter>ソース ファイル\wrapper</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxScreenCapture.cpp">
-      <Filter>ソース ファイル\wrapper</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxQuad.cpp">
-      <Filter>ソース ファイル\wrapper</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxByteAddressBuffer.cpp">
-      <Filter>ソース ファイル\wrapper</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxMessage.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\asdxSprite.cpp">
-      <Filter>ソース ファイル</Filter>
+    <ClCompile Include="..\src\fw\asdxMessage.cpp">
+      <Filter>ソース ファイル\fw</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\include\asdxApp.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxHash.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxHashString.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxHid.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxLogger.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxMath.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxP4VHelper.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxRef.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxStepTimer.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxStopWatch.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxTablet.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxColorSpace.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxMisc.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxSpinLock.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxPassGraph.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxList.h">
-      <Filter>ヘッダー ファイル\container</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxLfuCache.h">
-      <Filter>ヘッダー ファイル\container</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxLruCache.h">
-      <Filter>ヘッダー ファイル\container</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxPool.h">
-      <Filter>ヘッダー ファイル\container</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxStack.h">
-      <Filter>ヘッダー ファイル\container</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxHistory.h">
-      <Filter>ヘッダー ファイル\edit</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxAppHistoryMgr.h">
-      <Filter>ヘッダー ファイル\edit</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxResMaterial.h">
-      <Filter>ヘッダー ファイル\res</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxResModel.h">
-      <Filter>ヘッダー ファイル\res</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxResTexture.h">
-      <Filter>ヘッダー ファイル\res</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxFrameHeap.h">
-      <Filter>ヘッダー ファイル\allocator</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxEditParam.h">
-      <Filter>ヘッダー ファイル\edit</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxQueue.h">
-      <Filter>ヘッダー ファイル\container</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxCamera.h">
-      <Filter>ヘッダー ファイル\camera</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxCameraController.h">
-      <Filter>ヘッダー ファイル\camera</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxThreadPool.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxMacro.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxTcpConnector.h">
-      <Filter>ヘッダー ファイル\edit</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxDisposer.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxFileWatcher.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxModel.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
     <ClInclude Include="..\external\imgui\imconfig.h">
       <Filter>ソース ファイル\external\imgui</Filter>
     </ClInclude>
@@ -380,113 +131,77 @@
     <ClInclude Include="..\external\tinyxml2\tinyxml2.h">
       <Filter>ソース ファイル\external\tinyxml2</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\asdxGuiMgr.h">
+    <ClInclude Include="..\include\edit\asdxEditParam.h">
       <Filter>ヘッダー ファイル\edit</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\asdxFont.h">
-      <Filter>ヘッダー ファイル</Filter>
+    <ClInclude Include="..\include\edit\asdxFileWatcher.h">
+      <Filter>ヘッダー ファイル\edit</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\asdxColorMatrix.h">
-      <Filter>ヘッダー ファイル</Filter>
+    <ClInclude Include="..\include\edit\asdxGuiMgr.h">
+      <Filter>ヘッダー ファイル\edit</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\asdxMaterial.h">
-      <Filter>ヘッダー ファイル</Filter>
+    <ClInclude Include="..\include\edit\asdxHistory.h">
+      <Filter>ヘッダー ファイル\edit</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\renderer\asdxColorFilter.h">
-      <Filter>ヘッダー ファイル\renderer</Filter>
+    <ClInclude Include="..\include\edit\asdxP4VHelper.h">
+      <Filter>ヘッダー ファイル\edit</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\renderer\asdxCrossBilateralFilter.h">
-      <Filter>ヘッダー ファイル\renderer</Filter>
+    <ClInclude Include="..\include\edit\asdxTcpConnector.h">
+      <Filter>ヘッダー ファイル\edit</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\asdxThread.h">
-      <Filter>ヘッダー ファイル</Filter>
+    <ClInclude Include="..\include\core\asdxFrameHeap.h">
+      <Filter>ヘッダー ファイル\core</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\asdxCommandList.h">
-      <Filter>ヘッダー ファイル\wrapper</Filter>
+    <ClInclude Include="..\include\core\asdxHash.h">
+      <Filter>ヘッダー ファイル\core</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\asdxCommandQueue.h">
-      <Filter>ヘッダー ファイル\wrapper</Filter>
+    <ClInclude Include="..\include\core\asdxHid.h">
+      <Filter>ヘッダー ファイル\core</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\asdxConstantBuffer.h">
-      <Filter>ヘッダー ファイル\wrapper</Filter>
+    <ClInclude Include="..\include\core\asdxList.h">
+      <Filter>ヘッダー ファイル\core</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\asdxDescriptor.h">
-      <Filter>ヘッダー ファイル\wrapper</Filter>
+    <ClInclude Include="..\include\core\asdxLogger.h">
+      <Filter>ヘッダー ファイル\core</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\asdxFence.h">
-      <Filter>ヘッダー ファイル\wrapper</Filter>
+    <ClInclude Include="..\include\core\asdxMacro.h">
+      <Filter>ヘッダー ファイル\core</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\asdxGraphicsDevice.h">
-      <Filter>ヘッダー ファイル\wrapper</Filter>
+    <ClInclude Include="..\include\core\asdxMath.h">
+      <Filter>ヘッダー ファイル\core</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\asdxIndexBuffer.h">
-      <Filter>ヘッダー ファイル\wrapper</Filter>
+    <ClInclude Include="..\include\core\asdxMisc.h">
+      <Filter>ヘッダー ファイル\core</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\asdxPipelineState.h">
-      <Filter>ヘッダー ファイル\wrapper</Filter>
+    <ClInclude Include="..\include\core\asdxQueue.h">
+      <Filter>ヘッダー ファイル\core</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\asdxRayTracing.h">
-      <Filter>ヘッダー ファイル\wrapper</Filter>
+    <ClInclude Include="..\include\core\asdxSpinLock.h">
+      <Filter>ヘッダー ファイル\core</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\asdxResourceUploader.h">
-      <Filter>ヘッダー ファイル\wrapper</Filter>
+    <ClInclude Include="..\include\core\asdxStack.h">
+      <Filter>ヘッダー ファイル\core</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\asdxRootSignature.h">
-      <Filter>ヘッダー ファイル\wrapper</Filter>
+    <ClInclude Include="..\include\core\asdxStopWatch.h">
+      <Filter>ヘッダー ファイル\core</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\asdxSampler.h">
-      <Filter>ヘッダー ファイル\wrapper</Filter>
+    <ClInclude Include="..\include\core\asdxTablet.h">
+      <Filter>ヘッダー ファイル\core</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\asdxShaderCompiler.h">
-      <Filter>ヘッダー ファイル\wrapper</Filter>
+    <ClInclude Include="..\include\core\asdxThread.h">
+      <Filter>ヘッダー ファイル\core</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\asdxShaderReflection.h">
-      <Filter>ヘッダー ファイル\wrapper</Filter>
+    <ClInclude Include="..\include\core\asdxThreadPool.h">
+      <Filter>ヘッダー ファイル\core</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\asdxStructuredBuffer.h">
-      <Filter>ヘッダー ファイル\wrapper</Filter>
+    <ClInclude Include="..\include\fw\asdxApp.h">
+      <Filter>ヘッダー ファイル\fw</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\asdxTarget.h">
-      <Filter>ヘッダー ファイル\wrapper</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxTexture.h">
-      <Filter>ヘッダー ファイル\wrapper</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxUploadResource.h">
-      <Filter>ヘッダー ファイル\wrapper</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxVertexBuffer.h">
-      <Filter>ヘッダー ファイル\wrapper</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxView.h">
-      <Filter>ヘッダー ファイル\wrapper</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxCmdHelper.h">
-      <Filter>ヘッダー ファイル\wrapper</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxQuad.h">
-      <Filter>ヘッダー ファイル\wrapper</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxScreenCpature.h">
-      <Filter>ヘッダー ファイル\wrapper</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxByteAddressBuffer.h">
-      <Filter>ヘッダー ファイル\wrapper</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxAnyList.h">
-      <Filter>ヘッダー ファイル\container</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxMessage.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\asdxSprite.h">
-      <Filter>ヘッダー ファイル</Filter>
+    <ClInclude Include="..\include\fw\asdxMessage.h">
+      <Filter>ヘッダー ファイル\fw</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\include\asdxMath.inl">
-      <Filter>ヘッダー ファイル</Filter>
-    </None>
     <None Include="..\res\shaders\BRDF.hlsli">
       <Filter>リソース ファイル</Filter>
     </None>
@@ -496,14 +211,11 @@
     <None Include="..\res\shaders\Shadow.hlsli">
       <Filter>リソース ファイル</Filter>
     </None>
-    <None Include="..\include\asdxLfuCache.inl">
-      <Filter>ヘッダー ファイル\container</Filter>
-    </None>
-    <None Include="..\include\asdxLruCache.inl">
-      <Filter>ヘッダー ファイル\container</Filter>
-    </None>
     <None Include="..\res\shaders\TextureUtil.hlsli">
       <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="..\include\core\asdxMath.inl">
+      <Filter>ヘッダー ファイル\core</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
