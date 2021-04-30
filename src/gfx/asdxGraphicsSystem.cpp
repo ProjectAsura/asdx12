@@ -450,7 +450,7 @@ bool GraphicsSystem::UpdateBuffer(ID3D12Resource* pDstResource, const void* pIni
         return false;
     }
 
-    IUploadResource* pUploadResource;
+    IUploadBuffer* pUploadResource;
     if (!CreateUploadBuffer(pDstResource, pInitData, &pUploadResource))
     {
         ELOGA("Error : CreateUploadBufferResource() Failed.");
@@ -472,7 +472,7 @@ bool GraphicsSystem::UpdateTexture(ID3D12Resource* pDstResource, const ResTextur
         return false;
     }
 
-    IUploadResource* pUploadResource;
+    IUploadTexture* pUploadResource;
     if (!CreateUploadTexture(pDstResource, resource, &pUploadResource))
     {
         ELOGA("Error : CreateUploadTextureResource() Failed.");

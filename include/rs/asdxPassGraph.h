@@ -11,9 +11,9 @@
 #include <cstdint>
 #include <functional>
 #include <d3d12.h>
-#include <asdxTarget.h>
-#include <asdxMath.h>
-#include <asdxCommandQueue.h>
+#include <core/asdxMath.h>
+#include <gfx/asdxTarget.h>
+#include <gfx/asdxCommandQueue.h>
 
 
 namespace asdx {
@@ -27,6 +27,7 @@ class  PassResource;
 
 using PassSetup     = std::function<void(IPassGraphBuilder*)>;
 using PassExecute   = std::function<void(IPassGraphContext*)>;
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // PASS_RESOURCE_DIMENSION enum

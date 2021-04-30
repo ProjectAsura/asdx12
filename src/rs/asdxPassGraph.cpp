@@ -9,17 +9,16 @@
 //-----------------------------------------------------------------------------
 #include <atomic>
 #include <map>
-#include <asdxPassGraph.h>
-#include <asdxFrameHeap.h>
-#include <asdxCommandList.h>
-#include <asdxDisposer.h>
-#include <asdxHash.h>
-#include <asdxLogger.h>
-#include <asdxGraphicsDevice.h>
-#include <asdxList.h>
-#include <asdxStack.h>
-#include <asdxThreadPool.h>
-#include <asdxHash.h>
+#include <core/asdxFrameHeap.h>
+#include <core/asdxHash.h>
+#include <core/asdxList.h>
+#include <core/asdxStack.h>
+#include <core/asdxThreadPool.h>
+#include <core/asdxLogger.h>
+#include <gfx/asdxCommandList.h>
+#include <gfx/asdxDisposer.h>
+#include <gfx/asdxGraphicsSystem.h>
+#include <rs/asdxPassGraph.h>
 
 
 // パスで生成可能な最大リソース数.
@@ -162,7 +161,7 @@ public:
     //-------------------------------------------------------------------------
     void Set(const char* tag, const void* data, size_t size) override
     {
-        auto key = Fnv1a(tag).GetHash();
+        auto key = CalcHash(tag);
         BufferHolder holder;
         holder.pData = data;
         holder.size  = size;
@@ -185,7 +184,7 @@ public:
     //-------------------------------------------------------------------------
     const void* Get(const char* tag, size_t& size) const override
     {
-        auto key = Fnv1a(tag).GetHash();
+        auto key = CalcHash(tag);
 
         if (!Contains(key))
         { return nullptr; }
@@ -213,7 +212,7 @@ public:
     //-------------------------------------------------------------------------
     bool Contains(const char* tag) const override
     {
-        auto key = Fnv1(tag).GetHash();
+        auto key = CalcHash(tag);
         return Contains(key);
     }
 
@@ -293,6 +292,8 @@ public:
     //-------------------------------------------------------------------------
     bool Init(const PassResourceDesc& value, RenderPass* producer)
     {
+        auto pDevice = GetD3D12Device();
+
         {
             D3D12_RESOURCE_DESC desc = {};
             switch(value.Dimension)
@@ -375,7 +376,7 @@ public:
             props.CreationNodeMask      = 0;
             props.VisibleNodeMask       = 0;
 
-            auto hr = GfxDevice()->CreateCommittedResource(
+            auto hr = pDevice->CreateCommittedResource(
                 &props,
                 D3D12_HEAP_FLAG_NONE,
                 &desc, 
@@ -1825,6 +1826,8 @@ bool PassGraph::Init(const PassGraphDesc& desc)
         return false;
     }
 
+    auto pDevice = GetD3D12Device();
+
     m_MaxPassCount = desc.MaxPassCount;
 
     // 必要なメモリを計算.
@@ -1850,7 +1853,7 @@ bool PassGraph::Init(const PassGraphDesc& desc)
     for(auto i=0u; i<m_MaxPassCount; ++i)
     {
         if (!m_GraphicsCommandLists[i].Init(
-            GfxDevice().GetDevice(),
+            pDevice,
             D3D12_COMMAND_LIST_TYPE_DIRECT))
         {
             ELOG("Error : CommandList::Init() Failed.");
@@ -1869,7 +1872,7 @@ bool PassGraph::Init(const PassGraphDesc& desc)
     for(auto i=0u; i<m_MaxPassCount; ++i)
     {
         if (!m_ComputeCommandLists[i].Init(
-            GfxDevice().GetDevice(),
+            pDevice,
             D3D12_COMMAND_LIST_TYPE_COMPUTE))
         {
             ELOG("Error : CommandList::Init() Failed.");

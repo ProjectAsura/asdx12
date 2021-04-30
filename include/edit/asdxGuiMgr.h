@@ -15,7 +15,6 @@
 #include <gfx/asdxIndexBuffer.h>
 #include <gfx/asdxConstantBuffer.h>
 #include <gfx/asdxTexture.h>
-#include <asdxResourceUploader.h>
 
 
 //-----------------------------------------------------------------------------

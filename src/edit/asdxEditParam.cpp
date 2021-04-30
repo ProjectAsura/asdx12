@@ -10,8 +10,8 @@
 #include <edit/asdxEditParam.h>
 #include <edit/asdxHistory.h>
 #include <core/asdxMisc.h>
-#include <asdxResTexture.h>
-#include <asdxResourceUploader.h>
+#include <res/asdxResTexture.h>
+#include <gfx/asdxResourceUploader.h>
 
 
 #ifdef ASDX_ENABLE_IMGUI

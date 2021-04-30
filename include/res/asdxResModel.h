@@ -10,7 +10,7 @@
 //-----------------------------------------------------------------------------
 #include <cstdint>
 #include <vector>
-#include <asdxMath.h>
+#include <core/asdxMath.h>
 
 
 namespace asdx {

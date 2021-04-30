@@ -14,7 +14,7 @@
 #include <gfx/asdxVertexBuffer.h>
 #include <gfx/asdxIndexBuffer.h>
 #include <gfx/asdxPipelineState.h>
-#include <asdxRootSignature.h>
+#include <gfx/asdxRootSignature.h>
 
 
 namespace asdx {

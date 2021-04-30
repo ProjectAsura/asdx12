@@ -12,11 +12,11 @@
 #include <dxgi1_6.h>
 #include <core/asdxSpinLock.h>
 #include <core/asdxRef.h>
+#include <res/asdxResTexture.h>
 #include <gfx/asdxCommandQueue.h>
 #include <gfx/asdxDescriptor.h>
 #include <gfx/asdxDisposer.h>
-#include <asdxResourceUploader.h>
-#include <asdxResTexture.h>
+#include <gfx/asdxResourceUploader.h>
 
 
 namespace asdx {

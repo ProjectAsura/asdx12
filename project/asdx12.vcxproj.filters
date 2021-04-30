@@ -46,6 +46,18 @@
     <Filter Include="ヘッダー ファイル\gfx">
       <UniqueIdentifier>{e195f819-9403-4ec1-980a-db7d1d5d123a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ソース ファイル\res">
+      <UniqueIdentifier>{88ced615-62dd-45b6-94a8-825c1079d1f3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\res">
+      <UniqueIdentifier>{35f7670c-6979-497d-86f0-ee107ba6071b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\rs">
+      <UniqueIdentifier>{59d7c622-4850-40ba-a6f4-1df8e1b97e7a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\rs">
+      <UniqueIdentifier>{67e5d20a-7f96-4bfe-99e9-6e56790d7eb6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\external\imgui\imgui.cpp">
@@ -176,6 +188,27 @@
     </ClCompile>
     <ClCompile Include="..\src\gfx\asdxReflection.cpp">
       <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\res\asdxResMaterial.cpp">
+      <Filter>ソース ファイル\res</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\res\asdxResModel.cpp">
+      <Filter>ソース ファイル\res</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\res\asdxResTexture.cpp">
+      <Filter>ソース ファイル\res</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gfx\asdxUploadResource.cpp">
+      <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gfx\asdxModel.cpp">
+      <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gfx\asdxResourceUploader.cpp">
+      <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\rs\asdxPassGraph.cpp">
+      <Filter>ソース ファイル\rs</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -337,6 +370,27 @@
     </ClInclude>
     <ClInclude Include="..\include\gfx\asdxReflection.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\res\asdxResMaterial.h">
+      <Filter>ヘッダー ファイル\res</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\res\asdxResModel.h">
+      <Filter>ヘッダー ファイル\res</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\res\asdxResTexture.h">
+      <Filter>ヘッダー ファイル\res</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\gfx\asdxUploadResource.h">
+      <Filter>ヘッダー ファイル\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\gfx\asdxModel.h">
+      <Filter>ヘッダー ファイル\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\gfx\asdxResourceUploader.h">
+      <Filter>ヘッダー ファイル\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\rs\asdxPassGraph.h">
+      <Filter>ヘッダー ファイル\rs</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

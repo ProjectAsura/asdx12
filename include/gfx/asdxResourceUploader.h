@@ -10,9 +10,8 @@
 //-----------------------------------------------------------------------------
 #include <queue>
 #include <list>
-#include <mutex>
 #include <d3d12.h>
-#include <asdxUploadResource.h>
+#include <gfx/asdxUploadResource.h>
 
 
 namespace asdx {

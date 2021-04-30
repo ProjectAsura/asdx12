@@ -7,15 +7,15 @@
 //-------------------------------------------------------------------------------------------------
 // Includes
 //-------------------------------------------------------------------------------------------------
-#include <asdxResTexture.h>
-#include <asdxLogger.h>
-#include <dxgiformat.h>
-#include <wincodec.h>
-#include <wrl/client.h>
 #include <cassert>
 #include <memory>
 #include <string>
 #include <algorithm>
+#include <dxgiformat.h>
+#include <wincodec.h>
+#include <wrl/client.h>
+#include <res/asdxResTexture.h>
+#include <core/asdxLogger.h>
 
 
 //-------------------------------------------------------------------------------------------------

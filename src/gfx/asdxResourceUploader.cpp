@@ -7,7 +7,7 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <asdxResourceUploader.h>
+#include <gfx/asdxResourceUploader.h>
 
 
 namespace asdx {
@@ -36,7 +36,7 @@ void ResourceUploader::Push(IUploadResource* pResource, uint8_t lifeTime)
     if (pResource == nullptr)
     { return; }
 
-    Item item;
+    Item item = {};
     item.pResource = pResource;
     item.LifeTime  = lifeTime;
 
@@ -51,7 +51,7 @@ void ResourceUploader::Upload(ID3D12GraphicsCommandList* pCmdList)
     auto count = m_Queue.size();
     for(size_t i=0; i<count; ++i)
     {
-        auto item = m_Queue.front();
+        auto& item = m_Queue.front();
         m_Queue.pop();
 
         item.pResource->Upload(pCmdList);
@@ -94,7 +94,7 @@ void ResourceUploader::Clear()
     auto count = m_Queue.size();
     for(size_t i=0; i<count; ++i)
     {
-        auto item = m_Queue.front();
+        auto& item = m_Queue.front();
         m_Queue.pop();
 
         item.pResource->Release();

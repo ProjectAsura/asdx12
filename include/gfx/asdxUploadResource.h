@@ -10,7 +10,7 @@
 //-----------------------------------------------------------------------------
 #include <d3d12.h>
 #include <core/asdxRef.h>
-#include <asdxResTexture.h>
+#include <res/asdxResTexture.h>
 
 
 namespace asdx {
@@ -34,6 +34,40 @@ struct IUploadResource : public IReference
     virtual void Upload(ID3D12GraphicsCommandList* pCmdList) = 0;
 };
 
+///////////////////////////////////////////////////////////////////////////////
+// IUploadTexture interface
+///////////////////////////////////////////////////////////////////////////////
+struct IUploadTexture : public IUploadResource
+{
+    //-------------------------------------------------------------------------
+    //! @brief      デストラクタです.
+    //-------------------------------------------------------------------------
+    virtual ~IUploadTexture()
+    { /* DO_NOTHING */ }
+
+    //-------------------------------------------------------------------------
+    //! @brief      リソースを更新します.
+    //-------------------------------------------------------------------------
+    virtual void Update(const ResTexture& resource) = 0;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// IUploadBuffer interface
+///////////////////////////////////////////////////////////////////////////////
+struct IUploadBuffer : public IUploadResource
+{
+    //-------------------------------------------------------------------------
+    //! @brief      デストラクタです.
+    //-------------------------------------------------------------------------
+    virtual ~IUploadBuffer()
+    { /* DO_NOTHING */ }
+
+    //-------------------------------------------------------------------------
+    //! @brief      リソースを更新します.
+    //-------------------------------------------------------------------------
+    virtual void Update(const void* resource) = 0;
+};
+
 //-----------------------------------------------------------------------------
 //! @brief      アップロードテクスチャリソースを生成します.
 //! 
@@ -46,7 +80,7 @@ struct IUploadResource : public IReference
 bool CreateUploadTexture(
     ID3D12Resource*     pDest,
     const ResTexture&   resource,
-    IUploadResource**   ppResource);
+    IUploadTexture**    ppResource);
 
 //-----------------------------------------------------------------------------
 //! @brief      アップロードバッファリソースを生成します.
@@ -59,23 +93,8 @@ bool CreateUploadTexture(
 //-----------------------------------------------------------------------------
 bool CreateUploadBuffer(
     ID3D12Resource* pDest,
-    const void* resource,
-    IUploadResource** ppResource);
+    const void*     resource,
+    IUploadBuffer** ppResource);
 
-//-----------------------------------------------------------------------------
-//! @brief      アップロードリソースを更新します.
-//! 
-//! @param[in]      pResource       アップロードリソース
-//! @param[in]      resource        更新データ.
-//-----------------------------------------------------------------------------
-void UpdateTextureResource(IUploadResource* pResource, const ResTexture& resource);
-
-//-----------------------------------------------------------------------------
-//! @brief      アップロードリソースを更新します.
-//! 
-//! @param[in]      pResource       アップロードリソース
-//! @param[in]      resource        更新データ.
-//-----------------------------------------------------------------------------
-void UpdateBufferResource(IUploadResource* pResource, const void* resource);
 
 } // namespace asdx

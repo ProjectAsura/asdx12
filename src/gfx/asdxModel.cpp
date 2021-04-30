@@ -7,8 +7,8 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <asdxModel.h>
-#include <asdxLogger.h>
+#include <gfx/asdxModel.h>
+#include <core/asdxLogger.h>
 
 
 namespace asdx {

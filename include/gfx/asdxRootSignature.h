@@ -14,36 +14,65 @@
 
 namespace asdx {
 
-///////////////////////////////////////////////////////////////////////////////
-// RANGE_CBV structure
-///////////////////////////////////////////////////////////////////////////////
 struct RANGE_CBV : public D3D12_DESCRIPTOR_RANGE
 {
     RANGE_CBV(UINT baseRegister, UINT registerSpace = 0);
 };
 
-///////////////////////////////////////////////////////////////////////////////
-// RANGE_SRV structure
-///////////////////////////////////////////////////////////////////////////////
 struct RANGE_SRV : public D3D12_DESCRIPTOR_RANGE
 {
     RANGE_SRV(UINT baseRegister, UINT registerSpace = 0);
 };
 
-///////////////////////////////////////////////////////////////////////////////
-// RANGE_UAV structure
-///////////////////////////////////////////////////////////////////////////////
 struct RANGE_UAV : public D3D12_DESCRIPTOR_RANGE
 {
     RANGE_UAV(UINT baseRegister, UINT registerSpace = 0);
 };
 
-///////////////////////////////////////////////////////////////////////////////
-// RANGE_SMP structure
-///////////////////////////////////////////////////////////////////////////////
 struct RANGE_SMP : public D3D12_DESCRIPTOR_RANGE
 {
     RANGE_SMP(UINT baseRegister, UINT registerSpace = 0);
+};
+
+struct PARAM_TABLE : public D3D12_ROOT_PARAMETER
+{
+    PARAM_TABLE(
+        D3D12_SHADER_VISIBILITY         visibility,
+        UINT                            count,
+        const D3D12_DESCRIPTOR_RANGE*   ranges);
+};
+
+struct PARAM_CONSTANT : public D3D12_ROOT_PARAMETER
+{
+    PARAM_CONSTANT(
+        D3D12_SHADER_VISIBILITY visibility,
+        UINT                    count,
+        UINT                    baseRegister,
+        UINT                    registerSpace = 0);
+};
+
+struct PARAM_CBV : public D3D12_ROOT_PARAMETER
+{
+    PARAM_CBV(
+        D3D12_SHADER_VISIBILITY visibility,
+        UINT                    baseRegister,
+        UINT                    registerSpace = 0);
+};
+
+struct PARAM_SRV : public D3D12_ROOT_PARAMETER
+{
+    PARAM_SRV(
+        D3D12_SHADER_VISIBILITY visibility,
+        UINT                    baseRegister,
+        UINT                    registerSpace = 0);
+};
+
+struct PARAM_UAV : public D3D12_ROOT_PARAMETER
+{
+    PARAM_UAV(
+        D3D12_SHADER_VISIBILITY visibility,
+        UINT                    baseRegister,
+        UINT                    registerSpace = 0);
 };
 
 

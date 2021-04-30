@@ -8,8 +8,8 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <cstdio>
-#include <asdxResMaterial.h>
-#include <asdxLogger.h>
+#include <res/asdxResMaterial.h>
+#include <core/asdxLogger.h>
 
 
 namespace {

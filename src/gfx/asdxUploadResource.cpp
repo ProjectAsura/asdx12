@@ -9,9 +9,9 @@
 //-----------------------------------------------------------------------------
 #include <atomic>
 #include <vector>
-#include <asdxUploadResource.h>
-#include <asdxLogger.h>
-#include <asdxGraphicsDevice.h>
+#include <gfx/asdxUploadResource.h>
+#include <gfx/asdxGraphicsSystem.h>
+#include <core/asdxLogger.h>
 
 
 namespace {
@@ -82,7 +82,7 @@ namespace asdx {
 ///////////////////////////////////////////////////////////////////////////////
 // TextureUploadResource class
 ///////////////////////////////////////////////////////////////////////////////
-class TextureUploadResource : public IUploadResource
+class TextureUploadResource : public IUploadTexture
 {
     //=========================================================================
     // list of friend classes and methods.
@@ -259,7 +259,7 @@ public:
     //-------------------------------------------------------------------------
     //      リソースを更新します.
     //-------------------------------------------------------------------------
-    void Update(const ResTexture& resource)
+    void Update(const ResTexture& resource) override
     {
         BYTE* pData = nullptr;
         auto hr = m_pSrcResource->Map(0, nullptr, reinterpret_cast<void**>(&pData));
@@ -333,7 +333,7 @@ private:
 ///////////////////////////////////////////////////////////////////////////////
 // BufferUploadResource class
 ///////////////////////////////////////////////////////////////////////////////
-class BufferUploadResource : public IUploadResource
+class BufferUploadResource : public IUploadBuffer
 {
     //=========================================================================
     // list of friend classes and methods.
@@ -500,7 +500,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      リソースを更新します.
     //-------------------------------------------------------------------------
-    void Update(const void* pResource)
+    void Update(const void* pResource) override
     {
         auto dstDesc = m_pDstResource->GetDesc();
 
@@ -559,7 +559,7 @@ bool CreateUploadTexture
 (
     ID3D12Resource*     pDest,
     const ResTexture&   resource,
-    IUploadResource**   ppResource
+    IUploadTexture**    ppResource
 )
 {
     auto instance = new TextureUploadResource();
@@ -580,7 +580,7 @@ bool CreateUploadBuffer
 (
     ID3D12Resource*     pDest,
     const void*         resource,
-    IUploadResource**   ppResource
+    IUploadBuffer**     ppResource
 )
 {
     auto instance = new BufferUploadResource();
@@ -592,38 +592,6 @@ bool CreateUploadBuffer
 
     *ppResource = instance;
     return true;
-}
-
-//-----------------------------------------------------------------------------
-//      リソースを更新します.
-//-----------------------------------------------------------------------------
-void UpdateTextureResource
-(
-    IUploadResource*    pResource,
-    const ResTexture&   resource
-)
-{
-    auto instance = static_cast<TextureUploadResource*>(pResource);
-    if (instance == nullptr)
-    { return; }
-
-    instance->Update(resource);
-}
-
-//-----------------------------------------------------------------------------
-//      リソースを更新します.
-//-----------------------------------------------------------------------------
-void UpdateBufferResource
-(
-    IUploadResource*    pResource,
-    const void*         pData
-)
-{
-    auto instance = static_cast<BufferUploadResource*>(pResource);
-    if (instance == nullptr)
-    { return; }
-
-    instance->Update(pData);
 }
 
 } // namespace asdx

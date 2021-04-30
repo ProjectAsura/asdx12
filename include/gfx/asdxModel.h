@@ -8,9 +8,9 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <asdxResModel.h>
-#include <asdxStructuredBuffer.h>
-#include <asdxResourceUploader.h>
+#include <res/asdxResModel.h>
+#include <gfx/asdxStructuredBuffer.h>
+#include <gfx/asdxResourceUploader.h>
 
 
 namespace asdx {

@@ -50,6 +50,72 @@ RANGE_SMP::RANGE_SMP(UINT baseRegister, UINT registerSpace)
     OffsetInDescriptorsFromTableStart   = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 }
 
+PARAM_TABLE::PARAM_TABLE
+(
+    D3D12_SHADER_VISIBILITY         visibility,
+    UINT                            count,
+    const D3D12_DESCRIPTOR_RANGE*   ranges
+)
+{
+    ParameterType                       = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+    DescriptorTable.NumDescriptorRanges = count;
+    DescriptorTable.pDescriptorRanges   = ranges;
+    ShaderVisibility                    = visibility;
+}
+
+PARAM_CONSTANT::PARAM_CONSTANT
+(
+    D3D12_SHADER_VISIBILITY visibility,
+    UINT                    count,
+    UINT                    baseRegister,
+    UINT                    registerSpace
+)
+{
+    ParameterType               = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+    Constants.Num32BitValues    = count;
+    Constants.ShaderRegister    = baseRegister;
+    Constants.RegisterSpace     = registerSpace;
+    ShaderVisibility            = visibility;
+}
+
+PARAM_CBV::PARAM_CBV
+(
+    D3D12_SHADER_VISIBILITY visibility,
+    UINT                    baseRegister,
+    UINT                    registerSpace
+)
+{
+    ParameterType               = D3D12_ROOT_PARAMETER_TYPE_CBV;
+    Descriptor.ShaderRegister   = baseRegister;
+    Descriptor.RegisterSpace    = registerSpace;
+    ShaderVisibility            = visibility;
+}
+
+PARAM_SRV::PARAM_SRV
+(
+    D3D12_SHADER_VISIBILITY visibility,
+    UINT                    baseRegister,
+    UINT                    registerSpace
+)
+{
+    ParameterType               = D3D12_ROOT_PARAMETER_TYPE_SRV;
+    Descriptor.ShaderRegister   = baseRegister;
+    Descriptor.RegisterSpace    = registerSpace;
+    ShaderVisibility            = visibility;
+}
+
+PARAM_UAV::PARAM_UAV
+(
+    D3D12_SHADER_VISIBILITY visibility,
+    UINT                    baseRegister,
+    UINT                    registerSpace
+)
+{
+    ParameterType               = D3D12_ROOT_PARAMETER_TYPE_UAV;
+    Descriptor.ShaderRegister   = baseRegister;
+    Descriptor.RegisterSpace    = registerSpace;
+    ShaderVisibility            = visibility;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // RootSignature class
