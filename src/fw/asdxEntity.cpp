@@ -64,5 +64,4 @@ void Entity::Draw()
     { itr.second->Draw(); }
 }
 
-
 } // namespace asdx

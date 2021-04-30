@@ -16,17 +16,17 @@
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
-// MATERIAL_PARAMTERE_TYPE enum
+// MATERIAL_PARAM_TYPE enum
 ///////////////////////////////////////////////////////////////////////////////
 enum MATERIAL_PARAMETER_TYPE : uint32_t
 {
-    MATERIAL_PARAMETER_BOOL,        // bool型です.
-    MATERIAL_PARAMETER_INT,         // int型です.
-    MATERIAL_PARAMETER_UINT,        // uint型です.
-    MATERIAL_PARAMETER_FLOAT,       // float型です.
-    MATERIAL_PARAMETER_FLOAT2,      // float2型です.
-    MATERIAL_PARAMETER_FLOAT3,      // float3型です.
-    MATERIAL_PARAMETER_FLOAT4,      // float4型です.
+    MATERIAL_PARAM_BOOL,        // bool型です.
+    MATERIAL_PARAM_INT,         // int型です.
+    MATERIAL_PARAM_UINT,        // uint型です.
+    MATERIAL_PARAM_FLOAT,       // float型です.
+    MATERIAL_PARAM_FLOAT2,      // float2型です.
+    MATERIAL_PARAM_FLOAT3,      // float3型です.
+    MATERIAL_PARAM_FLOAT4,      // float4型です.
 };
 
 ///////////////////////////////////////////////////////////////////////////////
