@@ -118,6 +118,7 @@
     <ClCompile Include="..\src\fnd\asdxThread.cpp" />
     <ClCompile Include="..\src\fnd\asdxThreadPool.cpp" />
     <ClCompile Include="..\src\fw\asdxApp.cpp" />
+    <ClCompile Include="..\src\fw\asdxEntity.cpp" />
     <ClCompile Include="..\src\gfx\asdxByteAddressBuffer.cpp" />
     <ClCompile Include="..\src\gfx\asdxCommandList.cpp" />
     <ClCompile Include="..\src\gfx\asdxCommandQueue.cpp" />
@@ -180,6 +181,7 @@
     <ClInclude Include="..\include\fnd\asdxThread.h" />
     <ClInclude Include="..\include\fnd\asdxThreadPool.h" />
     <ClInclude Include="..\include\fw\asdxApp.h" />
+    <ClInclude Include="..\include\fw\asdxEntity.h" />
     <ClInclude Include="..\include\gfx\asdxByteAddressBuffer.h" />
     <ClInclude Include="..\include\gfx\asdxCommandList.h" />
     <ClInclude Include="..\include\gfx\asdxCommandQueue.h" />

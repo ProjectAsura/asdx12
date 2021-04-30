@@ -210,6 +210,9 @@
     <ClCompile Include="..\src\fnd\asdxThreadPool.cpp">
       <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\fw\asdxEntity.cpp">
+      <Filter>ソース ファイル\fw</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\external\imgui\imconfig.h">
@@ -394,6 +397,9 @@
     </ClInclude>
     <ClInclude Include="..\include\fnd\asdxMessage.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fw\asdxEntity.h">
+      <Filter>ヘッダー ファイル\fw</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
