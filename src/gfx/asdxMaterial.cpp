@@ -8,8 +8,9 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <cassert>
-#include <asdxMaterial.h>
-#include <asdxMisc.h>
+#include <fnd/asdxMisc.h>
+#include <fnd/asdxHash.h>
+#include <gfx/asdxMaterial.h>
 
 
 namespace asdx {
@@ -41,7 +42,7 @@ Material::~Material()
 //-----------------------------------------------------------------------------
 bool Material::Init(const ResMaterial& value)
 {
-    m_Hash          = value.Hash;
+    m_Hash          = CalcHash(value.Name.c_str());
     m_State         = MATERIAL_STATE(value.State);
     m_DisplayFace   = DISPLAY_FACE(value.DisplayFace);
     m_ShadowCast    = value.ShadowCast;
@@ -53,7 +54,8 @@ bool Material::Init(const ResMaterial& value)
     for(size_t i=0; i<value.Parameters.size(); ++i)
     {
         auto& p = value.Parameters[i];
-        m_Params[p.Hash] = p;
+        auto hash = CalcHash(value.Parameters[i].Name.c_str());
+        m_Params[hash] = p;
     }
 
     // テクスチャ初期化.
@@ -221,7 +223,7 @@ void Material::SetParam(uint32_t hash, const Vector2& value)
     { return; }
 
     auto p = m_Params.at(hash);
-    if (p.Type != MATERIAL_PARAMETER_FLOAT || p.Count < 2)
+    if (p.Type != MATERIAL_PARAMETER_FLOAT2)
     { return; }
 
     memcpy(m_Buffer.data() + p.Offset, &value, sizeof(value));
@@ -237,7 +239,7 @@ void Material::SetParam(uint32_t hash, const Vector3& value)
     { return; }
 
     auto p = m_Params.at(hash);
-    if (p.Type != MATERIAL_PARAMETER_FLOAT || p.Count < 3)
+    if (p.Type != MATERIAL_PARAMETER_FLOAT3)
     { return; }
 
     memcpy(m_Buffer.data() + p.Offset, &value, sizeof(value));
@@ -253,7 +255,7 @@ void Material::SetParam(uint32_t hash, const Vector4& value)
     { return; }
 
     auto p = m_Params.at(hash);
-    if (p.Type != MATERIAL_PARAMETER_FLOAT || p.Count < 4)
+    if (p.Type != MATERIAL_PARAMETER_FLOAT4)
     { return; }
 
     memcpy(m_Buffer.data() + p.Offset, &value, sizeof(value));
@@ -269,7 +271,7 @@ bool Material::GetBool(uint32_t hash) const
     if (m_Params.find(hash) != m_Params.end())
     {
         auto p = m_Params.at(hash);
-        if (p.Type == MATERIAL_PARAMETER_BOOL && p.Count >= 1)
+        if (p.Type == MATERIAL_PARAMETER_BOOL)
         {
             auto val = 0;
             memcpy(&val, m_Buffer.data() + p.Offset, sizeof(val));
@@ -289,7 +291,7 @@ int Material::GetInt(uint32_t hash) const
     if (m_Params.find(hash) != m_Params.end())
     {
         auto p = m_Params.at(hash);
-        if (p.Type == MATERIAL_PARAMETER_INT && p.Count >= 1)
+        if (p.Type == MATERIAL_PARAMETER_INT)
         { memcpy(&result, m_Buffer.data() + p.Offset, sizeof(result)); }
     }
 
@@ -305,7 +307,7 @@ float Material::GetFloat(uint32_t hash) const
     if (m_Params.find(hash) != m_Params.end())
     {
         auto p = m_Params.at(hash);
-        if (p.Type == MATERIAL_PARAMETER_FLOAT && p.Count >= 1)
+        if (p.Type == MATERIAL_PARAMETER_FLOAT)
         { memcpy(&result, m_Buffer.data() + p.Offset, sizeof(result)); }
     }
 
@@ -321,7 +323,7 @@ uint32_t Material::GetUint(uint32_t hash) const
     if (m_Params.find(hash) != m_Params.end())
     {
         auto p = m_Params.at(hash);
-        if (p.Type == MATERIAL_PARAMETER_UINT && p.Count >= 1)
+        if (p.Type == MATERIAL_PARAMETER_UINT)
         { memcpy(&result, m_Buffer.data() + p.Offset, sizeof(result)); }
     }
 
@@ -337,7 +339,7 @@ Vector2 Material::GetVector2(uint32_t hash) const
     if (m_Params.find(hash) != m_Params.end())
     {
         auto p = m_Params.at(hash);
-        if (p.Type == MATERIAL_PARAMETER_FLOAT && p.Count >= 2)
+        if (p.Type == MATERIAL_PARAMETER_FLOAT2)
         { memcpy(&result, m_Buffer.data() + p.Offset, sizeof(result)); }
     }
 
@@ -353,7 +355,7 @@ Vector3 Material::GetVector3(uint32_t hash) const
     if (m_Params.find(hash) != m_Params.end())
     {
         auto p = m_Params.at(hash);
-        if (p.Type == MATERIAL_PARAMETER_FLOAT && p.Count >= 3)
+        if (p.Type == MATERIAL_PARAMETER_FLOAT3)
         { memcpy(&result, m_Buffer.data() + p.Offset, sizeof(result)); }
     }
 
@@ -369,7 +371,7 @@ Vector4 Material::GetVector4(uint32_t hash) const
     if (m_Params.find(hash) != m_Params.end())
     {
         auto p = m_Params.at(hash);
-        if (p.Type == MATERIAL_PARAMETER_FLOAT && p.Count >= 4)
+        if (p.Type == MATERIAL_PARAMETER_FLOAT4)
         { memcpy(&result, m_Buffer.data() + p.Offset, sizeof(result)); }
     }
 

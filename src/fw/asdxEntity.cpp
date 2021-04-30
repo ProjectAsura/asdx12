@@ -26,6 +26,7 @@ bool Entity::Add(uint32_t id, IComponent* item)
     { return false; }
 
     m_Components[id] = item;
+    return true;
 }
 
 //-----------------------------------------------------------------------------

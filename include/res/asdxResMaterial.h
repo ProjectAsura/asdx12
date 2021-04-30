@@ -21,9 +21,12 @@ namespace asdx {
 enum MATERIAL_PARAMETER_TYPE : uint32_t
 {
     MATERIAL_PARAMETER_BOOL,        // bool型です.
-    MATERIAL_PARAMETER_FLOAT,       // float型です.
     MATERIAL_PARAMETER_INT,         // int型です.
     MATERIAL_PARAMETER_UINT,        // uint型です.
+    MATERIAL_PARAMETER_FLOAT,       // float型です.
+    MATERIAL_PARAMETER_FLOAT2,      // float2型です.
+    MATERIAL_PARAMETER_FLOAT3,      // float3型です.
+    MATERIAL_PARAMETER_FLOAT4,      // float4型です.
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -83,9 +86,8 @@ enum TEXTURE_USAGE : uint8_t
 struct ResMaterialParameter
 {
     uint32_t    Type;       //!< データ型です.
-    uint32_t    Hash;       //!< 名前を表すハッシュ値です.
-    uint32_t    Count;      //!< 要素数です.
     uint32_t    Offset;     //!< バッファ先頭からのオフセットです.
+    std::string Name;       //!< パラメータ名.
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -102,7 +104,8 @@ struct ResMaterialTexture
 ///////////////////////////////////////////////////////////////////////////////
 struct ResMaterial
 {
-    uint32_t    Hash;               //!< マテリアル名を表すハッシュ値です.
+    std::string Name;               //!< マテリアル名です.
+    std::string PixelShader;        //!< ピクセルシェーダ名.
     uint8_t     State;              //!< マテリアルステートです.
     uint8_t     DisplayFace;        //!< 表示面設定です.
     uint8_t     ShadowCast;         //!< シャドウキャスト.

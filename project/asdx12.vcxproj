@@ -127,6 +127,7 @@
     <ClCompile Include="..\src\gfx\asdxFence.cpp" />
     <ClCompile Include="..\src\gfx\asdxGraphicsSystem.cpp" />
     <ClCompile Include="..\src\gfx\asdxIndexBuffer.cpp" />
+    <ClCompile Include="..\src\gfx\asdxMaterial.cpp" />
     <ClCompile Include="..\src\gfx\asdxModel.cpp" />
     <ClCompile Include="..\src\gfx\asdxPipelineState.cpp" />
     <ClCompile Include="..\src\gfx\asdxQuad.cpp" />
@@ -191,6 +192,7 @@
     <ClInclude Include="..\include\gfx\asdxFence.h" />
     <ClInclude Include="..\include\gfx\asdxGraphicsSystem.h" />
     <ClInclude Include="..\include\gfx\asdxIndexBuffer.h" />
+    <ClInclude Include="..\include\gfx\asdxMaterial.h" />
     <ClInclude Include="..\include\gfx\asdxModel.h" />
     <ClInclude Include="..\include\gfx\asdxPipelineState.h" />
     <ClInclude Include="..\include\gfx\asdxQuad.h" />

@@ -9,10 +9,10 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <map>
-#include <asdxMath.h>
-#include <asdxResMaterial.h>
-#include <asdxConstantBuffer.h>
-#include <asdxTexture.h>
+#include <fnd/asdxMath.h>
+#include <res/asdxResMaterial.h>
+#include <gfx/asdxConstantBuffer.h>
+#include <gfx/asdxTexture.h>
 
 
 namespace asdx {
