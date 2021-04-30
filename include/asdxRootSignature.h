@@ -67,6 +67,178 @@ enum ROOT_SIGNATURE_FLAG
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+// RANGE_CBV structure
+///////////////////////////////////////////////////////////////////////////////
+struct RANGE_CBV : public D3D12_DESCRIPTOR_RANGE
+{
+    RANGE_CBV(UINT baseRegister, UINT registerSpace = 0)
+    {
+        RangeType                           = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+        NumDescriptors                      = 1;
+        BaseShaderRegister                  = baseRegister;
+        RegisterSpace                       = registerSpace;
+        OffsetInDescriptorsFromTableStart   = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+    }
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// RANGE_SRV structure
+///////////////////////////////////////////////////////////////////////////////
+struct RANGE_SRV : public D3D12_DESCRIPTOR_RANGE
+{
+    RANGE_SRV(UINT baseRegister, UINT registerSpace = 0)
+    {
+        RangeType                           = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+        NumDescriptors                      = 1;
+        BaseShaderRegister                  = baseRegister;
+        RegisterSpace                       = registerSpace;
+        OffsetInDescriptorsFromTableStart   = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+    }
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// RANGE_UAV structure
+///////////////////////////////////////////////////////////////////////////////
+struct RANGE_UAV : public D3D12_DESCRIPTOR_RANGE
+{
+    RANGE_UAV(UINT baseRegister, UINT registerSpace = 0)
+    {
+        RangeType                           = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+        NumDescriptors                      = 1;
+        BaseShaderRegister                  = baseRegister;
+        RegisterSpace                       = registerSpace;
+        OffsetInDescriptorsFromTableStart   = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+    }
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// RANGE_SMP structure
+///////////////////////////////////////////////////////////////////////////////
+struct RANGE_SMP : public D3D12_DESCRIPTOR_RANGE
+{
+    RANGE_SMP(UINT baseRegister, UINT registerSpace = 0)
+    {
+        RangeType                           = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
+        NumDescriptors                      = 1;
+        BaseShaderRegister                  = baseRegister;
+        RegisterSpace                       = registerSpace;
+        OffsetInDescriptorsFromTableStart   = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+    }
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// STATIC_SMP_DESC structure
+///////////////////////////////////////////////////////////////////////////////
+struct STATIC_SMP_DESC : public D3D12_STATIC_SAMPLER_DESC
+{
+    STATIC_SMP_DESC
+    (
+        STATIC_SAMPLER_TYPE type,
+        SHADER_VISIBILITY   visibility,
+        UINT                baseRegister,
+        UINT                registerSpace = 0
+    )
+    {
+        MipLODBias         = 0;
+        MaxAnisotropy      = 0;
+        ComparisonFunc     = D3D12_COMPARISON_FUNC_ALWAYS;
+        BorderColor        = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
+        MinLOD             = 0;
+        MaxLOD             = D3D12_FLOAT32_MAX;
+        ShaderRegister     = baseRegister;
+        RegisterSpace      = registerSpace;
+        ShaderVisibility   = visibility;
+
+        switch(type)
+        {
+        case SST_POINT_CLAMP:
+            {
+                Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+                AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+                AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+                AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+            }
+            break;
+
+        case SST_POINT_WRAP:
+            {
+                Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+                AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+                AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+                AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+            }
+            break;
+
+        case SST_POINT_MIRROR:
+            {
+                Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+                AddressU = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+                AddressV = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+                AddressW = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+            }
+            break;
+
+        case SST_LINEAR_CLAMP:
+            {
+                Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+                AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+                AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+                AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+            }
+            break;
+
+        case SST_LINEAR_WRAP:
+            {
+                Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+                AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+                AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+                AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+            }
+            break;
+
+        case SST_LINEAR_MIRROR:
+            {
+                Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+                AddressU = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+                AddressV = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+                AddressW = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+            }
+            break;
+
+        case SST_ANISOTROPIC_CLAMP:
+            {
+                Filter = D3D12_FILTER_ANISOTROPIC;
+                AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+                AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+                AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+                MaxAnisotropy = 16;
+            }
+            break;
+
+        case SST_ANISOTROPIC_WRAP:
+            {
+                Filter = D3D12_FILTER_ANISOTROPIC;
+                AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+                AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+                AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+                MaxAnisotropy = 16;
+            }
+            break;
+
+        case SST_ANISOTROPIC_MIRROR:
+            {
+                Filter = D3D12_FILTER_ANISOTROPIC;
+                AddressU = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+                AddressV = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+                AddressW = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+                MaxAnisotropy = 16;
+            }
+            break;
+        }
+    }
+};
+
+///////////////////////////////////////////////////////////////////////////////
 // RootSignatureDesc class
 ///////////////////////////////////////////////////////////////////////////////
 class RootSignatureDesc

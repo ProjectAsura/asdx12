@@ -40,6 +40,12 @@
     <Filter Include="ソース ファイル\fw">
       <UniqueIdentifier>{1bd64746-6373-4cbb-b9c9-aa9e450b10fd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ソース ファイル\gfx">
+      <UniqueIdentifier>{125a060f-ee53-4f62-b579-e8ef88e1da16}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\gfx">
+      <UniqueIdentifier>{e195f819-9403-4ec1-980a-db7d1d5d123a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\external\imgui\imgui.cpp">
@@ -199,6 +205,9 @@
     </ClInclude>
     <ClInclude Include="..\include\fw\asdxMessage.h">
       <Filter>ヘッダー ファイル\fw</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\gfx\asdxGraphics.h">
+      <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

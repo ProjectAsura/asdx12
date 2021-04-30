@@ -150,6 +150,7 @@
     <ClInclude Include="..\include\edit\asdxTcpConnector.h" />
     <ClInclude Include="..\include\fw\asdxApp.h" />
     <ClInclude Include="..\include\fw\asdxMessage.h" />
+    <ClInclude Include="..\include\gfx\asdxGraphics.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\include\core\asdxMath.inl" />
