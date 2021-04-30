@@ -10,8 +10,8 @@
 //-----------------------------------------------------------------------------
 #include <cstdint>
 #include <list>
-#include <core/asdxFrameHeap.h>
-#include <core/asdxQueue.h>
+#include <fnd/asdxFrameHeap.h>
+#include <fnd/asdxQueue.h>
 
 
 namespace asdx {

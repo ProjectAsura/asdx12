@@ -8,7 +8,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <edit/asdxP4VHelper.h>
-#include <core/asdxMisc.h>
+#include <fnd/asdxMisc.h>
 #include <Windows.h>
 
 

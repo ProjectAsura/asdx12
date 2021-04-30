@@ -10,7 +10,7 @@
 #include <algorithm>
 #include <cassert>
 #include <edit/asdxHistory.h>
-#include <core/asdxLogger.h>
+#include <fnd/asdxLogger.h>
 
 
 namespace asdx {

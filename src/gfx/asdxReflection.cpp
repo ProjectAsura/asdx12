@@ -8,7 +8,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <gfx/asdxReflection.h>
-#include <core/asdxLogger.h>
+#include <fnd/asdxLogger.h>
 
 #ifdef ASDX_ENABLE_DXC
     #include <dxcapi.h>

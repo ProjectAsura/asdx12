@@ -8,7 +8,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <res/asdxResModel.h>
-#include <core/asdxLogger.h>
+#include <fnd/asdxLogger.h>
 
 
 namespace {

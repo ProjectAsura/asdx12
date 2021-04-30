@@ -10,7 +10,7 @@
 #include <cassert>
 #include <gfx/asdxCommandList.h>
 #include <gfx/asdxGraphicsSystem.h>
-#include <core/asdxLogger.h>
+#include <fnd/asdxLogger.h>
 
 namespace {
 

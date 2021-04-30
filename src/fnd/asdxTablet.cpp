@@ -7,10 +7,10 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <core/asdxTablet.h>
+#include <fnd/asdxTablet.h>
 
 #ifdef ASDX_ENABLE_PENTAB
-#include <core/asdxLogger.h>
+#include <fnd/asdxLogger.h>
 
 
 namespace {

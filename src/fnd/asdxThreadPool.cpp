@@ -13,7 +13,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <cassert>
-#include <core/asdxThreadPool.h>
+#include <fnd/asdxThreadPool.h>
 
 
 namespace asdx {

@@ -10,7 +10,7 @@
 #include <cassert>
 #include <cstring>
 #include <Windows.h>
-#include <core/asdxHid.h>
+#include <fnd/asdxHid.h>
 
 
 namespace asdx {

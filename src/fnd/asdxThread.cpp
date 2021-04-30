@@ -9,7 +9,7 @@
 //-----------------------------------------------------------------------------
 #include <cassert>
 #include <Windows.h>
-#include <core/asdxThread.h>
+#include <fnd/asdxThread.h>
 
 
 namespace asdx {

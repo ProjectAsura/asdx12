@@ -8,8 +8,8 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <gfx/asdxQuad.h>
-#include <core/asdxMath.h>
-#include <core/asdxLogger.h>
+#include <fnd/asdxMath.h>
+#include <fnd/asdxLogger.h>
 
 
 namespace {

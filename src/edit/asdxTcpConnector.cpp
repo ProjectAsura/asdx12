@@ -10,7 +10,7 @@
 #include <WinSock2.h>
 #include <ws2tcpip.h>
 #include <edit/asdxTcpConnector.h>
-#include <core/asdxLogger.h>
+#include <fnd/asdxLogger.h>
 
 
 namespace asdx {

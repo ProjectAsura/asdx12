@@ -10,7 +10,7 @@
 #include <cstdio>
 #include <cstdarg>
 #include <Windows.h>
-#include <core/asdxLogger.h>
+#include <fnd/asdxLogger.h>
 
 
 namespace /* anonymous */ {

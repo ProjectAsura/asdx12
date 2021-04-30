@@ -18,8 +18,8 @@
 #include <direct.h>
 #include <ShObjIdl.h>
 #include <dxgiformat.h>
-#include <core/asdxLogger.h>
-#include <core/asdxMisc.h>
+#include <fnd/asdxLogger.h>
+#include <fnd/asdxMisc.h>
 
 
 namespace asdx {

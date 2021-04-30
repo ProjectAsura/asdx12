@@ -9,9 +9,9 @@
 //-----------------------------------------------------------------------------
 #include <list>
 #include <cassert>
-#include <core/asdxMacro.h>
-#include <core/asdxMath.h>
-#include <core/asdxLogger.h>
+#include <fnd/asdxMacro.h>
+#include <fnd/asdxMath.h>
+#include <fnd/asdxLogger.h>
 #include <fw/asdxApp.h>
 
 

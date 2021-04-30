@@ -9,7 +9,7 @@
 //-----------------------------------------------------------------------------
 #include <cstdio>
 #include <res/asdxResMaterial.h>
-#include <core/asdxLogger.h>
+#include <fnd/asdxLogger.h>
 
 
 namespace {

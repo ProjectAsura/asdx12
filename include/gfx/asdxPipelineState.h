@@ -10,7 +10,7 @@
 //-----------------------------------------------------------------------------
 #include <vector>
 #include <d3d12.h>
-#include <core/asdxRef.h>
+#include <fnd/asdxRef.h>
 
 
 #ifdef __ID3D12GraphicsCommandList6_INTERFACE_DEFINED__

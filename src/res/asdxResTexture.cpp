@@ -15,7 +15,7 @@
 #include <wincodec.h>
 #include <wrl/client.h>
 #include <res/asdxResTexture.h>
-#include <core/asdxLogger.h>
+#include <fnd/asdxLogger.h>
 
 
 //-------------------------------------------------------------------------------------------------

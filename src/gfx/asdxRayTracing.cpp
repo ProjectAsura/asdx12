@@ -7,8 +7,8 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <core/asdxLogger.h>
-#include <core/asdxMisc.h>
+#include <fnd/asdxLogger.h>
+#include <fnd/asdxMisc.h>
 #include <gfx/asdxRayTracing.h>
 #include <gfx/asdxGraphicsSystem.h>
 

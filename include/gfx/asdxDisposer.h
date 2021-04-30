@@ -9,8 +9,8 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <list>
-#include <core/asdxRef.h>
-#include <core/asdxSpinLock.h>
+#include <fnd/asdxRef.h>
+#include <fnd/asdxSpinLock.h>
 
 
 namespace asdx {

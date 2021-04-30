@@ -9,7 +9,7 @@
 //-----------------------------------------------------------------------------
 #include <cassert>
 #include <d3d12shader.h>
-#include <core/asdxLogger.h>
+#include <fnd/asdxLogger.h>
 #include <gfx/asdxPipelineState.h>
 #include <gfx/asdxGraphicsSystem.h>
 

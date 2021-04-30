@@ -9,7 +9,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <vector>
-#include <core/asdxMath.h>
+#include <fnd/asdxMath.h>
 #include <gfx/asdxView.h>
 #include <gfx/asdxVertexBuffer.h>
 #include <gfx/asdxIndexBuffer.h>

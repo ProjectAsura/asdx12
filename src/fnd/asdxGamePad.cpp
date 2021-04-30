@@ -11,7 +11,7 @@
 #include <cmath>
 #include <Windows.h>
 #include <Xinput.h>
-#include <core/asdxHid.h>
+#include <fnd/asdxHid.h>
 
 
 

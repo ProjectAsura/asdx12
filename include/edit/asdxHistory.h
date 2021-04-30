@@ -11,7 +11,7 @@
 #include <list>
 #include <vector>
 #include <functional>
-#include <core/asdxSpinLock.h>
+#include <fnd/asdxSpinLock.h>
 
 
 namespace asdx {

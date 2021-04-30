@@ -9,7 +9,7 @@
 //-----------------------------------------------------------------------------
 #include <gfx/asdxVertexBuffer.h>
 #include <gfx/asdxGraphicsSystem.h>
-#include <core/asdxLogger.h>
+#include <fnd/asdxLogger.h>
 
 
 namespace asdx {

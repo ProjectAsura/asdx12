@@ -11,7 +11,7 @@
 #include <vector>
 #include <gfx/asdxUploadResource.h>
 #include <gfx/asdxGraphicsSystem.h>
-#include <core/asdxLogger.h>
+#include <fnd/asdxLogger.h>
 
 
 namespace {

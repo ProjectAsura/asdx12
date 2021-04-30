@@ -16,9 +16,9 @@
 #include <d3d12.h>
 #include <dxgi1_6.h>
 
-#include <core/asdxRef.h>
-#include <core/asdxStepTimer.h>
-#include <core/asdxHid.h>
+#include <fnd/asdxRef.h>
+#include <fnd/asdxStepTimer.h>
+#include <fnd/asdxHid.h>
 #include <gfx/asdxGraphicsSystem.h>
 #include <gfx/asdxCommandList.h>
 #include <gfx/asdxTarget.h>

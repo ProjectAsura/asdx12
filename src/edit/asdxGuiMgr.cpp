@@ -10,8 +10,8 @@
 #include <edit/asdxGuiMgr.h>
 
 #ifdef ASDX_ENABLE_IMGUI
-#include <core/asdxMisc.h>
-#include <core/asdxLogger.h>
+#include <fnd/asdxMisc.h>
+#include <fnd/asdxLogger.h>
 #include <gfx/asdxGraphicsSystem.h>
 #include <imgui.h>
 #include <imgui_internal.h>

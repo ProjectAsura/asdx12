@@ -9,7 +9,7 @@
 //-----------------------------------------------------------------------------
 #include <cassert>
 #include <gfx/asdxDescriptor.h>
-#include <core/asdxLogger.h>
+#include <fnd/asdxLogger.h>
 
 
 namespace asdx {

@@ -10,8 +10,8 @@
 //-----------------------------------------------------------------------------
 #include <d3d12.h>
 #include <dxgi1_6.h>
-#include <core/asdxSpinLock.h>
-#include <core/asdxRef.h>
+#include <fnd/asdxSpinLock.h>
+#include <fnd/asdxRef.h>
 #include <res/asdxResTexture.h>
 #include <gfx/asdxCommandQueue.h>
 #include <gfx/asdxDescriptor.h>

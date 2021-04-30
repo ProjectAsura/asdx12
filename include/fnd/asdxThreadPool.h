@@ -9,7 +9,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <cstdint>
-#include <core/asdxQueue.h>
+#include <fnd/asdxQueue.h>
 
 
 namespace asdx {

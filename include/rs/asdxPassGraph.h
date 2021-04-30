@@ -11,7 +11,7 @@
 #include <cstdint>
 #include <functional>
 #include <d3d12.h>
-#include <core/asdxMath.h>
+#include <fnd/asdxMath.h>
 #include <gfx/asdxTarget.h>
 #include <gfx/asdxCommandQueue.h>
 

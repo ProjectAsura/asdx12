@@ -9,12 +9,12 @@
 //-----------------------------------------------------------------------------
 #include <atomic>
 #include <map>
-#include <core/asdxFrameHeap.h>
-#include <core/asdxHash.h>
-#include <core/asdxList.h>
-#include <core/asdxStack.h>
-#include <core/asdxThreadPool.h>
-#include <core/asdxLogger.h>
+#include <fnd/asdxFrameHeap.h>
+#include <fnd/asdxHash.h>
+#include <fnd/asdxList.h>
+#include <fnd/asdxStack.h>
+#include <fnd/asdxThreadPool.h>
+#include <fnd/asdxLogger.h>
 #include <gfx/asdxCommandList.h>
 #include <gfx/asdxDisposer.h>
 #include <gfx/asdxGraphicsSystem.h>

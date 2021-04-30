@@ -10,7 +10,7 @@
 //-----------------------------------------------------------------------------
 #include <vector>
 #include <d3d12.h>
-#include <core/asdxMath.h>
+#include <fnd/asdxMath.h>
 #include <gfx/asdxView.h>
 
 

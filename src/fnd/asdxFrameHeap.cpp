@@ -8,8 +8,8 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <new>
-#include <core/asdxFrameHeap.h>
-#include <core/asdxLogger.h>
+#include <fnd/asdxFrameHeap.h>
+#include <fnd/asdxLogger.h>
 
 
 namespace asdx {

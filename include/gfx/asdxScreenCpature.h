@@ -10,7 +10,7 @@
 //-----------------------------------------------------------------------------
 #include <cstdint>
 #include <d3d12.h>
-#include <core/asdxRef.h>
+#include <fnd/asdxRef.h>
 
 
 namespace asdx {

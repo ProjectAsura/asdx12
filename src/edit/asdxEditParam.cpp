@@ -9,7 +9,7 @@
 //-----------------------------------------------------------------------------
 #include <edit/asdxEditParam.h>
 #include <edit/asdxHistory.h>
-#include <core/asdxMisc.h>
+#include <fnd/asdxMisc.h>
 #include <res/asdxResTexture.h>
 #include <gfx/asdxResourceUploader.h>
 

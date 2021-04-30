@@ -10,7 +10,7 @@
 //-----------------------------------------------------------------------------
 #include <atomic>
 #include <d3d12.h>
-#include <core/asdxRef.h>
+#include <fnd/asdxRef.h>
 #include <gfx/asdxFence.h>
 
 

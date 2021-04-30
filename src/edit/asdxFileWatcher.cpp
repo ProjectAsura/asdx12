@@ -11,7 +11,7 @@
 #include <string>
 #include <Windows.h>
 #include <edit/asdxFileWatcher.h>
-#include <core/asdxLogger.h>
+#include <fnd/asdxLogger.h>
 
 
 namespace {
