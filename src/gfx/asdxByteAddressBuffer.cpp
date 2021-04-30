@@ -7,9 +7,9 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <asdxByteAddressBuffer.h>
-#include <asdxGraphicsDevice.h>
-#include <asdxLogger.h>
+#include <gfx/asdxByteAddressBuffer.h>
+#include <gfx/asdxGraphicsSystem.h>
+#include <core/asdxLogger.h>
 
 
 namespace asdx {
@@ -37,7 +37,7 @@ ByteAddressBuffer::~ByteAddressBuffer()
 //-----------------------------------------------------------------------------
 bool ByteAddressBuffer::Init(uint64_t size, D3D12_RESOURCE_STATES state)
 {
-    auto pDevice = GfxDevice().GetDevice();
+    auto pDevice = GetD3D12Device();
 
     if (pDevice == nullptr || size == 0)
     {
@@ -105,7 +105,7 @@ bool ByteAddressBuffer::Init(uint64_t size, const void* pInitData)
     if (!Init(size, D3D12_RESOURCE_STATE_GENERIC_READ))
     { return false; }
 
-    if (!GfxDevice().UpdateBuffer(m_Resource.GetPtr(), pInitData))
+    if (!GfxSystem().UpdateBuffer(m_Resource.GetPtr(), pInitData))
     {
         ELOGA("Error : GraphicsDevice::UpdateBuffer() Failed.");
         return false;
@@ -121,7 +121,7 @@ void ByteAddressBuffer::Term()
 {
     auto resource = m_Resource.Detach();
     if (resource != nullptr)
-    { GfxDevice().PushToDisposer(resource); }
+    { GfxSystem().Dispose(resource); }
     m_View.Reset();
 }
 

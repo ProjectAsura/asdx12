@@ -10,8 +10,8 @@
 //-----------------------------------------------------------------------------
 #include <vector>
 #include <d3d12.h>
-#include <asdxMath.h>
-#include <asdxView.h>
+#include <core/asdxMath.h>
+#include <gfx/asdxView.h>
 
 
 namespace asdx {

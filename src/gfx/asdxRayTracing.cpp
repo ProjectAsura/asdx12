@@ -7,10 +7,10 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <asdxRayTracing.h>
-#include <asdxLogger.h>
-#include <asdxGraphicsDevice.h>
-#include <asdxMisc.h>
+#include <core/asdxLogger.h>
+#include <core/asdxMisc.h>
+#include <gfx/asdxRayTracing.h>
+#include <gfx/asdxGraphicsSystem.h>
 
 
 namespace asdx {

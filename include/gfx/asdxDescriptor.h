@@ -10,8 +10,8 @@
 //-----------------------------------------------------------------------------
 #include <atomic>
 #include <d3d12.h>
-#include <asdxRef.h>
-#include <asdxPool.h>
+#include <core/asdxRef.h>
+#include <core/asdxList.h>
 
 
 namespace asdx {
@@ -24,13 +24,12 @@ class DescriptorHeap;
 ///////////////////////////////////////////////////////////////////////////////
 // Descriptor class
 ///////////////////////////////////////////////////////////////////////////////
-class Descriptor : public IReference
+class Descriptor : public IReference, public List<Descriptor>::Node
 {
     //=========================================================================
     // list of friend classes and methods.
     //=========================================================================
     friend class DescriptorHeap;
-    friend class Pool<Descriptor>;
 
 public:
     //=========================================================================
@@ -95,7 +94,6 @@ private:
 };
 
 
-
 ///////////////////////////////////////////////////////////////////////////////
 // DescriptorHeap class
 ///////////////////////////////////////////////////////////////////////////////
@@ -141,21 +139,21 @@ public:
     //!
     //! @return     生成したディスクリプタを返却します. 生成に失敗した場合は nullptr が返却されます.
     //-------------------------------------------------------------------------
-    Descriptor* CreateDescriptor();
+    Descriptor* Alloc();
 
     //-------------------------------------------------------------------------
     //! @brief      利用可能なハンドル数を取得します.
     //!
     //! @return     利用可能なハンドル数を返却します.
     //-------------------------------------------------------------------------
-    uint32_t GetAvailableHandleCount() const;
+    uint32_t GetAvailableCount() const;
 
     //-------------------------------------------------------------------------
     //! @brief      割り当て済みハンドル数を取得します.
     //!
     //! @return     割り当て済みハンドル数を返却します.
     //-------------------------------------------------------------------------
-    uint32_t GetAllocatedHandleCount() const;
+    uint32_t GetAllocatedCount() const;
 
     //-------------------------------------------------------------------------
     //! @brief      ハンドル総数を取得します.
@@ -174,13 +172,15 @@ private:
     // private variables.
     //=========================================================================
     ID3D12DescriptorHeap*   m_pHeap;            //!< ディスクリプタヒープです.
-    Pool<Descriptor>        m_Pool;             //!< プールです
+    List<Descriptor>        m_UsedList;         //!< 使用中リスト.
+    List<Descriptor>        m_FreeList;         //!< 未使用リスト.
+    Descriptor*             m_Descriptors;      //!< ディスクリプタ.
     uint32_t                m_IncrementSize;    //!< インクリメントサイズです.
 
     //=========================================================================
     // private methods.
     //=========================================================================
-    void DisposeDescriptor(Descriptor* pValue);
+    void Free(Descriptor* pValue);
 
     DescriptorHeap  (const DescriptorHeap&) = delete;
     void operator = (const DescriptorHeap&) = delete;

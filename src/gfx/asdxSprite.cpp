@@ -7,8 +7,9 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <asdxSprite.h>
-#include <asdxLogger.h>
+#include <gfx/asdxSprite.h>
+#include <gfx/asdxGraphicsSystem.h>
+#include <core/asdxLogger.h>
 
 
 namespace asdx {
@@ -64,9 +65,16 @@ bool SpriteSystem::Init
     DXGI_FORMAT depthFormat
 )
 {
+    auto pDevice = GetD3D12Device();
+    if (pDevice == nullptr || maxSpriteCount == 0)
+    {
+        ELOG("Error : Invalid Argument");
+        return false;
+    }
+
     // 頂点バッファ生成.
     auto vertexCount = maxSpriteCount * kVertexPerSprite;
-    if (!m_VB.Init(GfxDevice().GetDevice(), sizeof(Vertex) * vertexCount, sizeof(Vertex)))
+    if (!m_VB.Init(sizeof(Vertex) * vertexCount, sizeof(Vertex)))
     {
         ELOGA("Error : VertexBuffer::Init() Failed.");
         return false;
@@ -74,7 +82,7 @@ bool SpriteSystem::Init
 
     // インデックスバッファ生成.
     auto indexCount = maxSpriteCount * kIndexPerSprite;
-    if (!m_IB.Init(GfxDevice().GetDevice(), sizeof(uint32_t) * indexCount))
+    if (!m_IB.Init(sizeof(uint32_t) * indexCount))
     {
         ELOGA("Error : IndexBuffer::Init() Failed.");
         return true;
@@ -105,7 +113,7 @@ bool SpriteSystem::Init
         desc.AddTableSRV("ColorMap", SV_PS, 0);
         desc.SetFlag(RSF_ALLOW_IA);
 
-        if (!m_RootSig.Init(GfxDevice().GetDevice(), desc))
+        if (!m_RootSig.Init(pDevice, desc))
         {
             ELOGA("Error : RootSignature::Init() Failed.");
             return false;
@@ -123,17 +131,17 @@ bool SpriteSystem::Init
         desc.pRootSignature = m_RootSig.GetPtr();
         desc.VS                 = { SpriteVS, sizeof(SpriteVS) };
         desc.PS                 = { SpritePS, sizeof(SpritePS) };
-        desc.BlendState         = GetBS(BLEND_STATE_OPAQUE);
+        desc.BlendState         = BLEND_DESC(BLEND_STATE_OPAQUE);
         desc.SampleMask         = UINT_MAX;
-        desc.RasterizerState    = GetRS(RASTERIZER_STATE_CULL_NONE);
-        desc.DepthStencilState  = GetDSS(DEPTH_STATE_DEFAULT);
+        desc.RasterizerState    = RASTERIZER_DESC(RASTERIZER_STATE_CULL_NONE);
+        desc.DepthStencilState  = DEPTH_STENCIL_DESC(DEPTH_STATE_DEFAULT);
         desc.NumRenderTargets   = 1;
         desc.RTVFormats[0]      = colorFormat;
         desc.DSVFormat          = depthFormat;
         desc.SampleDesc.Count   = 1;
         desc.SampleDesc.Quality = 0;
 
-        if (!m_PSO.Init(GfxDevice().GetDevice(), &desc))
+        if (!m_PSO.Init(pDevice, &desc))
         {
             ELOG("Error : PipelineState::Init() Failed.");
             return false;

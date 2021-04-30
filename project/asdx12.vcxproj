@@ -118,6 +118,27 @@
     <ClCompile Include="..\src\edit\asdxTcpConnector.cpp" />
     <ClCompile Include="..\src\fw\asdxApp.cpp" />
     <ClCompile Include="..\src\fw\asdxMessage.cpp" />
+    <ClCompile Include="..\src\gfx\asdxByteAddressBuffer.cpp" />
+    <ClCompile Include="..\src\gfx\asdxCommandList.cpp" />
+    <ClCompile Include="..\src\gfx\asdxCommandQueue.cpp" />
+    <ClCompile Include="..\src\gfx\asdxConstantBuffer.cpp" />
+    <ClCompile Include="..\src\gfx\asdxDescriptor.cpp" />
+    <ClCompile Include="..\src\gfx\asdxFence.cpp" />
+    <ClCompile Include="..\src\gfx\asdxGraphicsSystem.cpp" />
+    <ClCompile Include="..\src\gfx\asdxIndexBuffer.cpp" />
+    <ClCompile Include="..\src\gfx\asdxPipelineState.cpp" />
+    <ClCompile Include="..\src\gfx\asdxQuad.cpp" />
+    <ClCompile Include="..\src\gfx\asdxRayTracing.cpp" />
+    <ClCompile Include="..\src\gfx\asdxReflection.cpp" />
+    <ClCompile Include="..\src\gfx\asdxRootSignature.cpp" />
+    <ClCompile Include="..\src\gfx\asdxSampler.cpp" />
+    <ClCompile Include="..\src\gfx\asdxScreenCapture.cpp" />
+    <ClCompile Include="..\src\gfx\asdxSprite.cpp" />
+    <ClCompile Include="..\src\gfx\asdxStructuredBuffer.cpp" />
+    <ClCompile Include="..\src\gfx\asdxTarget.cpp" />
+    <ClCompile Include="..\src\gfx\asdxTexture.cpp" />
+    <ClCompile Include="..\src\gfx\asdxVertexBuffer.cpp" />
+    <ClCompile Include="..\src\gfx\asdxView.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\external\imgui\imconfig.h" />
@@ -138,6 +159,7 @@
     <ClInclude Include="..\include\core\asdxQueue.h" />
     <ClInclude Include="..\include\core\asdxSpinLock.h" />
     <ClInclude Include="..\include\core\asdxStack.h" />
+    <ClInclude Include="..\include\core\asdxStepTimer.h" />
     <ClInclude Include="..\include\core\asdxStopWatch.h" />
     <ClInclude Include="..\include\core\asdxTablet.h" />
     <ClInclude Include="..\include\core\asdxThread.h" />
@@ -150,7 +172,28 @@
     <ClInclude Include="..\include\edit\asdxTcpConnector.h" />
     <ClInclude Include="..\include\fw\asdxApp.h" />
     <ClInclude Include="..\include\fw\asdxMessage.h" />
-    <ClInclude Include="..\include\gfx\asdxGraphics.h" />
+    <ClInclude Include="..\include\gfx\asdxByteAddressBuffer.h" />
+    <ClInclude Include="..\include\gfx\asdxCommandList.h" />
+    <ClInclude Include="..\include\gfx\asdxCommandQueue.h" />
+    <ClInclude Include="..\include\gfx\asdxConstantBuffer.h" />
+    <ClInclude Include="..\include\gfx\asdxDescriptor.h" />
+    <ClInclude Include="..\include\gfx\asdxDisposer.h" />
+    <ClInclude Include="..\include\gfx\asdxFence.h" />
+    <ClInclude Include="..\include\gfx\asdxGraphicsSystem.h" />
+    <ClInclude Include="..\include\gfx\asdxIndexBuffer.h" />
+    <ClInclude Include="..\include\gfx\asdxPipelineState.h" />
+    <ClInclude Include="..\include\gfx\asdxQuad.h" />
+    <ClInclude Include="..\include\gfx\asdxRayTracing.h" />
+    <ClInclude Include="..\include\gfx\asdxReflection.h" />
+    <ClInclude Include="..\include\gfx\asdxRootSignature.h" />
+    <ClInclude Include="..\include\gfx\asdxSampler.h" />
+    <ClInclude Include="..\include\gfx\asdxScreenCpature.h" />
+    <ClInclude Include="..\include\gfx\asdxSprite.h" />
+    <ClInclude Include="..\include\gfx\asdxStructuredBuffer.h" />
+    <ClInclude Include="..\include\gfx\asdxTarget.h" />
+    <ClInclude Include="..\include\gfx\asdxTexture.h" />
+    <ClInclude Include="..\include\gfx\asdxVertexBuffer.h" />
+    <ClInclude Include="..\include\gfx\asdxView.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\include\core\asdxMath.inl" />

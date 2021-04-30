@@ -11,10 +11,10 @@
 //-----------------------------------------------------------------------------
 #include <cstdint>
 #include <chrono>
-#include <asdxVertexBuffer.h>
-#include <asdxIndexBuffer.h>
-#include <asdxConstantBuffer.h>
-#include <asdxTexture.h>
+#include <gfx/asdxVertexBuffer.h>
+#include <gfx/asdxIndexBuffer.h>
+#include <gfx/asdxConstantBuffer.h>
+#include <gfx/asdxTexture.h>
 #include <asdxResourceUploader.h>
 
 

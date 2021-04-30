@@ -8,7 +8,7 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <asdxGraphicsDevice.h>
+#include <gfx/asdxDescriptor.h>
 
 
 namespace asdx {
@@ -18,15 +18,35 @@ namespace asdx {
 ///////////////////////////////////////////////////////////////////////////////
 enum SAMPLER_TYPE
 {
-    ST_POINT_CLAMP,
-    ST_POINT_WRAP,
-    ST_POINT_MIRROR,
-    ST_LINEAR_CLAMP,
-    ST_LINEAR_WRAP,
-    ST_LINEAR_MIRROR,
-    ST_ANISOTROPIC_CLAMP,
-    ST_ANISOTROPIC_WRAP,
-    ST_ANISOTROPIC_MIRROR,
+    SAMPLER_POINT_CLAMP,
+    SAMPLER_POINT_WRAP,
+    SAMPLER_POINT_MIRROR,
+    SAMPLER_LINEAR_CLAMP,
+    SAMPLER_LINEAR_WRAP,
+    SAMPLER_LINEAR_MIRROR,
+    SAMPLER_ANISOTROPIC_CLAMP,
+    SAMPLER_ANISOTROPIC_WRAP,
+    SAMPLER_ANISOTROPIC_MIRROR,
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// STATIC_SAMPLER_DESC structure
+///////////////////////////////////////////////////////////////////////////////
+struct STATIC_SAMPLER_DESC : public D3D12_STATIC_SAMPLER_DESC
+{
+    STATIC_SAMPLER_DESC(
+        SAMPLER_TYPE            type,
+        D3D12_SHADER_VISIBILITY visibility,
+        UINT                    baseRegister,
+        UINT                    registerSpace = 0);
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// SAMPLER_DESC structure
+///////////////////////////////////////////////////////////////////////////////
+struct SAMPLER_DESC : public D3D12_SAMPLER_DESC
+{
+    SAMPLER_DESC(SAMPLER_TYPE type);
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -62,26 +82,11 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      初期化処理を行います.
     //!
-    //! @param[in]      device          グラフィックスデバイスです.
-    //! @param[in]      type            サンプラータイプです.
-    //! @param[in]      compareFunc     比較関数.
-    //! @retval true    初期化に成功.
-    //! @retval false   初期化に失敗.
-    //-------------------------------------------------------------------------
-    bool Init(
-        GraphicsDevice&         device,
-        SAMPLER_TYPE            type,
-        D3D12_COMPARISON_FUNC   compareFunc = D3D12_COMPARISON_FUNC_ALWAYS);
-
-    //-------------------------------------------------------------------------
-    //! @brief      初期化処理を行います.
-    //!
-    //! @param[in]      device      グラフィックスデバイスです.
     //! @param[in]      pDesc       構成設定です.
     //! @retval true    初期化に成功.
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
-    bool Init(GraphicsDevice& device, const D3D12_SAMPLER_DESC* pDesc);
+    bool Init(const D3D12_SAMPLER_DESC* pDesc);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.

@@ -1,5 +1,5 @@
 ﻿//-----------------------------------------------------------------------------
-// File : asdxShaderReflection.cpp
+// File : asdxReflection.cpp
 // Desc : Shader Reflection.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
@@ -7,8 +7,8 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <asdxShaderReflection.h>
-#include <asdxLogger.h>
+#include <gfx/asdxReflection.h>
+#include <core/asdxLogger.h>
 
 #ifdef ASDX_ENABLE_DXC
     #include <dxcapi.h>

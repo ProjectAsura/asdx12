@@ -8,7 +8,9 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <asdxGraphicsDevice.h>
+#include <d3d12.h>
+#include <core/asdxRef.h>
+#include <gfx/asdxView.h>
 
 
 namespace asdx {
@@ -83,6 +85,134 @@ public:
     //-------------------------------------------------------------------------
     uint8_t GetIndex() const;
 
+    //-------------------------------------------------------------------------
+    //! @brief      遷移バリアを設定します.
+    //-------------------------------------------------------------------------
+    void BarrierTransition(
+        const IView*                    pView,
+        uint32_t                        subresource,
+        D3D12_RESOURCE_STATES           stateBefore,
+        D3D12_RESOURCE_STATES           stateAfter,
+        D3D12_RESOURCE_BARRIER_FLAGS    flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
+
+    //-------------------------------------------------------------------------
+    //! @brief      遷移バリアを設定します.
+    //-------------------------------------------------------------------------
+    void BarrierTransition(
+        ID3D12Resource*                 pResource,
+        uint32_t                        subresource,
+        D3D12_RESOURCE_STATES           stateBefore,
+        D3D12_RESOURCE_STATES           stateAfter,
+        D3D12_RESOURCE_BARRIER_FLAGS    flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
+
+    //-------------------------------------------------------------------------
+    //! @brief      UAVバリアを設定します.
+    //-------------------------------------------------------------------------
+    void BarrierUAV(
+        const IUnorderedAccessView*     pView,
+        D3D12_RESOURCE_BARRIER_FLAGS    flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
+
+    //-------------------------------------------------------------------------
+    //! @brief      UAVバリアを設定します.
+    //-------------------------------------------------------------------------
+    void BarrierUAV(
+        ID3D12Resource*                 pResource,
+        D3D12_RESOURCE_BARRIER_FLAGS    flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
+
+    //-------------------------------------------------------------------------
+    //! @brief      レンダーターゲットビューをクリアします.
+    //-------------------------------------------------------------------------
+    void ClearRTV(const IRenderTargetView* pView, const float* pClearColor);
+
+    //-------------------------------------------------------------------------
+    //! @brief      深度ステンシルビューをクリアします.
+    //-------------------------------------------------------------------------
+    void ClearDSV(const IDepthStencilView* pView, float clearDepth);
+
+    //-------------------------------------------------------------------------
+    //! @brief      深度ステンシルビューをクリアします.
+    //-------------------------------------------------------------------------
+    void ClearDSV(
+        const IDepthStencilView*    pView,
+        D3D12_CLEAR_FLAGS           flag,
+        float                       clearDepth,
+        uint8_t                     clearStencil);
+
+    //-------------------------------------------------------------------------
+    //! @brief      アンオーダードアクセスビューをクリアします.
+    //-------------------------------------------------------------------------
+    void ClearUAV(const IUnorderedAccessView* pView, const uint32_t* pClearValues);
+
+    //-------------------------------------------------------------------------
+    //! @brief      アンオーダードアクセスビューをクリアします.
+    //-------------------------------------------------------------------------
+    void ClearUAV(const IUnorderedAccessView* pView, const float* pClearValues);
+
+    //-------------------------------------------------------------------------
+    //! @brief      ビューポートを設定します.
+    //-------------------------------------------------------------------------
+    void SetViewport(const IView* pView, bool setScissor = true);
+
+    //-------------------------------------------------------------------------
+    //! @brief      ビューポートを設定します.
+    //-------------------------------------------------------------------------
+    void SetViewport(ID3D12Resource* pResource, bool setScissor = true);
+
+    //-------------------------------------------------------------------------
+    //! @brief      レンダーターゲットを設定します.
+    //-------------------------------------------------------------------------
+    void SetTarget(const IRenderTargetView* pRTV, const IDepthStencilView* pDSV);
+
+    //-------------------------------------------------------------------------
+    //! @brief      レンダーターゲットを設定します.
+    //-------------------------------------------------------------------------
+    void SetTargets(uint32_t count, const IRenderTargetView** pRTVs, const IDepthStencilView* pDSV);
+
+    //-------------------------------------------------------------------------
+    //! @brief      ルート定数を設定します.
+    //-------------------------------------------------------------------------
+    void SetConstants(uint32_t index, uint32_t count, const void* data, uint32_t offset, bool compute = false);
+
+    //-------------------------------------------------------------------------
+    //! @brief      ディスクリプタテーブルを設定します.
+    //-------------------------------------------------------------------------
+    void SetTable(uint32_t index, const IView* pView, bool compute = false);
+
+    //-------------------------------------------------------------------------
+    //! @brief      定数バッファビューを設定します.
+    //-------------------------------------------------------------------------
+    void SetCBV(uint32_t index, const IConstantBufferView* pView, bool compute = false);
+
+    //-------------------------------------------------------------------------
+    //! @brief      定数バッファビューを設定します.
+    //-------------------------------------------------------------------------
+    void SetCBV(uint32_t index, ID3D12Resource* pResource, bool compute = false);
+
+    //-------------------------------------------------------------------------
+    //! @brief      シェーダリソースビューを設定します.
+    //-------------------------------------------------------------------------
+    void SetSRV(uint32_t index, const IShaderResourceView* pView, bool compute = false);
+
+    //-------------------------------------------------------------------------
+    //! @brief      シェーダリソースビューを設定します.
+    //-------------------------------------------------------------------------
+    void SetSRV(uint32_t index, ID3D12Resource* pResource, bool compute = false);
+
+    //-------------------------------------------------------------------------
+    //! @brief      アンオーダードアクセスビューを設定します.
+    //-------------------------------------------------------------------------
+    void SetUAV(uint32_t index, const IUnorderedAccessView* pView, bool compute = false);
+
+    //-------------------------------------------------------------------------
+    //! @brief      アンオーダードアクセスビューを設定します.
+    //-------------------------------------------------------------------------
+    void SetUAV(uint32_t index, ID3D12Resource* pResource, bool compute = false);
+
+    //-------------------------------------------------------------------------
+    //! @brief      イベント開始します.
+    //-------------------------------------------------------------------------
+    void BeginEvent(const char* text);
+
 private:
     //=========================================================================
     // private variables.
@@ -95,6 +225,51 @@ private:
     // private methods.
     //=========================================================================
     /* NOTHING */
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// ScopedTransition class
+///////////////////////////////////////////////////////////////////////////////
+class ScopedTransition
+{
+public:
+    ScopedTransition(
+        ID3D12GraphicsCommandList*  pCmd,
+        ID3D12Resource*             pResource,
+        D3D12_RESOURCE_STATES       before,
+        D3D12_RESOURCE_STATES       after,
+        uint32_t                    subResource = 0
+    );
+
+    ScopedTransition(
+        ID3D12GraphicsCommandList*  pCmd,
+        const IView*                pView,
+        D3D12_RESOURCE_STATES       before,
+        D3D12_RESOURCE_STATES       after,
+        uint32_t                    subResource = 0
+    );
+
+    ~ScopedTransition();
+
+private:
+    ID3D12GraphicsCommandList* m_pCmd;
+    ID3D12Resource*            m_pResource;
+    D3D12_RESOURCE_STATES      m_StateBefore;
+    D3D12_RESOURCE_STATES      m_StateAfter;
+    uint32_t                   m_SubResource;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// ScopedMarker class
+///////////////////////////////////////////////////////////////////////////////
+class ScopedMarker
+{
+public:
+    ScopedMarker(ID3D12GraphicsCommandList* pCmd, const char* text);
+    ~ScopedMarker();
+
+private:
+    ID3D12GraphicsCommandList*  m_pCmd;
 };
 
 } // namespace asdx

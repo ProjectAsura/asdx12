@@ -12,6 +12,7 @@
 #ifdef ASDX_ENABLE_IMGUI
 #include <core/asdxMisc.h>
 #include <core/asdxLogger.h>
+#include <gfx/asdxGraphicsSystem.h>
 #include <imgui.h>
 #include <imgui_internal.h>
 
@@ -695,7 +696,7 @@ bool GuiMgr::Init
         io.Fonts->TexID = (void*)m_FontTexture.GetView();
     }
 
-    auto pDevice = GfxDevice().GetDevice();
+    auto pDevice = GetD3D12Device();
 
     // ルートシグニチャの生成.
     {
@@ -756,7 +757,7 @@ bool GuiMgr::Init
             return false;
         }
 
-        hr = GfxDevice()->CreateRootSignature(
+        hr = pDevice->CreateRootSignature(
             0, pBlob->GetBufferPointer(), pBlob->GetBufferSize(), IID_PPV_ARGS(m_RootSig.GetAddress()));
         if (FAILED(hr))
         {
@@ -836,7 +837,7 @@ bool GuiMgr::Init
     {
         m_VB.Term();
         m_SizeVB = MaxPrimitiveCount * 4;
-        if (!m_VB.Init(pDevice, m_SizeVB * sizeof(ImDrawVert), sizeof(ImDrawVert)))
+        if (!m_VB.Init(m_SizeVB * sizeof(ImDrawVert), sizeof(ImDrawVert)))
         {
             ELOG("Error : VertexBuffer::Init() Failed.");
             return false;
@@ -846,7 +847,7 @@ bool GuiMgr::Init
     {
         m_IB.Term();
         m_SizeIB = MaxPrimitiveCount * 6;
-        if (!m_IB.Init(pDevice, sizeof(ImDrawIdx) * m_SizeIB, true))
+        if (!m_IB.Init(sizeof(ImDrawIdx) * m_SizeIB, true))
         {
             ELOG("Error : IndexBuffer::Init() Failed.");
             return false;
@@ -1002,12 +1003,12 @@ void GuiMgr::OnDraw( ImDrawData* pDrawData )
         if (resource != nullptr)
         {
             resource->AddRef();
-            GfxDevice().PushToDisposer(resource);
+            GfxSystem().Dispose(resource);
         }
 
         m_VB.Term();
         m_SizeVB = pDrawData->TotalVtxCount + 5000;
-        if (!m_VB.Init(GfxDevice().GetDevice(), m_SizeVB * sizeof(ImDrawVert), sizeof(ImDrawVert)))
+        if (!m_VB.Init(m_SizeVB * sizeof(ImDrawVert), sizeof(ImDrawVert)))
         { return; }
     }
 
@@ -1017,12 +1018,12 @@ void GuiMgr::OnDraw( ImDrawData* pDrawData )
         if (resource != nullptr)
         {
             resource->AddRef();
-            GfxDevice().PushToDisposer(resource);
+            GfxSystem().Dispose(resource);
         }
 
         m_IB.Term();
         m_SizeIB = pDrawData->TotalIdxCount + 10000;
-        if (!m_IB.Init(GfxDevice().GetDevice(), m_SizeIB * sizeof(uint32_t), true))
+        if (!m_IB.Init(m_SizeIB * sizeof(uint32_t), true))
         { return; }
     }
 

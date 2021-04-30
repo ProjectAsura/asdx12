@@ -7,8 +7,9 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <asdxIndexBuffer.h>
-#include <asdxLogger.h>
+#include <gfx/asdxIndexBuffer.h>
+#include <gfx/asdxGraphicsSystem.h>
+#include <core/asdxLogger.h>
 
 
 namespace asdx {
@@ -32,8 +33,10 @@ IndexBuffer::~IndexBuffer()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool IndexBuffer::Init(ID3D12Device* pDevice, uint32_t size, bool isShortFormat)
+bool IndexBuffer::Init(uint32_t size, bool isShortFormat)
 {
+    auto pDevice = GetD3D12Device();
+
     if (pDevice == nullptr || size == 0)
     {
         ELOG("Error : Invalid Argument.");
@@ -89,7 +92,7 @@ void IndexBuffer::Term()
 {
     auto resource = m_pResource.Detach();
     if (resource != nullptr)
-    { GfxDevice().PushToDisposer(resource); }
+    { GfxSystem().Dispose(resource); }
     memset(&m_View, 0, sizeof(m_View));
 }
 

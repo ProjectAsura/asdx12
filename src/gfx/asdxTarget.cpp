@@ -7,9 +7,9 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <asdxTarget.h>
-#include <asdxLogger.h>
-#include <asdxGraphicsDevice.h>
+#include <gfx/asdxTarget.h>
+#include <gfx/asdxGraphicsSystem.h>
+#include <core/asdxLogger.h>
 
 
 namespace /* anonymous */ {
@@ -411,7 +411,7 @@ void ColorTarget::Term()
 
     auto resource = m_pResource.Detach();
     if (resource != nullptr)
-    { GfxDevice().PushToDisposer(resource); }
+    { GfxSystem().Dispose(resource); }
 
     memset(&m_Desc, 0, sizeof(m_Desc));
     m_IsSRGB = false;
@@ -660,7 +660,7 @@ void DepthTarget::Term()
 
     auto resource = m_pResource.Detach();
     if (resource != nullptr)
-    { GfxDevice().PushToDisposer(resource); }
+    { GfxSystem().Dispose(resource); }
 
     memset(&m_Desc, 0, sizeof(m_Desc));
 }
@@ -892,7 +892,7 @@ void ComputeTarget::Term()
 
     auto resource = m_pResource.Detach();
     if (resource != nullptr)
-    { GfxDevice().PushToDisposer(resource); }
+    { GfxSystem().Dispose(resource); }
  
     memset(&m_Desc, 0, sizeof(m_Desc));
 }

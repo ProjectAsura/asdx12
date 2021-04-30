@@ -7,8 +7,9 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <asdxVertexBuffer.h>
-#include <asdxLogger.h>
+#include <gfx/asdxVertexBuffer.h>
+#include <gfx/asdxGraphicsSystem.h>
+#include <core/asdxLogger.h>
 
 
 namespace asdx {
@@ -28,8 +29,10 @@ VertexBuffer::~VertexBuffer()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool VertexBuffer::Init(ID3D12Device* pDevice, uint64_t size, uint32_t stride)
+bool VertexBuffer::Init(uint64_t size, uint32_t stride)
 {
+    auto pDevice = GetD3D12Device();
+
     if (pDevice == nullptr || size == 0 || stride == 0)
     {
         ELOG("Error : Invalid Argument.");
@@ -85,7 +88,7 @@ void VertexBuffer::Term()
 {
     auto resource = m_pResource.Detach();
     if (resource != nullptr)
-    { GfxDevice().PushToDisposer(resource); }
+    { GfxSystem().Dispose(resource); }
     memset(&m_View, 0, sizeof(m_View));
 }
 

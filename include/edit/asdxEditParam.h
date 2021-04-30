@@ -9,7 +9,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <core/asdxMath.h>
-#include <asdxTexture.h>
+#include <gfx/asdxTexture.h>
 
 
 namespace asdx {

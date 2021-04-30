@@ -7,8 +7,8 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <asdxScreenCpature.h>
-#include <asdxLogger.h>
+#include <gfx/asdxScreenCpature.h>
+#include <core/asdxLogger.h>
 
 
 namespace asdx {

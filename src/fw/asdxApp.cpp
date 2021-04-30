@@ -683,7 +683,7 @@ bool Application::InitApp()
 void Application::TermApp()
 {
     // コマンドの完了を待機.
-    GfxDevice().WaitIdle();
+    GfxSystem().WaitIdle();
 
     // アプリケーション固有の終了処理.
     OnTerm();
@@ -858,7 +858,7 @@ bool Application::InitD3D()
     m_AspectRatio = (FLOAT)w / (FLOAT)h;
 
     // デバイスの初期化.
-    if (!GfxDevice().Init(&m_DeviceDesc))
+    if (!GfxSystem().Init(&m_DeviceDesc))
     {
         ELOG("Error : GraphicsDeivce::Init() Failed.");
         return false;
@@ -891,8 +891,8 @@ bool Application::InitD3D()
         fullScreenDesc.Windowed         = TRUE;
 
         RefPtr<IDXGISwapChain1> pSwapChain1;
-        auto pQueue = GfxDevice().GetGraphicsQueue()->GetQueue();
-        hr = GfxDevice().GetFactory()->CreateSwapChainForHwnd(pQueue, m_hWnd, &desc, &fullScreenDesc, nullptr, pSwapChain1.GetAddress());
+        auto pQueue = GfxSystem().GetGraphicsQueue()->GetQueue();
+        hr = GfxSystem().GetFactory()->CreateSwapChainForHwnd(pQueue, m_hWnd, &desc, &fullScreenDesc, nullptr, pSwapChain1.GetAddress());
         if (FAILED(hr))
         {
             ELOG("Error : IDXGIFactory2::CreateSwapChainForHwnd() Failed. errcode = 0x%x", hr);
@@ -900,7 +900,7 @@ bool Application::InitD3D()
         }
 
         if (m_AllowTearing)
-        { GfxDevice().GetFactory()->MakeWindowAssociation(m_hWnd, DXGI_MWA_NO_ALT_ENTER); }
+        { GfxSystem().GetFactory()->MakeWindowAssociation(m_hWnd, DXGI_MWA_NO_ALT_ENTER); }
 
         // IDXGISwapChain4にキャスト.
         hr = pSwapChain1->QueryInterface(IID_PPV_ARGS(m_pSwapChain4.GetAddress()));
@@ -955,7 +955,7 @@ bool Application::InitD3D()
         }
     }
 
-    if (!m_GfxCmdList.Init(GfxDevice().GetDevice(), D3D12_COMMAND_LIST_TYPE_DIRECT))
+    if (!m_GfxCmdList.Init(GetD3D12Device(), D3D12_COMMAND_LIST_TYPE_DIRECT))
     {
         ELOG("Error : CommandList::Init() Failed.");
         return false;
@@ -991,7 +991,7 @@ void Application::TermD3D()
     m_DepthTarget.Term();
     m_pSwapChain4.Reset();
     m_GfxCmdList.Term();
-    GraphicsDevice::Instance().Term();
+    GfxSystem().Term();
 }
 
 //-----------------------------------------------------------------------------
@@ -1128,7 +1128,7 @@ void Application::ResizeEvent( const ResizeEventArgs& param )
     if ( m_pSwapChain4 != nullptr )
     {
         // コマンドの完了を待機.
-        GfxDevice().WaitIdle();
+        GfxSystem().WaitIdle();
 
         // 描画ターゲットを解放.
         for(size_t i=0; i<m_ColorTarget.size(); ++i)
@@ -1138,7 +1138,7 @@ void Application::ResizeEvent( const ResizeEventArgs& param )
         m_DepthTarget.Term();
 
         // 強制破棄.
-        GraphicsDevice::Instance().ForceDispose();
+        GfxSystem().ForceDispose();
 
         HRESULT hr = S_OK;
 
@@ -1459,7 +1459,7 @@ void Application::Present( uint32_t syncInterval )
             ELOG( "Fatal Error : IDXGISwapChain::Present() Failed. ErrorCode = DXGI_ERROR_DEVICE_RESET." );
 
             // エラー表示.
-            DeviceRemovedHandler(GfxDevice().GetDevice());
+            DeviceRemovedHandler(GetD3D12Device());
 
             // 続行できないのでダイアログを表示.
             MessageBoxW( m_hWnd, L"A Fatal Error Occured. Shutting down.", L"FATAL ERROR", MB_OK | MB_ICONERROR );
@@ -1476,7 +1476,7 @@ void Application::Present( uint32_t syncInterval )
             ELOG( "Fatal Error : IDXGISwapChain::Present() Failed. ErrorCode = DXGI_ERROR_DEVICE_REMOVED." );
 
             // エラー表示.
-            DeviceRemovedHandler(GfxDevice().GetDevice());
+            DeviceRemovedHandler(GetD3D12Device());
 
             // 続行できないのでダイアログを表示.
             MessageBoxW( m_hWnd, L"A Fatal Error Occured. Shutting down.", L"FATAL ERROR", MB_OK | MB_ICONERROR );
@@ -1510,7 +1510,7 @@ void Application::CheckSupportHDR()
     GetWindowRect(m_hWnd, &rect);
 
     RefPtr<IDXGIAdapter1> pAdapter;
-    hr = GfxDevice().GetFactory()->EnumAdapters1(0, pAdapter.GetAddress());
+    hr = GfxSystem().GetFactory()->EnumAdapters1(0, pAdapter.GetAddress());
     if (FAILED(hr))
     {
         ELOG("Error : IDXGIFactory1::EnumAdapters1() Failed.");

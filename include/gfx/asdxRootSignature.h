@@ -1,6 +1,6 @@
 ﻿//-----------------------------------------------------------------------------
-// File : asdxShaderReflection.h
-// Desc : Shader Reflection.
+// File : asdxRootSignature.h
+// Desc : Root Signature.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 #pragma once
@@ -8,54 +8,52 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <d3d12shader.h>
-#include <asdxRef.h>
-
-
-//-----------------------------------------------------------------------------
-// Linker
-//-----------------------------------------------------------------------------
-#ifdef ASDX_AUTO_LINK
-    #ifdef ASDX_ENABLE_DXC
-        #pragma comment( lib, "dxcompiler.lib" )
-    #else
-        #pragma comment( lib, "d3dcompiler.lib")
-    #endif
-#endif
+#include <d3d12.h>
+#include <core/asdxRef.h>
 
 
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
-// SHADER_VERSION_TYPE enum
+// RANGE_CBV structure
 ///////////////////////////////////////////////////////////////////////////////
-enum SHADER_VERSION_TYPE
+struct RANGE_CBV : public D3D12_DESCRIPTOR_RANGE
 {
-    SHVER_PS = D3D12_SHVER_PIXEL_SHADER,
-    SHVER_VS = D3D12_SHVER_VERTEX_SHADER,
-    SHVER_GS = D3D12_SHVER_GEOMETRY_SHADER,
-    SHVER_HS = D3D12_SHVER_HULL_SHADER,
-    SHVER_DS = D3D12_SHVER_DOMAIN_SHADER,
-    SHVER_CS = D3D12_SHVER_COMPUTE_SHADER,
-    SHVER_LIBRARY,
-    SHVER_RAY_GENERATION,
-    SHVER_INTERSECTION,
-    SHVER_ANY_HIT,
-    SHVER_CLOSEST_HIT,
-    SHVER_MISS,
-    SHVER_CALLABLE,
-    SHVER_MS,
-    SHVER_AS,
-    SHVER_INVALID,
+    RANGE_CBV(UINT baseRegister, UINT registerSpace = 0);
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-// ShaderReflection class
+// RANGE_SRV structure
 ///////////////////////////////////////////////////////////////////////////////
-class ShaderReflection
+struct RANGE_SRV : public D3D12_DESCRIPTOR_RANGE
+{
+    RANGE_SRV(UINT baseRegister, UINT registerSpace = 0);
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// RANGE_UAV structure
+///////////////////////////////////////////////////////////////////////////////
+struct RANGE_UAV : public D3D12_DESCRIPTOR_RANGE
+{
+    RANGE_UAV(UINT baseRegister, UINT registerSpace = 0);
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// RANGE_SMP structure
+///////////////////////////////////////////////////////////////////////////////
+struct RANGE_SMP : public D3D12_DESCRIPTOR_RANGE
+{
+    RANGE_SMP(UINT baseRegister, UINT registerSpace = 0);
+};
+
+
+///////////////////////////////////////////////////////////////////////////////
+// RootSignature class
+///////////////////////////////////////////////////////////////////////////////
+class RootSignature
 {
     //=========================================================================
-    // list of friend classes and methods.
+    // friend classes and methods.
     //=========================================================================
     /* NOTHING */
 
@@ -72,22 +70,22 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      コンストラクタです.
     //-------------------------------------------------------------------------
-    ShaderReflection();
+    RootSignature();
 
     //-------------------------------------------------------------------------
     //! @brief      デストラクタです.
     //-------------------------------------------------------------------------
-    ~ShaderReflection();
+    ~RootSignature();
 
     //-------------------------------------------------------------------------
     //! @brief      初期化処理を行います.
     //!
-    //! @param[in]      pData       リフレクションデータ.
-    //! @param[in]      size        リフレクションデータサイズ(バイト単位).
+    //! @param[in]      pDevice     デバイスです.
+    //! @param[in]      pDesc       ルートシグニチャ設定です.
     //! @retval true    初期化に成功.
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
-    bool Init(const void* pData, size_t size);
+    bool Init(ID3D12Device* pDevice, const D3D12_ROOT_SIGNATURE_DESC* pDesc);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.
@@ -95,22 +93,17 @@ public:
     void Term();
 
     //-------------------------------------------------------------------------
-    //! @brief      シェーダリフレクションを取得します.
+    //! @brief      ルートシグニチャを取得します.
     //!
-    //! @return     シェーダリフレクションを返却します.
+    //! @return     ルートシグニチャを返却します.
     //-------------------------------------------------------------------------
-    ID3D12ShaderReflection* GetPtr() const;
-
-    //-------------------------------------------------------------------------
-    //! @brief      アロー演算子です.
-    //-------------------------------------------------------------------------
-    ID3D12ShaderReflection* operator ->();
+    ID3D12RootSignature* GetPtr() const;
 
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    RefPtr<ID3D12ShaderReflection> m_pReflection;
+    asdx::RefPtr<ID3D12RootSignature>   m_RootSignature;
 
     //=========================================================================
     // private methods.

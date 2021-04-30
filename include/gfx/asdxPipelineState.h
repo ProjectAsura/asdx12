@@ -10,7 +10,7 @@
 //-----------------------------------------------------------------------------
 #include <vector>
 #include <d3d12.h>
-#include <asdxRef.h>
+#include <core/asdxRef.h>
 
 
 #ifdef __ID3D12GraphicsCommandList6_INTERFACE_DEFINED__
@@ -95,6 +95,32 @@ struct GEOMETRY_PIPELINE_STATE_DESC
     UINT                        NodeMask;               //!< ノードマスク.
     D3D12_CACHED_PIPELINE_STATE CachedPSO;              //!< キャッシュ済みPSO.
     D3D12_PIPELINE_STATE_FLAGS  Flags;                  //!< フラグ.
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// DEPTH_STENCIL_DESC structure
+///////////////////////////////////////////////////////////////////////////////
+struct DEPTH_STENCIL_DESC : public D3D12_DEPTH_STENCIL_DESC
+{
+    DEPTH_STENCIL_DESC(
+        DEPTH_STATE_TYPE      type,
+        D3D12_COMPARISON_FUNC depthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL);
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// RASTERIZER_DESC structure
+///////////////////////////////////////////////////////////////////////////////
+struct RASTERIZER_DESC : public D3D12_RASTERIZER_DESC
+{
+    RASTERIZER_DESC(RASTERIZER_STATE_TYPE type);
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// BLEN_DESC structure
+///////////////////////////////////////////////////////////////////////////////
+struct BLEND_DESC : public D3D12_BLEND_DESC
+{
+    BLEND_DESC(BLEND_STATE_TYPE type);
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -206,33 +232,6 @@ public:
     //-------------------------------------------------------------------------
     PIPELINE_TYPE GetType() const;
 
-    //-------------------------------------------------------------------------
-    //! @brief      深度ステンシルステートを取得します.
-    //!
-    //! @param[in]      type        深度ステンシルステートタイプ.
-    //! @param[in]      func        深度比較関数です.
-    //! @return     深度ステンシルステートを返却します.
-    //-------------------------------------------------------------------------
-    static D3D12_DEPTH_STENCIL_DESC GetDepthStencilState(
-        DEPTH_STATE_TYPE        type,
-        D3D12_COMPARISON_FUNC   func);
-
-    //-------------------------------------------------------------------------
-    //! @brief      ラスタライザーステートを取得します.
-    //!
-    //! @param[in]      type        ラスタライザーステートタイプ.
-    //! @return     ラスタライザーステートを返却します.
-    //-------------------------------------------------------------------------
-    static D3D12_RASTERIZER_DESC GetRasterizerState(RASTERIZER_STATE_TYPE type);
-
-    //-------------------------------------------------------------------------
-    //! @brief      ブレンドステートを取得します.
-    //!
-    //! @param[in]      type        ブレンドステートタイプ.
-    //! @return     ブレンドステートを返却します.
-    //-------------------------------------------------------------------------
-    static D3D12_BLEND_DESC GetBlendState(BLEND_STATE_TYPE type);
-
 private:
     //=========================================================================
     // private variables.
@@ -259,18 +258,5 @@ private:
     //=========================================================================
     /* DO_NOTHING */
 };
-
-inline D3D12_DEPTH_STENCIL_DESC GetDSS
-(
-    DEPTH_STATE_TYPE      type,
-    D3D12_COMPARISON_FUNC func = D3D12_COMPARISON_FUNC_LESS_EQUAL
-)
-{ return PipelineState::GetDepthStencilState(type, func); }
-
-inline D3D12_RASTERIZER_DESC GetRS(RASTERIZER_STATE_TYPE type)
-{ return PipelineState::GetRasterizerState(type); }
-
-inline D3D12_BLEND_DESC GetBS(BLEND_STATE_TYPE type)
-{ return PipelineState::GetBlendState(type); }
 
 } // namespace asdx

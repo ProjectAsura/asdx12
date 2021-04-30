@@ -10,8 +10,8 @@
 //-----------------------------------------------------------------------------
 #include <atomic>
 #include <d3d12.h>
-#include <asdxRef.h>
-#include <asdxFence.h>
+#include <core/asdxRef.h>
+#include <gfx/asdxFence.h>
 
 
 namespace asdx {

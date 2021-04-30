@@ -7,12 +7,14 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <asdxQuad.h>
-#include <asdxMath.h>
-#include <asdxLogger.h>
+#include <gfx/asdxQuad.h>
+#include <core/asdxMath.h>
+#include <core/asdxLogger.h>
 
 
 namespace {
+
+#include "../res/shaders/Compiled/FullScreenVS.inc"
 
 //-----------------------------------------------------------------------------
 // Constant Values.
@@ -21,9 +23,6 @@ static const D3D12_INPUT_ELEMENT_DESC kElements[] = {
     { "POSITION", 0, DXGI_FORMAT_R16G16_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
     { "TEXCOORD", 0, DXGI_FORMAT_R16G16_FLOAT, 0, 4, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 };
-
-// FullScreenVS
-#include "../res/shaders/Compiled/FullScreenVS.inc"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Vertex structure
@@ -89,7 +88,7 @@ bool Quad::Init(ID3D12Device* pDevice)
     auto size   = uint64_t(sizeof(vertices));
     auto stride = uint32_t(sizeof(vertices[0]));
 
-    if (!m_VB.Init(pDevice, size, stride))
+    if (!m_VB.Init(size, stride))
     {
         ELOG("Error : VertexBuffer::Init() Failed.");
         return false;

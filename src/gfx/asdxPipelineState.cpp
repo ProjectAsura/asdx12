@@ -8,12 +8,10 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <cassert>
-#include <vector>
 #include <d3d12shader.h>
-#include <asdxPipelineState.h>
-#include <asdxHashString.h>
-#include <asdxLogger.h>
-#include <asdxGraphicsDevice.h>
+#include <core/asdxLogger.h>
+#include <gfx/asdxPipelineState.h>
+#include <gfx/asdxGraphicsSystem.h>
 
 
 namespace {
@@ -131,6 +129,187 @@ struct GPS_DESC
 
 
 namespace asdx {
+
+//-----------------------------------------------------------------------------
+//      深度ステンシルステートを取得します.
+//-----------------------------------------------------------------------------
+DEPTH_STENCIL_DESC::DEPTH_STENCIL_DESC(DEPTH_STATE_TYPE type, D3D12_COMPARISON_FUNC depthFunc)
+{
+    StencilEnable                = FALSE;
+    StencilReadMask              = D3D12_DEFAULT_STENCIL_READ_MASK;
+    StencilWriteMask             = D3D12_DEFAULT_STENCIL_WRITE_MASK;
+    FrontFace.StencilFailOp      = D3D12_STENCIL_OP_KEEP;
+    FrontFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
+    FrontFace.StencilPassOp      = D3D12_STENCIL_OP_KEEP;
+    FrontFace.StencilFunc        = D3D12_COMPARISON_FUNC_ALWAYS;
+    BackFace.StencilFailOp       = D3D12_STENCIL_OP_KEEP;
+    BackFace.StencilDepthFailOp  = D3D12_STENCIL_OP_KEEP;
+    BackFace.StencilPassOp       = D3D12_STENCIL_OP_KEEP;
+    BackFace.StencilFunc         = D3D12_COMPARISON_FUNC_ALWAYS;
+
+    switch(type)
+    {
+    case DEPTH_STATE_DEFAULT:
+        {
+            DepthEnable      = TRUE;
+            DepthWriteMask   = D3D12_DEPTH_WRITE_MASK_ALL;
+            DepthFunc        = depthFunc;
+        }
+        break;
+
+    case DEPTH_STATE_NONE:
+        {
+            DepthEnable      = FALSE;
+            DepthWriteMask   = D3D12_DEPTH_WRITE_MASK_ZERO;
+            DepthFunc        = D3D12_COMPARISON_FUNC_ALWAYS;
+        }
+        break;
+
+    case DEPTH_STATE_READ_ONLY:
+        {
+            DepthEnable      = TRUE;
+            DepthWriteMask   = D3D12_DEPTH_WRITE_MASK_ZERO;
+            DepthFunc        = depthFunc;
+        }
+        break;
+
+    case DEPTH_STATE_WRITE_ONLY:
+        {
+            DepthEnable      = FALSE;
+            DepthWriteMask   = D3D12_DEPTH_WRITE_MASK_ALL;
+            DepthFunc        = depthFunc;
+        }
+        break;
+    }
+}
+
+//-----------------------------------------------------------------------------
+//      ラスタライザーステートを取得します.
+//-----------------------------------------------------------------------------
+RASTERIZER_DESC::RASTERIZER_DESC(RASTERIZER_STATE_TYPE type)
+{
+    FrontCounterClockwise    = FALSE;
+    DepthBias                = D3D12_DEFAULT_DEPTH_BIAS;
+    DepthBiasClamp           = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
+    SlopeScaledDepthBias     = D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;
+    DepthClipEnable          = TRUE;
+    MultisampleEnable        = FALSE;
+    AntialiasedLineEnable    = FALSE;
+    ForcedSampleCount        = 0;
+    ConservativeRaster       = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
+
+    switch(type)
+    {
+    case RASTERIZER_STATE_CULL_NONE:
+        {
+            FillMode = D3D12_FILL_MODE_SOLID;
+            CullMode = D3D12_CULL_MODE_NONE;
+        }
+        break;
+
+    case RASTERIZER_STATE_CULL_BACK:
+        {
+            FillMode = D3D12_FILL_MODE_SOLID;
+            CullMode = D3D12_CULL_MODE_BACK;
+        }
+        break;
+
+    case RASTERIZER_STATE_CULL_FRONT:
+        {
+            FillMode = D3D12_FILL_MODE_SOLID;
+            CullMode = D3D12_CULL_MODE_FRONT;
+        }
+        break;
+
+    case RASTERIZER_STATE_WIREFRAME:
+        {
+            FillMode = D3D12_FILL_MODE_WIREFRAME;
+            CullMode = D3D12_CULL_MODE_NONE;
+        }
+        break;
+    }
+}
+
+//-----------------------------------------------------------------------------
+//      ブレンドステートを取得します.
+//-----------------------------------------------------------------------------
+BLEND_DESC::BLEND_DESC(BLEND_STATE_TYPE type)
+{
+    AlphaToCoverageEnable    = FALSE;
+    IndependentBlendEnable   = FALSE;
+    RenderTarget[0].RenderTargetWriteMask    = D3D12_COLOR_WRITE_ENABLE_ALL;
+    RenderTarget[0].LogicOpEnable            = FALSE;
+    RenderTarget[0].LogicOp                  = D3D12_LOGIC_OP_NOOP;
+
+    switch(type)
+    {
+    case BLEND_STATE_OPAQUE:
+        {
+            RenderTarget[0].BlendEnable = FALSE;
+            RenderTarget[0].SrcBlend    = RenderTarget[0].SrcBlendAlpha    = D3D12_BLEND_ONE;
+            RenderTarget[0].DestBlend   = RenderTarget[0].DestBlendAlpha   = D3D12_BLEND_ZERO;
+            RenderTarget[0].BlendOp     = RenderTarget[0].BlendOpAlpha     = D3D12_BLEND_OP_ADD;
+        }
+        break;
+
+    case BLEND_STATE_ALPHABLEND:
+        {
+            RenderTarget[0].BlendEnable = TRUE;
+            RenderTarget[0].SrcBlend    = RenderTarget[0].SrcBlendAlpha    = D3D12_BLEND_SRC_ALPHA;
+            RenderTarget[0].DestBlend   = RenderTarget[0].DestBlendAlpha   = D3D12_BLEND_INV_SRC_ALPHA;
+            RenderTarget[0].BlendOp     = RenderTarget[0].BlendOpAlpha     = D3D12_BLEND_OP_ADD;
+        }
+        break;
+
+    case BLEND_STATE_ADDITIVE:
+        {
+            RenderTarget[0].BlendEnable = TRUE;
+            RenderTarget[0].SrcBlend    = RenderTarget[0].SrcBlendAlpha    = D3D12_BLEND_SRC_ALPHA;
+            RenderTarget[0].DestBlend   = RenderTarget[0].DestBlendAlpha   = D3D12_BLEND_ONE;
+            RenderTarget[0].BlendOp     = RenderTarget[0].BlendOpAlpha     = D3D12_BLEND_OP_ADD;
+        }
+        break;
+
+    case BLEND_STATE_SUBTRACT:
+        {
+            RenderTarget[0].BlendEnable = TRUE;
+            RenderTarget[0].SrcBlend    = RenderTarget[0].SrcBlendAlpha    = D3D12_BLEND_SRC_ALPHA;
+            RenderTarget[0].DestBlend   = RenderTarget[0].DestBlendAlpha   = D3D12_BLEND_ONE;
+            RenderTarget[0].BlendOp     = RenderTarget[0].BlendOpAlpha     = D3D12_BLEND_OP_REV_SUBTRACT;
+        }
+        break;
+
+    case BLEND_STATE_PREMULTIPLIED:
+        {
+            RenderTarget[0].BlendEnable = TRUE;
+            RenderTarget[0].SrcBlend    = RenderTarget[0].SrcBlendAlpha    = D3D12_BLEND_ONE;
+            RenderTarget[0].DestBlend   = RenderTarget[0].DestBlendAlpha   = D3D12_BLEND_INV_SRC_ALPHA;
+            RenderTarget[0].BlendOp     = RenderTarget[0].BlendOpAlpha     = D3D12_BLEND_OP_ADD;
+        }
+        break;
+
+    case BLEND_STATE_MULTIPLY:
+        {
+            RenderTarget[0].BlendEnable    = TRUE;
+            RenderTarget[0].SrcBlend       = RenderTarget[0].SrcBlendAlpha    = D3D12_BLEND_ZERO;
+            RenderTarget[0].DestBlend      = D3D12_BLEND_SRC_COLOR;
+            RenderTarget[0].DestBlendAlpha = D3D12_BLEND_SRC_ALPHA;
+            RenderTarget[0].BlendOp        = RenderTarget[0].BlendOpAlpha     = D3D12_BLEND_OP_ADD;
+        }
+        break;
+
+    case BLEND_STATE_SCREEN:
+        {
+            RenderTarget[0].BlendEnable    = TRUE;
+            RenderTarget[0].SrcBlend       = D3D12_BLEND_DEST_COLOR;
+            RenderTarget[0].SrcBlendAlpha  = D3D12_BLEND_DEST_ALPHA;
+            RenderTarget[0].DestBlend      = RenderTarget[0].DestBlendAlpha   = D3D12_BLEND_ONE;
+            RenderTarget[0].BlendOp        = RenderTarget[0].BlendOpAlpha     = D3D12_BLEND_OP_ADD;
+        }
+        break;
+    }
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // PipelineState class
@@ -409,7 +588,7 @@ void PipelineState::Recreate()
     if (!m_pRecreatePSO.GetPtr())
     {
         auto pso = m_pRecreatePSO.Detach();
-        GfxDevice().PushToDisposer(pso);
+        GfxSystem().Dispose(pso);
     }
 
     if (m_Type == PIPELINE_TYPE_GRAPHICS)
@@ -470,197 +649,5 @@ ID3D12PipelineState* PipelineState::GetPtr() const
 //-----------------------------------------------------------------------------
 PIPELINE_TYPE PipelineState::GetType() const
 { return m_Type; }
-
-//-----------------------------------------------------------------------------
-//      深度ステンシルステートを取得します.
-//-----------------------------------------------------------------------------
-D3D12_DEPTH_STENCIL_DESC PipelineState::GetDepthStencilState(DEPTH_STATE_TYPE type, D3D12_COMPARISON_FUNC func)
-{
-    D3D12_DEPTH_STENCIL_DESC result = {};
-
-    result.StencilEnable                = FALSE;
-    result.StencilReadMask              = D3D12_DEFAULT_STENCIL_READ_MASK;
-    result.StencilWriteMask             = D3D12_DEFAULT_STENCIL_WRITE_MASK;
-    result.FrontFace.StencilFailOp      = D3D12_STENCIL_OP_KEEP;
-    result.FrontFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
-    result.FrontFace.StencilPassOp      = D3D12_STENCIL_OP_KEEP;
-    result.FrontFace.StencilFunc        = D3D12_COMPARISON_FUNC_ALWAYS;
-    result.BackFace.StencilFailOp       = D3D12_STENCIL_OP_KEEP;
-    result.BackFace.StencilDepthFailOp  = D3D12_STENCIL_OP_KEEP;
-    result.BackFace.StencilPassOp       = D3D12_STENCIL_OP_KEEP;
-    result.BackFace.StencilFunc         = D3D12_COMPARISON_FUNC_ALWAYS;
-
-    switch(type)
-    {
-    case DEPTH_STATE_DEFAULT:
-        {
-            result.DepthEnable      = TRUE;
-            result.DepthWriteMask   = D3D12_DEPTH_WRITE_MASK_ALL;
-            result.DepthFunc        = func;
-        }
-        break;
-
-    case DEPTH_STATE_NONE:
-        {
-            result.DepthEnable      = FALSE;
-            result.DepthWriteMask   = D3D12_DEPTH_WRITE_MASK_ZERO;
-            result.DepthFunc        = D3D12_COMPARISON_FUNC_ALWAYS;
-        }
-        break;
-
-    case DEPTH_STATE_READ_ONLY:
-        {
-            result.DepthEnable      = TRUE;
-            result.DepthWriteMask   = D3D12_DEPTH_WRITE_MASK_ZERO;
-            result.DepthFunc        = func;
-        }
-        break;
-
-    case DEPTH_STATE_WRITE_ONLY:
-        {
-            result.DepthEnable      = FALSE;
-            result.DepthWriteMask   = D3D12_DEPTH_WRITE_MASK_ALL;
-            result.DepthFunc        = func;
-        }
-        break;
-    }
-
-    return result;
-}
-
-//-----------------------------------------------------------------------------
-//      ラスタライザーステートを取得します.
-//-----------------------------------------------------------------------------
-D3D12_RASTERIZER_DESC PipelineState::GetRasterizerState(RASTERIZER_STATE_TYPE type)
-{
-    D3D12_RASTERIZER_DESC result = {};
-
-    result.FrontCounterClockwise    = FALSE;
-    result.DepthBias                = D3D12_DEFAULT_DEPTH_BIAS;
-    result.DepthBiasClamp           = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
-    result.SlopeScaledDepthBias     = D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;
-    result.DepthClipEnable          = TRUE;
-    result.MultisampleEnable        = FALSE;
-    result.AntialiasedLineEnable    = FALSE;
-    result.ForcedSampleCount        = 0;
-    result.ConservativeRaster       = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
-
-    switch(type)
-    {
-    case RASTERIZER_STATE_CULL_NONE:
-        {
-            result.FillMode = D3D12_FILL_MODE_SOLID;
-            result.CullMode = D3D12_CULL_MODE_NONE;
-        }
-        break;
-
-    case RASTERIZER_STATE_CULL_BACK:
-        {
-            result.FillMode = D3D12_FILL_MODE_SOLID;
-            result.CullMode = D3D12_CULL_MODE_BACK;
-        }
-        break;
-
-    case RASTERIZER_STATE_CULL_FRONT:
-        {
-            result.FillMode = D3D12_FILL_MODE_SOLID;
-            result.CullMode = D3D12_CULL_MODE_FRONT;
-        }
-        break;
-
-    case RASTERIZER_STATE_WIREFRAME:
-        {
-            result.FillMode = D3D12_FILL_MODE_WIREFRAME;
-            result.CullMode = D3D12_CULL_MODE_NONE;
-        }
-        break;
-    }
-
-    return result;
-}
-
-//-----------------------------------------------------------------------------
-//      ブレンドステートを取得します.
-//-----------------------------------------------------------------------------
-D3D12_BLEND_DESC PipelineState::GetBlendState(BLEND_STATE_TYPE type)
-{
-    D3D12_BLEND_DESC result = {};
-
-    result.AlphaToCoverageEnable    = FALSE;
-    result.IndependentBlendEnable   = FALSE;
-    result.RenderTarget[0].RenderTargetWriteMask    = D3D12_COLOR_WRITE_ENABLE_ALL;
-    result.RenderTarget[0].LogicOpEnable            = FALSE;
-    result.RenderTarget[0].LogicOp                  = D3D12_LOGIC_OP_NOOP;
-
-    switch(type)
-    {
-    case BLEND_STATE_OPAQUE:
-        {
-            result.RenderTarget[0].BlendEnable = FALSE;
-            result.RenderTarget[0].SrcBlend    = result.RenderTarget[0].SrcBlendAlpha    = D3D12_BLEND_ONE;
-            result.RenderTarget[0].DestBlend   = result.RenderTarget[0].DestBlendAlpha   = D3D12_BLEND_ZERO;
-            result.RenderTarget[0].BlendOp     = result.RenderTarget[0].BlendOpAlpha     = D3D12_BLEND_OP_ADD;
-        }
-        break;
-
-    case BLEND_STATE_ALPHABLEND:
-        {
-            result.RenderTarget[0].BlendEnable = TRUE;
-            result.RenderTarget[0].SrcBlend    = result.RenderTarget[0].SrcBlendAlpha    = D3D12_BLEND_SRC_ALPHA;
-            result.RenderTarget[0].DestBlend   = result.RenderTarget[0].DestBlendAlpha   = D3D12_BLEND_INV_SRC_ALPHA;
-            result.RenderTarget[0].BlendOp     = result.RenderTarget[0].BlendOpAlpha     = D3D12_BLEND_OP_ADD;
-        }
-        break;
-
-    case BLEND_STATE_ADDITIVE:
-        {
-            result.RenderTarget[0].BlendEnable = TRUE;
-            result.RenderTarget[0].SrcBlend    = result.RenderTarget[0].SrcBlendAlpha    = D3D12_BLEND_SRC_ALPHA;
-            result.RenderTarget[0].DestBlend   = result.RenderTarget[0].DestBlendAlpha   = D3D12_BLEND_ONE;
-            result.RenderTarget[0].BlendOp     = result.RenderTarget[0].BlendOpAlpha     = D3D12_BLEND_OP_ADD;
-        }
-        break;
-
-    case BLEND_STATE_SUBTRACT:
-        {
-            result.RenderTarget[0].BlendEnable = TRUE;
-            result.RenderTarget[0].SrcBlend    = result.RenderTarget[0].SrcBlendAlpha    = D3D12_BLEND_SRC_ALPHA;
-            result.RenderTarget[0].DestBlend   = result.RenderTarget[0].DestBlendAlpha   = D3D12_BLEND_ONE;
-            result.RenderTarget[0].BlendOp     = result.RenderTarget[0].BlendOpAlpha     = D3D12_BLEND_OP_REV_SUBTRACT;
-        }
-        break;
-
-    case BLEND_STATE_PREMULTIPLIED:
-        {
-            result.RenderTarget[0].BlendEnable = TRUE;
-            result.RenderTarget[0].SrcBlend    = result.RenderTarget[0].SrcBlendAlpha    = D3D12_BLEND_ONE;
-            result.RenderTarget[0].DestBlend   = result.RenderTarget[0].DestBlendAlpha   = D3D12_BLEND_INV_SRC_ALPHA;
-            result.RenderTarget[0].BlendOp     = result.RenderTarget[0].BlendOpAlpha     = D3D12_BLEND_OP_ADD;
-        }
-        break;
-
-    case BLEND_STATE_MULTIPLY:
-        {
-            result.RenderTarget[0].BlendEnable    = TRUE;
-            result.RenderTarget[0].SrcBlend       = result.RenderTarget[0].SrcBlendAlpha    = D3D12_BLEND_ZERO;
-            result.RenderTarget[0].DestBlend      = D3D12_BLEND_SRC_COLOR;
-            result.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_SRC_ALPHA;
-            result.RenderTarget[0].BlendOp        = result.RenderTarget[0].BlendOpAlpha     = D3D12_BLEND_OP_ADD;
-        }
-        break;
-
-    case BLEND_STATE_SCREEN:
-        {
-            result.RenderTarget[0].BlendEnable    = TRUE;
-            result.RenderTarget[0].SrcBlend       = D3D12_BLEND_DEST_COLOR;
-            result.RenderTarget[0].SrcBlendAlpha  = D3D12_BLEND_DEST_ALPHA;
-            result.RenderTarget[0].DestBlend      = result.RenderTarget[0].DestBlendAlpha   = D3D12_BLEND_ONE;
-            result.RenderTarget[0].BlendOp        = result.RenderTarget[0].BlendOpAlpha     = D3D12_BLEND_OP_ADD;
-        }
-        break;
-    }
-
-    return result;
-}
 
 } // namespace asdx

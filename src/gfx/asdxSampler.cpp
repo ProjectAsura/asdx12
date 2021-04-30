@@ -8,11 +8,224 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <asdxSampler.h>
-#include <asdxLogger.h>
+#include <gfx/asdxSampler.h>
+#include <gfx/asdxGraphicsSystem.h>
+#include <core/asdxLogger.h>
 
 
 namespace asdx {
+
+///////////////////////////////////////////////////////////////////////////////
+// STATIC_SAMPLER_DESC structure
+///////////////////////////////////////////////////////////////////////////////
+STATIC_SAMPLER_DESC::STATIC_SAMPLER_DESC
+(
+    SAMPLER_TYPE            type,
+    D3D12_SHADER_VISIBILITY visibility,
+    UINT                    baseRegister,
+    UINT                    registerSpace
+)
+{
+    MipLODBias         = 0;
+    MaxAnisotropy      = 0;
+    ComparisonFunc     = D3D12_COMPARISON_FUNC_ALWAYS;
+    BorderColor        = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
+    MinLOD             = 0;
+    MaxLOD             = D3D12_FLOAT32_MAX;
+    ShaderRegister     = baseRegister;
+    RegisterSpace      = registerSpace;
+    ShaderVisibility   = visibility;
+
+    switch(type)
+    {
+    case SAMPLER_POINT_CLAMP:
+        {
+            Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+            AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+            AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+            AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+        }
+        break;
+
+    case SAMPLER_POINT_WRAP:
+        {
+            Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+            AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+            AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+            AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+        }
+        break;
+
+    case SAMPLER_POINT_MIRROR:
+        {
+            Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+            AddressU = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+            AddressV = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+            AddressW = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+        }
+        break;
+
+    case SAMPLER_LINEAR_CLAMP:
+        {
+            Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+            AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+            AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+            AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+        }
+        break;
+
+    case SAMPLER_LINEAR_WRAP:
+        {
+            Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+            AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+            AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+            AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+        }
+        break;
+
+    case SAMPLER_LINEAR_MIRROR:
+        {
+            Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+            AddressU = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+            AddressV = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+            AddressW = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+        }
+        break;
+
+    case SAMPLER_ANISOTROPIC_CLAMP:
+        {
+            Filter = D3D12_FILTER_ANISOTROPIC;
+            AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+            AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+            AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+            MaxAnisotropy = 16;
+        }
+        break;
+
+    case SAMPLER_ANISOTROPIC_WRAP:
+        {
+            Filter = D3D12_FILTER_ANISOTROPIC;
+            AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+            AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+            AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+            MaxAnisotropy = 16;
+        }
+        break;
+
+    case SAMPLER_ANISOTROPIC_MIRROR:
+        {
+            Filter = D3D12_FILTER_ANISOTROPIC;
+            AddressU = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+            AddressV = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+            AddressW = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+            MaxAnisotropy = 16;
+        }
+        break;
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// SAMPLER_DESC structure
+///////////////////////////////////////////////////////////////////////////////
+SAMPLER_DESC::SAMPLER_DESC(SAMPLER_TYPE type)
+{
+    MipLODBias         = 0;
+    MaxAnisotropy      = 0;
+    ComparisonFunc     = D3D12_COMPARISON_FUNC_ALWAYS;
+    BorderColor[0]     = 0.0f;
+    BorderColor[1]     = 0.0f;
+    BorderColor[2]     = 0.0f;
+    BorderColor[3]     = 1.0f;
+    MinLOD             = 0;
+    MaxLOD             = D3D12_FLOAT32_MAX;
+
+    switch(type)
+    {
+    case SAMPLER_POINT_CLAMP:
+        {
+            Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+            AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+            AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+            AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+        }
+        break;
+
+    case SAMPLER_POINT_WRAP:
+        {
+            Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+            AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+            AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+            AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+        }
+        break;
+
+    case SAMPLER_POINT_MIRROR:
+        {
+            Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+            AddressU = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+            AddressV = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+            AddressW = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+        }
+        break;
+
+    case SAMPLER_LINEAR_CLAMP:
+        {
+            Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+            AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+            AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+            AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+        }
+        break;
+
+    case SAMPLER_LINEAR_WRAP:
+        {
+            Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+            AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+            AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+            AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+        }
+        break;
+
+    case SAMPLER_LINEAR_MIRROR:
+        {
+            Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+            AddressU = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+            AddressV = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+            AddressW = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+        }
+        break;
+
+    case SAMPLER_ANISOTROPIC_CLAMP:
+        {
+            Filter = D3D12_FILTER_ANISOTROPIC;
+            AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+            AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+            AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+            MaxAnisotropy = 16;
+        }
+        break;
+
+    case SAMPLER_ANISOTROPIC_WRAP:
+        {
+            Filter = D3D12_FILTER_ANISOTROPIC;
+            AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+            AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+            AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+            MaxAnisotropy = 16;
+        }
+        break;
+
+    case SAMPLER_ANISOTROPIC_MIRROR:
+        {
+            Filter = D3D12_FILTER_ANISOTROPIC;
+            AddressU = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+            AddressV = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+            AddressW = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+            MaxAnisotropy = 16;
+        }
+        break;
+    }
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Sampler class
@@ -33,126 +246,22 @@ Sampler::~Sampler()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool Sampler::Init
-(
-    GraphicsDevice&         device,
-    SAMPLER_TYPE            type,
-    D3D12_COMPARISON_FUNC   compareFunc
-)
+bool Sampler::Init(const D3D12_SAMPLER_DESC* pDesc)
 {
-    D3D12_SAMPLER_DESC desc = {};
-    desc.MipLODBias         = 0;
-    desc.MaxAnisotropy      = 0;
-    desc.ComparisonFunc     = compareFunc;
-    desc.BorderColor[0]     = 1.0f;
-    desc.BorderColor[1]     = 1.0f;
-    desc.BorderColor[2]     = 1.0f;
-    desc.BorderColor[3]     = 1.0f;
-    desc.MinLOD             = 0;
-    desc.MaxLOD             = D3D12_FLOAT32_MAX;
-
-    switch(type)
+    auto pDevice = GetD3D12Device();
+    if (pDevice == nullptr || pDesc == nullptr)
     {
-    case ST_POINT_CLAMP:
-        {
-            desc.Filter     = D3D12_FILTER_MIN_MAG_MIP_POINT;
-            desc.AddressU   = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-            desc.AddressV   = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-            desc.AddressW   = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-        }
-        break;
-
-    case ST_POINT_WRAP:
-        {
-            desc.Filter     = D3D12_FILTER_MIN_MAG_MIP_POINT;
-            desc.AddressU   = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-            desc.AddressV   = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-            desc.AddressW   = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-        }
-        break;
-
-    case ST_POINT_MIRROR:
-        {
-            desc.Filter     = D3D12_FILTER_MIN_MAG_MIP_POINT;
-            desc.AddressU   = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
-            desc.AddressV   = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
-            desc.AddressW   = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
-        }
-        break;
-
-    case ST_LINEAR_CLAMP:
-        {
-            desc.Filter     = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-            desc.AddressU   = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-            desc.AddressV   = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-            desc.AddressW   = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-        }
-        break;
-
-    case ST_LINEAR_WRAP:
-        {
-            desc.Filter     = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-            desc.AddressU   = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-            desc.AddressV   = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-            desc.AddressW   = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-        }
-        break;
-
-    case ST_LINEAR_MIRROR:
-        {
-            desc.Filter     = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-            desc.AddressU   = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
-            desc.AddressV   = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
-            desc.AddressW   = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
-        }
-        break;
-
-    case ST_ANISOTROPIC_CLAMP:
-        {
-            desc.Filter         = D3D12_FILTER_ANISOTROPIC;
-            desc.AddressU       = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-            desc.AddressV       = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-            desc.AddressW       = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-            desc.MaxAnisotropy  = 16;
-        }
-        break;
-
-    case ST_ANISOTROPIC_WRAP:
-        {
-            desc.Filter         = D3D12_FILTER_ANISOTROPIC;
-            desc.AddressU       = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-            desc.AddressV       = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-            desc.AddressW       = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-            desc.MaxAnisotropy  = 16;
-        }
-        break;
-
-    case ST_ANISOTROPIC_MIRROR:
-        {
-            desc.Filter         = D3D12_FILTER_ANISOTROPIC;
-            desc.AddressU       = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
-            desc.AddressV       = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
-            desc.AddressW       = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
-            desc.MaxAnisotropy  = 16;
-        }
-        break;
+        ELOG("Error : Invalid Argument.");
+        return false;
     }
 
-    return Init(device, &desc);
-}
-
-//-----------------------------------------------------------------------------
-//      初期化処理を行います.
-//-----------------------------------------------------------------------------
-bool Sampler::Init(GraphicsDevice& device, const D3D12_SAMPLER_DESC* pDesc)
-{
-    if (!device.AllocHandle(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, m_Descriptor.GetAddress()))
+    if (!GfxSystem().AllocHandle(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, m_Descriptor.GetAddress()))
     {
         ELOG("Error : GraphicsDevice::AllocHandle() Failed.");
         return false;
     }
 
-    device->CreateSampler(pDesc, m_Descriptor->GetHandleCPU());
+    pDevice->CreateSampler(pDesc, m_Descriptor->GetHandleCPU());
     return true;
 }
 

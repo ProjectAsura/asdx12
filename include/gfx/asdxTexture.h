@@ -9,7 +9,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <asdxResTexture.h>
-#include <asdxView.h>
+#include <gfx/asdxView.h>
 
 
 namespace asdx {

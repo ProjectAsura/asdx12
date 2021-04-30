@@ -9,13 +9,12 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <vector>
-#include <asdxGraphicsDevice.h>
-#include <asdxMath.h>
-#include <asdxView.h>
-#include <asdxVertexBuffer.h>
-#include <asdxIndexBuffer.h>
+#include <core/asdxMath.h>
+#include <gfx/asdxView.h>
+#include <gfx/asdxVertexBuffer.h>
+#include <gfx/asdxIndexBuffer.h>
+#include <gfx/asdxPipelineState.h>
 #include <asdxRootSignature.h>
-#include <asdxPipelineState.h>
 
 
 namespace asdx {

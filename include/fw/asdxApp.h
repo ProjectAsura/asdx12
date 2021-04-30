@@ -16,14 +16,12 @@
 #include <d3d12.h>
 #include <dxgi1_6.h>
 
-#include <asdxRef.h>
-#include <asdxStepTimer.h>
+#include <core/asdxRef.h>
+#include <core/asdxStepTimer.h>
 #include <core/asdxHid.h>
-#include <asdxColorSpace.h>
-#include <asdxGraphicsDevice.h>
-#include <asdxCommandList.h>
-#include <asdxTarget.h>
-#include <asdxDisposer.h>
+#include <gfx/asdxGraphicsSystem.h>
+#include <gfx/asdxCommandList.h>
+#include <gfx/asdxTarget.h>
 
 
 #if defined(DEBUG) || defined(_DEBUG)
@@ -50,6 +48,18 @@
 
 
 namespace asdx {
+
+///////////////////////////////////////////////////////////////////////////////
+// COLOR_SPACE enum
+///////////////////////////////////////////////////////////////////////////////
+enum COLOR_SPACE
+{
+    COLOR_SPACE_NONE,           // デフォルト.
+    COLOR_SPACE_SRGB,           // SRGB (ガンマ2.2)
+    COLOR_SPACE_BT709,          // ITU-R BT.709 (ガンマ2.4)
+    COLOR_SPACE_BT2100_PQ,      // ITU-R BT.2100 Perceptual Quantizer
+    COLOR_SPACE_BT2100_HLG,     // ITU-R BT.2100 Hybrid Log Gamma
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 // MouseEventArgs structure
@@ -177,7 +187,13 @@ public:
     //! @param [in]     hMenu       メニューハンドル.
     //! @param [in]     hAccel      アクセレレータハンドル.
     //-------------------------------------------------------------------------
-    Application( LPCWSTR title, uint32_t width, uint32_t height, HICON hIcon, HMENU hMenu, HACCEL hAccel );
+    Application(
+        LPCWSTR     title,
+        uint32_t    width,
+        uint32_t    height,
+        HICON       hIcon,
+        HMENU       hMenu,
+        HACCEL      hAccel);
 
     //-------------------------------------------------------------------------
     //! @brief      デストラクタです.
@@ -223,7 +239,7 @@ protected:
     HICON                           m_hIcon;                //!< アイコンハンドルです.
     HMENU                           m_hMenu;                //!< メニューハンドルです.
     HACCEL                          m_hAccel;               //!< アクセレレータハンドルです.
-    GraphicsDevice::Desc            m_DeviceDesc;           //!< デバイス設定です.
+    GraphicsSystem::Desc            m_DeviceDesc;           //!< デバイス設定です.
     std::vector<ColorTarget>        m_ColorTarget;          //!< カラーターゲットです.
     DepthTarget                     m_DepthTarget;          //!< 深度ターゲットです.
     CommandList                     m_GfxCmdList;           //!< グラフィックスコマンドリスト.
@@ -405,7 +421,6 @@ private:
     std::mutex              m_Mutex;                //!< ミューテックスです.
     DXGI_OUTPUT_DESC1       m_DisplayDesc;          //!< 出力先の設定です.
     RefPtr<IDXGISwapChain4> m_pSwapChain4;          //!< スワップチェイン4です.
-
 
     //=========================================================================
     // private methods.

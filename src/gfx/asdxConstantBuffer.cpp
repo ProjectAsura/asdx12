@@ -7,9 +7,9 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <asdxConstantBuffer.h>
-#include <asdxGraphicsDevice.h>
-#include <asdxLogger.h>
+#include <gfx/asdxConstantBuffer.h>
+#include <gfx/asdxGraphicsSystem.h>
+#include <core/asdxLogger.h>
 
 
 namespace asdx {
@@ -56,6 +56,8 @@ bool ConstantBuffer::Init(uint64_t size)
         return false;
     }
 
+    auto pDevice = GetD3D12Device();
+
     D3D12_HEAP_PROPERTIES props = {
         D3D12_HEAP_TYPE_UPLOAD,
         D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
@@ -79,7 +81,7 @@ bool ConstantBuffer::Init(uint64_t size)
 
     for(auto i=0; i<2; ++i)
     {
-        auto hr = GfxDevice()->CreateCommittedResource(
+        auto hr = pDevice->CreateCommittedResource(
             &props,
             D3D12_HEAP_FLAG_NONE,
             &desc,

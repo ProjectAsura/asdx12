@@ -8,9 +8,9 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <vector>
-#include <asdxTexture.h>
-#include <asdxLogger.h>
-#include <asdxGraphicsDevice.h>
+#include <gfx/asdxTexture.h>
+#include <gfx/asdxGraphicsSystem.h>
+#include <core/asdxLogger.h>
 
 
 namespace asdx {
@@ -36,7 +36,7 @@ Texture::~Texture()
 //-----------------------------------------------------------------------------
 bool Texture::Init(const ResTexture& resource)
 {
-    auto pD3DDevice = GfxDevice().GetDevice();
+    auto pDevice = GetD3D12Device();
 
     auto dimension  = D3D12_RESOURCE_DIMENSION_UNKNOWN;
     auto isCube     = false;
@@ -142,7 +142,7 @@ bool Texture::Init(const ResTexture& resource)
             D3D12_RESOURCE_FLAG_NONE
         };
 
-        auto hr = pD3DDevice->CreateCommittedResource(
+        auto hr = pDevice->CreateCommittedResource(
             &props,
             D3D12_HEAP_FLAG_NONE,
             &desc,
@@ -168,7 +168,7 @@ bool Texture::Init(const ResTexture& resource)
         }
     }
 
-    if (!GfxDevice().UpdateTexture(pResource, resource))
+    if (!GfxSystem().UpdateTexture(pResource, resource))
     {
         pResource->Release();
         pResource = nullptr;

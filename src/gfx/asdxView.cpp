@@ -8,9 +8,9 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <atomic>
-#include <asdxView.h>
-#include <asdxDescriptor.h>
-#include <asdxGraphicsDevice.h>
+#include <gfx/asdxView.h>
+#include <gfx/asdxDescriptor.h>
+#include <gfx/asdxGraphicsSystem.h>
 
 
 namespace asdx {
@@ -37,8 +37,8 @@ public:
 
     ~ConstantBufferView()
     {
-        GfxDevice().PushToDisposer(m_Descriptor);
-        GfxDevice().PushToDisposer(m_Resource); 
+        GfxSystem().Dispose(m_Descriptor);
+        GfxSystem().Dispose(m_Resource); 
     }
 
     void AddRef() override
@@ -96,8 +96,8 @@ public:
 
     ~RenderTargetView()
     {
-        GfxDevice().PushToDisposer(m_Descriptor);
-        GfxDevice().PushToDisposer(m_Resource);
+        GfxSystem().Dispose(m_Descriptor);
+        GfxSystem().Dispose(m_Resource);
     }
 
     void AddRef() override
@@ -155,8 +155,8 @@ public:
 
     ~DepthStencilView()
     {
-        GfxDevice().PushToDisposer(m_Descriptor);
-        GfxDevice().PushToDisposer(m_Resource);
+        GfxSystem().Dispose(m_Descriptor);
+        GfxSystem().Dispose(m_Resource);
     }
 
     void AddRef() override
@@ -213,8 +213,8 @@ public:
 
     ~ShaderResourceView()
     {
-        GfxDevice().PushToDisposer(m_Descriptor);
-        GfxDevice().PushToDisposer(m_Resource);
+        GfxSystem().Dispose(m_Descriptor);
+        GfxSystem().Dispose(m_Resource);
     }
 
     void AddRef() override
@@ -275,10 +275,10 @@ public:
 
     ~UnorderedAccessView()
     {
-        GfxDevice().PushToDisposer(m_Descriptor);
-        GfxDevice().PushToDisposer(m_Resource);
+        GfxSystem().Dispose(m_Descriptor);
+        GfxSystem().Dispose(m_Resource);
         if (m_CounterResource != nullptr)
-        { GfxDevice().PushToDisposer(m_CounterResource); }
+        { GfxSystem().Dispose(m_CounterResource); }
     }
 
     void AddRef() override
@@ -328,7 +328,7 @@ bool CreateConstantBufferView
 )
 {
     Descriptor* pDescriptor = nullptr;
-    auto ret = GfxDevice().AllocHandle(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, &pDescriptor);
+    auto ret = GfxSystem().AllocHandle(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, &pDescriptor);
     if (!ret)
     { return false; }
 
@@ -351,7 +351,7 @@ bool CreateRenderTargetView
 )
 {
     Descriptor* pDescriptor = nullptr;
-    auto ret = GfxDevice().AllocHandle(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, &pDescriptor);
+    auto ret = GfxSystem().AllocHandle(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, &pDescriptor);
     if (!ret)
     { return false; }
 
@@ -374,7 +374,7 @@ bool CreateDepthStencilView
 )
 {
     Descriptor* pDescriptor = nullptr;
-    auto ret = GfxDevice().AllocHandle(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, &pDescriptor);
+    auto ret = GfxSystem().AllocHandle(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, &pDescriptor);
     if (!ret)
     { return false; }
 
@@ -397,7 +397,7 @@ bool CreateShaderResourceView
 )
 {
     Descriptor* pDescriptor = nullptr;
-    auto ret = GfxDevice().AllocHandle(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, &pDescriptor);
+    auto ret = GfxSystem().AllocHandle(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, &pDescriptor);
     if (!ret)
     { return false; }
 
@@ -421,7 +421,7 @@ bool CreateUnorderedAccessView
 )
 {
     Descriptor* pDescriptor = nullptr;
-    auto ret = GfxDevice().AllocHandle(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, &pDescriptor);
+    auto ret = GfxSystem().AllocHandle(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, &pDescriptor);
     if (!ret)
     { return false; }
 

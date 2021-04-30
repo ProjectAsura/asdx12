@@ -8,23 +8,23 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <mutex>
 #include <d3d12.h>
 #include <dxgi1_6.h>
-#include <asdxRef.h>
-#include <asdxCommandQueue.h>
-#include <asdxDescriptor.h>
+#include <core/asdxSpinLock.h>
+#include <core/asdxRef.h>
+#include <gfx/asdxCommandQueue.h>
+#include <gfx/asdxDescriptor.h>
+#include <gfx/asdxDisposer.h>
 #include <asdxResourceUploader.h>
-#include <asdxDisposer.h>
 #include <asdxResTexture.h>
 
 
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
-// GraphicsDevice class
+// GraphicsSystem class
 ///////////////////////////////////////////////////////////////////////////////
-class GraphicsDevice
+class GraphicsSystem
 {
     //========================================================================
     // list of friend classes and methods.
@@ -59,7 +59,7 @@ public:
     //!
     //! @return     唯一のインスタンスを返却します.
     //-------------------------------------------------------------------------
-    static GraphicsDevice& Instance();
+    static GraphicsSystem& Instance();
 
     //-------------------------------------------------------------------------
     //! @brief      初期化処理を行います.
@@ -162,7 +162,7 @@ public:
     //! @param[in]      pResource       破棄リソース.
     //! @param[in]      lifeTime        生存フレーム数です.
     //--------------------------------------------------------------------------
-    void PushToDisposer(
+    void Dispose(
         ID3D12Resource*& pResource, 
         uint8_t lifeTime = kDefaultLiftTime);
 
@@ -172,7 +172,7 @@ public:
     //! @param[in]      pDescriptor     破棄ディスクリプタ.
     //! @param[in]      lifeTime        生存フレーム数です.
     //-------------------------------------------------------------------------
-    void PushToDisposer(
+    void Dispose(
         Descriptor*& pDescriptor,
         uint8_t lifeTime = kDefaultLiftTime);
 
@@ -182,7 +182,7 @@ public:
     //! @param[in]      pPipelineState  破棄パイプラインステート.
     //! @param[in]      lifeTime        生存フレーム数です.
     //-------------------------------------------------------------------------
-    void PushToDisposer(
+    void Dispose(
         ID3D12PipelineState*& pPipelineState,
         uint8_t lifeTime = kDefaultLiftTime);
 
@@ -217,7 +217,7 @@ private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    static GraphicsDevice           s_Instance;                 //!< シングルトンインスタンス.
+    static GraphicsSystem           s_Instance;                 //!< シングルトンインスタンス.
     RefPtr<IDXGIFactory7>           m_pFactory;                 //!< DXGIファクトリーです.
     RefPtr<ID3D12Debug3>            m_pDebug;                   //!< デバッグオブジェクト.
     RefPtr<ID3D12InfoQueue>         m_pInfoQueue;               //!< インフォキュー.
@@ -233,7 +233,7 @@ private:
     Disposer<ID3D12Resource>        m_ResourceDisposer;         //!< リソースディスポーザー.
     Disposer<Descriptor>            m_DescriptorDisposer;       //!< ディスクリプタディスポーザー.
     Disposer<ID3D12PipelineState>   m_PipelineStateDisposer;    //!< パイプラインステートディスポーザー.
-    std::mutex                      m_Mutex;
+    SpinLock                        m_SpinLock;                 //!< スピンロックです.
 
     //=========================================================================
     // private methods
@@ -242,12 +242,12 @@ private:
     //-------------------------------------------------------------------------
     //! @brief      コンストラクタです.
     //-------------------------------------------------------------------------
-    GraphicsDevice();
+    GraphicsSystem() = default;
 
     //-------------------------------------------------------------------------
     //! @brief      デストラクタです.
     //-------------------------------------------------------------------------
-    ~GraphicsDevice();
+    ~GraphicsSystem() = default;
 
     //-------------------------------------------------------------------------
     //! @brief      リソースアップローダーに追加します.
@@ -255,12 +255,12 @@ private:
     //! @param[in]      pResource       アップロードリソース.
     //! @param[in]      lifeTime        生存フレーム数です.
     //-------------------------------------------------------------------------
-    void PushToUploader(
+    void PushUploader(
         IUploadResource* pResource,
         uint8_t lifeTime = kDefaultLiftTime);
 
-    GraphicsDevice              (const GraphicsDevice&) = delete;   // アクセス禁止.
-    GraphicsDevice& operator =  (const GraphicsDevice&) = delete;   // アクセス禁止.
+    GraphicsSystem              (const GraphicsSystem&) = delete;   // アクセス禁止.
+    GraphicsSystem& operator =  (const GraphicsSystem&) = delete;   // アクセス禁止.
 };
 
 //-----------------------------------------------------------------------------
@@ -268,8 +268,8 @@ private:
 //!
 //! @return     グラフィックスデバイスを返却します.
 //-----------------------------------------------------------------------------
-inline GraphicsDevice& GfxDevice()
-{ return GraphicsDevice::Instance(); }
+inline GraphicsSystem& GfxSystem()
+{ return GraphicsSystem::Instance(); }
 
 //-----------------------------------------------------------------------------
 //! @brief      D3D12デバイスを取得します.
@@ -277,6 +277,6 @@ inline GraphicsDevice& GfxDevice()
 //! @return     D3D12デバイスを返却します.
 //-----------------------------------------------------------------------------
 inline ID3D12Device8* GetD3D12Device()
-{ return GraphicsDevice::Instance().GetDevice(); }
+{ return GraphicsSystem::Instance().GetDevice(); }
 
 } // namespace asdx

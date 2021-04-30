@@ -8,9 +8,9 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <atomic>
-#include <asdxStructuredBuffer.h>
-#include <asdxLogger.h>
-#include <asdxGraphicsDevice.h>
+#include <gfx/asdxStructuredBuffer.h>
+#include <gfx/asdxGraphicsSystem.h>
+#include <core/asdxLogger.h>
 
 
 namespace asdx {
@@ -38,7 +38,7 @@ StructuredBuffer::~StructuredBuffer()
 //-----------------------------------------------------------------------------
 bool StructuredBuffer::Init(uint64_t count, uint32_t stride, D3D12_RESOURCE_STATES state)
 {
-    auto pDevice = GfxDevice().GetDevice();
+    auto pDevice = GetD3D12Device();
 
     if (pDevice == nullptr || count == 0 || stride == 0)
     {
@@ -113,7 +113,7 @@ bool StructuredBuffer::Init
     if (!Init(count, stride, D3D12_RESOURCE_STATE_GENERIC_READ))
     { return false;  }
 
-    if (!GfxDevice().UpdateBuffer(m_Resource.GetPtr(), pInitData))
+    if (!GfxSystem().UpdateBuffer(m_Resource.GetPtr(), pInitData))
     {
         ELOGA("Error : GraphicsDevice::UpdateBuffer() Failed.");
         return false;
@@ -129,7 +129,7 @@ void StructuredBuffer::Term()
 {
     auto resource = m_Resource.Detach();
     if (resource != nullptr)
-    { GfxDevice().PushToDisposer(resource); }
+    { GfxSystem().Dispose(resource); }
     m_View.Reset();
 }
 

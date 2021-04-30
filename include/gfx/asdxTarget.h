@@ -9,7 +9,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <dxgi1_6.h>
-#include <asdxView.h>
+#include <gfx/asdxView.h>
 
 
 namespace asdx {

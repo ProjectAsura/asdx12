@@ -7,39 +7,27 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <asdxGraphicsDevice.h>
-#include <asdxLogger.h>
+#include <gfx/asdxGraphicsSystem.h>
+#include <core/asdxLogger.h>
 
 
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
-// GraphicsDevice class
+// GraphicsSystem class
 ///////////////////////////////////////////////////////////////////////////////
-GraphicsDevice GraphicsDevice::s_Instance = {};
-
-//-----------------------------------------------------------------------------
-//      コンストラクタです.
-//-----------------------------------------------------------------------------
-GraphicsDevice::GraphicsDevice()
-{ /* DO_NOTHING */ }
-
-//-----------------------------------------------------------------------------
-//      デストラクタです.
-//-----------------------------------------------------------------------------
-GraphicsDevice::~GraphicsDevice()
-{ /* DO_NOTHING */ }
+GraphicsSystem GraphicsSystem::s_Instance = {};
 
 //-----------------------------------------------------------------------------
 //      唯一のインスタンスを取得します.
 //-----------------------------------------------------------------------------
-GraphicsDevice& GraphicsDevice::Instance()
+GraphicsSystem& GraphicsSystem::Instance()
 { return s_Instance; }
 
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool GraphicsDevice::Init(const Desc* pDesc)
+bool GraphicsSystem::Init(const Desc* pDesc)
 {
     if (pDesc->EnableDebug)
     {
@@ -244,7 +232,7 @@ bool GraphicsDevice::Init(const Desc* pDesc)
 //-----------------------------------------------------------------------------
 //      終了処理を行います.
 //-----------------------------------------------------------------------------
-void GraphicsDevice::Term()
+void GraphicsSystem::Term()
 {
     m_ResourceUploader      .Clear();
     m_ResourceDisposer      .Clear();
@@ -272,62 +260,62 @@ void GraphicsDevice::Term()
 //-----------------------------------------------------------------------------
 //      ID3D12Device8を取得します.
 //-----------------------------------------------------------------------------
-ID3D12Device8* GraphicsDevice::GetDevice() const
+ID3D12Device8* GraphicsSystem::GetDevice() const
 { return m_pDevice.GetPtr(); }
 
 //-----------------------------------------------------------------------------
 //      IDXGIFactory7を取得します.
 //-----------------------------------------------------------------------------
-IDXGIFactory7* GraphicsDevice::GetFactory() const
+IDXGIFactory7* GraphicsSystem::GetFactory() const
 { return m_pFactory.GetPtr(); }
 
 //-----------------------------------------------------------------------------
 //      グラフィックスキューを取得します.
 //-----------------------------------------------------------------------------
-CommandQueue* GraphicsDevice::GetGraphicsQueue() const
+CommandQueue* GraphicsSystem::GetGraphicsQueue() const
 { return m_pGraphicsQueue.GetPtr(); }
 
 //-----------------------------------------------------------------------------
 //      コンピュートキューを取得します.
 //-----------------------------------------------------------------------------
-CommandQueue* GraphicsDevice::GetComputeQueue() const
+CommandQueue* GraphicsSystem::GetComputeQueue() const
 { return m_pComputeQueue.GetPtr(); }
 
 //-----------------------------------------------------------------------------
 //      コピーキューを取得します.
 //-----------------------------------------------------------------------------
-CommandQueue* GraphicsDevice::GetCopyQueue() const
+CommandQueue* GraphicsSystem::GetCopyQueue() const
 { return m_pCopyQueue.GetPtr(); }
 
 //-----------------------------------------------------------------------------
 //      ビデオデコードキューを取得します.
 //-----------------------------------------------------------------------------
-CommandQueue* GraphicsDevice::GetVideoDecodeQueue() const
+CommandQueue* GraphicsSystem::GetVideoDecodeQueue() const
 { return m_pVideoDecodeQueue.GetPtr(); }
 
 //-----------------------------------------------------------------------------
 //      ビデオプロセスキューを取得します.
 //-----------------------------------------------------------------------------
-CommandQueue* GraphicsDevice::GetVideoProcessQueue() const
+CommandQueue* GraphicsSystem::GetVideoProcessQueue() const
 { return m_pVideoProcessQueue.GetPtr(); }
 
 //-----------------------------------------------------------------------------
 //      ビデオエンコードキューを取得します.
 //-----------------------------------------------------------------------------
-CommandQueue* GraphicsDevice::GetVideoEncodeQueue() const
+CommandQueue* GraphicsSystem::GetVideoEncodeQueue() const
 { return m_pVideoEncodeQueue.GetPtr(); }
 
 //-----------------------------------------------------------------------------
 //      ディスクリプターを確保します.
 //-----------------------------------------------------------------------------
-bool GraphicsDevice::AllocHandle(int index, Descriptor** ppResult)
+bool GraphicsSystem::AllocHandle(int index, Descriptor** ppResult)
 {
-    std::lock_guard<std::mutex> guard(m_Mutex);
+    ScopedLock locker(&m_SpinLock);
 
     if (index < 0 || index >= 4)
     { return false; }
 
-    auto descriptor = m_DescriptorHeap[index].CreateDescriptor();
+    auto descriptor = m_DescriptorHeap[index].Alloc();
     if (descriptor == nullptr)
     { return false; }
 
@@ -339,13 +327,13 @@ bool GraphicsDevice::AllocHandle(int index, Descriptor** ppResult)
 //-----------------------------------------------------------------------------
 //      アロー演算子です.
 //-----------------------------------------------------------------------------
-ID3D12Device8* GraphicsDevice::operator-> () const
+ID3D12Device8* GraphicsSystem::operator-> () const
 { return m_pDevice.GetPtr(); }
 
 //-----------------------------------------------------------------------------
 //      ディスクリプタヒープを設定します.
 //-----------------------------------------------------------------------------
-void GraphicsDevice::SetDescriptorHeaps(ID3D12GraphicsCommandList* pCmdList)
+void GraphicsSystem::SetDescriptorHeaps(ID3D12GraphicsCommandList* pCmdList)
 {
     if (pCmdList == nullptr)
     { return; }
@@ -361,7 +349,7 @@ void GraphicsDevice::SetDescriptorHeaps(ID3D12GraphicsCommandList* pCmdList)
 //-----------------------------------------------------------------------------
 //      コマンドキューの実行完了を待機します.
 //-----------------------------------------------------------------------------
-void GraphicsDevice::WaitIdle()
+void GraphicsSystem::WaitIdle()
 {
     if (m_pGraphicsQueue.GetPtr() != nullptr)
     {
@@ -403,37 +391,37 @@ void GraphicsDevice::WaitIdle()
 //-----------------------------------------------------------------------------
 //      リソースアップローダーに追加します.
 //-----------------------------------------------------------------------------
-void GraphicsDevice::PushToUploader(IUploadResource* pResource, uint8_t lifeTime)
+void GraphicsSystem::PushUploader(IUploadResource* pResource, uint8_t lifeTime)
 { m_ResourceUploader.Push(pResource, lifeTime); }
 
 //-----------------------------------------------------------------------------
 //      リソースディスポーザーに追加します.
 //-----------------------------------------------------------------------------
-void GraphicsDevice::PushToDisposer(ID3D12Resource*& pResource, uint8_t lifeTime)
+void GraphicsSystem::Dispose(ID3D12Resource*& pResource, uint8_t lifeTime)
 { m_ResourceDisposer.Push(pResource, lifeTime); }
 
 //-----------------------------------------------------------------------------
 //      ディスクリプタディスポーザーに追加します.
 //-----------------------------------------------------------------------------
-void GraphicsDevice::PushToDisposer(Descriptor*& pDescriptor, uint8_t lifeTime)
+void GraphicsSystem::Dispose(Descriptor*& pDescriptor, uint8_t lifeTime)
 { m_DescriptorDisposer.Push(pDescriptor, lifeTime); }
 
 //-----------------------------------------------------------------------------
 //      パイプラインステートディスポーザーに追加します.
 //-----------------------------------------------------------------------------
-void GraphicsDevice::PushToDisposer(ID3D12PipelineState*& pPipelineState, uint8_t lifeTime)
+void GraphicsSystem::Dispose(ID3D12PipelineState*& pPipelineState, uint8_t lifeTime)
 { m_PipelineStateDisposer.Push(pPipelineState, lifeTime); }
 
 //-----------------------------------------------------------------------------
 //      アップロードコマンドを設定します.
 //-----------------------------------------------------------------------------
-void GraphicsDevice::SetUploadCommand(ID3D12GraphicsCommandList* pCmdList)
+void GraphicsSystem::SetUploadCommand(ID3D12GraphicsCommandList* pCmdList)
 { m_ResourceUploader.Upload(pCmdList); }
 
 //-----------------------------------------------------------------------------
 //      フレーム同期を取ります.
 //-----------------------------------------------------------------------------
-void GraphicsDevice::FrameSync()
+void GraphicsSystem::FrameSync()
 {
     m_ResourceUploader      .FrameSync();
     m_ResourceDisposer      .FrameSync();
@@ -444,7 +432,7 @@ void GraphicsDevice::FrameSync()
 //-----------------------------------------------------------------------------
 //      強制破棄を行います.
 //-----------------------------------------------------------------------------
-void GraphicsDevice::ForceDispose()
+void GraphicsSystem::ForceDispose()
 {
     m_ResourceDisposer      .Clear();
     m_DescriptorDisposer    .Clear();
@@ -454,7 +442,7 @@ void GraphicsDevice::ForceDispose()
 //-----------------------------------------------------------------------------
 //      バッファ更新リソースを生成し登録します.
 //-----------------------------------------------------------------------------
-bool GraphicsDevice::UpdateBuffer(ID3D12Resource* pDstResource, const void* pInitData)
+bool GraphicsSystem::UpdateBuffer(ID3D12Resource* pDstResource, const void* pInitData)
 {
     if (pDstResource == nullptr || pInitData== nullptr)
     {
@@ -469,14 +457,14 @@ bool GraphicsDevice::UpdateBuffer(ID3D12Resource* pDstResource, const void* pIni
         return false;
     }
 
-    PushToUploader(pUploadResource);
+    PushUploader(pUploadResource);
     return true;
 }
 
 //-----------------------------------------------------------------------------
 //      テクスチャ更新リソースを生成し登録します.
 //-----------------------------------------------------------------------------
-bool GraphicsDevice::UpdateTexture(ID3D12Resource* pDstResource, const ResTexture& resource)
+bool GraphicsSystem::UpdateTexture(ID3D12Resource* pDstResource, const ResTexture& resource)
 {
     if (pDstResource == nullptr || resource.pResources == nullptr)
     {
@@ -490,7 +478,7 @@ bool GraphicsDevice::UpdateTexture(ID3D12Resource* pDstResource, const ResTextur
         ELOGA("Error : CreateUploadTextureResource() Failed.");
         return false;
     }
-    PushToUploader(pUploadResource);
+    PushUploader(pUploadResource);
     return true;
 }
 
