@@ -8,7 +8,7 @@
 
 namespace asdx {
 
-using ThreadFunc = unsigned long(*)(void*);
+using ThreadFunc = unsigned long(*)(void* user);
 
 ///////////////////////////////////////////////////////////////////////////////
 // Thread class

@@ -138,6 +138,12 @@ MATERIAL_STATE Material::GetState() const
 { return m_State; }
 
 //-----------------------------------------------------------------------------
+//      表示面を取得します.
+//-----------------------------------------------------------------------------
+DISPLAY_FACE Material::GetDisplayFace() const
+{ return m_DisplayFace; }
+
+//-----------------------------------------------------------------------------
 //      キャストシャドウフラグを取得します.
 //-----------------------------------------------------------------------------
 bool Material::CastShadow() const
@@ -158,7 +164,7 @@ void Material::SetParam(uint32_t hash, bool value)
     { return; }
 
     auto p = m_Params.at(hash);
-    if (p.Type != MATERIAL_PARAMETER_BOOL)
+    if (p.Type != MATERIAL_PARAM_BOOL)
     { return; }
 
     auto v = value ? 1 : 0;
@@ -175,7 +181,7 @@ void Material::SetParam(uint32_t hash, int value)
     { return; }
 
     auto p = m_Params.at(hash);
-    if (p.Type != MATERIAL_PARAMETER_INT)
+    if (p.Type != MATERIAL_PARAM_INT)
     { return; }
 
     memcpy(m_Buffer.data() + p.Offset, &value, sizeof(value));
@@ -191,7 +197,7 @@ void Material::SetParam(uint32_t hash, float value)
     { return; }
 
     auto p = m_Params.at(hash);
-    if (p.Type != MATERIAL_PARAMETER_FLOAT)
+    if (p.Type != MATERIAL_PARAM_FLOAT)
     { return; }
 
     memcpy(m_Buffer.data() + p.Offset, &value, sizeof(value));
@@ -207,7 +213,7 @@ void Material::SetParam(uint32_t hash, uint32_t value)
     { return; }
 
     auto p = m_Params.at(hash);
-    if (p.Type != MATERIAL_PARAMETER_UINT)
+    if (p.Type != MATERIAL_PARAM_UINT)
     { return; }
 
     memcpy(m_Buffer.data() + p.Offset, &value, sizeof(value));
@@ -223,7 +229,7 @@ void Material::SetParam(uint32_t hash, const Vector2& value)
     { return; }
 
     auto p = m_Params.at(hash);
-    if (p.Type != MATERIAL_PARAMETER_FLOAT2)
+    if (p.Type != MATERIAL_PARAM_FLOAT2)
     { return; }
 
     memcpy(m_Buffer.data() + p.Offset, &value, sizeof(value));
@@ -239,7 +245,7 @@ void Material::SetParam(uint32_t hash, const Vector3& value)
     { return; }
 
     auto p = m_Params.at(hash);
-    if (p.Type != MATERIAL_PARAMETER_FLOAT3)
+    if (p.Type != MATERIAL_PARAM_FLOAT3)
     { return; }
 
     memcpy(m_Buffer.data() + p.Offset, &value, sizeof(value));
@@ -255,7 +261,7 @@ void Material::SetParam(uint32_t hash, const Vector4& value)
     { return; }
 
     auto p = m_Params.at(hash);
-    if (p.Type != MATERIAL_PARAMETER_FLOAT4)
+    if (p.Type != MATERIAL_PARAM_FLOAT4)
     { return; }
 
     memcpy(m_Buffer.data() + p.Offset, &value, sizeof(value));
@@ -271,7 +277,7 @@ bool Material::GetBool(uint32_t hash) const
     if (m_Params.find(hash) != m_Params.end())
     {
         auto p = m_Params.at(hash);
-        if (p.Type == MATERIAL_PARAMETER_BOOL)
+        if (p.Type == MATERIAL_PARAM_BOOL)
         {
             auto val = 0;
             memcpy(&val, m_Buffer.data() + p.Offset, sizeof(val));
@@ -291,7 +297,7 @@ int Material::GetInt(uint32_t hash) const
     if (m_Params.find(hash) != m_Params.end())
     {
         auto p = m_Params.at(hash);
-        if (p.Type == MATERIAL_PARAMETER_INT)
+        if (p.Type == MATERIAL_PARAM_INT)
         { memcpy(&result, m_Buffer.data() + p.Offset, sizeof(result)); }
     }
 
@@ -307,7 +313,7 @@ float Material::GetFloat(uint32_t hash) const
     if (m_Params.find(hash) != m_Params.end())
     {
         auto p = m_Params.at(hash);
-        if (p.Type == MATERIAL_PARAMETER_FLOAT)
+        if (p.Type == MATERIAL_PARAM_FLOAT)
         { memcpy(&result, m_Buffer.data() + p.Offset, sizeof(result)); }
     }
 
@@ -323,7 +329,7 @@ uint32_t Material::GetUint(uint32_t hash) const
     if (m_Params.find(hash) != m_Params.end())
     {
         auto p = m_Params.at(hash);
-        if (p.Type == MATERIAL_PARAMETER_UINT)
+        if (p.Type == MATERIAL_PARAM_UINT)
         { memcpy(&result, m_Buffer.data() + p.Offset, sizeof(result)); }
     }
 
@@ -339,7 +345,7 @@ Vector2 Material::GetVector2(uint32_t hash) const
     if (m_Params.find(hash) != m_Params.end())
     {
         auto p = m_Params.at(hash);
-        if (p.Type == MATERIAL_PARAMETER_FLOAT2)
+        if (p.Type == MATERIAL_PARAM_FLOAT2)
         { memcpy(&result, m_Buffer.data() + p.Offset, sizeof(result)); }
     }
 
@@ -355,7 +361,7 @@ Vector3 Material::GetVector3(uint32_t hash) const
     if (m_Params.find(hash) != m_Params.end())
     {
         auto p = m_Params.at(hash);
-        if (p.Type == MATERIAL_PARAMETER_FLOAT3)
+        if (p.Type == MATERIAL_PARAM_FLOAT3)
         { memcpy(&result, m_Buffer.data() + p.Offset, sizeof(result)); }
     }
 
@@ -371,7 +377,7 @@ Vector4 Material::GetVector4(uint32_t hash) const
     if (m_Params.find(hash) != m_Params.end())
     {
         auto p = m_Params.at(hash);
-        if (p.Type == MATERIAL_PARAMETER_FLOAT4)
+        if (p.Type == MATERIAL_PARAM_FLOAT4)
         { memcpy(&result, m_Buffer.data() + p.Offset, sizeof(result)); }
     }
 
