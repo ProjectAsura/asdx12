@@ -216,6 +216,15 @@
     <ClCompile Include="..\src\gfx\asdxMaterial.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\gfx\asdxShaderCompiler.cpp">
+      <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\fnd\asdxTokenizer.cpp">
+      <Filter>ソース ファイル\fnd</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gfx\asdxFxParser.cpp">
+      <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\external\imgui\imconfig.h">
@@ -405,6 +414,21 @@
       <Filter>ヘッダー ファイル\fw</Filter>
     </ClInclude>
     <ClInclude Include="..\include\gfx\asdxMaterial.h">
+      <Filter>ヘッダー ファイル\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\gfx\asdxShaderCompiler.h">
+      <Filter>ヘッダー ファイル\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\edit\asdxFxParser.h">
+      <Filter>ヘッダー ファイル\edit</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\edit\asdxTokenizer.h">
+      <Filter>ヘッダー ファイル\edit</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fnd\asdxTokenizer.h">
+      <Filter>ヘッダー ファイル\fnd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\gfx\asdxFxParser.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
   </ItemGroup>

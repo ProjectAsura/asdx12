@@ -117,6 +117,7 @@
     <ClCompile Include="..\src\fnd\asdxTablet.cpp" />
     <ClCompile Include="..\src\fnd\asdxThread.cpp" />
     <ClCompile Include="..\src\fnd\asdxThreadPool.cpp" />
+    <ClCompile Include="..\src\fnd\asdxTokenizer.cpp" />
     <ClCompile Include="..\src\fw\asdxApp.cpp" />
     <ClCompile Include="..\src\fw\asdxEntity.cpp" />
     <ClCompile Include="..\src\gfx\asdxByteAddressBuffer.cpp" />
@@ -125,6 +126,7 @@
     <ClCompile Include="..\src\gfx\asdxConstantBuffer.cpp" />
     <ClCompile Include="..\src\gfx\asdxDescriptor.cpp" />
     <ClCompile Include="..\src\gfx\asdxFence.cpp" />
+    <ClCompile Include="..\src\gfx\asdxFxParser.cpp" />
     <ClCompile Include="..\src\gfx\asdxGraphicsSystem.cpp" />
     <ClCompile Include="..\src\gfx\asdxIndexBuffer.cpp" />
     <ClCompile Include="..\src\gfx\asdxMaterial.cpp" />
@@ -137,6 +139,7 @@
     <ClCompile Include="..\src\gfx\asdxRootSignature.cpp" />
     <ClCompile Include="..\src\gfx\asdxSampler.cpp" />
     <ClCompile Include="..\src\gfx\asdxScreenCapture.cpp" />
+    <ClCompile Include="..\src\gfx\asdxShaderCompiler.cpp" />
     <ClCompile Include="..\src\gfx\asdxSprite.cpp" />
     <ClCompile Include="..\src\gfx\asdxStructuredBuffer.cpp" />
     <ClCompile Include="..\src\gfx\asdxTarget.cpp" />
@@ -159,10 +162,12 @@
     <ClInclude Include="..\external\tinyxml2\tinyxml2.h" />
     <ClInclude Include="..\include\edit\asdxEditParam.h" />
     <ClInclude Include="..\include\edit\asdxFileWatcher.h" />
+    <ClInclude Include="..\include\edit\asdxFxParser.h" />
     <ClInclude Include="..\include\edit\asdxGuiMgr.h" />
     <ClInclude Include="..\include\edit\asdxHistory.h" />
     <ClInclude Include="..\include\edit\asdxP4VHelper.h" />
     <ClInclude Include="..\include\edit\asdxTcpConnector.h" />
+    <ClInclude Include="..\include\edit\asdxTokenizer.h" />
     <ClInclude Include="..\include\fnd\asdxFrameHeap.h" />
     <ClInclude Include="..\include\fnd\asdxHash.h" />
     <ClInclude Include="..\include\fnd\asdxHid.h" />
@@ -181,6 +186,7 @@
     <ClInclude Include="..\include\fnd\asdxTablet.h" />
     <ClInclude Include="..\include\fnd\asdxThread.h" />
     <ClInclude Include="..\include\fnd\asdxThreadPool.h" />
+    <ClInclude Include="..\include\fnd\asdxTokenizer.h" />
     <ClInclude Include="..\include\fw\asdxApp.h" />
     <ClInclude Include="..\include\fw\asdxEntity.h" />
     <ClInclude Include="..\include\gfx\asdxByteAddressBuffer.h" />
@@ -190,6 +196,7 @@
     <ClInclude Include="..\include\gfx\asdxDescriptor.h" />
     <ClInclude Include="..\include\gfx\asdxDisposer.h" />
     <ClInclude Include="..\include\gfx\asdxFence.h" />
+    <ClInclude Include="..\include\gfx\asdxFxParser.h" />
     <ClInclude Include="..\include\gfx\asdxGraphicsSystem.h" />
     <ClInclude Include="..\include\gfx\asdxIndexBuffer.h" />
     <ClInclude Include="..\include\gfx\asdxMaterial.h" />
@@ -202,6 +209,7 @@
     <ClInclude Include="..\include\gfx\asdxRootSignature.h" />
     <ClInclude Include="..\include\gfx\asdxSampler.h" />
     <ClInclude Include="..\include\gfx\asdxScreenCpature.h" />
+    <ClInclude Include="..\include\gfx\asdxShaderCompiler.h" />
     <ClInclude Include="..\include\gfx\asdxSprite.h" />
     <ClInclude Include="..\include\gfx\asdxStructuredBuffer.h" />
     <ClInclude Include="..\include\gfx\asdxTarget.h" />
