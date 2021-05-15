@@ -162,12 +162,10 @@
     <ClInclude Include="..\external\tinyxml2\tinyxml2.h" />
     <ClInclude Include="..\include\edit\asdxEditParam.h" />
     <ClInclude Include="..\include\edit\asdxFileWatcher.h" />
-    <ClInclude Include="..\include\edit\asdxFxParser.h" />
     <ClInclude Include="..\include\edit\asdxGuiMgr.h" />
     <ClInclude Include="..\include\edit\asdxHistory.h" />
     <ClInclude Include="..\include\edit\asdxP4VHelper.h" />
     <ClInclude Include="..\include\edit\asdxTcpConnector.h" />
-    <ClInclude Include="..\include\edit\asdxTokenizer.h" />
     <ClInclude Include="..\include\fnd\asdxFrameHeap.h" />
     <ClInclude Include="..\include\fnd\asdxHash.h" />
     <ClInclude Include="..\include\fnd\asdxHid.h" />

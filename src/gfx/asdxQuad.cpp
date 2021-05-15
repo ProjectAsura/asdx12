@@ -46,7 +46,7 @@ namespace asdx {
 ///////////////////////////////////////////////////////////////////////////////
 // Quad class
 ///////////////////////////////////////////////////////////////////////////////
-const D3D12_INPUT_LAYOUT_DESC Quad::InputLayout = { kElements, 2 };
+const D3D12_INPUT_LAYOUT_DESC Quad::kInputLayout = { kElements, 2 };
 Quad Quad::s_Instance;
 
 //-----------------------------------------------------------------------------
@@ -85,8 +85,8 @@ bool Quad::Init(ID3D12Device* pDevice)
         Vertex(-1.0f, -3.0f, 0.0f,  2.0f)
     };
 
-    auto size   = uint64_t(sizeof(vertices));
-    auto stride = uint32_t(sizeof(vertices[0]));
+    auto size   = sizeof(vertices);
+    auto stride = static_cast<uint32_t>(sizeof(vertices[0]));
 
     if (!m_VB.Init(size, stride))
     {

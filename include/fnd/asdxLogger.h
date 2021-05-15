@@ -23,15 +23,15 @@ namespace asdx {
 #endif//ASDX_WIDE
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// LogLevel enum
+// LOG_LEVEL enum
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-enum class LogLevel : uint32_t
+enum LOG_LEVEL : uint32_t
 {
-    Verbose = 0,          //!< VERBOSEレベル (白).
-    Info,                 //!< INFOレベル    (緑).
-    Debug,                //!< DEBUGレベル   (青).
-    Warning,              //!< WRARNINGレベル(黄).
-    Error,                //!< ERRORレベル   (赤).
+    LOG_VERBOSE = 0,          //!< VERBOSEレベル (白).
+    LOG_INFO,                 //!< INFOレベル    (緑).
+    LOG_DEBUG,                //!< DEBUGレベル   (青).
+    LOG_WARNING,              //!< WARNINGレベル (黄).
+    LOG_ERROR,                //!< ERRORレベル   (赤).
 };
 
 
@@ -46,7 +46,7 @@ struct ILogger
     //! @param[in]      level       ログレベルです.
     //! @param[in]      format      フォーマットです.
     //---------------------------------------------------------------------------------------------
-    virtual void WriteA(LogLevel level, const char* format, ... ) = 0;
+    virtual void WriteA(LOG_LEVEL level, const char* format, ... ) = 0;
 
     //---------------------------------------------------------------------------------------------
     //! @brief      ログを出力します.
@@ -54,21 +54,21 @@ struct ILogger
     //! @param[in]      level       ログレベルです.
     //! @param[in]      format      フォーマットです.
     //---------------------------------------------------------------------------------------------
-    virtual void WriteW(LogLevel level, const wchar_t* format, ... ) = 0;
+    virtual void WriteW(LOG_LEVEL level, const wchar_t* format, ... ) = 0;
 
     //---------------------------------------------------------------------------------------------
     //! @brief      フィルタを設定します.
     //!
     //! @param[in]      filter      設定するフィルタ.
     //---------------------------------------------------------------------------------------------
-    virtual void SetFilter(LogLevel filter ) = 0;
+    virtual void SetFilter(LOG_LEVEL filter ) = 0;
 
     //---------------------------------------------------------------------------------------------
     //! @brief      設定されているフィルタを取得します.
     //!
     //! @return     設定されているフィルタを取得します.
     //---------------------------------------------------------------------------------------------
-    virtual LogLevel GetFilter() = 0;
+    virtual LOG_LEVEL GetFilter() = 0;
 };
 
 
@@ -105,7 +105,7 @@ public:
     //! @param[in]      level       ログレベルです.
     //! @param[in]      format      フォーマットです.
     //---------------------------------------------------------------------------------------------
-    void WriteA(LogLevel level, const char* format, ... ) override;
+    void WriteA(LOG_LEVEL level, const char* format, ... ) override;
 
     //---------------------------------------------------------------------------------------------
     //! @brief      ログを出力します.
@@ -113,7 +113,7 @@ public:
     //! @param[in]      level       ログレベルです.
     //! @param[in]      format      フォーマットです.
     //---------------------------------------------------------------------------------------------
-    void WriteW(LogLevel level, const wchar_t* format, ... ) override;
+    void WriteW(LOG_LEVEL level, const wchar_t* format, ... ) override;
 
     //---------------------------------------------------------------------------------------------
     //! @brief      フィルタを設定します.
@@ -121,14 +121,14 @@ public:
     //!
     //! @param[in]      filter      設定するフィルタ.
     //---------------------------------------------------------------------------------------------
-    void SetFilter(LogLevel filter ) override;
+    void SetFilter(LOG_LEVEL filter ) override;
 
     //---------------------------------------------------------------------------------------------
     //! @brief      設定されているフィルタを取得します.
     //!
     //! @return     設定されているフィルタを取得します.
     //---------------------------------------------------------------------------------------------
-    LogLevel GetFilter() override;
+    LOG_LEVEL GetFilter() override;
 
 protected:
     //=============================================================================================
@@ -146,7 +146,7 @@ private:
     // private variables.
     //=============================================================================================
     static SystemLogger     s_Instance;     //!< シングルトンインスタンスです.
-    LogLevel                m_Filter;       //!< フィルターです.
+    LOG_LEVEL               m_Filter;       //!< フィルターです.
 
     //=============================================================================================
     // private methods.
@@ -164,7 +164,7 @@ private:
 //-------------------------------------------------------------------------------------------------
 #ifndef DLOGA
   #if defined(DEBUG) || defined(_DEBUG)
-    #define DLOGA( fmt, ... )      asdx::SystemLogger::Instance().WriteA( asdx::LogLevel::Debug, "[File: %s, Line: %d] "fmt"\n", __FILE__, __LINE__, ##__VA_ARGS__ )
+    #define DLOGA( fmt, ... )      asdx::SystemLogger::Instance().WriteA( asdx::LOG_DEBUG, "[File: %s, Line: %d] "fmt"\n", __FILE__, __LINE__, ##__VA_ARGS__ )
   #else
     #define DLOGA( fmt, ... )      ((void)0)
   #endif//defined(DEBUG) || defined(_DEBUG)
@@ -172,7 +172,7 @@ private:
 
 #ifndef DLOGW
   #if defined(DEBUG) || defined(_DEBUG)
-    #define DLOGW( fmt, ... )      asdx::SystemLogger::Instance().WriteW( asdx::LogLevel::Debug, ASDX_WIDE("[File: %s, Line: %d] ") ASDX_WIDE(fmt) ASDX_WIDE("\n"), ASDX_WIDE(__FILE__), __LINE__, ##__VA_ARGS__ )
+    #define DLOGW( fmt, ... )      asdx::SystemLogger::Instance().WriteW( asdx::LOG_DEBUG, ASDX_WIDE("[File: %s, Line: %d] ") ASDX_WIDE(fmt) ASDX_WIDE("\n"), ASDX_WIDE(__FILE__), __LINE__, ##__VA_ARGS__ )
   #else
     #define DLOGW( fmt, ... )      ((void)0)
   #endif//defined(DEBUG) || defined(_DEBUG)
@@ -180,35 +180,35 @@ private:
 
 
 #ifndef VLOGA
-#define VLOGA( fmt, ... )   asdx::SystemLogger::Instance().WriteA( asdx::LogLevel::Verbose, fmt "\n", ##__VA_ARGS__ )
+#define VLOGA( fmt, ... )   asdx::SystemLogger::Instance().WriteA( asdx::LOG_VERBOSE, fmt "\n", ##__VA_ARGS__ )
 #endif//VLOGA
 
 #ifndef VLOGW
-#define VLOGW( fmt, ... )   asdx::SystemLogger::Instance().WriteW( asdx::LogLevel::Verbose, ASDX_WIDE(fmt) ASDX_WIDE("\n"), ##__VA_ARGS__ )
+#define VLOGW( fmt, ... )   asdx::SystemLogger::Instance().WriteW( asdx::LOG_VERBOSE, ASDX_WIDE(fmt) ASDX_WIDE("\n"), ##__VA_ARGS__ )
 #endif//VLOGW
 
 #ifndef ILOGA
-#define ILOGA( fmt, ... )   asdx::SystemLogger::Instance().WriteA( asdx::LogLevel::Info, fmt "\n", ##__VA_ARGS__ )
+#define ILOGA( fmt, ... )   asdx::SystemLogger::Instance().WriteA( asdx::LOG_INFO, fmt "\n", ##__VA_ARGS__ )
 #endif//ILOGA
 
 #ifndef ILOGW
-#define ILOGW( fmt, ... )   asdx::SystemLogger::Instance().WriteW( asdx::LogLevel::Info, ASDX_WIDE(fmt) ASDX_WIDE("\n"), ##__VA_ARGS__ );
+#define ILOGW( fmt, ... )   asdx::SystemLogger::Instance().WriteW( asdx::LOG_INFO, ASDX_WIDE(fmt) ASDX_WIDE("\n"), ##__VA_ARGS__ );
 #endif//ILOGW
 
 #ifndef WLOGA
-#define WLOGA( fmt, ... )   asdx::SystemLogger::Instance().WriteA( asdx::LogLevel::Warning, fmt "\n", ##__VA_ARGS__ )
+#define WLOGA( fmt, ... )   asdx::SystemLogger::Instance().WriteA( asdx::LOG_WARNING, fmt "\n", ##__VA_ARGS__ )
 #endif//WLOGA
 
 #ifndef WLOGW
-#define WLOGW( fmt, ... )   asdx::SystemLogger::Instance().WriteW( asdx::LogLevel::Warning, ASDX_WIDE(fmt) ASDX_WIDE("\n"), ##__VA_ARGS__ )
+#define WLOGW( fmt, ... )   asdx::SystemLogger::Instance().WriteW( asdx::LOG_WARNING, ASDX_WIDE(fmt) ASDX_WIDE("\n"), ##__VA_ARGS__ )
 #endif//WLOGW
 
 #ifndef ELOGA
-#define ELOGA( fmt, ... )   asdx::SystemLogger::Instance().WriteA( asdx::LogLevel::Error, "[File: %s, Line: %d] " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__ )
+#define ELOGA( fmt, ... )   asdx::SystemLogger::Instance().WriteA( asdx::LOG_ERROR, "[File: %s, Line: %d] " fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__ )
 #endif//ELOGA
 
 #ifndef ELOGW
-#define ELOGW( fmt, ... )   asdx::SystemLogger::Instance().WriteW( asdx::LogLevel::Error, ASDX_WIDE("[File: %s, Line: %d] ") ASDX_WIDE(fmt) ASDX_WIDE("\n"), ASDX_WIDE(__FILE__), __LINE__, ##__VA_ARGS__ )
+#define ELOGW( fmt, ... )   asdx::SystemLogger::Instance().WriteW( asdx::LOG_ERROR, ASDX_WIDE("[File: %s, Line: %d] ") ASDX_WIDE(fmt) ASDX_WIDE("\n"), ASDX_WIDE(__FILE__), __LINE__, ##__VA_ARGS__ )
 #endif//ELOGW
 
 #if defined(UNICODE) || defined(_UNICODE)

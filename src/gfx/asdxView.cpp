@@ -60,6 +60,9 @@ public:
     D3D12_GPU_DESCRIPTOR_HANDLE GetHandleGPU() const override
     { return m_Descriptor->GetHandleGPU(); }
 
+    uint32_t GetDescriptorIndex() const override
+    { return m_Descriptor->GetIndex(); }
+
     ID3D12Resource* GetResource() const override
     { return m_Resource; }
 
@@ -118,6 +121,9 @@ public:
 
     D3D12_GPU_DESCRIPTOR_HANDLE GetHandleGPU() const override
     { return m_Descriptor->GetHandleGPU(); }
+
+    uint32_t GetDescriptorIndex() const override
+    { return m_Descriptor->GetIndex(); }
 
     ID3D12Resource* GetResource() const override
     { return m_Resource; }
@@ -178,6 +184,9 @@ public:
     D3D12_GPU_DESCRIPTOR_HANDLE GetHandleGPU() const override
     { return m_Descriptor->GetHandleGPU(); }
 
+    uint32_t GetDescriptorIndex() const override
+    { return m_Descriptor->GetIndex(); }
+
     ID3D12Resource* GetResource() const override
     { return m_Resource; }
 
@@ -235,6 +244,9 @@ public:
 
     D3D12_GPU_DESCRIPTOR_HANDLE GetHandleGPU() const override
     { return m_Descriptor->GetHandleGPU(); }
+
+    uint32_t GetDescriptorIndex() const override
+    { return m_Descriptor->GetIndex(); }
 
     ID3D12Resource* GetResource() const override
     { return m_Resource; }
@@ -299,6 +311,9 @@ public:
 
     D3D12_GPU_DESCRIPTOR_HANDLE GetHandleGPU() const override
     { return m_Descriptor->GetHandleGPU(); }
+
+    uint32_t GetDescriptorIndex() const override
+    { return m_Descriptor->GetIndex(); }
 
     ID3D12Resource* GetResource() const override
     { return m_Resource; }

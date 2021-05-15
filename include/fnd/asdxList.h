@@ -26,7 +26,7 @@ class List
 
 public:
     class Node;
-    typedef List<T>::Node ListNode;
+    typedef Node ListNode;
 
     ///////////////////////////////////////////////////////////////////////////
     // Node class
@@ -61,8 +61,8 @@ public:
         //---------------------------------------------------------------------
         ~Node()
         {
-            auto prev = ListNode::m_Prev;
-            auto next = ListNode::m_Next;
+            auto prev = m_Prev;
+            auto next = m_Next;
 
             if (prev != nullptr)
             { prev->ListNode::m_Next = next; }
@@ -70,33 +70,33 @@ public:
             if (next != nullptr)
             { next->ListNode::m_Prev = prev; }
 
-            ListNode::m_Prev = nullptr;
-            ListNode::m_Next = nullptr;
+            m_Prev = nullptr;
+            m_Next = nullptr;
         }
 
         //---------------------------------------------------------------------
         //! @brief      次のノードを取得します.
         //---------------------------------------------------------------------
         T* GetNext() const
-        { return ListNode::m_Next; }
+        { return m_Next; }
 
         //---------------------------------------------------------------------
         //! @brief      前のノードを取得します.
         //---------------------------------------------------------------------
         T* GetPrev() const
-        { return ListNode::m_Prev; }
+        { return m_Prev; }
 
         //---------------------------------------------------------------------
         //! @brief      次のノードを持つかチェックします.
         //---------------------------------------------------------------------
         bool HasNext() const
-        { return ListNode::m_Next != nullptr; }
+        { return m_Next != nullptr; }
 
         //---------------------------------------------------------------------
         //! @brief      前のノードを持つかチェックします.
         //---------------------------------------------------------------------
         bool HasPrev() const
-        { return ListNode::m_Prev != nullptr; }
+        { return m_Prev != nullptr; }
 
     private:
         //=====================================================================

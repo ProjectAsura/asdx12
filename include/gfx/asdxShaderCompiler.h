@@ -68,7 +68,7 @@ bool CreateBlob(size_t size, IBlob** ppResult);
 //! @retval true    読み込みに成功.
 //! @retval false   読み込みに失敗.
 //-----------------------------------------------------------------------------
-bool ReadFileToBlob(const char* filname, IBlob** ppResult);
+bool ReadFileToBlob(const char* filename, IBlob** ppResult);
 
 //-----------------------------------------------------------------------------
 //! @brief      バイナリラージオブジェクトの内容をファイルに書き出します.
@@ -84,8 +84,8 @@ bool WriteBlobToFile(IBlob* pBlob, const char* filename);
 //! @brief      ファイルからシェーダコンパイルします.
 //!
 //! @param[in]      filename            ファイル名です.
-//! @param[in]      compileArgs         コンパイル引数です.
-//! @param[in]      countCompileArgs    コンパイル引数の数です.
+//! @param          entryPoint          エントリーポイント名で末.
+//! @param          shaderModel         シェーダモデルです.
 //! @param[out]     ppResult            シェーダバイナリの格納先です.
 //! @retval true    コンパイルに成功.
 //! @retval false   コンパイルに失敗.

@@ -657,7 +657,7 @@ bool OpenFolderDlg(std::string& result, const std::string& defaultPath)
         ret = SHCreateItemFromParsingName(folder.c_str(), nullptr, IID_PPV_ARGS(&pDefaultItem));
         if (FAILED(ret))
         {
-            WLOG("Warning : SHCreateItemFromParsingName() Failed");
+            WLOG("LOG_LEVEL_WARNING : SHCreateItemFromParsingName() Failed");
             if (pDefaultItem != nullptr)
             {
                 pDefaultItem->Release();

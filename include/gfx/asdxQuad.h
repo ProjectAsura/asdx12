@@ -27,7 +27,7 @@ public:
     //=========================================================================
     // public variables.
     //=========================================================================
-    static const D3D12_INPUT_LAYOUT_DESC InputLayout;
+    static const D3D12_INPUT_LAYOUT_DESC kInputLayout;
 
     //=========================================================================
     // public methods.

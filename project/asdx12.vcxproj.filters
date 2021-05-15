@@ -419,12 +419,6 @@
     <ClInclude Include="..\include\gfx\asdxShaderCompiler.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\edit\asdxFxParser.h">
-      <Filter>ヘッダー ファイル\edit</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\edit\asdxTokenizer.h">
-      <Filter>ヘッダー ファイル\edit</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\fnd\asdxTokenizer.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>

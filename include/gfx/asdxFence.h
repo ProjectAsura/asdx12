@@ -64,7 +64,7 @@ public:
     //! @brief      フェンスが指定された値に達するまで待機します.
     //!
     //! @param[in]      fenceValue      待機カウンター.
-    //! @param[in]      mesc            タイムアウト時間(ミリ秒).
+    //! @param[in]      msec            タイムアウト時間(ミリ秒).
     //-------------------------------------------------------------------------
     void Wait(UINT64 fenceValue, uint32_t msec = kInfinite);
 

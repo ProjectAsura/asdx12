@@ -155,11 +155,11 @@ bool Mesh::Init(const ResMesh& resource)
         }
     }
 
-    m_Box.mini = m_Box.maxi = resource.Positions[0];
+    m_Box.Mini = m_Box.Maxi = resource.Positions[0];
     for(auto i=1; i<resource.Positions.size(); ++i)
     {
-        m_Box.mini = asdx::Vector3::Min(m_Box.mini, resource.Positions[i]);
-        m_Box.maxi = asdx::Vector3::Max(m_Box.maxi, resource.Positions[i]);
+        m_Box.Mini = asdx::Vector3::Min(m_Box.Mini, resource.Positions[i]);
+        m_Box.Maxi = asdx::Vector3::Max(m_Box.Maxi, resource.Positions[i]);
     }
 
     m_MaterialHash = resource.MatrerialHash;
@@ -189,8 +189,8 @@ void Mesh::Term()
     m_MeshletCount = 0;
     m_MaterialHash = 0;
 
-    m_Box.mini = asdx::Vector3(FLT_MAX, FLT_MAX, FLT_MAX);
-    m_Box.maxi = asdx::Vector3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+    m_Box.Mini = asdx::Vector3(FLT_MAX, FLT_MAX, FLT_MAX);
+    m_Box.Maxi = asdx::Vector3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
 }
 
 //-----------------------------------------------------------------------------
@@ -235,7 +235,7 @@ const StructuredBuffer& Mesh::GetBoneWeights() const
 //-----------------------------------------------------------------------------
 //      インデックスデータを取得します.
 //-----------------------------------------------------------------------------
-const StructuredBuffer& Mesh::GetInindices() const
+const StructuredBuffer& Mesh::GetIndices() const
 { return m_Indices; }
 
 //-----------------------------------------------------------------------------
@@ -344,8 +344,8 @@ bool Model::Init(const ResModel& model)
         { m_Box = box; }
         else
         {
-            m_Box.mini = asdx::Vector3::Min(m_Box.mini, box.mini);
-            m_Box.maxi = asdx::Vector3::Max(m_Box.maxi, box.maxi);
+            m_Box.Mini = asdx::Vector3::Min(m_Box.Mini, box.Mini);
+            m_Box.Maxi = asdx::Vector3::Max(m_Box.Maxi, box.Maxi);
         }
         index++;
     }

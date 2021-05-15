@@ -119,7 +119,7 @@ struct Worker
                 &olp,
                 nullptr))
             {
-                ELOG("Error : ReadDirectoryChangesW() Failed.");
+                ELOG("LOG_LEVEL_ERROR : ReadDirectoryChangesW() Failed.");
                 break;
             }
 
@@ -149,7 +149,7 @@ struct Worker
             DWORD retSize = 0;
             if (!GetOverlappedResult(hDir, &olp, &retSize, FALSE))
             {
-                ELOG("Error : GetOverlappedResult() Failed.");
+                ELOG("LOG_LEVEL_ERROR : GetOverlappedResult() Failed.");
                 break;
             }
 

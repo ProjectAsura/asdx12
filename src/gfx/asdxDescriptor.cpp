@@ -26,6 +26,7 @@ Descriptor::Descriptor()
 , m_pHeap       (nullptr)
 , m_HandleCPU   ()
 , m_HandleGPU   ()
+, m_Index       (UINT32_MAX)
 , m_RefCount    (1)
 { /* DO_NOTHING */ }
 
@@ -72,6 +73,12 @@ D3D12_CPU_DESCRIPTOR_HANDLE Descriptor::GetHandleCPU() const
 //-----------------------------------------------------------------------------
 D3D12_GPU_DESCRIPTOR_HANDLE Descriptor::GetHandleGPU() const
 { return m_HandleGPU; }
+
+//-----------------------------------------------------------------------------
+//      インデックスを取得します.
+//-----------------------------------------------------------------------------
+uint32_t Descriptor::GetIndex() const
+{ return m_Index; }
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -125,6 +132,9 @@ bool DescriptorHeap::Init(ID3D12Device* pDevice, const D3D12_DESCRIPTOR_HEAP_DES
     {
         // ヒープを設定.
         m_Descriptors[i].m_pHeap = this;
+
+        // Dynamic Resource 用の番号を割り当て.
+        m_Descriptors[i].m_Index = i;
 
         // CPUハンドルをディスクリプタを割り当て.
         {

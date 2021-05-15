@@ -26,7 +26,7 @@ class Stack
 
 public:
     class Node;
-    typedef Stack<T>::Node StackNode;
+    typedef Node StackNode;
 
     ///////////////////////////////////////////////////////////////////////////
     // Node class
@@ -57,8 +57,8 @@ public:
         //---------------------------------------------------------------------
         ~Node()
         {
-            auto prev = StackNode::m_Prev;
-            auto next = StackNode::m_Next;
+            auto prev = m_Prev;
+            auto next = m_Next;
 
             if (prev != nullptr)
             { prev->StackNode::m_Next = next; }
@@ -66,8 +66,8 @@ public:
             if (next != nullptr)
             { next->StackNode::m_Prev = prev; }
 
-            StackNode::m_Prev = nullptr;
-            StackNode::m_Next = nullptr;
+            m_Prev = nullptr;
+            m_Next = nullptr;
         }
 
     private:
@@ -125,7 +125,6 @@ public:
     //-------------------------------------------------------------------------
     Stack()
     : m_Head(nullptr)
-    , m_Count(0)
     { /* DO_NOTHING */ }
 
     //-------------------------------------------------------------------------

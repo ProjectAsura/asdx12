@@ -49,7 +49,7 @@ public:
     //!
     //! @param[in]      resource            リソーステクスチャです.
     //! @retval true    初期化に成功.
-    //! @retval fasle   初期化に失敗.
+    //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
     bool Init(const ResTexture& resource);
 

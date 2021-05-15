@@ -79,7 +79,7 @@ public:
         auto itr = m_List.begin();
         while(itr != m_List.end())
         {
-            itr->LifeTime--;
+            --itr->LifeTime;
             if (itr->LifeTime <= 0)
             {
                 if (itr->pObject != nullptr)
@@ -92,7 +92,7 @@ public:
             }
             else
             {
-                itr++;
+                ++itr;
             }
         }
     }

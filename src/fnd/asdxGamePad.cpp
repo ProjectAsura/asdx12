@@ -88,7 +88,7 @@ void GamePad::UpdateState()
     XINPUT_STATE state;
     ZeroMemory( &state, sizeof(state) );
 
-    auto result = XInputGetState( m_PlayerIndex, &state );
+    const auto result = XInputGetState( m_PlayerIndex, &state );
     if ( result == ERROR_SUCCESS )
     {
         m_IsConnected = true;
@@ -127,10 +127,10 @@ void GamePad::UpdateState()
     { m_ThumbRY = 0; }
 
     // 正規化.
-    m_NormThumbLX = Max<float>( -1.0f, float( m_ThumbLX ) / 32767.0f );
-    m_NormThumbLY = Max<float>( -1.0f, float( m_ThumbLY ) / 32767.0f );
-    m_NormThumbRX = Max<float>( -1.0f, float( m_ThumbRX ) / 32767.0f );
-    m_NormThumbRY = Max<float>( -1.0f, float( m_ThumbRY ) / 32767.0f );
+    m_NormThumbLX = Max<float>( -1.0f, static_cast<float>(m_ThumbLX) / 32767.0f );
+    m_NormThumbLY = Max<float>( -1.0f, static_cast<float>(m_ThumbLY) / 32767.0f );
+    m_NormThumbRX = Max<float>( -1.0f, static_cast<float>(m_ThumbRX) / 32767.0f );
+    m_NormThumbRY = Max<float>( -1.0f, static_cast<float>(m_ThumbRY) / 32767.0f );
 
     if ( m_TriggerL > XINPUT_GAMEPAD_TRIGGER_THRESHOLD )
     { m_Buttons |= PAD_TRIGGER_L; }
@@ -150,8 +150,8 @@ void GamePad::Vibrate( float leftMoter, float rightMoter ) const
     XINPUT_VIBRATION vibrate;
     ZeroMemory( &vibrate, sizeof(vibrate) );
 
-    vibrate.wLeftMotorSpeed  = WORD( leftMoter  * 65535.0f );
-    vibrate.wRightMotorSpeed = WORD( rightMoter * 65535.0f );
+    vibrate.wLeftMotorSpeed  = static_cast<WORD>(leftMoter * 65535.0f);
+    vibrate.wRightMotorSpeed = static_cast<WORD>(rightMoter * 65535.0f);
 
     XInputSetState( m_PlayerIndex, &vibrate );
 }

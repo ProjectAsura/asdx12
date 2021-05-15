@@ -26,7 +26,7 @@ class Queue
 
 public:
     class Node;
-    typedef Queue<T>::Node QueueNode;
+    typedef Node QueueNode;
 
     ///////////////////////////////////////////////////////////////////////////
     // Node clas
@@ -61,8 +61,8 @@ public:
         //---------------------------------------------------------------------
         ~Node()
         {
-            auto prev = QueueNode::m_Prev;
-            auto next = QueueNode::m_Next;
+            auto prev = m_Prev;
+            auto next = m_Next;
 
             if (prev != nullptr)
             { prev->QueueNode::m_Next = next; }
@@ -70,8 +70,8 @@ public:
             if (next != nullptr)
             { next->QueueNode::m_Prev = prev; }
 
-            QueueNode::m_Prev = nullptr;
-            QueueNode::m_Next = nullptr;
+            m_Prev = nullptr;
+            m_Next = nullptr;
         }
 
     private:
@@ -130,7 +130,6 @@ public:
     Queue()
     : m_Head(nullptr)
     , m_Tail(nullptr)
-    , m_Count(0)
     { /* DO_NOTHING */ }
 
     //-------------------------------------------------------------------------
