@@ -14,28 +14,24 @@ namespace asdx {
 //-----------------------------------------------------------------------------
 //      ラジアンに変換します.
 //-----------------------------------------------------------------------------
-inline
 constexpr float ToRadian( float degree ) noexcept
 { return degree * ( F_PI / 180.0f ); }
 
 //-----------------------------------------------------------------------------
 //      ラジアンに変換します.
 //-----------------------------------------------------------------------------
-inline
 constexpr double ToRadian( double degree ) noexcept
 { return degree * ( D_PI / 180.0 ); }
 
 //-----------------------------------------------------------------------------
 //      度に変換します.
 //-----------------------------------------------------------------------------
-inline
 constexpr float ToDegree( float radian ) noexcept
 { return radian * ( 180.0f / F_PI ); }
 
 //-----------------------------------------------------------------------------
 //      度に変換します.
 //-----------------------------------------------------------------------------
-inline
 constexpr double ToDegree( double radian ) noexcept
 { return radian * ( 180.0 / D_PI ); }
 
@@ -70,14 +66,12 @@ bool IsEqual( double value1, double value2 ) noexcept
 //-----------------------------------------------------------------------------
 //      非数かどうかチェックします.
 //-----------------------------------------------------------------------------
-inline
 constexpr bool IsNan( float value ) noexcept
 { return ( value != value ); }
 
 //-----------------------------------------------------------------------------
 //      非数かどうかチェックします.
 //-----------------------------------------------------------------------------
-inline
 constexpr bool IsNan( double value ) noexcept
 { return ( value != value ); }
 
@@ -88,8 +82,15 @@ inline
 bool IsInf( float value )
 {
     // ビット列に変換して，指数部がすべて 1 かどうかチェック.
-    uint32_t f = *reinterpret_cast< uint32_t* >( &value );
-    return ((f & 0x7f800000) == 0x7f800000) && (value == value);
+    union FtoU
+    {
+        float f;
+        uint32_t u;
+    };
+
+    FtoU c{};
+    c.f = value;
+    return ((c.u & 0x7f800000) == 0x7f800000) && (value == value);
 }
 
 //-----------------------------------------------------------------------------
@@ -98,9 +99,15 @@ bool IsInf( float value )
 inline
 bool IsInf( double value )
 {
-    // ビット列に変換して，指数部がすべて 1 かどうかチェック.
-    uint64_t d = *reinterpret_cast<uint64_t*>( &value );
-    return ((d & 0x7ff0000000000000) == 0x7ff0000000000000) && (value == value);
+    union DtoL
+    {
+        double d;
+        uint64_t l;
+    };
+
+    DtoL c{};
+    c.d = value;
+    return ((c.l & 0x7ff0000000000000) == 0x7ff0000000000000) && (value == value);
 }
 
 //-----------------------------------------------------------------------------
