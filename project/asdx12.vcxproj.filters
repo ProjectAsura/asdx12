@@ -225,6 +225,9 @@
     <ClCompile Include="..\src\gfx\asdxFxParser.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\gfx\asdxAgilitySdkParameters.cpp">
+      <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\external\imgui\imconfig.h">
@@ -425,6 +428,9 @@
     <ClInclude Include="..\include\gfx\asdxFxParser.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\gfx\asdxAgilitySdkParameters.h">
+      <Filter>ヘッダー ファイル\gfx</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\res\shaders\BRDF.hlsli">
@@ -442,6 +448,7 @@
     <None Include="..\include\fnd\asdxMath.inl">
       <Filter>ヘッダー ファイル\fnd</Filter>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\res\shaders\CopyPS.hlsl">

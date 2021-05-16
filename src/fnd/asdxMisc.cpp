@@ -14,7 +14,6 @@
 #include <locale>
 #include <codecvt>
 #include <sstream>
-#include <Shlwapi.h>
 #include <direct.h>
 #include <ShObjIdl.h>
 #include <dxgiformat.h>

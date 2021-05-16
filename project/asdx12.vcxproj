@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\external\Microsoft.Direct3D.D3D12.1.4.9\build\native\Microsoft.Direct3D.D3D12.props" Condition="Exists('..\external\Microsoft.Direct3D.D3D12.1.4.9\build\native\Microsoft.Direct3D.D3D12.props')" />
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
       <Configuration>Debug</Configuration>
@@ -54,7 +55,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;ASDX_AUTO_LINK;ASDX_ENABLE_DXC;ASDX_ENABLE_IMGUI;ASDX_ENABLE_TINYXML2;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\d3dx12;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\d3d12\include\directx;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -78,7 +79,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;ASDX_AUTO_LINK;ASDX_ENABLE_DXC;ASDX_ENABLE_IMGUI;ASDX_ENABLE_TINYXML2;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\d3dx12;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\d3d12\include\directx;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -120,6 +121,7 @@
     <ClCompile Include="..\src\fnd\asdxTokenizer.cpp" />
     <ClCompile Include="..\src\fw\asdxApp.cpp" />
     <ClCompile Include="..\src\fw\asdxEntity.cpp" />
+    <ClCompile Include="..\src\gfx\asdxAgilitySdkParameters.cpp" />
     <ClCompile Include="..\src\gfx\asdxByteAddressBuffer.cpp" />
     <ClCompile Include="..\src\gfx\asdxCommandList.cpp" />
     <ClCompile Include="..\src\gfx\asdxCommandQueue.cpp" />
@@ -191,6 +193,7 @@
     <ClInclude Include="..\include\gfx\asdxCommandList.h" />
     <ClInclude Include="..\include\gfx\asdxCommandQueue.h" />
     <ClInclude Include="..\include\gfx\asdxConstantBuffer.h" />
+    <ClInclude Include="..\include\gfx\asdxAgilitySdkParameters.h" />
     <ClInclude Include="..\include\gfx\asdxDescriptor.h" />
     <ClInclude Include="..\include\gfx\asdxDisposer.h" />
     <ClInclude Include="..\include\gfx\asdxFence.h" />
@@ -226,6 +229,7 @@
     <None Include="..\res\shaders\Math.hlsli" />
     <None Include="..\res\shaders\Shadow.hlsli" />
     <None Include="..\res\shaders\TextureUtil.hlsli" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\res\shaders\ColorFilterCS.hlsl">
@@ -290,5 +294,14 @@
     </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\external\Microsoft.Direct3D.D3D12.1.4.9\build\native\Microsoft.Direct3D.D3D12.targets" Condition="Exists('..\external\Microsoft.Direct3D.D3D12.1.4.9\build\native\Microsoft.Direct3D.D3D12.targets')" />
+  </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>このプロジェクトは、このコンピューター上にない NuGet パッケージを参照しています。それらのパッケージをダウンロードするには、[NuGet パッケージの復元] を使用します。詳細については、http://go.microsoft.com/fwlink/?LinkID=322105 を参照してください。見つからないファイルは {0} です。</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\external\Microsoft.Direct3D.D3D12.1.4.9\build\native\Microsoft.Direct3D.D3D12.props')" Text="$([System.String]::Format('$(ErrorText)', '..\external\Microsoft.Direct3D.D3D12.1.4.9\build\native\Microsoft.Direct3D.D3D12.props'))" />
+    <Error Condition="!Exists('..\external\Microsoft.Direct3D.D3D12.1.4.9\build\native\Microsoft.Direct3D.D3D12.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\external\Microsoft.Direct3D.D3D12.1.4.9\build\native\Microsoft.Direct3D.D3D12.targets'))" />
+  </Target>
 </Project>

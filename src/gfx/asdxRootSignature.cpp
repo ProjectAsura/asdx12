@@ -7,14 +7,13 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <cassert>
 #include <gfx/asdxRootSignature.h>
 #include <fnd/asdxLogger.h>
 
 
 namespace asdx {
 
-RANGE_CBV::RANGE_CBV(UINT baseRegister, UINT registerSpace)
+RangeCbv::RangeCbv(UINT baseRegister, UINT registerSpace)
 {
     RangeType                           = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
     NumDescriptors                      = 1;
@@ -23,7 +22,7 @@ RANGE_CBV::RANGE_CBV(UINT baseRegister, UINT registerSpace)
     OffsetInDescriptorsFromTableStart   = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 }
 
-RANGE_SRV::RANGE_SRV(UINT baseRegister, UINT registerSpace)
+RangeSrv::RangeSrv(UINT baseRegister, UINT registerSpace)
 {
     RangeType                           = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
     NumDescriptors                      = 1;
@@ -32,7 +31,7 @@ RANGE_SRV::RANGE_SRV(UINT baseRegister, UINT registerSpace)
     OffsetInDescriptorsFromTableStart   = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 }
 
-RANGE_UAV::RANGE_UAV(UINT baseRegister, UINT registerSpace)
+RangeUav::RangeUav(UINT baseRegister, UINT registerSpace)
 {
     RangeType                           = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
     NumDescriptors                      = 1;
@@ -41,7 +40,7 @@ RANGE_UAV::RANGE_UAV(UINT baseRegister, UINT registerSpace)
     OffsetInDescriptorsFromTableStart   = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 }
 
-RANGE_SMP::RANGE_SMP(UINT baseRegister, UINT registerSpace)
+RangeSmp::RangeSmp(UINT baseRegister, UINT registerSpace)
 {
     RangeType                           = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
     NumDescriptors                      = 1;
@@ -50,7 +49,7 @@ RANGE_SMP::RANGE_SMP(UINT baseRegister, UINT registerSpace)
     OffsetInDescriptorsFromTableStart   = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 }
 
-PARAM_TABLE::PARAM_TABLE
+ParamTable::ParamTable
 (
     D3D12_SHADER_VISIBILITY         visibility,
     UINT                            count,
@@ -63,7 +62,7 @@ PARAM_TABLE::PARAM_TABLE
     ShaderVisibility                    = visibility;
 }
 
-PARAM_CONSTANT::PARAM_CONSTANT
+ParamConstant::ParamConstant
 (
     D3D12_SHADER_VISIBILITY visibility,
     UINT                    count,
@@ -78,7 +77,7 @@ PARAM_CONSTANT::PARAM_CONSTANT
     ShaderVisibility            = visibility;
 }
 
-PARAM_CBV::PARAM_CBV
+ParamCbv::ParamCbv
 (
     D3D12_SHADER_VISIBILITY visibility,
     UINT                    baseRegister,
@@ -91,7 +90,7 @@ PARAM_CBV::PARAM_CBV
     ShaderVisibility            = visibility;
 }
 
-PARAM_SRV::PARAM_SRV
+ParamSrv::ParamSrv
 (
     D3D12_SHADER_VISIBILITY visibility,
     UINT                    baseRegister,
@@ -104,7 +103,7 @@ PARAM_SRV::PARAM_SRV
     ShaderVisibility            = visibility;
 }
 
-PARAM_UAV::PARAM_UAV
+ParamUav::ParamUav
 (
     D3D12_SHADER_VISIBILITY visibility,
     UINT                    baseRegister,
@@ -116,6 +115,35 @@ PARAM_UAV::PARAM_UAV
     Descriptor.RegisterSpace    = registerSpace;
     ShaderVisibility            = visibility;
 }
+
+//-----------------------------------------------------------------------------
+//      DynamicResourcesをサポートしているかどうかチェックします.
+//-----------------------------------------------------------------------------
+bool CheckSupportDynamicResources(ID3D12Device8* pDevice)
+{
+    // D3D12_RESOURCE_BINDING_TIER3 と D3D_SHADER_MODEL_6_6 以上であることが必須.
+    // また、シェーダコンパイルする側で
+    // D3D_SHADER_REQUIRES_RESOURCE_HEAP_INDEXING(0x02000000)
+    // D3D_SHADER_REQUIRES_SAMPLER_HEAP_INDEXING(0x04000000)
+    // のフラグを設定しておく必要がある.
+
+    D3D12_FEATURE_DATA_D3D12_OPTIONS options = {};
+    if (FAILED(pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &options, sizeof(options))))
+    { return false; }
+
+    if (options.ResourceBindingTier != D3D12_RESOURCE_BINDING_TIER_3)
+    { return false; }
+
+    D3D12_FEATURE_DATA_SHADER_MODEL shaderModel = {};
+    if (FAILED(pDevice->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &shaderModel, sizeof(shaderModel))))
+    { return false; }
+
+    if (shaderModel.HighestShaderModel < D3D_SHADER_MODEL_6_6)
+    { return false; }
+
+    return true;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // RootSignature class
