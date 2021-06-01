@@ -77,13 +77,25 @@ public:
         //---------------------------------------------------------------------
         //! @brief      次のノードを取得します.
         //---------------------------------------------------------------------
-        T* GetNext() const
+        T* GetNext()
         { return m_Next; }
 
         //---------------------------------------------------------------------
         //! @brief      前のノードを取得します.
         //---------------------------------------------------------------------
-        T* GetPrev() const
+        T* GetPrev()
+        { return m_Prev; }
+
+        //---------------------------------------------------------------------
+        //! @brief      次のノードを取得します.
+        //---------------------------------------------------------------------
+        const T* GetNext() const
+        { return m_Next; }
+
+        //---------------------------------------------------------------------
+        //! @brief      前のノードを取得します.
+        //---------------------------------------------------------------------
+        const T* GetPrev() const
         { return m_Prev; }
 
         //---------------------------------------------------------------------
@@ -172,12 +184,8 @@ public:
         while(itr != nullptr)
         {
             auto node = itr;
+            itr = itr->GetNext();
             ListNode::Unlink(node);
-
-            if (itr->ListNode::m_Next == nullptr)
-            { break; }
-
-            itr = itr->ListNode::m_Next;
         }
 
         m_Head = nullptr;
@@ -243,10 +251,11 @@ public:
         { return nullptr; }
 
         auto head = m_Head;
-        auto next = m_Head->ListNode::m_Next;
+        auto next = m_Head->GetNext();
         ListNode::Unlink(head);
         m_Head = next;
         m_Count--;
+
         return head;
     }
 
@@ -259,17 +268,33 @@ public:
         { return nullptr; }
 
         auto tail = m_Tail;
-        auto prev = m_Tail->ListNode::m_Prev;
+        auto prev = m_Tail->GetPrev();
         ListNode::Unlink(tail);
         m_Tail = prev;
         m_Count--;
+
         return tail;
     }
 
     //-------------------------------------------------------------------------
     //! @brief      ノードを挿入します.
     //-------------------------------------------------------------------------
-    void Insert(T* target, T* node)
+    void InsertBefore(T* target, T* node)
+    {
+        if (target == nullptr || node == nullptr)
+        { return; }
+
+        ListNode::Link(node, target);
+        if (target == m_Head)
+        { m_Head = node; }
+
+        m_Count++;
+    }
+
+    //-------------------------------------------------------------------------
+    //! @brief      ノードを挿入します.
+    //-------------------------------------------------------------------------
+    void InsertAfter(T* target, T* node)
     {
         if (target == nullptr || node == nullptr)
         { return; }
@@ -290,7 +315,10 @@ public:
         { return; }
 
         if (node == m_Tail)
-        { m_Tail = node->ListNode::m_Prev; }
+        { m_Tail = node->GetPrev(); }
+        else if (node == m_Head)
+        { m_Head = node->GetNext(); }
+
         ListNode::Unlink(node);
         m_Count--;
     }
@@ -309,10 +337,7 @@ public:
             if (itr == node)
             { return true; }
 
-            if (itr->ListNode::m_Next == nullptr)
-            { break; }
-
-            itr = itr->ListNode::m_Next;
+            itr = itr->GetNext();
         }
 
         return false;

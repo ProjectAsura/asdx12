@@ -2022,7 +2022,7 @@ void PassGraph::Compile()
                 }
 
                 // コンピュートパスの前に追加.
-                m_PassList.Insert(itr->GetPrev(), pass);
+                m_PassList.InsertAfter(itr->GetPrev(), pass);
             }
 
             for(auto i=0u; i<count; ++i)

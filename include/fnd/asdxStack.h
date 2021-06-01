@@ -169,6 +169,7 @@ public:
         StackNode::Unlink(head);
         m_Head = prev;
         m_Count--;
+
         return head;
     }
 
@@ -181,12 +182,8 @@ public:
         while(itr != nullptr)
         {
             auto node = itr;
-            StackNode::Unlink(node);
-            
-            if (itr->StackNode::m_Prev == nullptr)
-            { break; }
-
             itr = itr->StackNode::m_Prev;
+            StackNode::Unlink(node);
         }
 
         m_Count = 0;

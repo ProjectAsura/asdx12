@@ -147,12 +147,8 @@ public:
         while(itr != nullptr)
         {
             auto node = itr;
-            QueueNode::Unlink(node);
-
-            if (itr->QueueNode::m_Next == nullptr)
-            { break; }
-
             itr = itr->QueueNode::m_Next;
+            QueueNode::Unlink(node);
         }
 
         m_Head = nullptr;
@@ -198,6 +194,12 @@ public:
         QueueNode::Unlink(head);
         m_Head = next;
         m_Count--;
+        if (m_Count == 0)
+        {
+            m_Head = nullptr;
+            m_Tail = nullptr;
+        }
+
         return head;
     }
 
