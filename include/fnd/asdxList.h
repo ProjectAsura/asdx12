@@ -26,7 +26,7 @@ class List
 
 public:
     class Node;
-    typedef Node ListNode;
+    using ListNode = List<T>::Node;
 
     ///////////////////////////////////////////////////////////////////////////
     // Node class
@@ -255,6 +255,11 @@ public:
         ListNode::Unlink(head);
         m_Head = next;
         m_Count--;
+        if (m_Count == 0)
+        {
+            m_Head = nullptr;
+            m_Tail = nullptr;
+        }
 
         return head;
     }
@@ -272,6 +277,11 @@ public:
         ListNode::Unlink(tail);
         m_Tail = prev;
         m_Count--;
+        if (m_Count == 0)
+        {
+            m_Head = nullptr;
+            m_Tail = nullptr;
+        }
 
         return tail;
     }
