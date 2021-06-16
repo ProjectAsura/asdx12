@@ -251,15 +251,7 @@ public:
         { return nullptr; }
 
         auto head = m_Head;
-        auto next = m_Head->GetNext();
-        ListNode::Unlink(head);
-        m_Head = next;
-        m_Count--;
-        if (m_Count == 0)
-        {
-            m_Head = nullptr;
-            m_Tail = nullptr;
-        }
+        Remove(head);
 
         return head;
     }
@@ -273,15 +265,7 @@ public:
         { return nullptr; }
 
         auto tail = m_Tail;
-        auto prev = m_Tail->GetPrev();
-        ListNode::Unlink(tail);
-        m_Tail = prev;
-        m_Count--;
-        if (m_Count == 0)
-        {
-            m_Head = nullptr;
-            m_Tail = nullptr;
-        }
+        Remove(tail);
 
         return tail;
     }
