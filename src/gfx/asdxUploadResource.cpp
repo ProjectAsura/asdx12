@@ -536,15 +536,15 @@ private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    std::atomic<uint32_t>           m_RefCount;
-    ID3D12Resource*                 m_pDstResource;
-    asdx::RefPtr<ID3D12Resource>    m_pSrcResource;
-    UINT64                          m_SrcOffset;
-    UINT64                          m_CopyBytes;
-    D3D12_PLACED_SUBRESOURCE_FOOTPRINT m_Layout = {};
-    UINT64  m_RowSizeInBytes  = 0;
-    UINT    m_RowCount        = 0;
-    UINT64  m_RequiredSize    = 0;
+    std::atomic<uint32_t>               m_RefCount;
+    ID3D12Resource*                     m_pDstResource;
+    asdx::RefPtr<ID3D12Resource>        m_pSrcResource;
+    UINT64                              m_SrcOffset;
+    UINT64                              m_CopyBytes;
+    D3D12_PLACED_SUBRESOURCE_FOOTPRINT  m_Layout = {};
+    UINT64                              m_RowSizeInBytes  = 0;
+    UINT                                m_RowCount        = 0;
+    UINT64                              m_RequiredSize    = 0;
 
     //=========================================================================
     // private methods.

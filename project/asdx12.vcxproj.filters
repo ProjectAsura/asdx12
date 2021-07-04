@@ -428,8 +428,8 @@
     <ClInclude Include="..\include\gfx\asdxFxParser.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\gfx\asdxAgilitySdkParameters.h">
-      <Filter>ヘッダー ファイル\gfx</Filter>
+    <ClInclude Include="..\include\rs\asdxBlackboard.h">
+      <Filter>ヘッダー ファイル\rs</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -13,108 +13,114 @@
 
 namespace asdx {
 
-RangeCbv::RangeCbv(UINT baseRegister, UINT registerSpace)
+void RangeCBV(D3D12_DESCRIPTOR_RANGE& range, UINT baseRegister, UINT registerSpace)
 {
-    RangeType                           = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-    NumDescriptors                      = 1;
-    BaseShaderRegister                  = baseRegister;
-    RegisterSpace                       = registerSpace;
-    OffsetInDescriptorsFromTableStart   = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+    range.RangeType                           = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+    range.NumDescriptors                      = 1;
+    range.BaseShaderRegister                  = baseRegister;
+    range.RegisterSpace                       = registerSpace;
+    range.OffsetInDescriptorsFromTableStart   = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 }
 
-RangeSrv::RangeSrv(UINT baseRegister, UINT registerSpace)
+void RangeSRV(D3D12_DESCRIPTOR_RANGE& range, UINT baseRegister, UINT registerSpace)
 {
-    RangeType                           = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-    NumDescriptors                      = 1;
-    BaseShaderRegister                  = baseRegister;
-    RegisterSpace                       = registerSpace;
-    OffsetInDescriptorsFromTableStart   = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+    range.RangeType                           = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    range.NumDescriptors                      = 1;
+    range.BaseShaderRegister                  = baseRegister;
+    range.RegisterSpace                       = registerSpace;
+    range.OffsetInDescriptorsFromTableStart   = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 }
 
-RangeUav::RangeUav(UINT baseRegister, UINT registerSpace)
+void RangeUAV(D3D12_DESCRIPTOR_RANGE& range, UINT baseRegister, UINT registerSpace)
 {
-    RangeType                           = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
-    NumDescriptors                      = 1;
-    BaseShaderRegister                  = baseRegister;
-    RegisterSpace                       = registerSpace;
-    OffsetInDescriptorsFromTableStart   = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+    range.RangeType                           = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+    range.NumDescriptors                      = 1;
+    range.BaseShaderRegister                  = baseRegister;
+    range.RegisterSpace                       = registerSpace;
+    range.OffsetInDescriptorsFromTableStart   = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 }
 
-RangeSmp::RangeSmp(UINT baseRegister, UINT registerSpace)
+void RangeSmp(D3D12_DESCRIPTOR_RANGE& range, UINT baseRegister, UINT registerSpace)
 {
-    RangeType                           = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
-    NumDescriptors                      = 1;
-    BaseShaderRegister                  = baseRegister;
-    RegisterSpace                       = registerSpace;
-    OffsetInDescriptorsFromTableStart   = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+    range.RangeType                           = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
+    range.NumDescriptors                      = 1;
+    range.BaseShaderRegister                  = baseRegister;
+    range.RegisterSpace                       = registerSpace;
+    range.OffsetInDescriptorsFromTableStart   = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 }
 
-ParamTable::ParamTable
+void ParamCBV
 (
+    D3D12_ROOT_PARAMETER&   param,
+    D3D12_SHADER_VISIBILITY visibility,
+    UINT                    baseRegister,
+    UINT                    registerSpace
+)
+{
+    param.ParameterType               = D3D12_ROOT_PARAMETER_TYPE_CBV;
+    param.Descriptor.ShaderRegister   = baseRegister;
+    param.Descriptor.RegisterSpace    = registerSpace;
+    param.ShaderVisibility            = visibility;
+}
+
+void ParamSRV
+(
+    D3D12_ROOT_PARAMETER&   param,
+    D3D12_SHADER_VISIBILITY visibility,
+    UINT                    baseRegister,
+    UINT                    registerSpace
+)
+{
+    param.ParameterType               = D3D12_ROOT_PARAMETER_TYPE_SRV;
+    param.Descriptor.ShaderRegister   = baseRegister;
+    param.Descriptor.RegisterSpace    = registerSpace;
+    param.ShaderVisibility            = visibility;
+}
+
+void ParamUAV
+(
+    D3D12_ROOT_PARAMETER&   param,
+    D3D12_SHADER_VISIBILITY visibility,
+    UINT                    baseRegister,
+    UINT                    registerSpace
+)
+{
+    param.ParameterType               = D3D12_ROOT_PARAMETER_TYPE_UAV;
+    param.Descriptor.ShaderRegister   = baseRegister;
+    param.Descriptor.RegisterSpace    = registerSpace;
+    param.ShaderVisibility            = visibility;
+}
+
+void ParamTable
+(
+    D3D12_ROOT_PARAMETER&           param,
     D3D12_SHADER_VISIBILITY         visibility,
     UINT                            count,
     const D3D12_DESCRIPTOR_RANGE*   ranges
 )
 {
-    ParameterType                       = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-    DescriptorTable.NumDescriptorRanges = count;
-    DescriptorTable.pDescriptorRanges   = ranges;
-    ShaderVisibility                    = visibility;
+    param.ParameterType                       = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+    param.DescriptorTable.NumDescriptorRanges = count;
+    param.DescriptorTable.pDescriptorRanges   = ranges;
+    param.ShaderVisibility                    = visibility;
 }
 
-ParamConstant::ParamConstant
+void ParamConstants
 (
+    D3D12_ROOT_PARAMETER&   param,
     D3D12_SHADER_VISIBILITY visibility,
     UINT                    count,
     UINT                    baseRegister,
     UINT                    registerSpace
 )
 {
-    ParameterType               = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-    Constants.Num32BitValues    = count;
-    Constants.ShaderRegister    = baseRegister;
-    Constants.RegisterSpace     = registerSpace;
-    ShaderVisibility            = visibility;
+    param.ParameterType               = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+    param.Constants.Num32BitValues    = count;
+    param.Constants.ShaderRegister    = baseRegister;
+    param.Constants.RegisterSpace     = registerSpace;
+    param.ShaderVisibility            = visibility;
 }
 
-ParamCbv::ParamCbv
-(
-    D3D12_SHADER_VISIBILITY visibility,
-    UINT                    baseRegister,
-    UINT                    registerSpace
-)
-{
-    ParameterType               = D3D12_ROOT_PARAMETER_TYPE_CBV;
-    Descriptor.ShaderRegister   = baseRegister;
-    Descriptor.RegisterSpace    = registerSpace;
-    ShaderVisibility            = visibility;
-}
-
-ParamSrv::ParamSrv
-(
-    D3D12_SHADER_VISIBILITY visibility,
-    UINT                    baseRegister,
-    UINT                    registerSpace
-)
-{
-    ParameterType               = D3D12_ROOT_PARAMETER_TYPE_SRV;
-    Descriptor.ShaderRegister   = baseRegister;
-    Descriptor.RegisterSpace    = registerSpace;
-    ShaderVisibility            = visibility;
-}
-
-ParamUav::ParamUav
-(
-    D3D12_SHADER_VISIBILITY visibility,
-    UINT                    baseRegister,
-    UINT                    registerSpace
-)
-{
-    ParameterType               = D3D12_ROOT_PARAMETER_TYPE_UAV;
-    Descriptor.ShaderRegister   = baseRegister;
-    Descriptor.RegisterSpace    = registerSpace;
-    ShaderVisibility            = visibility;
-}
 
 //-----------------------------------------------------------------------------
 //      DynamicResourcesをサポートしているかどうかチェックします.

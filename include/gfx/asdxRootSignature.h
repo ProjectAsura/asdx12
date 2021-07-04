@@ -29,68 +29,21 @@ enum ROOT_SIGNATURE_FLAGS
     ROOT_SIGNATURE_FLAG_DENY_MS = 0x200,
     ROOT_SIGNATURE_FLAG_HEAP_DIRECTLY_INDEXED_RES = 0x400,
     ROOT_SIGNATURE_FLAG_HEAP_DIRECTLY_INDEXED_SMP = 0x800,
+
+    ROOT_SIGNATURE_FLAG_VS_PS = ROOT_SIGNATURE_FLAG_ALLOW_IL | ROOT_SIGNATURE_FLAG_DENY_HS | ROOT_SIGNATURE_FLAG_DENY_DS | ROOT_SIGNATURE_FLAG_DENY_GS,
+    ROOT_SIGNATURE_FLAG_MS_PS = ROOT_SIGNATURE_FLAG_DENY_VS  | ROOT_SIGNATURE_FLAG_DENY_HS | ROOT_SIGNATURE_FLAG_DENY_DS | ROOT_SIGNATURE_FLAG_DENY_GS,
 };
 
-struct RangeCbv : D3D12_DESCRIPTOR_RANGE
-{
-    RangeCbv(UINT baseRegister, UINT registerSpace = 0);
-};
+void RangeCBV(D3D12_DESCRIPTOR_RANGE& range, UINT baseRegister, UINT registerSpace = 0);
+void RangeSRV(D3D12_DESCRIPTOR_RANGE& range, UINT baseRegister, UINT registerSpace = 0);
+void RangeUAV(D3D12_DESCRIPTOR_RANGE& range, UINT baseRegister, UINT registerSpace = 0);
+void RangeSmp(D3D12_DESCRIPTOR_RANGE& range, UINT baseRegister, UINT registerSpace = 0);
+void ParamCBV(D3D12_ROOT_PARAMETER& param, D3D12_SHADER_VISIBILITY shader, UINT baseRegister, uint32_t registerSpace = 0);
+void ParamSRV(D3D12_ROOT_PARAMETER& param, D3D12_SHADER_VISIBILITY shader, UINT baseRegister, uint32_t registerSpace = 0);
+void ParamUAV(D3D12_ROOT_PARAMETER& param, D3D12_SHADER_VISIBILITY shader, UINT baseRegister, uint32_t registerSpace = 0);
+void ParamTable(D3D12_ROOT_PARAMETER& param, D3D12_SHADER_VISIBILITY shader, UINT, const D3D12_DESCRIPTOR_RANGE* ranges);
+void ParamConstants(D3D12_ROOT_PARAMETER& param, D3D12_SHADER_VISIBILITY shader, UINT count, UINT baseRegister, UINT registerSpace = 0);
 
-struct RangeSrv : D3D12_DESCRIPTOR_RANGE
-{
-    RangeSrv(UINT baseRegister, UINT registerSpace = 0);
-};
-
-struct RangeUav : D3D12_DESCRIPTOR_RANGE
-{
-    RangeUav(UINT baseRegister, UINT registerSpace = 0);
-};
-
-struct RangeSmp : D3D12_DESCRIPTOR_RANGE
-{
-    RangeSmp(UINT baseRegister, UINT registerSpace = 0);
-};
-
-struct ParamTable : D3D12_ROOT_PARAMETER
-{
-    ParamTable(
-        D3D12_SHADER_VISIBILITY         visibility,
-        UINT                            count,
-        const D3D12_DESCRIPTOR_RANGE*   ranges);
-};
-
-struct ParamConstant : D3D12_ROOT_PARAMETER
-{
-    ParamConstant(
-        D3D12_SHADER_VISIBILITY visibility,
-        UINT                    count,
-        UINT                    baseRegister,
-        UINT                    registerSpace = 0);
-};
-
-struct ParamCbv : public D3D12_ROOT_PARAMETER
-{
-    ParamCbv(
-        D3D12_SHADER_VISIBILITY visibility,
-        UINT                    baseRegister,
-        UINT                    registerSpace = 0);
-};
-
-struct ParamSrv : public D3D12_ROOT_PARAMETER
-{
-    ParamSrv(
-        D3D12_SHADER_VISIBILITY visibility,
-        UINT                    baseRegister,
-        UINT                    registerSpace = 0);
-};
-
-struct ParamUav : public D3D12_ROOT_PARAMETER
-{
-    ParamUav(
-        D3D12_SHADER_VISIBILITY visibility,
-        UINT                    baseRegister,
-        UINT                    registerSpace = 0);
-};
 
 //-----------------------------------------------------------------------------
 //! @brief  DynamicResourcesをサポートしているかどうかチェックします.

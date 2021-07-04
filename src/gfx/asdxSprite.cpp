@@ -107,13 +107,13 @@ bool SpriteSystem::Init
 
     // ルートシグニチャ生成.
     {
-        RangeSrv srvRange(0);
+        D3D12_DESCRIPTOR_RANGE range[1] = {};
+        RangeSRV(range[0], 0);
 
-        D3D12_ROOT_PARAMETER params[3] = {
-            ParamConstant(D3D12_SHADER_VISIBILITY_VERTEX, 16, 0 ),
-            ParamConstant(D3D12_SHADER_VISIBILITY_PIXEL, 4, 1),
-            ParamTable(D3D12_SHADER_VISIBILITY_PIXEL, 1, &srvRange)
-        };
+        D3D12_ROOT_PARAMETER params[3] = {};
+        ParamConstants(params[0], D3D12_SHADER_VISIBILITY_VERTEX, 16, 0);
+        ParamConstants(params[1], D3D12_SHADER_VISIBILITY_PIXEL, 4, 1);
+        ParamTable(params[2], D3D12_SHADER_VISIBILITY_PIXEL, 1, range);
 
         D3D12_ROOT_SIGNATURE_DESC desc = {};
         desc.NumParameters      = _countof(params);

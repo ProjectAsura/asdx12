@@ -193,7 +193,6 @@
     <ClInclude Include="..\include\gfx\asdxCommandList.h" />
     <ClInclude Include="..\include\gfx\asdxCommandQueue.h" />
     <ClInclude Include="..\include\gfx\asdxConstantBuffer.h" />
-    <ClInclude Include="..\include\gfx\asdxAgilitySdkParameters.h" />
     <ClInclude Include="..\include\gfx\asdxDescriptor.h" />
     <ClInclude Include="..\include\gfx\asdxDisposer.h" />
     <ClInclude Include="..\include\gfx\asdxFence.h" />
@@ -221,6 +220,7 @@
     <ClInclude Include="..\include\res\asdxResMaterial.h" />
     <ClInclude Include="..\include\res\asdxResModel.h" />
     <ClInclude Include="..\include\res\asdxResTexture.h" />
+    <ClInclude Include="..\include\rs\asdxBlackboard.h" />
     <ClInclude Include="..\include\rs\asdxPassGraph.h" />
   </ItemGroup>
   <ItemGroup>
