@@ -14,11 +14,11 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include "TestApp.h"
-#include <asdxResModel.h>
-#include <asdxLogger.h>
-#include <asdxList.h>
-#include <asdxStack.h>
-#include <asdxQueue.h>
+#include <res/asdxResModel.h>
+#include <fnd/asdxLogger.h>
+#include <fnd/asdxList.h>
+#include <fnd/asdxStack.h>
+#include <fnd/asdxQueue.h>
 
 int main(int argc, char** argv)
 {

@@ -8,13 +8,12 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include "TestApp.h"
-#include <asdxCmdHelper.h>
-#include <asdxMath.h>
-#include <asdxGraphicsDevice.h>
-#include <asdxLogger.h>
-#include <asdxMisc.h>
-#include <asdxGuiMgr.h>
-#include <asdxQuad.h>
+#include <fnd/asdxMath.h>
+#include <gfx/asdxGraphicsSystem.h>
+#include <fnd/asdxLogger.h>
+#include <fnd/asdxMisc.h>
+#include <edit/asdxGuiMgr.h>
+#include <gfx/asdxQuad.h>
 #include <d3d12.h>
 
 #include "TestVS.inc"
@@ -140,7 +139,7 @@ void TestApp::OnTerm()
     m_CbScene       .Term();
     m_Texture       .Term();
     m_Sampler       .Term();
-    m_Disposer      .Clear();
+    //m_Disposer      .Clear();
 }
 
 //-----------------------------------------------------------------------------
@@ -154,7 +153,7 @@ void TestApp::OnFrameRender(asdx::FrameEventArgs& args)
     auto idx  = GetCurrentBackBufferIndex();
     auto pCmd = m_GfxCmdList.Reset();
 
-    asdx::GfxDevice().SetUploadCommand(pCmd);
+    asdx::GfxSystem().SetUploadCommand(pCmd);
 
 #if TEST_TRIANGLE
     // 三角形描画.
@@ -199,7 +198,7 @@ void TestApp::OnFrameRender(asdx::FrameEventArgs& args)
     Present(0);
 
     // フレーム同期.
-    asdx::GfxDevice().FrameSync();
+    asdx::GfxSystem().FrameSync();
 }
 
 //-----------------------------------------------------------------------------
@@ -244,9 +243,9 @@ void TestApp::OnTyping(uint32_t keyCode)
 //-----------------------------------------------------------------------------
 bool TestApp::TriangleTestInit()
 {
-    m_pGraphicsQueue = asdx::GfxDevice().GetGraphicsQueue();
+    m_pGraphicsQueue = asdx::GfxSystem().GetGraphicsQueue();
 
-    auto pDevice = asdx::GfxDevice().GetDevice();
+    auto pDevice = asdx::GetD3D12Device();
 
     // 頂点データ
     {
@@ -256,7 +255,7 @@ bool TestApp::TriangleTestInit()
             { asdx::Vector3(-0.5f, -0.5f, 0.0f), asdx::Vector2(0.0f, 0.0f) },
         };
 
-        if (!m_TriangleVB.Init(pDevice, sizeof(vertices), sizeof(Vertex)))
+        if (!m_TriangleVB.Init(sizeof(vertices), sizeof(Vertex)))
         {
             ELOG("Error : VertexBuffer::Init() Failed.");
             return false;

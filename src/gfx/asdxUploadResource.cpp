@@ -315,10 +315,10 @@ private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    std::atomic<uint32_t>                       m_RefCount;
-    ID3D12Resource*                             m_pDstResource;
-    asdx::RefPtr<ID3D12Resource>                m_pSrcResource;
-    std::vector<CopyTextureRegionCommand>       m_Commands;
+    std::atomic<uint32_t>                           m_RefCount;
+    ID3D12Resource*                                 m_pDstResource;
+    asdx::RefPtr<ID3D12Resource>                    m_pSrcResource;
+    std::vector<CopyTextureRegionCommand>           m_Commands;
     std::vector<D3D12_PLACED_SUBRESOURCE_FOOTPRINT> m_Layouts;
     std::vector<UINT>                               m_Rows;
     std::vector<UINT64>                             m_RowSizeInBytes;

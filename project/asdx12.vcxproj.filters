@@ -165,13 +165,7 @@
     <ClCompile Include="..\src\res\asdxResTexture.cpp">
       <Filter>ソース ファイル\res</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxUploadResource.cpp">
-      <Filter>ソース ファイル\gfx</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\gfx\asdxModel.cpp">
-      <Filter>ソース ファイル\gfx</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxResourceUploader.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
     <ClCompile Include="..\src\rs\asdxPassGraph.cpp">
@@ -225,7 +219,10 @@
     <ClCompile Include="..\src\gfx\asdxFxParser.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxAgilitySdkParameters.cpp">
+    <ClCompile Include="..\src\gfx\asdxResourceUploader.cpp">
+      <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gfx\asdxUploadResource.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
   </ItemGroup>
@@ -347,13 +344,7 @@
     <ClInclude Include="..\include\res\asdxResTexture.h">
       <Filter>ヘッダー ファイル\res</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\gfx\asdxUploadResource.h">
-      <Filter>ヘッダー ファイル\gfx</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\gfx\asdxModel.h">
-      <Filter>ヘッダー ファイル\gfx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\gfx\asdxResourceUploader.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
     <ClInclude Include="..\include\rs\asdxPassGraph.h">
@@ -431,6 +422,12 @@
     <ClInclude Include="..\include\rs\asdxBlackboard.h">
       <Filter>ヘッダー ファイル\rs</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\gfx\asdxResourceUploader.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\gfx\asdxUploadResource.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\res\shaders\BRDF.hlsli">
@@ -448,7 +445,6 @@
     <None Include="..\include\fnd\asdxMath.inl">
       <Filter>ヘッダー ファイル\fnd</Filter>
     </None>
-    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\res\shaders\CopyPS.hlsl">

@@ -8,19 +8,19 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <asdxApp.h>
-#include <asdxConstantBuffer.h>
-#include <asdxVertexBuffer.h>
-#include <asdxPipelineState.h>
-#include <asdxRootSignature.h>
-#include <asdxDisposer.h>
-#include <asdxResourceUploader.h>
-#include <asdxTexture.h>
-#include <asdxSampler.h>
-#include <asdxModel.h>
-#include <asdxCameraController.h>
-#include <asdxPassGraph.h>
-#include <renderer/asdxColorFilter.h>
+#include <fw/asdxApp.h>
+#include <gfx/asdxConstantBuffer.h>
+#include <gfx/asdxVertexBuffer.h>
+#include <gfx/asdxPipelineState.h>
+#include <gfx/asdxRootSignature.h>
+#include <gfx/asdxDisposer.h>
+#include <gfx/asdxResourceUploader.h>
+#include <gfx/asdxTexture.h>
+#include <gfx/asdxSampler.h>
+#include <gfx/asdxModel.h>
+#include <fw/asdxCameraController.h>
+#include <rs/asdxPassGraph.h>
+//#include <renderer/asdxColorFilter.h>
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -69,8 +69,8 @@ private:
     asdx::CameraController  m_CameraController;
     asdx::WaitPoint         m_WaitPoint;
 
-    asdx::IPassGraph*       m_PassGraph;
-    asdx::ColorFilter       m_ColorFilter;
+    //asdx::IPassGraph*       m_PassGraph;
+    //asdx::ColorFilter       m_ColorFilter;
 
     //=========================================================================
     // private methods.

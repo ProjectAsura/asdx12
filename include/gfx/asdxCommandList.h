@@ -212,6 +212,20 @@ public:
     //-------------------------------------------------------------------------
     void BeginEvent(const char* text);
 
+    //-------------------------------------------------------------------------
+    //! @brief      リソースを更新します.
+    //! 
+    //! @param[in]      pDstResource        アップロード先リソース.
+    //! @param[in]      subResourceCount    アップロードするサブリソース数.
+    //! @param[in]      subResourceOffset   開始サブリソース番号.
+    //! @param[in]      subResources        アップロードするサブリソースの配列.
+    //-------------------------------------------------------------------------
+    void Upload(
+        ID3D12Resource*                 pDstResource,
+        uint32_t                        subResourceCount,
+        uint32_t                        subResourceOffset,
+        const D3D12_SUBRESOURCE_DATA*   subResources);
+
 private:
     //=========================================================================
     // private variables.
