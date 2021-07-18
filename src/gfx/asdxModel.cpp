@@ -8,6 +8,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <gfx/asdxModel.h>
+#include <gfx/asdxCommandList.h>
 #include <fnd/asdxLogger.h>
 
 
@@ -35,10 +36,11 @@ Mesh::~Mesh()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool Mesh::Init(const ResMesh& resource)
+bool Mesh::Init(CommandList& cmdList, const ResMesh& resource)
 {
     {
         if (!m_Positions.Init(
+            cmdList,
             uint64_t(resource.Positions.size()),
             uint32_t(sizeof(resource.Positions[0])),
             resource.Positions.data()))
@@ -51,6 +53,7 @@ bool Mesh::Init(const ResMesh& resource)
     if (resource.TangentSpaces.size() > 0)
     {
         if (!m_TangentSpaces.Init(
+            cmdList,
             uint64_t(resource.TangentSpaces.size()),
             uint32_t(sizeof(resource.TangentSpaces[0])),
             resource.TangentSpaces.data()))
@@ -63,6 +66,7 @@ bool Mesh::Init(const ResMesh& resource)
     if (resource.Colors.size() > 0)
     {
         if (!m_Colors.Init(
+            cmdList,
             uint64_t(resource.Colors.size()),
             uint32_t(sizeof(resource.Colors[0])),
             resource.Colors.data()))
@@ -77,6 +81,7 @@ bool Mesh::Init(const ResMesh& resource)
         if (resource.TexCoords[i].size() > 0)
         {
             if (!m_TexCoords[i].Init(
+                cmdList,
                 uint64_t(resource.TexCoords[i].size()),
                 uint32_t(sizeof(resource.TexCoords[i][0])),
                 resource.TexCoords[i].data()))
@@ -90,6 +95,7 @@ bool Mesh::Init(const ResMesh& resource)
     if (resource.BoneIndices.size() > 0)
     {
         if (!m_BoneIndices.Init(
+            cmdList,
             uint64_t(resource.BoneIndices.size()),
             uint32_t(sizeof(resource.BoneIndices[0])),
             resource.BoneIndices.data()))
@@ -102,6 +108,7 @@ bool Mesh::Init(const ResMesh& resource)
     if (resource.BoneWeights.size() > 0)
     {
         if (!m_BoneWeights.Init(
+            cmdList,
             uint64_t(resource.BoneWeights.size()),
             uint32_t(sizeof(resource.BoneWeights[0])),
             resource.BoneWeights.data()))
@@ -113,6 +120,7 @@ bool Mesh::Init(const ResMesh& resource)
 
     {
         if (!m_Indices.Init(
+            cmdList,
             uint64_t(resource.Indices.size()),
             uint32_t(sizeof(resource.Indices[0])),
             resource.Indices.data()))
@@ -124,6 +132,7 @@ bool Mesh::Init(const ResMesh& resource)
 
     {
         if (!m_Primitives.Init(
+            cmdList,
             uint64_t(resource.Primitives.size()),
             uint32_t(sizeof(resource.Primitives[0])),
             resource.Primitives.data()))
@@ -135,6 +144,7 @@ bool Mesh::Init(const ResMesh& resource)
 
     {
         if (!m_Meshlets.Init(
+            cmdList,
             uint64_t(resource.Meshlets.size()),
             uint32_t(sizeof(resource.Meshlets[0])),
             resource.Meshlets.data()))
@@ -146,6 +156,7 @@ bool Mesh::Init(const ResMesh& resource)
 
     {
         if (!m_CullingInfos.Init(
+            cmdList,
             uint64_t(resource.CullingInfos.size()),
             uint32_t(sizeof(resource.CullingInfos[0])),
             resource.CullingInfos.data()))
@@ -328,14 +339,14 @@ Model::~Model()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool Model::Init(const ResModel& model)
+bool Model::Init(CommandList& cmdList, const ResModel& model)
 {
     auto index = 0;
     m_Meshes.resize(model.Meshes.size());
 
     for(size_t i=0; i<model.Meshes.size(); ++i)
     {
-        if (!m_Meshes[index].Init(model.Meshes[i]))
+        if (!m_Meshes[index].Init(cmdList, model.Meshes[i]))
         { return false; }
 
         auto& box = m_Meshes[index].GetBox();

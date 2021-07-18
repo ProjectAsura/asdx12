@@ -13,6 +13,7 @@
 #include <fnd/asdxMisc.h>
 #include <fnd/asdxLogger.h>
 #include <gfx/asdxGraphicsSystem.h>
+#include <gfx/asdxCommandList.h>
 #include <imgui.h>
 #include <imgui_internal.h>
 
@@ -642,6 +643,7 @@ GuiMgr& GuiMgr::Instance()
 //-----------------------------------------------------------------------------
 bool GuiMgr::Init
 (
+    CommandList&    cmdList,
     HWND            hWnd,
     uint32_t        width,
     uint32_t        height,
@@ -687,7 +689,7 @@ bool GuiMgr::Init
         res.Option          = 0;
         res.pResources      = &subRes;
 
-        if (!m_FontTexture.Init(res))
+        if (!m_FontTexture.Init(cmdList, res))
         {
             ELOG("Error : Texture::Init() Failed.");
             return false;

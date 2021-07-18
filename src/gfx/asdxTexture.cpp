@@ -10,6 +10,7 @@
 #include <vector>
 #include <gfx/asdxTexture.h>
 #include <gfx/asdxGraphicsSystem.h>
+#include <gfx/asdxCommandList.h>
 #include <fnd/asdxLogger.h>
 
 
@@ -34,7 +35,7 @@ Texture::~Texture()
 //-----------------------------------------------------------------------------
 //      ‰Šú‰»ˆ—‚ðs‚¢‚Ü‚·.
 //-----------------------------------------------------------------------------
-bool Texture::Init(const ResTexture& resource)
+bool Texture::Init(CommandList& cmdList, const ResTexture& resource)
 {
     auto pDevice = GetD3D12Device();
 
@@ -168,13 +169,7 @@ bool Texture::Init(const ResTexture& resource)
         }
     }
 
-    if (!UpdateTexture(pResource, resource))
-    {
-        pResource->Release();
-        pResource = nullptr;
-        ELOGA("Error : GraphicsDevice::UpdateTexture() Failed.");
-        return false;
-    }
+    cmdList.UpdateTexture(pResource, &resource);
 
     pResource->Release();
     pResource = nullptr;

@@ -611,6 +611,7 @@ private:
     /* NOTHING */
 };
 
+#if 0
 ///////////////////////////////////////////////////////////////////////////////
 // EditTexture class
 ///////////////////////////////////////////////////////////////////////////////
@@ -702,6 +703,7 @@ private:
     //=========================================================================
     /* NOTHING */
 };
+#endif
 
 } // namespace asdx
 
@@ -719,7 +721,7 @@ tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, con
 tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditFloat4&  control);
 tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditColor3&  control);
 tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditColor4&  control);
-tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditTexture& control);
+//tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditTexture& control);
 
 void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditBool&    control);
 void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditInt&     control);
@@ -729,7 +731,7 @@ void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditFloat3&  co
 void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditFloat4&  control);
 void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditColor3&  control);
 void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditColor4&  control);
-void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditTexture& control);
+//void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditTexture& control);
 
 } // namespace asdx
 #endif//ASDX_ENABLE_TINYXML2

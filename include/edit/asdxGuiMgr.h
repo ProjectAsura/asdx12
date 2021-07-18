@@ -25,6 +25,8 @@ struct ImDrawData;
 
 namespace asdx {
 
+class CommandList;
+
 ///////////////////////////////////////////////////////////////////////////////
 // GuiMgr class
 ///////////////////////////////////////////////////////////////////////////////
@@ -64,6 +66,7 @@ public:
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
     bool Init(
+        CommandList&        cmdList,
         HWND                hWnd,
         uint32_t            width,
         uint32_t            height,

@@ -34,17 +34,14 @@ struct DeviceDesc
     bool        EnableDRED;                     //!< DREDを有効にします
 };
 
-bool GraphicsSystemInit(const DeviceDesc& desc);
-void GraphicsSystemTerm();
-void GraphicsSystemWaitIdle();
+bool SystemInit(const DeviceDesc& desc);
+void SystemTerm();
+void SystemWaitIdle();
 void FrameSync();
-bool UpdateBuffer(ID3D12Resource* pDestResource, const void* pInitData);
-bool UpdateTexture(ID3D12Resource* pDestResource, const ResTexture& resource);
 void Dispose(ID3D12Resource*& pResource);
 void Dispose(Descriptor*& pDescriptor);
 void Dispose(ID3D12PipelineState*& pPipelineState);
 void ClearDisposer();
-void SetUploadCommand(ID3D12GraphicsCommandList* pCmdList);
 void SetDescriptorHeaps(ID3D12GraphicsCommandList* pCmdList);
 CommandQueue* GetGraphicsQueue();
 CommandQueue* GetComputeQueue();

@@ -684,7 +684,7 @@ bool Application::InitApp()
 void Application::TermApp()
 {
     // コマンドの完了を待機.
-    GraphicsSystemWaitIdle();
+    SystemWaitIdle();
 
     // アプリケーション固有の終了処理.
     OnTerm();
@@ -859,7 +859,7 @@ bool Application::InitD3D()
     m_AspectRatio = (FLOAT)w / (FLOAT)h;
 
     // デバイスの初期化.
-    if (!GraphicsSystemInit(m_DeviceDesc))
+    if (!SystemInit(m_DeviceDesc))
     {
         ELOG("Error : GraphicsDeivce::Init() Failed.");
         return false;
@@ -992,7 +992,7 @@ void Application::TermD3D()
     m_DepthTarget.Term();
     m_pSwapChain4.Reset();
     m_GfxCmdList.Term();
-    GraphicsSystemTerm();
+    SystemTerm();
 }
 
 //-----------------------------------------------------------------------------
@@ -1129,7 +1129,7 @@ void Application::ResizeEvent( const ResizeEventArgs& param )
     if ( m_pSwapChain4 != nullptr )
     {
         // コマンドの完了を待機.
-        GraphicsSystemWaitIdle();
+        SystemWaitIdle();
 
         // 描画ターゲットを解放.
         for(size_t i=0; i<m_ColorTarget.size(); ++i)

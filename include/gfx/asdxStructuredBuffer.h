@@ -13,6 +13,8 @@
 
 namespace asdx {
 
+class CommandList;
+
 ///////////////////////////////////////////////////////////////////////////////
 // StructuredBuffer class
 ///////////////////////////////////////////////////////////////////////////////
@@ -63,7 +65,7 @@ public:
     //! @retval true    初期化に成功.
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
-    bool Init(uint64_t count, uint32_t stride, const void* pInitData);
+    bool Init(CommandList& cmdList, uint64_t count, uint32_t stride, const void* pInitData);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.

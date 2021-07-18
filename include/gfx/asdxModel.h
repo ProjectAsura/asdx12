@@ -10,7 +10,6 @@
 //-----------------------------------------------------------------------------
 #include <res/asdxResModel.h>
 #include <gfx/asdxStructuredBuffer.h>
-#include <gfx/asdxResourceUploader.h>
 
 
 namespace asdx {
@@ -61,7 +60,7 @@ public:
     //! @retval true    初期化成功.
     //! @retval false   初期化失敗.
     //-------------------------------------------------------------------------
-    bool Init(const ResMesh& resource);
+    bool Init(CommandList& cmdList, const ResMesh& resource);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.
@@ -262,7 +261,7 @@ public:
     //! @retval true    初期化に成功.
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
-    bool Init(const ResModel& model);
+    bool Init(CommandList& cmdList, const ResModel& model);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.

@@ -629,7 +629,10 @@ void CommandList::UpdateSubresources
     const D3D12_SUBRESOURCE_DATA*   subResources
 )
 {
-    auto device = GetD3D12Device();
+    if (pDstResource == nullptr || subResources == nullptr || subResourceCount == 0)
+    { return; }
+
+    auto device  = GetD3D12Device();
     auto dstDesc = pDstResource->GetDesc();
 
     D3D12_RESOURCE_DESC uploadDesc = {
@@ -740,23 +743,144 @@ void CommandList::UpdateSubresources
 }
 
 //-----------------------------------------------------------------------------
-//      サブリソースを更新します.
+//      バッファを更新します.
 //-----------------------------------------------------------------------------
-void CommandList::UpdateSubresource
-(
-    ID3D12Resource* pDstResource,
-    uint32_t        subResourceIndex,
-    const void*     pData,
-    uint64_t        rowPitch,
-    uint64_t        slicePitch
-)
+void CommandList::UpdateBuffer(ID3D12Resource* pDstResource, const void* pSrcResource)
 {
-    D3D12_SUBRESOURCE_DATA res = {};
-    res.pData       = pData;
-    res.RowPitch    = rowPitch;
-    res.SlicePitch  = slicePitch;
+    if (pSrcResource == nullptr || pDstResource == nullptr)
+    { return; }
 
-    UpdateSubresources(pDstResource, 1, subResourceIndex, &res);
+    auto desc = pDstResource->GetDesc();
+
+    D3D12_SUBRESOURCE_DATA res = {};
+    res.pData       = pSrcResource;
+    res.RowPitch    = desc.Width;
+    res.SlicePitch  = desc.Width;
+
+    UpdateSubresources(pDstResource, 1, 0, &res);
+}
+
+//-----------------------------------------------------------------------
+//      テクスチャを更新します.
+//-----------------------------------------------------------------------
+void CommandList::UpdateTexture(ID3D12Resource* pDstResource, const ResTexture* pResTexture)
+{
+    if (pDstResource == nullptr || pResTexture == nullptr)
+    { return; }
+
+    auto device = GetD3D12Device();
+    auto dstDesc = pDstResource->GetDesc();
+
+    auto count = pResTexture->MipMapCount * pResTexture->SurfaceCount;
+
+    D3D12_RESOURCE_DESC uploadDesc = {
+        D3D12_RESOURCE_DIMENSION_BUFFER,
+        0,
+        GetRequiredIntermediateSize(device, &dstDesc, 0, count),
+        1,
+        1,
+        1,
+        DXGI_FORMAT_UNKNOWN,
+        { 1, 0 },
+        D3D12_TEXTURE_LAYOUT_ROW_MAJOR,
+        D3D12_RESOURCE_FLAG_NONE
+    };
+
+    D3D12_HEAP_PROPERTIES props = {
+        D3D12_HEAP_TYPE_UPLOAD,
+        D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
+        D3D12_MEMORY_POOL_UNKNOWN,
+        1,
+        1
+    };
+
+    ID3D12Resource* pSrcResource = nullptr;
+    auto hr = device->CreateCommittedResource(
+        &props,
+        D3D12_HEAP_FLAG_NONE,
+        &uploadDesc,
+        D3D12_RESOURCE_STATE_GENERIC_READ,
+        nullptr,
+        IID_PPV_ARGS(&pSrcResource));
+    if (FAILED(hr))
+    {
+        ELOG("Error : ID3D12Device::CreateCommitedResource() Failed. errcode = 0x%x", hr);
+        return;
+    }
+
+    // コマンドを生成.
+    {
+        std::vector<D3D12_PLACED_SUBRESOURCE_FOOTPRINT> layouts;
+        std::vector<UINT>                               rows;
+        std::vector<UINT64>                             rowSizeInBytes;
+
+        layouts       .resize(count);
+        rows          .resize(count);
+        rowSizeInBytes.resize(count);
+
+        UINT64 requiredSize = 0;
+        device->GetCopyableFootprints(
+            &dstDesc, 0, count, 0, layouts.data(), rows.data(), rowSizeInBytes.data(), &requiredSize);
+
+        BYTE* pData = nullptr;
+        hr = pSrcResource->Map(0, nullptr, reinterpret_cast<void**>(&pData));
+        if (FAILED(hr))
+        {
+            ELOG("Error : ID3D12Resource::Map() Failed. errcode = 0x%x", hr);
+            pSrcResource->Release();
+            return;
+        }
+
+        for(auto i=0u; i<count; ++i)
+        {
+            D3D12_SUBRESOURCE_DATA srcData = {};
+            srcData.pData       = pResTexture->pResources[i].pPixels;
+            srcData.RowPitch    = pResTexture->pResources[i].Pitch;
+            srcData.SlicePitch  = pResTexture->pResources[i].SlicePitch;
+
+            D3D12_MEMCPY_DEST dstData = {};
+            dstData.pData       = pData + layouts[i].Offset;
+            dstData.RowPitch    = layouts[i].Footprint.RowPitch;
+            dstData.SlicePitch  = SIZE_T(layouts[i].Footprint.RowPitch) * SIZE_T(rows[i]);
+
+            CopySubresource(
+                &dstData,
+                &srcData,
+                SIZE_T(rowSizeInBytes[i]),
+                rows[i],
+                layouts[i].Footprint.Depth);
+        }
+        pSrcResource->Unmap(0, nullptr);
+
+        if (dstDesc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
+        {
+            m_CmdList->CopyBufferRegion(
+                pDstResource,
+                0,
+                pSrcResource,
+                layouts[0].Offset,
+                layouts[0].Footprint.Width);
+        }
+        else
+        {
+            for(auto i=0u; i<count; ++i)
+            {
+                D3D12_TEXTURE_COPY_LOCATION dstLoc = {};
+                dstLoc.pResource        = pDstResource;
+                dstLoc.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+                dstLoc.SubresourceIndex = i;
+
+                D3D12_TEXTURE_COPY_LOCATION srcLoc = {};
+                srcLoc.pResource        = pSrcResource;
+                srcLoc.Type             = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+                srcLoc.PlacedFootprint  = layouts[i];
+
+                m_CmdList->CopyTextureRegion(&dstLoc, 0, 0, 0, &srcLoc, nullptr);
+            }
+        }
+    }
+
+    Dispose(pSrcResource);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

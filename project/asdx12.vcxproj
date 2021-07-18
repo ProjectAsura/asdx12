@@ -135,7 +135,6 @@
     <ClCompile Include="..\src\gfx\asdxQuad.cpp" />
     <ClCompile Include="..\src\gfx\asdxRayTracing.cpp" />
     <ClCompile Include="..\src\gfx\asdxReflection.cpp" />
-    <ClCompile Include="..\src\gfx\asdxResourceUploader.cpp" />
     <ClCompile Include="..\src\gfx\asdxRootSignature.cpp" />
     <ClCompile Include="..\src\gfx\asdxSampler.cpp" />
     <ClCompile Include="..\src\gfx\asdxScreenCapture.cpp" />
@@ -144,7 +143,6 @@
     <ClCompile Include="..\src\gfx\asdxStructuredBuffer.cpp" />
     <ClCompile Include="..\src\gfx\asdxTarget.cpp" />
     <ClCompile Include="..\src\gfx\asdxTexture.cpp" />
-    <ClCompile Include="..\src\gfx\asdxUploadResource.cpp" />
     <ClCompile Include="..\src\gfx\asdxVertexBuffer.cpp" />
     <ClCompile Include="..\src\gfx\asdxView.cpp" />
     <ClCompile Include="..\src\res\asdxResMaterial.cpp" />
@@ -203,7 +201,6 @@
     <ClInclude Include="..\include\gfx\asdxQuad.h" />
     <ClInclude Include="..\include\gfx\asdxRayTracing.h" />
     <ClInclude Include="..\include\gfx\asdxReflection.h" />
-    <ClInclude Include="..\include\gfx\asdxResourceUploader.h" />
     <ClInclude Include="..\include\gfx\asdxRootSignature.h" />
     <ClInclude Include="..\include\gfx\asdxSampler.h" />
     <ClInclude Include="..\include\gfx\asdxScreenCpature.h" />
@@ -212,7 +209,6 @@
     <ClInclude Include="..\include\gfx\asdxStructuredBuffer.h" />
     <ClInclude Include="..\include\gfx\asdxTarget.h" />
     <ClInclude Include="..\include\gfx\asdxTexture.h" />
-    <ClInclude Include="..\include\gfx\asdxUploadResource.h" />
     <ClInclude Include="..\include\gfx\asdxVertexBuffer.h" />
     <ClInclude Include="..\include\gfx\asdxView.h" />
     <ClInclude Include="..\include\res\asdxResMaterial.h" />

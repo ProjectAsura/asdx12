@@ -10,6 +10,7 @@
 #include <atomic>
 #include <gfx/asdxStructuredBuffer.h>
 #include <gfx/asdxGraphicsSystem.h>
+#include <gfx/asdxCommandList.h>
 #include <fnd/asdxLogger.h>
 
 
@@ -105,6 +106,7 @@ bool StructuredBuffer::Init(uint64_t count, uint32_t stride, D3D12_RESOURCE_STAT
 //-----------------------------------------------------------------------------
 bool StructuredBuffer::Init
 (
+    CommandList&        cmdList,
     uint64_t            count,
     uint32_t            stride,
     const void*         pInitData
@@ -113,11 +115,7 @@ bool StructuredBuffer::Init
     if (!Init(count, stride, D3D12_RESOURCE_STATE_GENERIC_READ))
     { return false;  }
 
-    if (!UpdateBuffer(m_Resource.GetPtr(), pInitData))
-    {
-        ELOGA("Error : GraphicsDevice::UpdateBuffer() Failed.");
-        return false;
-    }
+    cmdList.UpdateBuffer(m_Resource.GetPtr(), pInitData);
 
     return true;
 }

@@ -14,6 +14,8 @@
 
 namespace asdx {
 
+struct ResTexture;
+
 ///////////////////////////////////////////////////////////////////////////////
 // CommandList class
 ///////////////////////////////////////////////////////////////////////////////
@@ -222,20 +224,18 @@ public:
         const D3D12_SUBRESOURCE_DATA*   subResources);
 
     //-------------------------------------------------------------------------
-    //! @brief      リソースを更新します.
-    //! 
-    //! @param[in]      pDstResource        アップロード先リソース.
-    //! @param[in]      subResourceIndex    サブリソース番号.
-    //! @param[in]      pData               更新データ.
-    //! @param[in]      rowPitch            1行当たりのサイズ.
-    //! @param[in]      slicePitch          1スライスあたりのサイズの.
+    //! @brief      バッファを更新します.
     //-------------------------------------------------------------------------
-    void UpdateSubresource(
+    void UpdateBuffer(
         ID3D12Resource*     pDstResource,
-        uint32_t            subResourceIndex,
-        const void*         pData,
-        uint64_t            rowPitch,
-        uint64_t            slicePitch);
+        const void*         pSrcResource);
+
+    //-------------------------------------------------------------------------
+    //! @brief      テクスチャを更新します.
+    //-------------------------------------------------------------------------
+    void UpdateTexture(
+        ID3D12Resource*     pDstResource,
+        const ResTexture*   pSrcResource);
 
     //-------------------------------------------------------------------------
     //! @brief      イベントを開始します.

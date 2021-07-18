@@ -219,12 +219,6 @@
     <ClCompile Include="..\src\gfx\asdxFxParser.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxResourceUploader.cpp">
-      <Filter>ソース ファイル\gfx</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxUploadResource.cpp">
-      <Filter>ソース ファイル\gfx</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\external\imgui\imconfig.h">
@@ -421,12 +415,6 @@
     </ClInclude>
     <ClInclude Include="..\include\rs\asdxBlackboard.h">
       <Filter>ヘッダー ファイル\rs</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\gfx\asdxResourceUploader.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\gfx\asdxUploadResource.h">
-      <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

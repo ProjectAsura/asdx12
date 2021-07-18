@@ -11,7 +11,8 @@
 #include <gfx/asdxCommandQueue.h>
 #include <gfx/asdxDescriptor.h>
 #include <gfx/asdxDisposer.h>
-#include <gfx/asdxResourceUploader.h>
+#include <gfx/asdxCommandList.h>
+//#include <gfx/asdxResourceUploader.h>
 #include <fnd/asdxSpinLock.h>
 #include <fnd/asdxRef.h>
 
@@ -168,13 +169,6 @@ public:
     void Dispose(ID3D12PipelineState*& pPipelineState, uint8_t lifeTime);
 
     //-------------------------------------------------------------------------
-    //! @brief      アップロードコマンドを設定します.
-    //!
-    //! @param[in]      pCmdList        コマンドリストです.
-    //-------------------------------------------------------------------------
-    void SetUploadCommand(ID3D12GraphicsCommandList* pCmdList);
-
-    //-------------------------------------------------------------------------
     //! @brief      フレーム同期を行います.
     //-------------------------------------------------------------------------
     void FrameSync();
@@ -183,16 +177,6 @@ public:
     //! @brief      強制破棄を行います.
     //-------------------------------------------------------------------------
     void ClearDisposer();
-
-    //-------------------------------------------------------------------------
-    //! @brief      バッファ更新リソースを生成し，登録します.
-    //-------------------------------------------------------------------------
-    bool UpdateBuffer(ID3D12Resource* pDstResource, const void* pInitData);
-
-    //-------------------------------------------------------------------------
-    //! @brief      テクスチャ更新リソースを生成し，登録します.
-    //-------------------------------------------------------------------------
-    bool UpdateTexture(ID3D12Resource* pDstResource, const ResTexture& resource);
 
 private:
     //=========================================================================
@@ -210,7 +194,6 @@ private:
     RefPtr<CommandQueue>            m_pVideoProcessQueue;       //!< ビデオプロセスキュー.
     RefPtr<CommandQueue>            m_pVideoEncodeQueue;        //!< ビデオエンコードキュー.
     DescriptorHeap                  m_DescriptorHeap[4];        //!< ディスクリプタヒープ.
-    ResourceUploader                m_ResourceUploader;         //!< リソースアップローダー.
     Disposer<ID3D12Resource>        m_ResourceDisposer;         //!< リソースディスポーザー.
     Disposer<Descriptor>            m_DescriptorDisposer;       //!< ディスクリプタディスポーザー.
     Disposer<ID3D12PipelineState>   m_PipelineStateDisposer;    //!< パイプラインステートディスポーザー.
@@ -229,14 +212,6 @@ private:
     //! @brief      デストラクタです.
     //-------------------------------------------------------------------------
     ~GraphicsSystem() = default;
-
-    //-------------------------------------------------------------------------
-    //! @brief      リソースアップローダーに追加します.
-    //!
-    //! @param[in]      pResource       アップロードリソース.
-    //! @param[in]      lifeTime        生存フレーム数です.
-    //-------------------------------------------------------------------------
-    void PushUploader(IUploadResource* pResource, uint8_t lifeTime);
 
     GraphicsSystem              (const GraphicsSystem&) = delete;   // アクセス禁止.
     GraphicsSystem& operator =  (const GraphicsSystem&) = delete;   // アクセス禁止.
@@ -451,7 +426,7 @@ bool GraphicsSystem::Init(const DeviceDesc& deviceDesc)
         ELOG("Error : Queue::Create() Failed.");
         return false;
     }
-
+ 
     // 正常終了.
     return true;
 }
@@ -461,7 +436,6 @@ bool GraphicsSystem::Init(const DeviceDesc& deviceDesc)
 //-----------------------------------------------------------------------------
 void GraphicsSystem::Term()
 {
-    m_ResourceUploader      .Clear();
     m_ResourceDisposer      .Clear();
     m_DescriptorDisposer    .Clear();
     m_PipelineStateDisposer .Clear();
@@ -615,12 +589,6 @@ void GraphicsSystem::WaitIdle()
 }
 
 //-----------------------------------------------------------------------------
-//      リソースアップローダーに追加します.
-//-----------------------------------------------------------------------------
-void GraphicsSystem::PushUploader(IUploadResource* pResource, uint8_t lifeTime)
-{ m_ResourceUploader.Push(pResource, lifeTime); }
-
-//-----------------------------------------------------------------------------
 //      リソースディスポーザーに追加します.
 //-----------------------------------------------------------------------------
 void GraphicsSystem::Dispose(ID3D12Resource*& pResource, uint8_t lifeTime)
@@ -639,17 +607,10 @@ void GraphicsSystem::Dispose(ID3D12PipelineState*& pPipelineState, uint8_t lifeT
 { m_PipelineStateDisposer.Push(pPipelineState, lifeTime); }
 
 //-----------------------------------------------------------------------------
-//      アップロードコマンドを設定します.
-//-----------------------------------------------------------------------------
-void GraphicsSystem::SetUploadCommand(ID3D12GraphicsCommandList* pCmdList)
-{ m_ResourceUploader.Upload(pCmdList); }
-
-//-----------------------------------------------------------------------------
 //      フレーム同期を取ります.
 //-----------------------------------------------------------------------------
 void GraphicsSystem::FrameSync()
 {
-    m_ResourceUploader      .FrameSync();
     m_ResourceDisposer      .FrameSync();
     m_DescriptorDisposer    .FrameSync();
     m_PipelineStateDisposer .FrameSync();
@@ -665,66 +626,17 @@ void GraphicsSystem::ClearDisposer()
     m_PipelineStateDisposer .Clear();
 }
 
-//-----------------------------------------------------------------------------
-//      バッファ更新リソースを生成し登録します.
-//-----------------------------------------------------------------------------
-bool GraphicsSystem::UpdateBuffer(ID3D12Resource* pDstResource, const void* pInitData)
-{
-    if (pDstResource == nullptr || pInitData== nullptr)
-    {
-        ELOGA("Error : Invalid Argument.");
-        return false;
-    }
-
-    IUploadBuffer* pUploadResource;
-    if (!CreateUploadBuffer(pDstResource, pInitData, &pUploadResource))
-    {
-        ELOGA("Error : CreateUploadBufferResource() Failed.");
-        return false;
-    }
-
-    PushUploader(pUploadResource, kDefaultLifeTime);
-    return true;
-}
-
-//-----------------------------------------------------------------------------
-//      テクスチャ更新リソースを生成し登録します.
-//-----------------------------------------------------------------------------
-bool GraphicsSystem::UpdateTexture(ID3D12Resource* pDstResource, const ResTexture& resource)
-{
-    if (pDstResource == nullptr || resource.pResources == nullptr)
-    {
-        ELOGA("Error : Invalid Argument");
-        return false;
-    }
-
-    IUploadTexture* pUploadResource;
-    if (!CreateUploadTexture(pDstResource, resource, &pUploadResource))
-    {
-        ELOGA("Error : CreateUploadTextureResource() Failed.");
-        return false;
-    }
-    PushUploader(pUploadResource, kDefaultLifeTime);
-    return true;
-}
-
-bool GraphicsSystemInit(const DeviceDesc& desc)
+bool SystemInit(const DeviceDesc& desc)
 { return GraphicsSystem::Instance().Init(desc); }
 
-void GraphicsSystemTerm()
+void SystemTerm()
 { GraphicsSystem::Instance().Term(); }
 
-void GraphicsSystemWaitIdle()
+void SystemWaitIdle()
 { GraphicsSystem::Instance().WaitIdle(); }
 
 void FrameSync()
 { GraphicsSystem::Instance().FrameSync(); }
-
-bool UpdateBuffer(ID3D12Resource* pDestResource, const void* pInitdata)
-{ return GraphicsSystem::Instance().UpdateBuffer(pDestResource, pInitdata); }
-
-bool UpdateTexture(ID3D12Resource* pDestResource, const ResTexture& resource)
-{ return GraphicsSystem::Instance().UpdateTexture(pDestResource, resource); }
 
 void Dispose(ID3D12Resource*& pResource)
 { GraphicsSystem::Instance().Dispose(pResource, kDefaultLifeTime); }
@@ -737,9 +649,6 @@ void Dispose(ID3D12PipelineState*& pPipelineState)
 
 void ClearDisposer()
 { GraphicsSystem::Instance().ClearDisposer(); }
-
-void SetUploadCommand(ID3D12GraphicsCommandList* pCmd)
-{ GraphicsSystem::Instance().SetUploadCommand(pCmd); }
 
 void SetDescriptorHeaps(ID3D12GraphicsCommandList* pCmd)
 { GraphicsSystem::Instance().SetDescriptorHeaps(pCmd); }

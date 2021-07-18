@@ -11,7 +11,6 @@
 #include <edit/asdxHistory.h>
 #include <fnd/asdxMisc.h>
 #include <res/asdxResTexture.h>
-#include <gfx/asdxResourceUploader.h>
 
 
 #ifdef ASDX_ENABLE_IMGUI
@@ -141,9 +140,9 @@ public:
             { return; }
 
             m_pTexture->Term();
-                
-            if (!m_pTexture->Init(res))
-            { return; }
+
+            //if (!m_pTexture->Init(res))
+            //{ return; }
         }
     }
 
@@ -167,8 +166,8 @@ public:
 
             m_pTexture->Term();
 
-            if (!m_pTexture->Init(res))
-            { return; }
+            //if (!m_pTexture->Init(res))
+            //{ return; }
         }
     }
 
@@ -855,6 +854,7 @@ void EditColor4::DrawPicker(const char* tag)
 #endif
 }
 
+#if 0
 ///////////////////////////////////////////////////////////////////////////////
 // EditTexture class
 ///////////////////////////////////////////////////////////////////////////////
@@ -963,6 +963,7 @@ void EditTexture::DrawControl
 //-----------------------------------------------------------------------------
 IShaderResourceView* EditTexture::GetView() const
 { return m_Texture.GetView(); }
+#endif
 
 } // namespace asdx
 
@@ -1069,6 +1070,7 @@ tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, con
     return element;
 }
 
+#if 0
 //-----------------------------------------------------------------------------
 //      XMLエレメントを生成します.
 //-----------------------------------------------------------------------------
@@ -1078,6 +1080,7 @@ tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, con
     element->SetAttribute("path", control.GetPath().c_str());
     return element;
 }
+#endif
 
 //-----------------------------------------------------------------------------
 //      XMLエレメントを解析します.
@@ -1199,6 +1202,7 @@ void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditColor4& con
     control = EditColor4(value.x, value.y, value.z, value.w);
 }
 
+#if 0
 //-----------------------------------------------------------------------------
 //      XMLエレメントを解析します.
 //-----------------------------------------------------------------------------
@@ -1211,6 +1215,7 @@ void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditTexture& co
     auto path = e->Attribute("path");
     control.SetPath(path);
 }
+#endif
 
 } // namespace asdx
 #endif//ASDX_ENABLE_TINYXML2

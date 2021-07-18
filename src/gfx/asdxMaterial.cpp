@@ -40,7 +40,7 @@ Material::~Material()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool Material::Init(const ResMaterial& value)
+bool Material::Init(CommandList& cmdList, const ResMaterial& value)
 {
     m_Hash          = CalcHash(value.Name.c_str());
     m_State         = MATERIAL_STATE(value.State);
@@ -76,7 +76,7 @@ bool Material::Init(const ResMaterial& value)
             return false;
         }
 
-        if (!m_Textures[i].Texture.Init(res))
+        if (!m_Textures[i].Texture.Init(cmdList, res))
         {
             Term();
             return false;

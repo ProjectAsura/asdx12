@@ -9,6 +9,7 @@
 //-----------------------------------------------------------------------------
 #include <gfx/asdxByteAddressBuffer.h>
 #include <gfx/asdxGraphicsSystem.h>
+#include <gfx/asdxCommandList.h>
 #include <fnd/asdxLogger.h>
 
 
@@ -100,16 +101,12 @@ bool ByteAddressBuffer::Init(uint64_t size, D3D12_RESOURCE_STATES state)
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool ByteAddressBuffer::Init(uint64_t size, const void* pInitData)
+bool ByteAddressBuffer::Init(CommandList& cmdList, uint64_t size, const void* pInitData)
 {
     if (!Init(size, D3D12_RESOURCE_STATE_GENERIC_READ))
     { return false; }
 
-    if (!UpdateBuffer(m_Resource.GetPtr(), pInitData))
-    {
-        ELOGA("Error : GraphicsDevice::UpdateBuffer() Failed.");
-        return false;
-    }
+    cmdList.UpdateBuffer(m_Resource.GetPtr(), pInitData);
 
     return true;
 }
