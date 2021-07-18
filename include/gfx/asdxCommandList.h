@@ -208,11 +208,6 @@ public:
     void SetUAV(uint32_t index, ID3D12Resource* pResource, bool compute = false);
 
     //-------------------------------------------------------------------------
-    //! @brief      イベント開始します.
-    //-------------------------------------------------------------------------
-    void BeginEvent(const char* text);
-
-    //-------------------------------------------------------------------------
     //! @brief      リソースを更新します.
     //! 
     //! @param[in]      pDstResource        アップロード先リソース.
@@ -220,11 +215,151 @@ public:
     //! @param[in]      subResourceOffset   開始サブリソース番号.
     //! @param[in]      subResources        アップロードするサブリソースの配列.
     //-------------------------------------------------------------------------
-    void Upload(
+    void UpdateSubresources(
         ID3D12Resource*                 pDstResource,
         uint32_t                        subResourceCount,
         uint32_t                        subResourceOffset,
         const D3D12_SUBRESOURCE_DATA*   subResources);
+
+    //-------------------------------------------------------------------------
+    //! @brief      リソースを更新します.
+    //! 
+    //! @param[in]      pDstResource        アップロード先リソース.
+    //! @param[in]      subResourceIndex    サブリソース番号.
+    //! @param[in]      pData               更新データ.
+    //! @param[in]      rowPitch            1行当たりのサイズ.
+    //! @param[in]      slicePitch          1スライスあたりのサイズの.
+    //-------------------------------------------------------------------------
+    void UpdateSubresource(
+        ID3D12Resource*     pDstResource,
+        uint32_t            subResourceIndex,
+        const void*         pData,
+        uint64_t            rowPitch,
+        uint64_t            slicePitch);
+
+    //-------------------------------------------------------------------------
+    //! @brief      イベントを開始します.
+    //-------------------------------------------------------------------------
+    void BeginEvent(const char* text);
+
+    //-------------------------------------------------------------------------
+    //! @brief      イベントを終了します.
+    //-------------------------------------------------------------------------
+    void EndEvent()
+    { m_CmdList->EndEvent(); }
+
+    //-------------------------------------------------------------------------
+    //! @brief      ルートシグニチャを設定します.
+    //-------------------------------------------------------------------------
+    void SetRootSignature(ID3D12RootSignature* pRootSignature, bool compute);
+
+    //-------------------------------------------------------------------------
+    //! @brief      パイプラインステートを設定します.
+    //-------------------------------------------------------------------------
+    void SetPipelineState(ID3D12PipelineState* value) 
+    { m_CmdList->SetPipelineState(value); }
+
+    //-------------------------------------------------------------------------
+    //! @brief      ステートオブジェクトを設定します.
+    //-------------------------------------------------------------------------
+    void SetStateObject(ID3D12StateObject* value)
+    { m_CmdList->SetPipelineState1(value); }
+
+    //-------------------------------------------------------------------------
+    //! @brief      プリミティブトポロジーを設定します.
+    //-------------------------------------------------------------------------
+    void SetPrimitiveToplogy(D3D12_PRIMITIVE_TOPOLOGY value)
+    { m_CmdList->IASetPrimitiveTopology(value); }
+
+    //-------------------------------------------------------------------------
+    //! @brief      インデックスバッファを設定します.
+    //-------------------------------------------------------------------------
+    void SetIndexBuffer(const D3D12_INDEX_BUFFER_VIEW* pView)
+    { m_CmdList->IASetIndexBuffer(pView); }
+
+    //-------------------------------------------------------------------------
+    //! @brief      頂点バッファを設定します.
+    //-------------------------------------------------------------------------
+    void SetVertexBuffers(uint32_t startSlot, uint32_t viewCount, const D3D12_VERTEX_BUFFER_VIEW* pViews)
+    { m_CmdList->IASetVertexBuffers(startSlot, viewCount, pViews); }
+
+    //-------------------------------------------------------------------------
+    //! @brief      コンピュートシェーダを実行します.
+    //-------------------------------------------------------------------------
+    void Dispatch(uint32_t x, uint32_t y, uint32_t z)
+    { m_CmdList->Dispatch(x, y, z); }
+
+    //-------------------------------------------------------------------------
+    //! @brief      メッシュシェーダを実行します.
+    //-------------------------------------------------------------------------
+    void DispatchMesh(uint32_t x, uint32_t y, uint32_t z)
+    { m_CmdList->DispatchMesh(x, y, z); }
+
+    //-------------------------------------------------------------------------
+    //! @brief      レイトレーシングパイプラインを実行します.
+    //-------------------------------------------------------------------------
+    void DispatchRays(const D3D12_DISPATCH_RAYS_DESC* pDesc)
+    { m_CmdList->DispatchRays(pDesc); }
+
+    //-------------------------------------------------------------------------
+    //! @brief      描画します.
+    //-------------------------------------------------------------------------
+    void DrawInstanced
+    (
+        uint32_t vertexCountPerInstance,
+        uint32_t instanceCount,
+        uint32_t startVertexLocation,
+        uint32_t startInstanceLocation
+    )
+    {
+        m_CmdList->DrawInstanced(
+            vertexCountPerInstance,
+            instanceCount,
+            startVertexLocation,
+            startInstanceLocation);
+    }
+
+    //-------------------------------------------------------------------------
+    //! @brief      インデックス付きで描画します.
+    //-------------------------------------------------------------------------
+    void DrawIndexedInstanced
+    (
+        uint32_t indexCountPerInstance,
+        uint32_t instanceCount,
+        uint32_t startIndexLocation,
+        int32_t  baseVertexLocation,
+        uint32_t startInstanceLocation
+    )
+    {
+        m_CmdList->DrawIndexedInstanced(
+            indexCountPerInstance,
+            instanceCount,
+            startIndexLocation,
+            baseVertexLocation,
+            startInstanceLocation);
+    }
+
+    //-------------------------------------------------------------------------
+    //! @brief      インダイレクトコマンドを実行します.
+    //-------------------------------------------------------------------------
+    void ExecuteIndirect
+    (
+        ID3D12CommandSignature* pCmdSignature,
+        uint32_t                maxCmdCount,
+        ID3D12Resource*         pArgBuffer,
+        uint64_t                argBufferOffset,
+        ID3D12Resource*         pCounterBuffer,
+        uint64_t                counterBufferOffset
+    )
+    {
+        m_CmdList->ExecuteIndirect(
+            pCmdSignature,
+            maxCmdCount,
+            pArgBuffer,
+            argBufferOffset,
+            pCounterBuffer,
+            counterBufferOffset);
+    }
 
 private:
     //=========================================================================

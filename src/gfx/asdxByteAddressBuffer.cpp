@@ -105,7 +105,7 @@ bool ByteAddressBuffer::Init(uint64_t size, const void* pInitData)
     if (!Init(size, D3D12_RESOURCE_STATE_GENERIC_READ))
     { return false; }
 
-    if (!GfxSystem().UpdateBuffer(m_Resource.GetPtr(), pInitData))
+    if (!UpdateBuffer(m_Resource.GetPtr(), pInitData))
     {
         ELOGA("Error : GraphicsDevice::UpdateBuffer() Failed.");
         return false;
@@ -121,7 +121,7 @@ void ByteAddressBuffer::Term()
 {
     auto resource = m_Resource.Detach();
     if (resource != nullptr)
-    { GfxSystem().Dispose(resource); }
+    { Dispose(resource); }
     m_View.Reset();
 }
 

@@ -278,7 +278,12 @@ public:
         if (target == nullptr || node == nullptr)
         { return; }
 
+        auto prev = target->GetPrev();
         ListNode::Link(node, target);
+        node->ListNode::m_Prev = prev;
+        if (prev != nullptr)
+        { prev->ListNode::m_Next = node; }
+
         if (target == m_Head)
         { m_Head = node; }
 
@@ -293,7 +298,12 @@ public:
         if (target == nullptr || node == nullptr)
         { return; }
 
+        auto next = target->GetNext();
         ListNode::Link(target, node);
+        node->ListNode::m_Next = next;
+        if (next != nullptr)
+        { next->ListNode::m_Prev = node; }
+
         if (target == m_Tail)
         { m_Tail = node; }
 

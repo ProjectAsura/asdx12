@@ -168,7 +168,7 @@ bool Texture::Init(const ResTexture& resource)
         }
     }
 
-    if (!GfxSystem().UpdateTexture(pResource, resource))
+    if (!UpdateTexture(pResource, resource))
     {
         pResource->Release();
         pResource = nullptr;

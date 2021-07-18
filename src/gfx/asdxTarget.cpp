@@ -411,7 +411,7 @@ void ColorTarget::Term()
 
     auto resource = m_pResource.Detach();
     if (resource != nullptr)
-    { GfxSystem().Dispose(resource); }
+    { Dispose(resource); }
 
     memset(&m_Desc, 0, sizeof(m_Desc));
     m_IsSRGB = false;
@@ -660,7 +660,7 @@ void DepthTarget::Term()
 
     auto resource = m_pResource.Detach();
     if (resource != nullptr)
-    { GfxSystem().Dispose(resource); }
+    { Dispose(resource); }
 
     memset(&m_Desc, 0, sizeof(m_Desc));
 }
@@ -892,7 +892,7 @@ void ComputeTarget::Term()
 
     auto resource = m_pResource.Detach();
     if (resource != nullptr)
-    { GfxSystem().Dispose(resource); }
+    { Dispose(resource); }
  
     memset(&m_Desc, 0, sizeof(m_Desc));
 }

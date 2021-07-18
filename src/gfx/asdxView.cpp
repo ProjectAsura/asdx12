@@ -37,8 +37,8 @@ public:
 
     ~ConstantBufferView()
     {
-        GfxSystem().Dispose(m_Descriptor);
-        GfxSystem().Dispose(m_Resource); 
+        Dispose(m_Descriptor);
+        Dispose(m_Resource); 
     }
 
     void AddRef() override
@@ -99,8 +99,8 @@ public:
 
     ~RenderTargetView()
     {
-        GfxSystem().Dispose(m_Descriptor);
-        GfxSystem().Dispose(m_Resource);
+        Dispose(m_Descriptor);
+        Dispose(m_Resource);
     }
 
     void AddRef() override
@@ -161,8 +161,8 @@ public:
 
     ~DepthStencilView()
     {
-        GfxSystem().Dispose(m_Descriptor);
-        GfxSystem().Dispose(m_Resource);
+        Dispose(m_Descriptor);
+        Dispose(m_Resource);
     }
 
     void AddRef() override
@@ -222,8 +222,8 @@ public:
 
     ~ShaderResourceView()
     {
-        GfxSystem().Dispose(m_Descriptor);
-        GfxSystem().Dispose(m_Resource);
+        Dispose(m_Descriptor);
+        Dispose(m_Resource);
     }
 
     void AddRef() override
@@ -287,10 +287,9 @@ public:
 
     ~UnorderedAccessView()
     {
-        GfxSystem().Dispose(m_Descriptor);
-        GfxSystem().Dispose(m_Resource);
-        if (m_CounterResource != nullptr)
-        { GfxSystem().Dispose(m_CounterResource); }
+        Dispose(m_Descriptor);
+        Dispose(m_Resource);
+        Dispose(m_CounterResource);
     }
 
     void AddRef() override
@@ -343,7 +342,7 @@ bool CreateConstantBufferView
 )
 {
     Descriptor* pDescriptor = nullptr;
-    auto ret = GfxSystem().AllocHandle(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, &pDescriptor);
+    auto ret = AllocDescriptor(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, &pDescriptor);
     if (!ret)
     { return false; }
 
@@ -366,7 +365,7 @@ bool CreateRenderTargetView
 )
 {
     Descriptor* pDescriptor = nullptr;
-    auto ret = GfxSystem().AllocHandle(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, &pDescriptor);
+    auto ret = AllocDescriptor(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, &pDescriptor);
     if (!ret)
     { return false; }
 
@@ -389,7 +388,7 @@ bool CreateDepthStencilView
 )
 {
     Descriptor* pDescriptor = nullptr;
-    auto ret = GfxSystem().AllocHandle(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, &pDescriptor);
+    auto ret = AllocDescriptor(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, &pDescriptor);
     if (!ret)
     { return false; }
 
@@ -412,7 +411,7 @@ bool CreateShaderResourceView
 )
 {
     Descriptor* pDescriptor = nullptr;
-    auto ret = GfxSystem().AllocHandle(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, &pDescriptor);
+    auto ret = AllocDescriptor(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, &pDescriptor);
     if (!ret)
     { return false; }
 
@@ -436,7 +435,7 @@ bool CreateUnorderedAccessView
 )
 {
     Descriptor* pDescriptor = nullptr;
-    auto ret = GfxSystem().AllocHandle(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, &pDescriptor);
+    auto ret = AllocDescriptor(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, &pDescriptor);
     if (!ret)
     { return false; }
 

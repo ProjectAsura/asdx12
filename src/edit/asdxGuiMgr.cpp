@@ -1003,7 +1003,7 @@ void GuiMgr::OnDraw( ImDrawData* pDrawData )
         if (resource != nullptr)
         {
             resource->AddRef();
-            GfxSystem().Dispose(resource);
+            Dispose(resource);
         }
 
         m_VB.Term();
@@ -1018,7 +1018,7 @@ void GuiMgr::OnDraw( ImDrawData* pDrawData )
         if (resource != nullptr)
         {
             resource->AddRef();
-            GfxSystem().Dispose(resource);
+            Dispose(resource);
         }
 
         m_IB.Term();

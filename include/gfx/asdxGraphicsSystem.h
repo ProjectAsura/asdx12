@@ -10,273 +10,50 @@
 //-----------------------------------------------------------------------------
 #include <d3d12.h>
 #include <dxgi1_6.h>
-#include <fnd/asdxSpinLock.h>
-#include <fnd/asdxRef.h>
 #include <res/asdxResTexture.h>
-#include <gfx/asdxCommandQueue.h>
-#include <gfx/asdxDescriptor.h>
-#include <gfx/asdxDisposer.h>
-#include <gfx/asdxResourceUploader.h>
 
 
 namespace asdx {
 
+//-----------------------------------------------------------------------------
+// Forward Declarations.
+//-----------------------------------------------------------------------------
+class Descriptor;
+class CommandQueue;
+
 ///////////////////////////////////////////////////////////////////////////////
-// GraphicsSystem class
+// DeviceDesc structure
 ///////////////////////////////////////////////////////////////////////////////
-class GraphicsSystem
+struct DeviceDesc
 {
-    //========================================================================
-    // list of friend classes and methods.
-    //========================================================================
-    /* NOTHING */
-
-public:
-    ///////////////////////////////////////////////////////////////////////////
-    // Desc structure
-    ///////////////////////////////////////////////////////////////////////////
-    struct Desc
-    {
-        uint32_t    MaxShaderResourceCount;         //!< 最大シェーダリソース数です.
-        uint32_t    MaxSamplerCount;                //!< 最大サンプラー数です.
-        uint32_t    MaxColorTargetCount;            //!< 最大カラーターゲット数です.
-        uint32_t    MaxDepthTargetCount;            //!< 最大深度ターゲット数です.
-        bool        EnableDebug;                    //!< デバッグモードを有効にします.
-        bool        EnableDRED;                     //!< DREDを有効にします
-    };
-
-    //=========================================================================
-    // public variables.
-    //=========================================================================
-    static const uint8_t kDefaultLiftTime = 4;
-
-    //=========================================================================
-    // public methods.
-    //=========================================================================
-
-    //-------------------------------------------------------------------------
-    //! @brief      唯一のインスタンスを取得します.
-    //!
-    //! @return     唯一のインスタンスを返却します.
-    //-------------------------------------------------------------------------
-    static GraphicsSystem& Instance();
-
-    //-------------------------------------------------------------------------
-    //! @brief      初期化処理を行います.
-    //!
-    //! @param[in]      desc        構成設定です.
-    //! @retval true    初期化に成功.
-    //! @retval fasle   初期化に失敗.
-    //-------------------------------------------------------------------------
-    bool Init(const Desc* desc);
-
-    //-------------------------------------------------------------------------
-    //! @brief      終了処理を行います.
-    //-------------------------------------------------------------------------
-    void Term();
-
-    //-------------------------------------------------------------------------
-    //! @brief      ID3D12Device8を取得します.
-    //!
-    //! @return     ID3D12Device8を返却します.
-    //-------------------------------------------------------------------------
-    ID3D12Device8* GetDevice() const;
-
-    //-------------------------------------------------------------------------
-    //! @brief      IDXGIFactory7を取得します.
-    //!
-    //! @return     IDXGIFactory7を返却します.
-    //-------------------------------------------------------------------------
-    IDXGIFactory7* GetFactory() const;
-
-    //-------------------------------------------------------------------------
-    //! @brief      グラフィックスキューを取得します.
-    //!
-    //! @return     グラフィックスキューを返却します.
-    //-------------------------------------------------------------------------
-    CommandQueue* GetGraphicsQueue() const;
-
-    //-------------------------------------------------------------------------
-    //! @brief      コンピュートキューを取得します.
-    //!
-    //! @return     コンピュートキューを返却します.
-    //-------------------------------------------------------------------------
-    CommandQueue* GetComputeQueue() const;
-
-    //-------------------------------------------------------------------------
-    //! @brief      コピーキューを取得します.
-    //!
-    //! @return     コピーキューを返却します.
-    //-------------------------------------------------------------------------
-    CommandQueue* GetCopyQueue() const;
-
-    //-------------------------------------------------------------------------
-    //! @brief      ビデオデコードキューを取得します.
-    //!
-    //! @return     ビデオデコードキューを返却します.
-    //-------------------------------------------------------------------------
-    CommandQueue* GetVideoDecodeQueue() const;
-
-    //-------------------------------------------------------------------------
-    //! @brief      ビデオプロセスキューを取得します.
-    //!
-    //! @return     ビデオプロセスキューを返却します.
-    //-------------------------------------------------------------------------
-    CommandQueue* GetVideoProcessQueue() const;
-
-    //-------------------------------------------------------------------------
-    //! @brief      ビデオエンコードキューを取得します.
-    //!
-    //! @return     ビデオエンコードキューを返却します.
-    //-------------------------------------------------------------------------
-    CommandQueue* GetVideoEncodeQueue() const;
-
-    //-------------------------------------------------------------------------
-    //! @brief      ディスクリプターを確保します.
-    //!
-    //! @param[in]      index       ディスクリプタタイプです.
-    //! @param[out]     ppResult    ディスクリプタの確保先です.
-    //! @retval true    確保に成功.
-    //! @retval false   確保に失敗.
-    //-------------------------------------------------------------------------
-    bool AllocHandle(int index, Descriptor** ppResult);
-
-    //-------------------------------------------------------------------------
-    //! @brief      アロー演算子です.
-    //-------------------------------------------------------------------------
-    ID3D12Device8* operator-> () const;
-
-    //-------------------------------------------------------------------------
-    //! @brief      ディスクリプタヒープを設定します.
-    //-------------------------------------------------------------------------
-    void SetDescriptorHeaps(ID3D12GraphicsCommandList* pCmdList);
-
-    //-------------------------------------------------------------------------
-    //! @brief      コマンドキューの実行完了を待機します.
-    //-------------------------------------------------------------------------
-    void WaitIdle();
-
-    //-------------------------------------------------------------------------
-    //! @brief      リソースディスポーザーに追加します.
-    //!
-    //! @param[in]      pResource       破棄リソース.
-    //! @param[in]      lifeTime        生存フレーム数です.
-    //--------------------------------------------------------------------------
-    void Dispose(
-        ID3D12Resource*& pResource, 
-        uint8_t lifeTime = kDefaultLiftTime);
-
-    //-------------------------------------------------------------------------
-    //! @brief      ディスクリプタディスポーザーに追加します.
-    //!
-    //! @param[in]      pDescriptor     破棄ディスクリプタ.
-    //! @param[in]      lifeTime        生存フレーム数です.
-    //-------------------------------------------------------------------------
-    void Dispose(
-        Descriptor*& pDescriptor,
-        uint8_t lifeTime = kDefaultLiftTime);
-
-    //-------------------------------------------------------------------------
-    //! @brief      パイプラインステートディスポーザーに追加します.
-    //!
-    //! @param[in]      pPipelineState  破棄パイプラインステート.
-    //! @param[in]      lifeTime        生存フレーム数です.
-    //-------------------------------------------------------------------------
-    void Dispose(
-        ID3D12PipelineState*& pPipelineState,
-        uint8_t lifeTime = kDefaultLiftTime);
-
-    //-------------------------------------------------------------------------
-    //! @brief      アップロードコマンドを設定します.
-    //!
-    //! @param[in]      pCmdList        コマンドリストです.
-    //-------------------------------------------------------------------------
-    void SetUploadCommand(ID3D12GraphicsCommandList* pCmdList);
-
-    //-------------------------------------------------------------------------
-    //! @brief      フレーム同期を行います.
-    //-------------------------------------------------------------------------
-    void FrameSync();
-
-    //-------------------------------------------------------------------------
-    //! @brief      強制破棄を行います.
-    //-------------------------------------------------------------------------
-    void ForceDispose();
-
-    //-------------------------------------------------------------------------
-    //! @brief      バッファ更新リソースを生成し，登録します.
-    //-------------------------------------------------------------------------
-    bool UpdateBuffer(ID3D12Resource* pDstResource, const void* pInitData);
-
-    //-------------------------------------------------------------------------
-    //! @brief      テクスチャ更新リソースを生成し，登録します.
-    //-------------------------------------------------------------------------
-    bool UpdateTexture(ID3D12Resource* pDstResource, const ResTexture& resource);
-
-private:
-    //=========================================================================
-    // private variables.
-    //=========================================================================
-    static GraphicsSystem           s_Instance;                 //!< シングルトンインスタンス.
-    RefPtr<IDXGIFactory7>           m_pFactory;                 //!< DXGIファクトリーです.
-    RefPtr<ID3D12Debug3>            m_pDebug;                   //!< デバッグオブジェクト.
-    RefPtr<ID3D12InfoQueue>         m_pInfoQueue;               //!< インフォキュー.
-    RefPtr<ID3D12Device8>           m_pDevice;                  //!< デバイス.
-    RefPtr<CommandQueue>            m_pGraphicsQueue;           //!< グラフィックスキュー.
-    RefPtr<CommandQueue>            m_pComputeQueue;            //!< コンピュートキュー.
-    RefPtr<CommandQueue>            m_pCopyQueue;               //!< コピーキュー.
-    RefPtr<CommandQueue>            m_pVideoDecodeQueue;        //!< ビデオデコードキュー.
-    RefPtr<CommandQueue>            m_pVideoProcessQueue;       //!< ビデオプロセスキュー.
-    RefPtr<CommandQueue>            m_pVideoEncodeQueue;        //!< ビデオエンコードキュー.
-    DescriptorHeap                  m_DescriptorHeap[4];        //!< ディスクリプタヒープ.
-    ResourceUploader                m_ResourceUploader;         //!< リソースアップローダー.
-    Disposer<ID3D12Resource>        m_ResourceDisposer;         //!< リソースディスポーザー.
-    Disposer<Descriptor>            m_DescriptorDisposer;       //!< ディスクリプタディスポーザー.
-    Disposer<ID3D12PipelineState>   m_PipelineStateDisposer;    //!< パイプラインステートディスポーザー.
-    SpinLock                        m_SpinLock;                 //!< スピンロックです.
-
-    //=========================================================================
-    // private methods
-    //=========================================================================
-
-    //-------------------------------------------------------------------------
-    //! @brief      コンストラクタです.
-    //-------------------------------------------------------------------------
-    GraphicsSystem() = default;
-
-    //-------------------------------------------------------------------------
-    //! @brief      デストラクタです.
-    //-------------------------------------------------------------------------
-    ~GraphicsSystem() = default;
-
-    //-------------------------------------------------------------------------
-    //! @brief      リソースアップローダーに追加します.
-    //!
-    //! @param[in]      pResource       アップロードリソース.
-    //! @param[in]      lifeTime        生存フレーム数です.
-    //-------------------------------------------------------------------------
-    void PushUploader(
-        IUploadResource* pResource,
-        uint8_t lifeTime = kDefaultLiftTime);
-
-    GraphicsSystem              (const GraphicsSystem&) = delete;   // アクセス禁止.
-    GraphicsSystem& operator =  (const GraphicsSystem&) = delete;   // アクセス禁止.
+    uint32_t    MaxShaderResourceCount;         //!< 最大シェーダリソース数です.
+    uint32_t    MaxSamplerCount;                //!< 最大サンプラー数です.
+    uint32_t    MaxColorTargetCount;            //!< 最大カラーターゲット数です.
+    uint32_t    MaxDepthTargetCount;            //!< 最大深度ターゲット数です.
+    bool        EnableDebug;                    //!< デバッグモードを有効にします.
+    bool        EnableDRED;                     //!< DREDを有効にします
 };
 
-//-----------------------------------------------------------------------------
-//! @brief      グラフィックスデバイスを取得します.
-//!
-//! @return     グラフィックスデバイスを返却します.
-//-----------------------------------------------------------------------------
-inline GraphicsSystem& GfxSystem()
-{ return GraphicsSystem::Instance(); }
-
-//-----------------------------------------------------------------------------
-//! @brief      D3D12デバイスを取得します.
-//! 
-//! @return     D3D12デバイスを返却します.
-//-----------------------------------------------------------------------------
-inline ID3D12Device8* GetD3D12Device()
-{ return GraphicsSystem::Instance().GetDevice(); }
+bool GraphicsSystemInit(const DeviceDesc& desc);
+void GraphicsSystemTerm();
+void GraphicsSystemWaitIdle();
+void FrameSync();
+bool UpdateBuffer(ID3D12Resource* pDestResource, const void* pInitData);
+bool UpdateTexture(ID3D12Resource* pDestResource, const ResTexture& resource);
+void Dispose(ID3D12Resource*& pResource);
+void Dispose(Descriptor*& pDescriptor);
+void Dispose(ID3D12PipelineState*& pPipelineState);
+void ClearDisposer();
+void SetUploadCommand(ID3D12GraphicsCommandList* pCmdList);
+void SetDescriptorHeaps(ID3D12GraphicsCommandList* pCmdList);
+CommandQueue* GetGraphicsQueue();
+CommandQueue* GetComputeQueue();
+CommandQueue* GetCopyQueue();
+CommandQueue* GetVideoProcessQueue();
+CommandQueue* GetVideoEncodeQueue();
+CommandQueue* GetVideoDecodeQueue();
+bool AllocDescriptor(uint8_t heapType, Descriptor** ppResult); 
+ID3D12Device8* GetD3D12Device();
+IDXGIFactory7* GetDXGIFactory();
 
 } // namespace asdx

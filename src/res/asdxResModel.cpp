@@ -87,6 +87,14 @@ struct MeshHeaderV1
     uint32_t    CullingInfoCount;
 };
 
+///////////////////////////////////////////////////////////////////////////////
+/// MeshHeader structure
+///////////////////////////////////////////////////////////////////////////////
+struct MeshHeaderV2 : public MeshHeaderV1
+{
+    uint32_t    BoneWeightStride;
+};
+
 //-----------------------------------------------------------------------------
 //      最大成分を取得します.
 //-----------------------------------------------------------------------------
@@ -282,7 +290,7 @@ bool SaveModel(const char* path, const ResModel& model)
     header.Magic[1]  = 'D';
     header.Magic[2]  = 'L';
     header.Magic[3]  = '\0';
-    header.Version   = 0x1;
+    header.Version   = 0x2;
     header.MeshCount = uint32_t(model.Meshes.size());
 
     fwrite(&header, sizeof(header), 1, pFile);
@@ -291,11 +299,11 @@ bool SaveModel(const char* path, const ResModel& model)
     {
         auto& mesh = model.Meshes[i];
 
-        MeshHeaderV1 meshHeader;
+        MeshHeaderV2 meshHeader;
         meshHeader.MaterialHash         = mesh.MatrerialHash;
         meshHeader.PositionCount        = uint32_t(mesh.Positions.size());
         meshHeader.TangentSpaceCount    = uint32_t(mesh.TangentSpaces.size());
-        meshHeader.ColorCount           = uint32_t(mesh.Colors.size());       
+        meshHeader.ColorCount           = uint32_t(mesh.Colors.size());
         for(auto i=0; i<4; ++i)
         { meshHeader.TexCoordCount[i] = uint32_t(mesh.TexCoords[i].size()); }
         meshHeader.BoneIndexCount       = uint32_t(mesh.BoneIndices.size());
@@ -304,6 +312,7 @@ bool SaveModel(const char* path, const ResModel& model)
         meshHeader.PrimitiveCount       = uint32_t(mesh.Primitives.size());
         meshHeader.MeshletCount         = uint32_t(mesh.Meshlets.size());
         meshHeader.CullingInfoCount     = uint32_t(mesh.CullingInfos.size());
+        meshHeader.BoneWeightStride     = mesh.BoneWeightStride;
 
         fwrite(&meshHeader, sizeof(meshHeader), 1, pFile);
 
@@ -395,6 +404,64 @@ bool LoadModel(const char* path, ResModel& model)
             mesh.Primitives     .resize(meshHeader.PrimitiveCount);
             mesh.Meshlets       .resize(meshHeader.MeshletCount);
             mesh.CullingInfos   .resize(meshHeader.CullingInfoCount);
+            for(size_t j=0; j<mesh.Positions.size(); ++j)
+            { fread(&mesh.Positions[j], sizeof(mesh.Positions[j]), 1, pFile); }
+
+            for(size_t j=0; j<mesh.TangentSpaces.size(); ++j)
+            { fread(&mesh.TangentSpaces[j], sizeof(mesh.TangentSpaces[j]), 1, pFile); }
+
+            for(size_t j=0; j<mesh.Colors.size(); ++j)
+            { fread(&mesh.Colors[j], sizeof(mesh.Colors[j]), 1, pFile); }
+
+            for(auto ch=0; ch<4; ++ch)
+            {
+                for(size_t j=0; j<mesh.TexCoords[ch].size(); ++j)
+                { fread(&mesh.TexCoords[ch][j], sizeof(mesh.TexCoords[ch][j]), 1, pFile); }
+            }
+
+            for(size_t j=0; j<mesh.BoneIndices.size(); ++j)
+            { fread(&mesh.BoneIndices[j], sizeof(mesh.BoneIndices[j]), 1, pFile); }
+
+            for(size_t j=0; j<mesh.BoneWeights.size(); ++j)
+            { fread(&mesh.BoneWeights[j], sizeof(mesh.BoneWeights[j]), 1, pFile); }
+
+            for(size_t j=0; j<mesh.Indices.size(); ++j)
+            { fread(&mesh.Indices[j], sizeof(mesh.Indices[j]), 1, pFile); }
+
+            for(size_t j=0; j<mesh.Primitives.size(); ++j)
+            { fread(&mesh.Primitives[j], sizeof(mesh.Primitives[j]), 1, pFile); }
+
+            for(size_t j=0; j<mesh.Meshlets.size(); ++j)
+            { fread(&mesh.Meshlets[j], sizeof(mesh.Meshlets[j]), 1, pFile); }
+
+            for(size_t j=0; j<mesh.CullingInfos.size(); ++j)
+            { fread(&mesh.CullingInfos[j], sizeof(mesh.CullingInfos[j]), 1, pFile); }
+        }
+    }
+    if (modelHeader.Version == 0x2)
+    {
+        model.Meshes.resize(modelHeader.MeshCount);
+
+        for(size_t i=0; i<model.Meshes.size(); ++i)
+        {
+            MeshHeaderV2 meshHeader;
+            fread(&meshHeader, sizeof(meshHeader), 1, pFile);
+
+            auto& mesh = model.Meshes[i];
+
+            mesh.MatrerialHash = meshHeader.MaterialHash;
+            mesh.Positions      .resize(meshHeader.PositionCount);
+            mesh.TangentSpaces  .resize(meshHeader.TangentSpaceCount);
+            mesh.Colors         .resize(meshHeader.ColorCount);
+            for(auto ch=0; ch<4; ++ch)
+            { mesh.TexCoords[ch].resize(meshHeader.TexCoordCount[ch]); }
+            mesh.BoneIndices    .resize(meshHeader.BoneIndexCount);
+            mesh.BoneWeights    .resize(meshHeader.BoneWeightCount);
+            mesh.Indices        .resize(meshHeader.IndexCount);
+            mesh.Primitives     .resize(meshHeader.PrimitiveCount);
+            mesh.Meshlets       .resize(meshHeader.MeshletCount);
+            mesh.CullingInfos   .resize(meshHeader.CullingInfoCount);
+            mesh.BoneWeightStride = meshHeader.BoneWeightStride;
 
             for(size_t j=0; j<mesh.Positions.size(); ++j)
             { fread(&mesh.Positions[j], sizeof(mesh.Positions[j]), 1, pFile); }

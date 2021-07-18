@@ -184,7 +184,7 @@ ID3D12GraphicsCommandList6* CommandList::Reset()
     m_CmdList->Reset( m_Allocator[m_Index].GetPtr(), nullptr );
 
     // ディスクリプターヒープを設定しおく.
-    GfxSystem().SetDescriptorHeaps(m_CmdList.GetPtr());
+    SetDescriptorHeaps(m_CmdList.GetPtr());
 
     return m_CmdList.GetPtr();
 }
@@ -594,6 +594,20 @@ void CommandList::SetUAV
 }
 
 //-----------------------------------------------------------------------------
+//      ルートシグニチャを設定します.
+//-----------------------------------------------------------------------------
+void CommandList::SetRootSignature(ID3D12RootSignature* value, bool compute)
+{
+    if (value == nullptr)
+    { return; }
+
+    if (compute)
+    { m_CmdList->SetComputeRootSignature(value); }
+    else
+    { m_CmdList->SetGraphicsRootSignature(value); }
+}
+
+//-----------------------------------------------------------------------------
 //      イベントを開始します.
 //-----------------------------------------------------------------------------
 void CommandList::BeginEvent(const char* text)
@@ -607,7 +621,7 @@ void CommandList::BeginEvent(const char* text)
 //-----------------------------------------------------------------------------
 //      リソースをアップロードします.
 //-----------------------------------------------------------------------------
-void CommandList::Upload
+void CommandList::UpdateSubresources
 (
     ID3D12Resource*                 pDstResource,
     uint32_t                        subResourceCount,
@@ -722,7 +736,27 @@ void CommandList::Upload
         }
     }
 
-    GfxSystem().Dispose(pSrcResource);
+    Dispose(pSrcResource);
+}
+
+//-----------------------------------------------------------------------------
+//      サブリソースを更新します.
+//-----------------------------------------------------------------------------
+void CommandList::UpdateSubresource
+(
+    ID3D12Resource* pDstResource,
+    uint32_t        subResourceIndex,
+    const void*     pData,
+    uint64_t        rowPitch,
+    uint64_t        slicePitch
+)
+{
+    D3D12_SUBRESOURCE_DATA res = {};
+    res.pData       = pData;
+    res.RowPitch    = rowPitch;
+    res.SlicePitch  = slicePitch;
+
+    UpdateSubresources(pDstResource, 1, subResourceIndex, &res);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

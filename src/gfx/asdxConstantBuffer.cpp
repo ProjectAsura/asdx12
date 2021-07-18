@@ -10,6 +10,7 @@
 #include <gfx/asdxConstantBuffer.h>
 #include <gfx/asdxGraphicsSystem.h>
 #include <fnd/asdxLogger.h>
+#include <cassert>
 
 
 namespace asdx {

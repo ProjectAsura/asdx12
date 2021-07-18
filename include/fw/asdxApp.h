@@ -239,7 +239,7 @@ protected:
     HICON                           m_hIcon;                //!< アイコンハンドルです.
     HMENU                           m_hMenu;                //!< メニューハンドルです.
     HACCEL                          m_hAccel;               //!< アクセレレータハンドルです.
-    GraphicsSystem::Desc            m_DeviceDesc;           //!< デバイス設定です.
+    DeviceDesc                      m_DeviceDesc;           //!< デバイス設定です.
     std::vector<ColorTarget>        m_ColorTarget;          //!< カラーターゲットです.
     DepthTarget                     m_DepthTarget;          //!< 深度ターゲットです.
     CommandList                     m_GfxCmdList;           //!< グラフィックスコマンドリスト.

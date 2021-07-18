@@ -92,7 +92,7 @@ void IndexBuffer::Term()
 {
     auto resource = m_pResource.Detach();
     if (resource != nullptr)
-    { GfxSystem().Dispose(resource); }
+    { Dispose(resource); }
     memset(&m_View, 0, sizeof(m_View));
 }
 

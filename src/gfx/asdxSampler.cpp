@@ -255,7 +255,7 @@ bool Sampler::Init(const D3D12_SAMPLER_DESC* pDesc)
         return false;
     }
 
-    if (!GfxSystem().AllocHandle(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, m_Descriptor.GetAddress()))
+    if (!AllocDescriptor(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, m_Descriptor.GetAddress()))
     {
         ELOG("Error : GraphicsDevice::AllocHandle() Failed.");
         return false;

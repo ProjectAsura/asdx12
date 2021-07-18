@@ -15,6 +15,8 @@
 
 namespace asdx {
 
+static constexpr uint8_t kDefaultLifeTime = 4;    // 4フレーム分
+
 ///////////////////////////////////////////////////////////////////////////////
 // Disposer class
 ///////////////////////////////////////////////////////////////////////////////
@@ -30,7 +32,7 @@ public:
     //=========================================================================
     // public variables.
     //=========================================================================
-    static constexpr uint8_t kDefaultLifeTime = 4;    // 4フレーム分
+    /* NOTHING */
 
     //=========================================================================
     // public methods.
@@ -61,7 +63,7 @@ public:
 
         asdx::ScopedLock locker(&m_SpinLock);
 
-        Item item;
+        Item item = {};
         item.pObject    = pObject;
         item.LifeTime   = lifeTime;
         m_List.push_back(item);

@@ -588,7 +588,7 @@ void PipelineState::Recreate()
     if (!m_pRecreatePSO.GetPtr())
     {
         auto pso = m_pRecreatePSO.Detach();
-        GfxSystem().Dispose(pso);
+        Dispose(pso);
     }
 
     if (m_Type == PIPELINE_TYPE_GRAPHICS)

@@ -13,6 +13,7 @@
 #include <fnd/asdxMath.h>
 #include <fnd/asdxLogger.h>
 #include <fw/asdxApp.h>
+#include <gfx/asdxCommandQueue.h>
 
 
 namespace /* anonymous */ {
@@ -683,7 +684,7 @@ bool Application::InitApp()
 void Application::TermApp()
 {
     // コマンドの完了を待機.
-    GfxSystem().WaitIdle();
+    GraphicsSystemWaitIdle();
 
     // アプリケーション固有の終了処理.
     OnTerm();
@@ -858,7 +859,7 @@ bool Application::InitD3D()
     m_AspectRatio = (FLOAT)w / (FLOAT)h;
 
     // デバイスの初期化.
-    if (!GfxSystem().Init(&m_DeviceDesc))
+    if (!GraphicsSystemInit(m_DeviceDesc))
     {
         ELOG("Error : GraphicsDeivce::Init() Failed.");
         return false;
@@ -891,8 +892,8 @@ bool Application::InitD3D()
         fullScreenDesc.Windowed         = TRUE;
 
         RefPtr<IDXGISwapChain1> pSwapChain1;
-        auto pQueue = GfxSystem().GetGraphicsQueue()->GetQueue();
-        hr = GfxSystem().GetFactory()->CreateSwapChainForHwnd(pQueue, m_hWnd, &desc, &fullScreenDesc, nullptr, pSwapChain1.GetAddress());
+        auto pQueue = GetGraphicsQueue()->GetQueue();
+        hr = GetDXGIFactory()->CreateSwapChainForHwnd(pQueue, m_hWnd, &desc, &fullScreenDesc, nullptr, pSwapChain1.GetAddress());
         if (FAILED(hr))
         {
             ELOG("Error : IDXGIFactory2::CreateSwapChainForHwnd() Failed. errcode = 0x%x", hr);
@@ -900,7 +901,7 @@ bool Application::InitD3D()
         }
 
         if (m_AllowTearing)
-        { GfxSystem().GetFactory()->MakeWindowAssociation(m_hWnd, DXGI_MWA_NO_ALT_ENTER); }
+        { GetDXGIFactory()->MakeWindowAssociation(m_hWnd, DXGI_MWA_NO_ALT_ENTER); }
 
         // IDXGISwapChain4にキャスト.
         hr = pSwapChain1->QueryInterface(IID_PPV_ARGS(m_pSwapChain4.GetAddress()));
@@ -991,7 +992,7 @@ void Application::TermD3D()
     m_DepthTarget.Term();
     m_pSwapChain4.Reset();
     m_GfxCmdList.Term();
-    GfxSystem().Term();
+    GraphicsSystemTerm();
 }
 
 //-----------------------------------------------------------------------------
@@ -1128,7 +1129,7 @@ void Application::ResizeEvent( const ResizeEventArgs& param )
     if ( m_pSwapChain4 != nullptr )
     {
         // コマンドの完了を待機.
-        GfxSystem().WaitIdle();
+        GraphicsSystemWaitIdle();
 
         // 描画ターゲットを解放.
         for(size_t i=0; i<m_ColorTarget.size(); ++i)
@@ -1138,7 +1139,7 @@ void Application::ResizeEvent( const ResizeEventArgs& param )
         m_DepthTarget.Term();
 
         // 強制破棄.
-        GfxSystem().ForceDispose();
+        ClearDisposer();
 
         HRESULT hr = S_OK;
 
@@ -1180,17 +1181,13 @@ void Application::ResizeEvent( const ResizeEventArgs& param )
 //      マウスイベント処理.
 //-----------------------------------------------------------------------------
 void Application::MouseEvent( const MouseEventArgs& param )
-{
-    OnMouse( param );
-}
+{ OnMouse( param ); }
 
 //-----------------------------------------------------------------------------
 //      ドロップイベント処理.
 //------------------------------------------------------------------------------
 void Application::DropEvent( const wchar_t** dropFiles, uint32_t fileNum )
-{
-    OnDrop( dropFiles, fileNum );
-}
+{ OnDrop( dropFiles, fileNum ); }
 
 //-----------------------------------------------------------------------------
 //      ウィンドウプロシージャ.
@@ -1510,7 +1507,7 @@ void Application::CheckSupportHDR()
     GetWindowRect(m_hWnd, &rect);
 
     RefPtr<IDXGIAdapter1> pAdapter;
-    hr = GfxSystem().GetFactory()->EnumAdapters1(0, pAdapter.GetAddress());
+    hr = GetDXGIFactory()->EnumAdapters1(0, pAdapter.GetAddress());
     if (FAILED(hr))
     {
         ELOG("Error : IDXGIFactory1::EnumAdapters1() Failed.");
