@@ -962,6 +962,12 @@ bool Application::InitD3D()
         return false;
     }
 
+    if (!m_CopyCmdList.Init(GetD3D12Device(), D3D12_COMMAND_LIST_TYPE_COPY))
+    {
+        ELOG("Error : CommandList::Init() Failed.");
+        return false;
+    }
+
     // ビューポートの設定.
     m_Viewport.Width    = (FLOAT)w;
     m_Viewport.Height   = (FLOAT)h;
@@ -991,6 +997,7 @@ void Application::TermD3D()
     m_ColorTarget.clear();
     m_DepthTarget.Term();
     m_pSwapChain4.Reset();
+    m_CopyCmdList.Term();
     m_GfxCmdList.Term();
     SystemTerm();
 }

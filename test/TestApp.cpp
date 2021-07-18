@@ -139,7 +139,6 @@ void TestApp::OnTerm()
     m_CbScene       .Term();
     m_Texture       .Term();
     m_Sampler       .Term();
-    //m_Disposer      .Clear();
 }
 
 //-----------------------------------------------------------------------------
@@ -152,8 +151,6 @@ void TestApp::OnFrameRender(asdx::FrameEventArgs& args)
 
     auto idx  = GetCurrentBackBufferIndex();
     auto pCmd = m_GfxCmdList.Reset();
-
-    asdx::GfxSystem().SetUploadCommand(pCmd);
 
 #if TEST_TRIANGLE
     // 三角形描画.
@@ -198,7 +195,7 @@ void TestApp::OnFrameRender(asdx::FrameEventArgs& args)
     Present(0);
 
     // フレーム同期.
-    asdx::GfxSystem().FrameSync();
+    asdx::FrameSync();
 }
 
 //-----------------------------------------------------------------------------
@@ -243,7 +240,7 @@ void TestApp::OnTyping(uint32_t keyCode)
 //-----------------------------------------------------------------------------
 bool TestApp::TriangleTestInit()
 {
-    m_pGraphicsQueue = asdx::GfxSystem().GetGraphicsQueue();
+    m_pGraphicsQueue = asdx::GetGraphicsQueue();
 
     auto pDevice = asdx::GetD3D12Device();
 
@@ -268,28 +265,45 @@ bool TestApp::TriangleTestInit()
 
     // ルートシグニチャ.
     {
-        uint32_t flag = asdx::RSF_ALLOW_IA;
-        flag |= asdx::RSF_DENY_GS;
-        flag |= asdx::RSF_DENY_DS;
-        flag |= asdx::RSF_DENY_HS;
-        flag |= asdx::RSF_DENY_AS;
-        flag |= asdx::RSF_DENY_MS;
+        //uint32_t flag = asdx::RSF_ALLOW_IA;
+        //flag |= asdx::RSF_DENY_GS;
+        //flag |= asdx::RSF_DENY_DS;
+        //flag |= asdx::RSF_DENY_HS;
+        //flag |= asdx::RSF_DENY_AS;
+        //flag |= asdx::RSF_DENY_MS;
 
-        asdx::RootSignatureDesc desc;
-        desc.AddFromShader(TestVS, sizeof(TestVS))
-            .AddFromShader(TestPS, sizeof(TestPS));
-        desc.SetFlag(flag);
+        D3D12_DESCRIPTOR_RANGE range[2] = {};
+        asdx::RangeSRV(range[0], 0);
+        asdx::RangeSmp(range[1], 0);
 
-        if (!m_RootSignature.Init(pDevice, desc))
+        D3D12_ROOT_PARAMETER param[4] = {};
+        asdx::ParamCBV  (param[0], asdx::SV_VS, 0);
+        asdx::ParamCBV  (param[1], asdx::SV_VS, 1);
+        asdx::ParamTable(param[2], asdx::SV_PS, 1, &range[0]);
+        asdx::ParamTable(param[3], asdx::SV_PS, 1, &range[1]);
+
+        D3D12_ROOT_SIGNATURE_DESC desc = {};
+        desc.NumParameters      = _countof(param);
+        desc.pParameters        = param;
+        desc.NumStaticSamplers  = 0;
+        desc.pStaticSamplers    = nullptr;
+        desc.Flags              = asdx::ROOT_SIGNATURE_FLAG_VS_PS;
+
+        //asdx::RootSignatureDesc desc;
+        //desc.AddFromShader(TestVS, sizeof(TestVS))
+        //    .AddFromShader(TestPS, sizeof(TestPS));
+        //desc.SetFlag(flag);
+
+        if (!m_RootSignature.Init(pDevice, &desc))
         {
             ELOG("Error : RootSignature::Init() Failed.");
             return false;
         }
 
-        m_IndexCBMesh       = m_RootSignature.Find("CbMesh");
-        m_IndexCBScene      = m_RootSignature.Find("CbScene");
-        m_IndexColorMap     = m_RootSignature.Find("ColorMap");
-        m_IndexLinearClamp  = m_RootSignature.Find("LinearClamp");
+        //m_IndexCBMesh       = m_RootSignature.Find("CbMesh");
+        //m_IndexCBScene      = m_RootSignature.Find("CbScene");
+        //m_IndexColorMap     = m_RootSignature.Find("ColorMap");
+        //m_IndexLinearClamp  = m_RootSignature.Find("LinearClamp");
     }
 
     // パイプラインステート.
@@ -303,9 +317,9 @@ bool TestApp::TriangleTestInit()
         desc.pRootSignature         = m_RootSignature.GetPtr();
         desc.VS                     = { TestVS, sizeof(TestVS) };
         desc.PS                     = { TestPS, sizeof(TestPS) };
-        desc.BlendState             = asdx::GetBS(asdx::BLEND_STATE_OPAQUE);
-        desc.RasterizerState        = asdx::GetRS(asdx::RASTERIZER_STATE_CULL_BACK);
-        desc.DepthStencilState      = asdx::GetDSS(asdx::DEPTH_STATE_DEFAULT);
+        desc.BlendState             = asdx::BLEND_DESC(asdx::BLEND_STATE_OPAQUE);
+        desc.RasterizerState        = asdx::RASTERIZER_DESC(asdx::RASTERIZER_STATE_CULL_BACK);
+        desc.DepthStencilState      = asdx::DEPTH_STENCIL_DESC(asdx::DEPTH_STATE_DEFAULT);
         desc.InputLayout            = { elements, 2 };
         desc.PrimitiveTopologyType  = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
         desc.SampleMask             = UINT_MAX;
@@ -334,6 +348,8 @@ bool TestApp::TriangleTestInit()
         return false;
     }
 
+    m_CopyCmdList.Reset();
+
     {
         asdx::ResTexture res;
         if (!res.LoadFromFileA("./test.tga"))
@@ -342,7 +358,7 @@ bool TestApp::TriangleTestInit()
             return false;
         }
 
-        if (!m_Texture.Init(res))
+        if (!m_Texture.Init(m_CopyCmdList, res))
         {
             ELOG("Error : Texture::Init() Failed.");
             return false;
@@ -350,8 +366,17 @@ bool TestApp::TriangleTestInit()
         res.Release();
     }
 
+    m_CopyCmdList.Close();
+    ID3D12CommandList* pCopyCmdList[] = { m_CopyCmdList.GetCommandList() };
+    auto pCopyQueue = asdx::GetCopyQueue();
+    pCopyQueue->Execute(1, pCopyCmdList);
+    auto waitPoint = pCopyQueue->Signal();
+    pCopyQueue->Sync(waitPoint);
+
     {
-        if (!m_Sampler.Init(asdx::GfxDevice(), asdx::ST_LINEAR_CLAMP))
+        asdx::SAMPLER_DESC desc(asdx::SAMPLER_LINEAR_CLAMP);
+
+        if (!m_Sampler.Init(&desc))
         {
             ELOG("Error : Sampler::Init() Failed.");
             return false;
@@ -364,10 +389,9 @@ bool TestApp::TriangleTestInit()
 //-----------------------------------------------------------------------------
 //      三角形の描画関数です.
 //-----------------------------------------------------------------------------
-void TestApp::TriangleTestRender(ID3D12GraphicsCommandList6* pCmd, uint8_t idx)
+void TestApp::TriangleTestRender(uint8_t idx)
 {
-    asdx::BarrierTransition(
-        pCmd,
+    m_GfxCmdList.BarrierTransition(
         m_ColorTarget[idx].GetResource(),
         0,
         D3D12_RESOURCE_STATE_PRESENT,
@@ -376,27 +400,34 @@ void TestApp::TriangleTestRender(ID3D12GraphicsCommandList6* pCmd, uint8_t idx)
     auto pRTV = m_ColorTarget[idx].GetRTV();
     auto pDSV = m_DepthTarget.GetDSV();
 
-    asdx::ClearRTV(pCmd, pRTV, m_ClearColor);
-    asdx::ClearDSV(pCmd, pDSV, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0);
+    m_GfxCmdList.ClearRTV(pRTV, m_ClearColor);
+    m_GfxCmdList.ClearDSV(pDSV, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0);
 
-    asdx::SetRenderTarget(pCmd, pRTV, pDSV);
-    asdx::SetViewport(pCmd, m_ColorTarget[idx].GetResource());
+    m_GfxCmdList.SetTarget(pRTV, pDSV);
+    m_GfxCmdList.SetViewport(m_ColorTarget[idx].GetResource());
 
     // 描画処理.
     {
         auto vbv = m_TriangleVB.GetView();
-        pCmd->SetGraphicsRootSignature(m_RootSignature.GetPtr());
-        pCmd->SetPipelineState(m_PSO.GetPtr());
-        pCmd->SetGraphicsRootDescriptorTable(m_IndexColorMap, m_Texture.GetView()->GetHandleGPU());
-        pCmd->SetGraphicsRootDescriptorTable(m_IndexLinearClamp, m_Sampler.GetDescriptor()->GetHandleGPU());
+        //pCmd->SetGraphicsRootSignature(m_RootSignature.GetPtr());
+        //pCmd->SetPipelineState(m_PSO.GetPtr());
+        //pCmd->SetGraphicsRootDescriptorTable(m_IndexColorMap, m_Texture.GetView()->GetHandleGPU());
+        //pCmd->SetGraphicsRootDescriptorTable(m_IndexLinearClamp, m_Sampler.GetDescriptor()->GetHandleGPU());
 
-        pCmd->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-        pCmd->IASetVertexBuffers(0, 1, &vbv);
-        pCmd->DrawInstanced(3, 1, 0, 0);
+        m_GfxCmdList.SetRootSignature(m_RootSignature.GetPtr(), false);
+        m_GfxCmdList.SetPipelineState(m_PSO.GetPtr());
+        m_GfxCmdList.SetTable(2, m_Texture.GetView());
+        m_GfxCmdList.SetTable(3, &m_Sampler);
+        m_GfxCmdList.SetPrimitiveToplogy(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        m_GfxCmdList.SetVertexBuffers(0, 1, &vbv);
+        m_GfxCmdList.DrawInstanced(3, 1, 0, 0);
+
+        //pCmd->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        //pCmd->IASetVertexBuffers(0, 1, &vbv);
+        //pCmd->DrawInstanced(3, 1, 0, 0);
     }
 
-    asdx::BarrierTransition(
-        pCmd,
+    m_GfxCmdList.BarrierTransition(
         m_ColorTarget[idx].GetResource(),
         0,
         D3D12_RESOURCE_STATE_RENDER_TARGET,

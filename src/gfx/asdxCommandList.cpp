@@ -11,6 +11,7 @@
 #include <vector>
 #include <gfx/asdxCommandList.h>
 #include <gfx/asdxGraphicsSystem.h>
+#include <gfx/asdxSampler.h>
 #include <fnd/asdxLogger.h>
 
 namespace {
@@ -172,7 +173,7 @@ void CommandList::Term()
 //-----------------------------------------------------------------------------
 //      コマンドリストをリセットします.
 //-----------------------------------------------------------------------------
-ID3D12GraphicsCommandList6* CommandList::Reset()
+void CommandList::Reset()
 {
     // ダブルバッファリング.
     m_Index = (m_Index + 1) & 0x1;
@@ -185,8 +186,6 @@ ID3D12GraphicsCommandList6* CommandList::Reset()
 
     // ディスクリプターヒープを設定しおく.
     SetDescriptorHeaps(m_CmdList.GetPtr());
-
-    return m_CmdList.GetPtr();
 }
 
 //-----------------------------------------------------------------------------
@@ -480,6 +479,28 @@ void CommandList::SetTable
     { m_CmdList->SetComputeRootDescriptorTable(index, pView->GetHandleGPU()); }
     else
     { m_CmdList->SetGraphicsRootDescriptorTable(index, pView->GetHandleGPU()); }
+}
+
+//-----------------------------------------------------------------------------
+//      ディスクリプタテーブルを設定します.
+//-----------------------------------------------------------------------------
+void CommandList::SetTable
+(
+    uint32_t                    index,
+    const Sampler*              pSampler,
+    bool                        compute
+)
+{
+    if (pSampler == nullptr || index == UINT32_MAX)
+    { return; }
+
+    if (pSampler->GetDescriptor() == nullptr)
+    { return; }
+
+    if (compute)
+    { m_CmdList->SetComputeRootDescriptorTable(index, pSampler->GetDescriptor()->GetHandleGPU()); }
+    else
+    { m_CmdList->SetGraphicsRootDescriptorTable(index, pSampler->GetDescriptor()->GetHandleGPU()); }
 }
 
 //-----------------------------------------------------------------------------

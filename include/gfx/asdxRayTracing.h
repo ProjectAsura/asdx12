@@ -405,7 +405,7 @@ private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    static const uint32_t  kMaxCount = 12;
+    static const uint32_t  kMaxCount = 32;
     D3D12_STATE_SUBOBJECT  m_Objects[kMaxCount] = {};
     uint32_t               m_Count              = 0;
 

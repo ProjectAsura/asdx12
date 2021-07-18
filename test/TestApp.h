@@ -14,10 +14,10 @@
 #include <gfx/asdxPipelineState.h>
 #include <gfx/asdxRootSignature.h>
 #include <gfx/asdxDisposer.h>
-#include <gfx/asdxResourceUploader.h>
 #include <gfx/asdxTexture.h>
 #include <gfx/asdxSampler.h>
 #include <gfx/asdxModel.h>
+#include <gfx/asdxCommandList.h>
 #include <fw/asdxCameraController.h>
 #include <rs/asdxPassGraph.h>
 //#include <renderer/asdxColorFilter.h>
@@ -84,18 +84,18 @@ private:
     void OnTyping(uint32_t keyCode) override;
 
     bool TriangleTestInit();
-    void TriangleTestRender(ID3D12GraphicsCommandList6* pCmd, uint8_t idx);
+    void TriangleTestRender(uint8_t idx);
 
     bool MeshShaderTestInit();
-    void MeshShaderTestRender(ID3D12GraphicsCommandList6* pCmd, uint8_t idx);
+    void MeshShaderTestRender(uint8_t idx);
 
     bool MeshletTestInit();
-    void MeshletTestRender(ID3D12GraphicsCommandList6* pCmd, uint8_t idx);
+    void MeshletTestRender(uint8_t idx);
 
     bool QuadTestInit();
-    void QuadTestRender(ID3D12GraphicsCommandList6* pCmd, uint8_t idex);
+    void QuadTestRender(uint8_t idex);
 
     bool PassGraphTestInit();
     void PassGraphTestTerm();
-    void PassGraphTestRender(ID3D12GraphicsCommandList6* pCmd, uint8_t index);
+    void PassGraphTestRender(uint8_t index);
 };

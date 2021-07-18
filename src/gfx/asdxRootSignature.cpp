@@ -52,7 +52,7 @@ void RangeSmp(D3D12_DESCRIPTOR_RANGE& range, UINT baseRegister, UINT registerSpa
 void ParamCBV
 (
     D3D12_ROOT_PARAMETER&   param,
-    D3D12_SHADER_VISIBILITY visibility,
+    uint8_t                 visibility,
     UINT                    baseRegister,
     UINT                    registerSpace
 )
@@ -60,13 +60,13 @@ void ParamCBV
     param.ParameterType               = D3D12_ROOT_PARAMETER_TYPE_CBV;
     param.Descriptor.ShaderRegister   = baseRegister;
     param.Descriptor.RegisterSpace    = registerSpace;
-    param.ShaderVisibility            = visibility;
+    param.ShaderVisibility            = D3D12_SHADER_VISIBILITY(visibility);
 }
 
 void ParamSRV
 (
     D3D12_ROOT_PARAMETER&   param,
-    D3D12_SHADER_VISIBILITY visibility,
+    uint8_t                 visibility,
     UINT                    baseRegister,
     UINT                    registerSpace
 )
@@ -74,13 +74,13 @@ void ParamSRV
     param.ParameterType               = D3D12_ROOT_PARAMETER_TYPE_SRV;
     param.Descriptor.ShaderRegister   = baseRegister;
     param.Descriptor.RegisterSpace    = registerSpace;
-    param.ShaderVisibility            = visibility;
+    param.ShaderVisibility            = D3D12_SHADER_VISIBILITY(visibility);
 }
 
 void ParamUAV
 (
     D3D12_ROOT_PARAMETER&   param,
-    D3D12_SHADER_VISIBILITY visibility,
+    uint8_t                 visibility,
     UINT                    baseRegister,
     UINT                    registerSpace
 )
@@ -88,13 +88,13 @@ void ParamUAV
     param.ParameterType               = D3D12_ROOT_PARAMETER_TYPE_UAV;
     param.Descriptor.ShaderRegister   = baseRegister;
     param.Descriptor.RegisterSpace    = registerSpace;
-    param.ShaderVisibility            = visibility;
+    param.ShaderVisibility            = D3D12_SHADER_VISIBILITY(visibility);
 }
 
 void ParamTable
 (
     D3D12_ROOT_PARAMETER&           param,
-    D3D12_SHADER_VISIBILITY         visibility,
+    uint8_t                         visibility,
     UINT                            count,
     const D3D12_DESCRIPTOR_RANGE*   ranges
 )
@@ -102,13 +102,13 @@ void ParamTable
     param.ParameterType                       = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
     param.DescriptorTable.NumDescriptorRanges = count;
     param.DescriptorTable.pDescriptorRanges   = ranges;
-    param.ShaderVisibility                    = visibility;
+    param.ShaderVisibility                    = D3D12_SHADER_VISIBILITY(visibility);
 }
 
 void ParamConstants
 (
     D3D12_ROOT_PARAMETER&   param,
-    D3D12_SHADER_VISIBILITY visibility,
+    uint8_t                 visibility,
     UINT                    count,
     UINT                    baseRegister,
     UINT                    registerSpace
@@ -118,7 +118,7 @@ void ParamConstants
     param.Constants.Num32BitValues    = count;
     param.Constants.ShaderRegister    = baseRegister;
     param.Constants.RegisterSpace     = registerSpace;
-    param.ShaderVisibility            = visibility;
+    param.ShaderVisibility            = D3D12_SHADER_VISIBILITY(visibility);
 }
 
 

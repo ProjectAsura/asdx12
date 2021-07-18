@@ -9,40 +9,44 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <d3d12.h>
+#include <vector>
 #include <fnd/asdxRef.h>
 
 
 namespace asdx {
 
-enum ROOT_SIGNATURE_FLAGS
-{
-    ROOT_SIGNATURE_FLAG_NONE = 0,
-    ROOT_SIGNATURE_FLAG_ALLOW_IL = 0x01,
-    ROOT_SIGNATURE_FLAG_DENY_VS = 0x02,
-    ROOT_SIGNATURE_FLAG_DENY_HS = 0x04,
-    ROOT_SIGNATURE_FLAG_DENY_DS = 0x08,
-    ROOT_SIGNATURE_FLAG_DENY_GS = 0x10,
-    ROOT_SIGNATURE_FLAG_DENY_PS = 0x20,
-    ROOT_SIGNATURE_FLAG_ALLOW_STREAM_OUTPUT = 0x40,
-    ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE = 0x80,
-    ROOT_SIGNATURE_FLAG_DENY_AS = 0x100,
-    ROOT_SIGNATURE_FLAG_DENY_MS = 0x200,
-    ROOT_SIGNATURE_FLAG_HEAP_DIRECTLY_INDEXED_RES = 0x400,
-    ROOT_SIGNATURE_FLAG_HEAP_DIRECTLY_INDEXED_SMP = 0x800,
+constexpr D3D12_ROOT_SIGNATURE_FLAGS ROOT_SIGNATURE_FLAG_VS_PS =
+    D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
+    D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS       |
+    D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS   |
+    D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS;
 
-    ROOT_SIGNATURE_FLAG_VS_PS = ROOT_SIGNATURE_FLAG_ALLOW_IL | ROOT_SIGNATURE_FLAG_DENY_HS | ROOT_SIGNATURE_FLAG_DENY_DS | ROOT_SIGNATURE_FLAG_DENY_GS,
-    ROOT_SIGNATURE_FLAG_MS_PS = ROOT_SIGNATURE_FLAG_DENY_VS  | ROOT_SIGNATURE_FLAG_DENY_HS | ROOT_SIGNATURE_FLAG_DENY_DS | ROOT_SIGNATURE_FLAG_DENY_GS,
+constexpr D3D12_ROOT_SIGNATURE_FLAGS ROOT_SIGNATURE_FLAG_MS_PS =
+    D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS   |
+    D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
+    D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS;
+
+enum SHADER_VISIBILITY
+{
+    SV_ALL = 0,
+    SV_VS  = 1,
+    SV_HS  = 2,
+    SV_DS  = 3,
+    SV_GS  = 4,
+    SV_PS  = 5,
+    SV_AS  = 6,
+    SV_MS  = 7,
 };
 
 void RangeCBV(D3D12_DESCRIPTOR_RANGE& range, UINT baseRegister, UINT registerSpace = 0);
 void RangeSRV(D3D12_DESCRIPTOR_RANGE& range, UINT baseRegister, UINT registerSpace = 0);
 void RangeUAV(D3D12_DESCRIPTOR_RANGE& range, UINT baseRegister, UINT registerSpace = 0);
 void RangeSmp(D3D12_DESCRIPTOR_RANGE& range, UINT baseRegister, UINT registerSpace = 0);
-void ParamCBV(D3D12_ROOT_PARAMETER& param, D3D12_SHADER_VISIBILITY shader, UINT baseRegister, uint32_t registerSpace = 0);
-void ParamSRV(D3D12_ROOT_PARAMETER& param, D3D12_SHADER_VISIBILITY shader, UINT baseRegister, uint32_t registerSpace = 0);
-void ParamUAV(D3D12_ROOT_PARAMETER& param, D3D12_SHADER_VISIBILITY shader, UINT baseRegister, uint32_t registerSpace = 0);
-void ParamTable(D3D12_ROOT_PARAMETER& param, D3D12_SHADER_VISIBILITY shader, UINT, const D3D12_DESCRIPTOR_RANGE* ranges);
-void ParamConstants(D3D12_ROOT_PARAMETER& param, D3D12_SHADER_VISIBILITY shader, UINT count, UINT baseRegister, UINT registerSpace = 0);
+void ParamCBV(D3D12_ROOT_PARAMETER& param, uint8_t shader, UINT baseRegister, uint32_t registerSpace = 0);
+void ParamSRV(D3D12_ROOT_PARAMETER& param, uint8_t shader, UINT baseRegister, uint32_t registerSpace = 0);
+void ParamUAV(D3D12_ROOT_PARAMETER& param, uint8_t shader, UINT baseRegister, uint32_t registerSpace = 0);
+void ParamTable(D3D12_ROOT_PARAMETER& param, uint8_t shader, UINT count, const D3D12_DESCRIPTOR_RANGE* ranges);
+void ParamConstants(D3D12_ROOT_PARAMETER& param, uint8_t shader, UINT count, UINT baseRegister, UINT registerSpace = 0);
 
 
 //-----------------------------------------------------------------------------

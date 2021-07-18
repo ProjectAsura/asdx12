@@ -243,6 +243,7 @@ protected:
     std::vector<ColorTarget>        m_ColorTarget;          //!< カラーターゲットです.
     DepthTarget                     m_DepthTarget;          //!< 深度ターゲットです.
     CommandList                     m_GfxCmdList;           //!< グラフィックスコマンドリスト.
+    CommandList                     m_CopyCmdList;          //!< コピーコマンドリスト.
 
     //=========================================================================
     // protected methods.
