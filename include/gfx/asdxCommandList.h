@@ -251,8 +251,26 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      イベントを終了します.
     //-------------------------------------------------------------------------
-    void EndEvent()
+    inline void EndEvent()
     { m_CmdList->EndEvent(); }
+
+    //-------------------------------------------------------------------------
+    //! @brief      クエリを開始します.
+    //-------------------------------------------------------------------------
+    inline void BeginQuery(ID3D12QueryHeap* pHeap, D3D12_QUERY_TYPE type, uint32_t index)
+    { m_CmdList->BeginQuery(pHeap, type, index); }
+
+    //-------------------------------------------------------------------------
+    //! @brief      クエリを終了します.
+    //-------------------------------------------------------------------------
+    inline void EndQuery(ID3D12QueryHeap* pHeap, D3D12_QUERY_TYPE type, uint32_t index)
+    { m_CmdList->EndQuery(pHeap, type, index); }
+
+    //-------------------------------------------------------------------------
+    //! @brief      タイムスタンプを設定します.
+    //-------------------------------------------------------------------------
+    inline void QueryTimeStamp(ID3D12QueryHeap* pHeap, uint32_t index)
+    { m_CmdList->EndQuery(pHeap, D3D12_QUERY_TYPE_TIMESTAMP, index); }
 
     //-------------------------------------------------------------------------
     //! @brief      ルートシグニチャを設定します.
@@ -262,55 +280,55 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      パイプラインステートを設定します.
     //-------------------------------------------------------------------------
-    void SetPipelineState(ID3D12PipelineState* value) 
+    inline void SetPipelineState(ID3D12PipelineState* value) 
     { m_CmdList->SetPipelineState(value); }
 
     //-------------------------------------------------------------------------
     //! @brief      ステートオブジェクトを設定します.
     //-------------------------------------------------------------------------
-    void SetStateObject(ID3D12StateObject* value)
+    inline void SetStateObject(ID3D12StateObject* value)
     { m_CmdList->SetPipelineState1(value); }
 
     //-------------------------------------------------------------------------
     //! @brief      プリミティブトポロジーを設定します.
     //-------------------------------------------------------------------------
-    void SetPrimitiveToplogy(D3D12_PRIMITIVE_TOPOLOGY value)
+    inline void SetPrimitiveToplogy(D3D12_PRIMITIVE_TOPOLOGY value)
     { m_CmdList->IASetPrimitiveTopology(value); }
 
     //-------------------------------------------------------------------------
     //! @brief      インデックスバッファを設定します.
     //-------------------------------------------------------------------------
-    void SetIndexBuffer(const D3D12_INDEX_BUFFER_VIEW* pView)
+    inline void SetIndexBuffer(const D3D12_INDEX_BUFFER_VIEW* pView)
     { m_CmdList->IASetIndexBuffer(pView); }
 
     //-------------------------------------------------------------------------
     //! @brief      頂点バッファを設定します.
     //-------------------------------------------------------------------------
-    void SetVertexBuffers(uint32_t startSlot, uint32_t viewCount, const D3D12_VERTEX_BUFFER_VIEW* pViews)
+    inline void SetVertexBuffers(uint32_t startSlot, uint32_t viewCount, const D3D12_VERTEX_BUFFER_VIEW* pViews)
     { m_CmdList->IASetVertexBuffers(startSlot, viewCount, pViews); }
 
     //-------------------------------------------------------------------------
     //! @brief      コンピュートシェーダを実行します.
     //-------------------------------------------------------------------------
-    void Dispatch(uint32_t x, uint32_t y, uint32_t z)
+    inline void Dispatch(uint32_t x, uint32_t y, uint32_t z)
     { m_CmdList->Dispatch(x, y, z); }
 
     //-------------------------------------------------------------------------
     //! @brief      メッシュシェーダを実行します.
     //-------------------------------------------------------------------------
-    void DispatchMesh(uint32_t x, uint32_t y, uint32_t z)
-    { m_CmdList->DispatchMesh(x, y, z); }
+    inline void DispatchMesh(uint32_t x)
+    { m_CmdList->DispatchMesh(x, 1, 1); }
 
     //-------------------------------------------------------------------------
     //! @brief      レイトレーシングパイプラインを実行します.
     //-------------------------------------------------------------------------
-    void DispatchRays(const D3D12_DISPATCH_RAYS_DESC* pDesc)
+    inline void DispatchRays(const D3D12_DISPATCH_RAYS_DESC* pDesc)
     { m_CmdList->DispatchRays(pDesc); }
 
     //-------------------------------------------------------------------------
     //! @brief      描画します.
     //-------------------------------------------------------------------------
-    void DrawInstanced
+    inline void DrawInstanced
     (
         uint32_t vertexCountPerInstance,
         uint32_t instanceCount,
@@ -328,7 +346,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      インデックス付きで描画します.
     //-------------------------------------------------------------------------
-    void DrawIndexedInstanced
+    inline void DrawIndexedInstanced
     (
         uint32_t indexCountPerInstance,
         uint32_t instanceCount,
@@ -348,7 +366,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      インダイレクトコマンドを実行します.
     //-------------------------------------------------------------------------
-    void ExecuteIndirect
+    inline void ExecuteIndirect
     (
         ID3D12CommandSignature* pCmdSignature,
         uint32_t                maxCmdCount,
@@ -370,7 +388,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      コマンドの記録を終了します.
     //-------------------------------------------------------------------------
-    void Close()
+    inline void Close()
     { m_CmdList->Close(); }
 
 private:
@@ -388,48 +406,98 @@ private:
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-// ScopedTransition class
-///////////////////////////////////////////////////////////////////////////////
-class ScopedTransition
-{
-public:
-    ScopedTransition(
-        ID3D12GraphicsCommandList*  pCmd,
-        ID3D12Resource*             pResource,
-        D3D12_RESOURCE_STATES       before,
-        D3D12_RESOURCE_STATES       after,
-        uint32_t                    subResource = 0
-    );
-
-    ScopedTransition(
-        ID3D12GraphicsCommandList*  pCmd,
-        const IView*                pView,
-        D3D12_RESOURCE_STATES       before,
-        D3D12_RESOURCE_STATES       after,
-        uint32_t                    subResource = 0
-    );
-
-    ~ScopedTransition();
-
-private:
-    ID3D12GraphicsCommandList* m_pCmd;
-    ID3D12Resource*            m_pResource;
-    D3D12_RESOURCE_STATES      m_StateBefore;
-    D3D12_RESOURCE_STATES      m_StateAfter;
-    uint32_t                   m_SubResource;
-};
-
-///////////////////////////////////////////////////////////////////////////////
 // ScopedMarker class
 ///////////////////////////////////////////////////////////////////////////////
 class ScopedMarker
 {
+    //=========================================================================
+    // list of friend classes and methods.
+    //=========================================================================
+    /* NOTHING */
+
 public:
+    //=========================================================================
+    // public variables.
+    //=========================================================================
+    /* NOTHING */
+
+    //=========================================================================
+    // public methods.
+    //=========================================================================
     ScopedMarker(ID3D12GraphicsCommandList* pCmd, const char* text);
     ~ScopedMarker();
 
 private:
-    ID3D12GraphicsCommandList*  m_pCmd;
+    //=========================================================================
+    // private variables.
+    //=========================================================================
+    ID3D12GraphicsCommandList*  m_pCmd = nullptr;
+
+    //=========================================================================
+    // private methods.
+    //=========================================================================
+    /* NOTHING */
+};
+
+
+///////////////////////////////////////////////////////////////////////////////
+// BarrierHelper class
+///////////////////////////////////////////////////////////////////////////////
+class BarrierHelper
+{
+    //=========================================================================
+    // list of friend classes and methods.
+    //=========================================================================
+    /* NOTHING */
+
+public:
+    //=========================================================================
+    // public variables.
+    //=========================================================================
+    /* NOTHING */
+
+    //=========================================================================
+    // public methods.
+    //=========================================================================
+
+    //-------------------------------------------------------------------------
+    //! @brief      初期設定を行います.
+    //-------------------------------------------------------------------------
+    void Setup(ID3D12Resource* pResource, D3D12_RESOURCE_STATES states)
+    {
+        m_pResource = nullptr;
+        m_State     = states;
+    }
+
+    //-------------------------------------------------------------------------
+    //! @brief      次のステートへの遷移バリアを取得します.
+    //-------------------------------------------------------------------------
+    D3D12_RESOURCE_BARRIER Next(D3D12_RESOURCE_STATES nextState, UINT subResource = 0)
+    {
+        D3D12_RESOURCE_BARRIER barrier = {};
+        barrier.Type                    = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+        barrier.Flags                   = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+        barrier.Transition.pResource    = m_pResource;
+        barrier.Transition.Subresource  = subResource;
+        barrier.Transition.StateBefore  = m_State;
+        barrier.Transition.StateAfter   = nextState;
+
+        m_State = nextState;
+
+        return barrier;
+    }
+
+private:
+    //=========================================================================
+    // private variables.
+    //=========================================================================
+    ID3D12Resource*         m_pResource = nullptr;
+    D3D12_RESOURCE_STATES   m_State     = D3D12_RESOURCE_STATE_COMMON;
+
+    //=========================================================================
+    // private methods.
+    //=========================================================================
+    /* NOTHING */
 };
 
 } // namespace asdx
