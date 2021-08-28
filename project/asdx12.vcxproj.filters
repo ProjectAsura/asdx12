@@ -58,6 +58,9 @@
     <Filter Include="ヘッダー ファイル\fnd">
       <UniqueIdentifier>{17814e84-80c0-4d80-9375-aed24ea4b115}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ソース ファイル\external\meshoptimizer">
+      <UniqueIdentifier>{46543bdd-ffc5-45ee-ba45-318107a7250c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\external\imgui\imgui.cpp">
@@ -218,6 +221,51 @@
     </ClCompile>
     <ClCompile Include="..\src\gfx\asdxFxParser.cpp">
       <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\meshoptimizer\allocator.cpp">
+      <Filter>ソース ファイル\external\meshoptimizer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\meshoptimizer\clusterizer.cpp">
+      <Filter>ソース ファイル\external\meshoptimizer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\meshoptimizer\indexcodec.cpp">
+      <Filter>ソース ファイル\external\meshoptimizer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\meshoptimizer\indexgenerator.cpp">
+      <Filter>ソース ファイル\external\meshoptimizer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\meshoptimizer\overdrawanalyzer.cpp">
+      <Filter>ソース ファイル\external\meshoptimizer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\meshoptimizer\overdrawoptimizer.cpp">
+      <Filter>ソース ファイル\external\meshoptimizer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\meshoptimizer\simplifier.cpp">
+      <Filter>ソース ファイル\external\meshoptimizer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\meshoptimizer\spatialorder.cpp">
+      <Filter>ソース ファイル\external\meshoptimizer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\meshoptimizer\stripifier.cpp">
+      <Filter>ソース ファイル\external\meshoptimizer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\meshoptimizer\vcacheanalyzer.cpp">
+      <Filter>ソース ファイル\external\meshoptimizer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\meshoptimizer\vcacheoptimizer.cpp">
+      <Filter>ソース ファイル\external\meshoptimizer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\meshoptimizer\vertexcodec.cpp">
+      <Filter>ソース ファイル\external\meshoptimizer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\meshoptimizer\vertexfilter.cpp">
+      <Filter>ソース ファイル\external\meshoptimizer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\meshoptimizer\vfetchanalyzer.cpp">
+      <Filter>ソース ファイル\external\meshoptimizer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\meshoptimizer\vfetchoptimizer.cpp">
+      <Filter>ソース ファイル\external\meshoptimizer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -416,6 +464,9 @@
     <ClInclude Include="..\include\rs\asdxBlackboard.h">
       <Filter>ヘッダー ファイル\rs</Filter>
     </ClInclude>
+    <ClInclude Include="..\external\meshoptimizer\meshoptimizer.h">
+      <Filter>ソース ファイル\external\meshoptimizer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\res\shaders\BRDF.hlsli">
@@ -433,6 +484,7 @@
     <None Include="..\include\fnd\asdxMath.inl">
       <Filter>ヘッダー ファイル\fnd</Filter>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\res\shaders\CopyPS.hlsl">

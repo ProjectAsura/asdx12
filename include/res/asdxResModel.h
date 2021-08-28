@@ -10,6 +10,7 @@
 //-----------------------------------------------------------------------------
 #include <cstdint>
 #include <vector>
+#include <string>
 #include <fnd/asdxMath.h>
 
 
@@ -27,12 +28,12 @@ struct ResMeshlet
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-// ResCullingInfo structure
+// ResMeshletBounds structure
 ///////////////////////////////////////////////////////////////////////////////
-struct ResCullingInfo
+struct ResMeshletBounds
 {
-    Vector4     BoundingSphere;     //!< バウンディングスフィアです.
-    uint32_t    NormalCone;         //!< 圧縮済み法錐です.
+    Vector4     Sphere;         //!< バウンディングスフィアです.
+    uint32_t    NormalCone;     //!< 圧縮済み法錐です.
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -51,8 +52,9 @@ struct ResPrimitive
 ///////////////////////////////////////////////////////////////////////////////
 struct ResMesh
 {
-    uint32_t                            MeshHash;
-    uint32_t                            MatrerialHash;
+    std::string                         Name;               // メッシュ名.
+    uint32_t                            MaterialId;         // マテリアルID.
+    bool                                Visible;            // 可視フラグ.
     uint32_t                            BoneWeightStride;   // 1頂点あたりのボーンの重み数
     std::vector<asdx::Vector3>          Positions;          // R32G32B32A32_FLOAT
     std::vector<uint32_t>               TangentSpaces;      // R10B10G10A2_UINTで圧縮済み.
@@ -61,29 +63,50 @@ struct ResMesh
     std::vector<uint16_t>               BoneIndices;
     std::vector<float>                  BoneWeights;
     std::vector<uint32_t>               Indices;
+    std::vector<uint32_t>               UniqueVertexIndices;
     std::vector<ResPrimitive>           Primitives;
     std::vector<ResMeshlet>             Meshlets;
-    std::vector<ResCullingInfo>         CullingInfos;
-};
+    std::vector<ResMeshletBounds>       Bounds;
 
+    //-------------------------------------------------------------------------
+    //! @brief      破棄処理を行います.
+    //-------------------------------------------------------------------------
+    void Dispose();
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 // ResModel structure
 ///////////////////////////////////////////////////////////////////////////////
 struct ResModel
 {
-    std::vector<ResMesh>        Meshes;
+    std::string                 Name;       // モデル名.
+    bool                        Visible;    // 可視フラグ.
+    std::vector<ResMesh>        Meshes;     // メッシュ.
+    std::vector<std::string>    MaterialNames;
+
+    //-------------------------------------------------------------------------
+    //! @brief      破棄処理を行います.
+    //-------------------------------------------------------------------------
+    void Dispose();
+
+    //-------------------------------------------------------------------------
+    //! @brief      ファイルからモデルリソースを生成します.
+    //! 
+    //! @param[in]      filename        ファイル名です./
+    //! @retval true    リソース生成に成功.
+    //! @retval false   リソース生成に失敗.
+    //-------------------------------------------------------------------------
+    bool LoadFromFileA(const char* filename);
+
+    //-------------------------------------------------------------------------
+    //! @brief      ファイルからモデルリソースを生成します.
+    //! 
+    //! @param[in]      filename        ファイル名です.
+    //! @retval true    リソース生成に成功.
+    //! @retval false   リソース生成に失敗.
+    //-------------------------------------------------------------------------
+    bool LoadFromFileW(const wchar_t* filename);
 };
-
-//-----------------------------------------------------------------------------
-//      メッシュの破棄処理を行います.
-//-----------------------------------------------------------------------------
-void Dispose(ResMesh& resource);
-
-//-----------------------------------------------------------------------------
-//      モデルの破棄処理を行います.
-//-----------------------------------------------------------------------------
-void Dispose(ResModel& resource);
 
 //-----------------------------------------------------------------------------
 //      八面体ラップ処理を行います.
@@ -104,9 +127,9 @@ Vector3 UnpackNormal(const Vector2& value);
 //      接線空間を圧縮します.
 //-----------------------------------------------------------------------------
 uint32_t EncodeTBN(
-    const Vector3& normal,
-    const Vector3& tangent,
-    uint8_t binormalHandedeness);
+    const Vector3&  normal,
+    const Vector3&  tangent,
+    uint8_t         binormalHandedeness);
 
 //-----------------------------------------------------------------------------
 //      圧縮された接線空間を展開します.
@@ -116,25 +139,5 @@ void DecodeTBN(
     Vector3& tangent,
     Vector3& bitangent,
     Vector3& normal);
-
-//-----------------------------------------------------------------------------
-//! @brief      モデルを書き出します.
-//!
-//! @param[in]      path        出力ファイルパス.
-//! @param[in]      model       保存するモデルデータ.
-//! @retval true    保存に成功.
-//! @retval false   保存に失敗.
-//-----------------------------------------------------------------------------
-bool SaveModel(const char* path, const ResModel& model);
-
-//-----------------------------------------------------------------------------
-//! @brief      モデルを読み込みます.
-//!
-//! @param[in]      path        入力ファイルパス.
-//! @param[out]     model       モデルデータの格納先.
-//! @retval true    読み込みに成功.
-//! @retval false   読み込みに失敗.
-//-----------------------------------------------------------------------------
-bool LoadModel(const char* path, ResModel& model);
 
 } // namespace asdx

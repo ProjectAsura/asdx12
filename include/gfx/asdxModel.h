@@ -135,7 +135,7 @@ public:
     //!
     //! @return     カリング情報を返却します.
     //-------------------------------------------------------------------------
-    const StructuredBuffer& GetCullingInfos() const;
+    const StructuredBuffer& GetBounds() const;
 
     //-------------------------------------------------------------------------
     //! @brief      メッシュハッシュを取得します.
@@ -145,11 +145,11 @@ public:
     uint32_t GetMeshHash() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      マテリアルハッシュを取得します.
+    //! @brief      マテリアルIDを取得します.
     //!
-    //! @return     マテリアルハッシュを返却します.
+    //! @return     マテリアルIDを返却します.
     //-------------------------------------------------------------------------
-    uint32_t GetMaterialHash() const;
+    uint32_t GetMaterialId() const;
 
     //-------------------------------------------------------------------------
     //! @brief      メッシュレット数を取得します.
@@ -203,7 +203,7 @@ private:
     // private variables.
     //=========================================================================
     uint32_t            m_MeshHash;
-    uint32_t            m_MaterialHash;
+    uint32_t            m_MaterialId;
     uint32_t            m_MeshletCount;
     BoundingBox         m_Box;
     StructuredBuffer    m_Positions;
@@ -215,7 +215,7 @@ private:
     StructuredBuffer    m_Indices;
     StructuredBuffer    m_Primitives;
     StructuredBuffer    m_Meshlets;
-    StructuredBuffer    m_CullingInfos;
+    StructuredBuffer    m_Bounds;
 
     //=========================================================================
     // private methods.
@@ -269,6 +269,13 @@ public:
     void Term();
 
     //-------------------------------------------------------------------------
+    //! @brief      モデルハッシュを取得します.
+    //! 
+    //! @return     モデルハッシュを返却します.
+    //-------------------------------------------------------------------------
+    uint32_t GetModelHash() const;
+
+    //-------------------------------------------------------------------------
     //! @brief      メッシュ数を取得します.
     //!
     //! @return     メッシュ数を返却します.
@@ -294,6 +301,7 @@ private:
     //=========================================================================
     // private variables
     //=========================================================================
+    uint32_t            m_ModelHash;
     BoundingBox         m_Box;
     std::vector<Mesh>   m_Meshes;
     

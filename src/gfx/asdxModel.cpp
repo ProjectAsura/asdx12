@@ -10,6 +10,7 @@
 #include <gfx/asdxModel.h>
 #include <gfx/asdxCommandList.h>
 #include <fnd/asdxLogger.h>
+#include <fnd/asdxHash.h>
 
 
 namespace asdx {
@@ -22,7 +23,7 @@ namespace asdx {
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
 Mesh::Mesh()
-: m_MaterialHash(0)
+: m_MaterialId(UINT32_MAX)
 , m_MeshletCount(0)
 , m_Box({asdx::Vector3(FLT_MAX, FLT_MAX, FLT_MAX), asdx::Vector3(-FLT_MAX, -FLT_MAX, -FLT_MAX)})
 { /* DO_NOTHING */ }
@@ -38,6 +39,8 @@ Mesh::~Mesh()
 //-----------------------------------------------------------------------------
 bool Mesh::Init(CommandList& cmdList, const ResMesh& resource)
 {
+    m_MeshHash = asdx::CalcHash(resource.Name.c_str());
+
     {
         if (!m_Positions.Init(
             cmdList,
@@ -155,11 +158,11 @@ bool Mesh::Init(CommandList& cmdList, const ResMesh& resource)
     }
 
     {
-        if (!m_CullingInfos.Init(
+        if (!m_Bounds.Init(
             cmdList,
-            uint64_t(resource.CullingInfos.size()),
-            uint32_t(sizeof(resource.CullingInfos[0])),
-            resource.CullingInfos.data()))
+            uint64_t(resource.Bounds.size()),
+            uint32_t(sizeof(resource.Bounds[0])),
+            resource.Bounds.data()))
         {
             ELOG("Error : StructuredBuffer::Init() Failed.");
             return false;
@@ -173,7 +176,7 @@ bool Mesh::Init(CommandList& cmdList, const ResMesh& resource)
         m_Box.Maxi = asdx::Vector3::Max(m_Box.Maxi, resource.Positions[i]);
     }
 
-    m_MaterialHash = resource.MatrerialHash;
+    m_MaterialId   = resource.MaterialId;
     m_MeshletCount = uint32_t(resource.Meshlets.size());
 
     return true;
@@ -192,13 +195,13 @@ void Mesh::Term()
     m_Indices       .Term();
     m_Primitives    .Term();
     m_Meshlets      .Term();
-    m_CullingInfos  .Term();
+    m_Bounds        .Term();
 
     for(auto i=0; i<4; ++i)
     { m_TexCoords[i].Term(); }
 
     m_MeshletCount = 0;
-    m_MaterialHash = 0;
+    m_MaterialId   = 0;
 
     m_Box.Mini = asdx::Vector3(FLT_MAX, FLT_MAX, FLT_MAX);
     m_Box.Maxi = asdx::Vector3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
@@ -264,8 +267,8 @@ const StructuredBuffer& Mesh::GetMeshlets() const
 //-----------------------------------------------------------------------------
 //      カリング情報を取得します.
 //-----------------------------------------------------------------------------
-const StructuredBuffer& Mesh::GetCullingInfos() const
-{ return m_CullingInfos; }
+const StructuredBuffer& Mesh::GetBounds() const
+{ return m_Bounds; }
 
 //-----------------------------------------------------------------------------
 //      メッシュハッシュを取得します.
@@ -276,8 +279,8 @@ uint32_t Mesh::GetMeshHash() const
 //-----------------------------------------------------------------------------
 //      マテリアルハッシュを取得します.
 //-----------------------------------------------------------------------------
-uint32_t Mesh::GetMaterialHash() const
-{ return m_MaterialHash; }
+uint32_t Mesh::GetMaterialId() const
+{ return m_MaterialId; }
 
 //-----------------------------------------------------------------------------
 //      メッシュレット数を取得します.
@@ -327,7 +330,8 @@ bool Mesh::HasTexCoord(uint8_t index) const
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
 Model::Model()
-: m_Box({asdx::Vector3(FLT_MAX, FLT_MAX, FLT_MAX), asdx::Vector3(-FLT_MAX, -FLT_MAX, -FLT_MAX)})
+: m_ModelHash(0)
+, m_Box({asdx::Vector3(FLT_MAX, FLT_MAX, FLT_MAX), asdx::Vector3(-FLT_MAX, -FLT_MAX, -FLT_MAX)})
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
@@ -341,6 +345,8 @@ Model::~Model()
 //-----------------------------------------------------------------------------
 bool Model::Init(CommandList& cmdList, const ResModel& model)
 {
+    m_ModelHash = asdx::CalcHash(model.Name.c_str());
+
     auto index = 0;
     m_Meshes.resize(model.Meshes.size());
 
@@ -375,6 +381,12 @@ void Model::Term()
     m_Meshes.clear();
     m_Meshes.shrink_to_fit();
 }
+
+//-----------------------------------------------------------------------------
+//      モデルハッシュを取得します.
+//-----------------------------------------------------------------------------
+uint32_t Model::GetModelHash() const
+{ return m_ModelHash; }
 
 //-----------------------------------------------------------------------------
 //      メッシュ数を取得します.

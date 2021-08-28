@@ -9,7 +9,12 @@
 //-----------------------------------------------------------------------------
 #include <res/asdxResModel.h>
 #include <fnd/asdxLogger.h>
-
+#include <fnd/asdxMisc.h>
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+#include <assimp/cimport.h>
+#include <meshoptimizer.h>
 
 namespace {
 
@@ -58,106 +63,410 @@ union Unorm8888
     uint32_t c;
 };
 
-///////////////////////////////////////////////////////////////////////////////
-// ModelHeader structure
-///////////////////////////////////////////////////////////////////////////////
-struct ModelHeader
-{
-    uint8_t     Magic[4];
-    uint32_t    Version;
-    uint32_t    MeshCount;
-};
-
-///////////////////////////////////////////////////////////////////////////////
-/// MeshHeader structure
-///////////////////////////////////////////////////////////////////////////////
-struct MeshHeaderV1
-{
-    uint32_t    MeshHash;
-    uint32_t    MaterialHash;
-    uint32_t    PositionCount;
-    uint32_t    TangentSpaceCount;
-    uint32_t    ColorCount;
-    uint32_t    TexCoordCount[4];
-    uint32_t    BoneIndexCount;
-    uint32_t    BoneWeightCount;
-    uint32_t    IndexCount;
-    uint32_t    PrimitiveCount;
-    uint32_t    MeshletCount;
-    uint32_t    CullingInfoCount;
-};
-
-///////////////////////////////////////////////////////////////////////////////
-/// MeshHeader structure
-///////////////////////////////////////////////////////////////////////////////
-struct MeshHeaderV2 : public MeshHeaderV1
-{
-    uint32_t    BoneWeightStride;
-};
-
 //-----------------------------------------------------------------------------
 //      最大成分を取得します.
 //-----------------------------------------------------------------------------
 inline float Max3(const asdx::Vector3& value)
 { return asdx::Max(value.x, asdx::Max(value.y, value.z)); }
 
+//-----------------------------------------------------------------------------
+//      [0, 1]の実数を符号なし整数32bitに変換します.
+//-----------------------------------------------------------------------------
+inline uint32_t ToUnorm8(const asdx::Vector4& value)
+{
+    Unorm8888 packed;
+    packed.r = uint8_t(value.x * 255.0f);
+    packed.g = uint8_t(value.y * 255.0f);
+    packed.b = uint8_t(value.z * 255.0f);
+    packed.a = uint8_t(value.w * 255.0f);
+    return packed.c;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// MeshLoader class
+///////////////////////////////////////////////////////////////////////////////
+class MeshLoader
+{
+    //=========================================================================
+    // list of friend classes and methods.
+    //=========================================================================
+    /* NOTHING */
+
+public:
+    //=========================================================================
+    // public variables.
+    //=========================================================================
+    /* NOTHING */
+
+    //=========================================================================
+    // public methods.
+    //=========================================================================
+    MeshLoader() = default;
+    ~MeshLoader() = default;
+
+    //-------------------------------------------------------------------------
+    //! @brief      モデルをロードします.
+    //-------------------------------------------------------------------------
+    bool Load(const char* path, asdx::ResModel& model)
+    {
+        if (path == nullptr)
+        { return false; }
+
+        Assimp::Importer importer;
+        unsigned int flag = 0;
+        flag |= aiProcess_Triangulate;
+        flag |= aiProcess_PreTransformVertices;
+        flag |= aiProcess_CalcTangentSpace;
+        flag |= aiProcess_GenSmoothNormals;
+        flag |= aiProcess_GenUVCoords;
+        flag |= aiProcess_RemoveRedundantMaterials;
+        flag |= aiProcess_OptimizeMeshes;
+
+        // ファイルを読み込み.
+        m_pScene = importer.ReadFile(path, flag);
+
+        // チェック.
+        if (m_pScene == nullptr)
+        { return false; }
+
+        // メッシュのメモリを確保.
+        auto meshCount = m_pScene->mNumTextures;
+        model.Meshes.clear();
+        model.Meshes.resize(meshCount);
+
+        // メッシュデータを変換.
+        for(size_t i=0; i<meshCount; ++i)
+        {
+            const auto pMesh = m_pScene->mMeshes[i];
+            ParseMesh(model.Meshes[i], pMesh);
+        }
+
+        // 不要になったのでクリア.
+        importer.FreeScene();
+        m_pScene = nullptr;
+
+        // 正常終了.
+        return true;
+    }
+
+private:
+    //=========================================================================
+    // private variables.
+    //=========================================================================
+    const aiScene*  m_pScene = nullptr;
+
+    //=========================================================================
+    // private methods.
+    //=========================================================================
+
+    //-------------------------------------------------------------------------
+    //! @brief      メッシュを解析します.
+    //-------------------------------------------------------------------------
+    void ParseMesh(asdx::ResMesh& dstMesh, const aiMesh* srcMesh)
+    {
+        // マテリアル番号を設定.
+        dstMesh.MaterialId = srcMesh->mMaterialIndex;
+
+        aiVector3D zero3D(0.0f, 0.0f, 0.0f);
+
+        // 頂点データのメモリを確保.
+        auto vertexCount = srcMesh->mNumVertices;
+        dstMesh.Positions.resize(vertexCount);
+
+        if (srcMesh->HasNormals() && srcMesh->HasTangentsAndBitangents()) {
+            dstMesh.TangentSpaces.resize(vertexCount);
+        }
+        if (srcMesh->HasVertexColors(0)) {
+            dstMesh.Colors.resize(vertexCount);
+        }
+        auto uvCount = srcMesh->GetNumUVChannels();
+        uvCount = (uvCount > 4) ? 4 : uvCount;
+
+        for(auto c=0u; c<uvCount; ++c) {
+            assert(srcMesh->HasTextureCoords(c));
+            dstMesh.TexCoords[c].resize(vertexCount);
+        }
+
+        for(auto i=0u; i<vertexCount; ++i)
+        {
+            auto& pos = srcMesh->mVertices[i];
+            dstMesh.Positions[i] = asdx::Vector3(pos.x, pos.y, pos.z);
+
+            if (srcMesh->HasNormals() && srcMesh->HasTangentsAndBitangents()) {
+                auto& normal = srcMesh->mNormals[i];
+                auto& tangent = srcMesh->mTangents[i];
+                dstMesh.TangentSpaces[i] = asdx::EncodeTBN(
+                    asdx::Vector3(normal.x, normal.y, normal.z),
+                    asdx::Vector3(tangent.x, tangent.y, tangent.z), 0);
+            }
+            if (srcMesh->HasVertexColors(0)){
+                auto& color = srcMesh->mColors[0][i];
+                dstMesh.Colors[i] = asdx::EncodeUnorm4(asdx::Vector4(color.r, color.g, color.b, color.a));
+            }
+            for(auto c=0u; c<uvCount; ++c) {
+                auto& uv = srcMesh->mTextureCoords[c][i];
+                dstMesh.TexCoords[c][i] = asdx::EncodeHalf2(asdx::Vector2(uv.x, uv.y)).u;
+            }
+        }
+
+        // 頂点インデックスのメモリを確保.
+        auto indexCount = srcMesh->mNumFaces * 3;
+        dstMesh.Indices.resize(indexCount);
+
+        for(size_t i=0; i<indexCount; ++i)
+        {
+            const auto& face = srcMesh->mFaces[i];
+            assert(face.mNumIndices == 3);  // 三角形化しているので必ず3になっている.
+
+            dstMesh.Indices[i * 3 + 0] = face.mIndices[0];
+            dstMesh.Indices[i * 3 + 1] = face.mIndices[1];
+            dstMesh.Indices[i * 3 + 2] = face.mIndices[2];
+        }
+
+        // 最適化.
+        {
+            std::vector<uint32_t> remap(dstMesh.Indices.size());
+
+            // 重複データを削除するための再マッピング用インデックスを生成.
+            auto vertexCount = meshopt_generateVertexRemap(
+                remap.data(),
+                dstMesh.Indices.data(),
+                dstMesh.Indices.size(),
+                dstMesh.Positions.data(),
+                dstMesh.Positions.size(),
+                sizeof(asdx::Vector3));
+
+            std::vector<asdx::Vector3> vertices(vertexCount);
+            std::vector<uint32_t> indices(dstMesh.Indices.size());
+
+            // 頂点インデックスを再マッピング.
+            meshopt_remapIndexBuffer(
+                indices.data(),
+                dstMesh.Indices.data(),
+                dstMesh.Indices.size(),
+                remap.data());
+
+            // 頂点データを再マッピング.
+            meshopt_remapVertexBuffer(
+                vertices.data(),
+                dstMesh.Positions.data(),
+                dstMesh.Positions.size(),
+                sizeof(asdx::Vector3),
+                remap.data());
+
+            // 不要になったメモリを解放.
+            remap.clear();
+            remap.shrink_to_fit();
+
+            // 最適化したサイズにメモリ量を減らす.
+            dstMesh.Positions.resize(vertices.size());
+            dstMesh.Indices .resize(indices .size());
+
+            // 頂点キャッシュ最適化.
+            meshopt_optimizeVertexCache(
+                dstMesh.Indices.data(),
+                indices.data(),
+                indices.size(),
+                vertexCount);
+
+            // 不要になったメモリを解放.
+            indices.clear();
+            indices.shrink_to_fit();
+
+            // 頂点フェッチ最適化.
+            meshopt_optimizeVertexFetch(
+                dstMesh.Positions.data(),
+                dstMesh.Indices.data(),
+                dstMesh.Indices.size(),
+                vertices.data(),
+                vertices.size(),
+                sizeof(asdx::Vector3));
+
+            // 不要になったメモリを解放.
+            vertices.clear();
+            vertices.shrink_to_fit();
+        }
+
+        // メッシュレット生成.
+        {
+            const size_t kMaxVertices   = 64;
+            const size_t kMaxPrimitives = 126;
+            float coneWeight = 0.0f;
+
+            auto maxMeshlets = meshopt_buildMeshletsBound(
+                    dstMesh.Indices.size(),
+                    kMaxVertices,
+                    kMaxPrimitives);
+
+            std::vector<meshopt_Meshlet> meshlets(maxMeshlets);
+            std::vector<uint32_t> meshletVertices(maxMeshlets * kMaxVertices);
+            std::vector<uint8_t> meshletTriangles(maxMeshlets * kMaxPrimitives * 3);
+
+            auto meshletCount = meshopt_buildMeshlets(
+                meshlets.data(),
+                meshletVertices.data(),
+                meshletTriangles.data(),
+                dstMesh.Indices.data(),
+                dstMesh.Indices.size(),
+                &dstMesh.Positions[0].x,
+                dstMesh.Positions.size(),
+                sizeof(asdx::Vector3),
+                kMaxVertices,
+                kMaxPrimitives,
+                coneWeight);
+
+            // 最大値でメモリを予約.
+            dstMesh.UniqueVertexIndices.reserve(meshlets.size() * kMaxVertices);
+            dstMesh.Primitives   .reserve(meshlets.size() * kMaxPrimitives);
+
+            for(auto& meshlet : meshlets)
+            {
+                auto vertexOffset    = uint32_t(dstMesh.UniqueVertexIndices.size());
+                auto primitiveOffset = uint32_t(dstMesh.Primitives         .size());
+
+                for(auto i=0u; i<meshlet.vertex_count; ++i)
+                { dstMesh.UniqueVertexIndices.push_back(meshletVertices[i]); }
+
+                for(size_t i=0; i<meshlet.triangle_count; i+=3)
+                {
+                    asdx::ResPrimitive tris = {};
+                    tris.Index1 = meshletTriangles[i + 0];
+                    tris.Index0 = meshletTriangles[i + 1];
+                    tris.Index2 = meshletTriangles[i + 2];
+                    dstMesh.Primitives.push_back(tris);
+                }
+
+                // メッシュレットデータ設定.
+                asdx::ResMeshlet m = {};
+                m.VertexCount       = meshlet.vertex_count;
+                m.VertexOffset      = vertexOffset;
+                m.PrimitiveCount    = meshlet.triangle_count;
+                m.PrimitiveOffset   = primitiveOffset;
+
+                dstMesh.Meshlets.push_back(m);
+
+                // バウンディングを求める.
+                auto bounds = meshopt_computeMeshletBounds(
+                    &meshletVertices[meshlet.vertex_offset],
+                    &meshletTriangles[meshlet.triangle_offset],
+                    meshlet.triangle_count,
+                    &dstMesh.Positions[0].x,
+                    dstMesh.Positions.size(),
+                    sizeof(asdx::Vector3));
+
+                // カリングデータ設定.
+                auto normalCone = asdx::Vector4(
+                    asdx::Saturate(bounds.cone_axis[0] * 0.5f + 0.5f),
+                    asdx::Saturate(bounds.cone_axis[1] * 0.5f + 0.5f),
+                    asdx::Saturate(bounds.cone_axis[2] * 0.5f + 0.5f),
+                    asdx::Saturate(bounds.cone_cutoff * 0.5f + 0.5f));
+
+                asdx::ResMeshletBounds c = {};
+                c.Sphere     = asdx::Vector4(bounds.center[0], bounds.center[1], bounds.center[2], bounds.radius);
+                c.NormalCone = ToUnorm8(normalCone);
+
+                dstMesh.Bounds.push_back(c);
+            }
+
+            // サイズ最適化.
+            dstMesh.UniqueVertexIndices .shrink_to_fit();
+            dstMesh.Primitives          .shrink_to_fit();
+            dstMesh.Meshlets            .shrink_to_fit();
+            dstMesh.Bounds              .shrink_to_fit();
+        }
+    }
+};
+
+
 } // namespace
 
 
 namespace asdx {
 
+///////////////////////////////////////////////////////////////////////////////
+// ResMesh structure
+///////////////////////////////////////////////////////////////////////////////
+
 //-----------------------------------------------------------------------------
 //      メッシュの破棄処理を行います.
 //-----------------------------------------------------------------------------
-void Dispose(ResMesh& resource)
+void ResMesh::Dispose()
 {
-    resource.Positions.clear();
-    resource.Positions.shrink_to_fit();
+    Name.clear();
+    MaterialId = UINT32_MAX;
+    Positions.clear();
+    Positions.shrink_to_fit();
 
-    resource.TangentSpaces.clear();
-    resource.TangentSpaces.shrink_to_fit();
+    TangentSpaces.clear();
+    TangentSpaces.shrink_to_fit();
 
-    resource.Colors.clear();
-    resource.Colors.shrink_to_fit();
+    Colors.clear();
+    Colors.shrink_to_fit();
 
     for(auto i=0; i<4; ++i)
     {
-        resource.TexCoords[i].clear();
-        resource.TexCoords[i].shrink_to_fit();
+        TexCoords[i].clear();
+        TexCoords[i].shrink_to_fit();
     }
 
-    resource.BoneIndices.clear();
-    resource.BoneIndices.shrink_to_fit();
+    BoneIndices.clear();
+    BoneIndices.shrink_to_fit();
 
-    resource.BoneWeights.clear();
-    resource.BoneWeights.shrink_to_fit();
+    BoneWeights.clear();
+    BoneWeights.shrink_to_fit();
 
-    resource.Indices.clear();
-    resource.Indices.shrink_to_fit();
+    Indices.clear();
+    Indices.shrink_to_fit();
 
-    resource.Primitives.clear();
-    resource.Primitives.shrink_to_fit();
+    Primitives.clear();
+    Primitives.shrink_to_fit();
 
-    resource.Meshlets.clear();
-    resource.Meshlets.shrink_to_fit();
+    Meshlets.clear();
+    Meshlets.shrink_to_fit();
 
-    resource.CullingInfos.clear();
-    resource.CullingInfos.shrink_to_fit();
+    Bounds.clear();
+    Bounds.shrink_to_fit();
 
-    resource.MatrerialHash = 0;
+    BoneWeightStride = 0;
+    Visible = false;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// ResModel structure
+///////////////////////////////////////////////////////////////////////////////
 
 //-----------------------------------------------------------------------------
 //      モデルの破棄処理を行います.
 //-----------------------------------------------------------------------------
-void Dispose(ResModel& resource)
+void ResModel::Dispose()
 {
-    for(size_t i=0; i<resource.Meshes.size(); ++i)
-    { Dispose(resource.Meshes[i]); }
+    for(size_t i=0; i<Meshes.size(); ++i)
+    { Meshes[i].Dispose(); }
 
-    resource.Meshes.clear();
-    resource.Meshes.shrink_to_fit();
+    Meshes.clear();
+    Meshes.shrink_to_fit();
+
+    Visible = false;
+    Name.clear();
+}
+
+//-----------------------------------------------------------------------------
+//      ファイルからリソースを生成します.
+//-----------------------------------------------------------------------------
+bool ResModel::LoadFromFileA(const char* filename)
+{
+    MeshLoader loader;
+    return loader.Load(filename, *this);
+}
+
+//-----------------------------------------------------------------------------
+//      ファイルからリソースを生成します.
+//-----------------------------------------------------------------------------
+bool ResModel::LoadFromFileW(const wchar_t* filename)
+{
+    auto path = ToStringUTF8(filename);
+    return LoadFromFileA(path.c_str());
 }
 
 //-----------------------------------------------------------------------------
@@ -203,7 +512,7 @@ uint32_t EncodeTBN(const Vector3& normal, const Vector3& tangent, uint8_t binorm
 {
     auto packedNormal = PackNormal(normal);
 
-    TangentSpace packed;
+    TangentSpace packed = {};
     packed.NormalX = uint32_t(packedNormal.x * 1023.0);
     packed.NormalY = uint32_t(packedNormal.y * 1023.0);
 
@@ -272,240 +581,5 @@ void DecodeTBN(uint32_t encoded, Vector3& tangent, Vector3& bitangent, Vector3& 
     bitangent = (packed.BinormalHandedness == 0) ? bitangent : -bitangent;
 }
 
-//-----------------------------------------------------------------------------
-//      モデルを保存します.
-//-----------------------------------------------------------------------------
-bool SaveModel(const char* path, const ResModel& model)
-{
-    FILE* pFile;
-    auto err = fopen_s(&pFile, path, "wb");
-    if (err != 0)
-    {
-        ELOGA("Error : File Open Failed. path = %s", path);
-        return false;
-    }
-
-    ModelHeader header;
-    header.Magic[0]  = 'M';
-    header.Magic[1]  = 'D';
-    header.Magic[2]  = 'L';
-    header.Magic[3]  = '\0';
-    header.Version   = 0x2;
-    header.MeshCount = uint32_t(model.Meshes.size());
-
-    fwrite(&header, sizeof(header), 1, pFile);
-
-    for(size_t i=0; i<model.Meshes.size(); ++i)
-    {
-        auto& mesh = model.Meshes[i];
-
-        MeshHeaderV2 meshHeader;
-        meshHeader.MaterialHash         = mesh.MatrerialHash;
-        meshHeader.PositionCount        = uint32_t(mesh.Positions.size());
-        meshHeader.TangentSpaceCount    = uint32_t(mesh.TangentSpaces.size());
-        meshHeader.ColorCount           = uint32_t(mesh.Colors.size());
-        for(auto i=0; i<4; ++i)
-        { meshHeader.TexCoordCount[i] = uint32_t(mesh.TexCoords[i].size()); }
-        meshHeader.BoneIndexCount       = uint32_t(mesh.BoneIndices.size());
-        meshHeader.BoneWeightCount      = uint32_t(mesh.BoneWeights.size());
-        meshHeader.IndexCount           = uint32_t(mesh.Indices.size());
-        meshHeader.PrimitiveCount       = uint32_t(mesh.Primitives.size());
-        meshHeader.MeshletCount         = uint32_t(mesh.Meshlets.size());
-        meshHeader.CullingInfoCount     = uint32_t(mesh.CullingInfos.size());
-        meshHeader.BoneWeightStride     = mesh.BoneWeightStride;
-
-        fwrite(&meshHeader, sizeof(meshHeader), 1, pFile);
-
-        for(size_t j=0; j<mesh.Positions.size(); ++j)
-        { fwrite(&mesh.Positions[j], sizeof(mesh.Positions[j]), 1, pFile); }
-
-        for(size_t j=0; j<mesh.TangentSpaces.size(); ++j)
-        { fwrite(&mesh.TangentSpaces[j], sizeof(mesh.TangentSpaces[j]), 1, pFile); }
-
-        for(size_t j=0; j<mesh.Colors.size(); ++j)
-        { fwrite(&mesh.Colors[j], sizeof(mesh.Colors[j]), 1, pFile); }
-
-        for(auto ch=0; ch<4; ++ch)
-        {
-            for(size_t j=0; j<mesh.TexCoords[ch].size(); ++j)
-            { fwrite(&mesh.TexCoords[ch][j], sizeof(mesh.TexCoords[ch][j]), 1, pFile); }
-        }
-
-        for(size_t j=0; j<mesh.BoneIndices.size(); ++j)
-        { fwrite(&mesh.BoneIndices[j], sizeof(mesh.BoneIndices[j]), 1, pFile); }
-
-        for(size_t j=0; j<mesh.BoneWeights.size(); ++j)
-        { fwrite(&mesh.BoneWeights[j], sizeof(mesh.BoneWeights[j]), 1, pFile); }
-
-        for(size_t j=0; j<mesh.Indices.size(); ++j)
-        { fwrite(&mesh.Indices[j], sizeof(mesh.Indices[j]), 1, pFile); }
-
-        for(size_t j=0; j<mesh.Primitives.size(); ++j)
-        { fwrite(&mesh.Primitives[j], sizeof(mesh.Primitives[j]), 1, pFile); }
-
-        for(size_t j=0; j<mesh.Meshlets.size(); ++j)
-        { fwrite(&mesh.Meshlets[j], sizeof(mesh.Meshlets[j]), 1, pFile); }
-
-        for(size_t j=0; j<mesh.CullingInfos.size(); ++j)
-        { fwrite(&mesh.CullingInfos[j], sizeof(mesh.CullingInfos[j]), 1, pFile); }
-    }
-
-    fclose(pFile);
-    return true;
-}
-
-//-----------------------------------------------------------------------------
-//      モデルを読込します.
-//-----------------------------------------------------------------------------
-bool LoadModel(const char* path, ResModel& model)
-{
-    FILE* pFile;
-    auto err = fopen_s(&pFile, path, "rb");
-    if (err != 0)
-    {
-        ELOGA("Error : File Open Failed. path = %s", path);
-        return false;
-    }
-
-    ModelHeader modelHeader;
-    fread(&modelHeader, sizeof(modelHeader), 1, pFile);
-
-    if (modelHeader.Magic[0] != 'M'
-     || modelHeader.Magic[1] != 'D'
-     || modelHeader.Magic[2] != 'L'
-     || modelHeader.Magic[3] != '\0')
-    {
-        ELOGA("Error : Invalid File. path = %s", path);
-        fclose(pFile);
-        return false;
-    }
-
-    // Version 1.0f
-    if (modelHeader.Version == 0x1)
-    {
-        model.Meshes.resize(modelHeader.MeshCount);
-
-        for(size_t i=0; i<model.Meshes.size(); ++i)
-        {
-            MeshHeaderV1 meshHeader;
-            fread(&meshHeader, sizeof(meshHeader), 1, pFile);
-
-            auto& mesh = model.Meshes[i];
-
-            mesh.MatrerialHash = meshHeader.MaterialHash;
-            mesh.Positions      .resize(meshHeader.PositionCount);
-            mesh.TangentSpaces  .resize(meshHeader.TangentSpaceCount);
-            mesh.Colors         .resize(meshHeader.ColorCount);
-            for(auto ch=0; ch<4; ++ch)
-            { mesh.TexCoords[ch].resize(meshHeader.TexCoordCount[ch]); }
-            mesh.BoneIndices    .resize(meshHeader.BoneIndexCount);
-            mesh.BoneWeights    .resize(meshHeader.BoneWeightCount);
-            mesh.Indices        .resize(meshHeader.IndexCount);
-            mesh.Primitives     .resize(meshHeader.PrimitiveCount);
-            mesh.Meshlets       .resize(meshHeader.MeshletCount);
-            mesh.CullingInfos   .resize(meshHeader.CullingInfoCount);
-            for(size_t j=0; j<mesh.Positions.size(); ++j)
-            { fread(&mesh.Positions[j], sizeof(mesh.Positions[j]), 1, pFile); }
-
-            for(size_t j=0; j<mesh.TangentSpaces.size(); ++j)
-            { fread(&mesh.TangentSpaces[j], sizeof(mesh.TangentSpaces[j]), 1, pFile); }
-
-            for(size_t j=0; j<mesh.Colors.size(); ++j)
-            { fread(&mesh.Colors[j], sizeof(mesh.Colors[j]), 1, pFile); }
-
-            for(auto ch=0; ch<4; ++ch)
-            {
-                for(size_t j=0; j<mesh.TexCoords[ch].size(); ++j)
-                { fread(&mesh.TexCoords[ch][j], sizeof(mesh.TexCoords[ch][j]), 1, pFile); }
-            }
-
-            for(size_t j=0; j<mesh.BoneIndices.size(); ++j)
-            { fread(&mesh.BoneIndices[j], sizeof(mesh.BoneIndices[j]), 1, pFile); }
-
-            for(size_t j=0; j<mesh.BoneWeights.size(); ++j)
-            { fread(&mesh.BoneWeights[j], sizeof(mesh.BoneWeights[j]), 1, pFile); }
-
-            for(size_t j=0; j<mesh.Indices.size(); ++j)
-            { fread(&mesh.Indices[j], sizeof(mesh.Indices[j]), 1, pFile); }
-
-            for(size_t j=0; j<mesh.Primitives.size(); ++j)
-            { fread(&mesh.Primitives[j], sizeof(mesh.Primitives[j]), 1, pFile); }
-
-            for(size_t j=0; j<mesh.Meshlets.size(); ++j)
-            { fread(&mesh.Meshlets[j], sizeof(mesh.Meshlets[j]), 1, pFile); }
-
-            for(size_t j=0; j<mesh.CullingInfos.size(); ++j)
-            { fread(&mesh.CullingInfos[j], sizeof(mesh.CullingInfos[j]), 1, pFile); }
-        }
-    }
-    if (modelHeader.Version == 0x2)
-    {
-        model.Meshes.resize(modelHeader.MeshCount);
-
-        for(size_t i=0; i<model.Meshes.size(); ++i)
-        {
-            MeshHeaderV2 meshHeader;
-            fread(&meshHeader, sizeof(meshHeader), 1, pFile);
-
-            auto& mesh = model.Meshes[i];
-
-            mesh.MatrerialHash = meshHeader.MaterialHash;
-            mesh.Positions      .resize(meshHeader.PositionCount);
-            mesh.TangentSpaces  .resize(meshHeader.TangentSpaceCount);
-            mesh.Colors         .resize(meshHeader.ColorCount);
-            for(auto ch=0; ch<4; ++ch)
-            { mesh.TexCoords[ch].resize(meshHeader.TexCoordCount[ch]); }
-            mesh.BoneIndices    .resize(meshHeader.BoneIndexCount);
-            mesh.BoneWeights    .resize(meshHeader.BoneWeightCount);
-            mesh.Indices        .resize(meshHeader.IndexCount);
-            mesh.Primitives     .resize(meshHeader.PrimitiveCount);
-            mesh.Meshlets       .resize(meshHeader.MeshletCount);
-            mesh.CullingInfos   .resize(meshHeader.CullingInfoCount);
-            mesh.BoneWeightStride = meshHeader.BoneWeightStride;
-
-            for(size_t j=0; j<mesh.Positions.size(); ++j)
-            { fread(&mesh.Positions[j], sizeof(mesh.Positions[j]), 1, pFile); }
-
-            for(size_t j=0; j<mesh.TangentSpaces.size(); ++j)
-            { fread(&mesh.TangentSpaces[j], sizeof(mesh.TangentSpaces[j]), 1, pFile); }
-
-            for(size_t j=0; j<mesh.Colors.size(); ++j)
-            { fread(&mesh.Colors[j], sizeof(mesh.Colors[j]), 1, pFile); }
-
-            for(auto ch=0; ch<4; ++ch)
-            {
-                for(size_t j=0; j<mesh.TexCoords[ch].size(); ++j)
-                { fread(&mesh.TexCoords[ch][j], sizeof(mesh.TexCoords[ch][j]), 1, pFile); }
-            }
-
-            for(size_t j=0; j<mesh.BoneIndices.size(); ++j)
-            { fread(&mesh.BoneIndices[j], sizeof(mesh.BoneIndices[j]), 1, pFile); }
-
-            for(size_t j=0; j<mesh.BoneWeights.size(); ++j)
-            { fread(&mesh.BoneWeights[j], sizeof(mesh.BoneWeights[j]), 1, pFile); }
-
-            for(size_t j=0; j<mesh.Indices.size(); ++j)
-            { fread(&mesh.Indices[j], sizeof(mesh.Indices[j]), 1, pFile); }
-
-            for(size_t j=0; j<mesh.Primitives.size(); ++j)
-            { fread(&mesh.Primitives[j], sizeof(mesh.Primitives[j]), 1, pFile); }
-
-            for(size_t j=0; j<mesh.Meshlets.size(); ++j)
-            { fread(&mesh.Meshlets[j], sizeof(mesh.Meshlets[j]), 1, pFile); }
-
-            for(size_t j=0; j<mesh.CullingInfos.size(); ++j)
-            { fread(&mesh.CullingInfos[j], sizeof(mesh.CullingInfos[j]), 1, pFile); }
-        }
-    }
-    else
-    {
-        ELOGA("Error : Invalid Version. path = %s", path);
-        fclose(pFile);
-        return false;
-    }
-
-    fclose(pFile);
-    return true;
-}
 
 } // namespace asdx
