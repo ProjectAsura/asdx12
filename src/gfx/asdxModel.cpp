@@ -24,7 +24,6 @@ namespace asdx {
 //-----------------------------------------------------------------------------
 Mesh::Mesh()
 : m_MaterialId(UINT32_MAX)
-, m_MeshletCount(0)
 , m_Box({asdx::Vector3(FLT_MAX, FLT_MAX, FLT_MAX), asdx::Vector3(-FLT_MAX, -FLT_MAX, -FLT_MAX)})
 { /* DO_NOTHING */ }
 
@@ -37,137 +36,135 @@ Mesh::~Mesh()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool Mesh::Init(CommandList& cmdList, const ResMesh& resource)
+bool Mesh::Init(const ResMesh& resource)
 {
     m_MeshHash = asdx::CalcHash(resource.Name.c_str());
 
     {
-        if (!m_Positions.Init(
-            cmdList,
-            uint64_t(resource.Positions.size()),
-            uint32_t(sizeof(resource.Positions[0])),
-            resource.Positions.data()))
+        auto stride = uint32_t(sizeof(resource.Positions[0]));
+        auto size   = uint64_t(resource.Positions.size()) * stride;
+
+        if (!m_Positions.Init(size, stride))
         {
-            ELOG("Error : StructuredBuffer::Init() Failed.");
+            ELOG("Error : VertexBuffer::Init() Failed.");
             return false;
         }
+
+        auto ptr = m_Positions.Map();
+        memcpy(ptr, resource.Positions.data(), size);
+        m_Positions.Unmap();
     }
 
-    if (resource.TangentSpaces.size() > 0)
+    if (resource.Normals.size() > 0)
     {
-        if (!m_TangentSpaces.Init(
-            cmdList,
-            uint64_t(resource.TangentSpaces.size()),
-            uint32_t(sizeof(resource.TangentSpaces[0])),
-            resource.TangentSpaces.data()))
+        auto stride = uint32_t(sizeof(resource.Normals[0]));
+        auto size   = uint64_t(resource.Normals.size()) * stride;
+
+        if (!m_Normals.Init(size, stride))
         {
-            ELOG("Error : StructuredBuffer::Init() Failed.");
+            ELOG("Error : VertexBuffer::Init() Failed.");
             return false;
         }
+
+        auto ptr = m_Normals.Map();
+        memcpy(ptr, resource.Normals.data(), size);
+        m_Normals.Unmap();
+    }
+
+    if (resource.Tangents.size() > 0)
+    {
+        auto stride = uint32_t(sizeof(resource.Tangents[0]));
+        auto size   = uint64_t(resource.Tangents.size()) * stride;
+
+        if (!m_Tangents.Init(size, stride))
+        {
+            ELOG("Error : VertexBuffer::Init() Failed.");
+            return false;
+        }
+
+        auto ptr = m_Tangents.Map();
+        memcpy(ptr, resource.Tangents.data(), size);
+        m_Tangents.Unmap();
     }
 
     if (resource.Colors.size() > 0)
     {
-        if (!m_Colors.Init(
-            cmdList,
-            uint64_t(resource.Colors.size()),
-            uint32_t(sizeof(resource.Colors[0])),
-            resource.Colors.data()))
+        auto stride = uint32_t(sizeof(resource.Colors[0]));
+        auto size   = uint64_t(resource.Colors.size()) * stride;
+
+        if (!m_Colors.Init(size, stride))
         {
-            ELOG("Error : StructuredBuffer::Init() Failed.");
+            ELOG("Error : VertexBuffer::Init() Failed.");
             return false;
         }
+
+        auto ptr = m_Colors.Map();
+        memcpy(ptr, resource.Colors.data(), size);
+        m_Colors.Unmap();
     }
 
     for(auto i=0; i<4; ++i)
     {
         if (resource.TexCoords[i].size() > 0)
         {
-            if (!m_TexCoords[i].Init(
-                cmdList,
-                uint64_t(resource.TexCoords[i].size()),
-                uint32_t(sizeof(resource.TexCoords[i][0])),
-                resource.TexCoords[i].data()))
+            auto stride = uint32_t(sizeof(resource.TexCoords[i][0]));
+            auto size   = uint64_t(resource.TexCoords[i].size());
+            if (!m_TexCoords[i].Init(size, stride))
             {
-                ELOG("Error : StructuredBuffer:Init() Failed.");
+                ELOG("Error : VertexBuffer:Init() Failed.");
                 return false;
             }
+
+            auto ptr = m_TexCoords[i].Map();
+            memcpy(ptr, resource.TexCoords[i].data(), size);
+            m_TexCoords[i].Unmap();
         }
     }
 
     if (resource.BoneIndices.size() > 0)
     {
-        if (!m_BoneIndices.Init(
-            cmdList,
-            uint64_t(resource.BoneIndices.size()),
-            uint32_t(sizeof(resource.BoneIndices[0])),
-            resource.BoneIndices.data()))
+        auto stride = uint32_t(sizeof(resource.BoneIndices[0])) * resource.BoneWeightStride;
+        auto size   = uint64_t(resource.BoneIndices.size()) * sizeof(resource.BoneIndices[0]);
+
+        if (!m_BoneIndices.Init(size, stride))
         {
-            ELOG("Error : StructuredBuffer::Init() Failed.");
+            ELOG("Error : VertexBuffer::Init() Failed.");
             return false;
         }
+
+        auto ptr = m_BoneIndices.Map();
+        memcpy(ptr, resource.BoneIndices.data(), size);
+        m_BoneIndices.Unmap();
     }
 
     if (resource.BoneWeights.size() > 0)
     {
-        if (!m_BoneWeights.Init(
-            cmdList,
-            uint64_t(resource.BoneWeights.size()),
-            uint32_t(sizeof(resource.BoneWeights[0])),
-            resource.BoneWeights.data()))
+        auto stride = uint32_t(sizeof(resource.BoneWeights[0])) * resource.BoneWeightStride;
+        auto size   = uint64_t(resource.BoneWeights.size()) * sizeof(resource.BoneWeights[0]);
+
+        if (!m_BoneWeights.Init(size, stride))
         {
-            ELOG("Error : StructuredBuffer::Init() Failed.");
+            ELOG("Error : VertexBuffer::Init() Failed.");
             return false;
         }
     }
 
     {
-        if (!m_Indices.Init(
-            cmdList,
-            uint64_t(resource.Indices.size()),
-            uint32_t(sizeof(resource.Indices[0])),
-            resource.Indices.data()))
+        auto stride     = sizeof(resource.Indices[0]);
+        auto size       = resource.Indices.size() * stride;
+        auto isShort    = (stride == 16);
+
+        if (!m_Indices.Init(size, isShort))
         {
-            ELOG("Error : StructuredBuffer::Init() Failed.");
+            ELOG("Error : IndexBuffer::Init() Failed.");
             return false;
         }
+
+        auto ptr = m_Indices.Map();
+        memcpy(ptr, resource.Indices.data(), size);
+        m_Indices.Unmap();
     }
 
-    {
-        if (!m_Primitives.Init(
-            cmdList,
-            uint64_t(resource.Primitives.size()),
-            uint32_t(sizeof(resource.Primitives[0])),
-            resource.Primitives.data()))
-        {
-            ELOG("Error : StructuredBuffer::Init() Failed.");
-            return false;
-        }
-    }
-
-    {
-        if (!m_Meshlets.Init(
-            cmdList,
-            uint64_t(resource.Meshlets.size()),
-            uint32_t(sizeof(resource.Meshlets[0])),
-            resource.Meshlets.data()))
-        {
-            ELOG("Error : StructuredBuffer::Init() Failed");
-            return false;
-        }
-    }
-
-    {
-        if (!m_Bounds.Init(
-            cmdList,
-            uint64_t(resource.Bounds.size()),
-            uint32_t(sizeof(resource.Bounds[0])),
-            resource.Bounds.data()))
-        {
-            ELOG("Error : StructuredBuffer::Init() Failed.");
-            return false;
-        }
-    }
 
     m_Box.Mini = m_Box.Maxi = resource.Positions[0];
     for(auto i=1; i<resource.Positions.size(); ++i)
@@ -176,8 +173,8 @@ bool Mesh::Init(CommandList& cmdList, const ResMesh& resource)
         m_Box.Maxi = asdx::Vector3::Max(m_Box.Maxi, resource.Positions[i]);
     }
 
-    m_MaterialId   = resource.MaterialId;
-    m_MeshletCount = uint32_t(resource.Meshlets.size());
+    m_MaterialId        = resource.MaterialId;
+    m_BoneWeightStride  = resource.BoneWeightStride;
 
     return true;
 }
@@ -188,19 +185,16 @@ bool Mesh::Init(CommandList& cmdList, const ResMesh& resource)
 void Mesh::Term()
 {
     m_Positions     .Term();
-    m_TangentSpaces .Term();
+    m_Normals       .Term();
+    m_Tangents      .Term();
     m_Colors        .Term();
     m_BoneIndices   .Term();
     m_BoneWeights   .Term();
     m_Indices       .Term();
-    m_Primitives    .Term();
-    m_Meshlets      .Term();
-    m_Bounds        .Term();
 
     for(auto i=0; i<4; ++i)
     { m_TexCoords[i].Term(); }
 
-    m_MeshletCount = 0;
     m_MaterialId   = 0;
 
     m_Box.Mini = asdx::Vector3(FLT_MAX, FLT_MAX, FLT_MAX);
@@ -210,25 +204,28 @@ void Mesh::Term()
 //-----------------------------------------------------------------------------
 //      頂点データを取得します.
 //-----------------------------------------------------------------------------
-const StructuredBuffer& Mesh::GetPositions() const
+const VertexBuffer& Mesh::GetPositions() const
 { return m_Positions; }
 
 //-----------------------------------------------------------------------------
 //      接線空間を取得します.
 //-----------------------------------------------------------------------------
-const StructuredBuffer& Mesh::GetTangentSpaces() const
-{ return m_TangentSpaces; }
+const VertexBuffer& Mesh::GetNormals() const
+{ return m_Normals; }
+
+const VertexBuffer& Mesh::GetTangents() const
+{ return m_Tangents; }
 
 //-----------------------------------------------------------------------------
 //      頂点カラーを取得します.
 //-----------------------------------------------------------------------------
-const StructuredBuffer& Mesh::GetColors() const
+const VertexBuffer& Mesh::GetColors() const
 { return m_Colors; }
 
 //-----------------------------------------------------------------------------
 //      テクスチャ座標を取得します.
 //-----------------------------------------------------------------------------
-const StructuredBuffer& Mesh::GetTexCoords(uint8_t index) const
+const VertexBuffer& Mesh::GetTexCoords(uint8_t index) const
 {
     assert(index < 4);
     return m_TexCoords[index];
@@ -237,38 +234,20 @@ const StructuredBuffer& Mesh::GetTexCoords(uint8_t index) const
 //-----------------------------------------------------------------------------
 //      ボーン番号を取得します.
 //-----------------------------------------------------------------------------
-const StructuredBuffer& Mesh::GetBoneIndices() const
+const VertexBuffer& Mesh::GetBoneIndices() const
 { return m_BoneIndices; }
 
 //-----------------------------------------------------------------------------
 //      ボーンの重みを取得します.
 //-----------------------------------------------------------------------------
-const StructuredBuffer& Mesh::GetBoneWeights() const
+const VertexBuffer& Mesh::GetBoneWeights() const
 { return m_BoneWeights; }
 
 //-----------------------------------------------------------------------------
 //      インデックスデータを取得します.
 //-----------------------------------------------------------------------------
-const StructuredBuffer& Mesh::GetIndices() const
+const IndexBuffer& Mesh::GetIndices() const
 { return m_Indices; }
-
-//-----------------------------------------------------------------------------
-//      プリミティブデータを取得します.
-//-----------------------------------------------------------------------------
-const StructuredBuffer& Mesh::GetPrimitives() const
-{ return m_Primitives; }
-
-//-----------------------------------------------------------------------------
-//      メッシュレットデータのGPU仮想アドレスを取得します.
-//-----------------------------------------------------------------------------
-const StructuredBuffer& Mesh::GetMeshlets() const
-{ return m_Meshlets; }
-
-//-----------------------------------------------------------------------------
-//      カリング情報を取得します.
-//-----------------------------------------------------------------------------
-const StructuredBuffer& Mesh::GetBounds() const
-{ return m_Bounds; }
 
 //-----------------------------------------------------------------------------
 //      メッシュハッシュを取得します.
@@ -283,12 +262,6 @@ uint32_t Mesh::GetMaterialId() const
 { return m_MaterialId; }
 
 //-----------------------------------------------------------------------------
-//      メッシュレット数を取得します.
-//-----------------------------------------------------------------------------
-uint32_t Mesh::GetMeshletCount() const
-{ return m_MeshletCount; }
-
-//-----------------------------------------------------------------------------
 //      バウンディングボックスを取得します.
 //-----------------------------------------------------------------------------
 const BoundingBox& Mesh::GetBox() const
@@ -301,10 +274,10 @@ bool Mesh::HasBone() const
 { return m_BoneWeights.GetResource() != nullptr; }
 
 //-----------------------------------------------------------------------------
-//      接線空間を持つかどうか?
+//      接線ベクトルを持つかどうか?
 //-----------------------------------------------------------------------------
-bool Mesh::HasTangentSpace() const
-{ return m_TangentSpaces.GetResource() != nullptr; }
+bool Mesh::HasTangent() const
+{ return m_Tangents.GetResource() != nullptr; }
 
 //-----------------------------------------------------------------------------
 //      頂点カラーを持つかどうか?
@@ -343,7 +316,7 @@ Model::~Model()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool Model::Init(CommandList& cmdList, const ResModel& model)
+bool Model::Init(const ResModel& model)
 {
     m_ModelHash = asdx::CalcHash(model.Name.c_str());
 
@@ -352,7 +325,7 @@ bool Model::Init(CommandList& cmdList, const ResModel& model)
 
     for(size_t i=0; i<model.Meshes.size(); ++i)
     {
-        if (!m_Meshes[index].Init(cmdList, model.Meshes[i]))
+        if (!m_Meshes[index].Init(model.Meshes[i]))
         { return false; }
 
         auto& box = m_Meshes[index].GetBox();

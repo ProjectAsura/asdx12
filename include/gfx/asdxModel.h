@@ -9,7 +9,8 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <res/asdxResModel.h>
-#include <gfx/asdxStructuredBuffer.h>
+#include <gfx/asdxVertexBuffer.h>
+#include <gfx/asdxIndexBuffer.h>
 
 
 namespace asdx {
@@ -60,7 +61,7 @@ public:
     //! @retval true    初期化成功.
     //! @retval false   初期化失敗.
     //-------------------------------------------------------------------------
-    bool Init(CommandList& cmdList, const ResMesh& resource);
+    bool Init(const ResMesh& resource);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.
@@ -72,70 +73,56 @@ public:
     //!
     //! @return     頂点データを返却します.
     //-------------------------------------------------------------------------
-    const StructuredBuffer& GetPositions() const;
+    const VertexBuffer& GetPositions() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      接線空間を取得します.
+    //! @brief      法線ベクトルを取得します.
     //!
-    //! @return     接線空間を返却します.
+    //! @return     法線ベクトルを返却します.
     //-------------------------------------------------------------------------
-    const StructuredBuffer& GetTangentSpaces() const;
+    const VertexBuffer& GetNormals() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      接線ベクトルを取得します.
+    //! 
+    //! @return     接線ベクトルを返却します.
+    //-------------------------------------------------------------------------
+    const VertexBuffer& GetTangents() const;
 
     //-------------------------------------------------------------------------
     //! @brief      頂点カラーを取得します.
     //!
     //! @return     頂点カラー返却します.
     //-------------------------------------------------------------------------
-    const StructuredBuffer& GetColors() const;
+    const VertexBuffer& GetColors() const;
 
     //-------------------------------------------------------------------------
     //! @brief      テクスチャ座標を取得します.
     //!
     //! @return     テクスチャ座標を返却します.
     //-------------------------------------------------------------------------
-    const StructuredBuffer& GetTexCoords(uint8_t index) const;
+    const VertexBuffer& GetTexCoords(uint8_t index) const;
 
     //-------------------------------------------------------------------------
     //! @brief      ボーン番号を取得します.
     //!
     //! @return     ボーン番号を返却します.
     //-------------------------------------------------------------------------
-    const StructuredBuffer& GetBoneIndices() const;
+    const VertexBuffer& GetBoneIndices() const;
 
     //-------------------------------------------------------------------------
     //! @brief      ボーン重みを取得します.
     //!
     //! @return     ボーン重みを返却します.
     //-------------------------------------------------------------------------
-    const StructuredBuffer& GetBoneWeights() const;
+    const VertexBuffer& GetBoneWeights() const;
 
     //-------------------------------------------------------------------------
     //! @brief      インデックスデータを取得します.
     //!
     //! @return     インデックスデータを返却します.
     //-------------------------------------------------------------------------
-    const StructuredBuffer& GetIndices() const;
-
-    //-------------------------------------------------------------------------
-    //! @brief      プリミティブデータを取得します.
-    //!
-    //! @return     プリミティブデータを返却します.
-    //-------------------------------------------------------------------------
-    const StructuredBuffer& GetPrimitives() const;
-
-    //-------------------------------------------------------------------------
-    //! @brief      メッシュレットデータを取得します.
-    //!
-    //! @return     メッシュレットデータを返却します.
-    //-------------------------------------------------------------------------
-    const StructuredBuffer& GetMeshlets() const;
-
-    //-------------------------------------------------------------------------
-    //! @brief      カリング情報を取得します.
-    //!
-    //! @return     カリング情報を返却します.
-    //-------------------------------------------------------------------------
-    const StructuredBuffer& GetBounds() const;
+    const IndexBuffer& GetIndices() const;
 
     //-------------------------------------------------------------------------
     //! @brief      メッシュハッシュを取得します.
@@ -152,11 +139,11 @@ public:
     uint32_t GetMaterialId() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      メッシュレット数を取得します.
-    //!
-    //! @return     メッシュレット数を返却します.
+    //! @brief      1頂点あたりのボーンの重み数を取得します.
+    //! 
+    //! @return     1頂点あたりのボーンの重み数を返却します.
     //-------------------------------------------------------------------------
-    uint32_t GetMeshletCount() const;
+    uint32_t GetBoneWeightStride() const;
 
     //-------------------------------------------------------------------------
     //! @brief      バウンディングボックスを取得します.
@@ -166,12 +153,12 @@ public:
     const BoundingBox& GetBox() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      接線空間データを持つかどうか?
+    //! @brief      接線ベクトルを持つかどうか?
     //!
-    //! @retval true    接線空間データを持ちます.
-    //! @retval false   接線空間データを持ちません.
+    //! @retval true    接線ベクトルを持ちます.
+    //! @retval false   接線ベクトルを持ちません.
     //-------------------------------------------------------------------------
-    bool HasTangentSpace() const;
+    bool HasTangent() const;
 
     //-------------------------------------------------------------------------
     //! @brief      頂点カラーをもつかどうか?
@@ -204,25 +191,23 @@ private:
     //=========================================================================
     uint32_t            m_MeshHash;
     uint32_t            m_MaterialId;
-    uint32_t            m_MeshletCount;
+    uint32_t            m_BoneWeightStride; // 1頂点あたりのボーンの重み数.
     BoundingBox         m_Box;
-    StructuredBuffer    m_Positions;
-    StructuredBuffer    m_TangentSpaces;
-    StructuredBuffer    m_TexCoords[4];
-    StructuredBuffer    m_Colors;
-    StructuredBuffer    m_BoneIndices;
-    StructuredBuffer    m_BoneWeights;
-    StructuredBuffer    m_Indices;
-    StructuredBuffer    m_Primitives;
-    StructuredBuffer    m_Meshlets;
-    StructuredBuffer    m_Bounds;
+    VertexBuffer        m_Positions;
+    VertexBuffer        m_Normals;
+    VertexBuffer        m_Tangents;
+    VertexBuffer        m_Colors;
+    VertexBuffer        m_TexCoords[4];
+    VertexBuffer        m_BoneIndices;
+    VertexBuffer        m_BoneWeights;
+    IndexBuffer         m_Indices;
+
 
     //=========================================================================
     // private methods.
     //=========================================================================
     /* NOTHING */
 };
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // Model class
@@ -261,7 +246,7 @@ public:
     //! @retval true    初期化に成功.
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
-    bool Init(CommandList& cmdList, const ResModel& model);
+    bool Init(const ResModel& model);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.

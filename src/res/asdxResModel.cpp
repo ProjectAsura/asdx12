@@ -142,6 +142,16 @@ public:
             ParseMesh(model.Meshes[i], pMesh);
         }
 
+        // マテリアル名取得.
+        auto materialCount = m_pScene->mNumMaterials;
+        model.MaterialNames.resize(materialCount);
+        for(size_t i=0; i<materialCount; ++i)
+        {
+            aiString name;
+            aiGetMaterialString(m_pScene->mMaterials[i], AI_MATKEY_NAME, &name);
+            model.MaterialNames[i] = name.C_Str();
+        }
+
         // 不要になったのでクリア.
         importer.FreeScene();
         m_pScene = nullptr;
@@ -174,12 +184,13 @@ private:
         auto vertexCount = srcMesh->mNumVertices;
         dstMesh.Positions.resize(vertexCount);
 
-        if (srcMesh->HasNormals() && srcMesh->HasTangentsAndBitangents()) {
-            dstMesh.TangentSpaces.resize(vertexCount);
-        }
-        if (srcMesh->HasVertexColors(0)) {
-            dstMesh.Colors.resize(vertexCount);
-        }
+        if (srcMesh->HasNormals())
+        { dstMesh.Normals.resize(vertexCount); }
+        if (srcMesh->HasTangentsAndBitangents()) 
+        { dstMesh.Tangents.resize(vertexCount); }
+        if (srcMesh->HasVertexColors(0))
+        { dstMesh.Colors.resize(vertexCount); }
+
         auto uvCount = srcMesh->GetNumUVChannels();
         uvCount = (uvCount > 4) ? 4 : uvCount;
 
@@ -193,20 +204,26 @@ private:
             auto& pos = srcMesh->mVertices[i];
             dstMesh.Positions[i] = asdx::Vector3(pos.x, pos.y, pos.z);
 
-            if (srcMesh->HasNormals() && srcMesh->HasTangentsAndBitangents()) {
+            if (srcMesh->HasNormals())
+            {
                 auto& normal = srcMesh->mNormals[i];
+                dstMesh.Normals[i] = asdx::Vector3(normal.x, normal.y, normal.z);
+            }
+
+            if (srcMesh->HasTangentsAndBitangents())
+            {
                 auto& tangent = srcMesh->mTangents[i];
-                dstMesh.TangentSpaces[i] = asdx::EncodeTBN(
-                    asdx::Vector3(normal.x, normal.y, normal.z),
-                    asdx::Vector3(tangent.x, tangent.y, tangent.z), 0);
+                dstMesh.Tangents[i] = asdx::Vector3(tangent.x, tangent.y, tangent.z);
             }
-            if (srcMesh->HasVertexColors(0)){
+            if (srcMesh->HasVertexColors(0))
+            {
                 auto& color = srcMesh->mColors[0][i];
-                dstMesh.Colors[i] = asdx::EncodeUnorm4(asdx::Vector4(color.r, color.g, color.b, color.a));
+                dstMesh.Colors[i] = asdx::Vector4(color.r, color.g, color.b, color.a);
             }
-            for(auto c=0u; c<uvCount; ++c) {
+            for(auto c=0u; c<uvCount; ++c)
+            {
                 auto& uv = srcMesh->mTextureCoords[c][i];
-                dstMesh.TexCoords[c][i] = asdx::EncodeHalf2(asdx::Vector2(uv.x, uv.y)).u;
+                dstMesh.TexCoords[c][i] = asdx::Vector2(uv.x, uv.y);
             }
         }
 
@@ -288,93 +305,95 @@ private:
             vertices.shrink_to_fit();
         }
 
-        // メッシュレット生成.
-        {
-            const size_t kMaxVertices   = 64;
-            const size_t kMaxPrimitives = 126;
-            float coneWeight = 0.0f;
+#if 0
+        //// メッシュレット生成.
+        //{
+        //    const size_t kMaxVertices   = 64;
+        //    const size_t kMaxPrimitives = 126;
+        //    float coneWeight = 0.0f;
 
-            auto maxMeshlets = meshopt_buildMeshletsBound(
-                    dstMesh.Indices.size(),
-                    kMaxVertices,
-                    kMaxPrimitives);
+        //    auto maxMeshlets = meshopt_buildMeshletsBound(
+        //            dstMesh.Indices.size(),
+        //            kMaxVertices,
+        //            kMaxPrimitives);
 
-            std::vector<meshopt_Meshlet> meshlets(maxMeshlets);
-            std::vector<uint32_t> meshletVertices(maxMeshlets * kMaxVertices);
-            std::vector<uint8_t> meshletTriangles(maxMeshlets * kMaxPrimitives * 3);
+        //    std::vector<meshopt_Meshlet> meshlets(maxMeshlets);
+        //    std::vector<uint32_t> meshletVertices(maxMeshlets * kMaxVertices);
+        //    std::vector<uint8_t> meshletTriangles(maxMeshlets * kMaxPrimitives * 3);
 
-            auto meshletCount = meshopt_buildMeshlets(
-                meshlets.data(),
-                meshletVertices.data(),
-                meshletTriangles.data(),
-                dstMesh.Indices.data(),
-                dstMesh.Indices.size(),
-                &dstMesh.Positions[0].x,
-                dstMesh.Positions.size(),
-                sizeof(asdx::Vector3),
-                kMaxVertices,
-                kMaxPrimitives,
-                coneWeight);
+        //    auto meshletCount = meshopt_buildMeshlets(
+        //        meshlets.data(),
+        //        meshletVertices.data(),
+        //        meshletTriangles.data(),
+        //        dstMesh.Indices.data(),
+        //        dstMesh.Indices.size(),
+        //        &dstMesh.Positions[0].x,
+        //        dstMesh.Positions.size(),
+        //        sizeof(asdx::Vector3),
+        //        kMaxVertices,
+        //        kMaxPrimitives,
+        //        coneWeight);
 
-            // 最大値でメモリを予約.
-            dstMesh.UniqueVertexIndices.reserve(meshlets.size() * kMaxVertices);
-            dstMesh.Primitives   .reserve(meshlets.size() * kMaxPrimitives);
+        //    // 最大値でメモリを予約.
+        //    dstMesh.UniqueVertexIndices.reserve(meshlets.size() * kMaxVertices);
+        //    dstMesh.Primitives   .reserve(meshlets.size() * kMaxPrimitives);
 
-            for(auto& meshlet : meshlets)
-            {
-                auto vertexOffset    = uint32_t(dstMesh.UniqueVertexIndices.size());
-                auto primitiveOffset = uint32_t(dstMesh.Primitives         .size());
+        //    for(auto& meshlet : meshlets)
+        //    {
+        //        auto vertexOffset    = uint32_t(dstMesh.UniqueVertexIndices.size());
+        //        auto primitiveOffset = uint32_t(dstMesh.Primitives         .size());
 
-                for(auto i=0u; i<meshlet.vertex_count; ++i)
-                { dstMesh.UniqueVertexIndices.push_back(meshletVertices[i]); }
+        //        for(auto i=0u; i<meshlet.vertex_count; ++i)
+        //        { dstMesh.UniqueVertexIndices.push_back(meshletVertices[i]); }
 
-                for(size_t i=0; i<meshlet.triangle_count; i+=3)
-                {
-                    asdx::ResPrimitive tris = {};
-                    tris.Index1 = meshletTriangles[i + 0];
-                    tris.Index0 = meshletTriangles[i + 1];
-                    tris.Index2 = meshletTriangles[i + 2];
-                    dstMesh.Primitives.push_back(tris);
-                }
+        //        for(size_t i=0; i<meshlet.triangle_count; i+=3)
+        //        {
+        //            asdx::ResPrimitive tris = {};
+        //            tris.Index1 = meshletTriangles[i + 0];
+        //            tris.Index0 = meshletTriangles[i + 1];
+        //            tris.Index2 = meshletTriangles[i + 2];
+        //            dstMesh.Primitives.push_back(tris);
+        //        }
 
-                // メッシュレットデータ設定.
-                asdx::ResMeshlet m = {};
-                m.VertexCount       = meshlet.vertex_count;
-                m.VertexOffset      = vertexOffset;
-                m.PrimitiveCount    = meshlet.triangle_count;
-                m.PrimitiveOffset   = primitiveOffset;
+        //        // メッシュレットデータ設定.
+        //        asdx::ResMeshlet m = {};
+        //        m.VertexCount       = meshlet.vertex_count;
+        //        m.VertexOffset      = vertexOffset;
+        //        m.PrimitiveCount    = meshlet.triangle_count;
+        //        m.PrimitiveOffset   = primitiveOffset;
 
-                dstMesh.Meshlets.push_back(m);
+        //        dstMesh.Meshlets.push_back(m);
 
-                // バウンディングを求める.
-                auto bounds = meshopt_computeMeshletBounds(
-                    &meshletVertices[meshlet.vertex_offset],
-                    &meshletTriangles[meshlet.triangle_offset],
-                    meshlet.triangle_count,
-                    &dstMesh.Positions[0].x,
-                    dstMesh.Positions.size(),
-                    sizeof(asdx::Vector3));
+        //        // バウンディングを求める.
+        //        auto bounds = meshopt_computeMeshletBounds(
+        //            &meshletVertices[meshlet.vertex_offset],
+        //            &meshletTriangles[meshlet.triangle_offset],
+        //            meshlet.triangle_count,
+        //            &dstMesh.Positions[0].x,
+        //            dstMesh.Positions.size(),
+        //            sizeof(asdx::Vector3));
 
-                // カリングデータ設定.
-                auto normalCone = asdx::Vector4(
-                    asdx::Saturate(bounds.cone_axis[0] * 0.5f + 0.5f),
-                    asdx::Saturate(bounds.cone_axis[1] * 0.5f + 0.5f),
-                    asdx::Saturate(bounds.cone_axis[2] * 0.5f + 0.5f),
-                    asdx::Saturate(bounds.cone_cutoff * 0.5f + 0.5f));
+        //        // カリングデータ設定.
+        //        auto normalCone = asdx::Vector4(
+        //            asdx::Saturate(bounds.cone_axis[0] * 0.5f + 0.5f),
+        //            asdx::Saturate(bounds.cone_axis[1] * 0.5f + 0.5f),
+        //            asdx::Saturate(bounds.cone_axis[2] * 0.5f + 0.5f),
+        //            asdx::Saturate(bounds.cone_cutoff * 0.5f + 0.5f));
 
-                asdx::ResMeshletBounds c = {};
-                c.Sphere     = asdx::Vector4(bounds.center[0], bounds.center[1], bounds.center[2], bounds.radius);
-                c.NormalCone = ToUnorm8(normalCone);
+        //        asdx::ResMeshletBounds c = {};
+        //        c.Sphere     = asdx::Vector4(bounds.center[0], bounds.center[1], bounds.center[2], bounds.radius);
+        //        c.NormalCone = ToUnorm8(normalCone);
 
-                dstMesh.Bounds.push_back(c);
-            }
+        //        dstMesh.Bounds.push_back(c);
+        //    }
 
-            // サイズ最適化.
-            dstMesh.UniqueVertexIndices .shrink_to_fit();
-            dstMesh.Primitives          .shrink_to_fit();
-            dstMesh.Meshlets            .shrink_to_fit();
-            dstMesh.Bounds              .shrink_to_fit();
-        }
+        //    // サイズ最適化.
+        //    dstMesh.UniqueVertexIndices .shrink_to_fit();
+        //    dstMesh.Primitives          .shrink_to_fit();
+        //    dstMesh.Meshlets            .shrink_to_fit();
+        //    dstMesh.Bounds              .shrink_to_fit();
+        //}
+#endif
     }
 };
 
@@ -398,8 +417,11 @@ void ResMesh::Dispose()
     Positions.clear();
     Positions.shrink_to_fit();
 
-    TangentSpaces.clear();
-    TangentSpaces.shrink_to_fit();
+    Normals.clear();
+    Normals.shrink_to_fit();
+
+    Tangents.clear();
+    Tangents.shrink_to_fit();
 
     Colors.clear();
     Colors.shrink_to_fit();
@@ -418,15 +440,6 @@ void ResMesh::Dispose()
 
     Indices.clear();
     Indices.shrink_to_fit();
-
-    Primitives.clear();
-    Primitives.shrink_to_fit();
-
-    Meshlets.clear();
-    Meshlets.shrink_to_fit();
-
-    Bounds.clear();
-    Bounds.shrink_to_fit();
 
     BoneWeightStride = 0;
     Visible = false;

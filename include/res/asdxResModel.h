@@ -56,17 +56,14 @@ struct ResMesh
     uint32_t                            MaterialId;         // マテリアルID.
     bool                                Visible;            // 可視フラグ.
     uint32_t                            BoneWeightStride;   // 1頂点あたりのボーンの重み数
-    std::vector<asdx::Vector3>          Positions;          // R32G32B32A32_FLOAT
-    std::vector<uint32_t>               TangentSpaces;      // R10B10G10A2_UINTで圧縮済み.
-    std::vector<uint32_t>               Colors;             // R8G8B8A8_UNORMで圧縮済み.
-    std::vector<uint32_t>               TexCoords[4];       // R16R16_FLOATで圧縮済み.
-    std::vector<uint16_t>               BoneIndices;
-    std::vector<float>                  BoneWeights;
-    std::vector<uint32_t>               Indices;
-    std::vector<uint32_t>               UniqueVertexIndices;
-    std::vector<ResPrimitive>           Primitives;
-    std::vector<ResMeshlet>             Meshlets;
-    std::vector<ResMeshletBounds>       Bounds;
+    std::vector<asdx::Vector3>          Positions;          // 頂点位置.
+    std::vector<asdx::Vector3>          Normals;            // 法線ベクトル.
+    std::vector<asdx::Vector3>          Tangents;           // 接線ベクトル.
+    std::vector<asdx::Vector4>          Colors;             // 頂点カラー.
+    std::vector<asdx::Vector2>          TexCoords[4];       // テクスチャ座標.
+    std::vector<uint16_t>               BoneIndices;        // ボーン番号.
+    std::vector<float>                  BoneWeights;        // ボーン重み.
+    std::vector<uint32_t>               Indices;            // 頂点インデックス.
 
     //-------------------------------------------------------------------------
     //! @brief      破棄処理を行います.

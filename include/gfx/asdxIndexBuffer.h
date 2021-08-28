@@ -52,7 +52,7 @@ public:
     //! @retval true    初期化に成功.
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
-    bool Init(uint32_t size, bool isShortFormat = false);
+    bool Init(uint64_t size, bool isShortFormat = false);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.

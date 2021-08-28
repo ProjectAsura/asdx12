@@ -33,7 +33,7 @@ IndexBuffer::~IndexBuffer()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool IndexBuffer::Init(uint32_t size, bool isShortFormat)
+bool IndexBuffer::Init(uint64_t size, bool isShortFormat)
 {
     auto pDevice = GetD3D12Device();
 
