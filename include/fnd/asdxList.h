@@ -275,6 +275,11 @@ public:
     //-------------------------------------------------------------------------
     void InsertBefore(T* target, T* node)
     {
+        if (IsEmpty()) {
+            PushFront(node);
+            return;
+        }
+
         if (target == nullptr || node == nullptr)
         { return; }
 
@@ -295,6 +300,11 @@ public:
     //-------------------------------------------------------------------------
     void InsertAfter(T* target, T* node)
     {
+        if (IsEmpty()) {
+            PushBack(node);
+            return;
+        }
+
         if (target == nullptr || node == nullptr)
         { return; }
 

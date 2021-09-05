@@ -38,8 +38,6 @@ Mesh::~Mesh()
 //-----------------------------------------------------------------------------
 bool Mesh::Init(const ResMesh& resource)
 {
-    m_MeshHash = asdx::CalcHash(resource.Name.c_str());
-
     {
         auto stride = uint32_t(sizeof(resource.Positions[0]));
         auto size   = uint64_t(resource.Positions.size()) * stride;
@@ -165,7 +163,6 @@ bool Mesh::Init(const ResMesh& resource)
         m_Indices.Unmap();
     }
 
-
     m_Box.Mini = m_Box.Maxi = resource.Positions[0];
     for(auto i=1; i<resource.Positions.size(); ++i)
     {
@@ -173,6 +170,7 @@ bool Mesh::Init(const ResMesh& resource)
         m_Box.Maxi = asdx::Vector3::Max(m_Box.Maxi, resource.Positions[i]);
     }
 
+    m_MeshHash          = asdx::CalcHash(resource.Name.c_str());
     m_MaterialId        = resource.MaterialId;
     m_BoneWeightStride  = resource.BoneWeightStride;
 
@@ -195,7 +193,9 @@ void Mesh::Term()
     for(auto i=0; i<4; ++i)
     { m_TexCoords[i].Term(); }
 
-    m_MaterialId   = 0;
+    m_MaterialId        = 0;
+    m_MeshHash          = 0;
+    m_BoneWeightStride  = 0;
 
     m_Box.Mini = asdx::Vector3(FLT_MAX, FLT_MAX, FLT_MAX);
     m_Box.Maxi = asdx::Vector3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
