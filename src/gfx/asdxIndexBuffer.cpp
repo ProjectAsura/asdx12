@@ -79,7 +79,7 @@ bool IndexBuffer::Init(uint64_t size, bool isShortFormat)
     }
 
     m_View.BufferLocation   = m_pResource->GetGPUVirtualAddress();
-    m_View.SizeInBytes      = size;
+    m_View.SizeInBytes      = UINT(size);
     m_View.Format           = (isShortFormat) ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
 
     return true;
