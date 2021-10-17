@@ -484,7 +484,6 @@
     <None Include="..\include\fnd\asdxMath.inl">
       <Filter>ヘッダー ファイル\fnd</Filter>
     </None>
-    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\res\shaders\CopyPS.hlsl">

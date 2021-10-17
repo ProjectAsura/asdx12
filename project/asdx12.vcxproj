@@ -239,7 +239,6 @@
     <None Include="..\res\shaders\Math.hlsli" />
     <None Include="..\res\shaders\Shadow.hlsli" />
     <None Include="..\res\shaders\TextureUtil.hlsli" />
-    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\res\shaders\ColorFilterCS.hlsl">
@@ -304,15 +303,5 @@
     </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\external\assimp_native.redist.4.0.1\build\native\assimp_native.redist.targets" Condition="Exists('..\external\assimp_native.redist.4.0.1\build\native\assimp_native.redist.targets')" />
-    <Import Project="..\external\assimp_native.4.0.1\build\native\assimp_native.targets" Condition="Exists('..\external\assimp_native.4.0.1\build\native\assimp_native.targets')" />
-  </ImportGroup>
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>このプロジェクトは、このコンピューター上にない NuGet パッケージを参照しています。それらのパッケージをダウンロードするには、[NuGet パッケージの復元] を使用します。詳細については、http://go.microsoft.com/fwlink/?LinkID=322105 を参照してください。見つからないファイルは {0} です。</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('..\external\assimp_native.redist.4.0.1\build\native\assimp_native.redist.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\external\assimp_native.redist.4.0.1\build\native\assimp_native.redist.targets'))" />
-    <Error Condition="!Exists('..\external\assimp_native.4.0.1\build\native\assimp_native.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\external\assimp_native.4.0.1\build\native\assimp_native.targets'))" />
-  </Target>
+  <ImportGroup Label="ExtensionTargets" />
 </Project>
