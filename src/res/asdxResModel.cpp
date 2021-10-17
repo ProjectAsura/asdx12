@@ -10,11 +10,13 @@
 #include <res/asdxResModel.h>
 #include <fnd/asdxLogger.h>
 #include <fnd/asdxMisc.h>
+#include <meshoptimizer.h>
+#if ASDX_ENABLE_ASSIMP
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <assimp/cimport.h>
-#include <meshoptimizer.h>
+#endif
 
 namespace {
 
@@ -82,7 +84,7 @@ inline uint32_t ToUnorm8(const asdx::Vector4& value)
     return packed.c;
 }
 
-
+#if ASDX_ENABLE_ASSIMP
 ///////////////////////////////////////////////////////////////////////////////
 // MeshLoader class
 ///////////////////////////////////////////////////////////////////////////////
@@ -396,7 +398,7 @@ private:
 #endif
     }
 };
-
+#endif//ASDX_ENABLE_ASSIMP
 
 } // namespace
 
@@ -464,6 +466,7 @@ void ResModel::Dispose()
     Name.clear();
 }
 
+#if ASDX_ENABLE_ASSIMP
 //-----------------------------------------------------------------------------
 //      ファイルからリソースを生成します.
 //-----------------------------------------------------------------------------
@@ -481,6 +484,7 @@ bool ResModel::LoadFromFileW(const wchar_t* filename)
     auto path = ToStringUTF8(filename);
     return LoadFromFileA(path.c_str());
 }
+#endif//ASDX_ENABLE_ASSIMP
 
 //-----------------------------------------------------------------------------
 //      八面体ラップ処理を行います.
