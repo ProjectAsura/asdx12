@@ -9,14 +9,8 @@
 //-----------------------------------------------------------------------------
 #include <res/asdxResModel.h>
 #include <fnd/asdxLogger.h>
-#include <fnd/asdxMisc.h>
 #include <meshoptimizer.h>
-#if ASDX_ENABLE_ASSIMP
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
-#include <assimp/cimport.h>
-#endif
+
 
 namespace {
 
@@ -84,321 +78,6 @@ inline uint32_t ToUnorm8(const asdx::Vector4& value)
     return packed.c;
 }
 
-#if ASDX_ENABLE_ASSIMP
-///////////////////////////////////////////////////////////////////////////////
-// MeshLoader class
-///////////////////////////////////////////////////////////////////////////////
-class MeshLoader
-{
-    //=========================================================================
-    // list of friend classes and methods.
-    //=========================================================================
-    /* NOTHING */
-
-public:
-    //=========================================================================
-    // public variables.
-    //=========================================================================
-    /* NOTHING */
-
-    //=========================================================================
-    // public methods.
-    //=========================================================================
-    MeshLoader() = default;
-    ~MeshLoader() = default;
-
-    //-------------------------------------------------------------------------
-    //! @brief      モデルをロードします.
-    //-------------------------------------------------------------------------
-    bool Load(const char* path, asdx::ResModel& model)
-    {
-        if (path == nullptr)
-        { return false; }
-
-        Assimp::Importer importer;
-        unsigned int flag = 0;
-        flag |= aiProcess_Triangulate;
-        flag |= aiProcess_PreTransformVertices;
-        flag |= aiProcess_CalcTangentSpace;
-        flag |= aiProcess_GenSmoothNormals;
-        flag |= aiProcess_GenUVCoords;
-        flag |= aiProcess_RemoveRedundantMaterials;
-        flag |= aiProcess_OptimizeMeshes;
-
-        // ファイルを読み込み.
-        m_pScene = importer.ReadFile(path, flag);
-
-        // チェック.
-        if (m_pScene == nullptr)
-        { return false; }
-
-        // メッシュのメモリを確保.
-        auto meshCount = m_pScene->mNumTextures;
-        model.Meshes.clear();
-        model.Meshes.resize(meshCount);
-
-        // メッシュデータを変換.
-        for(size_t i=0; i<meshCount; ++i)
-        {
-            const auto pMesh = m_pScene->mMeshes[i];
-            ParseMesh(model.Meshes[i], pMesh);
-        }
-
-        // マテリアル名取得.
-        auto materialCount = m_pScene->mNumMaterials;
-        model.MaterialNames.resize(materialCount);
-        for(size_t i=0; i<materialCount; ++i)
-        {
-            aiString name;
-            aiGetMaterialString(m_pScene->mMaterials[i], AI_MATKEY_NAME, &name);
-            model.MaterialNames[i] = name.C_Str();
-        }
-
-        // 不要になったのでクリア.
-        importer.FreeScene();
-        m_pScene = nullptr;
-
-        // 正常終了.
-        return true;
-    }
-
-private:
-    //=========================================================================
-    // private variables.
-    //=========================================================================
-    const aiScene*  m_pScene = nullptr;
-
-    //=========================================================================
-    // private methods.
-    //=========================================================================
-
-    //-------------------------------------------------------------------------
-    //! @brief      メッシュを解析します.
-    //-------------------------------------------------------------------------
-    void ParseMesh(asdx::ResMesh& dstMesh, const aiMesh* srcMesh)
-    {
-        // マテリアル番号を設定.
-        dstMesh.MaterialId = srcMesh->mMaterialIndex;
-
-        aiVector3D zero3D(0.0f, 0.0f, 0.0f);
-
-        // 頂点データのメモリを確保.
-        auto vertexCount = srcMesh->mNumVertices;
-        dstMesh.Positions.resize(vertexCount);
-
-        if (srcMesh->HasNormals())
-        { dstMesh.Normals.resize(vertexCount); }
-        if (srcMesh->HasTangentsAndBitangents()) 
-        { dstMesh.Tangents.resize(vertexCount); }
-        if (srcMesh->HasVertexColors(0))
-        { dstMesh.Colors.resize(vertexCount); }
-
-        auto uvCount = srcMesh->GetNumUVChannels();
-        uvCount = (uvCount > 4) ? 4 : uvCount;
-
-        for(auto c=0u; c<uvCount; ++c) {
-            assert(srcMesh->HasTextureCoords(c));
-            dstMesh.TexCoords[c].resize(vertexCount);
-        }
-
-        for(auto i=0u; i<vertexCount; ++i)
-        {
-            auto& pos = srcMesh->mVertices[i];
-            dstMesh.Positions[i] = asdx::Vector3(pos.x, pos.y, pos.z);
-
-            if (srcMesh->HasNormals())
-            {
-                auto& normal = srcMesh->mNormals[i];
-                dstMesh.Normals[i] = asdx::Vector3(normal.x, normal.y, normal.z);
-            }
-
-            if (srcMesh->HasTangentsAndBitangents())
-            {
-                auto& tangent = srcMesh->mTangents[i];
-                dstMesh.Tangents[i] = asdx::Vector3(tangent.x, tangent.y, tangent.z);
-            }
-            if (srcMesh->HasVertexColors(0))
-            {
-                auto& color = srcMesh->mColors[0][i];
-                dstMesh.Colors[i] = asdx::Vector4(color.r, color.g, color.b, color.a);
-            }
-            for(auto c=0u; c<uvCount; ++c)
-            {
-                auto& uv = srcMesh->mTextureCoords[c][i];
-                dstMesh.TexCoords[c][i] = asdx::Vector2(uv.x, uv.y);
-            }
-        }
-
-        // 頂点インデックスのメモリを確保.
-        auto indexCount = srcMesh->mNumFaces * 3;
-        dstMesh.Indices.resize(indexCount);
-
-        for(size_t i=0; i<indexCount; ++i)
-        {
-            const auto& face = srcMesh->mFaces[i];
-            assert(face.mNumIndices == 3);  // 三角形化しているので必ず3になっている.
-
-            dstMesh.Indices[i * 3 + 0] = face.mIndices[0];
-            dstMesh.Indices[i * 3 + 1] = face.mIndices[1];
-            dstMesh.Indices[i * 3 + 2] = face.mIndices[2];
-        }
-
-        // 最適化.
-        {
-            std::vector<uint32_t> remap(dstMesh.Indices.size());
-
-            // 重複データを削除するための再マッピング用インデックスを生成.
-            auto vertexCount = meshopt_generateVertexRemap(
-                remap.data(),
-                dstMesh.Indices.data(),
-                dstMesh.Indices.size(),
-                dstMesh.Positions.data(),
-                dstMesh.Positions.size(),
-                sizeof(asdx::Vector3));
-
-            std::vector<asdx::Vector3> vertices(vertexCount);
-            std::vector<uint32_t> indices(dstMesh.Indices.size());
-
-            // 頂点インデックスを再マッピング.
-            meshopt_remapIndexBuffer(
-                indices.data(),
-                dstMesh.Indices.data(),
-                dstMesh.Indices.size(),
-                remap.data());
-
-            // 頂点データを再マッピング.
-            meshopt_remapVertexBuffer(
-                vertices.data(),
-                dstMesh.Positions.data(),
-                dstMesh.Positions.size(),
-                sizeof(asdx::Vector3),
-                remap.data());
-
-            // 不要になったメモリを解放.
-            remap.clear();
-            remap.shrink_to_fit();
-
-            // 最適化したサイズにメモリ量を減らす.
-            dstMesh.Positions.resize(vertices.size());
-            dstMesh.Indices .resize(indices .size());
-
-            // 頂点キャッシュ最適化.
-            meshopt_optimizeVertexCache(
-                dstMesh.Indices.data(),
-                indices.data(),
-                indices.size(),
-                vertexCount);
-
-            // 不要になったメモリを解放.
-            indices.clear();
-            indices.shrink_to_fit();
-
-            // 頂点フェッチ最適化.
-            meshopt_optimizeVertexFetch(
-                dstMesh.Positions.data(),
-                dstMesh.Indices.data(),
-                dstMesh.Indices.size(),
-                vertices.data(),
-                vertices.size(),
-                sizeof(asdx::Vector3));
-
-            // 不要になったメモリを解放.
-            vertices.clear();
-            vertices.shrink_to_fit();
-        }
-
-#if 0
-        //// メッシュレット生成.
-        //{
-        //    const size_t kMaxVertices   = 64;
-        //    const size_t kMaxPrimitives = 126;
-        //    float coneWeight = 0.0f;
-
-        //    auto maxMeshlets = meshopt_buildMeshletsBound(
-        //            dstMesh.Indices.size(),
-        //            kMaxVertices,
-        //            kMaxPrimitives);
-
-        //    std::vector<meshopt_Meshlet> meshlets(maxMeshlets);
-        //    std::vector<uint32_t> meshletVertices(maxMeshlets * kMaxVertices);
-        //    std::vector<uint8_t> meshletTriangles(maxMeshlets * kMaxPrimitives * 3);
-
-        //    auto meshletCount = meshopt_buildMeshlets(
-        //        meshlets.data(),
-        //        meshletVertices.data(),
-        //        meshletTriangles.data(),
-        //        dstMesh.Indices.data(),
-        //        dstMesh.Indices.size(),
-        //        &dstMesh.Positions[0].x,
-        //        dstMesh.Positions.size(),
-        //        sizeof(asdx::Vector3),
-        //        kMaxVertices,
-        //        kMaxPrimitives,
-        //        coneWeight);
-
-        //    // 最大値でメモリを予約.
-        //    dstMesh.UniqueVertexIndices.reserve(meshlets.size() * kMaxVertices);
-        //    dstMesh.Primitives   .reserve(meshlets.size() * kMaxPrimitives);
-
-        //    for(auto& meshlet : meshlets)
-        //    {
-        //        auto vertexOffset    = uint32_t(dstMesh.UniqueVertexIndices.size());
-        //        auto primitiveOffset = uint32_t(dstMesh.Primitives         .size());
-
-        //        for(auto i=0u; i<meshlet.vertex_count; ++i)
-        //        { dstMesh.UniqueVertexIndices.push_back(meshletVertices[i]); }
-
-        //        for(size_t i=0; i<meshlet.triangle_count; i+=3)
-        //        {
-        //            asdx::ResPrimitive tris = {};
-        //            tris.Index1 = meshletTriangles[i + 0];
-        //            tris.Index0 = meshletTriangles[i + 1];
-        //            tris.Index2 = meshletTriangles[i + 2];
-        //            dstMesh.Primitives.push_back(tris);
-        //        }
-
-        //        // メッシュレットデータ設定.
-        //        asdx::ResMeshlet m = {};
-        //        m.VertexCount       = meshlet.vertex_count;
-        //        m.VertexOffset      = vertexOffset;
-        //        m.PrimitiveCount    = meshlet.triangle_count;
-        //        m.PrimitiveOffset   = primitiveOffset;
-
-        //        dstMesh.Meshlets.push_back(m);
-
-        //        // バウンディングを求める.
-        //        auto bounds = meshopt_computeMeshletBounds(
-        //            &meshletVertices[meshlet.vertex_offset],
-        //            &meshletTriangles[meshlet.triangle_offset],
-        //            meshlet.triangle_count,
-        //            &dstMesh.Positions[0].x,
-        //            dstMesh.Positions.size(),
-        //            sizeof(asdx::Vector3));
-
-        //        // カリングデータ設定.
-        //        auto normalCone = asdx::Vector4(
-        //            asdx::Saturate(bounds.cone_axis[0] * 0.5f + 0.5f),
-        //            asdx::Saturate(bounds.cone_axis[1] * 0.5f + 0.5f),
-        //            asdx::Saturate(bounds.cone_axis[2] * 0.5f + 0.5f),
-        //            asdx::Saturate(bounds.cone_cutoff * 0.5f + 0.5f));
-
-        //        asdx::ResMeshletBounds c = {};
-        //        c.Sphere     = asdx::Vector4(bounds.center[0], bounds.center[1], bounds.center[2], bounds.radius);
-        //        c.NormalCone = ToUnorm8(normalCone);
-
-        //        dstMesh.Bounds.push_back(c);
-        //    }
-
-        //    // サイズ最適化.
-        //    dstMesh.UniqueVertexIndices .shrink_to_fit();
-        //    dstMesh.Primitives          .shrink_to_fit();
-        //    dstMesh.Meshlets            .shrink_to_fit();
-        //    dstMesh.Bounds              .shrink_to_fit();
-        //}
-#endif
-    }
-};
-#endif//ASDX_ENABLE_ASSIMP
 
 } // namespace
 
@@ -466,25 +145,177 @@ void ResModel::Dispose()
     Name.clear();
 }
 
-#if ASDX_ENABLE_ASSIMP
 //-----------------------------------------------------------------------------
-//      ファイルからリソースを生成します.
+//      クラスターメッシュの破棄処理を行います.
 //-----------------------------------------------------------------------------
-bool ResModel::LoadFromFileA(const char* filename)
+void ResClusterMesh::Dispose()
 {
-    MeshLoader loader;
-    return loader.Load(filename, *this);
+    Geometry = nullptr;
+    Meshlets.clear();
+    Meshlets.shrink_to_fit();
+
+    Primitives.clear();
+    Primitives.shrink_to_fit();
+
+    UniqueVertexIndices.clear();
+    UniqueVertexIndices.shrink_to_fit();
 }
 
 //-----------------------------------------------------------------------------
-//      ファイルからリソースを生成します.
+//      メッシュを最適化します.
 //-----------------------------------------------------------------------------
-bool ResModel::LoadFromFileW(const wchar_t* filename)
+void OptimizeMesh(ResMesh& mesh)
 {
-    auto path = ToStringUTF8(filename);
-    return LoadFromFileA(path.c_str());
+    std::vector<uint32_t> remap(mesh.Indices.size());
+
+    // 重複データを削除するための再マッピング用インデックスを生成.
+    auto vertexCount = meshopt_generateVertexRemap(
+        remap.data(),
+        mesh.Indices.data(),
+        mesh.Indices.size(),
+        mesh.Positions.data(),
+        mesh.Positions.size(),
+        sizeof(asdx::Vector3));
+
+    std::vector<asdx::Vector3> vertices(vertexCount);
+    std::vector<uint32_t> indices(mesh.Indices.size());
+
+    // 頂点インデックスを再マッピング.
+    meshopt_remapIndexBuffer(
+        indices.data(),
+        mesh.Indices.data(),
+        mesh.Indices.size(),
+        remap.data());
+
+    // 頂点データを再マッピング.
+    meshopt_remapVertexBuffer(
+        vertices.data(),
+        mesh.Positions.data(),
+        mesh.Positions.size(),
+        sizeof(asdx::Vector3),
+        remap.data());
+
+    // 不要になったメモリを解放.
+    remap.clear();
+    remap.shrink_to_fit();
+
+    // 最適化したサイズにメモリ量を減らす.
+    mesh.Positions.resize(vertices.size());
+    mesh.Indices .resize(indices .size());
+
+    // 頂点キャッシュ最適化.
+    meshopt_optimizeVertexCache(
+        mesh.Indices.data(),
+        indices.data(),
+        indices.size(),
+        vertexCount);
+
+    // 不要になったメモリを解放.
+    indices.clear();
+    indices.shrink_to_fit();
+
+    // 頂点フェッチ最適化.
+    meshopt_optimizeVertexFetch(
+        mesh.Positions.data(),
+        mesh.Indices.data(),
+        mesh.Indices.size(),
+        vertices.data(),
+        vertices.size(),
+        sizeof(asdx::Vector3));
+
+    // 不要になったメモリを解放.
+    vertices.clear();
+    vertices.shrink_to_fit();
 }
-#endif//ASDX_ENABLE_ASSIMP
+
+//-----------------------------------------------------------------------------
+//      クラスターメッシュを生成します.
+//-----------------------------------------------------------------------------
+void CreateClusterMesh(const ResMesh& mesh, ResClusterMesh& clusterMesh)
+{
+    clusterMesh.Geometry = &mesh;
+
+    const size_t kMaxVertices   = 64;
+    const size_t kMaxPrimitives = 126;
+    float coneWeight = 0.0f;
+
+    auto maxMeshlets = meshopt_buildMeshletsBound(
+            mesh.Indices.size(),
+            kMaxVertices,
+            kMaxPrimitives);
+
+    std::vector<meshopt_Meshlet> meshlets(maxMeshlets);
+    std::vector<uint32_t> meshletVertices(maxMeshlets * kMaxVertices);
+    std::vector<uint8_t> meshletTriangles(maxMeshlets * kMaxPrimitives * 3);
+
+    auto meshletCount = meshopt_buildMeshlets(
+        meshlets.data(),
+        meshletVertices.data(),
+        meshletTriangles.data(),
+        mesh.Indices.data(),
+        mesh.Indices.size(),
+        &mesh.Positions[0].x,
+        mesh.Positions.size(),
+        sizeof(asdx::Vector3),
+        kMaxVertices,
+        kMaxPrimitives,
+        coneWeight);
+
+    // 最大値でメモリを予約.
+    clusterMesh.UniqueVertexIndices.reserve(meshlets.size() * kMaxVertices);
+    clusterMesh.Primitives         .reserve(meshlets.size() * kMaxPrimitives);
+
+    for(auto& meshlet : meshlets)
+    {
+        auto vertexOffset    = uint32_t(clusterMesh.UniqueVertexIndices.size());
+        auto primitiveOffset = uint32_t(clusterMesh.Primitives         .size());
+
+        for(auto i=0u; i<meshlet.vertex_count; ++i)
+        { clusterMesh.UniqueVertexIndices.push_back(meshletVertices[i]); }
+
+        for(size_t i=0; i<meshlet.triangle_count; i+=3)
+        {
+            asdx::ResPrimitive tris = {};
+            tris.Index1 = meshletTriangles[i + 0];
+            tris.Index0 = meshletTriangles[i + 1];
+            tris.Index2 = meshletTriangles[i + 2];
+            clusterMesh.Primitives.push_back(tris);
+        }
+
+        // メッシュレットデータ設定.
+        asdx::ResMeshlet m = {};
+        m.VertexCount       = meshlet.vertex_count;
+        m.VertexOffset      = vertexOffset;
+        m.PrimitiveCount    = meshlet.triangle_count;
+        m.PrimitiveOffset   = primitiveOffset;
+
+        // バウンディングを求める.
+        auto bounds = meshopt_computeMeshletBounds(
+            &meshletVertices[meshlet.vertex_offset],
+            &meshletTriangles[meshlet.triangle_offset],
+            meshlet.triangle_count,
+            &mesh.Positions[0].x,
+            mesh.Positions.size(),
+            sizeof(asdx::Vector3));
+
+        // カリングデータ設定.
+        auto normalCone = asdx::Vector4(
+            asdx::Saturate(bounds.cone_axis[0] * 0.5f + 0.5f),
+            asdx::Saturate(bounds.cone_axis[1] * 0.5f + 0.5f),
+            asdx::Saturate(bounds.cone_axis[2] * 0.5f + 0.5f),
+            asdx::Saturate(bounds.cone_cutoff * 0.5f + 0.5f));
+
+        m.Sphere     = asdx::Vector4(bounds.center[0], bounds.center[1], bounds.center[2], bounds.radius);
+        m.NormalCone = ToUnorm8(normalCone);
+
+        clusterMesh.Meshlets.push_back(m);
+    }
+
+    // サイズ最適化.
+    clusterMesh.UniqueVertexIndices .shrink_to_fit();
+    clusterMesh.Primitives          .shrink_to_fit();
+    clusterMesh.Meshlets            .shrink_to_fit();
+}
 
 //-----------------------------------------------------------------------------
 //      八面体ラップ処理を行います.
