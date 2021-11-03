@@ -899,7 +899,7 @@ bool GuiMgr::Init
         auto& style = ImGui::GetStyle();
         style.WindowRounding = 2.0f;
 
-#if 0
+#if 1
         style.Colors[ ImGuiCol_Text ]                   = ImVec4( 1.000000f, 1.000000f, 1.000000f, 1.000000f );
         style.Colors[ ImGuiCol_TextDisabled ]           = ImVec4( 0.400000f, 0.400000f, 0.400000f, 1.000000f );
         style.Colors[ ImGuiCol_WindowBg ]               = ImVec4( 0.060000f, 0.060000f, 0.060000f, 0.752000f );

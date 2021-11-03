@@ -35,9 +35,7 @@ Descriptor::Descriptor()
 //-----------------------------------------------------------------------------
 Descriptor::~Descriptor()
 {
-    auto pHeap = m_pHeap;
-    if (pHeap != nullptr)
-    { pHeap->Free(this); }
+    m_pHeap = nullptr;
 }
 
 //-----------------------------------------------------------------------------
@@ -51,9 +49,16 @@ void Descriptor::AddRef()
 //-----------------------------------------------------------------------------
 void Descriptor::Release()
 {
-    m_RefCount--;
-    if (m_RefCount == 0)
-    { this->~Descriptor(); }
+    if (m_RefCount > 0)
+    {
+        m_RefCount--;
+        if (m_RefCount == 0)
+        {
+            auto pHeap = m_pHeap;
+            if (pHeap != nullptr)
+            { pHeap->Free(this); }
+        }
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -90,6 +95,8 @@ uint32_t Descriptor::GetIndex() const
 //-----------------------------------------------------------------------------
 DescriptorHeap::DescriptorHeap()
 : m_pHeap           (nullptr)
+, m_FreeList        ()
+, m_UsedList        ()
 , m_Descriptors     (nullptr)
 , m_IncrementSize   (0)
 { /* DO_NOTHING */ }
@@ -163,19 +170,20 @@ bool DescriptorHeap::Init(ID3D12Device* pDevice, const D3D12_DESCRIPTOR_HEAP_DES
 //-----------------------------------------------------------------------------
 void DescriptorHeap::Term()
 {
+    /* この関数内で落ちる場合は解放漏れがあります */
     m_FreeList.Clear();
     m_UsedList.Clear();
-
-    if (m_Descriptors != nullptr)
-    {
-        delete[] m_Descriptors;
-        m_Descriptors = nullptr;
-    }
 
     if (m_pHeap != nullptr)
     {
         m_pHeap->Release();
         m_pHeap = nullptr;
+    }
+
+    if (m_Descriptors != nullptr)
+    {
+        delete[] m_Descriptors;
+        m_Descriptors = nullptr;
     }
 }
 

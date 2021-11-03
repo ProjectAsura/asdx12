@@ -159,10 +159,10 @@ bool ColorTarget::Init(const TargetDesc* pDesc, bool isSRGB)
 
         D3D12_CLEAR_VALUE clearValue;
         clearValue.Format = pDesc->Format,
-        clearValue.Color[0] = 1.0f;
-        clearValue.Color[1] = 1.0f;
-        clearValue.Color[2] = 1.0f;
-        clearValue.Color[3] = 1.0f;
+        clearValue.Color[0] = pDesc->ClearColor[0];
+        clearValue.Color[1] = pDesc->ClearColor[1];
+        clearValue.Color[2] = pDesc->ClearColor[2];
+        clearValue.Color[3] = pDesc->ClearColor[3];
 
         hr = GetD3D12Device()->CreateCommittedResource( 
             &props,
@@ -523,8 +523,8 @@ bool DepthTarget::Init(const TargetDesc* pDesc)
 
         D3D12_CLEAR_VALUE clearValue;
         clearValue.Format               = pDesc->Format;
-        clearValue.DepthStencil.Depth   = 1.0f;
-        clearValue.DepthStencil.Stencil = 0;
+        clearValue.DepthStencil.Depth   = pDesc->ClearDepth;
+        clearValue.DepthStencil.Stencil = pDesc->ClearStencil;
 
         hr = GetD3D12Device()->CreateCommittedResource( 
             &props,

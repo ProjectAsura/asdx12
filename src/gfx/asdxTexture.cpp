@@ -147,7 +147,7 @@ bool Texture::Init(CommandList& cmdList, const ResTexture& resource)
             &props,
             D3D12_HEAP_FLAG_NONE,
             &desc,
-            D3D12_RESOURCE_STATE_GENERIC_READ,
+            D3D12_RESOURCE_STATE_COPY_DEST,
             nullptr,
             IID_PPV_ARGS(&pResource));
         if (FAILED(hr))
@@ -170,6 +170,8 @@ bool Texture::Init(CommandList& cmdList, const ResTexture& resource)
     }
 
     cmdList.UpdateTexture(pResource, &resource);
+
+    cmdList.BarrierTransition(pResource, 0, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
 
     pResource->Release();
     pResource = nullptr;

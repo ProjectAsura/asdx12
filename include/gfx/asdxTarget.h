@@ -28,6 +28,9 @@ struct TargetDesc
     DXGI_FORMAT                 Format;             //!< フォーマットです.
     DXGI_SAMPLE_DESC            SampleDesc;         //!< サンプル設定です.
     D3D12_RESOURCE_STATES       InitState;          //!< 初期ステート.
+    float                       ClearColor[4];
+    float                       ClearDepth;
+    uint8_t                     ClearStencil;
 
     //-------------------------------------------------------------------------
     //! @brief      コンストラクタです.
@@ -44,6 +47,13 @@ struct TargetDesc
     {
         SampleDesc.Count   = 0;
         SampleDesc.Quality = 0;
+
+        ClearColor[0] = 1.0f;
+        ClearColor[1] = 1.0f;
+        ClearColor[2] = 1.0f;
+        ClearColor[3] = 1.0f;
+        ClearDepth    = 1.0f;
+        ClearStencil  = 0;
     }
 };
 

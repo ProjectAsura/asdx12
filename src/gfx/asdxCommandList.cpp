@@ -409,12 +409,13 @@ void CommandList::SetViewport(ID3D12Resource* pResource, bool setScissor)
 //-----------------------------------------------------------------------------
 void CommandList::SetTarget(const IRenderTargetView* pRTV, const IDepthStencilView* pDSV)
 {
-    assert(pRTV != nullptr);
-    assert(pDSV != nullptr);
+    auto handleRTV = (pRTV != nullptr) ? pRTV->GetHandleCPU() : D3D12_CPU_DESCRIPTOR_HANDLE();
+    auto handleDSV = (pDSV != nullptr) ? pDSV->GetHandleCPU() : D3D12_CPU_DESCRIPTOR_HANDLE();
 
-    auto handleRTV = pRTV->GetHandleCPU();
-    auto handleDSV = pDSV->GetHandleCPU();
-    m_CmdList->OMSetRenderTargets(1, &handleRTV, FALSE, &handleDSV);
+    auto pHandleRTV = (pRTV != nullptr) ? &handleRTV : nullptr;
+    auto pHandleDSV = (pDSV != nullptr) ? &handleDSV : nullptr;
+
+    m_CmdList->OMSetRenderTargets(1, pHandleRTV, FALSE, pHandleDSV);
 }
 
 //-----------------------------------------------------------------------------
@@ -437,8 +438,9 @@ void CommandList::SetTargets
         handleRTVs[i] = pRTVs[i]->GetHandleCPU();
     }
 
-    auto handleDSV = pDSV->GetHandleCPU();
-    m_CmdList->OMSetRenderTargets(count, handleRTVs, FALSE, &handleDSV);
+    auto handleDSV = (pDSV != nullptr) ? pDSV->GetHandleCPU() : D3D12_CPU_DESCRIPTOR_HANDLE();
+    auto pHandleDSV = (pDSV != nullptr) ? &handleDSV : nullptr;
+    m_CmdList->OMSetRenderTargets(count, handleRTVs, FALSE, pHandleDSV);
 }
 
 //-----------------------------------------------------------------------------

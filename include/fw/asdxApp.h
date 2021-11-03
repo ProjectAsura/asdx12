@@ -229,6 +229,8 @@ protected:
     uint32_t                        m_SampleMask;           //!< サンプルマスクです.
     uint32_t                        m_StencilRef;           //!< ステンシル参照です.
     float                           m_ClearColor[ 4 ];      //!< 背景のクリアカラーです.
+    float                           m_ClearDepth;           //!< 深度クリア値です.
+    uint8_t                         m_ClearStencil;         //!< ステンシルクリア値です.
     uint32_t                        m_Width;                //!< 画面の横幅です.
     uint32_t                        m_Height;               //!< 画面の縦幅です.
     float                           m_AspectRatio;          //!< 画面のアスペクト比です.

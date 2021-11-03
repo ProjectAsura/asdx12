@@ -525,6 +525,8 @@ Application::Application()
     m_ClearColor[1] = 0.584313750f;
     m_ClearColor[2] = 0.929411829f;
     m_ClearColor[3] = 1.000000000f;
+    m_ClearDepth    = 1.0f;
+    m_ClearStencil  = 0;
 
     m_DeviceDesc.EnableDebug            = ASDX_DEV_VAR(true, false);
     m_DeviceDesc.MaxColorTargetCount    = 128;
@@ -564,6 +566,8 @@ Application::Application( LPCWSTR title, UINT width, UINT height, HICON hIcon, H
     m_ClearColor[1] = 0.584313750f;
     m_ClearColor[2] = 0.929411829f;
     m_ClearColor[3] = 1.000000000f;
+    m_ClearDepth    = 1.0f;
+    m_ClearStencil  = 0;
 
     m_DeviceDesc.EnableDebug            = ASDX_DEV_VAR(true, false);
     m_DeviceDesc.MaxColorTargetCount    = 128;
@@ -948,6 +952,8 @@ bool Application::InitD3D()
         desc.SampleDesc.Count   = 1;
         desc.SampleDesc.Quality = 0;
         desc.InitState          = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+        desc.ClearDepth         = m_ClearDepth;
+        desc.ClearStencil       = m_ClearStencil;
 
         if (!m_DepthTarget.Init(&desc))
         {

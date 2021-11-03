@@ -190,6 +190,7 @@ public:
         flag |= aiProcess_GenUVCoords;
         flag |= aiProcess_RemoveRedundantMaterials;
         flag |= aiProcess_OptimizeMeshes;
+        flag |= aiProcess_FlipWindingOrder;
 
         // ファイルを読み込み.
         m_pScene = importer.ReadFile(path, flag);
@@ -199,7 +200,7 @@ public:
         { return false; }
 
         // メッシュのメモリを確保.
-        auto meshCount = m_pScene->mNumTextures;
+        auto meshCount = m_pScene->mNumMeshes;
         model.Meshes.clear();
         model.Meshes.resize(meshCount);
 
@@ -209,7 +210,6 @@ public:
             const auto pMesh = m_pScene->mMeshes[i];
             ParseMesh(model.Meshes[i], pMesh);
         }
-
 
         // マテリアル名取得.
         auto materialCount = m_pScene->mNumMaterials;
@@ -299,10 +299,10 @@ private:
         }
 
         // 頂点インデックスのメモリを確保.
-        auto indexCount = srcMesh->mNumFaces * 3;
-        dstMesh.Indices.resize(indexCount);
+        auto faceCount = srcMesh->mNumFaces;
+        dstMesh.Indices.resize(faceCount * 3);
 
-        for(size_t i=0; i<indexCount; ++i)
+        for(size_t i=0; i<faceCount; ++i)
         {
             const auto& face = srcMesh->mFaces[i];
             assert(face.mNumIndices == 3);  // 三角形化しているので必ず3になっている.

@@ -439,6 +439,84 @@ private:
     /* NOTHING */
 };
 
+///////////////////////////////////////////////////////////////////////////////
+// ScopedBarrir class
+///////////////////////////////////////////////////////////////////////////////
+class ScopedBarrier
+{
+    //=========================================================================
+    // list of friend classes and methods.
+    //=========================================================================
+    /* NOTHING */
+
+public:
+    //=========================================================================
+    // public variables.
+    //=========================================================================
+    /* NOTHING */
+
+    //=========================================================================
+    // public methods.
+    //=========================================================================
+
+    //-------------------------------------------------------------------------
+    //! @brief      コンストラクタです.
+    //-------------------------------------------------------------------------
+    ScopedBarrier
+    (
+        ID3D12GraphicsCommandList*  pCmd,
+        ID3D12Resource*             pResource,
+        D3D12_RESOURCE_STATES       beforeState,
+        D3D12_RESOURCE_STATES       afterState
+    )
+    {
+        m_pCmd          = pCmd;
+        m_pResource     = pResource;
+        m_BeforeState   = beforeState;
+        m_AfterState    = afterState;
+
+        D3D12_RESOURCE_BARRIER barrier = {};
+        barrier.Type                    = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+        barrier.Flags                   = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+        barrier.Transition.pResource    = m_pResource;
+        barrier.Transition.Subresource  = 0;
+        barrier.Transition.StateBefore  = m_BeforeState;
+        barrier.Transition.StateAfter   = m_AfterState;
+
+        m_pCmd->ResourceBarrier(1, &barrier);
+    }
+
+    //-------------------------------------------------------------------------
+    //! @brief      デストラクタです.
+    //-------------------------------------------------------------------------
+    ~ScopedBarrier()
+    {
+        D3D12_RESOURCE_BARRIER barrier = {};
+        barrier.Type                    = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+        barrier.Flags                   = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+        barrier.Transition.pResource    = m_pResource;
+        barrier.Transition.Subresource  = 0;
+        barrier.Transition.StateBefore  = m_AfterState;
+        barrier.Transition.StateAfter   = m_BeforeState;
+
+        m_pCmd->ResourceBarrier(1, &barrier);
+    }
+
+private:
+    //=========================================================================
+    // private variables.
+    //=========================================================================
+    ID3D12GraphicsCommandList*  m_pCmd          = nullptr;
+    ID3D12Resource*             m_pResource     = nullptr;
+    D3D12_RESOURCE_STATES       m_BeforeState;
+    D3D12_RESOURCE_STATES       m_AfterState;
+
+    //=========================================================================
+    // private methods.
+    //=========================================================================
+    /* NOTHING */
+};
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // BarrierHelper class
