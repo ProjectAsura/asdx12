@@ -267,6 +267,12 @@
     <ClCompile Include="..\external\meshoptimizer\vfetchoptimizer.cpp">
       <Filter>ソース ファイル\external\meshoptimizer</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\fw\asdxCamera.cpp">
+      <Filter>ソース ファイル\fw</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\fw\asdxCameraController.cpp">
+      <Filter>ソース ファイル\fw</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\external\imgui\imconfig.h">
@@ -466,6 +472,12 @@
     </ClInclude>
     <ClInclude Include="..\external\meshoptimizer\meshoptimizer.h">
       <Filter>ソース ファイル\external\meshoptimizer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fw\asdxCamera.h">
+      <Filter>ヘッダー ファイル\fw</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fw\asdxCameraController.h">
+      <Filter>ヘッダー ファイル\fw</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
