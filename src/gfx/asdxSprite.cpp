@@ -140,7 +140,7 @@ bool SpriteSystem::Init
         desc.pRootSignature = m_RootSig.GetPtr();
         desc.VS                 = { SpriteVS, sizeof(SpriteVS) };
         desc.PS                 = { SpritePS, sizeof(SpritePS) };
-        desc.BlendState         = BLEND_DESC(BLEND_STATE_OPAQUE);
+        desc.BlendState         = BLEND_DESC(BLEND_STATE_ALPHABLEND);
         desc.SampleMask         = UINT_MAX;
         desc.RasterizerState    = RASTERIZER_DESC(RASTERIZER_STATE_CULL_NONE);
         desc.DepthStencilState  = DEPTH_STENCIL_DESC(DEPTH_STATE_DEFAULT);
