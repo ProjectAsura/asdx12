@@ -51,7 +51,7 @@ float CrossBilateralWeight(float r, float d, float d0)
 
     // dÇ∆d0ÇÕê¸å`ê[ìxílÇ∆Ç∑ÇÈ.
     float dz = (d0 - d) * Sharpness;
-    return exp(-r * r * BlurFallOff - dz * dz);
+    return exp2(-r * r * BlurFallOff - dz * dz);
 }
 
 //-----------------------------------------------------------------------------
