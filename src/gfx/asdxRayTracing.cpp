@@ -435,174 +435,136 @@ void Tlas::Build(ID3D12GraphicsCommandList6* pCmd)
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// SubObjects
+// RayTracingPipelineState class
 ///////////////////////////////////////////////////////////////////////////////
 
 //-----------------------------------------------------------------------------
-//      クリアします.
+//      コンストラクタです.
 //-----------------------------------------------------------------------------
-void SubObjects::Clear()
+RayTracingPipelineState::RayTracingPipelineState()
+: m_pObject (nullptr)
+, m_pProps  (nullptr)
+{ /* DO_NOTHING */ }
+
+//-----------------------------------------------------------------------------
+//      デストラクタです.
+//-----------------------------------------------------------------------------
+RayTracingPipelineState::~RayTracingPipelineState()
+{ Term(); }
+
+//-----------------------------------------------------------------------------
+//      初期化処理を行います.
+//-----------------------------------------------------------------------------
+bool RayTracingPipelineState::Init(ID3D12Device5* pDevice, const RayTracingPipelineStateDesc& desc)
 {
-    memset(m_Objects, 0, sizeof(m_Objects));
-    m_Count = 0;
+    uint32_t objCount = 6 + desc.HitGroupCount;
+
+    std::vector<D3D12_STATE_SUBOBJECT> objDesc;
+    objDesc.resize(objCount);
+
+    auto index = 0;
+
+    D3D12_GLOBAL_ROOT_SIGNATURE globalRootSignature = {};
+    globalRootSignature.pGlobalRootSignature = desc.pGlobalRootSignature;
+
+    objDesc[index].Type  = D3D12_STATE_SUBOBJECT_TYPE_GLOBAL_ROOT_SIGNATURE;
+    objDesc[index].pDesc = &globalRootSignature;
+    index++;
+
+    D3D12_LOCAL_ROOT_SIGNATURE localRootSignature = {};
+    if (desc.pLocalRootSignature != nullptr)
+    {
+        localRootSignature.pLocalRootSignature = desc.pLocalRootSignature;
+
+        objDesc[index].Type  = D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE;
+        objDesc[index].pDesc = &localRootSignature;
+        index++;
+    }
+
+    D3D12_DXIL_LIBRARY_DESC libDesc = {};
+    libDesc.DXILLibrary = desc.DXILLibrary;
+    libDesc.NumExports  = desc.ExportCount;
+    libDesc.pExports    = desc.pExports;
+
+    objDesc[index].Type     = D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY;
+    objDesc[index].pDesc    = &libDesc;
+    index++;
+
+    D3D12_RAYTRACING_SHADER_CONFIG shaderConfig = {};
+    shaderConfig.MaxAttributeSizeInBytes = desc.MaxAttributeSize;
+    shaderConfig.MaxPayloadSizeInBytes   = desc.MaxPayloadSize;
+
+    objDesc[index].Type     = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_SHADER_CONFIG;
+    objDesc[index].pDesc    = &shaderConfig;
+    index++;
+
+    D3D12_RAYTRACING_PIPELINE_CONFIG pipelineConfig = {};
+    pipelineConfig.MaxTraceRecursionDepth = desc.MaxTraceRecursionDepth;
+
+    objDesc[index].Type     = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_PIPELINE_CONFIG;
+    objDesc[index].pDesc    = &pipelineConfig;
+    index++;
+
+    for(auto i=0u; i<desc.HitGroupCount; ++i)
+    {
+        objDesc[index].Type  = D3D12_STATE_SUBOBJECT_TYPE_HIT_GROUP;
+        objDesc[index].pDesc = &desc.pHitGroups[i];
+        index++;
+    }
+
+    D3D12_STATE_OBJECT_DESC stateObjectDesc = {};
+    stateObjectDesc.Type            = D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE;
+    stateObjectDesc.NumSubobjects   = index;
+    stateObjectDesc.pSubobjects     = objDesc.data();
+
+    auto hr = pDevice->CreateStateObject(&stateObjectDesc, IID_PPV_ARGS(m_pObject.GetAddress()));
+
+    // メモリ解放.
+    objDesc.clear();
+
+    if (FAILED(hr))
+    {
+        ELOG("Error : ID3D12Device5::CreateStateObject() Failed. errcode = 0x%x", hr);
+        return false;
+    }
+
+    hr = m_pObject->QueryInterface(IID_PPV_ARGS(m_pProps.GetAddress()));
+    if (FAILED(hr))
+    {
+        ELOG("Error : ID3D12StateObject::QueryInterface() Failed. errcode = 0x%x", hr);
+        return false;
+    }
+
+    return true;
 }
 
 //-----------------------------------------------------------------------------
-//      ステートオブジェクト設定を追加します.
+//      終了処理を行います.
 //-----------------------------------------------------------------------------
-void SubObjects::Push(const D3D12_STATE_OBJECT_CONFIG* pDesc)
+void RayTracingPipelineState::Term()
 {
-    assert(m_Count + 1 < kMaxCount);
-    auto idx = m_Count;
-    m_Objects[idx].pDesc = pDesc;
-    m_Objects[idx].Type = D3D12_STATE_SUBOBJECT_TYPE_STATE_OBJECT_CONFIG;
-    m_Count++;
+    m_pObject.Reset();
+    m_pProps .Reset();
 }
 
 //-----------------------------------------------------------------------------
-//      グローバルルートシグニチャ設定を追加します.
+//      シェーダ識別子を取得します.
 //-----------------------------------------------------------------------------
-void SubObjects::Push(const D3D12_GLOBAL_ROOT_SIGNATURE* pDesc)
-{
-    assert(m_Count + 1 < kMaxCount);
-    auto idx = m_Count;
-    m_Objects[idx].pDesc = pDesc;
-    m_Objects[idx].Type = D3D12_STATE_SUBOBJECT_TYPE_GLOBAL_ROOT_SIGNATURE;
-    m_Count++;
-}
+void* RayTracingPipelineState::GetShaderIdentifier(const wchar_t* exportName) const
+{ return m_pProps->GetShaderIdentifier(exportName); }
 
 //-----------------------------------------------------------------------------
-//      ローカルルートシグニチャ設定を追加します.
+//      シェーダスタックサイズを取得します.
 //-----------------------------------------------------------------------------
-void SubObjects::Push(const D3D12_LOCAL_ROOT_SIGNATURE* pDesc)
-{
-    assert(m_Count + 1 < kMaxCount);
-    auto idx = m_Count;
-    m_Objects[idx].pDesc = pDesc;
-    m_Objects[idx].Type = D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE;
-    m_Count++;
-}
+UINT64 RayTracingPipelineState::GetShaderStackSize(const wchar_t* exportName) const
+{ return m_pProps->GetShaderStackSize(exportName); }
 
 //-----------------------------------------------------------------------------
-//      ノードマスク設定を追加します.
+//      ステートオブジェクトを取得します.
 //-----------------------------------------------------------------------------
-void SubObjects::Push(const D3D12_NODE_MASK* pDesc)
-{
-    assert(m_Count + 1 < kMaxCount);
-    auto idx = m_Count;
-    m_Objects[idx].pDesc = pDesc;
-    m_Objects[idx].Type = D3D12_STATE_SUBOBJECT_TYPE_NODE_MASK;
-    m_Count++;
-}
+ID3D12StateObject* RayTracingPipelineState::GetStateObject() const
+{ return m_pObject.GetPtr(); }
 
-//-----------------------------------------------------------------------------
-//      DXILライブラリ設定を追加します.
-//-----------------------------------------------------------------------------
-void SubObjects::Push(const D3D12_DXIL_LIBRARY_DESC* pDesc)
-{
-    assert(m_Count + 1 < kMaxCount);
-    auto idx = m_Count;
-    m_Objects[idx].pDesc = pDesc;
-    m_Objects[idx].Type = D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY;
-    m_Count++;
-}
-
-//-----------------------------------------------------------------------------
-//      既存コレクション設定を追加します.
-//-----------------------------------------------------------------------------
-void SubObjects::Push(const D3D12_EXISTING_COLLECTION_DESC* pDesc)
-{
-    assert(m_Count + 1 < kMaxCount);
-    auto idx = m_Count;
-    m_Objects[idx].pDesc = pDesc;
-    m_Objects[idx].Type = D3D12_STATE_SUBOBJECT_TYPE_EXISTING_COLLECTION;
-    m_Count++;
-}
-
-//-----------------------------------------------------------------------------
-//      エクスポートを関連付けるサブオブジェクト設定を追加します.
-//-----------------------------------------------------------------------------
-void SubObjects::Push(const D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION* pDesc)
-{
-    assert(m_Count + 1 < kMaxCount);
-    auto idx = m_Count;
-    m_Objects[idx].pDesc = pDesc;
-    m_Objects[idx].Type = D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION;
-    m_Count++;
-}
-
-//-----------------------------------------------------------------------------
-//      エクスポートを関連付けるDXILサブオブジェクト設定を追加します.
-//-----------------------------------------------------------------------------
-void SubObjects::Push(const D3D12_DXIL_SUBOBJECT_TO_EXPORTS_ASSOCIATION* pDesc)
-{
-    assert(m_Count + 1 < kMaxCount);
-    auto idx = m_Count;
-    m_Objects[idx].pDesc = pDesc;
-    m_Objects[idx].Type = D3D12_STATE_SUBOBJECT_TYPE_DXIL_SUBOBJECT_TO_EXPORTS_ASSOCIATION;
-    m_Count++;
-}
-
-//-----------------------------------------------------------------------------
-//      ヒットグループ設定を追加します.
-//-----------------------------------------------------------------------------
-void SubObjects::Push(const D3D12_HIT_GROUP_DESC* pDesc)
-{
-    assert(m_Count + 1 < kMaxCount);
-    auto idx = m_Count;
-    m_Objects[idx].pDesc = pDesc;
-    m_Objects[idx].Type = D3D12_STATE_SUBOBJECT_TYPE_HIT_GROUP;
-    m_Count++;
-}
-
-//-----------------------------------------------------------------------------
-//      シェーダ設定を追加します.
-//-----------------------------------------------------------------------------
-void SubObjects::Push(const D3D12_RAYTRACING_SHADER_CONFIG* pDesc)
-{
-    assert(m_Count + 1 < kMaxCount);
-    auto idx = m_Count;
-    m_Objects[idx].pDesc = pDesc;
-    m_Objects[idx].Type = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_SHADER_CONFIG;
-    m_Count++;
-}
-
-//-----------------------------------------------------------------------------
-//      パイプライン設定を追加します.
-//-----------------------------------------------------------------------------
-void SubObjects::Push(const D3D12_RAYTRACING_PIPELINE_CONFIG* pDesc)
-{
-    assert(m_Count + 1 < kMaxCount);
-    auto idx = m_Count;
-    m_Objects[idx].pDesc = pDesc;
-    m_Objects[idx].Type = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_PIPELINE_CONFIG;
-    m_Count++;
-}
-
-//-----------------------------------------------------------------------------
-//      パイプライン設定を追加します.
-//-----------------------------------------------------------------------------
-void SubObjects::Push(const D3D12_RAYTRACING_PIPELINE_CONFIG1* pDesc)
-{
-    assert(m_Count + 1 < kMaxCount);
-    auto idx = m_Count;
-    m_Objects[idx].pDesc = pDesc;
-    m_Objects[idx].Type = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_PIPELINE_CONFIG1;
-    m_Count++;
-}
-
-//-----------------------------------------------------------------------------
-//      ステートオブジェクトの構成設定を作成します.
-//-----------------------------------------------------------------------------
-D3D12_STATE_OBJECT_DESC SubObjects::GetDesc() const
-{
-    D3D12_STATE_OBJECT_DESC result = {};
-    result.Type          = D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE;
-    result.NumSubobjects = m_Count;
-    result.pSubobjects   = m_Objects;
-
-    return result;
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 // ShaderTable class
