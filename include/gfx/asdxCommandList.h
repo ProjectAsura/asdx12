@@ -386,6 +386,117 @@ public:
     }
 
     //-------------------------------------------------------------------------
+    //! @brief      領域を指定してバッファをコピーします.
+    //-------------------------------------------------------------------------
+    inline void CopyBufferRegion
+    (
+        ID3D12Resource* pDstBuffer,
+        UINT64          dstOffset,
+        ID3D12Resource* pSrcBuffer,
+        UINT64          srcOffset,
+        UINT64          numBytes
+    )
+    {
+        m_CmdList->CopyBufferRegion(
+            pDstBuffer,
+            dstOffset,
+            pSrcBuffer,
+            srcOffset,
+            numBytes);
+    }
+
+    //-------------------------------------------------------------------------
+    //! @brief      領域を指定してテクスチャをコピーします.
+    //-------------------------------------------------------------------------
+    inline void CopyTextureRegion
+    (
+        const D3D12_TEXTURE_COPY_LOCATION*  pDst,
+        UINT                                dstX,
+        UINT                                dstY,
+        UINT                                dstZ,
+        const D3D12_TEXTURE_COPY_LOCATION*  pSrc,
+        const D3D12_BOX*                    pSrcBox
+    )
+    {
+        m_CmdList->CopyTextureRegion(
+            pDst, dstX, dstY, dstZ, pSrc, pSrcBox);
+    }
+
+    //-------------------------------------------------------------------------
+    //! @brief      リソースをコピーします.
+    //-------------------------------------------------------------------------
+    inline void CopyResource
+    (
+        ID3D12Resource* pDstResource,
+        ID3D12Resource* pSrcResource
+    )
+    { m_CmdList->CopyResource(pDstResource, pSrcResource); }
+
+    //-------------------------------------------------------------------------
+    //! @brief      高速化機構をコピーします.
+    //-------------------------------------------------------------------------
+    inline void CopyRaytracingAS
+    (
+        D3D12_GPU_VIRTUAL_ADDRESS                           dstAS,
+        D3D12_GPU_VIRTUAL_ADDRESS                           srcAS,
+        D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE   mode
+    )
+    {
+        m_CmdList->CopyRaytracingAccelerationStructure(
+            dstAS, srcAS, mode);
+    }
+
+    //-------------------------------------------------------------------------
+    //! @brief      サブリソースを解決します.
+    //-------------------------------------------------------------------------
+    inline void ResolveSubsource
+    (
+        ID3D12Resource* pDstResource,
+        UINT            dstSubresource,
+        ID3D12Resource* pSrcResource,
+        UINT            srcSubresource,
+        DXGI_FORMAT     format
+    )
+    {
+        m_CmdList->ResolveSubresource(
+            pDstResource,
+            dstSubresource,
+            pSrcResource,
+            srcSubresource,
+            format);
+    }
+
+    //-------------------------------------------------------------------------
+    //! @brief      高速化機構をビルドします.
+    //-------------------------------------------------------------------------
+    inline void BuildRaytracingAS
+    (
+        const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC*           pDesc,
+        UINT                                                                postBuildInfoDescCount,
+        const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_DESC*  pPostBuildInfoDescs
+    )
+    {
+        m_CmdList->BuildRaytracingAccelerationStructure(
+            pDesc, postBuildInfoDescCount, pPostBuildInfoDescs);
+    }
+
+    //-------------------------------------------------------------------------
+    //! @brief      マーカーをプッシュします.
+    //-------------------------------------------------------------------------
+    inline void PushMarker(const char* name)
+    {
+        constexpr UINT PIX_EVENT_ANSI_VERSION = 1;
+        auto size = static_cast<UINT>((strlen(name) + 1) * sizeof(name[0]));
+        m_CmdList->BeginEvent(PIX_EVENT_ANSI_VERSION, name, size);
+    }
+
+    //-------------------------------------------------------------------------
+    //! @brief      マーカーをポップします.
+    //-------------------------------------------------------------------------
+    inline void PopMarker()
+    { m_CmdList->EndEvent(); }
+
+    //-------------------------------------------------------------------------
     //! @brief      コマンドの記録を終了します.
     //-------------------------------------------------------------------------
     inline void Close()
