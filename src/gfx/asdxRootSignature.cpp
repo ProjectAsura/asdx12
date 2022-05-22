@@ -13,115 +13,6 @@
 
 namespace asdx {
 
-void RangeCBV(D3D12_DESCRIPTOR_RANGE& range, UINT baseRegister, UINT registerSpace)
-{
-    range.RangeType                           = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-    range.NumDescriptors                      = 1;
-    range.BaseShaderRegister                  = baseRegister;
-    range.RegisterSpace                       = registerSpace;
-    range.OffsetInDescriptorsFromTableStart   = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-}
-
-void RangeSRV(D3D12_DESCRIPTOR_RANGE& range, UINT baseRegister, UINT registerSpace)
-{
-    range.RangeType                           = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-    range.NumDescriptors                      = 1;
-    range.BaseShaderRegister                  = baseRegister;
-    range.RegisterSpace                       = registerSpace;
-    range.OffsetInDescriptorsFromTableStart   = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-}
-
-void RangeUAV(D3D12_DESCRIPTOR_RANGE& range, UINT baseRegister, UINT registerSpace)
-{
-    range.RangeType                           = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
-    range.NumDescriptors                      = 1;
-    range.BaseShaderRegister                  = baseRegister;
-    range.RegisterSpace                       = registerSpace;
-    range.OffsetInDescriptorsFromTableStart   = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-}
-
-void RangeSmp(D3D12_DESCRIPTOR_RANGE& range, UINT baseRegister, UINT registerSpace)
-{
-    range.RangeType                           = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
-    range.NumDescriptors                      = 1;
-    range.BaseShaderRegister                  = baseRegister;
-    range.RegisterSpace                       = registerSpace;
-    range.OffsetInDescriptorsFromTableStart   = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-}
-
-void ParamCBV
-(
-    D3D12_ROOT_PARAMETER&   param,
-    uint8_t                 visibility,
-    UINT                    baseRegister,
-    UINT                    registerSpace
-)
-{
-    param.ParameterType               = D3D12_ROOT_PARAMETER_TYPE_CBV;
-    param.Descriptor.ShaderRegister   = baseRegister;
-    param.Descriptor.RegisterSpace    = registerSpace;
-    param.ShaderVisibility            = D3D12_SHADER_VISIBILITY(visibility);
-}
-
-void ParamSRV
-(
-    D3D12_ROOT_PARAMETER&   param,
-    uint8_t                 visibility,
-    UINT                    baseRegister,
-    UINT                    registerSpace
-)
-{
-    param.ParameterType               = D3D12_ROOT_PARAMETER_TYPE_SRV;
-    param.Descriptor.ShaderRegister   = baseRegister;
-    param.Descriptor.RegisterSpace    = registerSpace;
-    param.ShaderVisibility            = D3D12_SHADER_VISIBILITY(visibility);
-}
-
-void ParamUAV
-(
-    D3D12_ROOT_PARAMETER&   param,
-    uint8_t                 visibility,
-    UINT                    baseRegister,
-    UINT                    registerSpace
-)
-{
-    param.ParameterType               = D3D12_ROOT_PARAMETER_TYPE_UAV;
-    param.Descriptor.ShaderRegister   = baseRegister;
-    param.Descriptor.RegisterSpace    = registerSpace;
-    param.ShaderVisibility            = D3D12_SHADER_VISIBILITY(visibility);
-}
-
-void ParamTable
-(
-    D3D12_ROOT_PARAMETER&           param,
-    uint8_t                         visibility,
-    UINT                            count,
-    const D3D12_DESCRIPTOR_RANGE*   ranges
-)
-{
-    param.ParameterType                       = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-    param.DescriptorTable.NumDescriptorRanges = count;
-    param.DescriptorTable.pDescriptorRanges   = ranges;
-    param.ShaderVisibility                    = D3D12_SHADER_VISIBILITY(visibility);
-}
-
-void ParamConstants
-(
-    D3D12_ROOT_PARAMETER&   param,
-    uint8_t                 visibility,
-    UINT                    count,
-    UINT                    baseRegister,
-    UINT                    registerSpace
-)
-{
-    param.ParameterType               = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-    param.Constants.Num32BitValues    = count;
-    param.Constants.ShaderRegister    = baseRegister;
-    param.Constants.RegisterSpace     = registerSpace;
-    param.ShaderVisibility            = D3D12_SHADER_VISIBILITY(visibility);
-}
-
-
 //-----------------------------------------------------------------------------
 //      DynamicResourcesをサポートしているかどうかチェックします.
 //-----------------------------------------------------------------------------
@@ -149,6 +40,204 @@ bool CheckSupportDynamicResources(ID3D12Device8* pDevice)
 
     return true;
 }
+
+///////////////////////////////////////////////////////////////////////////////
+// DescriptorSetLayoutBase class
+///////////////////////////////////////////////////////////////////////////////
+void DescriptorSetLayoutBase::SetCBV(uint32_t slot, uint8_t shader, uint32_t baseRegister, uint32_t registerSpace)
+{
+    m_Params[slot].ParameterType                = D3D12_ROOT_PARAMETER_TYPE_CBV;
+    m_Params[slot].ShaderVisibility             = D3D12_SHADER_VISIBILITY(shader);
+    m_Params[slot].Descriptor.ShaderRegister    = baseRegister;
+    m_Params[slot].Descriptor.RegisterSpace     = registerSpace;
+}
+
+void DescriptorSetLayoutBase::SetSRV(uint32_t slot, uint8_t shader, uint32_t baseRegister, uint32_t registerSpace)
+{
+    m_Params[slot].ParameterType                = D3D12_ROOT_PARAMETER_TYPE_SRV;
+    m_Params[slot].ShaderVisibility             = D3D12_SHADER_VISIBILITY(shader);
+    m_Params[slot].Descriptor.ShaderRegister    = baseRegister;
+    m_Params[slot].Descriptor.RegisterSpace     = registerSpace;
+}
+
+void DescriptorSetLayoutBase::SetUAV(uint32_t slot, uint8_t shader, uint32_t baseRegister, uint32_t registerSpace)
+{
+    m_Params[slot].ParameterType                = D3D12_ROOT_PARAMETER_TYPE_UAV;
+    m_Params[slot].ShaderVisibility             = D3D12_SHADER_VISIBILITY(shader);
+    m_Params[slot].Descriptor.ShaderRegister    = baseRegister;
+    m_Params[slot].Descriptor.RegisterSpace     = registerSpace;
+}
+
+void DescriptorSetLayoutBase::SetTableCBV(uint32_t slot, uint8_t shader, uint32_t baseRegister, uint32_t registerSpace)
+{
+    m_Ranges[slot].RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+    m_Ranges[slot].NumDescriptors                       = 1;
+    m_Ranges[slot].BaseShaderRegister                   = baseRegister;
+    m_Ranges[slot].RegisterSpace                        = registerSpace;
+    m_Ranges[slot].OffsetInDescriptorsFromTableStart    = 0;
+
+    m_Params[slot].ParameterType                        = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+    m_Params[slot].ShaderVisibility                     = D3D12_SHADER_VISIBILITY(shader);
+    m_Params[slot].DescriptorTable.NumDescriptorRanges  = 1;
+    m_Params[slot].DescriptorTable.pDescriptorRanges    = &m_Ranges[slot];
+}
+
+void DescriptorSetLayoutBase::SetTableSRV(uint32_t slot, uint8_t shader, uint32_t baseRegister, uint32_t registerSpace)
+{
+    m_Ranges[slot].RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    m_Ranges[slot].NumDescriptors                       = 1;
+    m_Ranges[slot].BaseShaderRegister                   = baseRegister;
+    m_Ranges[slot].RegisterSpace                        = registerSpace;
+    m_Ranges[slot].OffsetInDescriptorsFromTableStart    = 0;
+
+    m_Params[slot].ParameterType                        = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+    m_Params[slot].ShaderVisibility                     = D3D12_SHADER_VISIBILITY(shader);
+    m_Params[slot].DescriptorTable.NumDescriptorRanges  = 1;
+    m_Params[slot].DescriptorTable.pDescriptorRanges    = &m_Ranges[slot];
+}
+
+void DescriptorSetLayoutBase::SetTableUAV(uint32_t slot, uint8_t shader, uint32_t baseRegister, uint32_t registerSpace)
+{
+    m_Ranges[slot].RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+    m_Ranges[slot].NumDescriptors                       = 1;
+    m_Ranges[slot].BaseShaderRegister                   = baseRegister;
+    m_Ranges[slot].RegisterSpace                        = registerSpace;
+    m_Ranges[slot].OffsetInDescriptorsFromTableStart    = 0;
+
+    m_Params[slot].ParameterType                        = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+    m_Params[slot].ShaderVisibility                     = D3D12_SHADER_VISIBILITY(shader);
+    m_Params[slot].DescriptorTable.NumDescriptorRanges  = 1;
+    m_Params[slot].DescriptorTable.pDescriptorRanges    = &m_Ranges[slot];
+}
+
+void DescriptorSetLayoutBase::SetTableSmp(uint32_t slot, uint8_t shader, uint32_t baseRegister, uint32_t registerSpace)
+{
+    m_Ranges[slot].RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
+    m_Ranges[slot].NumDescriptors                       = 1;
+    m_Ranges[slot].BaseShaderRegister                   = baseRegister;
+    m_Ranges[slot].RegisterSpace                        = registerSpace;
+    m_Ranges[slot].OffsetInDescriptorsFromTableStart    = 0;
+
+    m_Params[slot].ParameterType                        = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+    m_Params[slot].ShaderVisibility                     = D3D12_SHADER_VISIBILITY(shader);
+    m_Params[slot].DescriptorTable.NumDescriptorRanges  = 1;
+    m_Params[slot].DescriptorTable.pDescriptorRanges    = &m_Ranges[slot];
+}
+
+void DescriptorSetLayoutBase::SetContants(uint32_t slot, uint8_t shader, uint32_t count, uint32_t baseRegister, uint32_t registerSpace)
+{
+    m_Params[slot].ParameterType            = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+    m_Params[slot].ShaderVisibility         = D3D12_SHADER_VISIBILITY(shader);
+    m_Params[slot].Constants.ShaderRegister = baseRegister;
+    m_Params[slot].Constants.RegisterSpace  = registerSpace;
+    m_Params[slot].Constants.Num32BitValues = count;
+}
+
+void DescriptorSetLayoutBase::SetStaticSampler(uint32_t slot, uint8_t shader, uint32_t type, uint32_t baseRegister, uint32_t registerSpace)
+{
+    m_Samplers[slot].MipLODBias         = 0;
+    m_Samplers[slot].MaxAnisotropy      = 0;
+    m_Samplers[slot].ComparisonFunc     = D3D12_COMPARISON_FUNC_ALWAYS;
+    m_Samplers[slot].BorderColor        = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
+    m_Samplers[slot].MinLOD             = 0;
+    m_Samplers[slot].MaxLOD             = D3D12_FLOAT32_MAX;
+    m_Samplers[slot].ShaderRegister     = baseRegister;
+    m_Samplers[slot].RegisterSpace      = registerSpace;
+    m_Samplers[slot].ShaderVisibility   = D3D12_SHADER_VISIBILITY(shader);
+
+    switch(type)
+    {
+    case STATIC_SAMPLER_POINT_CLAMP:
+        {
+            m_Samplers[slot].Filter     = D3D12_FILTER_MIN_MAG_MIP_POINT;
+            m_Samplers[slot].AddressU   = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+            m_Samplers[slot].AddressV   = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+            m_Samplers[slot].AddressW   = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+        }
+        break;
+
+    case STATIC_SAMPLER_POINT_WRAP:
+        {
+            m_Samplers[slot].Filter     = D3D12_FILTER_MIN_MAG_MIP_POINT;
+            m_Samplers[slot].AddressU   = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+            m_Samplers[slot].AddressV   = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+            m_Samplers[slot].AddressW   = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+        }
+        break;
+
+    case STATIC_SAMPLER_POINT_MIRROR:
+        {
+            m_Samplers[slot].Filter     = D3D12_FILTER_MIN_MAG_MIP_POINT;
+            m_Samplers[slot].AddressU   = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+            m_Samplers[slot].AddressV   = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+            m_Samplers[slot].AddressW   = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+        }
+        break;
+
+    case STATIC_SAMPLER_LINEAR_CLAMP:
+        {
+            m_Samplers[slot].Filter     = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+            m_Samplers[slot].AddressU   = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+            m_Samplers[slot].AddressV   = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+            m_Samplers[slot].AddressW   = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+        }
+        break;
+
+    case STATIC_SAMPLER_LINEAR_WRAP:
+        {
+            m_Samplers[slot].Filter     = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+            m_Samplers[slot].AddressU   = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+            m_Samplers[slot].AddressV   = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+            m_Samplers[slot].AddressW   = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+        }
+        break;
+
+    case STATIC_SAMPLER_LINEAR_MIRROR:
+        {
+            m_Samplers[slot].Filter     = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+            m_Samplers[slot].AddressU   = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+            m_Samplers[slot].AddressV   = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+            m_Samplers[slot].AddressW   = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+        }
+        break;
+
+    case STATIC_SAMPLER_ANISOTROPIC_CLAMP:
+        {
+            m_Samplers[slot].Filter         = D3D12_FILTER_ANISOTROPIC;
+            m_Samplers[slot].AddressU       = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+            m_Samplers[slot].AddressV       = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+            m_Samplers[slot].AddressW       = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+            m_Samplers[slot].MaxAnisotropy  = 16;
+        }
+        break;
+
+    case STATIC_SAMPLER_ANISOTROPIC_WRAP:
+        {
+            m_Samplers[slot].Filter         = D3D12_FILTER_ANISOTROPIC;
+            m_Samplers[slot].AddressU       = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+            m_Samplers[slot].AddressV       = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+            m_Samplers[slot].AddressW       = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+            m_Samplers[slot].MaxAnisotropy  = 16;
+        }
+        break;
+
+    case STATIC_SAMPLER_ANISOTROPIC_MIRROR:
+        {
+            m_Samplers[slot].Filter         = D3D12_FILTER_ANISOTROPIC;
+            m_Samplers[slot].AddressU       = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+            m_Samplers[slot].AddressV       = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+            m_Samplers[slot].AddressW       = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+            m_Samplers[slot].MaxAnisotropy  = 16;
+        }
+        break;
+    }
+}
+
+void DescriptorSetLayoutBase::SetFlags(D3D12_ROOT_SIGNATURE_FLAGS flags)
+{ m_Desc.Flags = flags; }
+
+D3D12_ROOT_SIGNATURE_DESC* DescriptorSetLayoutBase::GetDesc()
+{ return &m_Desc; }
 
 
 ///////////////////////////////////////////////////////////////////////////////

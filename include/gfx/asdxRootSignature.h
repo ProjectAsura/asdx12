@@ -38,16 +38,21 @@ enum SHADER_VISIBILITY
     SV_MS  = 7,
 };
 
-void RangeCBV(D3D12_DESCRIPTOR_RANGE& range, UINT baseRegister, UINT registerSpace = 0);
-void RangeSRV(D3D12_DESCRIPTOR_RANGE& range, UINT baseRegister, UINT registerSpace = 0);
-void RangeUAV(D3D12_DESCRIPTOR_RANGE& range, UINT baseRegister, UINT registerSpace = 0);
-void RangeSmp(D3D12_DESCRIPTOR_RANGE& range, UINT baseRegister, UINT registerSpace = 0);
-void ParamCBV(D3D12_ROOT_PARAMETER& param, uint8_t shader, UINT baseRegister, uint32_t registerSpace = 0);
-void ParamSRV(D3D12_ROOT_PARAMETER& param, uint8_t shader, UINT baseRegister, uint32_t registerSpace = 0);
-void ParamUAV(D3D12_ROOT_PARAMETER& param, uint8_t shader, UINT baseRegister, uint32_t registerSpace = 0);
-void ParamTable(D3D12_ROOT_PARAMETER& param, uint8_t shader, UINT count, const D3D12_DESCRIPTOR_RANGE* ranges);
-void ParamConstants(D3D12_ROOT_PARAMETER& param, uint8_t shader, UINT count, UINT baseRegister, UINT registerSpace = 0);
-
+///////////////////////////////////////////////////////////////////////////////
+// STATIC_SAMPLER_TYPE enum
+///////////////////////////////////////////////////////////////////////////////
+enum STATIC_SAMPLER_TYPE
+{
+    STATIC_SAMPLER_POINT_CLAMP,
+    STATIC_SAMPLER_POINT_WRAP,
+    STATIC_SAMPLER_POINT_MIRROR,
+    STATIC_SAMPLER_LINEAR_CLAMP,
+    STATIC_SAMPLER_LINEAR_WRAP,
+    STATIC_SAMPLER_LINEAR_MIRROR,
+    STATIC_SAMPLER_ANISOTROPIC_CLAMP,
+    STATIC_SAMPLER_ANISOTROPIC_WRAP,
+    STATIC_SAMPLER_ANISOTROPIC_MIRROR,
+};
 
 //-----------------------------------------------------------------------------
 //! @brief  DynamicResourcesをサポートしているかどうかチェックします.
@@ -57,6 +62,77 @@ void ParamConstants(D3D12_ROOT_PARAMETER& param, uint8_t shader, UINT count, UIN
 //! @retval false   非サポートです.
 //-----------------------------------------------------------------------------
 bool CheckSupportDynamicResources(ID3D12Device8* pDevice);
+
+///////////////////////////////////////////////////////////////////////////////
+// DescriptorSetLayoutBase class
+///////////////////////////////////////////////////////////////////////////////
+class DescriptorSetLayoutBase
+{
+public:
+    DescriptorSetLayoutBase() = default;
+    void SetCBV(uint32_t slot, uint8_t shader, uint32_t baseRegister, uint32_t registerSpace = 0);
+    void SetSRV(uint32_t slot, uint8_t shader, uint32_t baseRegister, uint32_t registerSpace = 0);
+    void SetUAV(uint32_t slot, uint8_t shader, uint32_t baseRegister, uint32_t registerSpace = 0);
+    void SetTableCBV(uint32_t slot, uint8_t shader, uint32_t baseRegister, uint32_t registerSpace = 0);
+    void SetTableSRV(uint32_t slot, uint8_t shader, uint32_t baseRegister, uint32_t registerSpace = 0);
+    void SetTableUAV(uint32_t slot, uint8_t shader, uint32_t baseRegister, uint32_t registerSpace = 0);
+    void SetTableSmp(uint32_t slot, uint8_t shader, uint32_t baseRegister, uint32_t registerSpace = 0);
+    void SetContants(uint32_t slot, uint8_t shader, uint32_t count, uint32_t baseRegister, uint32_t registerSpace = 0);
+    void SetStaticSampler(uint32_t slot, uint8_t shader, uint32_t type, uint32_t baseRegister, uint32_t registerSpace = 0);
+    void SetFlags(D3D12_ROOT_SIGNATURE_FLAGS flags);
+    D3D12_ROOT_SIGNATURE_DESC* GetDesc();
+
+protected:
+    D3D12_ROOT_SIGNATURE_DESC   m_Desc      = {};
+    D3D12_ROOT_PARAMETER*       m_Params    = nullptr;
+    D3D12_DESCRIPTOR_RANGE*     m_Ranges    = nullptr;
+    D3D12_STATIC_SAMPLER_DESC*  m_Samplers  = nullptr;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// DescriptorSetLayout class
+///////////////////////////////////////////////////////////////////////////////
+template<size_t ParamCount, size_t SamplerCount>
+class DescriptorSetLayout : public DescriptorSetLayoutBase
+{
+public:
+    DescriptorSetLayout()
+    {
+        m_Params    = m_StorageParams;
+        m_Ranges    = m_StorageRanges;
+        m_Samplers  = m_StorageSamplers;
+
+        m_Desc.NumParameters        = ParamCount;
+        m_Desc.pParameters          = m_Params;
+        m_Desc.NumStaticSamplers    = SamplerCount;
+        m_Desc.pStaticSamplers      = m_Samplers;
+    }
+
+private:
+    D3D12_ROOT_PARAMETER        m_StorageParams  [ParamCount]   = {};
+    D3D12_DESCRIPTOR_RANGE      m_StorageRanges  [ParamCount]   = {};
+    D3D12_STATIC_SAMPLER_DESC   m_StorageSamplers[SamplerCount] = {};
+};
+
+template<size_t ParamCount>
+class DescriptorSetLayout<ParamCount, 0> : public DescriptorSetLayoutBase
+{
+public:
+    DescriptorSetLayout()
+    {
+        m_Params = m_StorageParams;
+        m_Ranges = m_StorageRanges;
+
+        m_Desc.NumParameters        = ParamCount;
+        m_Desc.pParameters          = m_Params;
+        m_Desc.NumStaticSamplers    = 0;
+        m_Desc.pStaticSamplers      = nullptr;
+    }
+
+private:
+    D3D12_ROOT_PARAMETER        m_StorageParams[ParamCount]     = {};
+    D3D12_DESCRIPTOR_RANGE      m_StorageRanges[ParamCount]     = {};
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 // RootSignature class

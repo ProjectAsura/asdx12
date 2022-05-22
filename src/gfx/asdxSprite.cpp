@@ -107,22 +107,13 @@ bool SpriteSystem::Init
 
     // ルートシグニチャ生成.
     {
-        D3D12_DESCRIPTOR_RANGE range[1] = {};
-        RangeSRV(range[0], 0);
+        asdx::DescriptorSetLayout<3, 0> layout;
+        layout.SetContants(0, SV_VS, 16, 0);
+        layout.SetContants(1, SV_PS, 4,  1);
+        layout.SetTableSRV(2, SV_PS, 0);
+        layout.SetFlags(ROOT_SIGNATURE_FLAG_VS_PS);
 
-        D3D12_ROOT_PARAMETER params[3] = {};
-        ParamConstants(params[0], D3D12_SHADER_VISIBILITY_VERTEX, 16, 0);
-        ParamConstants(params[1], D3D12_SHADER_VISIBILITY_PIXEL, 4, 1);
-        ParamTable(params[2], D3D12_SHADER_VISIBILITY_PIXEL, 1, range);
-
-        D3D12_ROOT_SIGNATURE_DESC desc = {};
-        desc.NumParameters      = _countof(params);
-        desc.NumStaticSamplers  = 0;
-        desc.pParameters        = params;
-        desc.pStaticSamplers    = nullptr;
-        desc.Flags              = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
-
-        if (!m_RootSig.Init(pDevice, &desc))
+        if (!m_RootSig.Init(pDevice, layout.GetDesc()))
         {
             ELOGA("Error : RootSignature::Init() Failed.");
             return false;

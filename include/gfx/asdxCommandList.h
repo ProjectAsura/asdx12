@@ -12,10 +12,27 @@
 #include <gfx/asdxView.h>
 
 
+#define STATE_COMMON        (D3D12_RESOURCE_STATE_COMMON)
+#define STATE_VB            (D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER)
+#define STATE_CB            (D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER)
+#define STATE_IB            (D3D12_RESOURCE_STATE_INDEX_BUFFER)
+#define STATE_RTV           (D3D12_RESOURCE_STATE_RENDER_TARGET)
+#define STATE_UAV           (D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
+#define STATE_DEPTH_WRITE   (D3D12_RESOURCE_STATE_DEPTH_WRITE)
+#define STATE_DEPTH_READ    (D3D12_RESOURCE_STATE_DEPTH_READ)
+#define STATE_INDIRECT_ARG  (D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT)
+#define STATE_COPY_SRC      (D3D12_RESOURCE_STATE_COPY_SOURCE)
+#define STATE_COPY_DST      (D3D12_RESOURCE_STATE_COPY_DEST)
+#define STATE_RESOLVE_SRC   (D3D12_RESOURCE_STATE_RESOLVE_SOURCE)
+#define STATE_RESOLVE_DST   (D3D12_RESOURCE_STATE_RESOLVE_DEST)
+#define STATE_AS            (D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE)
+#define STATE_READ          (D3D12_RESOURCE_STATE_GENERIC_READ)
+#define STATE_PRESET        (D3D12_RESOURCE_STATE_PRESENT)
+
 namespace asdx {
 
 struct ResTexture;
-class Sampler;
+class  Sampler;
 
 ///////////////////////////////////////////////////////////////////////////////
 // CommandList class
@@ -582,6 +599,33 @@ public:
     )
     {
         m_pCmd          = pCmd;
+        m_pResource     = pResource;
+        m_BeforeState   = beforeState;
+        m_AfterState    = afterState;
+
+        D3D12_RESOURCE_BARRIER barrier = {};
+        barrier.Type                    = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+        barrier.Flags                   = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+        barrier.Transition.pResource    = m_pResource;
+        barrier.Transition.Subresource  = 0;
+        barrier.Transition.StateBefore  = m_BeforeState;
+        barrier.Transition.StateAfter   = m_AfterState;
+
+        m_pCmd->ResourceBarrier(1, &barrier);
+    }
+
+    //-------------------------------------------------------------------------
+    //! @brief      コンストラクタです.
+    //-------------------------------------------------------------------------
+    ScopedBarrier
+    (
+        CommandList&                cmd,
+        ID3D12Resource*             pResource,
+        D3D12_RESOURCE_STATES       beforeState,
+        D3D12_RESOURCE_STATES       afterState
+    )
+    {
+        m_pCmd          = cmd.GetCommandList();
         m_pResource     = pResource;
         m_BeforeState   = beforeState;
         m_AfterState    = afterState;
