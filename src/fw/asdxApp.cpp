@@ -19,112 +19,6 @@
 namespace /* anonymous */ {
 
 ///////////////////////////////////////////////////////////////////////////////
-// ApplicationList class
-///////////////////////////////////////////////////////////////////////////////
-class ApplicationList
-{
-    //=========================================================================
-    // list of friend classes and methods.
-    //=========================================================================
-    /* NOTHING */
-
-public:
-    //=========================================================================
-    // public variables.
-    //=========================================================================
-    typedef std::list< asdx::Application* >                 List;
-    typedef std::list< asdx::Application* >::iterator       ListItr;
-    typedef std::list< asdx::Application* >::const_iterator ListCItr;
-
-    //=========================================================================
-    // public methods.
-    //=========================================================================
-
-    //-------------------------------------------------------------------------
-    //! @brief      コンストラクタです.
-    //-------------------------------------------------------------------------
-    ApplicationList()
-    { m_List.clear(); }
-
-    //-------------------------------------------------------------------------
-    //! @brief      デストラクタです.
-    //-------------------------------------------------------------------------
-    ~ApplicationList()
-    { m_List.clear(); }
-
-    //-------------------------------------------------------------------------
-    //! @brief      push_back()のラッパー関数です.
-    //-------------------------------------------------------------------------
-    void PushBack( asdx::Application* pApp )
-    { m_List.push_back( pApp ); }
-
-    //-------------------------------------------------------------------------
-    //! @brief      push_front()のラッパー関数です.
-    //-------------------------------------------------------------------------
-    void PushFront( asdx::Application* pApp )
-    { m_List.push_front( pApp ); }
-
-    //-------------------------------------------------------------------------
-    //! @brief      pop_back()のラッパー関数です.
-    //-------------------------------------------------------------------------
-    void PopBack()
-    { m_List.pop_back(); }
-
-    //-------------------------------------------------------------------------
-    //! @brief      pop_front()のラッパー関数です.
-    //-------------------------------------------------------------------------
-    void PopFront()
-    { m_List.pop_front(); }
-
-    //-------------------------------------------------------------------------
-    //! @brief      clear()のラッパー関数です.
-    //-------------------------------------------------------------------------
-    void Clear()
-    { m_List.clear(); }
-
-    //-------------------------------------------------------------------------
-    //! @brief      remove()のラッパー関数です.
-    //-------------------------------------------------------------------------
-    void Remove( asdx::Application* pApp )
-    { m_List.remove( pApp ); }
-
-    //-------------------------------------------------------------------------
-    //! @brief      begin()のラッパー関数です.
-    //-------------------------------------------------------------------------
-    ListItr Begin()
-    { return m_List.begin(); }
-
-    //-------------------------------------------------------------------------
-    //! @brief      begin()のラッパー関数です(const版).
-    //-------------------------------------------------------------------------
-    ListCItr Begin() const
-    { return m_List.begin(); }
-
-    //-------------------------------------------------------------------------
-    //! @brief      end()のラッパー関数です.
-    //-------------------------------------------------------------------------
-    ListItr End()
-    { return m_List.end(); }
-
-    //-------------------------------------------------------------------------
-    //! @brief      end()のラッパー関数です(const版).
-    //-------------------------------------------------------------------------
-    ListCItr End() const
-    { return m_List.end(); }
-
-private:
-    //=========================================================================
-    // private variables.
-    //=========================================================================
-    List    m_List;         //!< リストです.
-
-    //=========================================================================
-    // private methods.
-    //=========================================================================
-    /* NOTHING */
-};
-
-///////////////////////////////////////////////////////////////////////////////
 // AllocationTypeTable structure
 ///////////////////////////////////////////////////////////////////////////////
 struct AllocationTypeTable
@@ -132,9 +26,6 @@ struct AllocationTypeTable
     D3D12_DRED_ALLOCATION_TYPE  Type;
     const char*                 Tag;
 };
-
-// アプリケーションリスト.
-ApplicationList     g_AppList;
 
 // オペレーションテーブル.
 static const char* g_BreadcrumTable[] = {
@@ -520,6 +411,12 @@ Application::Application()
 , m_hMenu               ( nullptr )
 , m_hAccel              ( nullptr )
 {
+    // タイマーを開始します.
+    m_Timer.Start();
+
+    // 開始時刻を取得.
+    m_LatestUpdateTime = m_Timer.GetElapsedSec();
+
     // Corn Flower Blue.
     m_ClearColor[0] = 0.392156899f;
     m_ClearColor[1] = 0.584313750f;
@@ -561,6 +458,12 @@ Application::Application( LPCWSTR title, UINT width, UINT height, HICON hIcon, H
 , m_hIcon               ( hIcon )
 , m_hMenu               ( hMenu )
 {
+    // タイマーを開始します.
+    m_Timer.Start();
+
+    // 開始時刻を取得.
+    m_LatestUpdateTime = m_Timer.GetElapsedSec();
+
     // Corn Flower Blue.
     m_ClearColor[0] = 0.392156899f;
     m_ClearColor[1] = 0.584313750f;
@@ -781,7 +684,7 @@ bool Application::InitWnd()
         NULL,
         m_hMenu,
         hInst,
-        NULL
+        this
     );
 
     // 生成チェック.
@@ -793,15 +696,6 @@ bool Application::InitWnd()
         // 異常終了.
         return false;
     }
-
-    // アプリケーションリストに登録します.
-    g_AppList.PushBack( this );
-
-    // タイマーを開始します.
-    m_Timer.Start();
-
-    // 開始時刻を取得.
-    m_LatestUpdateTime = m_Timer.GetElapsedSec();
 
     // 正常終了.
     return true;
@@ -837,9 +731,6 @@ void Application::TermWnd()
     m_hIcon  = nullptr;
     m_hMenu  = nullptr;
     m_hAccel = nullptr;
-
-    // アプリケーションリストから削除します.
-    g_AppList.Remove( this );
 }
 
 //-----------------------------------------------------------------------------
@@ -1207,6 +1098,8 @@ void Application::DropEvent( const wchar_t** dropFiles, uint32_t fileNum )
 //-----------------------------------------------------------------------------
 LRESULT CALLBACK Application::MsgProc( HWND hWnd, UINT uMsg, WPARAM wp, LPARAM lp )
 {
+    auto pInstance = reinterpret_cast<Application*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+
     PAINTSTRUCT ps;
     HDC         hdc;
 
@@ -1225,10 +1118,8 @@ LRESULT CALLBACK Application::MsgProc( HWND hWnd, UINT uMsg, WPARAM wp, LPARAM l
         args.IsAltDown = isAltDown;
         args.IsKeyDown = isKeyDown;
 
-        for( ApplicationList::ListItr itr = g_AppList.Begin(); itr != g_AppList.End(); itr++ )
-        {
-            (*itr)->KeyEvent( args );
-        }
+        if (pInstance != nullptr)
+        { pInstance->KeyEvent(args); }
     }
 
     // 古いWM_MOUSEWHEELの定義.
@@ -1284,16 +1175,17 @@ LRESULT CALLBACK Application::MsgProc( HWND hWnd, UINT uMsg, WPARAM wp, LPARAM l
         args.IsSideButton1Down  = isSideButton1Down;
         args.IsSideButton2Down  = isSideButton2Down;
 
-        for( ApplicationList::ListItr itr = g_AppList.Begin(); itr != g_AppList.End(); itr++ )
-        {
-            (*itr)->MouseEvent( args );
-        }
+        if (pInstance != nullptr)
+        { pInstance->MouseEvent(args); }
     }
 
     switch( uMsg )
     {
     case WM_CREATE:
         {
+            auto pCreateStruct = reinterpret_cast<LPCREATESTRUCT>(lp);
+            SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pCreateStruct->lpCreateParams));
+
             // ドラッグアンドドロップ可能.
             DragAcceptFiles(hWnd, TRUE);
         }
@@ -1322,10 +1214,8 @@ LRESULT CALLBACK Application::MsgProc( HWND hWnd, UINT uMsg, WPARAM wp, LPARAM l
             args.Height = asdx::Max( h, (uint32_t)8 );
             args.AspectRatio = float( args.Width ) / args.Height;
 
-            for( ApplicationList::ListItr itr = g_AppList.Begin(); itr != g_AppList.End(); itr++ )
-            {
-                (*itr)->ResizeEvent( args );
-            }
+            if (pInstance != nullptr)
+            { pInstance->ResizeEvent(args); }
         }
         break;
 
@@ -1345,11 +1235,8 @@ LRESULT CALLBACK Application::MsgProc( HWND hWnd, UINT uMsg, WPARAM wp, LPARAM l
                 dropFiles[ i ] = dropFile;
             }
 
-            // アプリケーションに通知.
-            for( ApplicationList::ListItr itr = g_AppList.Begin(); itr != g_AppList.End(); itr++ )
-            {
-                (*itr)->DropEvent( dropFiles, numFiles );
-            }
+            if (pInstance != nullptr)
+            { pInstance->DropEvent(dropFiles, numFiles); }
 
             // 作業用のバッファを解放.
             for (uint32_t i=0; i < numFiles; i++)
@@ -1362,28 +1249,24 @@ LRESULT CALLBACK Application::MsgProc( HWND hWnd, UINT uMsg, WPARAM wp, LPARAM l
 
     case WM_MOVE:
         {
-            for( ApplicationList::ListItr itr = g_AppList.Begin(); itr != g_AppList.End(); itr++ )
-            {
-                (*itr)->CheckSupportHDR();
-            }
+            if (pInstance != nullptr)
+            { pInstance->CheckSupportHDR(); }
         }
         break;
 
     case WM_DISPLAYCHANGE:
         {
-            for( ApplicationList::ListItr itr = g_AppList.Begin(); itr != g_AppList.End(); itr++ )
-            {
-                (*itr)->CheckSupportHDR();
-            }
+            if (pInstance != nullptr)
+            { pInstance->CheckSupportHDR(); }
         }
         break;
 
     case WM_CHAR:
         {
-            auto keyCode = static_cast<uint32_t>( wp );
-            for( ApplicationList::ListItr itr = g_AppList.Begin(); itr != g_AppList.End(); itr++ )
+            if (pInstance != nullptr)
             {
-                (*itr)->OnTyping( keyCode );
+                auto keyCode = static_cast<uint32_t>( wp );
+                pInstance->OnTyping(keyCode);
             }
         }
         break;
@@ -1397,8 +1280,8 @@ LRESULT CALLBACK Application::MsgProc( HWND hWnd, UINT uMsg, WPARAM wp, LPARAM l
     }
 
     // ユーザーカスタマイズ用に呼び出し.
-    for( ApplicationList::ListItr itr = g_AppList.Begin(); itr != g_AppList.End(); itr++ )
-    { (*itr)->OnMsgProc( hWnd, uMsg, wp, lp ); }
+    if (pInstance != nullptr)
+    { pInstance->OnMsgProc(hWnd, uMsg, wp, lp); }
 
     return DefWindowProc( hWnd, uMsg, wp, lp );
 }
