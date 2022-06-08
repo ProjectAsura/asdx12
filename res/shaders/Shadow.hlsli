@@ -88,7 +88,7 @@ float SamplePCF1
 { return SampleShadow(shadowMap, shadowSmp, coord.xy, cascadeIndex, saturate(coord.z)); }
 
 //-----------------------------------------------------------------------------
-//      PCF 4tap.
+//      PCF 16
 //-----------------------------------------------------------------------------
 float SamplePCF4
 (
@@ -123,6 +123,48 @@ float SamplePCF4
     result += (w1.x * w1.y) * SampleShadow(shadowMap, shadowSmp, baseUV + float2(uv1.x, uv1.y), cascadeIndex, depth).x;
 
     return saturate(result * 0.0625); // 0.0625 = 1/16.
+}
+
+//-----------------------------------------------------------------------------
+//       PCF 144 
+//-----------------------------------------------------------------------------
+float SamplePCF9(Texture2D shadowMap, SamplerComparisonState shadowSmp, float3 coord, flaot2 shadowMapSize)
+{
+    float2 invMapize = 1.0f / shdaowMapSize;
+    float2 uv      = coord.xy * shadowMapSize;
+    float2 baseUV  = floor(uv.xy);
+    float2 st      = (uv.xy - baseUV.xy);
+
+    base_uv -= float2(0.5, 0.5f);
+    base_uv *= invMapsize;
+
+    float2 w0 = 4.0f - 3.0f * st;
+    float2 w1 = 7.0f;
+    float2 w2 = 1.0f + 3.0f * st;
+
+    float2 uv0 = (3.0 - 2.0 * st) / w0 - 2.0;
+    float2 uv1 = (3.0 + st) / w1;
+    float2 uv2 = st / w2 + 2.0;
+    
+    uv0 *= invMapSize;
+    uv1 *= invMapSize;
+    uv2 *= invMapSize;
+    
+    float depth = saturate(coord.z);
+    float result = 0.0f;
+    result += w0.x * w0.y * SampleShadow(shadowMap, shadowSmp, baseUV + float2(uv0.x, uv0.y) cascadeIndex, depth).x;
+    result += w1.x * w0.y * SampleShadow(shadowMap, shadowSmp, baseUV + float2(uv1.x, uv0.y) cascadeIndex, depth).x;
+    result += w2.x * w0.y * SampleShadow(shadowMap, shadowSmp, baseUV + float2(uv2.x, uv0.y) cascadeIndex, depth).x;
+
+    result += w0.x * w1.y * SampleShadow(shadowMap, shadowSmp, baseUV + float2(uv0.x, uv1.y) cascadeIndex, depth).x;
+    result += w1.x * w1.y * SampleShadow(shadowMap, shadowSmp, baseUV + float2(uv1.x, uv1.y) cascadeIndex, depth).x;
+    result += w2.x * w1.y * SampleShadow(shadowMap, shadowSmp, baseUV + float2(uv2.x, uv1.y) cascadeIndex, depth).x;
+
+    result += w0.x * w2.y * SampleShadow(shadowMap, shadowSmp, baseUV + float2(uv0.x, uv2.y) cascadeIndex, depth).x;
+    result += w1.x * w2.y * SampleShadow(shadowMap, shadowSmp, baseUV + float2(uv1.x, uv2.y) cascadeIndex, depth).x;
+    result += w2.x * w2.y * SampleShadow(shadowMap, shadowSmp, baseUV + float2(uv2.x, uv2.y) cascadeIndex, depth).x;
+
+    return saturate(result / 144.0f);
 }
 
 //-----------------------------------------------------------------------------
