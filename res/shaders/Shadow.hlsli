@@ -128,15 +128,22 @@ float SamplePCF4
 //-----------------------------------------------------------------------------
 //       PCF 144 
 //-----------------------------------------------------------------------------
-float SamplePCF9(Texture2D shadowMap, SamplerComparisonState shadowSmp, float3 coord, flaot2 shadowMapSize)
+float SamplePCF9
+(
+    Texture2DArray  shadowMap,      // カスケードシャドウマップ.
+    ShadowSampler   shadowSmp,      // シャドウサンプラー.
+    float3          coord,          // (シャドウマップ行列 * テクスチャ行列)で変換した位置座標.
+    uint            cascadeIndex,   // カスケード番号.
+    float2          shadowMapSize   // シャドウマップサイズ.
+)
 {
     float2 invMapize = 1.0f / shdaowMapSize;
     float2 uv      = coord.xy * shadowMapSize;
     float2 baseUV  = floor(uv.xy);
     float2 st      = (uv.xy - baseUV.xy);
 
-    base_uv -= float2(0.5, 0.5f);
-    base_uv *= invMapsize;
+    baseUV -= float2(0.5f, 0.5f);
+    baseUV *= invMapsize;
 
     float2 w0 = 4.0f - 3.0f * st;
     float2 w1 = 7.0f;
@@ -187,7 +194,7 @@ float Chebyshev(float2 moments, float mean, float minVariance)
 //-----------------------------------------------------------------------------
 //      プロシージャルグリッドを描画します.
 //-----------------------------------------------------------------------------
-float3 DrawGrid
+float3 DrawShadowGrid
 (
     float3 baseColor,         // 基本色.
     float2 shadowCoord,       // シャドウマップテクスチャ座標.
