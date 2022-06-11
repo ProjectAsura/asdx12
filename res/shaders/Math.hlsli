@@ -1655,9 +1655,9 @@ float2 ToSphereMapCoord(float3 reflectDir)
         reflectDir.x * s + 0.5f,
         1.0f - (reflectDir.y * s + 0.5f)); // DirectXÇ»ÇÃÇ≈è„â∫îΩì].
 #else
-    float theta = acos(dir.y);
-    float phi   = atan2(dir.z, dir.x);
-    if (dir.z < 0.0f)
+    float theta = acos(reflectDir.y);
+    float phi   = atan2(reflectDir.z, reflectDir.x);
+    if (reflectDir.z < 0.0f)
     { phi += F_2PI; }
 
     return float2(phi * F_1DIV2PI, theta * F_1DIVPI);
