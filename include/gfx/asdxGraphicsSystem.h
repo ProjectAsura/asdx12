@@ -32,6 +32,7 @@ struct DeviceDesc
     uint32_t    MaxDepthTargetCount;            //!< 最大深度ターゲット数です.
     bool        EnableDebug;                    //!< デバッグモードを有効にします.
     bool        EnableDRED;                     //!< DREDを有効にします
+    bool        EnableCapture;                  //!< PIXキャプチャーを有効にします.
 };
 
 bool SystemInit(const DeviceDesc& desc);

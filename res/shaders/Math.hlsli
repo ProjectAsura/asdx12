@@ -17,11 +17,13 @@
 //-----------------------------------------------------------------------------
 // Constant Values.
 //-----------------------------------------------------------------------------
-static const float HALF_MAX = 65504.0f;         // 半精度浮動小数の最大値.
-static const float FLT_NAN  = 0x7fc00000;       // qNaN
-static const float FLT_MAX  = 3.402823466e+38f; // 浮動小数の最大値.
-static const float F_PI     = 3.1415926535897932384626433832795f;
-static const float F_1DIVPI = 0.31830988618379067153776752674503f;
+static const float HALF_MAX  = 65504.0f;         // 半精度浮動小数の最大値.
+static const float FLT_NAN   = 0x7fc00000;       // qNaN
+static const float FLT_MAX   = 3.402823466e+38f; // 浮動小数の最大値.
+static const float F_PI      = 3.1415926535897932384626433832795f;
+static const float F_2PI     = 6.283185307179586476925286766559f;
+static const float F_1DIVPI  = 0.31830988618379067153776752674503f;
+static const float F_1DIV2PI = 0.15915494309189533576888376337251;
 static const float F_DITHER_LIST[4][4] = {
     { 0.37647f, 0.87450f, 0.50196f, 0.99000f },
     { 0.62352f, 0.12549f, 0.75294f, 0.25098f },
@@ -1642,15 +1644,24 @@ bool FrustumCulling(float3 p0, float3 p1, float3 p2)
 //-----------------------------------------------------------------------------
 float2 ToSphereMapCoord(float3 reflectDir)
 {
+#if 0
     // https://www.clicktorelease.com/blog/creating-spherical-environment-mapping-shader/
     // Pierre Lepers氏のコメントを参照.
     // 計算式導出についてには，Jaume Sanchez Elias氏の画像を参照.
     const float kSqrt8 = 2.82842712474619;
-    float s = 1.0f / (kSqrt8 * sqrt(abs(reflectDir.z) + 1.0f));
+    float s = 1.0f / (kSqrt8 * sqrt(saturate(reflectDir.z + 1.0f));
 
     return float2(
         reflectDir.x * s + 0.5f,
         1.0f - (reflectDir.y * s + 0.5f)); // DirectXなので上下反転.
+#else
+    float theta = acos(dir.y);
+    float phi   = atan2(dir.z, dir.x);
+    if (dir.z < 0.0f)
+    { phi += F_2PI; }
+
+    return float2(phi * F_1DIV2PI, theta * F_1DIVPI);
+#endif
 }
 
 //-----------------------------------------------------------------------------

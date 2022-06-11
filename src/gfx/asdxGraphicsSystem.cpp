@@ -15,8 +15,66 @@
 //#include <gfx/asdxResourceUploader.h>
 #include <fnd/asdxSpinLock.h>
 #include <fnd/asdxRef.h>
-
 #include <fnd/asdxLogger.h>
+#include <ShlObj.h>
+#include <strsafe.h>
+
+
+namespace {
+
+//-------------------------------------------------------------------------------------------------
+//      PIXキャプチャー用のDLLをロードします.
+//-------------------------------------------------------------------------------------------------
+void LoadPixGpuCpatureDll()
+{
+    LPWSTR programFilesPath = nullptr;
+    SHGetKnownFolderPath(FOLDERID_ProgramFiles, KF_FLAG_DEFAULT, NULL, &programFilesPath);
+
+    wchar_t pixSearchPath[MAX_PATH] = {};
+    StringCchCopy(pixSearchPath, MAX_PATH, programFilesPath);
+    StringCchCat(pixSearchPath, MAX_PATH, L"\\Microsoft PIX\\*");
+
+    WIN32_FIND_DATA findData;
+    bool foundPixInstallation = false;
+    wchar_t newestVersionFound[MAX_PATH] = {};
+
+    HANDLE hFind = FindFirstFile(pixSearchPath, &findData);
+    if (hFind != INVALID_HANDLE_VALUE)
+    {
+        do 
+        {
+            if (((findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY) &&
+                 (findData.cFileName[0] != '.'))
+            {
+                if (!foundPixInstallation || wcscmp(newestVersionFound, findData.cFileName) <= 0)
+                {
+                    foundPixInstallation = true;
+                    StringCchCopy(newestVersionFound, _countof(newestVersionFound), findData.cFileName);
+                }
+            }
+        } 
+        while (FindNextFile(hFind, &findData) != 0);
+    }
+
+    FindClose(hFind);
+
+    if (!foundPixInstallation)
+    {
+        return;
+    }
+
+    wchar_t dllPath[MAX_PATH] = {};
+    StringCchCopy(dllPath, wcslen(pixSearchPath), pixSearchPath);
+    StringCchCat(dllPath, MAX_PATH, &newestVersionFound[0]);
+    StringCchCat(dllPath, MAX_PATH, L"\\WinPixGpuCapturer.dll");
+
+    if (GetModuleHandleW(L"WinPixGpuCapturer.dll") == 0)
+    {
+        LoadLibraryW(dllPath);
+    }
+}
+
+} // namespace
 
 
 namespace asdx {
@@ -231,6 +289,10 @@ GraphicsSystem& GraphicsSystem::Instance()
 //-----------------------------------------------------------------------------
 bool GraphicsSystem::Init(const DeviceDesc& deviceDesc)
 {
+    // PIXキャプチャー設定.
+    if (deviceDesc.EnableCapture)
+    { LoadPixGpuCpatureDll(); }
+
     if (deviceDesc.EnableDebug)
     {
         asdx::RefPtr<ID3D12Debug> debug;
@@ -246,7 +308,6 @@ bool GraphicsSystem::Init(const DeviceDesc& deviceDesc)
             #endif
             }
         }
-
     }
 
     if (deviceDesc.EnableDRED)

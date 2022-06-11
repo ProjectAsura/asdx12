@@ -205,7 +205,7 @@ bool Blas::Init
         pDevice,
         prebuildInfo.ScratchDataSizeInBytes,
         m_Scratch.GetAddress(),
-        D3D12_RESOURCE_STATE_UNORDERED_ACCESS))
+        D3D12_RESOURCE_STATE_COMMON))
     {
         ELOGA("Error : CreateUAVBuffer() Failed.");
         return false;
@@ -354,7 +354,7 @@ bool Tlas::Init
         pDevice,
         prebuildInfo.ScratchDataSizeInBytes,
         m_Scratch.GetAddress(),
-        D3D12_RESOURCE_STATE_UNORDERED_ACCESS))
+        D3D12_RESOURCE_STATE_COMMON))
     {
         ELOGA("Error : CreateUAVBuffer() Failed.");
         return false;
