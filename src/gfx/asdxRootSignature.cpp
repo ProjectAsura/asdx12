@@ -9,6 +9,7 @@
 //-----------------------------------------------------------------------------
 #include <gfx/asdxRootSignature.h>
 #include <fnd/asdxLogger.h>
+#include <cassert>
 
 
 namespace asdx {
@@ -46,6 +47,7 @@ bool CheckSupportDynamicResources(ID3D12Device8* pDevice)
 ///////////////////////////////////////////////////////////////////////////////
 void DescriptorSetLayoutBase::SetCBV(uint32_t slot, uint8_t shader, uint32_t baseRegister, uint32_t registerSpace)
 {
+    assert(slot < m_ParamCount);
     m_Params[slot].ParameterType                = D3D12_ROOT_PARAMETER_TYPE_CBV;
     m_Params[slot].ShaderVisibility             = D3D12_SHADER_VISIBILITY(shader);
     m_Params[slot].Descriptor.ShaderRegister    = baseRegister;
@@ -54,6 +56,7 @@ void DescriptorSetLayoutBase::SetCBV(uint32_t slot, uint8_t shader, uint32_t bas
 
 void DescriptorSetLayoutBase::SetSRV(uint32_t slot, uint8_t shader, uint32_t baseRegister, uint32_t registerSpace)
 {
+    assert(slot < m_ParamCount);
     m_Params[slot].ParameterType                = D3D12_ROOT_PARAMETER_TYPE_SRV;
     m_Params[slot].ShaderVisibility             = D3D12_SHADER_VISIBILITY(shader);
     m_Params[slot].Descriptor.ShaderRegister    = baseRegister;
@@ -62,6 +65,7 @@ void DescriptorSetLayoutBase::SetSRV(uint32_t slot, uint8_t shader, uint32_t bas
 
 void DescriptorSetLayoutBase::SetUAV(uint32_t slot, uint8_t shader, uint32_t baseRegister, uint32_t registerSpace)
 {
+    assert(slot < m_ParamCount);
     m_Params[slot].ParameterType                = D3D12_ROOT_PARAMETER_TYPE_UAV;
     m_Params[slot].ShaderVisibility             = D3D12_SHADER_VISIBILITY(shader);
     m_Params[slot].Descriptor.ShaderRegister    = baseRegister;
@@ -70,6 +74,7 @@ void DescriptorSetLayoutBase::SetUAV(uint32_t slot, uint8_t shader, uint32_t bas
 
 void DescriptorSetLayoutBase::SetTableCBV(uint32_t slot, uint8_t shader, uint32_t baseRegister, uint32_t registerSpace)
 {
+    assert(slot < m_ParamCount);
     m_Ranges[slot].RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
     m_Ranges[slot].NumDescriptors                       = 1;
     m_Ranges[slot].BaseShaderRegister                   = baseRegister;
@@ -84,6 +89,7 @@ void DescriptorSetLayoutBase::SetTableCBV(uint32_t slot, uint8_t shader, uint32_
 
 void DescriptorSetLayoutBase::SetTableSRV(uint32_t slot, uint8_t shader, uint32_t baseRegister, uint32_t registerSpace)
 {
+    assert(slot < m_ParamCount);
     m_Ranges[slot].RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
     m_Ranges[slot].NumDescriptors                       = 1;
     m_Ranges[slot].BaseShaderRegister                   = baseRegister;
@@ -98,6 +104,7 @@ void DescriptorSetLayoutBase::SetTableSRV(uint32_t slot, uint8_t shader, uint32_
 
 void DescriptorSetLayoutBase::SetTableUAV(uint32_t slot, uint8_t shader, uint32_t baseRegister, uint32_t registerSpace)
 {
+    assert(slot < m_ParamCount);
     m_Ranges[slot].RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
     m_Ranges[slot].NumDescriptors                       = 1;
     m_Ranges[slot].BaseShaderRegister                   = baseRegister;
@@ -112,6 +119,7 @@ void DescriptorSetLayoutBase::SetTableUAV(uint32_t slot, uint8_t shader, uint32_
 
 void DescriptorSetLayoutBase::SetTableSmp(uint32_t slot, uint8_t shader, uint32_t baseRegister, uint32_t registerSpace)
 {
+    assert(slot < m_ParamCount);
     m_Ranges[slot].RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
     m_Ranges[slot].NumDescriptors                       = 1;
     m_Ranges[slot].BaseShaderRegister                   = baseRegister;
@@ -126,6 +134,7 @@ void DescriptorSetLayoutBase::SetTableSmp(uint32_t slot, uint8_t shader, uint32_
 
 void DescriptorSetLayoutBase::SetContants(uint32_t slot, uint8_t shader, uint32_t count, uint32_t baseRegister, uint32_t registerSpace)
 {
+    assert(slot < m_ParamCount);
     m_Params[slot].ParameterType            = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
     m_Params[slot].ShaderVisibility         = D3D12_SHADER_VISIBILITY(shader);
     m_Params[slot].Constants.ShaderRegister = baseRegister;
@@ -135,6 +144,7 @@ void DescriptorSetLayoutBase::SetContants(uint32_t slot, uint8_t shader, uint32_
 
 void DescriptorSetLayoutBase::SetStaticSampler(uint32_t slot, uint8_t shader, uint32_t type, uint32_t baseRegister, uint32_t registerSpace)
 {
+    assert(slot < m_SamplerCount);
     m_Samplers[slot].MipLODBias         = 0;
     m_Samplers[slot].MaxAnisotropy      = 0;
     m_Samplers[slot].ComparisonFunc     = D3D12_COMPARISON_FUNC_ALWAYS;

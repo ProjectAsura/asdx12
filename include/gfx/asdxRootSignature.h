@@ -87,6 +87,8 @@ protected:
     D3D12_ROOT_PARAMETER*       m_Params    = nullptr;
     D3D12_DESCRIPTOR_RANGE*     m_Ranges    = nullptr;
     D3D12_STATIC_SAMPLER_DESC*  m_Samplers  = nullptr;
+    size_t                      m_ParamCount    = 0;
+    size_t                      m_SamplerCount  = 0;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -106,6 +108,9 @@ public:
         m_Desc.pParameters          = m_Params;
         m_Desc.NumStaticSamplers    = SamplerCount;
         m_Desc.pStaticSamplers      = m_Samplers;
+
+        m_ParamCount    = ParamCount;
+        m_SamplerCount  = SamplerCount;
     }
 
 private:
