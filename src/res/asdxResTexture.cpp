@@ -1075,7 +1075,7 @@ namespace asdx {
 //-------------------------------------------------------------------------------------------------
 bool CreateResTextureFromWICFileW( const wchar_t* filename, asdx::ResTexture& resTexture )
 {
-    bool forceSRGB = true;
+    bool forceSRGB = false;
 
     if ( filename == nullptr )
     { return false; }
@@ -1401,7 +1401,7 @@ bool CreateResTextureFromWICFileA( const char* filename, asdx::ResTexture& resTe
 //-------------------------------------------------------------------------------------------------
 bool CreateResTextureFromWICMemory(const uint8_t* pBinary, uint32_t bufferSize, asdx::ResTexture& resTexture)
 {
-    bool forceSRGB = true;
+    bool forceSRGB = false;
 
     if ( pBinary == nullptr )
     { return false; }

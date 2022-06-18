@@ -82,7 +82,6 @@ struct ResTexture
     uint32_t             Format;         //!< 画像のフォーマットです.
     uint32_t             MipMapCount;    //!< ミップマップ数です.
     uint32_t             SurfaceCount;   //!< サーフェイス数です(1次元配列テクスチャ, 2次元配列テクスチャ, キューブマップの場合のみ6以上の数が入ります).
-    uint32_t             Option;         //!< オプションフラグです.
     SubResource*         pResources;     //!< サブリソースです.
 
     //-------------------------------------------------------------------------
@@ -96,7 +95,6 @@ struct ResTexture
     , Format        ( 0 )
     , MipMapCount   ( 0 )
     , SurfaceCount  ( 0 )
-    , Option        ( 0 )
     , pResources    ( nullptr )
     { /* DO_NOTHING */ }
 

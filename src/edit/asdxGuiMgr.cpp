@@ -686,7 +686,6 @@ bool GuiMgr::Init
         res.Format          = DXGI_FORMAT_R8G8B8A8_UNORM;
         res.MipMapCount     = 1;
         res.SurfaceCount    = 1;
-        res.Option          = 0;
         res.pResources      = &subRes;
 
         if (!m_FontTexture.Init(cmdList, res))
