@@ -16,6 +16,7 @@
 #include <wrl/client.h>
 #include <res/asdxResTexture.h>
 #include <fnd/asdxLogger.h>
+#include <fnd/asdxMath.h>
 
 
 //-------------------------------------------------------------------------------------------------
@@ -289,6 +290,74 @@ struct TGA_EXTENSION
 };
 #pragma pack( pop )
 
+////////////////////////////////////////////////////////////////////////////////////////////
+// RGBE structure
+////////////////////////////////////////////////////////////////////////////////////////////
+struct RGBE
+{
+    union
+    {
+        struct
+        {
+            uint8_t r;
+            uint8_t g;
+            uint8_t b;
+            uint8_t e;
+        };
+        uint8_t v[4];
+    };
+};
+
+
+//------------------------------------------------------------------------------------------
+//      RGBE形式からVector3形式に変換します.
+//------------------------------------------------------------------------------------------
+inline asdx::Vector3 RGBEToVec3( const RGBE& val )
+{
+    asdx::Vector3 result;
+    if ( val.e )
+    {
+        auto f = ldexp( 1.0, static_cast<int>(val.e - (128+8)) );
+        result.x = static_cast<float>( val.r * f );
+        result.y = static_cast<float>( val.g * f );
+        result.z = static_cast<float>( val.b * f );
+    }
+    else 
+    {
+        result.x = 0.0f;
+        result.y = 0.0f;
+        result.z = 0.0f;
+    }
+    return result;
+}
+
+//------------------------------------------------------------------------------------------
+//      Vector3形式からRGBE形式に変換します.
+//------------------------------------------------------------------------------------------
+inline RGBE Vec3ToRGBE( const asdx::Vector3& val )
+{
+    RGBE result = {};
+    double d = asdx::Max( val.x, asdx::Max( val.y, val.z ) );
+
+    if ( d <= DBL_EPSILON )
+    {
+        result.r = 0;
+        result.g = 0;
+        result.b = 0;
+        result.e = 0;
+        return result;
+    }
+
+    int e;
+    double m = frexp(d, &e); // d = m * 2^e
+    d = m * 256.0 / d;
+
+    result.r = static_cast<uint32_t>(val.x * d);
+    result.g = static_cast<uint32_t>(val.y * d);
+    result.b = static_cast<uint32_t>(val.z * d);
+    result.e = static_cast<uint32_t>(e + 128);
+    return result;
+}
 
 //-------------------------------------------------------------------------------------------------
 // Global Variables.
@@ -1652,25 +1721,14 @@ bool CreateResTextureFromWICMemory(const uint8_t* pBinary, uint32_t bufferSize, 
 //-------------------------------------------------------------------------------------------------
 //      DDSからリソーステクスチャを生成します.
 //-------------------------------------------------------------------------------------------------
-bool CreateResTextureFromDDSFileW(const wchar_t* filename, asdx::ResTexture& resTexture)
+bool CreateResTextureFromDDSFile(FILE* pFile, asdx::ResTexture& resTexture)
 {
-    FILE*           pFile           = nullptr;
     DDSurfaceDesc   ddsd            = {};
     char            magic[4]        = {};
     uint32_t        width           = 0;
     uint32_t        height          = 0;
     uint32_t        depth           = 0;
     uint32_t        nativeFormat    = 0;
-
-    // ファイルを開きます.
-    errno_t err = _wfopen_s( &pFile, filename, L"rb" );
-
-    // ファイルオープンチェック.
-    if ( err != 0 )
-    {
-        ELOGW( "Error : File Open Failed. filename = %s", filename );
-        return false;
-    }
 
    // マジックを読み込む.
     fread( magic, sizeof(char), 4, pFile);
@@ -1682,7 +1740,7 @@ bool CreateResTextureFromDDSFileW(const wchar_t* filename, asdx::ResTexture& res
       || ( magic[3] != ' ' ) )
     {
         // エラーログ出力.
-        ELOGW( "Error : Invalid File. filename = %s", filename );
+        ELOGW( "Error : Invalid File" );
 
         // ファイルを閉じる.
         fclose( pFile );
@@ -2245,8 +2303,31 @@ bool CreateResTextureFromDDSFileW(const wchar_t* filename, asdx::ResTexture& res
 //-------------------------------------------------------------------------------------------------
 bool CreateResTextureFromDDSFileA(const char* filename, asdx::ResTexture& resTexture)
 {
-    auto path = ToStringW(filename);
-    return CreateResTextureFromDDSFileW(path.c_str(), resTexture);
+    FILE* pFile = nullptr;
+    auto err = fopen_s(&pFile, filename, "rb");
+    if (err != 0)
+    {
+        ELOGA("Error : File Open Failed. path = %s", filename);
+        return false;
+    }
+
+    return CreateResTextureFromDDSFile(pFile, resTexture);
+}
+
+//-------------------------------------------------------------------------------------------------
+//      DDSファイルからリソーステクスチャを生成します.
+//-------------------------------------------------------------------------------------------------
+bool CreateResTextureFromDDSFileW(const wchar_t* filename, asdx::ResTexture& resTexture)
+{
+    FILE* pFile = nullptr;
+    auto err = _wfopen_s(&pFile, filename, L"rb");
+    if (err != 0)
+    {
+        ELOGA("Error : File Open Failed. path = %ls", filename);
+        return false;
+    }
+
+    return CreateResTextureFromDDSFile(pFile, resTexture);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -2798,25 +2879,8 @@ bool CreateResTextureFromDDSMemory(const uint8_t* pBinary, uint32_t bufferSize, 
 //-------------------------------------------------------------------------------------------------
 //      Targaファイルからリソーステクスチャを生成します.
 //-------------------------------------------------------------------------------------------------
-bool CreateResTextureFromTGAFileW(const wchar_t* filename, asdx::ResTexture& resTexture)
+bool CreateResTextureFromTGAFile(FILE* pFile, asdx::ResTexture& resTexture)
 {
-   // 引数チェック.
-    if ( filename == nullptr )
-    {
-        ELOG( "Error : Invalid Argument." );
-        return false;
-    }
-
-    FILE* pFile;
-
-    // ファイルを開く.
-    auto err = _wfopen_s( &pFile, filename, L"rb" );
-    if ( err != 0 )
-    {
-        ELOG( "Error : File Open Failed. Filename = %s", filename );
-        return false;
-    }
-
     // フッターを読み込み.
     TGA_FOOTER footer;
     long offset = sizeof(footer);
@@ -3107,9 +3171,332 @@ bool CreateResTextureFromTGAFileW(const wchar_t* filename, asdx::ResTexture& res
 //-------------------------------------------------------------------------------------------------
 bool CreateResTextureFromTGAFileA(const char* filename, asdx::ResTexture& resTexture)
 {
-    auto path = ToStringW(filename);
-    return CreateResTextureFromTGAFileW(path.c_str(), resTexture);
+    FILE* pFile = nullptr;
+    auto err = fopen_s(&pFile, filename, "rb");
+    if (err != 0)
+    {
+        ELOGA("Error : File Open Failed. path = %s", filename);
+        return false;
+    }
+
+    return CreateResTextureFromTGAFile(pFile, resTexture);
 }
+
+//-------------------------------------------------------------------------------------------------
+//      Targaファイルからリソーステクスチャを生成します.
+//-------------------------------------------------------------------------------------------------
+bool CreateResTextureFromTGAFileW(const wchar_t* filename, asdx::ResTexture& resTexture)
+{
+    FILE* pFile = nullptr;
+    auto err = _wfopen_s(&pFile, filename, L"rb");
+    if (err != 0)
+    {
+        ELOGW("Error : File Open Failed. path = %ls", filename);
+        return false;
+    }
+
+    return CreateResTextureFromTGAFile(pFile, resTexture);
+}
+
+//------------------------------------------------------------------------------------------
+//      HDRファイルのヘッダを読み込みします.
+//------------------------------------------------------------------------------------------
+bool ReadHdrHeader( FILE* pFile, int32_t& width, int32_t& height, float& gamma, float& exposure )
+{
+    char buf[ 256 ];
+    fread( buf, sizeof(char), 2, pFile );
+
+    if ( buf[0] != '#' || buf[1] != '?' )
+    { return false; }
+
+    auto valid = false;
+    for( ;; )
+    {
+        if ( fgets( buf, 256, pFile ) == nullptr )
+        { break; }
+
+        if ( buf[0] == '\n' )
+        { break; }
+        else if ( buf[0] == '#' )
+        { continue; }
+        else
+        {
+            auto g = 1.0f;
+            auto e = 1.0f;
+            if ( sscanf_s( buf, "GAMMA=%f\n", &g ) != 0 ) 
+            { gamma = g; }
+            else if ( sscanf_s( buf, "EXPOSURE=%f\n", &e ) != 0 )
+            { exposure = e; }
+            else if ( strcmp( buf, "FORMAT=32-bit_rle_rgbe\n" ) == 0 )
+            { valid = true; }
+        }
+    }
+
+    if ( !valid )
+    { return false; }
+
+    if ( fgets( buf, 256, pFile ) != nullptr )
+    {
+        auto w = 0;
+        auto h = 0;
+        if ( sscanf_s( buf, "-Y %d +X %d\n", &h, &w ) != 0 )
+        {
+            width = w;
+            height = h;
+        }
+        else if ( sscanf_s( buf, "+X %d -Y %d\n", &w, &h ) != 0 )
+        {
+            width = w;
+            height = h;
+        }
+        else
+        { return false; }
+    }
+
+    return true;
+}
+
+//------------------------------------------------------------------------------------------
+//      旧形式のカラーを読み取ります.
+//------------------------------------------------------------------------------------------
+bool ReadOldColors( FILE* pFile, RGBE* pLine, int32_t count )
+{
+    auto shift = 0;
+    while( 0 < count )
+    {
+        pLine[0].r = getc( pFile );
+        pLine[0].g = getc( pFile );
+        pLine[0].b = getc( pFile );
+        pLine[0].e = getc( pFile );
+
+        if ( feof( pFile ) || ferror( pFile ) )
+            return false;
+
+        if ( pLine[0].r == 1
+          && pLine[0].g == 1
+          && pLine[0].b == 1 )
+        {
+            for( auto i=pLine[0].e << shift; i > 0; i-- )
+            {
+                pLine[0].r = pLine[-1].r;
+                pLine[0].g = pLine[-1].g;
+                pLine[0].b = pLine[-1].b;
+                pLine[0].e = pLine[-1].e;
+                pLine++;
+                count--;
+            }
+            shift += 8;
+        }
+        else
+        {
+            pLine++;
+            count--;
+            shift = 0;
+        }
+    }
+
+    return true;
+}
+
+//------------------------------------------------------------------------------------------
+//      カラーを読み取ります.
+//------------------------------------------------------------------------------------------
+bool ReadColor( FILE* pFile, RGBE* pLine, int32_t count )
+{
+    if ( count < 8 || 0x7fff < count )
+    { return ReadOldColors( pFile, pLine, count ); }
+
+    auto i = getc( pFile );
+    if ( i == EOF )
+        return false;
+
+    if ( i != 2 )
+    {
+        ungetc( i, pFile );
+        return ReadOldColors( pFile, pLine, count );
+    }
+
+    pLine[0].g = getc( pFile );
+    pLine[0].b = getc( pFile );
+
+    if ( ( i = getc( pFile ) ) == EOF )
+        return false;
+
+    if ( pLine[0].g != 2 || pLine[0].b & 128 )
+    {
+        pLine[0].r = 2;
+        pLine[0].e = i;
+        return ReadOldColors( pFile, pLine + 1, count -1 );
+    }
+
+    if ( ( pLine[0].b << 8 | i ) != count )
+        return false;
+
+    for( i=0; i<4; ++i )
+    {
+        for( auto j=0; j<count; )
+        {
+            auto code = getc( pFile );
+            if ( code == EOF )
+                return false;
+
+            if ( 128 < code )
+            {
+                code &= 127;
+                auto val = getc( pFile );
+                while( code-- )
+                { pLine[j++].v[i] = val; }
+            }
+            else
+            {
+                while( code-- )
+                { pLine[j++].v[i] = getc( pFile ); }
+            }
+        }
+    }
+
+    return ( feof( pFile ) ? false : true );
+}
+
+//------------------------------------------------------------------------------------------
+//      HDRデータを読み取ります.
+//------------------------------------------------------------------------------------------
+bool ReadHdrData( FILE* pFile, const int32_t width, const int32_t height, float** ppPixels )
+{
+    auto pLines = new(std::nothrow) RGBE [ width * height ];
+    if ( pLines == nullptr )
+    { return false; }
+
+    auto pixels = new (std::nothrow) float [ width * height * 4 ];
+    if ( pixels == nullptr )
+    { return false; }
+
+    for( auto y=0; y<height; ++y )
+    {
+        if ( !ReadColor( pFile, pLines, width ) )
+        {
+            SafeDeleteArray( pLines );
+            SafeDeleteArray( pixels );
+            return false;
+        }
+
+        for( auto x =0; x < width; x++ )
+        {
+            auto pix = RGBEToVec3( pLines[x] );
+            auto idx = ( x * 4 ) + ( y * width *  4 );
+            pixels[idx + 0] = pix.x;
+            pixels[idx + 1] = pix.y;
+            pixels[idx + 2] = pix.z;
+            pixels[idx + 3] = 1.0f;
+        }
+    }
+
+    SafeDeleteArray( pLines );
+    (*ppPixels) = pixels;
+
+    return true;
+}
+
+//------------------------------------------------------------------------------------------
+//      HDRファイルからデータをロードします.
+//------------------------------------------------------------------------------------------
+bool CreateResTextureFromHDRFileA( const char* filename, asdx::ResTexture& resTexture)
+{
+    FILE* pFile = nullptr;
+
+    auto err = fopen_s( &pFile, filename, "rb" );
+    if ( err != 0 )
+    {
+        ELOGA( "Error : LoadFromHDR() Failed. File Open Failed. filename = %s", filename );
+        return false;
+    }
+
+    int32_t width    = 0;
+    int32_t height   = 0;
+    float   gamma    = 1.0f;
+    float   exposure = 1.0f;
+    if ( !ReadHdrHeader(pFile, width, height, gamma, exposure) )
+    {
+        ELOGA( "Error : LoadFromHDR() Failed. Header Read Failed. filename = %s", filename );
+        fclose(pFile);
+        return false;
+    }
+
+    resTexture.Dimension    = TEXTURE_DIMENSION_2D;
+    resTexture.Width        = uint32_t(width);
+    resTexture.Height       = uint32_t(height);
+    resTexture.Depth        = 0;
+    resTexture.Format       = DXGI_FORMAT_R32G32B32A32_FLOAT;
+    resTexture.MipMapCount  = 1;
+    resTexture.SurfaceCount = 1;
+    resTexture.pResources   = new SubResource[1];
+
+    resTexture.pResources[0].Width      = uint32_t(width);
+    resTexture.pResources[0].Height     = uint32_t(height);
+    resTexture.pResources[0].Pitch      = width * sizeof(float) * 4;
+    resTexture.pResources[0].SlicePitch = resTexture.pResources[0].Pitch * height;
+
+    if ( !ReadHdrData(pFile, width, height, reinterpret_cast<float**>(&resTexture.pResources[0].pPixels)) )
+    {
+        ELOGA( "Error : LoadFromHDR() Failed. Data Read Failed. filename = %s", filename );
+        fclose(pFile);
+        return false;
+    }
+
+    fclose(pFile);
+    return true;
+}
+
+//------------------------------------------------------------------------------------------
+//      HDRファイルからデータをロードします.
+//------------------------------------------------------------------------------------------
+bool CreateResTextureFromHDRFileW(const wchar_t* filename, asdx::ResTexture& resTexture)
+{
+    FILE* pFile = nullptr;
+
+    auto err = _wfopen_s(&pFile, filename, L"rb" );
+    if ( err != 0 )
+    {
+        ELOGW( "Error : LoadFromHDR() Failed. File Open Failed. filename = %s", filename );
+        return false;
+    }
+
+    int32_t width    = 0;
+    int32_t height   = 0;
+    float   gamma    = 1.0f;
+    float   exposure = 1.0f;
+    if ( !ReadHdrHeader(pFile, width, height, gamma, exposure) )
+    {
+        ELOGW( "Error : LoadFromHDR() Failed. Header Read Failed. filename = %s", filename );
+        fclose(pFile);
+        return false;
+    }
+
+    resTexture.Dimension    = TEXTURE_DIMENSION_2D;
+    resTexture.Width        = uint32_t(width);
+    resTexture.Height       = uint32_t(height);
+    resTexture.Depth        = 0;
+    resTexture.Format       = DXGI_FORMAT_R32G32B32A32_FLOAT;
+    resTexture.MipMapCount  = 1;
+    resTexture.SurfaceCount = 1;
+    resTexture.pResources   = new SubResource[1];
+
+    resTexture.pResources[0].Width      = uint32_t(width);
+    resTexture.pResources[0].Height     = uint32_t(height);
+    resTexture.pResources[0].Pitch      = width * sizeof(float) * 4;
+    resTexture.pResources[0].SlicePitch = resTexture.pResources[0].Pitch * height;
+
+    if ( !ReadHdrData(pFile, width, height, reinterpret_cast<float**>(&resTexture.pResources[0].pPixels)) )
+    {
+        ELOGW( "Error : LoadFromHDR() Failed. Data Read Failed. filename = %s", filename );
+        fclose(pFile);
+        return false;
+    }
+
+    fclose(pFile);
+    return true;
+}
+
 
 //-------------------------------------------------------------------------------------------------
 //      ファイルからテクスチャを生成します.
@@ -3127,7 +3514,9 @@ bool CreateResTextureFromFileW(const wchar_t* filename, asdx::ResTexture& resTex
     if (ext == L"dds")
     { return CreateResTextureFromDDSFileW( filename, resTexture ); }
     else if (ext == L"tga")
-    { return CreateResTextureFromTGAFileW( filename, resTexture );  }
+    { return CreateResTextureFromTGAFileW( filename, resTexture ); }
+    else if (ext == L"hdr")
+    { return CreateResTextureFromHDRFileW( filename, resTexture ); }
 
     return CreateResTextureFromWICFileW( filename, resTexture );
 }
@@ -3150,6 +3539,8 @@ bool CreateResTextureFromFileA(const char* filename, asdx::ResTexture& resTextur
     { return CreateResTextureFromDDSFileA( filename, resTexture ); }
     else if (ext == "tga")
     { return CreateResTextureFromTGAFileA( filename, resTexture ); }
+    else if (ext == "hdr")
+    { return CreateResTextureFromHDRFileA( filename, resTexture ); }
 
     return CreateResTextureFromWICFileA( filename, resTexture );
 }
