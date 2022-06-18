@@ -426,6 +426,10 @@ Application::Application()
     m_ClearStencil  = 0;
 
     m_DeviceDesc.EnableDebug            = ASDX_DEV_VAR(true, false);
+    m_DeviceDesc.EnableCapture          = false;
+    m_DeviceDesc.EnableDRED             = true;
+    m_DeviceDesc.EnableBreakOnError     = true;
+    m_DeviceDesc.EnableBreakOnWarning   = true;
     m_DeviceDesc.MaxColorTargetCount    = 128;
     m_DeviceDesc.MaxDepthTargetCount    = 128;
     m_DeviceDesc.MaxSamplerCount        = 128;

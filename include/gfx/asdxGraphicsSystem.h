@@ -30,9 +30,11 @@ struct DeviceDesc
     uint32_t    MaxSamplerCount;                //!< 最大サンプラー数です.
     uint32_t    MaxColorTargetCount;            //!< 最大カラーターゲット数です.
     uint32_t    MaxDepthTargetCount;            //!< 最大深度ターゲット数です.
-    bool        EnableDebug;                    //!< デバッグモードを有効にします.
-    bool        EnableDRED;                     //!< DREDを有効にします
-    bool        EnableCapture;                  //!< PIXキャプチャーを有効にします.
+    bool        EnableDebug          = false;   //!< デバッグモードを有効にします.
+    bool        EnableDRED           = true;    //!< DREDを有効にします
+    bool        EnableCapture        = false;   //!< PIXキャプチャーを有効にします.
+    bool        EnableBreakOnWarning = false;   //!< 警告時にブレークするなら true.
+    bool        EnableBreakOnError   = true;    //!< エラー時にブレークするなら true.
 };
 
 bool SystemInit(const DeviceDesc& desc);

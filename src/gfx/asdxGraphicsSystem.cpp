@@ -372,10 +372,12 @@ bool GraphicsSystem::Init(const DeviceDesc& deviceDesc)
             if (SUCCEEDED(hr))
             {
                 // エラー発生時にブレークさせる.
-                m_pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
+                if (deviceDesc.EnableBreakOnError)
+                { m_pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE); }
 
                 // 警告発生時にブレークさせる.
-                m_pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE);
+                if (deviceDesc.EnableBreakOnWarning)
+                { m_pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE); }
 
                 // クリア値が違うという警告は無効化しておく.
                 m_pInfoQueue->SetBreakOnID(D3D12_MESSAGE_ID_CLEARRENDERTARGETVIEW_MISMATCHINGCLEARVALUE, FALSE);
