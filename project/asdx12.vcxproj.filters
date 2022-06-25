@@ -479,6 +479,9 @@
     <ClInclude Include="..\include\fw\asdxCameraController.h">
       <Filter>ヘッダー ファイル\fw</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\fnd\asdxStringView.h">
+      <Filter>ヘッダー ファイル\fnd</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\res\shaders\BRDF.hlsli">

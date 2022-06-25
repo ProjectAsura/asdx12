@@ -164,5 +164,4 @@ uint8_t* CaptureResource::Map()
 void CaptureResource::Unmap()
 { m_Resource->Unmap(0, nullptr); }
 
-
 } // namespace asdx
