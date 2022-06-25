@@ -386,55 +386,8 @@ namespace asdx  {
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
 Application::Application()
-: m_hInst               ( nullptr )
-, m_hWnd                ( nullptr )
-, m_AllowTearing        ( false )
-, m_MultiSampleCount    ( 1 )
-, m_MultiSampleQuality  ( 0 )
-, m_SwapChainCount      ( 2 )
-, m_SwapChainFormat     ( DXGI_FORMAT_R10G10B10A2_UNORM )
-, m_DepthStencilFormat  ( DXGI_FORMAT_D32_FLOAT )
-, m_pSwapChain4         ( nullptr )
-, m_SampleMask          ( 0 )
-, m_StencilRef          ( 0 )
-, m_Width               ( 960 )
-, m_Height              ( 540 )
-, m_AspectRatio         ( 1.7777f )
-, m_Title               ( L"asdxApplication" )
-, m_Timer               ()
-, m_FrameCount          ( 0 )
-, m_FPS                 ( 0.0f )
-, m_LatestUpdateTime    ( 0.0f )
-, m_IsStopRendering     ( false )
-, m_IsStandbyMode       ( false )
-, m_hIcon               ( nullptr )
-, m_hMenu               ( nullptr )
-, m_hAccel              ( nullptr )
-{
-    // タイマーを開始します.
-    m_Timer.Start();
-
-    // 開始時刻を取得.
-    m_LatestUpdateTime = m_Timer.GetElapsedSec();
-
-    // Corn Flower Blue.
-    m_ClearColor[0] = 0.392156899f;
-    m_ClearColor[1] = 0.584313750f;
-    m_ClearColor[2] = 0.929411829f;
-    m_ClearColor[3] = 1.000000000f;
-    m_ClearDepth    = 1.0f;
-    m_ClearStencil  = 0;
-
-    m_DeviceDesc.EnableDebug            = ASDX_DEV_VAR(true, false);
-    m_DeviceDesc.EnableCapture          = false;
-    m_DeviceDesc.EnableDRED             = true;
-    m_DeviceDesc.EnableBreakOnError     = true;
-    m_DeviceDesc.EnableBreakOnWarning   = true;
-    m_DeviceDesc.MaxColorTargetCount    = 128;
-    m_DeviceDesc.MaxDepthTargetCount    = 128;
-    m_DeviceDesc.MaxSamplerCount        = 128;
-    m_DeviceDesc.MaxShaderResourceCount = 4096;
-}
+: Application(L"asdxApplication", 960, 540, nullptr, nullptr, nullptr)
+{ /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
@@ -461,6 +414,7 @@ Application::Application( LPCWSTR title, UINT width, UINT height, HICON hIcon, H
 , m_IsStandbyMode       ( false )
 , m_hIcon               ( hIcon )
 , m_hMenu               ( hMenu )
+, m_hAccel              ( hAccel )
 {
     // タイマーを開始します.
     m_Timer.Start();
@@ -476,7 +430,16 @@ Application::Application( LPCWSTR title, UINT width, UINT height, HICON hIcon, H
     m_ClearDepth    = 1.0f;
     m_ClearStencil  = 0;
 
+    m_BlendFactor[0] = 1.0f;
+    m_BlendFactor[1] = 1.0f;
+    m_BlendFactor[2] = 1.0f;
+    m_BlendFactor[3] = 1.0f;
+
     m_DeviceDesc.EnableDebug            = ASDX_DEV_VAR(true, false);
+    m_DeviceDesc.EnableCapture          = false;
+    m_DeviceDesc.EnableDRED             = true;
+    m_DeviceDesc.EnableBreakOnError     = true;
+    m_DeviceDesc.EnableBreakOnWarning   = true;
     m_DeviceDesc.MaxColorTargetCount    = 128;
     m_DeviceDesc.MaxDepthTargetCount    = 128;
     m_DeviceDesc.MaxSamplerCount        = 128;
@@ -494,7 +457,7 @@ Application::~Application()
 //-----------------------------------------------------------------------------
 void Application::SetStopRendering( bool isStopRendering )
 {
-    std::lock_guard<std::mutex> locker(m_Mutex);
+    ScopedLock locker(&m_SpinLock);
     m_IsStopRendering = isStopRendering;
 }
 
@@ -502,28 +465,19 @@ void Application::SetStopRendering( bool isStopRendering )
 //      描画停止フラグを取得します.
 //-----------------------------------------------------------------------------
 bool Application::IsStopRendering()
-{
-    std::lock_guard<std::mutex> locker(m_Mutex);
-    return m_IsStopRendering;
-}
+{ return m_IsStopRendering; }
 
 //-----------------------------------------------------------------------------
 //      フレームカウントを取得します.
 //-----------------------------------------------------------------------------
 DWORD Application::GetFrameCount()
-{
-    std::lock_guard<std::mutex> locker(m_Mutex);
-    return m_FrameCount;
-}
+{ return m_FrameCount; }
 
 //-----------------------------------------------------------------------------
 //      FPSを取得します.
 //-----------------------------------------------------------------------------
 FLOAT Application::GetFPS()
-{
-    std::lock_guard<std::mutex> locker(m_Mutex);
-    return m_FPS;
-}
+{ return m_FPS; }
 
 //-----------------------------------------------------------------------------
 //      アプリケーションを初期化します.
@@ -1173,6 +1127,7 @@ LRESULT CALLBACK Application::MsgProc( HWND hWnd, UINT uMsg, WPARAM wp, LPARAM l
         MouseEventArgs args;
         args.X = x;
         args.Y = y;
+        args.WheelDelta         = wheelDelta;
         args.IsLeftButtonDown   = isLeftButtonDown;
         args.IsMiddleButtonDown = isMiddleButtonDown;
         args.IsRightButtonDown  = isRightButtonDown;

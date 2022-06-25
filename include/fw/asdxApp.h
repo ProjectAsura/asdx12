@@ -9,7 +9,6 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <cstdint>
-#include <mutex>
 #include <vector>
 
 #include <Windows.h>
@@ -19,10 +18,10 @@
 #include <fnd/asdxRef.h>
 #include <fnd/asdxStepTimer.h>
 #include <fnd/asdxHid.h>
+#include <fnd/asdxSpinLock.h>
 #include <gfx/asdxGraphicsSystem.h>
 #include <gfx/asdxCommandList.h>
 #include <gfx/asdxTarget.h>
-
 
 #if defined(DEBUG) || defined(_DEBUG)
 #include <DXGIDebug.h>
@@ -217,35 +216,35 @@ protected:
     //=========================================================================
     // protected variables
     //=========================================================================
-    HINSTANCE                       m_hInst;                //!< インスタンスハンドルです.
-    HWND                            m_hWnd;                 //!< ウィンドウハンドルです.
-    bool                            m_AllowTearing;         //!< ティアリングを許可するかどうか.
-    uint32_t                        m_MultiSampleCount;     //!< マルチサンプリングのカウント数です.
-    uint32_t                        m_MultiSampleQuality;   //!< マルチサンプリングの品質値です.
-    uint32_t                        m_SwapChainCount;       //!< スワップチェインのバッファ数です.
-    DXGI_FORMAT                     m_SwapChainFormat;      //!< スワップチェインのバッファフォーマットです.
-    DXGI_FORMAT                     m_DepthStencilFormat;   //!< 深度ステンシルバッファのフォーマットです.
-    float                           m_BlendFactor[ 4 ];     //!< ブレンドファクターです.
-    uint32_t                        m_SampleMask;           //!< サンプルマスクです.
-    uint32_t                        m_StencilRef;           //!< ステンシル参照です.
-    float                           m_ClearColor[ 4 ];      //!< 背景のクリアカラーです.
-    float                           m_ClearDepth;           //!< 深度クリア値です.
-    uint8_t                         m_ClearStencil;         //!< ステンシルクリア値です.
-    uint32_t                        m_Width;                //!< 画面の横幅です.
-    uint32_t                        m_Height;               //!< 画面の縦幅です.
-    float                           m_AspectRatio;          //!< 画面のアスペクト比です.
-    LPCWSTR                         m_Title;                //!< アプリケーションのタイトル名です.
-    StepTimer                       m_Timer;                //!< タイマーです.
-    D3D12_VIEWPORT                  m_Viewport;             //!< ビューポートです.
-    D3D12_RECT                      m_ScissorRect;          //!< シザー矩形です.
-    HICON                           m_hIcon;                //!< アイコンハンドルです.
-    HMENU                           m_hMenu;                //!< メニューハンドルです.
-    HACCEL                          m_hAccel;               //!< アクセレレータハンドルです.
-    DeviceDesc                      m_DeviceDesc;           //!< デバイス設定です.
-    std::vector<ColorTarget>        m_ColorTarget;          //!< カラーターゲットです.
-    DepthTarget                     m_DepthTarget;          //!< 深度ターゲットです.
-    CommandList                     m_GfxCmdList;           //!< グラフィックスコマンドリスト.
-    CommandList                     m_CopyCmdList;          //!< コピーコマンドリスト.
+    HINSTANCE                       m_hInst                 = nullptr;                          //!< インスタンスハンドルです.
+    HWND                            m_hWnd                  = nullptr;                          //!< ウィンドウハンドルです.
+    bool                            m_AllowTearing          = false;                            //!< ティアリングを許可するかどうか.
+    uint32_t                        m_MultiSampleCount      = 1;                                //!< マルチサンプリングのカウント数です.
+    uint32_t                        m_MultiSampleQuality    = 0;                                //!< マルチサンプリングの品質値です.
+    uint32_t                        m_SwapChainCount        = 2;                                //!< スワップチェインのバッファ数です.
+    DXGI_FORMAT                     m_SwapChainFormat       = DXGI_FORMAT_R10G10B10A2_UNORM;    //!< スワップチェインのバッファフォーマットです.
+    DXGI_FORMAT                     m_DepthStencilFormat    = DXGI_FORMAT_D32_FLOAT;            //!< 深度ステンシルバッファのフォーマットです.
+    float                           m_BlendFactor[ 4 ]      = { 1.0f, 1.0f, 1.0f, 1.0f };       //!< ブレンドファクターです.
+    uint32_t                        m_SampleMask            = D3D12_DEFAULT_SAMPLE_MASK;        //!< サンプルマスクです.
+    uint32_t                        m_StencilRef            = D3D12_DEFAULT_STENCIL_REFERENCE;  //!< ステンシル参照です.
+    float                           m_ClearColor[ 4 ]       = { 1.0f, 1.0f, 1.0f, 1.0f };       //!< 背景のクリアカラーです.
+    float                           m_ClearDepth            = 1.0f;                             //!< 深度クリア値です.
+    uint8_t                         m_ClearStencil          = 0;                                //!< ステンシルクリア値です.
+    uint32_t                        m_Width                 = 960;                              //!< 画面の横幅です.
+    uint32_t                        m_Height                = 540;                              //!< 画面の縦幅です.
+    float                           m_AspectRatio           = 1.77777f;                         //!< 画面のアスペクト比です.
+    LPCWSTR                         m_Title                 = nullptr;                          //!< アプリケーションのタイトル名です.
+    StepTimer                       m_Timer;                                                    //!< タイマーです.
+    D3D12_VIEWPORT                  m_Viewport              = {};                               //!< ビューポートです.
+    D3D12_RECT                      m_ScissorRect           = {};                               //!< シザー矩形です.
+    HICON                           m_hIcon                 = nullptr;                          //!< アイコンハンドルです.
+    HMENU                           m_hMenu                 = nullptr;                          //!< メニューハンドルです.
+    HACCEL                          m_hAccel                = nullptr;                          //!< アクセレレータハンドルです.
+    DeviceDesc                      m_DeviceDesc            = {};                               //!< デバイス設定です.
+    std::vector<ColorTarget>        m_ColorTarget;                                              //!< カラーターゲットです.
+    DepthTarget                     m_DepthTarget;                                              //!< 深度ターゲットです.
+    CommandList                     m_GfxCmdList;                                               //!< グラフィックスコマンドリスト.
+    CommandList                     m_CopyCmdList;                                              //!< コピーコマンドリスト.
 
     //=========================================================================
     // protected methods.
@@ -416,14 +415,14 @@ private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    bool                    m_IsStopRendering;      //!< 描画を停止するかどうかのフラグ. 停止する場合はtrueを指定.
-    bool                    m_IsStandbyMode;        //!< スタンバイモードかどうかを示すフラグです.
-    DWORD                   m_FrameCount;           //!< フレームカウントです.
-    float                   m_FPS;                  //!< FPS(1秒あたりのフレーム描画回数)です.
-    double                  m_LatestUpdateTime;     //!< 最後の更新時間です.
-    std::mutex              m_Mutex;                //!< ミューテックスです.
-    DXGI_OUTPUT_DESC1       m_DisplayDesc;          //!< 出力先の設定です.
-    RefPtr<IDXGISwapChain4> m_pSwapChain4;          //!< スワップチェイン4です.
+    bool                    m_IsStopRendering   = false;    //!< 描画を停止するかどうかのフラグ. 停止する場合はtrueを指定.
+    bool                    m_IsStandbyMode     = false;    //!< スタンバイモードかどうかを示すフラグです.
+    DWORD                   m_FrameCount        = 0;        //!< フレームカウントです.
+    float                   m_FPS               = 0.0f;     //!< FPS(1秒あたりのフレーム描画回数)です.
+    double                  m_LatestUpdateTime  = 0.0;      //!< 最後の更新時間です.
+    SpinLock                m_SpinLock;                     //!< スピンロックです.
+    DXGI_OUTPUT_DESC1       m_DisplayDesc       = {};       //!< 出力先の設定です.
+    RefPtr<IDXGISwapChain4> m_pSwapChain4;                  //!< スワップチェイン4です.
 
     //=========================================================================
     // private methods.
