@@ -8,6 +8,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <gfx/asdxRootSignature.h>
+#include <gfx/asdxGraphicsSystem.h>
 #include <fnd/asdxLogger.h>
 #include <cassert>
 
@@ -307,7 +308,10 @@ bool RootSignature::Init(ID3D12Device* pDevice, const D3D12_ROOT_SIGNATURE_DESC*
 //      終了処理を行います.
 //-----------------------------------------------------------------------------
 void RootSignature::Term()
-{ m_RootSignature.Reset(); }
+{
+    auto rootSig = m_RootSignature.Detach();
+    Dispose(rootSig);
+}
 
 //-----------------------------------------------------------------------------
 //      ルートシグニチャを取得します.

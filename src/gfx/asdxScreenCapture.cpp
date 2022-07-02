@@ -8,6 +8,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <gfx/asdxScreenCpature.h>
+#include <gfx/asdxGraphicsSystem.h>
 #include <fnd/asdxLogger.h>
 
 
@@ -125,7 +126,8 @@ bool CaptureResource::Init(ID3D12Device* pDevice, ID3D12Resource* pSource)
 //-----------------------------------------------------------------------------
 void CaptureResource::Term()
 {
-    m_Resource.Reset();
+    auto resource = m_Resource.Detach();
+    Dispose(resource);
     memset(&m_CopyDst, 0, sizeof(m_CopyDst));
     memset(&m_CopySrc, 0, sizeof(m_CopySrc));
 }

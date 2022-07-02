@@ -197,10 +197,11 @@ bool WriteBlobToFile(IBlob* pBlob, const char* filename)
 //-----------------------------------------------------------------------------
 bool CompileFromFile
 (
-    const wchar_t*  filename,
-    const char*     entryPoint,
-    const char*     shaderModel,
-    IBlob**         ppResult
+    const wchar_t*            filename,
+    std::vector<std::wstring> includeDirs,
+    const char*               entryPoint,
+    const char*               shaderModel,
+    IBlob**                   ppResult
 )
 {
 #ifdef ASDX_ENABLE_DXC
@@ -221,10 +222,12 @@ bool CompileFromFile
     fread(buffer.data(), size, 1, pFile);
     fclose(pFile);
 
-
     HRESULT hr = S_OK;
+    RefPtr<IDxcUtils> pUtils;
     RefPtr<IDxcCompiler> pCompiler;
     RefPtr<IDxcLibrary> pLibrary;
+    RefPtr<IDxcIncludeHandler> pIncludeHandler;
+    DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(pUtils.GetAddress()));
     DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(pCompiler.GetAddress()));
     DxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(pLibrary.GetAddress()));
 
@@ -235,14 +238,28 @@ bool CompileFromFile
         return false;
     }
 
-    LPCWSTR args[] = {
+    hr = pUtils->CreateDefaultIncludeHandler(pIncludeHandler.GetAddress());
+    if (FAILED(hr))
+    {
+        return false;
+    }
+
+    std::vector<LPCWSTR> args;
 #if defined(DEBUG) || defined(_DEBUG)
-        L"/Zi",
-        L"/O0",
+    args.push_back(L"-Zi");
+    args.push_back(L"-O0");
+    args.push_back(L"-Qembed_debug");
 #else
-        L"/O2"
+    args.push_back(L"-O2");
 #endif
-    };
+    if (!includeDirs.empty())
+    {
+        for(size_t i=0; i<includeDirs.size(); ++i)
+        {
+            args.push_back(L"-I");
+            args.push_back(includeDirs[i].c_str());
+        }
+    }
 
     auto ep = asdx::ToStringW(entryPoint);
     auto sm = asdx::ToStringW(shaderModel);
@@ -253,11 +270,11 @@ bool CompileFromFile
         filename,
         ep.c_str(),
         sm.c_str(),
-        args,
-        _countof(args),
+        args.data(),
+        UINT(args.size()),
         nullptr,
         0,
-        nullptr,
+        pIncludeHandler.GetPtr(),
         pResults.GetAddress());
 
     HRESULT ret;
@@ -266,8 +283,11 @@ bool CompileFromFile
     {
         RefPtr<IDxcBlobEncoding> pErrorBlob;
         pResults->GetErrorBuffer(pErrorBlob.GetAddress());
-        wprintf(L"Compilation Failed. errcode = 0x%x, msg = %lS",
-            ret, reinterpret_cast<const wchar_t*>(pErrorBlob->GetBufferPointer()));
+        printf_s("Compilation Failed. errcode = 0x%x, msg = %s.\n",
+            ret, 
+            (pErrorBlob->GetBufferSize() > 0)
+            ? reinterpret_cast<const char*>(pErrorBlob->GetBufferPointer())
+            : "Unknown");
         
         return false;
     }
@@ -359,14 +379,14 @@ bool CompileFromFile
     pResults->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(pErrors.GetAddress()), nullptr);
     if (pErrors.GetPtr() != nullptr && pErrors->GetStringLength() != 0)
     {
-        wprintf(L"Warnings and Errors:\n%S\n", pErrors->GetStringPointer());
+        printf_s("Warnings and Errors:\n%s\n", pErrors->GetStringPointer());
     }
 
     HRESULT ret;
     pResults->GetStatus(&ret);
     if (FAILED(ret))
     {
-        wprintf(L"Compilation Failed. errcode = 0x%x", ret);
+        printf_s("Compilation Failed. errcode = 0x%x\n", ret);
         return false;
     }
 

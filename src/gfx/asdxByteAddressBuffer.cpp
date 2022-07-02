@@ -117,8 +117,7 @@ bool ByteAddressBuffer::Init(CommandList& cmdList, uint64_t size, const void* pI
 void ByteAddressBuffer::Term()
 {
     auto resource = m_Resource.Detach();
-    if (resource != nullptr)
-    { Dispose(resource); }
+    Dispose(resource);
     m_View.Reset();
 }
 

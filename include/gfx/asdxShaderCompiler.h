@@ -84,16 +84,18 @@ bool WriteBlobToFile(IBlob* pBlob, const char* filename);
 //! @brief      ファイルからシェーダコンパイルします.
 //!
 //! @param[in]      filename            ファイル名です.
-//! @param          entryPoint          エントリーポイント名で末.
-//! @param          shaderModel         シェーダモデルです.
+//! @param[in]      includeDirs         インクルードディレクトリ.
+//! @param[in]      entryPoint          エントリーポイント名で末.
+//! @param[in]      shaderModel         シェーダモデルです.
 //! @param[out]     ppResult            シェーダバイナリの格納先です.
 //! @retval true    コンパイルに成功.
 //! @retval false   コンパイルに失敗.
 //-----------------------------------------------------------------------------
 bool CompileFromFile(
-    const wchar_t*  filename,
-    const char*     entryPoint,
-    const char*     shaderModel,
-    IBlob**         ppResult);
+    const wchar_t*            filename,
+    std::vector<std::wstring> includeDirs,
+    const char*               entryPoint,
+    const char*               shaderModel,
+    IBlob**                   ppResult);
 
 } // namespace

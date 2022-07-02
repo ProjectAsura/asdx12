@@ -410,8 +410,7 @@ void ColorTarget::Term()
     m_pRTV.Reset();
 
     auto resource = m_pResource.Detach();
-    if (resource != nullptr)
-    { Dispose(resource); }
+    Dispose(resource);
 
     memset(&m_Desc, 0, sizeof(m_Desc));
     m_IsSRGB = false;
@@ -659,8 +658,7 @@ void DepthTarget::Term()
     m_pSRV.Reset();
 
     auto resource = m_pResource.Detach();
-    if (resource != nullptr)
-    { Dispose(resource); }
+    Dispose(resource);
 
     memset(&m_Desc, 0, sizeof(m_Desc));
 }
@@ -891,8 +889,7 @@ void ComputeTarget::Term()
     m_pSRV.Reset();
 
     auto resource = m_pResource.Detach();
-    if (resource != nullptr)
-    { Dispose(resource); }
+    Dispose(resource);
  
     memset(&m_Desc, 0, sizeof(m_Desc));
 }

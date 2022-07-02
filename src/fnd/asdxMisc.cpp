@@ -1180,12 +1180,22 @@ bool SearchFilesA(const char* directory, const char* ext, std::list<std::string>
 //-----------------------------------------------------------------------------
 //      フルパスに変換します.
 //-----------------------------------------------------------------------------
-std::string ToFullPath(const char* path)
+std::string ToFullPathA(const char* path)
 {
-    char fullPath[512];
+    char fullPath[512] = {};
 
     GetFullPathNameA(path, 512, fullPath, nullptr);
     return std::string(fullPath);
+}
+
+//-----------------------------------------------------------------------------
+//      フルパスに変換します.
+//-----------------------------------------------------------------------------
+std::wstring ToFullPathW(const wchar_t* path)
+{
+    wchar_t fullPath[512] = {};
+    GetFullPathNameW(path, 512, fullPath, nullptr);
+    return std::wstring(fullPath);
 }
 
 //-----------------------------------------------------------------------------

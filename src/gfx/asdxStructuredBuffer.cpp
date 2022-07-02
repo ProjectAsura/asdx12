@@ -126,8 +126,7 @@ bool StructuredBuffer::Init
 void StructuredBuffer::Term()
 {
     auto resource = m_Resource.Detach();
-    if (resource != nullptr)
-    { Dispose(resource); }
+    Dispose(resource);
     m_View.Reset();
 }
 

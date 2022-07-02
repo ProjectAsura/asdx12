@@ -269,7 +269,10 @@ bool Sampler::Init(const D3D12_SAMPLER_DESC* pDesc)
 //      終了処理を行います.
 //-----------------------------------------------------------------------------
 void Sampler::Term()
-{ m_Descriptor.Reset(); }
+{
+    auto descriptor = m_Descriptor.Detach();
+    Dispose(descriptor);
+}
 
 //-----------------------------------------------------------------------------
 //      ディスクリプタを取得します.

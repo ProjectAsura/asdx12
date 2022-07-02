@@ -41,9 +41,8 @@ bool SystemInit(const DeviceDesc& desc);
 void SystemTerm();
 void SystemWaitIdle();
 void FrameSync();
-void Dispose(ID3D12Resource*& pResource);
-void Dispose(Descriptor*& pDescriptor);
-void Dispose(ID3D12PipelineState*& pPipelineState);
+void DisposeObject(ID3D12Object*& pResource);
+void DisposeDescriptor(Descriptor*& pDescriptor);
 void ClearDisposer();
 void SetDescriptorHeaps(ID3D12GraphicsCommandList* pCmdList);
 CommandQueue* GetGraphicsQueue();
@@ -55,5 +54,18 @@ CommandQueue* GetVideoDecodeQueue();
 bool AllocDescriptor(uint8_t heapType, Descriptor** ppResult); 
 ID3D12Device8* GetD3D12Device();
 IDXGIFactory7* GetDXGIFactory();
+
+template<typename T>
+inline void Dispose(T*& ptr)
+{
+    auto casted = reinterpret_cast<ID3D12Object*>(ptr);
+    DisposeObject(casted);
+}
+
+template<>
+inline void Dispose<Descriptor>(Descriptor*& pDescriptor)
+{
+    DisposeDescriptor(pDescriptor);
+}
 
 } // namespace asdx

@@ -128,7 +128,8 @@ void ConstantBuffer::Term()
     for(auto i=0; i<2; ++i)
     {
         m_View[i].Reset();
-        m_Resource[i].Reset();
+        auto ptr = m_Resource[i].Detach();
+        Dispose(ptr);
         m_Dst[i] = nullptr;
     }
 

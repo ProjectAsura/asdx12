@@ -388,9 +388,13 @@ bool Tlas::Init
 //-----------------------------------------------------------------------------
 void Tlas::Term()
 {
-    m_Instances .Reset();
-    m_Scratch   .Reset();
-    m_Structure .Reset();
+    auto instance  = m_Instances.Detach();
+    auto scratch   = m_Scratch  .Detach();
+    auto structure = m_Structure.Detach();
+
+    Dispose(instance);
+    Dispose(scratch);
+    Dispose(structure);
 }
 
 //-----------------------------------------------------------------------------
@@ -543,8 +547,11 @@ bool RayTracingPipelineState::Init(ID3D12Device5* pDevice, const RayTracingPipel
 //-----------------------------------------------------------------------------
 void RayTracingPipelineState::Term()
 {
-    m_pObject.Reset();
-    m_pProps .Reset();
+    auto object = m_pObject.Detach();
+    auto props  = m_pProps .Detach();
+
+    Dispose(object);
+    Dispose(props);
 }
 
 //-----------------------------------------------------------------------------
@@ -643,7 +650,10 @@ bool ShaderTable::Init(ID3D12Device* pDevice, const Desc* pDesc)
 //      終了処理です.
 //-----------------------------------------------------------------------------
 void ShaderTable::Term()
-{ m_Resource.Reset(); }
+{
+    auto resource = m_Resource.Detach();
+    Dispose(resource);
+}
 
 //-----------------------------------------------------------------------------
 //      GPU仮想アドレスと範囲を取得します.

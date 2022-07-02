@@ -203,12 +203,12 @@ public:
     void WaitIdle();
 
     //-------------------------------------------------------------------------
-    //! @brief      リソースディスポーザーに追加します.
+    //! @brief      オブジェクトディスポーザーに追加します.
     //!
     //! @param[in]      pResource       破棄リソース.
     //! @param[in]      lifeTime        生存フレーム数です.
     //--------------------------------------------------------------------------
-    void Dispose(ID3D12Resource*& pResource, uint8_t lifeTime);
+    void Dispose(ID3D12Object*& pResource, uint8_t lifeTime);
 
     //-------------------------------------------------------------------------
     //! @brief      ディスクリプタディスポーザーに追加します.
@@ -217,14 +217,6 @@ public:
     //! @param[in]      lifeTime        生存フレーム数です.
     //-------------------------------------------------------------------------
     void Dispose(Descriptor*& pDescriptor, uint8_t lifeTime);
-
-    //-------------------------------------------------------------------------
-    //! @brief      パイプラインステートディスポーザーに追加します.
-    //!
-    //! @param[in]      pPipelineState  破棄パイプラインステート.
-    //! @param[in]      lifeTime        生存フレーム数です.
-    //-------------------------------------------------------------------------
-    void Dispose(ID3D12PipelineState*& pPipelineState, uint8_t lifeTime);
 
     //-------------------------------------------------------------------------
     //! @brief      フレーム同期を行います.
@@ -252,9 +244,8 @@ private:
     RefPtr<CommandQueue>            m_pVideoProcessQueue;       //!< ビデオプロセスキュー.
     RefPtr<CommandQueue>            m_pVideoEncodeQueue;        //!< ビデオエンコードキュー.
     DescriptorHeap                  m_DescriptorHeap[4];        //!< ディスクリプタヒープ.
-    Disposer<ID3D12Resource>        m_ResourceDisposer;         //!< リソースディスポーザー.
+    Disposer<ID3D12Object>          m_ObjectDisposer;           //!< オブジェクトディスポーザー.
     Disposer<Descriptor>            m_DescriptorDisposer;       //!< ディスクリプタディスポーザー.
-    Disposer<ID3D12PipelineState>   m_PipelineStateDisposer;    //!< パイプラインステートディスポーザー.
     SpinLock                        m_SpinLock;                 //!< スピンロックです.
 
     //=========================================================================
@@ -499,9 +490,8 @@ bool GraphicsSystem::Init(const DeviceDesc& deviceDesc)
 //-----------------------------------------------------------------------------
 void GraphicsSystem::Term()
 {
-    m_ResourceDisposer      .Clear();
-    m_DescriptorDisposer    .Clear();
-    m_PipelineStateDisposer .Clear();
+    m_ObjectDisposer    .Clear();
+    m_DescriptorDisposer.Clear();
 
     m_pGraphicsQueue    .Reset();
     m_pComputeQueue     .Reset();
@@ -652,10 +642,10 @@ void GraphicsSystem::WaitIdle()
 }
 
 //-----------------------------------------------------------------------------
-//      リソースディスポーザーに追加します.
+//      オブジェクトディスポーザーに追加します.
 //-----------------------------------------------------------------------------
-void GraphicsSystem::Dispose(ID3D12Resource*& pResource, uint8_t lifeTime)
-{ m_ResourceDisposer.Push(pResource, lifeTime); }
+void GraphicsSystem::Dispose(ID3D12Object*& pResource, uint8_t lifeTime)
+{ m_ObjectDisposer.Push(pResource, lifeTime); }
 
 //-----------------------------------------------------------------------------
 //      ディスクリプタディスポーザーに追加します.
@@ -664,19 +654,12 @@ void GraphicsSystem::Dispose(Descriptor*& pDescriptor, uint8_t lifeTime)
 { m_DescriptorDisposer.Push(pDescriptor, lifeTime); }
 
 //-----------------------------------------------------------------------------
-//      パイプラインステートディスポーザーに追加します.
-//-----------------------------------------------------------------------------
-void GraphicsSystem::Dispose(ID3D12PipelineState*& pPipelineState, uint8_t lifeTime)
-{ m_PipelineStateDisposer.Push(pPipelineState, lifeTime); }
-
-//-----------------------------------------------------------------------------
 //      フレーム同期を取ります.
 //-----------------------------------------------------------------------------
 void GraphicsSystem::FrameSync()
 {
-    m_ResourceDisposer      .FrameSync();
-    m_DescriptorDisposer    .FrameSync();
-    m_PipelineStateDisposer .FrameSync();
+    m_ObjectDisposer    .FrameSync();
+    m_DescriptorDisposer.FrameSync();
 }
 
 //-----------------------------------------------------------------------------
@@ -684,9 +667,8 @@ void GraphicsSystem::FrameSync()
 //-----------------------------------------------------------------------------
 void GraphicsSystem::ClearDisposer()
 {
-    m_ResourceDisposer      .Clear();
-    m_DescriptorDisposer    .Clear();
-    m_PipelineStateDisposer .Clear();
+    m_ObjectDisposer    .Clear();
+    m_DescriptorDisposer.Clear();
 }
 
 bool SystemInit(const DeviceDesc& desc)
@@ -701,14 +683,11 @@ void SystemWaitIdle()
 void FrameSync()
 { GraphicsSystem::Instance().FrameSync(); }
 
-void Dispose(ID3D12Resource*& pResource)
-{ GraphicsSystem::Instance().Dispose(pResource, kDefaultLifeTime); }
+void DisposeObject(ID3D12Object*& pObject)
+{ GraphicsSystem::Instance().Dispose(pObject, kDefaultLifeTime); }
 
-void Dispose(Descriptor*& pDescriptor)
+void DisposeDescriptor(Descriptor*& pDescriptor)
 { GraphicsSystem::Instance().Dispose(pDescriptor, kDefaultLifeTime); }
-
-void Dispose(ID3D12PipelineState*& pPipelineState)
-{ GraphicsSystem::Instance().Dispose(pPipelineState, kDefaultLifeTime); }
 
 void ClearDisposer()
 { GraphicsSystem::Instance().ClearDisposer(); }

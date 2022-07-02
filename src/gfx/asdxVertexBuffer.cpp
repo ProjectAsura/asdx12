@@ -87,8 +87,7 @@ bool VertexBuffer::Init(uint64_t size, uint32_t stride)
 void VertexBuffer::Term()
 {
     auto resource = m_pResource.Detach();
-    if (resource != nullptr)
-    { Dispose(resource); }
+    Dispose(resource);
     memset(&m_View, 0, sizeof(m_View));
 }
 
