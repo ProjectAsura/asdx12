@@ -659,5 +659,4 @@ float3 SampleGGX(float2 u, float roughness)
 float3 SampleLambert(float2 u)
 { return UniformSampleHemisphere(u); }
 
-
 #endif//ADX_BRDF_HLSLI
