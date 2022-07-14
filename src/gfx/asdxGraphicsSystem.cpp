@@ -234,6 +234,7 @@ private:
     //=========================================================================
     static GraphicsSystem           s_Instance;                 //!< シングルトンインスタンス.
     RefPtr<IDXGIFactory7>           m_pFactory;                 //!< DXGIファクトリーです.
+    RefPtr<IDXGIAdapter1>           m_pAdapter;                 //!< DXGIアダプターです.
     RefPtr<ID3D12Debug3>            m_pDebug;                   //!< デバッグオブジェクト.
     RefPtr<ID3D12InfoQueue>         m_pInfoQueue;               //!< インフォキュー.
     RefPtr<ID3D12Device8>           m_pDevice;                  //!< デバイス.
@@ -336,10 +337,31 @@ bool GraphicsSystem::Init(const DeviceDesc& deviceDesc)
         }
     }
 
+    // DXGIアダプター生成.
+    {
+        RefPtr<IDXGIAdapter1> pAdapter;
+        for(auto adapterId=0;
+            DXGI_ERROR_NOT_FOUND != m_pFactory->EnumAdapterByGpuPreference(adapterId, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(pAdapter.GetAddress()));
+            adapterId++)
+        {
+            DXGI_ADAPTER_DESC1 desc;
+            auto hr = pAdapter->GetDesc1(&desc);
+            if (FAILED(hr))
+            { continue; }
+
+            hr = D3D12CreateDevice(pAdapter.GetPtr(), D3D_FEATURE_LEVEL_11_0, __uuidof(ID3D12Device), nullptr);
+            if (SUCCEEDED(hr))
+            {
+                m_pAdapter = pAdapter.Detach();
+                break;
+            }
+        }
+    }
+
     // デバイス生成.
     {
         asdx::RefPtr<ID3D12Device> device;
-        auto hr = D3D12CreateDevice( nullptr, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(device.GetAddress()) );
+        auto hr = D3D12CreateDevice( m_pAdapter.GetPtr(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(device.GetAddress()) );
         if (FAILED(hr))
         {
             ELOG("Error : D3D12CreateDevice() Failed. errcode = 0x%x", hr);

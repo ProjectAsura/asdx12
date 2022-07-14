@@ -653,7 +653,7 @@ bool GuiMgr::Init
 {
     m_LastTime = std::chrono::system_clock::now();
 
-    ImGui::CreateContext();
+    m_pGuiContext = ImGui::CreateContext();
 
     auto& io = ImGui::GetIO();
 
@@ -953,7 +953,11 @@ void GuiMgr::Term()
     m_RootSig.Reset();
     m_PSO    .Reset();
 
-    ImGui::DestroyContext();
+    if (m_pGuiContext != nullptr)
+    {
+        ImGui::DestroyContext(m_pGuiContext);
+        m_pGuiContext = nullptr;
+    }
     m_pCmdList = nullptr;
 }
 
