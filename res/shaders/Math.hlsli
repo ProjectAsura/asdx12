@@ -348,8 +348,14 @@ float ToLinearDepthFromReverseZ(float hardwareDepth, float nearClip, float farCl
 //-----------------------------------------------------------------------------
 //      ハードウェアから出力されたリバース深度をビュー空間深度に変換します.
 //-----------------------------------------------------------------------------
-float ToViewDepthFromReveseZ(float hardwareDepth, float nearClip, float farClip)
+float ToViewDepthFromReverseZ(float hardwareDepth, float nearClip, float farClip)
 { return -farClip * nearClip / (hardwareDepth * (nearClip - farClip) + nearClip); }
+
+//-----------------------------------------------------------------------------
+//      farClip = ∞とするリバースZ深度バッファの値からビュー空間深度値を求めます.
+//-----------------------------------------------------------------------------
+float ToViewDepthFromReverseZ(float hardwareDepth, float nearClip)
+{ return -nearClip / hardwareDepth; }
 
 //-----------------------------------------------------------------------------
 //      ビュー空間深度から線形深度に変換します.

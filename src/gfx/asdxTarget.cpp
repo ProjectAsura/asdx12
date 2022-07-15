@@ -732,6 +732,10 @@ bool ComputeTarget::Init(const TargetDesc* pDesc, uint32_t stride)
             1
         };
 
+        auto layout = (pDesc->Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
+            ? D3D12_TEXTURE_LAYOUT_ROW_MAJOR
+            : D3D12_TEXTURE_LAYOUT_UNKNOWN;
+
         D3D12_RESOURCE_DESC desc = {
             pDesc->Dimension,
             pDesc->Alignment,
@@ -741,7 +745,7 @@ bool ComputeTarget::Init(const TargetDesc* pDesc, uint32_t stride)
             pDesc->MipLevels,
             pDesc->Format,
             pDesc->SampleDesc,
-            D3D12_TEXTURE_LAYOUT_UNKNOWN,
+            layout,
             D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS
         };
 

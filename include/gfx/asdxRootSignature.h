@@ -132,11 +132,35 @@ public:
         m_Desc.pParameters          = m_Params;
         m_Desc.NumStaticSamplers    = 0;
         m_Desc.pStaticSamplers      = nullptr;
+
+        m_ParamCount    = ParamCount;
+        m_SamplerCount  = 0;
     }
 
 private:
     D3D12_ROOT_PARAMETER        m_StorageParams[ParamCount]     = {};
     D3D12_DESCRIPTOR_RANGE      m_StorageRanges[ParamCount]     = {};
+};
+
+template<size_t SamplerCount>
+class DescriptorSetLayout<0, SamplerCount> : public DescriptorSetLayoutBase
+{
+public:
+    DescriptorSetLayout()
+    {
+        m_Samplers  = m_StorageSamplers;
+
+        m_Desc.NumParameters        = 0;
+        m_Desc.pParameters          = nullptr;
+        m_Desc.NumStaticSamplers    = SamplerCount;
+        m_Desc.pStaticSamplers      = m_Samplers;
+
+        m_ParamCount    = 0;
+        m_SamplerCount  = SamplerCount;
+    }
+
+private:
+    D3D12_STATIC_SAMPLER_DESC   m_StorageSamplers[SamplerCount] = {};
 };
 
 ///////////////////////////////////////////////////////////////////////////////
