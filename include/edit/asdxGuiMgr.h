@@ -118,11 +118,11 @@ private:
     RefPtr<ID3D12RootSignature>             m_RootSig;
     RefPtr<ID3D12PipelineState>             m_PSO;
     Texture                                 m_FontTexture;
-    ID3D12GraphicsCommandList*              m_pCmdList = nullptr;
-    std::chrono::system_clock::time_point   m_LastTime;
-    uint32_t                                m_SizeVB;
-    uint32_t                                m_SizeIB;
-    ImGuiContext*                            m_pGuiContext = nullptr;
+    ID3D12GraphicsCommandList*              m_pCmdList    = nullptr;
+    std::chrono::system_clock::time_point   m_LastTime    = {};
+    uint32_t                                m_SizeVB      = 0;
+    uint32_t                                m_SizeIB      = 0;
+    ImGuiContext*                           m_pGuiContext = nullptr;
 
     //=========================================================================
     // private mehods.
