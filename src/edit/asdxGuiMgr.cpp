@@ -835,25 +835,26 @@ bool GuiMgr::Init
         }
     }
 
+    for(auto i=0; i<2; ++i)
     {
-        m_VB.Term();
+        m_VB[i].Term();
         m_SizeVB = MaxPrimitiveCount * 4;
-        if (!m_VB.Init(m_SizeVB * sizeof(ImDrawVert), sizeof(ImDrawVert)))
+        if (!m_VB[i].Init(m_SizeVB * sizeof(ImDrawVert), sizeof(ImDrawVert)))
         {
             ELOG("Error : VertexBuffer::Init() Failed.");
             return false;
         }
-    }
 
-    {
-        m_IB.Term();
+        m_IB[i].Term();
         m_SizeIB = MaxPrimitiveCount * 6;
-        if (!m_IB.Init(sizeof(ImDrawIdx) * m_SizeIB, true))
+        if (!m_IB[i].Init(sizeof(ImDrawIdx) * m_SizeIB, true))
         {
             ELOG("Error : IndexBuffer::Init() Failed.");
             return false;
         }
     }
+
+    m_BufferIndex = 0;
 
     {
         if (!m_CB.Init(sizeof(TransformBuffer)))
@@ -945,8 +946,11 @@ bool GuiMgr::Init
 //-----------------------------------------------------------------------------
 void GuiMgr::Term()
 {
-    m_VB.Term();
-    m_IB.Term();
+    for(auto i=0; i<2; ++i)
+    {
+        m_VB[i].Term();
+        m_IB[i].Term();
+    }
     m_CB.Term();
     m_FontTexture.Term();
 
@@ -1004,36 +1008,36 @@ void GuiMgr::OnDraw( ImDrawData* pDrawData )
 
     if ( uint32_t( pDrawData->TotalVtxCount ) >= m_SizeVB )
     {
-        auto resource = m_VB.GetResource();
+        auto resource = m_VB[m_BufferIndex].GetResource();
         if (resource != nullptr)
         {
             resource->AddRef();
             Dispose(resource);
         }
 
-        m_VB.Term();
+        m_VB[m_BufferIndex].Term();
         m_SizeVB = pDrawData->TotalVtxCount + 5000;
-        if (!m_VB.Init(m_SizeVB * sizeof(ImDrawVert), sizeof(ImDrawVert)))
+        if (!m_VB[m_BufferIndex].Init(m_SizeVB * sizeof(ImDrawVert), sizeof(ImDrawVert)))
         { return; }
     }
 
     if ( pDrawData->TotalIdxCount >= MaxPrimitiveCount * 6 )
     {
-        auto resource = m_IB.GetResource();
+        auto resource = m_IB[m_BufferIndex].GetResource();
         if (resource != nullptr)
         {
             resource->AddRef();
             Dispose(resource);
         }
 
-        m_IB.Term();
+        m_IB[m_BufferIndex].Term();
         m_SizeIB = pDrawData->TotalIdxCount + 10000;
-        if (!m_IB.Init(m_SizeIB * sizeof(uint32_t), true))
+        if (!m_IB[m_BufferIndex].Init(m_SizeIB * sizeof(uint32_t), true))
         { return; }
     }
 
-    auto pDstVtx = m_VB.Map<ImDrawVert>();
-    auto pDstIdx = m_IB.Map<ImDrawIdx>();
+    auto pDstVtx = m_VB[m_BufferIndex].Map<ImDrawVert>();
+    auto pDstIdx = m_IB[m_BufferIndex].Map<ImDrawIdx>();
 
     for ( auto i = 0; i < pDrawData->CmdListsCount; ++i )
     {
@@ -1044,8 +1048,8 @@ void GuiMgr::OnDraw( ImDrawData* pDrawData )
         pDstIdx += pCmdList->IdxBuffer.size();
     }
 
-    m_VB.Unmap();
-    m_IB.Unmap();
+    m_VB[m_BufferIndex].Unmap();
+    m_IB[m_BufferIndex].Unmap();
 
     {
         float L = 0.0f;
@@ -1076,8 +1080,8 @@ void GuiMgr::OnDraw( ImDrawData* pDrawData )
     }
 
     {
-        auto vbv = m_VB.GetView();
-        auto ibv = m_IB.GetView();
+        auto vbv = m_VB[m_BufferIndex].GetView();
+        auto ibv = m_IB[m_BufferIndex].GetView();
         m_pCmdList->SetGraphicsRootSignature(m_RootSig.GetPtr());
         m_pCmdList->SetPipelineState(m_PSO.GetPtr());
         m_pCmdList->SetGraphicsRootConstantBufferView(0, m_CB.GetResource()->GetGPUVirtualAddress());
@@ -1136,6 +1140,8 @@ void GuiMgr::OnDraw( ImDrawData* pDrawData )
             offsetVtx += pCmdList->VtxBuffer.size();
         }
     }
+
+    m_BufferIndex = (m_BufferIndex + 1) & 0x1;
 }
 
 //-----------------------------------------------------------------------------

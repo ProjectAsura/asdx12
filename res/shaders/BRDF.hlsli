@@ -17,10 +17,7 @@
 //-----------------------------------------------------------------------------
 float ToSpecularPower(float roughness)
 {
-    // Dimiatr Lazarov, "Physically-based lighting in Call of Duty: Black Ops",
-    // SIGGRAPH 2011 Cources: Advances in Real-Time Rendering in 3D Graphics.
-    float glossiness = saturate(1.0f - roughness);
-    return exp2(13.0f * glossiness);
+    return 2.0f / min(0.99999f, max(0.0002f, roughness * roughness)) - 2.0f
 }
 
 //-----------------------------------------------------------------------------
@@ -638,13 +635,11 @@ float3 EvaluateDirectLightClearCoat
 //-----------------------------------------------------------------------------
 //      GGX BRDFの形状にもとづくサンプリングを行います.
 //-----------------------------------------------------------------------------
-float3 SampleGGX(float2 u, float roughness)
+float3 SampleGGX(float2 u, float a)
 {
-    // roughnessは線形roughnessとします.
-    float a = roughness * roughness;
-
+    // a = linearRoughness * linearRoughness とします.
     float phi = 2.0 * F_PI * u.x;
-    float cosTheta = sqrt( (1.0 - u.y) / max(u.y * (a * a - 1.0) + 1.0, 1e-8f) );
+    float cosTheta = sqrt( (1.0 - u.y) / (u.y * (a * a - 1.0) + 1.0) );
     float sinTheta = sqrt( 1.0 - cosTheta * cosTheta );
 
     return float3(
@@ -658,5 +653,19 @@ float3 SampleGGX(float2 u, float roughness)
 //-----------------------------------------------------------------------------
 float3 SampleLambert(float2 u)
 { return UniformSampleHemisphere(u); }
+
+//-----------------------------------------------------------------------------
+//      Phong BRDFの形状にもとづくサンプリングを行います.
+//-----------------------------------------------------------------------------
+float3 SamplePhong(float2 u, float shininess)
+{
+    float phi = 2.0f * F_PI * u.x;
+    float cosTheta = pow(1.0f - u.y, 1.0f / (shininess + 1.0f));
+    float sinTheta = sqrt(1.0f - cosTheta * cosTheta);
+    return float3(
+        sinTheta * cos(phi),
+        sinTheta * sin(phi),
+        cosTheta);
+}
 
 #endif//ADX_BRDF_HLSLI

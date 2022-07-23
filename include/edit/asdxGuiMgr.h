@@ -112,17 +112,18 @@ private:
     // private varaibles.
     //=========================================================================
     static GuiMgr                           s_Instance;
-    VertexBuffer                            m_VB;
-    IndexBuffer                             m_IB;
+    VertexBuffer                            m_VB[2];
+    IndexBuffer                             m_IB[2];
     ConstantBuffer                          m_CB;
     RefPtr<ID3D12RootSignature>             m_RootSig;
     RefPtr<ID3D12PipelineState>             m_PSO;
     Texture                                 m_FontTexture;
-    ID3D12GraphicsCommandList*              m_pCmdList    = nullptr;
-    std::chrono::system_clock::time_point   m_LastTime    = {};
-    uint32_t                                m_SizeVB      = 0;
-    uint32_t                                m_SizeIB      = 0;
+    ID3D12GraphicsCommandList*              m_pCmdList = nullptr;
+    std::chrono::system_clock::time_point   m_LastTime;
+    uint32_t                                m_SizeVB;
+    uint32_t                                m_SizeIB;
     ImGuiContext*                           m_pGuiContext = nullptr;
+    uint8_t                                 m_BufferIndex = 0;
 
     //=========================================================================
     // private mehods.
