@@ -1650,24 +1650,12 @@ bool FrustumCulling(float3 p0, float3 p1, float3 p2)
 //-----------------------------------------------------------------------------
 float2 ToSphereMapCoord(float3 reflectDir)
 {
-#if 0
-    // https://www.clicktorelease.com/blog/creating-spherical-environment-mapping-shader/
-    // Pierre Lepers氏のコメントを参照.
-    // 計算式導出についてには，Jaume Sanchez Elias氏の画像を参照.
-    const float kSqrt8 = 2.82842712474619;
-    float s = 1.0f / (kSqrt8 * sqrt(saturate(reflectDir.z + 1.0f));
-
-    return float2(
-        reflectDir.x * s + 0.5f,
-        1.0f - (reflectDir.y * s + 0.5f)); // DirectXなので上下反転.
-#else
     float theta = acos(reflectDir.y);
     float phi   = atan2(reflectDir.z, reflectDir.x);
     if (reflectDir.z < 0.0f)
     { phi += F_2PI; }
 
     return float2(phi * F_1DIV2PI, theta * F_1DIVPI);
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1713,80 +1701,5 @@ uint CalcMortonCode3(uint x, uint y, uint z)
     return BitSeparate3(x) | (BitSeparate3(y) << 1) | (BitSeparate3(z) << 2);
 }
 
-#if 0
-//-----------------------------------------------------------------------------
-//      ノードレベルを求めます.
-//-----------------------------------------------------------------------------
-uint CalcNodeLevel(float2 size, const float lastLevelSize, const uint levelMax)
-{
-    // 本多圭, "フラスタムカリング入門, 良いフラスタムの作り方", CEDEC 2019.
-    float sizeMax = max(size.x, size.y);
-    uint levelOffset = 0;
-    if (lastLevelSize <= sizeMax)
-    { levelOffset = log2(asuint(sizeMax / lastLevelSize)); }
-
-    // ルート.
-    if (levelMax < levelOffset)
-    { return 0; }
-
-    return levelMax - levelOffset;
-}
-
-//-----------------------------------------------------------------------------
-//      ノードレベルを求めます.
-//-----------------------------------------------------------------------------
-uint CalcNodeLevel(float3 size, const float lastLevelSize, const uint levelMax)
-{
-    // 本多圭, "フラスタムカリング入門, 良いフラスタムの作り方", CEDEC 2019.
-    float sizeMax = max(size.x, max(size.y, size.z));
-    uint levelOffset = 0;
-    if (lastLevelSize <= sizeMax)
-    { levelOffset = log2(asuint(sizeMax / lastLevelSize)); }
-
-    // ルート.
-    if (levelMax < levelOffset)
-    { return 0; }
-
-    return levelMax - levelOffset;
-}
-
-//-----------------------------------------------------------------------------
-//      ノードを求めます.
-//-----------------------------------------------------------------------------
-uint CalcNode(float2 pos, uint level, const float lastLevelSize, const uint levelMax)
-{
-    // 本多圭, "フラスタムカリング入門, 良いフラスタムの作り方", CEDEC 2019.
-    uint currentSize = lastLevelSize << (levelMax - level);
-    uint rootSize = lastLevelSize << levelMax;
-    uint maxCount = 1 << level;
-
-    uint2 levelPos = asuint(pos + rootSize / 2) / currentSize;
-
-    // 範囲外.
-    if (any(maxCount <= levelPos))
-    { return ~0; }
-
-    return CalcMortonCode2(levelPos.x, levelPos.y);
-}
-
-//-----------------------------------------------------------------------------
-//      ノードを求めます.
-//-----------------------------------------------------------------------------
-uint CalcNode(float4 pos, uint level, float lastLevelSize, uint levelMax)
-{
-    // 本多圭, "フラスタムカリング入門, 良いフラスタムの作り方", CEDEC 2019.
-    uint currentSize = lastLevelSize << (levelMax - level);
-    uint rootSize = lastLevelSize << levelMax;
-    uint maxCount = 1 << level;
-
-    uint4 levelPos = asuint(pos + rootSize / 2) / currentSize;
-
-    // 範囲外.
-    if (any(maxCount <= levelPos))
-    { return ~0; }
-
-    return CalcMortonCode3(levelPos.x, levelPos.y, levelPos.z);
-}
-#endif
 
 #endif//ASDX_MATH_HLSLI
