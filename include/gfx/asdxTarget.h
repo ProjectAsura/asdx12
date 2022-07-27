@@ -91,22 +91,20 @@ public:
     //! @brief      初期化処理を行います.
     //!
     //! @param[in]      pDesc       構成設定です.
-    //! @param[in]      isSRGB      sRGBフォーマットに設定する場合は true (ただし，設定可能な場合に限る).
     //! @retval true    初期化成功.
     //! @retval false   初期化失敗.
     //-------------------------------------------------------------------------
-    bool Init(const TargetDesc* pDesc, bool isSRGB);
+    bool Init(const TargetDesc* pDesc);
 
     //-------------------------------------------------------------------------
     //! @brief      初期化処理を行います.
     //!
     //! @param[in]      pSwapChain          スワップチェインです.
     //! @param[in]      backbufferIndex     バックバッファ番号です.
-    //! @param[in]      isSRGB              sRGBフォーマットに設定する場合は true (ただし設定可能な場合に限る).
     //! @retval true    初期化成功.
     //! @retval false   初期化失敗.
     //-------------------------------------------------------------------------
-    bool Init(IDXGISwapChain* pSwapChain, uint32_t backbufferIndex, bool isSRGB);
+    bool Init(IDXGISwapChain* pSwapChain, uint32_t backbufferIndex);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.
@@ -166,7 +164,6 @@ private:
     RefPtr<IRenderTargetView>   m_pRTV;
     RefPtr<IShaderResourceView> m_pSRV;
     TargetDesc                  m_Desc;
-    bool                        m_IsSRGB;
 
     //=========================================================================
     // private methods.

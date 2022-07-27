@@ -94,6 +94,70 @@ DXGI_FORMAT GetResourceFormat(DXGI_FORMAT value, bool isStencil)
     return result;
 }
 
+//-----------------------------------------------------------------------------
+//      非sRGBフォーマットに変換します.
+//-----------------------------------------------------------------------------
+DXGI_FORMAT GetNoSRGBFormat(DXGI_FORMAT value)
+{
+    DXGI_FORMAT result = value;
+
+    switch( value )
+    {
+    case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+        { result = DXGI_FORMAT_R8G8B8A8_UNORM; }
+        break;
+
+    case DXGI_FORMAT_BC1_UNORM_SRGB:
+        { result = DXGI_FORMAT_BC1_UNORM; }
+        break;
+
+    case DXGI_FORMAT_BC2_UNORM_SRGB:
+        { result = DXGI_FORMAT_BC2_UNORM; }
+        break;
+
+    case DXGI_FORMAT_BC3_UNORM_SRGB:
+        { result = DXGI_FORMAT_BC3_UNORM; }
+        break;
+
+    case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
+        { result = DXGI_FORMAT_B8G8R8A8_UNORM; }
+        break;
+
+    case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
+        { result = DXGI_FORMAT_B8G8R8X8_UNORM; }
+        break;
+
+    case DXGI_FORMAT_BC7_UNORM_SRGB:
+        { result = DXGI_FORMAT_BC7_UNORM; }
+        break;
+    }
+
+    return result;
+}
+
+//-----------------------------------------------------------------------------
+//      sRGBフォーマットかどうか?
+//-----------------------------------------------------------------------------
+bool IsSRGBFormat(DXGI_FORMAT value)
+{
+    bool result = false;
+
+    switch( value )
+    {
+    case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+    case DXGI_FORMAT_BC1_UNORM_SRGB:
+    case DXGI_FORMAT_BC2_UNORM_SRGB:
+    case DXGI_FORMAT_BC3_UNORM_SRGB:
+    case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
+    case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
+    case DXGI_FORMAT_BC7_UNORM_SRGB:
+        { result = true; }
+        break;
+    }
+
+    return result;
+}
+
 } // namespace /* anonymouus */
 
 
@@ -107,7 +171,6 @@ namespace asdx {
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
 ColorTarget::ColorTarget()
-: m_IsSRGB(false)
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
@@ -119,7 +182,7 @@ ColorTarget::~ColorTarget()
 //-----------------------------------------------------------------------------
 //      初期化処理です.
 //-----------------------------------------------------------------------------
-bool ColorTarget::Init(const TargetDesc* pDesc, bool isSRGB)
+bool ColorTarget::Init(const TargetDesc* pDesc)
 {
     if (pDesc == nullptr)
     {
@@ -136,6 +199,8 @@ bool ColorTarget::Init(const TargetDesc* pDesc, bool isSRGB)
     HRESULT hr = S_OK;
 
     {
+        auto format = GetNoSRGBFormat(pDesc->Format);
+
         D3D12_HEAP_PROPERTIES props = {
             D3D12_HEAP_TYPE_DEFAULT,
             D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
@@ -151,14 +216,14 @@ bool ColorTarget::Init(const TargetDesc* pDesc, bool isSRGB)
             pDesc->Height,
             pDesc->DepthOrArraySize,
             pDesc->MipLevels,
-            pDesc->Format,
+            format,
             pDesc->SampleDesc,
             D3D12_TEXTURE_LAYOUT_UNKNOWN,
             D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET
         };
 
-        D3D12_CLEAR_VALUE clearValue;
-        clearValue.Format = pDesc->Format,
+        D3D12_CLEAR_VALUE clearValue = {};
+        clearValue.Format   = format,
         clearValue.Color[0] = pDesc->ClearColor[0];
         clearValue.Color[1] = pDesc->ClearColor[1];
         clearValue.Color[2] = pDesc->ClearColor[2];
@@ -188,8 +253,8 @@ bool ColorTarget::Init(const TargetDesc* pDesc, bool isSRGB)
 
     D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc = {};
     D3D12_RENDER_TARGET_VIEW_DESC   rtv_desc = {};
-    rtv_desc.Format = ( isSRGB ) ? GetSRGBFormat(pDesc->Format) : pDesc->Format;
-    srv_desc.Format = ( isSRGB ) ? GetSRGBFormat(pDesc->Format) : pDesc->Format; 
+    rtv_desc.Format = pDesc->Format;
+    srv_desc.Format = pDesc->Format; 
     srv_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
 
@@ -287,7 +352,6 @@ bool ColorTarget::Init(const TargetDesc* pDesc, bool isSRGB)
     }
 
     memcpy(&m_Desc, pDesc, sizeof(m_Desc));
-    m_IsSRGB = isSRGB;
 
     return true;
 }
@@ -298,8 +362,7 @@ bool ColorTarget::Init(const TargetDesc* pDesc, bool isSRGB)
 bool ColorTarget::Init
 (
     IDXGISwapChain* pSwapChain,
-    uint32_t        backBufferIndex,
-    bool            isSRGB
+    uint32_t        backBufferIndex
 )
 {
     HRESULT hr = S_OK;
@@ -323,10 +386,6 @@ bool ColorTarget::Init
 #else
     auto mostDetailedMip = 0u;
 #endif
-
-    auto format = desc.Format;
-    if (isSRGB)
-    { format = GetSRGBFormat(desc.Format); }
 
     D3D12_RENDER_TARGET_VIEW_DESC   rtv_desc = {};
     D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc = {};
@@ -396,8 +455,6 @@ bool ColorTarget::Init
         return false;
     }
 
-    m_IsSRGB = true;
-
     return true;
 }
 
@@ -413,7 +470,6 @@ void ColorTarget::Term()
     Dispose(resource);
 
     memset(&m_Desc, 0, sizeof(m_Desc));
-    m_IsSRGB = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -422,12 +478,11 @@ void ColorTarget::Term()
 bool ColorTarget::Resize(uint32_t width, uint32_t height)
 {
     auto desc = m_Desc;
-    auto srgb = m_IsSRGB;
     Term();
 
     desc.Width  = width;
     desc.Height = height;
-    return Init(&desc, srgb);
+    return Init(&desc);
 }
 
 //-----------------------------------------------------------------------------
@@ -458,8 +513,7 @@ TargetDesc ColorTarget::GetDesc() const
 //      sRGBフラグを取得します.
 //-----------------------------------------------------------------------------
 bool ColorTarget::IsSRGB() const
-{ return m_IsSRGB; }
-
+{ return IsSRGBFormat(m_Desc.Format); }
 
 ///////////////////////////////////////////////////////////////////////////////
 // DepthTarget class
@@ -520,7 +574,7 @@ bool DepthTarget::Init(const TargetDesc* pDesc)
             D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL
         };
 
-        D3D12_CLEAR_VALUE clearValue;
+        D3D12_CLEAR_VALUE clearValue = {};
         clearValue.Format               = pDesc->Format;
         clearValue.DepthStencil.Depth   = pDesc->ClearDepth;
         clearValue.DepthStencil.Stencil = pDesc->ClearStencil;

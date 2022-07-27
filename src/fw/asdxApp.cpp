@@ -710,8 +710,9 @@ bool Application::InitD3D()
     std::vector<DisplayInfo> infos;
     GetSupportDisplayInfo(format, infos);
 
+    auto detect = false;
     DisplayInfo supportedInfo = {};
-    bool     detect     = false;
+
     for(auto& info : infos)
     {
         if (info.Width == m_Width && info.Height == m_Height)
@@ -755,8 +756,6 @@ bool Application::InitD3D()
 
     // アスペクト比を算出します.
     m_AspectRatio = (FLOAT)supportedInfo.Width / (FLOAT)supportedInfo.Height;
-
-    auto isSRGB = IsSRGBFormat(m_SwapChainFormat);
 
     // スワップチェインの初期化
     {
@@ -815,7 +814,7 @@ bool Application::InitD3D()
 
         for(auto i=0u; i<m_SwapChainCount; ++i)
         {
-            if (!m_ColorTarget[i].Init(m_pSwapChain4.GetPtr(), i, isSRGB))
+            if (!m_ColorTarget[i].Init(m_pSwapChain4.GetPtr(), i))
             {
                 ELOG("Error : ColorTarget::Init() Failed.");
                 return false;
@@ -1075,8 +1074,6 @@ void Application::ResizeEvent( const ResizeEventArgs& param )
 
         HRESULT hr = S_OK;
 
-        auto isSRGB = IsSRGBFormat(m_SwapChainFormat);
-
         // バッファをリサイズ.
         hr = m_pSwapChain4->ResizeBuffers( m_SwapChainCount, supportedInfo.Width, supportedInfo.Height, format, 0 );
         if ( FAILED( hr ) )
@@ -1084,7 +1081,7 @@ void Application::ResizeEvent( const ResizeEventArgs& param )
 
         for(auto i=0u; i<m_SwapChainCount; ++i)
         {
-            if (!m_ColorTarget[i].Init(m_pSwapChain4.GetPtr(), i, isSRGB))
+            if (!m_ColorTarget[i].Init(m_pSwapChain4.GetPtr(), i))
             { DLOG("Error : ColorTarget::Init() Failed."); }
         }
 
