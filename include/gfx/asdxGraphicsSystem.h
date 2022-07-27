@@ -11,6 +11,7 @@
 #include <d3d12.h>
 #include <dxgi1_6.h>
 #include <res/asdxResTexture.h>
+#include <vector>
 
 
 namespace asdx {
@@ -20,6 +21,17 @@ namespace asdx {
 //-----------------------------------------------------------------------------
 class Descriptor;
 class CommandQueue;
+
+
+///////////////////////////////////////////////////////////////////////////////
+// DisplayInfo structure
+///////////////////////////////////////////////////////////////////////////////
+struct DisplayInfo
+{
+    uint32_t        Width;
+    uint32_t        Height;
+    DXGI_RATIONAL   RefreshRate;
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 // DeviceDesc structure
@@ -54,6 +66,7 @@ CommandQueue* GetVideoDecodeQueue();
 bool AllocDescriptor(uint8_t heapType, Descriptor** ppResult); 
 ID3D12Device8* GetD3D12Device();
 IDXGIFactory7* GetDXGIFactory();
+void GetSupportDisplayInfo(DXGI_FORMAT format, std::vector<DisplayInfo>& result);
 
 template<typename T>
 inline void Dispose(T*& ptr)

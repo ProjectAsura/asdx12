@@ -698,19 +698,6 @@ bool Application::InitD3D()
 {
     HRESULT hr = S_OK;
 
-    // ウィンドウサイズを取得します.
-    RECT rc;
-    GetClientRect( m_hWnd, &rc );
-    UINT w = rc.right - rc.left;
-    UINT h = rc.bottom - rc.top;
-
-    // 取得したサイズを設定します.
-    m_Width       = w;
-    m_Height      = h;
-
-    // アスペクト比を算出します.
-    m_AspectRatio = (FLOAT)w / (FLOAT)h;
-
     // デバイスの初期化.
     if (!SystemInit(m_DeviceDesc))
     {
@@ -718,18 +705,66 @@ bool Application::InitD3D()
         return false;
     }
 
+    auto format = GetNoSRGBFormat(m_SwapChainFormat);
+
+    std::vector<DisplayInfo> infos;
+    GetSupportDisplayInfo(format, infos);
+
+    DisplayInfo supportedInfo = {};
+    bool     detect     = false;
+    for(auto& info : infos)
+    {
+        if (info.Width == m_Width && info.Height == m_Height)
+        {
+            detect = true;
+            supportedInfo = info;
+            break;
+        }
+    }
+
+    // 指定されている解像度がディスプレイでサポートされていない場合は，指定数未満で最大解像度を設定.
+    if (!detect)
+    {
+        for(auto& info : infos)
+        {
+            if (info.Width <= m_Width && info.Height <= m_Height)
+            {
+                detect          = true;
+                supportedInfo   = info;
+                break;
+            }
+        }
+    }
+
+    // それでも見つからなければエラーとする.
+    if (!detect)
+    {
+        ELOGA("Error : Not Found Supported Resolution.");
+        return false;
+    }
+
+    // ウィンドウサイズを取得します.
+    RECT rc;
+    GetClientRect( m_hWnd, &rc );
+    UINT w = rc.right  - rc.left;
+    UINT h = rc.bottom - rc.top;
+
+    // 取得したサイズを設定します.
+    m_Width       = w;
+    m_Height      = h;
+
+    // アスペクト比を算出します.
+    m_AspectRatio = (FLOAT)supportedInfo.Width / (FLOAT)supportedInfo.Height;
+
     auto isSRGB = IsSRGBFormat(m_SwapChainFormat);
 
     // スワップチェインの初期化
     {
-        DXGI_RATIONAL refreshRate;
-        GetDisplayRefreshRate(refreshRate);
-
         // スワップチェインの構成設定.
         DXGI_SWAP_CHAIN_DESC1 desc = {};
-        desc.Width              = w;
-        desc.Height             = h;
-        desc.Format             = GetNoSRGBFormat(m_SwapChainFormat);
+        desc.Width              = supportedInfo.Width;
+        desc.Height             = supportedInfo.Height;
+        desc.Format             = format;
         desc.Stereo             = FALSE;
         desc.SampleDesc.Count   = m_MultiSampleCount;
         desc.SampleDesc.Quality = m_MultiSampleQuality;
@@ -739,7 +774,7 @@ bool Application::InitD3D()
         desc.Flags              = (m_AllowTearing) ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
 
         DXGI_SWAP_CHAIN_FULLSCREEN_DESC fullScreenDesc = {};
-        fullScreenDesc.RefreshRate      = refreshRate;
+        fullScreenDesc.RefreshRate      = supportedInfo.RefreshRate;
         fullScreenDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
         fullScreenDesc.Scaling          = DXGI_MODE_SCALING_STRETCHED;
         fullScreenDesc.Windowed         = TRUE;
@@ -793,8 +828,8 @@ bool Application::InitD3D()
         TargetDesc desc;
         desc.Dimension          = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
         desc.Alignment          = 0;
-        desc.Width              = w;
-        desc.Height             = h;
+        desc.Width              = supportedInfo.Width;
+        desc.Height             = supportedInfo.Height;
         desc.DepthOrArraySize   = 1;
         desc.MipLevels          = 1;
         desc.Format             = m_DepthStencilFormat;
@@ -824,8 +859,8 @@ bool Application::InitD3D()
     }
 
     // ビューポートの設定.
-    m_Viewport.Width    = (FLOAT)w;
-    m_Viewport.Height   = (FLOAT)h;
+    m_Viewport.Width    = (FLOAT)supportedInfo.Width;
+    m_Viewport.Height   = (FLOAT)supportedInfo.Height;
     m_Viewport.MinDepth = 0.0f;
     m_Viewport.MaxDepth = 1.0f;
     m_Viewport.TopLeftX = 0;
@@ -833,9 +868,9 @@ bool Application::InitD3D()
 
     // シザー矩形の設定.
     m_ScissorRect.left   = 0;
-    m_ScissorRect.right  = w;
+    m_ScissorRect.right  = supportedInfo.Width;
     m_ScissorRect.top    = 0;
-    m_ScissorRect.bottom = h;
+    m_ScissorRect.bottom = supportedInfo.Height;
 
     return true;
 }
@@ -970,13 +1005,48 @@ void Application::ResizeEvent( const ResizeEventArgs& param )
       || param.Height <= m_MultiSampleCount)
     { return; }
 
+    auto format = GetNoSRGBFormat(m_SwapChainFormat);
+
+    std::vector<DisplayInfo> infos;
+    GetSupportDisplayInfo(format, infos);
+
+    auto detect = false;
+    DisplayInfo supportedInfo = {};
+
+    for(auto& info : infos)
+    {
+        if (info.Width == param.Width && info.Height == param.Height)
+        {
+            detect = true;
+            supportedInfo = info;
+            break;
+        }
+    }
+
+    // 指定されている解像度がディスプレイでサポートされていない場合は，指定数未満で最大解像度を設定.
+    if (!detect)
+    {
+        for(auto& info : infos)
+        {
+            if (info.Width <= param.Width && info.Height <= param.Height)
+            {
+                detect          = true;
+                supportedInfo   = info;
+                break;
+            }
+        }
+    }
+
+    if (!detect)
+    { return; }
+
     m_Width       = param.Width;
     m_Height      = param.Height;
-    m_AspectRatio = param.AspectRatio;
+    m_AspectRatio = (FLOAT)supportedInfo.Width / (FLOAT)supportedInfo.Height;
 
     // ビューポートの設定.
-    m_Viewport.Width    = (FLOAT)m_Width;
-    m_Viewport.Height   = (FLOAT)m_Height;
+    m_Viewport.Width    = (FLOAT)supportedInfo.Width;
+    m_Viewport.Height   = (FLOAT)supportedInfo.Height;
     m_Viewport.MinDepth = 0.0f;
     m_Viewport.MaxDepth = 1.0f;
     m_Viewport.TopLeftX = 0;
@@ -984,9 +1054,9 @@ void Application::ResizeEvent( const ResizeEventArgs& param )
 
     // シザー矩形の設定.
     m_ScissorRect.left   = 0;
-    m_ScissorRect.right  = m_Width;
+    m_ScissorRect.right  = supportedInfo.Width;
     m_ScissorRect.top    = 0;
-    m_ScissorRect.bottom = m_Height;
+    m_ScissorRect.bottom = supportedInfo.Height;
 
     if ( m_pSwapChain4 != nullptr )
     {
@@ -1006,10 +1076,9 @@ void Application::ResizeEvent( const ResizeEventArgs& param )
         HRESULT hr = S_OK;
 
         auto isSRGB = IsSRGBFormat(m_SwapChainFormat);
-        auto format = GetNoSRGBFormat(m_SwapChainFormat);
 
         // バッファをリサイズ.
-        hr = m_pSwapChain4->ResizeBuffers( m_SwapChainCount, m_Width, m_Height, format, 0 );
+        hr = m_pSwapChain4->ResizeBuffers( m_SwapChainCount, supportedInfo.Width, supportedInfo.Height, format, 0 );
         if ( FAILED( hr ) )
         { DLOG( "Error : IDXGISwapChain::ResizeBuffer() Failed. errcode = 0x%x", hr ); }
 
@@ -1022,8 +1091,8 @@ void Application::ResizeEvent( const ResizeEventArgs& param )
         TargetDesc desc;
         desc.Dimension          = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
         desc.Alignment          = 0;
-        desc.Width              = m_Width;
-        desc.Height             = m_Height;
+        desc.Width              = supportedInfo.Width;
+        desc.Height             = supportedInfo.Height;
         desc.DepthOrArraySize   = 1;
         desc.MipLevels          = 1;
         desc.Format             = m_DepthStencilFormat;

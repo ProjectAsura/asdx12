@@ -18,6 +18,9 @@
 #include <fnd/asdxLogger.h>
 #include <ShlObj.h>
 #include <strsafe.h>
+#include <vector>
+#include <algorithm>
+#include <tuple>
 
 
 namespace {
@@ -228,6 +231,14 @@ public:
     //-------------------------------------------------------------------------
     void ClearDisposer();
 
+    //-------------------------------------------------------------------------
+    //! @brief      サポートされているディスプレイ解像度を取得します.
+    //! 
+    //! @param[in]          format          フォーマット.
+    //! @param[out]         infos           ディスプレイ情報.
+    //-------------------------------------------------------------------------
+    void GetDisplayInfo(DXGI_FORMAT format, std::vector<DisplayInfo>& infos);
+
 private:
     //=========================================================================
     // private variables.
@@ -235,6 +246,7 @@ private:
     static GraphicsSystem           s_Instance;                 //!< シングルトンインスタンス.
     RefPtr<IDXGIFactory7>           m_pFactory;                 //!< DXGIファクトリーです.
     RefPtr<IDXGIAdapter1>           m_pAdapter;                 //!< DXGIアダプターです.
+    RefPtr<IDXGIOutput6>            m_pOutput;                  //!< DXGIアウトプットです.
     RefPtr<ID3D12Debug3>            m_pDebug;                   //!< デバッグオブジェクト.
     RefPtr<ID3D12InfoQueue>         m_pInfoQueue;               //!< インフォキュー.
     RefPtr<ID3D12Device8>           m_pDevice;                  //!< デバイス.
@@ -355,6 +367,24 @@ bool GraphicsSystem::Init(const DeviceDesc& deviceDesc)
                 m_pAdapter = pAdapter.Detach();
                 break;
             }
+        }
+    }
+
+    // ディスプレイを取得.
+    {
+        RefPtr<IDXGIOutput> pOutput;
+        auto hr = m_pAdapter->EnumOutputs(0, pOutput.GetAddress());
+        if (FAILED(hr))
+        {
+            ELOG("Error : IDXGIOutput::EnumOutputs() Failed. errcode = 0x%x", hr);
+            return false;
+        }
+
+        hr = pOutput->QueryInterface(IID_PPV_ARGS(m_pOutput.GetAddress()));
+        if (FAILED(hr))
+        {
+            ELOG("Error : IDXGIOutput::QueryInterface() Failed. errcode = 0x%x", hr);
+            return false;
         }
     }
 
@@ -527,6 +557,7 @@ void GraphicsSystem::Term()
         m_DescriptorHeap[i].Term();
     }
 
+    m_pOutput   .Reset();
     m_pDevice   .Reset();
     m_pInfoQueue.Reset();
     m_pDebug    .Reset();
@@ -693,6 +724,43 @@ void GraphicsSystem::ClearDisposer()
     m_DescriptorDisposer.Clear();
 }
 
+//-----------------------------------------------------------------------------
+//      ディスプレイ情報を取得します.
+//-----------------------------------------------------------------------------
+void GraphicsSystem::GetDisplayInfo(DXGI_FORMAT format, std::vector<DisplayInfo>& infos)
+{
+    if (!m_pOutput)
+    { return; }
+
+    UINT count = 0;
+    auto hr = m_pOutput->GetDisplayModeList(format, DXGI_ENUM_MODES_SCALING, &count, nullptr);
+    if (FAILED(hr) || count == 0)
+    { return; }
+
+    std::vector<DXGI_MODE_DESC> descs;
+    descs.resize(count);
+
+    hr = m_pOutput->GetDisplayModeList(format, DXGI_ENUM_MODES_SCALING, &count, descs.data());
+    if (FAILED(hr))
+    { return; }
+
+    infos.resize(count);
+    for(size_t i=0; i<infos.size(); ++i)
+    {
+        infos[i].Width          = descs[i].Width;
+        infos[i].Height         = descs[i].Height;
+        infos[i].RefreshRate    = descs[i].RefreshRate;
+    }
+
+    // 解像度が大きい順にする.
+    std::sort(infos.begin(), infos.end(), [](DisplayInfo& lhs, DisplayInfo& rhs)
+    {
+        auto refreshRateLhs = double(lhs.RefreshRate.Numerator) / double(lhs.RefreshRate.Denominator);
+        auto refreshRateRhs = double(rhs.RefreshRate.Numerator) / double(rhs.RefreshRate.Denominator);
+        return std::tie(lhs.Width, lhs.Height, refreshRateLhs) > std::tie(rhs.Width, rhs.Height, refreshRateRhs);
+    });
+}
+
 bool SystemInit(const DeviceDesc& desc)
 { return GraphicsSystem::Instance().Init(desc); }
 
@@ -743,5 +811,8 @@ ID3D12Device8* GetD3D12Device()
 
 IDXGIFactory7* GetDXGIFactory()
 { return GraphicsSystem::Instance().GetFactory(); }
+
+void GetSupportDisplayInfo(DXGI_FORMAT format, std::vector<DisplayInfo>& result)
+{ GraphicsSystem::Instance().GetDisplayInfo(format, result); }
 
 } // namespace asdx
