@@ -364,27 +364,21 @@ bool GraphicsSystem::Init(const DeviceDesc& deviceDesc)
             hr = D3D12CreateDevice(pAdapter.GetPtr(), D3D_FEATURE_LEVEL_11_0, __uuidof(ID3D12Device), nullptr);
             if (SUCCEEDED(hr))
             {
-                m_pAdapter = pAdapter.Detach();
-                break;
+                if (m_pAdapter.GetPtr() == nullptr)
+                {
+                    m_pAdapter = pAdapter.GetPtr();
+                    m_pAdapter->AddRef();
+                }
+
+                RefPtr<IDXGIOutput> pOutput;
+                hr = pAdapter->EnumOutputs(0, pOutput.GetAddress());
+                if (FAILED(hr))
+                { continue; }
+
+                hr = pOutput->QueryInterface(IID_PPV_ARGS(m_pOutput.GetAddress()));
+                if (SUCCEEDED(hr))
+                { break; }
             }
-        }
-    }
-
-    // ディスプレイを取得.
-    {
-        RefPtr<IDXGIOutput> pOutput;
-        auto hr = m_pAdapter->EnumOutputs(0, pOutput.GetAddress());
-        if (FAILED(hr))
-        {
-            ELOG("Error : IDXGIOutput::EnumOutputs() Failed. errcode = 0x%x", hr);
-            return false;
-        }
-
-        hr = pOutput->QueryInterface(IID_PPV_ARGS(m_pOutput.GetAddress()));
-        if (FAILED(hr))
-        {
-            ELOG("Error : IDXGIOutput::QueryInterface() Failed. errcode = 0x%x", hr);
-            return false;
         }
     }
 
