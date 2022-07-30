@@ -2186,13 +2186,13 @@ bool CreateResTextureFromDDSFile(FILE* pFile, asdx::ResTexture& resTexture)
     // リソースデータのメモリを確保.
     resTexture.pResources = new SubResource[ resTexture.MipMapCount * resTexture.SurfaceCount ];
 
+    size_t w = width;
+    size_t h = height;
+    size_t d = depth;
+
     // 各ミップレベルごとに処理.
     for ( size_t j=0; j<resTexture.MipMapCount; ++j )
     {
-        size_t w = width;
-        size_t h = height;
-        size_t d = depth;
-
         for( size_t i=0; i<resTexture.SurfaceCount; ++i )
         {
             size_t rowBytes = 0;
@@ -2859,7 +2859,6 @@ bool CreateResTextureFromDDSMemory(const uint8_t* pBinary, uint32_t bufferSize, 
             // インデックスをカウントアップ.
             idx++;
         }
-
 
         // 横幅，縦幅を更新.
         w = w >> 1;
