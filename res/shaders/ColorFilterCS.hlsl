@@ -44,6 +44,6 @@ void main
     uint3 groupThreadId : SV_GroupThreadID
 )
 {
-    uint2 id = RemapThreadId(kThreadSize, DispatchDim, groupId.xy, groupThreadId.xy);
+    uint2 id = RemapThreadId(kThreadSize, DispatchDim, 16, groupId.xy, groupThreadId.xy);
     Output[id] = mul(ColorMatrix, Input[id]);
 }

@@ -1305,7 +1305,7 @@ uint2 RemapThreadId
     const uint countPerfectTiles = dispatchDim.x / maxTileWidth;
 
     // 完全なタイルにおけるスレッドグループの総数.
-    const uint totalThreadGroups = countPerfectTiles * matTileWidth * dispatchDim.y - 1;
+    const uint totalThreadGroups = countPerfectTiles * maxTileWidth * dispatchDim.y - 1;
  
     // 1次元にする.
     const uint threadGroupIdFlattened = dispatchDim.x * groupId.y + groupId.x;
@@ -1333,7 +1333,7 @@ uint2 RemapThreadId
     }
 
     // 1次元にする.
-    const uint swizzledThreadGroupIdFlattened = tileId * mxTileWidth;
+    const uint swizzledThreadGroupIdFlattened = tileId * maxTileWidth
       + localThreadGroupIdY * dispatchDim.x
       + localThreadGroupIdX;
 
