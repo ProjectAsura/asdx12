@@ -61,6 +61,12 @@
     <Filter Include="ソース ファイル\external\meshoptimizer">
       <UniqueIdentifier>{46543bdd-ffc5-45ee-ba45-318107a7250c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ソース ファイル\renderer">
+      <UniqueIdentifier>{2ec75a62-0c47-4c33-a6d0-ae91d1d3ba74}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\renderer">
+      <UniqueIdentifier>{e2f62393-54ac-4e63-808f-1e5c7cf47d89}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\external\imgui\imgui.cpp">
@@ -273,6 +279,9 @@
     <ClCompile Include="..\src\fw\asdxCameraController.cpp">
       <Filter>ソース ファイル\fw</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\renderer\asdxTaaRenderer.cpp">
+      <Filter>ソース ファイル\renderer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\external\imgui\imconfig.h">
@@ -481,6 +490,9 @@
     </ClInclude>
     <ClInclude Include="..\include\fnd\asdxStringView.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\renderer\asdxTaaRenderer.h">
+      <Filter>ヘッダー ファイル\renderer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

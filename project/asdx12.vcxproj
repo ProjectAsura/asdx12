@@ -164,6 +164,7 @@
     <ClCompile Include="..\src\gfx\asdxTexture.cpp" />
     <ClCompile Include="..\src\gfx\asdxVertexBuffer.cpp" />
     <ClCompile Include="..\src\gfx\asdxView.cpp" />
+    <ClCompile Include="..\src\renderer\asdxTaaRenderer.cpp" />
     <ClCompile Include="..\src\res\asdxResMaterial.cpp" />
     <ClCompile Include="..\src\res\asdxResModel.cpp" />
     <ClCompile Include="..\src\res\asdxResTexture.cpp" />
@@ -234,6 +235,7 @@
     <ClInclude Include="..\include\gfx\asdxTexture.h" />
     <ClInclude Include="..\include\gfx\asdxVertexBuffer.h" />
     <ClInclude Include="..\include\gfx\asdxView.h" />
+    <ClInclude Include="..\include\renderer\asdxTaaRenderer.h" />
     <ClInclude Include="..\include\res\asdxResMaterial.h" />
     <ClInclude Include="..\include\res\asdxResModel.h" />
     <ClInclude Include="..\include\res\asdxResTexture.h" />

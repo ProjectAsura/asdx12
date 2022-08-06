@@ -124,9 +124,9 @@ void Quad::Draw(ID3D12GraphicsCommandList* pCmd)
 //-----------------------------------------------------------------------------
 D3D12_SHADER_BYTECODE Quad::GetVS()
 {
-    D3D12_SHADER_BYTECODE result;
+    D3D12_SHADER_BYTECODE result = {};
     result.pShaderBytecode = FullScreenVS;
-    result.BytecodeLength = sizeof(FullScreenVS);
+    result.BytecodeLength  = sizeof(FullScreenVS);
     return result;
 }
 

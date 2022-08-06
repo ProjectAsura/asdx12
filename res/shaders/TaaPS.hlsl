@@ -4,10 +4,6 @@
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 
-#ifndef ENABLE_VELOCITY
-#define ENABLE_VELOCITY (0)
-#endif//ENABLE_VELOCITY
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // VSOutput structure
@@ -39,23 +35,21 @@ cbuffer CbTemporalAA : register(b0)
 //-----------------------------------------------------------------------------
 // Textures and Samplers.
 //-----------------------------------------------------------------------------
-Texture2D       ColorMap   : register(t0);
-Texture2D       HistoryMap : register(t1);
-SamplerState    ColorSmp   : register(s0);
-SamplerState    HistorySmp : register(s1);
-#if ENABLE_VELOCITY
+Texture2D       ColorMap    : register(t0);
+Texture2D       HistoryMap  : register(t1);
 Texture2D       VelocityMap : register(t2);
+SamplerState    ColorSmp    : register(s0);
+SamplerState    HistorySmp  : register(s1);
 SamplerState    VelocitySmp : register(s2);
-#endif
 
 //-----------------------------------------------------------------------------
 // Constant Values.
 //-----------------------------------------------------------------------------
 static const int2 Offsets[8] = {
-    int2(-1,- 1), int2(-1,  1), 
-    int2( 1, -1), int2( 1,  1), 
-    int2( 1,  0), int2( 0, -1), 
-    int2( 0,  1), int2(-1,  0) 
+    int2(-1,- 1), int2(-1,  1),
+    int2( 1, -1), int2( 1,  1),
+    int2( 1,  0), int2( 0, -1),
+    int2( 0,  1), int2(-1,  0)
 };
 
 
@@ -140,8 +134,10 @@ PSOutput main(const VSOutput input)
     float3 colorAve = current;
     float3 colorVar = current * current;
 
+    int i;
+
     [unroll]
-    for(int i=0; i<8; ++i)
+    for(i=0; i<8; ++i)
     {
         float3 fetch = RGBToYCoCg(ColorMap.SampleLevel(ColorSmp, currentUV, 0.0f, Offsets[i]).rgb);
         colorAve += fetch;
@@ -155,27 +151,24 @@ PSOutput main(const VSOutput input)
     float3 colorMin = colorAve - Gamma * sigma;
     float3 colorMax = colorAve + Gamma * sigma;
 
-#if ENABLE_VELOCITY
     // 最も長い速度ベクトルを見つける.
     float2 velocity = VelocityMap.SampleLevel(VelocitySmp, input.TexCoord, 0).xy;
     [unroll]
-    for(int i=0; i<8; ++i)
+    for(i=0; i<8; ++i)
     {
         const float2 v = VelocityMap.SampleLevel(VelocitySmp, input.TexCoord, 0, Offsets[i]).xy;
         velocity = (dot(v, v) > dot(velocity, velocity)) ? v : velocity;
     }
+
     float2 historyUV = saturate(input.TexCoord + velocity);
-#else
-    float2 historyUV = input.TexCoord;
-#endif
     float3 history = RGBToYCoCg(BicubicSampleCatmullRom(HistoryMap, HistorySmp, historyUV, HistoryMapSize));
 
     // Box Clipping.
     history = clamp(history, colorMin, colorMax);
 
     // ブレンド率.
-    float alpha = BlendFactor;
     // TODO : 深度やマスクに応じて棄却処理を実装する.
+    float alpha = BlendFactor;
 
     output.Color = float4(YCoCgToRGB(lerp(current, history, alpha)), 1.0f);
 
