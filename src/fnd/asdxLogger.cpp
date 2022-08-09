@@ -133,7 +133,7 @@ void SystemLogger::WriteA(LOG_LEVEL level, const char* format, ... )
             vsprintf_s( msg, format, arg );
             va_end( arg );
 
-            printf_s( "%s", msg );
+            fprintf((level == LOG_ERROR ? stderr : stdout), "%s", msg );
 
             OutputDebugStringA( msg );
         }
@@ -157,7 +157,7 @@ void SystemLogger::WriteW(LOG_LEVEL level, const wchar_t* format, ... )
             vswprintf_s( msg, format, arg );
             va_end( arg );
 
-            wprintf_s( L"%s", msg );
+            fwprintf_s((level == LOG_ERROR ? stderr : stdout), L"%s", msg );
 
             OutputDebugStringW( msg );
         }

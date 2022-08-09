@@ -117,15 +117,40 @@ bool Texture::Init(CommandList& cmdList, const ResTexture& resource)
 
         case TEXTURE_DIMENSION_3D:
             {
-                dimension = D3D12_RESOURCE_DIMENSION_TEXTURE3D;
-                depth = resource.Depth;
+                dimension   = D3D12_RESOURCE_DIMENSION_TEXTURE3D;
+                depth       = resource.Depth;
+
+                viewDesc.ViewDimension                  = D3D12_SRV_DIMENSION_TEXTURE3D;
+                viewDesc.Format                         = format;
+                viewDesc.Texture3D.MipLevels            = resource.MipMapCount;
+                viewDesc.Texture3D.MostDetailedMip      = 0;
+                viewDesc.Texture3D.ResourceMinLODClamp  = 0.0f;
             }
             break;
 
         case TEXTURE_DIMENSION_CUBE:
             {
-                dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-                depth = resource.SurfaceCount;
+                dimension   = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+                depth       = resource.SurfaceCount;
+
+                if (resource.SurfaceCount > 6)
+                {
+                   viewDesc.ViewDimension                           = D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
+                   viewDesc.Format                                  = format;
+                   viewDesc.TextureCubeArray.First2DArrayFace       = 0;
+                   viewDesc.TextureCubeArray.MipLevels              = resource.MipMapCount;
+                   viewDesc.TextureCubeArray.MostDetailedMip        = 0;
+                   viewDesc.TextureCubeArray.NumCubes               = resource.SurfaceCount / 6;
+                   viewDesc.TextureCubeArray.ResourceMinLODClamp    = 0.0f;
+                }
+                else
+                {
+                    viewDesc.ViewDimension                      = D3D12_SRV_DIMENSION_TEXTURECUBE;
+                    viewDesc.Format                             = format;
+                    viewDesc.TextureCube.MipLevels              = resource.MipMapCount;
+                    viewDesc.TextureCube.MostDetailedMip        = 0;
+                    viewDesc.TextureCube.ResourceMinLODClamp    = 0;
+                }
             }
             break;
         }

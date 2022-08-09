@@ -860,6 +860,8 @@ void CommandList::UpdateTexture(ID3D12Resource* pDstResource, const ResTexture* 
             srcData.pData       = pResTexture->pResources[i].pPixels;
             srcData.RowPitch    = pResTexture->pResources[i].Pitch;
             srcData.SlicePitch  = pResTexture->pResources[i].SlicePitch;
+            assert(layouts[i].Footprint.Width  == pResTexture->pResources[i].Width);
+            assert(layouts[i].Footprint.Height == pResTexture->pResources[i].Height);
 
             D3D12_MEMCPY_DEST dstData = {};
             dstData.pData       = pData + layouts[i].Offset;

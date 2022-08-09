@@ -2190,10 +2190,14 @@ bool CreateResTextureFromDDSFile(FILE* pFile, asdx::ResTexture& resTexture)
     size_t h = height;
     size_t d = depth;
 
-    // 各ミップレベルごとに処理.
-    for ( size_t j=0; j<resTexture.MipMapCount; ++j )
+    for( size_t i=0; i<resTexture.SurfaceCount; ++i )
     {
-        for( size_t i=0; i<resTexture.SurfaceCount; ++i )
+        w = width;
+        h = height;
+        d = depth;
+
+        // 各ミップレベルごとに処理.
+        for ( size_t j=0; j<resTexture.MipMapCount; ++j )
         {
             size_t rowBytes = 0;
             size_t numRows  = 0;
@@ -2277,17 +2281,17 @@ bool CreateResTextureFromDDSFile(FILE* pFile, asdx::ResTexture& resTexture)
 
             // インデックスをカウントアップ.
             idx++;
+
+            // 横幅，縦幅を更新.
+            w = w >> 1;
+            h = h >> 1;
+            d = d >> 1;
+
+            // クランプ処理.
+            if ( w == 0 ) { w = 1; }
+            if ( h == 0 ) { h = 1; }
+            if ( d == 0 ) { d = 1; }
         }
-
-        // 横幅，縦幅を更新.
-        w = w >> 1;
-        h = h >> 1;
-        d = d >> 1;
-
-        // クランプ処理.
-        if ( w == 0 ) { w = 1; }
-        if ( h == 0 ) { h = 1; }
-        if ( d == 0 ) { d = 1; }
     }
 
     // 不要になったメモリを解放.
@@ -2789,10 +2793,14 @@ bool CreateResTextureFromDDSMemory(const uint8_t* pBinary, uint32_t bufferSize, 
     size_t h = height;
     size_t d = depth;
 
-    // 各ミップレベルごとに処理.
-    for ( size_t j=0; j<resTexture.MipMapCount; ++j )
+    for( size_t i=0; i<resTexture.SurfaceCount; ++i )
     {
-        for( size_t i=0; i<resTexture.SurfaceCount; ++i )
+        w = width;
+        h = height;
+        d = depth;
+
+        // 各ミップレベルごとに処理.
+        for ( size_t j=0; j<resTexture.MipMapCount; ++j )
         {
             size_t rowBytes = 0;
             size_t numRows  = 0;
@@ -2858,17 +2866,17 @@ bool CreateResTextureFromDDSMemory(const uint8_t* pBinary, uint32_t bufferSize, 
 
             // インデックスをカウントアップ.
             idx++;
+
+            // 横幅，縦幅を更新.
+            w = w >> 1;
+            h = h >> 1;
+            d = d >> 1;
+
+            // クランプ処理.
+            if ( w == 0 ) { w = 1; }
+            if ( h == 0 ) { h = 1; }
+            if ( d == 0 ) { d = 1; }
         }
-
-        // 横幅，縦幅を更新.
-        w = w >> 1;
-        h = h >> 1;
-        d = d >> 1;
-
-        // クランプ処理.
-        if ( w == 0 ) { w = 1; }
-        if ( h == 0 ) { h = 1; }
-        if ( d == 0 ) { d = 1; }
     }
 
     // 正常終了.
