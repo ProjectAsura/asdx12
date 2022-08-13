@@ -8,6 +8,7 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
+#include <fnd/asdxMath.h>
 #include <gfx/asdxView.h>
 #include <gfx/asdxRootSignature.h>
 #include <gfx/asdxPipelineState.h>
@@ -60,6 +61,8 @@ public:
     //! @param[in]      pDepthMap           深度マップです.
     //! @param[in]      gamma               ガンマ.
     //! @param[in]      alpha               ブレンド値です.
+    //! @param[in]      currJitter          現在フレーム用のジッタ―値です.
+    //! @param[in]      prevJitter          前フレームのジッタ―値です.
     //-------------------------------------------------------------------------
     void Render(
         ID3D12GraphicsCommandList*  pCmdList,
@@ -69,7 +72,9 @@ public:
         const IShaderResourceView*  pVelocityMap,
         const IShaderResourceView*  pDepthMap,
         float                       gamma,
-        float                       alpha);
+        float                       alpha,
+        const asdx::Vector2&        currJitter,
+        const asdx::Vector2&        prevJitter);
 
 private:
     //=========================================================================

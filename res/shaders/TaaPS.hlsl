@@ -254,7 +254,7 @@ PSOutput main(const VSOutput input)
     const float2 currUV = input.TexCoord;
 
     // 現在フレームのカラー.
-    float3 currColor = GetCurrentColor(currUV);
+    float3 currColor = GetCurrentColor(currUV + CurrJitter);
     
     // 1920x1080をベースとしたスケール.
     const float sizeScale = MapSize.x / 1920.0f;
@@ -263,13 +263,13 @@ PSOutput main(const VSOutput input)
     float2 velocity = GetVelocity(currUV);
     float  velocityDelta = saturate(1.0f - length(velocity) / (kFrameVelocityInPixelsDiff * sizeScale));
 
+    // 前フレームのテクスチャ座標を計算.
+    float2 prevUV = ((currUV + PrevJitter) + velocity / MapSize);
+
     // 深度値を取得.
     float currDepth = GetDepth(currUV);
-    float prevDepth = GetDepth(currUV + (velocity - PrevJitter) / MapSize);
+    float prevDepth = GetDepth(prevUV);
     float depthDelta = step(currDepth, prevDepth);
-
-    // 前フレームのテクスチャ座標を計算.
-    float2 prevUV = currUV + velocity / MapSize;
 
     // 画面内かどうか?
     float inScreen = (all(0.0f.xx <= prevUV) && all(prevUV < 1.0f.xx)) ? 1.0f : 0.0f;

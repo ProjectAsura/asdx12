@@ -131,7 +131,9 @@ void TaaRenderer::Render
     const IShaderResourceView*  pVelocitySRV,
     const IShaderResourceView*  pDepthSRV,
     float                       gamma,
-    float                       alpha
+    float                       alpha,
+    const asdx::Vector2&        currJitter,
+    const asdx::Vector2&        prevJitter
 )
 {
     Param param = {};
@@ -139,6 +141,8 @@ void TaaRenderer::Render
     param.BlendFactor   = alpha;
     param.MapSize.x     = float(pHistoryColorSRV->GetResource()->GetDesc().Width);
     param.MapSize.y     = float(pHistoryColorSRV->GetResource()->GetDesc().Height);
+    param.CurrJitter    = currJitter;
+    param.PrevJitter    = prevJitter;
 
     D3D12_VIEWPORT viewport = {};
     viewport.TopLeftX   = 0.0f;
