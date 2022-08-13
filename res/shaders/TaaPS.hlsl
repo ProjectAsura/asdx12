@@ -4,6 +4,17 @@
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 
+#ifndef ENABLE_REVERSE_Z
+#define ENABLE_REVERSE_Z    (0)
+#endif//ENABLE_REVERSE_Z
+
+
+//-----------------------------------------------------------------------------
+// Constant Values.
+//-----------------------------------------------------------------------------
+static const float kVarianceIntersectionMaxT  = 100.0f;
+static const float kFrameVelocityInPixelsDiff = 256.0f; // 1920 x 1080.
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // VSOutput structure
@@ -29,23 +40,26 @@ cbuffer CbTemporalAA : register(b0)
 {
     float   Gamma;          // 1.0でうまく動くとのこと. [0.75, 1.25]で設定するのがGoodとのこと.
     float   BlendFactor;
-    float2  HistoryMapSize;
+    float2  MapSize;
+    float2  CurrJitter;
+    float2  PrevJitter;
 };
+
 
 //-----------------------------------------------------------------------------
 // Textures and Samplers.
 //-----------------------------------------------------------------------------
-Texture2D       ColorMap    : register(t0);
-Texture2D       HistoryMap  : register(t1);
-Texture2D       VelocityMap : register(t2);
-SamplerState    ColorSmp    : register(s0);
-SamplerState    HistorySmp  : register(s1);
-SamplerState    VelocitySmp : register(s2);
+Texture2D           ColorMap    : register(t0);
+Texture2D           HistoryMap  : register(t1);
+Texture2D<float2>   VelocityMap : register(t2);
+Texture2D<float>    DepthMap    : register(t3);
+SamplerState        PointClamp  : register(s0);
+SamplerState        LinearClamp : register(s1);
 
 //-----------------------------------------------------------------------------
 // Constant Values.
 //-----------------------------------------------------------------------------
-static const int2 Offsets[8] = {
+static const int2 kOffsets[8] = {
     int2(-1,- 1), int2(-1,  1),
     int2( 1, -1), int2( 1,  1),
     int2( 1,  0), int2( 0, -1),
@@ -81,7 +95,7 @@ float3 YCoCgToRGB( float3 YCoCg )
 //-----------------------------------------------------------------------------
 //      Catmull-Rom フィルタリング.
 //-----------------------------------------------------------------------------
-float3 BicubicSampleCatmullRom(Texture2D map, SamplerState smp, float2 uv, float2 mapSize)
+float4 BicubicSampleCatmullRom(Texture2D map, SamplerState smp, float2 uv, float2 mapSize)
 {
     float2 samplePos = uv * mapSize;
     float2 tc = floor(samplePos - 0.5f) + 0.5f;
@@ -101,21 +115,135 @@ float3 BicubicSampleCatmullRom(Texture2D map, SamplerState smp, float2 uv, float
     float2 tc12 = (tc + w2 / w12) * invMapSize;
     float2 tc3  = (tc + 2) * invMapSize;
 
-    float3 result = float3(0.0f, 0.0f, 0.0f);
+    float4 result = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
-    result += map.SampleLevel(smp, float2(tc0.x,  tc0.y),  0).rgb * (w0.x  * w0.y);
-    result += map.SampleLevel(smp, float2(tc0.x,  tc12.y), 0).rgb * (w0.x  * w12.y);
-    result += map.SampleLevel(smp, float2(tc0.x,  tc3.y),  0).rgb * (w0.x  * w3.y);
+    result += map.SampleLevel(smp, float2(tc0.x,  tc0.y),  0) * (w0.x  * w0.y);
+    result += map.SampleLevel(smp, float2(tc0.x,  tc12.y), 0) * (w0.x  * w12.y);
+    result += map.SampleLevel(smp, float2(tc0.x,  tc3.y),  0) * (w0.x  * w3.y);
 
-    result += map.SampleLevel(smp, float2(tc12.x, tc0.y),  0).rgb * (w12.x * w0.y);
-    result += map.SampleLevel(smp, float2(tc12.x, tc12.y), 0).rgb * (w12.x * w12.y);
-    result += map.SampleLevel(smp, float2(tc12.x, tc3.y),  0).rgb * (w12.x * w3.y);
+    result += map.SampleLevel(smp, float2(tc12.x, tc0.y),  0) * (w12.x * w0.y);
+    result += map.SampleLevel(smp, float2(tc12.x, tc12.y), 0) * (w12.x * w12.y);
+    result += map.SampleLevel(smp, float2(tc12.x, tc3.y),  0) * (w12.x * w3.y);
 
-    result += map.SampleLevel(smp, float2(tc3.x,  tc0.y),  0).rgb * (w3.x * w0.y);
-    result += map.SampleLevel(smp, float2(tc3.x,  tc12.y), 0).rgb * (w3.x * w12.y);
-    result += map.SampleLevel(smp, float2(tc3.x,  tc3.y),  0).rgb * (w3.x * w3.y);
+    result += map.SampleLevel(smp, float2(tc3.x,  tc0.y),  0) * (w3.x * w0.y);
+    result += map.SampleLevel(smp, float2(tc3.x,  tc12.y), 0) * (w3.x * w12.y);
+    result += map.SampleLevel(smp, float2(tc3.x,  tc3.y),  0) * (w3.x * w3.y);
+
+    return max(result, 0.0f.xxxx);
+}
+
+//-----------------------------------------------------------------------------
+//      現在フレームのカラーを取得します.
+//-----------------------------------------------------------------------------
+float3 GetCurrentColor(float2 uv)
+{ return ColorMap.SampleLevel(PointClamp, uv, 0.0f).rgb; }
+
+//-----------------------------------------------------------------------------
+//      ヒストリーカラーを取得します.
+//-----------------------------------------------------------------------------
+float4 GetHistoryColor(float2 uv)
+{ return BicubicSampleCatmullRom(HistoryMap, LinearClamp, uv, MapSize); }
+
+//-----------------------------------------------------------------------------
+//      速度ベクトルを取得します.
+//-----------------------------------------------------------------------------
+float2 GetVelocity(float2 uv)
+{
+    float2 result = VelocityMap.SampleLevel(PointClamp, uv, 0.0f);
+    float  currLengthSq = dot(result, result);
+
+    // 最も長い速度ベクトルを取得.
+    [unroll] for(uint i=0; i<8; ++i)
+    {
+        float2 velocity = VelocityMap.SampleLevel(PointClamp, uv, 0.0f, kOffsets[i]);
+        float  lengthSq = dot(velocity, velocity);
+        if (lengthSq > currLengthSq)
+        {
+            result       = velocity;
+            currLengthSq = lengthSq;
+        }
+    }
 
     return result;
+}
+
+//-----------------------------------------------------------------------------
+//      隣接ピクセルを考慮して深度を取得します.
+//-----------------------------------------------------------------------------
+float GetDepth(float2 uv)
+{
+    // 隣接4x4ピクセルをチェックし，最も手前のものを返却.
+    float4 depths = DepthMap.GatherRed(PointClamp, uv);
+    #if ENABLE_REVERSE_Z
+        return max( max(depths.x, depths.y), max(depths.z, depths.w) );
+    #else
+        return min( min(depths.x, depths.y), min(depths.z, depths.w) );
+    #endif
+}
+
+//-----------------------------------------------------------------------------
+//      カラーをAABBでクリップします.
+//-----------------------------------------------------------------------------
+float3 ClipToAABB(float3 currentColor, float3 historyColor, float3 center, float3 extents)
+{
+    // 方向ベクトルを求める.
+    float3 dir = currentColor - historyColor;
+
+    // 交差位置を求める.
+    float3 intersection = ((center - sign(dir) * extents) - historyColor) / dir;
+    float3 possibleT = (intersection >= 0.0f.xxx) ? intersection : kVarianceIntersectionMaxT  + 1.0f;
+    float  t = min(kVarianceIntersectionMaxT, min(possibleT.x, min(possibleT.y, possibleT.z)));
+    return (t < kVarianceIntersectionMaxT) ? historyColor + dir * t : historyColor;
+}
+
+//-----------------------------------------------------------------------------
+//      ヒストリーカラーをクリップします.
+//-----------------------------------------------------------------------------
+float3 ClipHistoryColor(float2 uv, float3 currentColor, float3 historyColor, float gamma)
+{
+    const float3 currentColorYCoCg = RGBToYCoCg(currentColor);
+
+    // 平均と分散を求める.
+    float3 ave = currentColorYCoCg;
+    float3 var = currentColorYCoCg * currentColorYCoCg;
+
+    [unroll] for(uint i=0; i<8; ++i)
+    {
+        float3 newColorYCoCg = RGBToYCoCg(ColorMap.SampleLevel(PointClamp, uv, 0.0f, kOffsets[i]).rgb);
+        ave += newColorYCoCg;
+        var += newColorYCoCg * newColorYCoCg;
+    }
+
+    const float invSamples = 1.0f / 9.0f;
+    ave *= invSamples;
+    var = sqrt(var * invSamples - ave * ave) * gamma;
+
+    return YCoCgToRGB(ClipToAABB(YCoCgToRGB(historyColor), currentColorYCoCg, ave, var));
+}
+
+//-----------------------------------------------------------------------------
+//      最終カラーを求めます.
+//-----------------------------------------------------------------------------
+float4 GetFinalColor(float2 uv, float3 currentColor, float3 historyColor, float weight)
+{
+    float newWeight = saturate(0.5f - weight);
+    return float4(lerp(currentColor, historyColor, saturate(BlendFactor)), newWeight);
+}
+
+//-----------------------------------------------------------------------------
+//      隣接ピクセルを考慮した現在カラーを取得します.
+//-----------------------------------------------------------------------------
+float3 GetCurrentNeighborColor(float2 uv, float3 currentColor)
+{
+    const float centerWeight = 4.0f;
+    float3 accColor = currentColor * centerWeight;
+    [unroll] for(uint i=0; i<4; ++i)
+    {
+        accColor += ColorMap.SampleLevel(PointClamp, uv, 0.0f, kOffsets[i]).rgb;
+    }
+    const float invWeight = 1.0f / (4.0f + centerWeight);
+    accColor *= invWeight;
+    return accColor;
 }
 
 //-----------------------------------------------------------------------------
@@ -123,56 +251,62 @@ float3 BicubicSampleCatmullRom(Texture2D map, SamplerState smp, float2 uv, float
 //-----------------------------------------------------------------------------
 PSOutput main(const VSOutput input)
 {
-    PSOutput output = (PSOutput)0;
+    const float2 currUV = input.TexCoord;
+
+    // 現在フレームのカラー.
+    float3 currColor = GetCurrentColor(currUV);
     
-    // Marco Salvi's Variance clipping algorithm.
-    // https://www.dropbox.com/sh/dmye840y307lbpx/AAAQpC0MxMbuOsjm6XmTPgFJa?dl=0
+    // 1920x1080をベースとしたスケール.
+    const float sizeScale = MapSize.x / 1920.0f;
 
-    float2 currentUV = input.TexCoord;
-    float3 current = RGBToYCoCg(ColorMap  .SampleLevel(ColorSmp,   currentUV, 0).rgb);
+    // 速度ベクトルを取得.
+    float2 velocity = GetVelocity(currUV);
+    float  velocityDelta = saturate(1.0f - length(velocity) / (kFrameVelocityInPixelsDiff * sizeScale));
 
-    float3 colorAve = current;
-    float3 colorVar = current * current;
+    // 深度値を取得.
+    float currDepth = GetDepth(currUV);
+    float prevDepth = GetDepth(currUV + (velocity - PrevJitter) / MapSize);
+    float depthDelta = step(currDepth, prevDepth);
 
-    int i;
+    // 前フレームのテクスチャ座標を計算.
+    float2 prevUV = currUV + velocity / MapSize;
 
-    [unroll]
-    for(i=0; i<8; ++i)
+    // 画面内かどうか?
+    float inScreen = (all(0.0f.xx <= prevUV) && all(prevUV < 1.0f.xx)) ? 1.0f : 0.0f;
+
+    // ヒストリーが有効かどうかチェックする.
+    // 速度の差分，深度の差分，画面範囲であるか，いずれかすくなくとも１つがゼロなら無効と判断.
+    bool isValidHistory = (velocityDelta * depthDelta * inScreen) > 0.0f;
+
+    float4 finalColor;
+
+    // ヒストリーバッファが有効な場合.
+    [branch]
+    if (isValidHistory)
     {
-        float3 fetch = RGBToYCoCg(ColorMap.SampleLevel(ColorSmp, currentUV, 0.0f, Offsets[i]).rgb);
-        colorAve += fetch;
-        colorVar += fetch * fetch;
+        // 生のヒストリーカラーを取得.
+        float4 rawHistoryColor = GetHistoryColor(prevUV);
+
+        // クリップ済みヒストリーカラーを取得する.
+        float3 historyColor = ClipHistoryColor(prevUV, currColor, rawHistoryColor.rgb, Gamma);
+
+        // 重みを求める.
+        float weight = rawHistoryColor.a * velocityDelta * depthDelta;
+
+        // 現在カラーとヒストリーカラーをブレンドして最終カラーを求める.
+        finalColor = GetFinalColor(currUV, currColor, historyColor, weight);
     }
-    const float oneOverNine = 1.0f / 9.0f;
-    colorAve *= oneOverNine;
-    colorVar *= oneOverNine;
-
-    float3 sigma = sqrt(max(0, colorVar - colorAve * colorAve));
-    float3 colorMin = colorAve - Gamma * sigma;
-    float3 colorMax = colorAve + Gamma * sigma;
-
-    // 最も長い速度ベクトルを見つける.
-    float2 velocity = VelocityMap.SampleLevel(VelocitySmp, input.TexCoord, 0).xy;
-    [unroll]
-    for(i=0; i<8; ++i)
+    else
     {
-        const float2 v = VelocityMap.SampleLevel(VelocitySmp, input.TexCoord, 0, Offsets[i]).xy;
-        velocity = (dot(v, v) > dot(velocity, velocity)) ? v : velocity;
+        // ヒストリーバッファが無効な場合は隣接ピクセルを考慮して最終カラーを求める.
+        float3 neighborColor = GetCurrentNeighborColor(currUV, currColor);
+        finalColor = float4(neighborColor, 0.5f);
     }
 
-    float2 historyUV = saturate(input.TexCoord + velocity);
-    float3 history = RGBToYCoCg(BicubicSampleCatmullRom(HistoryMap, HistorySmp, historyUV, HistoryMapSize));
+    // 出力データ作成.
+    PSOutput output = (PSOutput)0;
+    output.Color = finalColor;
 
-    // Box Clipping.
-    history = clamp(history, colorMin, colorMax);
-
-    // ブレンド率.
-    // TODO : 深度やマスクに応じて棄却処理を実装する.
-    float alpha = BlendFactor;
-
-    output.Color = float4(YCoCgToRGB(lerp(current, history, alpha)), 1.0f);
-
-    // TAA自体の実行速度を上げるため，ここではHistoryMapの更新は行いません.
-    // HistoryMapの更新はこのシェーダを実行した後に，CopyResource()等で行ってください.
+    // 出力.
     return output;
 }

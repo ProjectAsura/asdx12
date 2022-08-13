@@ -631,23 +631,6 @@ float3 EvaluateDirectLightClearCoat
 }
 
 //-----------------------------------------------------------------------------
-//      GGX BRDFの形状にもとづくサンプリングを行います.
-//-----------------------------------------------------------------------------
-float3 SampleGGX(float2 u, float a)
-{
-    // a = linearRoughness * linearRoughness とします.
-    float phi = 2.0 * F_PI * u.x;
-    float cosTheta = sqrt( (1.0 - u.y) / (u.y * (a * a - 1.0) + 1.0) );
-    float sinTheta = sqrt( 1.0 - cosTheta * cosTheta );
-
-    // PDF = D * NdotH / (4.0f * LdotH);
-    return float3(
-        sinTheta * cos(phi),
-        sinTheta * sin(phi),
-        cosTheta);
-}
-
-//-----------------------------------------------------------------------------
 //      Lambert BRDFの形状にもとづくサンプリングを行います.
 //-----------------------------------------------------------------------------
 float3 SampleLambert(float2 u)
@@ -667,6 +650,23 @@ float3 SamplePhong(float2 u, float shininess)
 
     // PDF = normalizationTerm * pow(cosTheta, shininess)
     //     = ((1.0f + shininess) / (2.0f * F_PI)) * pow(cosTheta, shininess)
+    return float3(
+        sinTheta * cos(phi),
+        sinTheta * sin(phi),
+        cosTheta);
+}
+
+//-----------------------------------------------------------------------------
+//      GGX BRDFの形状にもとづくサンプリングを行います.
+//-----------------------------------------------------------------------------
+float3 SampleGGX(float2 u, float a)
+{
+    // a = linearRoughness * linearRoughness とします.
+    float phi = 2.0 * F_PI * u.x;
+    float cosTheta = sqrt( (1.0 - u.y) / (u.y * (a * a - 1.0) + 1.0) );
+    float sinTheta = sqrt( 1.0 - cosTheta * cosTheta );
+
+    // PDF = D * NdotH / (4.0f * LdotH);
     return float3(
         sinTheta * cos(phi),
         sinTheta * sin(phi),

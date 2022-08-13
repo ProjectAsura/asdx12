@@ -241,8 +241,6 @@ bool ColorTarget::Init(const TargetDesc* pDesc)
             ELOG( "Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr );
             return false;
         }
-
-        m_pResource->SetName(L"asdxColorTarget");
     }
 
 #if ASDX_IS_SCARLETT
@@ -515,6 +513,15 @@ TargetDesc ColorTarget::GetDesc() const
 bool ColorTarget::IsSRGB() const
 { return IsSRGBFormat(m_Desc.Format); }
 
+//-----------------------------------------------------------------------------
+//      デバッグ名を設定します.
+//-----------------------------------------------------------------------------
+void ColorTarget::SetName(LPCWSTR tag)
+{
+    if (m_pResource)
+    { m_pResource->SetName(tag); }
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // DepthTarget class
 ///////////////////////////////////////////////////////////////////////////////
@@ -591,8 +598,6 @@ bool DepthTarget::Init(const TargetDesc* pDesc)
             ELOG( "Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr );
             return false;
         }
-
-        m_pResource->SetName(L"asdxDepthTarget");
     }
 
     #if ASDX_IS_SCARLETT
@@ -741,6 +746,15 @@ const IShaderResourceView* DepthTarget::GetSRV() const
 TargetDesc DepthTarget::GetDesc() const
 { return m_Desc; }
 
+//-----------------------------------------------------------------------------
+//      デバッグ名を設定します.
+//-----------------------------------------------------------------------------
+void DepthTarget::SetName(LPCWSTR tag)
+{
+    if (m_pResource)
+    { m_pResource->SetName(tag); }
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // ComputeTarget class
@@ -815,8 +829,6 @@ bool ComputeTarget::Init(const TargetDesc* pDesc, uint32_t stride)
             ELOG( "Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr );
             return false;
         }
-
-        m_pResource->SetName(L"asdxComputeTarget");
     }
 
 #if ASDX_IS_SCARLETT
@@ -975,5 +987,14 @@ const IShaderResourceView* ComputeTarget::GetSRV() const
 //-----------------------------------------------------------------------------
 TargetDesc ComputeTarget::GetDesc() const
 { return m_Desc; }
+
+//-----------------------------------------------------------------------------
+//      デバッグ名を設定します.
+//-----------------------------------------------------------------------------
+void ComputeTarget::SetName(LPCWSTR tag)
+{
+    if (m_pResource)
+    { m_pResource->SetName(tag); }
+}
 
 } // namespace asdx

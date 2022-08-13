@@ -57,15 +57,17 @@ public:
     //! @param[in]      pCurrentColorMap    カレントカラーマップです.
     //! @param[in]      pHistoryColorMap    ヒストリーカラーマップです.
     //! @param[in]      pVelocityMap        速度マップです.
+    //! @param[in]      pDepthMap           深度マップです.
     //! @param[in]      gamma               ガンマ.
     //! @param[in]      alpha               ブレンド値です.
     //-------------------------------------------------------------------------
     void Render(
         ID3D12GraphicsCommandList*  pCmdList,
-        IRenderTargetView*          pRenderTargetView,
-        IShaderResourceView*        pCurrentColorMap,
-        IShaderResourceView*        pHistoryColorMap,
-        IShaderResourceView*        pVelocityMap,
+        const IRenderTargetView*    pRenderTargetView,
+        const IShaderResourceView*  pCurrentColorMap,
+        const IShaderResourceView*  pHistoryColorMap,
+        const IShaderResourceView*  pVelocityMap,
+        const IShaderResourceView*  pDepthMap,
         float                       gamma,
         float                       alpha);
 

@@ -370,6 +370,21 @@ float ToViewDepth(float linearDepth, float farClip)
 { return linearDepth * farClip; }
 
 //-----------------------------------------------------------------------------
+//      ビュー空間から射影空間に変換します.
+//-----------------------------------------------------------------------------
+float3 ToProjPos(float3 viewPos, float4 param)
+{
+    // param.x = 1.0f / proj[0][0];
+    // param.y = 1.0f / proj[1][1];
+    // param.z = nearClip;
+    // param.w = farClip;
+    return float3(
+        -viewPos.x / (viewPos.z * param.x),
+        -viewPos.y / (viewPos.z * param.y),
+        -(param.w / (param.z - param.w)) * (1.0f + (param.z / viewPos.z)));
+}
+
+//-----------------------------------------------------------------------------
 //      ビュー空間位置からテクスチャ座標を求めます.
 //-----------------------------------------------------------------------------
 float2 ToTexCoord(float3 viewPos, float2 param)
@@ -424,6 +439,30 @@ float2 Hammersley(uint i, uint N)
 {
     float ri = reversebits(i) * 2.3283064365386963e-10f;
     return float2(float(i) / float(N), ri);
+}
+
+//-----------------------------------------------------------------------------
+//      R1数列.
+//-----------------------------------------------------------------------------
+float R1Sequence(float number)
+{
+    // Martin Roberts, "The Unreasonable Effectiveness of Quasirandom Sequences", 2018
+    // http://extremelearning.com.au/unreasonable-effectiveness-of-quasirandom-sequences/
+
+    // g  = 1.6180339887498948482;
+    // a1 = 1 / g = 0.6180339887498948482
+    return frac(0.5f + number * 0.6180339887498948482);
+}
+
+//-----------------------------------------------------------------------------
+//      R2数列.
+//-----------------------------------------------------------------------------
+float2 R2Sequence(float number)
+{
+    // g = 1.32471795724474602596
+    // a1 = 1 / g       = 0.75487766624669276005
+    // a2 = 1 / (g * g) = 0.5698402909980532659114;
+    return frac(0.5f.xx + number * float2(0.75487766624669276005, 0.5698402909980532659114));
 }
 
 //-----------------------------------------------------------------------------
@@ -1683,6 +1722,9 @@ float2 ToSphereMapCoord(float3 reflectDir)
     return float2(phi * F_1DIV2PI, theta * F_1DIVPI);
 }
 
+//-----------------------------------------------------------------------------
+//      スフィアマップのテクスチャ座標からキューブマップサンプリング方向を求めます.
+//-----------------------------------------------------------------------------
 float3 FromSphereMapCoord(float2 uv)
 {
     float phi   = uv.x * F_2PI;
