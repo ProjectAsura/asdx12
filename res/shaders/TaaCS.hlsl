@@ -1,5 +1,5 @@
 ﻿//-----------------------------------------------------------------------------
-// File : TemporalAA_PS.hlsl
+// File : TaaCS.hlsl
 // Desc : Temporal Anti-Alias.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
@@ -15,23 +15,6 @@
 static const float kVarianceIntersectionMaxT  = 100.0f;
 static const float kFrameVelocityInPixelsDiff = 256.0f; // 1920 x 1080.
 
-
-///////////////////////////////////////////////////////////////////////////////
-// VSOutput structure
-///////////////////////////////////////////////////////////////////////////////
-struct VSOutput
-{
-    float4 Position : SV_POSITION;
-    float2 TexCoord : TEXCOORD;
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// PSOutput structure
-///////////////////////////////////////////////////////////////////////////////
-struct PSOutput
-{
-    float4 Color   : SV_TARGET0;
-};
 
 ///////////////////////////////////////////////////////////////////////////////
 // CbTemporalAA constant buffer.
@@ -53,6 +36,7 @@ Texture2D           ColorMap    : register(t0);
 Texture2D           HistoryMap  : register(t1);
 Texture2D<float2>   VelocityMap : register(t2);
 Texture2D<float>    DepthMap    : register(t3);
+RWTexture2D<float4> OutputMap   : register(u0);
 SamplerState        PointClamp  : register(s0);
 SamplerState        LinearClamp : register(s1);
 
@@ -95,7 +79,7 @@ float3 YCoCgToRGB( float3 YCoCg )
 //-----------------------------------------------------------------------------
 //      Catmull-Rom フィルタリング.
 //-----------------------------------------------------------------------------
-float4 BicubicSampleCatmullRom(Texture2D map, SamplerState smp, float2 uv)
+float4 BicubicSampleCatmullRom(Texture2D map, SamplerState smp, float2 uv, float2 mapSize)
 {
     float2 samplePos = uv * MapSize;
     float2 tc = floor(samplePos - 0.5f) + 0.5f;
@@ -141,7 +125,7 @@ float3 GetCurrentColor(float2 uv)
 //      ヒストリーカラーを取得します.
 //-----------------------------------------------------------------------------
 float4 GetHistoryColor(float2 uv)
-{ return BicubicSampleCatmullRom(HistoryMap, LinearClamp, uv); }
+{ return BicubicSampleCatmullRom(HistoryMap, LinearClamp, uv, MapSize); }
 
 //-----------------------------------------------------------------------------
 //      速度ベクトルを取得します.
@@ -251,9 +235,14 @@ float3 GetCurrentNeighborColor(float2 uv, float3 currentColor)
 //-----------------------------------------------------------------------------
 //      メインエントリーポイントです.
 //-----------------------------------------------------------------------------
-PSOutput main(const VSOutput input)
+[numthreads(8, 8, 1)]
+void main(uint3 dispatchId : SV_DispatchThreadID)
 {
-    const float2 currUV = input.TexCoord;
+    if (any(dispatchId.xy >= (uint2)MapSize)) {
+        return;
+    }
+
+    const float2 currUV = (float2)dispatchId.xy / MapSize;
 
     // 現在フレームのカラー.
     float3 currColor = GetCurrentColor(currUV);
@@ -266,7 +255,7 @@ PSOutput main(const VSOutput input)
     float  velocityDelta = saturate(1.0f - length(velocity) / (kFrameVelocityInPixelsDiff * sizeScale));
 
     // 前フレームのテクスチャ座標を計算.
-    float2 prevUV = currUV + (velocity * InvMapSize);
+    float2 prevUV = currUV + (velocity / MapSize);
 
     // 深度値を取得.
     float currDepth = GetCurrentDepth(currUV);
@@ -305,10 +294,6 @@ PSOutput main(const VSOutput input)
         finalColor = float4(neighborColor, 0.5f);
     }
 
-    // 出力データ作成.
-    PSOutput output = (PSOutput)0;
-    output.Color = finalColor;
-
     // 出力.
-    return output;
+    OutputMap[dispatchId.xy] = finalColor;
 }

@@ -37,13 +37,18 @@ public:
     //=========================================================================
 
     //-------------------------------------------------------------------------
-    //! @brief      初期化処理を行います.
+    //! @brief      ピクセルシェーダ用初期化処理を行います.
     //! 
     //! @param[in]      format      出力レンダーターゲットのフォーマット.
     //! @retval true    初期化に成功.
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
-    bool Init(DXGI_FORMAT format);
+    bool InitPS(DXGI_FORMAT format);
+
+    //-------------------------------------------------------------------------
+    //! @brief      コンピュートシェーダ用初期化処理を行います.
+    //-------------------------------------------------------------------------
+    bool InitCS();
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.
@@ -51,7 +56,7 @@ public:
     void Term();
 
     //-------------------------------------------------------------------------
-    //! @brief      描画処理を行います.
+    //! @brief      ピクセルシェーダを用いて描画処理を行います.
     //! 
     //! @param[in]      pCmdList            コマンドリストです.
     //! @param[in]      pRenderTargetView   レンダーターゲットビューです.
@@ -61,10 +66,9 @@ public:
     //! @param[in]      pDepthMap           深度マップです.
     //! @param[in]      gamma               ガンマ.
     //! @param[in]      alpha               ブレンド値です.
-    //! @param[in]      currJitter          現在フレーム用のジッタ―値です.
-    //! @param[in]      prevJitter          前フレームのジッタ―値です.
+    //! @param[in]      jitter              現在フレーム用のジッタ―値です.
     //-------------------------------------------------------------------------
-    void Render(
+    void RenderPS(
         ID3D12GraphicsCommandList*  pCmdList,
         const IRenderTargetView*    pRenderTargetView,
         const IShaderResourceView*  pCurrentColorMap,
@@ -73,15 +77,49 @@ public:
         const IShaderResourceView*  pDepthMap,
         float                       gamma,
         float                       alpha,
-        const asdx::Vector2&        currJitter,
-        const asdx::Vector2&        prevJitter);
+        const asdx::Vector2&        jitter);
+
+    //-------------------------------------------------------------------------
+    //! @brief      コンピュートシェーダを用いて描画処理を行います.
+    //! 
+    //! @param[in]      pCmdList                コマンドリストです.
+    //! @param[in]      pUnorderedAccessView    レンダーターゲットビューです.
+    //! @param[in]      pCurrentColorMap        カレントカラーマップです.
+    //! @param[in]      pHistoryColorMap        ヒストリーカラーマップです.
+    //! @param[in]      pVelocityMap            速度マップです.
+    //! @param[in]      pDepthMap               深度マップです.
+    //! @param[in]      gamma                   ガンマ.
+    //! @param[in]      alpha                   ブレンド値です.
+    //! @param[in]      jitter                  現在フレーム用のジッタ―値です.
+    //-------------------------------------------------------------------------
+    void RenderCS(
+        ID3D12GraphicsCommandList*  pCmdList,
+        const IUnorderedAccessView* pUnorderedAccessView,
+        const IShaderResourceView*  pCurrentColorMap,
+        const IShaderResourceView*  pHistoryColorMap,
+        const IShaderResourceView*  pVelocityMap,
+        const IShaderResourceView*  pDepthMap,
+        float                       gamma,
+        float                       alpha,
+        const asdx::Vector2&        jitter);
+
+    //-------------------------------------------------------------------------
+    //! @brief      ジッタ―値を計算します.
+    //! 
+    //! @param[in]      index           フレームインデックス.
+    //! @param[in]      w               レンダーターゲットの横幅.
+    //! @param[in]      h               レンダーターゲットの縦幅.
+    //-------------------------------------------------------------------------
+    static asdx::Vector2 CalcJitter(uint32_t index, uint32_t w, uint32_t h);
 
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    RootSignature   m_RootSig;
-    PipelineState   m_PipelineState;
+    RootSignature   m_RootSigPS;
+    RootSignature   m_RootSigCS;
+    PipelineState   m_PipelineStatePS;
+    PipelineState   m_PipelineStateCS;
 
     //=========================================================================
     // private methods.
