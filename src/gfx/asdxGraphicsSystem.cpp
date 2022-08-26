@@ -353,7 +353,7 @@ bool GraphicsSystem::Init(const DeviceDesc& deviceDesc)
     {
         RefPtr<IDXGIAdapter1> pAdapter;
         for(auto adapterId=0;
-            DXGI_ERROR_NOT_FOUND != m_pFactory->EnumAdapterByGpuPreference(adapterId, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(pAdapter.GetAddress()));
+            DXGI_ERROR_NOT_FOUND != m_pFactory->EnumAdapterByGpuPreference(adapterId, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(pAdapter.ReleaseAndGetAddress()));
             adapterId++)
         {
             DXGI_ADAPTER_DESC1 desc;
@@ -365,10 +365,7 @@ bool GraphicsSystem::Init(const DeviceDesc& deviceDesc)
             if (SUCCEEDED(hr))
             {
                 if (m_pAdapter.GetPtr() == nullptr)
-                {
-                    m_pAdapter = pAdapter.GetPtr();
-                    m_pAdapter->AddRef();
-                }
+                { m_pAdapter = pAdapter.GetPtr(); }
 
                 RefPtr<IDXGIOutput> pOutput;
                 hr = pAdapter->EnumOutputs(0, pOutput.GetAddress());
@@ -416,9 +413,24 @@ bool GraphicsSystem::Init(const DeviceDesc& deviceDesc)
                 if (deviceDesc.EnableBreakOnWarning)
                 { m_pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE); }
 
-                // クリア値が違うという警告は無効化しておく.
-                m_pInfoQueue->SetBreakOnID(D3D12_MESSAGE_ID_CLEARRENDERTARGETVIEW_MISMATCHINGCLEARVALUE, FALSE);
-                m_pInfoQueue->SetBreakOnID(D3D12_MESSAGE_ID_CLEARDEPTHSTENCILVIEW_MISMATCHINGCLEARVALUE, FALSE);
+                // 無視するメッセージID.
+                D3D12_MESSAGE_ID denyIds[] = {
+                    D3D12_MESSAGE_ID_CLEARRENDERTARGETVIEW_MISMATCHINGCLEARVALUE,
+                    D3D12_MESSAGE_ID_CLEARDEPTHSTENCILVIEW_MISMATCHINGCLEARVALUE,
+                };
+
+                // 無視するメッセージレベル.
+                D3D12_MESSAGE_SEVERITY severities[] = {
+                    D3D12_MESSAGE_SEVERITY_INFO
+                };
+
+                D3D12_INFO_QUEUE_FILTER filter = {};
+                filter.DenyList.NumIDs          = _countof(denyIds);
+                filter.DenyList.pIDList         = denyIds;
+                filter.DenyList.NumSeverities   = _countof(severities);
+                filter.DenyList.pSeverityList   = severities;
+
+                m_pInfoQueue->PushStorageFilter(&filter);
             }
         }
     }
@@ -555,6 +567,7 @@ void GraphicsSystem::Term()
     m_pDevice   .Reset();
     m_pInfoQueue.Reset();
     m_pDebug    .Reset();
+    m_pAdapter  .Reset();
     m_pFactory  .Reset();
 }
 
