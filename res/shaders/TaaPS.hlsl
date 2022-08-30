@@ -31,6 +31,7 @@ struct VSOutput
 struct PSOutput
 {
     float4 Color   : SV_TARGET0;
+    float4 History : SV_TARGET1;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -307,7 +308,8 @@ PSOutput main(const VSOutput input)
 
     // 出力データ作成.
     PSOutput output = (PSOutput)0;
-    output.Color = finalColor;
+    output.Color   = float4(finalColor.rgb, 1.0f);
+    output.History = finalColor;
 
     // 出力.
     return output;

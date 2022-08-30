@@ -59,7 +59,8 @@ public:
     //! @brief      ピクセルシェーダを用いて描画処理を行います.
     //! 
     //! @param[in]      pCmdList            コマンドリストです.
-    //! @param[in]      pRenderTargetView   レンダーターゲットビューです.
+    //! @param[in]      pColorRTV           出力カラーレンダーターゲットビューです.
+    //! @param[in]      pHistoryRTV         出力ヒストリーレンダーターゲットビューです.
     //! @param[in]      pCurrentColorMap    カレントカラーマップです.
     //! @param[in]      pHistoryColorMap    ヒストリーカラーマップです.
     //! @param[in]      pVelocityMap        速度マップです.
@@ -70,7 +71,8 @@ public:
     //-------------------------------------------------------------------------
     void RenderPS(
         ID3D12GraphicsCommandList*  pCmdList,
-        const IRenderTargetView*    pRenderTargetView,
+        const IRenderTargetView*    pColorRTV,
+        const IRenderTargetView*    pHistoryRTV,
         const IShaderResourceView*  pCurrentColorMap,
         const IShaderResourceView*  pHistoryColorMap,
         const IShaderResourceView*  pVelocityMap,
@@ -83,7 +85,8 @@ public:
     //! @brief      コンピュートシェーダを用いて描画処理を行います.
     //! 
     //! @param[in]      pCmdList                コマンドリストです.
-    //! @param[in]      pUnorderedAccessView    レンダーターゲットビューです.
+    //! @param[in]      pColorUAV               出力カラーアンオーダードアクセスビューです.
+    //! @param[in]      pHistoryUAV             出力ヒストリーアンオーダードアクセスビューです.
     //! @param[in]      pCurrentColorMap        カレントカラーマップです.
     //! @param[in]      pHistoryColorMap        ヒストリーカラーマップです.
     //! @param[in]      pVelocityMap            速度マップです.
@@ -94,7 +97,8 @@ public:
     //-------------------------------------------------------------------------
     void RenderCS(
         ID3D12GraphicsCommandList*  pCmdList,
-        const IUnorderedAccessView* pUnorderedAccessView,
+        const IUnorderedAccessView* pColorUAV,
+        const IUnorderedAccessView* pHistoryUVA,
         const IShaderResourceView*  pCurrentColorMap,
         const IShaderResourceView*  pHistoryColorMap,
         const IShaderResourceView*  pVelocityMap,

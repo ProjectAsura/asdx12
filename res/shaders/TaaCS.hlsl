@@ -32,13 +32,14 @@ cbuffer CbTemporalAA : register(b0)
 //-----------------------------------------------------------------------------
 // Textures and Samplers.
 //-----------------------------------------------------------------------------
-Texture2D           ColorMap    : register(t0);
-Texture2D           HistoryMap  : register(t1);
-Texture2D<float2>   VelocityMap : register(t2);
-Texture2D<float>    DepthMap    : register(t3);
-RWTexture2D<float4> OutputMap   : register(u0);
-SamplerState        PointClamp  : register(s0);
-SamplerState        LinearClamp : register(s1);
+Texture2D           ColorMap        : register(t0);
+Texture2D           HistoryMap      : register(t1);
+Texture2D<float2>   VelocityMap     : register(t2);
+Texture2D<float>    DepthMap        : register(t3);
+RWTexture2D<float4> OutColorMap     : register(u0);
+RWTexture2D<float4> OutHistoryMap   : register(u1);
+SamplerState        PointClamp      : register(s0);
+SamplerState        LinearClamp     : register(s1);
 
 //-----------------------------------------------------------------------------
 // Constant Values.
@@ -295,5 +296,6 @@ void main(uint3 dispatchId : SV_DispatchThreadID)
     }
 
     // 出力.
-    OutputMap[dispatchId.xy] = finalColor;
+    OutColorMap  [dispatchId.xy] = float4(finalColor.rgb, 1.0f);
+    OutHistoryMap[dispatchId.xy] = finalColor;
 }

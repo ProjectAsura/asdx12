@@ -86,7 +86,7 @@ bool TaaRenderer::InitPS(DXGI_FORMAT format)
         layout.SetTableSRV(3, SV_PS, 2);
         layout.SetTableSRV(4, SV_PS, 3);
 
-        layout.SetStaticSampler(0, SV_PS, STATIC_SAMPLER_POINT_CLAMP, 0);
+        layout.SetStaticSampler(0, SV_PS, STATIC_SAMPLER_POINT_CLAMP,  0);
         layout.SetStaticSampler(1, SV_PS, STATIC_SAMPLER_LINEAR_CLAMP, 1);
         layout.SetFlags(D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
@@ -134,15 +134,16 @@ bool TaaRenderer::InitCS()
 
     // ルートシグニチャの生成.
     {
-        DescriptorSetLayout<6, 2> layout;
+        DescriptorSetLayout<7, 2> layout;
         layout.SetContants(0, SV_ALL, 8, 0);
         layout.SetTableSRV(1, SV_ALL, 0);
         layout.SetTableSRV(2, SV_ALL, 1);
         layout.SetTableSRV(3, SV_ALL, 2);
         layout.SetTableSRV(4, SV_ALL, 3);
         layout.SetTableUAV(5, SV_ALL, 0);
+        layout.SetTableUAV(6, SV_ALL, 1);
 
-        layout.SetStaticSampler(0, SV_ALL, STATIC_SAMPLER_POINT_CLAMP, 0);
+        layout.SetStaticSampler(0, SV_ALL, STATIC_SAMPLER_POINT_CLAMP,  0);
         layout.SetStaticSampler(1, SV_ALL, STATIC_SAMPLER_LINEAR_CLAMP, 1);
 
         if (!m_RootSigCS.Init(pDevice, layout.GetDesc()))
@@ -188,7 +189,8 @@ void TaaRenderer::Term()
 void TaaRenderer::RenderPS
 (
     ID3D12GraphicsCommandList*  pCmdList,
-    const IRenderTargetView*    pRTV,
+    const IRenderTargetView*    pColorRTV,
+    const IRenderTargetView*    pHistoryRTV,
     const IShaderResourceView*  pCurrentColorSRV,
     const IShaderResourceView*  pHistoryColorSRV,
     const IShaderResourceView*  pVelocitySRV,
@@ -225,11 +227,14 @@ void TaaRenderer::RenderPS
     scissor.right   = LONG(param.MapSize.x);
     scissor.bottom  = LONG(param.MapSize.y);
 
-    auto handleRTV = pRTV->GetHandleCPU();
+    D3D12_CPU_DESCRIPTOR_HANDLE handleRTV[] = {
+        pColorRTV->GetHandleCPU(),
+        pHistoryRTV->GetHandleCPU()
+    };
 
     pCmdList->RSSetViewports(1, &viewport);
     pCmdList->RSSetScissorRects(1, &scissor);
-    pCmdList->OMSetRenderTargets(1, &handleRTV, FALSE, nullptr);
+    pCmdList->OMSetRenderTargets(_countof(handleRTV), handleRTV, FALSE, nullptr);
 
     pCmdList->SetGraphicsRootSignature(m_RootSigPS.GetPtr());
     pCmdList->SetPipelineState(m_PipelineStatePS.GetPtr());
@@ -247,7 +252,8 @@ void TaaRenderer::RenderPS
 void TaaRenderer::RenderCS
 (
     ID3D12GraphicsCommandList*  pCmdList,
-    const IUnorderedAccessView* pUAV,
+    const IUnorderedAccessView* pColorUAV,
+    const IUnorderedAccessView* pHistoryUAV,
     const IShaderResourceView*  pCurrentColorSRV,
     const IShaderResourceView*  pHistoryColorSRV,
     const IShaderResourceView*  pVelocitySRV,
@@ -257,7 +263,7 @@ void TaaRenderer::RenderCS
     const asdx::Vector2&        jitter
 )
 {
-    auto desc = pUAV->GetResource()->GetDesc();
+    auto desc = pColorUAV->GetResource()->GetDesc();
     auto w = uint32_t(desc.Width);
     auto h = desc.Height;
 
@@ -280,7 +286,8 @@ void TaaRenderer::RenderCS
     pCmdList->SetComputeRootDescriptorTable(2, pHistoryColorSRV->GetHandleGPU());
     pCmdList->SetComputeRootDescriptorTable(3, pVelocitySRV->GetHandleGPU());
     pCmdList->SetComputeRootDescriptorTable(4, pDepthSRV->GetHandleGPU());
-    pCmdList->SetComputeRootDescriptorTable(5, pUAV->GetHandleGPU());
+    pCmdList->SetComputeRootDescriptorTable(5, pColorUAV->GetHandleGPU());
+    pCmdList->SetComputeRootDescriptorTable(6, pHistoryUAV->GetHandleGPU());
     pCmdList->Dispatch(threadX, threadY, 1);
 }
 
