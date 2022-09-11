@@ -512,7 +512,7 @@ bool Application::InitApp()
     }
 
     // ウィンドウの初期化.
-    if ( !InitWnd() )
+    if ( m_CreateWindow && !InitWnd() )
     {
         DLOG( "Error : InitWnd() Failed." );
         return false;
@@ -558,7 +558,8 @@ void Application::TermApp()
     TermD3D();
 
     // ウィンドウの終了処理.
-    TermWnd();
+    if (m_CreateWindow)
+    { TermWnd(); }
 
     // COMライブラリの終了処理.
     CoUninitialize();
@@ -705,144 +706,161 @@ bool Application::InitD3D()
         return false;
     }
 
-    auto format = GetNoSRGBFormat(m_SwapChainFormat);
-
-    std::vector<DisplayInfo> infos;
-    GetSupportDisplayInfo(format, infos);
-
-    auto detect = false;
-    DisplayInfo supportedInfo = {};
-
-    for(auto& info : infos)
+    if (m_CreateWindow)
     {
-        if (info.Width == m_Width && info.Height == m_Height)
-        {
-            detect = true;
-            supportedInfo = info;
-            break;
-        }
-    }
+        auto format = GetNoSRGBFormat(m_SwapChainFormat);
 
-    // 指定されている解像度がディスプレイでサポートされていない場合は，指定数未満で最大解像度を設定.
-    if (!detect)
-    {
+        std::vector<DisplayInfo> infos;
+        GetSupportDisplayInfo(format, infos);
+
+        auto detect = false;
+        DisplayInfo supportedInfo = {};
+
         for(auto& info : infos)
         {
-            if (info.Width <= m_Width && info.Height <= m_Height)
+            if (info.Width == m_Width && info.Height == m_Height)
             {
-                detect          = true;
-                supportedInfo   = info;
+                detect = true;
+                supportedInfo = info;
                 break;
             }
         }
-    }
 
-    // それでも見つからなければエラーとする.
-    if (!detect)
-    {
-        ELOGA("Error : Not Found Supported Resolution.");
-        return false;
-    }
-
-    // ウィンドウサイズを取得します.
-    RECT rc;
-    GetClientRect( m_hWnd, &rc );
-    UINT w = rc.right  - rc.left;
-    UINT h = rc.bottom - rc.top;
-
-    // 取得したサイズを設定します.
-    m_Width       = w;
-    m_Height      = h;
-
-    // アスペクト比を算出します.
-    m_AspectRatio = (FLOAT)supportedInfo.Width / (FLOAT)supportedInfo.Height;
-
-    // スワップチェインの初期化
-    {
-        // スワップチェインの構成設定.
-        DXGI_SWAP_CHAIN_DESC1 desc = {};
-        desc.Width              = supportedInfo.Width;
-        desc.Height             = supportedInfo.Height;
-        desc.Format             = format;
-        desc.Stereo             = FALSE;
-        desc.SampleDesc.Count   = m_MultiSampleCount;
-        desc.SampleDesc.Quality = m_MultiSampleQuality;
-        desc.BufferCount        = m_SwapChainCount;
-        desc.Scaling            = DXGI_SCALING_STRETCH;
-        desc.SwapEffect         = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-        desc.Flags              = (m_AllowTearing) ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
-
-        DXGI_SWAP_CHAIN_FULLSCREEN_DESC fullScreenDesc = {};
-        fullScreenDesc.RefreshRate      = supportedInfo.RefreshRate;
-        fullScreenDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
-        fullScreenDesc.Scaling          = DXGI_MODE_SCALING_STRETCHED;
-        fullScreenDesc.Windowed         = TRUE;
-
-        RefPtr<IDXGISwapChain1> pSwapChain1;
-        auto pQueue = GetGraphicsQueue()->GetQueue();
-        hr = GetDXGIFactory()->CreateSwapChainForHwnd(pQueue, m_hWnd, &desc, &fullScreenDesc, nullptr, pSwapChain1.GetAddress());
-        if (FAILED(hr))
+        // 指定されている解像度がディスプレイでサポートされていない場合は，指定数未満で最大解像度を設定.
+        if (!detect)
         {
-            ELOG("Error : IDXGIFactory2::CreateSwapChainForHwnd() Failed. errcode = 0x%x", hr);
-            return false;
-        }
-
-        if (m_AllowTearing)
-        { GetDXGIFactory()->MakeWindowAssociation(m_hWnd, DXGI_MWA_NO_ALT_ENTER); }
-
-        // IDXGISwapChain4にキャスト.
-        hr = pSwapChain1->QueryInterface(IID_PPV_ARGS(m_pSwapChain4.GetAddress()));
-        if ( FAILED( hr ) )
-        {
-            m_pSwapChain4.Reset();
-            ELOG( "Warning : IDXGISwapChain4 Conversion Faild.");
-            return false;
-        }
-        else
-        {
-            wchar_t name[] = L"asdxSwapChain4\0";
-            m_pSwapChain4->SetPrivateData(WKPDID_D3DDebugObjectNameW, sizeof(name), name);
-
-            // HDR出力チェック.
-            CheckSupportHDR();
-        }
-    }
-
-    // カラーターゲットの初期化.
-    {
-        m_ColorTarget.resize(m_SwapChainCount);
-
-        for(auto i=0u; i<m_SwapChainCount; ++i)
-        {
-            if (!m_ColorTarget[i].Init(m_pSwapChain4.GetPtr(), i))
+            for(auto& info : infos)
             {
-                ELOG("Error : ColorTarget::Init() Failed.");
+                if (info.Width <= m_Width && info.Height <= m_Height)
+                {
+                    detect          = true;
+                    supportedInfo   = info;
+                    break;
+                }
+            }
+        }
+
+        // それでも見つからなければエラーとする.
+        if (!detect)
+        {
+            ELOGA("Error : Not Found Supported Resolution.");
+            return false;
+        }
+
+        // ウィンドウサイズを取得します.
+        RECT rc;
+        GetClientRect( m_hWnd, &rc );
+        UINT w = rc.right  - rc.left;
+        UINT h = rc.bottom - rc.top;
+
+        // 取得したサイズを設定します.
+        m_Width       = w;
+        m_Height      = h;
+
+        // アスペクト比を算出します.
+        m_AspectRatio = (FLOAT)supportedInfo.Width / (FLOAT)supportedInfo.Height;
+
+        // スワップチェインの初期化
+        {
+            // スワップチェインの構成設定.
+            DXGI_SWAP_CHAIN_DESC1 desc = {};
+            desc.Width              = supportedInfo.Width;
+            desc.Height             = supportedInfo.Height;
+            desc.Format             = format;
+            desc.Stereo             = FALSE;
+            desc.SampleDesc.Count   = m_MultiSampleCount;
+            desc.SampleDesc.Quality = m_MultiSampleQuality;
+            desc.BufferCount        = m_SwapChainCount;
+            desc.Scaling            = DXGI_SCALING_STRETCH;
+            desc.SwapEffect         = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+            desc.Flags              = (m_AllowTearing) ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
+
+            DXGI_SWAP_CHAIN_FULLSCREEN_DESC fullScreenDesc = {};
+            fullScreenDesc.RefreshRate      = supportedInfo.RefreshRate;
+            fullScreenDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+            fullScreenDesc.Scaling          = DXGI_MODE_SCALING_STRETCHED;
+            fullScreenDesc.Windowed         = TRUE;
+
+            RefPtr<IDXGISwapChain1> pSwapChain1;
+            auto pQueue = GetGraphicsQueue()->GetQueue();
+            hr = GetDXGIFactory()->CreateSwapChainForHwnd(pQueue, m_hWnd, &desc, &fullScreenDesc, nullptr, pSwapChain1.GetAddress());
+            if (FAILED(hr))
+            {
+                ELOG("Error : IDXGIFactory2::CreateSwapChainForHwnd() Failed. errcode = 0x%x", hr);
+                return false;
+            }
+
+            if (m_AllowTearing)
+            { GetDXGIFactory()->MakeWindowAssociation(m_hWnd, DXGI_MWA_NO_ALT_ENTER); }
+
+            // IDXGISwapChain4にキャスト.
+            hr = pSwapChain1->QueryInterface(IID_PPV_ARGS(m_pSwapChain4.GetAddress()));
+            if ( FAILED( hr ) )
+            {
+                m_pSwapChain4.Reset();
+                ELOG( "Warning : IDXGISwapChain4 Conversion Faild.");
+                return false;
+            }
+            else
+            {
+                wchar_t name[] = L"asdxSwapChain4\0";
+                m_pSwapChain4->SetPrivateData(WKPDID_D3DDebugObjectNameW, sizeof(name), name);
+
+                // HDR出力チェック.
+                CheckSupportHDR();
+            }
+        }
+
+        // カラーターゲットの初期化.
+        {
+            m_ColorTarget.resize(m_SwapChainCount);
+
+            for(auto i=0u; i<m_SwapChainCount; ++i)
+            {
+                if (!m_ColorTarget[i].Init(m_pSwapChain4.GetPtr(), i))
+                {
+                    ELOG("Error : ColorTarget::Init() Failed.");
+                    return false;
+                }
+            }
+        }
+
+        // 深度ターゲットの初期化.
+        {
+            TargetDesc desc;
+            desc.Dimension          = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+            desc.Alignment          = 0;
+            desc.Width              = supportedInfo.Width;
+            desc.Height             = supportedInfo.Height;
+            desc.DepthOrArraySize   = 1;
+            desc.MipLevels          = 1;
+            desc.Format             = m_DepthStencilFormat;
+            desc.SampleDesc.Count   = 1;
+            desc.SampleDesc.Quality = 0;
+            desc.InitState          = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+            desc.ClearDepth         = m_ClearDepth;
+            desc.ClearStencil       = m_ClearStencil;
+
+            if (!m_DepthTarget.Init(&desc))
+            {
+                ELOG("Error : DepthTarget::Init() Failed.");
                 return false;
             }
         }
-    }
 
-    // 深度ターゲットの初期化.
-    {
-        TargetDesc desc;
-        desc.Dimension          = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-        desc.Alignment          = 0;
-        desc.Width              = supportedInfo.Width;
-        desc.Height             = supportedInfo.Height;
-        desc.DepthOrArraySize   = 1;
-        desc.MipLevels          = 1;
-        desc.Format             = m_DepthStencilFormat;
-        desc.SampleDesc.Count   = 1;
-        desc.SampleDesc.Quality = 0;
-        desc.InitState          = D3D12_RESOURCE_STATE_DEPTH_WRITE;
-        desc.ClearDepth         = m_ClearDepth;
-        desc.ClearStencil       = m_ClearStencil;
+        // ビューポートの設定.
+        m_Viewport.Width    = (FLOAT)supportedInfo.Width;
+        m_Viewport.Height   = (FLOAT)supportedInfo.Height;
+        m_Viewport.MinDepth = 0.0f;
+        m_Viewport.MaxDepth = 1.0f;
+        m_Viewport.TopLeftX = 0;
+        m_Viewport.TopLeftY = 0;
 
-        if (!m_DepthTarget.Init(&desc))
-        {
-            ELOG("Error : DepthTarget::Init() Failed.");
-            return false;
-        }
+        // シザー矩形の設定.
+        m_ScissorRect.left   = 0;
+        m_ScissorRect.right  = supportedInfo.Width;
+        m_ScissorRect.top    = 0;
+        m_ScissorRect.bottom = supportedInfo.Height;
     }
 
     if (!m_GfxCmdList.Init(GetD3D12Device(), D3D12_COMMAND_LIST_TYPE_DIRECT))
@@ -857,20 +875,6 @@ bool Application::InitD3D()
         return false;
     }
 
-    // ビューポートの設定.
-    m_Viewport.Width    = (FLOAT)supportedInfo.Width;
-    m_Viewport.Height   = (FLOAT)supportedInfo.Height;
-    m_Viewport.MinDepth = 0.0f;
-    m_Viewport.MaxDepth = 1.0f;
-    m_Viewport.TopLeftX = 0;
-    m_Viewport.TopLeftY = 0;
-
-    // シザー矩形の設定.
-    m_ScissorRect.left   = 0;
-    m_ScissorRect.right  = supportedInfo.Width;
-    m_ScissorRect.top    = 0;
-    m_ScissorRect.bottom = supportedInfo.Height;
-
     return true;
 }
 
@@ -879,13 +883,14 @@ bool Application::InitD3D()
 //-----------------------------------------------------------------------------
 void Application::TermD3D()
 {
-    for(size_t i=0; i<m_ColorTarget.size(); ++i)
+    if (m_CreateWindow)
     {
-        m_ColorTarget[i].Term();
+        for(size_t i=0; i<m_ColorTarget.size(); ++i)
+        { m_ColorTarget[i].Term(); }
+        m_ColorTarget.clear();
+        m_DepthTarget.Term();
+        m_pSwapChain4.Reset();
     }
-    m_ColorTarget.clear();
-    m_DepthTarget.Term();
-    m_pSwapChain4.Reset();
     m_CopyCmdList.Term();
     m_GfxCmdList.Term();
     SystemTerm();
@@ -990,6 +995,13 @@ void Application::KeyEvent( const KeyEventArgs& param )
 //-----------------------------------------------------------------------------
 void Application::ResizeEvent( const ResizeEventArgs& param )
 {
+    m_Width       = param.Width;
+    m_Height      = param.Height;
+    m_AspectRatio = float(m_Width) / float(m_Height);
+
+    if (!m_CreateWindow)
+    { return; }
+
     if (m_pSwapChain4.GetPtr() == nullptr)
     { return; }
 
@@ -1349,6 +1361,9 @@ void Application::OnFrameRender( FrameEventArgs& )
 //-----------------------------------------------------------------------------
 void Application::Present( uint32_t syncInterval )
 {
+    if (!m_CreateWindow)
+    { return; }
+
     HRESULT hr = S_OK;
 
     // スタンバイモードかどうかチェック.
@@ -1421,6 +1436,9 @@ void Application::Present( uint32_t syncInterval )
 //-----------------------------------------------------------------------------
 void Application::CheckSupportHDR()
 {
+    if (m_CreateWindow)
+    { return; }
+
     HRESULT hr = S_OK;
 
     // ウィンドウ領域を取得.

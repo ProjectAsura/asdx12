@@ -219,6 +219,7 @@ protected:
     HINSTANCE                       m_hInst                 = nullptr;                          //!< インスタンスハンドルです.
     HWND                            m_hWnd                  = nullptr;                          //!< ウィンドウハンドルです.
     bool                            m_AllowTearing          = false;                            //!< ティアリングを許可するかどうか.
+    bool                            m_CreateWindow          = true;                             //!< ウィンドウの生成フラグ.
     uint32_t                        m_MultiSampleCount      = 1;                                //!< マルチサンプリングのカウント数です.
     uint32_t                        m_MultiSampleQuality    = 0;                                //!< マルチサンプリングの品質値です.
     uint32_t                        m_SwapChainCount        = 2;                                //!< スワップチェインのバッファ数です.
