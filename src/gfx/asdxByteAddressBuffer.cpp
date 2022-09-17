@@ -101,12 +101,17 @@ bool ByteAddressBuffer::Init(uint64_t size, D3D12_RESOURCE_STATES state)
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool ByteAddressBuffer::Init(CommandList& cmdList, uint64_t size, const void* pInitData)
+bool ByteAddressBuffer::Init
+(
+    ID3D12GraphicsCommandList*  pCmdList,
+    uint64_t                    size,
+    const void*                 pInitData
+)
 {
     if (!Init(size, D3D12_RESOURCE_STATE_GENERIC_READ))
     { return false; }
 
-    cmdList.UpdateBuffer(m_Resource.GetPtr(), pInitData);
+    UpdateBuffer(pCmdList, m_Resource.GetPtr(), pInitData);
 
     return true;
 }

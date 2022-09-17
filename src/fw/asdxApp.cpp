@@ -711,7 +711,7 @@ bool Application::InitD3D()
         auto format = GetNoSRGBFormat(m_SwapChainFormat);
 
         std::vector<DisplayInfo> infos;
-        GetSupportDisplayInfo(format, infos);
+        GetDisplayInfo(format, infos);
 
         auto detect = false;
         DisplayInfo supportedInfo = {};
@@ -1019,7 +1019,7 @@ void Application::ResizeEvent( const ResizeEventArgs& param )
     auto format = GetNoSRGBFormat(m_SwapChainFormat);
 
     std::vector<DisplayInfo> infos;
-    GetSupportDisplayInfo(format, infos);
+    GetDisplayInfo(format, infos);
 
     auto detect = false;
     DisplayInfo supportedInfo = {};

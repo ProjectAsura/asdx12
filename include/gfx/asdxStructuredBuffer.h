@@ -59,13 +59,14 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      初期化処理を行います.
     //!
+    //! @param[in]      pCmdList            コマンドリストです.
     //! @param[in]      count               配列数です.
     //! @param[in]      stride              構造体のサイズです.
     //! @param[in]      pInitData           初期化データです.
     //! @retval true    初期化に成功.
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
-    bool Init(CommandList& cmdList, uint64_t count, uint32_t stride, const void* pInitData);
+    bool Init(ID3D12GraphicsCommandList* pCmdList, uint64_t count, uint32_t stride, const void* pInitData);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.

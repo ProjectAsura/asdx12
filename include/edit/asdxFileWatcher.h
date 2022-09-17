@@ -15,6 +15,18 @@
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
+// ACTION_TYPE enum
+///////////////////////////////////////////////////////////////////////////////
+enum ACTION_TYPE
+{
+    ACTION_ADDED            = 0x1,      //!< ディレクトリにファイルが追加された.
+    ACTION_REMOVED          = 0x2,      //!< ディレクトリからファイルが削除された.
+    ACTION_MODIFIED         = 0x3,      //!< ファイルが変更された.
+    ACTION_RENAMED_OLD_NAME = 0x4,      //!< ファイルがリネームされ，通知される古いファイル名.
+    ACTION_RENAMED_NEW_NAME = 0x5,      //!< ファイルがリネームされ，通知される新しいファイル名.
+};
+
+///////////////////////////////////////////////////////////////////////////////
 // IFileUpdateListener interface
 ///////////////////////////////////////////////////////////////////////////////
 struct IFileUpdateListener
@@ -29,7 +41,7 @@ struct IFileUpdateListener
     //! @brief      ファイル更新時の処理です.
     //-------------------------------------------------------------------------
     virtual void OnUpdate(
-        uint32_t    actionType,
+        ACTION_TYPE actionType,
         const char* directoryPath,
         const char* relativePath) = 0;
 };

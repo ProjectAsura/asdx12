@@ -106,16 +106,16 @@ bool StructuredBuffer::Init(uint64_t count, uint32_t stride, D3D12_RESOURCE_STAT
 //-----------------------------------------------------------------------------
 bool StructuredBuffer::Init
 (
-    CommandList&        cmdList,
-    uint64_t            count,
-    uint32_t            stride,
-    const void*         pInitData
+    ID3D12GraphicsCommandList*  pCmdList,
+    uint64_t                    count,
+    uint32_t                    stride,
+    const void*                 pInitData
 )
 {
     if (!Init(count, stride, D3D12_RESOURCE_STATE_GENERIC_READ))
     { return false;  }
 
-    cmdList.UpdateBuffer(m_Resource.GetPtr(), pInitData);
+    UpdateBuffer(pCmdList, m_Resource.GetPtr(), pInitData);
 
     return true;
 }

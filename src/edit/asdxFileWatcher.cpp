@@ -178,7 +178,7 @@ struct Worker
                     }
 
                     // 通知.
-                    pListener->OnUpdate(pInfos->Action, DirectoryPath.c_str(), path.c_str());
+                    pListener->OnUpdate(asdx::ACTION_TYPE(pInfos->Action), DirectoryPath.c_str(), path.c_str());
 
                     // 次のエントリがなければ終了.
                     if (pInfos->NextEntryOffset == 0)
