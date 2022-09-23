@@ -11,6 +11,10 @@
 #include <dxgi1_6.h>
 #include <gfx/asdxView.h>
 
+#ifndef ENABLE_SINGLE_THREAD
+#define ENABLE_SINGLE_THREAD        (1)
+#endif//ENABLE_SINGLE_THREAD
+
 
 namespace asdx {
 
@@ -163,6 +167,16 @@ public:
     //-------------------------------------------------------------------------
     void SetName(LPCWSTR tag);
 
+#if ENABLE_SINGLE_THREAD
+    //-------------------------------------------------------------------------
+    //! @brief      ステート遷移を行います.
+    //! 
+    //! @param[in]      pCmdList    コマンドリスト.
+    //! @param[in]      nextState   遷移後のステート.
+    //-------------------------------------------------------------------------
+    void Transition(ID3D12GraphicsCommandList* pCmdList, D3D12_RESOURCE_STATES nextState);
+#endif
+
 private:
     //=========================================================================
     // private variables.
@@ -171,6 +185,9 @@ private:
     RefPtr<IRenderTargetView>   m_pRTV;
     RefPtr<IShaderResourceView> m_pSRV;
     TargetDesc                  m_Desc;
+#if ENABLE_SINGLE_THREAD
+    D3D12_RESOURCE_STATES       m_PrevState;
+#endif
 
     //=========================================================================
     // private methods.
@@ -269,6 +286,16 @@ public:
     //-------------------------------------------------------------------------
     void SetName(LPCWSTR tag);
 
+#if ENABLE_SINGLE_THREAD
+    //-------------------------------------------------------------------------
+    //! @brief      ステート遷移を行います.
+    //! 
+    //! @param[in]      pCmdList    コマンドリスト.
+    //! @param[in]      nextState   遷移後のステート.
+    //-------------------------------------------------------------------------
+    void Transition(ID3D12GraphicsCommandList* pCmdList, D3D12_RESOURCE_STATES nextState);
+#endif
+
 private:
     //=========================================================================
     // private variables.
@@ -277,6 +304,9 @@ private:
     RefPtr<IDepthStencilView>   m_pDSV;
     RefPtr<IShaderResourceView> m_pSRV;
     TargetDesc                  m_Desc;
+#if ENABLE_SINGLE_THREAD
+    D3D12_RESOURCE_STATES       m_PrevState;
+#endif
 
     //=========================================================================
     // private methods.
@@ -366,6 +396,24 @@ public:
     //-------------------------------------------------------------------------
     void SetName(LPCWSTR tag);
 
+    //-------------------------------------------------------------------------
+    //! @brief      UAVバリアを設定します.
+    //! 
+    //! @param[in]      pCmdList        コマンドリスト.
+    //-------------------------------------------------------------------------
+    void BarrierUAV(ID3D12GraphicsCommandList* pCmdList);
+
+#if ENABLE_SINGLE_THREAD
+    //-------------------------------------------------------------------------
+    //! @brief      ステート遷移を行います.
+    //! 
+    //! @param[in]      pCmdList    コマンドリスト.
+    //! @param[in]      nextState   遷移後のステート.
+    //-------------------------------------------------------------------------
+    void Transition(ID3D12GraphicsCommandList* pCmdList, D3D12_RESOURCE_STATES nextState);
+#endif
+
+
 private:
     //=========================================================================
     // private variables.
@@ -374,6 +422,9 @@ private:
     RefPtr<IUnorderedAccessView>    m_pUAV;
     RefPtr<IShaderResourceView>     m_pSRV;
     TargetDesc                      m_Desc;
+#if ENABLE_SINGLE_THREAD
+    D3D12_RESOURCE_STATES           m_PrevState;
+#endif
 
     //=========================================================================
     // private methods.
