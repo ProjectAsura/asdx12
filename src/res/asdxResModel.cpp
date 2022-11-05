@@ -78,6 +78,33 @@ inline uint32_t ToUnorm8(const asdx::Vector4& value)
     return packed.c;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// ResModelHeader structure
+///////////////////////////////////////////////////////////////////////////////
+struct ResModelHeader
+{
+    uint8_t     Magic[4];           // 'MDL\0"
+    uint32_t    NameLength;         // モデル名の長さ.
+    uint32_t    MeshCount;          // メッシュ数.
+    uint32_t    MaterialCount;      // マテリアル数.
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// ResMeshHeader structure
+///////////////////////////////////////////////////////////////////////////////
+struct ResMeshHeader
+{
+    uint32_t    NameLength;
+    uint32_t    MaterialId;
+    uint32_t    PositionCount;
+    uint32_t    NormalCount;
+    uint32_t    TangentCount;
+    uint32_t    ColorCount;
+    uint32_t    TexCoordCount[4];
+    uint32_t    BoneIndexCount;
+    uint32_t    BoneWeightCount;
+    uint32_t    IndexCount;
+};
 
 } // namespace
 
@@ -121,9 +148,6 @@ void ResMesh::Dispose()
 
     Indices.clear();
     Indices.shrink_to_fit();
-
-    BoneWeightStride = 0;
-    Visible = false;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -141,25 +165,293 @@ void ResModel::Dispose()
     Meshes.clear();
     Meshes.shrink_to_fit();
 
-    Visible = false;
     Name.clear();
 }
+
+//-----------------------------------------------------------------------------
+//      ファイルからロードします.
+//-----------------------------------------------------------------------------
+bool ResModel::LoadFromFileA(const char* filename)
+{
+    FILE* pFile = nullptr;
+    auto err = fopen_s(&pFile, filename, "rb");
+    if (err != 0)
+    {
+        ELOGA("Error : File Open Failed. path = %s", filename);
+        return false;
+    }
+
+    ResModelHeader header = {};
+    fread(&header, sizeof(header), 1, pFile);
+
+    if (header.Magic[0] != 'M' ||
+        header.Magic[1] != 'D' ||
+        header.Magic[2] != 'L' ||
+        header.Magic[3] != '\0')
+    {
+        fclose(pFile);
+        ELOGA("Error : Invalid File.");
+        return false;
+    }
+
+    Name.resize(header.NameLength);
+    fread(&Name[0], sizeof(char), header.NameLength, pFile);
+
+    Meshes.resize(header.MeshCount);
+    for(auto i=0u; i<header.MeshCount; ++i)
+    {
+        ResMeshHeader meshHeader = {};
+        fread(&meshHeader, sizeof(meshHeader), 1, pFile);
+
+        auto& dstMesh = Meshes[i];
+        dstMesh.Name.resize(meshHeader.NameLength);
+        fread(&dstMesh.Name[0], sizeof(char), meshHeader.NameLength, pFile);
+
+        dstMesh.MaterialId = meshHeader.MaterialId;
+
+        dstMesh.Positions.resize(meshHeader.PositionCount);
+        fread(dstMesh.Positions.data(), sizeof(asdx::Vector3), meshHeader.PositionCount, pFile);
+
+        if (meshHeader.NormalCount > 0)
+        {
+            dstMesh.Normals.resize(meshHeader.NormalCount);
+            fread(dstMesh.Normals.data(), sizeof(asdx::Vector3), meshHeader.NormalCount, pFile);
+        }
+
+        if (meshHeader.TangentCount > 0)
+        {
+            dstMesh.Tangents.resize(meshHeader.TangentCount);
+            fread(dstMesh.Tangents.data(), sizeof(asdx::Vector3), meshHeader.TangentCount, pFile);
+        }
+
+        if (meshHeader.ColorCount > 0)
+        {
+            dstMesh.Colors.resize(meshHeader.ColorCount);
+            fread(dstMesh.Colors.data(), sizeof(asdx::Vector4), meshHeader.ColorCount, pFile);
+        }
+
+        for(auto j=0; j<4; ++j)
+        {
+            if (meshHeader.TexCoordCount[j] > 0)
+            {
+                dstMesh.TexCoords[j].resize(meshHeader.TexCoordCount[j]);
+                fread(dstMesh.TexCoords[j].data(), sizeof(asdx::Vector2), meshHeader.TexCoordCount[j], pFile);
+            }
+        }
+
+        if (meshHeader.BoneIndexCount > 0)
+        {
+            dstMesh.BoneIndices.resize(meshHeader.BoneIndexCount);
+            fread(dstMesh.BoneIndices.data(), sizeof(ResBoneIndex), meshHeader.BoneIndexCount, pFile);
+        }
+
+        if (meshHeader.BoneWeightCount > 0)
+        {
+            dstMesh.BoneWeights.resize(meshHeader.BoneWeightCount);
+            fread(dstMesh.BoneWeights.data(), sizeof(asdx::Vector4), meshHeader.BoneWeightCount, pFile);
+        }
+
+        if (meshHeader.IndexCount > 0)
+        {
+            dstMesh.Indices.resize(meshHeader.IndexCount);
+            fread(dstMesh.Indices.data(), sizeof(uint32_t), meshHeader.IndexCount, pFile);
+        }
+    }
+
+    MaterialTags.resize(header.MaterialCount);
+    fread(&MaterialTags[0], sizeof(ResMaterialTag), header.MaterialCount, pFile);
+
+    fclose(pFile);
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      ファイルにセーブします.
+//-----------------------------------------------------------------------------
+bool ResModel::SaveToFileA(const char* filename)
+{
+    FILE* pFile = nullptr;
+    auto err = fopen_s(&pFile, filename, "wb");
+    if (err != 0)
+    {
+        ELOGA("Error : File Open Failed. path = %s", filename);
+        return false;
+    }
+
+    ResModelHeader header = {};
+    header.Magic[0] = 'M';
+    header.Magic[1] = 'D';
+    header.Magic[2] = 'L';
+    header.Magic[3] = '\0';
+
+    header.NameLength       = uint32_t(Name.length());
+    header.MeshCount        = uint32_t(Meshes.size());
+    header.MaterialCount    = uint32_t(MaterialTags.size());
+
+    fwrite(&header, sizeof(header), 1, pFile);
+
+    fwrite(Name.data(), sizeof(char), Name.length(), pFile);
+
+    for(size_t i=0; i<Meshes.size(); ++i)
+    {
+        const auto& srcMesh = Meshes[i];
+
+        ResMeshHeader meshHeader = {};
+        meshHeader.NameLength       = uint32_t(srcMesh.Name.length());
+        meshHeader.MaterialId       = srcMesh.MaterialId;
+        meshHeader.PositionCount    = uint32_t(srcMesh.Positions.size());
+        meshHeader.NormalCount      = uint32_t(srcMesh.Normals.size());
+        meshHeader.TangentCount     = uint32_t(srcMesh.Tangents.size());
+        meshHeader.ColorCount       = uint32_t(srcMesh.Colors.size());
+        for(auto j=0; j<4; ++j)
+        { meshHeader.TexCoordCount[j] = uint32_t(srcMesh.TexCoords[j].size()); }
+        meshHeader.BoneIndexCount   = uint32_t(srcMesh.BoneIndices.size());
+        meshHeader.BoneWeightCount  = uint32_t(srcMesh.BoneWeights.size());
+        meshHeader.IndexCount       = uint32_t(srcMesh.Indices.size());
+
+        fwrite(&meshHeader, sizeof(meshHeader), 1, pFile);
+
+        assert(!srcMesh.Positions.empty());
+        fwrite(srcMesh.Positions.data(), sizeof(asdx::Vector3), srcMesh.Positions.size(), pFile);
+
+        if (!srcMesh.Normals.empty())
+        { fwrite(srcMesh.Normals.data(), sizeof(asdx::Vector3), srcMesh.Normals.size(), pFile); }
+
+        if (!srcMesh.Tangents.empty())
+        { fwrite(srcMesh.Tangents.data(), sizeof(asdx::Vector3), srcMesh.Tangents.size(), pFile); }
+
+        if (!srcMesh.Colors.empty())
+        { fwrite(srcMesh.Colors.data(), sizeof(asdx::Vector4), srcMesh.Colors.size(), pFile); }
+
+        for(auto j=0; j<4; ++j)
+        {
+            if (!srcMesh.TexCoords[j].empty())
+            { fwrite(srcMesh.TexCoords[j].data(), sizeof(asdx::Vector2), srcMesh.TexCoords[j].size(), pFile); }
+        }
+
+        if (!srcMesh.BoneIndices.empty())
+        { fwrite(srcMesh.BoneIndices.data(), sizeof(ResBoneIndex), srcMesh.BoneIndices.size(), pFile); }
+
+        if (!srcMesh.BoneWeights.empty())
+        { fwrite(srcMesh.BoneWeights.data(), sizeof(asdx::Vector4), srcMesh.BoneWeights.size(), pFile); }
+
+        if (!srcMesh.Indices.empty())
+        { fwrite(srcMesh.Indices.data(), sizeof(uint32_t), srcMesh.Indices.size(), pFile); }
+    }
+
+    if (!MaterialTags.empty())
+    { fwrite(MaterialTags.data(), sizeof(ResMaterialTag), MaterialTags.size(), pFile); }
+
+    fclose(pFile);
+    return true;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// ResClusterMesh structure
+///////////////////////////////////////////////////////////////////////////////
 
 //-----------------------------------------------------------------------------
 //      クラスターメッシュの破棄処理を行います.
 //-----------------------------------------------------------------------------
 void ResClusterMesh::Dispose()
 {
-    Geometry = nullptr;
     Meshlets.clear();
     Meshlets.shrink_to_fit();
 
     Primitives.clear();
     Primitives.shrink_to_fit();
 
-    UniqueVertexIndices.clear();
-    UniqueVertexIndices.shrink_to_fit();
+    VertexIndices.clear();
+    VertexIndices.shrink_to_fit();
 }
+
+//-----------------------------------------------------------------------------
+//      クラスターメッシュを生成します.
+//-----------------------------------------------------------------------------
+void ResClusterMesh::Create(const ResMesh& mesh)
+{
+    const size_t kMaxVertices   = 64;
+    const size_t kMaxPrimitives = 126;
+    float coneWeight = 0.0f;
+
+    auto maxMeshlets = meshopt_buildMeshletsBound(
+            mesh.Indices.size(),
+            kMaxVertices,
+            kMaxPrimitives);
+
+    std::vector<meshopt_Meshlet> meshlets(maxMeshlets);
+    std::vector<uint32_t> meshletVertices(maxMeshlets * kMaxVertices);
+    std::vector<uint8_t> meshletTriangles(maxMeshlets * kMaxPrimitives * 3);
+
+    auto meshletCount = meshopt_buildMeshlets(
+        meshlets.data(),
+        meshletVertices.data(),
+        meshletTriangles.data(),
+        mesh.Indices.data(),
+        mesh.Indices.size(),
+        &mesh.Positions[0].x,
+        mesh.Positions.size(),
+        sizeof(asdx::Vector3),
+        kMaxVertices,
+        kMaxPrimitives,
+        coneWeight);
+
+    // 最大値でメモリを予約.
+    VertexIndices.reserve(meshlets.size() * kMaxVertices);
+    Primitives   .reserve(meshlets.size() * kMaxPrimitives);
+
+    for(auto& meshlet : meshlets)
+    {
+        auto vertexOffset    = uint32_t(VertexIndices.size());
+        auto primitiveOffset = uint32_t(Primitives   .size());
+
+        for(auto i=0u; i<meshlet.vertex_count; ++i)
+        { VertexIndices.push_back(meshletVertices[i]); }
+
+        for(size_t i=0; i<meshlet.triangle_count; i+=3)
+        {
+            asdx::ResPrimitive tris = {};
+            tris.Index1 = meshletTriangles[i + 0];
+            tris.Index0 = meshletTriangles[i + 1];
+            tris.Index2 = meshletTriangles[i + 2];
+            Primitives.push_back(tris);
+        }
+
+        // メッシュレットデータ設定.
+        asdx::ResMeshlet m = {};
+        m.VertexCount       = meshlet.vertex_count;
+        m.VertexOffset      = vertexOffset;
+        m.PrimitiveCount    = meshlet.triangle_count;
+        m.PrimitiveOffset   = primitiveOffset;
+
+        // バウンディングを求める.
+        auto bounds = meshopt_computeMeshletBounds(
+            &meshletVertices[meshlet.vertex_offset],
+            &meshletTriangles[meshlet.triangle_offset],
+            meshlet.triangle_count,
+            &mesh.Positions[0].x,
+            mesh.Positions.size(),
+            sizeof(asdx::Vector3));
+
+        // カリングデータ設定.
+        auto normalCone = asdx::Vector4(
+            asdx::Saturate(bounds.cone_axis[0] * 0.5f + 0.5f),
+            asdx::Saturate(bounds.cone_axis[1] * 0.5f + 0.5f),
+            asdx::Saturate(bounds.cone_axis[2] * 0.5f + 0.5f),
+            asdx::Saturate(bounds.cone_cutoff * 0.5f + 0.5f));
+
+        m.Sphere     = asdx::Vector4(bounds.center[0], bounds.center[1], bounds.center[2], bounds.radius);
+        m.NormalCone = ToUnorm8(normalCone);
+
+        Meshlets.push_back(m);
+    }
+
+    // サイズ最適化.
+    VertexIndices.shrink_to_fit();
+    Primitives   .shrink_to_fit();
+    Meshlets     .shrink_to_fit();
+}
+
 
 //-----------------------------------------------------------------------------
 //      メッシュを最適化します.
@@ -226,95 +518,6 @@ void OptimizeMesh(ResMesh& mesh)
     // 不要になったメモリを解放.
     vertices.clear();
     vertices.shrink_to_fit();
-}
-
-//-----------------------------------------------------------------------------
-//      クラスターメッシュを生成します.
-//-----------------------------------------------------------------------------
-void CreateClusterMesh(const ResMesh& mesh, ResClusterMesh& clusterMesh)
-{
-    clusterMesh.Geometry = &mesh;
-
-    const size_t kMaxVertices   = 64;
-    const size_t kMaxPrimitives = 126;
-    float coneWeight = 0.0f;
-
-    auto maxMeshlets = meshopt_buildMeshletsBound(
-            mesh.Indices.size(),
-            kMaxVertices,
-            kMaxPrimitives);
-
-    std::vector<meshopt_Meshlet> meshlets(maxMeshlets);
-    std::vector<uint32_t> meshletVertices(maxMeshlets * kMaxVertices);
-    std::vector<uint8_t> meshletTriangles(maxMeshlets * kMaxPrimitives * 3);
-
-    auto meshletCount = meshopt_buildMeshlets(
-        meshlets.data(),
-        meshletVertices.data(),
-        meshletTriangles.data(),
-        mesh.Indices.data(),
-        mesh.Indices.size(),
-        &mesh.Positions[0].x,
-        mesh.Positions.size(),
-        sizeof(asdx::Vector3),
-        kMaxVertices,
-        kMaxPrimitives,
-        coneWeight);
-
-    // 最大値でメモリを予約.
-    clusterMesh.UniqueVertexIndices.reserve(meshlets.size() * kMaxVertices);
-    clusterMesh.Primitives         .reserve(meshlets.size() * kMaxPrimitives);
-
-    for(auto& meshlet : meshlets)
-    {
-        auto vertexOffset    = uint32_t(clusterMesh.UniqueVertexIndices.size());
-        auto primitiveOffset = uint32_t(clusterMesh.Primitives         .size());
-
-        for(auto i=0u; i<meshlet.vertex_count; ++i)
-        { clusterMesh.UniqueVertexIndices.push_back(meshletVertices[i]); }
-
-        for(size_t i=0; i<meshlet.triangle_count; i+=3)
-        {
-            asdx::ResPrimitive tris = {};
-            tris.Index1 = meshletTriangles[i + 0];
-            tris.Index0 = meshletTriangles[i + 1];
-            tris.Index2 = meshletTriangles[i + 2];
-            clusterMesh.Primitives.push_back(tris);
-        }
-
-        // メッシュレットデータ設定.
-        asdx::ResMeshlet m = {};
-        m.VertexCount       = meshlet.vertex_count;
-        m.VertexOffset      = vertexOffset;
-        m.PrimitiveCount    = meshlet.triangle_count;
-        m.PrimitiveOffset   = primitiveOffset;
-
-        // バウンディングを求める.
-        auto bounds = meshopt_computeMeshletBounds(
-            &meshletVertices[meshlet.vertex_offset],
-            &meshletTriangles[meshlet.triangle_offset],
-            meshlet.triangle_count,
-            &mesh.Positions[0].x,
-            mesh.Positions.size(),
-            sizeof(asdx::Vector3));
-
-        // カリングデータ設定.
-        auto normalCone = asdx::Vector4(
-            asdx::Saturate(bounds.cone_axis[0] * 0.5f + 0.5f),
-            asdx::Saturate(bounds.cone_axis[1] * 0.5f + 0.5f),
-            asdx::Saturate(bounds.cone_axis[2] * 0.5f + 0.5f),
-            asdx::Saturate(bounds.cone_cutoff * 0.5f + 0.5f));
-
-        m.Sphere     = asdx::Vector4(bounds.center[0], bounds.center[1], bounds.center[2], bounds.radius);
-        m.NormalCone = ToUnorm8(normalCone);
-
-        clusterMesh.Meshlets.push_back(m);
-    }
-
-    // サイズ最適化.
-    clusterMesh.UniqueVertexIndices .shrink_to_fit();
-    clusterMesh.Primitives          .shrink_to_fit();
-    clusterMesh.Meshlets            .shrink_to_fit();
 }
 
 //-----------------------------------------------------------------------------

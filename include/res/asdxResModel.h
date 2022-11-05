@@ -5,10 +5,6 @@
 //-----------------------------------------------------------------------------
 #pragma once
 
-#ifndef ASDX_ENABLE_ASSIMP
-#define ASDX_ENABLE_ASSIMP  (0)
-#endif//ASDX_ENABLE_ASSIMP
-
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
@@ -16,13 +12,6 @@
 #include <vector>
 #include <string>
 #include <fnd/asdxMath.h>
-
-#if ASDX_ENABLE_ASSIMP
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
-#include <assimp/cimport.h>
-#endif
 
 
 namespace asdx {
@@ -52,21 +41,30 @@ struct ResPrimitive
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+// ResBoneIndex structure
+///////////////////////////////////////////////////////////////////////////////
+struct ResBoneIndex
+{
+    uint16_t    x;
+    uint16_t    y;
+    uint16_t    z;
+    uint16_t    w;
+};
+
+///////////////////////////////////////////////////////////////////////////////
 // ResMesh structure
 ///////////////////////////////////////////////////////////////////////////////
 struct ResMesh
 {
     std::string                         Name;               // メッシュ名.
     uint32_t                            MaterialId;         // マテリアルID.
-    bool                                Visible;            // 可視フラグ.
-    uint32_t                            BoneWeightStride;   // 1頂点あたりのボーンの重み数
     std::vector<asdx::Vector3>          Positions;          // 頂点位置.
     std::vector<asdx::Vector3>          Normals;            // 法線ベクトル.
     std::vector<asdx::Vector3>          Tangents;           // 接線ベクトル.
     std::vector<asdx::Vector4>          Colors;             // 頂点カラー.
     std::vector<asdx::Vector2>          TexCoords[4];       // テクスチャ座標.
-    std::vector<uint16_t>               BoneIndices;        // ボーン番号.
-    std::vector<float>                  BoneWeights;        // ボーン重み.
+    std::vector<ResBoneIndex>           BoneIndices;        // ボーン番号.
+    std::vector<asdx::Vector4>          BoneWeights;        // ボーン重み.
     std::vector<uint32_t>               Indices;            // 頂点インデックス.
 
     //-------------------------------------------------------------------------
@@ -76,19 +74,34 @@ struct ResMesh
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+// ResMaterialTag 
+///////////////////////////////////////////////////////////////////////////////
+union ResMaterialTag
+{
+    char        Name[64];
+    uint64_t    Hash;
+};
+
+///////////////////////////////////////////////////////////////////////////////
 // ResClusterMesh structure
 ///////////////////////////////////////////////////////////////////////////////
 struct ResClusterMesh
 {
-    const ResMesh*              Geometry = nullptr;
     std::vector<ResMeshlet>     Meshlets;
     std::vector<ResPrimitive>   Primitives;
-    std::vector<uint32_t>       UniqueVertexIndices;
+    std::vector<uint32_t>       VertexIndices;
 
     //-------------------------------------------------------------------------
     //! @brief      破棄処理を行います.
     //-------------------------------------------------------------------------
     void Dispose();
+
+    //-------------------------------------------------------------------------
+    //! @brief      クラスターメッシュを生成します.
+    //! 
+    //! @param[in]      mesh        リソースメッシュです.
+    //-------------------------------------------------------------------------
+    void Create(const ResMesh& mesh);
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -97,14 +110,31 @@ struct ResClusterMesh
 struct ResModel
 {
     std::string                 Name;           // モデル名.
-    bool                        Visible;        // 可視フラグ.
     std::vector<ResMesh>        Meshes;         // メッシュ.
-    std::vector<std::string>    MaterialNames;  // マテリアル名.
+    std::vector<ResMaterialTag> MaterialTags;   // マテリアル名.
 
     //-------------------------------------------------------------------------
     //! @brief      破棄処理を行います.
     //-------------------------------------------------------------------------
     void Dispose();
+
+    //-------------------------------------------------------------------------
+    //! @brief      ファイルからモデルリソースを生成します.
+    //! 
+    //! @param[in]      filename    ファイル名です.
+    //! @retval true    リソース生成に成功.
+    //! @retval false   リソース生成に失敗.
+    //-------------------------------------------------------------------------
+    bool LoadFromFileA(const char* filename);
+
+    //-------------------------------------------------------------------------
+    //! @brief      モデルリソースをファイルに保存します.
+    //! 
+    //! @param[in]      filename    ファイル名です.
+    //! @retval true    リソース保存に成功.
+    //! @retval false   リソース保存に失敗.
+    //-------------------------------------------------------------------------
+    bool SaveToFileA(const char* filename);
 };
 
 //-----------------------------------------------------------------------------
@@ -143,178 +173,5 @@ void DecodeTBN(
 //      メッシュを最適化します.
 //-----------------------------------------------------------------------------
 void OptimizeMesh(ResMesh& mesh);
-
-//-----------------------------------------------------------------------------
-//      クラスターメッシュを生成します.
-//-----------------------------------------------------------------------------
-void CreateClusterMesh(const ResMesh& mesh, ResClusterMesh& clusterMesh);
-
-
-#if ASDX_ENABLE_ASSIMP
-///////////////////////////////////////////////////////////////////////////////
-// MeshLoader class
-///////////////////////////////////////////////////////////////////////////////
-class MeshLoader
-{
-    //=========================================================================
-    // list of friend classes and methods.
-    //=========================================================================
-    /* NOTHING */
-
-public:
-    //=========================================================================
-    // public variables.
-    //=========================================================================
-    /* NOTHING */
-
-    //=========================================================================
-    // public methods.
-    //=========================================================================
-    MeshLoader() = default;
-    ~MeshLoader() = default;
-
-    //-------------------------------------------------------------------------
-    //! @brief      モデルをロードします.
-    //-------------------------------------------------------------------------
-    bool Load(const char* path, ResModel& model)
-    {
-        if (path == nullptr)
-        { return false; }
-
-        Assimp::Importer importer;
-        unsigned int flag = 0;
-        flag |= aiProcess_Triangulate;
-        flag |= aiProcess_PreTransformVertices;
-        flag |= aiProcess_CalcTangentSpace;
-        flag |= aiProcess_GenSmoothNormals;
-        flag |= aiProcess_GenUVCoords;
-        flag |= aiProcess_RemoveRedundantMaterials;
-        flag |= aiProcess_OptimizeMeshes;
-        flag |= aiProcess_FlipWindingOrder;
-
-        // ファイルを読み込み.
-        m_pScene = importer.ReadFile(path, flag);
-
-        // チェック.
-        if (m_pScene == nullptr)
-        { return false; }
-
-        // メッシュのメモリを確保.
-        auto meshCount = m_pScene->mNumMeshes;
-        model.Meshes.clear();
-        model.Meshes.resize(meshCount);
-
-        // メッシュデータを変換.
-        for(size_t i=0; i<meshCount; ++i)
-        {
-            const auto pMesh = m_pScene->mMeshes[i];
-            ParseMesh(model.Meshes[i], pMesh);
-        }
-
-        // マテリアル名取得.
-        auto materialCount = m_pScene->mNumMaterials;
-        model.MaterialNames.resize(materialCount);
-        for(size_t i=0; i<materialCount; ++i)
-        {
-            aiString name;
-            aiGetMaterialString(m_pScene->mMaterials[i], AI_MATKEY_NAME, &name);
-            model.MaterialNames[i] = name.C_Str();
-        }
-
-        // 不要になったのでクリア.
-        importer.FreeScene();
-        m_pScene = nullptr;
-
-        // 正常終了.
-        return true;
-    }
-
-private:
-    //=========================================================================
-    // private variables.
-    //=========================================================================
-    const aiScene*  m_pScene = nullptr;
-
-    //=========================================================================
-    // private methods.
-    //=========================================================================
-
-    //-------------------------------------------------------------------------
-    //! @brief      メッシュを解析します.
-    //-------------------------------------------------------------------------
-    void ParseMesh(ResMesh& dstMesh, const aiMesh* srcMesh)
-    {
-        // マテリアル番号を設定.
-        dstMesh.MaterialId = srcMesh->mMaterialIndex;
-
-        aiVector3D zero3D(0.0f, 0.0f, 0.0f);
-
-        // 頂点データのメモリを確保.
-        auto vertexCount = srcMesh->mNumVertices;
-        dstMesh.Positions.resize(vertexCount);
-
-        if (srcMesh->HasNormals())
-        { dstMesh.Normals.resize(vertexCount); }
-
-        if (srcMesh->HasTangentsAndBitangents()) 
-        { dstMesh.Tangents.resize(vertexCount); }
-
-        if (srcMesh->HasVertexColors(0))
-        { dstMesh.Colors.resize(vertexCount); }
-
-        auto uvCount = srcMesh->GetNumUVChannels();
-        uvCount = (uvCount > 4) ? 4 : uvCount;
-
-        for(auto c=0u; c<uvCount; ++c) {
-            assert(srcMesh->HasTextureCoords(c));
-            dstMesh.TexCoords[c].resize(vertexCount);
-        }
-
-        for(auto i=0u; i<vertexCount; ++i)
-        {
-            auto& pos = srcMesh->mVertices[i];
-            dstMesh.Positions[i] = asdx::Vector3(pos.x, pos.y, pos.z);
-
-            if (srcMesh->HasNormals())
-            {
-                auto& normal = srcMesh->mNormals[i];
-                dstMesh.Normals[i] = asdx::Vector3(normal.x, normal.y, normal.z);
-            }
-
-            if (srcMesh->HasTangentsAndBitangents())
-            {
-                auto& tangent = srcMesh->mTangents[i];
-                dstMesh.Tangents[i] = asdx::Vector3(tangent.x, tangent.y, tangent.z);
-            }
-            if (srcMesh->HasVertexColors(0))
-            {
-                auto& color = srcMesh->mColors[0][i];
-                dstMesh.Colors[i] = asdx::Vector4(color.r, color.g, color.b, color.a);
-            }
-            for(auto c=0u; c<uvCount; ++c)
-            {
-                auto& uv = srcMesh->mTextureCoords[c][i];
-                dstMesh.TexCoords[c][i] = asdx::Vector2(uv.x, uv.y);
-            }
-        }
-
-        // 頂点インデックスのメモリを確保.
-        auto faceCount = srcMesh->mNumFaces;
-        dstMesh.Indices.resize(faceCount * 3);
-
-        for(size_t i=0; i<faceCount; ++i)
-        {
-            const auto& face = srcMesh->mFaces[i];
-            assert(face.mNumIndices == 3);  // 三角形化しているので必ず3になっている.
-
-            dstMesh.Indices[i * 3 + 0] = face.mIndices[0];
-            dstMesh.Indices[i * 3 + 1] = face.mIndices[1];
-            dstMesh.Indices[i * 3 + 2] = face.mIndices[2];
-        }
-    }
-};
-#endif//ASDX_ENABLE_ASSIMP
-
-
 
 } // namespace asdx

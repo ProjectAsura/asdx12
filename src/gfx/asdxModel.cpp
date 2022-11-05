@@ -121,8 +121,8 @@ bool Mesh::Init(const ResMesh& resource)
 
     if (resource.BoneIndices.size() > 0)
     {
-        auto stride = uint32_t(sizeof(resource.BoneIndices[0])) * resource.BoneWeightStride;
-        auto size   = uint64_t(resource.BoneIndices.size()) * sizeof(resource.BoneIndices[0]);
+        auto stride = uint32_t(sizeof(resource.BoneIndices[0]));
+        auto size   = uint64_t(resource.BoneIndices.size());
 
         if (!m_BoneIndices.Init(size, stride))
         {
@@ -137,8 +137,8 @@ bool Mesh::Init(const ResMesh& resource)
 
     if (resource.BoneWeights.size() > 0)
     {
-        auto stride = uint32_t(sizeof(resource.BoneWeights[0])) * resource.BoneWeightStride;
-        auto size   = uint64_t(resource.BoneWeights.size()) * sizeof(resource.BoneWeights[0]);
+        auto stride = uint32_t(sizeof(resource.BoneWeights[0]));
+        auto size   = uint64_t(resource.BoneWeights.size());
 
         if (!m_BoneWeights.Init(size, stride))
         {
@@ -170,9 +170,8 @@ bool Mesh::Init(const ResMesh& resource)
         m_Box.Maxi = asdx::Vector3::Max(m_Box.Maxi, resource.Positions[i]);
     }
 
-    m_MeshHash          = asdx::CalcHash(resource.Name.c_str());
-    m_MaterialId        = resource.MaterialId;
-    m_BoneWeightStride  = resource.BoneWeightStride;
+    m_Name       = resource.Name;
+    m_MaterialId = resource.MaterialId;
 
     return true;
 }
@@ -194,10 +193,8 @@ void Mesh::Term()
     { m_TexCoords[i].Term(); }
 
     m_MaterialId        = 0;
-    m_MeshHash          = 0;
-    m_BoneWeightStride  = 0;
 
-    m_Box.Mini = asdx::Vector3(FLT_MAX, FLT_MAX, FLT_MAX);
+    m_Box.Mini = asdx::Vector3( FLT_MAX,  FLT_MAX,  FLT_MAX);
     m_Box.Maxi = asdx::Vector3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
 }
 
@@ -250,12 +247,6 @@ const IndexBuffer& Mesh::GetIndices() const
 { return m_Indices; }
 
 //-----------------------------------------------------------------------------
-//      メッシュハッシュを取得します.
-//-----------------------------------------------------------------------------
-uint32_t Mesh::GetMeshHash() const
-{ return m_MeshHash; }
-
-//-----------------------------------------------------------------------------
 //      マテリアルハッシュを取得します.
 //-----------------------------------------------------------------------------
 uint32_t Mesh::GetMaterialId() const
@@ -303,8 +294,7 @@ bool Mesh::HasTexCoord(uint8_t index) const
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
 Model::Model()
-: m_ModelHash(0)
-, m_Box({asdx::Vector3(FLT_MAX, FLT_MAX, FLT_MAX), asdx::Vector3(-FLT_MAX, -FLT_MAX, -FLT_MAX)})
+: m_Box({asdx::Vector3(FLT_MAX, FLT_MAX, FLT_MAX), asdx::Vector3(-FLT_MAX, -FLT_MAX, -FLT_MAX)})
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
@@ -318,7 +308,7 @@ Model::~Model()
 //-----------------------------------------------------------------------------
 bool Model::Init(const ResModel& model)
 {
-    m_ModelHash = asdx::CalcHash(model.Name.c_str());
+    m_Name = model.Name;
 
     auto index = 0;
     m_Meshes.resize(model.Meshes.size());
@@ -340,6 +330,8 @@ bool Model::Init(const ResModel& model)
         index++;
     }
 
+    m_MaterialTags = model.MaterialTags;
+
     return true;
 }
 
@@ -354,12 +346,6 @@ void Model::Term()
     m_Meshes.clear();
     m_Meshes.shrink_to_fit();
 }
-
-//-----------------------------------------------------------------------------
-//      モデルハッシュを取得します.
-//-----------------------------------------------------------------------------
-uint32_t Model::GetModelHash() const
-{ return m_ModelHash; }
 
 //-----------------------------------------------------------------------------
 //      メッシュ数を取得します.
@@ -381,5 +367,38 @@ const Mesh& Model::GetMesh(uint32_t index) const
 //-----------------------------------------------------------------------------
 const BoundingBox& Model::GetBox() const
 { return m_Box; }
+
+//-----------------------------------------------------------------------------
+//      モデル名を取得します.
+//-----------------------------------------------------------------------------
+const char* Model::GetName() const
+{ return m_Name.c_str(); }
+
+//-----------------------------------------------------------------------------
+//      マテリアル数を取得します.
+//-----------------------------------------------------------------------------
+uint32_t Model::GetMaterialCount() const
+{ return uint32_t(m_MaterialTags.size()); }
+
+//-----------------------------------------------------------------------------
+//      マテリアル名を取得します.
+//-----------------------------------------------------------------------------
+const char* Model::GetMaterialName(uint32_t index) const
+{
+    assert(size_t(index) < m_MaterialTags.size());
+    return m_MaterialTags[index].Name;
+}
+
+//-----------------------------------------------------------------------------
+//      メッシュのマテリアル名を取得します.
+//-----------------------------------------------------------------------------
+const char* Model::GetMeshMaterialName(uint32_t meshIndex) const
+{
+    assert(size_t(meshIndex) < m_Meshes.size());
+
+    auto id = m_Meshes[meshIndex].GetMaterialId();
+    assert(size_t(id) < m_MaterialTags.size());
+    return m_MaterialTags[id].Name;
+}
 
 } // namespace asdx
