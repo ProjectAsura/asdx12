@@ -11,7 +11,7 @@
 #include <map>
 #include <fnd/asdxMath.h>
 #include <res/asdxResMaterial.h>
-#include <gfx/asdxConstantBuffer.h>
+#include <gfx/asdxBuffer.h>
 #include <gfx/asdxTexture.h>
 
 

@@ -11,8 +11,7 @@
 #include <vector>
 #include <fnd/asdxMath.h>
 #include <gfx/asdxView.h>
-#include <gfx/asdxVertexBuffer.h>
-#include <gfx/asdxIndexBuffer.h>
+#include <gfx/asdxBuffer.h>
 #include <gfx/asdxPipelineState.h>
 #include <gfx/asdxRootSignature.h>
 

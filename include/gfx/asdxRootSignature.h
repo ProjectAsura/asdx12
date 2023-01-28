@@ -26,6 +26,9 @@ constexpr D3D12_ROOT_SIGNATURE_FLAGS ROOT_SIGNATURE_FLAG_MS_PS =
     D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
     D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS;
 
+///////////////////////////////////////////////////////////////////////////////
+// SHADER_VISIBILITY enum
+///////////////////////////////////////////////////////////////////////////////
 enum SHADER_VISIBILITY
 {
     SV_ALL = 0,
@@ -39,19 +42,19 @@ enum SHADER_VISIBILITY
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-// STATIC_SAMPLER_TYPE enum
+// SAMPLER_TYPE enum
 ///////////////////////////////////////////////////////////////////////////////
-enum STATIC_SAMPLER_TYPE
+enum SAMPLER_TYPE
 {
-    STATIC_SAMPLER_POINT_CLAMP,
-    STATIC_SAMPLER_POINT_WRAP,
-    STATIC_SAMPLER_POINT_MIRROR,
-    STATIC_SAMPLER_LINEAR_CLAMP,
-    STATIC_SAMPLER_LINEAR_WRAP,
-    STATIC_SAMPLER_LINEAR_MIRROR,
-    STATIC_SAMPLER_ANISOTROPIC_CLAMP,
-    STATIC_SAMPLER_ANISOTROPIC_WRAP,
-    STATIC_SAMPLER_ANISOTROPIC_MIRROR,
+    SMP_POINT_CLAMP,
+    SMP_POINT_WRAP,
+    SMP_POINT_MIRROR,
+    SMP_LINEAR_CLAMP,
+    SMP_LINEAR_WRAP,
+    SMP_LINEAR_MIRROR,
+    SMP_ANISOTROPIC_CLAMP,
+    SMP_ANISOTROPIC_WRAP,
+    SMP_ANISOTROPIC_MIRROR,
 };
 
 //-----------------------------------------------------------------------------
@@ -73,12 +76,8 @@ public:
     void SetCBV(uint32_t slot, uint8_t shader, uint32_t baseRegister, uint32_t registerSpace = 0);
     void SetSRV(uint32_t slot, uint8_t shader, uint32_t baseRegister, uint32_t registerSpace = 0);
     void SetUAV(uint32_t slot, uint8_t shader, uint32_t baseRegister, uint32_t registerSpace = 0);
-    void SetTableCBV(uint32_t slot, uint8_t shader, uint32_t baseRegister, uint32_t registerSpace = 0);
-    void SetTableSRV(uint32_t slot, uint8_t shader, uint32_t baseRegister, uint32_t registerSpace = 0);
-    void SetTableUAV(uint32_t slot, uint8_t shader, uint32_t baseRegister, uint32_t registerSpace = 0);
-    void SetTableSmp(uint32_t slot, uint8_t shader, uint32_t baseRegister, uint32_t registerSpace = 0);
-    void SetContants(uint32_t slot, uint8_t shader, uint32_t count, uint32_t baseRegister, uint32_t registerSpace = 0);
-    void SetStaticSampler(uint32_t slot, uint8_t shader, uint32_t type, uint32_t baseRegister, uint32_t registerSpace = 0);
+    void SetVar(uint32_t slot, uint8_t shader, uint32_t count, uint32_t baseRegister, uint32_t registerSpace = 0);
+    void SetSmp(uint32_t slot, uint8_t shader, uint32_t type, uint32_t baseRegister, uint32_t registerSpace = 0);
     void SetFlags(D3D12_ROOT_SIGNATURE_FLAGS flags);
     D3D12_ROOT_SIGNATURE_DESC* GetDesc();
 

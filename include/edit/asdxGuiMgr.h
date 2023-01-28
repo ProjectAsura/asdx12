@@ -11,9 +11,7 @@
 //-----------------------------------------------------------------------------
 #include <cstdint>
 #include <chrono>
-#include <gfx/asdxVertexBuffer.h>
-#include <gfx/asdxIndexBuffer.h>
-#include <gfx/asdxConstantBuffer.h>
+#include <gfx/asdxBuffer.h>
 #include <gfx/asdxTexture.h>
 
 
@@ -25,8 +23,6 @@ struct ImGuiContext;
 
 
 namespace asdx {
-
-class CommandList;
 
 ///////////////////////////////////////////////////////////////////////////////
 // GuiMgr class
@@ -118,7 +114,6 @@ private:
     RefPtr<ID3D12RootSignature>             m_RootSig;
     RefPtr<ID3D12PipelineState>             m_PSO;
     Texture                                 m_FontTexture;
-    ID3D12GraphicsCommandList*              m_pCmdList = nullptr;
     std::chrono::system_clock::time_point   m_LastTime;
     uint32_t                                m_SizeVB;
     uint32_t                                m_SizeIB;

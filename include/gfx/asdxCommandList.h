@@ -198,11 +198,6 @@ public:
     void SetTable(uint32_t index, const IView* pView, bool compute = false);
 
     //-------------------------------------------------------------------------
-    //! @brief      ディスクリプタテーブルを設定します.
-    //-------------------------------------------------------------------------
-    void SetTable(uint32_t index, const Sampler* sampler, bool compute = false);
-
-    //-------------------------------------------------------------------------
     //! @brief      定数バッファビューを設定します.
     //-------------------------------------------------------------------------
     void SetCBV(uint32_t index, const IConstantBufferView* pView, bool compute = false);

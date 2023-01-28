@@ -608,13 +608,6 @@ void SetClipboardText(void*, const char* text)
 
 namespace asdx {
 
-//-----------------------------------------------------------------------------
-//      描画処理を行います.
-//-----------------------------------------------------------------------------
-void RenderImGui(ImDrawData* pDrawData)
-{ asdx::GuiMgr::Instance().OnDraw(pDrawData); }
-
-
 ///////////////////////////////////////////////////////////////////////////////
 // GuiMgr class
 ///////////////////////////////////////////////////////////////////////////////
@@ -885,7 +878,7 @@ bool GuiMgr::Init
         io.KeyMap[ ImGuiKey_Y ]         = 'Y';
         io.KeyMap[ ImGuiKey_Z ]         = 'Z';
 
-        io.RenderDrawListsFn    = RenderImGui;
+        //io.RenderDrawListsFn    = RenderImGui;
         io.SetClipboardTextFn   = SetClipboardText;
         io.GetClipboardTextFn   = GetClipboardText;
         io.ImeWindowHandle      = hWnd;
@@ -934,7 +927,7 @@ bool GuiMgr::Init
         style.Colors[ ImGuiCol_PlotHistogram ]          = ImVec4( 0.900000f, 0.700000f, 0.000000f, 1.000000f );
         style.Colors[ ImGuiCol_PlotHistogramHovered ]   = ImVec4( 1.000000f, 0.600000f, 0.000000f, 1.000000f );
         style.Colors[ ImGuiCol_TextSelectedBg ]         = ImVec4( 0.260000f, 0.590000f, 0.980000f, 0.280000f );
-        style.Colors[ ImGuiCol_ModalWindowDarkening ]   = ImVec4( 0.800000f, 0.800000f, 0.800000f, 0.280000f );
+        //style.Colors[ ImGuiCol_ModalWindowDarkening ]   = ImVec4( 0.800000f, 0.800000f, 0.800000f, 0.280000f );
 #endif
     }
 
@@ -962,7 +955,6 @@ void GuiMgr::Term()
         ImGui::DestroyContext(m_pGuiContext);
         m_pGuiContext = nullptr;
     }
-    m_pCmdList = nullptr;
 }
 
 //-----------------------------------------------------------------------------
@@ -994,16 +986,13 @@ void GuiMgr::Update( uint32_t width, uint32_t height )
 //-----------------------------------------------------------------------------
 void GuiMgr::Draw(ID3D12GraphicsCommandList* pCmdList)
 {
-    m_pCmdList = pCmdList;
-    ImGui::Render();
-}
+    if (pCmdList == nullptr)
+    { return; }
 
-//-----------------------------------------------------------------------------
-//      描画時の処理です.
-//-----------------------------------------------------------------------------
-void GuiMgr::OnDraw( ImDrawData* pDrawData )
-{
-    if (m_pCmdList == nullptr)
+    ImGui::Render();
+
+    auto pDrawData = ImGui::GetDrawData();
+    if (pDrawData == nullptr)
     { return; }
 
     if ( uint32_t( pDrawData->TotalVtxCount ) >= m_SizeVB )
@@ -1076,19 +1065,19 @@ void GuiMgr::OnDraw( ImDrawData* pDrawData )
         viewport.MinDepth   = 0.0f;
         viewport.MaxDepth   = 1.0f;
 
-        m_pCmdList->RSSetViewports(1, &viewport);
+        pCmdList->RSSetViewports(1, &viewport);
     }
 
     {
         auto vbv = m_VB[m_BufferIndex].GetView();
         auto ibv = m_IB[m_BufferIndex].GetView();
-        m_pCmdList->SetGraphicsRootSignature(m_RootSig.GetPtr());
-        m_pCmdList->SetPipelineState(m_PSO.GetPtr());
-        m_pCmdList->SetGraphicsRootConstantBufferView(0, m_CB.GetResource()->GetGPUVirtualAddress());
-        m_pCmdList->SetGraphicsRootDescriptorTable(1, m_FontTexture.GetView()->GetHandleGPU());
-        m_pCmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-        m_pCmdList->IASetVertexBuffers(0, 1, &vbv);
-        m_pCmdList->IASetIndexBuffer(&ibv);
+        pCmdList->SetGraphicsRootSignature(m_RootSig.GetPtr());
+        pCmdList->SetPipelineState(m_PSO.GetPtr());
+        pCmdList->SetGraphicsRootConstantBufferView(0, m_CB.GetResource()->GetGPUVirtualAddress());
+        pCmdList->SetGraphicsRootDescriptorTable(1, m_FontTexture.GetView()->GetHandleGPU());
+        pCmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        pCmdList->IASetVertexBuffers(0, 1, &vbv);
+        pCmdList->IASetIndexBuffer(&ibv);
     }
 
     {
@@ -1098,13 +1087,13 @@ void GuiMgr::OnDraw( ImDrawData* pDrawData )
 
         for ( auto i = 0; i < pDrawData->CmdListsCount; ++i )
         {
-            const auto pCmdList = pDrawData->CmdLists[ i ];
-            for ( auto j = 0; j < pCmdList->CmdBuffer.size(); ++j )
+            const auto pList = pDrawData->CmdLists[ i ];
+            for ( auto j = 0; j < pList->CmdBuffer.size(); ++j )
             {
-                const auto pCmd = &pCmdList->CmdBuffer[ j ];
+                const auto pCmd = &pList->CmdBuffer[ j ];
                 if ( pCmd->UserCallback )
                 {
-                    pCmd->UserCallback( pCmdList, pCmd );
+                    pCmd->UserCallback( pList, pCmd );
                 }
                 else
                 {
@@ -1112,7 +1101,7 @@ void GuiMgr::OnDraw( ImDrawData* pDrawData )
                     if (pCmd->TextureId != nullptr)
                     {
                         auto pSRV = reinterpret_cast<IShaderResourceView*>(pCmd->TextureId);
-                        m_pCmdList->SetGraphicsRootDescriptorTable(1, pSRV->GetHandleGPU());
+                        pCmdList->SetGraphicsRootDescriptorTable(1, pSRV->GetHandleGPU());
                         changeTexture = true;
                     }
                     else
@@ -1120,7 +1109,7 @@ void GuiMgr::OnDraw( ImDrawData* pDrawData )
                         // フォントのテクスチャに戻す.
                         if (changeTexture)
                         {
-                            m_pCmdList->SetGraphicsRootDescriptorTable(1, m_FontTexture.GetView()->GetHandleGPU());
+                            pCmdList->SetGraphicsRootDescriptorTable(1, m_FontTexture.GetView()->GetHandleGPU());
                             changeTexture = false;
                         }
                     }
@@ -1132,12 +1121,12 @@ void GuiMgr::OnDraw( ImDrawData* pDrawData )
                         LONG(pCmd->ClipRect.w)
                     };
 
-                    m_pCmdList->RSSetScissorRects(1, &rc);
-                    m_pCmdList->DrawIndexedInstanced(pCmd->ElemCount, 1, offsetIdx, offsetVtx, 0);
+                    pCmdList->RSSetScissorRects(1, &rc);
+                    pCmdList->DrawIndexedInstanced(pCmd->ElemCount, 1, offsetIdx, offsetVtx, 0);
                 }
                 offsetIdx += pCmd->ElemCount;
             }
-            offsetVtx += pCmdList->VtxBuffer.size();
+            offsetVtx += pList->VtxBuffer.size();
         }
     }
 

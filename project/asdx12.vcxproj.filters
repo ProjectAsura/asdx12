@@ -46,12 +46,6 @@
     <Filter Include="ヘッダー ファイル\res">
       <UniqueIdentifier>{35f7670c-6979-497d-86f0-ee107ba6071b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ソース ファイル\rs">
-      <UniqueIdentifier>{59d7c622-4850-40ba-a6f4-1df8e1b97e7a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\rs">
-      <UniqueIdentifier>{67e5d20a-7f96-4bfe-99e9-6e56790d7eb6}</UniqueIdentifier>
-    </Filter>
     <Filter Include="ソース ファイル\fnd">
       <UniqueIdentifier>{a60684e9-49f0-4707-9b5e-7575a5aa87dc}</UniqueIdentifier>
     </Filter>
@@ -60,12 +54,6 @@
     </Filter>
     <Filter Include="ソース ファイル\external\meshoptimizer">
       <UniqueIdentifier>{46543bdd-ffc5-45ee-ba45-318107a7250c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ソース ファイル\renderer">
-      <UniqueIdentifier>{2ec75a62-0c47-4c33-a6d0-ae91d1d3ba74}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\renderer">
-      <UniqueIdentifier>{e2f62393-54ac-4e63-808f-1e5c7cf47d89}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -102,25 +90,16 @@
     <ClCompile Include="..\src\fw\asdxApp.cpp">
       <Filter>ソース ファイル\fw</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxByteAddressBuffer.cpp">
-      <Filter>ソース ファイル\gfx</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\gfx\asdxCommandList.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
     <ClCompile Include="..\src\gfx\asdxCommandQueue.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxConstantBuffer.cpp">
-      <Filter>ソース ファイル\gfx</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\gfx\asdxDescriptor.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
     <ClCompile Include="..\src\gfx\asdxFence.cpp">
-      <Filter>ソース ファイル\gfx</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxIndexBuffer.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
     <ClCompile Include="..\src\gfx\asdxPipelineState.cpp">
@@ -132,25 +111,16 @@
     <ClCompile Include="..\src\gfx\asdxRayTracing.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxSampler.cpp">
-      <Filter>ソース ファイル\gfx</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\gfx\asdxScreenCapture.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
     <ClCompile Include="..\src\gfx\asdxSprite.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxStructuredBuffer.cpp">
-      <Filter>ソース ファイル\gfx</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\gfx\asdxTarget.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
     <ClCompile Include="..\src\gfx\asdxTexture.cpp">
-      <Filter>ソース ファイル\gfx</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxVertexBuffer.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
     <ClCompile Include="..\src\gfx\asdxView.cpp">
@@ -160,9 +130,6 @@
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
     <ClCompile Include="..\src\gfx\asdxRootSignature.cpp">
-      <Filter>ソース ファイル\gfx</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxReflection.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
     <ClCompile Include="..\src\res\asdxResMaterial.cpp">
@@ -176,9 +143,6 @@
     </ClCompile>
     <ClCompile Include="..\src\gfx\asdxModel.cpp">
       <Filter>ソース ファイル\gfx</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\rs\asdxPassGraph.cpp">
-      <Filter>ソース ファイル\rs</Filter>
     </ClCompile>
     <ClCompile Include="..\src\fnd\asdxFrameHeap.cpp">
       <Filter>ソース ファイル\fnd</Filter>
@@ -224,9 +188,6 @@
     </ClCompile>
     <ClCompile Include="..\src\fnd\asdxTokenizer.cpp">
       <Filter>ソース ファイル\fnd</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxFxParser.cpp">
-      <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
     <ClCompile Include="..\external\meshoptimizer\allocator.cpp">
       <Filter>ソース ファイル\external\meshoptimizer</Filter>
@@ -279,8 +240,8 @@
     <ClCompile Include="..\src\fw\asdxCameraController.cpp">
       <Filter>ソース ファイル\fw</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\renderer\asdxTaaRenderer.cpp">
-      <Filter>ソース ファイル\renderer</Filter>
+    <ClCompile Include="..\src\gfx\asdxBuffer.cpp">
+      <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -326,16 +287,10 @@
     <ClInclude Include="..\include\fw\asdxApp.h">
       <Filter>ヘッダー ファイル\fw</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\gfx\asdxByteAddressBuffer.h">
-      <Filter>ヘッダー ファイル\gfx</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\gfx\asdxCommandList.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
     <ClInclude Include="..\include\gfx\asdxCommandQueue.h">
-      <Filter>ヘッダー ファイル\gfx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\gfx\asdxConstantBuffer.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
     <ClInclude Include="..\include\gfx\asdxDescriptor.h">
@@ -347,9 +302,6 @@
     <ClInclude Include="..\include\gfx\asdxFence.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\gfx\asdxIndexBuffer.h">
-      <Filter>ヘッダー ファイル\gfx</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\gfx\asdxPipelineState.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
@@ -359,25 +311,16 @@
     <ClInclude Include="..\include\gfx\asdxRayTracing.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\gfx\asdxSampler.h">
-      <Filter>ヘッダー ファイル\gfx</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\gfx\asdxScreenCpature.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
     <ClInclude Include="..\include\gfx\asdxSprite.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\gfx\asdxStructuredBuffer.h">
-      <Filter>ヘッダー ファイル\gfx</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\gfx\asdxTarget.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
     <ClInclude Include="..\include\gfx\asdxTexture.h">
-      <Filter>ヘッダー ファイル\gfx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\gfx\asdxVertexBuffer.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
     <ClInclude Include="..\include\gfx\asdxView.h">
@@ -387,9 +330,6 @@
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
     <ClInclude Include="..\include\gfx\asdxRootSignature.h">
-      <Filter>ヘッダー ファイル\gfx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\gfx\asdxReflection.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
     <ClInclude Include="..\include\res\asdxResMaterial.h">
@@ -403,9 +343,6 @@
     </ClInclude>
     <ClInclude Include="..\include\gfx\asdxModel.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\rs\asdxPassGraph.h">
-      <Filter>ヘッダー ファイル\rs</Filter>
     </ClInclude>
     <ClInclude Include="..\include\fnd\asdxFrameHeap.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
@@ -473,12 +410,6 @@
     <ClInclude Include="..\include\fnd\asdxTokenizer.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\gfx\asdxFxParser.h">
-      <Filter>ヘッダー ファイル\gfx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\rs\asdxBlackboard.h">
-      <Filter>ヘッダー ファイル\rs</Filter>
-    </ClInclude>
     <ClInclude Include="..\external\meshoptimizer\meshoptimizer.h">
       <Filter>ソース ファイル\external\meshoptimizer</Filter>
     </ClInclude>
@@ -491,8 +422,8 @@
     <ClInclude Include="..\include\fnd\asdxStringView.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\renderer\asdxTaaRenderer.h">
-      <Filter>ヘッダー ファイル\renderer</Filter>
+    <ClInclude Include="..\include\gfx\asdxBuffer.h">
+      <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -108,9 +108,9 @@ bool SpriteSystem::Init
     // ルートシグニチャ生成.
     {
         asdx::DescriptorSetLayout<3, 0> layout;
-        layout.SetContants(0, SV_VS, 16, 0);
-        layout.SetContants(1, SV_PS, 4,  1);
-        layout.SetTableSRV(2, SV_PS, 0);
+        layout.SetVar(0, SV_VS, 16, 0);
+        layout.SetVar(1, SV_PS, 4,  1);
+        layout.SetSRV(2, SV_PS, 0);
         layout.SetFlags(ROOT_SIGNATURE_FLAG_VS_PS);
 
         if (!m_RootSig.Init(pDevice, layout.GetDesc()))

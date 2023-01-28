@@ -9,8 +9,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <res/asdxResModel.h>
-#include <gfx/asdxVertexBuffer.h>
-#include <gfx/asdxIndexBuffer.h>
+#include <gfx/asdxBuffer.h>
 
 
 namespace asdx {

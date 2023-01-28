@@ -49,33 +49,6 @@ bool CheckSupportDynamicResources(ID3D12Device8* pDevice)
 void DescriptorSetLayoutBase::SetCBV(uint32_t slot, uint8_t shader, uint32_t baseRegister, uint32_t registerSpace)
 {
     assert(slot < m_ParamCount);
-    m_Params[slot].ParameterType                = D3D12_ROOT_PARAMETER_TYPE_CBV;
-    m_Params[slot].ShaderVisibility             = D3D12_SHADER_VISIBILITY(shader);
-    m_Params[slot].Descriptor.ShaderRegister    = baseRegister;
-    m_Params[slot].Descriptor.RegisterSpace     = registerSpace;
-}
-
-void DescriptorSetLayoutBase::SetSRV(uint32_t slot, uint8_t shader, uint32_t baseRegister, uint32_t registerSpace)
-{
-    assert(slot < m_ParamCount);
-    m_Params[slot].ParameterType                = D3D12_ROOT_PARAMETER_TYPE_SRV;
-    m_Params[slot].ShaderVisibility             = D3D12_SHADER_VISIBILITY(shader);
-    m_Params[slot].Descriptor.ShaderRegister    = baseRegister;
-    m_Params[slot].Descriptor.RegisterSpace     = registerSpace;
-}
-
-void DescriptorSetLayoutBase::SetUAV(uint32_t slot, uint8_t shader, uint32_t baseRegister, uint32_t registerSpace)
-{
-    assert(slot < m_ParamCount);
-    m_Params[slot].ParameterType                = D3D12_ROOT_PARAMETER_TYPE_UAV;
-    m_Params[slot].ShaderVisibility             = D3D12_SHADER_VISIBILITY(shader);
-    m_Params[slot].Descriptor.ShaderRegister    = baseRegister;
-    m_Params[slot].Descriptor.RegisterSpace     = registerSpace;
-}
-
-void DescriptorSetLayoutBase::SetTableCBV(uint32_t slot, uint8_t shader, uint32_t baseRegister, uint32_t registerSpace)
-{
-    assert(slot < m_ParamCount);
     m_Ranges[slot].RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
     m_Ranges[slot].NumDescriptors                       = 1;
     m_Ranges[slot].BaseShaderRegister                   = baseRegister;
@@ -88,7 +61,7 @@ void DescriptorSetLayoutBase::SetTableCBV(uint32_t slot, uint8_t shader, uint32_
     m_Params[slot].DescriptorTable.pDescriptorRanges    = &m_Ranges[slot];
 }
 
-void DescriptorSetLayoutBase::SetTableSRV(uint32_t slot, uint8_t shader, uint32_t baseRegister, uint32_t registerSpace)
+void DescriptorSetLayoutBase::SetSRV(uint32_t slot, uint8_t shader, uint32_t baseRegister, uint32_t registerSpace)
 {
     assert(slot < m_ParamCount);
     m_Ranges[slot].RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
@@ -103,7 +76,7 @@ void DescriptorSetLayoutBase::SetTableSRV(uint32_t slot, uint8_t shader, uint32_
     m_Params[slot].DescriptorTable.pDescriptorRanges    = &m_Ranges[slot];
 }
 
-void DescriptorSetLayoutBase::SetTableUAV(uint32_t slot, uint8_t shader, uint32_t baseRegister, uint32_t registerSpace)
+void DescriptorSetLayoutBase::SetUAV(uint32_t slot, uint8_t shader, uint32_t baseRegister, uint32_t registerSpace)
 {
     assert(slot < m_ParamCount);
     m_Ranges[slot].RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
@@ -118,22 +91,7 @@ void DescriptorSetLayoutBase::SetTableUAV(uint32_t slot, uint8_t shader, uint32_
     m_Params[slot].DescriptorTable.pDescriptorRanges    = &m_Ranges[slot];
 }
 
-void DescriptorSetLayoutBase::SetTableSmp(uint32_t slot, uint8_t shader, uint32_t baseRegister, uint32_t registerSpace)
-{
-    assert(slot < m_ParamCount);
-    m_Ranges[slot].RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
-    m_Ranges[slot].NumDescriptors                       = 1;
-    m_Ranges[slot].BaseShaderRegister                   = baseRegister;
-    m_Ranges[slot].RegisterSpace                        = registerSpace;
-    m_Ranges[slot].OffsetInDescriptorsFromTableStart    = 0;
-
-    m_Params[slot].ParameterType                        = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-    m_Params[slot].ShaderVisibility                     = D3D12_SHADER_VISIBILITY(shader);
-    m_Params[slot].DescriptorTable.NumDescriptorRanges  = 1;
-    m_Params[slot].DescriptorTable.pDescriptorRanges    = &m_Ranges[slot];
-}
-
-void DescriptorSetLayoutBase::SetContants(uint32_t slot, uint8_t shader, uint32_t count, uint32_t baseRegister, uint32_t registerSpace)
+void DescriptorSetLayoutBase::SetVar(uint32_t slot, uint8_t shader, uint32_t count, uint32_t baseRegister, uint32_t registerSpace)
 {
     assert(slot < m_ParamCount);
     m_Params[slot].ParameterType            = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
@@ -143,7 +101,7 @@ void DescriptorSetLayoutBase::SetContants(uint32_t slot, uint8_t shader, uint32_
     m_Params[slot].Constants.Num32BitValues = count;
 }
 
-void DescriptorSetLayoutBase::SetStaticSampler(uint32_t slot, uint8_t shader, uint32_t type, uint32_t baseRegister, uint32_t registerSpace)
+void DescriptorSetLayoutBase::SetSmp(uint32_t slot, uint8_t shader, uint32_t type, uint32_t baseRegister, uint32_t registerSpace)
 {
     assert(slot < m_SamplerCount);
     m_Samplers[slot].MipLODBias         = 0;
@@ -158,7 +116,7 @@ void DescriptorSetLayoutBase::SetStaticSampler(uint32_t slot, uint8_t shader, ui
 
     switch(type)
     {
-    case STATIC_SAMPLER_POINT_CLAMP:
+    case SMP_POINT_CLAMP:
         {
             m_Samplers[slot].Filter     = D3D12_FILTER_MIN_MAG_MIP_POINT;
             m_Samplers[slot].AddressU   = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
@@ -167,7 +125,7 @@ void DescriptorSetLayoutBase::SetStaticSampler(uint32_t slot, uint8_t shader, ui
         }
         break;
 
-    case STATIC_SAMPLER_POINT_WRAP:
+    case SMP_POINT_WRAP:
         {
             m_Samplers[slot].Filter     = D3D12_FILTER_MIN_MAG_MIP_POINT;
             m_Samplers[slot].AddressU   = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
@@ -176,7 +134,7 @@ void DescriptorSetLayoutBase::SetStaticSampler(uint32_t slot, uint8_t shader, ui
         }
         break;
 
-    case STATIC_SAMPLER_POINT_MIRROR:
+    case SMP_POINT_MIRROR:
         {
             m_Samplers[slot].Filter     = D3D12_FILTER_MIN_MAG_MIP_POINT;
             m_Samplers[slot].AddressU   = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
@@ -185,7 +143,7 @@ void DescriptorSetLayoutBase::SetStaticSampler(uint32_t slot, uint8_t shader, ui
         }
         break;
 
-    case STATIC_SAMPLER_LINEAR_CLAMP:
+    case SMP_LINEAR_CLAMP:
         {
             m_Samplers[slot].Filter     = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
             m_Samplers[slot].AddressU   = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
@@ -194,7 +152,7 @@ void DescriptorSetLayoutBase::SetStaticSampler(uint32_t slot, uint8_t shader, ui
         }
         break;
 
-    case STATIC_SAMPLER_LINEAR_WRAP:
+    case SMP_LINEAR_WRAP:
         {
             m_Samplers[slot].Filter     = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
             m_Samplers[slot].AddressU   = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
@@ -203,7 +161,7 @@ void DescriptorSetLayoutBase::SetStaticSampler(uint32_t slot, uint8_t shader, ui
         }
         break;
 
-    case STATIC_SAMPLER_LINEAR_MIRROR:
+    case SMP_LINEAR_MIRROR:
         {
             m_Samplers[slot].Filter     = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
             m_Samplers[slot].AddressU   = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
@@ -212,7 +170,7 @@ void DescriptorSetLayoutBase::SetStaticSampler(uint32_t slot, uint8_t shader, ui
         }
         break;
 
-    case STATIC_SAMPLER_ANISOTROPIC_CLAMP:
+    case SMP_ANISOTROPIC_CLAMP:
         {
             m_Samplers[slot].Filter         = D3D12_FILTER_ANISOTROPIC;
             m_Samplers[slot].AddressU       = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
@@ -222,7 +180,7 @@ void DescriptorSetLayoutBase::SetStaticSampler(uint32_t slot, uint8_t shader, ui
         }
         break;
 
-    case STATIC_SAMPLER_ANISOTROPIC_WRAP:
+    case SMP_ANISOTROPIC_WRAP:
         {
             m_Samplers[slot].Filter         = D3D12_FILTER_ANISOTROPIC;
             m_Samplers[slot].AddressU       = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
@@ -232,7 +190,7 @@ void DescriptorSetLayoutBase::SetStaticSampler(uint32_t slot, uint8_t shader, ui
         }
         break;
 
-    case STATIC_SAMPLER_ANISOTROPIC_MIRROR:
+    case SMP_ANISOTROPIC_MIRROR:
         {
             m_Samplers[slot].Filter         = D3D12_FILTER_ANISOTROPIC;
             m_Samplers[slot].AddressU       = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
