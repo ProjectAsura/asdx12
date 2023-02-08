@@ -9,8 +9,10 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <vector>
+#include <map>
 #include <d3d12.h>
 #include <fnd/asdxRef.h>
+#include <gfx/asdxView.h>
 
 
 #ifdef __ID3D12GraphicsCommandList6_INTERFACE_DEFINED__
@@ -23,6 +25,18 @@
 
 
 namespace asdx {
+
+///////////////////////////////////////////////////////////////////////////////
+// SHADER_TYPE
+///////////////////////////////////////////////////////////////////////////////
+enum SHADER_TYPE
+{
+    SHADER_TYPE_VS,      // Vertex Shader.
+    SHADER_TYPE_PS,      // Pixel Shader.
+    SHADER_TYPE_AS,      // Amplification Shader.
+    SHADER_TYPE_MS,      // Mesh Shader.
+    SHADER_TYPE_CS       // Compute Shader.
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 // PIPELINE_TYPE
@@ -161,7 +175,7 @@ public:
     //! @retval true    初期化に成功.
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
-    bool Init(ID3D12Device* pDevice, const D3D12_GRAPHICS_PIPELINE_STATE_DESC* pDesc);
+    bool Init(ID3D12Device8* pDevice, const D3D12_GRAPHICS_PIPELINE_STATE_DESC* pDesc);
 
     //-------------------------------------------------------------------------
     //! @brief      コンピュートパイプラインとして初期化します.
@@ -171,7 +185,7 @@ public:
     //! @retval true    初期化に成功.
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
-    bool Init(ID3D12Device* pDevice, const D3D12_COMPUTE_PIPELINE_STATE_DESC* pDesc);
+    bool Init(ID3D12Device8* pDevice, const D3D12_COMPUTE_PIPELINE_STATE_DESC* pDesc);
 
     //-------------------------------------------------------------------------
     //! @brief      ジオメトリパイプラインとして初期化します.
@@ -181,7 +195,7 @@ public:
     //! @retval true    初期化に成功.
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
-    bool Init(ID3D12Device2* pDevice, const GEOMETRY_PIPELINE_STATE_DESC* pDesc);
+    bool Init(ID3D12Device8* pDevice, const GEOMETRY_PIPELINE_STATE_DESC* pDesc);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.
@@ -189,29 +203,13 @@ public:
     void Term();
 
     //-------------------------------------------------------------------------
-    //! @brief      頂点シェーダを差し替えます.
+    //! @brief      シェーダを差し替えます.
+    //! 
+    //! @param[in]      type        シェーダタイプ.
+    //! @param[in]      pBinary     シェーダバイナリ.
+    //! @param[in]      binarySize  バイナリサイズ.
     //-------------------------------------------------------------------------
-    void ReplaceVS(const void* pBinary, size_t binarySize);
-
-    //-------------------------------------------------------------------------
-    //! @brief      ピクセルシェーダを差し替えます.
-    //-------------------------------------------------------------------------
-    void ReplacePS(const void* pBinary, size_t binarySize);
-
-    //-------------------------------------------------------------------------
-    //! @brief      コンピュートシェーダを差し替えます.
-    //-------------------------------------------------------------------------
-    void ReplaceCS(const void* pBinary, size_t binarySize);
-
-    //-------------------------------------------------------------------------
-    //! @brief      メッシュシェーダを差し替えます.
-    //-------------------------------------------------------------------------
-    void ReplaceMS(const void* pBinary, size_t binarySize);
-
-    //-------------------------------------------------------------------------
-    //! @brief      増幅シェーダを差し替えます.
-    //-------------------------------------------------------------------------
-    void ReplaceAS(const void* pBinary, size_t binarySize);
+    void ReplaceShader(SHADER_TYPE type, const void* pBinary, size_t binarySize);
 
     //-------------------------------------------------------------------------
     //! @brief      パイプラインステートを再生成します.
@@ -219,23 +217,73 @@ public:
     void Recreate();
 
     //-------------------------------------------------------------------------
-    //! @brief      パイプラインステートを取得します.
-    //!
-    //! @return     パイプラインステートを返却します.
-    //-------------------------------------------------------------------------
-    ID3D12PipelineState* GetPtr() const;
-
-    //-------------------------------------------------------------------------
     //! @brief      パイプラインタイプを取得します.
-    //!
+    //! 
     //! @return     パイプラインタイプを返却します.
     //-------------------------------------------------------------------------
     PIPELINE_TYPE GetType() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      パイプラインステートを設定します.
+    //! 
+    //! @param[in]      pCmdList        グラフィックスコマンドリスト.
+    //-------------------------------------------------------------------------
+    void SetState(ID3D12GraphicsCommandList* pCmdList);
+
+    //-------------------------------------------------------------------------
+    //! @brief      ルート定数を設定します.
+    //! 
+    //! @param[in]      pCmdList        グラフィックスコマンドリスト.
+    //! @param[in]      type            シェーダタイプです.
+    //! @param[in]      registerIndex   レジスタ番号.
+    //! @param[in]      paramCount      設定するパラメータ数.
+    //! @param[in]      params          設定するパラメータ.
+    //! @param[in]      offset          設定先先頭からのオフセット.
+    //-------------------------------------------------------------------------
+    void SetConstants(
+        ID3D12GraphicsCommandList*  pCmdList,
+        SHADER_TYPE                 type,
+        uint32_t                    registerIndex,
+        uint32_t                    paramCount,
+        const void*                 params,
+        uint32_t                    offset);
+
+    //-------------------------------------------------------------------------
+    //! @brief      定数バッファを設定します.
+    //! 
+    //! @param[in]      pCmdList        コマンドリストです.
+    //! @param[in]      type            シェーダタイプです.
+    //! @param[in]      registerIndex   レジスタ番号.
+    //! @param[in]      pView           ビューです.
+    //-------------------------------------------------------------------------
+    void SetCBV(ID3D12GraphicsCommandList* pCmdList, SHADER_TYPE type, uint32_t registerIndex, IConstantBufferView* pView);
+
+    //-------------------------------------------------------------------------
+    //! @brief      シェーダリソースビューを設定します.
+    //! 
+    //! @param[in]      pCmdList        コマンドリストです.
+    //! @param[in]      type            シェーダタイプです.
+    //! @param[in]      registerIndex   レジスタ番号.
+    //! @param[in]      pView           ビューです.
+    //-------------------------------------------------------------------------
+    void SetSRV(ID3D12GraphicsCommandList* pCmdList, SHADER_TYPE type, uint32_t registerIndex, IShaderResourceView* pView);
+
+    //-------------------------------------------------------------------------
+    //! @brief      アンオーダードアクセスビューを設定します.
+    //! 
+    //! @param[in]      pCmdList        コマンドリストです.
+    //! @param[in]      type            シェーダタイプです.
+    //! @param[in]      registerIndex   レジスタ番号.
+    //! @param[in]      pView           ビューです.
+    //-------------------------------------------------------------------------
+    void SetUAV(ID3D12GraphicsCommandList* pCmdList, SHADER_TYPE type, uint32_t registerIndex, IUnorderedAccessView* pView);
 
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
+    RefPtr<ID3D12RootSignature>     m_pRootSig;
+    RefPtr<ID3D12RootSignature>     m_pRecreateRootSig;
     RefPtr<ID3D12PipelineState>     m_pPSO;
     RefPtr<ID3D12PipelineState>     m_pRecreatePSO;
     PIPELINE_TYPE                   m_Type;
@@ -253,10 +301,25 @@ private:
     std::vector<uint8_t>    m_MS;
     std::vector<uint8_t>    m_AS;
 
+    std::map<uint16_t, uint16_t>    m_RootParameterIndices;
+
     //=========================================================================
     // private methods.
     //=========================================================================
-    /* DO_NOTHING */
+
+    uint32_t FindIndex(SHADER_TYPE type, uint8_t kind, uint32_t registerIndex) const;
+
+    bool EnumerateRootParameter(
+        SHADER_TYPE type,
+        const void* binary,
+        size_t binarySize,
+        std::vector<D3D12_DESCRIPTOR_RANGE*>& ranges,
+        std::vector<D3D12_ROOT_PARAMETER>& params,
+        std::vector<D3D12_STATIC_SAMPLER_DESC>& samplers);
+
+    bool CreateGraphicsRootSignature(ID3D12Device8* pDevice, ID3D12RootSignature** ppRootSig);
+    bool CreateGeometryRootSignature(ID3D12Device8* pDevice, ID3D12RootSignature** ppRootSig);
+    bool CreateComputeRootSignature(ID3D12Device8* pDevice, ID3D12RootSignature** ppRootSig);
 };
 
 } // namespace asdx

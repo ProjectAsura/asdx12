@@ -9,10 +9,11 @@
 //-----------------------------------------------------------------------------
 #include <gfx/asdxGraphicsSystem.h>
 #include <gfx/asdxCommandQueue.h>
-#include <gfx/asdxDescriptor.h>
+//#include <gfx/asdxDescriptor.h>
 #include <gfx/asdxDisposer.h>
 #include <gfx/asdxCommandList.h>
 //#include <gfx/asdxResourceUploader.h>
+#include <fnd/asdxList.h>
 #include <fnd/asdxSpinLock.h>
 #include <fnd/asdxRef.h>
 #include <fnd/asdxLogger.h>
@@ -130,6 +131,182 @@ inline void CopySubresource
 
 
 namespace asdx {
+
+//-----------------------------------------------------------------------------
+// Forward Declaration.
+//-----------------------------------------------------------------------------
+class DescriptorHeap;
+
+///////////////////////////////////////////////////////////////////////////////
+// Descriptor class
+///////////////////////////////////////////////////////////////////////////////
+class Descriptor : public IReference, public List<Descriptor>::Node
+{
+    //=========================================================================
+    // list of friend classes and methods.
+    //=========================================================================
+    friend class DescriptorHeap;
+
+public:
+    //=========================================================================
+    // public variables.
+    //=========================================================================
+    /* NOTHING */
+
+    //=========================================================================
+    // public methods.
+    //=========================================================================
+
+    //-------------------------------------------------------------------------
+    //! @brief      参照カウントを増やします.
+    //-------------------------------------------------------------------------
+    void AddRef() override;
+
+    //-------------------------------------------------------------------------
+    //! @brief      解放処理を行います.
+    //-------------------------------------------------------------------------
+    void Release() override;
+
+    //-------------------------------------------------------------------------
+    //! @brief      参照カウントを取得します.
+    //-------------------------------------------------------------------------
+    uint32_t GetCount() const override;
+
+    //-------------------------------------------------------------------------
+    //! @brief      CPUディスクリプタハンドルを取得します.
+    //-------------------------------------------------------------------------
+    D3D12_CPU_DESCRIPTOR_HANDLE GetHandleCPU() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      GPUディスクリプタハンドルを取得します.
+    //-------------------------------------------------------------------------
+    D3D12_GPU_DESCRIPTOR_HANDLE GetHandleGPU() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      インデックスを取得します.
+    //-------------------------------------------------------------------------
+    uint32_t GetIndex() const;
+
+private:
+    //=========================================================================
+    // private variables.
+    //=========================================================================
+    DescriptorHeap*             m_pHeap;        //!< ヒープへのポインタです.
+    D3D12_CPU_DESCRIPTOR_HANDLE m_HandleCPU;    //!< CPUディスクリプタハンドルです.
+    D3D12_GPU_DESCRIPTOR_HANDLE m_HandleGPU;    //!< GPUディスクリプタハンドルです.
+    uint32_t                    m_Index;        //!< ディスクリプタインデックス.
+    std::atomic<uint32_t>       m_RefCount;     //!< 参照カウンタです.
+
+    //=========================================================================
+    // private methods.
+    //=========================================================================
+
+    //-------------------------------------------------------------------------
+    //! @brief      コンストラクタです.
+    //-------------------------------------------------------------------------
+    Descriptor();
+
+    //-------------------------------------------------------------------------
+    //! @brief      デストラクタです.
+    //-------------------------------------------------------------------------
+    ~Descriptor();
+
+    Descriptor      (const Descriptor&) = delete;
+    void operator = (const Descriptor&) = delete;
+};
+
+
+///////////////////////////////////////////////////////////////////////////////
+// DescriptorHeap class
+///////////////////////////////////////////////////////////////////////////////
+class DescriptorHeap
+{
+    //=========================================================================
+    // list of friend classes and methods.
+    //=========================================================================
+    friend class Descriptor;
+
+public:
+    //=========================================================================
+    // public variables.
+    //=========================================================================
+    /* NOTHING */
+
+    //=========================================================================
+    // public methods.
+    //=========================================================================
+
+    //-------------------------------------------------------------------------
+    //! @brief      コンストラクタです.
+    //-------------------------------------------------------------------------
+    DescriptorHeap();
+
+    //-------------------------------------------------------------------------
+    //! @brief      デストラクタです.
+    //-------------------------------------------------------------------------
+    ~DescriptorHeap();
+
+    //-------------------------------------------------------------------------
+    //! @brief      初期化処理を行います.
+    //-------------------------------------------------------------------------
+    bool Init(ID3D12Device* pDevice, const D3D12_DESCRIPTOR_HEAP_DESC* pDesc);
+
+    //-------------------------------------------------------------------------
+    //! @brief      終了処理を行います.
+    //-------------------------------------------------------------------------
+    void Term();
+
+    //-------------------------------------------------------------------------
+    //! @brief      ディスクリプタを生成します.
+    //!
+    //! @return     生成したディスクリプタを返却します. 生成に失敗した場合は nullptr が返却されます.
+    //-------------------------------------------------------------------------
+    Descriptor* Alloc();
+
+    //-------------------------------------------------------------------------
+    //! @brief      利用可能なハンドル数を取得します.
+    //!
+    //! @return     利用可能なハンドル数を返却します.
+    //-------------------------------------------------------------------------
+    uint32_t GetAvailableCount() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      割り当て済みハンドル数を取得します.
+    //!
+    //! @return     割り当て済みハンドル数を返却します.
+    //-------------------------------------------------------------------------
+    uint32_t GetAllocatedCount() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      ハンドル総数を取得します.
+    //!
+    //! @return     ハンドル総数を返却します.
+    //-------------------------------------------------------------------------
+    uint32_t GetHandleCount() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      ディスクリプタヒープを取得します.
+    //-------------------------------------------------------------------------
+    ID3D12DescriptorHeap* GetD3D12DescriptorHeap() const;
+
+private:
+    //=========================================================================
+    // private variables.
+    //=========================================================================
+    ID3D12DescriptorHeap*   m_pHeap;            //!< ディスクリプタヒープです.
+    List<Descriptor>        m_UsedList;         //!< 使用中リスト.
+    List<Descriptor>        m_FreeList;         //!< 未使用リスト.
+    Descriptor*             m_Descriptors;      //!< ディスクリプタ.
+    uint32_t                m_IncrementSize;    //!< インクリメントサイズです.
+
+    //=========================================================================
+    // private methods.
+    //=========================================================================
+    void Free(Descriptor* pValue);
+
+    DescriptorHeap  (const DescriptorHeap&) = delete;
+    void operator = (const DescriptorHeap&) = delete;
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 // GraphicsSystem class
@@ -329,6 +506,230 @@ private:
 };
 
 
+
+///////////////////////////////////////////////////////////////////////////////
+// Descriptor class
+///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      コンストラクタです.
+//-----------------------------------------------------------------------------
+Descriptor::Descriptor()
+: List<Descriptor>::Node()
+, m_pHeap       (nullptr)
+, m_HandleCPU   ()
+, m_HandleGPU   ()
+, m_Index       (UINT32_MAX)
+, m_RefCount    (1)
+{ /* DO_NOTHING */ }
+
+//-----------------------------------------------------------------------------
+//      デストラクタです.
+//-----------------------------------------------------------------------------
+Descriptor::~Descriptor()
+{
+    m_pHeap = nullptr;
+}
+
+//-----------------------------------------------------------------------------
+//      参照カウントを増やします.
+//-----------------------------------------------------------------------------
+void Descriptor::AddRef()
+{ m_RefCount++; }
+
+//-----------------------------------------------------------------------------
+//      解放処理を行います.
+//-----------------------------------------------------------------------------
+void Descriptor::Release()
+{
+    if (m_RefCount > 0)
+    {
+        m_RefCount--;
+        if (m_RefCount == 0)
+        {
+            auto pHeap = m_pHeap;
+            if (pHeap != nullptr)
+            { pHeap->Free(this); }
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+//      参照カウントを取得します.
+//-----------------------------------------------------------------------------
+uint32_t Descriptor::GetCount() const
+{ return m_RefCount; }
+
+//-----------------------------------------------------------------------------
+//      CPUディスクリプタハンドルを取得します.
+//-----------------------------------------------------------------------------
+D3D12_CPU_DESCRIPTOR_HANDLE Descriptor::GetHandleCPU() const
+{ return m_HandleCPU; }
+
+//-----------------------------------------------------------------------------
+//      GPUディスクリプタハンドルを取得します.
+//-----------------------------------------------------------------------------
+D3D12_GPU_DESCRIPTOR_HANDLE Descriptor::GetHandleGPU() const
+{ return m_HandleGPU; }
+
+//-----------------------------------------------------------------------------
+//      インデックスを取得します.
+//-----------------------------------------------------------------------------
+uint32_t Descriptor::GetIndex() const
+{ return m_Index; }
+
+
+///////////////////////////////////////////////////////////////////////////////
+// DescritptorHeap class
+///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      コンストラクタです.
+//-----------------------------------------------------------------------------
+DescriptorHeap::DescriptorHeap()
+: m_pHeap           (nullptr)
+, m_FreeList        ()
+, m_UsedList        ()
+, m_Descriptors     (nullptr)
+, m_IncrementSize   (0)
+{ /* DO_NOTHING */ }
+
+//-----------------------------------------------------------------------------
+//      デストラクタです.
+//-----------------------------------------------------------------------------
+DescriptorHeap::~DescriptorHeap()
+{ Term(); }
+
+//-----------------------------------------------------------------------------
+//      初期化処理を行います.
+//-----------------------------------------------------------------------------
+bool DescriptorHeap::Init(ID3D12Device* pDevice, const D3D12_DESCRIPTOR_HEAP_DESC* pDesc)
+{
+    if (pDevice == nullptr || pDesc == nullptr)
+    { return false; }
+
+    if (pDesc->NumDescriptors == 0)
+    { return true; }
+
+    auto hr = pDevice->CreateDescriptorHeap(pDesc, IID_PPV_ARGS(&m_pHeap));
+    if ( FAILED(hr) )
+    {
+        ELOG("Error : ID3D12Device::CreateDescriptorHeap() Failed. errcode = 0x%x", hr);
+        return false;
+    }
+
+    m_pHeap->SetName(L"asdxDescriptorHeap");
+
+    // インクリメントサイズを取得.
+    m_IncrementSize = pDevice->GetDescriptorHandleIncrementSize(pDesc->Type);
+
+    // ディスクリプタ生成.
+    m_Descriptors = new Descriptor[pDesc->NumDescriptors];
+
+    auto hasHandleGPU = (pDesc->Flags == D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
+
+    for(auto i=0u; i<pDesc->NumDescriptors; ++i)
+    {
+        // ヒープを設定.
+        m_Descriptors[i].m_pHeap = this;
+
+        // Dynamic Resource 用の番号を割り当て.
+        m_Descriptors[i].m_Index = i;
+
+        // CPUハンドルをディスクリプタを割り当て.
+        {
+            auto handleCPU = m_pHeap->GetCPUDescriptorHandleForHeapStart();
+            handleCPU.ptr += UINT64(m_IncrementSize) * i;
+            m_Descriptors[i].m_HandleCPU = handleCPU;
+        }
+
+        // GPUハンドルをディスクリプタを割り当て
+        if (hasHandleGPU)
+        {
+            auto handleGPU = m_pHeap->GetGPUDescriptorHandleForHeapStart();
+            handleGPU.ptr += UINT64(m_IncrementSize) * i;
+            m_Descriptors[i].m_HandleGPU = handleGPU;
+        }
+
+        // 未使用リストに追加.
+        m_FreeList.PushBack(&m_Descriptors[i]);
+    }
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      終了処理を行います.
+//-----------------------------------------------------------------------------
+void DescriptorHeap::Term()
+{
+    /* この関数内で落ちる場合は解放漏れがあります */
+    m_FreeList.Clear();
+    m_UsedList.Clear();
+
+    if (m_pHeap != nullptr)
+    {
+        m_pHeap->Release();
+        m_pHeap = nullptr;
+    }
+
+    if (m_Descriptors != nullptr)
+    {
+        delete[] m_Descriptors;
+        m_Descriptors = nullptr;
+    }
+}
+
+//-----------------------------------------------------------------------------
+//      ディスクリプタを生成します.
+//-----------------------------------------------------------------------------
+Descriptor* DescriptorHeap::Alloc()
+{
+    auto node = m_FreeList.PopFront();
+    m_UsedList.PushBack(node);
+    return node;
+}
+
+//-----------------------------------------------------------------------------
+//      ディスクリプタを破棄します.
+//-----------------------------------------------------------------------------
+void DescriptorHeap::Free(Descriptor* pValue)
+{
+    if (pValue == nullptr)
+    { return; }
+
+    m_UsedList.Remove(pValue);
+    m_FreeList.PushBack(pValue);
+}
+
+//-----------------------------------------------------------------------------
+//      ディスクリプタヒープを取得します.
+//-----------------------------------------------------------------------------
+ID3D12DescriptorHeap* DescriptorHeap::GetD3D12DescriptorHeap() const
+{ return m_pHeap; }
+
+//-----------------------------------------------------------------------------
+//      割り当て済みハンドル数を取得します.
+//-----------------------------------------------------------------------------
+uint32_t DescriptorHeap::GetAllocatedCount() const
+{ return uint32_t(m_UsedList.GetCount()); }
+
+//-----------------------------------------------------------------------------
+//      割り当て可能なハンドル数を取得します.
+//-----------------------------------------------------------------------------
+uint32_t DescriptorHeap::GetAvailableCount() const
+{ return uint32_t(m_FreeList.GetCount()); }
+
+//-----------------------------------------------------------------------------
+//      ハンドル数を取得します.
+//-----------------------------------------------------------------------------
+uint32_t DescriptorHeap::GetHandleCount() const
+{ return uint32_t(m_UsedList.GetCount() + m_FreeList.GetCount()); }
+ 
+
+///////////////////////////////////////////////////////////////////////////////
+// GraphicsSystem
+///////////////////////////////////////////////////////////////////////////////
 GraphicsSystem GraphicsSystem::s_Instance = {};
 
 //-----------------------------------------------------------------------------
@@ -1202,5 +1603,439 @@ void UpdateTexture
 
     Dispose(pSrcResource);
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
+// ConstantBufferView class
+///////////////////////////////////////////////////////////////////////////////
+class ConstantBufferView : public IConstantBufferView
+{
+public:
+    ConstantBufferView
+    (
+        ID3D12Resource*                         pResource,
+        const D3D12_CONSTANT_BUFFER_VIEW_DESC*  pDesc,
+        Descriptor*                             pDescriptor
+    )
+    : m_RefCount  (1)
+    , m_Resource  (pResource)
+    , m_Descriptor(pDescriptor)
+    {
+        m_Resource->AddRef();
+        memcpy(&m_Desc, pDesc, sizeof(m_Desc));
+    }
+
+    ~ConstantBufferView()
+    {
+        DisposeDescriptor(m_Descriptor);
+        Dispose(m_Resource); 
+    }
+
+    void AddRef() override
+    { m_RefCount++; }
+
+    void Release() override
+    {
+        m_RefCount--;
+        if (m_RefCount == 0)
+        { delete this; }
+    }
+
+    uint32_t GetCount() const override
+    { return m_RefCount; }
+
+    D3D12_CPU_DESCRIPTOR_HANDLE GetHandleCPU() const override
+    { return m_Descriptor->GetHandleCPU(); }
+
+    D3D12_GPU_DESCRIPTOR_HANDLE GetHandleGPU() const override
+    { return m_Descriptor->GetHandleGPU(); }
+
+    uint32_t GetDescriptorIndex() const override
+    { return m_Descriptor->GetIndex(); }
+
+    ID3D12Resource* GetResource() const override
+    { return m_Resource; }
+
+    D3D12_CONSTANT_BUFFER_VIEW_DESC GetDesc() const override
+    { return m_Desc; }
+
+private:
+    std::atomic<uint32_t>           m_RefCount;
+    ID3D12Resource*                 m_Resource;
+    Descriptor*                     m_Descriptor;
+    D3D12_CONSTANT_BUFFER_VIEW_DESC m_Desc;
+};
+
+
+///////////////////////////////////////////////////////////////////////////////
+// RenderTargetView class
+///////////////////////////////////////////////////////////////////////////////
+class RenderTargetView : public IRenderTargetView
+{
+public:
+    RenderTargetView
+    (
+        ID3D12Resource*                         pResource,
+        const D3D12_RENDER_TARGET_VIEW_DESC*    pDesc,
+        Descriptor*                             pDescriptor
+    )
+    : m_RefCount    (1)
+    , m_Resource    (pResource)
+    , m_Descriptor  (pDescriptor)
+    {
+        m_Resource->AddRef();
+        memcpy(&m_Desc, pDesc, sizeof(m_Desc));
+    }
+
+    ~RenderTargetView()
+    {
+        DisposeDescriptor(m_Descriptor);
+        Dispose(m_Resource);
+    }
+
+    void AddRef() override
+    { m_RefCount++; }
+
+    void Release() override
+    {
+        m_RefCount--;
+        if (m_RefCount == 0)
+        { delete this; }
+    }
+
+    uint32_t GetCount() const override
+    { return m_RefCount; }
+
+    D3D12_CPU_DESCRIPTOR_HANDLE GetHandleCPU() const override
+    { return m_Descriptor->GetHandleCPU(); }
+
+    D3D12_GPU_DESCRIPTOR_HANDLE GetHandleGPU() const override
+    { return m_Descriptor->GetHandleGPU(); }
+
+    uint32_t GetDescriptorIndex() const override
+    { return m_Descriptor->GetIndex(); }
+
+    ID3D12Resource* GetResource() const override
+    { return m_Resource; }
+
+    D3D12_RENDER_TARGET_VIEW_DESC GetDesc() const override
+    { return m_Desc; }
+
+private:
+    std::atomic<uint32_t>           m_RefCount;
+    ID3D12Resource*                 m_Resource;
+    Descriptor*                     m_Descriptor;
+    D3D12_RENDER_TARGET_VIEW_DESC   m_Desc;
+};
+
+
+///////////////////////////////////////////////////////////////////////////////
+// DepthStencilView class
+///////////////////////////////////////////////////////////////////////////////
+class DepthStencilView : public IDepthStencilView
+{
+public:
+    DepthStencilView
+    (
+        ID3D12Resource*                         pResource,
+        const D3D12_DEPTH_STENCIL_VIEW_DESC*    pDesc,
+        Descriptor*                             pDescriptor
+    )
+    : m_RefCount    (1)
+    , m_Resource    (pResource)
+    , m_Descriptor  (pDescriptor)
+    {
+        m_Resource->AddRef();
+        memcpy(&m_Desc, pDesc, sizeof(m_Desc));
+    }
+
+    ~DepthStencilView()
+    {
+        DisposeDescriptor(m_Descriptor);
+        Dispose(m_Resource);
+    }
+
+    void AddRef() override
+    { m_RefCount++; }
+
+    void Release() override
+    {
+        m_RefCount--;
+        if (m_RefCount == 0)
+        { delete this; }
+    }
+
+    uint32_t GetCount() const override
+    { return m_RefCount; }
+
+    D3D12_CPU_DESCRIPTOR_HANDLE GetHandleCPU() const override
+    { return m_Descriptor->GetHandleCPU(); }
+
+    D3D12_GPU_DESCRIPTOR_HANDLE GetHandleGPU() const override
+    { return m_Descriptor->GetHandleGPU(); }
+
+    uint32_t GetDescriptorIndex() const override
+    { return m_Descriptor->GetIndex(); }
+
+    ID3D12Resource* GetResource() const override
+    { return m_Resource; }
+
+    D3D12_DEPTH_STENCIL_VIEW_DESC GetDesc() const override
+    { return m_Desc; }
+   
+private:
+    std::atomic<uint32_t>           m_RefCount;
+    ID3D12Resource*                 m_Resource;
+    Descriptor*                     m_Descriptor;
+    D3D12_DEPTH_STENCIL_VIEW_DESC   m_Desc;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// ShaderResourceView class
+///////////////////////////////////////////////////////////////////////////////
+class ShaderResourceView : public IShaderResourceView
+{
+public:
+    ShaderResourceView
+    (
+        ID3D12Resource*                         pResource,
+        const D3D12_SHADER_RESOURCE_VIEW_DESC*  pDesc,
+        Descriptor*                             pDescriptor
+    )
+    : m_RefCount    (1)
+    , m_Resource    (pResource)
+    , m_Descriptor  (pDescriptor)
+    {
+        m_Resource->AddRef();
+        memcpy(&m_Desc, pDesc, sizeof(m_Desc));
+    }
+
+    ~ShaderResourceView()
+    {
+        DisposeDescriptor(m_Descriptor);
+        Dispose(m_Resource);
+    }
+
+    void AddRef() override
+    { m_RefCount++; }
+
+    void Release() override
+    {
+        m_RefCount--;
+        if (m_RefCount == 0)
+        { delete this; }
+    }
+
+    uint32_t GetCount() const override
+    { return m_RefCount; }
+
+    D3D12_CPU_DESCRIPTOR_HANDLE GetHandleCPU() const override
+    { return m_Descriptor->GetHandleCPU(); }
+
+    D3D12_GPU_DESCRIPTOR_HANDLE GetHandleGPU() const override
+    { return m_Descriptor->GetHandleGPU(); }
+
+    uint32_t GetDescriptorIndex() const override
+    { return m_Descriptor->GetIndex(); }
+
+    ID3D12Resource* GetResource() const override
+    { return m_Resource; }
+
+    D3D12_SHADER_RESOURCE_VIEW_DESC GetDesc() const override
+    { return m_Desc; }
+
+private:
+    std::atomic<uint32_t>           m_RefCount;
+    ID3D12Resource*                 m_Resource;
+    Descriptor*                     m_Descriptor;
+    D3D12_SHADER_RESOURCE_VIEW_DESC m_Desc;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// UnorderedAccessView class
+///////////////////////////////////////////////////////////////////////////////
+class UnorderedAccessView : public IUnorderedAccessView
+{
+public:
+    UnorderedAccessView
+    (
+        ID3D12Resource* pResource,
+        ID3D12Resource* pCounterResource,
+        const D3D12_UNORDERED_ACCESS_VIEW_DESC* pDesc,
+        Descriptor* pDescriptor
+    )
+    : m_RefCount        (1)
+    , m_Resource        (pResource)
+    , m_CounterResource (pCounterResource)
+    , m_Descriptor      (pDescriptor)
+    {
+        m_Resource->AddRef();
+        if (m_CounterResource != nullptr)
+        { m_CounterResource->AddRef(); }
+        memcpy(&m_Desc, pDesc, sizeof(m_Desc));
+    }
+
+    ~UnorderedAccessView()
+    {
+        DisposeDescriptor(m_Descriptor);
+        Dispose(m_Resource);
+        Dispose(m_CounterResource);
+    }
+
+    void AddRef() override
+    { m_RefCount++; }
+
+    void Release() override
+    {
+        m_RefCount--;
+        if (m_RefCount == 0)
+        { delete this; }
+    }
+
+    uint32_t GetCount() const override
+    { return m_RefCount; }
+
+    D3D12_CPU_DESCRIPTOR_HANDLE GetHandleCPU() const override
+    { return m_Descriptor->GetHandleCPU(); }
+
+    D3D12_GPU_DESCRIPTOR_HANDLE GetHandleGPU() const override
+    { return m_Descriptor->GetHandleGPU(); }
+
+    uint32_t GetDescriptorIndex() const override
+    { return m_Descriptor->GetIndex(); }
+
+    ID3D12Resource* GetResource() const override
+    { return m_Resource; }
+
+    ID3D12Resource* GetCounterResource() const override
+    { return m_CounterResource; }
+
+    D3D12_UNORDERED_ACCESS_VIEW_DESC GetDesc() const override
+    { return m_Desc; }
+
+private:
+    std::atomic<uint32_t>               m_RefCount;
+    ID3D12Resource*                     m_Resource;
+    ID3D12Resource*                     m_CounterResource;
+    Descriptor*                         m_Descriptor;
+    D3D12_UNORDERED_ACCESS_VIEW_DESC    m_Desc;
+};
+
+//-----------------------------------------------------------------------------
+//      定数バッファを生成します.
+//-----------------------------------------------------------------------------
+bool CreateConstantBufferView
+(
+    ID3D12Resource*                         pResource,
+    const D3D12_CONSTANT_BUFFER_VIEW_DESC*  pDesc,
+    IConstantBufferView**                   ppView
+)
+{
+    Descriptor* pDescriptor = nullptr;
+    auto ret = AllocDescriptor(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, &pDescriptor);
+    if (!ret)
+    { return false; }
+
+    GetD3D12Device()->CreateConstantBufferView(pDesc, pDescriptor->GetHandleCPU());
+
+    auto instance = new ConstantBufferView(pResource, pDesc, pDescriptor);
+    *ppView = instance;
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      レンダーターゲットビューを生成します.
+//-----------------------------------------------------------------------------
+bool CreateRenderTargetView
+(
+    ID3D12Resource*                         pResource,
+    const D3D12_RENDER_TARGET_VIEW_DESC*    pDesc,
+    IRenderTargetView**                     ppView
+)
+{
+    Descriptor* pDescriptor = nullptr;
+    auto ret = AllocDescriptor(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, &pDescriptor);
+    if (!ret)
+    { return false; }
+
+    GetD3D12Device()->CreateRenderTargetView(pResource, pDesc, pDescriptor->GetHandleCPU());
+
+    auto instance = new RenderTargetView(pResource, pDesc, pDescriptor);
+    *ppView = instance;
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      深度ステンシルビューを生成します.
+//-----------------------------------------------------------------------------
+bool CreateDepthStencilView
+(
+    ID3D12Resource*                         pResource,
+    const D3D12_DEPTH_STENCIL_VIEW_DESC*    pDesc,
+    IDepthStencilView**                     ppView
+)
+{
+    Descriptor* pDescriptor = nullptr;
+    auto ret = AllocDescriptor(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, &pDescriptor);
+    if (!ret)
+    { return false; }
+
+    GetD3D12Device()->CreateDepthStencilView(pResource, pDesc, pDescriptor->GetHandleCPU());
+
+    auto instance = new DepthStencilView(pResource, pDesc, pDescriptor);
+    *ppView = instance;
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      シェーダリソースビューを生成します.
+//-----------------------------------------------------------------------------
+bool CreateShaderResourceView
+(
+    ID3D12Resource*                         pResource,
+    const D3D12_SHADER_RESOURCE_VIEW_DESC*  pDesc,
+    IShaderResourceView**                   ppView
+)
+{
+    Descriptor* pDescriptor = nullptr;
+    auto ret = AllocDescriptor(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, &pDescriptor);
+    if (!ret)
+    { return false; }
+
+    GetD3D12Device()->CreateShaderResourceView(pResource, pDesc, pDescriptor->GetHandleCPU());
+
+    auto instance = new ShaderResourceView(pResource, pDesc, pDescriptor);
+    *ppView = instance;
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      アンオーダードアクセスビューを生成します.
+//-----------------------------------------------------------------------------
+bool CreateUnorderedAccessView
+(
+    ID3D12Resource*                         pResource,
+    ID3D12Resource*                         pCounterResource,
+    const D3D12_UNORDERED_ACCESS_VIEW_DESC* pDesc,
+    IUnorderedAccessView**                  ppView
+)
+{
+    Descriptor* pDescriptor = nullptr;
+    auto ret = AllocDescriptor(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, &pDescriptor);
+    if (!ret)
+    { return false; }
+
+    GetD3D12Device()->CreateUnorderedAccessView(pResource, pCounterResource, pDesc, pDescriptor->GetHandleCPU());
+
+    auto instance = new UnorderedAccessView(pResource, pCounterResource, pDesc, pDescriptor);
+    *ppView = instance;
+
+    return true;
+}
+
 
 } // namespace asdx

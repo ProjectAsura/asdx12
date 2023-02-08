@@ -259,7 +259,13 @@ bool ResModel::LoadFromFileA(const char* filename)
     }
 
     MaterialTags.resize(header.MaterialCount);
-    fread(&MaterialTags[0], sizeof(ResMaterialTag), header.MaterialCount, pFile);
+    for(auto i=0u; i<header.MaterialCount; ++i)
+    {
+        uint32_t nameLength = 0;
+        fread(&nameLength, sizeof(nameLength), 1, pFile);
+        MaterialTags[i].resize(nameLength + 1);
+        fread(&MaterialTags[i][0], sizeof(char), nameLength, pFile);
+    }
 
     fclose(pFile);
     return true;
@@ -340,7 +346,14 @@ bool ResModel::SaveToFileA(const char* filename)
     }
 
     if (!MaterialTags.empty())
-    { fwrite(MaterialTags.data(), sizeof(ResMaterialTag), MaterialTags.size(), pFile); }
+    {
+        for(auto i=0u; i<MaterialTags.size(); ++i)
+        {
+            uint32_t nameLength = uint32_t(MaterialTags[i].size());
+            fwrite(&nameLength, sizeof(nameLength), 1, pFile);
+            fwrite(MaterialTags[i].data(), sizeof(char), nameLength, pFile);
+        }
+    }
 
     fclose(pFile);
     return true;

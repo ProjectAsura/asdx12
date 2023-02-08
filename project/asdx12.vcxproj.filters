@@ -96,12 +96,6 @@
     <ClCompile Include="..\src\gfx\asdxCommandQueue.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxDescriptor.cpp">
-      <Filter>ソース ファイル\gfx</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxFence.cpp">
-      <Filter>ソース ファイル\gfx</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\gfx\asdxPipelineState.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
@@ -112,9 +106,6 @@
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
     <ClCompile Include="..\src\gfx\asdxScreenCapture.cpp">
-      <Filter>ソース ファイル\gfx</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxSprite.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
     <ClCompile Include="..\src\gfx\asdxTarget.cpp">
@@ -129,9 +120,6 @@
     <ClCompile Include="..\src\gfx\asdxGraphicsSystem.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxRootSignature.cpp">
-      <Filter>ソース ファイル\gfx</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\res\asdxResMaterial.cpp">
       <Filter>ソース ファイル\res</Filter>
     </ClCompile>
@@ -140,9 +128,6 @@
     </ClCompile>
     <ClCompile Include="..\src\res\asdxResTexture.cpp">
       <Filter>ソース ファイル\res</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxModel.cpp">
-      <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
     <ClCompile Include="..\src\fnd\asdxFrameHeap.cpp">
       <Filter>ソース ファイル\fnd</Filter>
@@ -179,9 +164,6 @@
     </ClCompile>
     <ClCompile Include="..\src\fw\asdxEntity.cpp">
       <Filter>ソース ファイル\fw</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxMaterial.cpp">
-      <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
     <ClCompile Include="..\src\gfx\asdxShaderCompiler.cpp">
       <Filter>ソース ファイル\gfx</Filter>
@@ -293,9 +275,6 @@
     <ClInclude Include="..\include\gfx\asdxCommandQueue.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\gfx\asdxDescriptor.h">
-      <Filter>ヘッダー ファイル\gfx</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\gfx\asdxDisposer.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
@@ -314,9 +293,6 @@
     <ClInclude Include="..\include\gfx\asdxScreenCpature.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\gfx\asdxSprite.h">
-      <Filter>ヘッダー ファイル\gfx</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\gfx\asdxTarget.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
@@ -329,9 +305,6 @@
     <ClInclude Include="..\include\gfx\asdxGraphicsSystem.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\gfx\asdxRootSignature.h">
-      <Filter>ヘッダー ファイル\gfx</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\res\asdxResMaterial.h">
       <Filter>ヘッダー ファイル\res</Filter>
     </ClInclude>
@@ -340,9 +313,6 @@
     </ClInclude>
     <ClInclude Include="..\include\res\asdxResTexture.h">
       <Filter>ヘッダー ファイル\res</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\gfx\asdxModel.h">
-      <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
     <ClInclude Include="..\include\fnd\asdxFrameHeap.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
@@ -400,9 +370,6 @@
     </ClInclude>
     <ClInclude Include="..\include\fw\asdxEntity.h">
       <Filter>ヘッダー ファイル\fw</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\gfx\asdxMaterial.h">
-      <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
     <ClInclude Include="..\include\gfx\asdxShaderCompiler.h">
       <Filter>ヘッダー ファイル\gfx</Filter>

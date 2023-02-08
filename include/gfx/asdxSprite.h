@@ -12,8 +12,6 @@
 #include <fnd/asdxMath.h>
 #include <gfx/asdxView.h>
 #include <gfx/asdxBuffer.h>
-#include <gfx/asdxPipelineState.h>
-#include <gfx/asdxRootSignature.h>
 
 
 namespace asdx {
@@ -176,8 +174,8 @@ private:
     Matrix                      m_Transform         = Matrix::CreateIdentity();
     IShaderResourceView*        m_pSRV              = nullptr;
     ID3D12GraphicsCommandList*  m_pCmd              = nullptr;
-    RootSignature               m_RootSig;
-    PipelineState               m_PSO;
+    RefPtr<ID3D12RootSignature> m_RootSig;
+    RefPtr<ID3D12PipelineState> m_PSO;
     std::vector<Vertex>         m_Vertices;
 
     //=========================================================================

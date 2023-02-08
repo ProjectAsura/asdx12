@@ -11,7 +11,7 @@ struct PSInput
 {
     float4 Position : SV_POSITION;
     float2 TexCoord : TEXCOORD0;
-    float4 Color    : COLOR0;   
+    float4 Color    : COLOR0;
 };
 
 //-----------------------------------------------------------------------------

@@ -12,9 +12,20 @@
 #include <fnd/asdxLogger.h>
 #include <gfx/asdxPipelineState.h>
 #include <gfx/asdxGraphicsSystem.h>
+#include <gfx/asdxShaderCompiler.h>
 
 
 namespace {
+
+enum ROOT_PARAM_TYPE
+{
+    ROOT_PARAM_VAR = 0,
+    ROOT_PARAM_CBV = 1,
+    ROOT_PARAM_SRV = 2,
+    ROOT_PARAM_UAV = 3,
+    ROOT_PARAM_SMP = 4,
+    ROOT_PARAM_AS  = 5,
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 // PSSubObject class
@@ -124,6 +135,40 @@ struct GPS_DESC
         Flags               = pValue->Flags;
     }
 };
+
+
+uint16_t MakeKey(uint8_t shaderType, uint8_t paramType, uint8_t registerIndex)
+{
+    return uint16_t(((shaderType & 0xf) << 12) | ((paramType & 0xf) << 8) | registerIndex);
+}
+
+//-----------------------------------------------------------------------------
+//      DynamicResourcesをサポートしているかどうかチェックします.
+//-----------------------------------------------------------------------------
+bool CheckSupportDynamicResources(ID3D12Device8* pDevice)
+{
+    // D3D12_RESOURCE_BINDING_TIER3 と D3D_SHADER_MODEL_6_6 以上であることが必須.
+    // また、シェーダコンパイルする側で
+    // D3D_SHADER_REQUIRES_RESOURCE_HEAP_INDEXING(0x02000000)
+    // D3D_SHADER_REQUIRES_SAMPLER_HEAP_INDEXING(0x04000000)
+    // のフラグを設定しておく必要がある.
+
+    D3D12_FEATURE_DATA_D3D12_OPTIONS options = {};
+    if (FAILED(pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &options, sizeof(options))))
+    { return false; }
+
+    if (options.ResourceBindingTier != D3D12_RESOURCE_BINDING_TIER_3)
+    { return false; }
+
+    D3D12_FEATURE_DATA_SHADER_MODEL shaderModel = {};
+    if (FAILED(pDevice->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &shaderModel, sizeof(shaderModel))))
+    { return false; }
+
+    if (shaderModel.HighestShaderModel < D3D_SHADER_MODEL_6_6)
+    { return false; }
+
+    return true;
+}
 
 } // namespace
 
@@ -331,24 +376,12 @@ PipelineState::~PipelineState()
 //-----------------------------------------------------------------------------
 //      グラフィックスパイプラインとして初期化します.
 //-----------------------------------------------------------------------------
-bool PipelineState::Init(ID3D12Device* pDevice, const D3D12_GRAPHICS_PIPELINE_STATE_DESC* pDesc)
+bool PipelineState::Init(ID3D12Device8* pDevice, const D3D12_GRAPHICS_PIPELINE_STATE_DESC* pDesc)
 {
     if (pDevice == nullptr || pDesc == nullptr)
     {
         ELOG("Error : Inavlid Argument.");
         return false;
-    }
-
-    // パイプラインステート生成.
-    {
-        auto hr = pDevice->CreateGraphicsPipelineState(pDesc, IID_PPV_ARGS(m_pPSO.GetAddress()));
-        if (FAILED(hr))
-        {
-            ELOG("Error : ID3D12Device::CreateGraphicsPipelineState() Failed. errcode = 0x%x", hr);
-            return false;
-        }
-
-        m_pPSO->SetName(L"asdxGraphicsPipelineState");
     }
 
     m_VS.resize(pDesc->VS.BytecodeLength);
@@ -362,30 +395,41 @@ bool PipelineState::Init(ID3D12Device* pDevice, const D3D12_GRAPHICS_PIPELINE_ST
     m_Desc.Graphics.VS.pShaderBytecode = m_VS.data();
     m_Desc.Graphics.PS.pShaderBytecode = m_PS.data();
 
+    if (pDesc->pRootSignature == nullptr)
+    {
+        if (!CreateGraphicsRootSignature(pDevice, m_pRootSig.GetAddress()))
+        {
+            ELOG("Error : CreateGraphicsRootSignature() Failed");
+            return false;
+        }
+
+        m_Desc.Graphics.pRootSignature = m_pRootSig.GetPtr();
+    }
+
+    // パイプラインステート生成.
+    {
+        auto hr = pDevice->CreateGraphicsPipelineState(&m_Desc.Graphics, IID_PPV_ARGS(m_pPSO.GetAddress()));
+        if (FAILED(hr))
+        {
+            ELOG("Error : ID3D12Device::CreateGraphicsPipelineState() Failed. errcode = 0x%x", hr);
+            return false;
+        }
+
+        m_pPSO->SetName(L"asdxGraphicsPipelineState");
+    }
+
     return true;
 }
 
 //-----------------------------------------------------------------------------
 //      コンピュートパイプラインとして初期化します.
 //-----------------------------------------------------------------------------
-bool PipelineState::Init(ID3D12Device* pDevice, const D3D12_COMPUTE_PIPELINE_STATE_DESC* pDesc)
+bool PipelineState::Init(ID3D12Device8* pDevice, const D3D12_COMPUTE_PIPELINE_STATE_DESC* pDesc)
 {
     if (pDesc == nullptr)
     {
         ELOG("Error : Invalid Argument.");
         return false;
-    }
-
-    // パイプラインステート生成.
-    {
-        auto hr = pDevice->CreateComputePipelineState(pDesc, IID_PPV_ARGS(m_pPSO.GetAddress()));
-        if (FAILED(hr))
-        {
-            ELOG("Error : ID3D12Device::CreateComputePipelineState() Failed. errcode = 0x%x", hr);
-            return false;
-        }
-
-        m_pPSO->SetName(L"asdxComputePipelineState");
     }
 
     m_CS.resize(pDesc->CS.BytecodeLength);
@@ -395,13 +439,36 @@ bool PipelineState::Init(ID3D12Device* pDevice, const D3D12_COMPUTE_PIPELINE_STA
     m_Desc.Compute = *pDesc;
     m_Desc.Compute.CS.pShaderBytecode = m_CS.data();
 
+    if (pDesc->pRootSignature == nullptr)
+    {
+        if (!CreateComputeRootSignature(pDevice, m_pRootSig.GetAddress()))
+        {
+            ELOG("Error : CreateComputeRootSignature() Failed.");
+            return false;
+        }
+
+        m_Desc.Compute.pRootSignature = m_pRootSig.GetPtr();
+    }
+
+    // パイプラインステート生成.
+    {
+        auto hr = pDevice->CreateComputePipelineState(&m_Desc.Compute, IID_PPV_ARGS(m_pPSO.GetAddress()));
+        if (FAILED(hr))
+        {
+            ELOG("Error : ID3D12Device::CreateComputePipelineState() Failed. errcode = 0x%x", hr);
+            return false;
+        }
+
+        m_pPSO->SetName(L"asdxComputePipelineState");
+    }
+
     return true;
 }
 
 //-----------------------------------------------------------------------------
 //      ジオメトリパイプラインとして初期化します.
 //-----------------------------------------------------------------------------
-bool PipelineState::Init(ID3D12Device2* pDevice, const GEOMETRY_PIPELINE_STATE_DESC* pDesc)
+bool PipelineState::Init(ID3D12Device8* pDevice, const GEOMETRY_PIPELINE_STATE_DESC* pDesc)
 {
     if (pDevice == nullptr || pDesc == nullptr)
     {
@@ -432,25 +499,6 @@ bool PipelineState::Init(ID3D12Device2* pDevice, const GEOMETRY_PIPELINE_STATE_D
         }
     }
 
-    // ジオメトリパイプラインステートを生成.
-    {
-        GPS_DESC gpsDesc(pDesc);
-
-        D3D12_PIPELINE_STATE_STREAM_DESC pssDesc = {};
-        pssDesc.SizeInBytes = sizeof(gpsDesc);
-        pssDesc.pPipelineStateSubobjectStream = &gpsDesc;
-
-        // パイプラインステート生成.
-        auto hr = pDevice->CreatePipelineState(&pssDesc, IID_PPV_ARGS(m_pPSO.GetAddress()));
-        if (FAILED(hr))
-        {
-            ELOG("Error : ID3D12Device::CreateGraphicsPipelineState() Failed. errcode = 0x%x", hr);
-            return false;
-        }
-
-        m_pPSO->SetName(L"asdxGeometryPipelineState");
-    }
-
     m_MS.resize(pDesc->MS.BytecodeLength);
     memcpy(m_MS.data(), pDesc->MS.pShaderBytecode, m_MS.size());
 
@@ -476,6 +524,36 @@ bool PipelineState::Init(ID3D12Device2* pDevice, const GEOMETRY_PIPELINE_STATE_D
     if (pDesc->AS.BytecodeLength > 0)
     { m_Desc.Geometry.AS.pShaderBytecode = m_AS.data(); }
 
+    if (pDesc->pRootSignature == nullptr)
+    {
+        if (!CreateGeometryRootSignature(pDevice, m_pRootSig.GetAddress()))
+        {
+            ELOG("Error : CreateGeometryRootSignature() Failed.");
+            return false;
+        }
+
+        m_Desc.Geometry.pRootSignature = m_pRootSig.GetPtr();
+    }
+
+    // ジオメトリパイプラインステートを生成.
+    {
+        GPS_DESC gpsDesc(&m_Desc.Geometry);
+
+        D3D12_PIPELINE_STATE_STREAM_DESC pssDesc = {};
+        pssDesc.SizeInBytes = sizeof(gpsDesc);
+        pssDesc.pPipelineStateSubobjectStream = &gpsDesc;
+
+        // パイプラインステート生成.
+        auto hr = pDevice->CreatePipelineState(&pssDesc, IID_PPV_ARGS(m_pPSO.GetAddress()));
+        if (FAILED(hr))
+        {
+            ELOG("Error : ID3D12Device::CreateGraphicsPipelineState() Failed. errcode = 0x%x", hr);
+            return false;
+        }
+
+        m_pPSO->SetName(L"asdxGeometryPipelineState");
+    }
+
     return true;
 #else
     ELOG("Error : Not Support Geometry Pipeline.");
@@ -489,6 +567,8 @@ bool PipelineState::Init(ID3D12Device2* pDevice, const GEOMETRY_PIPELINE_STATE_D
 void PipelineState::Term()
 {
     m_pRecreatePSO.Reset();
+    m_pRecreateRootSig.Reset();
+    m_pRootSig.Reset();
     m_pPSO.Reset();
     m_VS.clear();
     m_PS.clear();
@@ -500,84 +580,78 @@ void PipelineState::Term()
 //-----------------------------------------------------------------------------
 //      頂点シェーダを差し替えます.
 //-----------------------------------------------------------------------------
-void PipelineState::ReplaceVS(const void* pBinary, size_t binarySize)
+void PipelineState::ReplaceShader(SHADER_TYPE type, const void* pBinary, size_t binarySize)
 {
-    if (m_Type != PIPELINE_TYPE_GRAPHICS)
-    { return; }
-
-    m_VS.resize(binarySize);
-    memcpy(m_VS.data(), pBinary, binarySize);
-
-    m_Desc.Graphics.VS.pShaderBytecode = m_VS.data();
-    m_Desc.Graphics.VS.BytecodeLength  = m_VS.size();
-}
-
-//-----------------------------------------------------------------------------
-//      ピクセルシェーダを差し替えます.
-//-----------------------------------------------------------------------------
-void PipelineState::ReplacePS(const void* pBinary, size_t binarySize)
-{
-    if (m_Type == PIPELINE_TYPE_COMPUTE)
-    { return; }
-
-    m_PS.resize(binarySize);
-    memcpy(m_PS.data(), pBinary, binarySize);
-
-    if (m_Type == PIPELINE_TYPE_GRAPHICS)
+    switch(type)
     {
-        m_Desc.Graphics.PS.pShaderBytecode = m_PS.data();
-        m_Desc.Graphics.PS.BytecodeLength  = m_PS.size();
+    case SHADER_TYPE_VS:
+        {
+            if (m_Type != PIPELINE_TYPE_GRAPHICS)
+            { return; }
+
+            m_VS.resize(binarySize);
+            memcpy(m_VS.data(), pBinary, binarySize);
+
+            m_Desc.Graphics.VS.pShaderBytecode = m_VS.data();
+            m_Desc.Graphics.VS.BytecodeLength  = m_VS.size();
+        }
+        break;
+
+    case SHADER_TYPE_PS:
+        {
+            if (m_Type != PIPELINE_TYPE_GRAPHICS)
+            { return; }
+
+            m_PS.resize(binarySize);
+            memcpy(m_PS.data(), pBinary, binarySize);
+
+            m_Desc.Graphics.PS.pShaderBytecode = m_PS.data();
+            m_Desc.Graphics.PS.BytecodeLength  = m_PS.size();
+        }
+        break;
+
+    case SHADER_TYPE_AS:
+        {
+            if (m_Type != PIPELINE_TYPE_GEOMETRY)
+            { return; }
+
+            m_AS.resize(binarySize);
+            memcpy(m_AS.data(), pBinary, binarySize);
+
+            m_Desc.Geometry.AS.pShaderBytecode = m_AS.data();
+            m_Desc.Geometry.AS.BytecodeLength  = m_AS.size();
+        }
+        break;
+
+    case SHADER_TYPE_MS:
+        {
+            if (m_Type != PIPELINE_TYPE_GEOMETRY)
+            { return; }
+
+            m_MS.resize(binarySize);
+            memcpy(m_MS.data(), pBinary, binarySize);
+
+            m_Desc.Geometry.MS.pShaderBytecode = m_MS.data();
+            m_Desc.Geometry.MS.BytecodeLength  = m_MS.size();
+        }
+        break;
+
+    case SHADER_TYPE_CS:
+        {
+            if (m_Type != PIPELINE_TYPE_COMPUTE)
+            { return; }
+
+            m_CS.resize(binarySize);
+            memcpy(m_CS.data(), pBinary, binarySize);
+
+            m_Desc.Compute.CS.pShaderBytecode = m_CS.data();
+            m_Desc.Compute.CS.BytecodeLength  = m_CS.size();
+        }
+        break;
+
+    default:
+        break;
     }
-    else if (m_Type == PIPELINE_TYPE_GEOMETRY)
-    {
-        m_Desc.Geometry.PS.pShaderBytecode = m_PS.data();
-        m_Desc.Geometry.PS.BytecodeLength  = m_PS.size();
-    }
-}
-
-//-----------------------------------------------------------------------------
-//      コンピュートシェーダを差し替えます.
-//-----------------------------------------------------------------------------
-void PipelineState::ReplaceCS(const void* pBinary, size_t binarySize)
-{
-    if (m_Type != PIPELINE_TYPE_COMPUTE)
-    { return; }
-
-    m_CS.resize(binarySize);
-    memcpy(m_CS.data(), pBinary, binarySize);
-
-    m_Desc.Compute.CS.pShaderBytecode = m_CS.data();
-    m_Desc.Compute.CS.BytecodeLength  = m_CS.size();
-}
-
-//-----------------------------------------------------------------------------
-//      メッシュシェーダを差し替えます.
-//-----------------------------------------------------------------------------
-void PipelineState::ReplaceMS(const void* pBinary, size_t binarySize)
-{
-    if (m_Type != PIPELINE_TYPE_GEOMETRY)
-    { return; }
-
-    m_MS.resize(binarySize);
-    memcpy(m_MS.data(), pBinary, binarySize);
-
-    m_Desc.Geometry.MS.pShaderBytecode = m_MS.data();
-    m_Desc.Geometry.MS.BytecodeLength  = m_MS.size();
-}
-
-//-----------------------------------------------------------------------------
-//      増幅シェーダを差し替えます.
-//-----------------------------------------------------------------------------
-void PipelineState::ReplaceAS(const void* pBinary, size_t binarySize)
-{
-    if (m_Type != PIPELINE_TYPE_GEOMETRY)
-    { return; }
-
-    m_AS.resize(binarySize);
-    memcpy(m_AS.data(), pBinary, binarySize);
-
-    m_Desc.Geometry.AS.pShaderBytecode = m_AS.data();
-    m_Desc.Geometry.AS.BytecodeLength  = m_AS.size();
 }
 
 //-----------------------------------------------------------------------------
@@ -591,9 +665,28 @@ void PipelineState::Recreate()
         Dispose(pso);
     }
 
+    if (!m_pRecreateRootSig.GetPtr())
+    {
+        auto rootSig = m_pRecreateRootSig.Detach();
+        Dispose(rootSig);
+    }
+
     if (m_Type == PIPELINE_TYPE_GRAPHICS)
     {
-        auto hr = GetD3D12Device()->CreateGraphicsPipelineState(&m_Desc.Graphics, IID_PPV_ARGS(m_pRecreatePSO.GetAddress()));
+        D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = m_Desc.Graphics;
+
+        if (m_pRootSig.GetPtr() != nullptr)
+        {
+            if (!CreateGraphicsRootSignature(GetD3D12Device(), m_pRecreateRootSig.GetAddress()))
+            {
+                ELOGA("Error : CreateGraphicsRootSignature() Failed.");
+                return;
+            }
+
+            desc.pRootSignature = m_pRecreateRootSig.GetPtr();
+        }
+
+        auto hr = GetD3D12Device()->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(m_pRecreatePSO.GetAddress()));
         if (FAILED(hr))
         {
             ELOGA("Error : ID3D12Device::CreateGraphicsPipelineState() Failed. errcode = 0x%x", hr);
@@ -604,7 +697,20 @@ void PipelineState::Recreate()
     }
     else if (m_Type == PIPELINE_TYPE_COMPUTE)
     {
-        auto hr = GetD3D12Device()->CreateComputePipelineState(&m_Desc.Compute, IID_PPV_ARGS(m_pRecreatePSO.GetAddress()));
+        D3D12_COMPUTE_PIPELINE_STATE_DESC desc = m_Desc.Compute;
+
+        if (m_pRootSig.GetPtr() != nullptr)
+        {
+            if (!CreateComputeRootSignature(GetD3D12Device(), m_pRecreateRootSig.GetAddress()))
+            {
+                ELOGA("Error : CreateGraphicsRootSignature() Failed.");
+                return;
+            }
+
+            desc.pRootSignature = m_pRecreateRootSig.GetPtr();
+        }
+
+        auto hr = GetD3D12Device()->CreateComputePipelineState(&desc, IID_PPV_ARGS(m_pRecreatePSO.GetAddress()));
         if (FAILED(hr))
         {
             ELOGA("Error : ID3D12Device::CreateComputePipelineState() Failed. errcode = 0x%x", hr);
@@ -616,6 +722,17 @@ void PipelineState::Recreate()
     else
     {
         GPS_DESC gpsDesc(&m_Desc.Geometry);
+
+        if (m_pRootSig.GetPtr() != nullptr)
+        {
+            if (!CreateGeometryRootSignature(GetD3D12Device(), m_pRecreateRootSig.GetAddress()))
+            {
+                ELOGA("Error : CreateGeometryRootSignature() Failed.");
+                return;
+            }
+
+            gpsDesc.RootSignature = m_pRecreateRootSig.GetPtr();
+        }
 
         D3D12_PIPELINE_STATE_STREAM_DESC pssDesc = {};
         pssDesc.SizeInBytes = sizeof(gpsDesc);
@@ -634,20 +751,630 @@ void PipelineState::Recreate()
 }
 
 //-----------------------------------------------------------------------------
-//      パイプラインステートを取得します.
-//-----------------------------------------------------------------------------
-ID3D12PipelineState* PipelineState::GetPtr() const
-{
-    if (m_pRecreatePSO.GetPtr() != nullptr)
-    { return m_pRecreatePSO.GetPtr(); }
-
-    return m_pPSO.GetPtr();
-}
-
-//-----------------------------------------------------------------------------
 //      パイプラインタイプを取得します.
 //-----------------------------------------------------------------------------
 PIPELINE_TYPE PipelineState::GetType() const
 { return m_Type; }
+
+//-----------------------------------------------------------------------------
+//      パイプラインステートを設定します.
+//-----------------------------------------------------------------------------
+void PipelineState::SetState(ID3D12GraphicsCommandList* pCmdList)
+{
+    if (m_Type == PIPELINE_TYPE_COMPUTE)
+    {
+        if (m_pRootSig.GetPtr() != nullptr)
+        {
+            auto sig = (m_pRecreateRootSig.GetPtr() != nullptr)
+                ? m_pRecreateRootSig.GetPtr()
+                : m_pRootSig.GetPtr();
+            pCmdList->SetComputeRootSignature(sig);
+        }
+    }
+    else
+    {
+        if (m_pRootSig.GetPtr() != nullptr)
+        {
+            auto sig = (m_pRecreateRootSig.GetPtr() != nullptr)
+                ? m_pRecreateRootSig.GetPtr()
+                : m_pRootSig.GetPtr();
+            pCmdList->SetGraphicsRootSignature(sig);
+        }
+    }
+
+    auto pso = (m_pRecreatePSO.GetPtr() != nullptr) ? m_pRecreatePSO.GetPtr() : m_pPSO.GetPtr();
+    pCmdList->SetPipelineState(pso);
+}
+
+//-----------------------------------------------------------------------------
+//      ルート定数を設定します.
+//-----------------------------------------------------------------------------
+void PipelineState::SetConstants
+(
+    ID3D12GraphicsCommandList*  pCmdList,
+    SHADER_TYPE                 type,
+    uint32_t                    registerIndex,
+    uint32_t                    paramCount,
+    const void*                 params,
+    uint32_t                    offset
+)
+{
+    auto index = FindIndex(type, ROOT_PARAM_UAV, registerIndex);
+    if (index == UINT32_MAX)
+    { return; }
+
+    if (type == SHADER_TYPE_CS)
+    { pCmdList->SetComputeRoot32BitConstants(index, paramCount, params, offset); }
+    else
+    { pCmdList->SetGraphicsRoot32BitConstants(index, paramCount, params, offset); }
+}
+
+//-----------------------------------------------------------------------------
+//      定数バッファを設定します.
+//-----------------------------------------------------------------------------
+void PipelineState::SetCBV
+(
+    ID3D12GraphicsCommandList*  pCmdList,
+    SHADER_TYPE                 type,
+    uint32_t                    registerIndex,
+    IConstantBufferView*        pView
+)
+{
+    auto index = FindIndex(type, ROOT_PARAM_CBV, registerIndex);
+    if (index == UINT32_MAX)
+    { return; }
+
+    if (type == SHADER_TYPE_CS)
+    { pCmdList->SetComputeRootDescriptorTable(index, pView->GetHandleGPU()); }
+    else
+    { pCmdList->SetGraphicsRootDescriptorTable(index, pView->GetHandleGPU()); }
+}
+
+//-----------------------------------------------------------------------------
+//      シェーダリソースビューを設定します.
+//-----------------------------------------------------------------------------
+void PipelineState::SetSRV
+(
+    ID3D12GraphicsCommandList*  pCmdList,
+    SHADER_TYPE                 type,
+    uint32_t                    registerIndex,
+    IShaderResourceView*        pView
+)
+{
+    auto index = FindIndex(type, ROOT_PARAM_SRV, registerIndex);
+    if (index == UINT32_MAX)
+    { return; }
+
+    if (type == SHADER_TYPE_CS)
+    { pCmdList->SetComputeRootDescriptorTable(index, pView->GetHandleGPU()); }
+    else
+    { pCmdList->SetGraphicsRootDescriptorTable(index, pView->GetHandleGPU()); }
+}
+
+//-----------------------------------------------------------------------------
+//      アンオーダードアクセスビューを設定します.
+//-----------------------------------------------------------------------------
+void PipelineState::SetUAV
+(
+    ID3D12GraphicsCommandList*  pCmdList,
+    SHADER_TYPE                 type,
+    uint32_t                    registerIndex,
+    IUnorderedAccessView*       pView
+)
+{
+    auto index = FindIndex(type, ROOT_PARAM_UAV, registerIndex);
+    if (index == UINT32_MAX)
+    { return; }
+
+    if (type == SHADER_TYPE_CS)
+    { pCmdList->SetComputeRootDescriptorTable(index, pView->GetHandleGPU()); }
+    else
+    { pCmdList->SetGraphicsRootDescriptorTable(index, pView->GetHandleGPU()); }
+}
+
+//-----------------------------------------------------------------------------
+//      ルートパラメータ番号を検索します.
+//-----------------------------------------------------------------------------
+uint32_t PipelineState::FindIndex(SHADER_TYPE type, uint8_t kind, uint32_t registerIndex) const
+{
+    auto key = MakeKey(uint8_t(type), kind, registerIndex);
+
+    auto itr = m_RootParameterIndices.find(key);
+    if (itr == m_RootParameterIndices.end())
+    { return UINT32_MAX; }
+
+    return itr->second;
+}
+
+//-----------------------------------------------------------------------------
+//      グラフィックスパイプライン用ルートシグニチャを生成します.
+//-----------------------------------------------------------------------------
+bool PipelineState::CreateGraphicsRootSignature(ID3D12Device8* pDevice, ID3D12RootSignature** ppRootSig)
+{
+    m_RootParameterIndices.clear();
+
+    std::vector<D3D12_DESCRIPTOR_RANGE*>    ranges;
+    std::vector<D3D12_ROOT_PARAMETER>       params;
+    std::vector<D3D12_STATIC_SAMPLER_DESC>  samplers;
+
+    bool hasVSInput = false;
+    if (!m_VS.empty())
+    { hasVSInput = EnumerateRootParameter(SHADER_TYPE_VS, m_VS.data(), m_VS.size(), ranges, params, samplers); }
+
+    if (!m_PS.empty())
+    { EnumerateRootParameter(SHADER_TYPE_PS, m_PS.data(), m_PS.size(), ranges, params, samplers); }
+
+    D3D12_ROOT_SIGNATURE_FLAGS flags = {};
+    flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
+    flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS;
+    flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS;
+    flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_AMPLIFICATION_SHADER_ROOT_ACCESS;
+    flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_MESH_SHADER_ROOT_ACCESS;
+    if (hasVSInput)
+    { flags |= D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT; }
+    if (CheckSupportDynamicResources(pDevice))
+    {
+        flags |= D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED;
+        flags |= D3D12_ROOT_SIGNATURE_FLAG_SAMPLER_HEAP_DIRECTLY_INDEXED;
+    }
+
+    D3D12_ROOT_SIGNATURE_DESC desc = {};
+    desc.NumParameters      = UINT(params.size());
+    desc.pParameters        = params.data();
+    desc.NumStaticSamplers  = UINT(samplers.size());
+    desc.pStaticSamplers    = samplers.data();
+    desc.Flags              = flags;
+
+    asdx::RefPtr<ID3DBlob> blob;
+    asdx::RefPtr<ID3DBlob> errorBlob;
+
+    auto hr = D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1_0, blob.GetAddress(), errorBlob.GetAddress());
+    auto ret = false;
+
+    if (SUCCEEDED(hr))
+    {
+        hr = pDevice->CreateRootSignature(0, blob->GetBufferPointer(), blob->GetBufferSize(), IID_PPV_ARGS(ppRootSig));
+        if (SUCCEEDED(hr))
+        { ret = true; }
+    }
+
+    for(size_t i=0; i<ranges.size(); ++i) {
+        auto ptr = ranges[i];
+        if (ptr)
+        { delete ptr; }
+        ranges[i] = nullptr;
+    }
+    ranges.clear();
+    params.clear();
+
+    return ret;
+}
+
+//-----------------------------------------------------------------------------
+//      ジオメトリパイプライン用ルートシグニチャを生成します.
+//-----------------------------------------------------------------------------
+bool PipelineState::CreateGeometryRootSignature(ID3D12Device8* pDevice, ID3D12RootSignature** ppRootSig)
+{
+    m_RootParameterIndices.clear();
+
+    std::vector<D3D12_DESCRIPTOR_RANGE*>    ranges;
+    std::vector<D3D12_ROOT_PARAMETER>       params;
+    std::vector<D3D12_STATIC_SAMPLER_DESC>  samplers;
+
+    if (!m_AS.empty())
+    { EnumerateRootParameter(SHADER_TYPE_AS, m_AS.data(), m_AS.size(), ranges, params, samplers); }
+
+    if (!m_MS.empty())
+    { EnumerateRootParameter(SHADER_TYPE_MS, m_MS.data(), m_MS.size(), ranges, params, samplers); }
+
+    if (!m_PS.empty())
+    { EnumerateRootParameter(SHADER_TYPE_PS, m_PS.data(), m_PS.size(), ranges, params, samplers); }
+
+    D3D12_ROOT_SIGNATURE_FLAGS flags = {};
+    flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS;
+    flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
+    flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS;
+    flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS;
+    if (CheckSupportDynamicResources(pDevice))
+    {
+        flags |= D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED;
+        flags |= D3D12_ROOT_SIGNATURE_FLAG_SAMPLER_HEAP_DIRECTLY_INDEXED;
+    }
+
+    D3D12_ROOT_SIGNATURE_DESC desc = {};
+    desc.NumParameters      = UINT(params.size());
+    desc.pParameters        = params.data();
+    desc.NumStaticSamplers  = UINT(samplers.size());
+    desc.pStaticSamplers    = samplers.data();
+    desc.Flags              = flags;
+
+    asdx::RefPtr<ID3DBlob> blob;
+    asdx::RefPtr<ID3DBlob> errorBlob;
+
+    auto hr = D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1_0, blob.GetAddress(), errorBlob.GetAddress());
+    auto ret = false;
+
+    if (SUCCEEDED(hr))
+    {
+        hr = pDevice->CreateRootSignature(0, blob->GetBufferPointer(), blob->GetBufferSize(), IID_PPV_ARGS(ppRootSig));
+        if (SUCCEEDED(hr))
+        { ret = true; }
+    }
+
+    for(size_t i=0; i<ranges.size(); ++i) {
+        auto ptr = ranges[i];
+        if (ptr)
+        { delete ptr; }
+        ranges[i] = nullptr;
+    }
+    ranges.clear();
+    params.clear();
+
+    return ret;
+}
+
+//-----------------------------------------------------------------------------
+//      コンピュートパイプライン用ルートシグニチャを生成します.
+//-----------------------------------------------------------------------------
+bool PipelineState::CreateComputeRootSignature(ID3D12Device8* pDevice, ID3D12RootSignature** ppRootSig)
+{
+    m_RootParameterIndices.clear();
+
+    std::vector<D3D12_DESCRIPTOR_RANGE*>    ranges;
+    std::vector<D3D12_ROOT_PARAMETER>       params;
+    std::vector<D3D12_STATIC_SAMPLER_DESC>  samplers;
+
+    if (!m_CS.empty())
+    { EnumerateRootParameter(SHADER_TYPE_AS, m_CS.data(), m_CS.size(), ranges, params, samplers); }
+
+    D3D12_ROOT_SIGNATURE_FLAGS flags = {};
+    flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS;
+    flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS;
+    flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS;
+    flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
+    flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
+    flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_AMPLIFICATION_SHADER_ROOT_ACCESS;
+    flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_MESH_SHADER_ROOT_ACCESS;
+    if (CheckSupportDynamicResources(pDevice))
+    {
+        flags |= D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED;
+        flags |= D3D12_ROOT_SIGNATURE_FLAG_SAMPLER_HEAP_DIRECTLY_INDEXED;
+    }
+
+    D3D12_ROOT_SIGNATURE_DESC desc = {};
+    desc.NumParameters      = UINT(params.size());
+    desc.pParameters        = params.data();
+    desc.NumStaticSamplers  = UINT(samplers.size());
+    desc.pStaticSamplers    = samplers.data();
+    desc.Flags              = flags;
+
+    asdx::RefPtr<ID3DBlob> blob;
+    asdx::RefPtr<ID3DBlob> errorBlob;
+
+    auto hr = D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1_0, blob.GetAddress(), errorBlob.GetAddress());
+    auto ret = false;
+
+    if (SUCCEEDED(hr))
+    {
+        hr = pDevice->CreateRootSignature(0, blob->GetBufferPointer(), blob->GetBufferSize(), IID_PPV_ARGS(ppRootSig));
+        if (SUCCEEDED(hr))
+        { ret = true; }
+    }
+
+    for(size_t i=0; i<ranges.size(); ++i) {
+        auto ptr = ranges[i];
+        if (ptr)
+        { delete ptr; }
+        ranges[i] = nullptr;
+    }
+    ranges.clear();
+    params.clear();
+
+    return ret;
+}
+
+//-----------------------------------------------------------------------------
+//      ルートパラメータを列挙します.
+//-----------------------------------------------------------------------------
+bool PipelineState::EnumerateRootParameter
+(
+    SHADER_TYPE                             type,
+    const void*                             binary,
+    size_t                                  binarySize,
+    std::vector<D3D12_DESCRIPTOR_RANGE*>&   ranges,
+    std::vector<D3D12_ROOT_PARAMETER>&      params,
+    std::vector<D3D12_STATIC_SAMPLER_DESC>& samplers
+)
+{
+    bool hasVSInput = false;
+
+    ShaderReflection reflection;
+
+    if (!reflection.Init(binary, binarySize))
+    { return hasVSInput; }
+
+    D3D12_SHADER_DESC shaderDesc = {};
+    auto hr = reflection->GetDesc(&shaderDesc);
+    if (FAILED(hr))
+    { return hasVSInput; }
+
+    D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL;
+    switch(type)
+    {
+    case SHADER_TYPE_VS:
+        {
+            visibility = D3D12_SHADER_VISIBILITY_VERTEX;
+
+            for(auto i=0u; i<shaderDesc.InputParameters; ++i)
+            {
+                D3D12_SIGNATURE_PARAMETER_DESC sigDesc = {};
+                hr = reflection->GetInputParameterDesc(i, &sigDesc);
+                if (FAILED(hr))
+                { continue; }
+
+                if (sigDesc.SystemValueType == D3D_NAME_POSITION ||
+                    sigDesc.SystemValueType == D3D_NAME_UNDEFINED)
+                {
+                    hasVSInput = true;
+                    break;
+                }
+            }
+        }
+        break;
+
+    case SHADER_TYPE_PS:
+        visibility = D3D12_SHADER_VISIBILITY_PIXEL;
+        break;
+
+    case SHADER_TYPE_AS:
+        visibility = D3D12_SHADER_VISIBILITY_AMPLIFICATION;
+        break;
+
+    case SHADER_TYPE_MS:
+        visibility = D3D12_SHADER_VISIBILITY_MESH;
+        break;
+    }
+
+    auto count = shaderDesc.BoundResources;
+    for(auto i=0u; i<count; ++i)
+    {
+        D3D12_SHADER_INPUT_BIND_DESC inputDesc = {};
+        hr = reflection->GetResourceBindingDesc(i, &inputDesc);
+        if (FAILED(hr))
+        { continue; }
+
+        switch(inputDesc.Type)
+        {
+        // CBV.
+        case D3D_SIT_CBUFFER:
+            {
+                if (strstr(inputDesc.Name, "Constants") != nullptr)
+                {
+                    auto cbReflection = reflection->GetConstantBufferByName(inputDesc.Name);
+                    assert(cbReflection != nullptr);
+
+                    D3D12_SHADER_BUFFER_DESC bufferDesc = {};
+                    hr = cbReflection->GetDesc(&bufferDesc);
+                    if (SUCCEEDED(hr))
+                    {
+                        auto size       = bufferDesc.Size;
+                        auto varCount   = size / 4;
+
+                        auto paramIndex = uint16_t(params.size());
+
+                        D3D12_ROOT_PARAMETER param = {};
+                        param.ParameterType             = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+                        param.Constants.Num32BitValues  = varCount;
+                        param.Constants.ShaderRegister  = inputDesc.BindPoint;
+                        param.Constants.RegisterSpace   = inputDesc.Space;
+                        param.ShaderVisibility          = visibility;
+                        params.push_back(param);
+
+                        auto key = MakeKey(type, ROOT_PARAM_VAR, inputDesc.BindPoint);
+                        m_RootParameterIndices[key] = paramIndex;
+                    }
+                }
+                else
+                {
+                    auto paramIndex = uint16_t(params.size());
+
+                    D3D12_ROOT_PARAMETER param = {};
+                    param.ParameterType             = D3D12_ROOT_PARAMETER_TYPE_CBV;
+                    param.Descriptor.ShaderRegister = inputDesc.BindPoint;
+                    param.Descriptor.RegisterSpace  = inputDesc.Space;
+                    param.ShaderVisibility          = visibility;
+                    params.push_back(param);
+
+                    auto key = MakeKey(type, ROOT_PARAM_CBV, inputDesc.BindPoint);
+                    m_RootParameterIndices[key] = paramIndex;
+                }
+            }
+            break;
+
+        // SRV.
+        case D3D_SIT_TBUFFER:
+        case D3D_SIT_TEXTURE:
+        case D3D_SIT_STRUCTURED:
+        case D3D_SIT_BYTEADDRESS:
+        case D3D_SIT_RTACCELERATIONSTRUCTURE:
+            {
+                auto paramIndex = uint16_t(params.size());
+
+                auto range = new D3D12_DESCRIPTOR_RANGE();
+                range->BaseShaderRegister                   = inputDesc.BindPoint;
+                range->RegisterSpace                        = inputDesc.Space;
+                range->NumDescriptors                       = 1;
+                range->OffsetInDescriptorsFromTableStart    = 0;
+                range->RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+
+                D3D12_ROOT_PARAMETER param = {};
+                param.ParameterType                         = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+                param.DescriptorTable.NumDescriptorRanges   = 1;
+                param.DescriptorTable.pDescriptorRanges     = range;
+                param.ShaderVisibility                      = visibility;
+
+                params.push_back(param);
+                ranges.push_back(range);
+
+                auto key = MakeKey(type, ROOT_PARAM_SRV, inputDesc.BindPoint);
+                m_RootParameterIndices[key] = paramIndex;
+            }
+            break;
+
+        // UAV.
+        case D3D_SIT_UAV_RWTYPED:
+        case D3D_SIT_UAV_RWSTRUCTURED:
+        case D3D_SIT_UAV_RWBYTEADDRESS:
+        case D3D_SIT_UAV_APPEND_STRUCTURED:
+        case D3D_SIT_UAV_CONSUME_STRUCTURED:
+        case D3D_SIT_UAV_RWSTRUCTURED_WITH_COUNTER:
+        case D3D_SIT_UAV_FEEDBACKTEXTURE:
+            {
+                auto paramIndex = uint16_t(params.size());
+
+                auto range = new D3D12_DESCRIPTOR_RANGE();
+                range->BaseShaderRegister                   = inputDesc.BindCount;
+                range->RegisterSpace                        = inputDesc.Space;
+                range->NumDescriptors                       = 1;
+                range->OffsetInDescriptorsFromTableStart    = 0;
+                range->RangeType                            = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+
+                D3D12_ROOT_PARAMETER param = {};
+                param.ParameterType                         = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+                param.DescriptorTable.NumDescriptorRanges   = 1;
+                param.DescriptorTable.pDescriptorRanges     = range;
+                param.ShaderVisibility                      = visibility;
+
+                params.push_back(param);
+                ranges.push_back(range);
+
+                auto key = MakeKey(type, ROOT_PARAM_UAV, inputDesc.BindPoint);
+                m_RootParameterIndices[key] = paramIndex;
+            }
+            break;
+
+        case D3D_SIT_SAMPLER:
+            {
+                D3D12_STATIC_SAMPLER_DESC smpDesc = {};
+                smpDesc.MipLODBias          = 0;
+                smpDesc.MinLOD              = 0;
+                smpDesc.MaxLOD              = D3D12_FLOAT32_MAX;
+                smpDesc.ComparisonFunc      = D3D12_COMPARISON_FUNC_NEVER;
+                smpDesc.BorderColor         = D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE;
+                smpDesc.ShaderRegister      = inputDesc.BindPoint;
+                smpDesc.RegisterSpace       = inputDesc.Space;
+                smpDesc.ShaderVisibility    = visibility;
+
+                if (strcmp(inputDesc.Name, "PointClamp") == 0)
+                {
+                    smpDesc.AddressU    = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+                    smpDesc.AddressV    = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+                    smpDesc.AddressW    = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+                    smpDesc.Filter      = D3D12_FILTER_MIN_MAG_MIP_POINT;
+
+                    samplers.push_back(smpDesc);
+                }
+                else if (strcmp(inputDesc.Name, "PointWrap") == 0)
+                {
+                    smpDesc.AddressU    = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+                    smpDesc.AddressV    = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+                    smpDesc.AddressW    = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+                    smpDesc.Filter      = D3D12_FILTER_MIN_MAG_MIP_POINT;
+
+                    samplers.push_back(smpDesc);
+                }
+                else if (strcmp(inputDesc.Name, "PointMirror") == 0)
+                {
+                    smpDesc.AddressU    = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+                    smpDesc.AddressV    = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+                    smpDesc.AddressW    = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+                    smpDesc.Filter      = D3D12_FILTER_MIN_MAG_MIP_POINT;
+
+                    samplers.push_back(smpDesc);
+                }
+                else if (strcmp(inputDesc.Name, "LinearClamp") == 0)
+                {
+                    smpDesc.AddressU    = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+                    smpDesc.AddressV    = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+                    smpDesc.AddressW    = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+                    smpDesc.Filter      = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+
+                    samplers.push_back(smpDesc);
+                }
+                else if (strcmp(inputDesc.Name, "LinearWrap") == 0)
+                {
+                    smpDesc.AddressU    = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+                    smpDesc.AddressV    = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+                    smpDesc.AddressW    = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+                    smpDesc.Filter      = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+
+                    samplers.push_back(smpDesc);
+                }
+                else if (strcmp(inputDesc.Name, "LinearMirror") == 0)
+                {
+                    smpDesc.AddressU    = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+                    smpDesc.AddressV    = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+                    smpDesc.AddressW    = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+                    smpDesc.Filter      = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+
+                    samplers.push_back(smpDesc);
+                }
+                else if (strcmp(inputDesc.Name, "AnisotropicClamp") == 0)
+                {
+                    smpDesc.AddressU        = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+                    smpDesc.AddressV        = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+                    smpDesc.AddressW        = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+                    smpDesc.Filter          = D3D12_FILTER_ANISOTROPIC;
+                    smpDesc.MaxAnisotropy   = 16;
+
+                    samplers.push_back(smpDesc);
+                }
+                else if (strcmp(inputDesc.Name, "AnisotropicWrap") == 0)
+                {
+                    smpDesc.AddressU        = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+                    smpDesc.AddressV        = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+                    smpDesc.AddressW        = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+                    smpDesc.Filter          = D3D12_FILTER_ANISOTROPIC;
+                    smpDesc.MaxAnisotropy   = 16;
+
+                    samplers.push_back(smpDesc);
+                }
+                else if (strcmp(inputDesc.Name, "AnisotropicMirror") == 0)
+                {
+                    smpDesc.AddressU        = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+                    smpDesc.AddressV        = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+                    smpDesc.AddressW        = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+                    smpDesc.Filter          = D3D12_FILTER_ANISOTROPIC;
+                    smpDesc.MaxAnisotropy   = 16;
+
+                    samplers.push_back(smpDesc);
+                }
+                else if (strcmp(inputDesc.Name, "ShadowSampler") == 0)
+                {
+                    smpDesc.AddressU        = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+                    smpDesc.AddressV        = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+                    smpDesc.AddressW        = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+                    smpDesc.Filter          = D3D12_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR;
+                    smpDesc.ComparisonFunc  = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+
+                    samplers.push_back(smpDesc);
+                }
+                else if (strcmp(inputDesc.Name, "ReverseShadowSampler") == 0)
+                {
+                    smpDesc.AddressU        = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+                    smpDesc.AddressV        = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+                    smpDesc.AddressW        = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+                    smpDesc.Filter          = D3D12_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR;
+                    smpDesc.ComparisonFunc  = D3D12_COMPARISON_FUNC_GREATER;
+
+                    samplers.push_back(smpDesc);
+                }
+            }
+            break;
+        }
+    }
+
+    return hasVSInput;
+}
 
 } // namespace asdx

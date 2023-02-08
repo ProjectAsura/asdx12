@@ -9,6 +9,7 @@
 //-----------------------------------------------------------------------------
 #include <gfx/asdxSprite.h>
 #include <gfx/asdxGraphicsSystem.h>
+#include <gfx/asdxPipelineState.h>
 #include <fnd/asdxLogger.h>
 
 
@@ -107,15 +108,69 @@ bool SpriteSystem::Init
 
     // ルートシグニチャ生成.
     {
-        asdx::DescriptorSetLayout<3, 0> layout;
-        layout.SetVar(0, SV_VS, 16, 0);
-        layout.SetVar(1, SV_PS, 4,  1);
-        layout.SetSRV(2, SV_PS, 0);
-        layout.SetFlags(ROOT_SIGNATURE_FLAG_VS_PS);
+        D3D12_ROOT_SIGNATURE_FLAGS flags = {};
+        flags |= D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+        flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS;
+        flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS;
+        flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
+        flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_AMPLIFICATION_SHADER_ROOT_ACCESS;
+        flags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_MESH_SHADER_ROOT_ACCESS;
 
-        if (!m_RootSig.Init(pDevice, layout.GetDesc()))
+        D3D12_DESCRIPTOR_RANGE range[2] = {};
+        range[0].BaseShaderRegister                 = 0;
+        range[0].RegisterSpace                      = 0;
+        range[0].OffsetInDescriptorsFromTableStart  = 0;
+        range[0].NumDescriptors                     = 1;
+        range[0].RangeType                          = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+
+        range[1].BaseShaderRegister                 = 0;
+        range[1].RegisterSpace                      = 0;
+        range[1].OffsetInDescriptorsFromTableStart  = 0;
+        range[1].NumDescriptors                     = 1;
+        range[1].RangeType                          = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
+
+        D3D12_ROOT_PARAMETER param[4] = {};
+        param[0].ParameterType                          = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+        param[0].Constants.Num32BitValues               = 16;
+        param[0].Constants.ShaderRegister               = 0;
+        param[0].Constants.RegisterSpace                = 0;
+        param[0].ShaderVisibility                       = D3D12_SHADER_VISIBILITY_VERTEX;
+
+        param[1].ParameterType                          = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+        param[1].Constants.Num32BitValues               = 4;
+        param[1].Constants.ShaderRegister               = 1;
+        param[1].Constants.RegisterSpace                = 0;
+        param[1].ShaderVisibility                       = D3D12_SHADER_VISIBILITY_PIXEL;
+
+        param[2].ParameterType                          = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+        param[2].DescriptorTable.NumDescriptorRanges    = 1;
+        param[2].DescriptorTable.pDescriptorRanges      = &range[0];
+        param[2].ShaderVisibility                       = D3D12_SHADER_VISIBILITY_PIXEL;
+
+        param[3].ParameterType                          = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+        param[3].DescriptorTable.NumDescriptorRanges    = 1;
+        param[3].DescriptorTable.pDescriptorRanges      = &range[1];
+        param[3].ShaderVisibility                       = D3D12_SHADER_VISIBILITY_PIXEL;
+
+        D3D12_ROOT_SIGNATURE_DESC desc = {};
+        desc.NumParameters  = 4;
+        desc.pParameters    = param;
+        desc.Flags          = flags;
+
+        asdx::RefPtr<ID3DBlob> blob;
+        asdx::RefPtr<ID3DBlob> errorBlob;
+
+        auto hr = D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1_0, blob.GetAddress(), errorBlob.GetAddress());
+        if (FAILED(hr))
         {
-            ELOGA("Error : RootSignature::Init() Failed.");
+            ELOG("Error : D3D12SerializeRootSignature() Failed. errcode = 0x%x", hr);
+            return false;
+        }
+
+        hr = pDevice->CreateRootSignature(0, blob->GetBufferPointer(), blob->GetBufferSize(), IID_PPV_ARGS(m_RootSig.GetAddress()));
+        if (FAILED(hr))
+        {
+            ELOG("Error : ID3D12Device::CreateRootSignature() Failed. errcode = 0x%x", hr);
             return false;
         }
     }
@@ -141,7 +196,8 @@ bool SpriteSystem::Init
         desc.SampleDesc.Count   = 1;
         desc.SampleDesc.Quality = 0;
 
-        if (!m_PSO.Init(pDevice, &desc))
+        auto hr = pDevice->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(m_PSO.GetAddress()));
+        if (FAILED(hr))
         {
             ELOG("Error : PipelineState::Init() Failed.");
             return false;
@@ -168,7 +224,7 @@ void SpriteSystem::Term()
     m_VB     .Term();
     m_IB     .Term();
     m_RootSig.Term();
-    m_PSO    .Term();
+    m_PSO    .Reset();
     m_pSRV           = nullptr;
     m_CurSpriteCount = 0;
     m_PreSpriteCount = 0;

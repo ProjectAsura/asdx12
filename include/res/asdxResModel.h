@@ -74,15 +74,6 @@ struct ResMesh
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-// ResMaterialTag 
-///////////////////////////////////////////////////////////////////////////////
-union ResMaterialTag
-{
-    char        Name[64];
-    uint64_t    Hash;
-};
-
-///////////////////////////////////////////////////////////////////////////////
 // ResClusterMesh structure
 ///////////////////////////////////////////////////////////////////////////////
 struct ResClusterMesh
@@ -111,7 +102,7 @@ struct ResModel
 {
     std::string                 Name;           // モデル名.
     std::vector<ResMesh>        Meshes;         // メッシュ.
-    std::vector<ResMaterialTag> MaterialTags;   // マテリアル名.
+    std::vector<std::string>    MaterialTags;   // マテリアル名.
 
     //-------------------------------------------------------------------------
     //! @brief      破棄処理を行います.
