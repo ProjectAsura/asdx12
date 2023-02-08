@@ -114,9 +114,6 @@
     <ClCompile Include="..\src\gfx\asdxTexture.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxView.cpp">
-      <Filter>ソース ファイル\gfx</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\gfx\asdxGraphicsSystem.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
@@ -276,9 +273,6 @@
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
     <ClInclude Include="..\include\gfx\asdxDisposer.h">
-      <Filter>ヘッダー ファイル\gfx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\gfx\asdxFence.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
     <ClInclude Include="..\include\gfx\asdxPipelineState.h">

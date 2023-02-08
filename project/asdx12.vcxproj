@@ -150,7 +150,6 @@
     <ClCompile Include="..\src\gfx\asdxShaderCompiler.cpp" />
     <ClCompile Include="..\src\gfx\asdxTarget.cpp" />
     <ClCompile Include="..\src\gfx\asdxTexture.cpp" />
-    <ClCompile Include="..\src\gfx\asdxView.cpp" />
     <ClCompile Include="..\src\res\asdxResMaterial.cpp" />
     <ClCompile Include="..\src\res\asdxResModel.cpp" />
     <ClCompile Include="..\src\res\asdxResTexture.cpp" />
@@ -198,7 +197,6 @@
     <ClInclude Include="..\include\gfx\asdxCommandList.h" />
     <ClInclude Include="..\include\gfx\asdxCommandQueue.h" />
     <ClInclude Include="..\include\gfx\asdxDisposer.h" />
-    <ClInclude Include="..\include\gfx\asdxFence.h" />
     <ClInclude Include="..\include\gfx\asdxGraphicsSystem.h" />
     <ClInclude Include="..\include\gfx\asdxPipelineState.h" />
     <ClInclude Include="..\include\gfx\asdxQuad.h" />
