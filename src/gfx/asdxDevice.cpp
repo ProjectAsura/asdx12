@@ -1,5 +1,5 @@
 ﻿//-----------------------------------------------------------------------------
-// File : asdxGraphicsDevice.cpp
+// File : asdxDevice.cpp
 // Desc : Graphics Device.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
@@ -7,7 +7,7 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <gfx/asdxGraphicsSystem.h>
+#include <gfx/asdxDevice.h>
 #include <gfx/asdxBuffer.h>
 #include <gfx/asdxCommandQueue.h>
 #include <gfx/asdxDisposer.h>

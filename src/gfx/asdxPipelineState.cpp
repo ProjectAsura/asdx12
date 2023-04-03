@@ -11,7 +11,7 @@
 #include <d3d12shader.h>
 #include <fnd/asdxLogger.h>
 #include <gfx/asdxPipelineState.h>
-#include <gfx/asdxGraphicsSystem.h>
+#include <gfx/asdxDevice.h>
 #include <gfx/asdxShaderCompiler.h>
 
 

@@ -19,7 +19,7 @@
 #include <fnd/asdxStepTimer.h>
 #include <fnd/asdxHid.h>
 #include <fnd/asdxSpinLock.h>
-#include <gfx/asdxGraphicsSystem.h>
+#include <gfx/asdxDevice.h>
 #include <gfx/asdxCommandList.h>
 #include <gfx/asdxTarget.h>
 

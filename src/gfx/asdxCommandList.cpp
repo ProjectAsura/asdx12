@@ -10,8 +10,9 @@
 #include <cassert>
 #include <vector>
 #include <gfx/asdxCommandList.h>
-#include <gfx/asdxGraphicsSystem.h>
+#include <gfx/asdxDevice.h>
 #include <fnd/asdxLogger.h>
+
 
 namespace {
 

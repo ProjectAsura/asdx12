@@ -142,7 +142,7 @@
     <ClCompile Include="..\src\gfx\asdxCamera.cpp" />
     <ClCompile Include="..\src\gfx\asdxCommandList.cpp" />
     <ClCompile Include="..\src\gfx\asdxCommandQueue.cpp" />
-    <ClCompile Include="..\src\gfx\asdxGraphicsSystem.cpp" />
+    <ClCompile Include="..\src\gfx\asdxDevice.cpp" />
     <ClCompile Include="..\src\gfx\asdxPipelineState.cpp" />
     <ClCompile Include="..\src\gfx\asdxRayTracing.cpp" />
     <ClCompile Include="..\src\gfx\asdxScreenCapture.cpp" />
@@ -195,8 +195,8 @@
     <ClInclude Include="..\include\gfx\asdxCamera.h" />
     <ClInclude Include="..\include\gfx\asdxCommandList.h" />
     <ClInclude Include="..\include\gfx\asdxCommandQueue.h" />
+    <ClInclude Include="..\include\gfx\asdxDevice.h" />
     <ClInclude Include="..\include\gfx\asdxDisposer.h" />
-    <ClInclude Include="..\include\gfx\asdxGraphicsSystem.h" />
     <ClInclude Include="..\include\gfx\asdxPipelineState.h" />
     <ClInclude Include="..\include\gfx\asdxRayTracing.h" />
     <ClInclude Include="..\include\gfx\asdxScreenCpature.h" />

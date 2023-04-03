@@ -10,7 +10,7 @@
 #include <fnd/asdxLogger.h>
 #include <fnd/asdxMisc.h>
 #include <gfx/asdxRayTracing.h>
-#include <gfx/asdxGraphicsSystem.h>
+#include <gfx/asdxDevice.h>
 
 
 namespace asdx {

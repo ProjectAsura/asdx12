@@ -108,9 +108,6 @@
     <ClCompile Include="..\src\gfx\asdxTexture.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxGraphicsSystem.cpp">
-      <Filter>ソース ファイル\gfx</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\res\asdxResMaterial.cpp">
       <Filter>ソース ファイル\res</Filter>
     </ClCompile>
@@ -219,6 +216,9 @@
     <ClCompile Include="..\src\fw\asdxAppCamera.cpp">
       <Filter>ソース ファイル\fw</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\gfx\asdxDevice.cpp">
+      <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\external\imgui\imconfig.h">
@@ -285,9 +285,6 @@
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
     <ClInclude Include="..\include\gfx\asdxView.h">
-      <Filter>ヘッダー ファイル\gfx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\gfx\asdxGraphicsSystem.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
     <ClInclude Include="..\include\res\asdxResMaterial.h">
@@ -379,6 +376,9 @@
     </ClInclude>
     <ClInclude Include="..\include\fw\asdxAppCamera.h">
       <Filter>ヘッダー ファイル\fw</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\gfx\asdxDevice.h">
+      <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

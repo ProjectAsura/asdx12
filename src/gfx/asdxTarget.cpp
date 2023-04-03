@@ -8,7 +8,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <gfx/asdxTarget.h>
-#include <gfx/asdxGraphicsSystem.h>
+#include <gfx/asdxDevice.h>
 #include <fnd/asdxLogger.h>
 
 

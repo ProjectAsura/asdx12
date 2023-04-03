@@ -9,7 +9,7 @@
 //-----------------------------------------------------------------------------
 #include <vector>
 #include <gfx/asdxTexture.h>
-#include <gfx/asdxGraphicsSystem.h>
+#include <gfx/asdxDevice.h>
 #include <gfx/asdxCommandList.h>
 #include <fnd/asdxLogger.h>
 

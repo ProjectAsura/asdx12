@@ -1,5 +1,5 @@
 ﻿//-----------------------------------------------------------------------------
-// File : asdxGraphicsDevice.h
+// File : asdxDevice.h
 // Desc : Graphics Device.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------

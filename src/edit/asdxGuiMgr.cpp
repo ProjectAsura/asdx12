@@ -12,7 +12,7 @@
 #ifdef ASDX_ENABLE_IMGUI
 #include <fnd/asdxMisc.h>
 #include <fnd/asdxLogger.h>
-#include <gfx/asdxGraphicsSystem.h>
+#include <gfx/asdxDevice.h>
 #include <gfx/asdxCommandList.h>
 #include <imgui.h>
 #include <imgui_internal.h>
