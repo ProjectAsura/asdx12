@@ -7,7 +7,7 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <fw/asdxCamera.h>
+#include <gfx/asdxCamera.h>
 #include <fnd/asdxLogger.h>
 
 
@@ -91,7 +91,6 @@ void ToVector
 }
 
 } // namespace /* anonymos */ 
-
 
 
 namespace asdx {

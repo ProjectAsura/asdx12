@@ -99,13 +99,7 @@
     <ClCompile Include="..\src\gfx\asdxPipelineState.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxQuad.cpp">
-      <Filter>ソース ファイル\gfx</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\gfx\asdxRayTracing.cpp">
-      <Filter>ソース ファイル\gfx</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxScreenCapture.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
     <ClCompile Include="..\src\gfx\asdxTarget.cpp">
@@ -162,9 +156,6 @@
     <ClCompile Include="..\src\fw\asdxEntity.cpp">
       <Filter>ソース ファイル\fw</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxShaderCompiler.cpp">
-      <Filter>ソース ファイル\gfx</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\fnd\asdxTokenizer.cpp">
       <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
@@ -213,14 +204,20 @@
     <ClCompile Include="..\external\meshoptimizer\vfetchoptimizer.cpp">
       <Filter>ソース ファイル\external\meshoptimizer</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\fw\asdxCamera.cpp">
-      <Filter>ソース ファイル\fw</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\fw\asdxCameraController.cpp">
-      <Filter>ソース ファイル\fw</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\gfx\asdxBuffer.cpp">
       <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gfx\asdxScreenCapture.cpp">
+      <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gfx\asdxShaderCompiler.cpp">
+      <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gfx\asdxCamera.cpp">
+      <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\fw\asdxAppCamera.cpp">
+      <Filter>ソース ファイル\fw</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -278,13 +275,7 @@
     <ClInclude Include="..\include\gfx\asdxPipelineState.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\gfx\asdxQuad.h">
-      <Filter>ヘッダー ファイル\gfx</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\gfx\asdxRayTracing.h">
-      <Filter>ヘッダー ファイル\gfx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\gfx\asdxScreenCpature.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
     <ClInclude Include="..\include\gfx\asdxTarget.h">
@@ -365,26 +356,29 @@
     <ClInclude Include="..\include\fw\asdxEntity.h">
       <Filter>ヘッダー ファイル\fw</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\gfx\asdxShaderCompiler.h">
-      <Filter>ヘッダー ファイル\gfx</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\fnd\asdxTokenizer.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
     <ClInclude Include="..\external\meshoptimizer\meshoptimizer.h">
       <Filter>ソース ファイル\external\meshoptimizer</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\fw\asdxCamera.h">
-      <Filter>ヘッダー ファイル\fw</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\fw\asdxCameraController.h">
-      <Filter>ヘッダー ファイル\fw</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\fnd\asdxStringView.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
     <ClInclude Include="..\include\gfx\asdxBuffer.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\gfx\asdxCamera.h">
+      <Filter>ヘッダー ファイル\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\gfx\asdxScreenCpature.h">
+      <Filter>ヘッダー ファイル\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\gfx\asdxShaderCompiler.h">
+      <Filter>ヘッダー ファイル\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fw\asdxAppCamera.h">
+      <Filter>ヘッダー ファイル\fw</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

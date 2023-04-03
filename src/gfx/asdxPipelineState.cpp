@@ -657,7 +657,7 @@ void PipelineState::ReplaceShader(SHADER_TYPE type, const void* pBinary, size_t 
 //-----------------------------------------------------------------------------
 //      パイプラインステートを再生成します.
 //-----------------------------------------------------------------------------
-void PipelineState::Recreate()
+void PipelineState::Rebuild()
 {
     if (!m_pRecreatePSO.GetPtr())
     {

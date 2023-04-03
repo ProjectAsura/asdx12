@@ -1,5 +1,5 @@
 ﻿//-----------------------------------------------------------------------------
-// File : asdxCameraController.cpp
+// File : asdxAppCamera.cpp
 // Desc : Camera Update Module.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
@@ -7,19 +7,19 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <fw/asdxCameraController.h>
+#include <fw/asdxAppCamera.h>
 
 
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
-// CameraUpdate class
+// AppCamera class
 ///////////////////////////////////////////////////////////////////////////////
 
 //-----------------------------------------------------------------------------
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
-CameraController::CameraController()
+AppCamera::AppCamera()
 : m_Camera      ()
 , m_MouseLeft   ()
 , m_MouseRight  ()
@@ -30,13 +30,13 @@ CameraController::CameraController()
 //-----------------------------------------------------------------------------
 //      デストラクタです.
 //-----------------------------------------------------------------------------
-CameraController::~CameraController()
+AppCamera::~AppCamera()
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      初期設定を行います.
 //-----------------------------------------------------------------------------
-void CameraController::Init
+void AppCamera::Init
 (
     asdx::Vector3 cameraPos,
     asdx::Vector3 cameraAim,
@@ -60,7 +60,7 @@ void CameraController::Init
 //-----------------------------------------------------------------------------
 //      マウスの処理です.
 //-----------------------------------------------------------------------------
-void CameraController::OnMouse
+void AppCamera::OnMouse
 (
     int  x,
     int  y,
@@ -83,7 +83,7 @@ void CameraController::OnMouse
 //-----------------------------------------------------------------------------
 //      キーの処理です.
 //-----------------------------------------------------------------------------
-void CameraController::OnKey( uint32_t nChar, bool isKeyDown, bool isAltDown )
+void AppCamera::OnKey( uint32_t nChar, bool isKeyDown, bool isAltDown )
 {
     CameraEvent e = MakeEventFromKey( nChar, isKeyDown, isAltDown );
     m_Camera.UpdateByEvent( e );
@@ -92,61 +92,61 @@ void CameraController::OnKey( uint32_t nChar, bool isKeyDown, bool isAltDown )
 //-----------------------------------------------------------------------------
 //      ビュー行列を取得します.
 //-----------------------------------------------------------------------------
-asdx::Matrix CameraController::GetView() const
+asdx::Matrix AppCamera::GetView() const
 { return m_Camera.GetView(); }
 
 //-----------------------------------------------------------------------------
 //      位置座標を取得します.
 //-----------------------------------------------------------------------------
-asdx::Vector3 CameraController::GetPosition() const
+asdx::Vector3 AppCamera::GetPosition() const
 { return m_Camera.GetPosition(); }
 
 //-----------------------------------------------------------------------------
 //      注視点を取得します.
 //-----------------------------------------------------------------------------
-asdx::Vector3 CameraController::GetTarget() const
+asdx::Vector3 AppCamera::GetTarget() const
 { return m_Camera.GetTarget(); }
 
 //-----------------------------------------------------------------------------
 //      上向き方向を取得します.
 //-----------------------------------------------------------------------------
-asdx::Vector3 CameraController::GetUpward() const
+asdx::Vector3 AppCamera::GetUpward() const
 { return m_Camera.GetUpward(); }
 
 //-----------------------------------------------------------------------------
 //      カメラ基底ベクトルのX軸を取得します.
 //-----------------------------------------------------------------------------
-asdx::Vector3 CameraController::GetAxisX() const
+asdx::Vector3 AppCamera::GetAxisX() const
 { return m_Camera.GetAxisX(); }
 
 //-----------------------------------------------------------------------------
 //      カメラ基底ベクトルのY軸を取得します.
 //-----------------------------------------------------------------------------
-asdx::Vector3 CameraController::GetAxisY() const
+asdx::Vector3 AppCamera::GetAxisY() const
 { return m_Camera.GetAxisY(); }
 
 //-----------------------------------------------------------------------------
 //      カメラ基底ベクトルのZ軸を取得します.
 //-----------------------------------------------------------------------------
-asdx::Vector3 CameraController::GetAxisZ() const
+asdx::Vector3 AppCamera::GetAxisZ() const
 { return m_Camera.GetAxisZ(); }
 
 //-----------------------------------------------------------------------------
 //      カメラのニアクリップ平面を取得します.
 //-----------------------------------------------------------------------------
-float CameraController::GetNearClip() const
+float AppCamera::GetNearClip() const
 { return m_Camera.GetMinDist(); }
 
 //-----------------------------------------------------------------------------
 //      カメラのファークリップ平面を取得します.
 //-----------------------------------------------------------------------------
-float CameraController::GetFarClip() const
+float AppCamera::GetFarClip() const
 { return m_Camera.GetMaxDist(); }
 
 //-----------------------------------------------------------------------------
 //      マウス入力からカメライベントを生成します.
 //-----------------------------------------------------------------------------
-CameraEvent CameraController::MakeEventFromMouse( int wheelDelta )
+CameraEvent AppCamera::MakeEventFromMouse( int wheelDelta )
 {
     CameraEvent result;
     uint32_t flags = 0;
@@ -275,7 +275,7 @@ CameraEvent CameraController::MakeEventFromMouse( int wheelDelta )
 //-----------------------------------------------------------------------------
 //      キー入力からカメライベントを生成する.
 //-----------------------------------------------------------------------------
-CameraEvent CameraController::MakeEventFromKey( uint32_t nChar, bool isKeyDown, bool isAltDown )
+CameraEvent AppCamera::MakeEventFromKey( uint32_t nChar, bool isKeyDown, bool isAltDown )
 {
     CameraEvent result;
 
@@ -308,7 +308,7 @@ CameraEvent CameraController::MakeEventFromKey( uint32_t nChar, bool isKeyDown, 
 //-----------------------------------------------------------------------------
 //      調整係数をリセットします.
 //-----------------------------------------------------------------------------
-void CameraController::ResetGain()
+void AppCamera::ResetGain()
 {
     m_Gain[0].Dolly  = 0.5f;
     m_Gain[0].Rotate = 0.01f;
@@ -324,13 +324,13 @@ void CameraController::ResetGain()
 //-----------------------------------------------------------------------------
 //      カメラパラメータを記憶します.
 //-----------------------------------------------------------------------------
-void CameraController::Present()
+void AppCamera::Present()
 { m_Camera.Preset(); }
 
 //-----------------------------------------------------------------------------
 //      カメラパラメータをリセットします.
 //-----------------------------------------------------------------------------
-void CameraController::Reset()
+void AppCamera::Reset()
 { m_Camera.Reset(); }
 
 } // namespace asdx

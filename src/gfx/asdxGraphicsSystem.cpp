@@ -8,11 +8,10 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <gfx/asdxGraphicsSystem.h>
+#include <gfx/asdxBuffer.h>
 #include <gfx/asdxCommandQueue.h>
-//#include <gfx/asdxDescriptor.h>
 #include <gfx/asdxDisposer.h>
 #include <gfx/asdxCommandList.h>
-//#include <gfx/asdxResourceUploader.h>
 #include <fnd/asdxList.h>
 #include <fnd/asdxSpinLock.h>
 #include <fnd/asdxRef.h>
@@ -25,6 +24,32 @@
 
 
 namespace {
+
+#include "../res/shaders/Compiled/FullScreenVS.inc"
+
+//-----------------------------------------------------------------------------
+// Constant Values.
+//-----------------------------------------------------------------------------
+static const D3D12_INPUT_ELEMENT_DESC kQuadElements[] = {
+    { "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+    { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 8, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+};
+static const D3D12_INPUT_LAYOUT_DESC kQuadLayout = { kQuadElements, 2 };
+
+struct QuadVertex
+{
+    float   Position[2];
+    float   TexCoord[2];
+
+    QuadVertex(float x, float y, float u, float v)
+    {
+        Position[0] = x;
+        Position[1] = y;
+        TexCoord[0] = u;
+        TexCoord[1] = v;
+    }
+};
+
 
 //-------------------------------------------------------------------------------------------------
 //      PIXキャプチャー用のDLLをロードします.
@@ -465,6 +490,11 @@ public:
     //-------------------------------------------------------------------------
     void GetDisplayInfo(DXGI_FORMAT format, std::vector<DisplayInfo>& infos);
 
+    //-------------------------------------------------------------------------
+    //! @brief      フルスクリーン矩形用頂点バッファを取得します.
+    //-------------------------------------------------------------------------
+    const VertexBuffer& GetQuadVB() const { return m_QuadVB; }
+
 private:
     //=========================================================================
     // private variables.
@@ -486,6 +516,7 @@ private:
     Disposer<ID3D12Object>          m_ObjectDisposer;           //!< オブジェクトディスポーザー.
     Disposer<Descriptor>            m_DescriptorDisposer;       //!< ディスクリプタディスポーザー.
     SpinLock                        m_SpinLock;                 //!< スピンロックです.
+    VertexBuffer                    m_QuadVB;
 
     //=========================================================================
     // private methods
@@ -988,6 +1019,28 @@ bool GraphicsSystem::Init(const DeviceDesc& deviceDesc)
         ELOG("Error : Queue::Create() Failed.");
         return false;
     }
+
+    // 矩形用
+    {
+        QuadVertex vertices[] = {
+            QuadVertex(-1.0f,  1.0f, 0.0f,  0.0f),
+            QuadVertex( 3.0f,  1.0f, 2.0f,  0.0f),
+            QuadVertex(-1.0f, -3.0f, 0.0f,  2.0f)
+        };
+
+        auto size = sizeof(vertices);
+        auto stride = uint32_t(sizeof(vertices[0]));
+
+        if (!m_QuadVB.Init(size, stride))
+        {
+            ELOG("Error : VertexBuffer::Init() Failed.");
+            return false;
+        }
+
+        auto dst = m_QuadVB.Map<QuadVertex>();
+        memcpy(dst, vertices, size);
+        m_QuadVB.Unmap();
+    }
  
     // 正常終了.
     return true;
@@ -998,6 +1051,8 @@ bool GraphicsSystem::Init(const DeviceDesc& deviceDesc)
 //-----------------------------------------------------------------------------
 void GraphicsSystem::Term()
 {
+    m_QuadVB.Term();
+
     m_ObjectDisposer    .Clear();
     m_DescriptorDisposer.Clear();
 
@@ -2037,5 +2092,34 @@ bool CreateUnorderedAccessView
     return true;
 }
 
+
+//-----------------------------------------------------------------------------
+//      フルスクリーン矩形用入力レイアウトを取得します.
+//-----------------------------------------------------------------------------
+D3D12_INPUT_LAYOUT_DESC GetQuadLayout()
+{ return kQuadLayout; }
+
+//-----------------------------------------------------------------------------
+//      フルスクリーン矩形用頂点シェーダを取得します.
+//-----------------------------------------------------------------------------
+D3D12_SHADER_BYTECODE GetQuadVS()
+{
+    D3D12_SHADER_BYTECODE result = {};
+    result.pShaderBytecode = FullScreenVS;
+    result.BytecodeLength  = sizeof(FullScreenVS);
+    return result;
+}
+
+//-----------------------------------------------------------------------------
+//      フルスクリーン矩形を描画します.
+//-----------------------------------------------------------------------------
+void DrawQuad(ID3D12GraphicsCommandList* pCmd)
+{
+    auto vbv = GraphicsSystem::Instance().GetQuadVB().GetView();
+    pCmd->IASetVertexBuffers(0, 1, &vbv);
+    pCmd->IASetIndexBuffer(nullptr);
+    pCmd->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    pCmd->DrawInstanced(3, 1, 0, 0);
+}
 
 } // namespace asdx
