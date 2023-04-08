@@ -681,7 +681,7 @@ bool GuiMgr::Init
         res.SurfaceCount    = 1;
         res.pResources      = &subRes;
 
-        if (!m_FontTexture.Init(cmdList, res))
+        if (!m_FontTexture.Init(cmdList.GetCommandList(), res))
         {
             ELOG("Error : Texture::Init() Failed.");
             return false;

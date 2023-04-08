@@ -495,6 +495,12 @@ public:
     //-------------------------------------------------------------------------
     const VertexBuffer& GetQuadVB() const { return m_QuadVB; }
 
+    //-------------------------------------------------------------------------
+    //! @brief      コマンドシグニチャを取得します.
+    //-------------------------------------------------------------------------
+    ID3D12CommandSignature* GetCommandSignature(COMMAND_SIGNATURE_TYPE type) const
+    { return m_pCommandSig[type]; }
+
 private:
     //=========================================================================
     // private variables.
@@ -517,6 +523,7 @@ private:
     Disposer<Descriptor>            m_DescriptorDisposer;       //!< ディスクリプタディスポーザー.
     SpinLock                        m_SpinLock;                 //!< スピンロックです.
     VertexBuffer                    m_QuadVB;
+    ID3D12CommandSignature*         m_pCommandSig[MAX_COUNT_COMMAND_SIGNATURE_TYPE] = {};
 
     //=========================================================================
     // private methods
@@ -1041,6 +1048,94 @@ bool GraphicsSystem::Init(const DeviceDesc& deviceDesc)
         memcpy(dst, vertices, size);
         m_QuadVB.Unmap();
     }
+
+    // コマンドシグニチャ生成.
+    {
+        {
+            D3D12_INDIRECT_ARGUMENT_DESC arg = {};
+            arg.Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW;
+
+            D3D12_COMMAND_SIGNATURE_DESC desc = {};
+            desc.ByteStride         = 0;
+            desc.NumArgumentDescs   = 1;
+            desc.pArgumentDescs     = &arg;
+
+            auto hr = m_pDevice->CreateCommandSignature(&desc, nullptr, IID_PPV_ARGS(&m_pCommandSig[COMMAND_SIGNATURE_TYPE_DRAW]));
+            if (FAILED(hr))
+            {
+                ELOG("Error : ID3D12Device::CreateCommandSignature() Failed.");
+                return false;
+            }
+        }
+
+        {
+            D3D12_INDIRECT_ARGUMENT_DESC arg = {};
+            arg.Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED;
+
+            D3D12_COMMAND_SIGNATURE_DESC desc = {};
+            desc.ByteStride         = 0;
+            desc.NumArgumentDescs   = 1;
+            desc.pArgumentDescs     = &arg;
+
+            auto hr = m_pDevice->CreateCommandSignature(&desc, nullptr, IID_PPV_ARGS(&m_pCommandSig[COMMAND_SIGNATURE_TYPE_DRAW_INDEXED]));
+            if (FAILED(hr))
+            {
+                ELOG("Error : ID3D12Device::CreateCommandSignature() Failed.");
+                return false;
+            }
+        }
+
+        {
+            D3D12_INDIRECT_ARGUMENT_DESC arg = {};
+            arg.Type = D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH;
+
+            D3D12_COMMAND_SIGNATURE_DESC desc = {};
+            desc.ByteStride         = 0;
+            desc.NumArgumentDescs   = 1;
+            desc.pArgumentDescs     = &arg;
+
+            auto hr = m_pDevice->CreateCommandSignature(&desc, nullptr, IID_PPV_ARGS(&m_pCommandSig[COMMAND_SIGNATURE_TYPE_DISPATCH]));
+            if (FAILED(hr))
+            {
+                ELOG("Error : ID3D12Device::CreateCommandSignature() Failed.");
+                return false;
+            }
+        }
+
+        {
+            D3D12_INDIRECT_ARGUMENT_DESC arg = {};
+            arg.Type = D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH_RAYS;
+
+            D3D12_COMMAND_SIGNATURE_DESC desc = {};
+            desc.ByteStride         = 0;
+            desc.NumArgumentDescs   = 1;
+            desc.pArgumentDescs     = &arg;
+
+            auto hr = m_pDevice->CreateCommandSignature(&desc, nullptr, IID_PPV_ARGS(&m_pCommandSig[COMMAND_SIGNATURE_TYPE_DISPATCH_RAYS]));
+            if (FAILED(hr))
+            {
+                ELOG("Error : ID3D12Device::CreateCommandSignature() Failed.");
+                return false;
+            }
+        }
+
+        {
+            D3D12_INDIRECT_ARGUMENT_DESC arg = {};
+            arg.Type = D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH_MESH;
+
+            D3D12_COMMAND_SIGNATURE_DESC desc = {};
+            desc.ByteStride         = 0;
+            desc.NumArgumentDescs   = 1;
+            desc.pArgumentDescs     = &arg;
+
+            auto hr = m_pDevice->CreateCommandSignature(&desc, nullptr, IID_PPV_ARGS(&m_pCommandSig[COMMAND_SIGNATURE_TYPE_DISPATCH_MESH]));
+            if (FAILED(hr))
+            {
+                ELOG("Error : ID3D12Device::CreateCommandSignature() Failed.");
+                return false;
+            }
+        }
+    }
  
     // 正常終了.
     return true;
@@ -1051,6 +1146,15 @@ bool GraphicsSystem::Init(const DeviceDesc& deviceDesc)
 //-----------------------------------------------------------------------------
 void GraphicsSystem::Term()
 {
+    for(auto i=0; i<MAX_COUNT_COMMAND_SIGNATURE_TYPE; ++i)
+    {
+        if (m_pCommandSig[i] != nullptr)
+        {
+            m_pCommandSig[i]->Release();
+            m_pCommandSig[i] = nullptr;
+        }
+    }
+
     m_QuadVB.Term();
 
     m_ObjectDisposer    .Clear();
@@ -2121,5 +2225,11 @@ void DrawQuad(ID3D12GraphicsCommandList* pCmd)
     pCmd->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     pCmd->DrawInstanced(3, 1, 0, 0);
 }
+
+//-----------------------------------------------------------------------------
+//      コマンドシグニチャを取得します.
+//-----------------------------------------------------------------------------
+ID3D12CommandSignature* GetCommandSignature(COMMAND_SIGNATURE_TYPE type)
+{ return GraphicsSystem::Instance().GetCommandSignature(type); }
 
 } // namespace asdx

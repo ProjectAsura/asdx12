@@ -21,6 +21,18 @@ namespace asdx {
 //-----------------------------------------------------------------------------
 class CommandQueue;
 
+///////////////////////////////////////////////////////////////////////////////
+// COMMAND_SIGNATURE_TYPE enum
+///////////////////////////////////////////////////////////////////////////////
+enum COMMAND_SIGNATURE_TYPE
+{
+    COMMAND_SIGNATURE_TYPE_DRAW,
+    COMMAND_SIGNATURE_TYPE_DRAW_INDEXED,
+    COMMAND_SIGNATURE_TYPE_DISPATCH,
+    COMMAND_SIGNATURE_TYPE_DISPATCH_RAYS,
+    COMMAND_SIGNATURE_TYPE_DISPATCH_MESH,
+    MAX_COUNT_COMMAND_SIGNATURE_TYPE,
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 // DisplayInfo structure
@@ -163,6 +175,11 @@ ID3D12Device8* GetD3D12Device();
 //! @brief      DXGIファクトリを取得します.
 //-----------------------------------------------------------------------------
 IDXGIFactory7* GetDXGIFactory();
+
+//-----------------------------------------------------------------------------
+//! @brief      コマンドシグニチャを取得します.
+//-----------------------------------------------------------------------------
+ID3D12CommandSignature* GetCommandSignature(COMMAND_SIGNATURE_TYPE type);
 
 //-----------------------------------------------------------------------------
 //! @brief      ディスプレイ情報を取得します.

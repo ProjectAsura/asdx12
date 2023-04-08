@@ -53,7 +53,7 @@ public:
     //! @retval true    初期化に成功.
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
-    bool Init(CommandList& cmdList, const ResTexture& resource);
+    bool Init(ID3D12GraphicsCommandList* pCmdList, const ResTexture& resource);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.
