@@ -108,12 +108,6 @@
     <ClCompile Include="..\src\gfx\asdxTexture.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\res\asdxResMaterial.cpp">
-      <Filter>ソース ファイル\res</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\res\asdxResModel.cpp">
-      <Filter>ソース ファイル\res</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\res\asdxResTexture.cpp">
       <Filter>ソース ファイル\res</Filter>
     </ClCompile>
@@ -286,12 +280,6 @@
     </ClInclude>
     <ClInclude Include="..\include\gfx\asdxView.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\res\asdxResMaterial.h">
-      <Filter>ヘッダー ファイル\res</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\res\asdxResModel.h">
-      <Filter>ヘッダー ファイル\res</Filter>
     </ClInclude>
     <ClInclude Include="..\include\res\asdxResTexture.h">
       <Filter>ヘッダー ファイル\res</Filter>

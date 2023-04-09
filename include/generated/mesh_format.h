@@ -11,265 +11,279 @@
 namespace asdx {
 namespace res {
 
-struct ResMesh;
-struct ResMeshBuilder;
+struct Mesh;
+struct MeshBuilder;
 
-struct ResModel;
-struct ResModelBuilder;
+struct Model;
+struct ModelBuilder;
 
-struct ResMesh FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
-  typedef ResMeshBuilder Builder;
+struct Mesh FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef MeshBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_POSITIONS = 4,
     VT_NORMALS = 6,
-    VT_TEXCOORDS = 8,
-    VT_BONEINDICES = 10,
-    VT_BONEWEIGHTS = 12,
-    VT_VERTEXINDICES = 14,
-    VT_MATERIALID = 16,
-    VT_BONESTRIDE = 18
+    VT_TANGENTS = 8,
+    VT_TEXCOORDS = 10,
+    VT_BONEINDICES = 12,
+    VT_BONEWEIGHTS = 14,
+    VT_VERTEXINDICES = 16,
+    VT_MATERIALID = 18,
+    VT_BONESTRIDE = 20
   };
-  const flatbuffers::Vector<const asdx::res::Float3 *> *positions() const {
+  const flatbuffers::Vector<const asdx::res::Float3 *> *Positions() const {
     return GetPointer<const flatbuffers::Vector<const asdx::res::Float3 *> *>(VT_POSITIONS);
   }
-  const flatbuffers::Vector<const asdx::res::Float3 *> *normals() const {
+  const flatbuffers::Vector<const asdx::res::Float3 *> *Normals() const {
     return GetPointer<const flatbuffers::Vector<const asdx::res::Float3 *> *>(VT_NORMALS);
   }
-  const flatbuffers::Vector<const asdx::res::Float2 *> *texCoords() const {
+  const flatbuffers::Vector<const asdx::res::Float3 *> *Tangents() const {
+    return GetPointer<const flatbuffers::Vector<const asdx::res::Float3 *> *>(VT_TANGENTS);
+  }
+  const flatbuffers::Vector<const asdx::res::Float2 *> *TexCoords() const {
     return GetPointer<const flatbuffers::Vector<const asdx::res::Float2 *> *>(VT_TEXCOORDS);
   }
-  const flatbuffers::Vector<uint32_t> *boneIndices() const {
+  const flatbuffers::Vector<uint32_t> *BoneIndices() const {
     return GetPointer<const flatbuffers::Vector<uint32_t> *>(VT_BONEINDICES);
   }
-  const flatbuffers::Vector<float> *boneWeights() const {
+  const flatbuffers::Vector<float> *BoneWeights() const {
     return GetPointer<const flatbuffers::Vector<float> *>(VT_BONEWEIGHTS);
   }
-  const flatbuffers::Vector<uint32_t> *vertexIndices() const {
+  const flatbuffers::Vector<uint32_t> *VertexIndices() const {
     return GetPointer<const flatbuffers::Vector<uint32_t> *>(VT_VERTEXINDICES);
   }
-  uint32_t materialId() const {
+  uint32_t MaterialId() const {
     return GetField<uint32_t>(VT_MATERIALID, 0);
   }
-  uint32_t boneStride() const {
+  uint32_t BoneStride() const {
     return GetField<uint32_t>(VT_BONESTRIDE, 0);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_POSITIONS) &&
-           verifier.VerifyVector(positions()) &&
+           verifier.VerifyVector(Positions()) &&
            VerifyOffset(verifier, VT_NORMALS) &&
-           verifier.VerifyVector(normals()) &&
+           verifier.VerifyVector(Normals()) &&
+           VerifyOffset(verifier, VT_TANGENTS) &&
+           verifier.VerifyVector(Tangents()) &&
            VerifyOffset(verifier, VT_TEXCOORDS) &&
-           verifier.VerifyVector(texCoords()) &&
+           verifier.VerifyVector(TexCoords()) &&
            VerifyOffset(verifier, VT_BONEINDICES) &&
-           verifier.VerifyVector(boneIndices()) &&
+           verifier.VerifyVector(BoneIndices()) &&
            VerifyOffset(verifier, VT_BONEWEIGHTS) &&
-           verifier.VerifyVector(boneWeights()) &&
+           verifier.VerifyVector(BoneWeights()) &&
            VerifyOffset(verifier, VT_VERTEXINDICES) &&
-           verifier.VerifyVector(vertexIndices()) &&
+           verifier.VerifyVector(VertexIndices()) &&
            VerifyField<uint32_t>(verifier, VT_MATERIALID) &&
            VerifyField<uint32_t>(verifier, VT_BONESTRIDE) &&
            verifier.EndTable();
   }
 };
 
-struct ResMeshBuilder {
-  typedef ResMesh Table;
+struct MeshBuilder {
+  typedef Mesh Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_positions(flatbuffers::Offset<flatbuffers::Vector<const asdx::res::Float3 *>> positions) {
-    fbb_.AddOffset(ResMesh::VT_POSITIONS, positions);
+  void add_Positions(flatbuffers::Offset<flatbuffers::Vector<const asdx::res::Float3 *>> Positions) {
+    fbb_.AddOffset(Mesh::VT_POSITIONS, Positions);
   }
-  void add_normals(flatbuffers::Offset<flatbuffers::Vector<const asdx::res::Float3 *>> normals) {
-    fbb_.AddOffset(ResMesh::VT_NORMALS, normals);
+  void add_Normals(flatbuffers::Offset<flatbuffers::Vector<const asdx::res::Float3 *>> Normals) {
+    fbb_.AddOffset(Mesh::VT_NORMALS, Normals);
   }
-  void add_texCoords(flatbuffers::Offset<flatbuffers::Vector<const asdx::res::Float2 *>> texCoords) {
-    fbb_.AddOffset(ResMesh::VT_TEXCOORDS, texCoords);
+  void add_Tangents(flatbuffers::Offset<flatbuffers::Vector<const asdx::res::Float3 *>> Tangents) {
+    fbb_.AddOffset(Mesh::VT_TANGENTS, Tangents);
   }
-  void add_boneIndices(flatbuffers::Offset<flatbuffers::Vector<uint32_t>> boneIndices) {
-    fbb_.AddOffset(ResMesh::VT_BONEINDICES, boneIndices);
+  void add_TexCoords(flatbuffers::Offset<flatbuffers::Vector<const asdx::res::Float2 *>> TexCoords) {
+    fbb_.AddOffset(Mesh::VT_TEXCOORDS, TexCoords);
   }
-  void add_boneWeights(flatbuffers::Offset<flatbuffers::Vector<float>> boneWeights) {
-    fbb_.AddOffset(ResMesh::VT_BONEWEIGHTS, boneWeights);
+  void add_BoneIndices(flatbuffers::Offset<flatbuffers::Vector<uint32_t>> BoneIndices) {
+    fbb_.AddOffset(Mesh::VT_BONEINDICES, BoneIndices);
   }
-  void add_vertexIndices(flatbuffers::Offset<flatbuffers::Vector<uint32_t>> vertexIndices) {
-    fbb_.AddOffset(ResMesh::VT_VERTEXINDICES, vertexIndices);
+  void add_BoneWeights(flatbuffers::Offset<flatbuffers::Vector<float>> BoneWeights) {
+    fbb_.AddOffset(Mesh::VT_BONEWEIGHTS, BoneWeights);
   }
-  void add_materialId(uint32_t materialId) {
-    fbb_.AddElement<uint32_t>(ResMesh::VT_MATERIALID, materialId, 0);
+  void add_VertexIndices(flatbuffers::Offset<flatbuffers::Vector<uint32_t>> VertexIndices) {
+    fbb_.AddOffset(Mesh::VT_VERTEXINDICES, VertexIndices);
   }
-  void add_boneStride(uint32_t boneStride) {
-    fbb_.AddElement<uint32_t>(ResMesh::VT_BONESTRIDE, boneStride, 0);
+  void add_MaterialId(uint32_t MaterialId) {
+    fbb_.AddElement<uint32_t>(Mesh::VT_MATERIALID, MaterialId, 0);
   }
-  explicit ResMeshBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  void add_BoneStride(uint32_t BoneStride) {
+    fbb_.AddElement<uint32_t>(Mesh::VT_BONESTRIDE, BoneStride, 0);
+  }
+  explicit MeshBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  flatbuffers::Offset<ResMesh> Finish() {
+  flatbuffers::Offset<Mesh> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<ResMesh>(end);
+    auto o = flatbuffers::Offset<Mesh>(end);
     return o;
   }
 };
 
-inline flatbuffers::Offset<ResMesh> CreateResMesh(
+inline flatbuffers::Offset<Mesh> CreateMesh(
     flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<flatbuffers::Vector<const asdx::res::Float3 *>> positions = 0,
-    flatbuffers::Offset<flatbuffers::Vector<const asdx::res::Float3 *>> normals = 0,
-    flatbuffers::Offset<flatbuffers::Vector<const asdx::res::Float2 *>> texCoords = 0,
-    flatbuffers::Offset<flatbuffers::Vector<uint32_t>> boneIndices = 0,
-    flatbuffers::Offset<flatbuffers::Vector<float>> boneWeights = 0,
-    flatbuffers::Offset<flatbuffers::Vector<uint32_t>> vertexIndices = 0,
-    uint32_t materialId = 0,
-    uint32_t boneStride = 0) {
-  ResMeshBuilder builder_(_fbb);
-  builder_.add_boneStride(boneStride);
-  builder_.add_materialId(materialId);
-  builder_.add_vertexIndices(vertexIndices);
-  builder_.add_boneWeights(boneWeights);
-  builder_.add_boneIndices(boneIndices);
-  builder_.add_texCoords(texCoords);
-  builder_.add_normals(normals);
-  builder_.add_positions(positions);
+    flatbuffers::Offset<flatbuffers::Vector<const asdx::res::Float3 *>> Positions = 0,
+    flatbuffers::Offset<flatbuffers::Vector<const asdx::res::Float3 *>> Normals = 0,
+    flatbuffers::Offset<flatbuffers::Vector<const asdx::res::Float3 *>> Tangents = 0,
+    flatbuffers::Offset<flatbuffers::Vector<const asdx::res::Float2 *>> TexCoords = 0,
+    flatbuffers::Offset<flatbuffers::Vector<uint32_t>> BoneIndices = 0,
+    flatbuffers::Offset<flatbuffers::Vector<float>> BoneWeights = 0,
+    flatbuffers::Offset<flatbuffers::Vector<uint32_t>> VertexIndices = 0,
+    uint32_t MaterialId = 0,
+    uint32_t BoneStride = 0) {
+  MeshBuilder builder_(_fbb);
+  builder_.add_BoneStride(BoneStride);
+  builder_.add_MaterialId(MaterialId);
+  builder_.add_VertexIndices(VertexIndices);
+  builder_.add_BoneWeights(BoneWeights);
+  builder_.add_BoneIndices(BoneIndices);
+  builder_.add_TexCoords(TexCoords);
+  builder_.add_Tangents(Tangents);
+  builder_.add_Normals(Normals);
+  builder_.add_Positions(Positions);
   return builder_.Finish();
 }
 
-inline flatbuffers::Offset<ResMesh> CreateResMeshDirect(
+inline flatbuffers::Offset<Mesh> CreateMeshDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
-    const std::vector<asdx::res::Float3> *positions = nullptr,
-    const std::vector<asdx::res::Float3> *normals = nullptr,
-    const std::vector<asdx::res::Float2> *texCoords = nullptr,
-    const std::vector<uint32_t> *boneIndices = nullptr,
-    const std::vector<float> *boneWeights = nullptr,
-    const std::vector<uint32_t> *vertexIndices = nullptr,
-    uint32_t materialId = 0,
-    uint32_t boneStride = 0) {
-  auto positions__ = positions ? _fbb.CreateVectorOfStructs<asdx::res::Float3>(*positions) : 0;
-  auto normals__ = normals ? _fbb.CreateVectorOfStructs<asdx::res::Float3>(*normals) : 0;
-  auto texCoords__ = texCoords ? _fbb.CreateVectorOfStructs<asdx::res::Float2>(*texCoords) : 0;
-  auto boneIndices__ = boneIndices ? _fbb.CreateVector<uint32_t>(*boneIndices) : 0;
-  auto boneWeights__ = boneWeights ? _fbb.CreateVector<float>(*boneWeights) : 0;
-  auto vertexIndices__ = vertexIndices ? _fbb.CreateVector<uint32_t>(*vertexIndices) : 0;
-  return asdx::res::CreateResMesh(
+    const std::vector<asdx::res::Float3> *Positions = nullptr,
+    const std::vector<asdx::res::Float3> *Normals = nullptr,
+    const std::vector<asdx::res::Float3> *Tangents = nullptr,
+    const std::vector<asdx::res::Float2> *TexCoords = nullptr,
+    const std::vector<uint32_t> *BoneIndices = nullptr,
+    const std::vector<float> *BoneWeights = nullptr,
+    const std::vector<uint32_t> *VertexIndices = nullptr,
+    uint32_t MaterialId = 0,
+    uint32_t BoneStride = 0) {
+  auto Positions__ = Positions ? _fbb.CreateVectorOfStructs<asdx::res::Float3>(*Positions) : 0;
+  auto Normals__ = Normals ? _fbb.CreateVectorOfStructs<asdx::res::Float3>(*Normals) : 0;
+  auto Tangents__ = Tangents ? _fbb.CreateVectorOfStructs<asdx::res::Float3>(*Tangents) : 0;
+  auto TexCoords__ = TexCoords ? _fbb.CreateVectorOfStructs<asdx::res::Float2>(*TexCoords) : 0;
+  auto BoneIndices__ = BoneIndices ? _fbb.CreateVector<uint32_t>(*BoneIndices) : 0;
+  auto BoneWeights__ = BoneWeights ? _fbb.CreateVector<float>(*BoneWeights) : 0;
+  auto VertexIndices__ = VertexIndices ? _fbb.CreateVector<uint32_t>(*VertexIndices) : 0;
+  return asdx::res::CreateMesh(
       _fbb,
-      positions__,
-      normals__,
-      texCoords__,
-      boneIndices__,
-      boneWeights__,
-      vertexIndices__,
-      materialId,
-      boneStride);
+      Positions__,
+      Normals__,
+      Tangents__,
+      TexCoords__,
+      BoneIndices__,
+      BoneWeights__,
+      VertexIndices__,
+      MaterialId,
+      BoneStride);
 }
 
-struct ResModel FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
-  typedef ResModelBuilder Builder;
+struct Model FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef ModelBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_NAME = 4,
     VT_MESHES = 6,
     VT_MATERIALS = 8
   };
-  const flatbuffers::String *name() const {
+  const flatbuffers::String *Name() const {
     return GetPointer<const flatbuffers::String *>(VT_NAME);
   }
-  const flatbuffers::Vector<flatbuffers::Offset<asdx::res::ResMesh>> *meshes() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<asdx::res::ResMesh>> *>(VT_MESHES);
+  const flatbuffers::Vector<flatbuffers::Offset<asdx::res::Mesh>> *Meshes() const {
+    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<asdx::res::Mesh>> *>(VT_MESHES);
   }
-  const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *materials() const {
+  const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *Materials() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>> *>(VT_MATERIALS);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_NAME) &&
-           verifier.VerifyString(name()) &&
+           verifier.VerifyString(Name()) &&
            VerifyOffset(verifier, VT_MESHES) &&
-           verifier.VerifyVector(meshes()) &&
-           verifier.VerifyVectorOfTables(meshes()) &&
+           verifier.VerifyVector(Meshes()) &&
+           verifier.VerifyVectorOfTables(Meshes()) &&
            VerifyOffset(verifier, VT_MATERIALS) &&
-           verifier.VerifyVector(materials()) &&
-           verifier.VerifyVectorOfStrings(materials()) &&
+           verifier.VerifyVector(Materials()) &&
+           verifier.VerifyVectorOfStrings(Materials()) &&
            verifier.EndTable();
   }
 };
 
-struct ResModelBuilder {
-  typedef ResModel Table;
+struct ModelBuilder {
+  typedef Model Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_name(flatbuffers::Offset<flatbuffers::String> name) {
-    fbb_.AddOffset(ResModel::VT_NAME, name);
+  void add_Name(flatbuffers::Offset<flatbuffers::String> Name) {
+    fbb_.AddOffset(Model::VT_NAME, Name);
   }
-  void add_meshes(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<asdx::res::ResMesh>>> meshes) {
-    fbb_.AddOffset(ResModel::VT_MESHES, meshes);
+  void add_Meshes(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<asdx::res::Mesh>>> Meshes) {
+    fbb_.AddOffset(Model::VT_MESHES, Meshes);
   }
-  void add_materials(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> materials) {
-    fbb_.AddOffset(ResModel::VT_MATERIALS, materials);
+  void add_Materials(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> Materials) {
+    fbb_.AddOffset(Model::VT_MATERIALS, Materials);
   }
-  explicit ResModelBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  explicit ModelBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  flatbuffers::Offset<ResModel> Finish() {
+  flatbuffers::Offset<Model> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<ResModel>(end);
+    auto o = flatbuffers::Offset<Model>(end);
     return o;
   }
 };
 
-inline flatbuffers::Offset<ResModel> CreateResModel(
+inline flatbuffers::Offset<Model> CreateModel(
     flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<flatbuffers::String> name = 0,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<asdx::res::ResMesh>>> meshes = 0,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> materials = 0) {
-  ResModelBuilder builder_(_fbb);
-  builder_.add_materials(materials);
-  builder_.add_meshes(meshes);
-  builder_.add_name(name);
+    flatbuffers::Offset<flatbuffers::String> Name = 0,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<asdx::res::Mesh>>> Meshes = 0,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> Materials = 0) {
+  ModelBuilder builder_(_fbb);
+  builder_.add_Materials(Materials);
+  builder_.add_Meshes(Meshes);
+  builder_.add_Name(Name);
   return builder_.Finish();
 }
 
-inline flatbuffers::Offset<ResModel> CreateResModelDirect(
+inline flatbuffers::Offset<Model> CreateModelDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
-    const char *name = nullptr,
-    const std::vector<flatbuffers::Offset<asdx::res::ResMesh>> *meshes = nullptr,
-    const std::vector<flatbuffers::Offset<flatbuffers::String>> *materials = nullptr) {
-  auto name__ = name ? _fbb.CreateString(name) : 0;
-  auto meshes__ = meshes ? _fbb.CreateVector<flatbuffers::Offset<asdx::res::ResMesh>>(*meshes) : 0;
-  auto materials__ = materials ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*materials) : 0;
-  return asdx::res::CreateResModel(
+    const char *Name = nullptr,
+    const std::vector<flatbuffers::Offset<asdx::res::Mesh>> *Meshes = nullptr,
+    const std::vector<flatbuffers::Offset<flatbuffers::String>> *Materials = nullptr) {
+  auto Name__ = Name ? _fbb.CreateString(Name) : 0;
+  auto Meshes__ = Meshes ? _fbb.CreateVector<flatbuffers::Offset<asdx::res::Mesh>>(*Meshes) : 0;
+  auto Materials__ = Materials ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*Materials) : 0;
+  return asdx::res::CreateModel(
       _fbb,
-      name__,
-      meshes__,
-      materials__);
+      Name__,
+      Meshes__,
+      Materials__);
 }
 
-inline const asdx::res::ResModel *GetResModel(const void *buf) {
-  return flatbuffers::GetRoot<asdx::res::ResModel>(buf);
+inline const asdx::res::Model *GetModel(const void *buf) {
+  return flatbuffers::GetRoot<asdx::res::Model>(buf);
 }
 
-inline const asdx::res::ResModel *GetSizePrefixedResModel(const void *buf) {
-  return flatbuffers::GetSizePrefixedRoot<asdx::res::ResModel>(buf);
+inline const asdx::res::Model *GetSizePrefixedModel(const void *buf) {
+  return flatbuffers::GetSizePrefixedRoot<asdx::res::Model>(buf);
 }
 
-inline bool VerifyResModelBuffer(
+inline bool VerifyModelBuffer(
     flatbuffers::Verifier &verifier) {
-  return verifier.VerifyBuffer<asdx::res::ResModel>(nullptr);
+  return verifier.VerifyBuffer<asdx::res::Model>(nullptr);
 }
 
-inline bool VerifySizePrefixedResModelBuffer(
+inline bool VerifySizePrefixedModelBuffer(
     flatbuffers::Verifier &verifier) {
-  return verifier.VerifySizePrefixedBuffer<asdx::res::ResModel>(nullptr);
+  return verifier.VerifySizePrefixedBuffer<asdx::res::Model>(nullptr);
 }
 
-inline void FinishResModelBuffer(
+inline void FinishModelBuffer(
     flatbuffers::FlatBufferBuilder &fbb,
-    flatbuffers::Offset<asdx::res::ResModel> root) {
+    flatbuffers::Offset<asdx::res::Model> root) {
   fbb.Finish(root);
 }
 
-inline void FinishSizePrefixedResModelBuffer(
+inline void FinishSizePrefixedModelBuffer(
     flatbuffers::FlatBufferBuilder &fbb,
-    flatbuffers::Offset<asdx::res::ResModel> root) {
+    flatbuffers::Offset<asdx::res::Model> root) {
   fbb.FinishSizePrefixed(root);
 }
 

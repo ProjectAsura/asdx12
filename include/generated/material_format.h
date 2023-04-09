@@ -98,16 +98,20 @@ inline flatbuffers::Offset<MaterialParameter> CreateMaterialParameterDirect(
 struct Material FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef MaterialBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_BASECOLOR = 4,
-    VT_ORM = 6,
-    VT_NORMAL = 8,
-    VT_EMISSIVE = 10,
-    VT_USERDATA = 12,
-    VT_PARAMETERS = 14,
-    VT_BUFFER = 16,
-    VT_HASALPHA = 18,
-    VT_TRANSPARENT = 20
+    VT_NAME = 4,
+    VT_BASECOLOR = 6,
+    VT_ORM = 8,
+    VT_NORMAL = 10,
+    VT_EMISSIVE = 12,
+    VT_USERDATA = 14,
+    VT_PARAMETERS = 16,
+    VT_BUFFER = 18,
+    VT_HASALPHA = 20,
+    VT_TRANSPARENT = 22
   };
+  const flatbuffers::String *Name() const {
+    return GetPointer<const flatbuffers::String *>(VT_NAME);
+  }
   uint32_t BaseColor() const {
     return GetField<uint32_t>(VT_BASECOLOR, 0);
   }
@@ -137,6 +141,8 @@ struct Material FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_NAME) &&
+           verifier.VerifyString(Name()) &&
            VerifyField<uint32_t>(verifier, VT_BASECOLOR) &&
            VerifyField<uint32_t>(verifier, VT_ORM) &&
            VerifyField<uint32_t>(verifier, VT_NORMAL) &&
@@ -158,6 +164,9 @@ struct MaterialBuilder {
   typedef Material Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
+  void add_Name(flatbuffers::Offset<flatbuffers::String> Name) {
+    fbb_.AddOffset(Material::VT_NAME, Name);
+  }
   void add_BaseColor(uint32_t BaseColor) {
     fbb_.AddElement<uint32_t>(Material::VT_BASECOLOR, BaseColor, 0);
   }
@@ -198,6 +207,7 @@ struct MaterialBuilder {
 
 inline flatbuffers::Offset<Material> CreateMaterial(
     flatbuffers::FlatBufferBuilder &_fbb,
+    flatbuffers::Offset<flatbuffers::String> Name = 0,
     uint32_t BaseColor = 0,
     uint32_t Orm = 0,
     uint32_t Normal = 0,
@@ -215,6 +225,7 @@ inline flatbuffers::Offset<Material> CreateMaterial(
   builder_.add_Normal(Normal);
   builder_.add_Orm(Orm);
   builder_.add_BaseColor(BaseColor);
+  builder_.add_Name(Name);
   builder_.add_Transparent(Transparent);
   builder_.add_HasAlpha(HasAlpha);
   return builder_.Finish();
@@ -222,6 +233,7 @@ inline flatbuffers::Offset<Material> CreateMaterial(
 
 inline flatbuffers::Offset<Material> CreateMaterialDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
+    const char *Name = nullptr,
     uint32_t BaseColor = 0,
     uint32_t Orm = 0,
     uint32_t Normal = 0,
@@ -231,11 +243,13 @@ inline flatbuffers::Offset<Material> CreateMaterialDirect(
     const std::vector<uint8_t> *Buffer = nullptr,
     bool HasAlpha = false,
     bool Transparent = false) {
+  auto Name__ = Name ? _fbb.CreateString(Name) : 0;
   auto UserData__ = UserData ? _fbb.CreateVector<uint32_t>(*UserData) : 0;
   auto Parameters__ = Parameters ? _fbb.CreateVector<flatbuffers::Offset<asdx::res::MaterialParameter>>(*Parameters) : 0;
   auto Buffer__ = Buffer ? _fbb.CreateVector<uint8_t>(*Buffer) : 0;
   return asdx::res::CreateMaterial(
       _fbb,
+      Name__,
       BaseColor,
       Orm,
       Normal,

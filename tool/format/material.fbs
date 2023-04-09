@@ -12,6 +12,7 @@ table MaterialParameter
 
 table Material
 {
+    Name      : string;
     BaseColor : uint;
     Orm       : uint;    // Occlusion/Roughness/Metalness.
     Normal    : uint;
