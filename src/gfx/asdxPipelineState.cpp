@@ -1349,23 +1349,25 @@ bool PipelineState::EnumerateRootParameter
 
                     samplers.push_back(smpDesc);
                 }
-                else if (strcmp(inputDesc.Name, "ShadowSampler") == 0)
+                else if (strcmp(inputDesc.Name, "LessEqualSampler") == 0)
                 {
                     smpDesc.AddressU        = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
                     smpDesc.AddressV        = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
                     smpDesc.AddressW        = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
                     smpDesc.Filter          = D3D12_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR;
                     smpDesc.ComparisonFunc  = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+                    smpDesc.BorderColor     = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
 
                     samplers.push_back(smpDesc);
                 }
-                else if (strcmp(inputDesc.Name, "ReverseShadowSampler") == 0)
+                else if (strcmp(inputDesc.Name, "GreaterSampler") == 0)
                 {
                     smpDesc.AddressU        = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
                     smpDesc.AddressV        = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
                     smpDesc.AddressW        = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
                     smpDesc.Filter          = D3D12_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR;
                     smpDesc.ComparisonFunc  = D3D12_COMPARISON_FUNC_GREATER;
+                    smpDesc.BorderColor     = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
 
                     samplers.push_back(smpDesc);
                 }

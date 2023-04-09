@@ -38,7 +38,7 @@ CommandList::~CommandList()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool CommandList::Init(ID3D12Device* pDevice, D3D12_COMMAND_LIST_TYPE type, uint32_t blockCount)
+bool CommandList::Init(ID3D12Device* pDevice, D3D12_COMMAND_LIST_TYPE type)
 {
     // 引数チェック.
     if (pDevice == nullptr)
@@ -76,57 +76,6 @@ bool CommandList::Init(ID3D12Device* pDevice, D3D12_COMMAND_LIST_TYPE type, uint
 
     m_Index = 0;
 
-    // バッファリソース生成.
-    if (blockCount > 0)
-    {
-        D3D12_HEAP_PROPERTIES props = {
-            D3D12_HEAP_TYPE_UPLOAD,
-            D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
-            D3D12_MEMORY_POOL_UNKNOWN,
-            1,
-            1
-        };
-
-        D3D12_RESOURCE_DESC desc = {};
-        desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
-        desc.Width              = UINT64(256 * blockCount);
-        desc.Height             = 1;
-        desc.DepthOrArraySize   = 1;
-        desc.MipLevels          = 1;
-        desc.Format             = DXGI_FORMAT_UNKNOWN;
-        desc.SampleDesc         = { 1, 0 };
-        desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-        desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
-
-        for(auto i=0; i<2; ++i)
-        {
-            auto hr = pDevice->CreateCommittedResource(
-                &props,
-                D3D12_HEAP_FLAG_NONE,
-                &desc,
-                D3D12_RESOURCE_STATE_COMMON,
-                nullptr,
-                IID_PPV_ARGS(m_Buffer[i].GetAddress()));
-            if (FAILED(hr))
-            {
-                ELOG("Error : ID3D12Device::CreateCommittedReosurce() Failed. errcode = 0x%x", hr);
-                return false;
-            }
-
-            hr = m_Buffer[i]->Map(0, nullptr, reinterpret_cast<void**>(&m_AddressCPU[i]));
-            if (FAILED(hr))
-            {
-                ELOG("Error : ID3D12Resource::Map() Failed. errcode = 0x%x", hr);
-                return false;
-            }
-
-            m_AddressGPU[i] = m_Buffer[i]->GetGPUVirtualAddress();
-        }
-    }
-
-    m_BlockIndex    = 0;
-    m_MaxBlockCount = blockCount;
-
     // 正常終了.
     return true;
 }
@@ -139,20 +88,7 @@ void CommandList::Term()
     m_CmdList.Reset();
 
     for(auto i=0; i<2; ++i)
-    {
-        m_Allocator[i].Reset();
-    
-        if (m_Buffer[i] != nullptr)
-        {
-            m_Buffer[i].Reset();
-
-            m_AddressCPU[i] = nullptr;
-            m_AddressGPU[i] = 0;
-        }
-    }
-
-    m_BlockIndex    = 0;
-    m_MaxBlockCount = 0;
+    { m_Allocator[i].Reset(); }
 }
 
 //-----------------------------------------------------------------------------
@@ -171,9 +107,6 @@ void CommandList::Reset()
 
     // ディスクリプターヒープを設定しおく.
     SetDescriptorHeaps(m_CmdList.GetPtr());
-
-    // ブロック先頭に戻す.
-    m_BlockIndex = 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -196,24 +129,6 @@ ID3D12GraphicsCommandList6* CommandList::GetCommandList() const
 //-----------------------------------------------------------------------------
 uint8_t CommandList::GetIndex() const
 { return m_Index; }
-
-//-----------------------------------------------------------------------------
-//      バッファを確保します.
-//-----------------------------------------------------------------------------
-BufferAddress CommandList::AllocBuffer(uint32_t size)
-{
-    BufferAddress result = {};
-
-    uint32_t blockCount = RoundUp(size, 256) / 256;
-    if (blockCount == 0 || (m_BlockIndex + blockCount) >= m_MaxBlockCount)
-    { return result; }
-
-    auto index = m_BlockIndex;
-    m_BlockIndex += blockCount;
-    result.AddressCPU = m_AddressCPU[m_Index] + 256u * index;
-    result.AddressGPU = m_AddressGPU[m_Index] + 256llu * index;
-    return result;
-}
 
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -1,0 +1,56 @@
+﻿
+namespace asdx.res;
+
+struct Half2
+{
+    X : ushort;
+    Y : ushort;
+}
+
+struct Half3
+{
+    X : ushort;
+    Y : ushort;
+    Z : ushort;
+}
+
+struct Half4
+{
+    X : ushort;
+    Y : ushort;
+    Z : ushort;
+    W : ushort;
+}
+
+struct Float2
+{
+    X : float;
+    Y : float;
+}
+
+struct Float3
+{
+    X : float;
+    Y : float;
+    Z : float;
+}
+
+struct Float4
+{
+    X : float;
+    Y : float;
+    Z : float;
+    W : float;
+}
+
+struct BoundingSphere
+{
+    Center : Float3;
+    Radius : float;
+}
+
+struct BoundingBox
+{
+    Mini : Float3;
+    Maxi : Float3;
+}

@@ -706,4 +706,130 @@ ID3D12Resource* StructuredBuffer::GetResource() const
 IShaderResourceView* StructuredBuffer::GetView() const
 { return m_View.GetPtr(); }
 
+
+///////////////////////////////////////////////////////////////////////////////
+// BufferUpdate class
+///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      初期化処理を行います.
+//-----------------------------------------------------------------------------
+bool BufferUpdater::Init(ID3D12Device* pDevice, uint64_t size)
+{
+    if (pDevice == nullptr || size == 0)
+    {
+        ELOG("Error : Invalid Argument.");
+        return false;
+    }
+
+    D3D12_HEAP_PROPERTIES props = {
+        D3D12_HEAP_TYPE_UPLOAD,
+        D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
+        D3D12_MEMORY_POOL_UNKNOWN,
+        1,
+        1
+    };
+
+    D3D12_RESOURCE_DESC desc = {};
+    desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
+    desc.Width              = size;
+    desc.Height             = 1;
+    desc.DepthOrArraySize   = 1;
+    desc.MipLevels          = 1;
+    desc.Format             = DXGI_FORMAT_UNKNOWN;
+    desc.SampleDesc         = { 1, 0 };
+    desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+    desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
+
+    for(auto i=0; i<2; ++i)
+    {
+        auto hr = pDevice->CreateCommittedResource(
+            &props,
+            D3D12_HEAP_FLAG_NONE,
+            &desc,
+            D3D12_RESOURCE_STATE_COMMON,
+            nullptr,
+            IID_PPV_ARGS(m_Resource[i].GetAddress()));
+        if (FAILED(hr))
+        {
+            ELOG("Error : ID3D12Device::CreateCommittedReosurce() Failed. errcode = 0x%x", hr);
+            return false;
+        }
+
+        hr = m_Resource[i]->Map(0, nullptr, reinterpret_cast<void**>(&m_AddressCPU[i]));
+        if (FAILED(hr))
+        {
+            ELOG("Error : ID3D12Resource::Map() Failed. errcode = 0x%x", hr);
+            return false;
+        }
+    }
+
+    m_Size  = size;
+    m_Offset = 0;
+    m_Index  = 0;
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      終了処理を行います.
+//-----------------------------------------------------------------------------
+void BufferUpdater::Term()
+{
+    for(auto i=0; i<2; ++i)
+    {
+        m_Resource[i].Reset();
+        m_AddressCPU[i] = nullptr;
+    }
+
+    m_Size   = 0;
+    m_Offset = 0;
+    m_Index  = 0;
+}
+
+//-----------------------------------------------------------------------------
+//      バッファを更新します.
+//-----------------------------------------------------------------------------
+bool BufferUpdater::Update
+(
+    ID3D12GraphicsCommandList*  pCommandList,
+    ID3D12Resource*             pDstResource,
+    uint64_t                    dstOffset,
+    void*                       pSrcResource,
+    uint64_t                    size
+)
+{
+    if (m_Offset + size >= m_Size)
+    { return false; }
+
+    auto srcOffset = m_Offset;
+    m_Offset += size;
+
+    auto dstAddr = m_AddressCPU[m_Index] + srcOffset;
+    memcpy(dstAddr, pSrcResource, size);
+
+    pCommandList->CopyBufferRegion(
+        pDstResource,
+        dstOffset,
+        m_Resource[m_Index].GetPtr(),
+        srcOffset,
+        size);
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      バッファを入れ替えます.
+//-----------------------------------------------------------------------------
+void BufferUpdater::SwapBuffers()
+{
+    m_Index  = (m_Index + 1) & 0x1;
+    m_Offset = 0;
+}
+
+//-----------------------------------------------------------------------------
+//      バッファ番号を取得します.
+//-----------------------------------------------------------------------------
+uint8_t BufferUpdater::GetIndex() const
+{ return m_Index; }
+
 } // namespace asdx

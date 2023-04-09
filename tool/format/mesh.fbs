@@ -1,0 +1,26 @@
+﻿
+include "base.fbs";
+
+namespace asdx.res;
+
+
+table Mesh
+{
+    Positions     : [Float3];
+    Normals       : [Float3];
+    TexCoords     : [Float2];
+    BoneIndices   : [uint];
+    BoneWeights   : [float];
+    VertexIndices : [uint];
+    MaterialId    : uint;     // Material Index in ResModel.
+    BoneStride    : uint;     // Bone Count Per Vertex.
+}
+
+table Model
+{
+    Name           : string;
+    Meshes         : [ResMesh];
+    Materials      : [string];
+}
+
+root_type Model;

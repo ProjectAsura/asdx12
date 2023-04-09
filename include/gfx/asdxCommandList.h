@@ -9,22 +9,10 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <d3d12.h>
-#include <gfx/asdxView.h>
+#include <fnd/asdxRef.h>
 
 
 namespace asdx {
-
-struct ResTexture;
-class  Sampler;
-
-///////////////////////////////////////////////////////////////////////////////
-// BufferAddress structure
-///////////////////////////////////////////////////////////////////////////////
-struct BufferAddress
-{
-    uint8_t*                  AddressCPU;
-    D3D12_GPU_VIRTUAL_ADDRESS AddressGPU;
-};
 
 ///////////////////////////////////////////////////////////////////////////////
 // CommandList class
@@ -59,13 +47,12 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      初期化処理を行います.
     //!
-    //! @param[in]      pDevice         デバイスです.
-    //! @param[in]      type            コマンドリストタイプです.
-    //! @param[in]      blockCount      定数バッファブロック数です.
+    //! @param[in]      pDevice             デバイスです.
+    //! @param[in]      type                コマンドリストタイプです.
     //! @retval true    初期化に成功.
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
-    bool Init(ID3D12Device* pDevice, D3D12_COMMAND_LIST_TYPE type, uint32_t blockCount = 128);
+    bool Init(ID3D12Device* pDevice, D3D12_COMMAND_LIST_TYPE type);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.
@@ -97,11 +84,6 @@ public:
     //-------------------------------------------------------------------------
     uint8_t GetIndex() const;
 
-    //-------------------------------------------------------------------------
-    //! @brief      バッファを確保します.
-    //-------------------------------------------------------------------------
-    BufferAddress AllocBuffer(uint32_t size);
-
 private:
     //=========================================================================
     // private variables.
@@ -110,17 +92,12 @@ private:
     RefPtr<ID3D12GraphicsCommandList6>  m_CmdList;              //!< コマンドリストです.
     uint8_t                             m_Index;                //!< バッファ番号です.
 
-    RefPtr<ID3D12Resource>              m_Buffer[2];            //!< 定数バッファ用リソースです.
-    uint32_t                            m_BlockIndex    = {};   //!< ブロックインデックスです.
-    uint8_t*                            m_AddressCPU[2] = {};   //!< CPUアドレスです.
-    D3D12_GPU_VIRTUAL_ADDRESS           m_AddressGPU[2] = {};   //!< GPUアドレスです.
-    uint32_t                            m_MaxBlockCount = 0;    //!< 最大ブロック数.
-
     //=========================================================================
     // private methods.
     //=========================================================================
     /* NOTHING */
 };
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // ScopedMarker class
