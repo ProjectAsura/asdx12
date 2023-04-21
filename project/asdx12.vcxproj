@@ -167,6 +167,7 @@
     <ClInclude Include="..\include\edit\asdxP4VHelper.h" />
     <ClInclude Include="..\include\edit\asdxTcpConnector.h" />
     <ClInclude Include="..\include\fnd\asdxFrameHeap.h" />
+    <ClInclude Include="..\include\fnd\asdxFunction.h" />
     <ClInclude Include="..\include\fnd\asdxHash.h" />
     <ClInclude Include="..\include\fnd\asdxHid.h" />
     <ClInclude Include="..\include\fnd\asdxList.h" />
