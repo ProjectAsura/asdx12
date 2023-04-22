@@ -15,7 +15,7 @@
 
 namespace asdx {
 
-template<typename Function, size_t MaxSize = 16, size_t Align = 8>
+template<typename Function, size_t MaxSize=16, size_t Align=8>
 class function;
 
 template<typename ReturnType, typename... Args, size_t MaxSize, size_t Align>
@@ -104,21 +104,20 @@ public:
 
     void reset()
     {
-        auto dispose = m_VTable.Dispose;
-        if (dispose)
-        {
-            m_VTable = VirtualMethodTable();
-            dispose(m_Storage);
-        }
+        if (m_Base == nullptr)
+        { return; }
+
+        m_Base->~Base();
+        m_Base = nullptr;
     }
 
     explicit operator bool() const
-    { return m_VTable.Invoke != nullptr; }
+    { return m_Base != nullptr; }
 
     ReturnType operator()(Args... args)
     {
-        assert(m_VTable.Invoke != nullptr);
-        return m_VTable.Invoke(m_Storage, std::forward<Args>(args)...);
+        assert(m_Base != nullptr);
+        return m_Base->Invoke(std::forward<Args>(args)...);
     }
 
     void swap(function& other)
@@ -144,65 +143,58 @@ public:
     { return action; }
 
 private:
-    struct VirtualMethodTable
+    struct Base
     {
-        ReturnType (*Invoke)  (void*, Args&& ...)     = nullptr;
-        void       (*Dispose) (void*)                 = nullptr;
-        void       (*Copy)    (const void*, void*)    = nullptr;
-        void       (*Move)    (void*, void*)          = nullptr;
+        virtual ~Base() {}
+        virtual ReturnType Invoke(Args&& ...) = 0;
+        virtual void       Copy  (void*)      = 0;
+        virtual void       Move  (void*)      = 0;
     };
-    VirtualMethodTable      m_VTable;
-    alignas(Align) uint8_t  m_Storage[MaxSize];
+
+    template<typename Functor>
+    struct Derived : Base
+    {
+        Functor func;
+
+        Derived(Functor f)
+        : func(std::move(f))
+        { /* DO_NOTHING */ }
+
+        ReturnType Invoke(Args&& ... args) override
+        { return func(std::forward<Args>(args)...); }
+
+        void Copy(void* dest) override
+        { new (dest) Functor(func); }
+
+        void Move(void* dest) override
+        { new (dest) Functor(std::move(func)); }
+    };
+
+    alignas(Align) uint8_t  m_Storage[MaxSize] = {};
+    Base*                   m_Base             = nullptr;
 
     template<typename Functor>
     void create(Functor&& f)
     {
-        using FunctorType = typename std::decay<Functor>::type;
-        static_assert(sizeof(FunctorType) <= MaxSize);
-
-        new (m_Storage) FunctorType(std::forward<Functor>(f));
-
-        m_VTable.Invoke  = &Invoke<FunctorType>;
-        m_VTable.Dispose = &Dispose<FunctorType>;
-        m_VTable.Copy    = &Copy<FunctorType>;
-        m_VTable.Move    = &Move<FunctorType>;
+        static_assert(sizeof(Functor) <= MaxSize);
+        static_assert(Align % alignof(Functor) == 0u);
+        m_Base = new(m_Storage) Derived<Functor>(std::forward<Functor>(f));
     }
 
     void copy(function const& value)
     {
-        assert(m_VTable.Copy != nullptr);
-        value.m_VTable.Copy(value.m_Storage, m_Storage);
-        m_VTable = value.m_VTable;
+        m_Base->Copy(value.m_Storage);
+        m_Base = value.m_Base;
     }
 
-    void move(function&& value, std::true_type movable)
+    void move(function&& value)
     {
-        assert(m_VTable.Move != nullptr);
-        value.m_VTable.Move(value.m_Storage, m_Storage);
-        m_VTable = value.m_VTable;
+        m_Base->Move(value.m_Storage);
+        m_Base = value.m_Base;
         value.reset();
     }
 
-    void move(function const& value, std::false_type movable)
-    { copy(value); }
-
-    template<typename Functor>
-    static ReturnType Invoke(void* functor, Args&&... args)
-    { return (*static_cast<Functor*>(functor))(std::forward<Args>(args)...); }
-
-    template<typename Functor>
-    static void Dispose(void* functor)
-    { static_cast<Functor*>(functor)->~Functor(); }
-
-    template<typename Functor>
-    static void Copy(void const* functor, void* dest)
-    { new (dest) Functor(*static_cast<Functor const*>(functor)); }
-
-    template<typename Functor>
-    static void Move(void* functor, void* dest)
-    { new (dest) Functor(std::move(*static_cast<Functor*>(functor))); }
-
-    // アクセス禁止.
+    // 以下, アクセス禁止.
     template<typename F, size_t S, size_t A> function             (function<F, S, A> const&)    = delete;
     template<typename F, size_t S, size_t A> function             (function<F, S, A>&)          = delete;
     template<typename F, size_t S, size_t A> function             (function<F, S, A>&&)         = delete;
