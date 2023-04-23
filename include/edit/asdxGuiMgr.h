@@ -63,12 +63,12 @@ public:
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
     bool Init(
-        CommandList&        cmdList,
-        HWND                hWnd,
-        uint32_t            width,
-        uint32_t            height,
-        DXGI_FORMAT         format,
-        const char*         fontPath);
+        ID3D12GraphicsCommandList*  pCmdList,
+        HWND                        hWnd,
+        uint32_t                    width,
+        uint32_t                    height,
+        DXGI_FORMAT                 format,
+        const char*                 fontPath);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.

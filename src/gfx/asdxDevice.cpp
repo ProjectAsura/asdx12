@@ -36,6 +36,23 @@ static const D3D12_INPUT_ELEMENT_DESC kQuadElements[] = {
 };
 static const D3D12_INPUT_LAYOUT_DESC kQuadLayout = { kQuadElements, 2 };
 
+#define SS(filter, addressMode, maxAnisotropy, comparison, borderColor, shaderRegister) \
+    { filter, addressMode, addressMode, addressMode, 0.0f, maxAnisotropy, comparison, borderColor, 0.0f, D3D12_FLOAT32_MAX, shaderRegister, 0, D3D12_SHADER_VISIBILITY_ALL }
+static const D3D12_STATIC_SAMPLER_DESC kStaticSamplers[] = {
+    SS(D3D12_FILTER_MIN_MAG_MIP_POINT,  D3D12_TEXTURE_ADDRESS_MODE_WRAP,   0,  D3D12_COMPARISON_FUNC_NEVER,      D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK, 0),
+    SS(D3D12_FILTER_MIN_MAG_MIP_POINT,  D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  0,  D3D12_COMPARISON_FUNC_NEVER,      D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK, 1),
+    SS(D3D12_FILTER_MIN_MAG_MIP_POINT,  D3D12_TEXTURE_ADDRESS_MODE_MIRROR, 0,  D3D12_COMPARISON_FUNC_NEVER,      D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK, 2),
+    SS(D3D12_FILTER_MIN_MAG_MIP_LINEAR, D3D12_TEXTURE_ADDRESS_MODE_WRAP,   0,  D3D12_COMPARISON_FUNC_NEVER,      D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK, 3),
+    SS(D3D12_FILTER_MIN_MAG_MIP_LINEAR, D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  0,  D3D12_COMPARISON_FUNC_NEVER,      D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK, 4),
+    SS(D3D12_FILTER_MIN_MAG_MIP_LINEAR, D3D12_TEXTURE_ADDRESS_MODE_MIRROR, 0,  D3D12_COMPARISON_FUNC_NEVER,      D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK, 5),
+    SS(D3D12_FILTER_ANISOTROPIC,        D3D12_TEXTURE_ADDRESS_MODE_WRAP,   16, D3D12_COMPARISON_FUNC_NEVER,      D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK, 6),
+    SS(D3D12_FILTER_ANISOTROPIC,        D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  16, D3D12_COMPARISON_FUNC_NEVER,      D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK, 7),
+    SS(D3D12_FILTER_ANISOTROPIC,        D3D12_TEXTURE_ADDRESS_MODE_MIRROR, 16, D3D12_COMPARISON_FUNC_NEVER,      D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK, 8),
+    SS(D3D12_FILTER_MIN_MAG_MIP_LINEAR, D3D12_TEXTURE_ADDRESS_MODE_BORDER, 0,  D3D12_COMPARISON_FUNC_LESS_EQUAL, D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE,      9),
+    SS(D3D12_FILTER_MIN_MAG_MIP_LINEAR, D3D12_TEXTURE_ADDRESS_MODE_BORDER, 0,  D3D12_COMPARISON_FUNC_GREATER,    D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE,     10),
+};
+#undef SS
+
 struct QuadVertex
 {
     float   Position[2];
@@ -2233,10 +2250,15 @@ ID3D12CommandSignature* GetCommandSignature(COMMAND_SIGNATURE_TYPE type)
 { return GraphicsSystem::Instance().GetCommandSignature(type); }
 
 //-----------------------------------------------------------------------------
-//      ルートシグニチャを取得します.
+//      スタティックサンプラーを取得します.
 //-----------------------------------------------------------------------------
-ID3D12RootSignature* GetCommonRootSignature(bool allowInputLayout)
-{ return GraphicsSystem::Instance().GetRootSignature(allowInputLayout); }
+const D3D12_STATIC_SAMPLER_DESC* GetStaticSamplers()
+{ return kStaticSamplers; }
 
+//-----------------------------------------------------------------------------
+//      スタティックサンプラー数を取得します.
+//-----------------------------------------------------------------------------
+uint32_t GetStaticSamplerCounts()
+{ return _countof(kStaticSamplers); }
 
 } // namespace asdx

@@ -636,12 +636,12 @@ GuiMgr& GuiMgr::Instance()
 //-----------------------------------------------------------------------------
 bool GuiMgr::Init
 (
-    CommandList&    cmdList,
-    HWND            hWnd,
-    uint32_t        width,
-    uint32_t        height,
-    DXGI_FORMAT     format,
-    const char*     fontPath
+    ID3D12GraphicsCommandList*  pCmdList,
+    HWND                        hWnd,
+    uint32_t                    width,
+    uint32_t                    height,
+    DXGI_FORMAT                 format,
+    const char*                 fontPath
 )
 {
     m_LastTime = std::chrono::system_clock::now();
@@ -681,7 +681,7 @@ bool GuiMgr::Init
         res.SurfaceCount    = 1;
         res.pResources      = &subRes;
 
-        if (!m_FontTexture.Init(cmdList.GetCommandList(), res))
+        if (!m_FontTexture.Init(pCmdList, res))
         {
             ELOG("Error : Texture::Init() Failed.");
             return false;
@@ -784,7 +784,7 @@ bool GuiMgr::Init
 
         D3D12_RASTERIZER_DESC rasterizerDesc = {};
         rasterizerDesc.FillMode                 = D3D12_FILL_MODE_SOLID;
-        rasterizerDesc.CullMode                 = D3D12_CULL_MODE_BACK;
+        rasterizerDesc.CullMode                 = D3D12_CULL_MODE_NONE;
         rasterizerDesc.FrontCounterClockwise    = FALSE;
         rasterizerDesc.DepthClipEnable          = TRUE;
         rasterizerDesc.MultisampleEnable        = FALSE;
