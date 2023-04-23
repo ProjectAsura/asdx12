@@ -501,15 +501,6 @@ public:
     ID3D12CommandSignature* GetCommandSignature(COMMAND_SIGNATURE_TYPE type) const
     { return m_pCommandSig[type]; }
 
-    //-------------------------------------------------------------------------
-    //! @brief      ルートシグニチャを取得します.
-    //-------------------------------------------------------------------------
-    ID3D12RootSignature* GetRootSignature(bool allowInputLayout) const
-    {
-        auto index = allowInputLayout ? 0 : 1;
-        return m_pRootSig[index].GetPtr();
-    }
-
 private:
     //=========================================================================
     // private variables.
@@ -533,7 +524,6 @@ private:
     SpinLock                        m_SpinLock;                 //!< スピンロックです.
     VertexBuffer                    m_QuadVB;
     ID3D12CommandSignature*         m_pCommandSig[MAX_COUNT_COMMAND_SIGNATURE_TYPE] = {};
-    RefPtr<ID3D12RootSignature>     m_pRootSig[2];  // 0: Allow InputLayout, 1: No Input Layout.
 
     //=========================================================================
     // private methods
@@ -1066,14 +1056,14 @@ bool GraphicsSystem::Init(const DeviceDesc& deviceDesc)
             arg.Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW;
 
             D3D12_COMMAND_SIGNATURE_DESC desc = {};
-            desc.ByteStride         = 0;
+            desc.ByteStride         = sizeof(D3D12_DRAW_ARGUMENTS);
             desc.NumArgumentDescs   = 1;
             desc.pArgumentDescs     = &arg;
 
             auto hr = m_pDevice->CreateCommandSignature(&desc, nullptr, IID_PPV_ARGS(&m_pCommandSig[COMMAND_SIGNATURE_TYPE_DRAW]));
             if (FAILED(hr))
             {
-                ELOG("Error : ID3D12Device::CreateCommandSignature() Failed.");
+                ELOG("Error : ID3D12Device::CreateCommandSignature() Failed. errcode = 0x%x", hr);
                 return false;
             }
         }
@@ -1083,14 +1073,14 @@ bool GraphicsSystem::Init(const DeviceDesc& deviceDesc)
             arg.Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED;
 
             D3D12_COMMAND_SIGNATURE_DESC desc = {};
-            desc.ByteStride         = 0;
+            desc.ByteStride         = sizeof(D3D12_DRAW_INDEXED_ARGUMENTS);
             desc.NumArgumentDescs   = 1;
             desc.pArgumentDescs     = &arg;
 
             auto hr = m_pDevice->CreateCommandSignature(&desc, nullptr, IID_PPV_ARGS(&m_pCommandSig[COMMAND_SIGNATURE_TYPE_DRAW_INDEXED]));
             if (FAILED(hr))
             {
-                ELOG("Error : ID3D12Device::CreateCommandSignature() Failed.");
+                ELOG("Error : ID3D12Device::CreateCommandSignature() Failed. errcode = 0x%x", hr);
                 return false;
             }
         }
@@ -1100,14 +1090,14 @@ bool GraphicsSystem::Init(const DeviceDesc& deviceDesc)
             arg.Type = D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH;
 
             D3D12_COMMAND_SIGNATURE_DESC desc = {};
-            desc.ByteStride         = 0;
+            desc.ByteStride         = sizeof(D3D12_DISPATCH_ARGUMENTS);
             desc.NumArgumentDescs   = 1;
             desc.pArgumentDescs     = &arg;
 
             auto hr = m_pDevice->CreateCommandSignature(&desc, nullptr, IID_PPV_ARGS(&m_pCommandSig[COMMAND_SIGNATURE_TYPE_DISPATCH]));
             if (FAILED(hr))
             {
-                ELOG("Error : ID3D12Device::CreateCommandSignature() Failed.");
+                ELOG("Error : ID3D12Device::CreateCommandSignature() Failed. errcode = 0x%x", hr);
                 return false;
             }
         }
@@ -1117,14 +1107,14 @@ bool GraphicsSystem::Init(const DeviceDesc& deviceDesc)
             arg.Type = D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH_RAYS;
 
             D3D12_COMMAND_SIGNATURE_DESC desc = {};
-            desc.ByteStride         = 0;
+            desc.ByteStride         = sizeof(D3D12_DISPATCH_RAYS_DESC);
             desc.NumArgumentDescs   = 1;
             desc.pArgumentDescs     = &arg;
 
             auto hr = m_pDevice->CreateCommandSignature(&desc, nullptr, IID_PPV_ARGS(&m_pCommandSig[COMMAND_SIGNATURE_TYPE_DISPATCH_RAYS]));
             if (FAILED(hr))
             {
-                ELOG("Error : ID3D12Device::CreateCommandSignature() Failed.");
+                ELOG("Error : ID3D12Device::CreateCommandSignature() Failed. errcode = 0x%x", hr);
                 return false;
             }
         }
@@ -1134,258 +1124,19 @@ bool GraphicsSystem::Init(const DeviceDesc& deviceDesc)
             arg.Type = D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH_MESH;
 
             D3D12_COMMAND_SIGNATURE_DESC desc = {};
-            desc.ByteStride         = 0;
+            desc.ByteStride         = sizeof(D3D12_DISPATCH_MESH_ARGUMENTS);
             desc.NumArgumentDescs   = 1;
             desc.pArgumentDescs     = &arg;
 
             auto hr = m_pDevice->CreateCommandSignature(&desc, nullptr, IID_PPV_ARGS(&m_pCommandSig[COMMAND_SIGNATURE_TYPE_DISPATCH_MESH]));
             if (FAILED(hr))
             {
-                ELOG("Error : ID3D12Device::CreateCommandSignature() Failed.");
+                ELOG("Error : ID3D12Device::CreateCommandSignature() Failed. errcode = 0x%x", hr);
                 return false;
             }
         }
     }
 
-    // ルートシグニチャ.
-    {
-        D3D12_ROOT_PARAMETER params[4] = {};
-        params[0].ParameterType             = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-        params[0].Constants.Num32BitValues  = 4;
-        params[0].Constants.RegisterSpace   = 0;
-        params[0].Constants.ShaderRegister  = 0;
-        params[0].ShaderVisibility          = D3D12_SHADER_VISIBILITY_ALL;
-
-        params[1].ParameterType              = D3D12_ROOT_PARAMETER_TYPE_CBV;
-        params[1].Descriptor.RegisterSpace   = 0;
-        params[1].Descriptor.ShaderRegister  = 1;
-        params[1].ShaderVisibility           = D3D12_SHADER_VISIBILITY_ALL;
-
-        params[2].ParameterType              = D3D12_ROOT_PARAMETER_TYPE_CBV;
-        params[2].Descriptor.RegisterSpace   = 0;
-        params[2].Descriptor.ShaderRegister  = 2;
-        params[2].ShaderVisibility           = D3D12_SHADER_VISIBILITY_ALL;
-
-        params[3].ParameterType              = D3D12_ROOT_PARAMETER_TYPE_CBV;
-        params[3].Descriptor.RegisterSpace   = 0;
-        params[3].Descriptor.ShaderRegister  = 3;
-        params[3].ShaderVisibility           = D3D12_SHADER_VISIBILITY_ALL;
-
-        D3D12_STATIC_SAMPLER_DESC samplers[11] = {};
-        samplers[0].Filter              = D3D12_FILTER_MIN_MAG_MIP_POINT;
-        samplers[0].AddressU            = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-        samplers[0].AddressV            = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-        samplers[0].AddressW            = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-        samplers[0].MipLODBias          = 0.0f;
-        samplers[0].MaxAnisotropy       = 0;
-        samplers[0].ComparisonFunc      = D3D12_COMPARISON_FUNC_NEVER;
-        samplers[0].BorderColor         = D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE;
-        samplers[0].MinLOD              = 0;
-        samplers[0].MaxLOD              = D3D12_FLOAT32_MAX;
-        samplers[0].ShaderRegister      = 0;
-        samplers[0].RegisterSpace       = 0;
-        samplers[0].ShaderVisibility    = D3D12_SHADER_VISIBILITY_ALL;
-
-        samplers[1].Filter              = D3D12_FILTER_MIN_MAG_MIP_POINT;
-        samplers[1].AddressU            = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-        samplers[1].AddressV            = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-        samplers[1].AddressW            = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-        samplers[1].MipLODBias          = 0.0f;
-        samplers[1].MaxAnisotropy       = 0;
-        samplers[1].ComparisonFunc      = D3D12_COMPARISON_FUNC_NEVER;
-        samplers[1].BorderColor         = D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE;
-        samplers[1].MinLOD              = 0;
-        samplers[1].MaxLOD              = D3D12_FLOAT32_MAX;
-        samplers[1].ShaderRegister      = 1;
-        samplers[1].RegisterSpace       = 0;
-        samplers[1].ShaderVisibility    = D3D12_SHADER_VISIBILITY_ALL;
-
-        samplers[2].Filter              = D3D12_FILTER_MIN_MAG_MIP_POINT;
-        samplers[2].AddressU            = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
-        samplers[2].AddressV            = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
-        samplers[2].AddressW            = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
-        samplers[2].MipLODBias          = 0.0f;
-        samplers[2].MaxAnisotropy       = 0;
-        samplers[2].ComparisonFunc      = D3D12_COMPARISON_FUNC_NEVER;
-        samplers[2].BorderColor         = D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE;
-        samplers[2].MinLOD              = 0;
-        samplers[2].MaxLOD              = D3D12_FLOAT32_MAX;
-        samplers[2].ShaderRegister      = 2;
-        samplers[2].RegisterSpace       = 0;
-        samplers[2].ShaderVisibility    = D3D12_SHADER_VISIBILITY_ALL;
-
-        samplers[3].Filter              = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-        samplers[3].AddressU            = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-        samplers[3].AddressV            = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-        samplers[3].AddressW            = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-        samplers[3].MipLODBias          = 0.0f;
-        samplers[3].MaxAnisotropy       = 0;
-        samplers[3].ComparisonFunc      = D3D12_COMPARISON_FUNC_NEVER;
-        samplers[3].BorderColor         = D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE;
-        samplers[3].MinLOD              = 0;
-        samplers[3].MaxLOD              = D3D12_FLOAT32_MAX;
-        samplers[3].ShaderRegister      = 3;
-        samplers[3].RegisterSpace       = 0;
-        samplers[3].ShaderVisibility    = D3D12_SHADER_VISIBILITY_ALL;
-
-        samplers[4].Filter              = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-        samplers[4].AddressU            = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-        samplers[4].AddressV            = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-        samplers[4].AddressW            = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-        samplers[4].MipLODBias          = 0.0f;
-        samplers[4].MaxAnisotropy       = 0;
-        samplers[4].ComparisonFunc      = D3D12_COMPARISON_FUNC_NEVER;
-        samplers[4].BorderColor         = D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE;
-        samplers[4].MinLOD              = 0;
-        samplers[4].MaxLOD              = D3D12_FLOAT32_MAX;
-        samplers[4].ShaderRegister      = 4;
-        samplers[4].RegisterSpace       = 0;
-        samplers[4].ShaderVisibility    = D3D12_SHADER_VISIBILITY_ALL;
-
-        samplers[5].Filter              = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-        samplers[5].AddressU            = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
-        samplers[5].AddressV            = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
-        samplers[5].AddressW            = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
-        samplers[5].MipLODBias          = 0.0f;
-        samplers[5].MaxAnisotropy       = 0;
-        samplers[5].ComparisonFunc      = D3D12_COMPARISON_FUNC_NEVER;
-        samplers[5].BorderColor         = D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE;
-        samplers[5].MinLOD              = 0;
-        samplers[5].MaxLOD              = D3D12_FLOAT32_MAX;
-        samplers[5].ShaderRegister      = 5;
-        samplers[5].RegisterSpace       = 0;
-        samplers[5].ShaderVisibility    = D3D12_SHADER_VISIBILITY_ALL;
-
-        samplers[6].Filter              = D3D12_FILTER_ANISOTROPIC;
-        samplers[6].AddressU            = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-        samplers[6].AddressV            = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-        samplers[6].AddressW            = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-        samplers[6].MipLODBias          = 0.0f;
-        samplers[6].MaxAnisotropy       = 16;
-        samplers[6].ComparisonFunc      = D3D12_COMPARISON_FUNC_NEVER;
-        samplers[6].BorderColor         = D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE;
-        samplers[6].MinLOD              = 0;
-        samplers[6].MaxLOD              = D3D12_FLOAT32_MAX;
-        samplers[6].ShaderRegister      = 6;
-        samplers[6].RegisterSpace       = 0;
-        samplers[6].ShaderVisibility    = D3D12_SHADER_VISIBILITY_ALL;
-
-        samplers[7].Filter              = D3D12_FILTER_ANISOTROPIC;
-        samplers[7].AddressU            = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-        samplers[7].AddressV            = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-        samplers[7].AddressW            = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-        samplers[7].MipLODBias          = 0.0f;
-        samplers[7].MaxAnisotropy       = 16;
-        samplers[7].ComparisonFunc      = D3D12_COMPARISON_FUNC_NEVER;
-        samplers[7].BorderColor         = D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE;
-        samplers[7].MinLOD              = 0;
-        samplers[7].MaxLOD              = D3D12_FLOAT32_MAX;
-        samplers[7].ShaderRegister      = 7;
-        samplers[7].RegisterSpace       = 0;
-        samplers[7].ShaderVisibility    = D3D12_SHADER_VISIBILITY_ALL;
-
-        samplers[8].Filter              = D3D12_FILTER_ANISOTROPIC;
-        samplers[8].AddressU            = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
-        samplers[8].AddressV            = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
-        samplers[8].AddressW            = D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
-        samplers[8].MipLODBias          = 0.0f;
-        samplers[8].MaxAnisotropy       = 16;
-        samplers[8].ComparisonFunc      = D3D12_COMPARISON_FUNC_NEVER;
-        samplers[8].BorderColor         = D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE;
-        samplers[8].MinLOD              = 0;
-        samplers[8].MaxLOD              = D3D12_FLOAT32_MAX;
-        samplers[8].ShaderRegister      = 8;
-        samplers[8].RegisterSpace       = 0;
-        samplers[8].ShaderVisibility    = D3D12_SHADER_VISIBILITY_ALL;
-
-        samplers[9].Filter              = D3D12_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR;
-        samplers[9].AddressU            = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-        samplers[9].AddressV            = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-        samplers[9].AddressW            = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-        samplers[9].MipLODBias          = 0.0f;
-        samplers[9].MaxAnisotropy       = 0;
-        samplers[9].ComparisonFunc      = D3D12_COMPARISON_FUNC_LESS_EQUAL;
-        samplers[9].BorderColor         = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
-        samplers[9].MinLOD              = 0;
-        samplers[9].MaxLOD              = D3D12_FLOAT32_MAX;
-        samplers[9].ShaderRegister      = 9;
-        samplers[9].RegisterSpace       = 0;
-        samplers[9].ShaderVisibility    = D3D12_SHADER_VISIBILITY_ALL;
-
-        samplers[10].Filter              = D3D12_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR;
-        samplers[10].AddressU            = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-        samplers[10].AddressV            = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-        samplers[10].AddressW            = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-        samplers[10].MipLODBias          = 0.0f;
-        samplers[10].MaxAnisotropy       = 0;
-        samplers[10].ComparisonFunc      = D3D12_COMPARISON_FUNC_GREATER;
-        samplers[10].BorderColor         = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
-        samplers[10].MinLOD              = 0;
-        samplers[10].MaxLOD              = D3D12_FLOAT32_MAX;
-        samplers[10].ShaderRegister      = 10;
-        samplers[10].RegisterSpace       = 0;
-        samplers[10].ShaderVisibility    = D3D12_SHADER_VISIBILITY_ALL;
-
-        {
-            D3D12_ROOT_SIGNATURE_FLAGS flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
-            flags |= D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED;
-            flags |= D3D12_ROOT_SIGNATURE_FLAG_SAMPLER_HEAP_DIRECTLY_INDEXED;
-
-            D3D12_ROOT_SIGNATURE_DESC desc = {};
-            desc.NumParameters      = _countof(params);
-            desc.pParameters        = params;
-            desc.NumStaticSamplers  = _countof(samplers);
-            desc.pStaticSamplers    = samplers;
-            desc.Flags              = flags;
-
-            RefPtr<ID3DBlob> blob;
-            RefPtr<ID3DBlob> errorBlob;
-
-            auto hr = D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1_0, blob.GetAddress(), errorBlob.GetAddress());
-            if (FAILED(hr))
-            {
-                ELOG("Error : D3D12SerializeRootSignature() Failed. errcode = 0x%x", hr);
-                return false;
-            }
-
-            hr = m_pDevice->CreateRootSignature(0, blob->GetBufferPointer(), blob->GetBufferSize(), IID_PPV_ARGS(m_pRootSig[0].GetAddress()));
-            if (FAILED(hr))
-            {
-                ELOG("Error : ID3D12Device::CreateRootSignature() Failed. errcode = 0x%x", hr);
-                return false;
-            }
-        }
-
-        {
-            D3D12_ROOT_SIGNATURE_FLAGS flags = D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED;
-            flags |= D3D12_ROOT_SIGNATURE_FLAG_SAMPLER_HEAP_DIRECTLY_INDEXED;
-
-            D3D12_ROOT_SIGNATURE_DESC desc = {};
-            desc.NumParameters      = _countof(params);
-            desc.pParameters        = params;
-            desc.NumStaticSamplers  = _countof(samplers);
-            desc.pStaticSamplers    = samplers;
-            desc.Flags              = flags;
-
-            RefPtr<ID3DBlob> blob;
-            RefPtr<ID3DBlob> errorBlob;
-
-            auto hr = D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1_0, blob.GetAddress(), errorBlob.GetAddress());
-            if (FAILED(hr))
-            {
-                ELOG("Error : D3D12SerializeRootSignature() Failed. errcode = 0x%x", hr);
-                return false;
-            }
-
-            hr = m_pDevice->CreateRootSignature(0, blob->GetBufferPointer(), blob->GetBufferSize(), IID_PPV_ARGS(m_pRootSig[1].GetAddress()));
-            if (FAILED(hr))
-            {
-                ELOG("Error : ID3D12Device::CreateRootSignature() Failed. errcode = 0x%x", hr);
-                return false;
-            }
-        }
-    }
- 
     // 正常終了.
     return true;
 }
@@ -1402,11 +1153,6 @@ void GraphicsSystem::Term()
             m_pCommandSig[i]->Release();
             m_pCommandSig[i] = nullptr;
         }
-    }
-
-    for(auto i=0; i<2; ++i)
-    {
-        m_pRootSig[i].Reset();
     }
 
     m_QuadVB.Term();

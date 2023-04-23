@@ -182,28 +182,6 @@ IDXGIFactory7* GetDXGIFactory();
 ID3D12CommandSignature* GetCommandSignature(COMMAND_SIGNATURE_TYPE type);
 
 //-----------------------------------------------------------------------------
-//! @brief      共通ルートシグニチャを取得します.
-//! 
-//! @note       レイアウトは下記の通りです.
-//!     param[0]:     b0 - RootConstants * 4
-//!     param[1]:     b1 - CBV
-//!     param[2]:     b2 - CBV
-//!     param[3]:     b3 - CBV
-//!     samplers[0]:    t0  - PointWrap
-//!     samplers[1]:    t1  - PointClamp
-//!     samplers[2]:    t2  - PointMirror
-//!     samplers[3]:    t3  - LinearWrap
-//!     samplers[4]:    t4  - LinearClamp
-//!     samplers[5]:    t5  - LinearMirror
-//!     samplers[6]:    t6  - AnisotropicWrap 16
-//!     samplers[7]:    t7  - AnisotropicClamp 16
-//!     samplers[8]:    t8  - AnisotropicMirror 16
-//!     samplers[9]:    t9  - Comparison LessEqual LinearBorder Color(0, 0, 0, 1)
-//!     samplers[10]:   t10 - Comparison Greater   LinearBorder Color(0, 0, 0, 1)
-//-----------------------------------------------------------------------------
-ID3D12RootSignature* GetCommonRootSignature(bool allowInputLayout);
-
-//-----------------------------------------------------------------------------
 //! @brief      ディスプレイ情報を取得します.
 //-----------------------------------------------------------------------------
 void GetDisplayInfo(DXGI_FORMAT format, std::vector<DisplayInfo>& result);
