@@ -213,6 +213,9 @@
     <ClCompile Include="..\src\gfx\asdxDevice.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
+    <ClCompile Include="..\external\imgui\imgui_tables.cpp">
+      <Filter>ソース ファイル\external\imgui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\external\imgui\imconfig.h">
