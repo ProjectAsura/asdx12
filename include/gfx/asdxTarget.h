@@ -175,6 +175,13 @@ public:
     //! @param[in]      nextState   遷移後のステート.
     //-------------------------------------------------------------------------
     void Transition(ID3D12GraphicsCommandList* pCmdList, D3D12_RESOURCE_STATES nextState);
+
+    //-------------------------------------------------------------------------
+    //! @brief      ステートを取得します.
+    //! 
+    //! @return     ステートを返却します.
+    //-------------------------------------------------------------------------
+    D3D12_RESOURCE_STATES GetState() const { return m_PrevState; }
 #endif
 
 private:
@@ -294,6 +301,13 @@ public:
     //! @param[in]      nextState   遷移後のステート.
     //-------------------------------------------------------------------------
     void Transition(ID3D12GraphicsCommandList* pCmdList, D3D12_RESOURCE_STATES nextState);
+
+    //-------------------------------------------------------------------------
+    //! @brief      ステートを取得します.
+    //! 
+    //! @return     ステートを返却します.
+    //-------------------------------------------------------------------------
+    D3D12_RESOURCE_STATES GetState() const { return m_PrevState; }
 #endif
 
 private:
@@ -411,6 +425,13 @@ public:
     //! @param[in]      nextState   遷移後のステート.
     //-------------------------------------------------------------------------
     void Transition(ID3D12GraphicsCommandList* pCmdList, D3D12_RESOURCE_STATES nextState);
+
+    //-------------------------------------------------------------------------
+    //! @brief      ステートを取得します.
+    //! 
+    //! @return     ステートを返却します.
+    //-------------------------------------------------------------------------
+    D3D12_RESOURCE_STATES GetState() const { return m_PrevState; }
 #endif
 
 

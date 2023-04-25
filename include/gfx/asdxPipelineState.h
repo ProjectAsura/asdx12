@@ -322,4 +322,12 @@ private:
     bool CreateComputeRootSignature(ID3D12Device8* pDevice, ID3D12RootSignature** ppRootSig);
 };
 
+void InitRangeAsSRV(D3D12_DESCRIPTOR_RANGE& range, UINT registerIndex, UINT count = 1);
+void InitRangeAsUAV(D3D12_DESCRIPTOR_RANGE& range, UINT registerIndex, UINT count = 1);
+void InitAsConstants(D3D12_ROOT_PARAMETER& param, UINT registerIndex, UINT count, D3D12_SHADER_VISIBILITY visibility);
+void InitAsCBV(D3D12_ROOT_PARAMETER& param, UINT registerIndex, D3D12_SHADER_VISIBILITY visibility);
+void InitAsSRV(D3D12_ROOT_PARAMETER& param, UINT registerIndex, D3D12_SHADER_VISIBILITY visibility);
+void InitAsTable(D3D12_ROOT_PARAMETER& param, UINT count, const D3D12_DESCRIPTOR_RANGE* range, D3D12_SHADER_VISIBILITY visiblity);
+bool InitRootSignature(ID3D12Device* pDevice, const D3D12_ROOT_SIGNATURE_DESC* pDesc, ID3D12RootSignature** ppRootSig);
+
 } // namespace asdx

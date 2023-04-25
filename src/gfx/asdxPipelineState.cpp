@@ -1379,4 +1379,91 @@ bool PipelineState::EnumerateRootParameter
     return hasVSInput;
 }
 
+void InitRangeAsSRV(D3D12_DESCRIPTOR_RANGE& range, UINT registerIndex, UINT count)
+{
+    range.RangeType                         = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    range.NumDescriptors                    = count;
+    range.BaseShaderRegister                = registerIndex;
+    range.RegisterSpace                     = 0;
+    range.OffsetInDescriptorsFromTableStart = 0;
+}
+
+void InitRangeAsUAV(D3D12_DESCRIPTOR_RANGE& range, UINT registerIndex, UINT count)
+{
+    range.RangeType                         = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+    range.NumDescriptors                    = count;
+    range.BaseShaderRegister                = registerIndex;
+    range.RegisterSpace                     = 0;
+    range.OffsetInDescriptorsFromTableStart = 0;
+}
+
+void InitAsConstants(D3D12_ROOT_PARAMETER& param, UINT registerIndex, UINT count, D3D12_SHADER_VISIBILITY visibility)
+{
+    param.ParameterType             = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+    param.Constants.Num32BitValues  = count;
+    param.Constants.ShaderRegister  = registerIndex;
+    param.Constants.RegisterSpace   = 0;
+    param.ShaderVisibility          = visibility;
+}
+
+void InitAsCBV(D3D12_ROOT_PARAMETER& param, UINT registerIndex, D3D12_SHADER_VISIBILITY visibility)
+{
+    param.ParameterType             = D3D12_ROOT_PARAMETER_TYPE_CBV;
+    param.Descriptor.ShaderRegister = registerIndex;
+    param.Descriptor.RegisterSpace  = 0;
+    param.ShaderVisibility          = visibility;
+}
+
+void InitAsSRV(D3D12_ROOT_PARAMETER& param, UINT registerIndex, D3D12_SHADER_VISIBILITY visibility)
+{
+    param.ParameterType             = D3D12_ROOT_PARAMETER_TYPE_SRV;
+    param.Descriptor.ShaderRegister = registerIndex;
+    param.Descriptor.RegisterSpace  = 0;
+    param.ShaderVisibility          = visibility;
+}
+
+void InitAsTable(
+    D3D12_ROOT_PARAMETER&           param,
+    UINT                            count,
+    const D3D12_DESCRIPTOR_RANGE*   range,
+    D3D12_SHADER_VISIBILITY         visibility
+)
+{
+    param.ParameterType                         = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+    param.DescriptorTable.NumDescriptorRanges   = 1;
+    param.DescriptorTable.pDescriptorRanges     = range;
+    param.ShaderVisibility                      = visibility;
+}
+
+bool InitRootSignature
+(
+    ID3D12Device*                       pDevice,
+    const D3D12_ROOT_SIGNATURE_DESC*    pDesc,
+    ID3D12RootSignature**               ppRootSig
+)
+{
+    asdx::RefPtr<ID3DBlob> blob;
+    asdx::RefPtr<ID3DBlob> errorBlob;
+    auto hr = D3D12SerializeRootSignature(
+        pDesc, D3D_ROOT_SIGNATURE_VERSION_1_0, blob.GetAddress(), errorBlob.GetAddress());
+    if (FAILED(hr))
+    {
+        ELOG("Error : D3D12SerializeRootSignature() Failed. errcode = 0x%x", hr);
+        if (errorBlob) {
+            ELOG("Error : msg = %s", reinterpret_cast<const char*>(errorBlob->GetBufferPointer()));
+        }
+        return false;
+    }
+
+    hr = pDevice->CreateRootSignature(
+        0, blob->GetBufferPointer(), blob->GetBufferSize(), IID_PPV_ARGS(ppRootSig));
+    if (FAILED(hr))
+    {
+        ELOG("Error : ID3D12Device::CreateRootSignature() Failed. errcode = 0x%x", hr);
+        return false;
+    }
+
+    return true;
+}
+
 } // namespace asdx
