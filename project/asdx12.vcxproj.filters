@@ -216,6 +216,9 @@
     <ClCompile Include="..\external\imgui\imgui_tables.cpp">
       <Filter>ソース ファイル\external\imgui</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\res\asdxResModel.cpp">
+      <Filter>ソース ファイル\res</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\external\imgui\imconfig.h">
@@ -373,6 +376,9 @@
     </ClInclude>
     <ClInclude Include="..\include\fnd\asdxFunction.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\res\asdxResModel.h">
+      <Filter>ヘッダー ファイル\res</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
