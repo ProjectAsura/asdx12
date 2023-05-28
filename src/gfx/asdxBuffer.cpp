@@ -499,7 +499,7 @@ bool ByteAddressBuffer::Init(uint64_t size, D3D12_RESOURCE_STATES state)
     desc.Width              = size;
     desc.Height             = 1;
     desc.DepthOrArraySize   = 1;
-    desc.Format             = DXGI_FORMAT_R32_TYPELESS;
+    desc.Format             = DXGI_FORMAT_UNKNOWN;
     desc.MipLevels          = 1;
     desc.SampleDesc.Count   = 1;
     desc.SampleDesc.Quality = 0;
