@@ -11,8 +11,14 @@
 #define half2   min16float2
 #define half3   min16float3
 #define half4   min16float4
+#define half2x2 min16float2x2
+#define half2x3 min16float2x3
+#define half3x2 min16float3x2
 #define half3x3 min16float3x3
 #define half3x4 min16float3x4
+#define half4x2 min16float4x2
+#define half4x3 min16float4x3
+#define half4x4 min16float4x4
 
 //-----------------------------------------------------------------------------
 // Constant Values.
@@ -30,7 +36,6 @@ static const float F_DITHER_LIST[4][4] = {
     { 0.43921f, 0.93725f, 0.31372f, 0.81568f },
     { 0.68627f, 0.18823f, 0.56470f, 0.06274f },
 };
-
 
 //-----------------------------------------------------------------------------
 //      半精度浮動小数の最大値未満に飽和させます.
@@ -265,6 +270,162 @@ float Min3(float3 value)
 //-----------------------------------------------------------------------------
 float Min4(float4 value)
 { return min(value.x, min(value.y, min(value.z, value.w))); }
+
+//-----------------------------------------------------------------------------
+//      スロープ関数.
+//-----------------------------------------------------------------------------
+float LinearStep(float edge0, float edge1, float x)
+{ return (x - edge0) / (edge1 - edge0); }
+
+//-----------------------------------------------------------------------------
+//      スロープ関数.
+//-----------------------------------------------------------------------------
+float2 LinearStep(float2 edge0, float2 edge1, float2 x)
+{ return (x - edge0) / (edge1 - edge0); }
+
+//-----------------------------------------------------------------------------
+//      スロープ関数.
+//-----------------------------------------------------------------------------
+float3 LinearStep(float3 edge0, float3 edge1, float3 x)
+{ return (x - edge0) / (edge1 - edge0); }
+
+//-----------------------------------------------------------------------------
+//      スロープ関数.
+//-----------------------------------------------------------------------------
+float4 LinearStep(float4 edge0, float4 edge1, float4 x)
+{ return (x - edge0) / (edge1 - edge0); }
+
+//-----------------------------------------------------------------------------
+//      3次エルミート補間.
+//-----------------------------------------------------------------------------
+float SmoothStep(float a, float b, float x)
+{
+    x = LinearStep(a, b, x);
+    return (x * x * (3.0f - 2.0f * x));
+}
+
+//-----------------------------------------------------------------------------
+//      3次エルミート補間.
+//-----------------------------------------------------------------------------
+float2 SmoothStep(float2 a, float2 b, float2 x)
+{
+    x = LinearStep(a, b, x);
+    return (x * x * (3.0f - 2.0f * x));
+}
+
+//-----------------------------------------------------------------------------
+//      3次エルミート補間.
+//-----------------------------------------------------------------------------
+float3 SmoothStep(float3 a, float3 b, float3 x)
+{
+    x = LinearStep(a, b, x);
+    return (x * x * (3.0f - 2.0f * x));
+}
+
+//-----------------------------------------------------------------------------
+//      3次エルミート補間.
+//-----------------------------------------------------------------------------
+float4 SmoothStep(float4 a, float4 b, float4 x)
+{
+    x = LinearStep(a, b, x);
+    return (x * x * (3.0f - 2.0f * x));
+}
+
+//-----------------------------------------------------------------------------
+//      5次エルミート補間.
+//-----------------------------------------------------------------------------
+float SmootherStep(float a, float b, float x)
+{
+    x = LinearStep(a, b, x);
+    return (x * x * x * (x * (x * 6.0f - 15.0f) + 10.0f));
+}
+
+//-----------------------------------------------------------------------------
+//      5次エルミート補間.
+//-----------------------------------------------------------------------------
+float2 SmootherStep(float2 a, float2 b, float2 x)
+{
+    x = LinearStep(a, b, x);
+    return (x * x * x * (x * (x * 6.0f - 15.0f) + 10.0f));
+}
+
+//-----------------------------------------------------------------------------
+//      5次エルミート補間.
+//-----------------------------------------------------------------------------
+float3 SmootherStep(float3 a, float3 b, float3 x)
+{
+    x = LinearStep(a, b, x);
+    return (x * x * x * (x * (x * 6.0f - 15.0f) + 10.0f));
+}
+
+//-----------------------------------------------------------------------------
+//      5次エルミート補間.
+//-----------------------------------------------------------------------------
+float4 SmootherStep(float4 a, float4 b, float4 x)
+{
+    x = LinearStep(a, b, x);
+    return (x * x * x * (x * (x * 6.0f - 15.0f) + 10.0f));
+}
+
+//-----------------------------------------------------------------------------
+//      [0, 1]のスロープ関数.
+//-----------------------------------------------------------------------------
+float linearstep(float edge0, float edge1, float x)
+{ return saturate(LinearStep(edge0, edge1, x)); }
+
+//-----------------------------------------------------------------------------
+//      [0, 1]のスロープ関数.
+//-----------------------------------------------------------------------------
+float2 linearstep(float2 edge0, float2 edge1, float2 x)
+{ return saturate(LinearStep(edge0, edge1, x)); }
+
+//-----------------------------------------------------------------------------
+//      [0, 1]のスロープ関数.
+//-----------------------------------------------------------------------------
+float3 linearstep(float3 edge0, float3 edge1, float3 x)
+{ return saturate(LinearStep(edge0, edge1, x)); }
+
+//-----------------------------------------------------------------------------
+//      [0, 1]のスロープ関数.
+//-----------------------------------------------------------------------------
+float4 linearstep(float4 edge0, float4 edge1, float4 x)
+{ return saturate(LinearStep(edge0, edge1, x)); }
+
+//-----------------------------------------------------------------------------
+//      [0, 1]の5次エルミート補間.
+//-----------------------------------------------------------------------------
+float smootherstep(float a, float b, float x)
+{
+    x = saturate(LinearStep(a, b, x));
+    return (x * x * x * (x * (x * 6.0f - 15.0f) + 10.0f));
+}
+
+//-----------------------------------------------------------------------------
+//      [0, 1]の5次エルミート補間.
+//-----------------------------------------------------------------------------
+float2 smootherstep(float2 a, float2 b, float2 x)
+{
+    x = saturate(LinearStep(a, b, x));
+    return (x * x * x * (x * (x * 6.0f - 15.0f) + 10.0f));
+}
+
+//-----------------------------------------------------------------------------
+//      [0, 1]範囲の5次エルミート補間.
+//-----------------------------------------------------------------------------
+float3 smootherstep(float3 a, float3 b, float3 x)
+{
+    x = saturate(LinearStep(a, b, x));
+    return (x * x * x * (x * (x * 6.0f - 15.0f) + 10.0f));
+}
+
+//-----------------------------------------------------------------------------
+//      [0, 1]範囲の5次エルミート補間.
+//-----------------------------------------------------------------------------
+float4 smootherstep(float4 a, float4 b, float4 x)
+{
+    x = saturate(LinearStep(a, b, x));
+    return (x * x * x * (x * (x * 6.0f - 15.0f) + 10.0f));
+ }
 
 //-----------------------------------------------------------------------------
 //      RGBE形式に圧縮します.
@@ -715,7 +876,7 @@ float ToksvigRoughness(float3 normal, float roughness)
 }
 
 //-----------------------------------------------------------------------------
-//      Toku-Kaplanyanフィルタを適用します.
+//      Tokuyoshi-Kaplanyanフィルタを適用します.
 //-----------------------------------------------------------------------------
 float TokuyoshiRoughness(float3 normal, float roughness, float sigma2, float kappa)
 {
@@ -1803,90 +1964,10 @@ uint CalcMortonCode3(uint x, uint y, uint z)
     return BitSeparate3(x) | (BitSeparate3(y) << 1) | (BitSeparate3(z) << 2);
 }
 
-float LinearStep(float edge0, float edge1, float x)
-{ return (x - edge0) / (edge1 - edge0); }
-
-float2 LinearStep(float2 edge0, float2 edge1, float2 x)
-{ return (x - edge0) / (edge1 - edge0); }
-
-float3 LinearStep(float3 edge0, float3 edge1, float3 x)
-{ return (x - edge0) / (edge1 - edge0); }
-
-float4 LinearStep(float4 edge0, float4 edge1, float4 x)
-{ return (x - edge0) / (edge1 - edge0); }
-
-float SmoothStep(float a, float b, float x)
-{
-    x = LinearStep(a, b, x);
-    return (x * x * (3.0f - 2.0f * x));
-}
-
-float2 SmoothStep(float2 a, float2 b, float2 x)
-{
-    x = LinearStep(a, b, x);
-    return (x * x * (3.0f - 2.0f * x));
-}
-
-float3 SmoothStep(float3 a, float3 b, float3 x)
-{
-    x = LinearStep(a, b, x);
-    return (x * x * (3.0f - 2.0f * x));
-}
-
-float4 SmoothStep(float4 a, float4 b, float4 x)
-{
-    x = LinearStep(a, b, x);
-    return (x * x * (3.0f - 2.0f * x));
-}
-
-float SmootherStep(float a, float b, float x)
-{
-    x = LinearStep(a, b, x);
-    return (x * x * x * ( x * ( x * 6.0f - 15.0f) + 10.0f));
-}
-
-float2 SmootherStep(float2 a, float2 b, float2 x)
-{
-    x = LinearStep(a, b, x);
-    return (x * x * x * ( x * ( x * 6.0f - 15.0f) + 10.0f));
-}
-
-float3 SmootherStep(float3 a, float3 b, float3 x)
-{
-    x = LinearStep(a, b, x);
-    return (x * x * x * ( x * ( x * 6.0f - 15.0f) + 10.0f));
-}
-
-float4 SmootherStep(float4 a, float4 b, float4 x)
-{
-    x = LinearStep(a, b, x);
-    return (x * x * x * ( x * ( x * 6.0f - 15.0f) + 10.0f));
-}
-
-float linearstep(float edge0, float edge1, float x)
-{ return saturate(LinearStep(edge0, edge1, x)); }
-
-float2 linearstep(float2 edge0, float2 edge1, float2 x)
-{ return saturate(LinearStep(edge0, edge1, x)); }
-
-float3 linearstep(float3 edge0, float3 edge1, float3 x)
-{ return saturate(LinearStep(edge0, edge1, x)); }
-
-float4 linearstep(float4 edge0, float4 edge1, float4 x)
-{ return saturate(LinearStep(edge0, edge1, x)); }
-
-float smootherstep(float a, float b, float x)
-{ return saturate(SmootherStep(a, b, x)); }
-
-float2 smootherstep(float2 a, float2 b, float2 x)
-{ return saturate(SmootherStep(a, b, x)); }
-
-float3 smootherstep(float3 a, float3 b, float3 x)
-{ return saturate(SmootherStep(a, b, x)); }
-
-float4 smootherstep(float4 a, float4 b, float4 x)
-{ return saturate(SmootherStep(a, b, x)); }
-
-
+//-----------------------------------------------------------------------------
+//      スクリーン内にテクスチャ座標が治まっているかどうかチェックします.
+//-----------------------------------------------------------------------------
+float IsInScreen(float2 uv)
+{ return float(all(saturate(uv) == uv)); }
 
 #endif//ASDX_MATH_HLSLI
