@@ -1803,5 +1803,90 @@ uint CalcMortonCode3(uint x, uint y, uint z)
     return BitSeparate3(x) | (BitSeparate3(y) << 1) | (BitSeparate3(z) << 2);
 }
 
+float LinearStep(float edge0, float edge1, float x)
+{ return (x - edge0) / (edge1 - edge0); }
+
+float2 LinearStep(float2 edge0, float2 edge1, float2 x)
+{ return (x - edge0) / (edge1 - edge0); }
+
+float3 LinearStep(float3 edge0, float3 edge1, float3 x)
+{ return (x - edge0) / (edge1 - edge0); }
+
+float4 LinearStep(float4 edge0, float4 edge1, float4 x)
+{ return (x - edge0) / (edge1 - edge0); }
+
+float SmoothStep(float a, float b, float x)
+{
+    x = LinearStep(a, b, x);
+    return (x * x * (3.0f - 2.0f * x));
+}
+
+float2 SmoothStep(float2 a, float2 b, float2 x)
+{
+    x = LinearStep(a, b, x);
+    return (x * x * (3.0f - 2.0f * x));
+}
+
+float3 SmoothStep(float3 a, float3 b, float3 x)
+{
+    x = LinearStep(a, b, x);
+    return (x * x * (3.0f - 2.0f * x));
+}
+
+float4 SmoothStep(float4 a, float4 b, float4 x)
+{
+    x = LinearStep(a, b, x);
+    return (x * x * (3.0f - 2.0f * x));
+}
+
+float SmootherStep(float a, float b, float x)
+{
+    x = LinearStep(a, b, x);
+    return (x * x * x * ( x * ( x * 6.0f - 15.0f) + 10.0f));
+}
+
+float2 SmootherStep(float2 a, float2 b, float2 x)
+{
+    x = LinearStep(a, b, x);
+    return (x * x * x * ( x * ( x * 6.0f - 15.0f) + 10.0f));
+}
+
+float3 SmootherStep(float3 a, float3 b, float3 x)
+{
+    x = LinearStep(a, b, x);
+    return (x * x * x * ( x * ( x * 6.0f - 15.0f) + 10.0f));
+}
+
+float4 SmootherStep(float4 a, float4 b, float4 x)
+{
+    x = LinearStep(a, b, x);
+    return (x * x * x * ( x * ( x * 6.0f - 15.0f) + 10.0f));
+}
+
+float linearstep(float edge0, float edge1, float x)
+{ return saturate(LinearStep(edge0, edge1, x)); }
+
+float2 linearstep(float2 edge0, float2 edge1, float2 x)
+{ return saturate(LinearStep(edge0, edge1, x)); }
+
+float3 linearstep(float3 edge0, float3 edge1, float3 x)
+{ return saturate(LinearStep(edge0, edge1, x)); }
+
+float4 linearstep(float4 edge0, float4 edge1, float4 x)
+{ return saturate(LinearStep(edge0, edge1, x)); }
+
+float smootherstep(float a, float b, float x)
+{ return saturate(SmootherStep(a, b, x)); }
+
+float2 smootherstep(float2 a, float2 b, float2 x)
+{ return saturate(SmootherStep(a, b, x)); }
+
+float3 smootherstep(float3 a, float3 b, float3 x)
+{ return saturate(SmootherStep(a, b, x)); }
+
+float4 smootherstep(float4 a, float4 b, float4 x)
+{ return saturate(SmootherStep(a, b, x)); }
+
+
 
 #endif//ASDX_MATH_HLSLI
