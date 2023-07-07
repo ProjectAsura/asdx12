@@ -679,7 +679,7 @@ float3 SampleGGX(float2 u, float a)
 float3 SampleVndfGGX(float2 u, float2 a, float3 wi)
 {
     // a = linearRoughness * linearRoughness ‚Æ‚µ‚Ü‚·.
-    float3 V = normalize(wi.xy * a, wi.z);
+    float3 V = normalize(float3(wi.xy * a, wi.z));
 
     // [Dupuy 2023] Jonathan Dupuy, Anis Benyoub,
     // "Sampling Visible GGX Normals with Spherical Caps",
@@ -691,7 +691,7 @@ float3 SampleVndfGGX(float2 u, float2 a, float3 wi)
     float y = sinTheta * cos(phi);
     float3 H = float3(x, y, z) + V;
 
-    H = normalize(float3(H.xy * alpha, H.z));
+    H = normalize(float3(H.xy * a, H.z));
 
     // PDF = D_vis * Jacobian
     //     = (G1(wi) * max(0, dot(wi, H)) * D(H) / wi.z) * (1.0f / (4.0f * LdotH));
