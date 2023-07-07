@@ -300,12 +300,14 @@ bool CompileFromFile
     hr = pLibrary->CreateBlobWithEncodingFromPinned(buffer.data(), UINT32(buffer.size()), DXC_CP_UTF8, pSource.GetAddress());
     if (FAILED(hr))
     {
+        ELOGA("Error : IDxcLibrary::CreateBlobWithEncodingFromPinned() Failed. errcode = 0x%x", hr);
         return false;
     }
 
     hr = pUtils->CreateDefaultIncludeHandler(pIncludeHandler.GetAddress());
     if (FAILED(hr))
     {
+        ELOG("Error : IDxcUtils::CreateDefaultIncludeHandler() Failed. errcode = 0x%x", hr);
         return false;
     }
 
@@ -348,7 +350,7 @@ bool CompileFromFile
     {
         RefPtr<IDxcBlobEncoding> pErrorBlob;
         pResults->GetErrorBuffer(pErrorBlob.GetAddress());
-        printf_s("Compilation Failed. errcode = 0x%x, msg = %s.\n",
+        ELOGA("Compilation Failed. errcode = 0x%x, msg = %s.",
             ret, 
             (pErrorBlob->GetBufferSize() > 0)
             ? reinterpret_cast<const char*>(pErrorBlob->GetBufferPointer())
@@ -444,14 +446,14 @@ bool CompileFromFile
     pResults->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(pErrors.GetAddress()), nullptr);
     if (pErrors.GetPtr() != nullptr && pErrors->GetStringLength() != 0)
     {
-        printf_s("Warnings and Errors:\n%s\n", pErrors->GetStringPointer());
+        ELOGA("Warnings and Errors:\n%s", pErrors->GetStringPointer());
     }
 
     HRESULT ret;
     pResults->GetStatus(&ret);
     if (FAILED(ret))
     {
-        printf_s("Compilation Failed. errcode = 0x%x\n", ret);
+        ELOGA("Compilation Failed. errcode = 0x%x", ret);
         return false;
     }
 
