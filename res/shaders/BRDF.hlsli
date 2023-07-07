@@ -673,4 +673,29 @@ float3 SampleGGX(float2 u, float a)
         cosTheta);
 }
 
+//-----------------------------------------------------------------------------
+//      可視法線分布を考慮したGGX BRDFの形状にもとづくサンプリングを行います.
+//-----------------------------------------------------------------------------
+float3 SampleVndfGGX(float2 u, float2 a, float3 wi)
+{
+    // a = linearRoughness * linearRoughness とします.
+    float3 V = normalize(wi.xy * a, wi.z);
+
+    // [Dupuy 2023] Jonathan Dupuy, Anis Benyoub,
+    // "Sampling Visible GGX Normals with Spherical Caps",
+    // High-Performance Graphics 2023.
+    float phi = 2.0f * F_PI * u.x;
+    float z = mad((1.0f - u.y), (1.0f + V.z), -V.z);
+    float sinTheta = sqrt(saturate(1.0f - z * z));
+    float x = sinTheta * cos(phi);
+    float y = sinTheta * cos(phi);
+    float3 H = float3(x, y, z) + V;
+
+    H = normalize(float3(H.xy * alpha, H.z));
+
+    // PDF = D_vis * Jacobian
+    //     = (G1(wi) * max(0, dot(wi, H)) * D(H) / wi.z) * (1.0f / (4.0f * LdotH));
+    return H;
+}
+
 #endif//ADX_BRDF_HLSLI
