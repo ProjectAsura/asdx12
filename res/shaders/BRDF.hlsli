@@ -175,33 +175,38 @@ float PhongSpecular(float3 N, float3 V, float3 L, float shininess)
 }
 
 //-----------------------------------------------------------------------------
-//      GGXのD項を求めます.
+//      SmithによるG1項を求めます.
 //-----------------------------------------------------------------------------
-float D_GGX(float NdotH, float m)
+float G1_Smith(float a, float NoS)
 {
-    float a2 = m * m;
-    float f = (NdotH * a2 - NdotH) * NdotH + 1;
-    float d = a2 / (f * f);
-    return SaturateHalf(d);
+    // https://github.com/boksajak/referencePT/blob/master/shaders/brdf.h
+    float a2 = a * a;
+    float NoS2 = NoS * NoS;
+    return SaturateFloat(2.0f / (sqrt(( (a2 * (1.0f - NoS2)) + NoS2) / NoS2) + 1.0f));
 }
 
 //-----------------------------------------------------------------------------
-//      Height Correlated SmithによるG項を求めます.
+//      SmithによるG2項を求めます.
 //-----------------------------------------------------------------------------
-float G_SmithGGX(float NdotL, float NdotV, float alphaG)
+float G2_Smith(float a, float NoL, float NoV)
 {
-#if 0
-    float a2 = alphaG * alphaG;
-    float GGXV = NdotL * sqrt(NdotV * NdotV * (1.0f - a2) + a2);
-    float GGXL = NdotV * sqrt(NdotL * NdotL * (1.0f - a2) + a2);
-    return 0.5f / (Lambda_GGXV + Lambda_GGXL);
-#else
-    // sqrt()がない最適化バージョン.
-    float a = alphaG;
-    float GGXV = NdotL * (NdotV * (1.0f - a) + a);
-    float GGXL = NdotV * (NdotL * (1.0f - a) + a);
-    return SaturateHalf(0.5f / (GGXV + GGXL));
-#endif
+    // [Heitz 2015] Eric Hetiz and Jonathan Dupuy,
+    // "Implementating a Simple Anisotroic Rough Diffuse Material with Stochastic Evaluation",
+    // Techinical report, 2015.
+    // From Appendix A, Equation (7).
+    float G1V = G1_Smith(a, NoV);
+    float G1L = G1_Smith(a, NoL);
+    return SaturateFloat((G1L * G1V) / (G1V + G1L - G1V * G1L));
+}
+
+//-----------------------------------------------------------------------------
+//      GGXのD項を求めます.
+//-----------------------------------------------------------------------------
+float D_GGX(float NoH, float a)
+{
+    float a2 = Pow2(a);
+    float d = (1.0f + (a2 - 1.0f) * Pow2(NoH));
+    return SaturateFloat(a2 / (F_PI * Pow2(d)));
 }
 
 //-----------------------------------------------------------------------------
@@ -614,9 +619,9 @@ float3 EvaluateDirectLightClearCoat
 
     float3 Fd = (Kd / F_PI);
     float  D = D_GGX(NoH, a2);
-    float  G = G_SmithGGX(NoL, NoV, a2);
+    float  G = G2_Smith(a2, NoL, NoV);
     float3 F = F_Schlick(Ks, f90, LoH);
-    float3 Fr = (D * G * F) / F_PI;
+    float3 Fr = (D * G * F) / (4.0f * NoV * NoL);
 
     float coatingPerceptualRoughness = GetClearCoatRoughness(clearCoatRoughness);
     float coatingRoughness = coatingPerceptualRoughness * coatingPerceptualRoughness;
@@ -624,7 +629,7 @@ float3 EvaluateDirectLightClearCoat
     float  Dc  = D_GGX(NoH, coatingRoughness);
     float  Gc  = V_Kelemen(LoH);
     float  Fc  = GetClearCoatFresnel(LoH, clearCoatStrength);
-    float  Frc = (Dc * Gc * Fc) / F_PI; 
+    float  Frc = (Dc * Gc * Fc) / (4.0f * NoV * NoL); 
     float  t   = max(1.0f - Fc, 0.0f);
 
     return ((Fd + Fr * (1.0f - Fc)) * (1.0f - Fc) + Frc) * NoL;
@@ -666,7 +671,9 @@ float3 SampleGGX(float2 u, float a)
     float cosTheta = sqrt( (1.0 - u.y) / (u.y * (a * a - 1.0) + 1.0) );
     float sinTheta = sqrt( 1.0 - cosTheta * cosTheta );
 
-    // PDF = D * NdotH / (4.0f * LdotH);
+    // PDF = D * NdotH;
+    // Jacobian  = 1.0f / (4.0f * VdotH);
+    // Final PDF = D * NdotH / (4.0f * VdotH).
     return float3(
         sinTheta * cos(phi),
         sinTheta * sin(phi),
@@ -685,16 +692,18 @@ float3 SampleVndfGGX(float2 u, float2 a, float3 wi)
     // "Sampling Visible GGX Normals with Spherical Caps",
     // High-Performance Graphics 2023.
     float phi = 2.0f * F_PI * u.x;
-    float z = mad((1.0f - u.y), (1.0f + V.z), -V.z);
+    float z = (1.0f - u.y) * (1.0f + V.z) - V.z; // original paper.
     float sinTheta = sqrt(saturate(1.0f - z * z));
     float x = sinTheta * cos(phi);
-    float y = sinTheta * cos(phi);
+    float y = sinTheta * sin(phi);
     float3 H = float3(x, y, z) + V;
 
     H = normalize(float3(H.xy * a, H.z));
 
-    // PDF = D_vis * Jacobian
-    //     = (G1(wi) * max(0, dot(wi, H)) * D(H) / wi.z) * (1.0f / (4.0f * LdotH));
+    // PDF = D_vis
+    //     = G(V) * VdotH * D(H) / V.z;
+    // Jacobian  = 1.0f / (4.0f * VdotH);
+    // Final PDF = G1(w) * D(H) / (V.z * 4.0f);
     return H;
 }
 
