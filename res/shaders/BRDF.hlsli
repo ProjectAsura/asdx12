@@ -175,28 +175,20 @@ float PhongSpecular(float3 N, float3 V, float3 L, float shininess)
 }
 
 //-----------------------------------------------------------------------------
-//      SmithによるG1項を求めます.
-//-----------------------------------------------------------------------------
-float G1_Smith(float a, float NoS)
-{
-    // https://github.com/boksajak/referencePT/blob/master/shaders/brdf.h
-    float a2 = a * a;
-    float NoS2 = NoS * NoS;
-    return SaturateFloat(2.0f / (sqrt(( (a2 * (1.0f - NoS2)) + NoS2) / NoS2) + 1.0f));
-}
-
-//-----------------------------------------------------------------------------
 //      SmithによるG2項を求めます.
 //-----------------------------------------------------------------------------
 float G2_Smith(float a, float NoL, float NoV)
 {
-    // [Heitz 2015] Eric Hetiz and Jonathan Dupuy,
-    // "Implementating a Simple Anisotroic Rough Diffuse Material with Stochastic Evaluation",
-    // Techinical report, 2015.
-    // From Appendix A, Equation (7).
-    float G1V = G1_Smith(a, NoV);
-    float G1L = G1_Smith(a, NoL);
-    return SaturateFloat((G1L * G1V) / (G1V + G1L - G1V * G1L));
+    // [Lagarde 2014] Sebastien Lagarde, Charles de Rousier,
+    // "Moving Frostbite to Physically Based Rendering 3.0",
+    // p.12, Listing 2.
+    float a2 = a * a;
+    float GGXV = NoV * sqrt(a2 + NoL * (NoL - a2 * NoL));
+    float GGXL = NoL * sqrt(a2 + NoV * (NoV - a2 * NoV));
+
+    // NOTE: "1.0f / (4.0f * NoL * NoV)"が考慮されている値なので，
+    //       返却値にこれらを掛ける必要はありません.
+    return 0.5f / (GGXV + GGXL);
 }
 
 //-----------------------------------------------------------------------------
@@ -692,7 +684,7 @@ float3 SampleVndfGGX(float2 u, float2 a, float3 wi)
     // "Sampling Visible GGX Normals with Spherical Caps",
     // High-Performance Graphics 2023.
     float phi = 2.0f * F_PI * u.x;
-    float z = (1.0f - u.y) * (1.0f + V.z) - V.z; // original paper.
+    float z = (1.0f - u.y) * (1.0f + V.z) - V.z;
     float sinTheta = sqrt(saturate(1.0f - z * z));
     float x = sinTheta * cos(phi);
     float y = sinTheta * sin(phi);
@@ -700,10 +692,8 @@ float3 SampleVndfGGX(float2 u, float2 a, float3 wi)
 
     H = normalize(float3(H.xy * a, H.z));
 
-    // PDF = D_vis
-    //     = G(V) * VdotH * D(H) / V.z;
-    // Jacobian  = 1.0f / (4.0f * VdotH);
-    // Final PDF = G1(w) * D(H) / (V.z * 4.0f);
+    // Final PDF.
+    // cf. [Dupuy 2023] Equation (20).
     return H;
 }
 
