@@ -197,8 +197,8 @@ float G2_Smith(float a, float NoL, float NoV)
 float D_GGX(float NoH, float a)
 {
     float a2 = Pow2(a);
-    float d = (1.0f + (a2 - 1.0f) * Pow2(NoH));
-    return SaturateFloat(a2 / (F_PI * Pow2(d)));
+    float d = (NoH * a2 - NoH) * NoH + 1.0f;
+    return a2 / (F_PI * Pow2(d));
 }
 
 //-----------------------------------------------------------------------------
@@ -692,7 +692,7 @@ float3 SampleVndfGGX(float2 u, float2 a, float3 wi)
 
     H = normalize(float3(H.xy * a, H.z));
 
-    // Final PDF.
+    // Final PDF = G1(N, H) * D(N) / (4.0f * NoH);
     // cf. [Dupuy 2023] Equation (20).
     return H;
 }

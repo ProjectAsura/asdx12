@@ -1277,6 +1277,10 @@ void GraphicsSystem::SetDescriptorHeaps(ID3D12GraphicsCommandList* pCmdList)
     if (pCmdList == nullptr)
     { return; }
 
+    // コピーコマンドリストには SetDescriptoreHeaps() は使えない.
+    if (pCmdList->GetType() == D3D12_COMMAND_LIST_TYPE_COPY)
+    { return; }
+
     ID3D12DescriptorHeap* pHeaps[] = {
         m_DescriptorHeap[D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV].GetD3D12DescriptorHeap(),
         m_DescriptorHeap[D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER].GetD3D12DescriptorHeap()
