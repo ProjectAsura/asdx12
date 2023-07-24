@@ -54,8 +54,8 @@ Texture2D           ColorMap    : register(t0);
 Texture2D           HistoryMap  : register(t1);
 Texture2D<float2>   VelocityMap : register(t2);
 Texture2D<float>    DepthMap    : register(t3);
-SamplerState        PointClamp  : register(s0);
-SamplerState        LinearClamp : register(s1);
+SamplerState        PointClamp  : register(s1); // Samplers.hlsliと合わせている.
+SamplerState        LinearClamp : register(s4); // Samplers.hlsliと合わせている.
 
 //-----------------------------------------------------------------------------
 // Constant Values.

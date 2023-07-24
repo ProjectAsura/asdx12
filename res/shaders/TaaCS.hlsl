@@ -38,8 +38,8 @@ Texture2D<float2>   VelocityMap     : register(t2);
 Texture2D<float>    DepthMap        : register(t3);
 RWTexture2D<float4> OutColorMap     : register(u0);
 RWTexture2D<float4> OutHistoryMap   : register(u1);
-SamplerState        PointClamp      : register(s0);
-SamplerState        LinearClamp     : register(s1);
+SamplerState        PointClamp      : register(s1); // Samplers.hlsliと合わせている.
+SamplerState        LinearClamp     : register(s4); // Samplers.hlsliと合わせている.
 
 //-----------------------------------------------------------------------------
 // Constant Values.
