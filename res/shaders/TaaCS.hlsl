@@ -45,10 +45,14 @@ SamplerState        LinearClamp     : register(s4); // Samplers.hlsliと合わ�
 // Constant Values.
 //-----------------------------------------------------------------------------
 static const int2 kOffsets[8] = {
-    int2(-1,- 1), int2(-1,  1),
-    int2( 1, -1), int2( 1,  1),
-    int2( 1,  0), int2( 0, -1),
-    int2( 0,  1), int2(-1,  0)
+    int2(-1, -1),
+    int2(-1,  1),
+    int2( 1, -1),
+    int2( 1,  1),
+    int2( 1,  0),
+    int2( 0, -1),
+    int2( 0,  1),
+    int2(-1,  0)
 };
 
 
@@ -243,7 +247,7 @@ void main(uint3 dispatchId : SV_DispatchThreadID)
         return;
     }
 
-    const float2 currUV = (float2)dispatchId.xy / MapSize;
+    const float2 currUV = ((float2)dispatchId.xy + 0.5f.xx) * InvMapSize;
 
     // 現在フレームのカラー.
     float3 currColor = GetCurrentColor(currUV);
@@ -256,7 +260,7 @@ void main(uint3 dispatchId : SV_DispatchThreadID)
     float  velocityDelta = saturate(1.0f - length(velocity) / (kFrameVelocityInPixelsDiff * sizeScale));
 
     // 前フレームのテクスチャ座標を計算.
-    float2 prevUV = currUV + (velocity / MapSize);
+    float2 prevUV = currUV + (velocity * InvMapSize);
 
     // 深度値を取得.
     float currDepth = GetCurrentDepth(currUV);
