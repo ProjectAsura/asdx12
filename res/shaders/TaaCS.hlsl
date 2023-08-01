@@ -4,10 +4,14 @@
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 
+//-----------------------------------------------------------------------------
+// Includes
+//-----------------------------------------------------------------------------
+#include "Math.hlsli"
+
 #ifndef ENABLE_REVERSE_Z
 #define ENABLE_REVERSE_Z    (0)
 #endif//ENABLE_REVERSE_Z
-
 
 //-----------------------------------------------------------------------------
 // Constant Values.
@@ -298,6 +302,9 @@ void main(uint3 dispatchId : SV_DispatchThreadID)
         float3 neighborColor = GetCurrentNeighborColor(currUV, currColor);
         finalColor = float4(neighborColor, 0.5f);
     }
+
+    // NaNを潰しておく.
+    finalColor = SaturateFloat(finalColor);
 
     // 出力.
     OutColorMap  [dispatchId.xy] = float4(finalColor.rgb, 1.0f);
