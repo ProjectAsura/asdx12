@@ -127,8 +127,8 @@ float4 BicubicSampleCatmullRom(Texture2D map, SamplerState smp, float2 uv, float
 //-----------------------------------------------------------------------------
 //      現在フレームのカラーを取得します.
 //-----------------------------------------------------------------------------
-float3 GetCurrentColor(float2 uv)
-{ return ColorMap.SampleLevel(PointClamp, uv, 0.0f).rgb; }
+float4 GetCurrentColor(float2 uv)
+{ return ColorMap.SampleLevel(PointClamp, uv, 0.0f); }
 
 //-----------------------------------------------------------------------------
 //      ヒストリーカラーを取得します.
@@ -188,21 +188,26 @@ float GetPreviousDepth(float2 uv)
 }
 
 //-----------------------------------------------------------------------------
-//      ヒストリーカラーをクリップします.
+//      ヒストリーカラーをクリップするためのバウンディングボックスを求めます.
 //-----------------------------------------------------------------------------
-float3 ClipHistoryColor(float2 uv, float3 currentColor, float3 historyColor, float gamma)
+void CalcColorBoundingBox
+(
+    float2      uv,
+    float3      curColor,
+    float       gamma,
+    out float3  minColor,
+    out float3  maxColor
+)
 {
-    const float3 currentColorYCoCg = RGBToYCoCg(currentColor);
-
     // 平均と分散を求める.
-    float3 ave = currentColorYCoCg;
-    float3 var = currentColorYCoCg * currentColorYCoCg;
+    float3 ave = curColor;
+    float3 var = curColor * curColor;
 
     [unroll] for(uint i=0; i<8; ++i)
     {
-        float3 newColorYCoCg = RGBToYCoCg(ColorMap.SampleLevel(PointClamp, uv, 0.0f, kOffsets[i]).rgb);
-        ave += newColorYCoCg;
-        var += newColorYCoCg * newColorYCoCg;
+        float3 newColor = RGBToYCoCg(ColorMap.SampleLevel(PointClamp, uv, 0.0f, kOffsets[i]).rgb);
+        ave += newColor;
+        var += newColor * newColor;
     }
 
     const float invSamples = 1.0f / 9.0f;
@@ -211,9 +216,20 @@ float3 ClipHistoryColor(float2 uv, float3 currentColor, float3 historyColor, flo
     var = sqrt(var - ave * ave) * gamma;
 
     // 分散クリッピング.
-    float3 mini = float3(ave - var);
-    float3 maxi = float3(ave + var);
-    return clamp(historyColor, YCoCgToRGB(mini), YCoCgToRGB(maxi));
+    minColor = float3(ave - var);
+    maxColor = float3(ave + var);
+}
+
+//-----------------------------------------------------------------------------
+//      AABBとの交差判定を行います.
+//-----------------------------------------------------------------------------
+float IntersectAABB(float3 dir, float3 orig, float3 mini, float3 maxi) 
+{
+    float3 invDir = rcp(dir);
+    float3 p0 = (mini - orig) * invDir;
+    float3 p1 = (maxi - orig) * invDir;
+    float3 t  = min(p0, p1);
+    return Max3(t);
 }
 
 //-----------------------------------------------------------------------------
@@ -242,19 +258,34 @@ float3 GetCurrentNeighborColor(float2 uv, float3 currentColor)
 }
 
 //-----------------------------------------------------------------------------
+//      重みを求めます.
+//-----------------------------------------------------------------------------
+float CalcHdrWeightY(float3 ycocg, float exposure = 1.0f)
+{ return rcp(ycocg.x * exposure + 4.0f); }
+
+//-----------------------------------------------------------------------------
+//      ブレンドウェイトを求めます.
+//-----------------------------------------------------------------------------
+float2 CalcBlendWeight(float historyWeight, float currentWeight, float blend)
+{
+    float blendH = (1.0f - blend) * historyWeight;
+    float blendC = blend * currentWeight;
+    return float2(blendH, blendC) * rcp(blendH + blendC);
+}
+
+//-----------------------------------------------------------------------------
 //      メインエントリーポイントです.
 //-----------------------------------------------------------------------------
 [numthreads(8, 8, 1)]
 void main(uint3 dispatchId : SV_DispatchThreadID)
 {
-    if (any(dispatchId.xy >= (uint2)MapSize)) {
-        return;
-    }
+    if (any(dispatchId.xy >= (uint2)MapSize))
+    { return; }
 
     const float2 currUV = ((float2)dispatchId.xy + 0.5f.xx) * InvMapSize;
 
     // 現在フレームのカラー.
-    float3 currColor = GetCurrentColor(currUV);
+    float4 currColor = GetCurrentColor(currUV);
     
     // 1920x1080をベースとしたスケール.
     const float sizeScale = MapSize.x / 1920.0f;
@@ -267,8 +298,8 @@ void main(uint3 dispatchId : SV_DispatchThreadID)
     float2 prevUV = currUV + (velocity * InvMapSize);
 
     // 深度値を取得.
-    float currDepth = GetCurrentDepth(currUV);
-    float prevDepth = GetPreviousDepth(prevUV + Jitter);
+    float currDepth  = GetCurrentDepth(currUV);
+    float prevDepth  = GetPreviousDepth(prevUV + Jitter);
     float depthDelta = step(currDepth, prevDepth);
 
     // 画面内かどうか?
@@ -284,22 +315,39 @@ void main(uint3 dispatchId : SV_DispatchThreadID)
     [branch]
     if (isValidHistory)
     {
-        // 生のヒストリーカラーを取得.
-        float4 rawHistoryColor = GetHistoryColor(prevUV);
+        // ヒストリーカラーを取得.
+        float4 prevColor = GetHistoryColor(prevUV);
+
+        // YCoCgに変換.
+        currColor.rgb = RGBToYCoCg(currColor.rgb);
+        prevColor.rgb = RGBToYCoCg(prevColor.rgb);
 
         // クリップ済みヒストリーカラーを取得する.
-        float3 historyColor = ClipHistoryColor(prevUV, currColor, rawHistoryColor.rgb, Gamma);
+        float3 minColor, maxColor;
+        CalcColorBoundingBox(prevUV, currColor.rgb, Gamma, minColor, maxColor);
+
+        // AABBでクリップ.
+        float t = IntersectAABB(currColor.rgb - prevColor.rgb, prevColor.rgb, minColor, maxColor);
+        prevColor.rgb = lerp(prevColor.rgb, currColor.rgb, saturate(t));
+        prevColor.rgb = clamp(prevColor.rgb, minColor, maxColor);
 
         // 重みを求める.
-        float weight = rawHistoryColor.a * velocityDelta * depthDelta;
+        float blend = BlendFactor * velocityDelta * depthDelta;
+        blend = max(blend, saturate(0.01f * prevColor.x / abs(currColor.x - prevColor.x)));
+        float  currWeight = CalcHdrWeightY(currColor.rgb);
+        float  prevWeight = CalcHdrWeightY(prevColor.rgb);
+        float2 weights    = CalcBlendWeight(prevWeight, currWeight, saturate(blend));
 
-        // 現在カラーとヒストリーカラーをブレンドして最終カラーを求める.
-        finalColor = GetFinalColor(currUV, currColor, historyColor, weight);
+        // 補間を行う.
+        finalColor = prevColor * weights.x + currColor * weights.y;
+        
+        // RGBに戻す.
+        finalColor.rgb = YCoCgToRGB(finalColor.rgb);
     }
     else
     {
         // ヒストリーバッファが無効な場合は隣接ピクセルを考慮して最終カラーを求める.
-        float3 neighborColor = GetCurrentNeighborColor(currUV, currColor);
+        float3 neighborColor = GetCurrentNeighborColor(currUV, currColor.rgb);
         finalColor = float4(neighborColor, 0.5f);
     }
 
