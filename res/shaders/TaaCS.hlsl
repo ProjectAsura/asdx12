@@ -332,13 +332,13 @@ void main(uint3 dispatchId : SV_DispatchThreadID)
         prevColor.rgb = clamp(prevColor.rgb, minColor, maxColor);
 
         // 重みを求める.
-        float blend = BlendFactor * velocityDelta * depthDelta;
+        float blend = saturate(1.0f - BlendFactor);
         blend = max(blend, saturate(0.01f * prevColor.x / abs(currColor.x - prevColor.x)));
         float  currWeight = CalcHdrWeightY(currColor.rgb);
         float  prevWeight = CalcHdrWeightY(prevColor.rgb);
         float2 weights    = CalcBlendWeight(prevWeight, currWeight, saturate(blend));
 
-        // 補間を行う.
+        // 補間処理.
         finalColor = prevColor * weights.x + currColor * weights.y;
         
         // RGBに戻す.
