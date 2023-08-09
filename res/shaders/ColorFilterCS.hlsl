@@ -9,15 +9,6 @@
 //-----------------------------------------------------------------------------
 #include "Math.hlsli"
 
-// スレッドサイズ.
-#define THREAD_SIZE 8
-
-//-----------------------------------------------------------------------------
-// Constant Values.
-//-----------------------------------------------------------------------------
-static const uint2 kThreadSize = uint2(THREAD_SIZE, THREAD_SIZE);
-
-
 ///////////////////////////////////////////////////////////////////////////////
 // CbColorFilter constant buffer.
 ///////////////////////////////////////////////////////////////////////////////
@@ -37,13 +28,13 @@ RWTexture2D<float4> Output  : register(u0);
 //-----------------------------------------------------------------------------
 //      メインエントリーポイントです.
 //-----------------------------------------------------------------------------
-[numthreads(THREAD_SIZE, THREAD_SIZE, 1)]
+[numthreads(8, 8, 1)]
 void main
 (
-    uint3 groupId       : SV_GroupID,
-    uint3 groupThreadId : SV_GroupThreadID
+    uint3 dispatchId : SV_DispatchThreadID,
+    uint  groupIndex : SV_GroupIndex
 )
 {
-    uint2 id = RemapThreadId(kThreadSize, DispatchDim, 16, groupId.xy, groupThreadId.xy);
+    uint2 id = RemapLane8x8(dispatchId.xy, groupIndex);
     Output[id] = mul(ColorMatrix, Input[id]);
 }

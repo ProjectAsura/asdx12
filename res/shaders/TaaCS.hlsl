@@ -248,7 +248,8 @@ float3 GetCurrentNeighborColor(float2 uv, float3 currentColor)
 {
     const float centerWeight = 4.0f;
     float3 accColor = currentColor * centerWeight;
-    [unroll] for(uint i=0; i<4; ++i)
+    [unroll] 
+    for(uint i=0; i<4; ++i)
     {
         accColor += ColorMap.SampleLevel(PointClamp, uv, 0.0f, kOffsets[i]).rgb;
     }

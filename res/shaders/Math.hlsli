@@ -1524,74 +1524,6 @@ float4x4 CreateRotationZ(float radian)
 }
 
 //-----------------------------------------------------------------------------
-//      スレッドグループのタイリングを行いスレッドIDを再マッピングします.
-//-----------------------------------------------------------------------------
-uint2 RemapThreadId
-(
-    const uint2 threadGroupDim,     // [numthreads(A, B, 1)]のAとBの値. (8, 8, 1)の64で起動するのが推奨.
-    const uint2 dispatchDim,        // ID3D12GraphicsCommandList::Dipatch(X, Y, Z)で渡した(X, Y)の値.
-    const uint  maxTileWidth,       // ユーザーパラメータ. 8, 16, or 32が推奨値.
-    const uint2 groupId,            // グループID(SV_GroupID).
-    const uint2 groupThreadId       // グループスレッドID(SV_GroupThreadID).
-)
-{
-    // Louis Bavoil, "Optimizing Compute Shaders for L2 Locality using Thread-Group ID Swizzling"
-    // https://developer.nvidia.com/blog/optimizing-compute-shaders-for-l2-locality-using-thread-group-id-swizzling/
-    // July 16, 2020.
-
-    // 1タイル内のスレッドグループの総数.
-    const uint countThreadGroups = maxTileWidth * dispatchDim.y;
-
-    // 考えうる完全なタイルの数.
-    const uint countPerfectTiles = dispatchDim.x / maxTileWidth;
-
-    // 完全なタイルにおけるスレッドグループの総数.
-    const uint totalThreadGroups = countPerfectTiles * maxTileWidth * dispatchDim.y;
- 
-    // 1次元にする.
-    const uint threadGroupIdFlattened = dispatchDim.x * groupId.y + groupId.x;
-
-    // 現在のスレッドグループからタイルIDへのマッピング.
-    const uint tileId             = threadGroupIdFlattened / countThreadGroups;
-    const uint localThreadGroupId = threadGroupIdFlattened % countThreadGroups;
-
-    // タイルの横幅で除算と剰余算を行って X と Y を算出.
-    uint localThreadGroupIdY;
-    uint localThreadGroupIdX;
- 
-    if(totalThreadGroups <= threadGroupIdFlattened)
-    {
-        // 最後のタイルに不完全な次元があり、最後のタイルからのCTAが起動された場合にのみ実行されるパス.
-        uint lastTile = dispatchDim.x % maxTileWidth;
-
-        localThreadGroupIdY = localThreadGroupId / lastTile;
-        localThreadGroupIdX = localThreadGroupId % lastTile;
-    }
-    else
-    {
-        localThreadGroupIdY = localThreadGroupId / maxTileWidth;
-        localThreadGroupIdX = localThreadGroupId % maxTileWidth;
-    }
-
-    // 1次元にする.
-    const uint swizzledThreadGroupIdFlattened = tileId * maxTileWidth
-      + localThreadGroupIdY * dispatchDim.x
-      + localThreadGroupIdX;
-
-    // 起動数で割り，グループIDを求める.
-    uint2 swizzledThreadGroupId;
-    swizzledThreadGroupId.y = swizzledThreadGroupIdFlattened / dispatchDim.x;
-    swizzledThreadGroupId.x = swizzledThreadGroupIdFlattened % dispatchDim.x;
-
-    // スレッドグループ数から起動スレッドIDを求める.
-    uint2 swizzledThreadId;
-    swizzledThreadId.x = threadGroupDim.x * swizzledThreadGroupId.x + groupThreadId.x;
-    swizzledThreadId.y = threadGroupDim.y * swizzledThreadGroupId.y + groupThreadId.y;
-
-    return swizzledThreadId;
-}
-
-//-----------------------------------------------------------------------------
 //      パッキングされたプリミティブ番号を展開します.
 //-----------------------------------------------------------------------------
 uint3 UnpackPrimitiveIndex(uint packed)
@@ -1660,13 +1592,6 @@ uint4 UnpackUshort4(uint2 packed)
     return uint4(
         UnpackUshort2(packed.x),
         UnpackUshort2(packed.y));
-#if 0
-//    return uint4(
-//        packed.x & 0xffff,
-//        (packed.x >> 16) & 0xffff,
-//        packed.y & 0xffff,
-//        (packed.y >> 16) & 0xffff);
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1969,5 +1894,36 @@ uint CalcMortonCode3(uint x, uint y, uint z)
 //-----------------------------------------------------------------------------
 float IsInScreen(float2 uv)
 { return float(all(saturate(uv) == uv)); }
+
+//-----------------------------------------------------------------------------
+//      ビットフィールドを抽出します.
+//-----------------------------------------------------------------------------
+uint BitfieldExtract(uint src, uint offset, uint bits)
+{
+    uint mask = (1u << bits) - 1u;
+    return (src >> offset) & mask;
+}
+
+//-----------------------------------------------------------------------------
+//      ビットフィールドを挿入します.
+//-----------------------------------------------------------------------------
+uint BitfieldInsert(uint src, uint insert, uint bits) 
+{
+    uint mask = (1u << bits) - 1u;
+    return (insert & mask) | (src & (~mask));
+}
+
+//-----------------------------------------------------------------------------
+//      モートンオーダーにリマップします.
+//-----------------------------------------------------------------------------
+uint2 RemapLane8x8(uint2 dispatchId, uint groupIndex)
+{
+    uint2 remappedGroupThreadId;
+    remappedGroupThreadId.x = BitfieldInsert(BitfieldExtract(groupIndex, 2u, 3u), groupIndex, 1u);
+    remappedGroupThreadId.y = BitfieldInsert(BitfieldExtract(groupIndex, 3u, 3u), BitfieldExtract(groupIndex, 1u, 2u), 2u);
+
+    int2 dispatchGroupId = int2(dispatchId) / 8; // 8未満切り捨て.
+    return dispatchGroupId * 8 + remappedGroupThreadId;
+}
 
 #endif//ASDX_MATH_HLSLI
