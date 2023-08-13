@@ -1922,7 +1922,7 @@ uint2 RemapLane8x8(uint2 dispatchId, uint groupIndex)
     remappedGroupThreadId.x = BitfieldInsert(BitfieldExtract(groupIndex, 2u, 3u), groupIndex, 1u);
     remappedGroupThreadId.y = BitfieldInsert(BitfieldExtract(groupIndex, 3u, 3u), BitfieldExtract(groupIndex, 1u, 2u), 2u);
 
-    int2 dispatchGroupId = int2(dispatchId) / 8; // 8未満切り捨て.
+    int2   dispatchGroupId = int2(dispatchId) / 8; // 8未満切り捨て.
     return dispatchGroupId * 8 + remappedGroupThreadId;
 }
 

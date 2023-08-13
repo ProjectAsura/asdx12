@@ -82,7 +82,7 @@ float3 YCoCgToRGB( float3 YCoCg )
     float R  = Y + Co-Cg;
     float G  = Y + Cg;
     float B  = Y - Co-Cg;
-    return float3(R,G,B);
+    return float3(R, G, B);
 }
 
 //-----------------------------------------------------------------------------
