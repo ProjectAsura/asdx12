@@ -221,18 +221,6 @@ void CalcColorBoundingBox
 }
 
 //-----------------------------------------------------------------------------
-//      AABBとの交差判定を行います.
-//-----------------------------------------------------------------------------
-float IntersectAABB(float3 dir, float3 orig, float3 mini, float3 maxi) 
-{
-    float3 invDir = rcp(dir);
-    float3 p0 = (mini - orig) * invDir;
-    float3 p1 = (maxi - orig) * invDir;
-    float3 t  = min(p0, p1);
-    return Max3(t);
-}
-
-//-----------------------------------------------------------------------------
 //      最終カラーを求めます.
 //-----------------------------------------------------------------------------
 float4 GetFinalColor(float2 uv, float3 currentColor, float3 historyColor, float weight)

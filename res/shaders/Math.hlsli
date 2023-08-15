@@ -1301,6 +1301,18 @@ bool RayBoxHit(float3 rayOrigin, float3 invRayDir, float3 boxMin, float3 boxMax)
 }
 
 //-----------------------------------------------------------------------------
+//      AABBとの交差判定を行い, 交点までの距離を返却します.
+//-----------------------------------------------------------------------------
+float IntersectAABB(float3 dir, float3 orig, float3 mini, float3 maxi)
+{
+    float3 invDir = rcp(dir);
+    float3 p0 = (mini - orig) * invDir;
+    float3 p1 = (maxi - orig) * invDir;
+    float3 t = min(p0, p1);
+    return Max3(t);
+}
+
+//-----------------------------------------------------------------------------
 //      グロシネスに変換します.
 //-----------------------------------------------------------------------------
 float RoughnessToGlossiness(float roughness)
@@ -1925,5 +1937,67 @@ uint2 RemapLane8x8(uint2 dispatchId, uint groupIndex)
     int2   dispatchGroupId = int2(dispatchId) / 8; // 8未満切り捨て.
     return dispatchGroupId * 8 + remappedGroupThreadId;
 }
+
+//-----------------------------------------------------------------------------
+//      RGBからYCoCgに変換します.
+//-----------------------------------------------------------------------------
+float4 RGBToYCoCg(float4 value)
+{
+    float Y  = dot(value.rgb, float3( 1, 2,  1)) * 0.25;
+    float Co = dot(value.rgb, float3( 2, 0, -2)) * 0.25 + (0.5 * 256.0 / 255.0);
+    float Cg = dot(value.rgb, float3(-1, 2, -1)) * 0.25 + (0.5 * 256.0 / 255.0);
+    return float4(Y, Co, Cg, value.a);
+}
+
+//-----------------------------------------------------------------------------
+//      YCoCgからRGBに変換します.
+//-----------------------------------------------------------------------------
+float4 YCoCgToRGB(float4 YCoCg)
+{
+    float Y  = YCoCg.x;
+    float Co = YCoCg.y - (0.5 * 256.0 / 255.0);
+    float Cg = YCoCg.z - (0.5 * 256.0 / 255.0);
+    float R  = Y + Co - Cg;
+    float G  = Y + Cg;
+    float B  = Y - Co - Cg;
+    return float4(R, G, B, YCoCg.a);
+}
+
+float3 Blend3(float3 x, float3 yOffset)
+{
+    // https://developer.nvidia.com/sites/all/modules/custom/gpugems/books/GPUGems/gpugems_ch08.html.
+    float3 y = 1.0f.xxx - Pow2(x);
+    return saturate(y - yOffset);
+}
+
+float3 ColorizeZucconi( float x )
+{
+    // https://www.shadertoy.com/view/ls2Bz1
+    // Original solution converts visible wavelengths of light (400-700 nm) (represented as x = [0; 1]) to RGB colors
+    x = saturate(x) * 0.85;
+
+    const float3 c1 = float3( 3.54585104, 2.93225262, 2.41593945 );
+    const float3 x1 = float3( 0.69549072, 0.49228336, 0.27699880 );
+    const float3 y1 = float3( 0.02312639, 0.15225084, 0.52607955 );
+
+    const float3 c2 = float3( 3.90307140, 3.21182957, 3.96587128 );
+    const float3 x2 = float3( 0.11748627, 0.86755042, 0.66077860 );
+    const float3 y2 = float3( 0.84897130, 0.88445281, 0.73949448 );
+
+    return Blend3(c1 * (x - x1), y1) + Blend3(c2 * (x - x2), y2);
+}
+
+//-----------------------------------------------------------------------------
+//      Karisのアンチファイアフライウェイトを計算します.
+//-----------------------------------------------------------------------------
+float KarisAntiFireflyWeight(float3 value, float exposure = 1.0f)
+{ return rcp(4.0f + LuminanceBT709(value) * exposure); }
+
+//-----------------------------------------------------------------------------
+//      Karisのアンチファイアフライウェイトを計算します.
+//-----------------------------------------------------------------------------
+float KarisAntiFireflyWeightY(float luma, float exposure = 1.0f)
+{ return rcp(4.0f + luma * exposure); }
+
 
 #endif//ASDX_MATH_HLSLI

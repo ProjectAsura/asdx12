@@ -110,6 +110,26 @@ float3 GetSpecularDomiantDir(float3 N, float3 R, float roughness)
 }
 
 //-----------------------------------------------------------------------------
+//      スペキュラーローブの半角の正接を求めます.
+//-----------------------------------------------------------------------------
+float GetSpecularLobeTanHalfAngle( float linearRoughness, float percentOfVolume = 0.75 )
+{
+    // Moving Frostbite to PBR v3.2 p.72
+    float a = linearRoughness * linearRoughness;
+    return a * percentOfVolume / ( 1.0 - percentOfVolume );
+}
+
+//-----------------------------------------------------------------------------
+//      スペキュラーローブの半角を求めます.
+//-----------------------------------------------------------------------------
+float GetSpecularLobeHalfAngle(float linearRoughess, float percentOfVolume = 0.75f)
+{
+    // Moving Frostbite to PBR v3.2 p.72
+    float tangent = GetSpecularLobeTanHalfAngle(linearRoughess, percentOfVolume);
+    return atan(tangent);
+}
+
+//-----------------------------------------------------------------------------
 //      スペキュラーAOを計算します.
 //-----------------------------------------------------------------------------
 float CalcSpecularAO(float NoV, float ao, float roughness)

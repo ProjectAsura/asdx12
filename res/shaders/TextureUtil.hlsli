@@ -6,6 +6,16 @@
 #ifndef ASDX_TEXTURE_UTIL_HLSLI
 #define ASDX_TEXTURE_UTIL_HLSLI
 
+
+///////////////////////////////////////////////////////////////////////////////
+// BilinearData structure
+///////////////////////////////////////////////////////////////////////////////
+struct BilinearData
+{
+    float2 origin;
+    float2 weight;
+};
+
 //-----------------------------------------------------------------------------
 //      単なる視差マッピング.
 //-----------------------------------------------------------------------------
@@ -70,14 +80,14 @@ float SampleMinLodFilter2D
 (
     Texture2D       sampledTex,
     uint2           sampledTexDim,
-    Texture2D       minlodTex,
-    uint2           minlodTexDim
+    Texture2D       minLodTex,
+    uint2           minLodTexDim,
     float2          uv,
     SamplerState    smp,
     float4          filterSlope
 )
 {
-    uint2 minLodAspect = sampledTexDim / minlodTexDim;
+    uint2 minLodAspect = sampledTexDim / minLodTexDim;
 
     int slopeU = filterSlope.x;
     int slopeV = filterSlope.y;
@@ -87,14 +97,14 @@ float SampleMinLodFilter2D
     { slopeV *= (minLodAspect.y / minLodAspect.x); }
 
     float2 absoluteCoords = float2(minLodTexDim) * uv;
-    float2 clampedCoords = round(absoluteCoords) / float(minLodTexDim);
-    float4 rawSamples = minlodtex.Gather(smp, clampedCoords).zwyx;
+    float2 clampedCoords = round(absoluteCoords) / float2(minLodTexDim);
+    float4 rawSamples = minLodTex.Gather(smp, clampedCoords).zwyx;
 
     float fracU = frac(absoluteCoords.x);
-    float fracV = 1.0f - frac(absoluteCoord.y);
+    float fracV = 1.0f - frac(absoluteCoords.y);
 
-    float offsetU = filterSlopes.z;
-    float offsetV = filterSlopes.w;
+    float offsetU = filterSlope.z;
+    float offsetV = filterSlope.w;
 
     int nearestTexel = ((fracU < 0.5f) ? 0 : 1) | ((fracV < 0.5f) ? 0 : 2);
     float gradientU = (fracU < 0.5f) ? fracU - offsetU : 1.0f - fracU - offsetU;
@@ -161,6 +171,129 @@ float FarestDepthDownSample4(Texture2D<float> depthBuffer, SamplerState depthSam
 
     float4 maxDepth = max(depth0, max(depth1, max(depth2, depth3)));
     return max(maxDepth.x, max(maxDepth.y, max(maxDepth.z, maxDepth.w)));
+}
+
+//-----------------------------------------------------------------------------
+//      モーションリプロジェクションを行います.
+//-----------------------------------------------------------------------------
+float2 MotionReprojection(float2 currUV, float2 motionVector)
+{ return currUV + motionVector; }
+
+//-----------------------------------------------------------------------------
+//      ヒットポイントリプロジェクションを行います.
+//-----------------------------------------------------------------------------
+float2 HitPointReprojection
+(
+    float3   origVS,                // 反射レイの起点.
+    float    reflectedRayLength,    // 衝突位置までの反射レイの長さ.
+    float4x4 invView,               // ビュー行列の逆行列.
+    float4x4 prevViewProj           // 前フレームのビュー射影行列.
+)
+{
+    float3 posVS = origVS;
+    float  primaryRayLength = length(posVS);
+    posVS = normalize(posVS);   // 視線ベクトル方向.
+
+    // Virtual Pointを求める.
+    float rayLength = primaryRayLength + reflectedRayLength;
+    posVS *= rayLength;
+    
+    // 前フレームでのUV座標を求める.
+    float3 currPosWS = mul(invView, float4(posVS, 1.0f)).xyz;
+    float4 prevPosCS = mul(prevViewProj, float4(currPosWS, 1.0f));
+    float2 prevUV = (prevPosCS.xy / prevPosCS.w) * float2(0.5f, -0.5f) + 0.5f.xx;
+    return prevUV;
+}
+
+//-----------------------------------------------------------------------------
+//      リプロジェクションが有効かどうかチェックします.
+//-----------------------------------------------------------------------------
+bool IsValidReprojection
+(
+    int2        pixelPos,           // ピクセル位置 [0, 0] - [ScreenWidth, ScreenHeight]
+    float3      prevPosWS,          // 前フレームのワールド空間位置.
+    float3      prevNormal,         // 前フレームのワールド空間法線.
+    float3      currPosWS,          // 現フレームのワールド空間位置.
+    float3      currNormal,         // 現フレームのワールド空間法線.
+    float       currLinearZ,        // 現フレームの線形深度.
+    const int2  screenSize,         // スクリーンサイズ.
+    const float distanceThreshold   // 平面距離の閾値.
+)
+{
+    // 画面ないかどうか判定.
+    if (any(pixelPos < int2(0, 0)) || any(pixelPos >= screenSize))
+    { return false; }
+
+    // 裏面ならヒストリーを棄却.
+    if (dot(currNormal, prevNormal) < 0.0f)
+    { return false; }
+
+    // 平面距離が許容範囲かチェック.
+    float3 posDiff      = currPosWS - prevPosWS;
+    float  planeDist1   = abs(dot(posDiff, prevNormal));
+    float  planeDist2   = abs(dot(posDiff, currNormal));
+    float  maxPlaneDist = max(planeDist1, planeDist2);
+    return (maxPlaneDist / currLinearZ) > distanceThreshold;
+}
+
+//-----------------------------------------------------------------------------
+//      バイリニア補間データを取得します.
+//-----------------------------------------------------------------------------
+BilinearData GetBilinearFilter(float2 uv, float2 screenSize)
+{
+    BilinearData result;
+    result.origin = floor(uv * screenSize - 0.5f);
+    result.weight = frac (uv * screenSize - 0.5f);
+    return result;
+}
+
+//-----------------------------------------------------------------------------
+//      カスタムウェイトを考慮したバイリニア補間のウェイトを取得します.
+//-----------------------------------------------------------------------------
+float4 GetBlinearCustomWeigths(BilinearData f, float4 customWeights)
+{
+    float4 weights;
+    weights.x = (1.0f - f.weight.x) * (1.0f - f.weight.y);
+    weights.y = f.weight.x * (1.0f - f.weight.y);
+    weights.z = (1.0f - f.weight.x) * f.weight.y;
+    weights.w = f.weight.x * f.weight.y;
+    return weights * customWeights;
+}
+
+//-----------------------------------------------------------------------------
+//      カスタムウェイトによるバイリニア補間を適用します.
+//-----------------------------------------------------------------------------
+float ApplyBilienarCustomWeigths(float s00, float s10, float s01, float s11, float4 w, bool normalize = true)
+{
+    float r = s00 * w.x + s10 * w.y + s01 * w.z + s11 * w.w;
+    return r * (normalize ? rcp(dot(w, 1.0f)) : 1.0f);
+}
+
+//-----------------------------------------------------------------------------
+//      カスタムウェイトによるバイリニア補間を適用します.
+//-----------------------------------------------------------------------------
+float2 ApplyBilienarCustomWeigths(float2 s00, float2 s10, float2 s01, float2 s11, float4 w, bool normalize = true)
+{
+    float2 r = s00 * w.x + s10 * w.y + s01 * w.z + s11 * w.w;
+    return r * (normalize ? rcp(dot(w, 1.0f)) : 1.0f);
+}
+
+//-----------------------------------------------------------------------------
+//      カスタムウェイトによるバイリニア補間を適用します.
+//-----------------------------------------------------------------------------
+float3 ApplyBilienarCustomWeigths(float3 s00, float3 s10, float3 s01, float3 s11, float4 w, bool normalize = true)
+{
+    float3 r = s00 * w.x + s10 * w.y + s01 * w.z + s11 * w.w;
+    return r * (normalize ? rcp(dot(w, 1.0f)) : 1.0f);
+}
+
+//-----------------------------------------------------------------------------
+//      カスタムウェイトによるバイリニア補間を適用します.
+//-----------------------------------------------------------------------------
+float4 ApplyBilienarCustomWeigths(float4 s00, float4 s10, float4 s01, float4 s11, float4 w, bool normalize = true)
+{
+    float4 r = s00 * w.x + s10 * w.y + s01 * w.z + s11 * w.w;
+    return r * (normalize ? rcp(dot(w, 1.0f)) : 1.0f);
 }
 
 #endif//ASDX_TEXTURE_UTIL_HLSLI
