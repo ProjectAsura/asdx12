@@ -14,7 +14,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 cbuffer CbColorFilter : register(b0)
 {
-    uint2       DispatchDim;
+    uint2       TargetSize;
     float2      InvTargetSize;
     float4x4    ColorMatrix;
 };
@@ -35,6 +35,9 @@ void main
     uint  groupIndex : SV_GroupIndex
 )
 {
-    uint2 id = RemapLane8x8(dispatchId.xy, groupIndex);
-    Output[id] = mul(ColorMatrix, Input[id]);
+    uint2 remappedId = RemapLane8x8(dispatchId.xy, groupIndex);
+    if (any(remappedId >= TargetSize)) 
+    { return; }
+
+    Output[remappedId] = mul(ColorMatrix, Input[remappedId]);
 }

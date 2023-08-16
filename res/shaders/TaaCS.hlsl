@@ -266,12 +266,14 @@ float2 CalcBlendWeight(float historyWeight, float currentWeight, float blend)
 //      メインエントリーポイントです.
 //-----------------------------------------------------------------------------
 [numthreads(8, 8, 1)]
-void main(uint3 dispatchId : SV_DispatchThreadID)
+void main(uint3 dispatchId : SV_DispatchThreadID, uint groupIndex : SV_GroupIndex)
 {
-    if (any(dispatchId.xy >= (uint2)MapSize))
+    uint2 remappedId = RemapLane8x8(dispatchId.xy, groupIndex);
+
+    if (any(remappedId >= (uint2)MapSize))
     { return; }
 
-    const float2 currUV = ((float2)dispatchId.xy + 0.5f.xx) * InvMapSize;
+    const float2 currUV = ((float2)remappedId + 0.5f.xx) * InvMapSize;
 
     // 現在フレームのカラー.
     float4 currColor = GetCurrentColor(currUV);
@@ -298,52 +300,50 @@ void main(uint3 dispatchId : SV_DispatchThreadID)
     // 速度の差分，深度の差分，画面範囲であるか，いずれかすくなくとも１つがゼロなら無効と判断.
     bool isValidHistory = (velocityDelta * depthDelta * inScreen) > 0.0f;
 
-    float4 finalColor;
-
-    // ヒストリーバッファが有効な場合.
-    [branch]
-    if (isValidHistory)
-    {
-        // ヒストリーカラーを取得.
-        float4 prevColor = GetHistoryColor(prevUV);
-
-        // YCoCgに変換.
-        currColor.rgb = RGBToYCoCg(currColor.rgb);
-        prevColor.rgb = RGBToYCoCg(prevColor.rgb);
-
-        // クリップ済みヒストリーカラーを取得する.
-        float3 minColor, maxColor;
-        CalcColorBoundingBox(prevUV, currColor.rgb, Gamma, minColor, maxColor);
-
-        // AABBでクリップ.
-        float t = IntersectAABB(currColor.rgb - prevColor.rgb, prevColor.rgb, minColor, maxColor);
-        prevColor.rgb = lerp(prevColor.rgb, currColor.rgb, saturate(t));
-        prevColor.rgb = clamp(prevColor.rgb, minColor, maxColor);
-
-        // 重みを求める.
-        float blend = saturate(1.0f - BlendFactor);
-        blend = max(blend, saturate(0.01f * prevColor.x / abs(currColor.x - prevColor.x)));
-        float  currWeight = CalcHdrWeightY(currColor.rgb);
-        float  prevWeight = CalcHdrWeightY(prevColor.rgb);
-        float2 weights    = CalcBlendWeight(prevWeight, currWeight, saturate(blend));
-
-        // 補間処理.
-        finalColor = prevColor * weights.x + currColor * weights.y;
-        
-        // RGBに戻す.
-        finalColor.rgb = YCoCgToRGB(finalColor.rgb);
-    }
-    else
-    {
-        // ヒストリーバッファが無効な場合は隣接ピクセルを考慮して最終カラーを求める.
+    // ヒストリーバッファが無効な場合は隣接ピクセルを考慮して最終カラーを求める.
+    if (!isValidHistory) {
         float3 neighborColor = GetCurrentNeighborColor(currUV, currColor.rgb);
-        finalColor = float4(neighborColor, 0.5f);
+        float4 finalColor    = SaturateFloat(float4(neighborColor, 0.5f));
+
+        // 出力.
+        OutColorMap  [remappedId] = float4(finalColor.rgb, 1.0f);
+        OutHistoryMap[remappedId] = finalColor;
+        return;
     }
+
+    // ヒストリーカラーを取得.
+    float4 prevColor = GetHistoryColor(prevUV);
+
+    // YCoCgに変換.
+    currColor.rgb = RGBToYCoCg(currColor.rgb);
+    prevColor.rgb = RGBToYCoCg(prevColor.rgb);
+
+    // クリップ済みヒストリーカラーを取得する.
+    float3 minColor, maxColor;
+    CalcColorBoundingBox(prevUV, currColor.rgb, Gamma, minColor, maxColor);
+
+    // AABBでクリップ.
+    float t = IntersectAABB(currColor.rgb - prevColor.rgb, prevColor.rgb, minColor, maxColor);
+    prevColor.rgb = lerp (prevColor.rgb, currColor.rgb, saturate(t));
+    prevColor.rgb = clamp(prevColor.rgb, minColor, maxColor);
+
+    // 重みを求める.
+    float blend = saturate(1.0f - BlendFactor);
+    blend = max(blend, saturate(0.01f * prevColor.x / abs(currColor.x - prevColor.x)));
+    float  currWeight = CalcHdrWeightY(currColor.rgb);
+    float  prevWeight = CalcHdrWeightY(prevColor.rgb);
+    float2 weights    = CalcBlendWeight(prevWeight, currWeight, saturate(blend));
+
+    // 補間処理.
+    float4 finalColor = prevColor * weights.x + currColor * weights.y;
+
+    // RGBに戻す.
+    finalColor.rgb = YCoCgToRGB(finalColor.rgb);
 
     // NaNを潰しておく.
     finalColor = SaturateFloat(finalColor);
 
     // 出力.
-    OutColorMap  [dispatchId.xy] = float4(finalColor.rgb, 1.0f);
-    OutHistoryMap[dispatchId.xy] = finalColor;
+    OutColorMap  [remappedId] = float4(finalColor.rgb, 1.0f);
+    OutHistoryMap[remappedId] = finalColor;
 }

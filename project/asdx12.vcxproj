@@ -214,6 +214,7 @@
     <None Include="..\include\fnd\asdxMath.inl" />
     <None Include="..\res\shaders\BRDF.hlsli" />
     <None Include="..\res\shaders\Math.hlsli" />
+    <None Include="..\res\shaders\Samplers.hlsli" />
     <None Include="..\res\shaders\Shadow.hlsli" />
     <None Include="..\res\shaders\TextureUtil.hlsli" />
   </ItemGroup>
@@ -277,10 +278,6 @@
     <FxCompile Include="..\res\shaders\TaaCS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
-    </FxCompile>
-    <FxCompile Include="..\res\shaders\TaaPS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
     </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
