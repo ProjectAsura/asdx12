@@ -29,7 +29,8 @@ static const float FLT_MAX   = 3.402823466e+38f; // 浮動小数の最大値.
 static const float F_PI      = 3.1415926535897932384626433832795f;
 static const float F_2PI     = 6.283185307179586476925286766559f;
 static const float F_1DIVPI  = 0.31830988618379067153776752674503f;
-static const float F_1DIV2PI = 0.15915494309189533576888376337251;
+static const float F_1DIV2PI = 0.15915494309189533576888376337251f;
+static const float F_PIDIV2  = 1.5707963267948966192313216916398f;
 static const float F_DITHER_LIST[4][4] = {
     { 0.37647f, 0.87450f, 0.50196f, 0.99000f },
     { 0.62352f, 0.12549f, 0.75294f, 0.25098f },
@@ -426,6 +427,88 @@ float4 smootherstep(float4 a, float4 b, float4 x)
     x = saturate(LinearStep(a, b, x));
     return (x * x * x * (x * (x * 6.0f - 15.0f) + 10.0f));
  }
+
+//-----------------------------------------------------------------------------
+//      平方根を近似計算します.
+//-----------------------------------------------------------------------------
+float FastSqrt(float x)
+{
+    // [Drobot2014a] Low Level Optimizations for GCN
+    // https://blog.selfshadow.com/publications/s2016-shading-course/activision/s2016_pbs_activision_occlusion.pdf slide 63
+    return asfloat(0x1fbd1df5 + (asint(x) >> 1));
+}
+
+//-----------------------------------------------------------------------------
+//      アークコサインを近似計算します.
+//-----------------------------------------------------------------------------
+float FastAcos(float x)
+{
+    // [Lagarde 2014] Sebastien Lagarde
+    // "Inverse trigonometric functions GPU optimization for AMD GCN architecture"
+    // https://seblagarde.wordpress.com/2014/12/01/inverse-trigonometric-functions-gpu-optimization-for-amd-gcn-architecture/
+    
+    // max absolute error 9.0x10^-3
+    // Eberly's polynomial degree 1 - respect bounds
+    // 4 VGPR, 12 FR (8 FR, 1 QR), 1 scalar
+    // input [-1, 1] and output [0, PI]
+    float x   = abs(x);
+    float ret = -0.156583 * x + F_PIDIV2;
+    ret *= FastSqrt(1.0 - x);
+    return (x >= 0) ? ret : F_PI - ret;
+}
+
+//-----------------------------------------------------------------------------
+//      アークサインを近似計算します.
+//-----------------------------------------------------------------------------
+float FastAsin(float x)
+{
+    // [Lagarde 2014] Sebastien Lagarde
+    // "Inverse trigonometric functions GPU optimization for AMD GCN architecture"
+    // https://seblagarde.wordpress.com/2014/12/01/inverse-trigonometric-functions-gpu-optimization-for-amd-gcn-architecture/
+    
+    // Same cost as Acos + 1 FR
+    // Same error
+    // input [-1, 1] and output [-PI/2, PI/2]
+    return F_PIDIV2 - FastAcos(x);
+}
+
+//-----------------------------------------------------------------------------
+//      正の値のアークタンジェントを近似計算します.
+//-----------------------------------------------------------------------------
+float FastAtanPos(float x)
+{
+    // [Lagarde 2014] Sebastien Lagarde
+    // "Inverse trigonometric functions GPU optimization for AMD GCN architecture"
+    // https://seblagarde.wordpress.com/2014/12/01/inverse-trigonometric-functions-gpu-optimization-for-amd-gcn-architecture/
+    
+    // max absolute error 1.3x10^-3
+    // Eberly's odd polynomial degree 5 - respect bounds
+    // 4 VGPR, 14 FR (10 FR, 1 QR), 2 scalar
+    // input [0, infinity] and output [0, PI/2]
+    const float kHalfPi = 1.570796;
+    float t0 = (x < 1.0f) ? x : 1.0f / x;
+    float t1 = t0 * t0;
+    float poly = 0.0872929f;
+    poly = -0.301895f + poly * t1;
+    poly = 1.0f + poly * t1;
+    poly = poly * t0;
+    return (x < 1.0f) ? poly : kHalfPi - poly;
+}
+
+//-----------------------------------------------------------------------------
+//      アークタンジェントを近似計算します.
+//-----------------------------------------------------------------------------
+float FastAtan(float x)
+{
+    // [Lagarde 2014] Sebastien Lagarde
+    // "Inverse trigonometric functions GPU optimization for AMD GCN architecture"
+    // https://seblagarde.wordpress.com/2014/12/01/inverse-trigonometric-functions-gpu-optimization-for-amd-gcn-architecture/
+
+    // 4 VGPR, 16 FR (12 FR, 1 QR), 2 scalar
+    // input [-infinity, infinity] and output [-PI/2, PI/2]
+    float t0 = FastAtanPos(abs(x));
+    return (x < 0.0f) ? -t0 : t0;
+}
 
 //-----------------------------------------------------------------------------
 //      RGBE形式に圧縮します.

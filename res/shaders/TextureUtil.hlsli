@@ -296,4 +296,44 @@ float4 ApplyBilienarCustomWeigths(float4 s00, float4 s10, float4 s01, float4 s11
     return r * (normalize ? rcp(dot(w, 1.0f)) : 1.0f);
 }
 
+//-----------------------------------------------------------------------------
+//      Catmull-Rom フィルタリング.
+//-----------------------------------------------------------------------------
+float4 BicubicSampleCatmullRom(Texture2D map, SamplerState smp, float2 uv, float2 mapSize)
+{
+    const float2 kInvMapSize = rcp(mapSize);
+    float2 samplePos = uv * mapSize;
+    float2 tc = floor(samplePos - 0.5f) + 0.5f;
+    float2 f  = samplePos - tc;
+    float2 f2 = f * f;
+    float2 f3 = f * f2;
+
+    float2 w0 = f2 - 0.5f * (f3 + f);
+    float2 w1 = 1.5f * f3 - 2.5f * f2 + 1;
+    float2 w3 = 0.5f * (f3 - f2);
+    float2 w2 = 1 - w0 - w1 - w3;
+
+    float2 w12 = w1 + w2;
+
+    float2 tc0  = (tc - 1) * kInvMapSize;
+    float2 tc12 = (tc + w2 / w12) * kInvMapSize;
+    float2 tc3  = (tc + 2) * kInvMapSize;
+
+    float4 result = float4(0.0f, 0.0f, 0.0f, 0.0f);
+
+    result += map.SampleLevel(smp, float2(tc0.x,  tc0.y),  0) * (w0.x  * w0.y);
+    result += map.SampleLevel(smp, float2(tc0.x,  tc12.y), 0) * (w0.x  * w12.y);
+    result += map.SampleLevel(smp, float2(tc0.x,  tc3.y),  0) * (w0.x  * w3.y);
+
+    result += map.SampleLevel(smp, float2(tc12.x, tc0.y),  0) * (w12.x * w0.y);
+    result += map.SampleLevel(smp, float2(tc12.x, tc12.y), 0) * (w12.x * w12.y);
+    result += map.SampleLevel(smp, float2(tc12.x, tc3.y),  0) * (w12.x * w3.y);
+
+    result += map.SampleLevel(smp, float2(tc3.x,  tc0.y),  0) * (w3.x * w0.y);
+    result += map.SampleLevel(smp, float2(tc3.x,  tc12.y), 0) * (w3.x * w12.y);
+    result += map.SampleLevel(smp, float2(tc3.x,  tc3.y),  0) * (w3.x * w3.y);
+
+    return max(result, 0.0f.xxxx);
+}
+
 #endif//ASDX_TEXTURE_UTIL_HLSLI

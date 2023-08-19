@@ -8,6 +8,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include "Math.hlsli"
+#include "TextureUtil.hlsli"
 
 #ifndef ENABLE_REVERSE_Z
 #define ENABLE_REVERSE_Z    (0)
@@ -59,70 +60,6 @@ static const int2 kOffsets[8] = {
     int2(-1,  0)
 };
 
-
-//-----------------------------------------------------------------------------
-//      RGBからYCoCgに変換します.
-//-----------------------------------------------------------------------------
-float3 RGBToYCoCg( float3 RGB )
-{
-    float Y  = dot(RGB, float3(  1, 2,  1 )) * 0.25;
-    float Co = dot(RGB, float3(  2, 0, -2 )) * 0.25 + ( 0.5 * 256.0/255.0 );
-    float Cg = dot(RGB, float3( -1, 2, -1 )) * 0.25 + ( 0.5 * 256.0/255.0 );
-    return float3(Y, Co, Cg);
-}
-
-//-----------------------------------------------------------------------------
-//      YCoCgからRGBに変換します.
-//-----------------------------------------------------------------------------
-float3 YCoCgToRGB( float3 YCoCg )
-{
-    float Y  = YCoCg.x;
-    float Co = YCoCg.y - ( 0.5 * 256.0 / 255.0 );
-    float Cg = YCoCg.z - ( 0.5 * 256.0 / 255.0 );
-    float R  = Y + Co-Cg;
-    float G  = Y + Cg;
-    float B  = Y - Co-Cg;
-    return float3(R, G, B);
-}
-
-//-----------------------------------------------------------------------------
-//      Catmull-Rom フィルタリング.
-//-----------------------------------------------------------------------------
-float4 BicubicSampleCatmullRom(Texture2D map, SamplerState smp, float2 uv, float2 mapSize)
-{
-    float2 samplePos = uv * MapSize;
-    float2 tc = floor(samplePos - 0.5f) + 0.5f;
-    float2 f  = samplePos - tc;
-    float2 f2 = f * f;
-    float2 f3 = f * f2;
-
-    float2 w0 = f2 - 0.5f * (f3 + f);
-    float2 w1 = 1.5f * f3 - 2.5f * f2 + 1;
-    float2 w3 = 0.5f * (f3 - f2);
-    float2 w2 = 1 - w0 - w1 - w3;
-
-    float2 w12 = w1 + w2;
-
-    float2 tc0  = (tc - 1) * InvMapSize;
-    float2 tc12 = (tc + w2 / w12) * InvMapSize;
-    float2 tc3  = (tc + 2) * InvMapSize;
-
-    float4 result = float4(0.0f, 0.0f, 0.0f, 0.0f);
-
-    result += map.SampleLevel(smp, float2(tc0.x,  tc0.y),  0) * (w0.x  * w0.y);
-    result += map.SampleLevel(smp, float2(tc0.x,  tc12.y), 0) * (w0.x  * w12.y);
-    result += map.SampleLevel(smp, float2(tc0.x,  tc3.y),  0) * (w0.x  * w3.y);
-
-    result += map.SampleLevel(smp, float2(tc12.x, tc0.y),  0) * (w12.x * w0.y);
-    result += map.SampleLevel(smp, float2(tc12.x, tc12.y), 0) * (w12.x * w12.y);
-    result += map.SampleLevel(smp, float2(tc12.x, tc3.y),  0) * (w12.x * w3.y);
-
-    result += map.SampleLevel(smp, float2(tc3.x,  tc0.y),  0) * (w3.x * w0.y);
-    result += map.SampleLevel(smp, float2(tc3.x,  tc12.y), 0) * (w3.x * w12.y);
-    result += map.SampleLevel(smp, float2(tc3.x,  tc3.y),  0) * (w3.x * w3.y);
-
-    return max(result, 0.0f.xxxx);
-}
 
 //-----------------------------------------------------------------------------
 //      現在フレームのカラーを取得します.
@@ -205,7 +142,7 @@ void CalcColorBoundingBox
 
     [unroll] for(uint i=0; i<8; ++i)
     {
-        float3 newColor = RGBToYCoCg(ColorMap.SampleLevel(PointClamp, uv, 0.0f, kOffsets[i]).rgb);
+        float3 newColor = RGBToYCoCg(ColorMap.SampleLevel(PointClamp, uv, 0.0f, kOffsets[i])).rgb;
         ave += newColor;
         var += newColor * newColor;
     }
@@ -315,8 +252,8 @@ void main(uint3 dispatchId : SV_DispatchThreadID, uint groupIndex : SV_GroupInde
     float4 prevColor = GetHistoryColor(prevUV);
 
     // YCoCgに変換.
-    currColor.rgb = RGBToYCoCg(currColor.rgb);
-    prevColor.rgb = RGBToYCoCg(prevColor.rgb);
+    currColor.rgb = RGBToYCoCg(currColor).rgb;
+    prevColor.rgb = RGBToYCoCg(prevColor).rgb;
 
     // クリップ済みヒストリーカラーを取得する.
     float3 minColor, maxColor;
@@ -338,7 +275,7 @@ void main(uint3 dispatchId : SV_DispatchThreadID, uint groupIndex : SV_GroupInde
     float4 finalColor = prevColor * weights.x + currColor * weights.y;
 
     // RGBに戻す.
-    finalColor.rgb = YCoCgToRGB(finalColor.rgb);
+    finalColor.rgb = YCoCgToRGB(finalColor).rgb;
 
     // NaNを潰しておく.
     finalColor = SaturateFloat(finalColor);
