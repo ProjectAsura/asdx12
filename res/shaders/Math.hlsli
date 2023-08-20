@@ -451,7 +451,7 @@ float FastAcos(float x)
     // Eberly's polynomial degree 1 - respect bounds
     // 4 VGPR, 12 FR (8 FR, 1 QR), 1 scalar
     // input [-1, 1] and output [0, PI]
-    float x   = abs(x);
+    x = abs(x);
     float ret = -0.156583 * x + F_PIDIV2;
     ret *= FastSqrt(1.0 - x);
     return (x >= 0) ? ret : F_PI - ret;
@@ -485,14 +485,13 @@ float FastAtanPos(float x)
     // Eberly's odd polynomial degree 5 - respect bounds
     // 4 VGPR, 14 FR (10 FR, 1 QR), 2 scalar
     // input [0, infinity] and output [0, PI/2]
-    const float kHalfPi = 1.570796;
     float t0 = (x < 1.0f) ? x : 1.0f / x;
     float t1 = t0 * t0;
     float poly = 0.0872929f;
     poly = -0.301895f + poly * t1;
     poly = 1.0f + poly * t1;
     poly = poly * t0;
-    return (x < 1.0f) ? poly : kHalfPi - poly;
+    return (x < 1.0f) ? poly : F_PIDIV2 - poly;
 }
 
 //-----------------------------------------------------------------------------
@@ -1514,22 +1513,6 @@ float3 UniformSampleCone(float2 u, float cosThetaMax)
 }
 
 //-----------------------------------------------------------------------------
-//      バランスヒューリスティック.
-//-----------------------------------------------------------------------------
-float BalanceHeuristic(float nf, float pf, float ng, float pg)
-{ return (nf * pf) / (nf * pf + ng * pg); }
-
-//-----------------------------------------------------------------------------
-//      パワーヒューリスティック.
-//-----------------------------------------------------------------------------
-float PowerHeuristic(float nf, float pf, float ng, float pg)
-{ 
-    float f = nf * pf;
-    float g = ng * pg;
-    return (f * f) / (f * f + g * g);
-}
-
-//-----------------------------------------------------------------------------
 //      X軸を取得します.
 //-----------------------------------------------------------------------------
 float3 GetAxisX(float4x4 view)
@@ -2073,13 +2056,13 @@ float3 ColorizeZucconi( float x )
 //-----------------------------------------------------------------------------
 //      Karisのアンチファイアフライウェイトを計算します.
 //-----------------------------------------------------------------------------
-float KarisAntiFireflyWeight(float3 value, float exposure = 1.0f)
+float KarisAntiFireflyWeight(float3 value, float exposure)
 { return rcp(4.0f + LuminanceBT709(value) * exposure); }
 
 //-----------------------------------------------------------------------------
 //      Karisのアンチファイアフライウェイトを計算します.
 //-----------------------------------------------------------------------------
-float KarisAntiFireflyWeightY(float luma, float exposure = 1.0f)
+float KarisAntiFireflyWeightY(float luma, float exposure)
 { return rcp(4.0f + luma * exposure); }
 
 

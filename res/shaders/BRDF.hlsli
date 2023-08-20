@@ -102,7 +102,7 @@ float3 GetDiffuseDominantDir(float3 N, float3 V, float NoV, float roughness)
 //-----------------------------------------------------------------------------
 //      スペキュラーの支配的な方向を求めます.
 //-----------------------------------------------------------------------------
-float3 GetSpecularDomiantDir(float3 N, float3 R, float roughness)
+float3 GetSpecularDominantDir(float3 N, float3 R, float roughness)
 {
     float smoothness = saturate(1.0f - roughness);
     float lerpFactor = smoothness * (sqrt(smoothness) + roughness);
@@ -112,7 +112,7 @@ float3 GetSpecularDomiantDir(float3 N, float3 R, float roughness)
 //-----------------------------------------------------------------------------
 //      スペキュラーローブの半角の正接を求めます.
 //-----------------------------------------------------------------------------
-float GetSpecularLobeTanHalfAngle( float linearRoughness, float percentOfVolume = 0.75 )
+float GetSpecularLobeTanHalfAngle(float linearRoughness, float percentOfVolume /*= 0.75*/)
 {
     // Moving Frostbite to PBR v3.2 p.72
     float a = linearRoughness * linearRoughness;
@@ -122,7 +122,7 @@ float GetSpecularLobeTanHalfAngle( float linearRoughness, float percentOfVolume 
 //-----------------------------------------------------------------------------
 //      スペキュラーローブの半角を求めます.
 //-----------------------------------------------------------------------------
-float GetSpecularLobeHalfAngle(float linearRoughess, float percentOfVolume = 0.75f)
+float GetSpecularLobeHalfAngle(float linearRoughess, float percentOfVolume /*= 0.75f*/)
 {
     // Moving Frostbite to PBR v3.2 p.72
     float tangent = GetSpecularLobeTanHalfAngle(linearRoughess, percentOfVolume);
@@ -133,7 +133,10 @@ float GetSpecularLobeHalfAngle(float linearRoughess, float percentOfVolume = 0.7
 //      スペキュラーAOを計算します.
 //-----------------------------------------------------------------------------
 float CalcSpecularAO(float NoV, float ao, float roughness)
-{ return saturate(Pow(max(NoV + ao, 0.0f), exp2(-16.0f * roughness - 1.0f)) - 1.0f + ao); }
+{
+    // Moving Frostbite to PBR v3.2 Listing 26.
+    return saturate(Pow(max(NoV + ao, 0.0f), exp2(-16.0f * roughness - 1.0f)) - 1.0f + ao);
+}
 
 //-----------------------------------------------------------------------------
 //      水平スペキュラーAOを計算します.
@@ -715,6 +718,22 @@ float3 SampleVndfGGX(float2 u, float2 a, float3 wi)
     // Final PDF = G1(N, H) * D(N) / (4.0f * NoH);
     // cf. [Dupuy 2023] Equation (20).
     return H;
+}
+
+//-----------------------------------------------------------------------------
+//      バランスヒューリスティック.
+//-----------------------------------------------------------------------------
+float BalanceHeuristic(float nf, float pf, float ng, float pg)
+{ return (nf * pf) / (nf * pf + ng * pg); }
+
+//-----------------------------------------------------------------------------
+//      パワーヒューリスティック.
+//-----------------------------------------------------------------------------
+float PowerHeuristic(float nf, float pf, float ng, float pg)
+{ 
+    float f = nf * pf;
+    float g = ng * pg;
+    return (f * f) / (f * f + g * g);
 }
 
 #endif//ADX_BRDF_HLSLI
