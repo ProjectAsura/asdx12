@@ -265,8 +265,7 @@ void main(uint3 dispatchId : SV_DispatchThreadID, uint groupIndex : SV_GroupInde
     prevColor.rgb = clamp(prevColor.rgb, minColor, maxColor);
 
     // 重みを求める.
-    float blend = saturate(1.0f - BlendFactor);
-    blend = max(blend, saturate(0.01f * prevColor.x / abs(currColor.x - prevColor.x)));
+    float blend = max(BlendFactor, saturate(0.01f * prevColor.x / abs(currColor.x - prevColor.x)));
     float  currWeight = CalcHdrWeightY(currColor.rgb);
     float  prevWeight = CalcHdrWeightY(prevColor.rgb);
     float2 weights    = CalcBlendWeight(prevWeight, currWeight, saturate(blend));

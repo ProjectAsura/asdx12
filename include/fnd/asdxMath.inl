@@ -6071,12 +6071,12 @@ void CalcFrustumPlanes(const Matrix& view, const Matrix& proj, Vector4* planes)
     // https://www.gamedevs.org/
     auto vp = Matrix::MultiplyTranspose(view, proj);
 
-    planes[0] = NormalizePlane(vp.row[3] + vp.row[0]);
-    planes[1] = NormalizePlane(vp.row[3] - vp.row[0]);
-    planes[2] = NormalizePlane(vp.row[3] + vp.row[1]);
-    planes[3] = NormalizePlane(vp.row[3] - vp.row[1]);
-    planes[4] = NormalizePlane(vp.row[2]);
-    planes[5] = NormalizePlane(vp.row[3] - vp.row[2]);
+    planes[PLANE_LEFT]   = NormalizePlane(vp.row[3] + vp.row[0]);
+    planes[PLANE_RIGHT]  = NormalizePlane(vp.row[3] - vp.row[0]);
+    planes[PLANE_BOTTOM] = NormalizePlane(vp.row[3] + vp.row[1]);
+    planes[PLANE_TOP]    = NormalizePlane(vp.row[3] - vp.row[1]);
+    planes[PLANE_NEAR]   = NormalizePlane(vp.row[2]);
+    planes[PLANE_FAR]    = NormalizePlane(vp.row[3] - vp.row[2]);
 }
 
 //-----------------------------------------------------------------------------
