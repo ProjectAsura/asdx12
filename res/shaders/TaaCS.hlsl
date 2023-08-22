@@ -78,6 +78,8 @@ float4 GetHistoryColor(float2 uv)
 //-----------------------------------------------------------------------------
 float2 GetVelocity(float2 uv)
 {
+    // https://www.gdcvault.com/play/1022970/Temporal-Reprojection-Anti-Aliasing-in
+
     float2 result = VelocityMap.SampleLevel(PointClamp, uv, 0.0f);
     float  currLengthSq = dot(result, result);
 
@@ -265,7 +267,7 @@ void main(uint3 dispatchId : SV_DispatchThreadID, uint groupIndex : SV_GroupInde
     prevColor.rgb = clamp(prevColor.rgb, minColor, maxColor);
 
     // 重みを求める.
-    float blend = max(BlendFactor, saturate(0.01f * prevColor.x / abs(currColor.x - prevColor.x)));
+    float  blend      = max(1.0f - BlendFactor, saturate(0.01f * prevColor.x / abs(currColor.x - prevColor.x)));
     float  currWeight = CalcHdrWeightY(currColor.rgb);
     float  prevWeight = CalcHdrWeightY(prevColor.rgb);
     float2 weights    = CalcBlendWeight(prevWeight, currWeight, saturate(blend));

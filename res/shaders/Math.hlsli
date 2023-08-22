@@ -2029,14 +2029,10 @@ float4 YCoCgToRGB(float4 YCoCg)
     return float4(R, G, B, YCoCg.a);
 }
 
-float3 Blend3(float3 x, float3 yOffset)
-{
-    // https://developer.nvidia.com/sites/all/modules/custom/gpugems/books/GPUGems/gpugems_ch08.html.
-    float3 y = 1.0f.xxx - Pow2(x);
-    return saturate(y - yOffset);
-}
-
-float3 ColorizeZucconi( float x )
+//-----------------------------------------------------------------------------
+//      [0, 1]の値をカラー化します.
+//-----------------------------------------------------------------------------
+float3 ColorizeZucconi(float x)
 {
     // https://www.shadertoy.com/view/ls2Bz1
     // Original solution converts visible wavelengths of light (400-700 nm) (represented as x = [0; 1]) to RGB colors
@@ -2050,7 +2046,9 @@ float3 ColorizeZucconi( float x )
     const float3 x2 = float3( 0.11748627, 0.86755042, 0.66077860 );
     const float3 y2 = float3( 0.84897130, 0.88445281, 0.73949448 );
 
-    return Blend3(c1 * (x - x1), y1) + Blend3(c2 * (x - x2), y2);
+    // https://developer.nvidia.com/sites/all/modules/custom/gpugems/books/GPUGems/gpugems_ch08.html.
+    return saturate(1.0f.xxx - Pow2(c1 * (x - x1)) - y1)
+         + saturate(1.0f.xxx - Pow2(c2 * (x - x2)) - y2);
 }
 
 //-----------------------------------------------------------------------------
@@ -2065,5 +2063,33 @@ float KarisAntiFireflyWeight(float3 value, float exposure)
 float KarisAntiFireflyWeightY(float luma, float exposure)
 { return rcp(4.0f + luma * exposure); }
 
+//-----------------------------------------------------------------------------
+//      先鋭化フィルタを適用します.
+//-----------------------------------------------------------------------------
+float4 ApplySharpening
+(
+    float4 center, float4 top, float4 left, float4 right, float4 bottom, float weight, float tolerance)
+{
+    // https://en.wikipedia.org/wiki/Unsharp_masking
+    // 中心重み  weight : 1.0  ~ 5.0 [default = 4.0]
+    // 許容値 tolerance : 0.05 ~ 0.2 [default = 0.1]
+    const float invWeight = SaturateFloat(1.0f / weight);
+
+    float4 result = RGBToYCoCg(center);
+
+    float unsharpenMask;
+    unsharpenMask  = weight * result.x;
+    unsharpenMask -= RGBToYCoCg(top).x;
+    unsharpenMask -= RGBToYCoCg(bottom).x;
+    unsharpenMask -= RGBToYCoCg(left).x;
+    unsharpenMask -= RGBToYCoCg(right).x;
+
+    result.x = clamp(
+        result.x + invWeight * unsharpenMask,
+        (1.0f - tolerance) * result.x, 
+        (1.0f + tolerance) * result.x);
+
+    return YCoCgToRGB(result);
+}
 
 #endif//ASDX_MATH_HLSLI
