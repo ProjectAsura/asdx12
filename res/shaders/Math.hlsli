@@ -2068,12 +2068,16 @@ float KarisAntiFireflyWeightY(float luma, float exposure)
 //-----------------------------------------------------------------------------
 float4 ApplySharpening
 (
-    float4 center, float4 top, float4 left, float4 right, float4 bottom, float weight, float tolerance)
+    float4  center,     // 中心ピクセル.
+    float4  top,        // 上ピクセル.
+    float4  left,       // 左ピクセル.
+    float4  right,      // 右ピクセル.
+    float4  bottom,     // 下ピクセル.
+    float   weight,     // 中心の重み (デフォルト4.0)
+    float   tolerance   // 許容値 (デフォルト0.1)
+)
 {
     // https://en.wikipedia.org/wiki/Unsharp_masking
-    // 中心重み  weight : 1.0  ~ 5.0 [default = 4.0]
-    // 許容値 tolerance : 0.05 ~ 0.2 [default = 0.1]
-    const float invWeight = SaturateFloat(1.0f / weight);
 
     float4 result = RGBToYCoCg(center);
 
@@ -2084,6 +2088,7 @@ float4 ApplySharpening
     unsharpenMask -= RGBToYCoCg(left).x;
     unsharpenMask -= RGBToYCoCg(right).x;
 
+    const float invWeight = SaturateFloat(1.0f / weight);
     result.x = clamp(
         result.x + invWeight * unsharpenMask,
         (1.0f - tolerance) * result.x, 

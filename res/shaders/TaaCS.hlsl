@@ -215,7 +215,7 @@ void main(uint3 dispatchId : SV_DispatchThreadID, uint groupIndex : SV_GroupInde
     const float2 currUV = ((float2)remappedId + 0.5f.xx) * InvMapSize;
 
     // 現在フレームのカラー.
-    float4 currColor = GetCurrentColor(currUV);
+    float4 currColor = GetCurrentColor(currUV + Jitter * InvMapSize);
     
     // 1920x1080をベースとしたスケール.
     const float sizeScale = MapSize.x / 1920.0f;
@@ -229,7 +229,7 @@ void main(uint3 dispatchId : SV_DispatchThreadID, uint groupIndex : SV_GroupInde
 
     // 深度値を取得.
     float currDepth  = GetCurrentDepth(currUV);
-    float prevDepth  = GetPreviousDepth(prevUV + Jitter);
+    float prevDepth  = GetPreviousDepth(prevUV);
     float depthDelta = step(currDepth, prevDepth);
 
     // 画面内かどうか?
