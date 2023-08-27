@@ -31,6 +31,8 @@ cbuffer CbTemporalAA : register(b0)
     float2  MapSize;
     float2  InvMapSize;
     float2  Jitter;
+    uint    Flags;
+    uint3   Reserved;
 };
 
 
@@ -65,7 +67,7 @@ static const int2 kOffsets[8] = {
 //      現在フレームのカラーを取得します.
 //-----------------------------------------------------------------------------
 float4 GetCurrentColor(float2 uv)
-{ return ColorMap.SampleLevel(PointClamp, uv, 0.0f); }
+{ return ColorMap.SampleLevel(LinearClamp, uv, 0.0f); }
 
 //-----------------------------------------------------------------------------
 //      ヒストリーカラーを取得します.
@@ -80,13 +82,13 @@ float2 GetVelocity(float2 uv)
 {
     // https://www.gdcvault.com/play/1022970/Temporal-Reprojection-Anti-Aliasing-in
 
-    float2 result = VelocityMap.SampleLevel(PointClamp, uv, 0.0f);
+    float2 result = VelocityMap.SampleLevel(LinearClamp, uv, 0.0f);
     float  currLengthSq = dot(result, result);
 
     // 最も長い速度ベクトルを取得.
     [unroll] for(uint i=0; i<8; ++i)
     {
-        float2 velocity = VelocityMap.SampleLevel(PointClamp, uv, 0.0f, kOffsets[i]);
+        float2 velocity = VelocityMap.SampleLevel(LinearClamp, uv, 0.0f, kOffsets[i]);
         float  lengthSq = dot(velocity, velocity);
         if (lengthSq > currLengthSq)
         {
@@ -144,7 +146,7 @@ void CalcColorBoundingBox
 
     [unroll] for(uint i=0; i<8; ++i)
     {
-        float3 newColor = RGBToYCoCg(ColorMap.SampleLevel(PointClamp, uv, 0.0f, kOffsets[i])).rgb;
+        float3 newColor = RGBToYCoCg(ColorMap.SampleLevel(LinearClamp, uv, 0.0f, kOffsets[i])).rgb;
         ave += newColor;
         var += newColor * newColor;
     }
@@ -178,7 +180,7 @@ float3 GetCurrentNeighborColor(float2 uv, float3 currentColor)
     [unroll] 
     for(uint i=0; i<4; ++i)
     {
-        accColor += ColorMap.SampleLevel(PointClamp, uv, 0.0f, kOffsets[i]).rgb;
+        accColor += ColorMap.SampleLevel(LinearClamp, uv, 0.0f, kOffsets[i]).rgb;
     }
     const float invWeight = 1.0f / (4.0f + centerWeight);
     accColor *= invWeight;
@@ -234,10 +236,11 @@ void main(uint3 dispatchId : SV_DispatchThreadID, uint groupIndex : SV_GroupInde
 
     // 画面内かどうか?
     float inScreen = (all(0.0f.xx <= prevUV) && all(prevUV < 1.0f.xx)) ? 1.0f : 0.0f;
+    float resetHistory = (Flags & 0x1) ? 0.0f : 1.0f;
 
     // ヒストリーが有効かどうかチェックする.
     // 速度の差分，深度の差分，画面範囲であるか，いずれかすくなくとも１つがゼロなら無効と判断.
-    bool isValidHistory = (velocityDelta * depthDelta * inScreen) > 0.0f;
+    bool isValidHistory = (velocityDelta * depthDelta * inScreen * resetHistory) > 0.0f;
 
     // ヒストリーバッファが無効な場合は隣接ピクセルを考慮して最終カラーを求める.
     if (!isValidHistory) {
