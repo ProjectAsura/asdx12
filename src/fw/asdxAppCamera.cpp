@@ -144,6 +144,12 @@ float AppCamera::GetFarClip() const
 { return m_Camera.GetMaxDist(); }
 
 //-----------------------------------------------------------------------------
+//      カメライベントによって更新を行います.
+//-----------------------------------------------------------------------------
+void AppCamera::UpdateByEvent(const CameraEvent& cameraEvent)
+{ m_Camera.UpdateByEvent(cameraEvent); }
+
+//-----------------------------------------------------------------------------
 //      マウス入力からカメライベントを生成します.
 //-----------------------------------------------------------------------------
 CameraEvent AppCamera::MakeEventFromMouse( int wheelDelta )
