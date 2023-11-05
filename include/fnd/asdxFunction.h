@@ -15,81 +15,104 @@
 
 namespace asdx {
 
-template<typename Function, size_t MaxSize=16, size_t Align=8>
-class function;
+//=============================================================================
+// Forward Declarations.
+//=============================================================================
+template<typename Func, size_t MaxSize=16, size_t Align=4>
+class Function;
 
+///////////////////////////////////////////////////////////////////////////////
+// Function class
+///////////////////////////////////////////////////////////////////////////////
 template<typename ReturnType, typename... Args, size_t MaxSize, size_t Align>
-class function<ReturnType(Args...), MaxSize, Align>
+class Function<ReturnType(Args...), MaxSize, Align>
 {
+    //=========================================================================
+    // list of friend classes and methods.
+    //=========================================================================
+    /* NOTHING */
+
 public:
+    //=========================================================================
+    // Type Definition.
+    //=========================================================================
     using result_type = ReturnType;
 
-    function()
+    //=========================================================================
+    // public variables.
+    //=========================================================================
+    /* NOTHING */
+
+    //=========================================================================
+    // public methods.
+    //=========================================================================
+
+    Function()
     { /* DO_NOTHING */ }
 
-    ~function()
+    ~Function()
     { reset(); }
 
-    function(std::nullptr_t)
+    Function(std::nullptr_t)
     { /* DO_NOTHING */ }
 
-    function(function const& value)
+    Function(Function const& value)
     { copy(value); }
 
-    function(function& value)
+    Function(Function& value)
     { copy(value); }
 
-    function(function&& value)
+    Function(Function&& value)
     { move(std::move(value)); }
 
     template<typename Functor>
-    function(Functor&& f)
+    Function(Functor&& f)
     { create(std::forward<Functor>(f)); }
 
-    function& operator = (std::nullptr_t)
+    Function& operator = (std::nullptr_t)
     {
         reset();
         return *this;
     }
 
-    function& operator = (function const& value)
+    Function& operator = (Function const& value)
     {
         assign(value);
         return *this;
     }
 
-    function& operator = (function& value)
+    Function& operator = (Function& value)
     {
         assign(value);
         return *this;
     }
 
-    function& operator = (function&& value)
+    Function& operator = (Function&& value)
     {
         assign(std::move(value));
         return *this;
     }
 
     template<typename Functor>
-    function& operator = (Functor&& f)
+    Function& operator = (Functor&& f)
     {
         assign(std::forward<Functor>(f));
         return *this;
     }
 
-    void assign(function const& value)
+    void assign(Function const& value)
     {
         reset();
         copy(value);
     }
 
-    void assign(function& value)
+    void assign(Function& value)
     {
         reset();
         copy(value);
     }
 
-    void assign(function&& value)
+    void assign(Function&& value)
     {
         reset();
         move(std::move(value));
@@ -120,26 +143,26 @@ public:
         return m_Base->Invoke(std::forward<Args>(args)...);
     }
 
-    void swap(function& other)
+    void swap(Function& other)
     {
-        function temp = std::move(other);
+        auto temp = std::move(other);
         other = std::move(*this);
         *this = std::move(temp);
     }
 
-    friend void swap(function& lhs, function& rhs)
+    friend void swap(Function& lhs, Function& rhs)
     { lhs.swap(rhs); }
 
-    friend bool operator == (std::nullptr_t, function const& action)
+    friend bool operator == (std::nullptr_t, Function const& action)
     { return !action; }
 
-    friend bool operator == (function const& action, std::nullptr_t)
+    friend bool operator == (Function const& action, std::nullptr_t)
     { return !action; }
 
-    friend bool operator != (std::nullptr_t, function const& action)
+    friend bool operator != (std::nullptr_t, Function const& action)
     { return action; }
 
-    friend bool operator != (function const& action, std::nullptr_t)
+    friend bool operator != (Function const& action, std::nullptr_t)
     { return action; }
 
 private:
@@ -152,7 +175,7 @@ private:
     };
 
     template<typename Functor>
-    struct Derived : Base
+    struct Derived : public Base
     {
         Functor func;
 
@@ -181,13 +204,13 @@ private:
         m_Base = new(m_Storage) Derived<Functor>(std::forward<Functor>(f));
     }
 
-    void copy(function const& value)
+    void copy(Function const& value)
     {
         m_Base->Copy(value.m_Storage);
         m_Base = value.m_Base;
     }
 
-    void move(function&& value)
+    void move(Function&& value)
     {
         m_Base->Move(value.m_Storage);
         m_Base = value.m_Base;
@@ -195,18 +218,18 @@ private:
     }
 
     // 以下, アクセス禁止.
-    template<typename F, size_t S, size_t A> function             (function<F, S, A> const&)    = delete;
-    template<typename F, size_t S, size_t A> function             (function<F, S, A>&)          = delete;
-    template<typename F, size_t S, size_t A> function             (function<F, S, A>&&)         = delete;
-    template<typename F, size_t S, size_t A> function& operator = (function<F, S, A> const&)    = delete;
-    template<typename F, size_t S, size_t A> function& operator = (function<F, S, A>&)          = delete;
-    template<typename F, size_t S, size_t A> function& operator = (function<F, S, A>&&)         = delete;
-    template<typename F, size_t S, size_t A> void      assign     (function<F, S, A> const&)    = delete;
-    template<typename F, size_t S, size_t A> void      assign     (function<F, S, A>&)          = delete;
-    template<typename F, size_t S, size_t A> void      assign     (function<F, S, A>&&)         = delete;
+    template<typename F, size_t S, size_t A> Function             (Function<F, S, A> const&)    = delete;
+    template<typename F, size_t S, size_t A> Function             (Function<F, S, A>&)          = delete;
+    template<typename F, size_t S, size_t A> Function             (Function<F, S, A>&&)         = delete;
+    template<typename F, size_t S, size_t A> Function& operator = (Function<F, S, A> const&)    = delete;
+    template<typename F, size_t S, size_t A> Function& operator = (Function<F, S, A>&)          = delete;
+    template<typename F, size_t S, size_t A> Function& operator = (Function<F, S, A>&&)         = delete;
+    template<typename F, size_t S, size_t A> void      assign     (Function<F, S, A> const&)    = delete;
+    template<typename F, size_t S, size_t A> void      assign     (Function<F, S, A>&)          = delete;
+    template<typename F, size_t S, size_t A> void      assign     (Function<F, S, A>&&)         = delete;
 };
 
 template<typename... Args>
-using Action = function<void(Args...)>;
+using Action = Function<void(Args...)>;
 
 } // namespace asdx
