@@ -16,11 +16,12 @@
 #include <fnd/asdxSpinLock.h>
 #include <fnd/asdxRef.h>
 #include <fnd/asdxLogger.h>
-#include <ShlObj.h>
+#include <cassert>
 #include <strsafe.h>
 #include <vector>
 #include <algorithm>
 #include <tuple>
+#include <ShlObj.h>
 
 
 namespace {
@@ -707,7 +708,7 @@ bool DescriptorHeap::Init(ID3D12Device* pDevice, const D3D12_DESCRIPTOR_HEAP_DES
         }
 
         // 未使用リストに追加.
-        m_FreeList.PushBack(&m_Descriptors[i]);
+        m_FreeList.push_back(&m_Descriptors[i]);
     }
 
     return true;
@@ -719,8 +720,8 @@ bool DescriptorHeap::Init(ID3D12Device* pDevice, const D3D12_DESCRIPTOR_HEAP_DES
 void DescriptorHeap::Term()
 {
     /* この関数内で落ちる場合は解放漏れがあります */
-    m_FreeList.Clear();
-    m_UsedList.Clear();
+    m_FreeList.clear();
+    m_UsedList.clear();
 
     if (m_pHeap != nullptr)
     {
@@ -740,9 +741,9 @@ void DescriptorHeap::Term()
 //-----------------------------------------------------------------------------
 Descriptor* DescriptorHeap::Alloc()
 {
-    auto node = m_FreeList.PopFront();
-    m_UsedList.PushBack(node);
-    return node;
+    auto& node = m_FreeList.front();
+    m_UsedList.push_back(&node);
+    return &node;
 }
 
 //-----------------------------------------------------------------------------
@@ -753,8 +754,8 @@ void DescriptorHeap::Free(Descriptor* pValue)
     if (pValue == nullptr)
     { return; }
 
-    m_UsedList.Remove(pValue);
-    m_FreeList.PushBack(pValue);
+    m_UsedList.erase(pValue);
+    m_FreeList.push_back(pValue);
 }
 
 //-----------------------------------------------------------------------------
@@ -767,19 +768,19 @@ ID3D12DescriptorHeap* DescriptorHeap::GetD3D12DescriptorHeap() const
 //      割り当て済みハンドル数を取得します.
 //-----------------------------------------------------------------------------
 uint32_t DescriptorHeap::GetAllocatedCount() const
-{ return uint32_t(m_UsedList.GetCount()); }
+{ return uint32_t(m_UsedList.size()); }
 
 //-----------------------------------------------------------------------------
 //      割り当て可能なハンドル数を取得します.
 //-----------------------------------------------------------------------------
 uint32_t DescriptorHeap::GetAvailableCount() const
-{ return uint32_t(m_FreeList.GetCount()); }
+{ return uint32_t(m_FreeList.size()); }
 
 //-----------------------------------------------------------------------------
 //      ハンドル数を取得します.
 //-----------------------------------------------------------------------------
 uint32_t DescriptorHeap::GetHandleCount() const
-{ return uint32_t(m_UsedList.GetCount() + m_FreeList.GetCount()); }
+{ return uint32_t(m_UsedList.size() + m_FreeList.size()); }
  
 
 ///////////////////////////////////////////////////////////////////////////////
