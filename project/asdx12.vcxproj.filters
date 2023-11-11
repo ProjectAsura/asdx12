@@ -132,9 +132,6 @@
     <ClCompile Include="..\src\fnd\asdxMouse.cpp">
       <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\fnd\asdxRandom.cpp">
-      <Filter>ソース ファイル\fnd</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\fnd\asdxTablet.cpp">
       <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
@@ -379,6 +376,15 @@
     </ClInclude>
     <ClInclude Include="..\include\res\asdxResModel.h">
       <Filter>ヘッダー ファイル\res</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fnd\asdxPcg.h">
+      <Filter>ヘッダー ファイル\fnd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fnd\asdxHalf.h">
+      <Filter>ヘッダー ファイル\fnd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fnd\asdxBitCast.h">
+      <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

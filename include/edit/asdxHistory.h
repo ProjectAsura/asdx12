@@ -19,16 +19,16 @@ namespace asdx {
 //-----------------------------------------------------------------------------
 // Type Definition
 //-----------------------------------------------------------------------------
-using Action = std::function<void(void)>;
+using HistoryAction = std::function<void(void)>;
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// IEventListener interface
+// IHistoryEventListener interface
 ///////////////////////////////////////////////////////////////////////////////
-struct IEventListener
+struct IHistoryEventListener
 {
-    virtual ~IEventListener() {}
-    virtual void OnNotify() = 0;
+    virtual ~IHistoryEventListener() {}
+    virtual void OnChanged() = 0;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -42,20 +42,20 @@ struct IHistory
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-// EventHandler class
+// HistoryEventHandler class
 ///////////////////////////////////////////////////////////////////////////////
-class EventHandler
+class HistoryEventHandler
 {
 public:
-    EventHandler();
-    ~EventHandler();
+    HistoryEventHandler();
+    ~HistoryEventHandler();
 
     void Invoke();
-    EventHandler& operator += (IEventListener* listener);
-    EventHandler& operator -= (IEventListener* listener);
+    HistoryEventHandler& operator += (IHistoryEventListener* listener);
+    HistoryEventHandler& operator -= (IHistoryEventListener* listener);
 
 private:
-    std::list<IEventListener*>  m_Listeners;
+    std::list<IHistoryEventListener*>  m_Listeners;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -64,14 +64,14 @@ private:
 class History : public IHistory
 {
 public:
-    History(Action redo, Action undo);
+    History(HistoryAction redo, HistoryAction undo);
     ~History();
     void Redo() override;
     void Undo() override;
 
 private:
-    Action  m_Redo;
-    Action  m_Undo;
+    HistoryAction  m_Redo;
+    HistoryAction  m_Undo;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -80,8 +80,8 @@ private:
 class GroupHistory : public IHistory
 {
 public:
-    EventHandler UndoExecuted;
-    EventHandler RedoExecuted;
+    HistoryEventHandler UndoExecuted;
+    HistoryEventHandler RedoExecuted;
 
     GroupHistory();
     ~GroupHistory();
@@ -103,8 +103,8 @@ private:
 class HistoryMgr
 {
 public:
-    EventHandler UndoExecuted;
-    EventHandler RedoExecuted;
+    HistoryEventHandler UndoExecuted;
+    HistoryEventHandler RedoExecuted;
 
     static HistoryMgr& Instance();
 
@@ -124,11 +124,11 @@ public:
 
 private:
     static HistoryMgr       s_Instance;
-    std::vector<IHistory*>  m_Histories;
-    int                     m_Current;
-    int                     m_Capacity;
-    bool                    m_Init;
-    SpinLock                m_SpinLock;
+    std::vector<IHistory*>  m_Histories = {};
+    int                     m_Current   = 0;
+    int                     m_Capacity  = 0;
+    bool                    m_Init      = false;
+    SpinLock                m_SpinLock  = {};
 
     HistoryMgr ();
     ~HistoryMgr();

@@ -10,40 +10,39 @@
 #include <algorithm>
 #include <cassert>
 #include <edit/asdxHistory.h>
-#include <fnd/asdxLogger.h>
 
 
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
-// EventHandler class
+// HistoryEventHandler class
 ///////////////////////////////////////////////////////////////////////////////
 
 //-----------------------------------------------------------------------------
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
-EventHandler::EventHandler()
+HistoryEventHandler::HistoryEventHandler()
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      デストラクタです.
 //-----------------------------------------------------------------------------
-EventHandler::~EventHandler()
+HistoryEventHandler::~HistoryEventHandler()
 { m_Listeners.clear(); }
 
 //-----------------------------------------------------------------------------
 //      呼び出しを行います.
 //-----------------------------------------------------------------------------
-void EventHandler::Invoke()
+void HistoryEventHandler::Invoke()
 {
     for(auto& itr : m_Listeners)
-    { itr->OnNotify(); }
+    { itr->OnChanged(); }
 }
 
 //-----------------------------------------------------------------------------
 //      追加登録します.
 //-----------------------------------------------------------------------------
-EventHandler& EventHandler::operator += (IEventListener* listener)
+HistoryEventHandler& HistoryEventHandler::operator += (IHistoryEventListener* listener)
 {
     m_Listeners.push_back(listener);
     return *this;
@@ -52,7 +51,7 @@ EventHandler& EventHandler::operator += (IEventListener* listener)
 //-----------------------------------------------------------------------------
 //      登録削除します.
 //-----------------------------------------------------------------------------
-EventHandler& EventHandler::operator-= (IEventListener* listener)
+HistoryEventHandler& HistoryEventHandler::operator-= (IHistoryEventListener* listener)
 {
     auto itr = std::remove(m_Listeners.begin(), m_Listeners.end(), listener);
     return *this;
@@ -66,7 +65,7 @@ EventHandler& EventHandler::operator-= (IEventListener* listener)
 //-----------------------------------------------------------------------------
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
-History::History(Action redo, Action undo)
+History::History(HistoryAction redo, HistoryAction undo)
 : m_Redo(redo)
 , m_Undo(redo)
 { /* DO_NOTHING */ }
@@ -190,7 +189,6 @@ HistoryMgr& HistoryMgr::Instance()
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
 HistoryMgr::HistoryMgr()
-: m_Current(0)
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
@@ -300,7 +298,7 @@ void HistoryMgr::Add(IHistory* item, bool redo)
         auto start = std::begin(m_Histories) + m_Current;
         auto end   = start + count;
 
-        auto itr = start;
+        auto& itr = start;
         while(itr != end)
         {
             auto ptr = (*itr);

@@ -56,7 +56,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;ASDX_AUTO_LINK;ASDX_ENABLE_DXC;ASDX_ENABLE_IMGUI;ASDX_ENABLE_TINYXML2;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;$(ProjectDir)..\external\meshoptimizer;$(ProjectDir)..\external\flatbuffers-2.0.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;$(ProjectDir)..\external\meshoptimizer;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -120,7 +120,6 @@
     <ClCompile Include="..\external\meshoptimizer\vfetchanalyzer.cpp" />
     <ClCompile Include="..\external\meshoptimizer\vfetchoptimizer.cpp" />
     <ClCompile Include="..\external\tinyxml2\tinyxml2.cpp" />
-    <ClCompile Include="..\src\edit\asdxEditParam.cpp" />
     <ClCompile Include="..\src\edit\asdxFileWatcher.cpp" />
     <ClCompile Include="..\src\edit\asdxGuiMgr.cpp" />
     <ClCompile Include="..\src\edit\asdxHistory.cpp" />
@@ -133,7 +132,6 @@
     <ClCompile Include="..\src\fnd\asdxMessage.cpp" />
     <ClCompile Include="..\src\fnd\asdxMisc.cpp" />
     <ClCompile Include="..\src\fnd\asdxMouse.cpp" />
-    <ClCompile Include="..\src\fnd\asdxRandom.cpp" />
     <ClCompile Include="..\src\fnd\asdxTablet.cpp" />
     <ClCompile Include="..\src\fnd\asdxThread.cpp" />
     <ClCompile Include="..\src\fnd\asdxThreadPool.cpp" />
@@ -156,6 +154,23 @@
     <ClCompile Include="..\src\res\asdxResTexture.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\external\hlslpp\include\hlsl++.h" />
+    <ClInclude Include="..\external\hlslpp\include\hlsl++_common.h" />
+    <ClInclude Include="..\external\hlslpp\include\hlsl++_config.h" />
+    <ClInclude Include="..\external\hlslpp\include\hlsl++_dependent.h" />
+    <ClInclude Include="..\external\hlslpp\include\hlsl++_matrix_float.h" />
+    <ClInclude Include="..\external\hlslpp\include\hlsl++_quaternion.h" />
+    <ClInclude Include="..\external\hlslpp\include\hlsl++_quaternion_type.h" />
+    <ClInclude Include="..\external\hlslpp\include\hlsl++_type_traits.h" />
+    <ClInclude Include="..\external\hlslpp\include\hlsl++_vector_double.h" />
+    <ClInclude Include="..\external\hlslpp\include\hlsl++_vector_double_type.h" />
+    <ClInclude Include="..\external\hlslpp\include\hlsl++_vector_float.h" />
+    <ClInclude Include="..\external\hlslpp\include\hlsl++_vector_float8.h" />
+    <ClInclude Include="..\external\hlslpp\include\hlsl++_vector_float_type.h" />
+    <ClInclude Include="..\external\hlslpp\include\hlsl++_vector_int.h" />
+    <ClInclude Include="..\external\hlslpp\include\hlsl++_vector_int_type.h" />
+    <ClInclude Include="..\external\hlslpp\include\hlsl++_vector_uint.h" />
+    <ClInclude Include="..\external\hlslpp\include\hlsl++_vector_uint_type.h" />
     <ClInclude Include="..\external\imgui\imconfig.h" />
     <ClInclude Include="..\external\imgui\imgui.h" />
     <ClInclude Include="..\external\imgui\imgui_internal.h" />
@@ -170,8 +185,10 @@
     <ClInclude Include="..\include\edit\asdxHistory.h" />
     <ClInclude Include="..\include\edit\asdxP4VHelper.h" />
     <ClInclude Include="..\include\edit\asdxTcpConnector.h" />
+    <ClInclude Include="..\include\fnd\asdxBitCast.h" />
     <ClInclude Include="..\include\fnd\asdxFrameHeap.h" />
     <ClInclude Include="..\include\fnd\asdxFunction.h" />
+    <ClInclude Include="..\include\fnd\asdxHalf.h" />
     <ClInclude Include="..\include\fnd\asdxHash.h" />
     <ClInclude Include="..\include\fnd\asdxHid.h" />
     <ClInclude Include="..\include\fnd\asdxList.h" />
@@ -180,6 +197,7 @@
     <ClInclude Include="..\include\fnd\asdxMath.h" />
     <ClInclude Include="..\include\fnd\asdxMessage.h" />
     <ClInclude Include="..\include\fnd\asdxMisc.h" />
+    <ClInclude Include="..\include\fnd\asdxPcg.h" />
     <ClInclude Include="..\include\fnd\asdxQueue.h" />
     <ClInclude Include="..\include\fnd\asdxRef.h" />
     <ClInclude Include="..\include\fnd\asdxSpinLock.h" />
@@ -211,7 +229,6 @@
     <ClInclude Include="..\include\res\asdxResTexture.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\include\fnd\asdxMath.inl" />
     <None Include="..\res\shaders\BRDF.hlsli" />
     <None Include="..\res\shaders\Math.hlsli" />
     <None Include="..\res\shaders\Samplers.hlsli" />

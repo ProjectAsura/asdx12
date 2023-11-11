@@ -49,16 +49,16 @@ bool TcpConnector::ConnectAsServer( const TcpConnector::Desc& info )
 {
     std::lock_guard<std::recursive_mutex> locker(m_Mutex);
 
-    sockaddr_in addr;
-    sockaddr_in client;
+    sockaddr_in addr   = {};
+    sockaddr_in client = {};
     int len = sizeof(client);
     int ret = 0;
 
     WSADATA wsaData;
 
-    if ( !m_IsReady )
+    if (!m_IsReady)
     {
-        ret = WSAStartup( 0x0202, &wsaData );
+        ret = WSAStartup(0x0202, &wsaData);
         if ( ret != 0 )
         {
             ELOG( "Error : WSAStartup() Failed." );
@@ -66,10 +66,10 @@ bool TcpConnector::ConnectAsServer( const TcpConnector::Desc& info )
         }
 
         // TCP通信の設定でソケットを生成.
-        m_SrcSocket = socket( AF_INET, SOCK_STREAM, IPPROTO_TCP );
+        m_SrcSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
         addr.sin_family         = AF_INET;
-        addr.sin_port           = htons( info.Port );
+        addr.sin_port           = htons(info.Port);
         addr.sin_addr.s_addr    = INADDR_ANY;
 
         // サーバーソケットに名前を付けます.
@@ -85,7 +85,7 @@ bool TcpConnector::ConnectAsServer( const TcpConnector::Desc& info )
         }
 
         // ソケットを受信待機モードにして，保留接続キューのサイズを確保します.
-        ret = listen( m_SrcSocket, 5 );
+        ret = listen(m_SrcSocket, 5);
         if ( ret != 0 )
         {
             ELOG( "Error : listen() Failed." );
@@ -97,8 +97,8 @@ bool TcpConnector::ConnectAsServer( const TcpConnector::Desc& info )
     }
 
     // タイムアウト値設定.
-    fd_set cnt;
-    timeval timeout;
+    fd_set cnt = {};
+    timeval timeout = {};
     FD_ZERO(&cnt);
     FD_SET(m_SrcSocket, &cnt);
 
@@ -109,15 +109,9 @@ bool TcpConnector::ConnectAsServer( const TcpConnector::Desc& info )
 
     ret = select(maxFd, &cnt, NULL, NULL, &timeout);
     if (ret == 0)
-    {
-        //ELOG("Error : Timeout.");
-        return false;
-    }
+    { return false; }
     else if (ret == INVALID_SOCKET)
-    {
-        //ELOG("Error : select() Failed.");
-        return false;
-    }
+    { return false; }
 
     if (FD_ISSET(m_SrcSocket, &cnt))
     {
@@ -148,15 +142,15 @@ bool TcpConnector::ConnectAsClient( const TcpConnector::Desc& info )
 {
     std::lock_guard<std::recursive_mutex> locker(m_Mutex);
 
-    sockaddr_in addr;
+    sockaddr_in addr = {};
     int len = sizeof(sockaddr_in);
     int ret = 0;
 
     WSADATA wsaData;
 
-    if ( !m_IsReady )
+    if (!m_IsReady)
     {
-        ret = WSAStartup( 0x0202, &wsaData );
+        ret = WSAStartup(0x0202, &wsaData);
         if ( ret != 0 )
         {
             ELOG( "Error : WSAStartup() Failed." );
@@ -289,15 +283,11 @@ bool TcpConnector::Receive( void* pBuffer, int size )
 
     // エラー.
     if ( status == SOCKET_ERROR )
-    {
-        //ELOG( "Error : recv() Failed." );
-        return false;
-    }
+    { return false; }
     // ソケットが閉じられた場合.
     else if ( status == 0 )
     {
         m_IsConnected = false;
-        //DLOG( "Error : Socket is already closed." );
         return false;
     }
 
