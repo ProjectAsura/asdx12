@@ -380,6 +380,9 @@
     <ClInclude Include="..\include\res\asdxResModel.h">
       <Filter>ヘッダー ファイル\res</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\fnd\asdxPool.h">
+      <Filter>ヘッダー ファイル\fnd</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\res\shaders\BRDF.hlsli">

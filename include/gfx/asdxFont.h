@@ -11,8 +11,6 @@
 //-----------------------------------------------------------------------------
 #include <cstdint>
 #include <vector>
-#include <d3d11.h>
-#include <asdxRef.h>
 
 
 namespace asdx {
