@@ -13,6 +13,7 @@
 #include <d3d12.h>
 #include <fnd/asdxRef.h>
 #include <gfx/asdxView.h>
+#include <edit/asdxFileWatcher.h>
 
 
 #ifdef __ID3D12GraphicsCommandList6_INTERFACE_DEFINED__
@@ -49,45 +50,43 @@ enum PIPELINE_TYPE
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-// DEPTH_STATE_TYPE
+// Preset class
 ///////////////////////////////////////////////////////////////////////////////
-enum DEPTH_STATE_TYPE
+class Preset
 {
-    DEPTH_STATE_DEFAULT,
-    DEPTH_STATE_NONE,
-    DEPTH_STATE_READ_ONLY,
-    DEPTH_STATE_WRITE_ONLY,
+public:
+    static const D3D12_RASTERIZER_DESC CullNone;
+    static const D3D12_RASTERIZER_DESC CullBack;
+    static const D3D12_RASTERIZER_DESC CullFront;
+    static const D3D12_RASTERIZER_DESC Wireframe;
 
-    MAX_COUNT_DEPTH_STATE_TYPE
-};
+    static const D3D12_DEPTH_STENCILOP_DESC StencilDefault;
 
-///////////////////////////////////////////////////////////////////////////////
-// RASTERIZER_STATE_TYPE
-///////////////////////////////////////////////////////////////////////////////
-enum RASTERIZER_STATE_TYPE
-{
-    RASTERIZER_STATE_CULL_NONE,
-    RASTERIZER_STATE_CULL_BACK,
-    RASTERIZER_STATE_CULL_FRONT,
-    RASTERIZER_STATE_WIREFRAME,
+    static const D3D12_DEPTH_STENCIL_DESC DepthDefault;
+    static const D3D12_DEPTH_STENCIL_DESC DepthNone;
+    static const D3D12_DEPTH_STENCIL_DESC DepthReadOnly;
+    static const D3D12_DEPTH_STENCIL_DESC DepthWriteOnly;
 
-    MAX_COUNT_RASTERIZER_STATE_TYPE
-};
+    static const D3D12_RENDER_TARGET_BLEND_DESC RTB_Opaque;
+    static const D3D12_RENDER_TARGET_BLEND_DESC RTB_AlphaBlend;
+    static const D3D12_RENDER_TARGET_BLEND_DESC RTB_Additive;
+    static const D3D12_RENDER_TARGET_BLEND_DESC RTB_Subtract;
+    static const D3D12_RENDER_TARGET_BLEND_DESC RTB_Premultiplied;
+    static const D3D12_RENDER_TARGET_BLEND_DESC RTB_Multiply;
+    static const D3D12_RENDER_TARGET_BLEND_DESC RTB_Screen;
 
-///////////////////////////////////////////////////////////////////////////////
-// BLEND_STATE_TYPE
-///////////////////////////////////////////////////////////////////////////////
-enum BLEND_STATE_TYPE
-{
-    BLEND_STATE_OPAQUE,
-    BLEND_STATE_ALPHABLEND,
-    BLEND_STATE_ADDITIVE,
-    BLEND_STATE_SUBTRACT,
-    BLEND_STATE_PREMULTIPLIED,
-    BLEND_STATE_MULTIPLY,
-    BLEND_STATE_SCREEN,
+    static const D3D12_BLEND_DESC Opaque;
+    static const D3D12_BLEND_DESC AlphaBlend;
+    static const D3D12_BLEND_DESC Additive;
+    static const D3D12_BLEND_DESC Subtract;
+    static const D3D12_BLEND_DESC Premultiplied;
+    static const D3D12_BLEND_DESC Multiply;
+    static const D3D12_BLEND_DESC Screen;
 
-    MAX_COUNT_BLEND_STATE_TYPE
+    static const D3D12_SHADER_BYTECODE FullScreenVS;
+    static const D3D12_SHADER_BYTECODE CopyPS;
+    static const D3D12_SHADER_BYTECODE SpriteVS;
+    static const D3D12_SHADER_BYTECODE SpritePS;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -112,35 +111,9 @@ struct GEOMETRY_PIPELINE_STATE_DESC
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-// DEPTH_STENCIL_DESC structure
-///////////////////////////////////////////////////////////////////////////////
-struct DEPTH_STENCIL_DESC : public D3D12_DEPTH_STENCIL_DESC
-{
-    DEPTH_STENCIL_DESC(
-        DEPTH_STATE_TYPE      type,
-        D3D12_COMPARISON_FUNC depthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL);
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// RASTERIZER_DESC structure
-///////////////////////////////////////////////////////////////////////////////
-struct RASTERIZER_DESC : public D3D12_RASTERIZER_DESC
-{
-    RASTERIZER_DESC(RASTERIZER_STATE_TYPE type);
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// BLEN_DESC structure
-///////////////////////////////////////////////////////////////////////////////
-struct BLEND_DESC : public D3D12_BLEND_DESC
-{
-    BLEND_DESC(BLEND_STATE_TYPE type);
-};
-
-///////////////////////////////////////////////////////////////////////////////
 // PipelineState class
 ///////////////////////////////////////////////////////////////////////////////
-class PipelineState
+class PipelineState : public IFileUpdateListener
 {
     //=========================================================================
     // list of friend classes and methods.
@@ -203,18 +176,11 @@ public:
     void Term();
 
     //-------------------------------------------------------------------------
-    //! @brief      シェーダを差し替えます.
+    //! @brief      パイプラインステートを設定します.
     //! 
-    //! @param[in]      type        シェーダタイプ.
-    //! @param[in]      pBinary     シェーダバイナリ.
-    //! @param[in]      binarySize  バイナリサイズ.
+    //! @param[in]      pCmdList        コマンドリスト.
     //-------------------------------------------------------------------------
-    void ReplaceShader(SHADER_TYPE type, const void* pBinary, size_t binarySize);
-
-    //-------------------------------------------------------------------------
-    //! @brief      パイプラインステートを再生成します.
-    //-------------------------------------------------------------------------
-    void Rebuild();
+    void SetState(ID3D12GraphicsCommandList* pCmdList);
 
     //-------------------------------------------------------------------------
     //! @brief      パイプラインタイプを取得します.
@@ -224,70 +190,59 @@ public:
     PIPELINE_TYPE GetType() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      パイプラインステートを設定します.
+    //! @brief      頂点シェーダのリロードパスを設定します.
     //! 
-    //! @param[in]      pCmdList        グラフィックスコマンドリスト.
+    //! @param[in]      path        監視対象となるファイルパス.
     //-------------------------------------------------------------------------
-    void SetState(ID3D12GraphicsCommandList* pCmdList);
+    void SetReloadPathVS(const char* path, const char* shaderModel);
 
     //-------------------------------------------------------------------------
-    //! @brief      ルート定数を設定します.
+    //! @brief      頂点シェーダのリロードパスを設定します.
     //! 
-    //! @param[in]      pCmdList        グラフィックスコマンドリスト.
-    //! @param[in]      type            シェーダタイプです.
-    //! @param[in]      registerIndex   レジスタ番号.
-    //! @param[in]      paramCount      設定するパラメータ数.
-    //! @param[in]      params          設定するパラメータ.
-    //! @param[in]      offset          設定先先頭からのオフセット.
+    //! @param[in]      path        監視対象となるファイルパス.
     //-------------------------------------------------------------------------
-    void SetConstants(
-        ID3D12GraphicsCommandList*  pCmdList,
-        SHADER_TYPE                 type,
-        uint32_t                    registerIndex,
-        uint32_t                    paramCount,
-        const void*                 params,
-        uint32_t                    offset);
+    void SetReloadPathPS(const char* path, const char* shaderModel);
 
     //-------------------------------------------------------------------------
-    //! @brief      定数バッファを設定します.
+    //! @brief      頂点シェーダのリロードパスを設定します.
     //! 
-    //! @param[in]      pCmdList        コマンドリストです.
-    //! @param[in]      type            シェーダタイプです.
-    //! @param[in]      registerIndex   レジスタ番号.
-    //! @param[in]      pView           ビューです.
+    //! @param[in]      path        監視対象となるファイルパス.
     //-------------------------------------------------------------------------
-    void SetCBV(ID3D12GraphicsCommandList* pCmdList, SHADER_TYPE type, uint32_t registerIndex, IConstantBufferView* pView);
+    void SetReloadPathCS(const char* path, const char* shaderModel);
 
     //-------------------------------------------------------------------------
-    //! @brief      シェーダリソースビューを設定します.
+    //! @brief      頂点シェーダのリロードパスを設定します.
     //! 
-    //! @param[in]      pCmdList        コマンドリストです.
-    //! @param[in]      type            シェーダタイプです.
-    //! @param[in]      registerIndex   レジスタ番号.
-    //! @param[in]      pView           ビューです.
+    //! @param[in]      path        監視対象となるファイルパス.
     //-------------------------------------------------------------------------
-    void SetSRV(ID3D12GraphicsCommandList* pCmdList, SHADER_TYPE type, uint32_t registerIndex, IShaderResourceView* pView);
+    void SetReloadPathAS(const char* path, const char* shaderModel);
 
     //-------------------------------------------------------------------------
-    //! @brief      アンオーダードアクセスビューを設定します.
+    //! @brief      頂点シェーダのリロードパスを設定します.
     //! 
-    //! @param[in]      pCmdList        コマンドリストです.
-    //! @param[in]      type            シェーダタイプです.
-    //! @param[in]      registerIndex   レジスタ番号.
-    //! @param[in]      pView           ビューです.
+    //! @param[in]      path        監視対象となるファイルパス.
     //-------------------------------------------------------------------------
-    void SetUAV(ID3D12GraphicsCommandList* pCmdList, SHADER_TYPE type, uint32_t registerIndex, IUnorderedAccessView* pView);
+    void SetReloadPathMS(const char* path, const char* shaderModel);
+
+    //-------------------------------------------------------------------------
+    //! @brief      シェーダリロードの為のインクルードディレクトリを設定します.
+    //! 
+    //! @param[in]      dirs        インクルードディレクトリ.
+    //-------------------------------------------------------------------------
+    void SetIncludeDirs(const std::vector<std::string>& dirs);
+
+    //-------------------------------------------------------------------------
+    //! @brief      ファイル更新時の処理です.
+    //-------------------------------------------------------------------------
+    void OnUpdate(
+        ACTION_TYPE actionType,
+        const char* directoryPath,
+        const char* relativePath) override;
 
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    RefPtr<ID3D12RootSignature>     m_pRootSig;
-    RefPtr<ID3D12RootSignature>     m_pRecreateRootSig;
-    RefPtr<ID3D12PipelineState>     m_pPSO;
-    RefPtr<ID3D12PipelineState>     m_pRecreatePSO;
-    PIPELINE_TYPE                   m_Type;
-
     union Desc
     {
         D3D12_GRAPHICS_PIPELINE_STATE_DESC  Graphics;
@@ -295,38 +250,41 @@ private:
         GEOMETRY_PIPELINE_STATE_DESC        Geometry;
     } m_Desc;
 
-    std::vector<uint8_t>    m_VS;
-    std::vector<uint8_t>    m_PS;
-    std::vector<uint8_t>    m_CS;
-    std::vector<uint8_t>    m_MS;
-    std::vector<uint8_t>    m_AS;
+    PIPELINE_TYPE               m_Type;
+    RefPtr<ID3D12PipelineState> m_DefaultPSO;
+    RefPtr<ID3D12PipelineState> m_ReloadedPSO;
 
-    std::map<uint16_t, uint16_t>    m_RootParameterIndices;
+    std::string                 m_ReloadPathVS;
+    std::string                 m_ReloadPathPS;
+    std::string                 m_ReloadPathCS;
+    std::string                 m_ReloadPathAS;
+    std::string                 m_ReloadPathMS;
 
-    //=========================================================================
-    // private methods.
-    //=========================================================================
+    std::string                 m_ShaderModelVS;
+    std::string                 m_ShaderModelPS;
+    std::string                 m_ShaderModelCS;
+    std::string                 m_ShaderModelAS;
+    std::string                 m_ShaderModelMS;
 
-    uint32_t FindIndex(SHADER_TYPE type, uint8_t kind, uint32_t registerIndex) const;
+    std::vector<uint8_t>        m_VS;
+    std::vector<uint8_t>        m_PS;
+    std::vector<uint8_t>        m_CS;
+    std::vector<uint8_t>        m_MS;
+    std::vector<uint8_t>        m_AS;
+    std::vector<std::string>    m_IncludeDirs;
 
-    bool EnumerateRootParameter(
-        SHADER_TYPE type,
-        const void* binary,
-        size_t binarySize,
-        std::vector<D3D12_DESCRIPTOR_RANGE*>& ranges,
-        std::vector<D3D12_ROOT_PARAMETER>& params,
-        std::vector<D3D12_STATIC_SAMPLER_DESC>& samplers);
+    bool m_Dirty = false;
 
-    bool CreateGraphicsRootSignature(ID3D12Device8* pDevice, ID3D12RootSignature** ppRootSig);
-    bool CreateGeometryRootSignature(ID3D12Device8* pDevice, ID3D12RootSignature** ppRootSig);
-    bool CreateComputeRootSignature(ID3D12Device8* pDevice, ID3D12RootSignature** ppRootSig);
+    void Rebuild();
+    void ReloadShader(const char* path, const char* shaderModel, std::vector<uint8_t>& result);
 };
 
-void InitRangeAsSRV(D3D12_DESCRIPTOR_RANGE& range, UINT registerIndex, UINT count = 1);
-void InitRangeAsUAV(D3D12_DESCRIPTOR_RANGE& range, UINT registerIndex, UINT count = 1);
-void InitAsConstants(D3D12_ROOT_PARAMETER& param, UINT registerIndex, UINT count, D3D12_SHADER_VISIBILITY visibility);
-void InitAsCBV(D3D12_ROOT_PARAMETER& param, UINT registerIndex, D3D12_SHADER_VISIBILITY visibility);
-void InitAsSRV(D3D12_ROOT_PARAMETER& param, UINT registerIndex, D3D12_SHADER_VISIBILITY visibility);
+void InitRangeAsSRV(D3D12_DESCRIPTOR_RANGE& range, UINT registerIndex, UINT count = 1, UINT registerSpace = 0);
+void InitRangeAsUAV(D3D12_DESCRIPTOR_RANGE& range, UINT registerIndex, UINT count = 1, UINT registerSpace = 0);
+void InitAsConstants(D3D12_ROOT_PARAMETER& param, UINT registerIndex, UINT count, D3D12_SHADER_VISIBILITY visibility, UINT registerSpace = 0);
+void InitAsCBV(D3D12_ROOT_PARAMETER& param, UINT registerIndex, D3D12_SHADER_VISIBILITY visibility, UINT registerSpace = 0);
+void InitAsSRV(D3D12_ROOT_PARAMETER& param, UINT registerIndex, D3D12_SHADER_VISIBILITY visibility, UINT registerSpace = 0);
+void InitAsUAV(D3D12_ROOT_PARAMETER& param, UINT registerIndex, D3D12_SHADER_VISIBILITY visibility, UINT registerSpace = 0);
 void InitAsTable(D3D12_ROOT_PARAMETER& param, UINT count, const D3D12_DESCRIPTOR_RANGE* range, D3D12_SHADER_VISIBILITY visiblity);
 bool InitRootSignature(ID3D12Device* pDevice, const D3D12_ROOT_SIGNATURE_DESC* pDesc, ID3D12RootSignature** ppRootSig);
 

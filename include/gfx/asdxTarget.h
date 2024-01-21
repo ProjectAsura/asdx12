@@ -11,10 +11,6 @@
 #include <dxgi1_6.h>
 #include <gfx/asdxView.h>
 
-#ifndef ENABLE_SINGLE_THREAD
-#define ENABLE_SINGLE_THREAD        (1)
-#endif//ENABLE_SINGLE_THREAD
-
 
 namespace asdx {
 
@@ -167,14 +163,56 @@ public:
     //-------------------------------------------------------------------------
     void SetName(LPCWSTR tag);
 
-#if ENABLE_SINGLE_THREAD
+#if ASDX_ENABLE_SINGLE_THREAD
+    //-------------------------------------------------------------------------
+    //! @brief      初期化処理を行います.
+    //!
+    //! @param[in]      pDesc       構成設定です.
+    //! @retval true    初期化成功.
+    //! @retval false   初期化失敗.
+    //-------------------------------------------------------------------------
+    bool Init1(const TargetDesc* pDesc)
+    {
+        m_PrevState = pDesc->InitState;
+        return Init(pDesc);
+    }
+
+    //-------------------------------------------------------------------------
+    //! @brief      初期化処理を行います.
+    //!
+    //! @param[in]      pSwapChain          スワップチェインです.
+    //! @param[in]      backbufferIndex     バックバッファ番号です.
+    //! @retval true    初期化成功.
+    //! @retval false   初期化失敗.
+    //-------------------------------------------------------------------------
+    bool Init1(IDXGISwapChain* pSwapChain, uint32_t backbufferIndex)
+    {
+        m_PrevState = D3D12_RESOURCE_STATE_COMMON;
+        return Init(pSwapChain, backbufferIndex);
+    }
+
     //-------------------------------------------------------------------------
     //! @brief      ステート遷移を行います.
     //! 
     //! @param[in]      pCmdList    コマンドリスト.
     //! @param[in]      nextState   遷移後のステート.
     //-------------------------------------------------------------------------
-    void Transition(ID3D12GraphicsCommandList* pCmdList, D3D12_RESOURCE_STATES nextState);
+    void ChangeState(ID3D12GraphicsCommandList* pCmdList, D3D12_RESOURCE_STATES nextState)
+    {
+        if (nextState == m_PrevState)
+        { return; }
+
+        D3D12_RESOURCE_BARRIER barrier = {};
+        barrier.Type                    = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+        barrier.Transition.pResource    = m_pResource.GetPtr();
+        barrier.Transition.Subresource  = 0;
+        barrier.Transition.StateBefore  = m_PrevState;
+        barrier.Transition.StateAfter   = nextState;
+
+        pCmdList->ResourceBarrier(1, &barrier);
+
+        m_PrevState = nextState;
+    }
 
     //-------------------------------------------------------------------------
     //! @brief      ステートを取得します.
@@ -192,8 +230,8 @@ private:
     RefPtr<IRenderTargetView>   m_pRTV;
     RefPtr<IShaderResourceView> m_pSRV;
     TargetDesc                  m_Desc;
-#if ENABLE_SINGLE_THREAD
-    D3D12_RESOURCE_STATES       m_PrevState;
+#if ASDX_ENABLE_SINGLE_THREAD
+    D3D12_RESOURCE_STATES       m_PrevState = D3D12_RESOURCE_STATE_COMMON;
 #endif
 
     //=========================================================================
@@ -293,14 +331,43 @@ public:
     //-------------------------------------------------------------------------
     void SetName(LPCWSTR tag);
 
-#if ENABLE_SINGLE_THREAD
+#if ASDX_ENABLE_SINGLE_THREAD
+    //-------------------------------------------------------------------------
+    //! @brief      初期化処理を行います.
+    //!
+    //! @param[in]      device      グラフィックスデバイスです.
+    //! @param[in]      pDesc       構成設定です.
+    //! @retval true    初期化に成功.
+    //! @retval false   初期化に失敗.
+    //-------------------------------------------------------------------------
+    bool Init1(const TargetDesc* pDesc)
+    {
+        m_PrevState = pDesc->InitState;
+        return Init(pDesc);
+    }
+
     //-------------------------------------------------------------------------
     //! @brief      ステート遷移を行います.
     //! 
     //! @param[in]      pCmdList    コマンドリスト.
     //! @param[in]      nextState   遷移後のステート.
     //-------------------------------------------------------------------------
-    void Transition(ID3D12GraphicsCommandList* pCmdList, D3D12_RESOURCE_STATES nextState);
+    void ChangeState(ID3D12GraphicsCommandList* pCmdList, D3D12_RESOURCE_STATES nextState)
+    {
+        if (nextState == m_PrevState)
+        { return; }
+
+        D3D12_RESOURCE_BARRIER barrier = {};
+        barrier.Type                    = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+        barrier.Transition.pResource    = m_pResource.GetPtr();
+        barrier.Transition.Subresource  = 0;
+        barrier.Transition.StateBefore  = m_PrevState;
+        barrier.Transition.StateAfter   = nextState;
+
+        pCmdList->ResourceBarrier(1, &barrier);
+
+        m_PrevState = nextState;
+    }
 
     //-------------------------------------------------------------------------
     //! @brief      ステートを取得します.
@@ -318,8 +385,8 @@ private:
     RefPtr<IDepthStencilView>   m_pDSV;
     RefPtr<IShaderResourceView> m_pSRV;
     TargetDesc                  m_Desc;
-#if ENABLE_SINGLE_THREAD
-    D3D12_RESOURCE_STATES       m_PrevState;
+#if ASDX_ENABLE_SINGLE_THREAD
+    D3D12_RESOURCE_STATES       m_PrevState = D3D12_RESOURCE_STATE_COMMON;
 #endif
 
     //=========================================================================
@@ -415,16 +482,45 @@ public:
     //! 
     //! @param[in]      pCmdList        コマンドリスト.
     //-------------------------------------------------------------------------
-    void BarrierUAV(ID3D12GraphicsCommandList* pCmdList);
+    void UAVBarrier(ID3D12GraphicsCommandList* pCmdList);
 
-#if ENABLE_SINGLE_THREAD
+#if ASDX_ENABLE_SINGLE_THREAD
+    //-------------------------------------------------------------------------
+    //! @brief      初期化処理を行います.
+    //!
+    //! @param[in]      device      グラフィックスデバイスです.
+    //! @param[in]      pDesc       構成設定です.
+    //! @retval true    初期化に成功.
+    //! @retval false   初期化に失敗.
+    //-------------------------------------------------------------------------
+    bool Init1(const TargetDesc* pDesc, uint32_t stride = 0)
+    {
+        m_PrevState = pDesc->InitState;
+        return Init(pDesc, stride);
+    }
+
     //-------------------------------------------------------------------------
     //! @brief      ステート遷移を行います.
     //! 
     //! @param[in]      pCmdList    コマンドリスト.
     //! @param[in]      nextState   遷移後のステート.
     //-------------------------------------------------------------------------
-    void Transition(ID3D12GraphicsCommandList* pCmdList, D3D12_RESOURCE_STATES nextState);
+    void ChangeState(ID3D12GraphicsCommandList* pCmdList, D3D12_RESOURCE_STATES nextState)
+    {
+        if (nextState == m_PrevState)
+        { return; }
+
+        D3D12_RESOURCE_BARRIER barrier = {};
+        barrier.Type                    = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+        barrier.Transition.pResource    = m_pResource.GetPtr();
+        barrier.Transition.Subresource  = 0;
+        barrier.Transition.StateBefore  = m_PrevState;
+        barrier.Transition.StateAfter   = nextState;
+
+        pCmdList->ResourceBarrier(1, &barrier);
+
+        m_PrevState = nextState;
+    }
 
     //-------------------------------------------------------------------------
     //! @brief      ステートを取得します.
@@ -434,7 +530,6 @@ public:
     D3D12_RESOURCE_STATES GetState() const { return m_PrevState; }
 #endif
 
-
 private:
     //=========================================================================
     // private variables.
@@ -443,8 +538,8 @@ private:
     RefPtr<IUnorderedAccessView>    m_pUAV;
     RefPtr<IShaderResourceView>     m_pSRV;
     TargetDesc                      m_Desc;
-#if ENABLE_SINGLE_THREAD
-    D3D12_RESOURCE_STATES           m_PrevState;
+#if ASDX_ENABLE_SINGLE_THREAD
+    D3D12_RESOURCE_STATES           m_PrevState = D3D12_RESOURCE_STATE_COMMON;
 #endif
 
     //=========================================================================

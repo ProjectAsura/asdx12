@@ -351,10 +351,6 @@ bool ColorTarget::Init(const TargetDesc* pDesc)
 
     memcpy(&m_Desc, pDesc, sizeof(m_Desc));
 
-#if ENABLE_SINGLE_THREAD
-    m_PrevState = pDesc->InitState;
-#endif
-
     return true;
 }
 
@@ -457,10 +453,6 @@ bool ColorTarget::Init
         return false;
     }
 
-#if ENABLE_SINGLE_THREAD
-    m_PrevState = D3D12_RESOURCE_STATE_COMMON;
-#endif
-
     return true;
 }
 
@@ -530,27 +522,6 @@ void ColorTarget::SetName(LPCWSTR tag)
     { m_pResource->SetName(tag); }
 }
 
-#if ENABLE_SINGLE_THREAD
-//-----------------------------------------------------------------------------
-//      ステート遷移を行います.
-//-----------------------------------------------------------------------------
-void ColorTarget::Transition(ID3D12GraphicsCommandList* pCmdList, D3D12_RESOURCE_STATES nextState)
-{
-    if (nextState == m_PrevState)
-    { return; }
-
-    D3D12_RESOURCE_BARRIER barrier = {};
-    barrier.Type                    = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-    barrier.Transition.pResource    = m_pResource.GetPtr();
-    barrier.Transition.Subresource  = 0;
-    barrier.Transition.StateBefore  = m_PrevState;
-    barrier.Transition.StateAfter   = nextState;
-
-    pCmdList->ResourceBarrier(1, &barrier);
-
-    m_PrevState = nextState;
-}
-#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 // DepthTarget class
@@ -735,10 +706,6 @@ bool DepthTarget::Init(const TargetDesc* pDesc)
 
     memcpy(&m_Desc, pDesc, sizeof(m_Desc));
 
-#if ENABLE_SINGLE_THREAD
-    m_PrevState = pDesc->InitState;
-#endif
-
     return true;
 }
 
@@ -801,28 +768,6 @@ void DepthTarget::SetName(LPCWSTR tag)
     if (m_pResource)
     { m_pResource->SetName(tag); }
 }
-
-#if ENABLE_SINGLE_THREAD
-//-----------------------------------------------------------------------------
-//      ステート遷移を行います.
-//-----------------------------------------------------------------------------
-void DepthTarget::Transition(ID3D12GraphicsCommandList* pCmdList, D3D12_RESOURCE_STATES nextState)
-{
-    if (nextState == m_PrevState)
-    { return; }
-
-    D3D12_RESOURCE_BARRIER barrier = {};
-    barrier.Type                    = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-    barrier.Transition.pResource    = m_pResource.GetPtr();
-    barrier.Transition.Subresource  = 0;
-    barrier.Transition.StateBefore  = m_PrevState;
-    barrier.Transition.StateAfter   = nextState;
-
-    pCmdList->ResourceBarrier(1, &barrier);
-
-    m_PrevState = nextState;
-}
-#endif
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1016,10 +961,6 @@ bool ComputeTarget::Init(const TargetDesc* pDesc, uint32_t stride)
 
     memcpy(&m_Desc, pDesc, sizeof(m_Desc));
 
-#if ENABLE_SINGLE_THREAD
-    m_PrevState = pDesc->InitState;
-#endif
-
     return true;
 }
 
@@ -1073,7 +1014,7 @@ void ComputeTarget::SetName(LPCWSTR tag)
 //-----------------------------------------------------------------------------
 //      UAVバリアを設定します.
 //-----------------------------------------------------------------------------
-void ComputeTarget::BarrierUAV(ID3D12GraphicsCommandList* pCmdList)
+void ComputeTarget::UAVBarrier(ID3D12GraphicsCommandList* pCmdList)
 {
     D3D12_RESOURCE_BARRIER barrier = {};
     barrier.Type            = D3D12_RESOURCE_BARRIER_TYPE_UAV;
@@ -1081,27 +1022,5 @@ void ComputeTarget::BarrierUAV(ID3D12GraphicsCommandList* pCmdList)
 
     pCmdList->ResourceBarrier(1, &barrier);
 }
-
-#if ENABLE_SINGLE_THREAD
-//-----------------------------------------------------------------------------
-//      ステート遷移を行います.
-//-----------------------------------------------------------------------------
-void ComputeTarget::Transition(ID3D12GraphicsCommandList* pCmdList, D3D12_RESOURCE_STATES nextState)
-{
-    if (nextState == m_PrevState)
-    { return; }
-
-    D3D12_RESOURCE_BARRIER barrier = {};
-    barrier.Type                    = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-    barrier.Transition.pResource    = m_pResource.GetPtr();
-    barrier.Transition.Subresource  = 0;
-    barrier.Transition.StateBefore  = m_PrevState;
-    barrier.Transition.StateAfter   = nextState;
-
-    pCmdList->ResourceBarrier(1, &barrier);
-
-    m_PrevState = nextState;
-}
-#endif
 
 } // namespace asdx

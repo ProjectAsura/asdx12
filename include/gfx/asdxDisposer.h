@@ -61,7 +61,7 @@ public:
         if (pObject == nullptr)
         { return; }
 
-        asdx::ScopedLock locker(&m_SpinLock);
+        ScopedLock locker(&m_SpinLock);
 
         Item item = {};
         item.pObject    = pObject;
@@ -76,7 +76,7 @@ public:
     //-------------------------------------------------------------------------
     void FrameSync()
     {
-        asdx::ScopedLock locker(&m_SpinLock);
+        ScopedLock locker(&m_SpinLock);
 
         auto itr = m_List.begin();
         while(itr != m_List.end())
@@ -104,7 +104,7 @@ public:
     //-------------------------------------------------------------------------
     void Clear()
     {
-        asdx::ScopedLock locker(&m_SpinLock);
+        ScopedLock locker(&m_SpinLock);
 
         auto itr = m_List.begin();
         while(itr != m_List.end())

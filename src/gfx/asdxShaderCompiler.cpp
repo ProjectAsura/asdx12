@@ -257,10 +257,154 @@ bool WriteBlobToFile(IBlob* pBlob, const char* filename)
     return true;
 }
 
+
 //-----------------------------------------------------------------------------
 //      シェーダコンパイルします.
 //-----------------------------------------------------------------------------
-bool CompileFromFile
+bool CompileFromFileA
+(
+    const char*                 filename,
+    std::vector<std::string>    includeDirs,
+    const char*                 entryPoint,
+    const char*                 shaderModel,
+    IBlob**                     ppResult
+)
+{
+#ifdef ASDX_ENABLE_DXC
+    FILE* pFile = nullptr;
+    std::vector<uint8_t> buffer;
+    auto err = fopen_s(&pFile, filename, "rb");
+    if (err != 0 || pFile == nullptr)
+    {
+        return false;
+    }
+
+    auto cur = ftell(pFile);
+    fseek(pFile, 0, SEEK_END);
+    auto end = ftell(pFile);
+    fseek(pFile, 0, SEEK_SET);
+    auto size = end - cur;
+    buffer.resize(end - cur + 1);
+    fread(buffer.data(), size, 1, pFile);
+    fclose(pFile);
+
+    HRESULT hr = S_OK;
+    RefPtr<IDxcUtils> pUtils;
+    RefPtr<IDxcCompiler> pCompiler;
+    RefPtr<IDxcLibrary> pLibrary;
+    RefPtr<IDxcIncludeHandler> pIncludeHandler;
+    DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(pUtils.GetAddress()));
+    DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(pCompiler.GetAddress()));
+    DxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(pLibrary.GetAddress()));
+
+    RefPtr<IDxcBlobEncoding> pSource;
+    hr = pLibrary->CreateBlobWithEncodingFromPinned(buffer.data(), UINT32(buffer.size()), DXC_CP_UTF8, pSource.GetAddress());
+    if (FAILED(hr))
+    {
+        ELOGA("Error : IDxcLibrary::CreateBlobWithEncodingFromPinned() Failed. errcode = 0x%x", hr);
+        return false;
+    }
+
+    hr = pUtils->CreateDefaultIncludeHandler(pIncludeHandler.GetAddress());
+    if (FAILED(hr))
+    {
+        ELOG("Error : IDxcUtils::CreateDefaultIncludeHandler() Failed. errcode = 0x%x", hr);
+        return false;
+    }
+
+    std::vector<LPCWSTR> args;
+#if defined(DEBUG) || defined(_DEBUG)
+    args.push_back(L"-Zi");
+    args.push_back(L"-O0");
+    args.push_back(L"-Qembed_debug");
+#else
+    args.push_back(L"-O2");
+#endif
+    if (!includeDirs.empty())
+    {
+        for(size_t i=0; i<includeDirs.size(); ++i)
+        {
+            args.push_back(L"-I");
+            args.push_back(ToStringW(includeDirs[i].c_str()).c_str());
+        }
+    }
+
+    auto ep = asdx::ToStringW(entryPoint);
+    auto sm = asdx::ToStringW(shaderModel);
+
+    RefPtr<IDxcOperationResult> pResults;
+    pCompiler->Compile(
+        pSource.GetPtr(),
+        ToStringW(filename).c_str(),
+        ep.c_str(),
+        sm.c_str(),
+        args.data(),
+        UINT(args.size()),
+        nullptr,
+        0,
+        pIncludeHandler.GetPtr(),
+        pResults.GetAddress());
+
+    HRESULT ret;
+    pResults->GetStatus(&ret);
+    if (FAILED(ret))
+    {
+        RefPtr<IDxcBlobEncoding> pErrorBlob;
+        pResults->GetErrorBuffer(pErrorBlob.GetAddress());
+        ELOGA("Compilation Failed. errcode = 0x%x, msg = %s.",
+            ret, 
+            (pErrorBlob->GetBufferSize() > 0)
+            ? reinterpret_cast<const char*>(pErrorBlob->GetBufferPointer())
+            : "Unknown");
+        
+        return false;
+    }
+
+    RefPtr<IDxcBlob> pShader;
+    pResults->GetResult(pShader.GetAddress());
+
+    auto blob = new Blob();
+    blob->m_Buffer = malloc(pShader->GetBufferSize());
+    blob->m_Size   = pShader->GetBufferSize();
+
+    memcpy(blob->m_Buffer, pShader->GetBufferPointer(), pShader->GetBufferSize());
+    *ppResult = blob;
+
+    return true;
+#else
+    RefPtr<ID3DBlob> pShader;
+    RefPtr<ID3DBlob> pError;
+    auto hr = D3DCompileFromFile(
+        filename,
+        nullptr,
+        D3D_COMPILE_STANDARD_FILE_INCLUDE,
+        entryPoint,
+        shaderModel,
+        flags,
+        0,
+        pShader.GetAddress(),
+        pError.GetAddress());
+    if (FAILED(hr))
+    {
+        return false;
+    }
+
+    auto blob = new Blob();
+    blob->m_Buffer = malloc(pShader->GetBufferSize());
+    blob->m_Size = pShader->GetBufferSize();
+    assert(blob->m_Buffer != nullptr);
+    memcpy(blob->m_Buffer, pShader->GetBufferPointer(), pShader->GetBufferSize());
+    *ppResult = blob;
+
+    return true;
+#endif
+}
+
+
+//-----------------------------------------------------------------------------
+//      シェーダコンパイルします.
+//-----------------------------------------------------------------------------
+bool CompileFromFileW
 (
     const wchar_t*            filename,
     std::vector<std::wstring> includeDirs,

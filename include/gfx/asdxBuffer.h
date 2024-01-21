@@ -409,12 +409,86 @@ public:
     //-------------------------------------------------------------------------
     IShaderResourceView* GetView() const;
 
+    //-------------------------------------------------------------------------
+    //! @brief      UAVバリアを設定します.
+    //! 
+    //! @param[in]      pCmdList        コマンドリスト.
+    //-------------------------------------------------------------------------
+    void UAVBarrier(ID3D12GraphicsCommandList* pCmdList);
+
+#if ASDX_ENABLE_SINGLE_THREAD
+    //-------------------------------------------------------------------------
+    //! @brief      初期化処理を行います.
+    //! 
+    //! @param[in]      size        バッファサイズです
+    //! @param[in]      state       リソースステートです
+    //! @retval true    初期化に成功.
+    //! @retval false   初期化に失敗.
+    //-------------------------------------------------------------------------
+    bool Init1(uint64_t size, D3D12_RESOURCE_STATES state)
+    {
+        m_State = state;
+        return Init(size, state);
+    }
+
+    //-------------------------------------------------------------------------
+    //! @brief      初期化処理を行います.
+    //!
+    //! @param[in]      pCmdList    コマンドリストです.
+    //! @param[in]      size        バッファサイズです
+    //! @param[in]      pInitData   初期化データです.
+    //! @retval true    初期化に成功.
+    //! @retval false   初期化に失敗.
+    //-------------------------------------------------------------------------
+    bool Init1(ID3D12GraphicsCommandList* pCmdList, uint64_t size, const void* pInitData)
+    {
+        m_State = D3D12_RESOURCE_STATE_GENERIC_READ;
+        return Init(pCmdList, size, pInitData);
+    }
+
+    //-------------------------------------------------------------------------
+    //! @brief      ステート遷移を行います.
+    //! 
+    //! @param[in]      pCmdList    コマンドリスト.
+    //! @param[in]      nextState   遷移後のステート.
+    //-------------------------------------------------------------------------
+    void ChangeState(ID3D12GraphicsCommandList* pCmdList, D3D12_RESOURCE_STATES state)
+    {
+        if (m_State == state)
+        { return; }
+
+        auto prevState = m_State;
+        auto nextState = state;
+
+        D3D12_RESOURCE_BARRIER barrier = {};
+        barrier.Type                    = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+        barrier.Flags                   = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+        barrier.Transition.pResource    = m_Resource.GetPtr();
+        barrier.Transition.StateBefore  = prevState;
+        barrier.Transition.StateAfter   = nextState;
+
+        pCmdList->ResourceBarrier(1, &barrier);
+
+        m_State = nextState;
+    }
+
+    //-------------------------------------------------------------------------
+    //! @brief      ステートを取得します.
+    //! 
+    //! @return     ステートを返却します.
+    //-------------------------------------------------------------------------
+    D3D12_RESOURCE_STATES GetState() const { return m_State; }
+#endif
+
 private:
     //=========================================================================
     // private variables
     //=========================================================================
     RefPtr<ID3D12Resource>      m_Resource;
     RefPtr<IShaderResourceView> m_View;
+#if ASDX_ENABLE_SINGLE_THREAD
+    D3D12_RESOURCE_STATES       m_State = D3D12_RESOURCE_STATE_COMMON;
+#endif
 
     //=========================================================================
     // private methods.
@@ -495,12 +569,88 @@ public:
     //-------------------------------------------------------------------------
     IShaderResourceView* GetView() const;
 
+    //-------------------------------------------------------------------------
+    //! @brief      UAVバリアを設定します.
+    //! 
+    //! @param[in]      pCmdList        コマンドリスト.
+    //-------------------------------------------------------------------------
+    void UAVBarrier(ID3D12GraphicsCommandList* pCmdList);
+
+#if ASDX_ENABLE_SINGLE_THREAD
+    //-------------------------------------------------------------------------
+    //! @brief      初期化処理を行います.
+    //!
+    //! @param[in]      count       配列数です.
+    //! @param[in]      stride      構造体のサイズです.
+    //! @param[in]      state       リソースステートです.
+    //! @retval true    初期化に成功.
+    //! @retval false   初期化に失敗.
+    //-------------------------------------------------------------------------
+    bool Init1(uint64_t size, uint32_t stride, D3D12_RESOURCE_STATES state)
+    {
+        m_State = state;
+        return Init(size, stride, state);
+    }
+
+    //-------------------------------------------------------------------------
+    //! @brief      初期化処理を行います.
+    //!
+    //! @param[in]      pCmdList            コマンドリストです.
+    //! @param[in]      count               配列数です.
+    //! @param[in]      stride              構造体のサイズです.
+    //! @param[in]      pInitData           初期化データです.
+    //! @retval true    初期化に成功.
+    //! @retval false   初期化に失敗.
+    //-------------------------------------------------------------------------
+    bool Init1(ID3D12GraphicsCommandList* pCmdList, uint64_t count, uint32_t stride, const void* pInitData)
+    {
+        m_State = D3D12_RESOURCE_STATE_GENERIC_READ;
+        return Init1(pCmdList, count, stride, pInitData);
+    }
+
+    //-------------------------------------------------------------------------
+    //! @brief      ステート遷移を行います.
+    //! 
+    //! @param[in]      pCmdList    コマンドリスト.
+    //! @param[in]      nextState   遷移後のステート.
+    //-------------------------------------------------------------------------
+    void ChangeState(ID3D12GraphicsCommandList* pCmdList, D3D12_RESOURCE_STATES state)
+    {
+        if (m_State == state)
+        { return; }
+
+        auto prevState = m_State;
+        auto nextState = state;
+
+        D3D12_RESOURCE_BARRIER barrier = {};
+        barrier.Type                    = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+        barrier.Flags                   = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+        barrier.Transition.pResource    = m_Resource.GetPtr();
+        barrier.Transition.StateBefore  = prevState;
+        barrier.Transition.StateAfter   = nextState;
+
+        pCmdList->ResourceBarrier(1, &barrier);
+
+        m_State = nextState;
+    }
+
+    //-------------------------------------------------------------------------
+    //! @brief      ステートを取得します.
+    //! 
+    //! @return     ステートを返却します.
+    //-------------------------------------------------------------------------
+    D3D12_RESOURCE_STATES GetState() const { return m_State; }
+#endif
+
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
     RefPtr<ID3D12Resource>          m_Resource;
     RefPtr<IShaderResourceView>     m_View;
+#if ASDX_ENABLE_SINGLE_THREAD
+    D3D12_RESOURCE_STATES           m_State = D3D12_RESOURCE_STATE_COMMON;
+#endif
 
     //=========================================================================
     // private methods.
@@ -588,6 +738,5 @@ private:
     //=========================================================================
     /* NOTHING */
 };
-
 
 } // namespace asdx

@@ -579,6 +579,19 @@ ID3D12Resource* ByteAddressBuffer::GetResource() const
 IShaderResourceView* ByteAddressBuffer::GetView() const
 { return m_View.GetPtr(); }
 
+//-----------------------------------------------------------------------------
+//      UAVバリアを設定します.
+//-----------------------------------------------------------------------------
+void ByteAddressBuffer::UAVBarrier(ID3D12GraphicsCommandList* pCmdList)
+{
+    D3D12_RESOURCE_BARRIER barrier = {};
+    barrier.Type            = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+    barrier.Flags           = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+    barrier.UAV.pResource   = m_Resource.GetPtr();
+
+    pCmdList->ResourceBarrier(1, &barrier);
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // StructuredBuffer class
@@ -705,6 +718,19 @@ ID3D12Resource* StructuredBuffer::GetResource() const
 //-----------------------------------------------------------------------------
 IShaderResourceView* StructuredBuffer::GetView() const
 { return m_View.GetPtr(); }
+
+//-----------------------------------------------------------------------------
+//      UAVバリアを設定します.
+//-----------------------------------------------------------------------------
+void StructuredBuffer::UAVBarrier(ID3D12GraphicsCommandList* pCmdList)
+{
+    D3D12_RESOURCE_BARRIER barrier = {};
+    barrier.Type            = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+    barrier.Flags           = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+    barrier.UAV.pResource   = m_Resource.GetPtr();
+
+    pCmdList->ResourceBarrier(1, &barrier);
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////
