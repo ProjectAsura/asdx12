@@ -10,6 +10,7 @@
 //-----------------------------------------------------------------------------
 #include <vector>
 #include <map>
+#include <atomic>
 #include <d3d12.h>
 #include <fnd/asdxRef.h>
 #include <gfx/asdxView.h>
@@ -55,38 +56,38 @@ enum PIPELINE_TYPE
 class Preset
 {
 public:
-    static const D3D12_RASTERIZER_DESC CullNone;
-    static const D3D12_RASTERIZER_DESC CullBack;
-    static const D3D12_RASTERIZER_DESC CullFront;
-    static const D3D12_RASTERIZER_DESC Wireframe;
+    static const D3D12_RASTERIZER_DESC CullNone;    //!< カリング無し.
+    static const D3D12_RASTERIZER_DESC CullBack;    //!< 背面カリング. 
+    static const D3D12_RASTERIZER_DESC CullFront;   //!< 前面カリング.
+    static const D3D12_RASTERIZER_DESC Wireframe;   //!< ワイヤーフレーム.
 
-    static const D3D12_DEPTH_STENCILOP_DESC StencilDefault;
+    static const D3D12_DEPTH_STENCILOP_DESC StencilDefault; //!< ステンシルデフォルト.
 
-    static const D3D12_DEPTH_STENCIL_DESC DepthDefault;
-    static const D3D12_DEPTH_STENCIL_DESC DepthNone;
-    static const D3D12_DEPTH_STENCIL_DESC DepthReadOnly;
-    static const D3D12_DEPTH_STENCIL_DESC DepthWriteOnly;
+    static const D3D12_DEPTH_STENCIL_DESC DepthDefault;     //!< 深度テストON ・書き込み有り.
+    static const D3D12_DEPTH_STENCIL_DESC DepthNone;        //!< 深度テストOFF・書き込み無し.
+    static const D3D12_DEPTH_STENCIL_DESC DepthReadOnly;    //!< 深度テストON ・書き込み無し.
+    static const D3D12_DEPTH_STENCIL_DESC DepthWriteOnly;   //!< 深度テストOFF・書き込み有り.
 
-    static const D3D12_RENDER_TARGET_BLEND_DESC RTB_Opaque;
-    static const D3D12_RENDER_TARGET_BLEND_DESC RTB_AlphaBlend;
-    static const D3D12_RENDER_TARGET_BLEND_DESC RTB_Additive;
-    static const D3D12_RENDER_TARGET_BLEND_DESC RTB_Subtract;
-    static const D3D12_RENDER_TARGET_BLEND_DESC RTB_Premultiplied;
-    static const D3D12_RENDER_TARGET_BLEND_DESC RTB_Multiply;
-    static const D3D12_RENDER_TARGET_BLEND_DESC RTB_Screen;
+    static const D3D12_RENDER_TARGET_BLEND_DESC RTB_Opaque;         //!< 不透明.
+    static const D3D12_RENDER_TARGET_BLEND_DESC RTB_AlphaBlend;     //!< アルファブレンド.
+    static const D3D12_RENDER_TARGET_BLEND_DESC RTB_Additive;       //!< 加算.
+    static const D3D12_RENDER_TARGET_BLEND_DESC RTB_Subtract;       //!< 減算.
+    static const D3D12_RENDER_TARGET_BLEND_DESC RTB_Premultiplied;  //!< 事前乗算済みアルファ.
+    static const D3D12_RENDER_TARGET_BLEND_DESC RTB_Multiply;       //!< 乗算.
+    static const D3D12_RENDER_TARGET_BLEND_DESC RTB_Screen;         //!< スクリーン.
 
-    static const D3D12_BLEND_DESC Opaque;
-    static const D3D12_BLEND_DESC AlphaBlend;
-    static const D3D12_BLEND_DESC Additive;
-    static const D3D12_BLEND_DESC Subtract;
-    static const D3D12_BLEND_DESC Premultiplied;
-    static const D3D12_BLEND_DESC Multiply;
-    static const D3D12_BLEND_DESC Screen;
+    static const D3D12_BLEND_DESC Opaque;           //!< 不透明.
+    static const D3D12_BLEND_DESC AlphaBlend;       //!< アルファブレンド.
+    static const D3D12_BLEND_DESC Additive;         //!< 加算.
+    static const D3D12_BLEND_DESC Subtract;         //!< 減算.
+    static const D3D12_BLEND_DESC Premultiplied;    //!< 事前乗算済みアルファ.
+    static const D3D12_BLEND_DESC Multiply;         //!< 乗算.
+    static const D3D12_BLEND_DESC Screen;           //!< スクリーン.
 
-    static const D3D12_SHADER_BYTECODE FullScreenVS;
-    static const D3D12_SHADER_BYTECODE CopyPS;
-    static const D3D12_SHADER_BYTECODE SpriteVS;
-    static const D3D12_SHADER_BYTECODE SpritePS;
+    static const D3D12_SHADER_BYTECODE FullScreenVS;    //!< フルスクリーン用頂点シェーダ.
+    static const D3D12_SHADER_BYTECODE CopyPS;          //!< コピー用ピクセルシェーダ.
+    static const D3D12_SHADER_BYTECODE SpriteVS;        //!< スプライト用頂点シェーダ.
+    static const D3D12_SHADER_BYTECODE SpritePS;        //!< スプライト用ピクセルシェーダ.
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -248,7 +249,7 @@ private:
         D3D12_GRAPHICS_PIPELINE_STATE_DESC  Graphics;
         D3D12_COMPUTE_PIPELINE_STATE_DESC   Compute;
         GEOMETRY_PIPELINE_STATE_DESC        Geometry;
-    } m_Desc;
+    } m_Desc = {};
 
     PIPELINE_TYPE               m_Type;
     RefPtr<ID3D12PipelineState> m_DefaultPSO;
@@ -273,7 +274,7 @@ private:
     std::vector<uint8_t>        m_AS;
     std::vector<std::string>    m_IncludeDirs;
 
-    bool m_Dirty = false;
+    std::atomic<bool> m_Dirty = false;
 
     void Rebuild();
     void ReloadShader(const char* path, const char* shaderModel, std::vector<uint8_t>& result);

@@ -365,32 +365,32 @@ const D3D12_BLEND_DESC Preset::Opaque = {
 const D3D12_BLEND_DESC Preset::AlphaBlend = {
     FALSE,
     FALSE,
-    { RTB_AlphaBlend, RTB_Opaque, RTB_Opaque, RTB_Opaque, RTB_Opaque, RTB_Opaque, RTB_Opaque, RTB_Opaque }
+    { RTB_AlphaBlend, RTB_AlphaBlend, RTB_AlphaBlend, RTB_AlphaBlend, RTB_AlphaBlend, RTB_AlphaBlend, RTB_AlphaBlend, RTB_AlphaBlend }
 };
 const D3D12_BLEND_DESC Preset::Additive = {
     FALSE,
     FALSE,
-    { RTB_Additive, RTB_Opaque, RTB_Opaque, RTB_Opaque, RTB_Opaque, RTB_Opaque, RTB_Opaque, RTB_Opaque }
+    { RTB_Additive, RTB_Additive, RTB_Additive, RTB_Additive, RTB_Additive, RTB_Additive, RTB_Additive, RTB_Additive }
 };
 const D3D12_BLEND_DESC Preset::Subtract = {
     FALSE,
     FALSE,
-    { RTB_Subtract, RTB_Opaque, RTB_Opaque, RTB_Opaque, RTB_Opaque, RTB_Opaque, RTB_Opaque, RTB_Opaque }
+    { RTB_Subtract, RTB_Subtract, RTB_Subtract, RTB_Subtract, RTB_Subtract, RTB_Subtract, RTB_Subtract, RTB_Subtract }
 };
 const D3D12_BLEND_DESC Preset::Premultiplied = {
     FALSE,
     FALSE,
-    { RTB_Premultiplied, RTB_Opaque, RTB_Opaque, RTB_Opaque, RTB_Opaque, RTB_Opaque, RTB_Opaque, RTB_Opaque }
+    { RTB_Premultiplied, RTB_Premultiplied, RTB_Premultiplied, RTB_Premultiplied, RTB_Premultiplied, RTB_Premultiplied, RTB_Premultiplied, RTB_Premultiplied }
 };
 const D3D12_BLEND_DESC Preset::Multiply = {
     FALSE,
     FALSE,
-    { RTB_Multiply, RTB_Opaque, RTB_Opaque, RTB_Opaque, RTB_Opaque, RTB_Opaque, RTB_Opaque, RTB_Opaque }
+    { RTB_Multiply, RTB_Multiply, RTB_Multiply, RTB_Multiply, RTB_Multiply, RTB_Multiply, RTB_Multiply, RTB_Multiply }
 };
 const D3D12_BLEND_DESC Preset::Screen = {
     FALSE,
     FALSE,
-    { RTB_Screen, RTB_Opaque, RTB_Opaque, RTB_Opaque, RTB_Opaque, RTB_Opaque, RTB_Opaque, RTB_Opaque }
+    { RTB_Screen, RTB_Screen, RTB_Screen, RTB_Screen, RTB_Screen, RTB_Screen, RTB_Screen, RTB_Screen }
 };
 
 const D3D12_SHADER_BYTECODE Preset::FullScreenVS = { internal::FullScreenVS, sizeof(internal::FullScreenVS) };
@@ -620,6 +620,8 @@ void PipelineState::Term()
 //-----------------------------------------------------------------------------
 void PipelineState::SetState(ID3D12GraphicsCommandList* pCmdList)
 {
+    Rebuild();
+
     auto pso = (m_ReloadedPSO.GetPtr() != nullptr) 
         ? m_ReloadedPSO.GetPtr()
         : m_DefaultPSO.GetPtr();
@@ -752,6 +754,9 @@ void PipelineState::ReloadShader
 //-----------------------------------------------------------------------------
 void PipelineState::Rebuild()
 {
+    if (!m_Dirty)
+    { return; }
+
     if (!m_ReloadedPSO.GetPtr())
     {
         auto pso = m_ReloadedPSO.Detach();
@@ -816,6 +821,8 @@ void PipelineState::Rebuild()
 
         m_ReloadedPSO->SetName(L"asdxGeometryPipelineState_Reload");
     }
+
+    m_Dirty = false;
 }
 
 //-----------------------------------------------------------------------------
