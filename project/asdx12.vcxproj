@@ -135,7 +135,6 @@
     <ClCompile Include="..\src\fnd\asdxMouse.cpp" />
     <ClCompile Include="..\src\fnd\asdxRandom.cpp" />
     <ClCompile Include="..\src\fnd\asdxTablet.cpp" />
-    <ClCompile Include="..\src\fnd\asdxThread.cpp" />
     <ClCompile Include="..\src\fnd\asdxThreadPool.cpp" />
     <ClCompile Include="..\src\fnd\asdxTokenizer.cpp" />
     <ClCompile Include="..\src\fw\asdxApp.cpp" />
@@ -189,7 +188,6 @@
     <ClInclude Include="..\include\fnd\asdxStopWatch.h" />
     <ClInclude Include="..\include\fnd\asdxStringView.h" />
     <ClInclude Include="..\include\fnd\asdxTablet.h" />
-    <ClInclude Include="..\include\fnd\asdxThread.h" />
     <ClInclude Include="..\include\fnd\asdxThreadPool.h" />
     <ClInclude Include="..\include\fnd\asdxTokenizer.h" />
     <ClInclude Include="..\include\fw\asdxApp.h" />

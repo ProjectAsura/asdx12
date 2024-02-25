@@ -138,9 +138,6 @@
     <ClCompile Include="..\src\fnd\asdxTablet.cpp">
       <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\fnd\asdxThread.cpp">
-      <Filter>ソース ファイル\fnd</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\fnd\asdxThreadPool.cpp">
       <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
@@ -333,9 +330,6 @@
       <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
     <ClInclude Include="..\include\fnd\asdxTablet.h">
-      <Filter>ヘッダー ファイル\fnd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\fnd\asdxThread.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
     <ClInclude Include="..\include\fnd\asdxThreadPool.h">

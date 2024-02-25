@@ -78,13 +78,29 @@ public:
     void Push(IRunnable* runnable) override
     {
         assert(runnable != nullptr);
-        if (runnable == nullptr)
-        { return; }
 
         // ブロック.
         {
             std::unique_lock<std::mutex> locker(m_Mutex);
             m_Queue.Push(runnable);
+        }
+
+        m_Condtion.notify_all();
+    }
+
+    //-------------------------------------------------------------------------
+    //! @brief      ジョブを追加します.
+    //-------------------------------------------------------------------------
+    void Push(uint32_t count, IRunnable** runnables) override
+    {
+        assert(count > 0);
+        assert(runnables != nullptr);
+
+        // ブロック.
+        {
+            std::unique_lock<std::mutex> locker(m_Mutex);
+            for(auto i=0u; i<count; ++i)
+            { m_Queue.Push(runnables[i]); }
         }
 
         m_Condtion.notify_all();
