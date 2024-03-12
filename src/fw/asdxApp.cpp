@@ -194,6 +194,178 @@ const char* ToString(D3D12_DRED_ALLOCATION_TYPE value)
 }
 
 //-----------------------------------------------------------------------------
+//      D3D12_COMMAND_LIST_TYPEに対応する文字列を取得します.
+//-----------------------------------------------------------------------------
+const char* ToString(D3D12_COMMAND_LIST_TYPE type)
+{
+    switch(type)
+    {
+    case D3D12_COMMAND_LIST_TYPE_DIRECT:
+        return "COMMAND_LIST_TYPE_DIRECT";
+
+    case D3D12_COMMAND_LIST_TYPE_BUNDLE:
+        return "COMMAND_LIST_TYPE_BUNDLE";
+
+    case D3D12_COMMAND_LIST_TYPE_COMPUTE:
+        return "COMMAND_LIST_TYPE_COMPUTE";
+
+    case D3D12_COMMAND_LIST_TYPE_COPY:
+        return "COMMAND_LIST_TYPE_COPY";
+
+    case D3D12_COMMAND_LIST_TYPE_VIDEO_DECODE:
+        return "COMMAND_LIST_TYPE_VIDEO_DECODE";
+
+    case D3D12_COMMAND_LIST_TYPE_VIDEO_PROCESS:
+        return "COMMAND_LIST_TYPE_VIDEO_PROCESS";
+
+    case D3D12_COMMAND_LIST_TYPE_VIDEO_ENCODE:
+        return "COMMAND_LIST_TYPE_VIDEO_ENCODE";
+    }
+
+    return "UNKNOWN";
+}
+
+//-----------------------------------------------------------------------------
+//      D3D12_COMMAND_QUEUE_FLAGSに対応する文字列を取得します.
+//-----------------------------------------------------------------------------
+const char* ToString(D3D12_COMMAND_QUEUE_FLAGS flags)
+{
+    if (flags == 0)
+    { return "COMMAND_QUEUE_FLAG_NONE"; }
+
+    return "COMMAND_QUEUE_FLAG_DISABLE_GPU_TIMEOUT";
+}
+
+
+//-----------------------------------------------------------------------------
+//      D3D12_HEAP_TYPEに対応する文字列を取得します.
+//-----------------------------------------------------------------------------
+const char* ToString(D3D12_HEAP_TYPE type)
+{
+    switch(type)
+    {
+    case D3D12_HEAP_TYPE_DEFAULT:
+        return "HEAP_TYPE_DEFAULT";
+
+    case D3D12_HEAP_TYPE_UPLOAD:
+        return "HEAP_TYPE_UPLOAD";
+
+    case D3D12_HEAP_TYPE_READBACK:
+        return "HEAP_TYPE_READBACK";
+
+    case D3D12_HEAP_TYPE_CUSTOM:
+        return "HEAP_TYPE_CUSTOM";
+
+#if D3D12_SDK_VERSION >= 613
+    case D3D12_HEAP_TYPE_GPU_UPLOAD:
+        return "HEAP_TYPE_GPU_UPLOAD";
+#endif
+    }
+
+    return "UNKNOWN";
+}
+
+//-----------------------------------------------------------------------------
+//      D3D12_CPU_PAGE_PROPERTYに対応する文字列を取得します.
+//-----------------------------------------------------------------------------
+const char* ToString(D3D12_CPU_PAGE_PROPERTY prop)
+{
+    switch(prop)
+    {
+    case D3D12_CPU_PAGE_PROPERTY_UNKNOWN:
+        return "CPU_PAGE_PROPERTY_UNKNOWN";
+
+    case D3D12_CPU_PAGE_PROPERTY_NOT_AVAILABLE:
+        return "CPU_PAGE_PROPERTY_NOT_AVAILABLE";
+
+    case D3D12_CPU_PAGE_PROPERTY_WRITE_COMBINE:
+        return "CPU_PAGE_PROPERTY_WRITE_COMBINE";
+
+    case D3D12_CPU_PAGE_PROPERTY_WRITE_BACK:
+        return "CPU_PAGE_PROPERTY_WRITE_BACK";
+    }
+
+    return "UNKNOWN";
+}
+
+//-----------------------------------------------------------------------------
+//      D3D12_MEMORY_POOLに対応する文字列を取得します.
+//-----------------------------------------------------------------------------
+const char* ToString(D3D12_MEMORY_POOL pool)
+{
+    switch(pool)
+    {
+    case D3D12_MEMORY_POOL_UNKNOWN:
+        return "MEMORY_POOL_UNKNOWN";
+
+    case D3D12_MEMORY_POOL_L0:
+        return "MEMORY_POOL_L0";
+
+    case D3D12_MEMORY_POOL_L1:
+        return "MEMORY_POOL_L1";
+    }
+
+    return "UNKNOWN";
+}
+
+//-----------------------------------------------------------------------------
+//      D3D12_HEAP_FLAGSに対応する文字列を取得します.
+//-----------------------------------------------------------------------------
+std::string ToString(D3D12_HEAP_FLAGS flags)
+{
+    if (flags == 0)
+    { return "HEAP_FLAG_NONE"; }
+
+    std::string result;
+    if (flags & D3D12_HEAP_FLAG_SHARED)
+    { result += "HEAP_FLAG_SHARED "; }
+
+    if (flags & D3D12_HEAP_FLAG_DENY_BUFFERS)
+    { result += "HEAP_FLAG_DENY_BUFFERS "; }
+
+    if (flags & D3D12_HEAP_FLAG_ALLOW_DISPLAY)
+    { result += "HEAP_FLAG_ALLOW_DISPLAY "; }
+
+    if (flags & D3D12_HEAP_FLAG_SHARED_CROSS_ADAPTER)
+    { result += "HEAP_FLAG_SHARED_CROSS_ADAPTER "; }
+
+    if (flags & D3D12_HEAP_FLAG_DENY_RT_DS_TEXTURES)
+    { result += "HEAP_FLAG_DENY_RT_DS_TEXTURES "; }
+
+    if (flags & D3D12_HEAP_FLAG_DENY_NON_RT_DS_TEXTURES)
+    { result += "HEAP_FLAG_DENY_NON_RT_DS_TEXTURES "; }
+
+    if (flags & D3D12_HEAP_FLAG_HARDWARE_PROTECTED)
+    { result += "HEAP_FLAG_HARDWARE_PROTECTED "; }
+
+    if (flags & D3D12_HEAP_FLAG_ALLOW_WRITE_WATCH)
+    { result += "HEAP_FLAG_ALLOW_WRITE_WATCH "; }
+
+    if (flags & D3D12_HEAP_FLAG_ALLOW_SHADER_ATOMICS)
+    { result += "HEAP_FLAG_ALLOW_SHADER_ATOMICS "; }
+
+    if (flags & D3D12_HEAP_FLAG_CREATE_NOT_RESIDENT)
+    { result += "HEAP_FLAG_CREATE_NOT_RESIDENT "; }
+
+    if (flags & D3D12_HEAP_FLAG_CREATE_NOT_ZEROED)
+    { result += "HEAP_FLAG_CREATE_NOT_ZEROED "; }
+
+    if (flags & D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES)
+    { result += "HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES "; }
+
+    if (flags & D3D12_HEAP_FLAG_ALLOW_ONLY_BUFFERS)
+    { result += "HEAP_FLAG_ALLOW_ONLY_BUFFERS "; }
+
+    if (flags & D3D12_HEAP_FLAG_ALLOW_ONLY_NON_RT_DS_TEXTURES)
+    { result += "HEAP_FLAG_ALLOW_ONLY_NOT_RT_DS_TEXTURES "; }
+
+    if (flags & D3D12_HEAP_FLAG_ALLOW_ONLY_RT_DS_TEXTURES)
+    { result += "HEAP_FLAG_ALLOW_ONLY_RT_DS_TEXTURES "; }
+
+    return result;
+}
+
+//-----------------------------------------------------------------------------
 //      ログ出力を行います.
 //-----------------------------------------------------------------------------
 void OutputLog(const D3D12_AUTO_BREADCRUMB_NODE1* pNode)
@@ -207,7 +379,17 @@ void OutputLog(const D3D12_AUTO_BREADCRUMB_NODE1* pNode)
     ILOGA("    pCommandQueueDebugNameA = %s"   , pNode->pCommandQueueDebugNameA);
     ILOGW("    pCommandQueueDebugNameW = %ls"  , pNode->pCommandQueueDebugNameW);
     ILOGA("    pCommandList            = 0x%x" , pNode->pCommandList);
+    if (pNode->pCommandList != nullptr)
+    { ILOGA("    pCommandList.Type       = %s", ToString(pNode->pCommandList->GetType())); }
     ILOGA("    pCommandQueue           = 0x%x" , pNode->pCommandQueue);
+    if (pNode->pCommandQueue != nullptr)
+    {
+        auto desc = pNode->pCommandQueue->GetDesc();
+        ILOGA("    pCommandQueue.Type      = %s", ToString(desc.Type));
+        ILOGA("    pCommandQueue.Priority  = %d", desc.Priority);
+        ILOGA("    pCommandQueue.Flags     = %s", ToString(desc.Flags));
+        ILOGA("    pCommandQueue.NodeMask  = %u", desc.NodeMask);
+    }
     ILOGA("    BreadcrumbCount         = %u"   , pNode->BreadcrumbCount);
     ILOGA("    BreadcrumbContextCount  = %u"   , pNode->BreadcrumbContextsCount);
     ILOGA("    pLastBreadcrumbValue    = 0x%x (%u)",   pNode->pLastBreadcrumbValue, *pNode->pLastBreadcrumbValue);
@@ -222,14 +404,13 @@ void OutputLog(const D3D12_AUTO_BREADCRUMB_NODE1* pNode)
         ILOGA("        Bredcrumb index = %u, string = %ls", ctx.BreadcrumbIndex, ctx.pContextString);
     }
 
-
     ILOGA("    pNext                   = 0x%x" , pNode->pNext);
 }
 
 //-----------------------------------------------------------------------------
 //      ログ出力を行います.
 //-----------------------------------------------------------------------------
-void OutputLog(const D3D12_DRED_ALLOCATION_NODE1* pNode)
+void OutputLog(ID3D12Device8* pDevice, const D3D12_DRED_ALLOCATION_NODE1* pNode)
 {
     if (pNode == nullptr)
     { return; }
@@ -239,12 +420,50 @@ void OutputLog(const D3D12_DRED_ALLOCATION_NODE1* pNode)
     ILOGW("    ObjectNameW   = %ls" , pNode->ObjectNameW);
     ILOGA("    AllcationType = %s"  , ToString(pNode->AllocationType));
     ILOGA("    pNext         = 0x%x", pNode->pNext);
+    ILOGA("    pObject       = 0x%p", pNode->pObject);
+
+    if (pNode->pObject != nullptr)
+    {
+        ID3D12Heap* pHeap = nullptr;
+        auto hr = pDevice->OpenExistingHeapFromAddress(reinterpret_cast<const void*>(pNode->pObject), IID_PPV_ARGS(&pHeap));
+        if (SUCCEEDED(hr))
+        {
+            wchar_t nameW[256] = {};
+            uint32_t sizeW = sizeof(nameW);
+            hr = pHeap->GetPrivateData(WKPDID_D3DDebugObjectNameW, &sizeW, nameW);
+            if (SUCCEEDED(hr))
+            { ILOGA("    Heap Name W : %s", nameW); }
+
+            char nameA[256] = {};
+            uint32_t sizeA = sizeof(nameA);
+            hr = pHeap->GetPrivateData(WKPDID_D3DDebugObjectName, &sizeA, nameA);
+            if (SUCCEEDED(hr))
+            { ILOGA("    Heap Name A : %s", nameA);  }
+
+            auto desc = pHeap->GetDesc();
+            ILOGA("    HeapDesc : ");
+            ILOGA("        SizeInBytes                     = %llu", desc.SizeInBytes);
+            ILOGA("        Properties.Type                 = %s", ToString(desc.Properties.Type));
+            ILOGA("        Properties.CPUPageProperty      = %s", ToString(desc.Properties.CPUPageProperty));
+            ILOGA("        Properties.MemoryPoolPreference = %s", ToString(desc.Properties.MemoryPoolPreference));
+            ILOGA("        Properties.CreatationNodeMask   = %u", desc.Properties.CreationNodeMask);
+            ILOGA("        Properties.VisibleNodeMask      = %u", desc.Properties.VisibleNodeMask);
+            ILOGA("        Alignment                       = %llu", desc.Alignment);
+            ILOGA("        Flags                           = %s", ToString(desc.Flags).c_str());
+        }
+
+        if (pHeap != nullptr)
+        {
+            pHeap->Release();
+            pHeap = nullptr;
+        }
+    }
 }
 
 //-----------------------------------------------------------------------------
 //      デバイス削除にエラーメッセージを表示します.
 //-----------------------------------------------------------------------------
-void DeviceRemovedHandler(ID3D12Device* pDevice)
+void DeviceRemovedHandler(ID3D12Device8* pDevice)
 {
     asdx::RefPtr<ID3D12DeviceRemovedExtendedData1> pDred;
     auto hr = pDevice->QueryInterface(IID_PPV_ARGS(pDred.GetAddress()));
@@ -270,17 +489,56 @@ void DeviceRemovedHandler(ID3D12Device* pDevice)
     hr = pDred->GetPageFaultAllocationOutput1(&pageFaultOutput);
     if (SUCCEEDED(hr))
     {
+        if (pageFaultOutput.PageFaultVA != 0)
+        {
+            ILOGA("PageFaultVirtualAddress : 0x%p", pageFaultOutput.PageFaultVA);
+
+            ID3D12Heap* pHeap = nullptr;
+            auto hr = pDevice->OpenExistingHeapFromAddress(reinterpret_cast<void*>(pageFaultOutput.PageFaultVA), IID_PPV_ARGS(&pHeap));
+            if (SUCCEEDED(hr))
+            {
+                wchar_t nameW[256] = {};
+                uint32_t sizeW = sizeof(nameW);
+                hr = pHeap->GetPrivateData(WKPDID_D3DDebugObjectNameW, &sizeW, nameW);
+                if (SUCCEEDED(hr))
+                { ILOGA("Heap Name W : %s", nameW); }
+
+                char nameA[256] = {};
+                uint32_t sizeA = sizeof(nameA);
+                hr = pHeap->GetPrivateData(WKPDID_D3DDebugObjectName, &sizeA, nameA);
+                if (SUCCEEDED(hr))
+                { ILOGA("Heap Name A : %s", nameA); }
+
+                auto desc = pHeap->GetDesc();
+                ILOGA("HeapDesc : ");
+                ILOGA("    SizeInBytes                     = %llu", desc.SizeInBytes);
+                ILOGA("    Properties.Type                 = %s", ToString(desc.Properties.Type));
+                ILOGA("    Properties.CPUPageProperty      = %s", ToString(desc.Properties.CPUPageProperty));
+                ILOGA("    Properties.MemoryPoolPreference = %s", ToString(desc.Properties.MemoryPoolPreference));
+                ILOGA("    Properties.CreatationNodeMask   = %u", desc.Properties.CreationNodeMask);
+                ILOGA("    Properties.VisibleNodeMask      = %u", desc.Properties.VisibleNodeMask);
+                ILOGA("    Alignment                       = %llu", desc.Alignment);
+                ILOGA("    Flags                           = %s", ToString(desc.Flags).c_str());
+            }
+
+            if (pHeap != nullptr)
+            {
+                pHeap->Release();
+                pHeap = nullptr;
+            }
+        }
+
         auto pNode = pageFaultOutput.pHeadRecentFreedAllocationNode;
         while(pNode != nullptr)
         {
-            OutputLog(pNode);
+            OutputLog(pDevice, pNode);
             pNode = pNode->pNext;
         }
 
         pNode = pageFaultOutput.pHeadExistingAllocationNode;
         while(pNode != nullptr)
         {
-            OutputLog(pNode);
+            OutputLog(pDevice, pNode);
             pNode = pNode->pNext;
         }
     }
