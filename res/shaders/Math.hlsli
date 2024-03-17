@@ -542,7 +542,13 @@ float3 FromTangentSpaceToWorld(float3 value, float3 T, float3 B, float3 N)
 //      八面体ラップ処理を行います.
 //-----------------------------------------------------------------------------
 float2 OctWrap(float2 v)
-{ return (1.0f - abs(v.yx)) * (v.xy >= 0.0f ? 1.0f : -1.0f); }
+{
+#if __HLSL_VERSION >= 2021
+    return (1.0f - abs(v.yx)) * select(v.xy >= 0.0f, 1.0f, -1.0f);
+#else
+    return (1.0f - abs(v.yx)) * (v.xy >= 0.0f ? 1.0f : -1.0f);
+#endif
+}
 
 //-----------------------------------------------------------------------------
 //      法線ベクトルをパッキングします.
@@ -566,7 +572,11 @@ float3 UnpackNormal(float2 packed)
     float2 encoded = packed * 2.0f - 1.0f;
     float3 n = float3(encoded.x, encoded.y, 1.0f - abs(encoded.x) - abs(encoded.y));
     float  t = saturate(-n.z);
+#if __HLSL_VERSION >= 2021
+    n.xy += select(n.xy >= 0.0f, -t, t);
+#else
     n.xy += (n.xy >= 0.0f) ? -t : t;
+#endif
     return normalize(n);
 }
 
