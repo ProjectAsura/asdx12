@@ -15,7 +15,7 @@
 #include <fnd/asdxLogger.h>
 
 
-#if (D3D12_PREVIEW_SDK_VERSION >= 710)
+#if (D3D12_SDK_VERSION >= 613 || D3D12_PREVIEW_SDK_VERSION >= 710)
 #define ASDX_ENABLE_GPU_UPLOAD_HEAPS    (1)
 #else
 #define ASDX_ENABLE_GPU_UPLOAD_HEAPS    (0)
@@ -60,10 +60,21 @@ bool Texture::Init(ID3D12GraphicsCommandList* pCmdList, const ResTexture& resour
     D3D12_SHADER_RESOURCE_VIEW_DESC viewDesc = {};
     viewDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
-    bool gpuUploadHeapsSupported = false;
+    bool gpuUploadHeapsSupported     = false;
+    bool isUnifiedMemoryArchitecture = false;
 
     auto heapType  = D3D12_HEAP_TYPE_DEFAULT;
     auto initState = D3D12_RESOURCE_STATE_COPY_DEST;
+
+    D3D12_FEATURE_DATA_ARCHITECTURE architecture = {};
+    if (SUCCEEDED(pDevice->CheckFeatureSupport(D3D12_FEATURE_ARCHITECTURE, &architecture, sizeof(architecture))))
+    {
+        if (architecture.UMA)
+        {
+            isUnifiedMemoryArchitecture = true;
+            initState = D3D12_RESOURCE_STATE_COMMON;
+        }
+    }
 
 #if ASDX_ENABLE_GPU_UPLOAD_HEAPS
     D3D12_FEATURE_DATA_D3D12_OPTIONS16 options16 = {};
@@ -72,7 +83,7 @@ bool Texture::Init(ID3D12GraphicsCommandList* pCmdList, const ResTexture& resour
         gpuUploadHeapsSupported = true;
 
         heapType  = D3D12_HEAP_TYPE_GPU_UPLOAD;
-        initState = D3D12_RESOURCE_STATE_COMMON;
+        initState = D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE;
     }
 #endif
 
@@ -203,8 +214,6 @@ bool Texture::Init(ID3D12GraphicsCommandList* pCmdList, const ResTexture& resour
         return false;
     }
 
-    pResource->SetName(L"asdxTexture");
-
     // シェーダリソースビューの生成.
     {
         if (!CreateShaderResourceView(pResource, &viewDesc, m_View.GetAddress()))
@@ -215,61 +224,26 @@ bool Texture::Init(ID3D12GraphicsCommandList* pCmdList, const ResTexture& resour
         }
     }
 
-    // GPUアップロードヒープが使える場合は直接マップする.
-    if (gpuUploadHeapsSupported)
+    // 直接書き込める場合.
+    if (gpuUploadHeapsSupported || isUnifiedMemoryArchitecture)
     {
-        std::vector<D3D12_PLACED_SUBRESOURCE_FOOTPRINT> layouts;
-        std::vector<UINT>   rows;
-        std::vector<UINT64> rowSizeInBytes;
-
         auto count = resource.MipMapCount * resource.SurfaceCount;
-
-        layouts.resize(count);
-        rows.resize(count);
-        rowSizeInBytes.resize(count);
-
-        UINT64 requiredSize = 0;
-        pDevice->GetCopyableFootprints(
-            &desc, 0, count, 0, layouts.data(), rows.data(), rowSizeInBytes.data(), &requiredSize);
-
-        BYTE* pData = nullptr;
-        auto hr = pResource->Map(0, nullptr, reinterpret_cast<void**>(&pData));
-        if (FAILED(hr))
-        {
-            ELOG("Error : ID3D12Resource::Map() Failed. errcode = 0x%x", hr);
-            pResource->Release();
-            pResource = nullptr;
-            return false;
-        }
-
         for(auto i=0u; i<count; ++i)
         {
-            D3D12_SUBRESOURCE_DATA srcData = {};
-            srcData.pData       = resource.pResources[i].pPixels;
-            srcData.RowPitch    = resource.pResources[i].Pitch;
-            srcData.SlicePitch  = resource.pResources[i].SlicePitch;
-            assert(layouts[i].Footprint.Width  == resource.pResources[i].Width);
-            assert(layouts[i].Footprint.Height == resource.pResources[i].Height);
+            auto srcPtr        = resource.pResources[i].pPixels;
+            auto srcRowPitch   = resource.pResources[i].Pitch;
+            auto srcDepthPitch = srcRowPitch * resource.pResources[i].Height * resource.Depth;
 
-            D3D12_MEMCPY_DEST dstData = {};
-            dstData.pData       = pData + layouts[i].Offset;
-            dstData.RowPitch    = layouts[i].Footprint.RowPitch;
-            dstData.SlicePitch  = SIZE_T(layouts[i].Footprint.RowPitch) * SIZE_T(rows[i]);
+            D3D12_BOX dstBox = {};
+            dstBox.left     = 0;
+            dstBox.right    = resource.pResources[i].Width;
+            dstBox.top      = 0;
+            dstBox.bottom   = resource.pResources[i].Height;
+            dstBox.front    = 0;
+            dstBox.back     = resource.Depth;
 
-            for(auto z=0u; z<layouts[i].Footprint.Depth; ++z)
-            {
-                auto pDstSlice = static_cast<BYTE*>      (dstData.pData) + dstData.SlicePitch * z;
-                auto pSrcSlice = static_cast<const BYTE*>(srcData.pData) + srcData.SlicePitch * LONG_PTR(z);
-                for(auto y=0u; y<rows[i]; ++y)
-                {
-                    memcpy(pDstSlice + dstData.RowPitch * y,
-                           pSrcSlice + srcData.RowPitch * LONG_PTR(y),
-                            rowSizeInBytes[i]);
-                }
-            }
+            pResource->WriteToSubresource(i, &dstBox, srcPtr, srcRowPitch, srcDepthPitch);
         }
-
-        pResource->Unmap(0, nullptr);
     }
     else
     {
@@ -284,7 +258,7 @@ bool Texture::Init(ID3D12GraphicsCommandList* pCmdList, const ResTexture& resour
         barrier.Type                    = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
         barrier.Flags                   = D3D12_RESOURCE_BARRIER_FLAG_NONE;
         barrier.Transition.pResource    = pResource;
-        barrier.Transition.Subresource  = 0;
+        barrier.Transition.Subresource  = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
         barrier.Transition.StateBefore  = initState;
         barrier.Transition.StateAfter   = D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE;
 
@@ -308,5 +282,14 @@ void Texture::Term()
 //-----------------------------------------------------------------------------
 IShaderResourceView* Texture::GetView() const
 { return m_View.GetPtr(); }
+
+//-----------------------------------------------------------------------------
+//      デバッグ名を設定します.
+//-----------------------------------------------------------------------------
+void Texture::SetName(const char* name)
+{
+    m_View->GetResource()
+          ->SetPrivateData(WKPDID_D3DDebugObjectName, strlen(name), name);
+}
 
 } // namespace asdx

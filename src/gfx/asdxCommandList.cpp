@@ -27,6 +27,7 @@ namespace asdx {
 CommandList::CommandList()
 : m_Allocator()
 , m_CmdList  ()
+, m_Index    (0)
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
@@ -94,7 +95,7 @@ void CommandList::Term()
 //-----------------------------------------------------------------------------
 //      コマンドリストをリセットします.
 //-----------------------------------------------------------------------------
-void CommandList::Reset()
+ID3D12GraphicsCommandList6* CommandList::Reset()
 {
     // ダブルバッファリング.
     m_Index = (m_Index + 1) & 0x1;
@@ -107,6 +108,8 @@ void CommandList::Reset()
 
     // ディスクリプターヒープを設定しおく.
     SetDescriptorHeaps(m_CmdList.GetPtr());
+
+    return m_CmdList.GetPtr();
 }
 
 //-----------------------------------------------------------------------------
