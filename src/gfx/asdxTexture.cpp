@@ -289,7 +289,7 @@ IShaderResourceView* Texture::GetView() const
 void Texture::SetName(const char* name)
 {
     m_View->GetResource()
-          ->SetPrivateData(WKPDID_D3DDebugObjectName, strlen(name), name);
+          ->SetPrivateData(WKPDID_D3DDebugObjectName, UINT(strlen(name)), name);
 }
 
 } // namespace asdx
