@@ -78,12 +78,14 @@ bool Texture::Init(ID3D12GraphicsCommandList* pCmdList, const ResTexture& resour
 
 #if ASDX_ENABLE_GPU_UPLOAD_HEAPS
     D3D12_FEATURE_DATA_D3D12_OPTIONS16 options16 = {};
-    if (SUCCEEDED(pDevice->CheckFeaturesSupport(D3D12_FEATURE_DATA_OPTIONS16, &options16, sizeof(options16))
+    if (SUCCEEDED(pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS16, &options16, sizeof(options16))))
     {
-        gpuUploadHeapsSupported = true;
-
-        heapType  = D3D12_HEAP_TYPE_GPU_UPLOAD;
-        initState = D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE;
+        if (options16.GPUUploadHeapSupported)
+        {
+            gpuUploadHeapsSupported = true;
+            heapType  = D3D12_HEAP_TYPE_GPU_UPLOAD;
+            initState = D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE;
+        }
     }
 #endif
 
