@@ -214,6 +214,7 @@
     <None Include="..\include\fnd\asdxMath.inl" />
     <None Include="..\res\shaders\BRDF.hlsli" />
     <None Include="..\res\shaders\Math.hlsli" />
+    <None Include="..\res\shaders\RayQuery.hlsli" />
     <None Include="..\res\shaders\Samplers.hlsli" />
     <None Include="..\res\shaders\Shadow.hlsli" />
     <None Include="..\res\shaders\TextureUtil.hlsli" />

@@ -400,6 +400,9 @@
     <None Include="..\res\shaders\Samplers.hlsli">
       <Filter>リソース ファイル</Filter>
     </None>
+    <None Include="..\res\shaders\RayQuery.hlsli">
+      <Filter>リソース ファイル</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\res\shaders\CopyPS.hlsl">

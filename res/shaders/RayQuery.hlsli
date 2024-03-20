@@ -21,9 +21,10 @@ struct HitRecord
     uint    PrimitiveIndex;     //!< プリミティブ番号.
     float2  BaryCentrics;       //!< 重心座標.
     float   Distance;           //!< ヒット距離.
+    uint    Status;             //!< コミットされた状態.
 
     bool IsHit()
-    { return PrimitiveIndex != INVALID_INDEX; }
+    { return Status != COMMITTED_NOTHING; }
 
     float3 GetBaryCentrics()
     { return float3(BaryCentrics, saturate(1.0f - BaryCentrics.x - BaryCentrics.y)); }
@@ -61,7 +62,18 @@ HitRecord Intersect
  
     // 交差確定するまでループ.
     while (rayQuery.Proceed())
-    { /* DO_NOTHING */ }
+    {
+        switch(rayQuery.CandidateType())
+        {
+        case CANDIDATE_NON_OPAQUE_TRIANGLE:
+            { rayQuery.CommitNonOpaqueTriangleHit(); }
+            break;
+
+        case CANDIDATE_PROCEDURAL_PRIMITIVE:
+            { rayQuery.CommitProceduralPrimitiveHit(rayQuery.CommittedRayT()); }
+            break;
+        }
+    }
 
     const bool isHit = rayQuery.CommittedStatus() != COMMITTED_NOTHING;
 
@@ -70,6 +82,7 @@ HitRecord Intersect
     result.InstanceIndex  = (isHit) ? rayQuery.CommittedInstanceIndex () : INVALID_INDEX;
     result.BaryCentrics   = (isHit) ? rayQuery.CommittedTriangleBarycentrics() : 0.0f.xx;
     result.Distance       = (isHit) ? rayQuery.CommittedRayT() : -1.0f;
+    result.Status         = rayQuery.CommittedStatus();
 
     return result;
 }
