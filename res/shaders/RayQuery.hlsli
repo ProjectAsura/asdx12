@@ -6,8 +6,14 @@
 #ifndef RAY_QUERY_HLSLI
 #define RAY_QUERY_HLSLI
 
-// 無効なインデックス.
-#define INVALID_INDEX 0xFFFFFFFF
+
+#ifndef ENABLE_PROCEDURAL_PRIMITIVE
+#define ENABLE_PROCEDURAL_PRIMITIVE (0)
+#endif//ENABLE_PROCEDURAL_PRIMITIVE
+
+#ifndef UNUSED
+#define UNUSED(x) (void)x
+#endif//UNUSED
 
 // TLASの定義.
 typedef RaytracingAccelerationStructure Tlas;
@@ -17,74 +23,194 @@ typedef RaytracingAccelerationStructure Tlas;
 ///////////////////////////////////////////////////////////////////////////////
 struct HitRecord
 {
-    uint    InstanceIndex;      //!< インスタンス番号.
-    uint    PrimitiveIndex;     //!< プリミティブ番号.
-    float2  BaryCentrics;       //!< 重心座標.
-    float   Distance;           //!< ヒット距離.
-    uint    Status;             //!< コミットされた状態.
+    float       Distance;           //!< ヒット距離.
+    float2      Barycentrics;       //!< 重心座標.
+    uint        InstanceIndex;      //!< インスタンス番号.
+    uint        InstanceID;         //!< ユーザーインスタンスID.
+    uint        HitGroupIndex;      //!< ヒットグループ番号.
+    uint        GeometryIndex;      //!< ジオメトリ番号.
+    uint        PrimitiveIndex;     //!< プリミティブ番号.
+    bool        FrontFace;          //!< ヒットが前面かどうか?
+    bool        ProceduralHit;      //!< プロシージャルプリミティブにヒットしたかどうか?
+    float3x4    ObjectToWorld;      //!< オブジェクト空間からワールド空間への変換行列.
+    
+    bool IsMiss()
+    { return Distance < 0; }
 
     bool IsHit()
-    { return Status != COMMITTED_NOTHING; }
+    { return !IsMiss(); }
 
-    float3 GetBaryCentrics()
-    { return float3(BaryCentrics, saturate(1.0f - BaryCentrics.x - BaryCentrics.y)); }
+    float3 GetBarycentrics()
+    { return float3(Barycentrics, saturate(1.0f - Barycentrics.x - Barycentrics.y)); }
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// PrimitiveArgs structure
+///////////////////////////////////////////////////////////////////////////////
+struct PrimitiveArgs
+{
+    uint InstanceIndex;     //!< インスタンス番号.
+    uint InstanceID;        //!< ユーザーインスタンスID.
+    uint HitGroupIndex;     //!< ヒットグループ番号.
+    uint GeometryIndex;     //!< ジオメトリ番号.
+    uint PrimitiveIndex;    //!< プリミティブ番号.
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// DefaultIntersectCallback structure
+///////////////////////////////////////////////////////////////////////////////
+struct DefaultIntersectCallback
+{
+    bool OnAnyHit
+    (
+        float3      rayOrg,     //!< レイの原点(オブジェクト空間).
+        float3      rayDir,     //!< レイの方向ベクトル(オブジェクト空間).
+        HitRecord   record      //!< ヒット情報.
+    )
+    {
+        UNUSED(rayOrg);
+        UNUSED(rayDir);
+        UNUSED(record);
+        return true;
+    }
+    
+    bool OnPrimitive
+    (
+        float3          rayOrg, //!< レイの原点(オブジェクト空間).
+        float3          rayDir, //!< レイの方向ベクトル(オブジェクト空間).
+        float           tMin,   //!< 距離の最小値.
+        inout float     tCur,   //!< 現在の距離.
+        PrimitiveArgs   args    //!< プリミティブ情報.
+    )
+    {
+        UNUSED(rayOrg);
+        UNUSED(rayDir);
+        UNUSED(tMin);
+        UNUSED(tCurrent);
+        UNUSED(args);
+        return false;
+    }
 };
 
 //-----------------------------------------------------------------------------
-//      交差判定を行います.
+//      インラインレイトレーシングを実行します.
 //-----------------------------------------------------------------------------
-HitRecord Intersect
+template<typename CallbackType>
+HitRecord TraceRayWithCallback
 (
-    Tlas    tlas,                   //!< 高速化機構.
-    uint    rayFlags,               //!< レイフラグ.
-    uint    instanceInclusionMask,  //!< インスタンスマスク.
-    float3  rayOrigin,              //!< レイの原点.
-    float3  rayDirection,           //!< レイの方向ベクトル.
-    float   tMin,                   //!< 交差許容最小距離.
-    float   tMax                    //!< 交差許容最大距離.
+    Tlas                tlas,
+    uint                rayFlags,
+    uint                instanceInclusionMask,
+    RayDesc             ray,
+    inout CallbackType  callback
 )
 {
-    // レイの設定.
-    RayDesc rayDesc;
-    rayDesc.Origin    = rayOrigin;
-    rayDesc.Direction = rayDirection;
-    rayDesc.TMin      = tMin;
-    rayDesc.TMax      = tMax;
+    #if ENABLE_PROCEDURAL_PRIMITIVE
+    RayQuery<RAY_FLAG_NONE> query;
+    #else
+    RayQuery<RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVE> query;
+    #endif
 
-    RayQuery<RAY_FLAG_NONE> rayQuery;
-
-    // レイトレ実行.
-    rayQuery.TraceRayInline(
-        tlas,
-        rayFlags,
-        instanceInclusionMask,
-        rayDesc);
- 
-    // 交差確定するまでループ.
-    while (rayQuery.Proceed())
+    query.TraceRayInline(tlas, rayFlags, instanceInclusionMask, ray);
+    
+    while(query.Proceed())
     {
-        switch(rayQuery.CandidateType())
+        switch(query.CandidateType())
         {
-        case CANDIDATE_NON_OPAQUE_TRIANGLE:
-            { rayQuery.CommitNonOpaqueTriangleHit(); }
-            break;
-
+        #if ENABLE_PROCEDURAL_PRIMITIVE
         case CANDIDATE_PROCEDURAL_PRIMITIVE:
-            { rayQuery.CommitProceduralPrimitiveHit(rayQuery.CommittedRayT()); }
+            {
+                PrimitiveArgs args;
+                args.InstanceID     = query.CandidateInstanceID();
+                args.InstanceIndex  = query.CandidateInstanceIndex();
+                args.PrimitiveIndex = query.CandidatePrimitiveIndex();
+                args.GeometryIndex  = query.CandidateGeometryIndex();
+                args.HitGroupIndex  = query.CandidateInstanceContributionToHitGroupIndex();
+            
+                const float3 rayOrg = query.CandidateObjectRayOrigin();
+                const float3 rayDir = query.CandidateObjectRayDirection();
+                const float  tMin   = query.RayTMin();
+                const float  tMax   = query.ComittedRayT();
+            
+                float tCur = tMax;
+                if (callback.OnPrimitive(rayOrg, rayDir, tMin, tCur, args))
+                { query.CommitProceduralPrimitiveHit(tCur); }
+            }
+            break;
+        #endif
+        case CANDIDATE_NON_OPAQUE_TRIANGLE:
+            {
+                HitRecord candidate;
+                candidate.Distance          = query.CandidateTriangleRayT();
+                candidate.InstanceID        = query.CandidateInstanceID();
+                candidate.InstanceIndex     = query.CandidateInstanceIndex();
+                candidate.PrimitiveIndex    = query.CandidatePrimitiveIndex();
+                candidate.GeometryIndex     = query.CandidateGeometryIndex();
+                candidate.Barycentrics      = query.CandidateTriangleBarycentrics();
+                candidate.FrontFace         = query.CandidateTriangleFrontFace();
+                candidate.HitGroupIndex     = query.CandidateInstanceContributionToHitGroupIndex();
+                candidate.ObjectToWorld     = query.CandidateObjectToWorld3x4();
+                
+                if (candidate.OnAnyHit(
+                    query.CandidateObjectRayOrigin(),
+                    query.CandidateObjectRayDirection(),
+                    candiate))
+                { query.CommitNonOpaqueTriangleHit(); }
+            }
             break;
         }
     }
 
-    const bool isHit = rayQuery.CommittedStatus() != COMMITTED_NOTHING;
+    HitRecord record = (HitRecord)0;
+    record.Distance  = -1.0f;
 
-    HitRecord result;
-    result.PrimitiveIndex = (isHit) ? rayQuery.CommittedPrimitiveIndex() : INVALID_INDEX;
-    result.InstanceIndex  = (isHit) ? rayQuery.CommittedInstanceIndex () : INVALID_INDEX;
-    result.BaryCentrics   = (isHit) ? rayQuery.CommittedTriangleBarycentrics() : 0.0f.xx;
-    result.Distance       = (isHit) ? rayQuery.CommittedRayT() : -1.0f;
-    result.Status         = rayQuery.CommittedStatus();
+    switch(query.CommittedStatus())
+    {
+    case COMMITTED_TRIANGLE_HIT:
+        {
+            record.Distance         = query.CommittedRayT();
+            record.InstanceID       = query.CommittedInstanceID();
+            record.InstanceIndex    = query.CommitedInstanceIndex();
+            record.PrimitiveIndex   = query.CommittedPrimitiveIndex();
+            record.GeometryIndex    = query.CommittedGeometryIndex();
+            record.Barycentrics     = query.CommittedTriangleBarycentrics();
+            record.FrontFace        = query.CommittedTriangleFrontFace();
+            record.HitGroupIndex    = query.CommittedInstanceContributionToHitGroupIndex();
+            record.ObjectToWorld    = query.CommittedObjectToWorld3x4();
+        }
+        break;
+        
+    #if ENABLE_PROCEDURAL_PRIMITIVE
+    case COMMITTED_PROCEDURAL_PRIMITIVE_HIT:
+        {
+            record.ProceduralHit    = true;
+            record.Distance         = query.CommittedRayT();
+            record.InstanceID       = query.CommittedInstanceID();
+            record.InstanceIndex    = query.CommittedInstanceIndex();
+            record.PrimitiveIndex   = query.CommittedPrimitiveIndex();
+            record.GeometryIndex    = query.CommittedGeometryIndex();
+            record.Barycentrics     = 0.0f.xx;
+            record.FrontFace        = true;
+            record.HitGroupIndex    = query.CommittedInstanceContributionToHitGroupIndex();
+            record.ObjectToWorld    = query.CommittedObjectToWorld3x4();
+        }
+        break;
+    #endif
+    }
 
-    return result;
+    return record;
+}
+
+HitRecord TraceRay
+(
+    Tlas    tlas,
+    uint    rayFlags,
+    uint    instanceInclusionMask,
+    RayDesc ray
+)
+{
+    DefaultIntersectCallback callback;
+    return TraceRayWithCallback(tlas, rayFlags, instanceInclusionMask, ray, callback);
 }
 
 #endif//RAY_QUERY_HLSLI
