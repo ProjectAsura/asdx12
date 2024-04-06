@@ -200,17 +200,8 @@ bool Blas::Init
     if (prebuildInfo.ResultDataMaxSizeInBytes == 0)
     { return false; }
 
-    // スクラッチバッファ生成.
-    if (!CreateBufferUAV(
-        pDevice,
-        prebuildInfo.ScratchDataSizeInBytes,
-        m_Scratch.GetAddress(),
-        D3D12_RESOURCE_STATE_COMMON))
-    {
-        ELOGA("Error : CreateUAVBuffer() Failed.");
-        return false;
-    }
-    m_Scratch->SetName(L"asdxBlasScratch");
+    // スクラッチバッファサイズを取得.
+    m_ScratchBufferSize = Max(prebuildInfo.ScratchDataSizeInBytes, prebuildInfo.UpdateScratchDataSizeInBytes);
 
     // 高速化機構用バッファ生成.
     if (!CreateBufferUAV(
@@ -226,9 +217,8 @@ bool Blas::Init
 
     // ビルド設定.
     memset(&m_BuildDesc, 0, sizeof(m_BuildDesc));
-    m_BuildDesc.Inputs                              = inputs;
-    m_BuildDesc.ScratchAccelerationStructureData    = m_Scratch->GetGPUVirtualAddress();
-    m_BuildDesc.DestAccelerationStructureData       = m_Structure->GetGPUVirtualAddress();
+    m_BuildDesc.Inputs                          = inputs;
+    m_BuildDesc.DestAccelerationStructureData   = m_Structure->GetGPUVirtualAddress();
 
     // 正常終了.
     return true;
@@ -240,9 +230,17 @@ bool Blas::Init
 void Blas::Term()
 {
     m_GeometryDesc.clear();
-    m_Scratch   .Reset();
-    m_Structure .Reset();
+    auto sturcture = m_Structure.Detach();
+
+    Dispose(sturcture);
+    m_ScratchBufferSize = 0;
 }
+
+//-----------------------------------------------------------------------------
+//      スクラッチバッファサイズを取得します.
+//-----------------------------------------------------------------------------
+size_t Blas::GetScratchBufferSize() const
+{ return m_ScratchBufferSize; }
 
 //-----------------------------------------------------------------------------
 //      ジオメトリ数を取得します.
@@ -277,10 +275,13 @@ ID3D12Resource* Blas::GetResource() const
 //-----------------------------------------------------------------------------
 //      ビルドします.
 //-----------------------------------------------------------------------------
-void Blas::Build(ID3D12GraphicsCommandList6* pCmd)
+void Blas::Build(ID3D12GraphicsCommandList6* pCmd, D3D12_GPU_VIRTUAL_ADDRESS scratchAddress)
 {
+    auto desc = m_BuildDesc;
+    desc.SourceAccelerationStructureData = scratchAddress;
+
     // 高速化機構を構築.
-    pCmd->BuildRaytracingAccelerationStructure(&m_BuildDesc, 0, nullptr);
+    pCmd->BuildRaytracingAccelerationStructure(&desc, 0, nullptr);
 
     // バリアを張っておく.
     D3D12_RESOURCE_BARRIER barrier = {};
@@ -349,17 +350,8 @@ bool Tlas::Init
     if (prebuildInfo.ResultDataMaxSizeInBytes == 0)
     { return false; }
 
-    // スクラッチバッファ生成.
-    if (!CreateBufferUAV(
-        pDevice,
-        prebuildInfo.ScratchDataSizeInBytes,
-        m_Scratch.GetAddress(),
-        D3D12_RESOURCE_STATE_COMMON))
-    {
-        ELOGA("Error : CreateUAVBuffer() Failed.");
-        return false;
-    }
-    m_Scratch->SetName(L"asdxTlasScratch");
+    // スクラッチバッファサイズを取得.
+    m_ScratchBufferSize = Max(prebuildInfo.ScratchDataSizeInBytes, prebuildInfo.UpdateScratchDataSizeInBytes);
 
     // 高速化機構用バッファ生成.
     if (!CreateBufferUAV(
@@ -375,9 +367,8 @@ bool Tlas::Init
 
     // ビルド設定.
     memset(&m_BuildDesc, 0, sizeof(m_BuildDesc));
-    m_BuildDesc.Inputs                              = inputs;
-    m_BuildDesc.ScratchAccelerationStructureData    = m_Scratch->GetGPUVirtualAddress();
-    m_BuildDesc.DestAccelerationStructureData       = m_Structure->GetGPUVirtualAddress();
+    m_BuildDesc.Inputs                          = inputs;
+    m_BuildDesc.DestAccelerationStructureData   = m_Structure->GetGPUVirtualAddress();
 
     // 正常終了.
     return true;
@@ -389,13 +380,19 @@ bool Tlas::Init
 void Tlas::Term()
 {
     auto instance  = m_Instances.Detach();
-    auto scratch   = m_Scratch  .Detach();
     auto structure = m_Structure.Detach();
 
     Dispose(instance);
-    Dispose(scratch);
     Dispose(structure);
+
+    m_ScratchBufferSize = 0;
 }
+
+//-----------------------------------------------------------------------------
+//      スクラッチバッファサイズを取得します.
+//-----------------------------------------------------------------------------
+size_t Tlas::GetScratchBufferSize() const 
+{ return m_ScratchBufferSize; }
 
 //-----------------------------------------------------------------------------
 //      メモリマッピングを行います.
@@ -425,10 +422,13 @@ ID3D12Resource* Tlas::GetResource() const
 //-----------------------------------------------------------------------------
 //      ビルドします.
 //-----------------------------------------------------------------------------
-void Tlas::Build(ID3D12GraphicsCommandList6* pCmd)
+void Tlas::Build(ID3D12GraphicsCommandList6* pCmd, D3D12_GPU_VIRTUAL_ADDRESS scratchAddress)
 {
+    auto desc = m_BuildDesc;
+    desc.SourceAccelerationStructureData = scratchAddress;
+
     // 高速化機構を構築.
-    pCmd->BuildRaytracingAccelerationStructure(&m_BuildDesc, 0, nullptr);
+    pCmd->BuildRaytracingAccelerationStructure(&desc, 0, nullptr);
 
     // バリアを張っておく.
     D3D12_RESOURCE_BARRIER barrier = {};

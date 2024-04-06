@@ -183,9 +183,14 @@ public:
     void Term();
 
     //-------------------------------------------------------------------------
+    //! @brief      スクラッチバッファサイズを取得します.
+    //-------------------------------------------------------------------------
+    size_t GetScratchBufferSize() const;
+
+    //-------------------------------------------------------------------------
     //! @brief      ビルドします.
     //-------------------------------------------------------------------------
-    void Build(ID3D12GraphicsCommandList6* pCmd);
+    void Build(ID3D12GraphicsCommandList6* pCmd, D3D12_GPU_VIRTUAL_ADDRESS scratchAddress);
 
     //-------------------------------------------------------------------------
     //! @brief      ジオメトリ数を取得します.
@@ -211,10 +216,10 @@ private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    RefPtr<ID3D12Resource>          m_Scratch;
     RefPtr<ID3D12Resource>          m_Structure;
     DXR_BUILD_DESC                  m_BuildDesc;
     std::vector<DXR_GEOMETRY_DESC>  m_GeometryDesc;
+    size_t                          m_ScratchBufferSize;
 
     //=========================================================================
     // private methods.
@@ -267,9 +272,14 @@ public:
     void Term();
 
     //-------------------------------------------------------------------------
+    //! @brief      スクラッチバッファサイズを取得します.
+    //-------------------------------------------------------------------------
+    size_t GetScratchBufferSize() const;
+
+    //-------------------------------------------------------------------------
     //! @brief      ビルドします.
     //-------------------------------------------------------------------------
-    void Build(ID3D12GraphicsCommandList6* pCmd);
+    void Build(ID3D12GraphicsCommandList6* pCmd, D3D12_GPU_VIRTUAL_ADDRESS scratchAddress);
 
     //-------------------------------------------------------------------------
     //! @brief      メモリマッピングを行います.
@@ -290,10 +300,10 @@ private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    RefPtr<ID3D12Resource>  m_Scratch;
     RefPtr<ID3D12Resource>  m_Structure;
     RefPtr<ID3D12Resource>  m_Instances;
     DXR_BUILD_DESC          m_BuildDesc;
+    size_t                  m_ScratchBufferSize;
 
     //=========================================================================
     // private methods.
