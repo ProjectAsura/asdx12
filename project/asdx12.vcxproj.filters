@@ -219,6 +219,9 @@
     <ClCompile Include="..\src\fnd\asdxOffsetAllocator.cpp">
       <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\fnd\asdxBitFlags.cpp">
+      <Filter>ソース ファイル\fnd</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\external\imgui\imconfig.h">
@@ -384,6 +387,9 @@
       <Filter>ヘッダー ファイル\res</Filter>
     </ClInclude>
     <ClInclude Include="..\include\fnd\asdxOffsetAllocator.h">
+      <Filter>ヘッダー ファイル\fnd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fnd\asdxBitFlags.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
   </ItemGroup>

@@ -14,6 +14,99 @@
 
 namespace asdx {
 
+//-----------------------------------------------------------------------------
+//! @brief      左端から連続した0となるビットの数を数えます.
+//! 
+//! @param[in]      value       数える数値.
+//! @return     左端から連続した0となるビットの数を返却します.
+//! @note       左端が0でない場合は常にゼロとなります.
+//-----------------------------------------------------------------------------
+int CountZeroL(uint8_t  value);
+int CountZeroL(uint16_t value);
+int CountZeroL(uint32_t value);
+int CountZeroL(uint64_t value);
+
+//-----------------------------------------------------------------------------
+//! @brief      右端から連続した0となるビットの数を数えます.
+//! 
+//! @param[in]      value       数える数値.
+//! @return     右端から連続した0となるビットの数を返却します.
+//! @note       右端が0でない場合は常にゼロとなります.
+//-----------------------------------------------------------------------------
+int CountZeroR(uint8_t  value);
+int CountZeroR(uint16_t value);
+int CountZeroR(uint32_t value);
+int CountZeroR(uint64_t value);
+
+//-----------------------------------------------------------------------------
+//! @brief      左端から連続した1となるビットの数を数えます.
+//! 
+//! @param[in]      value       数える数値.
+//! @return     左端から連続した1となるビットの数を返却します.
+//! @note       左端が1でない場合は常にゼロとなります.
+//-----------------------------------------------------------------------------
+inline int CountOneL(uint8_t  value) { return CountZeroL(uint8_t(~value)); }
+inline int CountOneL(uint16_t value) { return CountZeroL(uint16_t(~value)); }
+inline int CountOneL(uint32_t value) { return CountZeroL(uint32_t(~value)); }
+inline int CountOneL(uint64_t value) { return CountZeroL(uint64_t(~value)); }
+
+//-----------------------------------------------------------------------------
+//! @brief      右端から連続した1となるビットの数を数えます.
+//! 
+//! @param[in]      value       数える数値.
+//! @return     右端から連続した1となるビットの数を返却します.
+//! @note       右端が1でない場合は常にゼロとなります.
+//-----------------------------------------------------------------------------
+inline int CountOneR(uint8_t  value) { return CountZeroR(uint8_t(~value)); }
+inline int CountOneR(uint16_t value) { return CountZeroR(uint16_t(~value)); }
+inline int CountOneR(uint32_t value) { return CountZeroR(uint32_t(~value)); }
+inline int CountOneR(uint64_t value) { return CountZeroR(uint64_t(~value)); }
+
+//-----------------------------------------------------------------------------
+//! @brief      左から探索し，最初に0となるビットの番号を求めます.
+//! 
+//! @param[in]      value       数える数値.
+//! @return     左から探索し，最初に0となるビットの番号を返却します.
+//-----------------------------------------------------------------------------
+inline int FindZeroL(uint8_t  value) { return value == uint8_t (~0) ? 0 :  8 - CountOneL(value); }
+inline int FindZeroL(uint16_t value) { return value == uint16_t(~0) ? 0 : 16 - CountOneL(value); }
+inline int FindZeroL(uint32_t value) { return value == uint32_t(~0) ? 0 : 32 - CountOneL(value); }
+inline int FindZeroL(uint64_t value) { return value == uint64_t(~0) ? 0 : 64 - CountOneL(value); }
+
+//-----------------------------------------------------------------------------
+//! @brief      右から探索し，最初に0となるビットの番号を求めます.
+//! 
+//! @param[in]      value       数える数値.
+//! @return     右から探索し，最初に0となるビットの番号を返却します.
+//-----------------------------------------------------------------------------
+inline int FindZeroR(uint8_t  value) { return value == uint8_t (~0) ? 0 : CountOneR(value) + 1; }
+inline int FindZeroR(uint16_t value) { return value == uint16_t(~0) ? 0 : CountOneR(value) + 1; }
+inline int FindZeroR(uint32_t value) { return value == uint32_t(~0) ? 0 : CountOneR(value) + 1; }
+inline int FindZeroR(uint64_t value) { return value == uint64_t(~0) ? 0 : CountOneR(value) + 1; }
+
+//-----------------------------------------------------------------------------
+//! @brief      左から探索し，最初に1となるビットの番号を求めます.
+//! 
+//! @param[in]      value       数える数値.
+//! @return     左から探索し，最初に1となるビットの番号を返却します.
+//-----------------------------------------------------------------------------
+inline int FindOneL(uint8_t  value) { return value == 0 ? 0 :  8 - CountZeroL(value); }
+inline int FindOneL(uint16_t value) { return value == 0 ? 0 : 16 - CountZeroL(value); }
+inline int FindOneL(uint32_t value) { return value == 0 ? 0 : 32 - CountZeroL(value); }
+inline int FindOneL(uint64_t value) { return value == 0 ? 0 : 64 - CountZeroL(value); }
+
+//-----------------------------------------------------------------------------
+//! @brief      右から探索し，最初に1となるビットの番号を求めます.
+//! 
+//! @param[in]      value       数える数値.
+//! @return     右から探索し，最初に1となるビットの番号を返却します.
+//-----------------------------------------------------------------------------
+inline int FindOneR(uint8_t  value) { return value == 0 ? 0 : CountZeroR(value) + 1; }
+inline int FindOneR(uint16_t value) { return value == 0 ? 0 : CountZeroR(value) + 1; }
+inline int FindOneR(uint32_t value) { return value == 0 ? 0 : CountZeroR(value) + 1; }
+inline int FindOneR(uint64_t value) { return value == 0 ? 0 : CountZeroR(value) + 1; }
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // BitFlags8 class.
 ///////////////////////////////////////////////////////////////////////////////
@@ -89,6 +182,15 @@ public:
     { m_Flags = 0; }
 
     //-------------------------------------------------------------------------
+    //! @brief      マスク結果を取得します.
+    //! 
+    //! @param[in]      mask        マスクビット.
+    //! @return     マスク結果を返却します.
+    //-------------------------------------------------------------------------
+    uint8_t Mask(uint8_t mask) const
+    { return m_Flags & mask; }
+
+    //-------------------------------------------------------------------------
     //! @brief      任意のフラグが立っているかどうかチェックします.
     //! 
     //! @return     いずれかのフラグが立っていれば true を返却します.
@@ -117,6 +219,14 @@ public:
     //-------------------------------------------------------------------------
     operator uint8_t () const
     { return m_Flags; }
+
+    //-------------------------------------------------------------------------
+    //! @brief      使用していないインデックスを取得します.
+    //! 
+    //! @return     使用していないインデックスを返却します.
+    //-------------------------------------------------------------------------
+    int FindUnused() const 
+    { return FindZeroL(m_Flags); }
 
 private:
     //=========================================================================
@@ -205,6 +315,15 @@ public:
     { m_Flags = 0; }
 
     //-------------------------------------------------------------------------
+    //! @brief      マスク結果を取得します.
+    //! 
+    //! @param[in]      mask        マスクビット.
+    //! @return     マスク結果を返却します.
+    //-------------------------------------------------------------------------
+    uint16_t Mask(uint16_t mask) const
+    { return m_Flags & mask; }
+
+    //-------------------------------------------------------------------------
     //! @brief      任意のフラグが立っているかどうかチェックします.
     //! 
     //! @return     いずれかのフラグが立っていれば true を返却します.
@@ -233,6 +352,14 @@ public:
     //-------------------------------------------------------------------------
     operator uint16_t () const
     { return m_Flags; }
+
+    //-------------------------------------------------------------------------
+    //! @brief      使用していないインデックスを取得します.
+    //! 
+    //! @return     使用していないインデックスを返却します.
+    //-------------------------------------------------------------------------
+    int FindUnused() const 
+    { return FindZeroL(m_Flags); }
 
 private:
     //=========================================================================
@@ -321,6 +448,15 @@ public:
     { m_Flags = 0; }
 
     //-------------------------------------------------------------------------
+    //! @brief      マスク結果を取得します.
+    //! 
+    //! @param[in]      mask        マスクビット.
+    //! @return     マスク結果を返却します.
+    //-------------------------------------------------------------------------
+    uint32_t Mask(uint32_t mask) const
+    { return m_Flags & mask; }
+
+    //-------------------------------------------------------------------------
     //! @brief      任意のフラグが立っているかどうかチェックします.
     //! 
     //! @return     いずれかのフラグが立っていれば true を返却します.
@@ -349,6 +485,14 @@ public:
     //-------------------------------------------------------------------------
     operator uint32_t () const
     { return m_Flags; }
+
+    //-------------------------------------------------------------------------
+    //! @brief      使用していないインデックスを取得します.
+    //! 
+    //! @return     使用していないインデックスを返却します.
+    //-------------------------------------------------------------------------
+    int FindUnused() const 
+    { return FindZeroL(m_Flags); }
 
 private:
     //=========================================================================
@@ -437,6 +581,15 @@ public:
     { m_Flags = 0; }
 
     //-------------------------------------------------------------------------
+    //! @brief      マスク結果を取得します.
+    //! 
+    //! @param[in]      mask        マスクビット.
+    //! @return     マスク結果を返却します.
+    //-------------------------------------------------------------------------
+    uint64_t Mask(uint64_t mask) const
+    { return m_Flags & mask; }
+
+    //-------------------------------------------------------------------------
     //! @brief      任意のフラグが立っているかどうかチェックします.
     //! 
     //! @return     いずれかのフラグが立っていれば true を返却します.
@@ -466,6 +619,14 @@ public:
     operator uint64_t () const
     { return m_Flags; }
 
+    //-------------------------------------------------------------------------
+    //! @brief      使用していないインデックスを取得します.
+    //! 
+    //! @return     使用していないインデックスを返却します.
+    //-------------------------------------------------------------------------
+    int FindUnused() const 
+    { return FindZeroL(m_Flags); }
+
 private:
     //=========================================================================
     // private variables.
@@ -478,9 +639,9 @@ private:
     /* NOTHING */
 };
 
-static_assert(sizeof(BitFlags8)  == sizeof(uint8_t));
-static_assert(sizeof(BitFlags16) == sizeof(uint16_t));
-static_assert(sizeof(BitFlags32) == sizeof(uint32_t));
-static_assert(sizeof(BitFlags64) == sizeof(uint64_t));
+static_assert(sizeof(BitFlags8)  == sizeof(uint8_t) , "Size Not Match");
+static_assert(sizeof(BitFlags16) == sizeof(uint16_t), "Size Not Match");
+static_assert(sizeof(BitFlags32) == sizeof(uint32_t), "Size Not Match");
+static_assert(sizeof(BitFlags64) == sizeof(uint64_t), "Size Not Match");
 
 } // namespace asdx
