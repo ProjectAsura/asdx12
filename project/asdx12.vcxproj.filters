@@ -219,7 +219,7 @@
     <ClCompile Include="..\src\fnd\asdxOffsetAllocator.cpp">
       <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\fnd\asdxBitFlags.cpp">
+    <ClCompile Include="..\src\fnd\asdxBit.cpp">
       <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
   </ItemGroup>
@@ -389,7 +389,7 @@
     <ClInclude Include="..\include\fnd\asdxOffsetAllocator.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\fnd\asdxBitFlags.h">
+    <ClInclude Include="..\include\fnd\asdxBit.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
   </ItemGroup>

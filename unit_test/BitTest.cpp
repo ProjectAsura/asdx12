@@ -1,19 +1,19 @@
-//-----------------------------------------------------------------------------
-// File : BitFlagsTest.cpp
-// Desc : BitFlags Test.
+﻿//-----------------------------------------------------------------------------
+// File : BitTest.cpp
+// Desc : Bit Test.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <fnd/asdxBitFlags.h>
+#include <fnd/asdxBit.h>
 
 
 //============
 //  8-Bit.
 //============
-TEST(BitFlagsTest, CountZero8)
+TEST(BitTest, CountZero8)
 {
     // CountZeroL
     {
@@ -40,7 +40,7 @@ TEST(BitFlagsTest, CountZero8)
     }
 }
 
-TEST(BitFlagsTest, CountOne8)
+TEST(BitTest, CountOne8)
 {
     // CountOneL
     {
@@ -69,7 +69,7 @@ TEST(BitFlagsTest, CountOne8)
     }
 }
 
-TEST(BitFlagsTest, FindZero8)
+TEST(BitTest, FindZero8)
 {
     // FindZeroL
     {
@@ -98,7 +98,7 @@ TEST(BitFlagsTest, FindZero8)
     }
 }
 
-TEST(BitFlagsTest, FindOne8)
+TEST(BitTest, FindOne8)
 {
     // FindOneL
     {
@@ -125,7 +125,7 @@ TEST(BitFlagsTest, FindOne8)
     }
 }
 
-TEST(BitFlagsTest, BitFlags8)
+TEST(BitTest, BitFlags8)
 {
     asdx::BitFlags8 flags;
 
@@ -148,7 +148,7 @@ TEST(BitFlagsTest, BitFlags8)
 //============
 //  16-Bit.
 //============
-TEST(BitFlagsTest, CountZero16)
+TEST(BitTest, CountZero16)
 {
     // CountZeroL
     {
@@ -175,7 +175,7 @@ TEST(BitFlagsTest, CountZero16)
     }
 }
 
-TEST(BitFlagsTest, CountOne16)
+TEST(BitTest, CountOne16)
 {
     // CountOneL
     {
@@ -204,7 +204,7 @@ TEST(BitFlagsTest, CountOne16)
     }
 }
 
-TEST(BitFlagsTest, FindZero16)
+TEST(BitTest, FindZero16)
 {
     // FindZeroL
     {
@@ -233,7 +233,7 @@ TEST(BitFlagsTest, FindZero16)
     }
 }
 
-TEST(BitFlagsTest, FindOne16)
+TEST(BitTest, FindOne16)
 {
     // FindOneL
     {
@@ -260,7 +260,7 @@ TEST(BitFlagsTest, FindOne16)
     }
 }
 
-TEST(BitFlagsTest, BitFlags16)
+TEST(BitTest, BitFlags16)
 {
     asdx::BitFlags16 flags;
 
@@ -283,7 +283,7 @@ TEST(BitFlagsTest, BitFlags16)
 //============
 //  32-Bit.
 //============
-TEST(BitFlagsTest, CountZero32)
+TEST(BitTest, CountZero32)
 {
     // CountZeroL
     {
@@ -310,7 +310,7 @@ TEST(BitFlagsTest, CountZero32)
     }
 }
 
-TEST(BitFlagsTest, CountOne32)
+TEST(BitTest, CountOne32)
 {
     // CountOneL
     {
@@ -339,7 +339,7 @@ TEST(BitFlagsTest, CountOne32)
     }
 }
 
-TEST(BitFlagsTest, FindZero32)
+TEST(BitTest, FindZero32)
 {
     // FindZeroL
     {
@@ -368,7 +368,7 @@ TEST(BitFlagsTest, FindZero32)
     }
 }
 
-TEST(BitFlagsTest, FindOne32)
+TEST(BitTest, FindOne32)
 {
     // FindOneL
     {
@@ -395,7 +395,7 @@ TEST(BitFlagsTest, FindOne32)
     }
 }
 
-TEST(BitFlagsTest, BitFlags32)
+TEST(BitTest, BitFlags32)
 {
     asdx::BitFlags32 flags;
 
@@ -418,7 +418,7 @@ TEST(BitFlagsTest, BitFlags32)
 //============
 //  64-Bit.
 //============
-TEST(BitFlagsTest, CountZero64)
+TEST(BitTest, CountZero64)
 {
     // CountZeroL
     {
@@ -445,7 +445,7 @@ TEST(BitFlagsTest, CountZero64)
     }
 }
 
-TEST(BitFlagsTest, CountOne64)
+TEST(BitTest, CountOne64)
 {
     // CountOneL
     {
@@ -474,7 +474,7 @@ TEST(BitFlagsTest, CountOne64)
     }
 }
 
-TEST(BitFlagsTest, FindZero64)
+TEST(BitTest, FindZero64)
 {
     // FindZeroL
     {
@@ -503,7 +503,7 @@ TEST(BitFlagsTest, FindZero64)
     }
 }
 
-TEST(BitFlagsTest, FindOne64)
+TEST(BitTest, FindOne64)
 {
     // FindOneL
     {
@@ -530,7 +530,7 @@ TEST(BitFlagsTest, FindOne64)
     }
 }
 
-TEST(BitFlagsTest, BitFlags64)
+TEST(BitTest, BitFlags64)
 {
     asdx::BitFlags64 flags;
 
@@ -548,4 +548,21 @@ TEST(BitFlagsTest, BitFlags64)
 
     flags.Reset();
     EXPECT_EQ((uint64_t)flags, 0);
+}
+
+TEST(BitTest, BitOp)
+{
+    uint32_t val = 0;
+    val = asdx::BitFieldInsert(val, 0x3, 0, 2);
+    EXPECT_EQ(val, 0x3);
+
+    val = asdx::BitFieldInsert(val, 0x1, 3, 1);
+    EXPECT_EQ(val, 0xb);
+
+    uint32_t ext = 0;
+    ext = asdx::BitFieldExtract(val, 3, 1);
+    EXPECT_EQ(ext, 0x1);
+
+    ext = asdx::BitFieldExtract(val, 0, 2);
+    EXPECT_EQ(ext, 0x3);
 }

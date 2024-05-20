@@ -1,6 +1,6 @@
 ﻿//-----------------------------------------------------------------------------
-// File : asdxBitFlags.
-// Desc : Bit Flags.
+// File : asdxBit.h
+// Desc : Bit Operations.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 #pragma once
@@ -115,6 +115,70 @@ inline int FindOneR(uint8_t  value) { return value == 0 ? 0 : CountZeroR(value) 
 inline int FindOneR(uint16_t value) { return value == 0 ? 0 : CountZeroR(value) + 1; }
 inline int FindOneR(uint32_t value) { return value == 0 ? 0 : CountZeroR(value) + 1; }
 inline int FindOneR(uint64_t value) { return value == 0 ? 0 : CountZeroR(value) + 1; }
+
+//-----------------------------------------------------------------------------
+//! @brief      ビットフィールドを抽出します.
+//-----------------------------------------------------------------------------
+inline uint32_t BitFieldExtract(uint32_t src, uint32_t offset, uint32_t bits)
+{
+    uint32_t mask = (1u << bits) - 1u;
+    return (src >> offset) & mask;
+}
+
+//-----------------------------------------------------------------------------
+//! @brief      ビットフィールドを抽出します.
+//-----------------------------------------------------------------------------
+inline int BitFieldExtractSigned(int src, uint32_t offset, uint32_t bits)
+{
+    int shifted = src >> offset;
+    int signBit = shifted & (1u << (bits - 1u));
+    uint32_t mask = (1u << bits) - 1u;
+    return ~signBit | (shifted & mask);
+}
+
+//-----------------------------------------------------------------------------
+//! @brief      ビットフィールドを挿入します.
+//-----------------------------------------------------------------------------
+inline uint32_t BitFieldInsert(uint32_t src, uint32_t insert, uint32_t offset, uint32_t bits)
+{
+    uint32_t mask = ~(0xffffffff << bits) << offset;
+    return (src & ~mask) | (insert << offset);
+}
+
+//-----------------------------------------------------------------------------
+//! @brief      2次元用にビットを分離します.
+//-----------------------------------------------------------------------------
+inline uint32_t BitSeparate2(uint32_t value)
+{
+    value = (value | (value << 8)) & 0x00ff00ff;
+    value = (value | (value << 4)) & 0x0f0f0f0f;
+    value = (value | (value << 2)) & 0x33333333;
+    value = (value | (value << 1)) & 0x55555555;
+    return value;
+}
+
+//-----------------------------------------------------------------------------
+//! @brief      3次元用にビットを分離します.
+//-----------------------------------------------------------------------------
+inline uint32_t BitSeparate3(uint32_t value)
+{
+    value = (value | (value << 8)) & 0x000f000f;
+    value = (value | (value << 4)) & 0x000c30c3;
+    value = (value | (value << 2)) & 0x00249249;
+    return value;
+}
+
+//-----------------------------------------------------------------------------
+//! @brief      2次元のモートンコードを求めます.
+//-----------------------------------------------------------------------------
+inline uint32_t MortonOrder2(uint32_t x, uint32_t y)
+{ return (BitSeparate2(y) << 1) | BitSeparate2(x); }
+
+//-----------------------------------------------------------------------------
+//! @brief      3次元のモートンコードを求めます.
+//-----------------------------------------------------------------------------
+inline uint32_t MortonOrder3(uint32_t x, uint32_t y, uint32_t z)
+{ return (BitSeparate3(z) << 2) | (BitSeparate3(y) << 1) | BitSeparate3(x); }
 
 
 ///////////////////////////////////////////////////////////////////////////////

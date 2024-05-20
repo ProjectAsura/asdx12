@@ -9,6 +9,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <utility> // for std::swap
+#include <cassert>
 
 
 namespace asdx {
@@ -281,6 +282,8 @@ protected:
     //-------------------------------------------------------------------------
     NodeBase* erase(NodeBase* node)
     {
+        assert(node != nullptr);
+
         auto next = node->m_Next;
         node->unlink();
         return next;
@@ -295,6 +298,9 @@ protected:
     //-------------------------------------------------------------------------
     NodeBase* erase(NodeBase* first, NodeBase* last)
     {
+        assert(first != nullptr);
+        assert(last  != nullptr);
+
         auto back = last->m_Prev;
         NodeBase::link(first->m_Prev, last);
         NodeBase::link(back, first);
@@ -990,6 +996,7 @@ private:
     {
         auto gap  = distance(first, last);
         auto done = false;
+        --first;
 
         while(!done || gap > 1)
         {
@@ -1002,8 +1009,8 @@ private:
 
             done = true;
 
-            auto lhs = first;
-            auto rhs = advance(first, gap);
+            auto lhs = advance(first, 1);
+            auto rhs = advance(first, 1 + gap);
             for(; rhs != last; ++lhs, ++rhs)
             {
                 if (compare(*lhs, *rhs))

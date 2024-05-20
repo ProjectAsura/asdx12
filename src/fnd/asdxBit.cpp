@@ -1,13 +1,13 @@
 //-----------------------------------------------------------------------------
-// File : asdxBitFlags.cpp
-// Desc : Bit Flags.
+// File : asdxBit.cpp
+// Desc : Bit Operations.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <fnd/asdxBitFlags.h>
+#include <fnd/asdxBit.h>
 
 #if _HAS_CXX20
   #include <bit>      // for std::countl_zero, std::countr_zero
