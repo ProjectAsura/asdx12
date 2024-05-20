@@ -216,9 +216,6 @@
     <ClCompile Include="..\src\res\asdxResModel.cpp">
       <Filter>ソース ファイル\res</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\fnd\asdxOffsetAllocator.cpp">
-      <Filter>ソース ファイル\fnd</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\fnd\asdxBit.cpp">
       <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
@@ -385,9 +382,6 @@
     </ClInclude>
     <ClInclude Include="..\include\res\asdxBinary.h">
       <Filter>ヘッダー ファイル\res</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\fnd\asdxOffsetAllocator.h">
-      <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
     <ClInclude Include="..\include\fnd\asdxBit.h">
       <Filter>ヘッダー ファイル\fnd</Filter>

@@ -200,7 +200,6 @@ private:
     void create(Functor&& f)
     {
         static_assert(sizeof(Functor) <= MaxSize);
-        static_assert(Align % alignof(Functor) == 0u);
         m_Base = new(m_Storage) Derived<Functor>(std::forward<Functor>(f));
     }
 

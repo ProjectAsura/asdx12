@@ -134,7 +134,6 @@
     <ClCompile Include="..\src\fnd\asdxMessage.cpp" />
     <ClCompile Include="..\src\fnd\asdxMisc.cpp" />
     <ClCompile Include="..\src\fnd\asdxMouse.cpp" />
-    <ClCompile Include="..\src\fnd\asdxOffsetAllocator.cpp" />
     <ClCompile Include="..\src\fnd\asdxRandom.cpp" />
     <ClCompile Include="..\src\fnd\asdxTablet.cpp" />
     <ClCompile Include="..\src\fnd\asdxThreadPool.cpp" />
@@ -182,7 +181,6 @@
     <ClInclude Include="..\include\fnd\asdxMath.h" />
     <ClInclude Include="..\include\fnd\asdxMessage.h" />
     <ClInclude Include="..\include\fnd\asdxMisc.h" />
-    <ClInclude Include="..\include\fnd\asdxOffsetAllocator.h" />
     <ClInclude Include="..\include\fnd\asdxPool.h" />
     <ClInclude Include="..\include\fnd\asdxQueue.h" />
     <ClInclude Include="..\include\fnd\asdxRef.h" />

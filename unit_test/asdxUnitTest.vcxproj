@@ -109,6 +109,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BitTest.cpp" />
+    <ClCompile Include="FunctionTest.cpp" />
     <ClCompile Include="ListTest.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
