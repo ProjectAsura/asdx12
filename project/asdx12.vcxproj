@@ -185,6 +185,7 @@
     <ClInclude Include="..\include\fnd\asdxPool.h" />
     <ClInclude Include="..\include\fnd\asdxQueue.h" />
     <ClInclude Include="..\include\fnd\asdxRef.h" />
+    <ClInclude Include="..\include\fnd\asdxRelativePtr.h" />
     <ClInclude Include="..\include\fnd\asdxSpinLock.h" />
     <ClInclude Include="..\include\fnd\asdxStack.h" />
     <ClInclude Include="..\include\fnd\asdxStepTimer.h" />
