@@ -386,6 +386,9 @@
     <ClInclude Include="..\include\fnd\asdxBit.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\fnd\asdxOctree.h">
+      <Filter>ヘッダー ファイル\fnd</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\res\shaders\BRDF.hlsli">

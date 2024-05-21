@@ -35,7 +35,7 @@ bool MessageMgr::Init(size_t size)
 void MessageMgr::Term()
 {
     m_Listeners.clear();
-    m_Queue.Clear();
+    m_Queue.clear();
     m_Heap.Term();
 }
 
@@ -71,12 +71,12 @@ void MessageMgr::PushMessage(const Message& msg)
         memcpy(data, msg.GetBuffer(), msg.GetSize());
         
         auto instance = new (buf) Message(msg.GetType(), data, msg.GetSize());
-        m_Queue.Push(instance);
+        m_Queue.push(instance);
     }
     else
     {
         auto instance = new (buf) Message(msg.GetType());
-        m_Queue.Push(instance);
+        m_Queue.push(instance);
     }
 }
 
@@ -85,9 +85,9 @@ void MessageMgr::PushMessage(const Message& msg)
 //-----------------------------------------------------------------------------
 void MessageMgr::BroadCast()
 {
-    while(!m_Queue.IsEmpty())
+    while(!m_Queue.empty())
     {
-        auto msg = m_Queue.Pop();
+        auto msg = m_Queue.pop();
 
         for(auto& itr : m_Listeners)
         { itr->OnMessage(*msg); }

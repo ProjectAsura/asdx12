@@ -18,6 +18,7 @@ namespace asdx {
 //! @brief      立っているビットを数えます.
 //! 
 //! @return     立っているビットの数を返却します.
+//! @note       popcount() と同じ挙動です.
 //-----------------------------------------------------------------------------
 int CountBit(uint8_t  value);
 int CountBit(uint16_t value);
@@ -29,7 +30,7 @@ int CountBit(uint64_t value);
 //! 
 //! @param[in]      value       数える数値.
 //! @return     左端から連続した0となるビットの数を返却します.
-//! @note       左端が0でない場合は常にゼロとなります.
+//! @note       左端が0でない場合は常にゼロとなります. clz() と同じ挙動です.
 //-----------------------------------------------------------------------------
 int CountZeroL(uint8_t  value);
 int CountZeroL(uint16_t value);
@@ -41,7 +42,7 @@ int CountZeroL(uint64_t value);
 //! 
 //! @param[in]      value       数える数値.
 //! @return     右端から連続した0となるビットの数を返却します.
-//! @note       右端が0でない場合は常にゼロとなります.
+//! @note       右端が0でない場合は常にゼロとなります. ctz() と同じ挙動です.
 //-----------------------------------------------------------------------------
 int CountZeroR(uint8_t  value);
 int CountZeroR(uint16_t value);

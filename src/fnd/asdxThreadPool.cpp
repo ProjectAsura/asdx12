@@ -82,7 +82,7 @@ public:
         // ブロック.
         {
             std::unique_lock<std::mutex> locker(m_Mutex);
-            m_Queue.Push(runnable);
+            m_Queue.push(runnable);
         }
 
         m_Condtion.notify_all();
@@ -100,7 +100,7 @@ public:
         {
             std::unique_lock<std::mutex> locker(m_Mutex);
             for(auto i=0u; i<count; ++i)
-            { m_Queue.Push(runnables[i]); }
+            { m_Queue.push(runnables[i]); }
         }
 
         m_Condtion.notify_all();
@@ -112,7 +112,7 @@ public:
     void Wait() override
     {
         std::unique_lock<std::mutex> locker(m_Mutex);
-        if (m_Queue.IsEmpty())
+        if (m_Queue.empty())
         { return; }
 
         m_Condtion.wait(locker);
@@ -135,7 +135,7 @@ private:
             IRunnable* runnable = nullptr;
             {
                 std::unique_lock<std::mutex> locker(m_Mutex);
-                while(m_Queue.IsEmpty())
+                while(m_Queue.empty())
                 {
                     if (m_RequestTerminate)
                     { return; }
@@ -143,7 +143,7 @@ private:
                     m_Condtion.wait(locker);
                 }
 
-                runnable = m_Queue.Pop();
+                runnable = m_Queue.pop();
                 assert(runnable != nullptr);
             }
 
