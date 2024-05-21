@@ -9,6 +9,8 @@
 //-----------------------------------------------------------------------------
 #include <fnd/asdxList.h>
 
+namespace {
+
 struct IntValue : asdx::List<IntValue>::Node
 {
     IntValue(int value)
@@ -20,6 +22,8 @@ struct IntValue : asdx::List<IntValue>::Node
 
 static bool operator < (const IntValue& lhs, const IntValue& rhs)
 { return lhs.Value < rhs.Value; }
+
+} // namespace
 
 TEST(ListTest, Basic)
 {

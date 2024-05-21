@@ -149,5 +149,4 @@ private:
     { return 31 - CountZeroL(value); }
 };
 
-
 } // namespace asdx
