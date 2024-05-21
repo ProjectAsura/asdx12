@@ -29,11 +29,19 @@ public:
         List<T>     Objects;
     };
 
-    void Setup(uint8_t maxLevels, const Vector3& mini, const Vector3& maxi)
+    void Setup(uint8_t maxLevels, float cellSize)
     {
-        auto size   = Vector3::Abs(maxi - mini);
-        m_CellSize  = Max3(size);
+        m_CellSize  = cellSize;
         m_MaxLevels = maxLevels;
+    }
+
+    void Clear()
+    {
+        for(auto& itr : m_Nodes)
+        {
+            itr.second.Objects.clear();
+        }
+        m_Nodes.clear();
     }
 
     void Add(uint32_t code, T* object)
@@ -80,7 +88,7 @@ public:
         {
             const auto childCode = CalcChildCode(node->MortonCode, i);
             auto child = Find(childCode);
-            ForEach(child);
+            ForEach(child, action);
         }
     }
 
@@ -90,7 +98,7 @@ public:
         auto levelOffset = 0u;
 
         if (m_MaxSize <= sizeMax)
-            levelOffset = 31 - CountZeroL(uint32_t(sizeMax / m_MaxSize));
+            levelOffset = Log2(uint32_t(sizeMax / m_MaxSize));
 
         if (m_MaxLevels < levelOffset)
             return 0;   // ルート.
@@ -136,6 +144,9 @@ private:
 
     static float Max3(const Vector3& size)
     { return Max<float>(size.x, Max<float>(size.y, size.z)); }
+
+    static uint32_t Log2(uint32_t value)
+    { return 31 - CountZeroL(value); }
 };
 
 
