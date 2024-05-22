@@ -25,80 +25,81 @@ class Octree
 public:
     struct Node
     {
-        uint32_t    MortonCode;
         List<T>     Objects;
     };
 
-    void Setup(uint8_t maxLevels, float cellSize)
+    void Init(uint8_t maxLevels, const Vector3& rootMin, const Vector3& rootMax)
     {
-        m_CellSize  = cellSize;
+        m_RootMin   = rootMin;
         m_MaxLevels = maxLevels;
+
+        auto size = Vector3::Abs(rootMax - rootMin);
+        m_CellSize = size / ((float)(1 << maxLevels));
+
+        m_NodeCount = ((1 << ((maxLevels + 1) * 3)) - 1) / 7;
+        m_Nodes = new Node[m_NodeCount];
     }
 
-    void Clear()
+    void Term()
     {
-        for(auto& itr : m_Nodes)
+        if (m_Nodes)
         {
-            itr.second.Objects.clear();
+            for(auto i=0u; i<m_NodeCount; ++i)
+            { m_Nodes[i].Objects.clear(); }
+
+            delete[] m_Nodes;
+            m_Nodes = nullptr;
         }
-        m_Nodes.clear();
+        m_NodeCount = 0;
+        m_CellSize  = {};
+        m_RootMin   = {};
+        m_MaxLevels = 0;
     }
 
-    void Add(uint32_t code, T* object)
+    void Add(uint32_t index, T* object)
     {
-        auto node = Find(code);
-        if (node == nullptr)
-        {
-            Node newNode = {};
-            newNode.MortonCode = code;
-            newNode.Objects.push_back(object);
-
-            m_Nodes[code] = newNode;
-        }
-        else
-        {
-            node->Objects.push_back(object);
-        }
+        assert(index < m_NodeCount);
+        m_Nodes[index].Objects.push_back(object);
     }
 
-    void Remove(uint32_t code, T* object)
+    void Remove(uint32_t index, T* object)
     {
-        auto node = Find(code);
-        if (node == nullptr)
-            return;
-
-        node->Objects.erase(object);
+        assert(index < m_NodeCount);
+        m_Nodes[index].Objects.earse(object);
     }
 
-    Node* Find(uint32_t code)
+    Node& Get(uint32_t index)
     {
-        const auto itr = m_Nodes.find(code);
-        return (itr == m_Nodes.end()) ? nullptr : &(*itr);
+        assert(index < m_NodeCount);
+        return m_Nodes[index];
     }
 
-    template<typename Action>
-    void ForEach(Node* node, Action action)
+    const Node& Get(uint32_t index) const
     {
-        if (node == nullptr)
-            return;
+        assert(index < m_NodeCount);
+        return m_Nodes[index];
+    }
 
-        action(node);
+    Node* GetPtr(uint32_t index)
+    {
+        assert(index < m_NodeCount);
+        return &m_Nodes[index];
+    }
 
-        for(uint8_t i=0; i<8; ++i)
-        {
-            const auto childCode = CalcChildCode(node->MortonCode, i);
-            auto child = Find(childCode);
-            ForEach(child, action);
-        }
+    const Node* GetPtr(uint32_t index) const
+    {
+        assert(index < m_NodeCount);
+        return &m_Nodes[index];
     }
 
     uint8_t CalcLevel(const Vector3& size)
     {
+        auto cellSize    = Max3(m_CellSize);
         auto sizeMax     = Max3(size);
         auto levelOffset = 0u;
 
-        if (m_MaxSize <= sizeMax)
-            levelOffset = Log2(uint32_t(sizeMax / m_MaxSize));
+        if (cellSize <= sizeMax)
+            levelOffset = Log2(uint32_t(sizeMax / cellSize));
 
         if (m_MaxLevels < levelOffset)
             return 0;   // ルート.
@@ -106,29 +107,17 @@ public:
         return m_MaxLevels - levelOffset;
     }
 
-    uint32_t CalcNode(const Vector3& pos, uint8_t level)
+    uint32_t CalcIndex(const Vector3& mini, const Vector3& maxi)
     {
-        uint32_t currSize = m_CellSize << (m_MaxLevels - level);
-        uint32_t rootSize = m_CellSize << m_MaxLevels;
-        uint32_t maxCount = 1u << level;
+        // 所属空間を求める.
+        auto rhs   = GetPointCode(maxi);
+        auto level = CalcLevel(maxi - mini);
+        auto shift = m_MaxLevels - level;
+        auto code  = rhs >> (shift * 3);
 
-        uint32_t levelPosX = uint32_t(pos.x + rootSize / 2) / currSize;
-        uint32_t levelPosY = uint32_t(pos.y + rootSize / 2) / currSize;
-        uint32_t levelPosZ = uint32_t(pos.z + rootSize / 2) / currSize;
-
-        if ((maxCount <= levelPosX) || (maxCount <= levelPosY) || (maxCount <= levelPosZ))
-            return ~0; // 範囲外.
-
-        return MortonOrder3(levelPosX, levelPosY, levelPosZ);
-    }
-
-    uint32_t CalcMortonCode(const Vector3& mini, const Vector3& maxi)
-    {
-        auto size  = Vector3::Abs(maxi - mini);
-        auto pos   = (maxi + mini) * 0.5f;
-        auto level = CalcLevel(size);
-        auto code  = CalcNode(pos, level);
-        return code;
+        // 線形配列の番号に直す.
+        auto offset = ((1 << (level * 3)) - 1) / 7; // 等比数列の和.
+        return code + offset;
     }
 
     static uint32_t CalcParentCode(uint32_t childCode)
@@ -137,16 +126,36 @@ public:
     static uint32_t CalcChildCode(uint32_t parentCode, uint8_t childIndex)
     { return (parentCode << 3) | childIndex; }
 
+    uint8_t GetMaxLevels() const
+    { return m_MaxLevels; }
+
+    Vector3 GetCellSize() const
+    { return m_CellSize; }
+
+    uint32_t GetNodeCount() const
+    { return m_NodeCount; }
+
 private:
-    std::unordered_map<uint32_t, Node>  m_Nodes;        // ハッシュテーブル.
-    uint8_t                             m_MaxLevels;    // レベル数.
-    float                               m_CellSize;     // 末端セルのサイズの最大辺長.
+    Node*       m_Nodes     = nullptr;  // ノード.
+    uint32_t    m_NodeCount = 0;        // ノード数.
+    uint8_t     m_MaxLevels = 0;        // レベル数.
+    Vector3     m_RootMin   = {};       // ルートレベルの最小値.
+    Vector3     m_CellSize  = {};       // 末端のセルサイズ.
 
     static float Max3(const Vector3& size)
     { return Max<float>(size.x, Max<float>(size.y, size.z)); }
 
     static uint32_t Log2(uint32_t value)
     { return 31 - CountZeroL(value); }
+
+    uint32_t GetPointCode(const Vector3& p)
+    {
+        return MortonOrder3(
+            uint32_t((p.x - m_RootMin.x) / m_CellSize.x),
+            uint32_t((p.y - m_RootMin.y) / m_CellSize.y),
+            uint32_t((p.z - m_RootMin.z) / m_CellSize.z)
+        );
+    }
 };
 
 } // namespace asdx

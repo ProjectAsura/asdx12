@@ -89,6 +89,12 @@ protected:
         ~NodeBase()
         { unlink(); }
 
+        //---------------------------------------------------------------------
+        //! @brief      ‘ã“ü‰‰Zq‚Å‚·.
+        //---------------------------------------------------------------------
+        NodeBase& operator = (const NodeBase&)
+        { return *this; } // MEMO : ‚±‚¤‚µ‚È‚¢‚ÆƒoƒO‚é. 
+
     private:
         //=====================================================================
         // private variables
@@ -315,8 +321,11 @@ protected:
     //-------------------------------------------------------------------------
     size_t size() const 
     {
+        if (empty())
+            return 0;
+
         size_t count = 0;
-        for(auto itr = begin(); itr != end(); itr = itr->m_Next)
+        for(auto itr = begin(); itr != end() && itr != nullptr; itr = itr->m_Next)
         { count++; }
         return count;
     }
