@@ -116,7 +116,7 @@ public:
         auto code  = rhs >> (shift * 3);
 
         // 線形配列の番号に直す.
-        auto offset = ((1 << (level * 3)) - 1) / 7; // 等比数列の和.
+        auto offset = ((1 << (level * 3)) - 1) / 7;
         return code + offset;
     }
 
