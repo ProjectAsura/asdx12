@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="..\src\fnd\BitTest.cpp">
+      <Filter>fnd</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\fnd\FunctionTest.cpp">
+      <Filter>fnd</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\fnd\ListTest.cpp">
+      <Filter>fnd</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\fnd\OctreeTest.cpp">
+      <Filter>fnd</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\fnd\QueueTest.cpp">
+      <Filter>fnd</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\fnd\RelativePtrTest.cpp">
+      <Filter>fnd</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\fnd\StackTest.cpp">
+      <Filter>fnd</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="fnd">
+      <UniqueIdentifier>{becdfb1e-ce02-49e3-b2e2-18300bfe5f87}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

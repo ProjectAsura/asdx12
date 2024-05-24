@@ -11,6 +11,12 @@
 #include <cassert>
 #include <cstdint>
 
+#if _HAS_CXX20
+#include <bit>      // for std::bit_cast().
+#else
+#include <cstring>  // form memcpy().
+#endif
+
 
 namespace asdx {
 
@@ -116,6 +122,31 @@ inline int FindOneR(uint8_t  value) { return value == 0 ? 0 : CountZeroR(value) 
 inline int FindOneR(uint16_t value) { return value == 0 ? 0 : CountZeroR(value) + 1; }
 inline int FindOneR(uint32_t value) { return value == 0 ? 0 : CountZeroR(value) + 1; }
 inline int FindOneR(uint64_t value) { return value == 0 ? 0 : CountZeroR(value) + 1; }
+
+
+#if _HAS_CXX20
+//-----------------------------------------------------------------------------
+//! @brief      ビット列を崩さずに型キャストします.
+//-----------------------------------------------------------------------------
+template<typename To, typename From>
+inline To bit_cast(const From& value)
+{ return std::bit_cast<To>(value); }
+
+#else
+//-----------------------------------------------------------------------------
+//! @brief      ビット列を崩さずに型キャストします.
+//-----------------------------------------------------------------------------
+template<typename To, typename From>
+inline To bit_cast(const From& value)
+{
+    // データサイズが一致することを確認.
+    static_assert(sizeof(To) == sizeof(From), "bit_cast() size not matched.");
+
+    To ret = {};
+    memcpy(&ret, &value, sizeof(ret));
+    return ret;
+}
+#endif
 
 //-----------------------------------------------------------------------------
 //! @brief      ビットフィールドを抽出します.
@@ -713,10 +744,5 @@ private:
     //=========================================================================
     /* NOTHING */
 };
-
-static_assert(sizeof(BitFlags8)  == sizeof(uint8_t) , "Size Not Match");
-static_assert(sizeof(BitFlags16) == sizeof(uint16_t), "Size Not Match");
-static_assert(sizeof(BitFlags32) == sizeof(uint32_t), "Size Not Match");
-static_assert(sizeof(BitFlags64) == sizeof(uint64_t), "Size Not Match");
 
 } // namespace asdx
