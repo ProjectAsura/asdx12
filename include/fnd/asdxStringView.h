@@ -14,9 +14,9 @@
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
-// string_view class
+// StringViewA class
 ///////////////////////////////////////////////////////////////////////////////
-class string_view
+class StringViewA
 {
     //=========================================================================
     // list of friend classes and methods.
@@ -36,7 +36,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      コンストラクタです.
     //-------------------------------------------------------------------------
-    string_view(const char* value)
+    StringViewA(const char* value)
     : m_Ptr (value)
     { /* DO_NOTHING */ }
 
@@ -64,9 +64,9 @@ private:
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// wstring_view class
+// StringViewW class
 ///////////////////////////////////////////////////////////////////////////////
-class wstring_view
+class StringViewW
 {
     //=========================================================================
     // list of friend classes and methods.
@@ -86,7 +86,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      コンストラクタです.
     //-------------------------------------------------------------------------
-    wstring_view(const wchar_t* value)
+    StringViewW(const wchar_t* value)
     : m_Ptr (value)
     { /* DO_NOTHING */ }
 
@@ -111,5 +111,8 @@ private:
     //=========================================================================
     /* NOTHING */
 };
+
+using string_view  = StringViewA;
+using wstring_view = StringViewW;
 
 } // namespace asdx
