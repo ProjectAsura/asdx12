@@ -219,6 +219,9 @@
     <ClCompile Include="..\src\fnd\asdxBit.cpp">
       <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\fnd\asdxIndexHeap.cpp">
+      <Filter>ソース ファイル\fnd</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\external\imgui\imconfig.h">
@@ -387,6 +390,9 @@
       <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
     <ClInclude Include="..\include\fnd\asdxRelativePtr.h">
+      <Filter>ヘッダー ファイル\fnd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fnd\asdxIndexHeap.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
   </ItemGroup>

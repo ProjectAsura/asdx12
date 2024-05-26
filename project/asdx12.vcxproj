@@ -129,6 +129,7 @@
     <ClCompile Include="..\src\fnd\asdxBit.cpp" />
     <ClCompile Include="..\src\fnd\asdxFrameHeap.cpp" />
     <ClCompile Include="..\src\fnd\asdxGamePad.cpp" />
+    <ClCompile Include="..\src\fnd\asdxIndexHeap.cpp" />
     <ClCompile Include="..\src\fnd\asdxKeyboard.cpp" />
     <ClCompile Include="..\src\fnd\asdxLogger.cpp" />
     <ClCompile Include="..\src\fnd\asdxMessage.cpp" />
@@ -175,6 +176,7 @@
     <ClInclude Include="..\include\fnd\asdxFunction.h" />
     <ClInclude Include="..\include\fnd\asdxHash.h" />
     <ClInclude Include="..\include\fnd\asdxHid.h" />
+    <ClInclude Include="..\include\fnd\asdxIndexHeap.h" />
     <ClInclude Include="..\include\fnd\asdxList.h" />
     <ClInclude Include="..\include\fnd\asdxLogger.h" />
     <ClInclude Include="..\include\fnd\asdxMacro.h" />
