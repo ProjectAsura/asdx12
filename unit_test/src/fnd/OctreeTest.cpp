@@ -37,11 +37,20 @@ TEST(OctreeTest, Basic)
 
     asdx::Octree<Object> octree;
 
-    octree.Init(levels, asdx::Vector3(-rootSize, -rootSize, -rootSize), asdx::Vector3(rootSize, rootSize, rootSize));
+    auto mini = asdx::Vector3(-rootSize, -rootSize, -rootSize);
+    auto maxi = asdx::Vector3(rootSize, rootSize, rootSize);
+
+    octree.Init(levels, mini, maxi);
     EXPECT_EQ(octree.GetMaxLevels(), 3);
     EXPECT_FLOAT_EQ(octree.GetCellSize().x, cellSize);
     EXPECT_FLOAT_EQ(octree.GetCellSize().y, cellSize);
     EXPECT_FLOAT_EQ(octree.GetCellSize().z, cellSize);
+    EXPECT_FLOAT_EQ(octree.GetRootMax().x, maxi.x);
+    EXPECT_FLOAT_EQ(octree.GetRootMax().y, maxi.y);
+    EXPECT_FLOAT_EQ(octree.GetRootMax().z, maxi.z);
+    EXPECT_FLOAT_EQ(octree.GetRootMin().x, mini.x);
+    EXPECT_FLOAT_EQ(octree.GetRootMin().y, mini.y);
+    EXPECT_FLOAT_EQ(octree.GetRootMin().z, mini.z);
 
     uint8_t level = 0;
     level = octree.CalcLevel(object0.CalcSize());
@@ -54,21 +63,24 @@ TEST(OctreeTest, Basic)
     EXPECT_EQ(level, 3);
 
     uint32_t index = 0;
-    index = octree.CalcIndex(object0.Min, object0.Max);
+    index = octree.CalcHash(object0.Min, object0.Max);
+    printf_s("hash : 0x%x\n", index);
     octree.Add(index, &object0);
-    auto node = octree.GetPtr(index);
+    auto node = octree.Find(index);
     EXPECT_EQ(node->Objects.size(), 1);
     EXPECT_EQ(node->Objects.front().Id, object0.Id);
 
-    index = octree.CalcIndex(object1.Min, object1.Max);
+    index = octree.CalcHash(object1.Min, object1.Max);
+    printf_s("hash : 0x%x\n", index);
     octree.Add(index, &object1);
-    node = octree.GetPtr(index);
+    node = octree.Find(index);
     EXPECT_EQ(node->Objects.size(), 1);
     EXPECT_EQ(node->Objects.front().Id, object1.Id);
 
-    index = octree.CalcIndex(object2.Min, object2.Max);
+    index = octree.CalcHash(object2.Min, object2.Max);
+    printf_s("hash : 0x%x\n", index);
     octree.Add(index, &object2);
-    node = octree.GetPtr(index);
+    node = octree.Find(index);
     EXPECT_EQ(node->Objects.size(), 2);
     EXPECT_EQ(node->Objects.back().Id, 2);
 

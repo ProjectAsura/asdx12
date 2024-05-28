@@ -9,9 +9,9 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <cstdint>
-#include <functional>
 #include <d3d12.h>
 #include <fnd/asdxMath.h>
+#include <fnd/asdxFunction.h>
 #include <gfx/asdxTarget.h>
 #include <gfx/asdxCommandQueue.h>
 #include <rs/asdxBlackboard.h>
@@ -25,8 +25,8 @@ struct IPassGraphBuilder;
 struct IPassGraphContext;
 class  PassResource;
 
-using PassSetup     = std::function<void(IPassGraphBuilder*)>;
-using PassExecute   = std::function<void(IPassGraphContext*)>;
+using PassSetup     = Action<IPassGraphBuilder*>;
+using PassExecute   = Action<IPassGraphContext*>;
 
 
 ///////////////////////////////////////////////////////////////////////////////

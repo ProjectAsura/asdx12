@@ -30,66 +30,67 @@ public:
 
     void Init(uint8_t maxLevels, const Vector3& rootMin, const Vector3& rootMax)
     {
+        if (!m_Nodes.empty())
+        { Term(); }
+
         m_RootMin   = rootMin;
+        m_RootMax   = rootMax;
         m_MaxLevels = maxLevels;
 
         auto size = Vector3::Abs(rootMax - rootMin);
         m_CellSize = size / ((float)(1 << maxLevels));
-
-        m_NodeCount = ((1 << ((maxLevels + 1) * 3)) - 1) / 7;
-        m_Nodes = new Node[m_NodeCount];
     }
 
     void Term()
     {
-        if (m_Nodes)
+        if (!m_Nodes.empty())
         {
-            for(auto i=0u; i<m_NodeCount; ++i)
-            { m_Nodes[i].Objects.clear(); }
-
-            delete[] m_Nodes;
-            m_Nodes = nullptr;
+            for(auto& itr : m_Nodes)
+            { itr.second.Objects.clear(); }
+            m_Nodes.clear();
         }
-        m_NodeCount = 0;
         m_CellSize  = {};
         m_RootMin   = {};
+        m_RootMax   = {};
         m_MaxLevels = 0;
     }
 
-    void Add(uint32_t index, T* object)
+    void Add(uint32_t hash, T* object)
     {
-        assert(index < m_NodeCount);
-        m_Nodes[index].Objects.push_back(object);
+        assert(object != nullptr);
+        auto itr = m_Nodes.find(hash);
+        if (itr == m_Nodes.end())
+        {
+            Node node = {};
+            m_Nodes[hash] = node;
+            m_Nodes[hash].Objects.push_back(object);
+        }
+        else
+        {
+            itr->second.Objects.push_back(object);
+        }
     }
 
-    void Remove(uint32_t index, T* object)
+    void Remove(uint32_t hash, T* object)
     {
-        assert(index < m_NodeCount);
-        m_Nodes[index].Objects.earse(object);
+        assert(object != nullptr);
+        auto itr = m_Nodes.find(hash);
+        if (itr == m_Nodes.end())
+            return;
+
+        itr.Objects.erase(object);
     }
 
-    Node& Get(uint32_t index)
+    Node* Find(uint32_t hash)
     {
-        assert(index < m_NodeCount);
-        return m_Nodes[index];
+        auto itr = m_Nodes.find(hash);
+        return (itr == m_Nodes.end()) ? nullptr : &(itr->second);
     }
 
-    const Node& Get(uint32_t index) const
+    const Node* Find(uint32_t hash) const
     {
-        assert(index < m_NodeCount);
-        return m_Nodes[index];
-    }
-
-    Node* GetPtr(uint32_t index)
-    {
-        assert(index < m_NodeCount);
-        return &m_Nodes[index];
-    }
-
-    const Node* GetPtr(uint32_t index) const
-    {
-        assert(index < m_NodeCount);
-        return &m_Nodes[index];
+        auto itr = m_Nodes.find(hash);
+        return (itr == m_Nodes.end()) ? nullptr : &(itr->second);
     }
 
     uint8_t CalcLevel(const Vector3& size)
@@ -107,6 +108,17 @@ public:
         return m_MaxLevels - levelOffset;
     }
 
+    uint32_t CalcHash(const Vector3& mini, const Vector3& maxi)
+    {
+        // 所属空間を求める.
+        auto rhs   = GetPointCode(maxi);
+        auto level = CalcLevel(maxi - mini);
+        auto shift = m_MaxLevels - level;
+        auto code  = rhs >> (shift * 3);
+        return code;
+    }
+
+#if 0
     uint32_t CalcIndex(const Vector3& mini, const Vector3& maxi)
     {
         // 所属空間を求める.
@@ -119,6 +131,7 @@ public:
         auto offset = ((1 << (level * 3)) - 1) / 7;
         return code + offset;
     }
+#endif
 
     static uint32_t CalcParentCode(uint32_t childCode)
     { return childCode >> 3; }
@@ -129,17 +142,23 @@ public:
     uint8_t GetMaxLevels() const
     { return m_MaxLevels; }
 
-    Vector3 GetCellSize() const
+    uint32_t GetNodeCount() const
+    { return uint32_t(m_Nodes.size()); }
+
+    const Vector3& GetCellSize() const
     { return m_CellSize; }
 
-    uint32_t GetNodeCount() const
-    { return m_NodeCount; }
+    const Vector3& GetRootMax() const 
+    { return m_RootMax; }
+
+    const Vector3& GetRootMin() const
+    { return m_RootMin; }
 
 private:
-    Node*       m_Nodes     = nullptr;  // ノード.
-    uint32_t    m_NodeCount = 0;        // ノード数.
+    std::unordered_map<uint32_t, Node>      m_Nodes;
     uint8_t     m_MaxLevels = 0;        // レベル数.
     Vector3     m_RootMin   = {};       // ルートレベルの最小値.
+    Vector3     m_RootMax   = {};
     Vector3     m_CellSize  = {};       // 末端のセルサイズ.
 
     static float Max3(const Vector3& size)
