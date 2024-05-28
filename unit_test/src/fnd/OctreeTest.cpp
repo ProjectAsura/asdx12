@@ -27,11 +27,11 @@ struct Object : public asdx::List<Object>::Node
 
 TEST(OctreeTest, Basic)
 {
-    Object object0(0, asdx::Vector3(-10.0f, 0.0f, -10.0f), asdx::Vector3(10.0f, 0.0f, 10.0f));
+    Object object0(0, asdx::Vector3(-90.0f, -90.0f, -90.0f), asdx::Vector3(-80.0f, -80.0f, -80.0f));
     Object object1(1, asdx::Vector3(-150.0f, -10.0f, -100.0f), asdx::Vector3(200.0f, 0.0f, 200.0f));
-    Object object2(2, asdx::Vector3(-9.0f, -1.0f, -9.0f), asdx::Vector3(11.0f, 1.0f, 11.0f));
+    Object object2(2, asdx::Vector3(-85.0f, -85.0f, -85.0f), asdx::Vector3(-75.0f, -75.0f, -75.0f));
 
-    uint8_t levels = 3;
+    uint8_t levels = 4;
     float cellSize = 100.0f;
     float rootSize = (cellSize * (1 << levels)) * 0.5f;
 
@@ -41,7 +41,7 @@ TEST(OctreeTest, Basic)
     auto maxi = asdx::Vector3(rootSize, rootSize, rootSize);
 
     octree.Init(levels, mini, maxi);
-    EXPECT_EQ(octree.GetMaxLevels(), 3);
+    EXPECT_EQ(octree.GetMaxLevels(), levels);
     EXPECT_FLOAT_EQ(octree.GetCellSize().x, cellSize);
     EXPECT_FLOAT_EQ(octree.GetCellSize().y, cellSize);
     EXPECT_FLOAT_EQ(octree.GetCellSize().z, cellSize);
@@ -52,33 +52,21 @@ TEST(OctreeTest, Basic)
     EXPECT_FLOAT_EQ(octree.GetRootMin().y, mini.y);
     EXPECT_FLOAT_EQ(octree.GetRootMin().z, mini.z);
 
-    uint8_t level = 0;
-    level = octree.CalcLevel(object0.CalcSize());
-    EXPECT_EQ(level, 3);
-
-    level = octree.CalcLevel(object1.CalcSize());
-    EXPECT_EQ(level, 2);
-
-    level = octree.CalcLevel(object2.CalcSize());
-    EXPECT_EQ(level, 3);
-
     uint32_t index = 0;
     index = octree.CalcHash(object0.Min, object0.Max);
-    printf_s("hash : 0x%x\n", index);
     octree.Add(index, &object0);
     auto node = octree.Find(index);
     EXPECT_EQ(node->Objects.size(), 1);
     EXPECT_EQ(node->Objects.front().Id, object0.Id);
+    auto parent = octree.CalcParentCode(index);
 
     index = octree.CalcHash(object1.Min, object1.Max);
-    printf_s("hash : 0x%x\n", index);
     octree.Add(index, &object1);
     node = octree.Find(index);
     EXPECT_EQ(node->Objects.size(), 1);
     EXPECT_EQ(node->Objects.front().Id, object1.Id);
 
     index = octree.CalcHash(object2.Min, object2.Max);
-    printf_s("hash : 0x%x\n", index);
     octree.Add(index, &object2);
     node = octree.Find(index);
     EXPECT_EQ(node->Objects.size(), 2);
