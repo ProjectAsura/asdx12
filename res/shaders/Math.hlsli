@@ -843,36 +843,6 @@ float4 DitherTriangleNoiseRGB(float4 rgba, float2 uv, float2 screenSize, float t
     return float4(rgba.rgb + dither, rgba.a + dither.x);
 }
 
-//-----------------------------------------------------------------------------
-//      球面調和関数の係数ベクトルから放射照度を求めます.
-//-----------------------------------------------------------------------------
-float3 IrraidanceSH2(float3 n, float4 sh[4])
-{
-    // 2-Band.
-    float3 result = sh[0].rgb
-        + sh[1].rgb * (n.y)
-        + sh[2].rgb * (n.z)
-        + sh[3].rgb * (n.x);
-    return max(result, 0.0f);
-}
-
-//-----------------------------------------------------------------------------
-//      球面調和関数の係数ベクトルから放射照度を求めます.
-//-----------------------------------------------------------------------------
-float3 IrradianceSH3(float3 n, float4 sh[9])
-{
-    // 3-Band.
-    float3 result = sh[0].rgb
-         + sh[1].rgb * (n.y)
-         + sh[2].rgb * (n.z)
-         + sh[3].rgb * (n.x)
-         + sh[4].rgb * (n.y * n.x)
-         + sh[5].rgb * (n.y * n.z)
-         + sh[6].rgb * (3.0f * n.z * n.z - 1.0f)
-         + sh[7].rgb * (n.z * n.x)
-         + sh[8].rgb * (n.x * n.x - n.y * n.y);
-    return max(result, 0.0f);
-}
 
 //-----------------------------------------------------------------------------
 //      接線を再計算します.
@@ -1438,27 +1408,6 @@ float SpecularPowerToGlossiness(float specularPower)
 //-----------------------------------------------------------------------------
 float SpecularPowerToRoughness(float specularPower)
 { return SpecularPowerToRoughness(SpecularPowerToGlossiness(specularPower)); }
-
-//-----------------------------------------------------------------------------
-//      Geomerics方式で球面調和関数を評価します.
-//-----------------------------------------------------------------------------
-float IrradianceSH_NonlinearL1(float3 normal, float4 coeff)
-{
-    // William Joseph, "球面調和関数データからの拡散反射光の再現", CEDEC 2015,
-    // https://cedil.cesa.or.jp/cedil_sessions/view/1329
-    float  L0 = coeff.x;
-    float3 L1 = coeff.yzw;
-    float  modL1 = length(L1);
-    if (modL1 == 0.0f)
-    { return 0.0f; }
-
-    float q = saturate(0.5f + 0.5f * dot(normal, normalize(L1)));
-    float r = modL1 / L0;
-    float p = 1.0f + 2.0f * r;
-    float a = (1.0f - r) / (1.0f + r);
-
-    return L0 * lerp((1.0f + p) * Pow(q, p), 1.0f, a);
-}
 
 //-----------------------------------------------------------------------------
 //      正規直交基底を求めます.
