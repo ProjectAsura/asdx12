@@ -202,22 +202,28 @@ void IndexHeap::Free(IndexHandle& handle)
     for(auto& itr : m_UsedList)
     {
         auto node = &itr;
+
+        // 自分を探す.
         if (node == handle.m_pHolder)
         {
             m_UsedCount -= node->Count;
 
             auto& front = m_FreeList.front();
+            // マージ可能であれば連結.
             if (front.Offset == (node->Offset + node->Count))
             { front.Offset -= node->Count; }
 
+            // フリーリストに戻す前に無効にしておく.
             node->Valid  = false;
             node->Count  = 0;
             if (!m_FreeList.empty())
             { node->Offset = INVALID_OFFSET; }
 
+            // 使用リストから外してフリーリストに入れる.
             m_UsedList.erase(node);
             m_FreeList.push_back(node);
 
+            // 正常終了.
             return;
         }
     }
