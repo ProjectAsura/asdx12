@@ -65,6 +65,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\fnd\BitTest.cpp" />
+    <ClCompile Include="..\src\fnd\ChunkAllocatorTest.cpp" />
     <ClCompile Include="..\src\fnd\FunctionTest.cpp" />
     <ClCompile Include="..\src\fnd\IndexHeapTest.cpp" />
     <ClCompile Include="..\src\fnd\ListTest.cpp" />

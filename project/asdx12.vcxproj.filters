@@ -401,6 +401,9 @@
     <ClInclude Include="..\include\fnd\asdxOffsetAllocator.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\fnd\asdxChunkAllocator.h">
+      <Filter>ヘッダー ファイル\fnd</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\res\shaders\BRDF.hlsli">

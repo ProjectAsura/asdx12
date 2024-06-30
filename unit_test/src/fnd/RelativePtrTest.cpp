@@ -24,9 +24,9 @@ TEST(RelativePtrTest, Basic)
     // テストデータ作成.
     {
         TestData data = {};
-        data.IntCount = 4;
+        data.IntCount   = 4;
         data.FloatCount = 4;
-        data.IntValues.SetOffset(sizeof(uint32_t) * 2);
+        data.IntValues  .SetOffset(sizeof(uint32_t) * 2);
         data.FloatValues.SetOffset(sizeof(uint32_t) + sizeof(int) * data.IntCount);
 
         int intValues[] = { 1, 2, 3, 4 };
@@ -37,8 +37,8 @@ TEST(RelativePtrTest, Basic)
         EXPECT_TRUE(err == 0);
         if (fp != nullptr)
         {
-            fwrite(&data, sizeof(data), 1, fp);
-            fwrite(intValues, sizeof(int) * 4, 1, fp);
+            fwrite(&data,       sizeof(data),      1, fp);
+            fwrite(intValues,   sizeof(int)   * 4, 1, fp);
             fwrite(floatValues, sizeof(float) * 4, 1, fp);
             fclose(fp);
         }
@@ -59,8 +59,8 @@ TEST(RelativePtrTest, Basic)
 
             TestData* data = reinterpret_cast<TestData*>(buffer);
 
-            EXPECT_EQ(data->IntCount, 4);
-            EXPECT_EQ(data->FloatCount, 4);
+            EXPECT_EQ(data->IntCount,     4);
+            EXPECT_EQ(data->FloatCount,   4);
             EXPECT_EQ(data->IntValues[0], 1);
             EXPECT_EQ(data->IntValues[1], 2);
             EXPECT_EQ(data->IntValues[2], 3);
