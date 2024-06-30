@@ -19,7 +19,7 @@ namespace asdx {
 ///////////////////////////////////////////////////////////////////////////////
 struct IndexHolder : public List<IndexHolder>::Node
 {
-    uint32_t    Offset = INVALID_OFFSET;
+    uint32_t    Offset = IndexHandle::INVALID_OFFSET;
     uint32_t    Count  = 0;
     bool        Valid  = false;
 };
@@ -112,7 +112,7 @@ void IndexHeap::Term()
     for(auto& itr : m_UsedList)
     {
         itr.Valid   = false;
-        itr.Offset  = INVALID_OFFSET;
+        itr.Offset  = IndexHandle::INVALID_OFFSET;
         itr.Count   = 0;
     }
 
@@ -217,7 +217,7 @@ void IndexHeap::Free(IndexHandle& handle)
             node->Valid  = false;
             node->Count  = 0;
             if (!m_FreeList.empty())
-            { node->Offset = INVALID_OFFSET; }
+            { node->Offset = IndexHandle::INVALID_OFFSET; }
 
             // 使用リストから外してフリーリストに入れる.
             m_UsedList.erase(node);
@@ -267,10 +267,10 @@ uint32_t IndexHeap::GetOffset(const IndexHolder* pHolder)
     ScopedLock locker(&m_Lock);
 
     if (m_UsedList.empty())
-    { return INVALID_OFFSET; }
+    { return IndexHandle::INVALID_OFFSET; }
 
     if (!pHolder->Valid)
-    { return INVALID_OFFSET; }
+    { return IndexHandle::INVALID_OFFSET; }
 
     return pHolder->Offset;
 }

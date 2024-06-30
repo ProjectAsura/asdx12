@@ -4,12 +4,17 @@
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 
+// Original Code Written by Sebastian Aaltonen.
+// https://github.com/sebbbi/OffsetAllocator
+// MIT License: https://github.com/sebbbi/OffsetAllocator/blob/main/LICENSE
+
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
 #include <cassert>
 #include <fnd/asdxOffsetAllocator.h>
 #include <fnd/asdxBit.h>
+#include <fnd/asdxLogger.h>
 
 
 namespace {
@@ -22,7 +27,7 @@ static constexpr uint32_t LEAF_BINS_INDEX_MASK  = 0x7;
 static constexpr uint32_t MANTISSA_BITS         = 3;
 static constexpr uint32_t MANTISSA_VALUE        = 1 << MANTISSA_BITS;
 static constexpr uint32_t MANTISSA_MASK         = MANTISSA_VALUE - 1;
-static constexpr uint32_t NO_SPACE              = UINT32_MAX;
+static constexpr uint32_t NO_SPACE              = asdx::OffsetHandle::INVALID_OFFSET;
 
 //-----------------------------------------------------------------------------
 //      浮動小数への丸め上げします.
@@ -269,8 +274,9 @@ OffsetHandle OffsetAllocator::Alloc(uint32_t size, uint32_t alignment)
 //-----------------------------------------------------------------------------
 OffsetHandle OffsetAllocator::Alloc(uint32_t size)
 {
-    if (m_FreeOffset < 0)
+    if (m_FreeOffset < 0 || size == 0)
     {
+        ELOG("Error : Out of Memory.");
         return OffsetHandle(NO_SPACE, 0, NO_SPACE);
     }
 
@@ -322,7 +328,7 @@ OffsetHandle OffsetAllocator::Alloc(uint32_t size)
 
     m_FreeStorage -= nodeTotalSize;
 
-    // ビンが空?
+    // ビンが空か?
     if (m_BinIndices[binIndex] == Node::UNUSED)
     {
         // リーフビンマスクビットを削除.
@@ -336,7 +342,6 @@ OffsetHandle OffsetAllocator::Alloc(uint32_t size)
         }
     }
 
-    // Push back reminder N elements to a lower bin
     auto reminderSize = nodeTotalSize - size;
     if (reminderSize > 0)
     {
@@ -360,7 +365,11 @@ OffsetHandle OffsetAllocator::Alloc(uint32_t size)
 //-----------------------------------------------------------------------------
 void OffsetAllocator::Free(OffsetHandle& handle)
 {
-    assert(handle.m_MetaData != NO_SPACE);
+    if (!handle.IsValid())
+    {
+        return;
+    }
+
     if (!m_Nodes)
     {
         handle.Reset();
@@ -458,7 +467,7 @@ uint32_t OffsetAllocator::InsertNode(uint32_t size, uint32_t offset)
     {
         // ビンマスクビットを設定.
         m_UsedBins[topBinIndex] |= 1 << leafBinIndex;
-        m_UsedBinsTop |= 1 << topBinIndex;
+        m_UsedBinsTop           |= 1 << topBinIndex;
     }
 
     // フリーリストのノードを取り出し、ビンリンクリストの先頭に挿入 (next = old top).
@@ -485,14 +494,14 @@ void OffsetAllocator::RemoveNode(uint32_t nodeIndex)
 
     if (node.BinListPrev != Node::UNUSED)
     {
-        // 簡単なケース： 前のノードがある場合. このノードをリストの真ん中から削除するだけ.
+        // 単純なケース： 前のノードがある場合は，このノードをリストの中から削除するだけ.
         m_Nodes[node.BinListPrev].BinListNext = node.BinListNext;
         if (node.BinListNext != Node::UNUSED)
             m_Nodes[node.BinListNext].BinListPrev = node.BinListPrev;
     }
     else
     {
-        // ハードケース： ビンの最初のノードである。ビンを見つける.
+        // ハードケース： ビンの最初のノードであるビンを見つける.
 
         // bin >= allocとなるようにbinインデックスを切り捨てる.
         auto binIndex = UintToFloatRoundDown(node.DataSize);
@@ -504,7 +513,7 @@ void OffsetAllocator::RemoveNode(uint32_t nodeIndex)
         if (node.BinListNext != Node::UNUSED)
             m_Nodes[node.BinListNext].BinListPrev = Node::UNUSED;
 
-        // ビンが空?
+        // ビンが空か?
         if (m_BinIndices[binIndex] == Node::UNUSED)
         {
             // リーフビンのマスクビットを削除.

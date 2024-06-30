@@ -26,6 +26,9 @@
     <ClCompile Include="..\src\fnd\IndexHeapTest.cpp">
       <Filter>fnd</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\fnd\OffsetAllocatorTest.cpp">
+      <Filter>fnd</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />

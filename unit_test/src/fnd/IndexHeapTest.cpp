@@ -41,12 +41,12 @@ TEST(IndexHeapTest, Basic)
     EXPECT_EQ(heap.GetFreeCount(), 0);
 
     auto handle3 = heap.Alloc(1);
-    EXPECT_EQ(handle3.GetOffset(), asdx::INVALID_OFFSET);
+    EXPECT_EQ(handle3.GetOffset(), asdx::IndexHandle::INVALID_OFFSET);
     EXPECT_EQ(handle3.GetCount(), 0);
     EXPECT_FALSE(handle3.IsValid());
 
     heap.Free(handle1);
-    EXPECT_EQ(handle1.GetOffset(), asdx::INVALID_OFFSET);
+    EXPECT_EQ(handle1.GetOffset(), asdx::IndexHandle::INVALID_OFFSET);
     EXPECT_EQ(handle1.GetCount(), 0);
     EXPECT_FALSE(handle1.IsValid());
     EXPECT_EQ(heap.GetUsedCount(), 8);
@@ -65,7 +65,7 @@ TEST(IndexHeapTest, Basic)
     EXPECT_EQ(heap.GetFreeCount(), 2);
 
     heap.Free(handle0);
-    EXPECT_EQ(handle0.GetOffset(), asdx::INVALID_OFFSET);
+    EXPECT_EQ(handle0.GetOffset(), asdx::IndexHandle::INVALID_OFFSET);
     EXPECT_EQ(handle0.GetCount(), 0);
     EXPECT_FALSE(handle0.IsValid());
     EXPECT_EQ(heap.GetUsedCount(), 7);
@@ -79,7 +79,7 @@ TEST(IndexHeapTest, Basic)
     EXPECT_EQ(heap.GetFreeCount(), 3);
 
     heap.Free(handle2);
-    EXPECT_EQ(handle2.GetOffset(), asdx::INVALID_OFFSET);
+    EXPECT_EQ(handle2.GetOffset(), asdx::IndexHandle::INVALID_OFFSET);
     EXPECT_EQ(handle2.GetCount(), 0);
     EXPECT_FALSE(handle2.IsValid());
 
@@ -93,7 +93,7 @@ TEST(IndexHeapTest, Basic)
     heap.Free(handle0);
 
     handle1 = heap.Alloc(11);
-    EXPECT_EQ(handle1.GetOffset(), asdx::INVALID_OFFSET);
+    EXPECT_EQ(handle1.GetOffset(), asdx::IndexHandle::INVALID_OFFSET);
     EXPECT_EQ(handle1.GetCount(), 0);
     EXPECT_FALSE(handle1.IsValid());
 
