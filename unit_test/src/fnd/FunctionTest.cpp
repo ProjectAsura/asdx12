@@ -10,6 +10,10 @@
 #include <fnd/asdxFunction.h>
 #include <cstdio>
 
+struct FakePass
+{
+    asdx::Action<void> action;
+};
 
 TEST(FunctionTest, Basic)
 {
@@ -40,5 +44,15 @@ TEST(FunctionTest, Basic)
         };
 
         EXPECT_EQ(f(1), 4);
+    }
+
+    {
+        FakePass pass = {};
+        pass.action = []() {
+            printf_s("Called\n");
+            EXPECT_TRUE(true);
+        };
+
+        pass.action();
     }
 }
