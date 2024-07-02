@@ -32,7 +32,7 @@ static constexpr uint32_t NO_SPACE              = asdx::OffsetHandle::INVALID_OF
 //-----------------------------------------------------------------------------
 //      浮動小数への丸め上げします.
 //-----------------------------------------------------------------------------
-static uint32_t UintToFloatRoundUp(uint32_t size)
+static uint32_t FloatRoundUp(uint32_t size)
 {
     // ビンのサイズは、浮動小数点（指数＋仮数）分布（区分線形対数近似）に従います.
     // これにより、各サイズクラスで、平均オーバーヘッドのパーセンテージが同じになります。
@@ -66,7 +66,7 @@ static uint32_t UintToFloatRoundUp(uint32_t size)
 //-----------------------------------------------------------------------------
 //      浮動小数への丸め下げします.
 //-----------------------------------------------------------------------------
-static uint32_t UintToFloatRoundDown(uint32_t size)
+static uint32_t FloatRoundDown(uint32_t size)
 {
     uint32_t exp      = 0;
     uint32_t mantissa = 0;
@@ -282,7 +282,7 @@ OffsetHandle OffsetAllocator::Alloc(uint32_t size)
 
     // alloc >= binとなるようにbinインデックスを切り上げる.
     // サイズに合う最小の bin インデックスを与える
-    auto minBinIndex = UintToFloatRoundUp(size);
+    auto minBinIndex = FloatRoundUp(size);
 
     uint32_t minTopBinIndex  = minBinIndex >> TOP_BINS_INDEX_SHIFT;
     uint32_t minLeafBinIndex = minBinIndex & LEAF_BINS_INDEX_MASK;
@@ -457,7 +457,7 @@ uint32_t OffsetAllocator::GetFreeSize() const
 uint32_t OffsetAllocator::InsertNode(uint32_t size, uint32_t offset)
 {
     // bin >= allocとなるようにbinインデックスを切り捨てる.
-    auto binIndex = UintToFloatRoundDown(size);
+    auto binIndex = FloatRoundDown(size);
 
     auto topBinIndex  = binIndex >> TOP_BINS_INDEX_SHIFT;
     auto leafBinIndex = binIndex & LEAF_BINS_INDEX_MASK;
@@ -504,7 +504,7 @@ void OffsetAllocator::RemoveNode(uint32_t nodeIndex)
         // ハードケース： ビンの最初のノードであるビンを見つける.
 
         // bin >= allocとなるようにbinインデックスを切り捨てる.
-        auto binIndex = UintToFloatRoundDown(node.DataSize);
+        auto binIndex = FloatRoundDown(node.DataSize);
 
         auto topBinIndex  = binIndex >> TOP_BINS_INDEX_SHIFT;
         auto leafBinIndex = binIndex & LEAF_BINS_INDEX_MASK;
