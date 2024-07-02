@@ -189,7 +189,7 @@ OffsetAllocator::OffsetAllocator(OffsetAllocator&& other) noexcept
 void OffsetAllocator::Init(uint32_t size, uint32_t maxAllocatableCount)
 {
     m_Size                  = size;
-    m_MaxAllocatableCount   = maxAllocatableCount + 1;
+    m_MaxAllocatableCount   = maxAllocatableCount;
     Reset();
 }
 
@@ -230,7 +230,7 @@ void OffsetAllocator::Reset()
 {
     m_FreeStorage           = 0;
     m_UsedBinsTop           = 0;
-    m_FreeOffset            = int64_t(m_MaxAllocatableCount - 1);
+    m_FreeOffset            = int64_t(m_MaxAllocatableCount);
 
     for(auto i=0u; i<TOP_BINS_COUNT; ++i)
         m_UsedBins[i] = 0;
@@ -249,12 +249,12 @@ void OffsetAllocator::Reset()
         m_FreeNodes = nullptr;
     }
 
-    m_Nodes     = new Node    [m_MaxAllocatableCount];
-    m_FreeNodes = new uint32_t[m_MaxAllocatableCount];
+    m_Nodes     = new Node    [m_MaxAllocatableCount + 1];
+    m_FreeNodes = new uint32_t[m_MaxAllocatableCount + 1];
 
-    for(auto i=0u; i<m_MaxAllocatableCount; ++i)
+    for(auto i=0u; i<=m_MaxAllocatableCount; ++i)
     {
-        m_FreeNodes[i] = (m_MaxAllocatableCount - 1) - i;
+        m_FreeNodes[i] = m_MaxAllocatableCount - i;
     }
 
     InsertNode(m_Size, 0);
