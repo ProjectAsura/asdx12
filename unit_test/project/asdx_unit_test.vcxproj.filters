@@ -32,6 +32,9 @@
     <ClCompile Include="..\src\fnd\ChunkAllocatorTest.cpp">
       <Filter>fnd</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\fnd\JobSystemTest.cpp">
+      <Filter>fnd</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
