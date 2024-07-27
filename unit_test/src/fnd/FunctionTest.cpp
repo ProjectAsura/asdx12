@@ -8,6 +8,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <fnd/asdxFunction.h>
+#include <thread>
 
 struct FakePass
 {
@@ -52,4 +53,14 @@ TEST(FunctionTest, Basic)
 
         pass.action();
     }
+}
+
+TEST(FunctionTest, Thread)
+{
+    bool called = false;
+    asdx::Function<void()> func = [&](){ called = true; };
+    EXPECT_FALSE(called);
+    std::thread thread(func);
+    thread.join();
+    EXPECT_TRUE(called);
 }
