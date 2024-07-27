@@ -8,7 +8,6 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <fnd/asdxFunction.h>
-#include <cstdio>
 
 struct FakePass
 {
@@ -21,7 +20,6 @@ TEST(FunctionTest, Basic)
         asdx::Function<void()> f;
 
         f = []() {
-            printf_s("Called\n");
             EXPECT_TRUE(true);
         };
         f();
@@ -49,7 +47,6 @@ TEST(FunctionTest, Basic)
     {
         FakePass pass = {};
         pass.action = []() {
-            printf_s("Called\n");
             EXPECT_TRUE(true);
         };
 

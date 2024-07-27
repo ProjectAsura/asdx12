@@ -205,13 +205,13 @@ private:
 
     void copy(Function const& value)
     {
-        m_Base->Copy(value.m_Storage);
+        value.m_Base->Copy(m_Storage);
         m_Base = value.m_Base;
     }
 
     void move(Function&& value)
     {
-        m_Base->Move(value.m_Storage);
+        value.m_Base->Move(m_Storage);
         m_Base = value.m_Base;
         value.reset();
     }

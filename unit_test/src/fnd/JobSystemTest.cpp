@@ -26,31 +26,57 @@ enum SyncPoint
     SYNC_POINT_10,
 
     SYNC_POINT_FRAME_END,
+
     COUNT_OF_SYNC_POINT,
+};
+
+enum JOB_ID
+{
+    JOB_ID_01,
+    JOB_ID_02,
+    JOB_ID_03,
+    JOB_ID_04,
+    JOB_ID_05,
+    JOB_ID_06,
+    JOB_ID_07,
+    JOB_ID_08,
+    JOB_ID_09,
+    JOB_ID_10,
+
+    COUNT_OF_JOB_ID
 };
 
 struct TestListener1 : public asdx::JobListener
 {
-    void OnRun(uint32_t jobId, void* pUserData) override
+    void OnRun(uint32_t jobId) override
     {
-        printf_s("TestListener1::OnRun() id = %u\n", jobId);
+        if (jobId < COUNT_OF_JOB_ID)
+        { Called[jobId] = true; }
     }
+
+    bool Called[COUNT_OF_JOB_ID] = {};
 };
 
 struct TestListener2 : public asdx::JobListener
 {
-    void OnRun(uint32_t jobId, void* pUserData) override
+    void OnRun(uint32_t jobId) override
     {
-        printf_s("TestListener2::OnRun() id = %u\n", jobId);
+        if (jobId < COUNT_OF_JOB_ID)
+        { Called[jobId] = true; }
     }
+
+    bool Called[COUNT_OF_JOB_ID] = {};
 };
 
 struct TestListener3 : public asdx::JobListener
 {
-    void OnRun(uint32_t jobId, void* pUserData) override
+    void OnRun(uint32_t jobId) override
     {
-        printf_s("TestListener3::OnRun() id = %u\n", jobId);
+        if (jobId < COUNT_OF_JOB_ID)
+        { Called[jobId] = true; }
     }
+
+    bool Called[COUNT_OF_JOB_ID] = {};
 };
 
 
@@ -66,16 +92,23 @@ TEST(JobSystemTest, Basic)
     auto listener2 = TestListener2();
     auto listener3 = TestListener3();
 
-    auto job1  = asdx::Job( 1, SYNC_POINT_FRAME_START, SYNC_POINT_01, &listener1);
-    auto job2  = asdx::Job( 2, SYNC_POINT_01, SYNC_POINT_02, &listener1);
-    auto job3  = asdx::Job( 3, SYNC_POINT_02, SYNC_POINT_03, &listener2);
-    auto job4  = asdx::Job( 4, SYNC_POINT_03, SYNC_POINT_04, &listener3);
-    auto job5  = asdx::Job( 5, SYNC_POINT_04, SYNC_POINT_FRAME_END, &listener3);
-    auto job6  = asdx::Job( 6, SYNC_POINT_04, SYNC_POINT_05, &listener2);
-    auto job7  = asdx::Job( 7, SYNC_POINT_05, SYNC_POINT_07, &listener1);
-    auto job8  = asdx::Job( 8, SYNC_POINT_05, SYNC_POINT_06, &listener2);
-    auto job9  = asdx::Job( 9, SYNC_POINT_06, SYNC_POINT_07, &listener2);
-    auto job10 = asdx::Job(10, SYNC_POINT_06, SYNC_POINT_07, &listener3);
+    for(auto i=0; i<COUNT_OF_JOB_ID; ++i)
+    {
+        EXPECT_FALSE(listener1.Called[i]);
+        EXPECT_FALSE(listener2.Called[i]);
+        EXPECT_FALSE(listener3.Called[i]);
+    }
+
+    auto job1  = asdx::Job(JOB_ID_01, SYNC_POINT_FRAME_START, SYNC_POINT_01, &listener1);
+    auto job2  = asdx::Job(JOB_ID_02, SYNC_POINT_01, SYNC_POINT_02, &listener1);
+    auto job3  = asdx::Job(JOB_ID_03, SYNC_POINT_02, SYNC_POINT_03, &listener2);
+    auto job4  = asdx::Job(JOB_ID_04, SYNC_POINT_03, SYNC_POINT_04, &listener3);
+    auto job5  = asdx::Job(JOB_ID_05, SYNC_POINT_04, SYNC_POINT_FRAME_END, &listener3);
+    auto job6  = asdx::Job(JOB_ID_06, SYNC_POINT_04, SYNC_POINT_05, &listener2);
+    auto job7  = asdx::Job(JOB_ID_07, SYNC_POINT_05, SYNC_POINT_07, &listener1);
+    auto job8  = asdx::Job(JOB_ID_08, SYNC_POINT_05, SYNC_POINT_06, &listener2);
+    auto job9  = asdx::Job(JOB_ID_09, SYNC_POINT_06, SYNC_POINT_07, &listener2);
+    auto job10 = asdx::Job(JOB_ID_10, SYNC_POINT_06, SYNC_POINT_07, &listener3);
 
     EXPECT_TRUE(pJobSystem->Add(job1));
     EXPECT_TRUE(pJobSystem->Add(job2));
@@ -89,6 +122,17 @@ TEST(JobSystemTest, Basic)
     EXPECT_TRUE(pJobSystem->Add(job10));
 
     pJobSystem->Run();
+
+    EXPECT_TRUE(listener1.Called[JOB_ID_01]);
+    EXPECT_TRUE(listener1.Called[JOB_ID_02]);
+    EXPECT_TRUE(listener2.Called[JOB_ID_03]);
+    EXPECT_TRUE(listener3.Called[JOB_ID_04]);
+    EXPECT_TRUE(listener3.Called[JOB_ID_05]);
+    EXPECT_TRUE(listener2.Called[JOB_ID_06]);
+    EXPECT_TRUE(listener1.Called[JOB_ID_07]);
+    EXPECT_TRUE(listener2.Called[JOB_ID_08]);
+    EXPECT_TRUE(listener2.Called[JOB_ID_09]);
+    EXPECT_TRUE(listener3.Called[JOB_ID_10]);
 
     EXPECT_TRUE(pJobSystem->Remove(job1));
     EXPECT_TRUE(pJobSystem->Remove(job2));

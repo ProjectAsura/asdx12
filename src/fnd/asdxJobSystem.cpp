@@ -13,7 +13,6 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
-#include <functional>
 #include <fnd/asdxJobSystem.h>
 #include <fnd/asdxList.h>
 #include <fnd/asdxQueue.h>
@@ -35,15 +34,14 @@ JobSystem*  g_JobSystem = nullptr;
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// JobItem structure
+// JobNode structure
 ///////////////////////////////////////////////////////////////////////////////
-struct JobItem 
-: public List<JobItem>::Node
-, public Queue<JobItem>::Node
+struct JobNode 
+: public List<JobNode>::Node
+, public Queue<JobNode>::Node
 {
-    Job             JobInfo     = {};       //!< ジョブ情報.
+    Job             Job         = {};       //!< ジョブ情報.
     JobSyncPoint*   pSyncPoint  = nullptr;  //!< 同期点.
-    bool            Finished    = false;    //!< 完了済みフラグ.
 
     void Run();
 };
@@ -83,9 +81,13 @@ public:
     //-------------------------------------------------------------------------
     void Init(uint8_t threadCount)
     {
+        assert(threadCount <= std::thread::hardware_concurrency());
+
         m_ExitRequest = false;
+
+        m_Threads.reserve(threadCount);
         for(auto i=0; i<threadCount; ++i)
-        { m_Threads.emplace_back(std::thread(m_Worker)); }
+        { m_Threads.emplace_back(std::thread(&JobQueue::Worker, this)); }
     }
 
     //-------------------------------------------------------------------------
@@ -93,31 +95,42 @@ public:
     //-------------------------------------------------------------------------
     void Term()
     {
+        // 終了要求フラグを立てる.
         {
             std::unique_lock<std::mutex> locker(m_Mutex);
             m_ExitRequest = true;
         }
 
+        // 全部起こす.
         m_Condition.notify_all();
 
-        auto count = m_Threads.size();
-        for(auto i=0; i<count; ++i)
-        { m_Threads.at(i).join(); }
+        // スレッド終了待ち.
+        for(auto& thread : m_Threads)
+        { thread.join(); }
+
+        // ジョブ破棄.
+        m_Queue.clear();
+
+        // スレッド破棄.
+        m_Threads.clear();
+        m_Threads.shrink_to_fit();
     }
 
     //-------------------------------------------------------------------------
     //! @brief      ジョブを登録します.
     //-------------------------------------------------------------------------
-    void Push(JobItem* item)
+    void Push(JobNode* item)
     {
         assert(item != nullptr);
 
+        // キューに追加.
         {
             std::unique_lock<std::mutex> locker(m_Mutex);
             m_Queue.push(item);
         }
 
-        m_Condition.notify_all();
+        // 起こす.
+        m_Condition.notify_one();
     }
 
     //-------------------------------------------------------------------------
@@ -126,7 +139,7 @@ public:
     void Wait()
     {
         std::unique_lock<std::mutex> locker(m_Mutex);
-        if (m_Queue.empty())
+        if (m_Queue.empty() || m_ExitRequest)
         { return; }
 
         m_Condition.wait(locker);
@@ -137,31 +150,33 @@ private:
     // private variables.
     //=========================================================================
     bool                        m_ExitRequest = false;
-    asdx::Queue<JobItem>        m_Queue;
+    asdx::Queue<JobNode>        m_Queue;
     std::mutex                  m_Mutex;
     std::condition_variable     m_Condition;
     std::vector<std::thread>    m_Threads;
 
-    std::function<void()> m_Worker = [this]()
+    //-------------------------------------------------------------------------
+    //! @brief      スレッド処理を実行します.
+    //-------------------------------------------------------------------------
+    void Worker()
     {
         while(true)
         {
-            JobItem* jobItem = nullptr;
+            JobNode* jobNode = nullptr;
             {
                 std::unique_lock<std::mutex> locker(m_Mutex);
-                while(m_Queue.empty())
-                {
-                    if (m_ExitRequest)
-                    { return; }
 
-                    m_Condition.wait(locker);
-                }
+                while(m_Queue.empty() && !m_ExitRequest)
+                { m_Condition.wait(locker); }
 
-                jobItem = m_Queue.pop();
-                assert(jobItem != nullptr);
+                if (m_ExitRequest)
+                { return; }
+
+                jobNode = m_Queue.pop();
+                assert(jobNode != nullptr);
             }
 
-            jobItem->Run();
+            jobNode->Run();
         }
     };
 };
@@ -215,13 +230,13 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      ジョブを追加します.
     //-------------------------------------------------------------------------
-    void Add(JobItem* job)
+    void Add(JobNode* job)
     { m_Jobs.push_back(job); }
 
     //-------------------------------------------------------------------------
     //! @brief      ジョブを削除します.
     //-------------------------------------------------------------------------
-    void Remove(JobItem* job)
+    void Remove(JobNode* job)
     { m_Jobs.erase(job); }
 
     //-------------------------------------------------------------------------
@@ -231,14 +246,10 @@ public:
     { return m_WaitCount == m_ReadyCount; }
 
     //-------------------------------------------------------------------------
-    //! @brief      カウンター類をリセットします.
+    //! @brief      カウンターをリセットします.
     //-------------------------------------------------------------------------
     void Reset()
-    {
-        m_ReadyCount = 0;
-        for(auto& j : m_Jobs)
-        { j.Finished = false; }
-    }
+    { m_ReadyCount = 0; }
 
     //-------------------------------------------------------------------------
     //! @brief      前ジョブの完了数をインクリメントします.
@@ -249,14 +260,14 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      ジョブに対応するジョブ情報を探索します.
     //-------------------------------------------------------------------------
-    JobItem* Find(const Job& job)
+    JobNode* Find(const Job& job)
     {
         for(auto itr = m_Jobs.begin(); itr != m_Jobs.end(); ++itr)
         {
-            if (itr->JobInfo.StartPoint == job.StartPoint
-             && itr->JobInfo.SyncPoint  == job.SyncPoint
-             && itr->JobInfo.Id         == job.Id
-             && itr->JobInfo.pListener  == job.pListener)
+            if (itr->Job.StartPoint == job.StartPoint
+             && itr->Job.SyncPoint  == job.SyncPoint
+             && itr->Job.UserId     == job.UserId
+             && itr->Job.pListener  == job.pListener)
             { return &(*itr); }
         }
 
@@ -275,24 +286,7 @@ public:
     void PushToJobQueue(JobQueue& queue)
     {
         for(auto& item : m_Jobs)
-        {
-            item.Finished = false;
-            queue.Push(&item);
-        }
-    }
-
-    //-------------------------------------------------------------------------
-    //! @brief      ジョブが完了したかどうかチェックします.
-    //-------------------------------------------------------------------------
-    bool IsFinished() const
-    {
-        for(auto& j : m_Jobs)
-        {
-            if (!j.Finished)
-            { return false; }
-        }
-
-        return true;
+        { queue.Push(&item); }
     }
 
     //-------------------------------------------------------------------------
@@ -311,7 +305,7 @@ private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    List<JobItem>           m_Jobs;
+    List<JobNode>           m_Jobs;
     uint32_t                m_WaitCount  = 0;
     std::atomic<uint32_t>   m_ReadyCount = 0;
 
@@ -369,8 +363,8 @@ public:
     //-------------------------------------------------------------------------
     void Term()
     {
-        // 完了を待機.
-        m_JobQueue.Wait();
+        // ジョブキューを破棄.
+        m_JobQueue.Term();
 
         // 同期ポイントを破棄.
         if (m_SyncPoints != nullptr)
@@ -380,9 +374,6 @@ public:
         }
 
         m_SyncPointCount = 0;
-
-        // ジョブキューを破棄.
-        m_JobQueue.Term();
 
         // 初期化済みフラグを下す.
         m_Initialized = false;
@@ -404,10 +395,9 @@ public:
             return false;
         }
 
-        auto item = new JobItem();
-        item->JobInfo    = job;
+        auto item = new JobNode();
+        item->Job        = job;
         item->pSyncPoint = &m_SyncPoints[job.SyncPoint];
-        item->Finished   = false;
 
         m_SyncPoints[job.SyncPoint].IncrementWaitCount();
         m_SyncPoints[job.StartPoint].Add(item);
@@ -479,10 +469,10 @@ private:
 //-----------------------------------------------------------------------------
 //      ジョブを実行します.
 //-----------------------------------------------------------------------------
-void JobItem::Run()
+void JobNode::Run()
 {
     // ジョブを実行.
-    JobInfo.pListener->OnRun(JobInfo.Id, JobInfo.pUserData);
+    Job.pListener->OnRun(Job.UserId);
 
     // 同期ポイントに通知.
     pSyncPoint->IncrementReadyCount();

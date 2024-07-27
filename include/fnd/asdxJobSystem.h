@@ -5,10 +5,17 @@
 //-----------------------------------------------------------------------------
 #pragma once
 
+#if defined(DEBUG) || defined(_DEBUG)
+#define JOB_DEBUG   (1)
+#endif
+
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
 #include <cstdint>
+#if JOB_DEBUG
+#include <cstring>
+#endif
 
 
 namespace asdx {
@@ -26,10 +33,9 @@ struct JobListener
     //-------------------------------------------------------------------------
     //! @brief      ジョブ実行関数です.
     //! 
-    //! @param[in]      jobId       ジョブIDです.
-    //! @param[in]      pUserData   ユーザーデータ.
+    //! @param[in]      userId      ユーザーIDです.
     //-------------------------------------------------------------------------
-    virtual void OnRun(uint32_t jobId, void* pUserData) = 0;
+    virtual void OnRun(uint32_t userId) = 0;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -37,11 +43,13 @@ struct JobListener
 ///////////////////////////////////////////////////////////////////////////////
 struct Job
 {
-    uint32_t        Id          = UINT32_MAX;   //!< ジョブID.
+    uint32_t        UserId      = UINT32_MAX;   //!< ユーザーID.
     uint32_t        StartPoint  = UINT32_MAX;   //!< ジョブ開始点.
     uint32_t        SyncPoint   = UINT32_MAX;   //!< ジョブ同期点.
     JobListener*    pListener   = nullptr;      //!< ジョブリスナー.
-    void*           pUserData   = nullptr;      //!< ユーザーデータ.
+#if JOB_DEBUG
+    char            DebugTag[64] = {};          //!< デバッグ名.
+#endif
 
     //-------------------------------------------------------------------------
     //! @brief      コンストラクタです.
@@ -51,25 +59,41 @@ struct Job
     //-------------------------------------------------------------------------
     //! @brief      引数付きコンストラクタです.
     //! 
-    //! @param[in]      jobId           ジョブID(OnRun()に渡される値です).
+    //! @param[in]      userId          ユーザーID.
     //! @param[in]      startPoint      ジョブ開始点.
     //! @param[in]      syncPoint       ジョブ同期点.
     //! @param[in]      pListener       ジョブリスナー.
     //-------------------------------------------------------------------------
     Job
     (
-        uint32_t        jobId,
+        uint32_t        userId,
         uint32_t        startPoint,
         uint32_t        syncPoint,
-        JobListener*    listener,
-        void*           userData = nullptr
+        JobListener*    listener
     )
-    : Id        (jobId)
+    : UserId    (userId)
     , StartPoint(startPoint)
     , SyncPoint (syncPoint)
     , pListener (listener)
-    , pUserData (userData)
     { /* DO_NOTHING */ }
+
+#if JOB_DEBUG
+    //-------------------------------------------------------------------------
+    //! @brief      デバッグ名を設定します.
+    //! 
+    //! @param[in]      tag     設定するデバッグ名.
+    //-------------------------------------------------------------------------
+    void SetDebugTag(const char* tag)
+    { strcpy_s(DebugTag, tag); }
+
+    //-------------------------------------------------------------------------
+    //! @brief      デバッグ名を取得します.
+    //! 
+    //! @return     デバッグ名を返却します.
+    //-------------------------------------------------------------------------
+    const char* GetDebugTag() const
+    { return DebugTag; }
+#endif
 };
 
 ///////////////////////////////////////////////////////////////////////////////
