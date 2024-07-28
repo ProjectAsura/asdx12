@@ -10,20 +10,25 @@
 #include <fnd/asdxFunction.h>
 #include <thread>
 
-struct FakePass
-{
-    asdx::Action<void> action;
-};
 
 TEST(FunctionTest, Basic)
 {
     {
         asdx::Function<void()> f;
 
+        //EXPECT_TRUE(f == nullptr);
+        //EXPECT_TRUE(nullptr == f);
+        EXPECT_FALSE((bool)f);
+
         f = []() {
             EXPECT_TRUE(true);
         };
         f();
+
+        EXPECT_TRUE((bool)f);
+
+        //EXPECT_TRUE(f != nullptr);
+        //EXPECT_TRUE(nullptr != f);
     }
 
     {
@@ -46,12 +51,45 @@ TEST(FunctionTest, Basic)
     }
 
     {
+        struct FakePass
+        {
+            asdx::Action<void> action;
+        };
+
         FakePass pass = {};
         pass.action = []() {
             EXPECT_TRUE(true);
         };
 
         pass.action();
+    }
+
+    {
+        bool called = false;
+        bool destructed = false;
+
+        {
+            struct Functor
+            {
+                bool* pCalled     = nullptr;
+                bool* pDestructed = nullptr;
+
+                Functor(bool* called, bool* destructed)
+                : pCalled(called)
+                , pDestructed(destructed)
+                {}
+
+                ~Functor()
+                { *pDestructed = true; }
+
+                void operator() () { *pCalled = true; }
+            };
+
+            asdx::Function<void()> f = Functor(&called, &destructed);
+            f();
+        }
+        EXPECT_TRUE(called);
+        EXPECT_TRUE(destructed);
     }
 
     {

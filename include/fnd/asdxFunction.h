@@ -130,7 +130,7 @@ public:
         if (m_Base == nullptr)
         { return; }
 
-        m_Base->~Base();
+        m_Base->Dispose(m_Storage);
         m_Base = nullptr;
     }
 
@@ -169,9 +169,10 @@ private:
     struct Base
     {
         virtual ~Base() {}
-        virtual ReturnType Invoke(Args&& ...) = 0;
-        virtual void       Copy  (void*)      = 0;
-        virtual void       Move  (void*)      = 0;
+        virtual ReturnType Invoke (Args&& ...) = 0;
+        virtual void       Copy   (void*)      = 0;
+        virtual void       Move   (void*)      = 0;
+        virtual void       Dispose(void*)      = 0;
     };
 
     template<typename Functor>
@@ -191,6 +192,9 @@ private:
 
         void Move(void* dest) override
         { new (dest) Functor(std::move(func)); }
+
+        void Dispose(void* dest) override
+        { static_cast<Functor*>(dest)->~Functor(); }
     };
 
     alignas(Align) uint8_t  m_Storage[MaxSize] = {};
