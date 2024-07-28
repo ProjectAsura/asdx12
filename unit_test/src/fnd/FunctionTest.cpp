@@ -16,8 +16,8 @@ TEST(FunctionTest, Basic)
     {
         asdx::Function<void()> f;
 
-        //EXPECT_TRUE(f == nullptr);
-        //EXPECT_TRUE(nullptr == f);
+        EXPECT_TRUE(f == nullptr);
+        EXPECT_TRUE(nullptr == f);
         EXPECT_FALSE((bool)f);
 
         f = []() {
@@ -27,8 +27,8 @@ TEST(FunctionTest, Basic)
 
         EXPECT_TRUE((bool)f);
 
-        //EXPECT_TRUE(f != nullptr);
-        //EXPECT_TRUE(nullptr != f);
+        EXPECT_TRUE(f != nullptr);
+        EXPECT_TRUE(nullptr != f);
     }
 
     {

@@ -154,16 +154,16 @@ public:
     { lhs.swap(rhs); }
 
     friend bool operator == (std::nullptr_t, Function const& action)
-    { return !action; }
+    { return nullptr == action.m_Base; }
 
     friend bool operator == (Function const& action, std::nullptr_t)
-    { return !action; }
+    { return action.m_Base == nullptr; }
 
     friend bool operator != (std::nullptr_t, Function const& action)
-    { return action; }
+    { return nullptr != action.m_Base; }
 
     friend bool operator != (Function const& action, std::nullptr_t)
-    { return action; }
+    { return action.m_Base != nullptr; }
 
 private:
     struct Base
