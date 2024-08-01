@@ -28,6 +28,9 @@ class JobSyncPoint;
 class JobQueue;
 class JobSystem;
 
+//-----------------------------------------------------------------------------
+// Global Variables.
+//-----------------------------------------------------------------------------
 namespace {
 JobSystem*  g_JobSystem = nullptr;
 }//namespace
