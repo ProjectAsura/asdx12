@@ -545,4 +545,75 @@ OffsetAllocator::Node OffsetAllocator::GenNode(uint32_t offset, uint32_t size, u
     return node;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// ThreadSafeOffsetAllocator class
+///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      初期化処理です.
+//-----------------------------------------------------------------------------
+void ThreadSafeOffsetAllocator::Init(uint32_t size, uint32_t maxAllocatableCount)
+{
+    ScopedLock locker(&m_Lock);
+    m_Allocator.Init(size, maxAllocatableCount);
+}
+
+//-----------------------------------------------------------------------------
+//      終了処理です.
+//-----------------------------------------------------------------------------
+void ThreadSafeOffsetAllocator::Term()
+{
+    ScopedLock locker(&m_Lock);
+    m_Allocator.Term();
+}
+
+//-----------------------------------------------------------------------------
+//      リセットします.
+//-----------------------------------------------------------------------------
+void ThreadSafeOffsetAllocator::Reset()
+{
+    ScopedLock locker(&m_Lock);
+    m_Allocator.Reset();
+}
+
+//-----------------------------------------------------------------------------
+//      メモリを確保します.
+//-----------------------------------------------------------------------------
+OffsetHandle ThreadSafeOffsetAllocator::Alloc(uint32_t size)
+{
+    ScopedLock locker(&m_Lock);
+    return m_Allocator.Alloc(size);
+}
+
+//-----------------------------------------------------------------------------
+//      アライメントを指定してメモリを確保します.
+//-----------------------------------------------------------------------------
+OffsetHandle ThreadSafeOffsetAllocator::Alloc(uint32_t size, uint32_t alignment)
+{
+    uint32_t alignSize = (size + (alignment - 1)) & ~(alignment - 1);
+    return Alloc(alignSize);
+}
+
+//-----------------------------------------------------------------------------
+//      メモリを解放します.
+//-----------------------------------------------------------------------------
+void ThreadSafeOffsetAllocator::Free(OffsetHandle& handle)
+{
+    ScopedLock locker(&m_Lock);
+    m_Allocator.Free(handle);
+}
+
+//-----------------------------------------------------------------------------
+//      使用サイズを取得します.
+//-----------------------------------------------------------------------------
+uint32_t ThreadSafeOffsetAllocator::GetUsedSize() const
+{ return m_Allocator.GetUsedSize(); }
+
+//-----------------------------------------------------------------------------
+//      未使用サイズを取得します.
+//-----------------------------------------------------------------------------
+uint32_t ThreadSafeOffsetAllocator::GetFreeSize() const
+{ return m_Allocator.GetFreeSize(); }
+
+
 } // namespace asdx
