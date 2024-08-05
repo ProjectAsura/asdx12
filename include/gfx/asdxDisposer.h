@@ -9,13 +9,12 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <list>
+#include <algorithm>
 #include <fnd/asdxRef.h>
 #include <fnd/asdxSpinLock.h>
 
 
 namespace asdx {
-
-static constexpr uint8_t kDefaultLifeTime = 4;    // 4フレーム分
 
 ///////////////////////////////////////////////////////////////////////////////
 // Disposer class
@@ -32,7 +31,7 @@ public:
     //=========================================================================
     // public variables.
     //=========================================================================
-    /* NOTHING */
+    static constexpr uint8_t kDefaultFrameCount = 4;
 
     //=========================================================================
     // public methods.
@@ -42,7 +41,16 @@ public:
     //! @brief      コンストラクタです.
     //-------------------------------------------------------------------------
     Disposer()
-    { /* DO_NOTHING */ }
+    : Disposer(kDefaultFrameCount)
+    { /* DO_NOTHING */; }
+
+    //-------------------------------------------------------------------------
+    //! @brief      引数付きコンストラクタです.
+    //! 
+    //! @param[in]      frameCount      生存フレーム数.
+    //-------------------------------------------------------------------------
+    Disposer(uint8_t frameCount)
+    { m_Lists.resize(frameCount); }
 
     //-------------------------------------------------------------------------
     //! @brief      デストラクタです.
@@ -56,19 +64,15 @@ public:
     //! @param[in]      pObject     登録するオブジェクト.
     //! @param[in]      lifeTime    生存フレーム数.
     //-------------------------------------------------------------------------
-    void Push(T*& pObject, uint8_t lifeTime = kDefaultLifeTime)
+    void Push(T*& object)
     {
-        if (pObject == nullptr)
+        if (object == nullptr)
         { return; }
 
-        ScopedLock locker(&m_SpinLock);
+        m_Lists.front().push_back(object);
+        object = nullptr;
 
-        Item item = {};
-        item.pObject    = pObject;
-        item.LifeTime   = lifeTime;
-        m_List.push_back(item);
-
-        pObject = nullptr;
+        m_Count++;
     }
 
     //-------------------------------------------------------------------------
@@ -76,27 +80,24 @@ public:
     //-------------------------------------------------------------------------
     void FrameSync()
     {
-        ScopedLock locker(&m_SpinLock);
+        // 先頭を末端に移動し，前にずらす.
+        std::rotate(m_Lists.begin(), (++m_Lists.begin()), m_Lists.end());
 
-        auto itr = m_List.begin();
-        while(itr != m_List.end())
+        auto& list = m_Lists.front();
+        auto itr = list.begin();
+        while(itr != list.end())
         {
-            --itr->LifeTime;
-            if (itr->LifeTime <= 0)
+            auto object = (*itr);
+            if (object != nullptr)
             {
-                if (itr->pObject != nullptr)
-                {
-                    itr->pObject->Release();
-                    itr->pObject = nullptr;
-                }
+                object->Release();
+                object = nullptr;
+            }
 
-                itr = m_List.erase(itr);
-            }
-            else
-            {
-                ++itr;
-            }
+            itr = list.erase(itr);
+            m_Count--;
         }
+        list.clear();
     }
 
     //-------------------------------------------------------------------------
@@ -104,42 +105,42 @@ public:
     //-------------------------------------------------------------------------
     void Clear()
     {
-        ScopedLock locker(&m_SpinLock);
-
-        auto itr = m_List.begin();
-        while(itr != m_List.end())
+        for(auto& list : m_Lists)
         {
-            if (itr->pObject != nullptr)
+            auto itr = list.begin();
+            while(itr != list.end())
             {
-                // GPUが実行中 or メモリ解法漏れ があるとここで落ちるはずなので，
-                // 終了処理に問題がないか再チェックしようね!
-                itr->pObject->Release();
-                itr->pObject = nullptr;
-                itr->LifeTime  = 0;
+                auto object = (*itr);
+                if (object != nullptr)
+                {
+                    object->Release();
+                    object = nullptr;
+                }
+                itr = list.erase(itr);
+                m_Count--;
             }
-
-            itr = m_List.erase(itr);
+            list.clear();
         }
-
-        // 念のため.
-        m_List.clear();
     }
 
-private:
-    ///////////////////////////////////////////////////////////////////////////
-    // Item structure
-    ///////////////////////////////////////////////////////////////////////////
-    struct Item
-    {
-        T*          pObject;    //!< 破棄オブジェクト.
-        uint8_t     LifeTime;   //!< 生存フレーム数.
-    };
+    //-------------------------------------------------------------------------
+    //! @brief      登録数を取得します.
+    //-------------------------------------------------------------------------
+    uint32_t GetCount() const
+    { return m_Count; }
 
+    //-------------------------------------------------------------------------
+    //! @brief      空かどうかチェックします.
+    //-------------------------------------------------------------------------
+    bool Empty() const
+    { return m_Count == 0; }
+
+private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    std::list<Item>         m_List;         //!< 破棄リスト.
-    SpinLock                m_SpinLock;     //!< スピンロック.
+    std::vector< std::list<T*> >    m_Lists;        //!< 遅延解放リスト. 
+    uint32_t                        m_Count = 0;    //!< 登録数.
 
     //=========================================================================
     // private methods.

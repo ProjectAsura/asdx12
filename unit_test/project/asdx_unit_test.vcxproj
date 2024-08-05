@@ -75,6 +75,7 @@
     <ClCompile Include="..\src\fnd\QueueTest.cpp" />
     <ClCompile Include="..\src\fnd\RelativePtrTest.cpp" />
     <ClCompile Include="..\src\fnd\StackTest.cpp" />
+    <ClCompile Include="..\src\gfx\DisposerTest.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>

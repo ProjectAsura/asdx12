@@ -35,6 +35,9 @@
     <ClCompile Include="..\src\fnd\JobSystemTest.cpp">
       <Filter>fnd</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\gfx\DisposerTest.cpp">
+      <Filter>gfx</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -45,6 +48,9 @@
   <ItemGroup>
     <Filter Include="fnd">
       <UniqueIdentifier>{becdfb1e-ce02-49e3-b2e2-18300bfe5f87}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="gfx">
+      <UniqueIdentifier>{44801ccc-9a33-43c5-b7ee-1823df4800b4}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

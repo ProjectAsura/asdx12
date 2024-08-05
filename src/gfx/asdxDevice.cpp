@@ -478,17 +478,15 @@ public:
     //! @brief      オブジェクトディスポーザーに追加します.
     //!
     //! @param[in]      pResource       破棄リソース.
-    //! @param[in]      lifeTime        生存フレーム数です.
     //--------------------------------------------------------------------------
-    void Dispose(ID3D12Object*& pResource, uint8_t lifeTime);
+    void Dispose(ID3D12Object*& pResource);
 
     //-------------------------------------------------------------------------
     //! @brief      ディスクリプタディスポーザーに追加します.
     //!
     //! @param[in]      pDescriptor     破棄ディスクリプタ.
-    //! @param[in]      lifeTime        生存フレーム数です.
     //-------------------------------------------------------------------------
-    void Dispose(Descriptor*& pDescriptor, uint8_t lifeTime);
+    void Dispose(Descriptor*& pDescriptor);
 
     //-------------------------------------------------------------------------
     //! @brief      フレーム同期を行います.
@@ -1335,14 +1333,14 @@ void GraphicsSystem::WaitIdle()
 //-----------------------------------------------------------------------------
 //      オブジェクトディスポーザーに追加します.
 //-----------------------------------------------------------------------------
-void GraphicsSystem::Dispose(ID3D12Object*& pResource, uint8_t lifeTime)
-{ m_ObjectDisposer.Push(pResource, lifeTime); }
+void GraphicsSystem::Dispose(ID3D12Object*& pResource)
+{ m_ObjectDisposer.Push(pResource); }
 
 //-----------------------------------------------------------------------------
 //      ディスクリプタディスポーザーに追加します.
 //-----------------------------------------------------------------------------
-void GraphicsSystem::Dispose(Descriptor*& pDescriptor, uint8_t lifeTime)
-{ m_DescriptorDisposer.Push(pDescriptor, lifeTime); }
+void GraphicsSystem::Dispose(Descriptor*& pDescriptor)
+{ m_DescriptorDisposer.Push(pDescriptor); }
 
 //-----------------------------------------------------------------------------
 //      フレーム同期を取ります.
@@ -1427,13 +1425,13 @@ void FrameSync()
 //      オブジェクトを破棄します.
 //-----------------------------------------------------------------------------
 void DisposeObject(ID3D12Object*& pObject)
-{ GraphicsSystem::Instance().Dispose(pObject, kDefaultLifeTime); }
+{ GraphicsSystem::Instance().Dispose(pObject); }
 
 //-----------------------------------------------------------------------------
 //      ディスクリプタを破棄します.
 //-----------------------------------------------------------------------------
 void DisposeDescriptor(Descriptor*& pDescriptor)
-{ GraphicsSystem::Instance().Dispose(pDescriptor, kDefaultLifeTime); }
+{ GraphicsSystem::Instance().Dispose(pDescriptor); }
 
 //-----------------------------------------------------------------------------
 //      ディスポーザーをクリアします.
