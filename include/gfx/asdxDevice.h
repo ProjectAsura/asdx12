@@ -58,6 +58,7 @@ struct DeviceDesc
     bool        EnableCapture        = false;   //!< PIXキャプチャーを有効にします.
     bool        EnableBreakOnWarning = false;   //!< 警告時にブレークするなら true.
     bool        EnableBreakOnError   = true;    //!< エラー時にブレークするなら true.
+    bool        EnableVideoQueue     = false;   //!< ビデオキューを生成するなら true.
 };
 
 //-----------------------------------------------------------------------------

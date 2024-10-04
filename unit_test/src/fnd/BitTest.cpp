@@ -125,9 +125,9 @@ TEST(BitTest, FindOne8)
     }
 }
 
-TEST(BitTest, BitFlags8)
+TEST(BitTest, BitFlag8)
 {
-    asdx::BitFlags8 flags;
+    asdx::BitFlag8 flags;
 
     EXPECT_EQ((uint8_t)flags, 0);
     EXPECT_TRUE(flags.None());
@@ -137,7 +137,7 @@ TEST(BitTest, BitFlags8)
     EXPECT_FALSE(flags.Get(1));
     EXPECT_TRUE(flags.Any());
 
-    flags = asdx::BitFlags8(0xff);
+    flags = asdx::BitFlag8(0xff);
     EXPECT_EQ((uint8_t)flags, 0xff);
     EXPECT_TRUE(flags.All());
 
@@ -260,9 +260,9 @@ TEST(BitTest, FindOne16)
     }
 }
 
-TEST(BitTest, BitFlags16)
+TEST(BitTest, BitFlag16)
 {
-    asdx::BitFlags16 flags;
+    asdx::BitFlag16 flags;
 
     EXPECT_EQ((uint16_t)flags, 0);
     EXPECT_TRUE(flags.None());
@@ -272,7 +272,7 @@ TEST(BitTest, BitFlags16)
     EXPECT_FALSE(flags.Get(1));
     EXPECT_TRUE(flags.Any());
 
-    flags = asdx::BitFlags16(0xffff);
+    flags = asdx::BitFlag16(0xffff);
     EXPECT_EQ((uint16_t)flags, 0xffff);
     EXPECT_TRUE(flags.All());
 
@@ -395,9 +395,9 @@ TEST(BitTest, FindOne32)
     }
 }
 
-TEST(BitTest, BitFlags32)
+TEST(BitTest, BitFlag32)
 {
-    asdx::BitFlags32 flags;
+    asdx::BitFlag32 flags;
 
     EXPECT_EQ((uint32_t)flags, 0);
     EXPECT_TRUE(flags.None());
@@ -407,7 +407,7 @@ TEST(BitTest, BitFlags32)
     EXPECT_FALSE(flags.Get(1));
     EXPECT_TRUE(flags.Any());
 
-    flags = asdx::BitFlags32(0xffffffff);
+    flags = asdx::BitFlag32(0xffffffff);
     EXPECT_EQ((uint32_t)flags, 0xffffffff);
     EXPECT_TRUE(flags.All());
 
@@ -530,9 +530,9 @@ TEST(BitTest, FindOne64)
     }
 }
 
-TEST(BitTest, BitFlags64)
+TEST(BitTest, BitFlag64)
 {
-    asdx::BitFlags64 flags;
+    asdx::BitFlag64 flags;
 
     EXPECT_EQ((uint64_t)flags, 0);
     EXPECT_TRUE(flags.None());
@@ -542,7 +542,7 @@ TEST(BitTest, BitFlags64)
     EXPECT_FALSE(flags.Get(1));
     EXPECT_TRUE(flags.Any());
 
-    flags = asdx::BitFlags64(0xffffffffffffffff);
+    flags = asdx::BitFlag64(0xffffffffffffffff);
     EXPECT_EQ((uint64_t)flags, 0xffffffffffffffff);
     EXPECT_TRUE(flags.All());
 

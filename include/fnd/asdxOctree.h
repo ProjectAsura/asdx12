@@ -138,7 +138,7 @@ private:
 
     uint32_t CalcPointCode(const Vector3& p)
     {
-        return MortonOrder3(
+        return EncodeMorton3(
             uint32_t((p.x - m_RootMin.x) / m_CellSize.x),
             uint32_t((p.y - m_RootMin.y) / m_CellSize.y),
             uint32_t((p.z - m_RootMin.z) / m_CellSize.z));

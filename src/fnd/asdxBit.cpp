@@ -182,10 +182,10 @@ int CountZeroR(uint64_t value) { return impl::CountZeroR(value); }
 
 #endif
 
-static_assert(sizeof(BitFlags8)  == sizeof(uint8_t) , "BitFlag8  Size Not Match");
-static_assert(sizeof(BitFlags16) == sizeof(uint16_t), "BitFlag16 Size Not Match");
-static_assert(sizeof(BitFlags32) == sizeof(uint32_t), "BitFlag32 Size Not Match");
-static_assert(sizeof(BitFlags64) == sizeof(uint64_t), "BitFlag64 Size Not Match");
+static_assert(sizeof(BitFlag8)  == sizeof(uint8_t) , "BitFlag8  Size Not Match");
+static_assert(sizeof(BitFlag16) == sizeof(uint16_t), "BitFlag16 Size Not Match");
+static_assert(sizeof(BitFlag32) == sizeof(uint32_t), "BitFlag32 Size Not Match");
+static_assert(sizeof(BitFlag64) == sizeof(uint64_t), "BitFlag64 Size Not Match");
 
 
 } // namespace asdx

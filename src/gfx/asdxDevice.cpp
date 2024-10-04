@@ -1016,31 +1016,34 @@ bool GraphicsSystem::Init(const DeviceDesc& deviceDesc)
         return false;
     }
 
-    // ビデオデコードキューの生成.
-    ret = CommandQueue::Create(
-        m_pDevice.GetPtr(), D3D12_COMMAND_LIST_TYPE_VIDEO_DECODE, m_pVideoDecodeQueue.GetAddress());
-    if (!ret)
+    if (deviceDesc.EnableVideoQueue)
     {
-        ELOG("Error : Queue::Create() Failed.");
-        return false;
-    }
+        // ビデオデコードキューの生成.
+        ret = CommandQueue::Create(
+            m_pDevice.GetPtr(), D3D12_COMMAND_LIST_TYPE_VIDEO_DECODE, m_pVideoDecodeQueue.GetAddress());
+        if (!ret)
+        {
+            ELOG("Error : Queue::Create() Failed.");
+            return false;
+        }
 
-    // ビデオプロセスキューの生成.
-    ret = CommandQueue::Create(
-        m_pDevice.GetPtr(), D3D12_COMMAND_LIST_TYPE_VIDEO_PROCESS, m_pVideoProcessQueue.GetAddress());
-    if (!ret)
-    {
-        ELOG("Error : Queue::Create() Failed.");
-        return false;
-    }
+        // ビデオプロセスキューの生成.
+        ret = CommandQueue::Create(
+            m_pDevice.GetPtr(), D3D12_COMMAND_LIST_TYPE_VIDEO_PROCESS, m_pVideoProcessQueue.GetAddress());
+        if (!ret)
+        {
+            ELOG("Error : Queue::Create() Failed.");
+            return false;
+        }
 
-    // ビデオエンコードキューの生成.
-    ret = CommandQueue::Create(
-        m_pDevice.GetPtr(), D3D12_COMMAND_LIST_TYPE_VIDEO_ENCODE, m_pVideoEncodeQueue.GetAddress());
-    if (!ret)
-    {
-        ELOG("Error : Queue::Create() Failed.");
-        return false;
+        // ビデオエンコードキューの生成.
+        ret = CommandQueue::Create(
+            m_pDevice.GetPtr(), D3D12_COMMAND_LIST_TYPE_VIDEO_ENCODE, m_pVideoEncodeQueue.GetAddress());
+        if (!ret)
+        {
+            ELOG("Error : Queue::Create() Failed.");
+            return false;
+        }
     }
 
     // 矩形用
@@ -1065,6 +1068,7 @@ bool GraphicsSystem::Init(const DeviceDesc& deviceDesc)
         m_QuadVB.Unmap();
     }
 
+#if 0
     // コマンドシグニチャ生成.
     {
         {
@@ -1152,6 +1156,7 @@ bool GraphicsSystem::Init(const DeviceDesc& deviceDesc)
             }
         }
     }
+#endif
 
     // 正常終了.
     return true;

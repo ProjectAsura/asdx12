@@ -9,18 +9,18 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "asdx12", "..\..\project\asd
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|x64 = Debug|x64
-		Release|x64 = Release|x64
+		DebugMT|x64 = DebugMT|x64
+		ReleaseMT|x64 = ReleaseMT|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{66CEEE01-D6A2-430E-85A5-829F8EA19454}.Debug|x64.ActiveCfg = Debug|x64
-		{66CEEE01-D6A2-430E-85A5-829F8EA19454}.Debug|x64.Build.0 = Debug|x64
-		{66CEEE01-D6A2-430E-85A5-829F8EA19454}.Release|x64.ActiveCfg = Release|x64
-		{66CEEE01-D6A2-430E-85A5-829F8EA19454}.Release|x64.Build.0 = Release|x64
-		{ECD906D6-5DEB-4B5B-B919-05C147194C1D}.Debug|x64.ActiveCfg = Debug|x64
-		{ECD906D6-5DEB-4B5B-B919-05C147194C1D}.Debug|x64.Build.0 = Debug|x64
-		{ECD906D6-5DEB-4B5B-B919-05C147194C1D}.Release|x64.ActiveCfg = Release|x64
-		{ECD906D6-5DEB-4B5B-B919-05C147194C1D}.Release|x64.Build.0 = Release|x64
+		{66CEEE01-D6A2-430E-85A5-829F8EA19454}.DebugMT|x64.ActiveCfg = Debug|x64
+		{66CEEE01-D6A2-430E-85A5-829F8EA19454}.DebugMT|x64.Build.0 = Debug|x64
+		{66CEEE01-D6A2-430E-85A5-829F8EA19454}.ReleaseMT|x64.ActiveCfg = Release|x64
+		{66CEEE01-D6A2-430E-85A5-829F8EA19454}.ReleaseMT|x64.Build.0 = Release|x64
+		{ECD906D6-5DEB-4B5B-B919-05C147194C1D}.DebugMT|x64.ActiveCfg = DebugMT|x64
+		{ECD906D6-5DEB-4B5B-B919-05C147194C1D}.DebugMT|x64.Build.0 = DebugMT|x64
+		{ECD906D6-5DEB-4B5B-B919-05C147194C1D}.ReleaseMT|x64.ActiveCfg = ReleaseMT|x64
+		{ECD906D6-5DEB-4B5B-B919-05C147194C1D}.ReleaseMT|x64.Build.0 = ReleaseMT|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
