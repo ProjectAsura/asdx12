@@ -230,9 +230,7 @@ private:
     RefPtr<IRenderTargetView>   m_pRTV;
     RefPtr<IShaderResourceView> m_pSRV;
     TargetDesc                  m_Desc;
-#if ASDX_ENABLE_SINGLE_THREAD
     D3D12_RESOURCE_STATES       m_PrevState = D3D12_RESOURCE_STATE_COMMON;
-#endif
 
     //=========================================================================
     // private methods.
@@ -385,9 +383,7 @@ private:
     RefPtr<IDepthStencilView>   m_pDSV;
     RefPtr<IShaderResourceView> m_pSRV;
     TargetDesc                  m_Desc;
-#if ASDX_ENABLE_SINGLE_THREAD
     D3D12_RESOURCE_STATES       m_PrevState = D3D12_RESOURCE_STATE_COMMON;
-#endif
 
     //=========================================================================
     // private methods.
@@ -538,9 +534,7 @@ private:
     RefPtr<IUnorderedAccessView>    m_pUAV;
     RefPtr<IShaderResourceView>     m_pSRV;
     TargetDesc                      m_Desc;
-#if ASDX_ENABLE_SINGLE_THREAD
     D3D12_RESOURCE_STATES           m_PrevState = D3D12_RESOURCE_STATE_COMMON;
-#endif
 
     //=========================================================================
     // private methods.

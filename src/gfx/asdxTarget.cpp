@@ -351,6 +351,8 @@ bool ColorTarget::Init(const TargetDesc* pDesc)
 
     memcpy(&m_Desc, pDesc, sizeof(m_Desc));
 
+    m_PrevState = m_Desc.InitState;
+
     return true;
 }
 
@@ -452,6 +454,8 @@ bool ColorTarget::Init
         ELOG("Error : CreateShaderResourceView() Failed.");
         return false;
     }
+
+    m_PrevState = D3D12_RESOURCE_STATE_COMMON;
 
     return true;
 }
@@ -705,6 +709,8 @@ bool DepthTarget::Init(const TargetDesc* pDesc)
     }
 
     memcpy(&m_Desc, pDesc, sizeof(m_Desc));
+
+    m_PrevState = m_Desc.InitState;
 
     return true;
 }
@@ -960,6 +966,8 @@ bool ComputeTarget::Init(const TargetDesc* pDesc, uint32_t stride)
     }
 
     memcpy(&m_Desc, pDesc, sizeof(m_Desc));
+
+    m_PrevState = m_Desc.InitState;
 
     return true;
 }

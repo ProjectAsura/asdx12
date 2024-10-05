@@ -689,10 +689,21 @@ bool StructuredBuffer::Init
     const void*                 pInitData
 )
 {
-    if (!Init(count, stride, D3D12_RESOURCE_STATE_GENERIC_READ))
+    if (!Init(count, stride, D3D12_RESOURCE_STATE_COMMON))
     { return false;  }
 
     UpdateBuffer(pCmdList, m_Resource.GetPtr(), pInitData);
+
+    {
+        D3D12_RESOURCE_BARRIER barrier = {};
+        barrier.Type                    = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+        barrier.Transition.pResource    = m_Resource.GetPtr();
+        barrier.Transition.StateBefore  = D3D12_RESOURCE_STATE_COPY_DEST;
+        barrier.Transition.StateAfter   = D3D12_RESOURCE_STATE_GENERIC_READ;
+        barrier.Transition.Subresource  = 0;
+
+        pCmdList->ResourceBarrier(1, &barrier);
+    }
 
     return true;
 }

@@ -318,7 +318,7 @@ void Blas::SetName(LPCWSTR name)
 //-----------------------------------------------------------------------------
 //      ビルドします.
 //-----------------------------------------------------------------------------
-void Blas::Build(ID3D12GraphicsCommandList6* pCmd, D3D12_GPU_VIRTUAL_ADDRESS scratchAddress)
+void Blas::Build(ID3D12GraphicsCommandList4* pCmd, D3D12_GPU_VIRTUAL_ADDRESS scratchAddress)
 {
     auto desc = m_BuildDesc;
     desc.ScratchAccelerationStructureData = scratchAddress;
@@ -470,7 +470,7 @@ void Tlas::SetName(LPCWSTR name)
 //-----------------------------------------------------------------------------
 //      ビルドします.
 //-----------------------------------------------------------------------------
-void Tlas::Build(ID3D12GraphicsCommandList6* pCmd, D3D12_GPU_VIRTUAL_ADDRESS scratchAddress)
+void Tlas::Build(ID3D12GraphicsCommandList4* pCmd, D3D12_GPU_VIRTUAL_ADDRESS scratchAddress)
 {
     auto desc = m_BuildDesc;
     desc.ScratchAccelerationStructureData = scratchAddress;
@@ -960,7 +960,7 @@ void RayTracingPipelineState::Rebuild()
 //-----------------------------------------------------------------------------
 //      レイトレーシングパイプラインを起動します.
 //-----------------------------------------------------------------------------
-void RayTracingPipelineState::DispatchRays(ID3D12GraphicsCommandList6* pCmd, uint32_t width, uint32_t height)
+void RayTracingPipelineState::DispatchRays(ID3D12GraphicsCommandList4* pCmd, uint32_t width, uint32_t height)
 {
     assert(pCmd != nullptr);
     assert(width > 0);

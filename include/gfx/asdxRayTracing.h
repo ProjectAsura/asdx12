@@ -253,7 +253,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      ビルドします.
     //-------------------------------------------------------------------------
-    void Build(ID3D12GraphicsCommandList6* pCmd, D3D12_GPU_VIRTUAL_ADDRESS scratchAddress);
+    void Build(ID3D12GraphicsCommandList4* pCmd, D3D12_GPU_VIRTUAL_ADDRESS scratchAddress);
 
     //-------------------------------------------------------------------------
     //! @brief      ジオメトリ数を取得します.
@@ -347,7 +347,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      ビルドします.
     //-------------------------------------------------------------------------
-    void Build(ID3D12GraphicsCommandList6* pCmd, D3D12_GPU_VIRTUAL_ADDRESS scratchAddress);
+    void Build(ID3D12GraphicsCommandList4* pCmd, D3D12_GPU_VIRTUAL_ADDRESS scratchAddress);
 
     //-------------------------------------------------------------------------
     //! @brief      メモリマッピングを行います.
@@ -528,7 +528,7 @@ public:
     //! @param[in]      width       横幅.
     //! @param[in]      height      縦幅.
     //-------------------------------------------------------------------------
-    void DispatchRays(ID3D12GraphicsCommandList6* pCmd, uint32_t width, uint32_t height);
+    void DispatchRays(ID3D12GraphicsCommandList4* pCmd, uint32_t width, uint32_t height);
 
     //-------------------------------------------------------------------------
     //! @brief      シェーダライブラリのリロードパスを設定します.
