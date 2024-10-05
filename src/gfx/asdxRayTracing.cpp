@@ -168,10 +168,7 @@ AsScratchBuffer::~AsScratchBuffer()
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
 bool AsScratchBuffer::Init(ID3D12Device* pDevice, size_t size)
-{
-    return CreateBufferUAV(
-        pDevice, size, m_Scratch.GetAddress(), D3D12_RESOURCE_STATE_COMMON);
-}
+{ return CreateBufferUAV(pDevice, size, m_Scratch.GetAddress()); }
 
 //-----------------------------------------------------------------------------
 //      終了処理を行います.
@@ -191,7 +188,7 @@ D3D12_GPU_VIRTUAL_ADDRESS AsScratchBuffer::GetGpuAddress() const
 //-----------------------------------------------------------------------------
 //      デバッグ名を設定します.
 //-----------------------------------------------------------------------------
-void AsScratchBuffer::SetDebugName(const wchar_t* name)
+void AsScratchBuffer::SetName(LPCWSTR name)
 { m_Scratch->SetName(name); }
 
 
@@ -254,7 +251,6 @@ bool Blas::Init
         ELOGA("Error : CreateUAVBuffer() Failed.");
         return false;
     }
-    m_Structure->SetName(L"asdxBlas");
 
     // ビルド設定.
     memset(&m_BuildDesc, 0, sizeof(m_BuildDesc));
@@ -314,12 +310,18 @@ ID3D12Resource* Blas::GetResource() const
 { return m_Structure.GetPtr(); }
 
 //-----------------------------------------------------------------------------
+//      デバッグ名を設定します.
+//-----------------------------------------------------------------------------
+void Blas::SetName(LPCWSTR name)
+{ m_Structure->SetName(name); }
+
+//-----------------------------------------------------------------------------
 //      ビルドします.
 //-----------------------------------------------------------------------------
 void Blas::Build(ID3D12GraphicsCommandList6* pCmd, D3D12_GPU_VIRTUAL_ADDRESS scratchAddress)
 {
     auto desc = m_BuildDesc;
-    desc.SourceAccelerationStructureData = scratchAddress;
+    desc.ScratchAccelerationStructureData = scratchAddress;
 
     // 高速化機構を構築.
     pCmd->BuildRaytracingAccelerationStructure(&desc, 0, nullptr);
@@ -404,7 +406,6 @@ bool Tlas::Init
         ELOGA("Error : CreateUAVBuffer() Failed.");
         return false;
     }
-    m_Structure->SetName(L"asdxTlas");
 
     // ビルド設定.
     memset(&m_BuildDesc, 0, sizeof(m_BuildDesc));
@@ -461,12 +462,18 @@ ID3D12Resource* Tlas::GetResource() const
 { return m_Structure.GetPtr(); }
 
 //-----------------------------------------------------------------------------
+//      デバッグ名を設定します.
+//-----------------------------------------------------------------------------
+void Tlas::SetName(LPCWSTR name)
+{ m_Structure->SetName(name); }
+
+//-----------------------------------------------------------------------------
 //      ビルドします.
 //-----------------------------------------------------------------------------
 void Tlas::Build(ID3D12GraphicsCommandList6* pCmd, D3D12_GPU_VIRTUAL_ADDRESS scratchAddress)
 {
     auto desc = m_BuildDesc;
-    desc.SourceAccelerationStructureData = scratchAddress;
+    desc.ScratchAccelerationStructureData = scratchAddress;
 
     // 高速化機構を構築.
     pCmd->BuildRaytracingAccelerationStructure(&desc, 0, nullptr);
@@ -505,6 +512,8 @@ RayTracingPipelineState::~RayTracingPipelineState()
 bool RayTracingPipelineState::Init(ID3D12Device5* pDevice, const RayTracingPipelineStateDesc& desc)
 {
     uint32_t objCount = 5u + uint32_t(desc.HitGroups.size());
+
+    m_Desc = desc;
 
     std::vector<D3D12_STATE_SUBOBJECT> objDesc;
     objDesc.resize(objCount);
@@ -599,7 +608,7 @@ bool RayTracingPipelineState::Init(ID3D12Device5* pDevice, const RayTracingPipel
     // レイ生成テーブル.
     {
         asdx::ShaderRecord record = {};
-        record.ShaderIdentifier = m_pDefaultProps->GetShaderIdentifier(m_Desc.RayGeneration.c_str());
+        record.ShaderIdentifier = m_pDefaultProps->GetShaderIdentifier(desc.RayGeneration.c_str());
 
         asdx::ShaderTable::Desc desc = {};
         desc.RecordCount = 1;
@@ -615,10 +624,10 @@ bool RayTracingPipelineState::Init(ID3D12Device5* pDevice, const RayTracingPipel
     // ミステーブル.
     {
         std::vector<asdx::ShaderRecord> record;
-        record.resize(m_Desc.MissTable.size());
-        for(size_t i=0; i<m_Desc.MissTable.size(); ++i)
+        record.resize(desc.MissTable.size());
+        for(size_t i=0; i<desc.MissTable.size(); ++i)
         {
-            record[i].ShaderIdentifier = m_pDefaultProps->GetShaderIdentifier(m_Desc.MissTable[i].c_str());
+            record[i].ShaderIdentifier = m_pDefaultProps->GetShaderIdentifier(desc.MissTable[i].c_str());
         }
 
         asdx::ShaderTable::Desc desc = {};
@@ -635,10 +644,10 @@ bool RayTracingPipelineState::Init(ID3D12Device5* pDevice, const RayTracingPipel
     // ヒットグループ.
     {
         std::vector<asdx::ShaderRecord> record;
-        record.resize(m_Desc.HitGroups.size());
-        for(size_t i=0; i<m_Desc.HitGroups.size(); ++i)
+        record.resize(desc.HitGroups.size());
+        for(size_t i=0; i<desc.HitGroups.size(); ++i)
         {
-            record[i].ShaderIdentifier = m_pDefaultProps->GetShaderIdentifier(m_Desc.HitGroups[i].HitGroupExport);
+            record[i].ShaderIdentifier = m_pDefaultProps->GetShaderIdentifier(desc.HitGroups[i].HitGroupExport);
         }
 
         asdx::ShaderTable::Desc desc = {};
@@ -766,7 +775,7 @@ void RayTracingPipelineState::ReloadShader(const char* path, const char* shaderM
 }
 
 //-----------------------------------------------------------------------------
-//
+//      リビルドを行います.
 //-----------------------------------------------------------------------------
 void RayTracingPipelineState::Rebuild()
 {

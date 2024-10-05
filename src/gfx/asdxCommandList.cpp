@@ -133,6 +133,12 @@ ID3D12GraphicsCommandList6* CommandList::GetCommandList() const
 uint8_t CommandList::GetIndex() const
 { return m_Index; }
 
+//-----------------------------------------------------------------------------
+//      デバッグ名を設定します.
+//-----------------------------------------------------------------------------
+void CommandList::SetName(LPCWSTR name)
+{ m_CmdList->SetName(name); }
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // ScopedMarker class

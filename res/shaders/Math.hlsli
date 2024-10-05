@@ -2001,8 +2001,8 @@ uint2 RemapLane8x8(uint2 dispatchId, uint groupIndex)
     remappedId.x = BitfieldInsert(BitfieldExtract(groupIndex, 2u, 3u), groupIndex, 1u);
     remappedId.y = BitfieldInsert(BitfieldExtract(groupIndex, 3u, 3u), BitfieldExtract(groupIndex, 1u, 2u), 2u);
 
-    uint2  dispatchGroupId = uint2(dispatchId) >> 3; // 8未満切り捨て.
-    return dispatchGroupId << 3 + remappedId;
+    uint2  dispatchGroupId = uint2(dispatchId) / 8; // 8未満切り捨て.
+    return (dispatchGroupId * 8) + remappedId;
 }
 
 //-----------------------------------------------------------------------------

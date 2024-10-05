@@ -1080,6 +1080,8 @@ bool Application::InitD3D()
                     ELOG("Error : ColorTarget::Init() Failed.");
                     return false;
                 }
+
+                m_ColorTarget[i].SetName(L"AppColorTarget");
             }
         }
 
@@ -1104,6 +1106,8 @@ bool Application::InitD3D()
                 ELOG("Error : DepthTarget::Init() Failed.");
                 return false;
             }
+
+            m_DepthTarget.SetName(L"AppDepthTarget");
         }
 
         // ビューポートの設定.
@@ -1127,11 +1131,15 @@ bool Application::InitD3D()
         return false;
     }
 
+    m_GfxCmdList.SetName(L"AppGraphicsCommandList");
+
     if (!m_CopyCmdList.Init(GetD3D12Device(), D3D12_COMMAND_LIST_TYPE_COPY))
     {
         ELOG("Error : CommandList::Init() Failed.");
         return false;
     }
+
+    m_CopyCmdList.SetName(L"AppCopyCommandList");
 
     return true;
 }
