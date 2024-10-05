@@ -233,12 +233,16 @@ public:
     void SetIncludeDirs(const std::vector<std::string>& dirs);
 
     //-------------------------------------------------------------------------
+    //! @brief      依存ファイル名を設定します.
+    //! 
+    //! @param[in]      path        ファイルパス.
+    //-------------------------------------------------------------------------
+    void SetDependencies(const std::vector<std::string>& dependencies);
+
+    //-------------------------------------------------------------------------
     //! @brief      ファイル更新時の処理です.
     //-------------------------------------------------------------------------
-    void OnUpdate(
-        ACTION_TYPE actionType,
-        const char* directoryPath,
-        const char* relativePath) override;
+    void OnUpdate(const FileUpdateEventArgs& args) override;
 
 private:
     //=========================================================================
@@ -266,6 +270,8 @@ private:
     std::string                 m_ShaderModelCS;
     std::string                 m_ShaderModelAS;
     std::string                 m_ShaderModelMS;
+
+    std::vector<std::string>    m_Dependencies;
 
     std::vector<uint8_t>        m_VS;
     std::vector<uint8_t>        m_PS;

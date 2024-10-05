@@ -10,6 +10,8 @@
 //-----------------------------------------------------------------------------
 #include <atomic>
 #include <thread>
+#include <list>
+#include <string>
 
 
 namespace asdx {
@@ -27,6 +29,16 @@ enum ACTION_TYPE
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+// FileUpdateEventArgs structure
+///////////////////////////////////////////////////////////////////////////////
+struct FileUpdateEventArgs
+{
+    ACTION_TYPE     Type;
+    std::string     DirectoryPath;
+    std::string     RelativePath;
+};
+
+///////////////////////////////////////////////////////////////////////////////
 // IFileUpdateListener interface
 ///////////////////////////////////////////////////////////////////////////////
 struct IFileUpdateListener
@@ -40,10 +52,7 @@ struct IFileUpdateListener
     //-------------------------------------------------------------------------
     //! @brief      ファイル更新時の処理です.
     //-------------------------------------------------------------------------
-    virtual void OnUpdate(
-        ACTION_TYPE actionType,
-        const char* directoryPath,
-        const char* relativePath) = 0;
+    virtual void OnUpdate(const FileUpdateEventArgs& args) = 0;
 };
 
 
@@ -63,10 +72,10 @@ public:
     ///////////////////////////////////////////////////////////////////////////
     struct Desc
     {
-        const char*             DirectoryPath;      //!< 監視対象ディレクトリ.
-        size_t                  BufferSize;         //!< バッファサイズ.
-        uint32_t                WaitTimeMsec;       //!< 1ループの待機時間(ミリ秒単位)
-        IFileUpdateListener*    pListener;          //!< 変更通知先.
+        const char* DirectoryPath;      //!< 監視対象ディレクトリ.
+        size_t      BufferSize;         //!< バッファサイズ.
+        uint32_t    WaitTimeMsec;       //!< 1ループの待機時間(ミリ秒単位)
+        std::list<IFileUpdateListener*> pListeners; //!< 変更通知先.
     };
 
     //=========================================================================
@@ -95,7 +104,7 @@ public:
     //! @retval true    初期化に成功.
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
-    bool Init(const Desc& desc);
+    bool Init(Desc& desc);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.

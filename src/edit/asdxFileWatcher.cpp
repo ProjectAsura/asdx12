@@ -42,8 +42,9 @@ struct Worker
     uint32_t                    WaitTimeMsec    = 0;
     std::vector<uint8_t>        Buffer          = {};
     std::string                 DirectoryPath   = {};
-    asdx::IFileUpdateListener*  pListener       = nullptr;
     std::atomic<bool>*          pFinish         = nullptr;
+
+    std::list<asdx::IFileUpdateListener*> pListeners = {};
 
     Worker()
     { /* DO_NOTHING */ }
@@ -51,7 +52,7 @@ struct Worker
     ~Worker()
     { /* DO_NOTHING */ }
 
-    bool Prepare(const asdx::FileWatcher::Desc& desc, std::atomic<bool>* pFlags)
+    bool Prepare(asdx::FileWatcher::Desc& desc, std::atomic<bool>* pFlags)
     {
         hDir = CreateFileA(
             desc.DirectoryPath,
@@ -80,7 +81,7 @@ struct Worker
 
         pFinish         = pFlags;
         DirectoryPath   = desc.DirectoryPath;
-        pListener       = desc.pListener;
+        pListeners      = std::move(desc.pListeners);
         WaitTimeMsec    = desc.WaitTimeMsec;
         Buffer.resize(desc.BufferSize);
 
@@ -177,8 +178,13 @@ struct Worker
                         { CloseHandle(handle); }
                     }
 
-                    // 通知.
-                    pListener->OnUpdate(asdx::ACTION_TYPE(pInfos->Action), DirectoryPath.c_str(), path.c_str());
+                    asdx::FileUpdateEventArgs args;
+                    args.Type           = asdx::ACTION_TYPE(pInfos->Action);
+                    args.DirectoryPath  = DirectoryPath;
+                    args.RelativePath   = path;
+
+                    for(auto& listener : pListeners)
+                    { listener->OnUpdate(args); }
 
                     // 次のエントリがなければ終了.
                     if (pInfos->NextEntryOffset == 0)
@@ -196,7 +202,7 @@ struct Worker
         hEvent      = nullptr;
         hDir        = nullptr;
         pFinish     = nullptr;
-        pListener   = nullptr;
+        pListeners.clear();
         Buffer.clear();
         Buffer.shrink_to_fit();
     }
@@ -225,7 +231,7 @@ FileWatcher::~FileWatcher()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool FileWatcher::Init(const Desc& desc)
+bool FileWatcher::Init(Desc& desc)
 {
     // 念のために終了させる.
     Term();

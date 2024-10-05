@@ -11,6 +11,7 @@
 #include <fnd/asdxMisc.h>
 #include <gfx/asdxRayTracing.h>
 #include <gfx/asdxDevice.h>
+#include <gfx/asdxShaderCompiler.h>
 
 
 namespace asdx {
@@ -152,6 +153,46 @@ bool CreateUploadBuffer
 
     return true;
 }
+
+///////////////////////////////////////////////////////////////////////////////
+// AsScratchBuffer class
+///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      デストラクタです.
+//-----------------------------------------------------------------------------
+AsScratchBuffer::~AsScratchBuffer()
+{ Term(); }
+
+//-----------------------------------------------------------------------------
+//      初期化処理を行います.
+//-----------------------------------------------------------------------------
+bool AsScratchBuffer::Init(ID3D12Device* pDevice, size_t size)
+{
+    return CreateBufferUAV(
+        pDevice, size, m_Scratch.GetAddress(), D3D12_RESOURCE_STATE_COMMON);
+}
+
+//-----------------------------------------------------------------------------
+//      終了処理を行います.
+//-----------------------------------------------------------------------------
+void AsScratchBuffer::Term()
+{
+    auto buffer = m_Scratch.Detach();
+    Dispose(buffer);
+}
+
+//-----------------------------------------------------------------------------
+//      GPU仮想アドレスを取得します.
+//-----------------------------------------------------------------------------
+D3D12_GPU_VIRTUAL_ADDRESS AsScratchBuffer::GetGpuAddress() const
+{ return m_Scratch->GetGPUVirtualAddress(); }
+
+//-----------------------------------------------------------------------------
+//      デバッグ名を設定します.
+//-----------------------------------------------------------------------------
+void AsScratchBuffer::SetDebugName(const wchar_t* name)
+{ m_Scratch->SetName(name); }
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -446,8 +487,10 @@ void Tlas::Build(ID3D12GraphicsCommandList6* pCmd, D3D12_GPU_VIRTUAL_ADDRESS scr
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
 RayTracingPipelineState::RayTracingPipelineState()
-: m_pObject (nullptr)
-, m_pProps  (nullptr)
+: m_pDefaultObject (nullptr)
+, m_pDefaultProps  (nullptr)
+, m_pReloadObject  (nullptr)
+, m_pReloadProps   (nullptr)
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
@@ -461,10 +504,34 @@ RayTracingPipelineState::~RayTracingPipelineState()
 //-----------------------------------------------------------------------------
 bool RayTracingPipelineState::Init(ID3D12Device5* pDevice, const RayTracingPipelineStateDesc& desc)
 {
-    uint32_t objCount = 6 + desc.HitGroupCount;
+    uint32_t objCount = 5u + uint32_t(desc.HitGroups.size());
 
     std::vector<D3D12_STATE_SUBOBJECT> objDesc;
     objDesc.resize(objCount);
+
+    std::vector<D3D12_EXPORT_DESC> exports;
+    {
+        exports.push_back({ desc.RayGeneration.c_str(), nullptr, D3D12_EXPORT_FLAG_NONE });
+        for(auto& hit : desc.HitGroups)
+        {
+            if (hit.AnyHitShaderImport)
+            {
+                exports.push_back({hit.AnyHitShaderImport, nullptr, D3D12_EXPORT_FLAG_NONE});
+            }
+            if (hit.ClosestHitShaderImport)
+            {
+                exports.push_back({hit.ClosestHitShaderImport, nullptr, D3D12_EXPORT_FLAG_NONE});
+            }
+            if (hit.IntersectionShaderImport)
+            {
+                exports.push_back({hit.IntersectionShaderImport, nullptr, D3D12_EXPORT_FLAG_NONE});
+            }
+        }
+        for(auto& miss : desc.MissTable)
+        {
+            exports.push_back({miss.c_str(), nullptr, D3D12_EXPORT_FLAG_NONE});
+        }
+    }
 
     auto index = 0;
 
@@ -475,20 +542,10 @@ bool RayTracingPipelineState::Init(ID3D12Device5* pDevice, const RayTracingPipel
     objDesc[index].pDesc = &globalRootSignature;
     index++;
 
-    D3D12_LOCAL_ROOT_SIGNATURE localRootSignature = {};
-    if (desc.pLocalRootSignature != nullptr)
-    {
-        localRootSignature.pLocalRootSignature = desc.pLocalRootSignature;
-
-        objDesc[index].Type  = D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE;
-        objDesc[index].pDesc = &localRootSignature;
-        index++;
-    }
-
     D3D12_DXIL_LIBRARY_DESC libDesc = {};
     libDesc.DXILLibrary = desc.DXILLibrary;
-    libDesc.NumExports  = desc.ExportCount;
-    libDesc.pExports    = desc.pExports;
+    libDesc.NumExports  = UINT(exports.size());
+    libDesc.pExports    = exports.data();
 
     objDesc[index].Type     = D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY;
     objDesc[index].pDesc    = &libDesc;
@@ -509,10 +566,10 @@ bool RayTracingPipelineState::Init(ID3D12Device5* pDevice, const RayTracingPipel
     objDesc[index].pDesc    = &pipelineConfig;
     index++;
 
-    for(auto i=0u; i<desc.HitGroupCount; ++i)
+    for(auto i=0u; i<desc.HitGroups.size(); ++i)
     {
         objDesc[index].Type  = D3D12_STATE_SUBOBJECT_TYPE_HIT_GROUP;
-        objDesc[index].pDesc = &desc.pHitGroups[i];
+        objDesc[index].pDesc = &desc.HitGroups[i];
         index++;
     }
 
@@ -521,7 +578,7 @@ bool RayTracingPipelineState::Init(ID3D12Device5* pDevice, const RayTracingPipel
     stateObjectDesc.NumSubobjects   = index;
     stateObjectDesc.pSubobjects     = objDesc.data();
 
-    auto hr = pDevice->CreateStateObject(&stateObjectDesc, IID_PPV_ARGS(m_pObject.GetAddress()));
+    auto hr = pDevice->CreateStateObject(&stateObjectDesc, IID_PPV_ARGS(m_pDefaultObject.GetAddress()));
 
     // メモリ解放.
     objDesc.clear();
@@ -532,11 +589,67 @@ bool RayTracingPipelineState::Init(ID3D12Device5* pDevice, const RayTracingPipel
         return false;
     }
 
-    hr = m_pObject->QueryInterface(IID_PPV_ARGS(m_pProps.GetAddress()));
+    hr = m_pDefaultObject->QueryInterface(IID_PPV_ARGS(m_pDefaultProps.GetAddress()));
     if (FAILED(hr))
     {
         ELOG("Error : ID3D12StateObject::QueryInterface() Failed. errcode = 0x%x", hr);
         return false;
+    }
+
+    // レイ生成テーブル.
+    {
+        asdx::ShaderRecord record = {};
+        record.ShaderIdentifier = m_pDefaultProps->GetShaderIdentifier(m_Desc.RayGeneration.c_str());
+
+        asdx::ShaderTable::Desc desc = {};
+        desc.RecordCount = 1;
+        desc.pRecords = &record;
+
+        if (!m_DefaultRayGeneration.Init(pDevice, &desc))
+        {
+            ELOGA("Error : RayGenenerationTable Init Failed.");
+            return false;
+        }
+    }
+
+    // ミステーブル.
+    {
+        std::vector<asdx::ShaderRecord> record;
+        record.resize(m_Desc.MissTable.size());
+        for(size_t i=0; i<m_Desc.MissTable.size(); ++i)
+        {
+            record[i].ShaderIdentifier = m_pDefaultProps->GetShaderIdentifier(m_Desc.MissTable[i].c_str());
+        }
+
+        asdx::ShaderTable::Desc desc = {};
+        desc.RecordCount = uint32_t(record.size());
+        desc.pRecords    = record.data();
+
+        if (!m_DefaultMiss.Init(pDevice, &desc))
+        {
+            ELOGA("Error : MissTable Init Failed.");
+            return false;
+        }
+    }
+
+    // ヒットグループ.
+    {
+        std::vector<asdx::ShaderRecord> record;
+        record.resize(m_Desc.HitGroups.size());
+        for(size_t i=0; i<m_Desc.HitGroups.size(); ++i)
+        {
+            record[i].ShaderIdentifier = m_pDefaultProps->GetShaderIdentifier(m_Desc.HitGroups[i].HitGroupExport);
+        }
+
+        asdx::ShaderTable::Desc desc = {};
+        desc.RecordCount = uint32_t(record.size());
+        desc.pRecords = record.data();
+
+        if (!m_DefaultHitGroup.Init(pDevice, &desc))
+        {
+            ELOGA("Error : HitGroup Init Failed.");
+            return false;
+        }
     }
 
     return true;
@@ -547,30 +660,343 @@ bool RayTracingPipelineState::Init(ID3D12Device5* pDevice, const RayTracingPipel
 //-----------------------------------------------------------------------------
 void RayTracingPipelineState::Term()
 {
-    auto object = m_pObject.Detach();
-    auto props  = m_pProps .Detach();
+    {
+        auto object = m_pDefaultObject.Detach();
+        auto props  = m_pDefaultProps .Detach();
 
-    Dispose(object);
-    Dispose(props);
+        Dispose(object);
+        Dispose(props);
+
+        m_DefaultRayGeneration.Term();
+        m_DefaultMiss         .Term();
+        m_DefaultHitGroup     .Term();
+    }
+
+    {
+        auto object = m_pReloadProps.Detach();
+        auto props  = m_pReloadProps.Detach();
+
+        Dispose(object);
+        Dispose(props);
+
+        m_ReloadRayGeneration.Term();
+        m_ReloadMiss         .Term();
+        m_ReloadtHitGroup    .Term();
+    }
+
+    m_ReloadPathLib .clear();
+    m_ShaderModelLib.clear();
+    m_IncludeDirs   .clear();
+    m_Dependencies  .clear();
 }
 
 //-----------------------------------------------------------------------------
-//      シェーダ識別子を取得します.
+//      シェーダライブラリのリロードパスを設定します.
 //-----------------------------------------------------------------------------
-void* RayTracingPipelineState::GetShaderIdentifier(const wchar_t* exportName) const
-{ return m_pProps->GetShaderIdentifier(exportName); }
+void RayTracingPipelineState::SetReloadPathLib(const char* path, const char* shaderModel)
+{
+    m_ReloadPathLib  = path;
+    m_ShaderModelLib = shaderModel;
+}
 
 //-----------------------------------------------------------------------------
-//      シェーダスタックサイズを取得します.
+//      インクルードディレクトリを設定します.
 //-----------------------------------------------------------------------------
-UINT64 RayTracingPipelineState::GetShaderStackSize(const wchar_t* exportName) const
-{ return m_pProps->GetShaderStackSize(exportName); }
+void RayTracingPipelineState::SetIncludeDirs(const std::vector<std::string>& dirs)
+{
+    m_IncludeDirs = dirs;
+}
 
 //-----------------------------------------------------------------------------
-//      ステートオブジェクトを取得します.
+//      依存ファイルを設定します.
 //-----------------------------------------------------------------------------
-ID3D12StateObject* RayTracingPipelineState::GetStateObject() const
-{ return m_pObject.GetPtr(); }
+void RayTracingPipelineState::SetDependencies(const std::vector<std::string>& dependencies)
+{
+    m_Dependencies = dependencies;
+}
+
+//-----------------------------------------------------------------------------
+//      ファイル更新時の処理です.
+//-----------------------------------------------------------------------------
+void RayTracingPipelineState::OnUpdate(const FileUpdateEventArgs& args)
+{
+    std::string path = args.DirectoryPath;
+    path += "/";
+    path += args.RelativePath;
+
+    path = ToFullPathA(path.c_str());
+
+    switch(args.Type)
+    {
+    case ACTION_MODIFIED:
+    case ACTION_RENAMED_NEW_NAME:
+        {
+            if (!m_ReloadPathLib.empty() && m_ReloadPathLib == path)
+            { m_Dirty = true; }
+
+            for(auto& dep : m_Dependencies)
+            {
+                if (!dep.empty() && dep == path)
+                {
+                    m_Dirty = true;
+                    break;
+                }
+            }
+        }
+        break;
+
+    default:
+        break;
+    }
+}
+
+//-----------------------------------------------------------------------------
+//      シェーダをリロードします.
+//-----------------------------------------------------------------------------
+void RayTracingPipelineState::ReloadShader(const char* path, const char* shaderModel, std::vector<uint8_t>& result)
+{
+    RefPtr<IBlob> blob;
+    // シェーダコンパイル.
+    if (!CompileFromFileA(path, m_IncludeDirs, "", shaderModel, blob.GetAddress()))
+    { return; }
+
+    result.clear();
+    result.resize(blob->GetBufferSize());
+    memcpy(result.data(), blob->GetBufferPointer(), blob->GetBufferSize());
+}
+
+//-----------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------
+void RayTracingPipelineState::Rebuild()
+{
+    if (!m_Dirty)
+        return;
+
+    // オブジェクトを遅延解放.
+    {
+        auto object = m_pReloadObject.Detach();
+        auto props  = m_pReloadProps .Detach();
+        Dispose(object);
+        Dispose(props);
+
+        m_ReloadRayGeneration.Term();
+        m_ReloadMiss         .Term();
+        m_ReloadtHitGroup    .Term();
+    }
+
+    // シェーダリロード.
+    ReloadShader(m_ReloadPathLib.c_str(), m_ShaderModelLib.c_str(), m_Lib);
+
+    auto pDevice = GetD3D12Device();
+
+    uint32_t objCount = 5u + uint32_t(m_Desc.HitGroups.size());
+
+    std::vector<D3D12_STATE_SUBOBJECT> objDesc;
+    objDesc.resize(objCount);
+
+    uint32_t hitExports = 0;
+
+    std::vector<D3D12_EXPORT_DESC> exports;
+    {
+        exports.push_back({ m_Desc.RayGeneration.c_str(), nullptr, D3D12_EXPORT_FLAG_NONE });
+        for(auto& hit : m_Desc.HitGroups)
+        {
+            if (hit.AnyHitShaderImport)
+            {
+                exports.push_back({hit.AnyHitShaderImport, nullptr, D3D12_EXPORT_FLAG_NONE});
+                hitExports++;
+            }
+            if (hit.ClosestHitShaderImport)
+            {
+                exports.push_back({hit.ClosestHitShaderImport, nullptr, D3D12_EXPORT_FLAG_NONE});
+                hitExports++;
+            }
+            if (hit.IntersectionShaderImport)
+            {
+                exports.push_back({hit.IntersectionShaderImport, nullptr, D3D12_EXPORT_FLAG_NONE});
+                hitExports++;
+            }
+        }
+        for(auto& miss : m_Desc.MissTable)
+        {
+            exports.push_back({miss.c_str(), nullptr, D3D12_EXPORT_FLAG_NONE});
+        }
+    }
+
+    auto index = 0;
+
+    D3D12_GLOBAL_ROOT_SIGNATURE globalRootSignature = {};
+    globalRootSignature.pGlobalRootSignature = m_Desc.pGlobalRootSignature;
+
+    objDesc[index].Type  = D3D12_STATE_SUBOBJECT_TYPE_GLOBAL_ROOT_SIGNATURE;
+    objDesc[index].pDesc = &globalRootSignature;
+    index++;
+
+    D3D12_DXIL_LIBRARY_DESC libDesc = {};
+    libDesc.DXILLibrary.BytecodeLength  = m_Lib.size();
+    libDesc.DXILLibrary.pShaderBytecode = m_Lib.data();
+    libDesc.NumExports  = UINT(exports.size());
+    libDesc.pExports    = exports.data();
+
+    objDesc[index].Type     = D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY;
+    objDesc[index].pDesc    = &libDesc;
+    index++;
+
+    D3D12_RAYTRACING_SHADER_CONFIG shaderConfig = {};
+    shaderConfig.MaxAttributeSizeInBytes = m_Desc.MaxAttributeSize;
+    shaderConfig.MaxPayloadSizeInBytes   = m_Desc.MaxPayloadSize;
+
+    objDesc[index].Type     = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_SHADER_CONFIG;
+    objDesc[index].pDesc    = &shaderConfig;
+    index++;
+
+    D3D12_RAYTRACING_PIPELINE_CONFIG pipelineConfig = {};
+    pipelineConfig.MaxTraceRecursionDepth = m_Desc.MaxTraceRecursionDepth;
+
+    objDesc[index].Type     = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_PIPELINE_CONFIG;
+    objDesc[index].pDesc    = &pipelineConfig;
+    index++;
+
+    for(auto i=0u; i<m_Desc.HitGroups.size(); ++i)
+    {
+        objDesc[index].Type  = D3D12_STATE_SUBOBJECT_TYPE_HIT_GROUP;
+        objDesc[index].pDesc = &m_Desc.HitGroups[i];
+        index++;
+    }
+
+    D3D12_STATE_OBJECT_DESC stateObjectDesc = {};
+    stateObjectDesc.Type            = D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE;
+    stateObjectDesc.NumSubobjects   = index;
+    stateObjectDesc.pSubobjects     = objDesc.data();
+
+
+    auto hr = pDevice->CreateStateObject(&stateObjectDesc, IID_PPV_ARGS(m_pReloadObject.GetAddress()));
+
+    // メモリ解放.
+    objDesc.clear();
+
+    if (FAILED(hr))
+    {
+        ELOG("Error : ID3D12Device5::CreateStateObject() Failed. errcode = 0x%x", hr);
+        return;
+    }
+
+    hr = m_pReloadObject->QueryInterface(IID_PPV_ARGS(m_pReloadProps.GetAddress()));
+    if (FAILED(hr))
+    {
+        ELOG("Error : ID3D12StateObject::QueryInterface() Failed. errcode = 0x%x", hr);
+        return;
+    }
+
+    // レイ生成テーブル.
+    {
+        asdx::ShaderRecord record = {};
+        record.ShaderIdentifier = m_pReloadProps->GetShaderIdentifier(m_Desc.RayGeneration.c_str());
+
+        asdx::ShaderTable::Desc desc = {};
+        desc.RecordCount = 1;
+        desc.pRecords = &record;
+
+        if (!m_ReloadRayGeneration.Init(pDevice, &desc))
+        {
+            ELOGA("Error : RayGenenerationTable Init Failed.");
+            return;
+        }
+    }
+
+    // ミステーブル.
+    {
+        std::vector<asdx::ShaderRecord> record;
+        record.resize(m_Desc.MissTable.size());
+        for(size_t i=0; i<m_Desc.MissTable.size(); ++i)
+        {
+            record[i].ShaderIdentifier = m_pReloadProps->GetShaderIdentifier(m_Desc.MissTable[i].c_str());
+        }
+
+        asdx::ShaderTable::Desc desc = {};
+        desc.RecordCount = uint32_t(record.size());
+        desc.pRecords    = record.data();
+
+        if (!m_ReloadMiss.Init(pDevice, &desc))
+        {
+            ELOGA("Error : MissTable Init Failed.");
+            return;
+        }
+    }
+
+    // ヒットグループ.
+    {
+        std::vector<asdx::ShaderRecord> record;
+        record.resize(m_Desc.HitGroups.size());
+        for(size_t i=0; i<m_Desc.HitGroups.size(); ++i)
+        {
+            record[i].ShaderIdentifier = m_pReloadProps->GetShaderIdentifier(m_Desc.HitGroups[i].HitGroupExport);
+        }
+
+        asdx::ShaderTable::Desc desc = {};
+        desc.RecordCount = uint32_t(record.size());
+        desc.pRecords = record.data();
+
+        if (!m_ReloadtHitGroup.Init(pDevice, &desc))
+        {
+            ELOGA("Error : HitGroup Init Failed.");
+            return;
+        }
+    }
+
+    m_Dirty = false;
+}
+
+//-----------------------------------------------------------------------------
+//      レイトレーシングパイプラインを起動します.
+//-----------------------------------------------------------------------------
+void RayTracingPipelineState::DispatchRays(ID3D12GraphicsCommandList6* pCmd, uint32_t width, uint32_t height)
+{
+    assert(pCmd != nullptr);
+    assert(width > 0);
+    assert(height > 0);
+
+    Rebuild();
+
+    D3D12_DISPATCH_RAYS_DESC desc = {};
+
+    if (m_pReloadObject.GetPtr() != nullptr)
+    {
+        auto stateObject = m_pReloadObject.GetPtr();
+        auto rayGenTable = m_ReloadRayGeneration.GetRecordView();
+        auto missTable   = m_ReloadMiss.GetTableView();
+        auto hitGroup    = m_ReloadtHitGroup.GetTableView();
+
+        desc.RayGenerationShaderRecord  = rayGenTable;
+        desc.MissShaderTable            = missTable;
+        desc.HitGroupTable              = hitGroup;
+        desc.Width                      = width;
+        desc.Height                     = height;
+        desc.Depth                      = 1;
+
+        pCmd->SetPipelineState1(stateObject);
+        pCmd->DispatchRays(&desc);
+        return;
+    }
+    else
+    {
+        auto stateObject = m_pDefaultObject.GetPtr();
+        auto rayGenTable = m_DefaultRayGeneration.GetRecordView();
+        auto missTable   = m_DefaultMiss.GetTableView();
+        auto hitGroup    = m_DefaultHitGroup.GetTableView();
+
+        desc.RayGenerationShaderRecord  = rayGenTable;
+        desc.MissShaderTable            = missTable;
+        desc.HitGroupTable              = hitGroup;
+        desc.Width                      = width;
+        desc.Height                     = height;
+        desc.Depth                      = 1;
+
+        pCmd->SetPipelineState1(stateObject);
+        pCmd->DispatchRays(&desc);
+    }
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -8,6 +8,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <cassert>
+#include <algorithm>
 #include <d3d12shader.h>
 #include <fnd/asdxLogger.h>
 #include <fnd/asdxMisc.h>
@@ -699,40 +700,50 @@ void PipelineState::SetIncludeDirs(const std::vector<std::string>& dirs)
 { m_IncludeDirs = dirs; }
 
 //-----------------------------------------------------------------------------
+//      依存ファイル名を設定します.
+//-----------------------------------------------------------------------------
+void PipelineState::SetDependencies(const std::vector<std::string>& dependencies)
+{ m_Dependencies = dependencies; }
+
+//-----------------------------------------------------------------------------
 //      ファイル更新時の処理です.
 //-----------------------------------------------------------------------------
-void PipelineState::OnUpdate(ACTION_TYPE actionType, const char* directoryPath, const char* relativePath)
+void PipelineState::OnUpdate(const FileUpdateEventArgs& args)
 {
-    std::string path = directoryPath;
+    std::string path = args.DirectoryPath;
     path += "/";
-    path += relativePath;
+    path += args.RelativePath;
 
     path = ToFullPathA(path.c_str());
 
-    switch(actionType)
+    switch(args.Type)
     {
     case ACTION_MODIFIED:
     case ACTION_RENAMED_NEW_NAME:
         {
-            // 頂点シェーダ.
             if (!m_ReloadPathVS.empty() && m_ReloadPathVS == path)
-            { ReloadShader(path.c_str(), m_ShaderModelVS.c_str(), m_VS); }
+            { m_Dirty = true; }
 
-            // ピクセルシェーダ.
             if (!m_ReloadPathPS.empty() && m_ReloadPathPS == path)
-            { ReloadShader(path.c_str(), m_ShaderModelPS.c_str(), m_PS); }
+            { m_Dirty = true; }
 
-            // コンピュートシェーダ.
             if (!m_ReloadPathCS.empty() && m_ReloadPathCS == path)
-            { ReloadShader(path.c_str(), m_ShaderModelCS.c_str(), m_CS); }
+            { m_Dirty = true; }
 
-            // 増幅シェーダ.
             if (!m_ReloadPathAS.empty() && m_ReloadPathAS == path)
-            { ReloadShader(path.c_str(), m_ShaderModelAS.c_str(), m_AS); }
+            { m_Dirty = true; }
 
-            // メッシュシェーダ.
             if (!m_ReloadPathMS.empty() && m_ReloadPathMS == path)
-            { ReloadShader(path.c_str(), m_ShaderModelMS.c_str(), m_MS); }
+            { m_Dirty = true; }
+
+            for(auto& dep : m_Dependencies)
+            {
+                if (!dep.empty() && dep == path)
+                {
+                    m_Dirty = true;
+                    break;
+                }
+            }
         }
         break;
 
@@ -759,7 +770,6 @@ void PipelineState::ReloadShader
     result.clear();
     result.resize(blob->GetBufferSize());
     memcpy(result.data(), blob->GetBufferPointer(), blob->GetBufferSize());
-    m_Dirty = true;
 }
 
 //-----------------------------------------------------------------------------
@@ -774,6 +784,29 @@ void PipelineState::Rebuild()
     {
         auto pso = m_ReloadedPSO.Detach();
         Dispose(pso);
+    }
+
+    // シェーダリロード.
+    {
+        // 頂点シェーダ.
+        if (!m_ReloadPathVS.empty())
+        { ReloadShader(m_ReloadPathVS.c_str(), m_ShaderModelVS.c_str(), m_VS); }
+
+        // ピクセルシェーダ.
+        if (!m_ReloadPathPS.empty())
+        { ReloadShader(m_ReloadPathPS.c_str(), m_ShaderModelPS.c_str(), m_PS); }
+
+        // コンピュートシェーダ.
+        if (!m_ReloadPathCS.empty())
+        { ReloadShader(m_ReloadPathCS.c_str(), m_ShaderModelCS.c_str(), m_CS); }
+
+        // 増幅シェーダ.
+        if (!m_ReloadPathAS.empty())
+        { ReloadShader(m_ReloadPathAS.c_str(), m_ShaderModelAS.c_str(), m_AS); }
+
+        // メッシュシェーダ.
+        if (!m_ReloadPathMS.empty())
+        { ReloadShader(m_ReloadPathMS.c_str(), m_ShaderModelMS.c_str(), m_MS); }
     }
 
     if (m_Type == PIPELINE_TYPE_GRAPHICS)
