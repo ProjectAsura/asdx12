@@ -133,14 +133,14 @@ public:
     //!
     //! @return     レンダーターゲットビューを返却します.
     //-------------------------------------------------------------------------
-    const IRenderTargetView* GetRTV() const;
+    IRenderTargetView* GetRTV() const;
 
     //-------------------------------------------------------------------------
     //! @brief      シェーダリソースビューを取得します.
     //!
     //! @return     シェーダリソースビューを返却します.
     //-------------------------------------------------------------------------
-    const IShaderResourceView* GetSRV() const;
+    IShaderResourceView* GetSRV() const;
 
     //-------------------------------------------------------------------------
     //! @brief      構成設定を取得します.
@@ -164,33 +164,6 @@ public:
     void SetName(LPCWSTR tag);
 
 #if ASDX_ENABLE_SINGLE_THREAD
-    //-------------------------------------------------------------------------
-    //! @brief      初期化処理を行います.
-    //!
-    //! @param[in]      pDesc       構成設定です.
-    //! @retval true    初期化成功.
-    //! @retval false   初期化失敗.
-    //-------------------------------------------------------------------------
-    bool Init1(const TargetDesc* pDesc)
-    {
-        m_PrevState = pDesc->InitState;
-        return Init(pDesc);
-    }
-
-    //-------------------------------------------------------------------------
-    //! @brief      初期化処理を行います.
-    //!
-    //! @param[in]      pSwapChain          スワップチェインです.
-    //! @param[in]      backbufferIndex     バックバッファ番号です.
-    //! @retval true    初期化成功.
-    //! @retval false   初期化失敗.
-    //-------------------------------------------------------------------------
-    bool Init1(IDXGISwapChain* pSwapChain, uint32_t backbufferIndex)
-    {
-        m_PrevState = D3D12_RESOURCE_STATE_COMMON;
-        return Init(pSwapChain, backbufferIndex);
-    }
-
     //-------------------------------------------------------------------------
     //! @brief      ステート遷移を行います.
     //! 
@@ -306,14 +279,14 @@ public:
     //!
     //! @return     深度ステンシルビューを返却します.
     //-------------------------------------------------------------------------
-    const IDepthStencilView* GetDSV() const;
+    IDepthStencilView* GetDSV() const;
 
     //-------------------------------------------------------------------------
     //! @brief      シェーダリソースビューを取得します.
     //!
     //! @return     シェーダリソースビューを返却します.
     //-------------------------------------------------------------------------
-    const IShaderResourceView* GetSRV() const;
+    IShaderResourceView* GetSRV() const;
 
     //-------------------------------------------------------------------------
     //! @brief      構成設定を取得します.
@@ -330,20 +303,6 @@ public:
     void SetName(LPCWSTR tag);
 
 #if ASDX_ENABLE_SINGLE_THREAD
-    //-------------------------------------------------------------------------
-    //! @brief      初期化処理を行います.
-    //!
-    //! @param[in]      device      グラフィックスデバイスです.
-    //! @param[in]      pDesc       構成設定です.
-    //! @retval true    初期化に成功.
-    //! @retval false   初期化に失敗.
-    //-------------------------------------------------------------------------
-    bool Init1(const TargetDesc* pDesc)
-    {
-        m_PrevState = pDesc->InitState;
-        return Init(pDesc);
-    }
-
     //-------------------------------------------------------------------------
     //! @brief      ステート遷移を行います.
     //! 
@@ -434,6 +393,15 @@ public:
     bool Init(const TargetDesc* pDesc, uint32_t stride = 0);
 
     //-------------------------------------------------------------------------
+    //! @brief      初期化処理を行います.
+    //! 
+    //! @param[in]      target      カラーターゲットです.
+    //! @retval true    初期化に成功.
+    //! @retval false   初期化に失敗.
+    //-------------------------------------------------------------------------
+    bool Init(ColorTarget& target);
+
+    //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.
     //-------------------------------------------------------------------------
     void Term();
@@ -481,20 +449,6 @@ public:
     void UAVBarrier(ID3D12GraphicsCommandList* pCmdList);
 
 #if ASDX_ENABLE_SINGLE_THREAD
-    //-------------------------------------------------------------------------
-    //! @brief      初期化処理を行います.
-    //!
-    //! @param[in]      device      グラフィックスデバイスです.
-    //! @param[in]      pDesc       構成設定です.
-    //! @retval true    初期化に成功.
-    //! @retval false   初期化に失敗.
-    //-------------------------------------------------------------------------
-    bool Init1(const TargetDesc* pDesc, uint32_t stride = 0)
-    {
-        m_PrevState = pDesc->InitState;
-        return Init(pDesc, stride);
-    }
-
     //-------------------------------------------------------------------------
     //! @brief      ステート遷移を行います.
     //! 

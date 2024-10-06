@@ -7,6 +7,7 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
+#include <cassert>
 #include <gfx/asdxTarget.h>
 #include <gfx/asdxDevice.h>
 #include <fnd/asdxLogger.h>
@@ -336,6 +337,13 @@ bool ColorTarget::Init(const TargetDesc* pDesc)
             srv_desc.Texture1DArray.ResourceMinLODClamp = 0;
         }
     }
+    else if (pDesc->Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
+    {
+        // Not Support Buffer.
+        assert(false);
+        ELOGA("Error : Not Support Buffer Type.");
+        return false;
+    }
 
     if (!CreateRenderTargetView(m_pResource.GetPtr(), &rtv_desc, m_pRTV.GetAddress()))
     {
@@ -496,13 +504,13 @@ ID3D12Resource* ColorTarget::GetResource() const
 //-----------------------------------------------------------------------------
 //      レンダーターゲットビューを取得します.
 //-----------------------------------------------------------------------------
-const IRenderTargetView* ColorTarget::GetRTV() const
+IRenderTargetView* ColorTarget::GetRTV() const
 { return m_pRTV.GetPtr(); }
 
 //-----------------------------------------------------------------------------
 //      シェーダリソースビューを取得します.
 //-----------------------------------------------------------------------------
-const IShaderResourceView* ColorTarget::GetSRV() const
+IShaderResourceView* ColorTarget::GetSRV() const
 { return m_pSRV.GetPtr(); }
 
 //-----------------------------------------------------------------------------
@@ -695,6 +703,13 @@ bool DepthTarget::Init(const TargetDesc* pDesc)
             srv_desc.Texture1D.ResourceMinLODClamp  = 0;
         }
     }
+    else if (pDesc->Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
+    {
+        // Not Support Buffer.
+        assert(false);
+        ELOGA("Error : Not Support Buffer Type.");
+        return false;
+    }
 
     if (!CreateDepthStencilView(m_pResource.GetPtr(), &dsv_desc, m_pDSV.GetAddress()))
     {
@@ -751,13 +766,13 @@ ID3D12Resource* DepthTarget::GetResource() const
 //-----------------------------------------------------------------------------
 //      深度ステンシルビューを取得します.
 //-----------------------------------------------------------------------------
-const IDepthStencilView* DepthTarget::GetDSV() const
+IDepthStencilView* DepthTarget::GetDSV() const
 { return m_pDSV.GetPtr(); }
 
 //-----------------------------------------------------------------------------
 //      シェーダリソースビューを取得します.
 //-----------------------------------------------------------------------------
-const IShaderResourceView* DepthTarget::GetSRV() const
+IShaderResourceView* DepthTarget::GetSRV() const
 { return m_pSRV.GetPtr(); }
 
 //-----------------------------------------------------------------------------
@@ -966,6 +981,80 @@ bool ComputeTarget::Init(const TargetDesc* pDesc, uint32_t stride)
     }
 
     memcpy(&m_Desc, pDesc, sizeof(m_Desc));
+
+    m_PrevState = m_Desc.InitState;
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      初期化処理を行います.
+//-----------------------------------------------------------------------------
+bool ComputeTarget::Init(ColorTarget& target)
+{
+    m_pResource = target.GetResource();
+    m_pSRV      = target.GetSRV();
+
+    auto desc = target.GetDesc();
+
+    D3D12_UNORDERED_ACCESS_VIEW_DESC uav_desc = {};
+    uav_desc.Format = desc.Format;
+
+    if (desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D)
+    {
+        uav_desc.ViewDimension          = D3D12_UAV_DIMENSION_TEXTURE3D;
+        uav_desc.Texture3D.FirstWSlice  = 0;
+        uav_desc.Texture3D.MipSlice     = 0;
+        uav_desc.Texture3D.WSize        = desc.DepthOrArraySize;
+    }
+    else if (desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE2D)
+    {
+        if (desc.DepthOrArraySize > 1)
+        {
+            uav_desc.ViewDimension                      = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
+            uav_desc.Texture2DArray.ArraySize           = desc.DepthOrArraySize;
+            uav_desc.Texture2DArray.FirstArraySlice     = 0;
+            uav_desc.Texture2DArray.MipSlice            = 0;
+            uav_desc.Texture2DArray.PlaneSlice          = 0;
+        }
+
+        else
+        {
+            uav_desc.ViewDimension          = D3D12_UAV_DIMENSION_TEXTURE2D;
+            uav_desc.Texture2D.MipSlice     = 0;
+            uav_desc.Texture2D.PlaneSlice   = 0;
+        }
+    }
+    else if (desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE1D)
+    {
+        if (desc.DepthOrArraySize > 1)
+        {
+            uav_desc.ViewDimension                  = D3D12_UAV_DIMENSION_TEXTURE1DARRAY;
+            uav_desc.Texture1DArray.ArraySize       = desc.DepthOrArraySize;
+            uav_desc.Texture1DArray.FirstArraySlice = 0;
+            uav_desc.Texture1DArray.MipSlice        = 0;
+        }
+        else
+        {
+            uav_desc.ViewDimension      = D3D12_UAV_DIMENSION_TEXTURE1D;
+            uav_desc.Texture1D.MipSlice = 0;
+        }
+    }
+    else if (desc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
+    {
+        // Not Support Buffer.
+        assert(false);
+        ELOGA("Error : Not Support Buffer Type.");
+        return false;
+    }
+
+    if (!CreateUnorderedAccessView(m_pResource.GetPtr(), nullptr, &uav_desc, m_pUAV.GetAddress()))
+    {
+        ELOG("Error : CreateUnorderedAccessView() Failed.");
+        return false;
+    }
+
+    memcpy(&m_Desc, &desc, sizeof(m_Desc));
 
     m_PrevState = m_Desc.InitState;
 
