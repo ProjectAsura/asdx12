@@ -966,7 +966,7 @@ void RayTracingPipelineState::Rebuild()
         }
     }
 
-    DLOGA("Shader Reloaded! File=%s, ShaderModel=%s", m_ReloadPathLib.c_str(), m_ShaderModelLib.c_str());
+    ILOGA("Info : Shader Reloaded! Lib=%s(%s)", m_ReloadPathLib.c_str(), m_ShaderModelLib.c_str());
 }
 
 //-----------------------------------------------------------------------------

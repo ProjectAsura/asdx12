@@ -842,6 +842,9 @@ void PipelineState::Rebuild()
         }
 
          m_ReloadedPSO->SetName(L"asdxGraphicsPipelineState_Reload");
+         ILOGA("Info : Shader Reloaded! VS=%s(%s), PS=%s(%s)",
+             m_ReloadPathVS.c_str(), m_ShaderModelVS.c_str(),
+             m_ReloadPathPS.c_str(), m_ShaderModelPS.c_str());
     }
     else if (m_Type == PIPELINE_TYPE_COMPUTE)
     {
@@ -857,6 +860,7 @@ void PipelineState::Rebuild()
         }
 
         m_ReloadedPSO->SetName(L"asdxComputePipelineState_Reload");
+        ILOGA("Info : Shader Reloaded! CS=%s(%s)", m_ReloadPathCS.c_str(), m_ShaderModelCS.c_str());
     }
     else
     {
@@ -883,9 +887,11 @@ void PipelineState::Rebuild()
         }
 
         m_ReloadedPSO->SetName(L"asdxGeometryPipelineState_Reload");
+        ILOGA("Info : Shader Reloaded! AS=%s(%s), MS=%s(%s), PS=%s(%s)",
+            m_ReloadPathAS.c_str(), m_ShaderModelAS.c_str(),
+            m_ReloadPathMS.c_str(), m_ShaderModelMS.c_str(),
+            m_ReloadPathPS.c_str(), m_ShaderModelPS.c_str());
     }
-
-    DLOGA("Error : Shader Reloaded!");
 }
 
 //-----------------------------------------------------------------------------
