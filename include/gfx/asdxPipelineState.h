@@ -17,10 +17,6 @@
 #include <edit/asdxFileWatcher.h>
 
 
-#ifdef __ID3D12GraphicsCommandList6_INTERFACE_DEFINED__
-#define ASDX_ENABLE_MESH_SHADER
-#endif//__ID3D12GraphicsCommandList6_INTERFACE_DEFINED__
-
 #if defined(DEBUG) || defined(_DEBUG)
 #define D3DCOMPILE_DEBUG 1      // デバッグ情報がシェーダー BLOB に出力されるようする.
 #endif//defined(DEBUG) || defined(_DEBUG)
@@ -149,7 +145,7 @@ public:
     //! @retval true    初期化に成功.
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
-    bool Init(ID3D12Device8* pDevice, const D3D12_GRAPHICS_PIPELINE_STATE_DESC* pDesc);
+    bool Init(ID3D12Device* pDevice, const D3D12_GRAPHICS_PIPELINE_STATE_DESC* pDesc);
 
     //-------------------------------------------------------------------------
     //! @brief      コンピュートパイプラインとして初期化します.
@@ -159,7 +155,7 @@ public:
     //! @retval true    初期化に成功.
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
-    bool Init(ID3D12Device8* pDevice, const D3D12_COMPUTE_PIPELINE_STATE_DESC* pDesc);
+    bool Init(ID3D12Device* pDevice, const D3D12_COMPUTE_PIPELINE_STATE_DESC* pDesc);
 
     //-------------------------------------------------------------------------
     //! @brief      ジオメトリパイプラインとして初期化します.
@@ -169,7 +165,7 @@ public:
     //! @retval true    初期化に成功.
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
-    bool Init(ID3D12Device8* pDevice, const GEOMETRY_PIPELINE_STATE_DESC* pDesc);
+    bool Init(ID3D12Device2* pDevice, const GEOMETRY_PIPELINE_STATE_DESC* pDesc);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.

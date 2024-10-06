@@ -17,6 +17,11 @@
 #include <gfx/asdxShaderCompiler.h>
 
 
+// ヘッダにあるとバグの原因となるので，ソース側に定義.
+#ifdef __ID3D12GraphicsCommandList6_INTERFACE_DEFINED__
+#define ASDX_ENABLE_MESH_SHADER
+#endif//__ID3D12GraphicsCommandList6_INTERFACE_DEFINED__
+
 namespace {
 
 namespace internal {
@@ -433,7 +438,7 @@ PipelineState::~PipelineState()
 //-----------------------------------------------------------------------------
 //      グラフィックスパイプラインとして初期化します.
 //-----------------------------------------------------------------------------
-bool PipelineState::Init(ID3D12Device8* pDevice, const D3D12_GRAPHICS_PIPELINE_STATE_DESC* pDesc)
+bool PipelineState::Init(ID3D12Device* pDevice, const D3D12_GRAPHICS_PIPELINE_STATE_DESC* pDesc)
 {
     if (pDevice == nullptr || pDesc == nullptr)
     {
@@ -476,7 +481,7 @@ bool PipelineState::Init(ID3D12Device8* pDevice, const D3D12_GRAPHICS_PIPELINE_S
 //-----------------------------------------------------------------------------
 //      コンピュートパイプラインとして初期化します.
 //-----------------------------------------------------------------------------
-bool PipelineState::Init(ID3D12Device8* pDevice, const D3D12_COMPUTE_PIPELINE_STATE_DESC* pDesc)
+bool PipelineState::Init(ID3D12Device* pDevice, const D3D12_COMPUTE_PIPELINE_STATE_DESC* pDesc)
 {
     if (pDesc == nullptr)
     {
@@ -515,7 +520,7 @@ bool PipelineState::Init(ID3D12Device8* pDevice, const D3D12_COMPUTE_PIPELINE_ST
 //-----------------------------------------------------------------------------
 //      ジオメトリパイプラインとして初期化します.
 //-----------------------------------------------------------------------------
-bool PipelineState::Init(ID3D12Device8* pDevice, const GEOMETRY_PIPELINE_STATE_DESC* pDesc)
+bool PipelineState::Init(ID3D12Device2* pDevice, const GEOMETRY_PIPELINE_STATE_DESC* pDesc)
 {
     if (pDevice == nullptr || pDesc == nullptr)
     {
