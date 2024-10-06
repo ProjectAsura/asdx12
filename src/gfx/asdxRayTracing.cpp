@@ -704,7 +704,7 @@ void RayTracingPipelineState::Term()
 //-----------------------------------------------------------------------------
 void RayTracingPipelineState::SetReloadPathLib(const char* path, const char* shaderModel)
 {
-    m_ReloadPathLib  = path;
+    m_ReloadPathLib  = ToFullPathA(path);
     m_ShaderModelLib = shaderModel;
 }
 
@@ -713,7 +713,9 @@ void RayTracingPipelineState::SetReloadPathLib(const char* path, const char* sha
 //-----------------------------------------------------------------------------
 void RayTracingPipelineState::SetIncludeDirs(const std::vector<std::string>& dirs)
 {
-    m_IncludeDirs = dirs;
+    m_IncludeDirs.resize(dirs.size());
+    for(auto i=0; i<dirs.size(); ++i)
+    { m_IncludeDirs[i] = ToFullPathA(dirs[i].c_str()); }
 }
 
 //-----------------------------------------------------------------------------
@@ -721,7 +723,9 @@ void RayTracingPipelineState::SetIncludeDirs(const std::vector<std::string>& dir
 //-----------------------------------------------------------------------------
 void RayTracingPipelineState::SetDependencies(const std::vector<std::string>& dependencies)
 {
-    m_Dependencies = dependencies;
+    m_Dependencies.resize(dependencies.size());
+    for(auto i=0; i<dependencies.size(); ++i)
+    { m_Dependencies[i] = ToFullPathA(dependencies[i].c_str()); }
 }
 
 //-----------------------------------------------------------------------------
@@ -762,16 +766,18 @@ void RayTracingPipelineState::OnUpdate(const FileUpdateEventArgs& args)
 //-----------------------------------------------------------------------------
 //      シェーダをリロードします.
 //-----------------------------------------------------------------------------
-void RayTracingPipelineState::ReloadShader(const char* path, const char* shaderModel, std::vector<uint8_t>& result)
+bool RayTracingPipelineState::ReloadShader(const char* path, const char* shaderModel, std::vector<uint8_t>& result)
 {
     RefPtr<IBlob> blob;
     // シェーダコンパイル.
     if (!CompileFromFileA(path, m_IncludeDirs, "", shaderModel, blob.GetAddress()))
-    { return; }
+    { return false; }
 
     result.clear();
     result.resize(blob->GetBufferSize());
     memcpy(result.data(), blob->GetBufferPointer(), blob->GetBufferSize());
+
+    return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -781,6 +787,15 @@ void RayTracingPipelineState::Rebuild()
 {
     if (!m_Dirty)
         return;
+
+    m_Dirty = false;
+
+    // シェーダリロード.
+    if (!ReloadShader(m_ReloadPathLib.c_str(), m_ShaderModelLib.c_str(), m_Lib))
+    {
+        ELOGA("Error : Shader Reload Failed. File=%s, ShaderModel=%s", m_ReloadPathLib.c_str(), m_ShaderModelLib.c_str());
+        return;
+    }
 
     // オブジェクトを遅延解放.
     {
@@ -793,9 +808,6 @@ void RayTracingPipelineState::Rebuild()
         m_ReloadMiss         .Term();
         m_ReloadtHitGroup    .Term();
     }
-
-    // シェーダリロード.
-    ReloadShader(m_ReloadPathLib.c_str(), m_ShaderModelLib.c_str(), m_Lib);
 
     auto pDevice = GetD3D12Device();
 
@@ -954,7 +966,7 @@ void RayTracingPipelineState::Rebuild()
         }
     }
 
-    m_Dirty = false;
+    DLOGA("Shader Reloaded! File=%s, ShaderModel=%s", m_ReloadPathLib.c_str(), m_ShaderModelLib.c_str());
 }
 
 //-----------------------------------------------------------------------------

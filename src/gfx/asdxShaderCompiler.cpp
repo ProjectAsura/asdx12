@@ -313,6 +313,7 @@ bool CompileFromFileA
     }
 
     std::vector<LPCWSTR> args;
+    std::vector<std::wstring> wpaths;
 #if defined(DEBUG) || defined(_DEBUG)
     args.push_back(L"-Zi");
     args.push_back(L"-O0");
@@ -322,10 +323,12 @@ bool CompileFromFileA
 #endif
     if (!includeDirs.empty())
     {
+        wpaths.resize(includeDirs.size());
         for(size_t i=0; i<includeDirs.size(); ++i)
         {
+            wpaths[i] = asdx::ToStringW(includeDirs[i].c_str());
             args.push_back(L"-I");
-            args.push_back(ToStringW(includeDirs[i].c_str()).c_str());
+            args.push_back(wpaths[i].c_str());
         }
     }
 

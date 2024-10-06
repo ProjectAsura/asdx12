@@ -586,7 +586,7 @@ private:
     // private methods.
     //=========================================================================
     void Rebuild();
-    void ReloadShader(const char* path, const char* shaderModel, std::vector<uint8_t>& result);
+    bool ReloadShader(const char* path, const char* shaderModel, std::vector<uint8_t>& result);
 };
 
 

@@ -279,7 +279,7 @@ private:
     std::atomic<bool> m_Dirty = false;
 
     void Rebuild();
-    void ReloadShader(const char* path, const char* shaderModel, std::vector<uint8_t>& result);
+    bool ReloadShader(const char* path, const char* shaderModel, std::vector<uint8_t>& result);
 };
 
 void InitRangeAsSRV(D3D12_DESCRIPTOR_RANGE& range, UINT registerIndex, UINT count = 1, UINT registerSpace = 0);
