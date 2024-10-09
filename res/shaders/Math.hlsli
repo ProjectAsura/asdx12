@@ -1431,6 +1431,7 @@ float3 UniformSampleHemisphere(float2 u)
     float phi = 2.0f * F_PI * u.y;
 
     return float3(r * cos(phi), r * sin(phi), z);
+    // Pdf = z * (1.0f / F_PI);
 }
 
 //-----------------------------------------------------------------------------
@@ -1443,6 +1444,7 @@ float3 UniformSampleSphere(float2 u)
     float phi = 2.0f * F_PI * u.y;
 
     return float3(r * cos(phi), r * sin(phi), z);
+    // Pdf = 1.0f / (4.0f * F_PI);
 }
 
 //-----------------------------------------------------------------------------
@@ -1469,6 +1471,16 @@ float3 UniformSampleCone(float2 u, float cosThetaMax)
         cos(phi) * sinTheta,
         sin(phi) * sinTheta,
         cosTheta);
+}
+
+//-----------------------------------------------------------------------------
+//      三角形を一様サンプリングします.
+//-----------------------------------------------------------------------------
+float3 UniformSampleTriangle(float2 u)
+{
+    float su = sqrt(u.x);
+    float2 b = float2(1.0f - su, u.y * su);
+    return float3(1.0f - b.x - b.y, b.x, b.y);
 }
 
 //-----------------------------------------------------------------------------
