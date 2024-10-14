@@ -274,7 +274,7 @@ OffsetHandle OffsetAllocator::Alloc(uint32_t size, uint32_t alignment)
 //-----------------------------------------------------------------------------
 OffsetHandle OffsetAllocator::Alloc(uint32_t size)
 {
-    if (m_FreeOffset < 0 || size == 0)
+    if (m_FreeOffset < 0 || size == 0 || size > GetFreeSize())
     {
         ELOG("Error : Out of Memory.");
         return OffsetHandle(NO_SPACE, 0, NO_SPACE);
