@@ -558,7 +558,11 @@ float2 PackNormal(float3 normal)
     // Octahedron normal vector encoding.
     // https://knarkowicz.wordpress.com/2014/04/16/octahedron-normal-vector-encoding/
     float3 n = normal / (abs(normal.x) + abs(normal.y) + abs(normal.z));
+#if __HLSL_VERSION >= 2021
+    n.xy = select(n.z >= 0.0f, n.xy, OctWrap(n.xy));
+#else
     n.xy = (n.z >= 0.0f) ? n.xy : OctWrap(n.xy);
+#endif
     return n.xy * 0.5f + 0.5f;
 }
 
@@ -669,7 +673,11 @@ float3 MinDiff(float3 p, float3 r, float3 l)
 {
     float3 v1 = r - p;
     float3 v2 = p - l;
+#if __HLSL_VERSION >= 2021
+    return select(dot(v1, v1) < dot(v2, v2),  v1, v2);
+#else
     return (dot(v1, v1) < dot(v2, v2)) ? v1 : v2;
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -734,7 +742,11 @@ float3 BlendNormal(float3 n1, float3 n2)
 //-----------------------------------------------------------------------------
 float3 BentReflection(float3 T, float3 B, float3 N, float3 V, float anisotropy)
 {
-    float3 anisotropicDirection = (anisotropy >= 0.0) ? B : T;
+#if __HLSL_VERSION >= 2021
+    float3 anisotropicDirection = select(anisotropy >= 0.0f,  B, T);
+#else
+    float3 anisotropicDirection = (anisotropy >= 0.0f) ? B : T;
+#endif
     float3 anisotropicTangent   = cross(anisotropicDirection, V);
     float3 anisotropicNormal    = cross(anisotropicTangent, anisotropicDirection);
     float3 bentNormal           = normalize(lerp(N, anisotropicNormal, anisotropy));
