@@ -487,6 +487,12 @@ bool ByteAddressBuffer::Init(uint64_t size, D3D12_RESOURCE_STATES state)
         return false;
     }
 
+    auto rest = size % 4;
+    if (rest != 0)
+    {
+        size += rest;
+    }
+
     D3D12_HEAP_PROPERTIES prop = {};
     prop.Type                   = D3D12_HEAP_TYPE_DEFAULT;
     prop.CPUPageProperty        = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
@@ -549,10 +555,21 @@ bool ByteAddressBuffer::Init
     const void*                 pInitData
 )
 {
-    if (!Init(size, D3D12_RESOURCE_STATE_GENERIC_READ))
+    if (!Init(size, D3D12_RESOURCE_STATE_COMMON))
     { return false; }
 
     UpdateBuffer(pCmdList, m_Resource.GetPtr(), pInitData);
+
+    {
+        D3D12_RESOURCE_BARRIER barrier = {};
+        barrier.Type                    = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+        barrier.Transition.pResource    = m_Resource.GetPtr();
+        barrier.Transition.StateBefore  = D3D12_RESOURCE_STATE_COPY_DEST;
+        barrier.Transition.StateAfter   = D3D12_RESOURCE_STATE_GENERIC_READ;
+        barrier.Transition.Subresource  = 0;
+
+        pCmdList->ResourceBarrier(1, &barrier);
+    }
 
     return true;
 }
