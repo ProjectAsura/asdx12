@@ -1056,15 +1056,16 @@ bool ShapeStates::Init(ID3D12Device* pDevice, DXGI_FORMAT colorFormat, DXGI_FORM
 
     // ルートシグニチャ生成.
     {
-        D3D12_ROOT_PARAMETER params[2];
-        asdx::InitAsCBV(params[0], 0, D3D12_SHADER_VISIBILITY_ALL, 0);
-        asdx::InitAsCBV(params[1], 1, D3D12_SHADER_VISIBILITY_VERTEX, 0);
+        D3D12_ROOT_PARAMETER params[2] = {};
+        asdx::InitAsCBV(params[0], 0, D3D12_SHADER_VISIBILITY_ALL);
+        asdx::InitAsCBV(params[1], 1, D3D12_SHADER_VISIBILITY_ALL);
 
         D3D12_ROOT_SIGNATURE_DESC desc = {};
         desc.pParameters        = params;
         desc.NumParameters      = _countof(params);
         desc.pStaticSamplers    = nullptr;
         desc.NumStaticSamplers  = 0;
+        desc.Flags              = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
         asdx::RefPtr<ID3DBlob> pBlob;
         asdx::RefPtr<ID3DBlob> pErrorBlob;
@@ -1084,6 +1085,10 @@ bool ShapeStates::Init(ID3D12Device* pDevice, DXGI_FORMAT colorFormat, DXGI_FORM
         }
     }
 
+    D3D12_INPUT_ELEMENT_DESC elements[] = {
+        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+    };
+
     // 不透明パイプラインステート生成.
     {
         D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = {};
@@ -1095,6 +1100,7 @@ bool ShapeStates::Init(ID3D12Device* pDevice, DXGI_FORMAT colorFormat, DXGI_FORM
         desc.RasterizerState        = asdx::Preset::CullNone;
         desc.DepthStencilState      = asdx::Preset::DepthDefault;
         desc.PrimitiveTopologyType  = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+        desc.InputLayout            = { elements, 1 };
         desc.NumRenderTargets       = 1;
         desc.RTVFormats[0]          = colorFormat;
         desc.DSVFormat              = depthFormat;
@@ -1118,8 +1124,9 @@ bool ShapeStates::Init(ID3D12Device* pDevice, DXGI_FORMAT colorFormat, DXGI_FORM
         desc.BlendState             = asdx::Preset::AlphaBlend;
         desc.SampleMask             = D3D12_DEFAULT_SAMPLE_MASK;
         desc.RasterizerState        = asdx::Preset::CullNone;
-        desc.DepthStencilState      = asdx::Preset::DepthDefault;
+        desc.DepthStencilState      = asdx::Preset::DepthReadOnly;
         desc.PrimitiveTopologyType  = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+        desc.InputLayout            = { elements, 1 };
         desc.NumRenderTargets       = 1;
         desc.RTVFormats[0]          = colorFormat;
         desc.DSVFormat              = depthFormat;
@@ -1145,6 +1152,7 @@ bool ShapeStates::Init(ID3D12Device* pDevice, DXGI_FORMAT colorFormat, DXGI_FORM
         desc.RasterizerState        = asdx::Preset::Wireframe;
         desc.DepthStencilState      = asdx::Preset::DepthDefault;
         desc.PrimitiveTopologyType  = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+        desc.InputLayout            = { elements, 1 };
         desc.NumRenderTargets       = 1;
         desc.RTVFormats[0]          = colorFormat;
         desc.DSVFormat              = depthFormat;
@@ -1220,52 +1228,7 @@ void ShapeStates::SetMatrix(const asdx::Matrix& view, const asdx::Matrix& proj)
 {
     m_View = view;
     m_Proj = proj;
-}
 
-//-----------------------------------------------------------------------------
-//      不透明ステートを適用します.
-//-----------------------------------------------------------------------------
-void ShapeStates::ApplyOpaqueState(ID3D12GraphicsCommandList* pCmd)
-{
-    auto address = UpdateParam();
-
-    pCmd->SetGraphicsRootSignature(m_RootSignature.GetPtr());
-    pCmd->SetPipelineState(m_OpaqueState.GetPtr());
-    pCmd->SetGraphicsRootConstantBufferView(1, address);
-    pCmd->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-}
-
-//-----------------------------------------------------------------------------
-//      半透明ステートを適用します.
-//-----------------------------------------------------------------------------
-void ShapeStates::ApplyTranslucentState(ID3D12GraphicsCommandList* pCmd)
-{
-    auto address = UpdateParam();
-
-    pCmd->SetGraphicsRootSignature(m_RootSignature.GetPtr());
-    pCmd->SetPipelineState(m_TranslucentState.GetPtr());
-    pCmd->SetGraphicsRootConstantBufferView(1, address);
-    pCmd->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-}
-
-//-----------------------------------------------------------------------------
-//      ワイヤーフレームステートを適用します.
-//-----------------------------------------------------------------------------
-void ShapeStates::ApplyWireframeState(ID3D12GraphicsCommandList* pCmd)
-{
-    auto address = UpdateParam();
-
-    pCmd->SetGraphicsRootSignature(m_RootSignature.GetPtr());
-    pCmd->SetPipelineState(m_WireframeState.GetPtr());
-    pCmd->SetGraphicsRootConstantBufferView(1, address);
-    pCmd->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-}
-
-//-----------------------------------------------------------------------------
-//      定数バッファを更新します.
-//-----------------------------------------------------------------------------
-D3D12_GPU_VIRTUAL_ADDRESS ShapeStates::UpdateParam()
-{
     CameraParam param;
     param.View = m_View;
     param.Proj = m_Proj;
@@ -1280,8 +1243,51 @@ D3D12_GPU_VIRTUAL_ADDRESS ShapeStates::UpdateParam()
     m_CameraBuffer->Unmap(0, nullptr);
 
     m_BufferIndex = (m_BufferIndex + 1) & 0x1;
+}
 
-    return m_CameraBuffer->GetGPUVirtualAddress() + offset;
+//-----------------------------------------------------------------------------
+//      不透明ステートを適用します.
+//-----------------------------------------------------------------------------
+void ShapeStates::ApplyOpaqueState(ID3D12GraphicsCommandList* pCmd)
+{
+    auto size    = asdx::RoundUp(sizeof(CameraParam), 256);
+    auto offset  = m_BufferIndex * size;
+    auto address = m_CameraBuffer->GetGPUVirtualAddress() + offset;
+
+    pCmd->SetGraphicsRootSignature(m_RootSignature.GetPtr());
+    pCmd->SetPipelineState(m_OpaqueState.GetPtr());
+    pCmd->SetGraphicsRootConstantBufferView(0, address);
+    pCmd->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+}
+
+//-----------------------------------------------------------------------------
+//      半透明ステートを適用します.
+//-----------------------------------------------------------------------------
+void ShapeStates::ApplyTranslucentState(ID3D12GraphicsCommandList* pCmd)
+{
+    auto size    = asdx::RoundUp(sizeof(CameraParam), 256);
+    auto offset  = m_BufferIndex * size;
+    auto address = m_CameraBuffer->GetGPUVirtualAddress() + offset;
+
+    pCmd->SetGraphicsRootSignature(m_RootSignature.GetPtr());
+    pCmd->SetPipelineState(m_TranslucentState.GetPtr());
+    pCmd->SetGraphicsRootConstantBufferView(0, address);
+    pCmd->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+}
+
+//-----------------------------------------------------------------------------
+//      ワイヤーフレームステートを適用します.
+//-----------------------------------------------------------------------------
+void ShapeStates::ApplyWireframeState(ID3D12GraphicsCommandList* pCmd)
+{
+    auto size    = asdx::RoundUp(sizeof(CameraParam), 256);
+    auto offset  = m_BufferIndex * size;
+    auto address = m_CameraBuffer->GetGPUVirtualAddress() + offset;
+
+    pCmd->SetGraphicsRootSignature(m_RootSignature.GetPtr());
+    pCmd->SetPipelineState(m_WireframeState.GetPtr());
+    pCmd->SetGraphicsRootConstantBufferView(0, address);
+    pCmd->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1380,10 +1386,25 @@ bool ShapeBase::InitBuffer
         m_VBV.BufferLocation = m_VB->GetGPUVirtualAddress();
         m_VBV.SizeInBytes    = uint32_t(sizeof(asdx::Vector3) * positionCount);
         m_VBV.StrideInBytes  = uint32_t(sizeof(asdx::Vector3));
+
+        if (positions != nullptr)
+        {
+            uint8_t* pDst = nullptr;
+            auto hr = m_VB->Map(0, nullptr, reinterpret_cast<void**>(&pDst));
+            if (FAILED(hr))
+            {
+                ELOG("Error : ID3D12Resource::Map() Failed. errcode = 0x%x", hr);
+                return false;
+            }
+
+            memcpy(pDst, positions, sizeof(asdx::Vector3) * positionCount);
+
+            m_VB->Unmap(0, nullptr);
+        }
     }
 
     // インデックスバッファ生成.
-    if (indices != nullptr)
+    if (indexCount > 0)
     {
         D3D12_HEAP_PROPERTIES prop = {};
         prop.Type                   = D3D12_HEAP_TYPE_UPLOAD;
@@ -1425,6 +1446,20 @@ bool ShapeBase::InitBuffer
         m_IBV.BufferLocation = m_IB->GetGPUVirtualAddress();
         m_IBV.Format         = DXGI_FORMAT_R32_UINT;
         m_IBV.SizeInBytes    = uint32_t(sizeof(uint32_t) * indexCount);
+
+        if (indices != nullptr)
+        {
+            uint8_t* pDst = nullptr;
+            auto hr = m_IB->Map(0, nullptr, reinterpret_cast<void**>(&pDst));
+            if (FAILED(hr))
+            {
+                ELOG("Error : ID3D12Resource::Map() Failed. errcode = 0x%x", hr);
+                return false;
+            }
+
+            memcpy(pDst, indices, sizeof(uint32_t) * indexCount);
+            m_IB->Unmap(0, nullptr);
+        }
     }
 
     // 定数バッファ生成.
@@ -1510,7 +1545,7 @@ void ShapeBase::Draw(ID3D12GraphicsCommandList* pCmd)
 
     pCmd->IASetVertexBuffers(0, 1, &m_VBV);
     pCmd->IASetIndexBuffer(&m_IBV);
-    pCmd->SetGraphicsRootConstantBufferView(0, address);
+    pCmd->SetGraphicsRootConstantBufferView(1, address);
     pCmd->DrawIndexedInstanced(m_IndexCount, 1, 0, 0, 0);
 }
 
