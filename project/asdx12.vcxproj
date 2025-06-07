@@ -237,6 +237,7 @@
     <ClCompile Include="..\src\gfx\asdxRayTracing.cpp" />
     <ClCompile Include="..\src\gfx\asdxScreenCapture.cpp" />
     <ClCompile Include="..\src\gfx\asdxShaderCompiler.cpp" />
+    <ClCompile Include="..\src\gfx\asdxShape.cpp" />
     <ClCompile Include="..\src\gfx\asdxTarget.cpp" />
     <ClCompile Include="..\src\gfx\asdxTexture.cpp" />
     <ClCompile Include="..\src\res\asdxResModel.cpp" />
@@ -295,6 +296,7 @@
     <ClInclude Include="..\include\gfx\asdxDevice.h" />
     <ClInclude Include="..\include\gfx\asdxDisposer.h" />
     <ClInclude Include="..\include\gfx\asdxPipelineState.h" />
+    <ClInclude Include="..\include\gfx\asdxShape.h" />
     <ClInclude Include="..\include\gfx\asdxRayTracing.h" />
     <ClInclude Include="..\include\gfx\asdxScreenCpature.h" />
     <ClInclude Include="..\include\gfx\asdxShaderCompiler.h" />
@@ -367,6 +369,18 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='DebugMD|x64'">6.4</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='ReleaseMT|x64'">6.4</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='ReleaseMD|x64'">6.4</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\ShapePS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMT|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMD|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMT|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMD|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\ShapeVS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMT|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMD|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMT|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMD|x64'">Vertex</ShaderType>
     </FxCompile>
     <FxCompile Include="..\res\shaders\SkyBoxPS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMT|x64'">Pixel</ShaderType>

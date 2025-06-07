@@ -228,6 +228,9 @@
     <ClCompile Include="..\src\fnd\asdxJobSystem.cpp">
       <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\gfx\asdxShape.cpp">
+      <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\external\imgui\imconfig.h">
@@ -410,6 +413,9 @@
     <ClInclude Include="..\include\fnd\asdxJobSystem.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\gfx\asdxShape.h">
+      <Filter>ヘッダー ファイル\gfx</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\res\shaders\BRDF.hlsli">
@@ -478,6 +484,12 @@
       <Filter>リソース ファイル</Filter>
     </FxCompile>
     <FxCompile Include="..\res\shaders\TaaCS.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\ShapeVS.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\ShapePS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
   </ItemGroup>
