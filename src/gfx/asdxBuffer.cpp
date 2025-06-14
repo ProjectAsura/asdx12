@@ -642,6 +642,11 @@ bool StructuredBuffer::Init(uint64_t count, uint32_t stride, D3D12_RESOURCE_STAT
     }
 
     uint64_t size = count * stride;
+    auto rest = size % 4;
+    if (rest != 0)
+    {
+        size += rest;
+    }
 
     D3D12_HEAP_PROPERTIES prop = {};
     prop.Type                   = D3D12_HEAP_TYPE_DEFAULT;
