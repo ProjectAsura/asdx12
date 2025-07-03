@@ -2244,7 +2244,7 @@ D3D12_SHADER_BYTECODE GetQuadVS()
 //-----------------------------------------------------------------------------
 void DrawQuad(ID3D12GraphicsCommandList* pCmd)
 {
-    auto vbv = GraphicsSystem::Instance().GetQuadVB().GetView();
+    auto vbv = GraphicsSystem::Instance().GetQuadVB().GetVBV();
     pCmd->IASetVertexBuffers(0, 1, &vbv);
     pCmd->IASetIndexBuffer(nullptr);
     pCmd->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);

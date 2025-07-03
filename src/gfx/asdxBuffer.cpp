@@ -125,7 +125,7 @@ void VertexBuffer::Unmap()
 //-----------------------------------------------------------------------------
 //      頂点バッファビューを取得します.
 //-----------------------------------------------------------------------------
-D3D12_VERTEX_BUFFER_VIEW VertexBuffer::GetView() const
+D3D12_VERTEX_BUFFER_VIEW VertexBuffer::GetVBV() const
 { return m_View; }
 
 //-----------------------------------------------------------------------------
@@ -249,7 +249,7 @@ void IndexBuffer::Unmap()
 //-----------------------------------------------------------------------------
 //      インデックスバッファビューを取得します.
 //-----------------------------------------------------------------------------
-D3D12_INDEX_BUFFER_VIEW IndexBuffer::GetView() const
+D3D12_INDEX_BUFFER_VIEW IndexBuffer::GetIBV() const
 { return m_View; }
 
 //-----------------------------------------------------------------------------
@@ -411,13 +411,13 @@ ID3D12Resource* ConstantBuffer::GetResource(uint32_t index) const
 //-----------------------------------------------------------------------------
 //      定数バッファビューを取得します.
 //-----------------------------------------------------------------------------
-IConstantBufferView* ConstantBuffer::GetView() const
+IConstantBufferView* ConstantBuffer::GetCBV() const
 { return m_View[m_Index].GetPtr(); }
 
 //-----------------------------------------------------------------------------
 //      定数バッファビューを取得します.
 //-----------------------------------------------------------------------------
-IConstantBufferView* ConstantBuffer::GetView(uint32_t index) const
+IConstantBufferView* ConstantBuffer::GetCBV(uint32_t index) const
 {
     assert(index < 2);
     return m_View[index].GetPtr();;
@@ -593,7 +593,7 @@ ID3D12Resource* ByteAddressBuffer::GetResource() const
 //-----------------------------------------------------------------------------
 //      シェーダリソースビューを取得します.
 //-----------------------------------------------------------------------------
-IShaderResourceView* ByteAddressBuffer::GetView() const
+IShaderResourceView* ByteAddressBuffer::GetSRV() const
 { return m_View.GetPtr(); }
 
 //-----------------------------------------------------------------------------
@@ -749,7 +749,7 @@ ID3D12Resource* StructuredBuffer::GetResource() const
 //-----------------------------------------------------------------------------
 //      ビューを取得します.
 //-----------------------------------------------------------------------------
-IShaderResourceView* StructuredBuffer::GetView() const
+IShaderResourceView* StructuredBuffer::GetSRV() const
 { return m_View.GetPtr(); }
 
 //-----------------------------------------------------------------------------

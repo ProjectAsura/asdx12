@@ -687,7 +687,7 @@ bool GuiMgr::Init
             return false;
         }
 
-        io.Fonts->TexID = (void*)m_FontTexture.GetView();
+        io.Fonts->TexID = (void*)m_FontTexture.GetSRV();
     }
 
     auto pDevice = GetD3D12Device();
@@ -1069,12 +1069,12 @@ void GuiMgr::Draw(ID3D12GraphicsCommandList* pCmdList)
     }
 
     {
-        auto vbv = m_VB[m_BufferIndex].GetView();
-        auto ibv = m_IB[m_BufferIndex].GetView();
+        auto vbv = m_VB[m_BufferIndex].GetVBV();
+        auto ibv = m_IB[m_BufferIndex].GetIBV();
         pCmdList->SetGraphicsRootSignature(m_RootSig.GetPtr());
         pCmdList->SetPipelineState(m_PSO.GetPtr());
         pCmdList->SetGraphicsRootConstantBufferView(0, m_CB.GetResource()->GetGPUVirtualAddress());
-        pCmdList->SetGraphicsRootDescriptorTable(1, m_FontTexture.GetView()->GetHandleGPU());
+        pCmdList->SetGraphicsRootDescriptorTable(1, m_FontTexture.GetSRV()->GetHandleGPU());
         pCmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         pCmdList->IASetVertexBuffers(0, 1, &vbv);
         pCmdList->IASetIndexBuffer(&ibv);
@@ -1109,7 +1109,7 @@ void GuiMgr::Draw(ID3D12GraphicsCommandList* pCmdList)
                         // フォントのテクスチャに戻す.
                         if (changeTexture)
                         {
-                            pCmdList->SetGraphicsRootDescriptorTable(1, m_FontTexture.GetView()->GetHandleGPU());
+                            pCmdList->SetGraphicsRootDescriptorTable(1, m_FontTexture.GetSRV()->GetHandleGPU());
                             changeTexture = false;
                         }
                     }
