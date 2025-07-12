@@ -989,7 +989,7 @@ bool Application::InitD3D()
         {
             for(auto& info : infos)
             {
-                if (info.Width <= m_Width && info.Height <= m_Height)
+                if (m_Width <= info.Width  && m_Height <= info.Height)
                 {
                     detect          = true;
                     supportedInfo   = info;
@@ -1288,14 +1288,13 @@ void Application::ResizeEvent( const ResizeEventArgs& param )
     GetDisplayInfo(format, infos);
 
     auto detect = false;
-    DisplayInfo supportedInfo = {};
 
+    // 完全一致チェック.
     for(auto& info : infos)
     {
         if (info.Width == param.Width && info.Height == param.Height)
         {
             detect = true;
-            supportedInfo = info;
             break;
         }
     }
@@ -1305,10 +1304,9 @@ void Application::ResizeEvent( const ResizeEventArgs& param )
     {
         for(auto& info : infos)
         {
-            if (info.Width <= param.Width && info.Height <= param.Height)
+            if (param.Width <= info.Width && param.Height <= info.Height)
             {
-                detect          = true;
-                supportedInfo   = info;
+                detect = true;
                 break;
             }
         }
@@ -1319,11 +1317,11 @@ void Application::ResizeEvent( const ResizeEventArgs& param )
 
     m_Width       = param.Width;
     m_Height      = param.Height;
-    m_AspectRatio = (FLOAT)supportedInfo.Width / (FLOAT)supportedInfo.Height;
+    m_AspectRatio = (FLOAT)m_Width / (FLOAT)m_Height;
 
     // ビューポートの設定.
-    m_Viewport.Width    = (FLOAT)supportedInfo.Width;
-    m_Viewport.Height   = (FLOAT)supportedInfo.Height;
+    m_Viewport.Width    = (FLOAT)m_Width;
+    m_Viewport.Height   = (FLOAT)m_Height;
     m_Viewport.MinDepth = 0.0f;
     m_Viewport.MaxDepth = 1.0f;
     m_Viewport.TopLeftX = 0;
@@ -1331,9 +1329,9 @@ void Application::ResizeEvent( const ResizeEventArgs& param )
 
     // シザー矩形の設定.
     m_ScissorRect.left   = 0;
-    m_ScissorRect.right  = supportedInfo.Width;
+    m_ScissorRect.right  = m_Width;
     m_ScissorRect.top    = 0;
-    m_ScissorRect.bottom = supportedInfo.Height;
+    m_ScissorRect.bottom = m_Height;
 
     if ( m_pSwapChain4 != nullptr )
     {
@@ -1353,7 +1351,7 @@ void Application::ResizeEvent( const ResizeEventArgs& param )
         HRESULT hr = S_OK;
 
         // バッファをリサイズ.
-        hr = m_pSwapChain4->ResizeBuffers( m_SwapChainCount, supportedInfo.Width, supportedInfo.Height, format, 0 );
+        hr = m_pSwapChain4->ResizeBuffers( m_SwapChainCount, m_Width, m_Height, format, 0 );
         if ( FAILED( hr ) )
         { DLOG( "Error : IDXGISwapChain::ResizeBuffer() Failed. errcode = 0x%x", hr ); }
 
@@ -1366,8 +1364,8 @@ void Application::ResizeEvent( const ResizeEventArgs& param )
         TargetDesc desc;
         desc.Dimension          = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
         desc.Alignment          = 0;
-        desc.Width              = supportedInfo.Width;
-        desc.Height             = supportedInfo.Height;
+        desc.Width              = m_Width;
+        desc.Height             = m_Height;
         desc.DepthOrArraySize   = 1;
         desc.MipLevels          = 1;
         desc.Format             = m_DepthStencilFormat;

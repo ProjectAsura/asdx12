@@ -983,6 +983,7 @@ bool ComputeTarget::Init(const TargetDesc* pDesc, uint32_t stride)
     memcpy(&m_Desc, pDesc, sizeof(m_Desc));
 
     m_PrevState = m_Desc.InitState;
+    m_Stride    = stride;
 
     return true;
 }
@@ -1073,6 +1074,22 @@ void ComputeTarget::Term()
     Dispose(resource);
  
     memset(&m_Desc, 0, sizeof(m_Desc));
+    m_Stride = 0;
+}
+
+//-----------------------------------------------------------------------------
+//      リサイズ処理を行います.
+//-----------------------------------------------------------------------------
+bool ComputeTarget::Resize(uint32_t width, uint32_t height, uint16_t depth)
+{
+    auto desc   = m_Desc;
+    auto stride = m_Stride;
+    Term();
+
+    desc.Width            = width;
+    desc.Height           = height;
+    desc.DepthOrArraySize = depth;
+    return Init(&desc, stride);
 }
 
 //-----------------------------------------------------------------------------
@@ -1098,6 +1115,12 @@ const IShaderResourceView* ComputeTarget::GetSRV() const
 //-----------------------------------------------------------------------------
 TargetDesc ComputeTarget::GetDesc() const
 { return m_Desc; }
+
+//-----------------------------------------------------------------------------
+//      ストライドサイズを取得します.
+//-----------------------------------------------------------------------------
+uint32_t ComputeTarget::GetStride() const
+{ return m_Stride; }
 
 //-----------------------------------------------------------------------------
 //      デバッグ名を設定します.

@@ -811,9 +811,7 @@ bool GraphicsSystem::Init(const DeviceDesc& deviceDesc)
             if (SUCCEEDED(hr))
             {
                 m_pDebug->EnableDebugLayer();
-            #if 0 // 呼び出すとメッシュシェーダが表示されなくなるので，封印.
                 m_pDebug->SetEnableGPUBasedValidation(TRUE);
-            #endif
             }
         }
     }
@@ -1068,7 +1066,7 @@ bool GraphicsSystem::Init(const DeviceDesc& deviceDesc)
         m_QuadVB.Unmap();
     }
 
-#if 0
+#if 1
     // コマンドシグニチャ生成.
     {
         {
