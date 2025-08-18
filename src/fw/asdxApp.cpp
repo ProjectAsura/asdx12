@@ -1248,15 +1248,6 @@ void Application::Run()
 }
 
 //-----------------------------------------------------------------------------
-//      キーイベント処理.
-//-----------------------------------------------------------------------------
-void Application::KeyEvent( const KeyEventArgs& param )
-{
-    // キーイベント呼び出し.
-    OnKey( param );
-}
-
-//-----------------------------------------------------------------------------
 //      リサイズイベント処理.
 //-----------------------------------------------------------------------------
 void Application::ResizeEvent( const ResizeEventArgs& param )
@@ -1382,18 +1373,6 @@ void Application::ResizeEvent( const ResizeEventArgs& param )
 }
 
 //-----------------------------------------------------------------------------
-//      マウスイベント処理.
-//-----------------------------------------------------------------------------
-void Application::MouseEvent( const MouseEventArgs& param )
-{ OnMouse( param ); }
-
-//-----------------------------------------------------------------------------
-//      ドロップイベント処理.
-//------------------------------------------------------------------------------
-void Application::DropEvent( const wchar_t** dropFiles, uint32_t fileNum )
-{ OnDrop( dropFiles, fileNum ); }
-
-//-----------------------------------------------------------------------------
 //      ウィンドウプロシージャ.
 //-----------------------------------------------------------------------------
 LRESULT CALLBACK Application::MsgProc( HWND hWnd, UINT uMsg, WPARAM wp, LPARAM lp )
@@ -1419,7 +1398,7 @@ LRESULT CALLBACK Application::MsgProc( HWND hWnd, UINT uMsg, WPARAM wp, LPARAM l
         args.IsKeyDown = isKeyDown;
 
         if (pInstance != nullptr)
-        { pInstance->KeyEvent(args); }
+        { pInstance->OnKey(args); }
     }
 
     // 古いWM_MOUSEWHEELの定義.
@@ -1477,7 +1456,7 @@ LRESULT CALLBACK Application::MsgProc( HWND hWnd, UINT uMsg, WPARAM wp, LPARAM l
         args.IsSideButton2Down  = isSideButton2Down;
 
         if (pInstance != nullptr)
-        { pInstance->MouseEvent(args); }
+        { pInstance->OnMouse(args); }
     }
 
     switch( uMsg )
@@ -1537,7 +1516,7 @@ LRESULT CALLBACK Application::MsgProc( HWND hWnd, UINT uMsg, WPARAM wp, LPARAM l
             }
 
             if (pInstance != nullptr)
-            { pInstance->DropEvent(dropFiles, numFiles); }
+            { pInstance->OnDrop(dropFiles, numFiles); }
 
             // 作業用のバッファを解放.
             for (uint32_t i=0; i < numFiles; i++)
@@ -1600,25 +1579,19 @@ bool Application::OnInit()
 //      終了時の処理.
 //-----------------------------------------------------------------------------
 void Application::OnTerm()
-{
-    /* DO_NOTHING */
-}
+{ /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      フレーム遷移時の処理.
 //-----------------------------------------------------------------------------
 void Application::OnFrameMove( FrameEventArgs& )
-{
-    /* DO_NOTHING */
-}
+{ /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      フレーム描画字の処理.
 //-----------------------------------------------------------------------------
 void Application::OnFrameRender( FrameEventArgs& )
-{
-    /* DO_NOTHING */
-}
+{ /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      コマンドを実行して，画面に表示します.
