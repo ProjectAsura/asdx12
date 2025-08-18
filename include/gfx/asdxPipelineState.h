@@ -10,6 +10,7 @@
 //-----------------------------------------------------------------------------
 #include <vector>
 #include <map>
+#include <array>
 #include <atomic>
 #include <d3d12.h>
 #include <fnd/asdxRef.h>
@@ -84,6 +85,11 @@ public:
     static const D3D12_SHADER_BYTECODE CopyPS;          //!< コピー用ピクセルシェーダ.
     static const D3D12_SHADER_BYTECODE SpriteVS;        //!< スプライト用頂点シェーダ.
     static const D3D12_SHADER_BYTECODE SpritePS;        //!< スプライト用ピクセルシェーダ.
+
+    static const D3D12_STATIC_SAMPLER_DESC StaticSamplers[11];  //!< スタティックサンプラー.
+    static const D3D12_INPUT_ELEMENT_DESC  QuadElements[2];     //!< フルスクリーン矩形用入力レイアウト.
+
+    static D3D12_SHADER_BYTECODE GetQuadVS();   //!< フルスクリーン矩形用頂点シェーダを取得します.
 };
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -12,6 +12,7 @@
 #include <gfx/asdxTexture.h>
 #include <gfx/asdxDevice.h>
 #include <gfx/asdxCommandList.h>
+#include <gfx/asdxUpdateCommand.h>
 #include <fnd/asdxLogger.h>
 
 

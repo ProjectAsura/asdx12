@@ -10,6 +10,7 @@
 #include <cassert>
 #include <gfx/asdxBuffer.h>
 #include <gfx/asdxDevice.h>
+#include <gfx/asdxUpdateCommand.h>
 #include <fnd/asdxLogger.h>
 
 

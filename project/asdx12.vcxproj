@@ -232,6 +232,7 @@
     <ClCompile Include="..\src\gfx\asdxCamera.cpp" />
     <ClCompile Include="..\src\gfx\asdxCommandList.cpp" />
     <ClCompile Include="..\src\gfx\asdxCommandQueue.cpp" />
+    <ClCompile Include="..\src\gfx\asdxDescriptorHeap.cpp" />
     <ClCompile Include="..\src\gfx\asdxDevice.cpp" />
     <ClCompile Include="..\src\gfx\asdxPipelineState.cpp" />
     <ClCompile Include="..\src\gfx\asdxRayTracing.cpp" />
@@ -240,6 +241,7 @@
     <ClCompile Include="..\src\gfx\asdxShape.cpp" />
     <ClCompile Include="..\src\gfx\asdxTarget.cpp" />
     <ClCompile Include="..\src\gfx\asdxTexture.cpp" />
+    <ClCompile Include="..\src\gfx\asdxUpdateCommand.cpp" />
     <ClCompile Include="..\src\res\asdxResModel.cpp" />
     <ClCompile Include="..\src\res\asdxResTexture.cpp" />
   </ItemGroup>
@@ -293,6 +295,7 @@
     <ClInclude Include="..\include\gfx\asdxCamera.h" />
     <ClInclude Include="..\include\gfx\asdxCommandList.h" />
     <ClInclude Include="..\include\gfx\asdxCommandQueue.h" />
+    <ClInclude Include="..\include\gfx\asdxDescriptorHeap.h" />
     <ClInclude Include="..\include\gfx\asdxDevice.h" />
     <ClInclude Include="..\include\gfx\asdxDisposer.h" />
     <ClInclude Include="..\include\gfx\asdxPipelineState.h" />
@@ -302,7 +305,7 @@
     <ClInclude Include="..\include\gfx\asdxShaderCompiler.h" />
     <ClInclude Include="..\include\gfx\asdxTarget.h" />
     <ClInclude Include="..\include\gfx\asdxTexture.h" />
-    <ClInclude Include="..\include\gfx\asdxView.h" />
+    <ClInclude Include="..\include\gfx\asdxUpdateCommand.h" />
     <ClInclude Include="..\include\res\asdxResModel.h" />
     <ClInclude Include="..\include\res\asdxResTexture.h" />
   </ItemGroup>
