@@ -1,10 +1,15 @@
 //-----------------------------------------------------------------------------
 // File : TextureUtil.hlsli
-// Desc : Math Utility.
+// Desc : Texture Utility.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 #ifndef ASDX_TEXTURE_UTIL_HLSLI
 #define ASDX_TEXTURE_UTIL_HLSLI
+
+//-----------------------------------------------------------------------------
+// Includes
+//-----------------------------------------------------------------------------
+#include "Math.hlsli"
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -15,6 +20,57 @@ struct BilinearData
     float2 origin;
     float2 weight;
 };
+
+//-----------------------------------------------------------------------------
+//      UVアニメーションを行います.
+//-----------------------------------------------------------------------------
+float2 UVAnimation(float2 uv, float2 scale, float2 offset, float rotate)
+{
+    float2 st = uv * scale;
+    float s, c;
+    sincos(rotate, s, c);
+
+    float2 temp = st;
+    st.x = temp.x * c - temp.y * s;
+    st.y = temp.x * s + temp.y * c;
+    st += offset;
+    return st;
+}
+
+//-----------------------------------------------------------------------------
+//      スフィアマップのテクスチャ座標を求めます.
+//-----------------------------------------------------------------------------
+float2 ToSphereMapCoord(float3 reflectDir)
+{
+    float theta = acos(reflectDir.y);
+    float phi   = atan2(reflectDir.z, reflectDir.x);
+    if (reflectDir.z < 0.0f)
+    {
+        phi += F_2PI;
+    }
+
+    return float2(phi * F_1DIV2PI, theta * F_1DIVPI);
+}
+
+//-----------------------------------------------------------------------------
+//      スフィアマップのテクスチャ座標からキューブマップサンプリング方向を求めます.
+//-----------------------------------------------------------------------------
+float3 FromSphereMapCoord(float2 uv)
+{
+    float phi   = uv.x * F_2PI;
+    float theta = uv.y * F_PI;
+
+    float sinTheta, cosTheta;
+    sincos(theta, sinTheta, cosTheta);
+
+    float sinPhi, cosPhi;
+    sincos(phi, sinPhi, cosPhi);
+
+    return float3(
+        cosPhi * sinTheta,
+        sinPhi * sinTheta,
+        cosTheta);
+}
 
 //-----------------------------------------------------------------------------
 //      単なる視差マッピング.

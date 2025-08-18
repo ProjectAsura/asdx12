@@ -12,6 +12,50 @@
 #include "Math.hlsli"
 
 
+
+//-----------------------------------------------------------------------------
+//      グロシネスに変換します.
+//-----------------------------------------------------------------------------
+float RoughnessToGlossiness(float roughness)
+{
+    return saturate(1.0f - roughness);
+}
+
+//-----------------------------------------------------------------------------
+//      ラフネスに変換します.
+//-----------------------------------------------------------------------------
+float GlossinessToRoughness(float glossiness)
+{
+    return saturate(1.0f - glossiness);
+}
+
+//-----------------------------------------------------------------------------
+//      PBR RoughnessからTradiational Specular Powerに変換します.
+//-----------------------------------------------------------------------------
+float GlossinessToSpecularPower(float glossiness)
+{
+    // Sebastien Lagarade, "Adopting a physically based shading model", 
+    // https://seblagarde.wordpress.com/2011/08/17/hello-world/
+    // ※有効範囲は[2, 2048]まで.
+    return exp2(10.0f * glossiness + 1.0f);
+}
+
+//-----------------------------------------------------------------------------
+//      Traditional Specular Power から PBR Glossinessに変換します.
+//-----------------------------------------------------------------------------
+float SpecularPowerToGlossiness(float specularPower)
+{
+    return log2(specularPower) * 0.01f - 1.0f;
+}
+
+//-----------------------------------------------------------------------------
+//      Traditional Specular Power から　PBR Roughnessに変換します.
+//-----------------------------------------------------------------------------
+float SpecularPowerToRoughness(float specularPower)
+{
+    return SpecularPowerToRoughness(SpecularPowerToGlossiness(specularPower));
+}
+
 //-----------------------------------------------------------------------------
 //      ラフネスからスペキュラー指数を求めます.
 //-----------------------------------------------------------------------------
@@ -735,5 +779,34 @@ float PowerHeuristic(float nf, float pf, float ng, float pg)
     float g = ng * pg;
     return (f * f) / (f * f + g * g);
 }
+
+//-----------------------------------------------------------------------------
+//        Toksvigフィルタを適用します.
+//-----------------------------------------------------------------------------
+float ToksvigRoughness(float3 normal, float roughness)
+{
+    float length_normal = length(normal);
+    float shininess = 1.0f - roughness;
+    float toksvig_shininess = length_normal * shininess / (length_normal + shininess * (1.0f - length_normal));
+    return 1.0f - toksvig_shininess;
+}
+
+//-----------------------------------------------------------------------------
+//      Tokuyoshi-Kaplanyanフィルタを適用します.
+//-----------------------------------------------------------------------------
+float TokuyoshiRoughness(float3 normal, float roughness, float sigma2, float kappa)
+{
+    // Yusuke Tokuyoshi and Anton S. Kaplanyan, "Improved Geometric Specular Antialiasing",
+    // ACM SIGGRAPH Symposium on Interactive 3D Graphics and Games 2019, 
+    // sigma2 : screen-space variance.
+    // kappa  : clamping threshold.
+    // ※ sigma^2 = 0.25, kappa = 0.18 in the paper.
+    float3 dndu = ddx(normal);
+    float3 dndv = ddy(normal);
+    float variance = sigma2 * (dot(dndu, dndu) + dot(dndv, dndv));
+    float kernelRoughness2 = min(2.0f * variance, kappa);
+    return sqrt(saturate(roughness * roughness + kernelRoughness2));
+}
+
 
 #endif//ADX_BRDF_HLSLI

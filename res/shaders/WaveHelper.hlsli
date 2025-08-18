@@ -140,34 +140,61 @@ float2 WaveActiveLerp(float value, float t)
     return float2(interpolation, oneMinusT);
 }
 
-#if __HLSL_VERSION >= 2021
-//-----------------------------------------------------------------------------
-//      スカラー化ロードを試みます.
-//-----------------------------------------------------------------------------
-template<typename T>
-void TryScalarLoad(out T result, StructuredBuffer<T> buffer, uint index)
-{
-    // [Mishima 2016] 三嶋仁, 清水昭尋, "「バイオハザード7」を実現するレンダリング技術",
-    // CEDEC 2016, Slide 15, https://cedil.cesa.or.jp/cedil_sessions/view/1488
+//#if __HLSL_VERSION >= 2021
+////-----------------------------------------------------------------------------
+////      スカラー化ロードを試みます.
+////-----------------------------------------------------------------------------
+//template<typename T>
+//void TryScalarLoad(out T result, StructuredBuffer<T> buffer, uint index)
+//{
+//    // [Mishima 2016] 三嶋仁, 清水昭尋, "「バイオハザード7」を実現するレンダリング技術",
+//    // CEDEC 2016, Slide 15, https://cedil.cesa.or.jp/cedil_sessions/view/1488
 
-    uint lane = WaveReadFirstLane(index);
-    if (WaveActiveAllTrue(index == lane))
-        result = buffer[lane];
-    else
-        result = buffer[index];
-}
-#else
+//    uint lane = WaveReadFirstLane(index);
+//    if (WaveActiveAllTrue(index == lane))
+//        result = buffer[lane];
+//    else
+//        result = buffer[index];
+//}
+//#else
+////-----------------------------------------------------------------------------
+////      スカラー化ロードを試みます.
+////-----------------------------------------------------------------------------
+//#define TryScalarLoad(result, buffer, index)    \
+//{                                               \
+//    uint lane = WaveReadLaneFirst(index);       \
+//    if (WaveActiveAllTrue(index == lane))       \
+//        result = buffer[lane];                  \
+//    else                                        \
+//        result = buffer[index];                 \
+//}
+//#endif
+
 //-----------------------------------------------------------------------------
-//      スカラー化ロードを試みます.
+//      ビットが立っている数を求めます.
 //-----------------------------------------------------------------------------
-#define TryScalarLoad(result, buffer, index)    \
-{                                               \
-    uint lane = WaveReadLaneFirst(index);       \
-    if (WaveActiveAllTrue(index == lane))       \
-        result = buffer[lane];                  \
-    else                                        \
-        result = buffer[index];                 \
+uint SumCountBits(uint4 mask)
+{
+    uint4 count = countbits(mask);
+    return dot(count, 1u.xxxx);
 }
-#endif
+
+//-----------------------------------------------------------------------------
+//      最も低いレーン番号を取得します.
+//-----------------------------------------------------------------------------
+uint GetLowestLane(uint4 mask)
+{
+    uint4 lowLanes = (uint4) (firstbitlow(mask) | uint4(0, 32, 64, 96));
+    return min(min(lowLanes.x, lowLanes.y), min(lowLanes.z, lowLanes.w));
+}
+
+//-----------------------------------------------------------------------------
+//      最も高いレーン番号を取得します
+//-----------------------------------------------------------------------------
+uint GetHighestLane(uint4 mask)
+{
+    uint4 hiLanes = (uint4) (firstbithigh(mask) | uint4(0, 32, 64, 96));
+    return max(max(hiLanes.x, hiLanes.y), max(hiLanes.z, hiLanes.w));
+}
 
 #endif//ASDX_WAVE_HELPER_HLSLI

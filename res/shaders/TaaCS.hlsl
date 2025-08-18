@@ -8,7 +8,9 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include "Math.hlsli"
+#include "Color.hlsli"
 #include "TextureUtil.hlsli"
+#include "ComputeUtil.hlsli"
 
 #ifndef ENABLE_REVERSE_Z
 #define ENABLE_REVERSE_Z    (0)

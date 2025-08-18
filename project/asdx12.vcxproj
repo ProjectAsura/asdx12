@@ -312,11 +312,16 @@
   <ItemGroup>
     <None Include="..\include\fnd\asdxMath.inl" />
     <None Include="..\res\shaders\BRDF.hlsli" />
+    <None Include="..\res\shaders\Color.hlsli" />
+    <None Include="..\res\shaders\ComputeUtil.hlsli" />
+    <None Include="..\res\shaders\Culling.hlsli" />
     <None Include="..\res\shaders\Math.hlsli" />
+    <None Include="..\res\shaders\Random.hlsli" />
     <None Include="..\res\shaders\RayQuery.hlsli" />
     <None Include="..\res\shaders\Samplers.hlsli" />
     <None Include="..\res\shaders\Shadow.hlsli" />
     <None Include="..\res\shaders\SphericalHarmonics.hlsli" />
+    <None Include="..\res\shaders\TangentSpace.hlsli" />
     <None Include="..\res\shaders\TextureUtil.hlsli" />
     <None Include="..\res\shaders\WaveHelper.hlsli" />
   </ItemGroup>
