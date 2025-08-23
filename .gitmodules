@@ -4,3 +4,9 @@
 [submodule "external/tinyxml2"]
 	path = external/tinyxml2
 	url = https://github.com/leethomason/tinyxml2
+[submodule "external/cmdline"]
+	path = external/cmdline
+	url = https://github.com/ProjectAsura/cmdline.git
+[submodule "external/DirectXTex"]
+	path = external/DirectXTex
+	url = https://github.com/microsoft/DirectXTex.git

@@ -1,0 +1,22 @@
+﻿namespace asdx.res;
+
+struct SubresourceInfo
+{
+    RowPitch   : ulong;
+    SlicePitch : ulong;
+}
+
+table TextureBinary
+{
+    Version          : uint;
+    Dimension        : uint;
+    Width            : uint;
+    Height           : uint;
+    DepthOrArraySize : ushort;
+    MipLevels        : ushort;
+    Format           : uint;
+    Subresources     : [SubresourceInfo];
+    Texels           : [ubyte];
+}
+
+root_type TextureBinary;
