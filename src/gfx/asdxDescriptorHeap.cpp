@@ -73,7 +73,7 @@ bool DescriptorHeap::Init(ID3D12Device* pDevice, const D3D12_DESCRIPTOR_HEAP_DES
 void DescriptorHeap::Term()
 {
     {
-        ScopedLock lock(&m_SpinLock);
+        ScopedLock<SpinLock> lock(m_SpinLock);
 
         for(auto& list : m_DisposeList)
         {
@@ -98,7 +98,7 @@ void DescriptorHeap::Term()
 //-----------------------------------------------------------------------------
 OffsetHandle DescriptorHeap::Alloc(uint32_t count)
 {
-    ScopedLock lock(&m_SpinLock);
+    ScopedLock<SpinLock> lock(m_SpinLock);
     return m_Allocator.Alloc(count);
 }
 
@@ -110,7 +110,7 @@ void DescriptorHeap::Free(OffsetHandle& handle)
     if (!handle.IsValid())
         return;
 
-    ScopedLock lock(&m_SpinLock);
+    ScopedLock<SpinLock> lock(m_SpinLock);
     m_DisposeList.front().push_back(handle);
     handle = OffsetHandle();
 }
@@ -142,7 +142,7 @@ D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHeap::GetHandleGPU(const OffsetHandle& hol
 //-----------------------------------------------------------------------------
 void DescriptorHeap::FrameSync()
 {
-    ScopedLock lock(&m_SpinLock);
+    ScopedLock<SpinLock> lock(m_SpinLock);
 
     // 先頭を末端に移動し，前にずらす.
     std::rotate(m_DisposeList.begin(), (++m_DisposeList.begin()), m_DisposeList.end());

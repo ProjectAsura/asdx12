@@ -70,14 +70,14 @@ public:
     //! @param[in]      index       バッファ番号です.
     //! @return     コマンドアロケータを返却します.
     //-------------------------------------------------------------------------
-    ID3D12CommandAllocator* GetAllocator(uint8_t index) const;
+    ID3D12CommandAllocator* GetD3D12CommandAllocator(uint8_t index) const;
 
     //-------------------------------------------------------------------------
     //! @brief      グラフィックスコマンドリストを取得します.
     //!
     //! @return     グラフィックスコマンドリストを返却します.
     //-------------------------------------------------------------------------
-    ID3D12GraphicsCommandList6* GetCommandList() const;
+    ID3D12GraphicsCommandList6* GetD3D12CommandList() const;
 
     //-------------------------------------------------------------------------
     //! @brief      現在のバッファ番号を返却します.

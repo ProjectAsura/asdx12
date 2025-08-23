@@ -8,7 +8,10 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
+#include <cassert>
+#include <cstdint>
 #include <atomic>
+#include <thread>
 
 
 namespace asdx {
@@ -38,7 +41,8 @@ public:
     //-------------------------------------------------------------------------
     void lock()
     {
-        while (m_State.test_and_set(std::memory_order_acquire))
+        uint32_t old = 0;
+        while(!m_State.compare_exchange_weak(old, 1u, std::memory_order_acquire))
         { _mm_pause(); }
     }
 
@@ -46,13 +50,25 @@ public:
     //! @brief      ロックを解除します.
     //-------------------------------------------------------------------------
     void unlock()
-    { m_State.clear(std::memory_order_release); }
+    { m_State.store(0, std::memory_order_release); }
+
+    //-------------------------------------------------------------------------
+    //! @brief      ロックを試みます.
+    //! 
+    //! @retval true    ロックに成功.
+    //! @retval false   ロックに失敗.
+    //-------------------------------------------------------------------------
+    bool try_lock()
+    {
+        uint32_t old = 0;
+        return m_State.compare_exchange_weak(old, 1u);
+    }
 
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    std::atomic_flag    m_State = ATOMIC_FLAG_INIT;
+    std::atomic<uint32_t>   m_State = {};
 
     //=========================================================================
     // private methods.
@@ -60,10 +76,133 @@ private:
     /* NOTHING */
 };
 
+///////////////////////////////////////////////////////////////////////////////
+// RecursiveSpinLock class
+///////////////////////////////////////////////////////////////////////////////
+class RecursiveSpinLock
+{
+    //=========================================================================
+    // list of friend classes and methods.
+    //=========================================================================
+    /* NOTHING */
+
+public:
+    //=========================================================================
+    // public variables.
+    //=========================================================================
+    /* NOTHING */
+
+    //=========================================================================
+    // public methods.
+    //=========================================================================
+
+    //-------------------------------------------------------------------------
+    //! @brief      ロックします.
+    //-------------------------------------------------------------------------
+    void lock()
+    {
+        std::hash<std::thread::id> hasher;
+        auto hashId = hasher(std::this_thread::get_id());
+
+        while(!acquire(hashId))
+        { _mm_pause(); }
+
+        assert(m_Counter + 1 <= UINT64_MAX);
+        m_Counter++;
+    }
+
+    //-------------------------------------------------------------------------
+    //! @brief      ロックを解除します.
+    //-------------------------------------------------------------------------
+    void unlock()
+    {
+        std::hash<std::thread::id> hasher;
+        auto hashId = hasher(std::this_thread::get_id());
+        assert(m_Owner == hashId);
+
+        // 再起カウントを減らす.
+        m_Counter--;
+
+        // ゼロになったらロック解除.
+        if (m_Counter == 0)
+        {
+            size_t defaultId = 0;
+            m_Owner.store(defaultId, std::memory_order_relaxed);
+            m_State.store(0, std::memory_order_release);
+        }
+    }
+
+    //-------------------------------------------------------------------------
+    //! @brief      ロックを試みます.
+    //! 
+    //! @retval true    ロックに成功.
+    //! @retval false   ロックに失敗.
+    //-------------------------------------------------------------------------
+    bool try_lock()
+    {
+        std::hash<std::thread::id> hasher;
+        auto hashId = hasher(std::this_thread::get_id());
+
+        // 先にロック済みなら，所有者と同じスレッドじゃないとロックできない.
+        auto lockHashId = m_Owner.load();
+        if (lockHashId > 0 && m_Counter > 0 && hashId != lockHashId)
+        {
+            // ダメでした.
+            return false;
+        }
+
+        if (acquire(hashId))
+        {
+            assert(m_Counter + 1 <= UINT64_MAX);
+            m_Counter++;
+            return true;    // ロックしたよ.
+        }
+
+        // ダメでした.
+        return false;
+    }
+
+private:
+    //=========================================================================
+    // private variables.
+    //=========================================================================
+    std::atomic<uint32_t>   m_State   = {};
+    std::atomic<size_t>     m_Owner   = {};
+    uint64_t                m_Counter = 0;
+
+    //-------------------------------------------------------------------------
+    //! @brief      ロックを取得します.
+    //-------------------------------------------------------------------------
+    bool acquire(size_t hashId)
+    {
+        // フラグ取得と設定.
+        uint32_t old = 0;
+        m_State.compare_exchange_weak(old, 1u, std::memory_order_acquire);
+
+        // ロックが未取得なら所有者に設定.
+        if (old == 0)
+        {
+            assert(m_Counter == 0); // 未設定のはず.
+            m_Owner.store(hashId, std::memory_order_relaxed);
+            return true;    // ロックしたよ.
+        }
+
+        // ロックが取得済みで，同一スレッドなら再起カウントをあげて終了.
+        if (old == 1u && m_Owner.load(std::memory_order_relaxed) == hashId)
+        {
+            assert(m_Counter > 0);
+            return true;    // ロックしたよ.
+        }
+
+        // ダメでした.
+        return false;
+    }
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 // ScopedLock class
 ///////////////////////////////////////////////////////////////////////////////
+template<typename T>
 class ScopedLock
 {
     //=========================================================================
@@ -84,27 +223,21 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      コンストラクタです.
     //-------------------------------------------------------------------------
-    ScopedLock(SpinLock* value)
-    : m_SpinLock(value)
-    {
-        if (m_SpinLock != nullptr)
-        { m_SpinLock->lock(); }
-    }
+    explicit ScopedLock(T& value)
+    : m_LockObject(value)
+    { m_LockObject.lock(); }
 
     //-------------------------------------------------------------------------
     //! @brief      デストラクタです.
     //-------------------------------------------------------------------------
     ~ScopedLock()
-    {
-        if (m_SpinLock != nullptr)
-        { m_SpinLock->unlock(); }
-    }
+    { m_LockObject.unlock(); }
 
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    SpinLock*   m_SpinLock = nullptr;
+    T&   m_LockObject;
 
     //=========================================================================
     // private methods.

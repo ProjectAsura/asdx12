@@ -93,6 +93,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;$(ProjectDir)..\external\meshoptimizer;$(ProjectDir)..\external\flatbuffers-2.0.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -116,6 +117,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;$(ProjectDir)..\external\meshoptimizer;$(ProjectDir)..\external\flatbuffers-2.0.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -141,6 +143,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;$(ProjectDir)..\external\meshoptimizer;$(ProjectDir)..\external\flatbuffers-2.0.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -167,6 +170,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;$(ProjectDir)..\external\meshoptimizer;$(ProjectDir)..\external\flatbuffers-2.0.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -213,8 +217,7 @@
     <ClCompile Include="..\src\fnd\asdxBit.cpp" />
     <ClCompile Include="..\src\fnd\asdxFrameHeap.cpp" />
     <ClCompile Include="..\src\fnd\asdxGamePad.cpp" />
-    <ClCompile Include="..\src\fnd\asdxIndexHeap.cpp" />
-    <ClCompile Include="..\src\fnd\asdxJobSystem.cpp" />
+    <ClCompile Include="..\src\fnd\asdxJob.cpp" />
     <ClCompile Include="..\src\fnd\asdxKeyboard.cpp" />
     <ClCompile Include="..\src\fnd\asdxLogger.cpp" />
     <ClCompile Include="..\src\fnd\asdxMessage.cpp" />
@@ -227,7 +230,6 @@
     <ClCompile Include="..\src\fnd\asdxTokenizer.cpp" />
     <ClCompile Include="..\src\fw\asdxApp.cpp" />
     <ClCompile Include="..\src\fw\asdxAppCamera.cpp" />
-    <ClCompile Include="..\src\fw\asdxEntity.cpp" />
     <ClCompile Include="..\src\gfx\asdxBuffer.cpp" />
     <ClCompile Include="..\src\gfx\asdxCamera.cpp" />
     <ClCompile Include="..\src\gfx\asdxCommandList.cpp" />
@@ -266,15 +268,13 @@
     <ClInclude Include="..\include\fnd\asdxFunction.h" />
     <ClInclude Include="..\include\fnd\asdxHash.h" />
     <ClInclude Include="..\include\fnd\asdxHid.h" />
-    <ClInclude Include="..\include\fnd\asdxIndexHeap.h" />
-    <ClInclude Include="..\include\fnd\asdxJobSystem.h" />
+    <ClInclude Include="..\include\fnd\asdxJob.h" />
     <ClInclude Include="..\include\fnd\asdxList.h" />
     <ClInclude Include="..\include\fnd\asdxLogger.h" />
     <ClInclude Include="..\include\fnd\asdxMacro.h" />
     <ClInclude Include="..\include\fnd\asdxMath.h" />
     <ClInclude Include="..\include\fnd\asdxMessage.h" />
     <ClInclude Include="..\include\fnd\asdxMisc.h" />
-    <ClInclude Include="..\include\fnd\asdxOctree.h" />
     <ClInclude Include="..\include\fnd\asdxOffsetAllocator.h" />
     <ClInclude Include="..\include\fnd\asdxPool.h" />
     <ClInclude Include="..\include\fnd\asdxQueue.h" />
@@ -324,6 +324,7 @@
     <None Include="..\res\shaders\TangentSpace.hlsli" />
     <None Include="..\res\shaders\TextureUtil.hlsli" />
     <None Include="..\res\shaders\WaveHelper.hlsli" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\res\shaders\ColorFilterCS.hlsl">
@@ -434,5 +435,13 @@
     </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\external\WinPixEventRuntime.1.0.240308001\build\WinPixEventRuntime.targets" Condition="Exists('..\external\WinPixEventRuntime.1.0.240308001\build\WinPixEventRuntime.targets')" />
+  </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>このプロジェクトは、このコンピューター上にない NuGet パッケージを参照しています。それらのパッケージをダウンロードするには、[NuGet パッケージの復元] を使用します。詳細については、http://go.microsoft.com/fwlink/?LinkID=322105 を参照してください。見つからないファイルは {0} です。</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\external\WinPixEventRuntime.1.0.240308001\build\WinPixEventRuntime.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\external\WinPixEventRuntime.1.0.240308001\build\WinPixEventRuntime.targets'))" />
+  </Target>
 </Project>

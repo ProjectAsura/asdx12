@@ -210,7 +210,7 @@ bool HistoryMgr::IsInit() const
 //-----------------------------------------------------------------------------
 bool HistoryMgr::Init(int capacity)
 {
-    ScopedLock locker(&m_SpinLock);
+    ScopedLock<SpinLock> locker(m_SpinLock);
 
     if (m_Init)
     { return false; }
@@ -231,7 +231,7 @@ bool HistoryMgr::Init(int capacity)
 //-----------------------------------------------------------------------------
 void HistoryMgr::Term()
 {
-    ScopedLock locker(&m_SpinLock);
+    ScopedLock<SpinLock> locker(m_SpinLock);
 
     auto itr = std::begin(m_Histories);
     while(itr != std::end(m_Histories))
@@ -286,7 +286,7 @@ bool HistoryMgr::IsEmpty() const
 //-----------------------------------------------------------------------------
 void HistoryMgr::Add(IHistory* item, bool redo)
 {
-    ScopedLock locker(&m_SpinLock);
+    ScopedLock<SpinLock> locker(m_SpinLock);
 
     assert(m_Init == true);
     assert(item != nullptr);
@@ -319,7 +319,7 @@ void HistoryMgr::Add(IHistory* item, bool redo)
 //-----------------------------------------------------------------------------
 void HistoryMgr::Clear()
 {
-    ScopedLock locker(&m_SpinLock);
+    ScopedLock<SpinLock> locker(m_SpinLock);
 
     auto itr = std::begin(m_Histories);
     while(itr != std::end(m_Histories))
@@ -339,7 +339,7 @@ void HistoryMgr::Clear()
 //-----------------------------------------------------------------------------
 void HistoryMgr::Redo()
 {
-    ScopedLock locker(&m_SpinLock);
+    ScopedLock<SpinLock> locker(m_SpinLock);
 
     assert(m_Init == true);
     m_Histories[m_Current]->Redo();
@@ -352,7 +352,7 @@ void HistoryMgr::Redo()
 //-----------------------------------------------------------------------------
 void HistoryMgr::Undo()
 {
-    ScopedLock locker(&m_SpinLock);
+    ScopedLock<SpinLock> locker(m_SpinLock);
 
     assert(m_Init == true);
     --m_Current;

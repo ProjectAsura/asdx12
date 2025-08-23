@@ -141,9 +141,6 @@
     <ClCompile Include="..\src\fnd\asdxThreadPool.cpp">
       <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\fw\asdxEntity.cpp">
-      <Filter>ソース ファイル\fw</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\fnd\asdxTokenizer.cpp">
       <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
@@ -219,13 +216,10 @@
     <ClCompile Include="..\src\fnd\asdxBit.cpp">
       <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\fnd\asdxIndexHeap.cpp">
-      <Filter>ソース ファイル\fnd</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\fnd\asdxOffsetAllocator.cpp">
       <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\fnd\asdxJobSystem.cpp">
+    <ClCompile Include="..\src\fnd\asdxJob.cpp">
       <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
     <ClCompile Include="..\src\gfx\asdxShape.cpp">
@@ -398,13 +392,7 @@
     <ClInclude Include="..\include\fnd\asdxBit.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\fnd\asdxOctree.h">
-      <Filter>ヘッダー ファイル\fnd</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\fnd\asdxRelativePtr.h">
-      <Filter>ヘッダー ファイル\fnd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\fnd\asdxIndexHeap.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
     <ClInclude Include="..\include\fnd\asdxOffsetAllocator.h">
@@ -413,7 +401,7 @@
     <ClInclude Include="..\include\fnd\asdxChunkAllocator.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\fnd\asdxJobSystem.h">
+    <ClInclude Include="..\include\fnd\asdxJob.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
     <ClInclude Include="..\include\gfx\asdxShape.h">
@@ -469,6 +457,7 @@
     <None Include="..\res\shaders\Random.hlsli">
       <Filter>リソース ファイル</Filter>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\res\shaders\CopyPS.hlsl">

@@ -554,7 +554,7 @@ OffsetAllocator::Node OffsetAllocator::GenNode(uint32_t offset, uint32_t size, u
 //-----------------------------------------------------------------------------
 void ThreadSafeOffsetAllocator::Init(uint32_t size, uint32_t maxAllocatableCount)
 {
-    ScopedLock locker(&m_Lock);
+    ScopedLock<SpinLock> locker(m_Lock);
     m_Allocator.Init(size, maxAllocatableCount);
 }
 
@@ -563,7 +563,7 @@ void ThreadSafeOffsetAllocator::Init(uint32_t size, uint32_t maxAllocatableCount
 //-----------------------------------------------------------------------------
 void ThreadSafeOffsetAllocator::Term()
 {
-    ScopedLock locker(&m_Lock);
+    ScopedLock<SpinLock> locker(m_Lock);
     m_Allocator.Term();
 }
 
@@ -572,7 +572,7 @@ void ThreadSafeOffsetAllocator::Term()
 //-----------------------------------------------------------------------------
 void ThreadSafeOffsetAllocator::Reset()
 {
-    ScopedLock locker(&m_Lock);
+    ScopedLock<SpinLock> locker(m_Lock);
     m_Allocator.Reset();
 }
 
@@ -581,7 +581,7 @@ void ThreadSafeOffsetAllocator::Reset()
 //-----------------------------------------------------------------------------
 OffsetHandle ThreadSafeOffsetAllocator::Alloc(uint32_t size)
 {
-    ScopedLock locker(&m_Lock);
+    ScopedLock<SpinLock> locker(m_Lock);
     return m_Allocator.Alloc(size);
 }
 
@@ -599,7 +599,7 @@ OffsetHandle ThreadSafeOffsetAllocator::Alloc(uint32_t size, uint32_t alignment)
 //-----------------------------------------------------------------------------
 void ThreadSafeOffsetAllocator::Free(OffsetHandle& handle)
 {
-    ScopedLock locker(&m_Lock);
+    ScopedLock<SpinLock> locker(m_Lock);
     m_Allocator.Free(handle);
 }
 

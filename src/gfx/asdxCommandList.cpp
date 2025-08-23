@@ -12,7 +12,7 @@
 #include <gfx/asdxCommandList.h>
 #include <gfx/asdxDevice.h>
 #include <fnd/asdxLogger.h>
-#include <fnd/asdxMisc.h>
+#include <pix3.h>
 
 
 namespace asdx {
@@ -115,7 +115,7 @@ ID3D12GraphicsCommandList6* CommandList::Reset()
 //-----------------------------------------------------------------------------
 //      コマンドリストアロケータを取得します.
 //-----------------------------------------------------------------------------
-ID3D12CommandAllocator* CommandList::GetAllocator(uint8_t index) const
+ID3D12CommandAllocator* CommandList::GetD3D12CommandAllocator(uint8_t index) const
 {
     assert(index < 2);
     return m_Allocator[index].GetPtr();
@@ -124,7 +124,7 @@ ID3D12CommandAllocator* CommandList::GetAllocator(uint8_t index) const
 //-----------------------------------------------------------------------------
 //      グラフィックスコマンドリストを取得します.
 //-----------------------------------------------------------------------------
-ID3D12GraphicsCommandList6* CommandList::GetCommandList() const
+ID3D12GraphicsCommandList6* CommandList::GetD3D12CommandList() const
 { return m_CmdList.GetPtr(); }
 
 //-----------------------------------------------------------------------------
@@ -150,17 +150,16 @@ void CommandList::SetName(LPCWSTR name)
 ScopedMarker::ScopedMarker(ID3D12GraphicsCommandList* pCmd, const char* text)
 : m_pCmd(pCmd)
 {
+    assert(m_pCmd != nullptr);
     assert(text != nullptr);
-    static const UINT PIX_EVENT_ANSI_VERSION = 1;
-    auto size = UINT((strlen(text) + 1) * sizeof(char));
-    m_pCmd->BeginEvent(PIX_EVENT_ANSI_VERSION, text, size);
+    PIXBeginEvent(m_pCmd, PIX_COLOR_DEFAULT, text);
 }
 
 //-----------------------------------------------------------------------------
 //      デストラクタです.
 //-----------------------------------------------------------------------------
 ScopedMarker::~ScopedMarker()
-{ m_pCmd->EndEvent(); }
+{ PIXEndEvent(m_pCmd); }
 
 
 } // namespace asdx

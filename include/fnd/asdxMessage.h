@@ -198,10 +198,10 @@ private:
     /* NOTHING */
 };
 
-inline void AddListener(IMessageListener* instance)
+inline void AddMessageListener(IMessageListener* instance)
 { asdx::MessageMgr::Instance().Add(instance); }
 
-inline void RemoveListener(IMessageListener* instance)
+inline void RemoveMessageListener(IMessageListener* instance)
 { asdx::MessageMgr::Instance().Remove(instance); }
 
 inline void SendMsg(const Message& msg)

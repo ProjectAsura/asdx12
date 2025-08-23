@@ -69,7 +69,7 @@ void MessageMgr::PushMessage(const Message& msg)
     {
         auto data = m_Heap.Alloc(msg.GetSize());
         memcpy(data, msg.GetBuffer(), msg.GetSize());
-        
+
         auto instance = new (buf) Message(msg.GetType(), data, msg.GetSize());
         m_Queue.push(instance);
     }

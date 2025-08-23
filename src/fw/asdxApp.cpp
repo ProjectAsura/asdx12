@@ -715,7 +715,7 @@ Application::~Application()
 //-----------------------------------------------------------------------------
 void Application::SetStopRendering( bool isStopRendering )
 {
-    ScopedLock locker(&m_SpinLock);
+    ScopedLock<SpinLock> locker(m_SpinLock);
     m_IsStopRendering = isStopRendering;
 }
 
