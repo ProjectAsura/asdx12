@@ -10,3 +10,6 @@
 [submodule "external/DirectXTex"]
 	path = external/DirectXTex
 	url = https://github.com/microsoft/DirectXTex.git
+[submodule "external/simdjson"]
+	path = external/simdjson
+	url = https://github.com/simdjson/simdjson
