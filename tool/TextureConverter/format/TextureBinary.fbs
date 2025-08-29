@@ -2,6 +2,8 @@
 
 struct SubresourceInfo
 {
+    Width      : uint;
+    Height     : uint;
     RowPitch   : ulong;
     SlicePitch : ulong;
 }

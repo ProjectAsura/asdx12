@@ -104,13 +104,13 @@ bool Texture::Init(ID3D12GraphicsCommandList* pCmdList, const ResTexture& resour
     case TEXTURE_DIMENSION_1D:
         {
             dimension = D3D12_RESOURCE_DIMENSION_TEXTURE1D;
-            if (resource.SurfaceCount > 1)
+            if (resource.DepthOrArraySize > 1)
             {
                 viewDesc.ViewDimension                      = D3D12_SRV_DIMENSION_TEXTURE1DARRAY;
                 viewDesc.Format                             = format;
-                viewDesc.Texture1DArray.ArraySize           = resource.SurfaceCount;
+                viewDesc.Texture1DArray.ArraySize           = resource.DepthOrArraySize;
                 viewDesc.Texture1DArray.FirstArraySlice     = 0;
-                viewDesc.Texture1DArray.MipLevels           = resource.MipMapCount;
+                viewDesc.Texture1DArray.MipLevels           = resource.MipLevels;
                 viewDesc.Texture1DArray.MostDetailedMip     = mostDetailedMip;
                 viewDesc.Texture1DArray.ResourceMinLODClamp = 0;
             }
@@ -118,7 +118,7 @@ bool Texture::Init(ID3D12GraphicsCommandList* pCmdList, const ResTexture& resour
             {
                 viewDesc.ViewDimension                  = D3D12_SRV_DIMENSION_TEXTURE1D;
                 viewDesc.Format                         = format;
-                viewDesc.Texture1D.MipLevels            = resource.MipMapCount;
+                viewDesc.Texture1D.MipLevels            = resource.MipLevels;
                 viewDesc.Texture1D.MostDetailedMip      = mostDetailedMip;
                 viewDesc.Texture1D.ResourceMinLODClamp  = 0;
             }
@@ -128,13 +128,13 @@ bool Texture::Init(ID3D12GraphicsCommandList* pCmdList, const ResTexture& resour
     case TEXTURE_DIMENSION_2D:
         {
             dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-            if (resource.SurfaceCount > 1)
+            if (resource.DepthOrArraySize> 1)
             {
                 viewDesc.ViewDimension                      = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
                 viewDesc.Format                             = format;
-                viewDesc.Texture2DArray.ArraySize           = resource.SurfaceCount;
+                viewDesc.Texture2DArray.ArraySize           = resource.DepthOrArraySize;
                 viewDesc.Texture2DArray.FirstArraySlice     = 0;
-                viewDesc.Texture2DArray.MipLevels           = resource.MipMapCount;
+                viewDesc.Texture2DArray.MipLevels           = resource.MipLevels;
                 viewDesc.Texture2DArray.MostDetailedMip     = mostDetailedMip;
                 viewDesc.Texture2DArray.PlaneSlice          = 0;
                 viewDesc.Texture2DArray.ResourceMinLODClamp = 0;
@@ -143,7 +143,7 @@ bool Texture::Init(ID3D12GraphicsCommandList* pCmdList, const ResTexture& resour
             {
                 viewDesc.ViewDimension                      = D3D12_SRV_DIMENSION_TEXTURE2D;
                 viewDesc.Format                             = format;
-                viewDesc.Texture2D.MipLevels                = resource.MipMapCount;
+                viewDesc.Texture2D.MipLevels                = resource.MipLevels;
                 viewDesc.Texture2D.MostDetailedMip          = mostDetailedMip;
                 viewDesc.Texture2D.PlaneSlice               = 0;
                 viewDesc.Texture2D.ResourceMinLODClamp      = 0;
@@ -154,11 +154,11 @@ bool Texture::Init(ID3D12GraphicsCommandList* pCmdList, const ResTexture& resour
     case TEXTURE_DIMENSION_3D:
         {
             dimension   = D3D12_RESOURCE_DIMENSION_TEXTURE3D;
-            depth       = resource.Depth;
+            depth       = resource.DepthOrArraySize;
 
             viewDesc.ViewDimension                  = D3D12_SRV_DIMENSION_TEXTURE3D;
             viewDesc.Format                         = format;
-            viewDesc.Texture3D.MipLevels            = resource.MipMapCount;
+            viewDesc.Texture3D.MipLevels            = resource.MipLevels;
             viewDesc.Texture3D.MostDetailedMip      = 0;
             viewDesc.Texture3D.ResourceMinLODClamp  = 0.0f;
         }
@@ -167,23 +167,23 @@ bool Texture::Init(ID3D12GraphicsCommandList* pCmdList, const ResTexture& resour
     case TEXTURE_DIMENSION_CUBE:
         {
             dimension   = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-            depth       = resource.SurfaceCount;
+            depth       = resource.DepthOrArraySize;
 
-            if (resource.SurfaceCount > 6)
+            if (resource.DepthOrArraySize > 1)
             {
                 viewDesc.ViewDimension                           = D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
                 viewDesc.Format                                  = format;
                 viewDesc.TextureCubeArray.First2DArrayFace       = 0;
-                viewDesc.TextureCubeArray.MipLevels              = resource.MipMapCount;
+                viewDesc.TextureCubeArray.MipLevels              = resource.MipLevels;
                 viewDesc.TextureCubeArray.MostDetailedMip        = 0;
-                viewDesc.TextureCubeArray.NumCubes               = resource.SurfaceCount / 6;
+                viewDesc.TextureCubeArray.NumCubes               = resource.DepthOrArraySize;
                 viewDesc.TextureCubeArray.ResourceMinLODClamp    = 0.0f;
             }
             else
             {
                 viewDesc.ViewDimension                      = D3D12_SRV_DIMENSION_TEXTURECUBE;
                 viewDesc.Format                             = format;
-                viewDesc.TextureCube.MipLevels              = resource.MipMapCount;
+                viewDesc.TextureCube.MipLevels              = resource.MipLevels;
                 viewDesc.TextureCube.MostDetailedMip        = 0;
                 viewDesc.TextureCube.ResourceMinLODClamp    = 0;
             }
@@ -196,8 +196,8 @@ bool Texture::Init(ID3D12GraphicsCommandList* pCmdList, const ResTexture& resour
         0,
         resource.Width,
         resource.Height,
-        UINT16(depth),
-        UINT16(resource.MipMapCount),
+        resource.DepthOrArraySize,
+        resource.MipLevels,
         format,
         { 1, 0 },
         D3D12_TEXTURE_LAYOUT_UNKNOWN,
@@ -230,22 +230,23 @@ bool Texture::Init(ID3D12GraphicsCommandList* pCmdList, const ResTexture& resour
     // íºê⁄èëÇ´çûÇﬂÇÈèÍçá.
     if (gpuUploadHeapsSupported || isUnifiedMemoryArchitecture)
     {
-        auto count = resource.MipMapCount * resource.SurfaceCount;
+        auto count = resource.SubResourceCount;
         for(auto i=0u; i<count; ++i)
         {
-            auto srcPtr        = resource.pResources[i].pPixels;
-            auto srcRowPitch   = resource.pResources[i].Pitch;
-            auto srcDepthPitch = srcRowPitch * resource.pResources[i].Height * resource.Depth;
+            const auto& inRes = resource.SubResources[i];
+            auto srcPtr        = inRes.pPixels;
+            auto srcRowPitch   = inRes.RowPitch;
+            auto srcDepthPitch = inRes.SlicePitch;
 
             D3D12_BOX dstBox = {};
             dstBox.left     = 0;
-            dstBox.right    = resource.pResources[i].Width;
+            dstBox.right    = inRes.Width;
             dstBox.top      = 0;
-            dstBox.bottom   = resource.pResources[i].Height;
+            dstBox.bottom   = inRes.Height;
             dstBox.front    = 0;
-            dstBox.back     = resource.Depth;
+            dstBox.back     = resource.DepthOrArraySize;
 
-            pResource->WriteToSubresource(i, &dstBox, srcPtr, srcRowPitch, srcDepthPitch);
+            pResource->WriteToSubresource(i, &dstBox, srcPtr, UINT(srcRowPitch), UINT(srcDepthPitch));
         }
     }
     else

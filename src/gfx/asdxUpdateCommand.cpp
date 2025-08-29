@@ -229,7 +229,7 @@ void UpdateTexture
     auto device = GetD3D12Device();
     auto dstDesc = pDstResource->GetDesc();
 
-    auto count = pResTexture->MipMapCount * pResTexture->SurfaceCount;
+    auto count = pResTexture->SubResourceCount;
 
     D3D12_RESOURCE_DESC uploadDesc = {
         D3D12_RESOURCE_DIMENSION_BUFFER,
@@ -291,12 +291,12 @@ void UpdateTexture
 
         for(auto i=0u; i<count; ++i)
         {
+            const auto& inRes = pResTexture->SubResources[i];
+
             D3D12_SUBRESOURCE_DATA srcData = {};
-            srcData.pData       = pResTexture->pResources[i].pPixels;
-            srcData.RowPitch    = pResTexture->pResources[i].Pitch;
-            srcData.SlicePitch  = pResTexture->pResources[i].SlicePitch;
-            assert(layouts[i].Footprint.Width  == pResTexture->pResources[i].Width);
-            assert(layouts[i].Footprint.Height == pResTexture->pResources[i].Height);
+            srcData.pData       = inRes.pPixels;
+            srcData.RowPitch    = inRes.RowPitch;
+            srcData.SlicePitch  = inRes.SlicePitch;
 
             D3D12_MEMCPY_DEST dstData = {};
             dstData.pData       = pData + layouts[i].Offset;

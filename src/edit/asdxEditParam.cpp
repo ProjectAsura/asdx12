@@ -135,11 +135,11 @@ public:
         }
         else
         {
-            asdx::ResTexture res;
-            if (!res.LoadFromFileA(m_NextPath.c_str()))
-            { return; }
+            //asdx::ResTexture res;
+            //if (!res.LoadFromFileA(m_NextPath.c_str()))
+            //{ return; }
 
-            m_pTexture->Term();
+            //m_pTexture->Term();
 
             //if (!m_pTexture->Init(res))
             //{ return; }
@@ -161,7 +161,7 @@ public:
         else
         {
             asdx::ResTexture res;
-            if (!res.LoadFromFileA(m_PrevPath.c_str()))
+            //if (!res.LoadFromFileA(m_PrevPath.c_str()))
             { return; }
 
             m_pTexture->Term();

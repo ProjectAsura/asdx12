@@ -23,6 +23,18 @@ namespace {
 static constexpr uint32_t CURRENT_VERSION = 1u; //!< 現在のバイナリバージョン.
 
 
+///////////////////////////////////////////////////////////////////////////////
+// TEXTURE_DIMENSION enum
+///////////////////////////////////////////////////////////////////////////////
+enum TEXTURE_DIMENSION
+{
+    TEXTURE_DIMENSION_UNKNOWN,
+    TEXTURE_DIMENSION_1D,
+    TEXTURE_DIMENSION_2D,
+    TEXTURE_DIMENSION_3D,
+    TEXTURE_DIMENSION_CUBE
+};
+
 //-----------------------------------------------------------------------------
 //      ワイド文字列に変換します.
 //-----------------------------------------------------------------------------
@@ -48,6 +60,33 @@ uint16_t GetDepthOrArraySize(const DirectX::TexMetadata& metaData)
         return uint16_t(metaData.depth);
 
     return uint16_t(metaData.arraySize);
+}
+
+//-----------------------------------------------------------------------------
+//      テクスチャの次元を取得します.
+//-----------------------------------------------------------------------------
+uint32_t GetDimension(const DirectX::TexMetadata& metaData)
+{
+    switch(metaData.dimension)
+    {
+    case DirectX::TEX_DIMENSION_TEXTURE1D:
+        return TEXTURE_DIMENSION_1D;
+
+    case DirectX::TEX_DIMENSION_TEXTURE2D:
+        if (metaData.IsCubemap())
+        {
+            return TEXTURE_DIMENSION_CUBE;
+        }
+        return TEXTURE_DIMENSION_2D;
+
+    case DirectX::TEX_DIMENSION_TEXTURE3D:
+        return TEXTURE_DIMENSION_3D;
+
+    default:
+        break;
+    }
+
+    return TEXTURE_DIMENSION_UNKNOWN;
 }
 
 } // namespace
@@ -111,6 +150,8 @@ bool TextureConverter::Convert(const Desc& desc)
         for(size_t i=0; i<scratchImage.GetImageCount(); ++i)
         {
             subresources[i] = asdx::res::SubresourceInfo(
+                uint32_t(images[i].width),
+                uint32_t(images[i].height),
                 uint32_t(images[i].rowPitch),
                 uint32_t(images[i].slicePitch));
         }
@@ -119,7 +160,7 @@ bool TextureConverter::Convert(const Desc& desc)
         auto resource = CreateTextureBinary(
             builder,
             CURRENT_VERSION,
-            uint32_t(texMetaData.dimension),
+            GetDimension(texMetaData),
             uint32_t(texMetaData.width),
             uint32_t(texMetaData.height),
             GetDepthOrArraySize(texMetaData),

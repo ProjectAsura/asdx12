@@ -663,23 +663,22 @@ bool GuiMgr::Init
         int height;
         io.Fonts->GetTexDataAsRGBA32( &pPixels, &width, &height );
 
-        asdx::SubResource subRes;
+        asdx::ResSubResource subRes;
         subRes.Width       = width;
         subRes.Height      = height;
-        subRes.MipIndex    = 0;
-        subRes.Pitch       = width * 4;
+        subRes.RowPitch    = width * 4;
         subRes.SlicePitch  = width * height * 4;
         subRes.pPixels     = pPixels;
 
         asdx::ResTexture res;
-        res.Dimension       = asdx::TEXTURE_DIMENSION_2D;
-        res.Width           = width;
-        res.Height          = height;
-        res.Depth           = 1;
-        res.Format          = DXGI_FORMAT_R8G8B8A8_UNORM;
-        res.MipMapCount     = 1;
-        res.SurfaceCount    = 1;
-        res.pResources      = &subRes;
+        res.Dimension           = asdx::TEXTURE_DIMENSION_2D;
+        res.Width               = width;
+        res.Height              = height;
+        res.DepthOrArraySize    = 1;
+        res.Format              = DXGI_FORMAT_R8G8B8A8_UNORM;
+        res.MipLevels           = 1;
+        res.SubResourceCount    = 1;
+        res.SubResources[0]     = subRes;
 
         if (!m_FontTexture.Init(pCmdList, res))
         {

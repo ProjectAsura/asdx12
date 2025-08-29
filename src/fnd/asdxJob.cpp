@@ -1,6 +1,6 @@
 ﻿//-----------------------------------------------------------------------------
-// File : asdxJobSystem.cpp
-// Desc : JobSystem
+// File : asdxJob.cpp
+// Desc : Job System
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 
@@ -13,7 +13,7 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
-#include <fnd/asdxJobSystem.h>
+#include <fnd/asdxJob.h>
 #include <fnd/asdxList.h>
 #include <fnd/asdxQueue.h>
 #include <fnd/asdxLogger.h>
