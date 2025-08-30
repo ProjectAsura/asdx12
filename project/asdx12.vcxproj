@@ -230,6 +230,7 @@
     <ClCompile Include="..\src\fnd\asdxTokenizer.cpp" />
     <ClCompile Include="..\src\fw\asdxApp.cpp" />
     <ClCompile Include="..\src\fw\asdxAppCamera.cpp" />
+    <ClCompile Include="..\src\fw\asdxSound.cpp" />
     <ClCompile Include="..\src\gfx\asdxBuffer.cpp" />
     <ClCompile Include="..\src\gfx\asdxCamera.cpp" />
     <ClCompile Include="..\src\gfx\asdxCommandList.cpp" />
@@ -291,7 +292,7 @@
     <ClInclude Include="..\include\fnd\asdxTokenizer.h" />
     <ClInclude Include="..\include\fw\asdxApp.h" />
     <ClInclude Include="..\include\fw\asdxAppCamera.h" />
-    <ClInclude Include="..\include\fw\asdxEntity.h" />
+    <ClInclude Include="..\include\fw\asdxSound.h" />
     <ClInclude Include="..\include\gfx\asdxBuffer.h" />
     <ClInclude Include="..\include\gfx\asdxCamera.h" />
     <ClInclude Include="..\include\gfx\asdxCommandList.h" />

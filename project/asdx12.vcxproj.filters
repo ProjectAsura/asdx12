@@ -234,6 +234,9 @@
     <ClCompile Include="..\src\gfx\asdxDred.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\fw\asdxSound.cpp">
+      <Filter>ソース ファイル\fw</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\external\imgui\imconfig.h">
@@ -353,9 +356,6 @@
     <ClInclude Include="..\include\fnd\asdxMessage.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\fw\asdxEntity.h">
-      <Filter>ヘッダー ファイル\fw</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\fnd\asdxTokenizer.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
@@ -418,6 +418,9 @@
     </ClInclude>
     <ClInclude Include="..\include\gfx\asdxDred.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fw\asdxSound.h">
+      <Filter>ヘッダー ファイル\fw</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
