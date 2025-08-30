@@ -231,6 +231,9 @@
     <ClCompile Include="..\src\edit\asdxGuiMgr.cpp">
       <Filter>ソース ファイル\edit</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\gfx\asdxDred.cpp">
+      <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\external\imgui\imconfig.h">
@@ -411,6 +414,9 @@
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
     <ClInclude Include="..\include\gfx\asdxUpdateCommand.h">
+      <Filter>ヘッダー ファイル\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\gfx\asdxDred.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
   </ItemGroup>
