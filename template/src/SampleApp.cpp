@@ -23,6 +23,18 @@
 SampleApp::SampleApp()
 : asdx::App(L"Sample", 1920, 1080, nullptr, nullptr, nullptr)
 {
+    m_SwapChainFormat    = DXGI_FORMAT_R8G8B8A8_UNORM;
+    m_DepthStencilFormat = DXGI_FORMAT_D32_FLOAT;
+
+    m_DeviceDesc.MaxShaderResourceCount = 8192;
+    m_DeviceDesc.MaxSamplerCount        = 128;
+    m_DeviceDesc.MaxColorTargetCount    = 256;
+    m_DeviceDesc.MaxDepthTargetCount    = 256;
+
+#if ASDX_DEBUG
+    m_DeviceDesc.EnableDebug   = true;
+    m_DeviceDesc.EnableCapture = true;
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -39,11 +51,18 @@ bool SampleApp::OnInit()
 {
     auto pDevice = asdx::GetD3D12Device();
 
+    #if ASDX_ENABLE_SOUND
+    {
+        // サウンドマネージャの初期化.
+        asdx::InitSoundMgr(reinterpret_cast<uintptr_t>(m_hWnd));
+    }
+    #endif
+
     // コマンドリストをリセット.
     m_GfxCmdList.Reset();
     auto pCmd = m_GfxCmdList.GetD3D12CommandList();
 
-    #ifdef ASDX_ENABLE_IMGUI
+    #if ASDX_ENABLE_IMGUI
     // GUI初期化.
     {
         const auto path = "../res/font/07やさしさゴシック.ttf";
@@ -83,8 +102,11 @@ bool SampleApp::OnInit()
 //-----------------------------------------------------------------------------
 void SampleApp::OnTerm()
 {
+    // TODO : Implementation.
+    {
+    }
 
-    #ifdef ASDX_ENABLE_IMGUI
+    #if ASDX_ENABLE_IMGUI
     {
         // GUI終了処理.
         asdx::GuiMgr::Instance().Term();
@@ -98,10 +120,17 @@ void SampleApp::OnTerm()
 void SampleApp::OnFrameMove(const asdx::App::FrameEventArgs& args)
 {
 
-    #ifdef ASDX_ENABLE_IMGUI
+    #if ASDX_ENABLE_IMGUI
     {
         // ImGuiフレーム開始処理.
         asdx::GuiMgr::Instance().Update(m_Width, m_Height);
+    }
+    #endif
+
+    #if ASDX_ENABLE_SOUND
+    {
+        // サウンドマネージャの終了処理.
+        asdx::TermSoundMgr();
     }
     #endif
 }
@@ -139,7 +168,7 @@ void SampleApp::OnFrameRender(const asdx::App::FrameEventArgs& args)
     }
 
 
-    #ifdef ASDX_ENABLE_IMGUI
+    #if ASDX_ENABLE_IMGUI
     {
         // ImGui描画処理.
         asdx::GuiMgr::Instance().Draw(pCmd);
@@ -197,6 +226,7 @@ void SampleApp::OnKey(const asdx::App::KeyEventArgs& args)
     m_Camera.OnKey(args.KeyCode, args.IsKeyDown, args.IsAltDown);
     #if ASDX_ENABLE_IMGUI
     {
+        // ImGuiのキー処理.
         asdx::GuiMgr::Instance().OnKey(args.KeyCode, args.IsKeyDown, args.IsAltDown);
     }
     #endif
@@ -209,6 +239,7 @@ void SampleApp::OnMouse(const asdx::App::MouseEventArgs& args)
 {
     if(args.IsAltDown)
     {
+        // カメラのマウス処理.
         m_Camera.OnMouse(
             args.X,
             args.Y,
@@ -223,6 +254,7 @@ void SampleApp::OnMouse(const asdx::App::MouseEventArgs& args)
     {
         #if ASDX_ENABLE_IMGUI
         {
+            // ImGuiのマウス処理.
             asdx::GuiMgr::Instance().OnMouse(
                 args.X,
                 args.Y,
@@ -242,7 +274,33 @@ void SampleApp::OnTyping(uint32_t keyCode)
 {
     #if ASDX_ENABLE_IMGUI
     {
+        // タイピング時の処理です.
         asdx::GuiMgr::Instance().OnTyping(keyCode);
     }
     #endif
+}
+
+//-----------------------------------------------------------------------------
+//      メッセージプロシージャ時の処理です.
+//-----------------------------------------------------------------------------
+void SampleApp::OnMsgProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
+{
+    ASDX_UNUSED(hWnd);
+    ASDX_UNUSED(wp);
+    ASDX_UNUSED(lp);
+
+    switch(msg)
+    {
+    case MM_MCINOTIFY:
+        {
+        #if ASDX_ENABLE_SOUND
+            // サウンドマネージャのコールバック.
+            asdx::OnSoundMsg(uint32_t(lp), uint32_t(wp));
+        #endif//ASDX_ENABLE_SOUND
+        }
+        break;
+
+    default:
+        break;
+    }
 }

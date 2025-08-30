@@ -234,6 +234,17 @@ public:
     }
 
     //-------------------------------------------------------------------------
+    //! @brief      再生状態を取得します.
+    //-------------------------------------------------------------------------
+    SoundState GetState(SoundId id) override
+    {
+        if (!IsExist(id))
+        { return SoundState::Error; }
+
+        return SoundState(m_Status[id].State);
+    }
+
+    //-------------------------------------------------------------------------
     //! @brief      サウンドが登録されているかチェックします.
     //! 
     //! @param[in]      id      登録ID.
@@ -317,6 +328,9 @@ private:
     SoundManager           (const SoundManager&) = delete;
     SoundManager& operator=(const SoundManager&) = delete;
 };
+
+// シングルトンインスタンスの初期化.
+SoundManager SoundManager::s_Instance = {};
 
 //-----------------------------------------------------------------------------
 //      サウンドマネージャを取得します.
