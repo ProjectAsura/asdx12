@@ -32,7 +32,7 @@ class GuiMgr
     //=========================================================================
     // list of friend classes and methods.
     //=========================================================================
-    friend void RenderImGui(ImDrawData* pDrawData);
+    /* NOTHING */
 
 public:
     //=========================================================================
@@ -110,13 +110,13 @@ private:
     static GuiMgr                           s_Instance;
     VertexBuffer                            m_VB[2];
     IndexBuffer                             m_IB[2];
-    ConstantBuffer                          m_CB;
+    ConstantBuffer                          m_CB[2];
     RefPtr<ID3D12RootSignature>             m_RootSig;
     RefPtr<ID3D12PipelineState>             m_PSO;
     Texture                                 m_FontTexture;
-    std::chrono::system_clock::time_point   m_LastTime;
-    uint32_t                                m_SizeVB;
-    uint32_t                                m_SizeIB;
+    std::chrono::system_clock::time_point   m_LastTime    = {};
+    uint32_t                                m_SizeVB      = 0;
+    uint32_t                                m_SizeIB      = 0;
     ImGuiContext*                           m_pGuiContext = nullptr;
     uint8_t                                 m_BufferIndex = 0;
 
@@ -133,11 +133,6 @@ private:
     //! @brief      デストラクタです.
     //-------------------------------------------------------------------------
     ~GuiMgr();
-
-    //-------------------------------------------------------------------------
-    //! @brief      内部処理用描画関数です.
-    //-------------------------------------------------------------------------
-    void OnDraw(ImDrawData* pData);
 };
 
 } // namespace asdx

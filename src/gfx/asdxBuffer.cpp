@@ -10,6 +10,7 @@
 #include <cassert>
 #include <gfx/asdxBuffer.h>
 #include <gfx/asdxDevice.h>
+#include <gfx/asdxDescriptorHeap.h>
 #include <gfx/asdxUpdateCommand.h>
 #include <fnd/asdxLogger.h>
 
@@ -69,14 +70,14 @@ bool VertexBuffer::Init(uint64_t size, uint32_t stride)
         &desc,
         state,
         nullptr,
-        IID_PPV_ARGS(m_pResource.GetAddress()));
+        IID_PPV_ARGS(m_Resource.GetAddress()));
     if ( FAILED(hr) )
     {
         ELOG("Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr);
         return false;
     }
 
-    m_View.BufferLocation   = m_pResource->GetGPUVirtualAddress();
+    m_View.BufferLocation   = m_Resource->GetGPUVirtualAddress();
     m_View.SizeInBytes      = UINT(size);
     m_View.StrideInBytes    = stride;
 
@@ -88,7 +89,7 @@ bool VertexBuffer::Init(uint64_t size, uint32_t stride)
 //-----------------------------------------------------------------------------
 void VertexBuffer::Term()
 {
-    auto resource = m_pResource.Detach();
+    auto resource = m_Resource.Detach();
     Dispose(resource);
     memset(&m_View, 0, sizeof(m_View));
 }
@@ -98,11 +99,11 @@ void VertexBuffer::Term()
 //-----------------------------------------------------------------------------
 void* VertexBuffer::Map()
 {
-    if (m_pResource.GetPtr() == nullptr)
+    if (m_Resource.GetPtr() == nullptr)
     { return nullptr; }
 
     void* ptr = nullptr;
-    auto hr = m_pResource->Map(0, nullptr, &ptr);
+    auto hr = m_Resource->Map(0, nullptr, &ptr);
     if (FAILED(hr))
     {
         ELOG("Error : ID3D12Resource::Map() Failed. errcode = 0x%x", hr);
@@ -117,10 +118,10 @@ void* VertexBuffer::Map()
 //-----------------------------------------------------------------------------
 void VertexBuffer::Unmap()
 {
-    if (m_pResource.GetPtr() == nullptr)
+    if (m_Resource.GetPtr() == nullptr)
     { return; }
 
-    m_pResource->Unmap(0, nullptr);
+    m_Resource->Unmap(0, nullptr);
 }
 
 //-----------------------------------------------------------------------------
@@ -133,7 +134,16 @@ D3D12_VERTEX_BUFFER_VIEW VertexBuffer::GetVBV() const
 //      リソースを取得します.
 //-----------------------------------------------------------------------------
 ID3D12Resource* VertexBuffer::GetResource() const
-{ return m_pResource.GetPtr(); }
+{ return m_Resource.GetPtr(); }
+
+//-----------------------------------------------------------------------------
+//      デバッグ名を設定します.
+//-----------------------------------------------------------------------------
+void VertexBuffer::SetName(LPCWSTR tag)
+{
+    if (m_Resource)
+    { m_Resource->SetName(tag); }
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -193,14 +203,14 @@ bool IndexBuffer::Init(uint64_t size, bool isShortFormat)
         &desc,
         state,
         nullptr,
-        IID_PPV_ARGS(m_pResource.GetAddress()));
+        IID_PPV_ARGS(m_Resource.GetAddress()));
     if ( FAILED(hr) )
     {
         ELOG("Error : ID3D12Device::CreateCommittedResource() Failed. errode = 0x%x", hr);
         return false;
     }
 
-    m_View.BufferLocation   = m_pResource->GetGPUVirtualAddress();
+    m_View.BufferLocation   = m_Resource->GetGPUVirtualAddress();
     m_View.SizeInBytes      = UINT(size);
     m_View.Format           = (isShortFormat) ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
 
@@ -212,7 +222,7 @@ bool IndexBuffer::Init(uint64_t size, bool isShortFormat)
 //-----------------------------------------------------------------------------
 void IndexBuffer::Term()
 {
-    auto resource = m_pResource.Detach();
+    auto resource = m_Resource.Detach();
     Dispose(resource);
     memset(&m_View, 0, sizeof(m_View));
 }
@@ -222,11 +232,11 @@ void IndexBuffer::Term()
 //-----------------------------------------------------------------------------
 void* IndexBuffer::Map()
 {
-    if (m_pResource.GetPtr() == nullptr)
+    if (m_Resource.GetPtr() == nullptr)
     { return nullptr; }
 
     void* ptr = nullptr;
-    auto hr = m_pResource->Map(0, nullptr, &ptr);
+    auto hr = m_Resource->Map(0, nullptr, &ptr);
     if (FAILED(hr))
     {
         ELOG("Error : ID3D12Resource::Map() Failed. errcode = 0x%x", hr);
@@ -241,10 +251,10 @@ void* IndexBuffer::Map()
 //-----------------------------------------------------------------------------
 void IndexBuffer::Unmap()
 {
-    if (m_pResource.GetPtr() == nullptr)
+    if (m_Resource.GetPtr() == nullptr)
     { return; }
 
-    m_pResource->Unmap(0, nullptr);
+    m_Resource->Unmap(0, nullptr);
 }
 
 //-----------------------------------------------------------------------------
@@ -257,7 +267,16 @@ D3D12_INDEX_BUFFER_VIEW IndexBuffer::GetIBV() const
 //      リソースを取得します.
 //-----------------------------------------------------------------------------
 ID3D12Resource* IndexBuffer::GetResource() const
-{ return m_pResource.GetPtr(); }
+{ return m_Resource.GetPtr(); }
+
+//-----------------------------------------------------------------------------
+//      デバッグ名を設定します.
+//-----------------------------------------------------------------------------
+void IndexBuffer::SetName(LPCWSTR tag)
+{
+    if (m_Resource)
+    { m_Resource->SetName(tag); }
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -268,15 +287,7 @@ ID3D12Resource* IndexBuffer::GetResource() const
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
 ConstantBuffer::ConstantBuffer()
-: m_Index(0)
-{
-    m_Dst[0] = nullptr;
-    m_Dst[1] = nullptr;
-    m_View[0] = nullptr;
-    m_View[1] = nullptr;
-    m_Resource[0] = nullptr;
-    m_Resource[1] = nullptr;
-}
+{ /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      デストラクタです.
@@ -325,39 +336,17 @@ bool ConstantBuffer::Init(uint64_t size)
         D3D12_RESOURCE_FLAG_NONE
     };
 
-    for(auto i=0; i<2; ++i)
+    auto hr = pDevice->CreateCommittedResource(
+        &props,
+        D3D12_HEAP_FLAG_NONE,
+        &desc,
+        D3D12_RESOURCE_STATE_GENERIC_READ,
+        nullptr,
+        IID_PPV_ARGS(m_Resource.GetAddress()));
+    if ( FAILED( hr ) )
     {
-        auto hr = pDevice->CreateCommittedResource(
-            &props,
-            D3D12_HEAP_FLAG_NONE,
-            &desc,
-            D3D12_RESOURCE_STATE_GENERIC_READ,
-            nullptr,
-            IID_PPV_ARGS(m_Resource[i].GetAddress()));
-        if ( FAILED( hr ) )
-        {
-            ELOG( "Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr );
-            return false;
-        }
-
-        m_Resource[i]->SetName(L"asdxConstantBuffer");
-
-        hr = m_Resource[i]->Map( 0, nullptr, reinterpret_cast<void**>( &m_Dst[i] ) );
-        if ( FAILED( hr ) )
-        {
-            ELOG( "Error : ID3D12Resource::Map() Failed. errcode = 0x%x", hr );
-            return false;
-        }
-
-        D3D12_CONSTANT_BUFFER_VIEW_DESC viewDesc = {};
-        viewDesc.SizeInBytes    = static_cast<uint32_t>(size);
-        viewDesc.BufferLocation = m_Resource[i]->GetGPUVirtualAddress();
-
-        if (!CreateConstantBufferView(m_Resource[i].GetPtr(), &viewDesc, m_View[i].GetAddress()))
-        {
-            ELOGA("Erorr : CreateConstantBufferView() Failed.");
-            return false;
-        }
+        ELOG( "Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr );
+        return false;
     }
 
     m_Size = size;
@@ -370,74 +359,45 @@ bool ConstantBuffer::Init(uint64_t size)
 //-----------------------------------------------------------------------------
 void ConstantBuffer::Term()
 {
-    for(auto i=0; i<2; ++i)
-    {
-        m_View[i].Reset();
-        auto ptr = m_Resource[i].Detach();
-        Dispose(ptr);
-        m_Dst[i] = nullptr;
-    }
+    auto resource = m_Resource.Detach();
+    Dispose(resource);
 
-    m_Size  = 0;
-    m_Index = 0;
-}
-
-//-----------------------------------------------------------------------------
-//      更新処理を行います.
-//-----------------------------------------------------------------------------
-void ConstantBuffer::Update(const void* pSrc, uint64_t size, uint64_t srcOffset, uint64_t dstOffset)
-{
-    auto dst = m_Dst[m_Index] + dstOffset;
-    auto src = reinterpret_cast<const uint8_t*>(pSrc) + srcOffset;
-    auto copy_size = (size > m_Size) ? m_Size : size;
-
-    memcpy(dst, src, copy_size);
+    m_Size = 0;
 }
 
 //-----------------------------------------------------------------------------
 //      リソースを取得します.
 //-----------------------------------------------------------------------------
 ID3D12Resource* ConstantBuffer::GetResource() const
-{ return m_Resource[m_Index].GetPtr(); }
+{ return m_Resource.GetPtr(); }
 
 //-----------------------------------------------------------------------------
-//      リソースを取得します.
+//      GPUアドレスを取得します.
 //-----------------------------------------------------------------------------
-ID3D12Resource* ConstantBuffer::GetResource(uint32_t index) const
+D3D12_GPU_VIRTUAL_ADDRESS ConstantBuffer::GetGpuAddress() const
 {
-    assert(index < 2);
-    return m_Resource[index].GetPtr();
+    D3D12_GPU_VIRTUAL_ADDRESS result = {};
+    if (m_Resource.GetPtr() != nullptr)
+    { result = m_Resource->GetGPUVirtualAddress(); }
+    return result;
 }
 
 //-----------------------------------------------------------------------------
-//      定数バッファビューを取得します.
+//      サイズを取得します.
 //-----------------------------------------------------------------------------
-IConstantBufferView* ConstantBuffer::GetCBV() const
-{ return m_View[m_Index].GetPtr(); }
-
-//-----------------------------------------------------------------------------
-//      定数バッファビューを取得します.
-//-----------------------------------------------------------------------------
-IConstantBufferView* ConstantBuffer::GetCBV(uint32_t index) const
-{
-    assert(index < 2);
-    return m_View[index].GetPtr();;
-}
-
-//-----------------------------------------------------------------------------
-//      バッファを入れ替えます.
-//-----------------------------------------------------------------------------
-void ConstantBuffer::SwapBuffer()
-{ m_Index = (m_Index + 1) & 0x1; }
+uint64_t ConstantBuffer::GetSize() const
+{ return m_Size; }
 
 //-----------------------------------------------------------------------------
 //      メモリマッピングを行います.
 //-----------------------------------------------------------------------------
-void* ConstantBuffer::Map(uint32_t index)
+void* ConstantBuffer::Map()
 {
-    assert(index < 2);
+    if (m_Resource.GetPtr() == nullptr)
+    { return nullptr; }
+
     void* pData = nullptr;
-    auto hr = m_Resource[index]->Map(0, nullptr, &pData);
+    auto hr = m_Resource->Map(0, nullptr, &pData);
     if (FAILED(hr))
     {
         ELOG("Error : ID3D12Resource::Map() Failed. errcode = 0x%x", hr);
@@ -450,10 +410,21 @@ void* ConstantBuffer::Map(uint32_t index)
 //-----------------------------------------------------------------------------
 //      メモリマッピングを解除します.
 //-----------------------------------------------------------------------------
-void ConstantBuffer::Unmap(uint32_t index)
+void ConstantBuffer::Unmap()
 {
-    assert(index < 2);
-    m_Resource[index]->Unmap(0, nullptr);
+    if (m_Resource.GetPtr() == nullptr)
+    { return; }
+
+    m_Resource->Unmap(0, nullptr);
+}
+
+//-----------------------------------------------------------------------------
+//      デバッグ名を設定します.
+//-----------------------------------------------------------------------------
+void ConstantBuffer::SetName(LPCWSTR tag)
+{
+    if (m_Resource)
+    { m_Resource->SetName(tag); }
 }
 
 
@@ -466,7 +437,6 @@ void ConstantBuffer::Unmap(uint32_t index)
 //-----------------------------------------------------------------------------
 ByteAddressBuffer::ByteAddressBuffer()
 : m_Resource()
-, m_View    ()
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
@@ -537,11 +507,15 @@ bool ByteAddressBuffer::Init(uint64_t size, D3D12_RESOURCE_STATES state)
     viewDesc.Buffer.StructureByteStride = 0;
     viewDesc.Buffer.Flags               = D3D12_BUFFER_SRV_FLAG_RAW;
 
-    if (!CreateShaderResourceView(m_Resource.GetPtr(), &viewDesc, m_View.GetAddress()))
+    m_HandleSRV = GetResourceDescriptorHeap()->Alloc(1);
+    if (!m_HandleSRV.IsValid())
     {
-        ELOGA("Error : CreateShaderResourceView() Failed.");
+        ELOG("Error : DescriptorHeap::Alloc() Failed.");
         return false;
     }
+
+    pDevice->CreateShaderResourceView(m_Resource.GetPtr(), &viewDesc, GetCpuHandleSRV());
+    m_State = state;
 
     return true;
 }
@@ -571,6 +545,7 @@ bool ByteAddressBuffer::Init
 
         pCmdList->ResourceBarrier(1, &barrier);
     }
+    m_State = D3D12_RESOURCE_STATE_GENERIC_READ;
 
     return true;
 }
@@ -580,9 +555,11 @@ bool ByteAddressBuffer::Init
 //-----------------------------------------------------------------------------
 void ByteAddressBuffer::Term()
 {
+    if (m_HandleSRV.IsValid())
+    { GetResourceDescriptorHeap()->Free(m_HandleSRV); }
+
     auto resource = m_Resource.Detach();
     Dispose(resource);
-    m_View.Reset();
 }
 
 //-----------------------------------------------------------------------------
@@ -592,10 +569,43 @@ ID3D12Resource* ByteAddressBuffer::GetResource() const
 { return m_Resource.GetPtr(); }
 
 //-----------------------------------------------------------------------------
-//      シェーダリソースビューを取得します.
+//      オフセットハンドルを取得します.
 //-----------------------------------------------------------------------------
-IShaderResourceView* ByteAddressBuffer::GetSRV() const
-{ return m_View.GetPtr(); }
+const OffsetHandle& ByteAddressBuffer::GetOffsetHandleSRV() const
+{ return m_HandleSRV; }
+
+//-----------------------------------------------------------------------------
+//      CPUディスクリプタハンドルを取得します.
+//-----------------------------------------------------------------------------
+D3D12_CPU_DESCRIPTOR_HANDLE ByteAddressBuffer::GetCpuHandleSRV() const
+{
+    D3D12_CPU_DESCRIPTOR_HANDLE result = {};
+    if (m_HandleSRV.IsValid())
+    { result = GetResourceDescriptorHeap()->GetHandleCPU(m_HandleSRV); }
+    return result;
+}
+
+//-----------------------------------------------------------------------------
+//      GPUディスクリプタハンドルを取得します.
+//-----------------------------------------------------------------------------
+D3D12_GPU_DESCRIPTOR_HANDLE ByteAddressBuffer::GetGpuHandleSRV() const
+{
+    D3D12_GPU_DESCRIPTOR_HANDLE result = {};
+    if (m_HandleSRV.IsValid())
+    { result = GetResourceDescriptorHeap()->GetHandleGPU(m_HandleSRV); }
+    return result;
+}
+
+//-----------------------------------------------------------------------------
+//      GPUアドレスを取得します.
+//-----------------------------------------------------------------------------
+D3D12_GPU_VIRTUAL_ADDRESS ByteAddressBuffer::GetGpuAddress() const
+{
+    D3D12_GPU_VIRTUAL_ADDRESS result = {};
+    if (m_Resource.GetPtr() != nullptr)
+    { result = m_Resource->GetGPUVirtualAddress(); }
+    return result;
+}
 
 //-----------------------------------------------------------------------------
 //      UAVバリアを設定します.
@@ -620,7 +630,6 @@ void ByteAddressBuffer::UAVBarrier(ID3D12GraphicsCommandList* pCmdList)
 //-----------------------------------------------------------------------------
 StructuredBuffer::StructuredBuffer()
 : m_Resource   ()
-, m_View       ()
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
@@ -692,11 +701,15 @@ bool StructuredBuffer::Init(uint64_t count, uint32_t stride, D3D12_RESOURCE_STAT
     viewDesc.Buffer.StructureByteStride = stride;
     viewDesc.Buffer.Flags               = D3D12_BUFFER_SRV_FLAG_NONE;
 
-    if (!CreateShaderResourceView(m_Resource.GetPtr(), &viewDesc, m_View.GetAddress()))
+    m_HandleSRV = GetResourceDescriptorHeap()->Alloc(1);
+    if (!m_HandleSRV.IsValid())
     {
-        ELOGA("Error : CreateShaderResourceView() Failed.");
+        ELOG("Error : DescriptorHeap::Alloc() Failed.");
         return false;
     }
+
+    pDevice->CreateShaderResourceView(m_Resource.GetPtr(), &viewDesc, GetCpuHandleSRV());
+    m_State = state;
 
     return true;
 }
@@ -727,6 +740,7 @@ bool StructuredBuffer::Init
 
         pCmdList->ResourceBarrier(1, &barrier);
     }
+    m_State = D3D12_RESOURCE_STATE_GENERIC_READ;
 
     return true;
 }
@@ -736,9 +750,11 @@ bool StructuredBuffer::Init
 //-----------------------------------------------------------------------------
 void StructuredBuffer::Term()
 {
+    if (m_HandleSRV.IsValid())
+    { GetResourceDescriptorHeap()->Free(m_HandleSRV); }
+
     auto resource = m_Resource.Detach();
     Dispose(resource);
-    m_View.Reset();
 }
 
 //-----------------------------------------------------------------------------
@@ -748,10 +764,43 @@ ID3D12Resource* StructuredBuffer::GetResource() const
 { return m_Resource.GetPtr(); }
 
 //-----------------------------------------------------------------------------
-//      ビューを取得します.
+//      オフセットハンドルを取得します.
 //-----------------------------------------------------------------------------
-IShaderResourceView* StructuredBuffer::GetSRV() const
-{ return m_View.GetPtr(); }
+const OffsetHandle& StructuredBuffer::GetOffsetHandleSRV() const
+{ return m_HandleSRV; }
+
+//-----------------------------------------------------------------------------
+//      CPUディスクリプタハンドルを取得します.
+//-----------------------------------------------------------------------------
+D3D12_CPU_DESCRIPTOR_HANDLE StructuredBuffer::GetCpuHandleSRV() const
+{
+    D3D12_CPU_DESCRIPTOR_HANDLE result = {};
+    if (m_HandleSRV.IsValid())
+    { result = GetResourceDescriptorHeap()->GetHandleCPU(m_HandleSRV); }
+    return result;
+}
+
+//-----------------------------------------------------------------------------
+//      GPUディスクリプタハンドルを取得します.
+//-----------------------------------------------------------------------------
+D3D12_GPU_DESCRIPTOR_HANDLE StructuredBuffer::GetGpuHandleSRV() const
+{
+    D3D12_GPU_DESCRIPTOR_HANDLE result = {};
+    if (m_HandleSRV.IsValid())
+    { result = GetResourceDescriptorHeap()->GetHandleGPU(m_HandleSRV); }
+    return result;
+}
+
+//-----------------------------------------------------------------------------
+//      GPUアドレスを取得します.
+//-----------------------------------------------------------------------------
+D3D12_GPU_VIRTUAL_ADDRESS StructuredBuffer::GetGpuAddress() const
+{
+    D3D12_GPU_VIRTUAL_ADDRESS result = {};
+    if (m_Resource.GetPtr() != nullptr)
+    { result = m_Resource->GetGPUVirtualAddress(); }
+    return result;
+}
 
 //-----------------------------------------------------------------------------
 //      UAVバリアを設定します.
@@ -766,130 +815,5 @@ void StructuredBuffer::UAVBarrier(ID3D12GraphicsCommandList* pCmdList)
     pCmdList->ResourceBarrier(1, &barrier);
 }
 
-
-///////////////////////////////////////////////////////////////////////////////
-// BufferUpdate class
-///////////////////////////////////////////////////////////////////////////////
-
-//-----------------------------------------------------------------------------
-//      初期化処理を行います.
-//-----------------------------------------------------------------------------
-bool BufferUpdater::Init(ID3D12Device* pDevice, uint64_t size)
-{
-    if (pDevice == nullptr || size == 0)
-    {
-        ELOG("Error : Invalid Argument.");
-        return false;
-    }
-
-    D3D12_HEAP_PROPERTIES props = {
-        D3D12_HEAP_TYPE_UPLOAD,
-        D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
-        D3D12_MEMORY_POOL_UNKNOWN,
-        1,
-        1
-    };
-
-    D3D12_RESOURCE_DESC desc = {};
-    desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
-    desc.Width              = size;
-    desc.Height             = 1;
-    desc.DepthOrArraySize   = 1;
-    desc.MipLevels          = 1;
-    desc.Format             = DXGI_FORMAT_UNKNOWN;
-    desc.SampleDesc         = { 1, 0 };
-    desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
-
-    for(auto i=0; i<2; ++i)
-    {
-        auto hr = pDevice->CreateCommittedResource(
-            &props,
-            D3D12_HEAP_FLAG_NONE,
-            &desc,
-            D3D12_RESOURCE_STATE_COMMON,
-            nullptr,
-            IID_PPV_ARGS(m_Resource[i].GetAddress()));
-        if (FAILED(hr))
-        {
-            ELOG("Error : ID3D12Device::CreateCommittedReosurce() Failed. errcode = 0x%x", hr);
-            return false;
-        }
-
-        hr = m_Resource[i]->Map(0, nullptr, reinterpret_cast<void**>(&m_AddressCPU[i]));
-        if (FAILED(hr))
-        {
-            ELOG("Error : ID3D12Resource::Map() Failed. errcode = 0x%x", hr);
-            return false;
-        }
-    }
-
-    m_Size  = size;
-    m_Offset = 0;
-    m_Index  = 0;
-
-    return true;
-}
-
-//-----------------------------------------------------------------------------
-//      終了処理を行います.
-//-----------------------------------------------------------------------------
-void BufferUpdater::Term()
-{
-    for(auto i=0; i<2; ++i)
-    {
-        m_Resource[i].Reset();
-        m_AddressCPU[i] = nullptr;
-    }
-
-    m_Size   = 0;
-    m_Offset = 0;
-    m_Index  = 0;
-}
-
-//-----------------------------------------------------------------------------
-//      バッファを更新します.
-//-----------------------------------------------------------------------------
-bool BufferUpdater::Update
-(
-    ID3D12GraphicsCommandList*  pCommandList,
-    ID3D12Resource*             pDstResource,
-    uint64_t                    dstOffset,
-    void*                       pSrcResource,
-    uint64_t                    size
-)
-{
-    if (m_Offset + size >= m_Size)
-    { return false; }
-
-    auto srcOffset = m_Offset;
-    m_Offset += size;
-
-    auto dstAddr = m_AddressCPU[m_Index] + srcOffset;
-    memcpy(dstAddr, pSrcResource, size);
-
-    pCommandList->CopyBufferRegion(
-        pDstResource,
-        dstOffset,
-        m_Resource[m_Index].GetPtr(),
-        srcOffset,
-        size);
-    return true;
-}
-
-//-----------------------------------------------------------------------------
-//      バッファを入れ替えます.
-//-----------------------------------------------------------------------------
-void BufferUpdater::SwapBuffers()
-{
-    m_Index  = (m_Index + 1) & 0x1;
-    m_Offset = 0;
-}
-
-//-----------------------------------------------------------------------------
-//      バッファ番号を取得します.
-//-----------------------------------------------------------------------------
-uint8_t BufferUpdater::GetIndex() const
-{ return m_Index; }
 
 } // namespace asdx

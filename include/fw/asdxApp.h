@@ -17,15 +17,11 @@
 
 #include <fnd/asdxRef.h>
 #include <fnd/asdxStepTimer.h>
-#include <fnd/asdxHid.h>
 #include <fnd/asdxSpinLock.h>
 #include <gfx/asdxDevice.h>
 #include <gfx/asdxCommandList.h>
 #include <gfx/asdxTarget.h>
 
-#if defined(DEBUG) || defined(_DEBUG)
-#include <DXGIDebug.h>
-#endif//defiend(DEBUG) || defined(_DEBUG)
 
 //-----------------------------------------------------------------------------
 // Linker
@@ -49,112 +45,9 @@
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
-// COLOR_SPACE enum
+// App class
 ///////////////////////////////////////////////////////////////////////////////
-enum COLOR_SPACE
-{
-    COLOR_SPACE_NONE,           // デフォルト.
-    COLOR_SPACE_SRGB,           // SRGB (ガンマ2.2)
-    COLOR_SPACE_BT709,          // ITU-R BT.709 (ガンマ2.4)
-    COLOR_SPACE_BT2100_PQ,      // ITU-R BT.2100 Perceptual Quantizer
-    COLOR_SPACE_BT2100_HLG,     // ITU-R BT.2100 Hybrid Log Gamma
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// MouseEventArgs structure
-///////////////////////////////////////////////////////////////////////////////
-struct MouseEventArgs
-{
-    int     X;                  //!< カーソルのX座標です.
-    int     Y;                  //!< カーソルのY座標です.
-    int     WheelDelta;         //!< マウスホイールの移動方向です.
-    bool    IsLeftButtonDown;   //!< 左ボタンが押されたどうかを示すフラグです.
-    bool    IsRightButtonDown;  //!< 右ボタンが押されたどうかを示すフラグです.
-    bool    IsMiddleButtonDown; //!< 中ボタンが押されたかどうかを示すフラグです.
-    bool    IsSideButton1Down;  //!< X1ボタンが押されたかどうかを示すフラグです.
-    bool    IsSideButton2Down;  //!< X2ボタンが押されたかどうかを示すフラグです.
-
-    //-------------------------------------------------------------------------
-    //! @brief      コンストラクタです.
-    //-------------------------------------------------------------------------
-    MouseEventArgs()
-    : X                 ( 0 )
-    , Y                 ( 0 )
-    , WheelDelta        ( 0 )
-    , IsLeftButtonDown  ( false )
-    , IsRightButtonDown ( false)
-    , IsMiddleButtonDown( false )
-    , IsSideButton1Down ( false )
-    , IsSideButton2Down ( false )
-    { /* DO_NOTHING */ }
-};
-
-
-///////////////////////////////////////////////////////////////////////////////
-// KeyEventArgs structure
-///////////////////////////////////////////////////////////////////////////////
-struct KeyEventArgs
-{
-    uint32_t    KeyCode;        //!< キーコードです.
-    bool        IsKeyDown;      //!< キーが押されたかどうかを示すフラグです.
-    bool        IsAltDown;      //!< ALTキーが押されたかどうかを示すフラグです.
-
-    //-------------------------------------------------------------------------
-    //! @brief      コンストラクタです.
-    //-------------------------------------------------------------------------
-    KeyEventArgs()
-    : KeyCode   ( 0 )
-    , IsKeyDown ( false )
-    , IsAltDown ( false )
-    { /* DO_NOTHING */ }
-};
-
-
-///////////////////////////////////////////////////////////////////////////////
-// ResizeEventArgs structure
-///////////////////////////////////////////////////////////////////////////////
-struct ResizeEventArgs
-{
-    uint32_t    Width;          //!< 画面の横幅です.
-    uint32_t    Height;         //!< 画面の縦幅です.
-    float       AspectRatio;    //!< 画面のアスペクト比です.
-
-    //-------------------------------------------------------------------------
-    //! @brief      コンストラクタです.
-    //-------------------------------------------------------------------------
-    ResizeEventArgs()
-    : Width      ( 0 )
-    , Height     ( 0 )
-    , AspectRatio( 0.0f )
-    { /* DO_NOTHING */ }
-};
-
-
-///////////////////////////////////////////////////////////////////////////////
-// FrameEventArgs struture
-///////////////////////////////////////////////////////////////////////////////
-struct FrameEventArgs
-{
-    double                  Time;           //!< アプリケーション開始からの相対時間です.
-    double                  ElapsedTime;    //!< 前のフレームからの経過時間(秒)です.
-    float                   FPS;            //!< １秒当たりフレーム更新回数です.
-    bool                    IsStopDraw;     //!< 描画停止フラグです.
-
-    //-------------------------------------------------------------------------
-    //! @brief      コンストラクタです.
-    //-------------------------------------------------------------------------
-    FrameEventArgs()
-    : Time          ( 0 )
-    , ElapsedTime   ( 0 )
-    , FPS           ( 0.0f )
-    , IsStopDraw    ( false )
-    { /* DO_NOTHING */ }
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// Application class
-///////////////////////////////////////////////////////////////////////////////
-class Application
+class App
 {
     //=========================================================================
     // list of friend classes and methods.
@@ -162,6 +55,66 @@ class Application
     /* NOTHING */
 
 public:
+    ///////////////////////////////////////////////////////////////////////////////
+    // COLOR_SPACE enum
+    ///////////////////////////////////////////////////////////////////////////////
+    enum COLOR_SPACE
+    {
+        COLOR_SPACE_NONE,           // デフォルト.
+        COLOR_SPACE_SRGB,           // SRGB (ガンマ2.2)
+        COLOR_SPACE_BT709,          // ITU-R BT.709 (ガンマ2.4)
+        COLOR_SPACE_BT2100_PQ,      // ITU-R BT.2100 Perceptual Quantizer
+        COLOR_SPACE_BT2100_HLG,     // ITU-R BT.2100 Hybrid Log Gamma
+    };
+
+    ///////////////////////////////////////////////////////////////////////////
+    // MouseEventArgs structure
+    ///////////////////////////////////////////////////////////////////////////
+    struct MouseEventArgs
+    {
+        int     X           = 0;        //!< カーソルのX座標です.
+        int     Y           = 0;        //!< カーソルのY座標です.
+        int     WheelDelta  = 0;        //!< マウスホイールの移動方向です.
+        bool    IsDownL     = false;    //!< 左ボタンが押されたら true.
+        bool    IsDownR     = false;    //!< 右ボタンが押されたら true.
+        bool    IsDownM     = false;    //!< 中ボタンが押されたら true.
+        bool    IsDownX1    = false;    //!< X1ボタンが押されたら true.
+        bool    IsDownX2    = false;    //!< X2ボタンが押されたら true.
+        bool    IsAltDown   = false;    //!< ALTキーが押されていたら true.
+        bool    IsCtrlDown  = false;    //!< Ctrlキーが押されていたら true.
+        bool    IsShiftDown = false;    //!< Shiftキーが押されていたら true.
+    };
+
+    ///////////////////////////////////////////////////////////////////////////
+    // KeyEventArgs structure
+    ///////////////////////////////////////////////////////////////////////////
+    struct KeyEventArgs
+    {
+        uint32_t    KeyCode     = 0;        //!< キーコードです.
+        bool        IsKeyDown   = false;    //!< キーが押されたかどうかを示すフラグです.
+        bool        IsAltDown   = false;    //!< ALTキーが押されたかどうかを示すフラグです.
+    };
+
+    ///////////////////////////////////////////////////////////////////////////
+    // ResizeEventArgs structure
+    ///////////////////////////////////////////////////////////////////////////
+    struct ResizeEventArgs
+    {
+        uint32_t    Width       = 0;        //!< 画面の横幅です.
+        uint32_t    Height      = 0;        //!< 画面の縦幅です.
+        float       AspectRatio = 0.0f;     //!< 画面のアスペクト比です.
+    };
+
+    ///////////////////////////////////////////////////////////////////////////
+    // FrameEventArgs structure
+    ///////////////////////////////////////////////////////////////////////////
+    struct FrameEventArgs
+    {
+        double      AppTimeSec      = 0.0;  //!< アプリケーション開始からの相対時間(秒)です.
+        double      ElapsedTimeSec  = 0.0;  //!< 前フレームからの経過時間(秒)です.
+        float       FPS             = 0.0f; //!< Frame Per Secondです. (瞬間値なので GetFPS()とは異なる値になります).
+    };
+
     //=========================================================================
     // public variables.
     //=========================================================================
@@ -174,7 +127,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      コンストラクタです.
     //-------------------------------------------------------------------------
-    Application();
+    App();
 
     //-------------------------------------------------------------------------
     //! @brief      引数付きコンストラクタです.
@@ -186,7 +139,7 @@ public:
     //! @param [in]     hMenu       メニューハンドル.
     //! @param [in]     hAccel      アクセレレータハンドル.
     //-------------------------------------------------------------------------
-    Application(
+    App(
         LPCWSTR     title,
         uint32_t    width,
         uint32_t    height,
@@ -197,12 +150,12 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      デストラクタです.
     //-------------------------------------------------------------------------
-    virtual ~Application();
+    virtual ~App();
 
     //-------------------------------------------------------------------------
     //! @brief      アプリケーションを実行します.
     //-------------------------------------------------------------------------
-    void Run();
+    int Run();
 
     //-------------------------------------------------------------------------
     //! @brief      フォーカスを持つかどうか判定します.
@@ -253,62 +206,58 @@ protected:
 
     //-------------------------------------------------------------------------
     //! @brief      初期化時に実行する処理です.
-    //!
-    //! @note       派生クラスにて実装を行います.
+    //! 
+    //! @retval true    初期化に成功.
+    //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
-    virtual bool OnInit       ();
+    virtual bool OnInit();
 
     //-------------------------------------------------------------------------
     //! @brief      終了時に実行する処理です.
-    //!
-    //! @note       派生クラスにて実装を行います.
     //-------------------------------------------------------------------------
-    virtual void OnTerm       ();
+    virtual void OnTerm();
 
     //-------------------------------------------------------------------------
     //! @brief      フレーム遷移時に実行する処理です.
-    //!
-    //! @param [in]     param       フレームインベントパラメータです.
-    //! @note       派生クラスにて実装を行います.
+    //! 
+    //! @param[in]      args        フレームイベントパラメータです.
     //-------------------------------------------------------------------------
-    virtual void OnFrameMove  ( FrameEventArgs& param );
+    virtual void OnFrameMove(const FrameEventArgs& args);
 
     //-------------------------------------------------------------------------
     //! @brief      フレーム描画時に実行する処理です.
-    //!
-    //! @param [in]     param       フレームインベントパラメータです.
-    //! @note       派生クラスにて実装を行います.
+    //! 
+    //! @param[in]      args        フレームイベントパラメータです.
     //-------------------------------------------------------------------------
-    virtual void OnFrameRender( FrameEventArgs& param );
+    virtual void OnFrameRender(const FrameEventArgs& args);
 
     //-------------------------------------------------------------------------
     //! @brief      リサイズ時に実行する処理です.
     //!
-    //! @param [in]     param       リサイズイベントパラメータです.
-    //! @note       派生クラスにて実装を行います.
+    //! @param[in]      args       リサイズイベントパラメータです.
     //-------------------------------------------------------------------------
-    virtual void OnResize     ( const ResizeEventArgs& param );
+    virtual void OnResize(const ResizeEventArgs& args);
 
     //-------------------------------------------------------------------------
     //! @brief      キーイベント通知時に実行する処理です.
     //!
-    //! @param [in]     param       キーイベントパラメータです.
-    //! @note       派生クラスにて実装を行います.
+    //! @param[in]      args       キーイベントパラメータです.
     //-------------------------------------------------------------------------
-    virtual void OnKey        ( const KeyEventArgs&    param );
+    virtual void OnKey(const KeyEventArgs& args);
 
     //-------------------------------------------------------------------------
     //! @brief      マウスイベント通知時に実行する処理です.
     //!
-    //! @param [in]     param       マウスイベントパラメータです.
-    //! @note       派生クラスにて実装を行います.
+    //! @param[in]      args       マウスイベントパラメータです.
     //-------------------------------------------------------------------------
-    virtual void OnMouse      ( const MouseEventArgs&  param );
+    virtual void OnMouse(const MouseEventArgs& args);
 
     //-------------------------------------------------------------------------
     //! @brief      タイピング時の処理です.
+    //! 
+    //! @param[in]      keyCode     キーコードです.
     //-------------------------------------------------------------------------
-    virtual void OnTyping     ( uint32_t keyCode );
+    virtual void OnTyping(uint32_t keyCode);
 
     //-------------------------------------------------------------------------
     //! @brief      ウィンドウへのドラッグアンドドロップされたと時に実行する処理です.
@@ -316,7 +265,7 @@ protected:
     //! @param[in]      dropFiles     ドラッグアンドドロップされたファイル名です.
     //! @param[in]      fileCount     ドラッグアンドドロップされたファイル数です.
     //-------------------------------------------------------------------------
-    virtual void OnDrop        ( const wchar_t** dropFiles, uint32_t fileCount );
+    virtual void OnDrop(const wchar_t** dropFiles, uint32_t fileCount);
 
     //-------------------------------------------------------------------------
     //! @brief      メッセージプロシージャの処理です.
@@ -326,14 +275,14 @@ protected:
     //! @param[in]      wp          メッセージの追加情報.
     //! @param[in]      lp          メッセージの追加情報.
     //-------------------------------------------------------------------------
-    virtual void OnMsgProc( HWND hWnd, UINT msg, WPARAM wp, LPARAM lp );
+    virtual void OnMsgProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp);
 
     //-------------------------------------------------------------------------
     //! @brief      描画停止フラグを設定します.
     //!
     //! @param [in]     isStopRendering     描画を停止するかどうか.停止する場合はtrueを指定します.
     //-------------------------------------------------------------------------
-    void SetStopRendering( bool isStopRendering );
+    void SetStopRendering(bool isStopRendering);
 
     //-------------------------------------------------------------------------
     //! @brief      描画停止フラグを取得します.
@@ -371,7 +320,7 @@ protected:
     //!
     //! @param [in]     syncInterval        垂直同期の間隔です.
     //-------------------------------------------------------------------------
-    void Present( uint32_t syncInterval );
+    void Present(uint32_t syncInterval);
 
     //-------------------------------------------------------------------------
     //! @brief      HDR出力をサポートしているかどうかチェックします.
@@ -474,17 +423,17 @@ private:
     //-------------------------------------------------------------------------
     //! @brief      メインループ処理です.
     //-------------------------------------------------------------------------
-    void MainLoop();
+    int MainLoop();
 
     //-------------------------------------------------------------------------
     //! @brief      リサイズイベントを処理します.
     //!
-    //! @param[in]      param       リサイズイベント引数です.
+    //! @param[in]      args        リサイズイベント引数です.
     //! @note       このメソッドは内部処理で, OnResize()を呼び出します.
     //!             また，このメソッドはウィンドウプロシージャからのアクセス専用メソッドですので,
     //!             アプリケーション側で呼び出しを行わないでください.
     //-------------------------------------------------------------------------
-    void ResizeEvent( const ResizeEventArgs& param );
+    void ResizeEvent(const ResizeEventArgs& args);
 
     //-------------------------------------------------------------------------
     //! @brief      HDR出力をサポートしているかどうかチェックします.
@@ -499,10 +448,10 @@ private:
     //! @param [in]     wp          メッセージの追加情報.
     //! @param [in]     lp          メッセージの追加情報.
     //-------------------------------------------------------------------------
-    static LRESULT CALLBACK MsgProc( HWND hWnd, uint32_t uMsg, WPARAM wp, LPARAM lp );
+    static LRESULT CALLBACK MsgProc(HWND hWnd, uint32_t uMsg, WPARAM wp, LPARAM lp);
 
-    Application             (const Application&) = delete;
-    Application& operator = (const Application&) = delete;
+    App             (const App&) = delete;
+    App& operator = (const App&) = delete;
 };
 
 } // namespace asdx

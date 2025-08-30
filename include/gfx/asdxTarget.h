@@ -8,8 +8,10 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
+#include <d3d12.h>
 #include <dxgi1_6.h>
-#include <gfx/asdxView.h>
+#include <fnd/asdxOffsetAllocator.h>
+#include <fnd/asdxRef.h>
 
 
 namespace asdx {
@@ -19,42 +21,18 @@ namespace asdx {
 ///////////////////////////////////////////////////////////////////////////////
 struct TargetDesc
 {
-    D3D12_RESOURCE_DIMENSION    Dimension;          //!< 次元です.
-    uint64_t                    Alignment;          //!< アライメントです.
-    uint64_t                    Width;              //!< 横幅です.
-    uint32_t                    Height;             //!< 縦幅です.
-    uint16_t                    DepthOrArraySize;   //!< 奥行 または 配列サイズです.
-    uint16_t                    MipLevels;          //!< ミップレベル数です.
-    DXGI_FORMAT                 Format;             //!< フォーマットです.
-    DXGI_SAMPLE_DESC            SampleDesc;         //!< サンプル設定です.
-    D3D12_RESOURCE_STATES       InitState;          //!< 初期ステート.
-    float                       ClearColor[4];
-    float                       ClearDepth;
-    uint8_t                     ClearStencil;
-
-    //-------------------------------------------------------------------------
-    //! @brief      コンストラクタです.
-    //-------------------------------------------------------------------------
-    TargetDesc()
-    : Dimension         ( D3D12_RESOURCE_DIMENSION_UNKNOWN )
-    , Alignment         ( 0 )
-    , Width             ( 0 )
-    , Height            ( 0 )
-    , MipLevels         ( 0 )
-    , DepthOrArraySize  ( 0 )
-    , Format            ( DXGI_FORMAT_UNKNOWN )
-    , InitState         ( D3D12_RESOURCE_STATE_COMMON )
-    {
-        SampleDesc.Count   = 0;
-        SampleDesc.Quality = 0;
-
-        ClearColor[0] = 1.0f;
-        ClearColor[1] = 1.0f;
-        ClearColor[2] = 1.0f;
-        ClearColor[3] = 1.0f;
-        ClearDepth    = 1.0f;
-        ClearStencil  = 0;
-    }
+    D3D12_RESOURCE_DIMENSION    Dimension           = D3D12_RESOURCE_DIMENSION_UNKNOWN;     //!< 次元です.
+    uint64_t                    Alignment           = 0;                                    //!< アライメントです.
+    uint64_t                    Width               = 0;                                    //!< 横幅です.
+    uint32_t                    Height              = 1;                                    //!< 縦幅です.
+    uint16_t                    DepthOrArraySize    = 1;                                    //!< 奥行 または 配列サイズです.
+    uint16_t                    MipLevels           = 1;                                    //!< ミップレベル数です.
+    DXGI_FORMAT                 Format              = DXGI_FORMAT_UNKNOWN;                  //!< フォーマットです.
+    DXGI_SAMPLE_DESC            SampleDesc          = { 1, 0 };                             //!< サンプル設定です.
+    D3D12_RESOURCE_STATES       InitState           = D3D12_RESOURCE_STATE_COMMON;          //!< 初期ステート.
+    float                       ClearColor[4]       = { 1.0f, 1.0f, 1.0f, 1.0f };           //!< クリアカラー値です.
+    float                       ClearDepth          = 1.0f;                                 //!< クリア深度値です.
+    uint8_t                     ClearStencil        = 0;                                    //!< クリアステンシル値です.
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -129,18 +107,39 @@ public:
     ID3D12Resource* GetResource() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      レンダーターゲットビューを取得します.
+    //! @brief      オフセットハンドルを取得します(RTV用).
     //!
-    //! @return     レンダーターゲットビューを返却します.
+    //! @return     オフセットハンドルを返却します(RTV用).
     //-------------------------------------------------------------------------
-    IRenderTargetView* GetRTV() const;
+    const OffsetHandle& GetOffsetHandleRTV() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      シェーダリソースビューを取得します.
-    //!
-    //! @return     シェーダリソースビューを返却します.
+    //! @brief      CPUディスクリプタハンドルを取得します(RTV用).
+    //! 
+    //! @return     CPUディスクリプタハンドルを返却します(RTV用).
     //-------------------------------------------------------------------------
-    IShaderResourceView* GetSRV() const;
+    D3D12_CPU_DESCRIPTOR_HANDLE GetCpuHandleRTV() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      オフセットハンドルを取得します(SRV用).
+    //!
+    //! @return     オフセットハンドルを返却します(SRV用).
+    //-------------------------------------------------------------------------
+    const OffsetHandle& GetOffsetHandleSRV() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      CPUディスクリプタハンドルを取得します(SRV用).
+    //! 
+    //! @return     CPUディスクリプタハンドルを返却します(SRV用).
+    //-------------------------------------------------------------------------
+    D3D12_CPU_DESCRIPTOR_HANDLE GetCpuHandleSRV() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      GPUディスクリプタハンドルを取得します(SRV用).
+    //! 
+    //! @return     GPUディスクリプタハンドルを返却します(SRV用).
+    //-------------------------------------------------------------------------
+    D3D12_GPU_DESCRIPTOR_HANDLE GetGpuHandleSRV() const;
 
     //-------------------------------------------------------------------------
     //! @brief      構成設定を取得します.
@@ -200,8 +199,8 @@ private:
     // private variables.
     //=========================================================================
     RefPtr<ID3D12Resource>      m_pResource;
-    RefPtr<IRenderTargetView>   m_pRTV;
-    RefPtr<IShaderResourceView> m_pSRV;
+    OffsetHandle                m_HandleRTV;
+    OffsetHandle                m_HandleSRV;
     TargetDesc                  m_Desc;
     D3D12_RESOURCE_STATES       m_PrevState = D3D12_RESOURCE_STATE_COMMON;
 
@@ -275,18 +274,39 @@ public:
     ID3D12Resource* GetResource() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      深度ステンシルビューを取得します.
+    //! @brief      オフセットハンドルを取得します(DSV用).
     //!
-    //! @return     深度ステンシルビューを返却します.
+    //! @return     オフセットハンドルを返却します(DSV用).
     //-------------------------------------------------------------------------
-    IDepthStencilView* GetDSV() const;
+    const OffsetHandle& GetOffsetHandleDSV() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      シェーダリソースビューを取得します.
-    //!
-    //! @return     シェーダリソースビューを返却します.
+    //! @brief      CPUディスクリプタハンドルを取得します(DSV用).
+    //! 
+    //! @return     CPUディスクリプタハンドルを返却します(DSV用).
     //-------------------------------------------------------------------------
-    IShaderResourceView* GetSRV() const;
+    D3D12_CPU_DESCRIPTOR_HANDLE GetCpuHandleDSV() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      オフセットハンドルを取得します(SRV用).
+    //!
+    //! @return     オフセットハンドルを返却します(SRV用).
+    //-------------------------------------------------------------------------
+    const OffsetHandle& GetOffsetHandleSRV() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      CPUディスクリプタハンドルを取得します(SRV用).
+    //! 
+    //! @return     CPUディスクリプタハンドルを返却します(SRV用).
+    //-------------------------------------------------------------------------
+    D3D12_CPU_DESCRIPTOR_HANDLE GetCpuHandleSRV() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      GPUディスクリプタハンドルを取得します(SRV用).
+    //! 
+    //! @return     GPUディスクリプタハンドルを返却します(SRV用).
+    //-------------------------------------------------------------------------
+    D3D12_GPU_DESCRIPTOR_HANDLE GetGpuHandleSRV() const;
 
     //-------------------------------------------------------------------------
     //! @brief      構成設定を取得します.
@@ -339,8 +359,8 @@ private:
     // private variables.
     //=========================================================================
     RefPtr<ID3D12Resource>      m_pResource;
-    RefPtr<IDepthStencilView>   m_pDSV;
-    RefPtr<IShaderResourceView> m_pSRV;
+    OffsetHandle                m_HandleDSV;
+    OffsetHandle                m_HandleSRV;
     TargetDesc                  m_Desc;
     D3D12_RESOURCE_STATES       m_PrevState = D3D12_RESOURCE_STATE_COMMON;
 
@@ -425,18 +445,46 @@ public:
     ID3D12Resource* GetResource() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      アンオーダードアクセスビューを取得します.
+    //! @brief      オフセットハンドルを取得します(UAV用).
     //!
-    //! @return     アンオーダードアクセスビューを返却します.
+    //! @return     オフセットハンドルを返却します(UAV用).
     //-------------------------------------------------------------------------
-    const IUnorderedAccessView* GetUAV() const;
+    const OffsetHandle& GetOffsetHandleUAV() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      シェーダリソースビューを取得します.
-    //!
-    //! @return     シェーダリソースビューを返却します.
+    //! @brief      CPUディスクリプタハンドルを取得します(UAV用).
+    //! 
+    //! @return     CPUディスクリプタハンドルを返却します(UAV用).
     //-------------------------------------------------------------------------
-    const IShaderResourceView* GetSRV() const;
+    D3D12_CPU_DESCRIPTOR_HANDLE GetCpuHandleUAV() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      GPUディスクリプタハンドルを取得します(UAV用).
+    //! 
+    //! @return     GPUディスクリプタハンドルを返却します(UAV用).
+    //-------------------------------------------------------------------------
+    D3D12_GPU_DESCRIPTOR_HANDLE GetGpuHandleUAV() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      オフセットハンドルを取得します(SRV用).
+    //!
+    //! @return     オフセットハンドルを返却します(SRV用).
+    //-------------------------------------------------------------------------
+    const OffsetHandle& GetOffsetHandleSRV() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      CPUディスクリプタハンドルを取得します(SRV用).
+    //! 
+    //! @return     CPUディスクリプタハンドルを返却します(SRV用).
+    //-------------------------------------------------------------------------
+    D3D12_CPU_DESCRIPTOR_HANDLE GetCpuHandleSRV() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      GPUディスクリプタハンドルを取得します(SRV用).
+    //! 
+    //! @return     GPUディスクリプタハンドルを返却します(SRV用).
+    //-------------------------------------------------------------------------
+    D3D12_GPU_DESCRIPTOR_HANDLE GetGpuHandleSRV() const;
 
     //-------------------------------------------------------------------------
     //! @brief      構成設定を取得します.
@@ -503,8 +551,8 @@ private:
     // private variables.
     //=========================================================================
     RefPtr<ID3D12Resource>          m_pResource;
-    RefPtr<IUnorderedAccessView>    m_pUAV;
-    RefPtr<IShaderResourceView>     m_pSRV;
+    OffsetHandle                    m_HandleUAV;
+    OffsetHandle                    m_HandleSRV;
     TargetDesc                      m_Desc;
     D3D12_RESOURCE_STATES           m_PrevState = D3D12_RESOURCE_STATE_COMMON;
     uint32_t                        m_Stride    = 0;

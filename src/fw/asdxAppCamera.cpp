@@ -83,9 +83,9 @@ void AppCamera::OnMouse
 //-----------------------------------------------------------------------------
 //      キーの処理です.
 //-----------------------------------------------------------------------------
-void AppCamera::OnKey( uint32_t nChar, bool isKeyDown, bool isAltDown )
+void AppCamera::OnKey( uint32_t keyCode, bool isKeyDown, bool isAltDown )
 {
-    CameraEvent e = MakeEventFromKey( nChar, isKeyDown, isAltDown );
+    CameraEvent e = MakeEventFromKey( keyCode, isKeyDown, isAltDown );
     m_Camera.UpdateByEvent( e );
 }
 

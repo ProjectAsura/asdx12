@@ -139,27 +139,4 @@ uint8_t CommandList::GetIndex() const
 void CommandList::SetName(LPCWSTR name)
 { m_CmdList->SetName(name); }
 
-
-///////////////////////////////////////////////////////////////////////////////
-// ScopedMarker class
-///////////////////////////////////////////////////////////////////////////////
-
-//-----------------------------------------------------------------------------
-//      コンストラクタです.
-//-----------------------------------------------------------------------------
-ScopedMarker::ScopedMarker(ID3D12GraphicsCommandList* pCmd, const char* text)
-: m_pCmd(pCmd)
-{
-    assert(m_pCmd != nullptr);
-    assert(text != nullptr);
-    PIXBeginEvent(m_pCmd, PIX_COLOR_DEFAULT, text);
-}
-
-//-----------------------------------------------------------------------------
-//      デストラクタです.
-//-----------------------------------------------------------------------------
-ScopedMarker::~ScopedMarker()
-{ PIXEndEvent(m_pCmd); }
-
-
 } // namespace asdx

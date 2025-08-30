@@ -530,7 +530,7 @@ bool GraphicsSystem::Init(const DeviceDesc& deviceDesc)
             return false;
         }
 
-        auto dst = m_QuadVB.Map<QuadVertex>();
+        auto dst = m_QuadVB.MapAs<QuadVertex>();
         memcpy(dst, vertices, size);
         m_QuadVB.Unmap();
     }

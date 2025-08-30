@@ -8,11 +8,11 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <cassert>
-#include <vector>
 #include <gfx/asdxTexture.h>
 #include <gfx/asdxDevice.h>
-#include <gfx/asdxCommandList.h>
 #include <gfx/asdxUpdateCommand.h>
+#include <gfx/asdxDescriptorHeap.h>
+#include <res/asdxResTexture.h>
 #include <fnd/asdxLogger.h>
 
 
@@ -90,7 +90,6 @@ bool Texture::Init(ID3D12GraphicsCommandList* pCmdList, const ResTexture& resour
     }
 #endif
 
-    ID3D12Resource* pResource = nullptr;
     D3D12_HEAP_PROPERTIES props = {
         heapType,
         D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
@@ -210,22 +209,21 @@ bool Texture::Init(ID3D12GraphicsCommandList* pCmdList, const ResTexture& resour
         &desc,
         initState,
         nullptr,
-        IID_PPV_ARGS(&pResource));
+        IID_PPV_ARGS(m_Resource.GetAddress()));
     if (FAILED(hr))
     {
         ELOG("Error : ID3D12Device::CreateCommitedResource() Failed. errcode = 0x%x", hr);
         return false;
     }
 
-    // シェーダリソースビューの生成.
+    m_HandleSRV = GetResourceDescriptorHeap()->Alloc(1);
+    if (!m_HandleSRV.IsValid())
     {
-        if (!CreateShaderResourceView(pResource, &viewDesc, m_View.GetAddress()))
-        {
-            pResource->Release();
-            pResource = nullptr;
-            return false;
-        }
+        ELOG("Error : DescriptorHeap::Alloc() Failed.");
+        return false;
     }
+
+    pDevice->CreateShaderResourceView(m_Resource.GetPtr(), &viewDesc, GetCpuHandleSRV());
 
     // 直接書き込める場合.
     if (gpuUploadHeapsSupported || isUnifiedMemoryArchitecture)
@@ -246,13 +244,13 @@ bool Texture::Init(ID3D12GraphicsCommandList* pCmdList, const ResTexture& resour
             dstBox.front    = 0;
             dstBox.back     = resource.DepthOrArraySize;
 
-            pResource->WriteToSubresource(i, &dstBox, srcPtr, UINT(srcRowPitch), UINT(srcDepthPitch));
+            m_Resource->WriteToSubresource(i, &dstBox, srcPtr, UINT(srcRowPitch), UINT(srcDepthPitch));
         }
     }
     else
     {
         // コピーコマンドを使ってアップロード.
-        UpdateTexture(pCmdList, pResource, &resource);
+        UpdateTexture(pCmdList, m_Resource.GetPtr(), &resource);
     }
 
     // ステート遷移.
@@ -261,16 +259,13 @@ bool Texture::Init(ID3D12GraphicsCommandList* pCmdList, const ResTexture& resour
         D3D12_RESOURCE_BARRIER barrier = {};
         barrier.Type                    = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
         barrier.Flags                   = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-        barrier.Transition.pResource    = pResource;
+        barrier.Transition.pResource    = m_Resource.GetPtr();
         barrier.Transition.Subresource  = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
         barrier.Transition.StateBefore  = initState;
         barrier.Transition.StateAfter   = D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE;
 
         pCmdList->ResourceBarrier(1, &barrier);
     }
-
-    pResource->Release();
-    pResource = nullptr;
 
     return true;
 }
@@ -279,21 +274,49 @@ bool Texture::Init(ID3D12GraphicsCommandList* pCmdList, const ResTexture& resour
 //      終了処理を行います.
 //-----------------------------------------------------------------------------
 void Texture::Term()
-{ m_View.Reset(); }
+{
+    if (m_HandleSRV.IsValid())
+    { GetResourceDescriptorHeap()->Free(m_HandleSRV); }
+
+    auto resource = m_Resource.Detach();
+    Dispose(resource);
+}
 
 //-----------------------------------------------------------------------------
-//      ビューを取得します.
+//      オフセットハンドルを取得します.
 //-----------------------------------------------------------------------------
-IShaderResourceView* Texture::GetSRV() const
-{ return m_View.GetPtr(); }
+const OffsetHandle& Texture::GetOffsetHandleSRV() const
+{ return m_HandleSRV; }
+
+//-----------------------------------------------------------------------------
+//      CPUディスクリプタハンドルを取得します.
+//-----------------------------------------------------------------------------
+D3D12_CPU_DESCRIPTOR_HANDLE Texture::GetCpuHandleSRV() const
+{
+    D3D12_CPU_DESCRIPTOR_HANDLE result = {};
+    if (m_HandleSRV.IsValid())
+    { result = GetResourceDescriptorHeap()->GetHandleCPU(m_HandleSRV); }
+    return result;
+}
+
+//-----------------------------------------------------------------------------
+//      GPUディスクリプタハンドルを取得します.
+//-----------------------------------------------------------------------------
+D3D12_GPU_DESCRIPTOR_HANDLE Texture::GetGpuHandleSRV() const
+{
+    D3D12_GPU_DESCRIPTOR_HANDLE result = {};
+    if (m_HandleSRV.IsValid())
+    { result = GetResourceDescriptorHeap()->GetHandleGPU(m_HandleSRV); }
+    return result;
+}
 
 //-----------------------------------------------------------------------------
 //      デバッグ名を設定します.
 //-----------------------------------------------------------------------------
-void Texture::SetName(const char* name)
+void Texture::SetName(LPCWSTR tag)
 {
-    m_View->GetResource()
-          ->SetPrivateData(WKPDID_D3DDebugObjectName, UINT(strlen(name)), name);
+    if (m_Resource.GetPtr() != nullptr)
+    { m_Resource->SetName(tag); }
 }
 
 } // namespace asdx

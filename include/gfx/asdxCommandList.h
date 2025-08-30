@@ -123,8 +123,34 @@ public:
     //=========================================================================
     // public methods.
     //=========================================================================
-    ScopedMarker(ID3D12GraphicsCommandList* pCmd, const char* text);
-    ~ScopedMarker();
+
+    //-------------------------------------------------------------------------
+    //! @brief      コンストラクタです.
+    //-------------------------------------------------------------------------
+    ScopedMarker(ID3D12GraphicsCommandList* pCmd, const char* text)
+    {
+        assert(pCmd != nullptr);
+        assert(text != nullptr);
+    #if _PIX3_H_
+        PIXBeginEvent(m_pCmd, PIX_COLOR_DEFAULT, text);
+    #else
+        static const UINT PIX_EVENT_ANSI_VERSION = 1;
+        auto size = UINT((strlen(text) + 1) * sizeof(char));
+        m_pCmd->BeginEvent(PIX_EVENT_ANSI_VERSION, text, size);
+    #endif
+    }
+
+    //-------------------------------------------------------------------------
+    //! @brief      デストラクタです.
+    //-------------------------------------------------------------------------
+    ~ScopedMarker()
+    {
+    #if _PIX3_H_
+        PIXEndEvent(m_pCmd)
+    #else
+        m_pCmd->EndEvent();
+    #endif
+    }
 
 private:
     //=========================================================================

@@ -15,6 +15,9 @@
 #include <fw/asdxApp.h>
 #include <gfx/asdxCommandQueue.h>
 
+#if defined(DEBUG) || defined(_DEBUG)
+#include <DXGIDebug.h>
+#endif//defiend(DEBUG) || defined(_DEBUG)
 
 namespace /* anonymous */ {
 
@@ -637,20 +640,20 @@ namespace asdx  {
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// Application class
+// App class
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 //-----------------------------------------------------------------------------
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
-Application::Application()
-: Application(L"asdxApplication", 960, 540, nullptr, nullptr, nullptr)
+App::App()
+: App(L"asdxApplication", 960, 540, nullptr, nullptr, nullptr)
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-Application::Application( LPCWSTR title, UINT width, UINT height, HICON hIcon, HMENU hMenu, HACCEL hAccel )
+App::App(LPCWSTR title, UINT width, UINT height, HICON hIcon, HMENU hMenu, HACCEL hAccel)
 : m_hInst               ( nullptr )
 , m_hWnd                ( nullptr )
 , m_AllowTearing        ( false )
@@ -707,13 +710,13 @@ Application::Application( LPCWSTR title, UINT width, UINT height, HICON hIcon, H
 //-----------------------------------------------------------------------------
 //      デストラクタです.
 //-----------------------------------------------------------------------------
-Application::~Application()
+App::~App()
 { TermApp(); }
 
 //-----------------------------------------------------------------------------
 //      描画停止フラグを設定します.
 //-----------------------------------------------------------------------------
-void Application::SetStopRendering( bool isStopRendering )
+void App::SetStopRendering( bool isStopRendering )
 {
     ScopedLock<SpinLock> locker(m_SpinLock);
     m_IsStopRendering = isStopRendering;
@@ -722,25 +725,25 @@ void Application::SetStopRendering( bool isStopRendering )
 //-----------------------------------------------------------------------------
 //      描画停止フラグを取得します.
 //-----------------------------------------------------------------------------
-bool Application::IsStopRendering()
+bool App::IsStopRendering()
 { return m_IsStopRendering; }
 
 //-----------------------------------------------------------------------------
 //      フレームカウントを取得します.
 //-----------------------------------------------------------------------------
-DWORD Application::GetFrameCount()
+DWORD App::GetFrameCount()
 { return m_FrameCount; }
 
 //-----------------------------------------------------------------------------
 //      FPSを取得します.
 //-----------------------------------------------------------------------------
-FLOAT Application::GetFPS()
+FLOAT App::GetFPS()
 { return m_FPS; }
 
 //-----------------------------------------------------------------------------
 //      アプリケーションを初期化します.
 //-----------------------------------------------------------------------------
-bool Application::InitApp()
+bool App::InitApp()
 {
     // COMライブラリの初期化.
     HRESULT hr = CoInitialize( nullptr );
@@ -804,7 +807,7 @@ bool Application::InitApp()
 //-----------------------------------------------------------------------------
 //      アプリケーションの終了処理.
 //-----------------------------------------------------------------------------
-void Application::TermApp()
+void App::TermApp()
 {
     // コマンドの完了を待機.
     SystemWaitIdle();
@@ -826,7 +829,7 @@ void Application::TermApp()
 //-----------------------------------------------------------------------------
 //      ウィンドウの初期化処理.
 //-----------------------------------------------------------------------------
-bool Application::InitWnd()
+bool App::InitWnd()
 {
     // インスタンスハンドルを取得.
     HINSTANCE hInst = GetModuleHandle( nullptr );
@@ -921,7 +924,7 @@ bool Application::InitWnd()
 //-----------------------------------------------------------------------------
 //      ウィンドウの終了処理.
 //-----------------------------------------------------------------------------
-void Application::TermWnd()
+void App::TermWnd()
 {
     // タイマーを止めます.
     m_Timer.Stop();
@@ -953,7 +956,7 @@ void Application::TermWnd()
 //-----------------------------------------------------------------------------
 //      Direct3Dの初期化処理.
 //-----------------------------------------------------------------------------
-bool Application::InitD3D()
+bool App::InitD3D()
 {
     HRESULT hr = S_OK;
 
@@ -1087,7 +1090,7 @@ bool Application::InitD3D()
 
         // 深度ターゲットの初期化.
         {
-            TargetDesc desc;
+            TargetDesc desc = {};
             desc.Dimension          = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
             desc.Alignment          = 0;
             desc.Width              = supportedInfo.Width;
@@ -1147,7 +1150,7 @@ bool Application::InitD3D()
 //-----------------------------------------------------------------------------
 //      Direct3Dの終了処理.
 //-----------------------------------------------------------------------------
-void Application::TermD3D()
+void App::TermD3D()
 {
     if (m_CreateWindow)
     {
@@ -1165,7 +1168,7 @@ void Application::TermD3D()
 //-----------------------------------------------------------------------------
 //      メインループ処理.
 //-----------------------------------------------------------------------------
-void Application::MainLoop()
+int App::MainLoop()
 {
     MSG msg = { 0 };
 
@@ -1209,9 +1212,8 @@ void Application::MainLoop()
             }
 
             frameEventArgs.FPS             = 1.0f / (float)elapsedTime;   // そのフレームにおけるFPS.
-            frameEventArgs.Time            = time;
-            frameEventArgs.ElapsedTime     = elapsedTime;
-            frameEventArgs.IsStopDraw      = m_IsStopRendering;
+            frameEventArgs.AppTimeSec      = time;
+            frameEventArgs.ElapsedTimeSec  = elapsedTime;
 
             // フレーム遷移処理.
             OnFrameMove( frameEventArgs );
@@ -1229,28 +1231,34 @@ void Application::MainLoop()
             frameCount++;
         }
     }
+
+    return (int)msg.wParam;
 }
 
 //-----------------------------------------------------------------------------
 //      アプリケーションを実行します.
 //-----------------------------------------------------------------------------
-void Application::Run()
+int App::Run()
 {
+    int ret = -1;
+
     // アプリケーションの初期化処理.
     if ( InitApp() )
     {
         // メインループ処理.
-        MainLoop();
+        ret = MainLoop();
     }
 
     // アプリケーションの終了処理.
     TermApp();
+
+    return ret;
 }
 
 //-----------------------------------------------------------------------------
 //      リサイズイベント処理.
 //-----------------------------------------------------------------------------
-void Application::ResizeEvent( const ResizeEventArgs& param )
+void App::ResizeEvent(const ResizeEventArgs& param)
 {
     m_Width       = param.Width;
     m_Height      = param.Height;
@@ -1369,15 +1377,15 @@ void Application::ResizeEvent( const ResizeEventArgs& param )
     }
 
     // リサイズイベント呼び出し.
-    OnResize( param );
+    OnResize(param);
 }
 
 //-----------------------------------------------------------------------------
 //      ウィンドウプロシージャ.
 //-----------------------------------------------------------------------------
-LRESULT CALLBACK Application::MsgProc( HWND hWnd, UINT uMsg, WPARAM wp, LPARAM lp )
+LRESULT CALLBACK App::MsgProc( HWND hWnd, UINT uMsg, WPARAM wp, LPARAM lp )
 {
-    auto pInstance = reinterpret_cast<Application*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+    auto pInstance = reinterpret_cast<App*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
 
     PAINTSTRUCT ps;
     HDC         hdc;
@@ -1387,18 +1395,20 @@ LRESULT CALLBACK Application::MsgProc( HWND hWnd, UINT uMsg, WPARAM wp, LPARAM l
       || ( uMsg == WM_KEYUP )
       || ( uMsg == WM_SYSKEYUP ) )
     {
-        bool isKeyDown = ( uMsg == WM_KEYDOWN  || uMsg == WM_SYSKEYDOWN );
-
-        DWORD mask = ( 1 << 29 );
-        bool isAltDown =( ( lp & mask ) != 0 );
-
-        KeyEventArgs args;
-        args.KeyCode   = uint32_t( wp );
-        args.IsAltDown = isAltDown;
-        args.IsKeyDown = isKeyDown;
-
         if (pInstance != nullptr)
-        { pInstance->OnKey(args); }
+        {
+            bool isKeyDown = ( uMsg == WM_KEYDOWN  || uMsg == WM_SYSKEYDOWN );
+
+            DWORD mask = ( 1 << 29 );
+            bool isAltDown =( ( lp & mask ) != 0 );
+
+            KeyEventArgs args;
+            args.KeyCode   = uint32_t( wp );
+            args.IsAltDown = isAltDown;
+            args.IsKeyDown = isKeyDown;
+
+            pInstance->OnKey(args);
+        }
     }
 
     // 古いWM_MOUSEWHEELの定義.
@@ -1420,43 +1430,52 @@ LRESULT CALLBACK Application::MsgProc( HWND hWnd, UINT uMsg, WPARAM wp, LPARAM l
       || ( uMsg == WM_MOUSEMOVE )
       || ( uMsg == OLD_WM_MOUSEWHEEL ) )
     {
-        int x = (short)LOWORD( lp );
-        int y = (short)HIWORD( lp );
-
-        int wheelDelta = 0;
-        if ( ( uMsg == WM_MOUSEHWHEEL )
-          || ( uMsg == OLD_WM_MOUSEWHEEL ) )
-        {
-            POINT pt;
-            pt.x = x;
-            pt.y = y;
-
-            ScreenToClient( hWnd, &pt );
-            x = pt.x;
-            y = pt.y;
-
-            wheelDelta += (short)HIWORD( wp );
-        }
-
-        int  buttonState = LOWORD( wp );
-        bool isLeftButtonDown   = ( ( buttonState & MK_LBUTTON  ) != 0 );
-        bool isRightButtonDown  = ( ( buttonState & MK_RBUTTON  ) != 0 );
-        bool isMiddleButtonDown = ( ( buttonState & MK_MBUTTON  ) != 0 );
-        bool isSideButton1Down  = ( ( buttonState & MK_XBUTTON1 ) != 0 );
-        bool isSideButton2Down  = ( ( buttonState & MK_XBUTTON2 ) != 0 );
-
-        MouseEventArgs args;
-        args.X = x;
-        args.Y = y;
-        args.WheelDelta         = wheelDelta;
-        args.IsLeftButtonDown   = isLeftButtonDown;
-        args.IsMiddleButtonDown = isMiddleButtonDown;
-        args.IsRightButtonDown  = isRightButtonDown;
-        args.IsSideButton1Down  = isSideButton1Down;
-        args.IsSideButton2Down  = isSideButton2Down;
-
         if (pInstance != nullptr)
-        { pInstance->OnMouse(args); }
+        {
+            int x = int(LOWORD( lp ));
+            int y = int(HIWORD( lp ));
+
+            int wheelDelta = 0;
+            if ( ( uMsg == WM_MOUSEHWHEEL )
+              || ( uMsg == OLD_WM_MOUSEWHEEL ) )
+            {
+                POINT pt = {};
+                pt.x = x;
+                pt.y = y;
+
+                ScreenToClient( hWnd, &pt );
+                x = pt.x;
+                y = pt.y;
+
+                wheelDelta += int(HIWORD( wp ));
+            }
+
+            int  mask = LOWORD( wp );
+            bool isDownL  = !!(mask & MK_LBUTTON );
+            bool isDownR  = !!(mask & MK_RBUTTON );
+            bool isDownM  = !!(mask & MK_MBUTTON );
+            bool isDownX1 = !!(mask & MK_XBUTTON1);
+            bool isDownX2 = !!(mask & MK_XBUTTON2);
+
+            auto isAltDown   = !!(GetKeyState(VK_MENU)    & 0x8000);
+            auto isCtrlDown  = !!(GetKeyState(VK_CONTROL) & 0x8000);
+            auto isShiftDown = !!(GetKeyState(VK_SHIFT)   & 0x8000);
+
+            MouseEventArgs args;
+            args.X           = x;
+            args.Y           = y;
+            args.WheelDelta  = wheelDelta;
+            args.IsDownL     = isDownL;
+            args.IsDownR     = isDownR;
+            args.IsDownM     = isDownM;
+            args.IsDownX1    = isDownX1;
+            args.IsDownX2    = isDownX2;
+            args.IsAltDown   = isAltDown;
+            args.IsCtrlDown  = isCtrlDown;
+            args.IsShiftDown = isShiftDown;
+
+            pInstance->OnMouse(args);
+        }
     }
 
     switch( uMsg )
@@ -1569,7 +1588,7 @@ LRESULT CALLBACK Application::MsgProc( HWND hWnd, UINT uMsg, WPARAM wp, LPARAM l
 //-----------------------------------------------------------------------------
 //      初期化時の処理.
 //-----------------------------------------------------------------------------
-bool Application::OnInit()
+bool App::OnInit()
 {
     /* DO_NOTHING */
     return true;
@@ -1578,27 +1597,27 @@ bool Application::OnInit()
 //-----------------------------------------------------------------------------
 //      終了時の処理.
 //-----------------------------------------------------------------------------
-void Application::OnTerm()
+void App::OnTerm()
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      フレーム遷移時の処理.
 //-----------------------------------------------------------------------------
-void Application::OnFrameMove( FrameEventArgs& )
+void App::OnFrameMove(const FrameEventArgs&)
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      フレーム描画字の処理.
 //-----------------------------------------------------------------------------
-void Application::OnFrameRender( FrameEventArgs& )
+void App::OnFrameRender(const FrameEventArgs&)
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      コマンドを実行して，画面に表示します.
 //-----------------------------------------------------------------------------
-void Application::Present( uint32_t syncInterval )
+void App::Present(uint32_t syncInterval)
 {
-    if (!m_CreateWindow)
+    if (!m_CreateWindow || m_pSwapChain4.GetPtr() == nullptr)
     { return; }
 
     HRESULT hr = S_OK;
@@ -1671,9 +1690,9 @@ void Application::Present( uint32_t syncInterval )
 //-----------------------------------------------------------------------------
 //      ディスプレイがHDR出力をサポートしているかどうかチェックします.
 //-----------------------------------------------------------------------------
-void Application::CheckSupportHDR()
+void App::CheckSupportHDR()
 {
-    if (m_CreateWindow)
+    if (!m_CreateWindow)
     { return; }
 
     HRESULT hr = S_OK;
@@ -1748,19 +1767,19 @@ void Application::CheckSupportHDR()
 //-----------------------------------------------------------------------------
 //      HDR出力をサポートしているかどうかチェックします.
 //-----------------------------------------------------------------------------
-bool Application::IsSupportHDR() const
+bool App::IsSupportHDR() const
 { return m_DisplayDesc.ColorSpace == DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020; }
 
 //-----------------------------------------------------------------------------
 //      ディスプレイ設定を取得します.
 //-----------------------------------------------------------------------------
-DXGI_OUTPUT_DESC1 Application::GetDisplayDesc() const
+DXGI_OUTPUT_DESC1 App::GetDisplayDesc() const
 { return m_DisplayDesc; }
 
 //-----------------------------------------------------------------------------
 //      色空間を設定します
 //-----------------------------------------------------------------------------
-bool Application::SetColorSpace(COLOR_SPACE value)
+bool App::SetColorSpace(COLOR_SPACE value)
 {
     if (m_pSwapChain4.GetPtr() == nullptr)
     { return false; }
@@ -1875,7 +1894,7 @@ bool Application::SetColorSpace(COLOR_SPACE value)
 //-----------------------------------------------------------------------------
 //      ディスプレイのリフレッシュレートを取得します.
 //-----------------------------------------------------------------------------
-bool Application::GetDisplayRefreshRate(DXGI_RATIONAL& result) const
+bool App::GetDisplayRefreshRate(DXGI_RATIONAL& result) const
 {
     auto hMonitor = MonitorFromWindow(m_hWnd, MONITOR_DEFAULTTONEAREST);
 
@@ -1908,7 +1927,7 @@ bool Application::GetDisplayRefreshRate(DXGI_RATIONAL& result) const
 //-----------------------------------------------------------------------------
 //      スワップチェインのバックバッファ番号を取得します.
 //-----------------------------------------------------------------------------
-uint32_t Application::GetCurrentBackBufferIndex() const
+uint32_t App::GetCurrentBackBufferIndex() const
 {
     if (m_pSwapChain4.GetPtr() == nullptr)
     { return 0; }
@@ -1919,49 +1938,49 @@ uint32_t Application::GetCurrentBackBufferIndex() const
 //-----------------------------------------------------------------------------
 //      リサイズ時の処理.
 //-----------------------------------------------------------------------------
-void Application::OnResize( const ResizeEventArgs& )
+void App::OnResize(const ResizeEventArgs&)
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      キーイベント時の処理.
 //-----------------------------------------------------------------------------
-void Application::OnKey( const KeyEventArgs& )
+void App::OnKey(const KeyEventArgs&)
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      マウスイベント時の処理.
 //-----------------------------------------------------------------------------
-void Application::OnMouse( const MouseEventArgs& )
+void App::OnMouse(const MouseEventArgs&)
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      タイピングイベント時の処理.
 //-----------------------------------------------------------------------------
-void Application::OnTyping( uint32_t )
+void App::OnTyping(uint32_t)
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      ドロップ時の処理.
 //------------------------------------------------------------------------------
-void Application::OnDrop( const wchar_t**, uint32_t )
+void App::OnDrop(const wchar_t**, uint32_t)
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      メッセージプロシージャの処理.
 //-----------------------------------------------------------------------------
-void Application::OnMsgProc( HWND, UINT, WPARAM, LPARAM )
+void App::OnMsgProc(HWND, UINT, WPARAM, LPARAM)
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      フォーカスを持つかどうか判定します.
 //-----------------------------------------------------------------------------
-bool Application::HasFocus() const
+bool App::HasFocus() const
 { return ( GetActiveWindow() == m_hWnd ); }
 
 //------------------------------------------------------------------------------
 //      スタンバイモードかどうかチェックします.
 //------------------------------------------------------------------------------
-bool Application::IsStandByMode() const
+bool App::IsStandByMode() const
 { return m_IsStandbyMode; }
 
 } // namespace asdx

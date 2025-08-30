@@ -77,38 +77,6 @@ bool CreateBufferUAV
 }
 
 //-----------------------------------------------------------------------------
-//      バッファSRVを生成します.
-//-----------------------------------------------------------------------------
-bool CreateBufferSRV
-(
-    ID3D12Device*           pDevice,
-    ID3D12Resource*         pResource,
-    UINT                    elementCount,
-    UINT                    elementSize,
-    IShaderResourceView**   ppView
-)
-{
-    D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
-    desc.ViewDimension           = D3D12_SRV_DIMENSION_BUFFER;
-    desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    desc.Buffer.NumElements      = elementCount;
-    if (elementSize == 0)
-    {
-        desc.Format                     = DXGI_FORMAT_R32_TYPELESS;
-        desc.Buffer.Flags               = D3D12_BUFFER_SRV_FLAG_RAW;
-        desc.Buffer.StructureByteStride = 0;
-    }
-    else
-    {
-        desc.Format                     = DXGI_FORMAT_UNKNOWN;
-        desc.Buffer.Flags               = D3D12_BUFFER_SRV_FLAG_NONE;
-        desc.Buffer.StructureByteStride = elementSize;
-    }
-
-    return asdx::CreateShaderResourceView(pResource, &desc, ppView);
-}
-
-//-----------------------------------------------------------------------------
 //      アップロードバッファを生成します.
 //-----------------------------------------------------------------------------
 bool CreateUploadBuffer
