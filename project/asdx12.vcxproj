@@ -243,6 +243,7 @@
     <ClCompile Include="..\src\gfx\asdxScreenCapture.cpp" />
     <ClCompile Include="..\src\gfx\asdxShaderCompiler.cpp" />
     <ClCompile Include="..\src\gfx\asdxShape.cpp" />
+    <ClCompile Include="..\src\gfx\asdxSprite.cpp" />
     <ClCompile Include="..\src\gfx\asdxTarget.cpp" />
     <ClCompile Include="..\src\gfx\asdxTexture.cpp" />
     <ClCompile Include="..\src\gfx\asdxUpdateCommand.cpp" />
@@ -306,6 +307,7 @@
     <ClInclude Include="..\include\gfx\asdxRayTracing.h" />
     <ClInclude Include="..\include\gfx\asdxScreenCpature.h" />
     <ClInclude Include="..\include\gfx\asdxShaderCompiler.h" />
+    <ClInclude Include="..\include\gfx\asdxSprite.h" />
     <ClInclude Include="..\include\gfx\asdxTarget.h" />
     <ClInclude Include="..\include\gfx\asdxTexture.h" />
     <ClInclude Include="..\include\gfx\asdxUpdateCommand.h" />
