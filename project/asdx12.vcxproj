@@ -240,6 +240,7 @@
     <ClCompile Include="..\src\gfx\asdxDred.cpp" />
     <ClCompile Include="..\src\gfx\asdxPipelineState.cpp" />
     <ClCompile Include="..\src\gfx\asdxRayTracing.cpp" />
+    <ClCompile Include="..\src\gfx\asdxSampler.cpp" />
     <ClCompile Include="..\src\gfx\asdxScreenCapture.cpp" />
     <ClCompile Include="..\src\gfx\asdxShaderCompiler.cpp" />
     <ClCompile Include="..\src\gfx\asdxShape.cpp" />
@@ -303,6 +304,7 @@
     <ClInclude Include="..\include\gfx\asdxDisposer.h" />
     <ClInclude Include="..\include\gfx\asdxDred.h" />
     <ClInclude Include="..\include\gfx\asdxPipelineState.h" />
+    <ClInclude Include="..\include\gfx\asdxSampler.h" />
     <ClInclude Include="..\include\gfx\asdxShape.h" />
     <ClInclude Include="..\include\gfx\asdxRayTracing.h" />
     <ClInclude Include="..\include\gfx\asdxScreenCpature.h" />

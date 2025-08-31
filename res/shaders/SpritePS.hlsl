@@ -11,14 +11,7 @@ struct VSOutput
 {
     float4 Position : SV_POSITION;
     float2 TexCoord : TEXCOORD0;
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// CbColor constant buffer.
-///////////////////////////////////////////////////////////////////////////////
-cbuffer CbColor : register(b1)
-{
-    float4 Color;
+    float4 Color    : COLOR0;
 };
 
 //-----------------------------------------------------------------------------
@@ -32,5 +25,5 @@ SamplerState ColorSmp : register(s0);
 //-----------------------------------------------------------------------------
 float4 main(const VSOutput input) : SV_TARGET
 {
-    return ColorMap.Sample(ColorSmp, input.TexCoord) * Color;
+    return ColorMap.Sample(ColorSmp, input.TexCoord) * input.Color;
 }

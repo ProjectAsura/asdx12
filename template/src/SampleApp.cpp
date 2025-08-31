@@ -12,6 +12,24 @@
 #include <fnd/asdxLogger.h>
 #include <edit/asdxGuiMgr.h>
 
+#define TEST (1)
+#if TEST
+#include <gfx/asdxSprite.h>
+#include <res/asdxResTexture.h>
+#include <gfx/asdxTexture.h>
+#include <gfx/asdxSampler.h>
+#endif
+
+namespace {
+
+#if TEST
+asdx::SpriteRenderer g_SpriteRenderer;
+asdx::TextureBinary g_TextureBinary;
+asdx::Texture       g_Texture;
+asdx::Sampler       g_Sampler;
+#endif
+
+} // namespace
 
 ///////////////////////////////////////////////////////////////////////////////
 // SampleApp class
@@ -74,6 +92,36 @@ bool SampleApp::OnInit()
     }
     #endif
 
+#if TEST
+    if (!g_TextureBinary.LoadA("../res/texture/Test.txb"))
+    {
+        ELOG("Texture Load Failed.");
+        return false;
+    }
+
+    auto res = g_TextureBinary.GetResource();
+    if (!g_Texture.Init(pCmd, res))
+    {
+        ELOG("Texture::Init() Failed.");
+        return false;
+    }
+
+    if (!g_SpriteRenderer.Init(pDevice, m_Width, m_Height, 512, 16, m_SwapChainFormat, m_DepthStencilFormat))
+    {
+        ELOG("Error : SpriteRenderer::Init() Failed.");
+        return false;
+    }
+
+    {
+        auto desc = asdx::Sampler::PointClamp;
+        if (!g_Sampler.Init(&desc))
+        {
+            ELOG("Error : Sampler::Init() Failed.");
+            return false;
+        }
+    }
+#endif
+
     // コマンドの記録を終了.
     pCmd->Close();
 
@@ -133,6 +181,7 @@ void SampleApp::OnFrameMove(const asdx::App::FrameEventArgs& args)
         asdx::TermSoundMgr();
     }
     #endif
+
 }
 
 //-----------------------------------------------------------------------------
@@ -141,6 +190,10 @@ void SampleApp::OnFrameMove(const asdx::App::FrameEventArgs& args)
 void SampleApp::OnFrameRender(const asdx::App::FrameEventArgs& args)
 {
     auto idx = GetCurrentBackBufferIndex();
+
+#if TEST
+    g_SpriteRenderer.Reset();
+#endif
 
     // コマンド記録開始.
     m_GfxCmdList.Reset();
@@ -165,6 +218,12 @@ void SampleApp::OnFrameRender(const asdx::App::FrameEventArgs& args)
 
     // TODO : 描画処理.
     {
+
+#if TEST
+        g_SpriteRenderer.SetTexture(g_Texture.GetGpuHandleSRV(), g_Sampler.GetGpuHandle());
+        g_SpriteRenderer.Add( 10, 10, 64, 64 );
+        g_SpriteRenderer.Draw(pCmd);
+#endif
     }
 
 

@@ -11,6 +11,7 @@ struct VSInput
 {
     float3 Position : POSITION;
     float2 TexCoord : TEXCOORD0;
+    float4 Color    : COLOR0;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -20,6 +21,7 @@ struct VSOutput
 {
     float4 Position : SV_POSITION;
     float2 TexCoord : TEXCOORD0;
+    float4 Color    : COLOR0;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -41,6 +43,7 @@ VSOutput main(const VSInput input)
 
     output.Position = mul(Transform, localPos);
     output.TexCoord = input.TexCoord;
+    output.Color    = input.Color;
 
     return output;
 }

@@ -212,7 +212,7 @@ bool SpriteRenderer::Init
         }
 
         uint32_t j=0u;
-        for(auto i=0u; i<count; i+= kVertexCountPerSprite)
+        for(auto i=0u; i<count && j<count; i+=kVertexCountPerSprite)
         {
             pIndices[j + 0] = i + 0;
             pIndices[j + 1] = i + 1;
@@ -264,6 +264,10 @@ bool SpriteRenderer::Init
         desc.pParameters        = param;
         desc.NumStaticSamplers  = 0;
         desc.pStaticSamplers    = nullptr;
+        desc.Flags              = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+        desc.Flags             |= D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS;
+        desc.Flags             |= D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS;
+        desc.Flags             |= D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
 
         RefPtr<ID3DBlob> blob;
         RefPtr<ID3DBlob> errorBlob;
@@ -526,6 +530,7 @@ void SpriteRenderer::Draw(ID3D12GraphicsCommandList* pCmdList)
 
     pCmdList->IASetVertexBuffers(0, 1, &vbv);
     pCmdList->IASetIndexBuffer(&ibv);
+    pCmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
     pCmdList->SetGraphicsRoot32BitConstants(0, 16, &m_Transform, 0);
 
