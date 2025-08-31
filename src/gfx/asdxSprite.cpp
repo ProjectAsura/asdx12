@@ -243,7 +243,7 @@ bool SpriteRenderer::Init
         range[1].RegisterSpace                      = 0;
         range[1].OffsetInDescriptorsFromTableStart  = 0;
 
-        D3D12_ROOT_PARAMETER param[3] = {};
+        D3D12_ROOT_PARAMETER param[4] = {};
         param[0].ParameterType              = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
         param[0].Constants.Num32BitValues   = 16;
         param[0].Constants.ShaderRegister   = 0;
@@ -258,6 +258,13 @@ bool SpriteRenderer::Init
         param[2].ParameterType                          = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
         param[2].DescriptorTable.NumDescriptorRanges    = 1;
         param[2].DescriptorTable.pDescriptorRanges      = &range[1];
+
+        // フォント用定数.
+        param[3].ParameterType              = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+        param[3].Constants.Num32BitValues   = 4;
+        param[3].Constants.ShaderRegister   = 1;
+        param[3].Constants.RegisterSpace    = 0;
+        param[3].ShaderVisibility           = D3D12_SHADER_VISIBILITY_PIXEL;
 
         D3D12_ROOT_SIGNATURE_DESC desc = {};
         desc.NumParameters      = _countof(param);
