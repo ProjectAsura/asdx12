@@ -166,6 +166,22 @@ public:
     { Add(x, y, w, h, 0, uv0, uv1); }
 
     //-------------------------------------------------------------------------
+    //! @brief      パイプラインステートを設定します.
+    //! 
+    //! @param[in]      pCmdList        グラフィックスコマンドリストです.
+    //! @param[in]      pPipelineState  パイプラインステートです(nullptrの場合はデフォルトのパイプラインステートが設定されます).
+    //-------------------------------------------------------------------------
+    void SetPipelineState(ID3D12GraphicsCommandList* pCmdList, ID3D12PipelineState* pPipelineState);
+
+    //-------------------------------------------------------------------------
+    //! @brief      パイプラインステートを設定します.
+    //! 
+    //! @param[in]      pCmdList        グラフィックスコマンドリストです.
+    //-------------------------------------------------------------------------
+    void SetPipelineState(ID3D12GraphicsCommandList* pCmdList)
+    { SetPipelineState(pCmdList, nullptr); }
+
+    //-------------------------------------------------------------------------
     //! @brief      描画処理を行います.
     //! 
     //! @param[in]      pCmdList        グラフィックスコマンドリストです.
@@ -185,6 +201,16 @@ public:
     //! @return     カラーを返却します.
     //-------------------------------------------------------------------------
     Vector4 GetColor() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      スプライト描画用パイプラインステートを生成します.
+    //! 
+    //! @param[in]      ps          ピクセルシェーダ
+    //! @param[out]     ppResult    パイプラインステートの格納先です.
+    //! @retval true    生成に成功.
+    //! @retval false   生成に失敗.
+    //-------------------------------------------------------------------------
+    bool CreateSpritePipelineState(ID3D12Device* pDevice, const D3D12_SHADER_BYTECODE& ps, ID3D12PipelineState** pResult); 
 
 private:
     ///////////////////////////////////////////////////////////////////////////
@@ -239,6 +265,8 @@ private:
     Unorm4                      m_Color             = {};                           //!< 頂点カラー.
     D3D12_GPU_DESCRIPTOR_HANDLE m_HandleSRV         = {};                           //!< シェーダリソースビュー.
     D3D12_GPU_DESCRIPTOR_HANDLE m_HandleSampler     = {};                           //!< サンプラー
+    DXGI_FORMAT                 m_ColorFormat       = DXGI_FORMAT_UNKNOWN;
+    DXGI_FORMAT                 m_DepthFormat       = DXGI_FORMAT_UNKNOWN;
 
     //=========================================================================
     // private methods.

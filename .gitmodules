@@ -13,3 +13,6 @@
 [submodule "external/simdjson"]
 	path = external/simdjson
 	url = https://github.com/simdjson/simdjson
+[submodule "external/fpng"]
+	path = external/fpng
+	url = https://github.com/richgel999/fpng

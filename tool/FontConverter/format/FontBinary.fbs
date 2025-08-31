@@ -1,0 +1,33 @@
+﻿namespace asdx.res;
+
+struct Bounds
+{
+    Left   : float;
+    Right  : float;
+    Top    : float;
+    Bottom : float;
+}
+
+struct Glyph
+{
+    Unicode    : uint;
+    Advance    : float;
+    AtlasBound : Bounds;
+    PlaneBound : Bounds;
+}
+
+table FontBinary
+{
+    Version       : uint;
+    FontName      : string;
+    FontSize      : float;
+    DistanceRange : float;
+    FlipY         : bool;
+    Width         : uint;
+    Height        : uint;
+    Format        : uint;
+    Glyphs        : [Glyph];
+    Texels        : [ubyte];
+}
+
+root_type FontBinary;

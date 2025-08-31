@@ -292,29 +292,12 @@ bool SpriteRenderer::Init
 
     // パイプラインステート生成.
     {
-        D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = {};
-        desc.pRootSignature                 = m_RootSig.GetPtr();
-        desc.VS                             = { SpriteVS, sizeof(SpriteVS) };
-        desc.PS                             = { SpritePS, sizeof(SpritePS) };
-        desc.BlendState                     = kAlphaBlend;
-        desc.SampleMask                     = D3D12_DEFAULT_SAMPLE_MASK;
-        desc.RasterizerState                = kCullBack;
-        desc.DepthStencilState              = (dsvFormat == DXGI_FORMAT_UNKNOWN) ? kDepthNone : kDepthDefault;
-        desc.InputLayout.NumElements        = _countof(kElements);
-        desc.InputLayout.pInputElementDescs = kElements;
-        desc.PrimitiveTopologyType          = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-        desc.NumRenderTargets               = 1;
-        desc.RTVFormats[0]                  = rtvFormat;
-        desc.DSVFormat                      = dsvFormat;
-        desc.SampleDesc.Count               = 1;
-        desc.SampleDesc.Quality             = 0;
+        m_ColorFormat = rtvFormat;
+        m_DepthFormat = dsvFormat;
 
-        auto hr = pDevice->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(m_PSO.GetAddress()));
-        if (FAILED(hr))
-        {
-            ELOG("Error : ID3D12Device::CreateGraphicsPipelineState() Failed. errcode = 0x%x", hr);
-            return false;
-        }
+        D3D12_SHADER_BYTECODE ps = { SpritePS, sizeof(SpritePS) };
+        if (!CreateSpritePipelineState(pDevice, ps, m_PSO.GetAddress()))
+        { return false; }
     }
 
     // バッチメモリ確保.
@@ -511,6 +494,16 @@ void SpriteRenderer::Add(int x, int y, int w, int h, int layer, const Vector2& u
 }
 
 //-----------------------------------------------------------------------------
+//      パイプラインステートを設定します.
+//-----------------------------------------------------------------------------
+void SpriteRenderer::SetPipelineState(ID3D12GraphicsCommandList* pCmdList, ID3D12PipelineState* pPipelineState)
+{
+    auto pso = (pPipelineState == nullptr) ? m_PSO.GetPtr() : pPipelineState;
+    pCmdList->SetGraphicsRootSignature(m_RootSig.GetPtr());
+    pCmdList->SetPipelineState(pso);
+}
+
+//-----------------------------------------------------------------------------
 //      描画処理を行います.
 //-----------------------------------------------------------------------------
 void SpriteRenderer::Draw(ID3D12GraphicsCommandList* pCmdList)
@@ -525,13 +518,9 @@ void SpriteRenderer::Draw(ID3D12GraphicsCommandList* pCmdList)
     ibv.SizeInBytes    = UINT(m_IB->GetDesc().Width);
     ibv.Format         = DXGI_FORMAT_R32_UINT;
 
-    pCmdList->SetGraphicsRootSignature(m_RootSig.GetPtr());
-    pCmdList->SetPipelineState(m_PSO.GetPtr());
-
     pCmdList->IASetVertexBuffers(0, 1, &vbv);
     pCmdList->IASetIndexBuffer(&ibv);
     pCmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
     pCmdList->SetGraphicsRoot32BitConstants(0, 16, &m_Transform, 0);
 
     for(auto i=m_SubmitCount; i<m_BatchCount; ++i)
@@ -561,6 +550,49 @@ Vector4 SpriteRenderer::GetColor() const
         Saturate(m_Color.G * inv),
         Saturate(m_Color.B * inv),
         Saturate(m_Color.A * inv));
+}
+
+//-----------------------------------------------------------------------------
+//      スプライト描画用パイプラインステートを生成します.
+//-----------------------------------------------------------------------------
+bool SpriteRenderer::CreateSpritePipelineState
+(
+    ID3D12Device*                   pDevice,
+    const D3D12_SHADER_BYTECODE&    pixelShader,
+    ID3D12PipelineState**           ppResult
+)
+{
+    if (pDevice == nullptr || ppResult == nullptr)
+    { return false; }
+
+    // パイプラインステート生成.
+    {
+        D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = {};
+        desc.pRootSignature                 = m_RootSig.GetPtr();
+        desc.VS                             = { SpriteVS, sizeof(SpriteVS) };
+        desc.PS                             = pixelShader;
+        desc.BlendState                     = kAlphaBlend;
+        desc.SampleMask                     = D3D12_DEFAULT_SAMPLE_MASK;
+        desc.RasterizerState                = kCullBack;
+        desc.DepthStencilState              = (m_DepthFormat == DXGI_FORMAT_UNKNOWN) ? kDepthNone : kDepthDefault;
+        desc.InputLayout.NumElements        = _countof(kElements);
+        desc.InputLayout.pInputElementDescs = kElements;
+        desc.PrimitiveTopologyType          = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+        desc.NumRenderTargets               = 1;
+        desc.RTVFormats[0]                  = m_ColorFormat;
+        desc.DSVFormat                      = m_DepthFormat;
+        desc.SampleDesc.Count               = 1;
+        desc.SampleDesc.Quality             = 0;
+
+        auto hr = pDevice->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(ppResult));
+        if (FAILED(hr))
+        {
+            ELOG("Error : ID3D12Device::CreateGraphicsPipelineState() Failed. errcode = 0x%x", hr);
+            return false;
+        }
+    }
+
+    return true;
 }
 
 } // namespace asdx
