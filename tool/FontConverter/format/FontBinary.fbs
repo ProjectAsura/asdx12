@@ -10,7 +10,7 @@ struct Bounds
 
 struct Glyph
 {
-    Unicode    : uint;
+    Unicode    : uint (key);
     Advance    : float;
     AtlasBound : Bounds;
     PlaneBound : Bounds;
@@ -19,13 +19,16 @@ struct Glyph
 table FontBinary
 {
     Version       : uint;
-    FontName      : string;
-    FontSize      : float;
     DistanceRange : float;
+    FontSize      : uint;
+    TextureWidth  : uint;
+    TextureHeight : uint;
+    EmSize        : float;
+    LineHeight    : float;
+    Ascender      : float;
+    Descender     : float;
     FlipY         : bool;
-    Width         : uint;
-    Height        : uint;
-    Format        : uint;
+    TextureFormat : uint;
     Glyphs        : [Glyph];
     Texels        : [ubyte];
 }
