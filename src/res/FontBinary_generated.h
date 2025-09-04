@@ -81,6 +81,12 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Glyph FLATBUFFERS_FINAL_CLASS {
   uint32_t Unicode() const {
     return ::flatbuffers::EndianScalar(Unicode_);
   }
+  bool KeyCompareLessThan(const Glyph * const o) const {
+    return Unicode() < o->Unicode();
+  }
+  int KeyCompareWithValue(uint32_t _Unicode) const {
+    return static_cast<int>(Unicode() > _Unicode) - static_cast<int>(Unicode() < _Unicode);
+  }
   float Advance() const {
     return ::flatbuffers::EndianScalar(Advance_);
   }
@@ -97,39 +103,51 @@ struct FontBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef FontBinaryBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_VERSION = 4,
-    VT_FONTNAME = 6,
+    VT_DISTANCERANGE = 6,
     VT_FONTSIZE = 8,
-    VT_DISTANCERANGE = 10,
-    VT_FLIPY = 12,
-    VT_WIDTH = 14,
-    VT_HEIGHT = 16,
-    VT_FORMAT = 18,
-    VT_GLYPHS = 20,
-    VT_TEXELS = 22
+    VT_TEXTUREWIDTH = 10,
+    VT_TEXTUREHEIGHT = 12,
+    VT_EMSIZE = 14,
+    VT_LINEHEIGHT = 16,
+    VT_ASCENDER = 18,
+    VT_DESCENDER = 20,
+    VT_FLIPY = 22,
+    VT_TEXTUREFORMAT = 24,
+    VT_GLYPHS = 26,
+    VT_TEXELS = 28
   };
   uint32_t Version() const {
     return GetField<uint32_t>(VT_VERSION, 0);
   }
-  const ::flatbuffers::String *FontName() const {
-    return GetPointer<const ::flatbuffers::String *>(VT_FONTNAME);
-  }
-  float FontSize() const {
-    return GetField<float>(VT_FONTSIZE, 0.0f);
-  }
   float DistanceRange() const {
     return GetField<float>(VT_DISTANCERANGE, 0.0f);
+  }
+  uint32_t FontSize() const {
+    return GetField<uint32_t>(VT_FONTSIZE, 0);
+  }
+  uint32_t TextureWidth() const {
+    return GetField<uint32_t>(VT_TEXTUREWIDTH, 0);
+  }
+  uint32_t TextureHeight() const {
+    return GetField<uint32_t>(VT_TEXTUREHEIGHT, 0);
+  }
+  float EmSize() const {
+    return GetField<float>(VT_EMSIZE, 0.0f);
+  }
+  float LineHeight() const {
+    return GetField<float>(VT_LINEHEIGHT, 0.0f);
+  }
+  float Ascender() const {
+    return GetField<float>(VT_ASCENDER, 0.0f);
+  }
+  float Descender() const {
+    return GetField<float>(VT_DESCENDER, 0.0f);
   }
   bool FlipY() const {
     return GetField<uint8_t>(VT_FLIPY, 0) != 0;
   }
-  uint32_t Width() const {
-    return GetField<uint32_t>(VT_WIDTH, 0);
-  }
-  uint32_t Height() const {
-    return GetField<uint32_t>(VT_HEIGHT, 0);
-  }
-  uint32_t Format() const {
-    return GetField<uint32_t>(VT_FORMAT, 0);
+  uint32_t TextureFormat() const {
+    return GetField<uint32_t>(VT_TEXTUREFORMAT, 0);
   }
   const ::flatbuffers::Vector<const asdx::res::Glyph *> *Glyphs() const {
     return GetPointer<const ::flatbuffers::Vector<const asdx::res::Glyph *> *>(VT_GLYPHS);
@@ -140,14 +158,16 @@ struct FontBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_VERSION, 4) &&
-           VerifyOffset(verifier, VT_FONTNAME) &&
-           verifier.VerifyString(FontName()) &&
-           VerifyField<float>(verifier, VT_FONTSIZE, 4) &&
            VerifyField<float>(verifier, VT_DISTANCERANGE, 4) &&
+           VerifyField<uint32_t>(verifier, VT_FONTSIZE, 4) &&
+           VerifyField<uint32_t>(verifier, VT_TEXTUREWIDTH, 4) &&
+           VerifyField<uint32_t>(verifier, VT_TEXTUREHEIGHT, 4) &&
+           VerifyField<float>(verifier, VT_EMSIZE, 4) &&
+           VerifyField<float>(verifier, VT_LINEHEIGHT, 4) &&
+           VerifyField<float>(verifier, VT_ASCENDER, 4) &&
+           VerifyField<float>(verifier, VT_DESCENDER, 4) &&
            VerifyField<uint8_t>(verifier, VT_FLIPY, 1) &&
-           VerifyField<uint32_t>(verifier, VT_WIDTH, 4) &&
-           VerifyField<uint32_t>(verifier, VT_HEIGHT, 4) &&
-           VerifyField<uint32_t>(verifier, VT_FORMAT, 4) &&
+           VerifyField<uint32_t>(verifier, VT_TEXTUREFORMAT, 4) &&
            VerifyOffset(verifier, VT_GLYPHS) &&
            verifier.VerifyVector(Glyphs()) &&
            VerifyOffset(verifier, VT_TEXELS) &&
@@ -163,26 +183,35 @@ struct FontBinaryBuilder {
   void add_Version(uint32_t Version) {
     fbb_.AddElement<uint32_t>(FontBinary::VT_VERSION, Version, 0);
   }
-  void add_FontName(::flatbuffers::Offset<::flatbuffers::String> FontName) {
-    fbb_.AddOffset(FontBinary::VT_FONTNAME, FontName);
-  }
-  void add_FontSize(float FontSize) {
-    fbb_.AddElement<float>(FontBinary::VT_FONTSIZE, FontSize, 0.0f);
-  }
   void add_DistanceRange(float DistanceRange) {
     fbb_.AddElement<float>(FontBinary::VT_DISTANCERANGE, DistanceRange, 0.0f);
+  }
+  void add_FontSize(uint32_t FontSize) {
+    fbb_.AddElement<uint32_t>(FontBinary::VT_FONTSIZE, FontSize, 0);
+  }
+  void add_TextureWidth(uint32_t TextureWidth) {
+    fbb_.AddElement<uint32_t>(FontBinary::VT_TEXTUREWIDTH, TextureWidth, 0);
+  }
+  void add_TextureHeight(uint32_t TextureHeight) {
+    fbb_.AddElement<uint32_t>(FontBinary::VT_TEXTUREHEIGHT, TextureHeight, 0);
+  }
+  void add_EmSize(float EmSize) {
+    fbb_.AddElement<float>(FontBinary::VT_EMSIZE, EmSize, 0.0f);
+  }
+  void add_LineHeight(float LineHeight) {
+    fbb_.AddElement<float>(FontBinary::VT_LINEHEIGHT, LineHeight, 0.0f);
+  }
+  void add_Ascender(float Ascender) {
+    fbb_.AddElement<float>(FontBinary::VT_ASCENDER, Ascender, 0.0f);
+  }
+  void add_Descender(float Descender) {
+    fbb_.AddElement<float>(FontBinary::VT_DESCENDER, Descender, 0.0f);
   }
   void add_FlipY(bool FlipY) {
     fbb_.AddElement<uint8_t>(FontBinary::VT_FLIPY, static_cast<uint8_t>(FlipY), 0);
   }
-  void add_Width(uint32_t Width) {
-    fbb_.AddElement<uint32_t>(FontBinary::VT_WIDTH, Width, 0);
-  }
-  void add_Height(uint32_t Height) {
-    fbb_.AddElement<uint32_t>(FontBinary::VT_HEIGHT, Height, 0);
-  }
-  void add_Format(uint32_t Format) {
-    fbb_.AddElement<uint32_t>(FontBinary::VT_FORMAT, Format, 0);
+  void add_TextureFormat(uint32_t TextureFormat) {
+    fbb_.AddElement<uint32_t>(FontBinary::VT_TEXTUREFORMAT, TextureFormat, 0);
   }
   void add_Glyphs(::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::Glyph *>> Glyphs) {
     fbb_.AddOffset(FontBinary::VT_GLYPHS, Glyphs);
@@ -204,24 +233,30 @@ struct FontBinaryBuilder {
 inline ::flatbuffers::Offset<FontBinary> CreateFontBinary(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t Version = 0,
-    ::flatbuffers::Offset<::flatbuffers::String> FontName = 0,
-    float FontSize = 0.0f,
     float DistanceRange = 0.0f,
+    uint32_t FontSize = 0,
+    uint32_t TextureWidth = 0,
+    uint32_t TextureHeight = 0,
+    float EmSize = 0.0f,
+    float LineHeight = 0.0f,
+    float Ascender = 0.0f,
+    float Descender = 0.0f,
     bool FlipY = false,
-    uint32_t Width = 0,
-    uint32_t Height = 0,
-    uint32_t Format = 0,
+    uint32_t TextureFormat = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::Glyph *>> Glyphs = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> Texels = 0) {
   FontBinaryBuilder builder_(_fbb);
   builder_.add_Texels(Texels);
   builder_.add_Glyphs(Glyphs);
-  builder_.add_Format(Format);
-  builder_.add_Height(Height);
-  builder_.add_Width(Width);
-  builder_.add_DistanceRange(DistanceRange);
+  builder_.add_TextureFormat(TextureFormat);
+  builder_.add_Descender(Descender);
+  builder_.add_Ascender(Ascender);
+  builder_.add_LineHeight(LineHeight);
+  builder_.add_EmSize(EmSize);
+  builder_.add_TextureHeight(TextureHeight);
+  builder_.add_TextureWidth(TextureWidth);
   builder_.add_FontSize(FontSize);
-  builder_.add_FontName(FontName);
+  builder_.add_DistanceRange(DistanceRange);
   builder_.add_Version(Version);
   builder_.add_FlipY(FlipY);
   return builder_.Finish();
@@ -230,28 +265,33 @@ inline ::flatbuffers::Offset<FontBinary> CreateFontBinary(
 inline ::flatbuffers::Offset<FontBinary> CreateFontBinaryDirect(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t Version = 0,
-    const char *FontName = nullptr,
-    float FontSize = 0.0f,
     float DistanceRange = 0.0f,
+    uint32_t FontSize = 0,
+    uint32_t TextureWidth = 0,
+    uint32_t TextureHeight = 0,
+    float EmSize = 0.0f,
+    float LineHeight = 0.0f,
+    float Ascender = 0.0f,
+    float Descender = 0.0f,
     bool FlipY = false,
-    uint32_t Width = 0,
-    uint32_t Height = 0,
-    uint32_t Format = 0,
-    const std::vector<asdx::res::Glyph> *Glyphs = nullptr,
+    uint32_t TextureFormat = 0,
+    std::vector<asdx::res::Glyph> *Glyphs = nullptr,
     const std::vector<uint8_t> *Texels = nullptr) {
-  auto FontName__ = FontName ? _fbb.CreateString(FontName) : 0;
-  auto Glyphs__ = Glyphs ? _fbb.CreateVectorOfStructs<asdx::res::Glyph>(*Glyphs) : 0;
+  auto Glyphs__ = Glyphs ? _fbb.CreateVectorOfSortedStructs<asdx::res::Glyph>(Glyphs) : 0;
   auto Texels__ = Texels ? _fbb.CreateVector<uint8_t>(*Texels) : 0;
   return asdx::res::CreateFontBinary(
       _fbb,
       Version,
-      FontName__,
-      FontSize,
       DistanceRange,
+      FontSize,
+      TextureWidth,
+      TextureHeight,
+      EmSize,
+      LineHeight,
+      Ascender,
+      Descender,
       FlipY,
-      Width,
-      Height,
-      Format,
+      TextureFormat,
       Glyphs__,
       Texels__);
 }

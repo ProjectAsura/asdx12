@@ -243,6 +243,9 @@
     <ClCompile Include="..\src\gfx\asdxSampler.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\res\asdxResFont.cpp">
+      <Filter>ソース ファイル\res</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\external\imgui\imconfig.h">
@@ -433,6 +436,9 @@
     </ClInclude>
     <ClInclude Include="..\include\gfx\asdxSampler.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\res\asdxResFont.h">
+      <Filter>ヘッダー ファイル\res</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

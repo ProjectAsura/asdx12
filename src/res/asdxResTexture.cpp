@@ -135,14 +135,13 @@ bool TextureBinary::LoadW(const wchar_t* path)
 //-----------------------------------------------------------------------------
 //      メモリからロードします.
 //-----------------------------------------------------------------------------
-bool TextureBinary::LoadFromMemory(void* pBinary, size_t binarySize)
+bool TextureBinary::LoadFromMemory(void* pBinary, [[maybe_unused]] size_t binarySize)
 {
-    ASDX_UNUSED(binarySize);
 #if ASDX_DEBUG
     // データ整合性をチェック.
     {
         flatbuffers::Verifier::Options options;
-        flatbuffers::Verifier verifier(reinterpret_cast<const uint8_t*>(pBinary), binarySize, options);
+        [[maybe_unused]] flatbuffers::Verifier verifier(reinterpret_cast<const uint8_t*>(pBinary), binarySize, options);
         assert(res::VerifyTextureBinaryBuffer(verifier));
     }
 #endif
