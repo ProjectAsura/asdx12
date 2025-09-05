@@ -182,7 +182,7 @@ public:
     //! @retval true    検索にヒット.
     //! @retval false   見つからなかった.
     //-------------------------------------------------------------------------
-    bool FindGlyph(uint32_t unicode, ResGlyph& result);
+    bool FindGlyph(uint32_t unicode, ResGlyph& result) const;
 
 private:
     //=========================================================================

@@ -9,37 +9,77 @@
 //-----------------------------------------------------------------------------
 #include <cassert>
 #include <cstdarg>
-#include <asdxFont.h>
-#include <asdxLogger.h>
+#include <gfx/asdxDevice.h>
+#include <gfx/asdxFont.h>
+#include <gfx/asdxSprite.h>
+#include <fnd/asdxLogger.h>
+#include <res/asdxResTexture.h>
 
-#define STB_TRUETYPE_IMPLEMENTATION
-#include "../external/imgui/imstb_truetype.h"
+
+namespace { 
+
+//----------------------------------------------------------------------------
+// Constant Values.
+//----------------------------------------------------------------------------
+#include "../res/shaders/Compiled/FontPS.inc"
 
 
-namespace {
-
-//-----------------------------------------------------------------------------
-//      ファイルをロードします.
-//-----------------------------------------------------------------------------
-bool LoadFile(const char* path, std::vector<uint8_t>& binary)
+//----------------------------------------------------------------------------
+//      ユニコードを取得します.
+//----------------------------------------------------------------------------
+bool Utf8Next(const char* &p, uint32_t &out)
 {
-    FILE* pFile = nullptr;
-    auto err = fopen_s(&pFile, path, "rb");
-    if (err != 0)
+    const uint8_t* s = reinterpret_cast<const uint8_t*>(p);
+    if (*s == 0)
+        return false;
+
+    uint32_t cp  = 0;
+    uint8_t  c   = *s;
+    int      len = 0;
+
+    if (c < 0x80) 
     {
+        cp  = c;
+        len = 1;
+    }
+    else if ((c >> 5) == 0x6)
+    {
+        if ((s[1] & 0xC0) != 0x80)
+        {
+            ++p;
+            return false;
+        }
+        cp = ((c & 0x1F) << 6) | (s[1] & 0x3F);
+        len = 2;
+    }
+    else if ((c >> 4) == 0xE)
+    {
+        if ((s[1] & 0xC0) != 0x80 || (s[2] & 0xC0) != 0x80)
+        {
+            ++p;
+            return false;
+        }
+        cp = ((c & 0x0F) << 12) | ((s[1] & 0x3F) << 6) | (s[2] & 0x3F);
+        len = 3;
+    }
+    else if ((c >> 3) == 0x1E)
+    {
+        if ((s[1] & 0xC0) != 0x80 || (s[2] & 0xC0) != 0x80 || (s[3] & 0xC0) != 0x80)
+        {
+            ++p;
+            return false;
+        }
+        cp = ((c & 0x07) << 18) | ((s[1] & 0x3F) << 12) | ((s[2] & 0x3F) << 6) | (s[3] & 0x3F);
+        len = 4;
+    }
+    else
+    {
+        ++p;
         return false;
     }
 
-    auto pos = ftell(pFile);
-    fseek(pFile, 0, SEEK_END);
-    auto end = ftell(pFile);
-    fseek(pFile, 0, SEEK_SET);
-    auto size = end - pos;
-
-    binary.resize(size);
-    fread(binary.data(), size, 1, pFile);
-    fclose(pFile);
-
+    p  += len;
+    out = cp;
     return true;
 }
 
@@ -50,67 +90,56 @@ namespace asdx {
 ///////////////////////////////////////////////////////////////////////////////
 // Font class
 ///////////////////////////////////////////////////////////////////////////////
-struct Font::Body
-{
-    float                   Ascent;
-    float                   Descent;
-    float                   LineGap;
-    float                   Scale;
-    float                   Height;
-    stbtt_fontinfo          Font;
-    std::vector<uint8_t>    Binary;
-};
 
 //-----------------------------------------------------------------------------
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
 Font::Font()
-: m_pBody(nullptr)
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      デストラクタです.
 //-----------------------------------------------------------------------------
 Font::~Font()
-{
-    // Term()ちゃんと明示的に呼んでね!
-    assert(m_pBody == nullptr);
-}
+{ Term(); }
 
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool Font::Init(const char* path, float fontSize)
+bool Font::Init(ID3D12GraphicsCommandList* pCmd, const char* path)
 {
-    m_pBody = new Font::Body();
-
-    if (!LoadFile(path, m_pBody->Binary))
+    if (pCmd == nullptr || path == nullptr)
     {
-        ELOGA("Error : LoadFile() Failed. path = %s", path);
-        Term();
+        ELOG("Error : Invalid Argument.");
         return false;
     }
 
-    auto offset = stbtt_GetFontOffsetForIndex(m_pBody->Binary.data(), 0);
-    if (!stbtt_InitFont(&m_pBody->Font, m_pBody->Binary.data(), offset))
+    if (!m_Binary.LoadA(path))
     {
-        ELOGA("Error : stbtt_InitFont() Failed.");
-        Term();
+        ELOG("Error : FontBinary Load Failed.");
         return false;
     }
 
-    const auto fontScale = stbtt_ScaleForPixelHeight(&m_pBody->Font, fontSize);
+    ResTexture res = {};
+    res.Dimension           = TEXTURE_DIMENSION_2D;
+    res.Width               = m_Binary.GetTextureWidth();
+    res.Height              = m_Binary.GetTextureHeight();
+    res.DepthOrArraySize    = 1;
+    res.MipLevels           = 1;
+    res.Format              = m_Binary.GetTextureFormat();
+    res.SubResourceCount    = 1;
 
-    int ascent  = 0;
-    int descent = 0;
-    int lineGap = 0;
-    stbtt_GetFontVMetrics(&m_pBody->Font, &ascent, &descent, &lineGap);
+    res.SubResources[0].Width       = res.Width;
+    res.SubResources[0].Height      = res.Height;
+    res.SubResources[0].RowPitch    = m_Binary.GetTexelSize() / res.Width;
+    res.SubResources[0].SlicePitch  = m_Binary.GetTexelSize();
+    res.SubResources[0].pPixels     = m_Binary.GetTexels();
 
-    m_pBody->Ascent  = roundf(ascent * fontScale);
-    m_pBody->Descent = roundf(descent * fontScale);
-    m_pBody->LineGap = roundf(lineGap * fontScale);
-    m_pBody->Scale   = fontScale;
-    m_pBody->Height  = (m_pBody->Ascent - m_pBody->Descent) + m_pBody->LineGap;
+    if (!m_Texture.Init(pCmd, res))
+    {
+        ELOG("Error : Font Texture Init Failed.");
+        return false;
+    }
 
     return true;
 }
@@ -120,163 +149,177 @@ bool Font::Init(const char* path, float fontSize)
 //-----------------------------------------------------------------------------
 void Font::Term()
 {
-    if (m_pBody != nullptr)
-    {
-        delete m_pBody;
-        m_pBody = nullptr;
-    }
+    m_Texture.Term();
+    m_Binary .Term();
 }
 
 //-----------------------------------------------------------------------------
-//      ラスタライズに必要なサイズを求めます.
+//      テクスチャを取得します.
 //-----------------------------------------------------------------------------
-void Font::CalcSize(const wchar_t* text, uint32_t& w, uint32_t& h) const
+const Texture& Font::GetTexture() const
+{ return m_Texture; }
+
+//-----------------------------------------------------------------------------
+//      フォントバイナリを取得します.
+//-----------------------------------------------------------------------------
+const FontBinary& Font::GetBinary() const
+{ return m_Binary; }
+
+//-----------------------------------------------------------------------------
+//      グリフを検索します.
+//-----------------------------------------------------------------------------
+bool Font::Find(uint32_t unicode, DrawInfo& info) const
 {
-    assert(m_pBody != nullptr);
+    ResGlyph glyph = {};
+    if (!m_Binary.FindGlyph(unicode, glyph))
+        return false;
 
-    auto fw = 0.0f;
-    auto fh = m_pBody->Height;
+    auto unitSize = m_Binary.GetEmSize() * m_Binary.GetFontSize();
+    auto w = glyph.PlaneBound.Right - glyph.PlaneBound.Left;
+    auto h = glyph.PlaneBound.Top   - glyph.PlaneBound.Bottom;
 
-    auto count  = wcslen(text);
-    for(auto i=0; i<count; ++i)
+    info.x = unitSize * glyph.PlaneBound.Left;
+    info.y = unitSize * glyph.PlaneBound.Top;
+    info.w = unitSize * w;
+    info.h = unitSize * h;
+
+    info.uv0.x = glyph.AtlasBound.Left   / float(m_Binary.GetTextureWidth());
+    info.uv0.y = glyph.AtlasBound.Top    / float(m_Binary.GetTextureHeight());
+    info.uv1.x = glyph.AtlasBound.Right  / float(m_Binary.GetTextureWidth());
+    info.uv1.y = glyph.AtlasBound.Bottom / float(m_Binary.GetTextureHeight());
+
+    info.advance = glyph.Advance * unitSize;
+
+    if (m_Binary.IsFlipY())
     {
-        auto code = int(text[i]);
-        if (code == '\n')
+        auto temp  = info.uv0.y;
+        info.uv0.y = info.uv1.y;
+        info.uv1.y = temp;
+    }
+
+    return true;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// FontRenderer class
+///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      コンストラクタです.
+//-----------------------------------------------------------------------------
+FontRenderer::FontRenderer()
+{ /* DO_NOTHING */ }
+
+//-----------------------------------------------------------------------------
+//      デストラクタです.
+//-----------------------------------------------------------------------------
+FontRenderer::~FontRenderer()
+{ Term(); }
+
+//-----------------------------------------------------------------------------
+//      初期化処理を行います.
+//-----------------------------------------------------------------------------
+bool FontRenderer::Init(SpriteRenderer& renderer)
+{
+    auto pDevice = GetD3D12Device();
+    assert(pDevice != nullptr);
+
+    D3D12_SHADER_BYTECODE ps = { FontPS, sizeof(FontPS) };
+
+    if (!renderer.CreateSpritePipelineState(pDevice, ps, m_PSO.GetAddress()))
+    {
+        ELOG("Error : PipelineState Init Failed.");
+        return false;
+    }
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      終了処理を行います.
+//-----------------------------------------------------------------------------
+void FontRenderer::Term()
+{ m_PSO.Reset(); }
+
+//-----------------------------------------------------------------------------
+//      スプライトフォントを追加します.
+//-----------------------------------------------------------------------------
+void FontRenderer::Add
+(
+    SpriteRenderer& renderer,
+    const Font&     font,
+    int             x,
+    int             y,
+    int             layer,
+    int*            outX,
+    int*            outY,
+    const char*     text
+)
+{
+    auto posX = x;
+    auto posY = y + (int)(font.GetBinary().GetAscender() * m_Scale);
+
+    const char* p = text;   // UTF-8.
+    while(*p)
+    {
+        uint32_t unicode = 0;
+        if (!Utf8Next(p, unicode))
+            continue;
+
+        if (unicode == '\n')
         {
-            // 1行分進める.
-            fh += m_pBody->Height;
-
-            // 最大値を記録.
-            w = (fw > float(w)) ? uint32_t(fw) : w;
-
-            // リセット.
-            fw = 0.0f;
-
+            posX = x;
+            posY += int(font.GetBinary().GetLineHeight() * m_Scale);
             continue;
         }
 
-        int advance = 0;
-        int lsb     = 0;
-        stbtt_GetCodepointHMetrics(&m_pBody->Font, code, &advance, &lsb);
-        fw += roundf(m_pBody->Scale * advance);
-
-        auto kern = stbtt_GetCodepointKernAdvance(
-            &m_pBody->Font, code, int(text[i + 1]));
-        fw += roundf(kern * m_pBody->Scale);
-    }
-
-    w = (fw > float(w)) ? uint32_t(fw) : w;
-    h = uint32_t(fh);
-}
-
-//-----------------------------------------------------------------------------
-//      ラスタライズ処理を行います.
-//-----------------------------------------------------------------------------
-Font::Bitmap Font::Rasterize(const wchar_t* text) const
-{
-    assert(m_pBody != nullptr);
-    Font::Bitmap result;
-
-    // メモリサイズ計算.
-    CalcSize(text, result.Width, result.Height);
-
-    // メモリ確保.
-    result.Resize();
-
-    // ラスタライズ.
-    Rasterize(result, text);
-
-    return result;
-}
-
-//-----------------------------------------------------------------------------
-//      フォーマットを指定してラスタライズ処理を行います.
-//-----------------------------------------------------------------------------
-Font::Bitmap Font::RasterizeFormat(const wchar_t* format, ...) const
-{
-    wchar_t buffer[2048] = {};
-
-    va_list arg;
-    va_start(arg, format);
-    vswprintf_s(buffer, format, arg);
-    va_end(arg);
-
-    return Rasterize(buffer);
-}
-
-//-----------------------------------------------------------------------------
-//      指定されたメモリにラスタライズ処理を行います.
-//-----------------------------------------------------------------------------
-void Font::Rasterize(Bitmap& bitmap, const wchar_t* text) const
-{
-    auto x = 0;
-    auto y = m_pBody->Ascent;
-
-    auto pixel = bitmap.Pixels.data();
-
-    auto count = wcslen(text);
-    for(auto i=0; i<count; ++i)
-    {
-        auto code = int(text[i]);
-        if (code == '\n')
+        Font::DrawInfo info;
+        if (!font.Find(unicode, info))
         {
-            y += m_pBody->Height;
-            x = 0;
-            continue;
+            if (!font.Find(0xFFFD, info))
+                continue;
         }
 
-        int advance = 0;
-        int lsb     = 0;
-        stbtt_GetCodepointHMetrics(&m_pBody->Font, code, &advance, &lsb);
+        renderer.Add(
+            posX + int(info.x * m_Scale),
+            posY + int(info.y * m_Scale),
+            int(info.w * m_Scale),
+            int(info.h * m_Scale),
+            layer,
+            info.uv0,
+            info.uv1);
 
-        int x0 = 0;
-        int x1 = 0;
-        int y0 = 0;
-        int y1 = 0;
-        stbtt_GetCodepointBitmapBoxSubpixel(
-            &m_pBody->Font,
-            code,
-            m_pBody->Scale,
-            m_pBody->Scale,
-            0.0f,
-            0.0f,
-            &x0, &y0, &x1, &y1);
-
-        auto offset = int(x + roundf(lsb * m_pBody->Scale) + ((y + y0) * bitmap.Width));
-        auto w = x1 - x0;
-        auto h = y1 - y0;
-        stbtt_MakeCodepointBitmapSubpixel(
-            &m_pBody->Font,
-            pixel + offset,
-            w, h,
-            bitmap.Width,
-            m_pBody->Scale,
-            m_pBody->Scale,
-            0.0f,
-            0.0f,
-            code);
-        
-        x += int(roundf(advance * m_pBody->Scale));
-
-        auto kern = stbtt_GetCodepointKernAdvance(
-            &m_pBody->Font, code, int(text[i + 1]));
-        x += int(roundf(kern * m_pBody->Scale));
+        posX += int(info.advance * m_Scale);
     }
+
+    if (outX != nullptr)
+    { *outX = posX; }
+
+    if (outY != nullptr)
+    { *outY = posY; }
 }
 
 //-----------------------------------------------------------------------------
-//      フォーマットを指定して指定されたメモリにラスタライズ処理を行います.
+//      書式指定子でフォーマットします.
 //-----------------------------------------------------------------------------
-void Font::RasterizeFormat(Bitmap& bitmap, const wchar_t* format, ...) const
+char* FontRenderer::Format(char* buffer, size_t bufferSize, const char* format, ...)
 {
-    wchar_t buffer[2048] = {};
+    assert(buffer != nullptr);
+    assert(format != nullptr);
 
     va_list arg;
     va_start(arg, format);
-    vswprintf_s(buffer, format, arg);
+    vsprintf_s(buffer, bufferSize, format, arg);
     va_end(arg);
-
-    Rasterize(bitmap, buffer);
+    return buffer;
 }
+
+//-----------------------------------------------------------------------------
+//      パイプラインステートを設定します.
+//-----------------------------------------------------------------------------
+void FontRenderer::SetPipelineState(ID3D12GraphicsCommandList* pCmdList, SpriteRenderer& renderer)
+{ renderer.SetPipelineState(pCmdList, m_PSO.GetPtr()); }
+
 
 } // namespace asdx

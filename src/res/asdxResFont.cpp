@@ -274,7 +274,7 @@ const uint8_t* FontBinary::GetTexels() const
 //-----------------------------------------------------------------------------
 //      グリフを検索します.
 //-----------------------------------------------------------------------------
-bool FontBinary::FindGlyph(uint32_t unicode, ResGlyph& result)
+bool FontBinary::FindGlyph(uint32_t unicode, ResGlyph& result) const
 {
     assert(m_pBinary != nullptr);
     auto glyph = res::GetFontBinary(m_pBinary)->Glyphs()->LookupByKey(unicode);
