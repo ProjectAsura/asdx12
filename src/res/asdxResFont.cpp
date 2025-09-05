@@ -182,15 +182,6 @@ uint32_t FontBinary::GetFontSize() const
 }
 
 //-----------------------------------------------------------------------------
-//      em単位のサイズを取得します.
-//-----------------------------------------------------------------------------
-float FontBinary::GetEmSize() const
-{
-    assert(m_pBinary != nullptr);
-    return res::GetFontBinary(m_pBinary)->EmSize();
-}
-
-//-----------------------------------------------------------------------------
 //      1行あたりの縦幅を取得します.
 //-----------------------------------------------------------------------------
 float FontBinary::GetLineHeight() const
@@ -229,37 +220,46 @@ bool FontBinary::IsFlipY() const
 //-----------------------------------------------------------------------------
 //      テクスチャの横幅を取得します.
 //-----------------------------------------------------------------------------
-uint32_t FontBinary::GetTextureWidth() const
+uint32_t FontBinary::GetWidth() const
 {
     assert(m_pBinary != nullptr);
-    return res::GetFontBinary(m_pBinary)->TextureWidth();
+    return res::GetFontBinary(m_pBinary)->Width();
 }
 
 //-----------------------------------------------------------------------------
 //      テクスチャの縦幅を取得します.
 //-----------------------------------------------------------------------------
-uint32_t FontBinary::GetTextureHeight() const
+uint32_t FontBinary::GetHeight() const
 {
     assert(m_pBinary != nullptr);
-    return res::GetFontBinary(m_pBinary)->TextureHeight();
+    return res::GetFontBinary(m_pBinary)->Height();
+}
+
+//-----------------------------------------------------------------------------
+//      テクスチャの1行あたりのサイズを取得します.
+//-----------------------------------------------------------------------------
+uint32_t FontBinary::GetRowPitch() const
+{
+    assert(m_pBinary != nullptr);
+    return res::GetFontBinary(m_pBinary)->RowPitch();
+}
+
+//-----------------------------------------------------------------------------
+//      テクスチャのスライスサイズを取得します.
+//-----------------------------------------------------------------------------
+uint32_t FontBinary::GetSlicePitch() const
+{
+    assert(m_pBinary != nullptr);
+    return res::GetFontBinary(m_pBinary)->SlicePitch();
 }
 
 //-----------------------------------------------------------------------------
 //      テクスチャフォーマットを取得します.
 //-----------------------------------------------------------------------------
-DXGI_FORMAT FontBinary::GetTextureFormat() const
+DXGI_FORMAT FontBinary::GetFormat() const
 {
     assert(m_pBinary != nullptr);
     return DXGI_FORMAT(res::GetFontBinary(m_pBinary)->TextureFormat());
-}
-
-//-----------------------------------------------------------------------------
-//      テクセルサイズを取得します.
-//-----------------------------------------------------------------------------
-size_t FontBinary::GetTexelSize() const
-{
-    assert(m_pBinary != nullptr);
-    return res::GetFontBinary(m_pBinary)->Texels()->size();
 }
 
 //-----------------------------------------------------------------------------

@@ -25,7 +25,7 @@ namespace {
 
 
 //----------------------------------------------------------------------------
-//      ユニコードを取得します.
+//      Unicodeを取得します.
 //----------------------------------------------------------------------------
 bool Utf8Next(const char* &p, uint32_t &out)
 {
@@ -122,17 +122,17 @@ bool Font::Init(ID3D12GraphicsCommandList* pCmd, const char* path)
 
     ResTexture res = {};
     res.Dimension           = TEXTURE_DIMENSION_2D;
-    res.Width               = m_Binary.GetTextureWidth();
-    res.Height              = m_Binary.GetTextureHeight();
+    res.Width               = m_Binary.GetWidth();
+    res.Height              = m_Binary.GetHeight();
     res.DepthOrArraySize    = 1;
     res.MipLevels           = 1;
-    res.Format              = m_Binary.GetTextureFormat();
+    res.Format              = m_Binary.GetFormat();
     res.SubResourceCount    = 1;
 
     res.SubResources[0].Width       = res.Width;
     res.SubResources[0].Height      = res.Height;
-    res.SubResources[0].RowPitch    = m_Binary.GetTexelSize() / res.Width;
-    res.SubResources[0].SlicePitch  = m_Binary.GetTexelSize();
+    res.SubResources[0].RowPitch    = m_Binary.GetRowPitch();
+    res.SubResources[0].SlicePitch  = m_Binary.GetSlicePitch();
     res.SubResources[0].pPixels     = m_Binary.GetTexels();
 
     if (!m_Texture.Init(pCmd, res))
@@ -174,7 +174,7 @@ bool Font::Find(uint32_t unicode, DrawInfo& info) const
     if (!m_Binary.FindGlyph(unicode, glyph))
         return false;
 
-    auto unitSize = m_Binary.GetEmSize() * m_Binary.GetFontSize();
+    auto unitSize = m_Binary.GetFontSize();
     auto w = glyph.PlaneBound.Right - glyph.PlaneBound.Left;
     auto h = glyph.PlaneBound.Top   - glyph.PlaneBound.Bottom;
 
@@ -183,10 +183,10 @@ bool Font::Find(uint32_t unicode, DrawInfo& info) const
     info.w = unitSize * w;
     info.h = unitSize * h;
 
-    info.uv0.x = glyph.AtlasBound.Left   / float(m_Binary.GetTextureWidth());
-    info.uv0.y = glyph.AtlasBound.Top    / float(m_Binary.GetTextureHeight());
-    info.uv1.x = glyph.AtlasBound.Right  / float(m_Binary.GetTextureWidth());
-    info.uv1.y = glyph.AtlasBound.Bottom / float(m_Binary.GetTextureHeight());
+    info.uv0.x = glyph.AtlasBound.Left   / float(m_Binary.GetWidth ());
+    info.uv0.y = glyph.AtlasBound.Top    / float(m_Binary.GetHeight());
+    info.uv1.x = glyph.AtlasBound.Right  / float(m_Binary.GetWidth ());
+    info.uv1.y = glyph.AtlasBound.Bottom / float(m_Binary.GetHeight());
 
     info.advance = glyph.Advance * unitSize;
 
@@ -277,6 +277,7 @@ void FontRenderer::Add
         Font::DrawInfo info;
         if (!font.Find(unicode, info))
         {
+            // フォールバックでリトライする.
             if (!font.Find(0xFFFD, info))
                 continue;
         }
@@ -320,6 +321,5 @@ char* FontRenderer::Format(char* buffer, size_t bufferSize, const char* format, 
 //-----------------------------------------------------------------------------
 void FontRenderer::SetPipelineState(ID3D12GraphicsCommandList* pCmdList, SpriteRenderer& renderer)
 { renderer.SetPipelineState(pCmdList, m_PSO.GetPtr()); }
-
 
 } // namespace asdx

@@ -100,7 +100,9 @@ bool FontConverter::Convert(const Desc& desc)
         auto ascender       = float(metrics["ascender"]  .get_double().value());
         auto descender      = float(metrics["descender"] .get_double().value());
 
-        DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
+        DXGI_FORMAT format     = DXGI_FORMAT_UNKNOWN;
+        uint32_t    rowPitch   = 0;
+        uint32_t    slicePitch = 0;
         std::vector<uint8_t> texels;
         {
             DirectX::TexMetadata  texMetaData  = {};
@@ -148,7 +150,10 @@ bool FontConverter::Convert(const Desc& desc)
                 return false;
             }
 
-            format = texMetaData.format;
+            auto images = scratchImage.GetImages();
+            format      = texMetaData.format;
+            rowPitch    = uint32_t(images[0].rowPitch);
+            slicePitch  = uint32_t(images[0].slicePitch);
 
             texels.resize(scratchImage.GetPixelsSize());
             memcpy(texels.data(), scratchImage.GetPixels(), texels.size());
@@ -165,12 +170,13 @@ bool FontConverter::Convert(const Desc& desc)
             fontSize,
             texWidth,
             texHeight,
-            emSize,
+            rowPitch,
+            slicePitch,
+            (uint32_t)format,
             lineHeight,
             ascender,
             descender,
             flipY,
-            (uint32_t)format,
             &srcGlyph,
             &texels);
 

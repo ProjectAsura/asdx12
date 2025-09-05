@@ -21,14 +21,15 @@ table FontBinary
     Version       : uint;
     DistanceRange : float;
     FontSize      : uint;
-    TextureWidth  : uint;
-    TextureHeight : uint;
-    EmSize        : float;
+    Width         : uint;
+    Height        : uint;
+    RowPitch      : uint;
+    SlicePitch    : uint;
+    TextureFormat : uint;
     LineHeight    : float;
     Ascender      : float;
     Descender     : float;
     FlipY         : bool;
-    TextureFormat : uint;
     Glyphs        : [Glyph];
     Texels        : [ubyte];
 }

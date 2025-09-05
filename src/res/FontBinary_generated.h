@@ -105,16 +105,17 @@ struct FontBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
     VT_VERSION = 4,
     VT_DISTANCERANGE = 6,
     VT_FONTSIZE = 8,
-    VT_TEXTUREWIDTH = 10,
-    VT_TEXTUREHEIGHT = 12,
-    VT_EMSIZE = 14,
-    VT_LINEHEIGHT = 16,
-    VT_ASCENDER = 18,
-    VT_DESCENDER = 20,
-    VT_FLIPY = 22,
-    VT_TEXTUREFORMAT = 24,
-    VT_GLYPHS = 26,
-    VT_TEXELS = 28
+    VT_WIDTH = 10,
+    VT_HEIGHT = 12,
+    VT_ROWPITCH = 14,
+    VT_SLICEPITCH = 16,
+    VT_TEXTUREFORMAT = 18,
+    VT_LINEHEIGHT = 20,
+    VT_ASCENDER = 22,
+    VT_DESCENDER = 24,
+    VT_FLIPY = 26,
+    VT_GLYPHS = 28,
+    VT_TEXELS = 30
   };
   uint32_t Version() const {
     return GetField<uint32_t>(VT_VERSION, 0);
@@ -125,14 +126,20 @@ struct FontBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   uint32_t FontSize() const {
     return GetField<uint32_t>(VT_FONTSIZE, 0);
   }
-  uint32_t TextureWidth() const {
-    return GetField<uint32_t>(VT_TEXTUREWIDTH, 0);
+  uint32_t Width() const {
+    return GetField<uint32_t>(VT_WIDTH, 0);
   }
-  uint32_t TextureHeight() const {
-    return GetField<uint32_t>(VT_TEXTUREHEIGHT, 0);
+  uint32_t Height() const {
+    return GetField<uint32_t>(VT_HEIGHT, 0);
   }
-  float EmSize() const {
-    return GetField<float>(VT_EMSIZE, 0.0f);
+  uint32_t RowPitch() const {
+    return GetField<uint32_t>(VT_ROWPITCH, 0);
+  }
+  uint32_t SlicePitch() const {
+    return GetField<uint32_t>(VT_SLICEPITCH, 0);
+  }
+  uint32_t TextureFormat() const {
+    return GetField<uint32_t>(VT_TEXTUREFORMAT, 0);
   }
   float LineHeight() const {
     return GetField<float>(VT_LINEHEIGHT, 0.0f);
@@ -146,9 +153,6 @@ struct FontBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   bool FlipY() const {
     return GetField<uint8_t>(VT_FLIPY, 0) != 0;
   }
-  uint32_t TextureFormat() const {
-    return GetField<uint32_t>(VT_TEXTUREFORMAT, 0);
-  }
   const ::flatbuffers::Vector<const asdx::res::Glyph *> *Glyphs() const {
     return GetPointer<const ::flatbuffers::Vector<const asdx::res::Glyph *> *>(VT_GLYPHS);
   }
@@ -160,14 +164,15 @@ struct FontBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
            VerifyField<uint32_t>(verifier, VT_VERSION, 4) &&
            VerifyField<float>(verifier, VT_DISTANCERANGE, 4) &&
            VerifyField<uint32_t>(verifier, VT_FONTSIZE, 4) &&
-           VerifyField<uint32_t>(verifier, VT_TEXTUREWIDTH, 4) &&
-           VerifyField<uint32_t>(verifier, VT_TEXTUREHEIGHT, 4) &&
-           VerifyField<float>(verifier, VT_EMSIZE, 4) &&
+           VerifyField<uint32_t>(verifier, VT_WIDTH, 4) &&
+           VerifyField<uint32_t>(verifier, VT_HEIGHT, 4) &&
+           VerifyField<uint32_t>(verifier, VT_ROWPITCH, 4) &&
+           VerifyField<uint32_t>(verifier, VT_SLICEPITCH, 4) &&
+           VerifyField<uint32_t>(verifier, VT_TEXTUREFORMAT, 4) &&
            VerifyField<float>(verifier, VT_LINEHEIGHT, 4) &&
            VerifyField<float>(verifier, VT_ASCENDER, 4) &&
            VerifyField<float>(verifier, VT_DESCENDER, 4) &&
            VerifyField<uint8_t>(verifier, VT_FLIPY, 1) &&
-           VerifyField<uint32_t>(verifier, VT_TEXTUREFORMAT, 4) &&
            VerifyOffset(verifier, VT_GLYPHS) &&
            verifier.VerifyVector(Glyphs()) &&
            VerifyOffset(verifier, VT_TEXELS) &&
@@ -189,14 +194,20 @@ struct FontBinaryBuilder {
   void add_FontSize(uint32_t FontSize) {
     fbb_.AddElement<uint32_t>(FontBinary::VT_FONTSIZE, FontSize, 0);
   }
-  void add_TextureWidth(uint32_t TextureWidth) {
-    fbb_.AddElement<uint32_t>(FontBinary::VT_TEXTUREWIDTH, TextureWidth, 0);
+  void add_Width(uint32_t Width) {
+    fbb_.AddElement<uint32_t>(FontBinary::VT_WIDTH, Width, 0);
   }
-  void add_TextureHeight(uint32_t TextureHeight) {
-    fbb_.AddElement<uint32_t>(FontBinary::VT_TEXTUREHEIGHT, TextureHeight, 0);
+  void add_Height(uint32_t Height) {
+    fbb_.AddElement<uint32_t>(FontBinary::VT_HEIGHT, Height, 0);
   }
-  void add_EmSize(float EmSize) {
-    fbb_.AddElement<float>(FontBinary::VT_EMSIZE, EmSize, 0.0f);
+  void add_RowPitch(uint32_t RowPitch) {
+    fbb_.AddElement<uint32_t>(FontBinary::VT_ROWPITCH, RowPitch, 0);
+  }
+  void add_SlicePitch(uint32_t SlicePitch) {
+    fbb_.AddElement<uint32_t>(FontBinary::VT_SLICEPITCH, SlicePitch, 0);
+  }
+  void add_TextureFormat(uint32_t TextureFormat) {
+    fbb_.AddElement<uint32_t>(FontBinary::VT_TEXTUREFORMAT, TextureFormat, 0);
   }
   void add_LineHeight(float LineHeight) {
     fbb_.AddElement<float>(FontBinary::VT_LINEHEIGHT, LineHeight, 0.0f);
@@ -209,9 +220,6 @@ struct FontBinaryBuilder {
   }
   void add_FlipY(bool FlipY) {
     fbb_.AddElement<uint8_t>(FontBinary::VT_FLIPY, static_cast<uint8_t>(FlipY), 0);
-  }
-  void add_TextureFormat(uint32_t TextureFormat) {
-    fbb_.AddElement<uint32_t>(FontBinary::VT_TEXTUREFORMAT, TextureFormat, 0);
   }
   void add_Glyphs(::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::Glyph *>> Glyphs) {
     fbb_.AddOffset(FontBinary::VT_GLYPHS, Glyphs);
@@ -235,26 +243,28 @@ inline ::flatbuffers::Offset<FontBinary> CreateFontBinary(
     uint32_t Version = 0,
     float DistanceRange = 0.0f,
     uint32_t FontSize = 0,
-    uint32_t TextureWidth = 0,
-    uint32_t TextureHeight = 0,
-    float EmSize = 0.0f,
+    uint32_t Width = 0,
+    uint32_t Height = 0,
+    uint32_t RowPitch = 0,
+    uint32_t SlicePitch = 0,
+    uint32_t TextureFormat = 0,
     float LineHeight = 0.0f,
     float Ascender = 0.0f,
     float Descender = 0.0f,
     bool FlipY = false,
-    uint32_t TextureFormat = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::Glyph *>> Glyphs = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> Texels = 0) {
   FontBinaryBuilder builder_(_fbb);
   builder_.add_Texels(Texels);
   builder_.add_Glyphs(Glyphs);
-  builder_.add_TextureFormat(TextureFormat);
   builder_.add_Descender(Descender);
   builder_.add_Ascender(Ascender);
   builder_.add_LineHeight(LineHeight);
-  builder_.add_EmSize(EmSize);
-  builder_.add_TextureHeight(TextureHeight);
-  builder_.add_TextureWidth(TextureWidth);
+  builder_.add_TextureFormat(TextureFormat);
+  builder_.add_SlicePitch(SlicePitch);
+  builder_.add_RowPitch(RowPitch);
+  builder_.add_Height(Height);
+  builder_.add_Width(Width);
   builder_.add_FontSize(FontSize);
   builder_.add_DistanceRange(DistanceRange);
   builder_.add_Version(Version);
@@ -267,14 +277,15 @@ inline ::flatbuffers::Offset<FontBinary> CreateFontBinaryDirect(
     uint32_t Version = 0,
     float DistanceRange = 0.0f,
     uint32_t FontSize = 0,
-    uint32_t TextureWidth = 0,
-    uint32_t TextureHeight = 0,
-    float EmSize = 0.0f,
+    uint32_t Width = 0,
+    uint32_t Height = 0,
+    uint32_t RowPitch = 0,
+    uint32_t SlicePitch = 0,
+    uint32_t TextureFormat = 0,
     float LineHeight = 0.0f,
     float Ascender = 0.0f,
     float Descender = 0.0f,
     bool FlipY = false,
-    uint32_t TextureFormat = 0,
     std::vector<asdx::res::Glyph> *Glyphs = nullptr,
     const std::vector<uint8_t> *Texels = nullptr) {
   auto Glyphs__ = Glyphs ? _fbb.CreateVectorOfSortedStructs<asdx::res::Glyph>(Glyphs) : 0;
@@ -284,14 +295,15 @@ inline ::flatbuffers::Offset<FontBinary> CreateFontBinaryDirect(
       Version,
       DistanceRange,
       FontSize,
-      TextureWidth,
-      TextureHeight,
-      EmSize,
+      Width,
+      Height,
+      RowPitch,
+      SlicePitch,
+      TextureFormat,
       LineHeight,
       Ascender,
       Descender,
       FlipY,
-      TextureFormat,
       Glyphs__,
       Texels__);
 }

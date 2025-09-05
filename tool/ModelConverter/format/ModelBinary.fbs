@@ -1,0 +1,64 @@
+﻿namespace asdx.res;
+
+struct Float2
+{
+    X : float;
+    Y : float;
+}
+
+struct Float3
+{
+    X : float;
+    Y : float;
+    Z : float;
+}
+
+struct Float4
+{
+    X : float;
+    Y : float;
+    Z : float;
+    W : float;
+}
+
+struct Uint4
+{
+    X : uint;
+    Y : uint;
+    Z : uint;
+    W : uint;
+}
+
+struct Unorm4
+{
+    X : ubyte;
+    Y : ubyte;
+    Z : ubyte;
+    W : ubyte;
+}
+
+table Mesh
+{
+    Name         : string;
+    MaterialTag  : string;
+    Positions    : [Float3];
+    Normals      : [Float3];
+    Tangents     : [Float4];
+    Colors       : [Unorm4];
+    TexCoords0   : [Float2];
+    TexCoords1   : [Float2];
+    TexCoords2   : [Float2];
+    TexCoords3   : [Float2];
+    BoneWeights0 : [Float4];
+    BoneWeights1 : [Float4];
+    BoneIndices0 : [Uint4];
+    BoneIndices1 : [Uint4];
+}
+
+table ModelBinary
+{
+    Version : uint;
+    Meshes  : [Mesh];
+}
+
+root_type ModelBinary;
