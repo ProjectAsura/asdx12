@@ -24,15 +24,15 @@ int main(int argc, char** argv)
     cmdline::parser parser;
 
     // 引数指定を設定.
-    parser.add<std::string>("dds", 'd', "Input DDS file Path", true, "");
-    parser.add<std::string>("json", 'j', "Input JSON File Path", true, "");
+    parser.add<std::string>("texture", 't', "Input DDS file Path", true, "");
+    parser.add<std::string>("json", 'j', "Input Glyph JSON File Path", true, "");
     parser.add<std::string>("output", 'o', "Output Font Binary Path", true, "");
 
     // 解析実行.
     parser.parse_check(argc, argv);
 
     FontConverter::Desc desc = {};
-    desc.DdsPath = parser.get<std::string>("dds");
+    desc.DdsPath = parser.get<std::string>("texture");
     desc.JsonPath = parser.get<std::string>("json");
     desc.OutputPath = parser.get<std::string>("output");
 

@@ -58,7 +58,8 @@ bool FontConverter::Convert(const Desc& desc)
         auto json = simdjson::padded_string::load(desc.JsonPath.c_str());
         auto doc  = parser.iterate(json);
 
-        auto glyphs  = doc["glyphs"].get_array();
+        auto glyphs = doc["glyphs"].get_array();
+        assert(glyphs.error() == simdjson::SUCCESS);
 
         std::vector<asdx::res::Glyph> srcGlyph;
         srcGlyph.reserve(glyphs.count_elements().value());
@@ -68,13 +69,19 @@ bool FontConverter::Convert(const Desc& desc)
             auto unicode = uint32_t(g["unicode"].get_uint64().value());
             auto advance = float(g["advance"].get_double().value());
 
-            auto planeBounds = g["plane_bounds"];
+            auto planeBounds = g["planeBounds"];
+            if (planeBounds.error() != simdjson::SUCCESS)
+                continue;
+
             auto pl = float(planeBounds["left"]  .get_double().value());
             auto pr = float(planeBounds["right"] .get_double().value());
             auto pt = float(planeBounds["top"]   .get_double().value());
             auto pb = float(planeBounds["bottom"].get_double().value());
 
-            auto atlasBounds = g["atlas_bounds"];
+            auto atlasBounds = g["atlasBounds"];
+            if (atlasBounds.error() != simdjson::SUCCESS)
+                continue;
+
             auto al = float(atlasBounds["left"]  .get_double().value());
             auto ar = float(atlasBounds["right"] .get_double().value());
             auto at = float(atlasBounds["top"]   .get_double().value());
@@ -86,16 +93,18 @@ bool FontConverter::Convert(const Desc& desc)
             srcGlyph.push_back(asdx::res::Glyph(unicode, advance, aBound, pBound));
         }
 
-        auto atlas   = doc["atlas"];
-        auto metrics = doc["metric"];
+        auto atlas = doc["atlas"];
+        assert(atlas.error() == simdjson::SUCCESS);
 
-        auto fontSize       = uint32_t(atlas["size"]  .get_uint64().value());
         auto distanceRange  = float(atlas["distanceRange"].get_double().value());
-        auto flipY          = (atlas["yOrigin"].get_string().value() == std::string_view("bottom"));
+        auto fontSize       = uint32_t(atlas["size"]  .get_uint64().value());
         auto texWidth       = uint32_t(atlas["width"] .get_uint64().value());
         auto texHeight      = uint32_t(atlas["height"].get_uint64().value());
+        auto flipY          = (atlas["yOrigin"].get_string().value() == std::string_view("bottom"));
 
-        auto emSize         = float(metrics["emSize"]    .get_double().value());
+        auto metrics = doc["metrics"];
+        assert(metrics.error() == simdjson::SUCCESS);
+
         auto lineHeight     = float(metrics["lineHeight"].get_double().value());
         auto ascender       = float(metrics["ascender"]  .get_double().value());
         auto descender      = float(metrics["descender"] .get_double().value());
