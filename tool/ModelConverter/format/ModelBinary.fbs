@@ -37,28 +37,56 @@ struct Unorm4
     W : ubyte;
 }
 
+struct Float4x4
+{
+    _11 : float;
+    _12 : float;
+    _13 : float;
+    _14 : float;
+
+    _21 : float;
+    _22 : float;
+    _23 : float;
+    _24 : float;
+
+    _31 : float;
+    _32 : float;
+    _33 : float;
+    _34 : float;
+
+    _41 : float;
+    _42 : float;
+    _43 : float;
+    _44 : float;
+}
+
+table Bone
+{
+    Name         : string (key);
+    OffsetMatrix : Float4x4;
+}
+
 table Mesh
 {
-    Name         : string;
-    MaterialTag  : string;
-    Positions    : [Float3];
-    Normals      : [Float3];
-    Tangents     : [Float4];
-    Colors       : [Unorm4];
-    TexCoords0   : [Float2];
-    TexCoords1   : [Float2];
-    TexCoords2   : [Float2];
-    TexCoords3   : [Float2];
-    BoneWeights0 : [Float4];
-    BoneWeights1 : [Float4];
-    BoneIndices0 : [Uint4];
-    BoneIndices1 : [Uint4];
+    Name          : string;
+    MaterialTag   : string;
+    Positions     : [Float3];
+    Normals       : [Float3];
+    Tangents      : [Float4];
+    Colors        : [Unorm4];
+    TexCoords     : [Float2];
+    BoneWeights   : [Float4];
+    BoneIndices   : [Uint4];
+    VertexIndices : [uint];
 }
 
 table ModelBinary
 {
-    Version : uint;
-    Meshes  : [Mesh];
+    Version          : uint;
+    Meshes           : [Mesh];
+    Bones            : [Bone];
+    RootTransform    : Float4x4;
+    InvRootTransform : Float4x4;
 }
 
 root_type ModelBinary;

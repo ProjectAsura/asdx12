@@ -9,6 +9,12 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <string>
+#include <map>
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+#include <ModelBinary_generated.h>
+#include <fnd/asdxMath.h>
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -63,11 +69,20 @@ private:
     //=========================================================================
     // private variables.
     //=========================================================================
-
+    struct BoneInfo
+    {
+        uint32_t        Index;
+        std::string     Name;
+        asdx::Matrix    OffsetMatrix;   // Inverse Bind Pose Matrix.
+    };
+    std::map<std::string, BoneInfo> m_BoneMap;
 
     //=========================================================================
     // private methods.
     //=========================================================================
-
+    void ParseMesh(
+        flatbuffers::FlatBufferBuilder& builder,
+        const char* materialTag,
+        flatbuffers::Offset<asdx::res::Mesh>& dstMesh, const aiMesh* srcMesh);
 };
 
