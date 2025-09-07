@@ -274,6 +274,9 @@ void FontRenderer::Add
     const char*     text
 )
 {
+    if (text == nullptr)
+        return;
+
     auto lineHeight = font.GetBinary().GetLineHeight() * font.GetBinary().GetFontSize() * m_Scale;
     auto posX = x;
     auto posY = y + int(lineHeight);
@@ -320,18 +323,48 @@ void FontRenderer::Add
 }
 
 //-----------------------------------------------------------------------------
-//      書式指定子でフォーマットします.
+//      フォーマットを指定してスプライトフォントを追加します.
 //-----------------------------------------------------------------------------
-char* FontRenderer::Format(char* buffer, size_t bufferSize, const char* format, ...)
+void FontRenderer::AddFormat(SpriteRenderer& renderer, const Font& font, int x, int y, int layer, int* outX, int* outY, const char* format, ...)
 {
-    assert(buffer != nullptr);
     assert(format != nullptr);
-
+    char buffer[2048] = {};
     va_list arg;
     va_start(arg, format);
-    vsprintf_s(buffer, bufferSize, format, arg);
+    vsprintf_s(buffer, format, arg);
     va_end(arg);
-    return buffer;
+
+    Add(renderer, font, x, y, layer, outX, outY, buffer);
+}
+
+//-----------------------------------------------------------------------------
+//      フォーマットを指定してスプライトフォントを追加します.
+//-----------------------------------------------------------------------------
+void FontRenderer::AddFormat(SpriteRenderer& renderer, const Font& font, int x, int y, int layer, const char* format, ...)
+{
+    assert(format != nullptr);
+    char buffer[2048] = {};
+    va_list arg;
+    va_start(arg, format);
+    vsprintf_s(buffer, format, arg);
+    va_end(arg);
+
+    Add(renderer, font, x, y, layer, buffer);
+}
+
+//-----------------------------------------------------------------------------
+//      フォーマットを指定してスプライトフォントを追加します.
+//-----------------------------------------------------------------------------
+void FontRenderer::AddFormat(SpriteRenderer& renderer, const Font& font, int x, int y, const char* format, ...)
+{
+    assert(format != nullptr);
+    char buffer[2048] = {};
+    va_list arg;
+    va_start(arg, format);
+    vsprintf_s(buffer, format, arg);
+    va_end(arg);
+
+    Add(renderer, font, x, y, buffer);
 }
 
 //-----------------------------------------------------------------------------

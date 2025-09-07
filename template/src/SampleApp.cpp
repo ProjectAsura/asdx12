@@ -244,8 +244,9 @@ void SampleApp::OnFrameRender(const asdx::App::FrameEventArgs& args)
         asdx::FontRenderer::Instance().SetOuterColor(1.0f, 0.0f, 0.0f, 1.0f);
         asdx::FontRenderer::Instance().SetOuterOffset(-1.0f, -1.0f);
         asdx::FontRenderer::Instance().SetState(pCmd, g_SpriteRenderer, g_Font);
-        asdx::FontRenderer::Instance().SetScale(4.0f);
-        asdx::FontRenderer::Instance().Add(g_SpriteRenderer, g_Font, 10, 74, u8"てすとですよ!テスト!\n魑魅魍魎\nThis is test...\nHP:345");
+        asdx::FontRenderer::Instance().SetScale(2.0f);
+        asdx::FontRenderer::Instance().Add(g_SpriteRenderer, g_Font, 10, 74, u8"てすとですよ!テスト!");
+        asdx::FontRenderer::Instance().AddFormat(g_SpriteRenderer, g_Font, 10, 142, "FPS : %f", args.FPS);
 
         g_SpriteRenderer.Draw(pCmd);
 #endif

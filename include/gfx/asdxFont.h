@@ -203,26 +203,41 @@ public:
     { Add(renderer, font, x, y, 0, nullptr, nullptr, text); }
 
     //-------------------------------------------------------------------------
-    //! @brief      書式指定子でフォーマットし，指定された配列に格納します.
+    //! @brief      フォーマットを指定してフォントスプライトを追加します.
     //! 
-    //! @param[in,out]  buffer      格納先のバッファ.
-    //! @param[in]      bufferSize  バッファサイズ.
-    //! @param[in]      format      書式指定子.
-    //! @return     bufferのポインタを返却します.
+    //! @param[in]      renderer        スプライトレンダラー.
+    //! @param[in]      font            フォント.
+    //! @param[in]      x               描画位置のX成分.
+    //! @param[in]      y               描画位置のY成分.
+    //! @param[in]      layer           奥行方向.
+    //! @param[out]     outX            文字描画後のX成分
+    //! @param[out]     outY            文字描画後のY成分.
+    //! @param[in]      format          書式指定子.
     //-------------------------------------------------------------------------
-    static char* Format(char* buffer, size_t bufferSize, const char* format, ...);
+    void AddFormat(SpriteRenderer& renderer, const Font& font, int x, int y, int layer, int* outX, int* outY, const char* format, ...);
 
     //-------------------------------------------------------------------------
-    //! @brief      書式指定子でフォーマットし，指定された配列に格納します.
+    //! @brief      フォーマットを指定してフォントスプライトを追加します.
     //! 
-    //! @param[in,out]  buffer      格納先のバッファ.
-    //! @param[in]      bufferSize  バッファサイズ.
-    //! @param[in]      format      書式指定子.
-    //! @return     bufferのポインタを返却します.
+    //! @param[in]      renderer        スプライトレンダラー.
+    //! @param[in]      font            フォント.
+    //! @param[in]      x               描画位置のX成分.
+    //! @param[in]      y               描画位置のY成分.
+    //! @param[in]      layer           奥行方向.
+    //! @param[in]      format          書式指定子.
     //-------------------------------------------------------------------------
-    template<size_t ArraySize, class... Args>
-    static char* Format(char buffer[ArraySize], const char* format, Args ...args)
-    { return Format(buffer, ArraySize, format, args...); }
+    void AddFormat(SpriteRenderer& renderer, const Font& font, int x, int y, int layer, const char* format, ...);
+
+    //-------------------------------------------------------------------------
+    //! @brief      フォーマットを指定してフォントスプライトを追加します.
+    //! 
+    //! @param[in]      renderer        スプライトレンダラー.
+    //! @param[in]      font            フォント.
+    //! @param[in]      x               描画位置のX成分.
+    //! @param[in]      y               描画位置のY成分.
+    //! @param[in]      format          書式指定子.
+    //-------------------------------------------------------------------------
+    void AddFormat(SpriteRenderer& renderer, const Font& font, int x, int y, const char* format, ...);
 
     //-------------------------------------------------------------------------
     //! @brief      パイプラインステートを設定します.
