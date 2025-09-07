@@ -175,8 +175,10 @@ bool Font::Find(uint32_t unicode, DrawInfo& info) const
         return false;
 
     auto unitSize = m_Binary.GetFontSize();
-    auto w = abs(glyph.PlaneBound.Right - glyph.PlaneBound.Left);
-    auto h = abs(glyph.PlaneBound.Top   - glyph.PlaneBound.Bottom);
+    auto w = glyph.PlaneBound.Right  - glyph.PlaneBound.Left;
+    auto h = glyph.PlaneBound.Bottom - glyph.PlaneBound.Top;
+    assert(w >= 0.0f);
+    assert(h >= 0.0f);
 
     info.x = unitSize * glyph.PlaneBound.Left;
     info.y = unitSize * glyph.PlaneBound.Top;
@@ -184,18 +186,11 @@ bool Font::Find(uint32_t unicode, DrawInfo& info) const
     info.h = unitSize * h;
 
     info.uv0.x = glyph.AtlasBound.Left   / float(m_Binary.GetWidth ());
-    info.uv0.y = glyph.AtlasBound.Top    / float(m_Binary.GetHeight());
+    info.uv0.y = glyph.AtlasBound.Bottom / float(m_Binary.GetHeight());
     info.uv1.x = glyph.AtlasBound.Right  / float(m_Binary.GetWidth ());
-    info.uv1.y = glyph.AtlasBound.Bottom / float(m_Binary.GetHeight());
+    info.uv1.y = glyph.AtlasBound.Top    / float(m_Binary.GetHeight());
 
     info.advance = glyph.Advance * unitSize;
-
-    // DirectXなので上下反転.
-    {
-        auto temp  = info.uv0.y;
-        info.uv0.y = info.uv1.y;
-        info.uv1.y = temp;
-    }
 
     return true;
 }
@@ -342,15 +337,26 @@ char* FontRenderer::Format(char* buffer, size_t bufferSize, const char* format, 
 //-----------------------------------------------------------------------------
 //      パイプラインステートを設定します.
 //-----------------------------------------------------------------------------
-void FontRenderer::SetState(ID3D12GraphicsCommandList* pCmdList, SpriteRenderer& renderer, const Font& font)
+void FontRenderer::SetState
+(
+    ID3D12GraphicsCommandList*  pCmdList,
+    SpriteRenderer&             renderer,
+    const Font&                 font
+)
 {
     renderer.SetPipelineState(pCmdList, m_PipelineState.GetPtr());
     renderer.SetTexture(font.GetTexture().GetGpuHandleSRV(), m_LinearClamp.GetGpuHandle());
 }
 
+//-----------------------------------------------------------------------------
+//      スケールを設定します.
+//-----------------------------------------------------------------------------
 void FontRenderer::SetScale(float value)
 { m_Scale = value; }
 
+//-----------------------------------------------------------------------------
+//      スケールを取得します.
+//-----------------------------------------------------------------------------
 float FontRenderer::GetScale() const
 { return m_Scale; }
 

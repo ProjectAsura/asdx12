@@ -113,9 +113,8 @@ struct FontBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
     VT_LINEHEIGHT = 20,
     VT_ASCENDER = 22,
     VT_DESCENDER = 24,
-    VT_FLIPY = 26,
-    VT_GLYPHS = 28,
-    VT_TEXELS = 30
+    VT_GLYPHS = 26,
+    VT_TEXELS = 28
   };
   uint32_t Version() const {
     return GetField<uint32_t>(VT_VERSION, 0);
@@ -150,9 +149,6 @@ struct FontBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   float Descender() const {
     return GetField<float>(VT_DESCENDER, 0.0f);
   }
-  bool FlipY() const {
-    return GetField<uint8_t>(VT_FLIPY, 0) != 0;
-  }
   const ::flatbuffers::Vector<const asdx::res::Glyph *> *Glyphs() const {
     return GetPointer<const ::flatbuffers::Vector<const asdx::res::Glyph *> *>(VT_GLYPHS);
   }
@@ -172,7 +168,6 @@ struct FontBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
            VerifyField<float>(verifier, VT_LINEHEIGHT, 4) &&
            VerifyField<float>(verifier, VT_ASCENDER, 4) &&
            VerifyField<float>(verifier, VT_DESCENDER, 4) &&
-           VerifyField<uint8_t>(verifier, VT_FLIPY, 1) &&
            VerifyOffset(verifier, VT_GLYPHS) &&
            verifier.VerifyVector(Glyphs()) &&
            VerifyOffset(verifier, VT_TEXELS) &&
@@ -218,9 +213,6 @@ struct FontBinaryBuilder {
   void add_Descender(float Descender) {
     fbb_.AddElement<float>(FontBinary::VT_DESCENDER, Descender, 0.0f);
   }
-  void add_FlipY(bool FlipY) {
-    fbb_.AddElement<uint8_t>(FontBinary::VT_FLIPY, static_cast<uint8_t>(FlipY), 0);
-  }
   void add_Glyphs(::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::Glyph *>> Glyphs) {
     fbb_.AddOffset(FontBinary::VT_GLYPHS, Glyphs);
   }
@@ -251,7 +243,6 @@ inline ::flatbuffers::Offset<FontBinary> CreateFontBinary(
     float LineHeight = 0.0f,
     float Ascender = 0.0f,
     float Descender = 0.0f,
-    bool FlipY = false,
     ::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::Glyph *>> Glyphs = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> Texels = 0) {
   FontBinaryBuilder builder_(_fbb);
@@ -268,7 +259,6 @@ inline ::flatbuffers::Offset<FontBinary> CreateFontBinary(
   builder_.add_FontSize(FontSize);
   builder_.add_DistanceRange(DistanceRange);
   builder_.add_Version(Version);
-  builder_.add_FlipY(FlipY);
   return builder_.Finish();
 }
 
@@ -285,7 +275,6 @@ inline ::flatbuffers::Offset<FontBinary> CreateFontBinaryDirect(
     float LineHeight = 0.0f,
     float Ascender = 0.0f,
     float Descender = 0.0f,
-    bool FlipY = false,
     std::vector<asdx::res::Glyph> *Glyphs = nullptr,
     const std::vector<uint8_t> *Texels = nullptr) {
   auto Glyphs__ = Glyphs ? _fbb.CreateVectorOfSortedStructs<asdx::res::Glyph>(Glyphs) : 0;
@@ -303,7 +292,6 @@ inline ::flatbuffers::Offset<FontBinary> CreateFontBinaryDirect(
       LineHeight,
       Ascender,
       Descender,
-      FlipY,
       Glyphs__,
       Texels__);
 }

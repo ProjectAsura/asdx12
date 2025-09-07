@@ -29,7 +29,6 @@ table FontBinary
     LineHeight    : float;
     Ascender      : float;
     Descender     : float;
-    FlipY         : bool;
     Glyphs        : [Glyph];
     Texels        : [ubyte];
 }

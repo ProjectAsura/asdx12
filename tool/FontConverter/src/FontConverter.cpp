@@ -110,7 +110,13 @@ bool FontConverter::Convert(const Desc& desc)
         auto fontSize       = uint32_t(atlas["size"]  .get_uint64().value());
         auto texWidth       = uint32_t(atlas["width"] .get_uint64().value());
         auto texHeight      = uint32_t(atlas["height"].get_uint64().value());
-        auto flipY          = (atlas["yOrigin"].get_string().value() == std::string_view("bottom"));
+        auto isFlipY = atlas["yOrigin"].get_string().value() == std::string_view("bottom");
+        assert(!isFlipY);
+        if (isFlipY)
+        {
+            fprintf_s(stderr, "Error : yOrigin is not \"top\".");
+            return false;
+        }
 
         auto metrics = doc["metrics"];
         assert(metrics.error() == simdjson::SUCCESS);
@@ -195,7 +201,6 @@ bool FontConverter::Convert(const Desc& desc)
             lineHeight,
             ascender,
             descender,
-            flipY,
             &srcGlyph,
             &texels);
 
