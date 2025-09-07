@@ -18,6 +18,7 @@
 #include <res/asdxResTexture.h>
 #include <gfx/asdxTexture.h>
 #include <gfx/asdxSampler.h>
+#include <gfx/asdxFont.h>
 #endif
 
 namespace {
@@ -27,6 +28,7 @@ asdx::SpriteRenderer g_SpriteRenderer;
 asdx::TextureBinary g_TextureBinary;
 asdx::Texture       g_Texture;
 asdx::Sampler       g_Sampler;
+asdx::Font          g_Font;
 #endif
 
 } // namespace
@@ -119,6 +121,18 @@ bool SampleApp::OnInit()
             ELOG("Error : Sampler::Init() Failed.");
             return false;
         }
+    }
+
+    if (!g_Font.Init(pCmd, "../res/font/yasashisa_gothic.fnb"))
+    {
+        ELOG("Error : Font::Init Failed.");
+        return false;
+    }
+
+    if (!asdx::FontRenderer::Instance().Init(g_SpriteRenderer))
+    {
+        ELOG("Error : FontRenderer::Init() Failed.");
+        return false;
     }
 #endif
 
@@ -220,8 +234,15 @@ void SampleApp::OnFrameRender(const asdx::App::FrameEventArgs& args)
     {
 
 #if TEST
+        g_SpriteRenderer.SetPipelineState(pCmd);
         g_SpriteRenderer.SetTexture(g_Texture.GetGpuHandleSRV(), g_Sampler.GetGpuHandle());
         g_SpriteRenderer.Add( 10, 10, 64, 64 );
+        g_SpriteRenderer.Draw(pCmd);
+
+        asdx::FontRenderer::Instance().SetState(pCmd, g_SpriteRenderer, g_Font);
+        asdx::FontRenderer::Instance().SetScale(2.0f);
+        asdx::FontRenderer::Instance().Add(g_SpriteRenderer, g_Font, 10, 74, u8"てすとですよ!テスト!");
+
         g_SpriteRenderer.Draw(pCmd);
 #endif
     }

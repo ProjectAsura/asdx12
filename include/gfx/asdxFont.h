@@ -14,6 +14,7 @@
 #include <fnd/asdxMath.h>
 #include <res/asdxResFont.h>
 #include <gfx/asdxTexture.h>
+#include <gfx/asdxSampler.h>
 
 
 namespace asdx {
@@ -229,15 +230,30 @@ public:
     //! @param[in]      pCmdList    グラフィックスコマンドリストです.
     //! @param[in]      renderer    スプライトレンダラーです.
     //-------------------------------------------------------------------------
-    void SetPipelineState(ID3D12GraphicsCommandList* pCmdList, SpriteRenderer& renderer);
+    void SetState(ID3D12GraphicsCommandList* pCmdList, SpriteRenderer& renderer, const Font& font);
+
+    //-------------------------------------------------------------------------
+    //! @brief      スケールを設定します.
+    //! 
+    //! @param[in]      value       設定するスケール値.
+    //-------------------------------------------------------------------------
+    void SetScale(float value);
+
+    //-------------------------------------------------------------------------
+    //! @brief      スケール値を取得します.
+    //! 
+    //! @return     スケール値を返却します.
+    //-------------------------------------------------------------------------
+    float GetScale() const;
 
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    static FontRenderer             s_Instance;     //!< シングルトンインスタンスです.
-    RefPtr<ID3D12PipelineState>     m_PSO;          //!< パイプラインステートです.
-    float                           m_Scale = 1.0f; //!< フォントスケールです.
+    static FontRenderer             s_Instance;         //!< シングルトンインスタンスです.
+    RefPtr<ID3D12PipelineState>     m_PipelineState;    //!< パイプラインステートです.
+    Sampler                         m_LinearClamp;      //!< リニアクランプ.
+    float                           m_Scale = 1.0f;     //!< フォントスケールです.
 
     //=========================================================================
     // private methods.

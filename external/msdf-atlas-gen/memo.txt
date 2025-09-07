@@ -2,4 +2,6 @@
 https://github.com/Chlumsky/msdf-atlas-gen/releases/tag/v1.3
 
 コマンドは次のように打ち込む.
-msdf-atlas-gen.exe -size 64 -pxrange 4 -charset charset-jp.txt -font 07やさしさゴシック.ttf -json yasashisa_gothic.json -format png -imageout yasashisa_gothic.png
+msdf-atlas-gen.exe -size 32 -pxrange 8 -charset charset-jp.txt -font 07やさしさゴシック.ttf -json yasashisa_gothic.json -format png -imageout yasashisa_gothic.png -yorigin top -type sdf
+
+出力されたテクスチャはDXT1にするとガビガビになるため，L8のままつかう。

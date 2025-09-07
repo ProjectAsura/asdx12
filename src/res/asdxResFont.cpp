@@ -143,7 +143,7 @@ bool FontBinary::LoadFromMemory(void* pBinary, [[maybe_unused]] size_t binarySiz
     {
         flatbuffers::Verifier::Options options;
         [[maybe_unused]] flatbuffers::Verifier verifier(reinterpret_cast<const uint8_t*>(pBinary), binarySize, options);
-        assert(res::VerifySizePrefixedFontBinaryBuffer(verifier));
+        assert(res::VerifyFontBinaryBuffer(verifier));
     }
 #endif
 

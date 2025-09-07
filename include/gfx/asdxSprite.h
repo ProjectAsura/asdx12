@@ -210,7 +210,16 @@ public:
     //! @retval true    生成に成功.
     //! @retval false   生成に失敗.
     //-------------------------------------------------------------------------
-    bool CreateSpritePipelineState(ID3D12Device* pDevice, const D3D12_SHADER_BYTECODE& ps, ID3D12PipelineState** pResult); 
+    bool CreateSpriteState(ID3D12Device* pDevice, const D3D12_SHADER_BYTECODE& ps, bool preMultipliedAlpha, ID3D12PipelineState** pResult);
+
+    //-------------------------------------------------------------------------
+    //! @brief      ユーザーパラメータを設定します.
+    //! 
+    //! @param[in]      count       32bitパラメータの数.
+    //! @param[in]      param       32bitパラメータ.
+    //! @param[in]      destOffset  書き込みオフセット.
+    //-------------------------------------------------------------------------
+    void SetParam(uint32_t count, const void* param, uint32_t destOffset);
 
 private:
     ///////////////////////////////////////////////////////////////////////////
@@ -267,6 +276,7 @@ private:
     D3D12_GPU_DESCRIPTOR_HANDLE m_HandleSampler     = {};                           //!< サンプラー
     DXGI_FORMAT                 m_ColorFormat       = DXGI_FORMAT_UNKNOWN;
     DXGI_FORMAT                 m_DepthFormat       = DXGI_FORMAT_UNKNOWN;
+    uint32_t                    m_Param[4]          = {};
 
     //=========================================================================
     // private methods.

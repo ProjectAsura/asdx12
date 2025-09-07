@@ -175,8 +175,8 @@ bool Font::Find(uint32_t unicode, DrawInfo& info) const
         return false;
 
     auto unitSize = m_Binary.GetFontSize();
-    auto w = glyph.PlaneBound.Right - glyph.PlaneBound.Left;
-    auto h = glyph.PlaneBound.Top   - glyph.PlaneBound.Bottom;
+    auto w = abs(glyph.PlaneBound.Right - glyph.PlaneBound.Left);
+    auto h = abs(glyph.PlaneBound.Top   - glyph.PlaneBound.Bottom);
 
     info.x = unitSize * glyph.PlaneBound.Left;
     info.y = unitSize * glyph.PlaneBound.Top;
@@ -190,7 +190,7 @@ bool Font::Find(uint32_t unicode, DrawInfo& info) const
 
     info.advance = glyph.Advance * unitSize;
 
-    if (m_Binary.IsFlipY())
+    // DirectXなので上下反転.
     {
         auto temp  = info.uv0.y;
         info.uv0.y = info.uv1.y;
@@ -204,6 +204,7 @@ bool Font::Find(uint32_t unicode, DrawInfo& info) const
 ///////////////////////////////////////////////////////////////////////////////
 // FontRenderer class
 ///////////////////////////////////////////////////////////////////////////////
+FontRenderer FontRenderer::s_Instance = {};
 
 //-----------------------------------------------------------------------------
 //      コンストラクタです.
@@ -218,6 +219,12 @@ FontRenderer::~FontRenderer()
 { Term(); }
 
 //-----------------------------------------------------------------------------
+//      シングルトンインスタンスを取得.
+//-----------------------------------------------------------------------------
+FontRenderer& FontRenderer::Instance()
+{ return s_Instance; }
+
+//-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
 bool FontRenderer::Init(SpriteRenderer& renderer)
@@ -225,12 +232,24 @@ bool FontRenderer::Init(SpriteRenderer& renderer)
     auto pDevice = GetD3D12Device();
     assert(pDevice != nullptr);
 
-    D3D12_SHADER_BYTECODE ps = { FontPS, sizeof(FontPS) };
-
-    if (!renderer.CreateSpritePipelineState(pDevice, ps, m_PSO.GetAddress()))
+    // パイプラインステートを生成します.
     {
-        ELOG("Error : PipelineState Init Failed.");
-        return false;
+        D3D12_SHADER_BYTECODE ps = { FontPS, sizeof(FontPS) };
+        if (!renderer.CreateSpriteState(pDevice, ps, true, m_PipelineState.GetAddress()))
+        {
+            ELOG("Error : PipelineState Init Failed.");
+            return false;
+        }
+    }
+
+    // サンプラーを生成します.
+    {
+        auto desc = Sampler::LinearClamp;
+        if (!m_LinearClamp.Init(&desc))
+        {
+            ELOG("Error : Sampler::Init() Failed.");
+            return false;
+        }
     }
 
     return true;
@@ -240,7 +259,10 @@ bool FontRenderer::Init(SpriteRenderer& renderer)
 //      終了処理を行います.
 //-----------------------------------------------------------------------------
 void FontRenderer::Term()
-{ m_PSO.Reset(); }
+{
+    m_PipelineState.Reset();
+    m_LinearClamp  .Term();
+}
 
 //-----------------------------------------------------------------------------
 //      スプライトフォントを追加します.
@@ -257,8 +279,9 @@ void FontRenderer::Add
     const char*     text
 )
 {
+    auto lineHeight = font.GetBinary().GetLineHeight() * font.GetBinary().GetFontSize() * m_Scale;
     auto posX = x;
-    auto posY = y + (int)(font.GetBinary().GetAscender() * m_Scale);
+    auto posY = y + int(lineHeight);
 
     const char* p = text;   // UTF-8.
     while(*p)
@@ -270,7 +293,7 @@ void FontRenderer::Add
         if (unicode == '\n')
         {
             posX = x;
-            posY += int(font.GetBinary().GetLineHeight() * m_Scale);
+            posY += int(lineHeight);
             continue;
         }
 
@@ -319,7 +342,16 @@ char* FontRenderer::Format(char* buffer, size_t bufferSize, const char* format, 
 //-----------------------------------------------------------------------------
 //      パイプラインステートを設定します.
 //-----------------------------------------------------------------------------
-void FontRenderer::SetPipelineState(ID3D12GraphicsCommandList* pCmdList, SpriteRenderer& renderer)
-{ renderer.SetPipelineState(pCmdList, m_PSO.GetPtr()); }
+void FontRenderer::SetState(ID3D12GraphicsCommandList* pCmdList, SpriteRenderer& renderer, const Font& font)
+{
+    renderer.SetPipelineState(pCmdList, m_PipelineState.GetPtr());
+    renderer.SetTexture(font.GetTexture().GetGpuHandleSRV(), m_LinearClamp.GetGpuHandle());
+}
+
+void FontRenderer::SetScale(float value)
+{ m_Scale = value; }
+
+float FontRenderer::GetScale() const
+{ return m_Scale; }
 
 } // namespace asdx

@@ -32,8 +32,8 @@ int main(int argc, char** argv)
     parser.parse_check(argc, argv);
 
     FontConverter::Desc desc = {};
-    desc.DdsPath = parser.get<std::string>("texture");
-    desc.JsonPath = parser.get<std::string>("json");
+    desc.DdsPath    = parser.get<std::string>("texture");
+    desc.JsonPath   = parser.get<std::string>("json");
     desc.OutputPath = parser.get<std::string>("output");
 
     auto ret = FontConverter().Convert(desc);

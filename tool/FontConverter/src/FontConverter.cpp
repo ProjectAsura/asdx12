@@ -69,23 +69,33 @@ bool FontConverter::Convert(const Desc& desc)
             auto unicode = uint32_t(g["unicode"].get_uint64().value());
             auto advance = float(g["advance"].get_double().value());
 
-            auto planeBounds = g["planeBounds"];
-            if (planeBounds.error() != simdjson::SUCCESS)
-                continue;
+            auto pl = 0.0f;
+            auto pr = 0.0f;
+            auto pt = 0.0f;
+            auto pb = 0.0f;
 
-            auto pl = float(planeBounds["left"]  .get_double().value());
-            auto pr = float(planeBounds["right"] .get_double().value());
-            auto pt = float(planeBounds["top"]   .get_double().value());
-            auto pb = float(planeBounds["bottom"].get_double().value());
+            auto al = 0.0f;
+            auto ar = 0.0f;
+            auto at = 0.0f;
+            auto ab = 0.0f;
+
+            auto planeBounds = g["planeBounds"];
+            if (planeBounds.error() == simdjson::SUCCESS)
+            {
+                pl = float(planeBounds["left"]  .get_double().value());
+                pr = float(planeBounds["right"] .get_double().value());
+                pt = float(planeBounds["top"]   .get_double().value());
+                pb = float(planeBounds["bottom"].get_double().value());
+            }
 
             auto atlasBounds = g["atlasBounds"];
-            if (atlasBounds.error() != simdjson::SUCCESS)
-                continue;
-
-            auto al = float(atlasBounds["left"]  .get_double().value());
-            auto ar = float(atlasBounds["right"] .get_double().value());
-            auto at = float(atlasBounds["top"]   .get_double().value());
-            auto ab = float(atlasBounds["bottom"].get_double().value());
+            if (atlasBounds.error() == simdjson::SUCCESS)
+            {
+                al = float(atlasBounds["left"]  .get_double().value());
+                ar = float(atlasBounds["right"] .get_double().value());
+                at = float(atlasBounds["top"]   .get_double().value());
+                ab = float(atlasBounds["bottom"].get_double().value());
+            }
 
             asdx::res::Bounds pBound(pl, pr, pt, pb);
             asdx::res::Bounds aBound(al, ar, at, ab);

@@ -84,10 +84,29 @@ const D3D12_RENDER_TARGET_BLEND_DESC kRTB_AlphaBlend = {
     D3D12_COLOR_WRITE_ENABLE_ALL
 };
 
+const D3D12_RENDER_TARGET_BLEND_DESC kRTB_Premultiplied = {
+    TRUE,
+    FALSE,
+    D3D12_BLEND_ONE,
+    D3D12_BLEND_INV_SRC_ALPHA,
+    D3D12_BLEND_OP_ADD,
+    D3D12_BLEND_ONE,
+    D3D12_BLEND_INV_SRC_ALPHA,
+    D3D12_BLEND_OP_ADD,
+    D3D12_LOGIC_OP_NOOP,
+    D3D12_COLOR_WRITE_ENABLE_ALL
+};
+
 const D3D12_BLEND_DESC kAlphaBlend = {
     FALSE,
     FALSE,
     { kRTB_AlphaBlend, kRTB_AlphaBlend, kRTB_AlphaBlend, kRTB_AlphaBlend, kRTB_AlphaBlend, kRTB_AlphaBlend, kRTB_AlphaBlend, kRTB_AlphaBlend }
+};
+
+const D3D12_BLEND_DESC kPremultiplied = {
+    FALSE,
+    FALSE,
+    { kRTB_Premultiplied, kRTB_Premultiplied, kRTB_Premultiplied, kRTB_Premultiplied, kRTB_Premultiplied, kRTB_Premultiplied, kRTB_Premultiplied, kRTB_Premultiplied }
 };
 } // namespace
 
@@ -303,7 +322,7 @@ bool SpriteRenderer::Init
         m_DepthFormat = dsvFormat;
 
         D3D12_SHADER_BYTECODE ps = { SpritePS, sizeof(SpritePS) };
-        if (!CreateSpritePipelineState(pDevice, ps, m_PSO.GetAddress()))
+        if (!CreateSpriteState(pDevice, ps, false, m_PSO.GetAddress()))
         { return false; }
     }
 
@@ -529,6 +548,7 @@ void SpriteRenderer::Draw(ID3D12GraphicsCommandList* pCmdList)
     pCmdList->IASetIndexBuffer(&ibv);
     pCmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     pCmdList->SetGraphicsRoot32BitConstants(0, 16, &m_Transform, 0);
+    pCmdList->SetGraphicsRoot32BitConstants(3, 4, m_Param, 0);
 
     for(auto i=m_SubmitCount; i<m_BatchCount; ++i)
     {
@@ -536,8 +556,8 @@ void SpriteRenderer::Draw(ID3D12GraphicsCommandList* pCmdList)
         pCmdList->SetGraphicsRootDescriptorTable(1, batch.SRV);
         pCmdList->SetGraphicsRootDescriptorTable(2, batch.Sampler);
         pCmdList->DrawIndexedInstanced(batch.IndexCount, 1, batch.IndexOffset, 0, 0);
-        m_SpriteCount++;
     }
+    m_SubmitCount += m_BatchCount;
 }
 
 //-----------------------------------------------------------------------------
@@ -562,10 +582,11 @@ Vector4 SpriteRenderer::GetColor() const
 //-----------------------------------------------------------------------------
 //      スプライト描画用パイプラインステートを生成します.
 //-----------------------------------------------------------------------------
-bool SpriteRenderer::CreateSpritePipelineState
+bool SpriteRenderer::CreateSpriteState
 (
     ID3D12Device*                   pDevice,
     const D3D12_SHADER_BYTECODE&    pixelShader,
+    bool                            preMultipliedAlpha,
     ID3D12PipelineState**           ppResult
 )
 {
@@ -578,7 +599,7 @@ bool SpriteRenderer::CreateSpritePipelineState
         desc.pRootSignature                 = m_RootSig.GetPtr();
         desc.VS                             = { SpriteVS, sizeof(SpriteVS) };
         desc.PS                             = pixelShader;
-        desc.BlendState                     = kAlphaBlend;
+        desc.BlendState                     = (preMultipliedAlpha) ? kPremultiplied : kAlphaBlend;
         desc.SampleMask                     = D3D12_DEFAULT_SAMPLE_MASK;
         desc.RasterizerState                = kCullBack;
         desc.DepthStencilState              = (m_DepthFormat == DXGI_FORMAT_UNKNOWN) ? kDepthNone : kDepthDefault;
@@ -600,6 +621,16 @@ bool SpriteRenderer::CreateSpritePipelineState
     }
 
     return true;
+}
+
+//-----------------------------------------------------------------------------
+//      ユーザーパラメータを設定します.
+//-----------------------------------------------------------------------------
+void SpriteRenderer::SetParam(uint32_t count, const void* param, uint32_t destOffset)
+{
+    assert(param != nullptr);
+    assert(count <= 4);
+    memcpy(m_Param + destOffset, param, sizeof(uint32_t) * count);
 }
 
 } // namespace asdx
