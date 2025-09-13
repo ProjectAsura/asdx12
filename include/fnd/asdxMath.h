@@ -9,12 +9,11 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <cstdint>
-#include <cmath>
-#include <complex>
 #include <cfloat>
+#include <cmath>
 #include <cassert>
-#include <cstring>
-#include <climits>
+#include <cstring>  // for memcpy.
+#include <bit>
 
 
 namespace asdx {
@@ -37,14 +36,14 @@ using half = uint16_t;
 //-----------------------------------------------------------------------------
 // Constant Variables
 //-----------------------------------------------------------------------------
-static constexpr float F_PI      = 3.1415926535897932384626433832795f;     //!< πです.
-static constexpr float F_2PI     = 6.283185307179586476925286766559f;      //!< 2πです.
-static constexpr float F_1DIVPI  = 0.31830988618379067153776752674503f;    //!< 1/πです.
-static constexpr float F_PIDIV2  = 1.5707963267948966192313216916398f;     //!< π/2です.
-static constexpr float F_PIDIV3  = 1.0471975511965977461542144610932f;     //!< π/3です.
-static constexpr float F_PIDIV4  = 0.78539816339744830961566084581988f;    //!< π/4です.
-static constexpr float F_PIDIV6  = 0.52359877559829887307710723054658f;    //!< π/6です.
-static constexpr float F_EPSILON = 1.192092896e-07f;                       //!< マシンイプシロン(float).
+static constexpr float F_PI      = 3.1415926535897932384626433832795f;      //!< πです.
+static constexpr float F_2PI     = 6.283185307179586476925286766559f;       //!< 2πです.
+static constexpr float F_1DIVPI  = 0.31830988618379067153776752674503f;     //!< 1/πです.
+static constexpr float F_PIDIV2  = 1.5707963267948966192313216916398f;      //!< π/2です.
+static constexpr float F_PIDIV3  = 1.0471975511965977461542144610932f;      //!< π/3です.
+static constexpr float F_PIDIV4  = 0.78539816339744830961566084581988f;     //!< π/4です.
+static constexpr float F_PIDIV6  = 0.52359877559829887307710723054658f;     //!< π/6です.
+static constexpr float F_EPSILON = 1.192092896e-07f;                        //!< マシンイプシロン(float).
 
 static constexpr double D_PI      = 3.1415926535897932384626433832795;      //!< πです.
 static constexpr double D_2PI     = 6.283185307179586476925286766559;       //!< 2πです.
@@ -55,7 +54,7 @@ static constexpr double D_PIDIV4  = 0.78539816339744830961566084581988;     //!<
 static constexpr double D_PIDIV6  = 0.52359877559829887307710723054658;     //!< π/6です.
 static constexpr double D_EPSILON = 2.2204460492503131e-016;                //!< マシンイプシロン(double)
 
-static constexpr float ONB_EPSILON = 0.01f;                                //!< 正規直交規定を算出する際に用いるイプシロン値です.
+static constexpr float ONB_EPSILON = 0.01f;                                 //!< 正規直交規定を算出する際に用いるイプシロン値です.
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -63,17 +62,17 @@ static constexpr float ONB_EPSILON = 0.01f;                                //!< 
 ///////////////////////////////////////////////////////////////////////////////
 enum PLANE_TYPE
 {
-    PLANE_LEFT      = 0,
-    PLANE_RIGHT     = 1,
-    PLANE_BOTTOM    = 2,
-    PLANE_TOP       = 3,
-    PLANE_NEAR      = 4,
-    PLANE_FAR       = 5,
-    PLANE_EXTRA0    = 6,
-    PLANE_EXTRA1    = 7,
+    PLANE_LEFT      = 0,        //!< 左.
+    PLANE_RIGHT     = 1,        //!< 右.
+    PLANE_BOTTOM    = 2,        //!< 底面.
+    PLANE_TOP       = 3,        //!< 天面.
+    PLANE_NEAR      = 4,        //!< ニア平面.
+    PLANE_FAR       = 5,        //!< ファー平面.
+    PLANE_EXTRA0    = 6,        //!< シャドウ用追加平面0.
+    PLANE_EXTRA1    = 7,        //!< シャドウ用追加平面1.
 
-    PLANE_COUNT        = 6,
-    SHADOW_PLANE_COUNT = 8,
+    PLANE_COUNT        = 6,     //!< 通常カリング用平面数.
+    SHADOW_PLANE_COUNT = 8,     //!< シャドウカリング用平面数.
 };
 
 
@@ -87,7 +86,7 @@ enum PLANE_TYPE
 //! @param [in]     degree      角度(度)
 //! @return     度をラジアンに変換した結果を返却します.
 //-----------------------------------------------------------------------------
-constexpr float     ToRadian( float degree ) noexcept;
+constexpr float ToRadian(float degree) noexcept;
 
 //-----------------------------------------------------------------------------
 //! @brief      度をラジアンに変換します.
@@ -95,7 +94,7 @@ constexpr float     ToRadian( float degree ) noexcept;
 //! @param [in]     degree      角度(度)
 //! @return     度をラジアンに変換した結果を返却します.
 //-----------------------------------------------------------------------------
-constexpr double     ToRadian( double degree ) noexcept;
+constexpr double ToRadian(double degree) noexcept;
 
 //-----------------------------------------------------------------------------
 //! @brief      ラジアンを度に変換します.
@@ -103,7 +102,7 @@ constexpr double     ToRadian( double degree ) noexcept;
 //! @param [in]     radian      角度(ラジアン)
 //! @return     ラジアンを度に変換した結果を返却します.
 //-----------------------------------------------------------------------------
-constexpr float     ToDegree( float radian ) noexcept;
+constexpr float ToDegree(float radian) noexcept;
 
 //-----------------------------------------------------------------------------
 //! @brief      ラジアンを度に変換します.
@@ -111,7 +110,7 @@ constexpr float     ToDegree( float radian ) noexcept;
 //! @param [in]     radian      角度(ラジアン)
 //! @return     ラジアンを度に変換した結果を返却します.
 //-----------------------------------------------------------------------------
-constexpr double     ToDegree( double radian ) noexcept;
+constexpr double ToDegree(double radian) noexcept;
 
 //-----------------------------------------------------------------------------
 //! @brief      値がゼロであるかどうか判定します.
@@ -119,7 +118,7 @@ constexpr double     ToDegree( double radian ) noexcept;
 //! @param [in]     value       判定する値.
 //! @return     値がゼロであるとみなせる場合にtrueを返却します.
 //-----------------------------------------------------------------------------
-bool    IsZero( float value ) noexcept;
+bool IsZero(float value) noexcept;
 
 //-----------------------------------------------------------------------------
 //! @brief      値がゼロであるかどうか判定します.
@@ -127,7 +126,7 @@ bool    IsZero( float value ) noexcept;
 //! @param [in]     value       判定する値.
 //! @return     値がゼロであるとみなせる場合にtrueを返却します.
 //-----------------------------------------------------------------------------
-bool    IsZero( double value ) noexcept;
+bool IsZero(double value) noexcept;
 
 //-----------------------------------------------------------------------------
 //! @brief      値が等価であるか判定します.
@@ -136,7 +135,7 @@ bool    IsZero( double value ) noexcept;
 //! @param [in]     b           判定する値.
 //! @return     値が等価であるとみなせる場合にtrueを返却します.
 //-----------------------------------------------------------------------------
-bool    IsEqual( float a, float b ) noexcept;
+bool IsEqual(float a, float b) noexcept;
 
 //-----------------------------------------------------------------------------
 //! @brief      値が等価であるか判定します.
@@ -145,7 +144,7 @@ bool    IsEqual( float a, float b ) noexcept;
 //! @param [in]     b           判定する値.
 //! @return     値が等価であるとみなせる場合にtrueを返却します.
 //-----------------------------------------------------------------------------
-bool    IsEqual( double a, double b ) noexcept;
+bool IsEqual(double a, double b) noexcept;
 
 //-----------------------------------------------------------------------------
 //! @brief      非数であるか判定します.
@@ -153,7 +152,7 @@ bool    IsEqual( double a, double b ) noexcept;
 //! @param [in]     value       判定する値.
 //! @return     非数であった場合にtrueを返却します.
 //-----------------------------------------------------------------------------
-constexpr bool    IsNan( float value ) noexcept;
+constexpr bool IsNaN(float value) noexcept;
 
 //-----------------------------------------------------------------------------
 //! @brief      非数であるか判定します.
@@ -161,7 +160,7 @@ constexpr bool    IsNan( float value ) noexcept;
 //! @param [in]     value       判定する値.
 //! @return     非数であった場合にtrueを返却します.
 //-----------------------------------------------------------------------------
-constexpr bool    IsNan( double value ) noexcept;
+constexpr bool IsNaN(double value) noexcept;
 
 //-----------------------------------------------------------------------------
 //! @brief      無限大であるか判定します.
@@ -169,7 +168,7 @@ constexpr bool    IsNan( double value ) noexcept;
 //! @param [in]     value       判定する値.
 //! @return     無限大であった場合にtrueを返却します.
 //-----------------------------------------------------------------------------
-bool    IsInf( float value );
+constexpr bool IsInf(float value);
 
 //-----------------------------------------------------------------------------
 //! @brief      無限大であるか判定します.
@@ -177,7 +176,7 @@ bool    IsInf( float value );
 //! @param [in]     value       判定する値.
 //! @return     無限大であった場合にtrueを返却します.
 //-----------------------------------------------------------------------------
-bool    IsInf( double value );
+constexpr bool IsInf(double value);
 
 //-----------------------------------------------------------------------------
 //! @brief      平方和の平方根を求めます.
@@ -186,7 +185,7 @@ bool    IsInf( double value );
 //! @param [in]     y       値2
 //! @return     平方和の平方根を返却します.
 //-----------------------------------------------------------------------------
-float     Hypot( float x, float y );
+float Hypot(float x, float y);
 
 //-----------------------------------------------------------------------------
 //! @brief      平方和の平方根を求めます.
@@ -196,7 +195,7 @@ float     Hypot( float x, float y );
 //! @param [in]     z       値3
 //! @return     平方和の平方根を返却します.
 //-----------------------------------------------------------------------------
-float     Hypot( float x, float y, float z );
+float Hypot(float x, float y, float z);
 
 //-----------------------------------------------------------------------------
 //! @brief      平方和の平方根を求めます.
@@ -207,7 +206,7 @@ float     Hypot( float x, float y, float z );
 //! @param [in]     w       値4
 //! @return     平方和の平方根を返却します.
 //-----------------------------------------------------------------------------
-float     Hypot( float x, float y, float z, float w );
+float Hypot(float x, float y, float z, float w);
 
 //-----------------------------------------------------------------------------
 //! @brief      平方和の平方根を求めます.
@@ -216,7 +215,7 @@ float     Hypot( float x, float y, float z, float w );
 //! @param [in]     y       値2
 //! @return     平方和の平方根を返却します.
 //-----------------------------------------------------------------------------
-double     Hypot( double x, double y );
+double Hypot(double x, double y);
 
 //-----------------------------------------------------------------------------
 //! @brief      平方和の平方根を求めます.
@@ -226,7 +225,7 @@ double     Hypot( double x, double y );
 //! @param [in]     z       値3
 //! @return     平方和の平方根を返却します.
 //-----------------------------------------------------------------------------
-double     Hypot( double x, double y, double z );
+double Hypot(double x, double y, double z);
 
 //-----------------------------------------------------------------------------
 //! @brief      平方和の平方根を求めます.
@@ -237,7 +236,7 @@ double     Hypot( double x, double y, double z );
 //! @param [in]     w       値4
 //! @return     平方和の平方根を返却します.
 //-----------------------------------------------------------------------------
-double     Hypot( double x, double y, double z, double w );
+double Hypot(double x, double y, double z, double w);
 
 //-----------------------------------------------------------------------------
 //! @brief      階乗を計算します.
@@ -245,7 +244,7 @@ double     Hypot( double x, double y, double z, double w );
 //! @param [in]     number      階乗を計算する値.
 //! @return     (number)!を計算した値を返却します.
 //-----------------------------------------------------------------------------
-uint32_t     Fact( uint32_t number );
+uint32_t Fact(uint32_t number);
 
 //-----------------------------------------------------------------------------
 //! @brief      2重階乗を計算します.
@@ -253,7 +252,7 @@ uint32_t     Fact( uint32_t number );
 //! @param [in]     number      2重階乗を計算する値.
 //! @return     (number)!!を計算した値を返却します.
 //-----------------------------------------------------------------------------
-uint32_t     DblFact( uint32_t number );
+uint32_t DblFact(uint32_t number);
 
 //-----------------------------------------------------------------------------
 //! @brief      順列を計算します.
@@ -262,7 +261,7 @@ uint32_t     DblFact( uint32_t number );
 //! @param [in]     r       選択数.
 //! @return     n個のものからr個とった順列を返却します.
 //-----------------------------------------------------------------------------
-uint32_t     Perm( uint32_t n, uint32_t r );
+uint32_t Perm(uint32_t n, uint32_t r);
 
 //-----------------------------------------------------------------------------
 //! @brief      組合せを計算します.
@@ -271,7 +270,7 @@ uint32_t     Perm( uint32_t n, uint32_t r );
 //! @param [in]     r       選択数.
 //! @return     n個のものからr個とった組合せを返却します.
 //-----------------------------------------------------------------------------
-uint32_t     Comb( uint32_t n, uint32_t r );
+uint32_t Comb(uint32_t n, uint32_t r);
 
 //-----------------------------------------------------------------------------
 //! @brief      float型からhalf型に変換します.
@@ -279,7 +278,7 @@ uint32_t     Comb( uint32_t n, uint32_t r );
 //! @param [in]     value       half型に変換する値.
 //! @return     半精度浮動小数表現に変換した結果を返却します.
 //-----------------------------------------------------------------------------
-half     ToHalf( float value );
+half ToHalf(float value);
 
 //-----------------------------------------------------------------------------
 //! @brief      half型からfloat型に変換します.
@@ -287,7 +286,7 @@ half     ToHalf( float value );
 //! @param [in]     value       float型に変換する値.
 //! @return     単精度浮動小数表現に変換した結果を返却します.
 //-----------------------------------------------------------------------------
-float     ToFloat( half value );
+float ToFloat(half value);
 
 //-----------------------------------------------------------------------------
 //! @brief      線形補間を行います.
@@ -297,7 +296,7 @@ float     ToFloat( half value );
 //! @param [in]     amount      重み(0～1の値範囲で指定).
 //! @return     線形補間の結果を返却します.
 //-----------------------------------------------------------------------------
-constexpr float     Lerp( float a, float b, float amount ) noexcept;
+constexpr float Lerp(float a, float b, float amount) noexcept;
 
 //-----------------------------------------------------------------------------
 //! @brief      線形補間を行います.
@@ -307,7 +306,7 @@ constexpr float     Lerp( float a, float b, float amount ) noexcept;
 //! @param [in]     amount      重み(0～1の値範囲で指定).
 //! @return     線形補間の結果を返却します.
 //-----------------------------------------------------------------------------
-constexpr double     Lerp( double a, double b, double amount ) noexcept;
+constexpr double Lerp(double a, double b, double amount) noexcept;
 
 //-----------------------------------------------------------------------------
 //! @brief      2つの値のうち，大きい方を返却します.
@@ -317,8 +316,8 @@ constexpr double     Lerp( double a, double b, double amount ) noexcept;
 //! @return     2つの値のうち，大きい方を返却します.
 //-----------------------------------------------------------------------------
 template<typename T> inline
-constexpr T Max( const T& a, const T& b ) noexcept
-{ return ( a > b ) ? a : b; }
+constexpr T Max(const T& a, const T& b) noexcept
+{ return (a > b) ? a : b; }
 
 //-----------------------------------------------------------------------------
 //! @brief      2つの値のうち，小さい方の値を返却します.
@@ -328,8 +327,8 @@ constexpr T Max( const T& a, const T& b ) noexcept
 //! @return     2つの値のうち，小さい方の値を返却します.
 //-----------------------------------------------------------------------------
 template<typename T> inline
-constexpr T Min( const T& a, const T& b ) noexcept
-{ return ( a < b ) ? a : b; }
+constexpr T Min(const T& a, const T& b) noexcept
+{ return (a < b) ? a : b; }
 
 //-----------------------------------------------------------------------------
 //! @brief      値を指定された範囲内に収めます.
@@ -340,7 +339,7 @@ constexpr T Min( const T& a, const T& b ) noexcept
 //! @return     値をaからbの範囲内に収めた結果を返却します.
 //-----------------------------------------------------------------------------
 template<typename T> inline
-constexpr T Clamp( const T& value, const T& mini, const T& maxi ) noexcept
+constexpr T Clamp(const T& value, const T& mini, const T& maxi) noexcept
 { return Max( mini, Min( maxi, value ) ); }
 
 //-----------------------------------------------------------------------------
@@ -350,7 +349,7 @@ constexpr T Clamp( const T& value, const T& mini, const T& maxi ) noexcept
 //! @return     値を0から1の範囲内に収めた結果を返却します.
 //-----------------------------------------------------------------------------
 template<typename T> inline
-constexpr T Saturate( const T& value ) noexcept
+constexpr T Saturate(const T& value) noexcept
 { return Clamp( value, T(0), T(1) ); }
 
 //-----------------------------------------------------------------------------
@@ -360,8 +359,8 @@ constexpr T Saturate( const T& value ) noexcept
 //! @return     符号が正である場合には1を，負である場合には-1を返却します.
 //-----------------------------------------------------------------------------
 template<typename T> inline
-constexpr T Sign( T value ) noexcept
-{ return ( value < T(0) ) ? T(-1) : T(1); }
+constexpr T Sign(T value) noexcept
+{ return (value < T(0)) ? T(-1) : T(1); }
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -376,11 +375,11 @@ struct Vector2
     //-------------------------------------------------------------------------
     //! @brief      乗算演算子です.
     //!
-    //! @param [in]     scalar      乗算するスカラー値.
-    //! @param [in]     value       乗算されるベクトル.
+    //! @param [in]     lhs     乗算するスカラー値.
+    //! @param [in]     rhs     乗算されるベクトル.
     //! @return     乗算結果を返却します.
     //-------------------------------------------------------------------------
-    friend Vector2   operator*   ( float, const Vector2& );
+    friend Vector2 operator* (float lhs, const Vector2& rhs);
 
 public:
     //=========================================================================
@@ -396,14 +395,14 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      コンストラクタです.
     //-------------------------------------------------------------------------
-    Vector2();
+    Vector2() = default;
 
     //-------------------------------------------------------------------------
     //! @brief      引数付きコンストラクタです.
     //!
-    //! @param [in]     pValeus     要素数2の配列.
+    //! @param [in]     pValues     要素数2の配列.
     //-------------------------------------------------------------------------
-    explicit Vector2( const float* );
+    explicit Vector2(const float* pValues);
 
     //-------------------------------------------------------------------------
     //! @brief      引数付きコンストラクタです.
@@ -411,7 +410,7 @@ public:
     //! @param [in]     nx           X成分.
     //! @param [in]     ny           Y成分.
     //-------------------------------------------------------------------------
-    Vector2( float nx, float ny );
+    Vector2(float nx, float ny);
 
     //-------------------------------------------------------------------------
     //! @brief      float*型への演算子です.
@@ -433,7 +432,7 @@ public:
     //! @param [in]     value       加算する値.
     //! @return     加算結果を返却します.
     //-------------------------------------------------------------------------
-    Vector2&         operator += ( const Vector2& );
+    Vector2& operator += (const Vector2& value);
 
     //-------------------------------------------------------------------------
     //! @brief      減算代入演算子です.
@@ -441,23 +440,23 @@ public:
     //! @param [in]     value       減算する値.
     //! @return     減算結果を返却します.
     //-------------------------------------------------------------------------
-    Vector2&         operator -= ( const Vector2& );
+    Vector2& operator -= (const Vector2& value);
 
     //-------------------------------------------------------------------------
     //! @brief      乗算代入演算子です.
     //!
-    //! @param [in]     scalar      乗算するスカラー値.
+    //! @param [in]     value      乗算するスカラー値.
     //! @return     乗算結果を返却します.
     //-------------------------------------------------------------------------
-    Vector2&         operator *= ( float );
+    Vector2&  operator *= (float value);
 
     //-------------------------------------------------------------------------
     //! @brief      除算代入演算子です.
     //!
-    //! @param [in]     scalar      除算するスカラー値.
+    //! @param [in]     value      除算するスカラー値.
     //! @return     除算結果を返却します.
     //-------------------------------------------------------------------------
-    Vector2&         operator /= ( float );
+    Vector2& operator /= (float value);
 
     //-------------------------------------------------------------------------
     //! @brief      代入演算子です.
@@ -465,21 +464,21 @@ public:
     //! @param [in]     value       代入する値.
     //! @return     代入結果を返却します.
     //-------------------------------------------------------------------------
-    Vector2&         operator =  ( const Vector2& );
+    Vector2& operator = (const Vector2& value);
 
     //-------------------------------------------------------------------------
     //! @brief      正符号演算子です.
     //!
     //! @return     自分自身の値を返却します.
     //-------------------------------------------------------------------------
-    Vector2          operator +  () const;
+    Vector2 operator + () const;
 
     //-------------------------------------------------------------------------
     //! @brief      負符号演算子です.
     //!
     //! @return     負符号を付けた値を返却します.
     //-------------------------------------------------------------------------
-    Vector2          operator -  () const;
+    Vector2 operator - () const;
 
     //-------------------------------------------------------------------------
     //! @brief      加算演算子です.
@@ -487,7 +486,7 @@ public:
     //! @param [in]     value       加算する値.
     //! @return     加算結果を返却します.
     //-------------------------------------------------------------------------
-    Vector2          operator +  ( const Vector2& ) const;
+    Vector2 operator + (const Vector2& value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      減算演算子です.
@@ -495,23 +494,23 @@ public:
     //! @param [in]     value       減算する値.
     //! @return     減算結果を返却します.
     //-------------------------------------------------------------------------
-    Vector2          operator -  ( const Vector2& ) const;
+    Vector2 operator - (const Vector2& value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      乗算演算子です.
     //!
-    //! @param [in]     scalar      乗算するスカラー値.
+    //! @param [in]     value      乗算するスカラー値.
     //! @return     乗算結果を返却します.
     //-------------------------------------------------------------------------
-    Vector2          operator *  ( float ) const;
+    Vector2 operator * (float value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      除算演算子です.
     //!
-    //! @param [in]     scalar      除算するスカラー値.
+    //! @param [in]     value       除算するスカラー値.
     //! @return     除算結果を返却します.
     //-------------------------------------------------------------------------
-    Vector2          operator /  ( float ) const;
+    Vector2 operator / (float value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      等価比較演算子です.
@@ -519,7 +518,7 @@ public:
     //! @param [in]     value       比較する値.
     //! @return     値が等価であればtrue, そうでなければfalseを返却します.
     //-------------------------------------------------------------------------
-    bool             operator == ( const Vector2& ) const;
+    bool operator == (const Vector2& value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      非等価比較演算子です.
@@ -527,37 +526,36 @@ public:
     //! @param [in]     value       比較する値.
     //! @return     値が非等価であればtrue, そうでなければfalseを返却します.
     //-------------------------------------------------------------------------
-    bool             operator != ( const Vector2& ) const;
+    bool operator != (const Vector2& value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      ベクトルの長さを求めます.
     //!
     //! @return     ベクトルの長さを返却します.
     //-------------------------------------------------------------------------
-    float             Length          () const;
+    float Length() const;
 
     //-------------------------------------------------------------------------
     //! @brief      ベクトルの長さの2乗値を求めます.
     //!
     //! @return     ベクトルの長さの2乗値を返却します.
     //-------------------------------------------------------------------------
-    float             LengthSq        () const;
+    float LengthSq() const;
 
     //-------------------------------------------------------------------------
     //! @brief      ベクトルを正規化します.
     //!
     //! @return     正規化したベクトルを返却します.
     //-------------------------------------------------------------------------
-    Vector2&        Normalize       ();
+    Vector2& Normalize();
 
     //-------------------------------------------------------------------------
     //! @brief      ベクトルの正規化を試みます.
     //!
-    //! @param [in]     value       長さが0の場合に設定する値.
+    //! @param [in]     reset       長さが0の場合に設定する値.
     //! @return     ベクトルの長さが0の場合はvalueを，そうでないときは正規化したベクトルを返却します.
     //-------------------------------------------------------------------------
-    Vector2&        SafeNormalize   ( const Vector2& );
-
+    Vector2& SafeNormalize(const Vector2& reset);
 
     //-------------------------------------------------------------------------
     //! @brief      各成分の絶対値を求めます.
@@ -565,15 +563,7 @@ public:
     //! @param [in]     value       絶対値を求める値.
     //! @return     各成分の絶対値を求め，その結果を返却します.
     //-------------------------------------------------------------------------
-    static Vector2 Abs( const Vector2& value );
-
-    //-------------------------------------------------------------------------
-    //! @brief      各成分の絶対値を求めます.
-    //!
-    //! @param [in]     value       絶対値を求めます.
-    //! @param [out]    result      計算結果の格納先.
-    //-------------------------------------------------------------------------
-    static void    Abs( const Vector2& value, Vector2& result );
+    static Vector2 Abs(const Vector2& value);
 
     //-------------------------------------------------------------------------
     //! @brief      値を指定された範囲内に制限します.
@@ -583,17 +573,7 @@ public:
     //! @param [in]     b           最大値.
     //! @return     クランプされた値を返却します.
     //-------------------------------------------------------------------------
-    static Vector2 Clamp( const Vector2& value, const Vector2& a, const Vector2& b );
-
-    //-------------------------------------------------------------------------
-    //! @brief      値を指定された範囲内に制限します.
-    //!
-    //! @param [in]     value       クランプする値.
-    //! @param [in]     a           最小値.
-    //! @param [in]     b           最大値.
-    //! @param [out]    result      クランプされた値.
-    //-------------------------------------------------------------------------
-    static void    Clamp( const Vector2& value, const Vector2& a, const Vector2& b, Vector2& result );
+    static Vector2 Clamp(const Vector2& value, const Vector2& mini, const Vector2& maxi);
 
     //-------------------------------------------------------------------------
     //! @brief      指定された値を0～1の範囲に制限します.
@@ -601,69 +581,34 @@ public:
     //! @param [in]     value       クランプする値.
     //! @return     クランプされた値.
     //-------------------------------------------------------------------------
-    static Vector2 Saturate( const Vector2& value );
-
-    //-------------------------------------------------------------------------
-    //! @brief      指定された値を0～1の範囲に制限します.
-    //!
-    //! @param [in]     value       クランプする値.
-    //! @param [out]    result      クランプされた値.
-    //-------------------------------------------------------------------------
-    static void    Saturate( const Vector2& value, Vector2& result );
+    static Vector2 Saturate(const Vector2& value);
 
     //-------------------------------------------------------------------------
     //! @brief      2つのベクトル間の距離を求めます.
     //!
-    //! @param [in]     a           入力ベクトル.
-    //! @param [in]     b           入力ベクトル.
+    //! @param [in]     lhs     入力ベクトル.
+    //! @param [in]     rhs     入力ベクトル.
     //! @return     2つのベクトル間の距離を返却します.
     //-------------------------------------------------------------------------
-    static float     Distance( const Vector2& a, const Vector2& b );
-
-    //-------------------------------------------------------------------------
-    //! @brief      2つのベクトル間の距離を求めます.
-    //!
-    //! @param [in]     a           入力ベクトル.
-    //! @param [in]     b           入力ベクトル.
-    //! @param [out]    result      2つのベクトル間の距離.
-    //-------------------------------------------------------------------------
-    static void    Distance( const Vector2& a, const Vector2& b, float& result );
+    static float Distance(const Vector2& lhs, const Vector2& rhs);
 
     //-------------------------------------------------------------------------
     //! @brief      2つのベクトル間の距離の2乗値を求めます.
     //!
-    //! @param [in]     a           入力ベクトル.
-    //! @param [in]     b           入力ベクトル.
+    //! @param [in]     lhs     入力ベクトル.
+    //! @param [in]     rhs     入力ベクトル.
     //! @return     2つのベクトル間の距離の2乗値を返却します.
     //-------------------------------------------------------------------------
-    static float     DistanceSq( const Vector2& a, const Vector2& b );
-
-    //-------------------------------------------------------------------------
-    //! @brief      2つのベクトル間の距離の2乗値を求めます.
-    //!
-    //! @param [in]     a           入力ベクトル.
-    //! @param [in]     b           入力ベクトル.
-    //! @param [out]    result      2つのベクトル間の距離の2乗値.
-    //-------------------------------------------------------------------------
-    static void    DistanceSq( const Vector2& a, const Vector2& b, float& result );
+    static float DistanceSq(const Vector2& lhs, const Vector2& rhs);
 
     //-------------------------------------------------------------------------
     //! @brief      ベクトルの内積を求めます.
     //!
-    //! @param [in]     a           入力ベクトル.
-    //! @param [in]     b           入力ベクトル.
+    //! @param [in]     lhs     入力ベクトル.
+    //! @param [in]     rhs     入力ベクトル.
     //! @return     ベクトルの内積を返却します.
     //-------------------------------------------------------------------------
-    static float     Dot( const Vector2& a, const Vector2& b );
-
-    //-------------------------------------------------------------------------
-    //! @brief      ベクトルの内積を求めます.
-    //!
-    //! @param [in]     a           入力ベクトル.
-    //! @param [in]     b           入力ベクトル.
-    //! @param [out]    result      ベクトルの内積.
-    //-------------------------------------------------------------------------
-    static void    Dot( const Vector2& a, const Vector2& b, float& result );
+    static float Dot(const Vector2& lhs, const Vector2& rhs);
 
     //-------------------------------------------------------------------------
     //! @brief      ベクトルを正規化します.
@@ -671,15 +616,7 @@ public:
     //! @param [in]     value       正規化するベクトル.
     //! @return     正規化したベクトルを返却します.
     //-------------------------------------------------------------------------
-    static Vector2 Normalize( const Vector2& value );
-
-    //-------------------------------------------------------------------------
-    //! @brief      ベクトルを正規化します.
-    //!
-    //! @param [in]     value       正規化するベクトル.
-    //! @param [out]    result      正規化したベクトル.
-    //-------------------------------------------------------------------------
-    static void    Normalize( const Vector2& value, Vector2& result );
+    static Vector2 Normalize(const Vector2& value);
 
     //-------------------------------------------------------------------------
     //! @brief      ベクトルの正規化を試みます.
@@ -689,70 +626,34 @@ public:
     //! @return     ベクトルの長さが0でなければ正規化したベクトルを返却,
     //!             長さが0の場合はsetを返却します.
     //-------------------------------------------------------------------------
-    static Vector2 SafeNormalize( const Vector2& value, const Vector2& set );
-
-    //-------------------------------------------------------------------------
-    //! @brief      ベクトルの正規化を試みます.
-    //!
-    //! @param [in]     value       正規化するベクトル.
-    //! @param [in]     set         長さが0の場合に設定するベクトル.
-    //! @param [out]    result      長さが0でなければ正規化したベクトル，0であれば set.
-    //-------------------------------------------------------------------------
-    static void    SafeNormalize( const Vector2& value, const Vector2& set, Vector2& result );
+    static Vector2 SafeNormalize(const Vector2& value, const Vector2& set);
 
     //-------------------------------------------------------------------------
     //! @brief      2つのベクトルの交差角を求めます.
     //!
-    //! @param [in]     a           入力ベクトル.
-    //! @param [in]     b           入力ベクトル.
+    //! @param [in]     lhs     入力ベクトル.
+    //! @param [in]     rhs     入力ベクトル.
     //! @return     2つのベクトルの交差角をラジアンで返却します.
     //-------------------------------------------------------------------------
-    static float     ComputeCrossingAngle( const Vector2& a, const Vector2& b );
-
-    //-------------------------------------------------------------------------
-    //! @brief      2つのベクトルの交差角を求めます.
-    //!
-    //! @param [in]     a           入力ベクトル.
-    //! @param [in]     b           入力ベクトル.
-    //! @param [out]    result      2つのベクトルの交差角(ラジアン).
-    //-------------------------------------------------------------------------
-    static void    ComputeCrossingAngle( const Vector2& a, const Vector2& b, float& result );
+    static float ComputeCrossingAngle(const Vector2& lhs, const Vector2& rhs);
 
     //-------------------------------------------------------------------------
     //! @brief      各成分の最小値を求めます.
     //!
-    //! @param [in]     a           比較する値.
-    //! @param [in]     b           比較する値.
+    //! @param [in]     lhs     比較する値.
+    //! @param [in]     rhs     比較する値.
     //! @return     各成分の最小値を求め，その結果を返却します.
     //-------------------------------------------------------------------------
-    static Vector2 Min( const Vector2& a, const Vector2& b );
-
-    //-------------------------------------------------------------------------
-    //! @brief      各成分の最小値を求めます.
-    //!
-    //! @param [in]     a           比較する値.
-    //! @param [in]     b           比較する値.
-    //! @param [out]    result      各成分の最小値を求めた結果.
-    //-------------------------------------------------------------------------
-    static void    Min( const Vector2& a, const Vector2& b, Vector2& result );
+    static Vector2 Min(const Vector2& lhs, const Vector2& rhs);
 
     //-------------------------------------------------------------------------
     //! @brief      各成分の最大値を求めます.
     //!
-    //! @param [in]     a           比較する値.
-    //! @param [in]     b           比較する値.
+    //! @param [in]     lhs     比較する値.
+    //! @param [in]     rhs     比較する値.
     //! @return     各成分の最大値を求め，その結果を返却します.
     //-------------------------------------------------------------------------
-    static Vector2 Max( const Vector2& a, const Vector2& b );
-
-    //-------------------------------------------------------------------------
-    //! @brief      各成分の最大値を求めます.
-    //!
-    //! @param [in]     a           比較する値.
-    //! @param [in]     b           比較する値.
-    //! @param [out]    result      各成分の最大値を求めた結果.
-    //-------------------------------------------------------------------------
-    static void    Max( const Vector2& a, const Vector2& b, Vector2& result );
+    static Vector2 Max(const Vector2& lhs, const Vector2& rhs);
 
     //-------------------------------------------------------------------------
     //! @brief      指定された法線を持つ表面の入射ベクトルから，反射ベクトルを求めます.
@@ -761,16 +662,7 @@ public:
     //! @param [in]     n           法線ベクトル.
     //! @return     反射ベクトルを返却します.
     //-------------------------------------------------------------------------
-    static Vector2 Reflect( const Vector2& i, const Vector2& n );
-
-    //-------------------------------------------------------------------------
-    //! @brief      指定された法線を持つ表面の入射ベクトルから，反射ベクトルを求めます.
-    //!
-    //! @param [in]     i           入射ベクトル.
-    //! @param [in]     n           法線ベクトル.
-    //! @param [out]    result      反射ベクトル.
-    //-------------------------------------------------------------------------
-    static void    Reflect( const Vector2& i, const Vector2& n, Vector2& result );
+    static Vector2 Reflect(const Vector2& i, const Vector2& n);
 
     //-------------------------------------------------------------------------
     //! @brief      指定された法線を持つ表面の入射ベクトルと屈折角から，屈折ベクトルを求めます.
@@ -780,41 +672,19 @@ public:
     //! @param [in]     eta         屈折率.
     //! @return     屈折ベクトルを返却します.
     //-------------------------------------------------------------------------
-    static Vector2 Refract( const Vector2& i, const Vector2& n, float eta );
-
-    //-------------------------------------------------------------------------
-    //! @brief      指定された法線を持つ表面の入射ベクトルと屈折角から，屈折ベクトルを求めます.
-    //!
-    //! @param [in]     i           入射ベクトル.
-    //! @param [in]     n           法線ベクトル.
-    //! @param [in]     eta         屈折率.
-    //! @param [out]    result      屈折ベクトル.
-    //-------------------------------------------------------------------------
-    static void    Refract( const Vector2& i, const Vector2& n, float eta, Vector2& result );
+    static Vector2 Refract(const Vector2& i, const Vector2& n, float eta);
 
     //-------------------------------------------------------------------------
     //! @brief      重心座標上の点を求めます.
     //!
-    //! @param [in]     a           入力ベクトル.
-    //! @param [in]     b           入力ベクトル.
-    //! @param [in]     c           入力ベクトル.
-    //! @param [in]     amount1     重み.
-    //! @param [in]     amount2     重み.
+    //! @param [in]     p0      入力ベクトル.
+    //! @param [in]     p1      入力ベクトル.
+    //! @param [in]     p2      入力ベクトル.
+    //! @param [in]     a       重み.
+    //! @param [in]     b       重み.
     //! @return     重心座標上の点を返却します.
     //-------------------------------------------------------------------------
-    static Vector2 Barycentric( const Vector2& a, const Vector2& b, const Vector2& c, float f, float g );
-
-    //-------------------------------------------------------------------------
-    //! @brief      重心座標上の点を求めます.
-    //!
-    //! @param [in]     a           入力ベクトル.
-    //! @param [in]     b           入力ベクトル.
-    //! @param [in]     c           入力ベクトル.
-    //! @param [in]     amount1     重み.
-    //! @param [in]     amount2     重み.
-    //! @param [out]    result      重心座標上の点.
-    //-------------------------------------------------------------------------
-    static void    Barycentric( const Vector2& a, const Vector2& b, const Vector2& c, float f, float g, Vector2& result );
+    static Vector2 Barycentric(const Vector2& p0, const Vector2& p1, const Vector2& p2, float a, float b);
 
     //-------------------------------------------------------------------------
     //! @brief      エルミートスプライン補間を行います.
@@ -826,19 +696,7 @@ public:
     //! @param [in]     amount      重み.
     //! @return     エルミートスプライン補間を行った結果を返却します.
     //-------------------------------------------------------------------------
-    static Vector2 Hermite( const Vector2& a, const Vector2& t1, const Vector2& b, const Vector2& t2, float amount );
-
-    //-------------------------------------------------------------------------
-    //! @brief      エルミートスプライン補間を行います.
-    //!
-    //! @param [in]     a           入力位置ベクトル.
-    //! @param [in]     t1          入力接ベクトル.
-    //! @param [in]     b           入力位置ベクトル.
-    //! @param [in]     t2          入力接ベクトル.
-    //! @param [in]     amount      重み.
-    //! @param [out]    result      エルミートスプライン補間の結果.
-    //-------------------------------------------------------------------------
-    static void    Hermite( const Vector2& a, const Vector2& t1, const Vector2& b, const Vector2& t2, float amount, Vector2& result );
+    static Vector2 Hermite(const Vector2& a, const Vector2& t1, const Vector2& b, const Vector2& t2, float amount);
 
     //-------------------------------------------------------------------------
     //! @brief      Catmull-Rom補間を行います.
@@ -850,19 +708,7 @@ public:
     //! @param [in]     amount      加重係数.
     //! @return     Catmull-Rom補間の結果を返却します.
     //-------------------------------------------------------------------------
-    static Vector2 CatmullRom( const Vector2& a, const Vector2& b, const Vector2& c, const Vector2& d, float amount );
-
-    //-------------------------------------------------------------------------
-    //! @brief      Catmull-Rom補間を行います.
-    //!
-    //! @param [in]     a           補間の最初の位置.
-    //! @param [in]     b           補間の2番目の位置.
-    //! @param [in]     c           補間の3番目の位置.
-    //! @param [in]     d           補間の4番目の位置.
-    //! @param [in]     amount      加重係数.
-    //! @param [out]    result      Catmull-Rom補間の結果.
-    //-------------------------------------------------------------------------
-    static void    CatmullRom( const Vector2& a, const Vector2& b, const Vector2& c, const Vector2& d, float amount, Vector2& result );
+    static Vector2 CatmullRom(const Vector2& a, const Vector2& b, const Vector2& c, const Vector2& d, float amount);
 
     //-------------------------------------------------------------------------
     //! @brief      線形補間を行います.
@@ -872,17 +718,7 @@ public:
     //! @param [in]     amount      重み(0～1の値範囲で指定).
     //! @return     線形補間の結果を返却します.
     //-------------------------------------------------------------------------
-    static Vector2 Lerp( const Vector2& a, const Vector2& b, float amount );
-
-    //-------------------------------------------------------------------------
-    //! @brief      線形補間を行います.
-    //!
-    //! @param [in]     a           入力ベクトル.
-    //! @param [in]     b           入力ベクトル.
-    //! @param [in]     amount      重み(0～1の値範囲で指定).
-    //! @param [out]    result      線形補間の結果.
-    //-------------------------------------------------------------------------
-    static void    Lerp( const Vector2& a, const Vector2& b, float amount, Vector2 &result );
+    static Vector2 Lerp(const Vector2& a, const Vector2& b, float amount);
 
     //-------------------------------------------------------------------------
     //! @brief      3次方程式を用いて，2つの値の間を補間します.
@@ -892,17 +728,7 @@ public:
     //! @param [in]     amount      重み.
     //! @return     補間の結果を返却します.
     //-------------------------------------------------------------------------
-    static Vector2 SmoothStep( const Vector2& a, const Vector2& b, float amount );
-
-    //-------------------------------------------------------------------------
-    //! @brief      3次方程式を用いて，2つの値の間を補間します.
-    //!
-    //! @param [in]     a           入力ベクトル.
-    //! @param [in]     b           入力ベクトル.
-    //! @param [in]     amount      重み.
-    //! @param [out]    result      補間の結果.
-    //-------------------------------------------------------------------------
-    static void    SmoothStep( const Vector2& a, const Vector2& b, float amount, Vector2 &result );
+    static Vector2 SmoothStep(const Vector2& a, const Vector2& b, float amount);
 
     //-------------------------------------------------------------------------
     //! @brief      指定された行列を用いて，ベクトルを変換します.
@@ -911,16 +737,7 @@ public:
     //! @param [in]     matrix      変換行列.
     //! @return     変換されたベクトルを返却します.
     //-------------------------------------------------------------------------
-    static Vector2 Transform( const Vector2& position, const Matrix& matrix );
-
-    //-------------------------------------------------------------------------
-    //! @brief      指定された行列を用いて，ベクトルを変換します.
-    //!
-    //! @param [in]     position    入力ベクトル.
-    //! @param [in]     matrix      変換行列.
-    //! @param [out]    result      変換されたベクトル.
-    //-------------------------------------------------------------------------
-    static void    Transform( const Vector2& position, const Matrix& matrix, Vector2 &result );
+    static Vector2 Transform(const Vector2& position, const Matrix& matrix);
 
     //-------------------------------------------------------------------------
     //! @brief      指定された行列を用いて，法線ベクトルを変換します.
@@ -929,16 +746,7 @@ public:
     //! @param [in]     matrix      変換行列.
     //! @return     変換された法線ベクトル.
     //-------------------------------------------------------------------------
-    static Vector2 TransformNormal( const Vector2& normal, const Matrix& matrix );
-
-    //-------------------------------------------------------------------------
-    //! @brief      指定された行列を用いて，法線ベクトルを変換します.
-    //!
-    //! @param [in]     normal      入力ベクトル.
-    //! @param [in]     matrix      変換行列.
-    //! @param [out]    result      変換された法線ベクトル.
-    //-------------------------------------------------------------------------
-    static void    TransformNormal( const Vector2& normal, const Matrix& matrix, Vector2 &result );
+    static Vector2 TransformNormal(const Vector2& normal, const Matrix& matrix);
 
     //-------------------------------------------------------------------------
     //! @brief      指定された行列を用いてベクトルを変換し，変換結果をw=1に射影します.
@@ -947,17 +755,7 @@ public:
     //! @param [in]     matrix      変換行列.
     //! @return     行列変換後, w=1に射影されたベクトルを返却します.
     //-------------------------------------------------------------------------
-    static Vector2 TransformCoord( const Vector2& coords, const Matrix& matrix );
-
-    //-------------------------------------------------------------------------
-    //! @brief      指定された行列を用いてベクトルを変換し，変換結果をw=1に射影します.
-    //!
-    //! @param [in]     coord       入力ベクトル.
-    //! @param [in]     matrix      変換行列.
-    //! @param [out]    result      行列変換後，w=1に射影されたベクトル.
-    //-------------------------------------------------------------------------
-    static void    TransformCoord( const Vector2& coords, const Matrix& matrix, Vector2 &result );
-
+    static Vector2 TransformCoord(const Vector2& coords, const Matrix& matrix);
 };
 
 
@@ -973,11 +771,11 @@ struct Vector3
     //-------------------------------------------------------------------------
     //! @brief      乗算演算子です.
     //!
-    //! @param [in]     scalar      乗算するスカラー値.
-    //! @param [in]     value       乗算されるベクトル.
+    //! @param [in]     lhs     乗算するスカラー値.
+    //! @param [in]     rhs     乗算されるベクトル.
     //! @return     乗算結果を返却します.
     //-------------------------------------------------------------------------
-    friend Vector3   operator *  ( float, const Vector3& );
+    friend Vector3 operator * (float lhs, const Vector3& rhs);
 
 public:
     //=========================================================================
@@ -994,14 +792,14 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      コンストラクタです.
     //-------------------------------------------------------------------------
-    Vector3();
+    Vector3() = default;
 
     //-------------------------------------------------------------------------
     //! @brief      引数付きコンストラクタです.
     //!
     //! @param [in]     pValeus     要素数3の配列.
     //-------------------------------------------------------------------------
-    explicit Vector3( const float * );
+    explicit Vector3(const float* pValues);
 
     //-------------------------------------------------------------------------
     //! @brief      引数付きコンストラクタです.
@@ -1009,7 +807,7 @@ public:
     //! @param [in]     value       2次元ベクトル.
     //! @param [in]     nz          Z成分.
     //-------------------------------------------------------------------------
-    Vector3( const Vector2& value, float nz );
+    Vector3(const Vector2& value, float nz);
 
     //-------------------------------------------------------------------------
     //! @brief      引数付きコンストラクタです.
@@ -1018,7 +816,7 @@ public:
     //! @param [in]     ny           Y成分.
     //! @param [in]     nz           Z成分.
     //-------------------------------------------------------------------------
-    Vector3( float nx, float ny, float nz );
+    Vector3(float nx, float ny, float nz);
 
     //-------------------------------------------------------------------------
     //! @brief      float*型への演算子です.
@@ -1040,7 +838,7 @@ public:
     //! @param [in]     value       加算する値.
     //! @return     加算結果を返却します.
     //-------------------------------------------------------------------------
-    Vector3&         operator += ( const Vector3& );
+    Vector3& operator += (const Vector3& value);
 
     //-------------------------------------------------------------------------
     //! @brief      減算代入演算子です.
@@ -1048,23 +846,23 @@ public:
     //! @param [in]     value       減算する値.
     //! @return     減算結果を返却します.
     //-------------------------------------------------------------------------
-    Vector3&         operator -= ( const Vector3& );
+    Vector3& operator -= (const Vector3& value);
 
     //-------------------------------------------------------------------------
     //! @brief      乗算代入演算子です.
     //!
-    //! @param [in]     scalar      乗算するスカラー値.
+    //! @param [in]     value      乗算するスカラー値.
     //! @return     乗算結果を返却します.
     //-------------------------------------------------------------------------
-    Vector3&         operator *= ( float );
+    Vector3& operator *= (float value);
 
     //-------------------------------------------------------------------------
     //! @brief      除算代入演算子です.
     //!
-    //! @param [in]     scalar      除算するスカラー値.
+    //! @param [in]     value      除算するスカラー値.
     //! @return     除算結果を返却します.
     //-------------------------------------------------------------------------
-    Vector3&         operator /= ( float );
+    Vector3& operator /= (float value);
 
     //-------------------------------------------------------------------------
     //! @brief      代入演算子です.
@@ -1072,21 +870,21 @@ public:
     //! @param [in]     value       代入する値.
     //! @return     代入結果を返却します.
     //-------------------------------------------------------------------------
-    Vector3&         operator =  ( const Vector3& );
+    Vector3& operator = (const Vector3& value);
 
     //-------------------------------------------------------------------------
     //! @brief      正符号演算子です.
     //!
     //! @return     自分自身の値を返却します.
     //-------------------------------------------------------------------------
-    Vector3          operator +  () const;
+    Vector3 operator + () const;
 
     //-------------------------------------------------------------------------
     //! @brief      負符号演算子です.
     //!
     //! @return     負符号を付けた値を返却します.
     //-------------------------------------------------------------------------
-    Vector3          operator -  () const;
+    Vector3 operator - () const;
 
     //-------------------------------------------------------------------------
     //! @brief      加算演算子です.
@@ -1094,7 +892,7 @@ public:
     //! @param [in]     value       加算する値.
     //! @return     加算結果を返却します.
     //-------------------------------------------------------------------------
-    Vector3          operator +  ( const Vector3& ) const;
+    Vector3 operator + (const Vector3& value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      減算演算子です.
@@ -1102,23 +900,23 @@ public:
     //! @param [in]     value       減算する値.
     //! @return     減算結果を返却します.
     //-------------------------------------------------------------------------
-    Vector3          operator -  ( const Vector3& ) const;
+    Vector3 operator - (const Vector3& value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      乗算演算子です.
     //!
-    //! @param [in]     scalar      乗算するスカラー値.
+    //! @param [in]     value      乗算するスカラー値.
     //! @return     乗算結果を返却します.
     //-------------------------------------------------------------------------
-    Vector3          operator *  ( float ) const;
+    Vector3 operator * (float value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      除算演算子です.
     //!
-    //! @param [in]     scalar      除算するスカラー値.
+    //! @param [in]     value      除算するスカラー値.
     //! @return     除算結果を返却します.
     //-------------------------------------------------------------------------
-    Vector3          operator /  ( float ) const;
+    Vector3 operator / (float value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      等価比較演算子です.
@@ -1126,7 +924,7 @@ public:
     //! @param [in]     value       比較する値.
     //! @return     値が等価であればtrue, そうでなければfalseを返却します.
     //-------------------------------------------------------------------------
-    bool             operator == ( const Vector3& ) const;
+    bool operator == (const Vector3& value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      非等価比較演算子です.
@@ -1134,37 +932,36 @@ public:
     //! @param [in]     value       比較する値.
     //! @return     値が非等価であればtrue, そうでなければfalseを返却します.
     //-------------------------------------------------------------------------
-    bool             operator != ( const Vector3& ) const;
+    bool operator != (const Vector3& value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      ベクトルの長さを求めます.
     //!
     //! @return     ベクトルの長さを返却します.
     //-------------------------------------------------------------------------
-    float             Length          () const;
+    float Length() const;
 
     //-------------------------------------------------------------------------
     //! @brief      ベクトルの長さの2乗値を求めます.
     //!
     //! @return     ベクトルの長さの2乗値を返却します.
     //-------------------------------------------------------------------------
-    float             LengthSq        () const;
+    float LengthSq() const;
 
     //-------------------------------------------------------------------------
     //! @brief      ベクトルを正規化します.
     //!
     //! @return     正規化したベクトルを返却します.
     //-------------------------------------------------------------------------
-    Vector3&        Normalize       ();
+    Vector3& Normalize();
 
     //-------------------------------------------------------------------------
     //! @brief      ベクトルの正規化を試みます.
     //!
-    //! @param [in]     value       長さが0の場合に設定する値.
+    //! @param [in]     set     長さが0の場合に設定する値.
     //! @return     ベクトルの長さが0の場合はvalueを，そうでないときは正規化したベクトルを返却します.
     //-------------------------------------------------------------------------
-    Vector3&        SafeNormalize   ( const Vector3& );
-
+    Vector3& SafeNormalize(const Vector3& set);
 
     //-------------------------------------------------------------------------
     //! @brief      各成分の絶対値を求めます.
@@ -1172,15 +969,7 @@ public:
     //! @param [in]     value       絶対値を求める値.
     //! @return     各成分の絶対値を求め，その結果を返却します.
     //-------------------------------------------------------------------------
-    static Vector3 Abs( const Vector3& value );
-
-    //-------------------------------------------------------------------------
-    //! @brief      各成分の絶対値を求めます.
-    //!
-    //! @param [in]     value       絶対値を求めます.
-    //! @param [out]    result      計算結果の格納先.
-    //-------------------------------------------------------------------------
-    static void    Abs( const Vector3& value, Vector3& result );
+    static Vector3 Abs(const Vector3& value);
 
     //-------------------------------------------------------------------------
     //! @brief      値を指定された範囲内に制限します.
@@ -1190,17 +979,7 @@ public:
     //! @param [in]     b           最大値.
     //! @return     クランプされた値を返却します.
     //-------------------------------------------------------------------------
-    static Vector3 Clamp( const Vector3& value, const Vector3& a, const Vector3& b );
-
-    //-------------------------------------------------------------------------
-    //! @brief      値を指定された範囲内に制限します.
-    //!
-    //! @param [in]     value       クランプする値.
-    //! @param [in]     a           最小値.
-    //! @param [in]     b           最大値.
-    //! @param [out]    result      クランプされた値.
-    //-------------------------------------------------------------------------
-    static void    Clamp( const Vector3& value, const Vector3& a, const Vector3& b, Vector3& result );
+    static Vector3 Clamp(const Vector3& value, const Vector3& a, const Vector3& b);
 
     //-------------------------------------------------------------------------
     //! @brief      指定された値を0～1の範囲に制限します.
@@ -1208,15 +987,7 @@ public:
     //! @param [in]     value       クランプする値.
     //! @return     クランプされた値.
     //-------------------------------------------------------------------------
-    static Vector3 Saturate( const Vector3& value );
-
-    //-------------------------------------------------------------------------
-    //! @brief      指定された値を0～1の範囲に制限します.
-    //!
-    //! @param [in]     value       クランプする値.
-    //! @param [out]    result      クランプされた値.
-    //-------------------------------------------------------------------------
-    static void    Saturate( const Vector3& value, Vector3& result );
+    static Vector3 Saturate(const Vector3& value);
 
     //-------------------------------------------------------------------------
     //! @brief      2つのベクトル間の距離を求めます.
@@ -1225,16 +996,7 @@ public:
     //! @param [in]     b           入力ベクトル.
     //! @return     2つのベクトル間の距離を返却します.
     //-------------------------------------------------------------------------
-    static float     Distance( const Vector3& a, const Vector3& b );
-
-    //-------------------------------------------------------------------------
-    //! @brief      2つのベクトル間の距離を求めます.
-    //!
-    //! @param [in]     a           入力ベクトル.
-    //! @param [in]     b           入力ベクトル.
-    //! @param [out]    result      2つのベクトル間の距離.
-    //-------------------------------------------------------------------------
-    static void    Distance( const Vector3& a, const Vector3& b, float& result );
+    static float Distance(const Vector3& a, const Vector3& b);
 
     //-------------------------------------------------------------------------
     //! @brief      2つのベクトル間の距離の2乗値を求めます.
@@ -1243,16 +1005,7 @@ public:
     //! @param [in]     b           入力ベクトル.
     //! @return     2つのベクトル間の距離の2乗値を返却します.
     //-------------------------------------------------------------------------
-    static float     DistanceSq( const Vector3& a, const Vector3& b );
-
-    //-------------------------------------------------------------------------
-    //! @brief      2つのベクトル間の距離の2乗値を求めます.
-    //!
-    //! @param [in]     a           入力ベクトル.
-    //! @param [in]     b           入力ベクトル.
-    //! @param [out]    result      2つのベクトル間の距離の2乗値.
-    //-------------------------------------------------------------------------
-    static void    DistanceSq( const Vector3& a, const Vector3& b, float& reuslt );
+    static float DistanceSq(const Vector3& a, const Vector3& b);
 
     //-------------------------------------------------------------------------
     //! @brief      ベクトルの内積を求めます.
@@ -1261,16 +1014,7 @@ public:
     //! @param [in]     b           入力ベクトル.
     //! @return     ベクトルの内積を返却します.
     //-------------------------------------------------------------------------
-    static float     Dot( const Vector3& a, const Vector3& b );
-
-    //-------------------------------------------------------------------------
-    //! @brief      ベクトルの内積を求めます.
-    //!
-    //! @param [in]     a           入力ベクトル.
-    //! @param [in]     b           入力ベクトル.
-    //! @param [out]    result      ベクトルの内積.
-    //-------------------------------------------------------------------------
-    static void    Dot( const Vector3& a, const Vector3& b, float& result );
+    static float Dot(const Vector3& a, const Vector3& b);
 
     //-------------------------------------------------------------------------
     //! @brief      ベクトルの外積を求めます.
@@ -1279,16 +1023,7 @@ public:
     //! @param [in]     b           入力ベクトル.
     //! @return     ベクトルの外積を返却します.
     //-------------------------------------------------------------------------
-    static Vector3 Cross( const Vector3& a, const Vector3& b );
-
-    //-------------------------------------------------------------------------
-    //! @brief      ベクトルの外積を求めます.
-    //!
-    //! @param [in]     a           入力ベクトル.
-    //! @param [in]     b           入力ベクトル.
-    //! @param [out]    result      ベクトルの外積.
-    //-------------------------------------------------------------------------
-    static void    Cross( const Vector3& a, const Vector3& b, Vector3& result );
+    static Vector3 Cross(const Vector3& a, const Vector3& b);
 
     //-------------------------------------------------------------------------
     //! @brief      ベクトルを正規化します.
@@ -1296,15 +1031,7 @@ public:
     //! @param [in]     value       正規化するベクトル.
     //! @return     正規化したベクトルを返却します.
     //-------------------------------------------------------------------------
-    static Vector3 Normalize( const Vector3& value );
-
-    //-------------------------------------------------------------------------
-    //! @brief      ベクトルを正規化します.
-    //!
-    //! @param [in]     value       正規化するベクトル.
-    //! @param [out]    result      正規化したベクトル.
-    //-------------------------------------------------------------------------
-    static void    Normalize( const Vector3& value, Vector3& result );
+    static Vector3 Normalize(const Vector3& value);
 
     //-------------------------------------------------------------------------
     //! @brief      ベクトルの正規化を試みます.
@@ -1314,16 +1041,7 @@ public:
     //! @return     ベクトルの長さが0でなければ正規化したベクトルを返却,
     //!             長さが0の場合はsetを返却します.
     //-------------------------------------------------------------------------
-    static Vector3  SafeNormalize( const Vector3& value, const Vector3& set );
-
-    //-------------------------------------------------------------------------
-    //! @brief      ベクトルの正規化を試みます.
-    //!
-    //! @param [in]     value       正規化するベクトル.
-    //! @param [in]     set         長さが0の場合に設定するベクトル.
-    //! @param [out]    result      長さが0でなければ正規化したベクトル，0であれば set.
-    //-------------------------------------------------------------------------
-    static void     SafeNormalize( const Vector3& value, const Vector3& set, Vector3& result );
+    static Vector3 SafeNormalize(const Vector3& value, const Vector3& set);
 
     //-------------------------------------------------------------------------
     //! @brief      三角形の法線ベクトルを求めます.
@@ -1333,17 +1051,7 @@ public:
     //! @param [in]     p3          三角形を構成する頂点.
     //! @return     法線ベクトルを返却します.
     //-------------------------------------------------------------------------
-    static Vector3 ComputeNormal( const Vector3& p1, const Vector3& p2, const Vector3& p3 );
-
-    //-------------------------------------------------------------------------
-    //! @brief      三角形の法線ベクトルを求めます.
-    //!
-    //! @param [in]     p1          三角形を構成する頂点.
-    //! @param [in]     p2          三角形を構成する頂点.
-    //! @param [in]     p3          三角形を構成する頂点.
-    //! @param [out]    result      法線ベクトル.
-    //-------------------------------------------------------------------------
-    static void    ComputeNormal( const Vector3& p1, const Vector3& p2, const Vector3& p3, Vector3& result );
+    static Vector3 ComputeNormal(const Vector3& p1, const Vector3& p2, const Vector3& p3);
 
     //-------------------------------------------------------------------------
     //! @brief      四角形の法線ベクトルを求めます.
@@ -1354,18 +1062,7 @@ public:
     //! @param [in]     p4          四角形を構成する頂点.
     //! @return     法線ベクトルを返却します.
     //-------------------------------------------------------------------------
-    static Vector3 ComputeQuadNormal( const Vector3& p1, const Vector3& p2, const Vector3& p3, const Vector3& p4 );
-
-    //-------------------------------------------------------------------------
-    //! @brief      四角形の法線ベクトルを求めます.
-    //!
-    //! @param [in]     p1          四角形を構成する頂点.
-    //! @param [in]     p2          四角形を構成する頂点.
-    //! @param [in]     p3          四角形を構成する頂点.
-    //! @param [in]     p4          四角形を構成する頂点.
-    //! @param [out]    result      法線ベクトル.
-    //-------------------------------------------------------------------------
-    static void    ComputeQuadNormal( const Vector3& p1, const Vector3& p2, const Vector3& p3, const Vector3& p4, Vector3& result );
+    static Vector3 ComputeQuadNormal(const Vector3& p1, const Vector3& p2, const Vector3& p3, const Vector3& p4);
 
     //-------------------------------------------------------------------------
     //! @brief      2つのベクトルの交差角を求めます.
@@ -1374,16 +1071,7 @@ public:
     //! @param [in]     b           入力ベクトル.
     //! @param [out]    result      2つのベクトルの交差角(ラジアン).
     //-------------------------------------------------------------------------
-    static float     ComputeCrossingAngle( const Vector3& a, const Vector3& b );
-
-    //-------------------------------------------------------------------------
-    //! @brief      2つのベクトルの交差角を求めます.
-    //!
-    //! @param [in]     a           入力ベクトル.
-    //! @param [in]     b           入力ベクトル.
-    //! @param [out]    result      2つのベクトルの交差角(ラジアン).
-    //-------------------------------------------------------------------------
-    static void    ComputeCrossingAngle( const Vector3& a, const Vector3& b, float& result );
+    static float ComputeCrossingAngle(const Vector3& a, const Vector3& b);
 
     //-------------------------------------------------------------------------
     //! @brief      各成分の最小値を求めます.
@@ -1392,16 +1080,7 @@ public:
     //! @param [in]     b           比較する値.
     //! @return     各成分の最小値を求め，その結果を返却します.
     //-------------------------------------------------------------------------
-    static Vector3 Min( const Vector3& a, const Vector3& b );
-
-    //-------------------------------------------------------------------------
-    //! @brief      各成分の最小値を求めます.
-    //!
-    //! @param [in]     a           比較する値.
-    //! @param [in]     b           比較する値.
-    //! @param [out]    result      各成分の最小値を求めた結果.
-    //-------------------------------------------------------------------------
-    static void    Min( const Vector3& a, const Vector3& b, Vector3& result );
+    static Vector3 Min(const Vector3& a, const Vector3& b);
 
     //-------------------------------------------------------------------------
     //! @brief      各成分の最大値を求めます.
@@ -1410,16 +1089,7 @@ public:
     //! @param [in]     b           比較する値.
     //! @return     各成分の最大値を求め，その結果を返却します.
     //-------------------------------------------------------------------------
-    static Vector3 Max( const Vector3& a, const Vector3& b );
-
-    //-------------------------------------------------------------------------
-    //! @brief      各成分の最大値を求めます.
-    //!
-    //! @param [in]     a           比較する値.
-    //! @param [in]     b           比較する値.
-    //! @param [out]    result      各成分の最大値を求めた結果.
-    //-------------------------------------------------------------------------
-    static void    Max( const Vector3& a, const Vector3& b, Vector3& result );
+    static Vector3 Max(const Vector3& a, const Vector3& b);
 
     //-------------------------------------------------------------------------
     //! @brief      指定された法線を持つ表面の入射ベクトルから，反射ベクトルを求めます.
@@ -1428,16 +1098,7 @@ public:
     //! @param [in]     n           法線ベクトル.
     //! @return     反射ベクトルを返却します.
     //-------------------------------------------------------------------------
-    static Vector3 Reflect( const Vector3& i, const Vector3& n );
-
-    //-------------------------------------------------------------------------
-    //! @brief      指定された法線を持つ表面の入射ベクトルから，反射ベクトルを求めます.
-    //!
-    //! @param [in]     i           入射ベクトル.
-    //! @param [in]     n           法線ベクトル.
-    //! @param [out]    result      反射ベクトル.
-    //-------------------------------------------------------------------------
-    static void    Reflect( const Vector3& i, const Vector3& n, Vector3& result );
+    static Vector3 Reflect(const Vector3& i, const Vector3& n);
 
     //-------------------------------------------------------------------------
     //! @brief      指定された法線を持つ表面の入射ベクトルと屈折角から，屈折ベクトルを求めます.
@@ -1447,17 +1108,7 @@ public:
     //! @param [in]     eta         屈折率.
     //! @return     屈折ベクトルを返却します.
     //-------------------------------------------------------------------------
-    static Vector3 Refract( const Vector3& i, const Vector3& n, float eta );
-
-    //-------------------------------------------------------------------------
-    //! @brief      指定された法線を持つ表面の入射ベクトルと屈折角から，屈折ベクトルを求めます.
-    //!
-    //! @param [in]     i           入射ベクトル.
-    //! @param [in]     n           法線ベクトル.
-    //! @param [in]     eta         屈折率.
-    //! @param [out]    result      屈折ベクトル.
-    //-------------------------------------------------------------------------
-    static void    Refract( const Vector3& i, const Vector3& n, float eta, Vector3& result );
+    static Vector3 Refract(const Vector3& i, const Vector3& n, float eta);
 
     //-------------------------------------------------------------------------
     //! @brief      重心座標上の点を求めます.
@@ -1469,19 +1120,7 @@ public:
     //! @param [in]     amount2     重み.
     //! @return     重心座標上の点を返却します.
     //-------------------------------------------------------------------------
-    static Vector3 Barycentric( const Vector3& a, const Vector3& b, const Vector3& v3, float f, float g );
-
-    //-------------------------------------------------------------------------
-    //! @brief      重心座標上の点を求めます.
-    //!
-    //! @param [in]     a           入力ベクトル.
-    //! @param [in]     b           入力ベクトル.
-    //! @param [in]     c           入力ベクトル.
-    //! @param [in]     amount1     重み.
-    //! @param [in]     amount2     重み.
-    //! @param [out]    result      重心座標上の点.
-    //-------------------------------------------------------------------------
-    static void    Barycentric( const Vector3& a, const Vector3& b, const Vector3& v3, float f, float g, Vector3& result );
+    static Vector3 Barycentric(const Vector3& a, const Vector3& b, const Vector3& , float f, float g);
 
     //-------------------------------------------------------------------------
     //! @brief      エルミートスプライン補間を行います.
@@ -1493,19 +1132,7 @@ public:
     //! @param [in]     amount      重み.
     //! @return     エルミートスプライン補間を行った結果を返却します.
     //-------------------------------------------------------------------------
-    static Vector3 Hermite( const Vector3& a, const Vector3& t1, const Vector3& b, const Vector3& t2, float amount );
-
-    //-------------------------------------------------------------------------
-    //! @brief      エルミートスプライン補間を行います.
-    //!
-    //! @param [in]     a           入力位置ベクトル.
-    //! @param [in]     t1          入力接ベクトル.
-    //! @param [in]     b           入力位置ベクトル.
-    //! @param [in]     t2          入力接ベクトル.
-    //! @param [in]     amount      重み.
-    //! @param [out]    result      エルミートスプライン補間の結果.
-    //-------------------------------------------------------------------------
-    static void    Hermite( const Vector3& a, const Vector3& t1, const Vector3& b, const Vector3& t2, float amount, Vector3& result );
+    static Vector3 Hermite(const Vector3& a, const Vector3& t1, const Vector3& b, const Vector3& t2, float amount);
 
     //-------------------------------------------------------------------------
     //! @brief      Catmull-Rom補間を行います.
@@ -1517,19 +1144,7 @@ public:
     //! @param [in]     amount      加重係数.
     //! @return     Catmull-Rom補間の結果を返却します.
     //-------------------------------------------------------------------------
-    static Vector3 CatmullRom( const Vector3& a, const Vector3& b, const Vector3& c, const Vector3& d, float amount );
-
-    //-------------------------------------------------------------------------
-    //! @brief      Catmull-Rom補間を行います.
-    //!
-    //! @param [in]     a           補間の最初の位置.
-    //! @param [in]     b           補間の2番目の位置.
-    //! @param [in]     c           補間の3番目の位置.
-    //! @param [in]     d           補間の4番目の位置.
-    //! @param [in]     amount      加重係数.
-    //! @param [out]    result      Catmull-Rom補間の結果.
-    //-------------------------------------------------------------------------
-    static void    CatmullRom( const Vector3& a, const Vector3& b, const Vector3& c, const Vector3& d, float amount, Vector3& result );
+    static Vector3 CatmullRom(const Vector3& a, const Vector3& b, const Vector3& c, const Vector3& d, float amount);
 
     //-------------------------------------------------------------------------
     //! @brief      線形補間を行います.
@@ -1539,17 +1154,7 @@ public:
     //! @param [in]     amount      重み(0～1の値範囲で指定).
     //! @return     線形補間の結果を返却します.
     //-------------------------------------------------------------------------
-    static Vector3 Lerp( const Vector3& a, const Vector3& b, float amount );
-
-    //-------------------------------------------------------------------------
-    //! @brief      線形補間を行います.
-    //!
-    //! @param [in]     a           入力ベクトル.
-    //! @param [in]     b           入力ベクトル.
-    //! @param [in]     amount      重み(0～1の値範囲で指定).
-    //! @param [out]    result      線形補間の結果.
-    //-------------------------------------------------------------------------
-    static void    Lerp( const Vector3& a, const Vector3& b, float amount, Vector3 &result );
+    static Vector3 Lerp(const Vector3& a, const Vector3& b, float amount);
 
     //-------------------------------------------------------------------------
     //! @brief      3次方程式を用いて，2つの値の間を補間します.
@@ -1559,17 +1164,7 @@ public:
     //! @param [in]     amount      重み.
     //! @return     補間の結果を返却します.
     //-------------------------------------------------------------------------
-    static Vector3 SmoothStep( const Vector3& a, const Vector3& b, float amount );
-
-    //-------------------------------------------------------------------------
-    //! @brief      3次方程式を用いて，2つの値の間を補間します.
-    //!
-    //! @param [in]     a           入力ベクトル.
-    //! @param [in]     b           入力ベクトル.
-    //! @param [in]     amount      重み.
-    //! @param [out]    result      補間の結果.
-    //-------------------------------------------------------------------------
-    static void    SmoothStep( const Vector3& a, const Vector3& b, float amount, Vector3 &result );
+    static Vector3 SmoothStep(const Vector3& a, const Vector3& b, float amount);
 
     //-------------------------------------------------------------------------
     //! @brief      指定された行列を用いて，ベクトルを変換します.
@@ -1578,16 +1173,7 @@ public:
     //! @param [in]     matrix      変換行列.
     //! @return     変換されたベクトルを返却します.
     //-------------------------------------------------------------------------
-    static Vector3 Transform( const Vector3& position, const Matrix& matrix );
-
-    //-------------------------------------------------------------------------
-    //! @brief      指定された行列を用いて，ベクトルを変換します.
-    //!
-    //! @param [in]     position    入力ベクトル.
-    //! @param [in]     matrix      変換行列.
-    //! @param [out]    result      変換されたベクトル.
-    //-------------------------------------------------------------------------
-    static void    Transform( const Vector3& position, const Matrix& matrix, Vector3 &result );
+    static Vector3 Transform(const Vector3& position, const Matrix& matrix);
 
     //-------------------------------------------------------------------------
     //! @brief      指定された行列を用いて，法線ベクトルを変換します.
@@ -1596,16 +1182,7 @@ public:
     //! @param [in]     matrix      変換行列.
     //! @return     変換された法線ベクトル.
     //-------------------------------------------------------------------------
-    static Vector3 TransformNormal( const Vector3& normal, const Matrix& matrix );
-
-    //-------------------------------------------------------------------------
-    //! @brief      指定された行列を用いて，法線ベクトルを変換します.
-    //!
-    //! @param [in]     normal      入力ベクトル.
-    //! @param [in]     matrix      変換行列.
-    //! @param [out]    result      変換された法線ベクトル.
-    //-------------------------------------------------------------------------
-    static void    TransformNormal( const Vector3& normal, const Matrix& matrix, Vector3 &result );
+    static Vector3 TransformNormal(const Vector3& normal, const Matrix& matrix);
 
     //-------------------------------------------------------------------------
     //! @brief      指定された行列を用いてベクトルを変換し，変換結果をw=1に射影します.
@@ -1614,16 +1191,7 @@ public:
     //! @param [in]     matrix      変換行列.
     //! @return     行列変換後, w=1に射影されたベクトルを返却します.
     //-------------------------------------------------------------------------
-    static Vector3 TransformCoord( const Vector3& coord, const Matrix& matrix );
-
-    //-------------------------------------------------------------------------
-    //! @brief      指定された行列を用いてベクトルを変換し，変換結果をw=1に射影します.
-    //!
-    //! @param [in]     coord       入力ベクトル.
-    //! @param [in]     matrix      変換行列.
-    //! @param [out]    result      行列変換後，w=1に射影されたベクトル.
-    //-------------------------------------------------------------------------
-    static void    TransformCoord( const Vector3& coord, const Matrix& matrix, Vector3& result );
+    static Vector3 TransformCoord(const Vector3& coord, const Matrix& matrix);
 
     //-------------------------------------------------------------------------
     //! @brief      スカラー3重積を計算します.
@@ -1633,17 +1201,7 @@ public:
     //! @param [in]     c           入力ベクトル.
     //! @return     スカラー3重積の演算結果を返却します.
     //-------------------------------------------------------------------------
-    static float     ScalarTriple( const Vector3& a, const Vector3& b, const Vector3& c );
-
-    //-------------------------------------------------------------------------
-    //! @brief      スカラー3重積を計算します.
-    //!
-    //! @param [in]     a           入力ベクトル.
-    //! @param [in]     b           入力ベクトル.
-    //! @param [in]     c           入力ベクトル.
-    //! @param [out]    result      スカラー3重積の演算結果.
-    //-------------------------------------------------------------------------
-    static void    ScalarTriple( const Vector3& a, const Vector3& b, const Vector3& c, float& result );
+    static float ScalarTriple(const Vector3& a, const Vector3& b, const Vector3& c);
 
     //-------------------------------------------------------------------------
     //! @brief      ベクトル3重積を計算します.
@@ -1653,17 +1211,7 @@ public:
     //! @param [in]     c           入力ベクトル.
     //! @return     ベクトル3重積の演算結果を返却します.
     //-------------------------------------------------------------------------
-    static Vector3 VectorTriple( const Vector3& a, const Vector3& b, const Vector3& c );
-
-    //-------------------------------------------------------------------------
-    //! @brief      ベクトル3重積を計算します.
-    //!
-    //! @param [in]     a           入力ベクトル.
-    //! @param [in]     b           入力ベクトル.
-    //! @param [in]     c           入力ベクトル.
-    //! @param [out]    result      ベクトル3重積の演算結果.
-    //-------------------------------------------------------------------------
-    static void    VectorTriple( const Vector3& a, const Vector3& b, const Vector3& c, Vector3& result );
+    static Vector3 VectorTriple(const Vector3& a, const Vector3& b, const Vector3& c);
 
     //-------------------------------------------------------------------------
     //! @brief      四元数でベクトルを回転させます.
@@ -1672,16 +1220,7 @@ public:
     //! @param[in]      rotation    四元数.
     //! @return     回転した結果を返却します.
     //-------------------------------------------------------------------------
-    static Vector3 Rotate( const Vector3& value, const Quaternion& rotation );
-
-    //-------------------------------------------------------------------------
-    //! @brief      四元数でベクトルを回転させます.
-    //!
-    //! @param[in]      value       ベクトル.
-    //! @param[in]      rotation    四元数.
-    //! @param[out]     result      回転した結果を返却します.
-    //-------------------------------------------------------------------------
-    static void    Rotate( const Vector3& value, const Quaternion& rotation, Vector3& result );
+    static Vector3 Rotate(const Vector3& value, const Quaternion& rotation);
 
     //-------------------------------------------------------------------------
     //! @brief      四元数でベクトルを逆回転させます.
@@ -1690,16 +1229,7 @@ public:
     //! @param[in]      rotation    四元数.
     //! @return     逆回転した結果を返却します.
     //-------------------------------------------------------------------------
-    static Vector3 InverseRotate( const Vector3& value, const Quaternion& rotation );
-
-    //-------------------------------------------------------------------------
-    //! @brief      四元数でベクトルを逆回転させます.
-    //!
-    //! @param[in]      value       ベクトル.
-    //! @param[in]      rotation    四元数.
-    //! @param[out]     result      逆回転した結果を返却します.
-    //--------------------------------------------------------------------------
-    static void    InverseRotate( const Vector3& value, const Quaternion& rotation, Vector3& result );
+    static Vector3 InverseRotate(const Vector3& value, const Quaternion& rotation);
 };
 
 
@@ -1715,11 +1245,11 @@ struct Vector4
     //-------------------------------------------------------------------------
     //! @brief      乗算演算子です.
     //!
-    //! @param [in]     scalar      乗算するスカラー値.
-    //! @param [in]     value       乗算されるベクトル.
+    //! @param [in]     lhs     乗算するスカラー値.
+    //! @param [in]     rhs     乗算されるベクトル.
     //! @return     乗算結果を返却します.
     //-------------------------------------------------------------------------
-    friend Vector4   operator *  ( float, const Vector4& );
+    friend Vector4   operator *  (float lhs, const Vector4& rhs);
 
 public:
     //=========================================================================
@@ -1737,14 +1267,14 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      コンストラクタです.
     //-------------------------------------------------------------------------
-    Vector4();
+    Vector4() = default;
 
     //-------------------------------------------------------------------------
     //! @brief      引数付きコンストラクタです.
     //!
     //! @param [in]     pValeus     要素数4の配列.
     //-------------------------------------------------------------------------
-    Vector4( const float* );
+    Vector4(const float* pValues);
 
     //-------------------------------------------------------------------------
     //! @brief      引数付きコンストラクタです.
@@ -1753,7 +1283,7 @@ public:
     //! @param [in]     nz          Z成分.
     //! @param [in]     nw          W成分.
     //-------------------------------------------------------------------------
-    Vector4( const Vector2& value, float nz, float nw );
+    Vector4(const Vector2& value, float nz, float nw);
 
     //-------------------------------------------------------------------------
     //! @brief      引数付きコンストラクタです.
@@ -1761,7 +1291,7 @@ public:
     //! @param [in]     value       3次元ベクトル.
     //! @param [in]     nw          W成分.
     //-------------------------------------------------------------------------
-    Vector4( const Vector3& value, float nw );
+    Vector4(const Vector3& value, float nw);
 
     //-------------------------------------------------------------------------
     //! @brief      引数付きコンストラクタです.
@@ -1771,14 +1301,14 @@ public:
     //! @param [in]     nz           Z成分.
     //! @param [in]     nw           W成分.
     //-------------------------------------------------------------------------
-    Vector4( float nx, float ny, float nz, float nw );
+    Vector4(float nx, float ny, float nz, float nw);
 
     //-------------------------------------------------------------------------
     //! @brief      float*型への演算子です.
     //!
     //! @return     最初の要素へのポインタを返却します.
     //-------------------------------------------------------------------------
-    operator       float* ();
+    operator float* ();
 
     //-------------------------------------------------------------------------
     //! @brief      const float*型への演算子です.
@@ -1793,7 +1323,7 @@ public:
     //! @param [in]     value       加算する値.
     //! @return     加算結果を返却します.
     //-------------------------------------------------------------------------
-    Vector4&         operator += ( const Vector4& );
+    Vector4& operator += (const Vector4& value);
 
     //-------------------------------------------------------------------------
     //! @brief      減算代入演算子です.
@@ -1801,23 +1331,23 @@ public:
     //! @param [in]     value       減算する値.
     //! @return     減算結果を返却します.
     //-------------------------------------------------------------------------
-    Vector4&         operator -= ( const Vector4& );
+    Vector4& operator -= (const Vector4& value);
 
     //-------------------------------------------------------------------------
     //! @brief      乗算代入演算子です.
     //!
-    //! @param [in]     scalar      乗算するスカラー値.
+    //! @param [in]     value       乗算するスカラー値.
     //! @return     乗算結果を返却します.
     //-------------------------------------------------------------------------
-    Vector4&         operator *= ( float );
+    Vector4& operator *= (float value);
 
     //-------------------------------------------------------------------------
     //! @brief      除算代入演算子です.
     //!
-    //! @param [in]     scalar      除算するスカラー値.
+    //! @param [in]     value       除算するスカラー値.
     //! @return     除算結果を返却します.
     //-------------------------------------------------------------------------
-    Vector4&         operator /= ( float );
+    Vector4& operator /= (float value);
 
     //-------------------------------------------------------------------------
     //! @brief      代入演算子です.
@@ -1825,21 +1355,21 @@ public:
     //! @param [in]     value       代入する値.
     //! @return     代入結果を返却します.
     //-------------------------------------------------------------------------
-    Vector4&         operator =  ( const Vector4& );
+    Vector4& operator = (const Vector4& value);
 
     //-------------------------------------------------------------------------
     //! @brief      正符号演算子です.
     //!
     //! @return     自分自身の値を返却します.
     //-------------------------------------------------------------------------
-    Vector4          operator +  () const;
+    Vector4 operator + () const;
 
     //-------------------------------------------------------------------------
     //! @brief      負符号演算子です.
     //!
     //! @return     負符号を付けた値を返却します.
     //-------------------------------------------------------------------------
-    Vector4          operator -  () const;
+    Vector4 operator - () const;
 
     //-------------------------------------------------------------------------
     //! @brief      加算演算子です.
@@ -1847,7 +1377,7 @@ public:
     //! @param [in]     value       加算する値.
     //! @return     加算結果を返却します.
     //-------------------------------------------------------------------------
-    Vector4          operator +  ( const Vector4& ) const;
+    Vector4 operator + (const Vector4& value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      減算演算子です.
@@ -1855,23 +1385,23 @@ public:
     //! @param [in]     value       減算する値.
     //! @return     減算結果を返却します.
     //-------------------------------------------------------------------------
-    Vector4          operator -  ( const Vector4& ) const;
+    Vector4 operator - (const Vector4& value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      乗算演算子です.
     //!
-    //! @param [in]     scalar      乗算するスカラー値.
+    //! @param [in]     value       乗算するスカラー値.
     //! @return     乗算結果を返却します.
     //-------------------------------------------------------------------------
-    Vector4          operator *  ( float ) const;
+    Vector4 operator * (float value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      除算演算子です.
     //!
-    //! @param [in]     scalar      除算するスカラー値.
+    //! @param [in]     value       除算するスカラー値.
     //! @return     除算結果を返却します.
     //-------------------------------------------------------------------------
-    Vector4          operator /  ( float ) const;
+    Vector4 operator / (float value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      等価比較演算子です.
@@ -1879,7 +1409,7 @@ public:
     //! @param [in]     value       比較する値.
     //! @return     値が等価であればtrue, そうでなければfalseを返却します.
     //-------------------------------------------------------------------------
-    bool             operator == ( const Vector4& ) const;
+    bool operator == (const Vector4& value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      非等価比較演算子です.
@@ -1887,37 +1417,36 @@ public:
     //! @param [in]     value       比較する値.
     //! @return     値が非等価であればtrue, そうでなければfalseを返却します.
     //-------------------------------------------------------------------------
-    bool             operator != ( const Vector4& ) const;
+    bool operator != (const Vector4& value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      ベクトルの長さを求めます.
     //!
     //! @return     ベクトルの長さを返却します.
     //-------------------------------------------------------------------------
-    float              Length         () const;
+    float Length() const;
 
     //-------------------------------------------------------------------------
     //! @brief      ベクトルの長さの2乗値を求めます.
     //!
     //! @return     ベクトルの長さの2乗値を返却します.
     //-------------------------------------------------------------------------
-    float              LengthSq       () const;
+    float LengthSq() const;
 
     //-------------------------------------------------------------------------
     //! @brief      ベクトルを正規化します.
     //!
     //! @return     正規化したベクトルを返却します.
     //-------------------------------------------------------------------------
-    Vector4&         Normalize      ();
+    Vector4& Normalize();
 
     //-------------------------------------------------------------------------
     //! @brief      ベクトルの正規化を試みます.
     //!
-    //! @param [in]     value       長さが0の場合に設定する値.
+    //! @param [in]     set       長さが0の場合に設定する値.
     //! @return     ベクトルの長さが0の場合はvalueを，そうでないときは正規化したベクトルを返却します.
     //-------------------------------------------------------------------------
-    Vector4&         SafeNormalize  ( const Vector4& );
-
+    Vector4& SafeNormalize(const Vector4& set);
 
     //-------------------------------------------------------------------------
     //! @brief      各成分の絶対値を求めます.
@@ -1925,15 +1454,7 @@ public:
     //! @param [in]     value       絶対値を求める値.
     //! @return     各成分の絶対値を求め，その結果を返却します.
     //-------------------------------------------------------------------------
-    static Vector4 Abs( const Vector4& v );
-
-    //-------------------------------------------------------------------------
-    //! @brief      各成分の絶対値を求めます.
-    //!
-    //! @param [in]     value       絶対値を求めます.
-    //! @param [out]    result      計算結果の格納先.
-    //-------------------------------------------------------------------------
-    static void    Abs( const Vector4& value, Vector4& result );
+    static Vector4 Abs(const Vector4& v);
 
     //-------------------------------------------------------------------------
     //! @brief      値を指定された範囲内に制限します.
@@ -1943,17 +1464,7 @@ public:
     //! @param [in]     b           最大値.
     //! @return     クランプされた値を返却します.
     //-------------------------------------------------------------------------
-    static Vector4 Clamp( const Vector4& value, const Vector4& a, const Vector4& b );
-
-    //-------------------------------------------------------------------------
-    //! @brief      値を指定された範囲内に制限します.
-    //!
-    //! @param [in]     value       クランプする値.
-    //! @param [in]     a           最小値.
-    //! @param [in]     b           最大値.
-    //! @param [out]    result      クランプされた値.
-    //-------------------------------------------------------------------------
-    static void    Clamp( const Vector4& value, const Vector4& a, const Vector4& b, Vector4& result );
+    static Vector4 Clamp(const Vector4& value, const Vector4& a, const Vector4& b);
 
     //-------------------------------------------------------------------------
     //! @brief      指定された値を0～1の範囲に制限します.
@@ -1961,15 +1472,7 @@ public:
     //! @param [in]     value       クランプする値.
     //! @return     クランプされた値.
     //-------------------------------------------------------------------------
-    static Vector4 Saturate( const Vector4& value );
-
-    //-------------------------------------------------------------------------
-    //! @brief      指定された値を0～1の範囲に制限します.
-    //!
-    //! @param [in]     value       クランプする値.
-    //! @param [out]    result      クランプされた値.
-    //-------------------------------------------------------------------------
-    static void    Saturate( const Vector4& value, Vector4& result );
+    static Vector4 Saturate(const Vector4& value);
 
     //-------------------------------------------------------------------------
     //! @brief      2つのベクトル間の距離を求めます.
@@ -1978,16 +1481,7 @@ public:
     //! @param [in]     b           入力ベクトル.
     //! @return     2つのベクトル間の距離を返却します.
     //-------------------------------------------------------------------------
-    static float     Distance( const Vector4& a, const Vector4& b );
-
-    //-------------------------------------------------------------------------
-    //! @brief      2つのベクトル間の距離を求めます.
-    //!
-    //! @param [in]     a           入力ベクトル.
-    //! @param [in]     b           入力ベクトル.
-    //! @param [out]    result      2つのベクトル間の距離.
-    //-------------------------------------------------------------------------
-    static void    Distance( const Vector4& a, const Vector4& b, float& result );
+    static float Distance(const Vector4& a, const Vector4& b);
 
     //-------------------------------------------------------------------------
     //! @brief      2つのベクトル間の距離の2乗値を求めます.
@@ -1996,16 +1490,7 @@ public:
     //! @param [in]     b           入力ベクトル.
     //! @return     2つのベクトル間の距離の2乗値を返却します.
     //-------------------------------------------------------------------------
-    static float     DistanceSq( const Vector4& a, const Vector4& b );
-
-    //-------------------------------------------------------------------------
-    //! @brief      2つのベクトル間の距離の2乗値を求めます.
-    //!
-    //! @param [in]     a           入力ベクトル.
-    //! @param [in]     b           入力ベクトル.
-    //! @param [out]    result      2つのベクトル間の距離の2乗値.
-    //-------------------------------------------------------------------------
-    static void    DistanceSq( const Vector4& a, const Vector4& b, float& result );
+    static float DistanceSq(const Vector4& a, const Vector4& b);
 
     //-------------------------------------------------------------------------
     //! @brief      ベクトルの内積を求めます.
@@ -2014,16 +1499,7 @@ public:
     //! @param [in]     b           入力ベクトル.
     //! @return     ベクトルの内積を返却します.
     //-------------------------------------------------------------------------
-    static float     Dot( const Vector4& a, const Vector4& b );
-
-    //-------------------------------------------------------------------------
-    //! @brief      ベクトルの内積を求めます.
-    //!
-    //! @param [in]     a           入力ベクトル.
-    //! @param [in]     b           入力ベクトル.
-    //! @param [out]    result      ベクトルの内積.
-    //-------------------------------------------------------------------------
-    static void    Dot( const Vector4& a, const Vector4& b, float& result );
+    static float Dot(const Vector4& a, const Vector4& b);
 
     //-------------------------------------------------------------------------
     //! @brief      ベクトルを正規化します.
@@ -2031,15 +1507,7 @@ public:
     //! @param [in]     value       正規化するベクトル.
     //! @return     正規化したベクトルを返却します.
     //-------------------------------------------------------------------------
-    static Vector4 Normalize( const Vector4& value );
-
-    //-------------------------------------------------------------------------
-    //! @brief      ベクトルを正規化します.
-    //!
-    //! @param [in]     value       正規化するベクトル.
-    //! @param [out]    result      正規化したベクトル.
-    //-------------------------------------------------------------------------
-    static void    Normalize( const Vector4& value, Vector4& result );
+    static Vector4 Normalize(const Vector4& value);
 
     //-------------------------------------------------------------------------
     //! @brief      ベクトルの正規化を試みます.
@@ -2049,16 +1517,7 @@ public:
     //! @return     ベクトルの長さが0でなければ正規化したベクトルを返却,
     //!             長さが0の場合はsetを返却します.
     //-------------------------------------------------------------------------
-    static Vector4 SafeNormalize( const Vector4& value, const Vector4& set );
-
-    //-------------------------------------------------------------------------
-    //! @brief      ベクトルの正規化を試みます.
-    //!
-    //! @param [in]     value       正規化するベクトル.
-    //! @param [in]     set         長さが0の場合に設定するベクトル.
-    //! @param [out]    result      長さが0でなければ正規化したベクトル，0であれば set.
-    //-------------------------------------------------------------------------
-    static void    SafeNormalize( const Vector4& value, const Vector4& set, Vector4& result );
+    static Vector4 SafeNormalize(const Vector4& value, const Vector4& set);
 
     //-------------------------------------------------------------------------
     //! @brief      2つのベクトルの交差角を求めます.
@@ -2067,16 +1526,7 @@ public:
     //! @param [in]     b           入力ベクトル.
     //! @return     2つのベクトルの交差角をラジアンで返却します.
     //-------------------------------------------------------------------------
-    static float     ComputeCrossingAngle( const Vector4& a, const Vector4& b );
-
-    //-------------------------------------------------------------------------
-    //! @brief      2つのベクトルの交差角を求めます.
-    //!
-    //! @param [in]     a           入力ベクトル.
-    //! @param [in]     b           入力ベクトル.
-    //! @param [out]    result      2つのベクトルの交差角(ラジアン).
-    //-------------------------------------------------------------------------
-    static void    ComputeCrossingAngle( const Vector4& a, const Vector4& b, float& result );
+    static float ComputeCrossingAngle(const Vector4& a, const Vector4& b);
 
     //-------------------------------------------------------------------------
     //! @brief      各成分の最小値を求めます.
@@ -2085,16 +1535,7 @@ public:
     //! @param [in]     b           比較する値.
     //! @return     各成分の最小値を求め，その結果を返却します.
     //-------------------------------------------------------------------------
-    static Vector4 Min( const Vector4& a, const Vector4& b );
-
-    //-------------------------------------------------------------------------
-    //! @brief      各成分の最小値を求めます.
-    //!
-    //! @param [in]     a           比較する値.
-    //! @param [in]     b           比較する値.
-    //! @param [out]    result      各成分の最小値を求めた結果.
-    //-------------------------------------------------------------------------
-    static void    Min( const Vector4& a, const Vector4& b, Vector4& result );
+    static Vector4 Min(const Vector4& a, const Vector4& b);
 
     //-------------------------------------------------------------------------
     //! @brief      各成分の最大値を求めます.
@@ -2103,16 +1544,7 @@ public:
     //! @param [in]     b           比較する値.
     //! @return     各成分の最大値を求め，その結果を返却します.
     //-------------------------------------------------------------------------
-    static Vector4 Max( const Vector4& a, const Vector4& b );
-
-    //-------------------------------------------------------------------------
-    //! @brief      各成分の最大値を求めます.
-    //!
-    //! @param [in]     a           比較する値.
-    //! @param [in]     b           比較する値.
-    //! @param [out]    result      各成分の最大値を求めた結果.
-    //-------------------------------------------------------------------------
-    static void    Max( const Vector4& a, const Vector4& b, Vector4& result );
+    static Vector4 Max(const Vector4& a, const Vector4& b);
 
     //-------------------------------------------------------------------------
     //! @brief      重心座標上の点を求めます.
@@ -2124,19 +1556,7 @@ public:
     //! @param [in]     amount2     重み.
     //! @return     重心座標上の点を返却します.
     //-------------------------------------------------------------------------
-    static Vector4 Barycentric( const Vector4& a, const Vector4& b, const Vector4& c, float f, float g );
-
-    //-------------------------------------------------------------------------
-    //! @brief      重心座標上の点を求めます.
-    //!
-    //! @param [in]     a           入力ベクトル.
-    //! @param [in]     b           入力ベクトル.
-    //! @param [in]     c           入力ベクトル.
-    //! @param [in]     amount1     重み.
-    //! @param [in]     amount2     重み.
-    //! @param [out]    result      重心座標上の点.
-    //-------------------------------------------------------------------------
-    static void    Barycentric( const Vector4& a, const Vector4& b, const Vector4& c, float f, float g, Vector4& result );
+    static Vector4 Barycentric(const Vector4& a, const Vector4& b, const Vector4& c, float f, float g);
 
     //-------------------------------------------------------------------------
     //! @brief      エルミートスプライン補間を行います.
@@ -2148,19 +1568,7 @@ public:
     //! @param [in]     amount      重み.
     //! @return     エルミートスプライン補間を行った結果を返却します.
     //-------------------------------------------------------------------------
-    static Vector4 Hermite( const Vector4& a, const Vector4& t1, const Vector4& b, const Vector4& t2, float amount );
-
-    //-------------------------------------------------------------------------
-    //! @brief      エルミートスプライン補間を行います.
-    //!
-    //! @param [in]     a           入力位置ベクトル.
-    //! @param [in]     t1          入力接ベクトル.
-    //! @param [in]     b           入力位置ベクトル.
-    //! @param [in]     t2          入力接ベクトル.
-    //! @param [in]     amount      重み.
-    //! @param [out]    result      エルミートスプライン補間の結果.
-    //-------------------------------------------------------------------------
-    static void    Hermite( const Vector4& a, const Vector4& t1, const Vector4& b, const Vector4& t2, float amount, Vector4& result );
+    static Vector4 Hermite(const Vector4& a, const Vector4& t1, const Vector4& b, const Vector4& t2, float amount);
 
     //-------------------------------------------------------------------------
     //! @brief      Catmull-Rom補間を行います.
@@ -2172,19 +1580,7 @@ public:
     //! @param [in]     amount      加重係数.
     //! @return     Catmull-Rom補間の結果を返却します.
     //-------------------------------------------------------------------------
-    static Vector4 CatmullRom( const Vector4& a, const Vector4& b, const Vector4& c, const Vector4& d, float amount );
-
-    //-------------------------------------------------------------------------
-    //! @brief      Catmull-Rom補間を行います.
-    //!
-    //! @param [in]     a           補間の最初の位置.
-    //! @param [in]     b           補間の2番目の位置.
-    //! @param [in]     c           補間の3番目の位置.
-    //! @param [in]     d           補間の4番目の位置.
-    //! @param [in]     amount      加重係数.
-    //! @param [out]    result      Catmull-Rom補間の結果.
-    //-------------------------------------------------------------------------
-    static void    CatmullRom( const Vector4& a, const Vector4& b, const Vector4& c, const Vector4& d, float amount, Vector4& result );
+    static Vector4 CatmullRom(const Vector4& a, const Vector4& b, const Vector4& c, const Vector4& d, float amount);
 
     //-------------------------------------------------------------------------
     //! @brief      線形補間を行います.
@@ -2194,17 +1590,7 @@ public:
     //! @param [in]     amount      重み(0～1の値範囲で指定).
     //! @return     線形補間の結果を返却します.
     //-------------------------------------------------------------------------
-    static Vector4 Lerp( const Vector4& a, const Vector4& b, float amount );
-
-    //-------------------------------------------------------------------------
-    //! @brief      線形補間を行います.
-    //!
-    //! @param [in]     a           入力ベクトル.
-    //! @param [in]     b           入力ベクトル.
-    //! @param [in]     amount      重み(0～1の値範囲で指定).
-    //! @param [out]    result      線形補間の結果.
-    //-------------------------------------------------------------------------
-    static void    Lerp( const Vector4& a, const Vector4& b, float amount, Vector4 &result );
+    static Vector4 Lerp(const Vector4& a, const Vector4& b, float amount);
 
     //-------------------------------------------------------------------------
     //! @brief      3次方程式を用いて，2つの値の間を補間します.
@@ -2214,17 +1600,7 @@ public:
     //! @param [in]     amount      重み.
     //! @return     補間の結果を返却します.
     //-------------------------------------------------------------------------
-    static Vector4 SmoothStep( const Vector4& a, const Vector4& b, float amount );
-
-    //-------------------------------------------------------------------------
-    //! @brief      3次方程式を用いて，2つの値の間を補間します.
-    //!
-    //! @param [in]     a           入力ベクトル.
-    //! @param [in]     b           入力ベクトル.
-    //! @param [in]     amount      重み.
-    //! @param [out]    result      補間の結果.
-    //-------------------------------------------------------------------------
-    static void    SmoothStep( const Vector4& a, const Vector4& b, float amount, Vector4 &result );
+    static Vector4 SmoothStep(const Vector4& a, const Vector4& b, float amount);
 
     //-------------------------------------------------------------------------
     //! @brief      指定された行列を用いて，ベクトルを変換します.
@@ -2233,17 +1609,15 @@ public:
     //! @param [in]     matrix      変換行列.
     //! @return     変換されたベクトルを返却します.
     //-------------------------------------------------------------------------
-    static Vector4 Transform( const Vector4& position, const Matrix& matrix );
+    static Vector4 Transform(const Vector4& position, const Matrix& matrix);
 
     //-------------------------------------------------------------------------
-    //! @brief      指定された行列を用いて，ベクトルを変換します.
+    //! @brief      平面式を正規化します.
     //!
-    //! @param [in]     position    入力ベクトル.
-    //! @param [in]     matrix      変換行列.
-    //! @param [out]    result      変換されたベクトル.
+    //! @param[in]      value       平面式(x, y, zが法線, wが距離).
+    //! @return     正規化した平面式を返却します.
     //-------------------------------------------------------------------------
-    static void    Transform( const Vector4& position, const Matrix& matrix, Vector4 &result );
-
+    static Vector4 NormalizePlane(const Vector4& value);
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2279,7 +1653,7 @@ public:
             float _41, _42, _43, _44;
         };
         float m[4][4];
-        Vector4 row[4];
+        Vector4 v[4];
     };
 
     //=========================================================================
@@ -2296,7 +1670,7 @@ public:
     //!
     //! @param [in]     pValues     要素数16の配列.
     //-------------------------------------------------------------------------
-    explicit Matrix( const float* );
+    explicit Matrix(const float* pValues);
 
     //-------------------------------------------------------------------------
     //! @brief      引数付きコンストラクタです.
@@ -2332,7 +1706,7 @@ public:
     //! @param[in]      v2      3行目の値です.
     //! @param[in]      v3      4行目の値です.
     //---------------------------------------------------------------------------------------------
-    explicit Matrix( const Vector4& v1, const Vector4& v2, const Vector4& v3, const Vector4& v4 );
+    explicit Matrix(const Vector4& v1, const Vector4& v2, const Vector4& v3, const Vector4& v4);
 
     //-------------------------------------------------------------------------
     //! @brief      インデクサです.
@@ -2341,7 +1715,7 @@ public:
     //! @param [in]     col         列番号.
     //! @return     指定された行番号と列番号に対応する要素を返却します.
     //-------------------------------------------------------------------------
-    float& operator () ( uint32_t row, uint32_t col );
+    float& operator() (uint32_t row, uint32_t col);
 
     //-------------------------------------------------------------------------
     //! @brief      インデクサです(const版).
@@ -2350,14 +1724,14 @@ public:
     //! @param [in]     col         列番号.
     //! @return     指定された行番号と列番号に対応する要素を返却します.
     //-------------------------------------------------------------------------
-    const float&  operator () ( uint32_t row, uint32_t col ) const;
+    const float& operator() (uint32_t row, uint32_t col) const;
 
     //-------------------------------------------------------------------------
     //! @brief      float*型への演算子です.
     //!
     //! @return     最初の要素へのポインタを返却します.
     //-------------------------------------------------------------------------
-    operator       float* ();
+    operator float* ();
 
     //-------------------------------------------------------------------------
     //! @brief      const float*型への演算子です.
@@ -2372,7 +1746,7 @@ public:
     //! @param [in]     value       乗算する行列.
     //! @return     乗算結果を返却します.
     //-------------------------------------------------------------------------
-    Matrix& operator *= ( const Matrix& );
+    Matrix& operator *= (const Matrix& value);
 
     //-------------------------------------------------------------------------
     //! @brief      加算代入演算子です.
@@ -2380,7 +1754,7 @@ public:
     //! @param [in]     value       加算する行列.
     //! @return     加算結果を返却します.
     //-------------------------------------------------------------------------
-    Matrix& operator += ( const Matrix& );
+    Matrix& operator += (const Matrix& value);
 
     //-------------------------------------------------------------------------
     //! @brief      減算代入演算子です.
@@ -2388,23 +1762,23 @@ public:
     //! @param [in]     value       減算する行列.
     //! @return     減算結果を返却します.
     //-------------------------------------------------------------------------
-    Matrix& operator -= ( const Matrix& );
+    Matrix& operator -= (const Matrix& value);
 
     //-------------------------------------------------------------------------
     //! @brief      乗算代入演算子です.
     //!
-    //! @param [in]     scalar      乗算するスカラー値.
+    //! @param [in]     value       乗算するスカラー値.
     //! @return     乗算結果を返却します.
     //-------------------------------------------------------------------------
-    Matrix& operator *= ( float );
+    Matrix& operator *= (float value);
 
     //-------------------------------------------------------------------------
     //! @brief      除算代入演算子です.
     //!
-    //! @param [in]     scalar      除算するスカラー値.
+    //! @param [in]     value       除算するスカラー値.
     //! @return     除算結果を返却します.
     //-------------------------------------------------------------------------
-    Matrix& operator /= ( float );
+    Matrix& operator /= (float value);
 
     //-------------------------------------------------------------------------
     //! @brief      代入演算子です.
@@ -2412,21 +1786,21 @@ public:
     //! @param [in]     value       代入する値.
     //! @return     代入結果を返却します.
     //-------------------------------------------------------------------------
-    Matrix& operator =  ( const Matrix& );
+    Matrix& operator = (const Matrix& value);
 
     //-------------------------------------------------------------------------
     //! @brief      正符号演算子です.
     //!
     //! @return     自分自身を値を返却します.
     //-------------------------------------------------------------------------
-    Matrix  operator + () const;
+    Matrix operator + () const;
 
     //-------------------------------------------------------------------------
     //! @brief      負符号演算子です.
     //
     //! @return     各成分にマイナスを付けた値を返却します.
     //-------------------------------------------------------------------------
-    Matrix  operator - () const;
+    Matrix operator - () const;
 
     //-------------------------------------------------------------------------
     //! @brief      乗算演算子です.
@@ -2434,7 +1808,7 @@ public:
     //! @param [in]     value       乗算する値.
     //! @return     乗算結果を返却します.
     //-------------------------------------------------------------------------
-    Matrix  operator *  ( const Matrix& ) const;
+    Matrix operator * (const Matrix& value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      加算演算子です.
@@ -2442,7 +1816,7 @@ public:
     //! @param [in]     value       加算する値.
     //! @return     加算結果を返却します.
     //-------------------------------------------------------------------------
-    Matrix  operator +  ( const Matrix& ) const;
+    Matrix operator + (const Matrix& value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      減算演算子です.
@@ -2450,22 +1824,22 @@ public:
     //! @param [in]     value       減算する値.
     //! @retrurn    減算結果を返却します.
     //-------------------------------------------------------------------------
-    Matrix  operator -  ( const Matrix& ) const;
+    Matrix operator - (const Matrix& value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      乗算演算子です.
     //
-    //! @param [in]     scalar      乗算するスカラー値.
+    //! @param [in]     value       乗算するスカラー値.
     //! @return     乗算結果を返却します.
     //-------------------------------------------------------------------------
-    Matrix  operator *  ( float ) const;
+    Matrix operator * (float value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      除算演算子です.
     //!
-    //! @param [in]     scalar      除算するスカラー値.
+    //! @param [in]     value       除算するスカラー値.
     //-------------------------------------------------------------------------
-    Matrix  operator /  ( float ) const;
+    Matrix operator / (float value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      等価比較演算子です.
@@ -2474,7 +1848,7 @@ public:
     //! @retval true    値が等価です.
     //! @retval false   値が非等価です.
     //-------------------------------------------------------------------------
-    bool    operator == ( const Matrix& ) const;
+    bool operator == (const Matrix& value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      非等価比較演算子です.
@@ -2483,14 +1857,14 @@ public:
     //! @retval true    値が非等価です.
     //! @retval false   値が等価です.
     //-------------------------------------------------------------------------
-    bool    operator != ( const Matrix& ) const;
+    bool operator != (const Matrix& value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      行列式を求めます.
     //!
     //! @return     行列式の値を返却します.
     //-------------------------------------------------------------------------
-    float     Determinant () const;
+    float Determinant() const;
 
     //-------------------------------------------------------------------------
     //! @brief      単位行列にします.
@@ -2504,7 +1878,7 @@ public:
     //!
     //! @return     単位行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix   CreateIdentity();
+    static Matrix CreateIdentity();
 
     //-------------------------------------------------------------------------
     //! @brief      単位行列であるか判定します.
@@ -2513,7 +1887,7 @@ public:
     //! @retval true    単位行列です.
     //! @retval false   非単位行列です.
     //-------------------------------------------------------------------------
-    static bool    IsIdentity( const Matrix &value );
+    static bool IsIdentity(const Matrix &value);
 
     //-------------------------------------------------------------------------
     //! @brief      行列を転置します.
@@ -2521,15 +1895,7 @@ public:
     //! @param [in]     value       転置する行列.
     //! @return     行列を転置した結果を返却します.
     //-------------------------------------------------------------------------
-    static Matrix  Transpose( const Matrix& value );
-
-    //-------------------------------------------------------------------------
-    //! @brief      行列を転置します.
-    //!
-    //! @param [in]     value       転置する行列.
-    //! @param [out]    result      転置された行列.
-    //-------------------------------------------------------------------------
-    static void    Transpose( const Matrix& value, Matrix &result );
+    static Matrix Transpose(const Matrix& value);
 
     //-------------------------------------------------------------------------
     //! @brief      行列同士を乗算します.
@@ -2538,16 +1904,7 @@ public:
     //! @param [in]     b           入力行列.
     //! @return     乗算結果を返却します.
     //-------------------------------------------------------------------------
-    static Matrix  Multiply( const Matrix& a, const Matrix& b );
-
-    //-------------------------------------------------------------------------
-    //! @brief      行列同士を乗算します.
-    //!
-    //! @param [in]     a           入力行列.
-    //! @param [in]     b           入力行列.
-    //! @param [out]    result      乗算結果.
-    //-------------------------------------------------------------------------
-    static void    Multiply( const Matrix& a, const Matrix& b, Matrix &result );
+    static Matrix Multiply(const Matrix& a, const Matrix& b);
 
     //-------------------------------------------------------------------------
     //! @brief      スカラー乗算します.
@@ -2556,16 +1913,7 @@ public:
     //! @param [in]     scalar      スカラー値.
     //! @return     行列をスカラー倍した結果を返却します.
     //-------------------------------------------------------------------------
-    static Matrix  Multiply( const Matrix& value, float scalar );
-
-    //-------------------------------------------------------------------------
-    //! @brief      スカラー乗算します.
-    //!
-    //! @param [in]     value       入力行列.
-    //! @param [in]     scalar      スカラー値.
-    //! @param [out]    result      スカラー乗算した結果.
-    //-------------------------------------------------------------------------
-    static void    Multiply( const Matrix& value, float scalar, Matrix &result );
+    static Matrix Multiply(const Matrix& value, float scalar );
 
     //-------------------------------------------------------------------------
     //! @brief      行列同士を乗算し，乗算結果を転置します.
@@ -2574,31 +1922,14 @@ public:
     //! @param [in]     b           入力行列.
     //! @return     行列同士を乗算し，乗算結果を転置した値を返却します.
     //-------------------------------------------------------------------------
-    static Matrix  MultiplyTranspose( const Matrix& a, const Matrix& b );
-
-    //-------------------------------------------------------------------------
-    //! @brief      行列同士を乗算し，乗算結果を転置します.
-    //!
-    //! @param [in]     a           入力行列.
-    //! @param [in]     b           入力行列.
-    //! @param [out]    result      行列同士を乗算し，乗算結果を転置した値.
-    //-------------------------------------------------------------------------
-    static void    MultiplyTranspose( const Matrix& a, const Matrix& b, Matrix &result );
+    static Matrix MultiplyTranspose(const Matrix& a, const Matrix& b);
 
     //-------------------------------------------------------------------------
     //! @brief      逆行列を求めます.
     //!
     //! @param [in]     value       逆行列を求める値.
     //-------------------------------------------------------------------------
-    static Matrix  Invert( const Matrix& value );
-
-    //-------------------------------------------------------------------------
-    //! @brief      逆行列を求めます.
-    //!
-    //! @param [in]     value       逆行列を求める値.
-    //! @param [out]    result      逆行列.
-    //-------------------------------------------------------------------------
-    static void    Invert( const Matrix& value, Matrix &result );
+    static Matrix Invert(const Matrix& value);
 
     //-------------------------------------------------------------------------
     //! @brief      拡大縮小行列を生成します.
@@ -2606,15 +1937,7 @@ public:
     //! @param [in]     scale      拡大縮小値.
     //! @return     拡大縮小行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix  CreateScale( float scale );
-
-    //-------------------------------------------------------------------------
-    //! @brief      拡大縮小行列を生成します.
-    //!
-    //! @param [in]     scale       拡大縮小値.
-    //! @param [out]    result      拡大縮小行列.
-    //-------------------------------------------------------------------------
-    static void    CreateScale( float scale, Matrix &result );
+    static Matrix CreateScale(float scale);
 
     //-------------------------------------------------------------------------
     //! @brief      拡大縮小行列を生成します.
@@ -2624,33 +1947,15 @@ public:
     //! @param [in]     sz          Z成分の拡大縮小値.
     //! @return     拡大縮小行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix  CreateScale( float sx, float sy, float sz );
+    static Matrix CreateScale(float sx, float sy, float sz);
 
     //-------------------------------------------------------------------------
     //! @brief      拡大縮小行列を生成します.
     //!
-    //! @param [in]     sx          X成分の拡大縮小値.
-    //! @param [in]     sy          Y成分の拡大縮小値.
-    //! @param [in]     sz          Z成分の拡大縮小値.
-    //! @param [out]    result      拡大縮小行列.
-    //-------------------------------------------------------------------------
-    static void    CreateScale( float sx, float sy, float sz, Matrix &result );
-
-    //-------------------------------------------------------------------------
-    //! @brief      拡大縮小行列を生成します.
-    //!
-    //! @param [in]     scale       拡大縮小値.
+    //! @param [in]     value       拡大縮小値.
     //! @return     拡大縮小行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix  CreateScale( const Vector3& scale );
-
-    //-------------------------------------------------------------------------
-    //! @brief      拡大縮小行列を生成します.
-    //!
-    //! @param [in]     scale       拡大縮小値.
-    //! @param [out]    result      拡大縮小行列.
-    //-------------------------------------------------------------------------
-    static void    CreateScale( const Vector3& scale, Matrix &result );
+    static Matrix CreateScale(const Vector3& value);
 
     //-------------------------------------------------------------------------
     //! @brief      平行移動行列を生成します.
@@ -2660,17 +1965,7 @@ public:
     //! @param [in]     tz          Z成分の平行移動値.
     //! @return     平行移動行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix  CreateTranslation( float tx, float ty, float tz );
-
-    //-------------------------------------------------------------------------
-    //! @brief      平行移動行列を生成します.
-    //!
-    //! @param [in]     tx          X成分の平行移動値.
-    //! @param [in]     ty          Y成分の平行移動値.
-    //! @param [in]     tz          Z成分の平行移動値.
-    //! @param [out]    result      平行移動行列.
-    //-------------------------------------------------------------------------
-    static void    CreateTranslation( float tx, float ty, float tz, Matrix &result );
+    static Matrix CreateTranslation(float tx, float ty, float tz);
 
     //-------------------------------------------------------------------------
     //! @brief      平行移動行列を生成します.
@@ -2678,15 +1973,7 @@ public:
     //! @param [in]     translate   平行移動値.
     //! @return     平行移動行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix  CreateTranslation( const Vector3& translate );
-
-    //-------------------------------------------------------------------------
-    //! @brief      平行移動行列を生成します.
-    //!
-    //! @param [in]     trnaslate   平行移動値.
-    //! @param [out]    result      平行移動行列.
-    //-------------------------------------------------------------------------
-    static void    CreateTranslation( const Vector3& translate, Matrix &result );
+    static Matrix CreateTranslation(const Vector3& translate);
 
     //-------------------------------------------------------------------------
     //! @brief      X軸回りの回転行列を生成します.
@@ -2694,15 +1981,7 @@ public:
     //! @param [in]     radian         角度(ラジアン).
     //! @return     X軸回りの回転行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix  CreateRotationX( float radian );
-
-    //-------------------------------------------------------------------------
-    //! @brief      X軸回りの回転行列を生成します.
-    //!
-    //! @param [in]     radian         角度(ラジアン).
-    //! @param [out]    result         X軸回りの回転行列.
-    //-------------------------------------------------------------------------
-    static void    CreateRotationX( float radian, Matrix &result );
+    static Matrix CreateRotationX(float radian);
 
     //-------------------------------------------------------------------------
     //! @brief      Y軸回りの回転行列を生成します.
@@ -2710,15 +1989,7 @@ public:
     //! @param [in]     radian         角度(ラジアン).
     //! @return     Y軸回りの回転行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix  CreateRotationY( float radian );
-
-    //-------------------------------------------------------------------------
-    //! @brief      Y軸回りの回転行列を生成します.
-    //!
-    //! @param [in]     radian         角度(ラジアン).
-    //! @param [out]    result         Y軸回りの回転行列.
-    //-------------------------------------------------------------------------
-    static void    CreateRotationY( float radian, Matrix &result );
+    static Matrix CreateRotationY(float radian);
 
     //-------------------------------------------------------------------------
     //! @brief      Z軸回りの回転行列を生成します.
@@ -2726,15 +1997,7 @@ public:
     //! @param [in]     radian         角度(ラジアン).
     //! @return     Z軸回りの回転行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix  CreateRotationZ( float radian );
-
-    //-------------------------------------------------------------------------
-    //! @brief      Z軸回りの回転行列を生成します.
-    //!
-    //! @param [in]     radian         角度(ラジアン),.
-    //! @param [out]    result      Z軸周りの回転行列.
-    //-------------------------------------------------------------------------
-    static void    CreateRotationZ( float radian, Matrix &result );
+    static Matrix CreateRotationZ(float radian);
 
     //-------------------------------------------------------------------------
     //! @brief      四元数から行列を生成します.
@@ -2742,15 +2005,7 @@ public:
     //! @param [in]     value       四元数.
     //! @return     四元数から生成された行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix  CreateFromQuaternion( const Quaternion& qua );
-
-    //-------------------------------------------------------------------------
-    //! @brief      四元数から行列を生成します.
-    //!
-    //! @param [in]     value       四元数.
-    //! @param [out]    result      四元数から生成された行列.
-    //-------------------------------------------------------------------------
-    static void    CreateFromQuaternion( const Quaternion& qua, Matrix &result );
+    static Matrix CreateFromQuaternion(const Quaternion& qua);
 
     //-------------------------------------------------------------------------
     //! @brief      指定された軸と角度から回転行列を生成します.
@@ -2759,16 +2014,7 @@ public:
     //! @param [in]     radian      回転角(ラジアン).
     //! @return     回転行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix  CreateFromAxisAngle( const Vector3& axis, float radian );
-
-    //-------------------------------------------------------------------------
-    //! @brief      指定された軸と角度から回転行列を生成します.
-    //!
-    //! @param [in]     axis        回転軸.
-    //! @param [in]     radian      回転角(ラジアン).
-    //! @param [out]    result      回転行列.
-    //-------------------------------------------------------------------------
-    static void    CreateFromAxisAngle( const Vector3& axis, float radian, Matrix &result );
+    static Matrix CreateFromAxisAngle(const Vector3& axis, float radian);
 
     //-------------------------------------------------------------------------
     //! @brief      ヨー・ピッチ・ロール角から回転行列を生成します.
@@ -2778,17 +2024,7 @@ public:
     //! @param [in]     roll        ロール角(ラジアン).
     //! @return     回転行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix  CreateRotationFromYawPitchRoll( float yaw, float pitch, float roll );
-
-    //-------------------------------------------------------------------------
-    //! @brief      ヨー・ピッチ・ロール角から回転行列を生成します.
-    //!
-    //! @param [in]     yaw         ヨー角(ラジアン).
-    //! @param [in]     pitch       ピッチ角(ラジアン).
-    //! @param [in]     roll        ロール角(ラジアン).
-    //! @param [out]    result      回転行列.
-    //-------------------------------------------------------------------------
-    static void    CreateRotationFromYawPitchRoll( float yaw, float pitch, float roll, Matrix& result );
+    static Matrix CreateRotationFromYawPitchRoll(float yaw, float pitch, float roll);
 
     //-------------------------------------------------------------------------
     //! @brief      ビュー行列を生成します.
@@ -2798,17 +2034,7 @@ public:
     //! @param [in]     upward      上向きベクトル.
     //! @return     ビュー行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix  CreateLookAt( const Vector3& position, const Vector3& target, const Vector3& upward );
-
-    //-------------------------------------------------------------------------
-    //! @brief      ビュー行列を生成します.
-    //!
-    //! @param [in]     position    カメラ位置.
-    //! @param [in]     target      注視点.
-    //! @param [in]     upward      上向きベクトル.
-    //! @param [out]    result      ビュー行列.
-    //-------------------------------------------------------------------------
-    static void    CreateLookAt( const Vector3& position, const Vector3& target, const Vector3& upward, Matrix &result );
+    static Matrix CreateLookAt(const Vector3& position, const Vector3& target, const Vector3& upward);
 
     //-------------------------------------------------------------------------
     //! @brief      ビュー行列を生成します.
@@ -2818,17 +2044,7 @@ public:
     //! @param [in]     upward      上向きベクトル.
     //! @return     ビュー行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix  CreateLookTo( const Vector3& position, const Vector3& viewDir, const Vector3& upward );
-
-    //-------------------------------------------------------------------------
-    //! @brief      ビュー行列を生成します.
-    //!
-    //! @param [in]     position    カメラ位置.
-    //! @param [in]     viewDir     視線ベクトル.
-    //! @param [in]     upward      上向きベクトル.
-    //! @param [out]    result      ビュー行列.
-    //-------------------------------------------------------------------------
-    static void    CreateLookTo( const Vector3& position, const Vector3& viewDir, const Vector3& upward, Matrix& result );
+    static Matrix CreateLookTo(const Vector3& position, const Vector3& viewDir, const Vector3& upward);
 
     //-------------------------------------------------------------------------
     //! @brief      透視投影行列を生成します.
@@ -2839,18 +2055,7 @@ public:
     //! @param [in]     farClip     遠クリップ平面までの距離.
     //! @return     透視投影行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix  CreatePerspective( float width, float height, float nearClip, float farClip );
-
-    //-------------------------------------------------------------------------
-    //! @brief      透視投影行列を生成します.
-    //!
-    //! @param [in]     width       ビューボリュームの幅.
-    //! @param [in]     height      ビューボリュームの高さ.
-    //! @param [in]     nearClip    近クリップ平面までの距離.
-    //! @param [in]     farClip     遠クリップ平面までの距離.
-    //! @param [out]    result      透視投影行列.
-    //-------------------------------------------------------------------------
-    static void    CreatePerspective( float width, float height, float nearClip, float farClip, Matrix &result );
+    static Matrix CreatePerspective(float width, float height, float nearClip, float farClip);
 
     //-------------------------------------------------------------------------
     //! @brief      視野角に基づいて透視投影行列を生成します.
@@ -2861,18 +2066,7 @@ public:
     //! @param [in]     farClip         遠クリップ平面までの距離.
     //! @return     透視投影行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix  CreatePerspectiveFieldOfView( float fieldOfView, float aspectRatio, float nearClip, float farClip );
-
-    //-------------------------------------------------------------------------
-    //! @brief      視野角に基づいて透視投影行列を生成します.
-    //!
-    //! @param [in]     fieldOfView     視野角(ラジアン).
-    //! @param [in]     aspectRatio     アスペクト比.
-    //! @param [in]     nearClip        近クリップ平面までの距離.
-    //! @param [in]     farClip         遠クリップ平面までの距離.
-    //! @param [out]    result          透視投影行列.
-    //-------------------------------------------------------------------------
-    static void    CreatePerspectiveFieldOfView( float fieldOfView, float aspectRatio, float nearClip, float farClip, Matrix &result );
+    static Matrix CreatePerspectiveFieldOfView(float fieldOfView, float aspectRatio, float nearClip, float farClip);
 
     //-------------------------------------------------------------------------
     //! @brief      視野角に基づいてReverse-Z透視投影行列を生成します.
@@ -2882,17 +2076,7 @@ public:
     //! @param [in]     nearClip        近クリップ平面までの距離.
     //! @return     投資投影行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix  CreatePerspectiveFieldOfViewReverseZ( float filedOfView, float aspectRatio, float nearClip );
-
-    //-------------------------------------------------------------------------
-    //! @brief      視野角に基づいてReverse-Z透視投影行列を生成します.
-    //!
-    //! @param [in]     fieldOfView     視野角(ラジアン).
-    //! @param [in]     aspectRatio     アスペクト比.
-    //! @param [in]     nearClip        近クリップ平面までの距離.
-    //! @param [out]    result          透視投影行列.
-    //-------------------------------------------------------------------------
-    static void    CreatePerspectiveFieldOfViewReverseZ( float fieldOfView, float aspectRatio, float nearClip, Matrix& result );
+    static Matrix CreatePerspectiveFieldOfViewReverseZ(float filedOfView, float aspectRatio, float nearClip);
 
     //-------------------------------------------------------------------------
     //! @brief      カスタマイズした透視投影行列を生成します.
@@ -2905,20 +2089,7 @@ public:
     //! @param [in]     farClip     遠クリップ平面までの距離.
     //! @return     透視投影行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix  CreatePerspectiveOffCenter( float left, float right, float bottom, float top, float nearClip, float farClip );
-
-    //-------------------------------------------------------------------------
-    //! @brief      カスタマイズした透視投影行列を生成します.
-    //!
-    //! @param [in]     left        ビューボリュームの最小X値.
-    //! @param [in]     right       ビューボリュームの最大X値.
-    //! @param [in]     bottom      ビューボリュームの最小Y値.
-    //! @param [in]     top         ビューボリュームの最大Y値.
-    //! @param [in]     nearClip    近クリップ平面までの距離.
-    //! @param [in]     farClip     遠クリップ平面までの距離.
-    //! @param [out]    result      透視投影行列.
-    //-------------------------------------------------------------------------
-    static void    CreatePerspectiveOffCenter( float left, float right, float bottom, float top, float nearClip, float farClip, Matrix &result );
+    static Matrix CreatePerspectiveOffCenter(float left, float right, float bottom, float top, float nearClip, float farClip);
 
     //-------------------------------------------------------------------------
     //! @brief      正射影行列を生成します.
@@ -2929,18 +2100,7 @@ public:
     //! @param [in]     farClip     遠クリップ平面までの距離.
     //! @return     正射影行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix  CreateOrthographic( float width, float height, float nearClip, float farClip );
-
-    //-------------------------------------------------------------------------
-    //! @brief      正射影行列を生成します.
-    //!
-    //! @param [in]     width       ビューボリュームの幅.
-    //! @param [in]     height      ビューボリュームの高さ.
-    //! @param [in]     nearClip    近クリップ平面までの距離.
-    //! @param [in]     farClip     遠クリップ平面までの距離.
-    //! @param [out]    result      正射影行列.
-    //-------------------------------------------------------------------------
-    static void    CreateOrthographic( float width, float height, float nearClip, float farClip, Matrix &result );
+    static Matrix  CreateOrthographic(float width, float height, float nearClip, float farClip);
 
     //-------------------------------------------------------------------------
     //! @brief      カスタマイズした正射影行列を生成します.
@@ -2953,20 +2113,7 @@ public:
     //! @param [in]     farClip     遠クリップ平面までの距離.
     //! @return     正射影行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix  CreateOrthographicOffCenter( float left, float right, float bottom, float top, float nearClip, float farClip );
-
-    //-------------------------------------------------------------------------
-    //! @brief      カスタマイズした正射影行列を生成します.
-    //!
-    //! @param [in]     left        ビューボリュームの最小X値.
-    //! @param [in]     right       ビューボリュームの最大X値.
-    //! @param [in]     bottom      ビューボリュームの最小Y値.
-    //! @param [in]     top         ビューボリュームの最大Y値.
-    //! @param [in]     nearClip    近クリップ平面までの距離.
-    //! @param [in]     farClip     遠クリップ平面までの距離.
-    //! @param [out]    result      正射影行列.
-    //-------------------------------------------------------------------------
-    static void    CreateOrthographicOffCenter( float left, float right, float bottom, float top, float nearClip, float farClip, Matrix &result );
+    static Matrix CreateOrthographicOffCenter(float left, float right, float bottom, float top, float nearClip, float farClip);
 
     //-------------------------------------------------------------------------
     //! @brief      カスタマイズした正射影行列を生成します.
@@ -2979,20 +2126,7 @@ public:
     //! @param [in]     farClip     遠クリップ平面までの距離.
     //! @return     正射影行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix  CreateOrthographicOffCenterReverseZ( float left, float right, float bottom, float top, float nearClip, float farClip );
-
-    //-------------------------------------------------------------------------
-    //! @brief      カスタマイズした正射影行列を生成します.
-    //!
-    //! @param [in]     left        ビューボリュームの最小X値.
-    //! @param [in]     right       ビューボリュームの最大X値.
-    //! @param [in]     bottom      ビューボリュームの最小Y値.
-    //! @param [in]     top         ビューボリュームの最大Y値.
-    //! @param [in]     nearClip    近クリップ平面までの距離.
-    //! @param [in]     farClip     遠クリップ平面までの距離.
-    //! @param [out]    result      正射影行列.
-    //-------------------------------------------------------------------------
-    static void    CreateOrthographicOffCenterReverseZ( float left, float right, float bottom, float top, float nearClip, float farClip, Matrix &result );
+    static Matrix CreateOrthographicOffCenterReverseZ(float left, float right, float bottom, float top, float nearClip, float farClip);
 
     //-------------------------------------------------------------------------
     //! @brief      2つの行列を線形補間します.
@@ -3002,17 +2136,7 @@ public:
     //! @param [in]     amount      補間係数.
     //! @return     線形補間した行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix  Lerp( const Matrix& a, const Matrix& b, float amount );
-
-    //-------------------------------------------------------------------------
-    //! @brief      2つの行列を線形補間します.
-    //!
-    //! @param [in]     a           入力行列.
-    //! @param [in]     b           入力行列.
-    //! @param [in]     amount      補間係数.
-    //! @param [out]    result      線形補間された行列.
-    //-------------------------------------------------------------------------
-    static void    Lerp( const Matrix& a, const Matrix& b, float amount, Matrix &result );
+    static Matrix Lerp(const Matrix& a, const Matrix& b, float amount);
 
     //-------------------------------------------------------------------------
     //! @brief      ビルボード行列を生成します.
@@ -3020,15 +2144,7 @@ public:
     //! @param[in]      value       ビュー行列.
     //! @return     ビルボード行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix   CreateBillboard( const Matrix& value );
-
-    //-------------------------------------------------------------------------
-    //! @brief      ビルボード行列を生成します.
-    //!
-    //! @param[in]      value       ビュー行列.
-    //! @param[out]     result      ビルボード行列の格納先.
-    //-------------------------------------------------------------------------
-    static void     CreateBillboard( const Matrix& value, Matrix& result );
+    static Matrix CreateBillboard(const Matrix& value);
 
     //-------------------------------------------------------------------------
     //! @brief      Y軸ビルボード行列を生成します.
@@ -3036,15 +2152,7 @@ public:
     //! @param[in]      value       ビュー行列.
     //! @return     Y軸ビルボード行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix   CreateBillboardAxisY( const Matrix& value );
-
-    //-------------------------------------------------------------------------
-    //! @brief      Y軸ビルボード行列を生成します.
-    //!
-    //! @param[in]      value       ビュー行列.
-    //! @param[out]     result      Y軸ビルボード行列の格納先.
-    //-------------------------------------------------------------------------
-    static void     CreateBillboardAxisY( const Matrix& value, Matrix& result );
+    static Matrix CreateBillboardAxisY(const Matrix& value);
 
     //-------------------------------------------------------------------------
     //! @brief      平行移動行列を左から掛けます.
@@ -3053,7 +2161,7 @@ public:
     //! @param[in]      mat         行列.
     //! @return     平行移動行列を←から掛けた結果を返却します.
     //-------------------------------------------------------------------------
-    static Matrix   AppendTranslation(const Vector3& vec, Matrix& mat);
+    static Matrix AppendTranslation(const Vector3& vec, Matrix& mat);
 
     //-------------------------------------------------------------------------
     //! @brief      平行移動行列を右から掛けます.
@@ -3062,7 +2170,7 @@ public:
     //! @param[in]      vec         平行移動量.
     //! @return     平行移動行列を右から掛けた結果を返却します.
     //-------------------------------------------------------------------------
-    static Matrix   AppendTranslation(Matrix& mat, const Vector3& vec);
+    static Matrix AppendTranslation(Matrix& mat, const Vector3& vec);
 
     //-------------------------------------------------------------------------
     //! @brief      スケール行列を左から掛けます.
@@ -3071,7 +2179,7 @@ public:
     //! @param[in]      mat         行列.
     //! @return     左からスケール行列を掛けた結果を返却します.
     //-------------------------------------------------------------------------
-    static Matrix   AppendScale(const Vector3& vec, Matrix& mat);
+    static Matrix AppendScale(const Vector3& vec, Matrix& mat);
 
     //-------------------------------------------------------------------------
     //! @brief      スケール行列を右から掛けます.
@@ -3080,7 +2188,7 @@ public:
     //! @param[in]      vec         スケール値.
     //! @return     右からスケール行列を掛けた結果を返却します.
     //-------------------------------------------------------------------------
-    static Matrix   AppendScale(Matrix& mat, const Vector3& vec);
+    static Matrix AppendScale(Matrix& mat, const Vector3& vec);
 
     //-------------------------------------------------------------------------
     //! @brief      明度を調整するカラー行列を生成します.
@@ -3190,24 +2298,24 @@ public:
     //!
     //! @param [in]     pValues     要素数4の配列.
     //-------------------------------------------------------------------------
-    Quaternion( const float* );
+    Quaternion(const float* pValue);
 
     //-------------------------------------------------------------------------
     //! @brief      引数付きコンストラクタです.
     //!
     //! @param [in]     nx          X成分.
     //! @param [in]     ny          Y成分.
-    //! @param [in]     nz          Z成分.
+    //! @param[in]     nz          Z成分.
     //! @param [in]     nw          W成分.
     //-------------------------------------------------------------------------
-    Quaternion( float nx, float ny, float nz, float nw );
+    Quaternion(float nx, float ny, float nz, float nw);
 
     //-------------------------------------------------------------------------
     //! @brief      float*型へのキャストです.
     //!
     //! @return     最初の要素へのポインタを返却します.
     //-------------------------------------------------------------------------
-    operator       float* ();
+    operator float* ();
 
     //-------------------------------------------------------------------------
     //! @brief      const float*型へのキャストです.
@@ -3222,7 +2330,7 @@ public:
     //! @param [in]     value       加算する値.
     //! @return     加算結果を返却します.
     //-------------------------------------------------------------------------
-    Quaternion& operator += ( const Quaternion& );
+    Quaternion& operator += (const Quaternion& value);
 
     //-------------------------------------------------------------------------
     //! @brief      減算代入演算子です.
@@ -3230,7 +2338,7 @@ public:
     //! @param [in]     value       減算する値.
     //! @return     減算結果を返却します.
     //-------------------------------------------------------------------------
-    Quaternion& operator -= ( const Quaternion& );
+    Quaternion& operator -= (const Quaternion& value);
 
     //-------------------------------------------------------------------------
     //! @brief      乗算代入演算子です.
@@ -3238,37 +2346,37 @@ public:
     //! @param [in]     value       乗算する値.
     //! @return     乗算結果を返却します.
     //-------------------------------------------------------------------------
-    Quaternion& operator *= ( const Quaternion& );
+    Quaternion& operator *= (const Quaternion& value);
 
     //-------------------------------------------------------------------------
     //! @brief      乗算代入演算子です.
     //!
-    //! @param [in]     scalar      スカラー乗算する値.
+    //! @param [in]     value      スカラー乗算する値.
     //! @return     スカラー乗算した結果を返却します.
     //-------------------------------------------------------------------------
-    Quaternion& operator *= ( float );
+    Quaternion& operator *= (float value);
 
     //-------------------------------------------------------------------------
     //! @brief      除算代入演算子です.
     //!
-    //! @param [in]     scalar      スカラー除算する値.
+    //! @param [in]     value      スカラー除算する値.
     //! @return     スカラー除算した結果を返却します.
     //-------------------------------------------------------------------------
-    Quaternion& operator /= ( float );
+    Quaternion& operator /= (float value);
 
     //-------------------------------------------------------------------------
     //! @brief      正符号演算子です.
     //!
     //! @return     自分自身の値を返却します.
     //-------------------------------------------------------------------------
-    Quaternion  operator + () const;
+    Quaternion operator + () const;
 
     //-------------------------------------------------------------------------
     //! @brief      負符号演算子です.
     //!
     //! @return     各成分の符号を反転した結果を返却します.
     //-------------------------------------------------------------------------
-    Quaternion  operator - () const;
+    Quaternion operator - () const;
 
     //-------------------------------------------------------------------------
     //! @brief      乗算演算子です.
@@ -3276,7 +2384,7 @@ public:
     //! @param [in]     value       乗算する値.
     //! @return     乗算結果を返却します.
     //-------------------------------------------------------------------------
-    Quaternion  operator *  ( const Quaternion& ) const;
+    Quaternion operator * (const Quaternion& value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      加算演算子です.
@@ -3284,7 +2392,7 @@ public:
     //! @param [in]     value       加算する値.
     //! @return     加算結果を返却します.
     //-------------------------------------------------------------------------
-    Quaternion  operator +  ( const Quaternion& ) const;
+    Quaternion operator + (const Quaternion& value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      減算演算子です.
@@ -3292,23 +2400,23 @@ public:
     //! @param [in]     value       減算する値.
     //! @return     減算結果を返却します.
     //-------------------------------------------------------------------------
-    Quaternion  operator -  ( const Quaternion& ) const;
+    Quaternion operator - (const Quaternion& value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      乗算演算子です.
     //!
-    //! @param [in]     scalar      スカラー乗算する値.
+    //! @param [in]     value      スカラー乗算する値.
     //! @return     スカラー乗算した結果を返却します.
     //-------------------------------------------------------------------------
-    Quaternion  operator *  ( float ) const;
+    Quaternion operator * (float value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      除算演算子です.
     //!
-    //! @param [in]     scalar      スカラー除算する値.
+    //! @param [in]     value      スカラー除算する値.
     //! @return     スカラー除算した結果を返却します.
     //-------------------------------------------------------------------------
-    Quaternion  operator /  ( float ) const;
+    Quaternion operator / (float value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      等価比較演算子です.
@@ -3317,7 +2425,7 @@ public:
     //! @retval true    等価です.
     //! @retval false   非等価です.
     //-------------------------------------------------------------------------
-    bool        operator == ( const Quaternion& ) const;
+    bool operator == (const Quaternion& value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      非等価比較演算子です.
@@ -3326,28 +2434,28 @@ public:
     //! @retval true    非等価です.
     //! @retval flase   等価です.
     //-------------------------------------------------------------------------
-    bool        operator != ( const Quaternion& ) const;
+    bool operator != (const Quaternion& value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      四元数の長さを求めます.
     //!
     //! @return     四元数の長さを返却します.
     //-------------------------------------------------------------------------
-    float         Length       () const;
+    float Length() const;
 
     //-------------------------------------------------------------------------
     //! @brief      四元数の長さの2乗値を求めます.
     //!
     //! @return     四元数の長さの2乗値を返却します.
     //-------------------------------------------------------------------------
-    float         LengthSq     () const;
+    float LengthSq() const;
 
     //-------------------------------------------------------------------------
     //! @brief      四元数を正規化します.
     //!
     //! @return     正規化した四元数を返却します.
     //-------------------------------------------------------------------------
-    Quaternion& Normalize    ();
+    Quaternion& Normalize();
 
     //-------------------------------------------------------------------------
     //! @brief      零除算を考慮して，四元数を正規化を試みます.
@@ -3355,21 +2463,21 @@ public:
     //! @param [in]     set         長さが0の場合に設定する四元数.
     //! @return     長さが0でなければ正規化した四元数，0であればsetを返却します.
     //-------------------------------------------------------------------------
-    Quaternion& SafeNormalize( const Quaternion& );
+    Quaternion& SafeNormalize(const Quaternion& set);
 
     //-------------------------------------------------------------------------
     //! @brief      単位四元数化します.
     //!
     //! @return     単位四元数化した結果を返却します.
     //-------------------------------------------------------------------------
-    Quaternion& Identity     ();
+    Quaternion& Identity();
 
     //-------------------------------------------------------------------------
     //! @brief      単位四元数を生成します.
     //!
     //! @return     単位四元数を返却します.
     //-------------------------------------------------------------------------
-    static Quaternion   CreateIdentity();
+    static Quaternion CreateIdentity();
 
     //-------------------------------------------------------------------------
     //! @brief      単位四元数かどうかチェックします.
@@ -3378,7 +2486,7 @@ public:
     //! @retval true    単位四元数です.
     //! @retval false   非単位四元数です.
     //-------------------------------------------------------------------------
-    static bool        IsIdentity( const Quaternion &value );
+    static bool IsIdentity(const Quaternion& value);
 
     //-------------------------------------------------------------------------
     //! @brief      正規化されているかどうかチェックします.
@@ -3386,7 +2494,7 @@ public:
     //! @param [in]    value       チェックする値.
     //! @return     正規化されていればtrueを返却します.
     //-------------------------------------------------------------------------
-    static bool        IsNormalized( const Quaternion& value );
+    static bool IsNormalized(const Quaternion& value);
 
     //-------------------------------------------------------------------------
     //! @brief      四元数同士の乗算を行います.
@@ -3395,16 +2503,7 @@ public:
     //! @param [in]     b           入力四元数.
     //! @return     乗算結果を返却します.
     //-------------------------------------------------------------------------
-    static Quaternion  Multiply( const Quaternion& a, const Quaternion& b );
-
-    //-------------------------------------------------------------------------
-    //! @brief      四元数同士の乗算を行います.
-    //!
-    //! @param [in]     a           入力四元数.
-    //! @param [in]     b           入力四元数.
-    //! @param [out]    result      乗算結果.
-    //-------------------------------------------------------------------------
-    static void        Multiply( const Quaternion& a, const Quaternion& b, Quaternion &result );
+    static Quaternion Multiply(const Quaternion& a, const Quaternion& b);
 
     //-------------------------------------------------------------------------
     //! @brief      四元数の内積を求めます.
@@ -3413,16 +2512,7 @@ public:
     //! @param [in]     b           入力四元数.
     //! @return     四元数の内積を返却します.
     //-------------------------------------------------------------------------
-    static float         Dot( const Quaternion& a, const Quaternion& b );
-
-    //-------------------------------------------------------------------------
-    //! @brief      四元数の内積を求めます.
-    //!
-    //! @param [in]     a           入力四元数.
-    //! @param [in]     b           入力四元数.
-    //! @param [out]    result      四元数の内積.
-    //-------------------------------------------------------------------------
-    static void        Dot( const Quaternion& a, const Quaternion& b, float &result );
+    static float Dot(const Quaternion& a, const Quaternion& b);
 
     //-------------------------------------------------------------------------
     //! @brief      四元数の共役を求めます.
@@ -3430,15 +2520,7 @@ public:
     //! @param [in]     value       共役を求めたい四元数.
     //! @return     四元数の共役を返却します.
     //-------------------------------------------------------------------------
-    static Quaternion  Conjugate( const Quaternion& value );
-
-    //-------------------------------------------------------------------------
-    //! @brief      四元数の共役を求めます.
-    //!
-    //! @param [in]     value       共役を求めたい四元数.
-    //! @param [out]    result      四元数の共役.
-    //-------------------------------------------------------------------------
-    static void        Conjugate( const Quaternion& value, Quaternion &result );
+    static Quaternion Conjugate(const Quaternion& value);
 
     //-------------------------------------------------------------------------
     //! @brief      四元数を正規化します.
@@ -3446,15 +2528,7 @@ public:
     //! @param [in]     value       入力四元数.
     //! @return     四元数を正規化した結果を返却します.
     //-------------------------------------------------------------------------
-    static Quaternion  Normalize( const Quaternion& value );
-
-    //-------------------------------------------------------------------------
-    //! @brief      四元数を正規化します.
-    //!
-    //! @param [in]     value       入力四元数.
-    //! @param [out]    result      正規化した四元数.
-    //-------------------------------------------------------------------------
-    static void        Normalize( const Quaternion& value, Quaternion &result );
+    static Quaternion Normalize(const Quaternion& value);
 
     //-------------------------------------------------------------------------
     //! @brief      零除算を考慮して正規化を試みます.
@@ -3463,16 +2537,7 @@ public:
     //! @param [in]     set         長さが0の場合に設定する四元数.
     //! @return     長さが0でなければ正規化した四元数、長さが0であればsetを返却します.
     //-------------------------------------------------------------------------
-    static Quaternion   SafeNormalize( const Quaternion& value, const Quaternion& set );
-
-    //-------------------------------------------------------------------------
-    //! @brief      零除算を考慮して正規化を試みます.
-    //!
-    //! @param [in]     value       入力四元数.
-    //! @param [in]     set         長さが0の場合に設定する四元数.
-    //! @param [out]    result      長さが0でなければ正規化した四元数、長さが0であればset.
-    //-------------------------------------------------------------------------
-    static void         SafeNormalize( const Quaternion& value, const Quaternion& set, Quaternion& result );
+    static Quaternion SafeNormalize(const Quaternion& value, const Quaternion& set);
 
     //-------------------------------------------------------------------------
     //! @brief      ヨー・ピッチ・ロール角から四元数を生成します.
@@ -3482,17 +2547,7 @@ public:
     //! @param [in]     roll        ロール角(ラジアン).
     //! @return     指定されたヨー・ピッチ・ロール角から生成された四元数を返却します.
     //-------------------------------------------------------------------------
-    static Quaternion  CreateFromYawPitchRoll( float yaw, float pitch, float roll );
-
-    //-------------------------------------------------------------------------
-    //! @brief      ヨー・ピッチ・ロール角から四元数を生成します.
-    //!
-    //! @param [in]     yaw         ヨー角(ラジアン).
-    //! @param [in]     pitch       ピッチ角(ラジアン).
-    //! @param [in]     roll        ロール角(ラジアン).
-    //! @param [out]    result      指定されたヨー・ピッチ・ロール角から生成された四元数.
-    //-------------------------------------------------------------------------
-    static void        CreateFromYawPitchRoll( float yaw, float pitch, float roll, Quaternion &result );
+    static Quaternion CreateFromYawPitchRoll(float yaw, float pitch, float roll);
 
     //-------------------------------------------------------------------------
     //! @brief      指定された軸と角度から四元数を生成します.
@@ -3501,16 +2556,7 @@ public:
     //! @param [in]     rad         回転角(ラジアン).
     //! @return     指定された軸と角度から生成された四元数を返却します.
     //-------------------------------------------------------------------------
-    static Quaternion  CreateFromAxisAngle( const Vector3& axis, float radian );
-
-    //-------------------------------------------------------------------------
-    //! @brief      指定された軸と角度から四元数を生成します.
-    //!
-    //! @param [in]     axis        回転軸.
-    //! @param [in]     rad         回転角(ラジアン).
-    //! @param [out]    result      指定された軸と角度から生成された四元数.
-    //-------------------------------------------------------------------------
-    static void        CreateFromAxisAngle( const Vector3& axis, float radian, Quaternion& result );
+    static Quaternion CreateFromAxisAngle(const Vector3& axis, float radian);
 
     //-------------------------------------------------------------------------
     //! @brief      回転行列から四元数を生成します.
@@ -3518,15 +2564,7 @@ public:
     //! @param [in]     value       回転行列.
     //! @return     回転行列から生成した四元数を返却します.
     //-------------------------------------------------------------------------
-    static Quaternion   CreateFromRotationMatrix( const Matrix& value );
-
-    //-------------------------------------------------------------------------
-    //! @brief      回転行列から四元数を生成します.
-    //!
-    //! @param [in]     value       回転行列.
-    //! @param [out]    result      回転行列から生成した四元数を返却します.
-    //-------------------------------------------------------------------------
-    static void         CreateFromRotationMatrix( const Matrix& value, Quaternion& result );
+    static Quaternion CreateFromRotationMatrix(const Matrix& value);
 
     //-------------------------------------------------------------------------
     //! @brief      オイラー角(XYZの順)を取得します.
@@ -3534,15 +2572,7 @@ public:
     //! @param[in]      value       オイラー角を求める四元数.
     //! @return     オイラー角(XYZの順)をラジアン単位で返却します.
     //-------------------------------------------------------------------------
-    static Vector3      ToAxisAngle( const Quaternion& value );
-
-    //-------------------------------------------------------------------------
-    //! @brief      オイラー角(XYZの順)を取得します.
-    //!
-    //! @param[in]      value       オイラー角を求める四元数.
-    //! @param[out]     result      オイラー角の格納先.
-    //-------------------------------------------------------------------------
-    static void         ToAxisAngle( const Quaternion& value, Vector3& result );
+    static Vector3 ToAxisAngle(const Quaternion& value);
 
     //-------------------------------------------------------------------------
     //! @brief      球面線形補間を行います.
@@ -3552,17 +2582,7 @@ public:
     //! @param [in]     amount      補間係数.
     //! @return     球面線形補間した結果を返却します.
     //-------------------------------------------------------------------------
-    static Quaternion  Slerp( const Quaternion& a, const Quaternion& b, float amount );
-
-    //-------------------------------------------------------------------------
-    //! @brief      球面線形補間を行います.
-    //!
-    //! @param [in]     a           入力四元数.
-    //! @param [in]     b           入力四元数.
-    //! @param [in]     amount      補間係数.
-    //! @param [out]    result      球面線形補完した結果.
-    //-------------------------------------------------------------------------
-    static void        Slerp( const Quaternion& a, const Quaternion& b, float amount, Quaternion &result );
+    static Quaternion Slerp(const Quaternion& a, const Quaternion& b, float amount);
 
     //-------------------------------------------------------------------------
     //! @brief      球面四角形補間を行います.
@@ -3574,20 +2594,7 @@ public:
     //! @param [in]     amount      補間係数.
     //! @return     球面四角形補間した結果を返却します.
     //-------------------------------------------------------------------------
-    static Quaternion  Squad( const Quaternion& value, const Quaternion& a, const Quaternion& b, const Quaternion& c, float amount );
-
-    //-------------------------------------------------------------------------
-    //! @brief      球面四角形補間を行います.
-    //!
-    //! @param [in]     a           入力四元数.
-    //! @param [in]     b           入力四元数.
-    //! @param [in]     c           入力四元数.
-    //! @param [in]     d           入力四元数.
-    //! @param [in]     amount      補間係数.
-    //! @param [out]    result      球面四角形補間した結果.
-    //-------------------------------------------------------------------------
-    static void        Squad( const Quaternion& value, const Quaternion& a, const Quaternion& b, const Quaternion& c, float amount, Quaternion &result );
-
+    static Quaternion Squad(const Quaternion& value, const Quaternion& a, const Quaternion& b, const Quaternion& c, float amount);
 };
 
 
@@ -3616,105 +2623,31 @@ public:
     //!
     //! @param [in]     seed        設定する種.
     //-------------------------------------------------------------------------
-    XorShift( int seed );
+    XorShift(uint32_t seed);
 
     //-------------------------------------------------------------------------
     //! @brief      コピーコンストラクタです.
     //!
     //! @param [in]     random      複製元のインスタンス.
     //-------------------------------------------------------------------------
-    XorShift( const XorShift& random );
+    XorShift(const XorShift& random);
 
     //-------------------------------------------------------------------------
     //! @brief      デストラクタです.
     //-------------------------------------------------------------------------
-    ~XorShift();
+    ~XorShift() = default;
 
     //-------------------------------------------------------------------------
     //! @brief      ランダム種を設定します.
     //!
     //! @param [in]     seed        設定する種.
     //-------------------------------------------------------------------------
-    void SetSeed ( int seed );
+    void SetSeed(uint32_t seed);
 
     //-------------------------------------------------------------------------
-    //! @brief      乱数をuint32_t型として取得します.
-    //!
-    //! @return     乱数を返却します.
+    //! @brief      議事乱数を取得します.
     //-------------------------------------------------------------------------
-    uint32_t  GetAsU32();
-
-    //-------------------------------------------------------------------------
-    //! @brief      乱数をint型として取得します.
-    //!
-    //! @return     -0x80000000から0x7fffffffまでの範囲で乱数を返却します.
-    //-------------------------------------------------------------------------
-    int  GetAsS32();
-
-    //-------------------------------------------------------------------------
-    //! @brief      指定された値範囲までの乱数をint型として取得します.
-    //!
-    //! @param [in]     a       最大値.
-    //! @return     1からaまでの範囲で乱数を返却します.
-    //-------------------------------------------------------------------------
-    int  GetAsS32( int a );
-
-    //-------------------------------------------------------------------------
-    //! @brief      指定された値範囲で乱数をint型として取得します.
-    //!
-    //! @param [in]     a       最小値.
-    //! @param [in]     b       最大値.
-    //! @return     aからb-1までの範囲で乱数を返却します.
-    //-------------------------------------------------------------------------
-    int  GetAsS32( int a, int b );
-
-    //-------------------------------------------------------------------------
-    //! @brief      乱数をfloat型として取得します.
-    //!
-    //! @return     0.0fから1.0fまでの範囲で乱数を返却します.
-    //-------------------------------------------------------------------------
-    float  GetAsF32();
-
-    //-------------------------------------------------------------------------
-    //! @brief      指定された値範囲までの乱数をfloat型として取得します.
-    //!
-    //! @param [in]     a       最大値.
-    //! @return     0.0fからaまでの範囲で乱数を返却します.
-    //-------------------------------------------------------------------------
-    float  GetAsF32( float a );
-
-    //-------------------------------------------------------------------------
-    //! @brief      指定された値範囲までの乱数をfloat型として取得します.
-    //!
-    //! @param [in]     a       最小値.
-    //! @param [in]     b       最大値.
-    //! @return     aからbまでの範囲で乱数を返却します.
-    //-------------------------------------------------------------------------
-    float  GetAsF32( float a, float b );
-
-    //-------------------------------------------------------------------------
-    //! @brief      乱数をdouble型として取得します.
-    //!
-    //! @return     0.0から1.0までの範囲で乱数を返却します.
-    //-------------------------------------------------------------------------
-    double  GetAsF64();
-
-    //-------------------------------------------------------------------------
-    //! @brief      指定された値範囲までの乱数をdouble型として取得します.
-    //!
-    //! @param [in]     a       最大値.
-    //! @return     0.0からaまでの範囲で乱数を返却します.
-    //-------------------------------------------------------------------------
-    double  GetAsF64( double a );
-
-    //-------------------------------------------------------------------------
-    //! @brief      指定された値範囲で乱数をdouble型として取得します.
-    //!
-    //! @param [in]     a       最小値.
-    //! @param [in]     b       最大値.
-    //! @return     aからbまでの範囲で乱数を返却します.
-    //-------------------------------------------------------------------------
-    double  GetAsF64( double a, double b );
+    uint32_t GetValue();
 
     //-------------------------------------------------------------------------
     //! @brief      代入演算子です.
@@ -3722,7 +2655,7 @@ public:
     //! @param [in]     random      代入する値.
     //! @return     代入結果を返却します.
     //-------------------------------------------------------------------------
-    XorShift& operator =  ( const XorShift& random );
+    XorShift& operator = (const XorShift& random);
 
     //-------------------------------------------------------------------------
     //! @brief      等価演算子です.
@@ -3731,7 +2664,7 @@ public:
     //! @retval true    等価です.
     //! @retval false   非等価です.
     //-------------------------------------------------------------------------
-    bool    operator == ( const XorShift& random ) const;
+    bool operator == (const XorShift& random) const;
 
     //-------------------------------------------------------------------------
     //! @brief      非等価演算子です.
@@ -3740,16 +2673,16 @@ public:
     //! @retval true    非等価です.
     //! @retval false   等価です.
     //-------------------------------------------------------------------------
-    bool    operator != ( const XorShift& random ) const;
+    bool operator != (const XorShift& random) const;
 
 private:
     //=========================================================================
     // private variables
     //=========================================================================
-    uint32_t     m_X;            //!< 変数です.
-    uint32_t     m_Y;            //!< 変数です.
-    uint32_t     m_Z;            //!< 変数です.
-    uint32_t     m_W;            //!< 変数です.
+    uint32_t    m_X;    //!< 変数です.
+    uint32_t    m_Y;    //!< 変数です.
+    uint32_t    m_Z;    //!< 変数です.
+    uint32_t    m_W;    //!< 変数です.
 
     //=========================================================================
     // private methods
@@ -3758,7 +2691,7 @@ private:
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-// PCG class
+// PCG (Permuted congruential generator) class
 ///////////////////////////////////////////////////////////////////////////////
 class PCG
 {
@@ -3782,131 +2715,59 @@ public:
     //!
     //! @param [in]     seed        設定する種.
     //-------------------------------------------------------------------------
-    PCG( uint64_t seed );
+    PCG(uint64_t seed);
 
     //-------------------------------------------------------------------------
     //! @brief      コピーコンストラクタです.
     //!
     //! @param [in]     random      複製元のインスタンス.
     //-------------------------------------------------------------------------
-    PCG( const PCG& random );
+    PCG(const PCG& random);
 
     //-------------------------------------------------------------------------
     //! @brief      デストラクタです.
     //-------------------------------------------------------------------------
-    ~PCG();
+    ~PCG() = default;
 
     //-------------------------------------------------------------------------
     //! @brief      ランダム種を設定します.
     //!
     //! @param [in]     seed        設定する種.
     //-------------------------------------------------------------------------
-    void SetSeed( uint64_t seed );
+    void SetSeed(uint64_t seed);
 
     //-------------------------------------------------------------------------
-    //! @brief      乱数をuint32_t型として取得します.
+    //! @brief      疑似乱数を取得します.
     //!
-    //! @return     乱数を返却します.
+    //! @return     疑似乱数を返却します.
     //-------------------------------------------------------------------------
-    uint32_t  GetAsU32();
-
-    //-------------------------------------------------------------------------
-    //! @brief      乱数をint型として取得します.
-    //!
-    //! @return     -0x80000000から0x7fffffffまでの範囲で乱数を返却します.
-    //-------------------------------------------------------------------------
-    int  GetAsS32();
-
-    //-------------------------------------------------------------------------
-    //! @brief      指定された値範囲までの乱数をint型として取得します.
-    //!
-    //! @param [in]     a       最大値.
-    //! @return     1からaまでの範囲で乱数を返却します.
-    //-------------------------------------------------------------------------
-    int  GetAsS32( int a );
-
-    //-------------------------------------------------------------------------
-    //! @brief      指定された値範囲で乱数をint型として取得します.
-    //!
-    //! @param [in]     a       最小値.
-    //! @param [in]     b       最大値.
-    //! @return     aからb-1までの範囲で乱数を返却します.
-    //-------------------------------------------------------------------------
-    int  GetAsS32( int a, int b );
-
-    //-------------------------------------------------------------------------
-    //! @brief      乱数をfloat型として取得します.
-    //!
-    //! @return     0.0fから1.0fまでの範囲で乱数を返却します.
-    //-------------------------------------------------------------------------
-    float  GetAsF32();
-
-    //-------------------------------------------------------------------------
-    //! @brief      指定された値範囲までの乱数をfloat型として取得します.
-    //!
-    //! @param [in]     a       最大値.
-    //! @return     0.0fからaまでの範囲で乱数を返却します.
-    //-------------------------------------------------------------------------
-    float  GetAsF32( float a );
-
-    //-------------------------------------------------------------------------
-    //! @brief      指定された値範囲までの乱数をfloat型として取得します.
-    //!
-    //! @param [in]     a       最小値.
-    //! @param [in]     b       最大値.
-    //! @return     aからbまでの範囲で乱数を返却します.
-    //-------------------------------------------------------------------------
-    float  GetAsF32( float a, float b );
-
-    //-------------------------------------------------------------------------
-    //! @brief      乱数をdouble型として取得します.
-    //!
-    //! @return     0.0から1.0までの範囲で乱数を返却します.
-    //-------------------------------------------------------------------------
-    double  GetAsF64();
-
-    //-------------------------------------------------------------------------
-    //! @brief      指定された値範囲までの乱数をdouble型として取得します.
-    //!
-    //! @param [in]     a       最大値.
-    //! @return     0.0からaまでの範囲で乱数を返却します.
-    //-------------------------------------------------------------------------
-    double  GetAsF64( double a );
-
-    //-------------------------------------------------------------------------
-    //! @brief      指定された値範囲で乱数をdouble型として取得します.
-    //!
-    //! @param [in]     a       最小値.
-    //! @param [in]     b       最大値.
-    //! @return     aからbまでの範囲で乱数を返却します.
-    //-------------------------------------------------------------------------
-    double  GetAsF64( double a, double b );
+    uint32_t GetValue();
 
     //-------------------------------------------------------------------------
     //! @brief      代入演算子です.
     //!
-    //! @param [in]     random      代入する値.
+    //! @param [in]     value      代入する値.
     //! @return     代入結果を返却します.
     //-------------------------------------------------------------------------
-    PCG& operator =  ( const PCG& random );
+    PCG& operator = (const PCG& value);
 
     //-------------------------------------------------------------------------
     //! @brief      等価演算子です.
     //
-    //! @param [in]     random      比較する値.
+    //! @param [in]     value      比較する値.
     //! @retval true    等価です.
     //! @retval false   非等価です.
     //-------------------------------------------------------------------------
-    bool    operator == ( const PCG& random ) const;
+    bool operator == (const PCG& value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      非等価演算子です.
     //!
-    //! @param [in]     random      比較する値.
+    //! @param [in]     value       比較する値.
     //! @retval true    非等価です.
     //! @retval false   等価です.
     //-------------------------------------------------------------------------
-    bool    operator != ( const PCG& random ) const;
+    bool operator != (const PCG& value) const;
 
 private:
     //=========================================================================
@@ -3920,6 +2781,128 @@ private:
     // private methods
     //=========================================================================
     static uint32_t Rotate(uint32_t x, uint32_t r);
+};
+
+
+///////////////////////////////////////////////////////////////////////////////
+// RandomHelper class
+///////////////////////////////////////////////////////////////////////////////
+class RandomHelper
+{
+    //=========================================================================
+    // list of friend classes and methods.
+    //=========================================================================
+    /* NOTHING */
+
+public:
+    //=========================================================================
+    // public variables.
+    //=========================================================================
+    /* NOTHING */
+
+    //=========================================================================
+    // public methods.
+    //=========================================================================
+
+    //-------------------------------------------------------------------------
+    //! @brief      疑似乱数値をint型に変換します.
+    //! 
+    //! @param[in]      value       疑似乱数の値.
+    //! @return     変換した結果を返却します.
+    //-------------------------------------------------------------------------
+    static int GetAsInt(uint32_t value);
+
+    //-------------------------------------------------------------------------
+    //! @brief      疑似乱数をint型に変換し，指定範囲値に変換します.
+    //! 
+    //! @param[in]      value       疑似乱数の値.
+    //! @param[in]      mini        範囲の最小値.
+    //! @param[in]      maxi        範囲の最大値.
+    //! @return     指定範囲値に変換した結果を返却します.
+    //-------------------------------------------------------------------------
+    static int GetAsInt(uint32_t value, int mini, int maxi);
+
+    //-------------------------------------------------------------------------
+    //! @brief      疑似乱数値をfloat型に変換します.
+    //! 
+    //! @param[in]      value       疑似乱数の値.
+    //! @return     変換した結果を返却します.
+    //-------------------------------------------------------------------------
+    static float GetAsFloat(uint32_t value);
+
+    //-------------------------------------------------------------------------
+    //! @brief      疑似乱数をfloat型に変換し，指定範囲値に変換します.
+    //! 
+    //! @param[in]      value       疑似乱数の値.
+    //! @param[in]      mini        範囲の最小値.
+    //! @param[in]      maxi        範囲の最大値.
+    //! @return     指定範囲値に変換した結果を返却します.
+    //-------------------------------------------------------------------------
+    static float GetAsFloat(uint32_t value, float mini, float maxi);
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// Quad2 class
+///////////////////////////////////////////////////////////////////////////////
+class Quad2
+{
+    //=========================================================================
+    // list of friend classes and methods.
+    //=========================================================================
+    /* NOTHING */
+
+public:
+    //=========================================================================
+    // public variables.
+    //=========================================================================
+    int x = 0;
+    int y = 0;
+    int w = 0;
+    int h = 0;
+
+    //=========================================================================
+    // public methods.
+    //=========================================================================
+
+    //-------------------------------------------------------------------------
+    //! @brief      コンストラクタです.
+    //-------------------------------------------------------------------------
+    Quad2() = default;
+
+    //-------------------------------------------------------------------------
+    //! @brief      引数付きコンストラクタです.
+    //-------------------------------------------------------------------------
+    Quad2(int nx, int ny, int width, int height);
+
+    //-------------------------------------------------------------------------
+    //! @brief      平行移動します.
+    //! 
+    //! @param[in]      tx      X成分の移動量.
+    //! @param[in]      ty      Y成分の移動量.
+    //! @return     平行移動後の結果を返却します.
+    //-------------------------------------------------------------------------
+    Quad2& Move(int tx, int ty);
+
+    //-------------------------------------------------------------------------
+    //! @brief      矩形と矩形の包含を調べます.
+    //! 
+    //! @param[in]      lhs     矩形
+    //! @param[in]      rhs     矩形
+    //! @retval true    含まれます.
+    //! @retval false   含まれません.
+    //-------------------------------------------------------------------------
+    static bool Contains(const Quad2& lhs, const Quad2& rhs);
+
+    //-------------------------------------------------------------------------
+    //! @brief      点と矩形の包含を調べます.
+    //! 
+    //! @param[in]      x       点のX成分.
+    //! @param[in]      y       点のY成分.
+    //! @param[in]      quad    矩形.
+    //! @retval true    含まれます.
+    //! @retval false   含まれません.
+    //-------------------------------------------------------------------------
+    static bool Contains(int x, int y, const Quad2& quad);
 };
 
 //-----------------------------------------------------------------------------
@@ -3972,155 +2955,6 @@ Vector3 ComputeIntersection(const Vector4& plane, const Vector3& orig, const Vec
 //! @param[out]     corners     錐台の8角を返却します.
 //-----------------------------------------------------------------------------
 void GetCorners(const Vector4* planes, Vector3* corners);
-
-
-///////////////////////////////////////////////////////////////////////////////
-// Half2 union
-///////////////////////////////////////////////////////////////////////////////
-union Half2 
-{
-    struct {
-        half x;
-        half y;
-    };
-    uint32_t u;
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// Half3 structure
-///////////////////////////////////////////////////////////////////////////////
-struct Half3
-{
-    half x;
-    half y;
-    half z;
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// Half4 union
-///////////////////////////////////////////////////////////////////////////////
-union Half4
-{
-    struct {
-        half x;
-        half y;
-        half z;
-        half w;
-    };
-    uint64_t u;
-};
-
-//-----------------------------------------------------------------------------
-//! @brief      半精度浮動小数点形式に変換します.
-//!
-//! @param[in]      value       単精度浮動小数です.
-//! @return     半精度浮動小数形式に変換した結果を返却します.
-//-----------------------------------------------------------------------------
-Half2 EncodeHalf2(const Vector2& value);
-
-//-----------------------------------------------------------------------------
-//! @brief      単精度浮動小数点形式に変換します.
-//!
-//! @param[in]      value       半精度浮動小数です.
-//! @return     単精度浮動小数形式に変換した結果を返却します.
-//-----------------------------------------------------------------------------
-Vector2 DecodeHalf2(const Half2& value);
-
-//-----------------------------------------------------------------------------
-//! @brief      半精度浮動小数点形式に変換します.
-//!
-//! @param[in]      value       単精度浮動小数です.
-//! @return     半精度浮動小数形式に変換した結果を返却します.
-//-----------------------------------------------------------------------------
-Half3 EncodeHalf3(const Vector3& value);
-
-//-----------------------------------------------------------------------------
-//! @brief      単精度浮動小数点形式に変換します.
-//!
-//! @param[in]      value       半精度浮動小数です.
-//! @return     単精度浮動小数形式に変換した結果を返却します.
-//-----------------------------------------------------------------------------
-Vector3 DecodeHalf3(const Half3& value);
-
-//-----------------------------------------------------------------------------
-//! @brief      半精度浮動小数点形式に変換します.
-//!
-//! @param[in]      value       単精度浮動小数です.
-//! @return     半精度浮動小数形式に変換した結果を返却します.
-//-----------------------------------------------------------------------------
-Half4 EncodeHalf4(const Vector4& value);
-
-//-----------------------------------------------------------------------------
-//! @brief      単精度浮動小数点形式に変換します.
-//!
-//! @param[in]      value       半精度浮動小数です.
-//! @return     単精度浮動小数形式に変換した結果を返却します.
-//-----------------------------------------------------------------------------
-Vector4 DecodeHalf4(const Half4& value);
-
-//-----------------------------------------------------------------------------
-//! @brief      4要素のUNORM形式に変換します.
-//!
-//! @param[in]      value       4次元ベクトル.
-//! @return     4要素のUNORM形式にパッキングした値を返却します.
-//-----------------------------------------------------------------------------
-uint32_t EncodeUnorm4(const Vector4& value);
-
-//-----------------------------------------------------------------------------
-//! @brief      4要素のUNORM形式を展開します.
-//!
-//! @param[in]      value      4要素のUNORM形式.
-//! @return     4次元ベクトルに展開した値を返却します.
-//-----------------------------------------------------------------------------
-Vector4 DecodeUnorm4(uint32_t value);
-
-//-----------------------------------------------------------------------------
-//! @brief      2要素のUNORM形式に変換します.
-//!
-//! @param[in]      value       2次元ベクトル.
-//! @return     2次元ベクトルに展開した値を返却します.
-//-----------------------------------------------------------------------------
-uint16_t EncodeUnorm2(const Vector2& value);
-
-//-----------------------------------------------------------------------------
-//! @brief      2要素のUNORM形式を展開します.
-//!
-//! @param[in]      value      2要素のUNORM形式.
-//! @return     2次元ベクトルに展開した値を返却します.
-//-----------------------------------------------------------------------------
-Vector2 DecodeUnorm2(uint16_t value);
-
-//-----------------------------------------------------------------------------
-//! @brief      4要素のSNORM形式に変換します.
-//!
-//! @param[in]      value       4次元ベクトル.
-//! @return     4要素のSNORM形式にパッキングした値を返却します.
-//-----------------------------------------------------------------------------
-uint32_t EncodeSnorm4(const Vector4& value);
-
-//-----------------------------------------------------------------------------
-//! @brief      4要素のSNORM形式を展開します.
-//!
-//! @param[in]      value      4要素のSNORM形式.
-//! @return     4次元ベクトルに展開した値を返却します.
-//-----------------------------------------------------------------------------
-Vector4 DecodeSnorm4(uint32_t value);
-
-//-----------------------------------------------------------------------------
-//! @brief      2要素のSNORM形式に変換します.
-//!
-//! @param[in]      value       2次元ベクトル.
-//! @return     2次元ベクトルに展開した値を返却します.
-//-----------------------------------------------------------------------------
-uint16_t EncodeSnorm2(const Vector2& value);
-
-//-----------------------------------------------------------------------------
-//! @brief      2要素のSNORM形式を展開します.
-//!
-//! @param[in]      value      2要素のSNORM形式.
-//! @return     2次元ベクトルに展開した値を返却します.
-//-----------------------------------------------------------------------------
-Vector2 DecodeSnorm2(uint16_t value);
 
 } // namespace asdx
 

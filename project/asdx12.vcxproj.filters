@@ -55,6 +55,9 @@
     <Filter Include="ソース ファイル\external\meshoptimizer">
       <UniqueIdentifier>{46543bdd-ffc5-45ee-ba45-318107a7250c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ソース ファイル\external\Cflat">
+      <UniqueIdentifier>{e1cc366b-9bd2-45a0-90e7-96dcec3ce9be}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\external\imgui\imgui.cpp">
@@ -127,9 +130,6 @@
       <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
     <ClCompile Include="..\src\fnd\asdxMouse.cpp">
-      <Filter>ソース ファイル\fnd</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\fnd\asdxRandom.cpp">
       <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
     <ClCompile Include="..\src\fnd\asdxTablet.cpp">
@@ -248,6 +248,12 @@
     </ClCompile>
     <ClCompile Include="..\src\gfx\asdxFont.cpp">
       <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\fw\asdxScript.cpp">
+      <Filter>ソース ファイル\fw</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\Cflat\Cflat.cpp">
+      <Filter>ソース ファイル\external\Cflat</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -445,6 +451,27 @@
     </ClInclude>
     <ClInclude Include="..\include\gfx\asdxFont.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fw\asdxScript.h">
+      <Filter>ヘッダー ファイル\fw</Filter>
+    </ClInclude>
+    <ClInclude Include="..\external\Cflat\Cflat.h">
+      <Filter>ソース ファイル\external\Cflat</Filter>
+    </ClInclude>
+    <ClInclude Include="..\external\Cflat\CflatConfig.h">
+      <Filter>ソース ファイル\external\Cflat</Filter>
+    </ClInclude>
+    <ClInclude Include="..\external\Cflat\CflatGlobal.h">
+      <Filter>ソース ファイル\external\Cflat</Filter>
+    </ClInclude>
+    <ClInclude Include="..\external\Cflat\CflatGlobalConfig.h">
+      <Filter>ソース ファイル\external\Cflat</Filter>
+    </ClInclude>
+    <ClInclude Include="..\external\Cflat\CflatHelper.h">
+      <Filter>ソース ファイル\external\Cflat</Filter>
+    </ClInclude>
+    <ClInclude Include="..\external\Cflat\CflatMacros.h">
+      <Filter>ソース ファイル\external\Cflat</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

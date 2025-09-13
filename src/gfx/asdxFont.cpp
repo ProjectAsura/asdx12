@@ -16,6 +16,14 @@
 #include <res/asdxResTexture.h>
 
 
+#define ASDX_FONT_FORMATTING \
+    assert(format != nullptr);          \
+    char buffer[1024] = {};             \
+    va_list arg;                        \
+    va_start(arg, format);              \
+    vsprintf_s(buffer, format, arg);    \
+    va_end(arg);                        \
+
 namespace { 
 
 //----------------------------------------------------------------------------
@@ -25,9 +33,9 @@ namespace {
 
 
 //----------------------------------------------------------------------------
-//      Unicodeを取得します.
+//      UTF-8からUTF-32に変換します.
 //----------------------------------------------------------------------------
-bool Utf8Next(const char* &p, uint32_t &out)
+bool ToUTF32(const char* &p, uint32_t &out)
 {
     const uint8_t* s = reinterpret_cast<const uint8_t*>(p);
     if (*s == 0)
@@ -285,7 +293,7 @@ void FontRenderer::Add
     while(*p)
     {
         uint32_t unicode = 0;
-        if (!Utf8Next(p, unicode))
+        if (!ToUTF32(p, unicode))
             continue;
 
         if (unicode == '\n')
@@ -327,13 +335,7 @@ void FontRenderer::Add
 //-----------------------------------------------------------------------------
 void FontRenderer::AddFormat(SpriteRenderer& renderer, const Font& font, int x, int y, int layer, int* outX, int* outY, const char* format, ...)
 {
-    assert(format != nullptr);
-    char buffer[2048] = {};
-    va_list arg;
-    va_start(arg, format);
-    vsprintf_s(buffer, format, arg);
-    va_end(arg);
-
+    ASDX_FONT_FORMATTING
     Add(renderer, font, x, y, layer, outX, outY, buffer);
 }
 
@@ -342,13 +344,7 @@ void FontRenderer::AddFormat(SpriteRenderer& renderer, const Font& font, int x, 
 //-----------------------------------------------------------------------------
 void FontRenderer::AddFormat(SpriteRenderer& renderer, const Font& font, int x, int y, int layer, const char* format, ...)
 {
-    assert(format != nullptr);
-    char buffer[2048] = {};
-    va_list arg;
-    va_start(arg, format);
-    vsprintf_s(buffer, format, arg);
-    va_end(arg);
-
+    ASDX_FONT_FORMATTING
     Add(renderer, font, x, y, layer, buffer);
 }
 
@@ -357,13 +353,7 @@ void FontRenderer::AddFormat(SpriteRenderer& renderer, const Font& font, int x, 
 //-----------------------------------------------------------------------------
 void FontRenderer::AddFormat(SpriteRenderer& renderer, const Font& font, int x, int y, const char* format, ...)
 {
-    assert(format != nullptr);
-    char buffer[2048] = {};
-    va_list arg;
-    va_start(arg, format);
-    vsprintf_s(buffer, format, arg);
-    va_end(arg);
-
+    ASDX_FONT_FORMATTING
     Add(renderer, font, x, y, buffer);
 }
 
