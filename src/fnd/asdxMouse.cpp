@@ -131,7 +131,7 @@ int Mouse::GetCursorDiffY() const
 //-----------------------------------------------------------------------------
 //      キーが押されっぱなしかどうかチェックします.
 //-----------------------------------------------------------------------------
-bool Mouse::IsHold( const uint32_t button ) const
+bool Mouse::IsHold(uint32_t button) const
 {
     assert( button < NUM_MOUSE_BUTTON );
     return m_Button[ m_Index ][ button ];
@@ -140,7 +140,7 @@ bool Mouse::IsHold( const uint32_t button ) const
 //-----------------------------------------------------------------------------
 //      キーが押されたかどうかチェックします.
 //-----------------------------------------------------------------------------
-bool Mouse::IsDown( const uint32_t button ) const
+bool Mouse::IsDown(uint32_t button) const
 {
     assert( button < NUM_MOUSE_BUTTON );
     return m_Button[ m_Index ][ button ] && ( !m_Button[ 1 - m_Index ][ button ] );
@@ -149,7 +149,7 @@ bool Mouse::IsDown( const uint32_t button ) const
 //-----------------------------------------------------------------------------
 //      ドラッグ中かどうかチェックします.
 //-----------------------------------------------------------------------------
-bool Mouse::IsDrag( const uint32_t button ) const
+bool Mouse::IsDrag(uint32_t button) const
 {
     assert( button < NUM_MOUSE_BUTTON );
     return m_Button[ m_Index ][ button ] && m_Button[ 1 - m_Index ][ button ];

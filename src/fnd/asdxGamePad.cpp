@@ -8,11 +8,9 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <cassert>
-#include <cmath>
 #include <Windows.h>
 #include <Xinput.h>
 #include <fnd/asdxHid.h>
-
 
 
 namespace /* anonymous */ {
@@ -27,7 +25,6 @@ namespace /* anonymous */ {
 template<typename T> inline
 T Max( T a, T b )
 { return ( a > b ) ? a : b; }
-
 
 } // namespace /* anonymous */
 
@@ -85,8 +82,7 @@ bool GamePad::IsConnected() const
 //-----------------------------------------------------------------------------
 void GamePad::UpdateState()
 {
-    XINPUT_STATE state;
-    ZeroMemory( &state, sizeof(state) );
+    XINPUT_STATE state = {};
 
     const auto result = XInputGetState( m_PlayerIndex, &state );
     if ( result == ERROR_SUCCESS )
@@ -145,13 +141,12 @@ void GamePad::UpdateState()
 //-----------------------------------------------------------------------------
 //      バイブレーションさせます.
 //-----------------------------------------------------------------------------
-void GamePad::Vibrate( float leftMoter, float rightMoter ) const
+void GamePad::Vibrate(float lhs, float rhs) const
 {
-    XINPUT_VIBRATION vibrate;
-    ZeroMemory( &vibrate, sizeof(vibrate) );
+    XINPUT_VIBRATION vibrate = {};
 
-    vibrate.wLeftMotorSpeed  = static_cast<WORD>(leftMoter * 65535.0f);
-    vibrate.wRightMotorSpeed = static_cast<WORD>(rightMoter * 65535.0f);
+    vibrate.wLeftMotorSpeed  = static_cast<WORD>(lhs * 65535.0f);
+    vibrate.wRightMotorSpeed = static_cast<WORD>(rhs * 65535.0f);
 
     XInputSetState( m_PlayerIndex, &vibrate );
 }
@@ -159,7 +154,7 @@ void GamePad::Vibrate( float leftMoter, float rightMoter ) const
 //-----------------------------------------------------------------------------
 //      プレイヤーインデックスを設定します.
 //-----------------------------------------------------------------------------
-void GamePad::SetPlayerIndex( const uint32_t index )
+void GamePad::SetPlayerIndex(uint32_t index)
 {
     assert( index < 4 );
     m_PlayerIndex = index;
@@ -174,14 +169,14 @@ uint32_t GamePad::GetPlayerIndex() const
 //-----------------------------------------------------------------------------
 //      ボタンが押されたかチェックします.
 //-----------------------------------------------------------------------------
-bool GamePad::IsDown( PAD_BUTTON type ) const
-{ return ( m_PressedButtons & type ) > 0; }
+bool GamePad::IsDown(PAD_BUTTON type) const
+{ return !!(m_PressedButtons & type); }
 
 //-----------------------------------------------------------------------------
 //      ボタンが押されているかチェックします.
 //-----------------------------------------------------------------------------
-bool GamePad::IsHold( PAD_BUTTON type ) const
-{ return ( m_Buttons & type ) > 0; }
+bool GamePad::IsHold(PAD_BUTTON type) const
+{ return !!(m_Buttons & type); }
 
 //-----------------------------------------------------------------------------
 //      左サムスティックのX成分を取得します.

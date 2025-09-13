@@ -24,7 +24,7 @@ namespace asdx {
 //-----------------------------------------------------------------------------
 Keyboard::Keyboard()
 : m_Index( 0 )
-{ memset( m_Keys, 0, sizeof( bool ) * MAX_KEYS * 2 ); }
+{ memset(m_Keys, 0, sizeof(bool) * MAX_KEYS * 2); }
 
 //-----------------------------------------------------------------------------
 //      デストラクタです.
@@ -39,8 +39,8 @@ void Keyboard::UpdateState()
 {
     m_Index = 1 - m_Index;
 
-    uint8_t keys[ MAX_KEYS ];
-    GetKeyboardState( keys );
+    uint8_t keys[ MAX_KEYS ] = {};
+    GetKeyboardState(keys);
     for( uint32_t i=0; i<MAX_KEYS; ++i )
     { m_Keys[ m_Index ][ i ] = ( ( keys[ i ] & 0x80 ) != 0 ) ? true : false; }
 }
@@ -48,7 +48,7 @@ void Keyboard::UpdateState()
 //-----------------------------------------------------------------------------
 //      キーが押されっぱなしかどうかチェックします.
 //-----------------------------------------------------------------------------
-bool Keyboard::IsHold( const uint32_t keyCode ) const
+bool Keyboard::IsHold(uint32_t keyCode) const
 {
     assert( keyCode < MAX_KEYS );
     uint32_t idx = m_Index;
@@ -59,7 +59,7 @@ bool Keyboard::IsHold( const uint32_t keyCode ) const
 //-----------------------------------------------------------------------------
 //      キーが押されたかどうかチェックします.
 //-----------------------------------------------------------------------------
-bool Keyboard::IsDown( const uint32_t keyCode ) const
+bool Keyboard::IsDown(uint32_t keyCode) const
 {
     assert( keyCode < MAX_KEYS );
     uint32_t idx = m_Index;
@@ -70,7 +70,7 @@ bool Keyboard::IsDown( const uint32_t keyCode ) const
 //-----------------------------------------------------------------------------
 //      キーコードを変換します.
 //-----------------------------------------------------------------------------
-uint32_t Keyboard::ConvertKey( const uint32_t keyCode )
+uint32_t Keyboard::ConvertKey(uint32_t keyCode)
 {
     uint32_t key = keyCode;
     uint32_t result = 0;

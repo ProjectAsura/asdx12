@@ -136,14 +136,16 @@ bool FontBinary::LoadW(const wchar_t* path)
 //-----------------------------------------------------------------------------
 //      メモリからロードします.
 //-----------------------------------------------------------------------------
-bool FontBinary::LoadFromMemory(void* pBinary, [[maybe_unused]] size_t binarySize)
+bool FontBinary::LoadFromMemory(void* pBinary, size_t binarySize)
 {
+    ASDX_UNUSED(binarySize);
 #if ASDX_DEBUG
     // データ整合性をチェック.
     {
         flatbuffers::Verifier::Options options;
-        [[maybe_unused]] flatbuffers::Verifier verifier(reinterpret_cast<const uint8_t*>(pBinary), binarySize, options);
+        flatbuffers::Verifier verifier(reinterpret_cast<const uint8_t*>(pBinary), binarySize, options);
         assert(res::VerifyFontBinaryBuffer(verifier));
+        ASDX_UNUSED(verifier);
     }
 #endif
 
