@@ -74,19 +74,29 @@ inline constexpr bool IsNaN(double value) noexcept
 //-----------------------------------------------------------------------------
 //      無限大かどうかチェックします.
 //-----------------------------------------------------------------------------
-inline constexpr bool IsInf(float value)
+inline bool IsInf(float value)
 {
     // ビット列に変換して，指数部がすべて 1 かどうかチェック.
+#if _HAS_CXX20
     auto u = std::bit_cast<uint32_t>(value);
+#else
+    uint32_t u = 0;
+    memcpy(&u, &value, sizeof(u));
+#endif
     return ((u & 0x7f800000) == 0x7f800000) && (value == value);
 }
 
 //-----------------------------------------------------------------------------
 //      無限大かどうかチェックします.
 //-----------------------------------------------------------------------------
-inline constexpr bool IsInf(double value)
+inline bool IsInf(double value)
 {
+#if _HAS_CXX20
     auto l = std::bit_cast<uint64_t>(value);
+#else
+    uint32_t l = 0;
+    memcpy(&l, &value, sizeof(l));
+#endif
     return ((l & 0x7ff0000000000000) == 0x7ff0000000000000) && (value == value);
 }
 
@@ -175,7 +185,12 @@ inline half ToHalf(float value)
     half result;
 
     // ビット列を崩さないままuint32_t型に変換.
+#if _HAS_CXX20
     uint32_t bit = std::bit_cast<uint32_t>(value);
+#else
+    uint32_t bit;
+    memcpy(&bit, &value, sizeof(bit));
+#endif
 
     // float表現の符号bitを取り出し.
     uint16_t sign = (bit & 0x80000000U) >> 16U;
@@ -249,7 +264,13 @@ inline float ToFloat(half value)
              ((exponent + 112 ) << 23) | // 指数部.
              (mantissa << 13 );           // 仮数部.
 
+#if _HAS_CXX20
     return std::bit_cast<float>(result);
+#else
+    float out;
+    memcpy(&out, &result, sizeof(out));
+    return out;
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -270,7 +291,7 @@ inline constexpr double Lerp(double a, double b, double amount) noexcept
 ///////////////////////////////////////////////////////////////////////////////
 
 //-----------------------------------------------------------------------------
-//      引数付きコンストラクタ.
+//      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
 inline Vector2::Vector2(const float* pf)
 {
@@ -280,7 +301,15 @@ inline Vector2::Vector2(const float* pf)
 }
 
 //-----------------------------------------------------------------------------
-//      引数付きコンストラクタ.
+//      引数付きコンストラクタです.
+//-----------------------------------------------------------------------------
+inline Vector2::Vector2(float value)
+: x(value)
+, y(value)
+{ /* DO_NOTHING */ }
+
+//-----------------------------------------------------------------------------
+//      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
 inline Vector2::Vector2(float nx, float ny)
 : x(nx)
@@ -750,6 +779,15 @@ inline Vector3::Vector3(const float* pf)
     y = pf[1];
     z = pf[2];
 }
+
+//-----------------------------------------------------------------------------
+//      引数付きコンストラクタです.
+//-----------------------------------------------------------------------------
+inline Vector3::Vector3(float value)
+: x(value)
+, y(value)
+, z(value)
+{ /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
@@ -1368,6 +1406,16 @@ inline Vector4::Vector4(const float* pf)
     z = pf[2];
     w = pf[3];
 }
+
+//-----------------------------------------------------------------------------
+//      引数付きコンストラクタです.
+//-----------------------------------------------------------------------------
+inline Vector4::Vector4(float value)
+: x(value)
+, y(value)
+, z(value)
+, w(value)
+{ /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.

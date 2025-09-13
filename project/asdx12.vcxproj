@@ -93,7 +93,6 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;$(ProjectDir)..\external\meshoptimizer;$(ProjectDir)..\external\flatbuffers\include;$(ProjectDir)..\external\cflat;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -117,7 +116,6 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;$(ProjectDir)..\external\meshoptimizer;$(ProjectDir)..\external\flatbuffers\include;$(ProjectDir)..\external\cflat;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -143,7 +141,6 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;$(ProjectDir)..\external\meshoptimizer;$(ProjectDir)..\external\flatbuffers\include;$(ProjectDir)..\external\cflat;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -170,7 +167,6 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;$(ProjectDir)..\external\meshoptimizer;$(ProjectDir)..\external\flatbuffers\include;$(ProjectDir)..\external\cflat;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
