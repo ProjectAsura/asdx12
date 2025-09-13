@@ -255,6 +255,9 @@
     <ClCompile Include="..\external\Cflat\Cflat.cpp">
       <Filter>ソース ファイル\external\Cflat</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\fnd\asdxStateMachine.cpp">
+      <Filter>ソース ファイル\fnd</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\external\imgui\imconfig.h">
@@ -472,6 +475,9 @@
     </ClInclude>
     <ClInclude Include="..\external\Cflat\CflatMacros.h">
       <Filter>ソース ファイル\external\Cflat</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fnd\asdxStateMachine.h">
+      <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
