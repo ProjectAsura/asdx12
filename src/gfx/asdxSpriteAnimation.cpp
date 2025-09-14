@@ -35,14 +35,15 @@ SpriteAnimation::~SpriteAnimation()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-void SpriteAnimation::Init(int w, int h, std::vector<Frame>&& frames)
+void SpriteAnimation::Init(int w, int h, const std::vector<Frame>& frames)
 {
     m_SpriteW    = w;
     m_SpriteH    = h;
     m_FrameIndex = 0;
 
-    m_Frames = std::move(frames);
+    m_Frames = frames;
     m_Frames.shrink_to_fit();
+    assert(m_Frames.size() <= UINT32_MAX);
 }
 
 //-----------------------------------------------------------------------------
@@ -87,12 +88,83 @@ void SpriteAnimation::NextFrameByTime(float changeSec, float deltaSec, float& el
 //-----------------------------------------------------------------------------
 //      スプライトを追加します.
 //-----------------------------------------------------------------------------
-void SpriteAnimation::Add(SpriteRenderer& renderer, int x, int y, int layer)
+void SpriteAnimation::Add(SpriteRenderer& renderer, int x, int y, int layer, uint8_t flag)
 {
     assert(!m_Frames.empty());
     assert(m_FrameIndex <= m_Frames.size() - 1);
-    const auto& frame = m_Frames[m_FrameIndex];
-    renderer.Add(x, y, m_SpriteW, m_SpriteH, layer, frame.uv0, frame.uv1);
+    auto uv0 = m_Frames[m_FrameIndex].uv0;
+    auto uv1 = m_Frames[m_FrameIndex].uv1;
+
+    // 水平方向に反転.
+    if (!!(flag & Flag::FLIP_X))
+    {
+        auto u = uv0.x;
+        uv0.x = uv1.x;
+        uv1.x = u;
+    }
+
+    // 垂直方向に反転.
+    if (!!(flag & Flag::FLIP_Y))
+    {
+        auto v = uv0.y;
+        uv0.y = uv1.y;
+        uv1.y = v;
+    }
+
+    renderer.Add(x, y, m_SpriteW, m_SpriteH, layer, uv0, uv1);
 }
+
+///////////////////////////////////////////////////////////////////////////////
+// TimerSpriteAnimation class
+///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      コンストラクタです.
+//-----------------------------------------------------------------------------
+TimerSpriteAnimation::TimerSpriteAnimation()
+: m_Animation   ()
+, m_ChangeSec   (0.0f)
+, m_ElapsedSec  (0.0f)
+{ /* DO_NOTHING */ }
+
+//-----------------------------------------------------------------------------
+//      デストラクタです.
+//-----------------------------------------------------------------------------
+TimerSpriteAnimation::~TimerSpriteAnimation()
+{ Term(); }
+
+//-----------------------------------------------------------------------------
+//      初期化処理を行います.
+//-----------------------------------------------------------------------------
+void TimerSpriteAnimation::Init(int w, int h, float changeSec, const std::vector<Frame>& frames)
+{
+    m_Animation.Init(w, h, frames);
+
+    m_ChangeSec  = changeSec;
+    m_ElapsedSec = 0.0f;
+}
+
+//-----------------------------------------------------------------------------
+//      終了処理を行います.
+//-----------------------------------------------------------------------------
+void TimerSpriteAnimation::Term()
+{
+    m_Animation.Term();
+
+    m_ChangeSec  = 0.0f;
+    m_ElapsedSec = 0.0f;
+}
+
+//-----------------------------------------------------------------------------
+//      更新処理です.
+//-----------------------------------------------------------------------------
+void TimerSpriteAnimation::Update(float deltaSec)
+{ m_Animation.NextFrameByTime(m_ChangeSec, deltaSec, m_ElapsedSec); }
+
+//-----------------------------------------------------------------------------
+//      スプライトを追加します.
+//-----------------------------------------------------------------------------
+void TimerSpriteAnimation::Add(SpriteRenderer& renderer, int x, int y, int layer, uint8_t flags)
+{ m_Animation.Add(renderer, x, y, layer, flags); }
 
 } // namespace asdx
