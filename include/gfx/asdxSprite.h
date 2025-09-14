@@ -205,12 +205,18 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      スプライト描画用パイプラインステートを生成します.
     //! 
-    //! @param[in]      ps          ピクセルシェーダ
-    //! @param[out]     ppResult    パイプラインステートの格納先です.
+    //! @param[in]      pDevice                 デバイス.
+    //! @param[in]      pixelShader             ピクセルシェーダ
+    //! @param[in]      preMultipliedAlpha      事前乗算済みアルファを使用する場合は true, そうでない場合はアルファブレンドになります.
+    //! @param[out]     ppResult                パイプラインステートの格納先です.
     //! @retval true    生成に成功.
     //! @retval false   生成に失敗.
     //-------------------------------------------------------------------------
-    bool CreateSpriteState(ID3D12Device* pDevice, const D3D12_SHADER_BYTECODE& ps, bool preMultipliedAlpha, ID3D12PipelineState** pResult);
+    bool CreateSpriteState(
+        ID3D12Device*                   pDevice,
+        const D3D12_SHADER_BYTECODE&    pixelShader,
+        bool                            preMultipliedAlpha,
+        ID3D12PipelineState**           pResult);
 
     //-------------------------------------------------------------------------
     //! @brief      ユーザーパラメータを設定します.
