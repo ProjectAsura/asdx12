@@ -19,6 +19,7 @@
 #include <gfx/asdxTexture.h>
 #include <gfx/asdxSampler.h>
 #include <gfx/asdxFont.h>
+#include <gfx/asdxSpriteAnimation.h>
 #endif
 
 namespace {
@@ -29,6 +30,7 @@ asdx::TextureBinary g_TextureBinary;
 asdx::Texture       g_Texture;
 asdx::Sampler       g_Sampler;
 asdx::Font          g_Font;
+asdx::TimerSpriteAnimation g_AirShipAnim;
 #endif
 
 } // namespace
@@ -95,7 +97,7 @@ bool SampleApp::OnInit()
     #endif
 
 #if TEST
-    if (!g_TextureBinary.LoadA("../res/texture/Test.txb"))
+    if (!g_TextureBinary.LoadA("../res/texture/air_ship.txb"))
     {
         ELOG("Texture Load Failed.");
         return false;
@@ -134,6 +136,18 @@ bool SampleApp::OnInit()
         ELOG("Error : FontRenderer::Init() Failed.");
         return false;
     }
+
+    {
+        asdx::Vector2 oneSize(16.0f / 64.0f, 16.0f / 64.0f);
+
+        std::vector<asdx::SpriteAnimation::Frame> frames{
+            { asdx::Vector2(0.0f, 40.0f/64.0f), asdx::Vector2(oneSize.x, 40.0f / 64.0f + oneSize.y) },
+            { asdx::Vector2(20.0f / 64.0f, 20.0f / 64.0f), asdx::Vector2(20.0f / 64.0f + oneSize.x, 20.0f / 64.0f + oneSize.y) },
+        };
+
+        g_AirShipAnim.Init(128, 128, 0.025f, frames);
+    }
+
 #endif
 
     // コマンドの記録を終了.
@@ -234,9 +248,12 @@ void SampleApp::OnFrameRender(const asdx::App::FrameEventArgs& args)
     {
 
 #if TEST
+        g_AirShipAnim.Update(float(args.ElapsedTimeSec));
+
         g_SpriteRenderer.SetPipelineState(pCmd);
         g_SpriteRenderer.SetTexture(g_Texture.GetGpuHandleSRV(), g_Sampler.GetGpuHandle());
-        g_SpriteRenderer.Add( 10, 10, 64, 64 );
+        g_AirShipAnim.Add(g_SpriteRenderer, 100, 256);
+        //g_SpriteRenderer.Add( 10, 10, 64, 64 );
         g_SpriteRenderer.Draw(pCmd);
 
         asdx::FontRenderer::Instance().SetEnableOuter(true);

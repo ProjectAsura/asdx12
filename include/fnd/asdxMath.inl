@@ -207,7 +207,7 @@ inline half ToHalf(float value)
         if (bit < 0x38800000U)
         {
             uint32_t shift = 113U - (bit >> 23U);
-            bit    = (0x800000U | (bit & 0x7FFFFFU)) >> shift;
+            bit = (0x800000U | (bit & 0x7FFFFFU)) >> shift;
         }
         else
         {
@@ -220,7 +220,7 @@ inline half ToHalf(float value)
     }
 
     // 符号部を付け足して返却.
-    return static_cast<half>(result | sign );
+    return static_cast<half>(result | sign);
 }
 
 //-----------------------------------------------------------------------------
@@ -232,16 +232,16 @@ inline float ToFloat(half value)
     uint32_t result;
 
     // 仮数
-    uint32_t mantissa = static_cast<uint32_t>(value & 0x03FF );
+    uint32_t mantissa = static_cast<uint32_t>(value & 0x03FF);
 
     // 正規化済みの場合.
     if ((value & 0x7C00 ) != 0 )
     {
         // 指数部を計算.
-        exponent = static_cast<uint32_t>((value >> 10 ) & 0x1F );
+        exponent = static_cast<uint32_t>((value >> 10 ) & 0x1F);
     }
     // 正規化されていない場合.
-    else if (mantissa != 0 )
+    else if (mantissa != 0)
     {
         // 結果となるfloatで値を正規化する.
         exponent = 1;
@@ -260,9 +260,9 @@ inline float ToFloat(half value)
         exponent = (uint32_t)-112;
     }
 
-    result = ((value & 0x8000 ) << 16) | // 符号部.
-             ((exponent + 112 ) << 23) | // 指数部.
-             (mantissa << 13 );           // 仮数部.
+    result = ((value & 0x8000) << 16) | // 符号部.
+             ((exponent + 112) << 23) | // 指数部.
+             (mantissa << 13);           // 仮数部.
 
 #if _HAS_CXX20
     return std::bit_cast<float>(result);
@@ -372,10 +372,10 @@ inline Vector2& Vector2::operator /= (float f)
 //-----------------------------------------------------------------------------
 //      代入演算子です.
 //-----------------------------------------------------------------------------
-inline Vector2& Vector2::operator = (const Vector2& value)
+inline Vector2& Vector2::operator = (const Vector2& v)
 {
-    x = value.x;
-    y = value.y;
+    x = v.x;
+    y = v.y;
     return (*this);
 }
 
@@ -502,21 +502,21 @@ inline Vector2 Vector2::Abs(const Vector2& value)
 //-----------------------------------------------------------------------------
 //      各成分の値を制限します.
 //-----------------------------------------------------------------------------
-inline Vector2 Vector2::Clamp(const Vector2& value, const Vector2& a, const Vector2& b )
+inline Vector2 Vector2::Clamp(const Vector2& v, const Vector2& mini, const Vector2& maxi)
 {
     return Vector2(
-        asdx::Clamp(value.x, a.x, b.x),
-        asdx::Clamp(value.y, a.y, b.y) );
+        asdx::Clamp(v.x, mini.x, maxi.x),
+        asdx::Clamp(v.y, mini.y, maxi.y) );
 }
 
 //-----------------------------------------------------------------------------
 //      各成分の値を0～1に収めます.
 //-----------------------------------------------------------------------------
-inline Vector2 Vector2::Saturate(const Vector2& value)
+inline Vector2 Vector2::Saturate(const Vector2& v)
 {
     return Vector2(
-        asdx::Saturate(value.x),
-        asdx::Saturate(value.y) );
+        asdx::Saturate(v.x),
+        asdx::Saturate(v.y) );
 }
 
 //-----------------------------------------------------------------------------
@@ -783,10 +783,10 @@ inline Vector3::Vector3(const float* pf)
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-inline Vector3::Vector3(float value)
-: x(value)
-, y(value)
-, z(value)
+inline Vector3::Vector3(float scalar)
+: x(scalar)
+, y(scalar)
+, z(scalar)
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
@@ -867,11 +867,11 @@ inline Vector3& Vector3::operator /= (float f)
 //-----------------------------------------------------------------------------
 //      代入演算子です.
 //-----------------------------------------------------------------------------
-inline Vector3& Vector3::operator = (const Vector3& value)
+inline Vector3& Vector3::operator = (const Vector3& v)
 {
-    x = value.x;
-    y = value.y;
-    z = value.z;
+    x = v.x;
+    y = v.y;
+    z = v.z;
     return (*this);
 }
 
@@ -993,12 +993,12 @@ inline Vector3& Vector3::SafeNormalize(const Vector3& set)
 //-----------------------------------------------------------------------------
 //      各成分の絶対値を求めます.
 //-----------------------------------------------------------------------------
-inline Vector3 Vector3::Abs(const Vector3& v)
+inline Vector3 Vector3::Abs(const Vector3& value)
 { 
     return Vector3(
-        fabs(v.x),
-        fabs(v.y),
-        fabs(v.z) );
+        fabs(value.x),
+        fabs(value.y),
+        fabs(value.z) );
 }
 
 //-----------------------------------------------------------------------------
@@ -1410,11 +1410,11 @@ inline Vector4::Vector4(const float* pf)
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-inline Vector4::Vector4(float value)
-: x(value)
-, y(value)
-, z(value)
-, w(value)
+inline Vector4::Vector4(float scalar)
+: x(scalar)
+, y(scalar)
+, z(scalar)
+, w(scalar)
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
@@ -1511,12 +1511,12 @@ inline Vector4& Vector4::operator /= (float f)
 //-----------------------------------------------------------------------------
 //      代入演算子です.
 //-----------------------------------------------------------------------------
-inline Vector4& Vector4::operator = (const Vector4& value)
+inline Vector4& Vector4::operator = (const Vector4& v)
 {
-    x = value.x;
-    y = value.y;
-    z = value.z;
-    w = value.w;
+    x = v.x;
+    y = v.y;
+    z = v.z;
+    w = v.w;
     return (*this);
 }
 
@@ -2492,7 +2492,7 @@ inline Matrix Matrix::CreateRotationZ(float radian)
 //-----------------------------------------------------------------------------
 inline Matrix Matrix::CreateFromQuaternion(const Quaternion& qua)
 {
-    auto xx = qua.x * qua.x; // num
+    auto xx = qua.x * qua.x; // num1
     auto yy = qua.y * qua.y; // num2
     auto zz = qua.z * qua.z; // num3
 
