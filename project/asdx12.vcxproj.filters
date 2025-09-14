@@ -261,6 +261,9 @@
     <ClCompile Include="..\src\gfx\asdxSpriteAnimation.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\gfx\asdxFade.cpp">
+      <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\external\imgui\imconfig.h">
@@ -485,6 +488,9 @@
     <ClInclude Include="..\include\gfx\asdxSpriteAnimation.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\gfx\asdxFade.h">
+      <Filter>ヘッダー ファイル\gfx</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\res\shaders\BRDF.hlsli">
@@ -578,6 +584,9 @@
       <Filter>リソース ファイル</Filter>
     </FxCompile>
     <FxCompile Include="..\res\shaders\FontPS.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\FadePS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
   </ItemGroup>
