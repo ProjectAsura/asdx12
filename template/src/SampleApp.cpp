@@ -20,6 +20,7 @@
 #include <gfx/asdxSampler.h>
 #include <gfx/asdxFont.h>
 #include <gfx/asdxSpriteAnimation.h>
+#include <gfx/asdxFade.h>
 #endif
 
 namespace {
@@ -148,6 +149,13 @@ bool SampleApp::OnInit()
         g_AirShipAnim.Init(128, 128, 0.025f, frames);
     }
 
+    if (!asdx::Fade::Instance().Init(pCmd, m_SwapChainFormat))
+    {
+        ELOG("Error : Fade::Init() Failed.");
+        return false;
+    }
+
+    asdx::Fade::Instance().SetChangeSec(2.0f);
 #endif
 
     // コマンドの記録を終了.
@@ -266,6 +274,9 @@ void SampleApp::OnFrameRender(const asdx::App::FrameEventArgs& args)
         asdx::FontRenderer::Instance().AddFormat(g_SpriteRenderer, g_Font, 10, 142, "FPS : %f", args.FPS);
 
         g_SpriteRenderer.Draw(pCmd);
+
+        asdx::Fade::Instance().Update(float(args.ElapsedTimeSec));
+        asdx::Fade::Instance().Draw(pCmd);
 #endif
     }
 
