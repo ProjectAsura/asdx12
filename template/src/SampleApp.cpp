@@ -155,7 +155,10 @@ bool SampleApp::OnInit()
         return false;
     }
 
-    asdx::Fade::Instance().SetChangeSec(2.0f);
+    asdx::Fade::Instance().SetColor1(asdx::Vector4(1.0f, 0.0f, 0.0f, 1.0f));
+    asdx::Fade::Instance().SetChangeSec(3.0f);
+    asdx::Fade::Instance().SetEnablePulse(true);
+    asdx::Fade::Instance().SetPulseSpeed(4.0f);
 #endif
 
     // コマンドの記録を終了.
@@ -343,6 +346,17 @@ void SampleApp::OnKey(const asdx::App::KeyEventArgs& args)
         asdx::GuiMgr::Instance().OnKey(args.KeyCode, args.IsKeyDown, args.IsAltDown);
     }
     #endif
+
+#if 1
+    if (args.IsKeyDown)
+    {
+        if (args.KeyCode == 'R')
+        {
+            asdx::Fade::Instance().ResetState();
+        }
+    }
+
+#endif
 }
 
 //-----------------------------------------------------------------------------

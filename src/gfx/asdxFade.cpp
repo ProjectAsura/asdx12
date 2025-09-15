@@ -40,6 +40,8 @@ Fade::Fade()
 , m_ChangeSec   (1.0f)
 , m_ElapsedSec  (0.0f)
 , m_Complete    (false)
+, m_EnablePulse (false)
+, m_PulseSpeed  (1.0f)
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
@@ -208,7 +210,26 @@ void Fade::Update(float deltaSec)
 void Fade::Draw(ID3D12GraphicsCommandList* pCmd, D3D12_GPU_DESCRIPTOR_HANDLE handleSRV)
 {
     auto amount = asdx::Saturate(m_ElapsedSec / m_ChangeSec);
-    auto color  = Vector4::Lerp(m_Color0, m_Color1, amount);
+    Vector4 color;
+    // フェード.
+    if (!m_EnablePulse)
+    { color  = Vector4::Lerp(m_Color0, m_Color1, amount); }
+    // 点滅エフェクト.
+    else
+    {
+        if (amount < 1.0f)
+        {
+            float phase = 1.0f + sinf(m_ElapsedSec * m_ChangeSec * m_PulseSpeed);
+            color.x = (1.0f - phase) * m_Color1.x;
+            color.y = (1.0f - phase) * m_Color1.y;
+            color.z = (1.0f - phase) * m_Color1.z;
+            color.w = (1.0f - phase) * m_Color1.w;
+        }
+        else
+        {
+            color = m_Color1;
+        }
+    }
 
     pCmd->SetGraphicsRootSignature(m_RootSig.GetPtr());
     pCmd->SetPipelineState(m_PipelineState.GetPtr());
@@ -274,5 +295,29 @@ void Fade::ResetState()
 //-----------------------------------------------------------------------------
 bool Fade::IsComplete() const
 { return m_Complete; }
+
+//-----------------------------------------------------------------------------
+//      点滅フラグを設定します.
+//-----------------------------------------------------------------------------
+void Fade::SetEnablePulse(bool value)
+{ m_EnablePulse = value; }
+
+//-----------------------------------------------------------------------------
+//      点滅フラグを取得します.
+//-----------------------------------------------------------------------------
+bool Fade::IsEnablePulse() const
+{ return m_EnablePulse; }
+
+//-----------------------------------------------------------------------------
+//      点滅速度を設定します.
+//-----------------------------------------------------------------------------
+void Fade::SetPulseSpeed(float value)
+{ m_PulseSpeed = value; }
+
+//-----------------------------------------------------------------------------
+//      点滅速度を取得します.
+//-----------------------------------------------------------------------------
+float Fade::GetPulseSpeed() const
+{ return m_PulseSpeed; }
 
 } // namespace asdx
