@@ -82,15 +82,11 @@ HRESULT CreateShaderReflectionOld(const void* pData, size_t size, ID3D12ShaderRe
 }
 #endif
 
-} // namespace
-
-
-namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
 // Blob class
 ///////////////////////////////////////////////////////////////////////////////
-class Blob : public IBlob
+class Blob : public asdx::IBlob
 {
     //=========================================================================
     // list of friend classes and methods.
@@ -187,6 +183,11 @@ private:
     /* NOTHING */
 };
 
+} // namespace
+
+
+namespace asdx {
+
 //-----------------------------------------------------------------------------
 //      バイナリラージオブジェクトを生成します.
 //-----------------------------------------------------------------------------
@@ -256,7 +257,6 @@ bool WriteBlobToFile(IBlob* pBlob, const char* filename)
 
     return true;
 }
-
 
 //-----------------------------------------------------------------------------
 //      シェーダコンパイルします.

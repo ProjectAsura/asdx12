@@ -7,7 +7,6 @@
 //-----------------------------------------------------------------------------
 // Includes.
 //-----------------------------------------------------------------------------
-#include <cstdio>
 #include <fnd/asdxMacro.h>
 #include <fnd/asdxLogger.h>
 #include <res/asdxResTexture.h>
@@ -33,7 +32,7 @@ namespace asdx {
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
 TextureBinary::TextureBinary()
-: m_pBinary(nullptr)
+: m_Blob()
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
@@ -47,44 +46,20 @@ TextureBinary::~TextureBinary()
 //-----------------------------------------------------------------------------
 bool TextureBinary::LoadA(const char* path)
 {
-    void*  pBuffer    = nullptr;
-    size_t bufferSize = 0;
+    if (!m_Blob.LoadA(path))
+    { return false; }
 
-    // テクスチャファイル(*.txb)をロード.
+#if ASDX_DEBUG
+    // データ整合性をチェック.
     {
-        if (path == nullptr)
-        {
-            ELOG("Error : Invalid Argument.");
-            return false;
-        }
-
-        FILE* fp = nullptr;
-        auto err = fopen_s(&fp, path, "rb");
-        if (err != 0 || fp == nullptr)
-        {
-            ELOG("Error : File Open Failed. path = %s", path);
-            return false;
-        }
-
-        auto begin = ftell(fp);
-        fseek(fp, 0, SEEK_END);
-        auto end = ftell(fp);
-        bufferSize = end - begin;
-        fseek(fp, 0, SEEK_SET);
-
-        pBuffer = malloc(bufferSize);
-        if (pBuffer == nullptr)
-        {
-            fclose(fp);
-            ELOG("Error : Out of Memory.");
-            return false;
-        }
-
-        fread(pBuffer, bufferSize, 1, fp);
-        fclose(fp);
+        flatbuffers::Verifier::Options options;
+        flatbuffers::Verifier verifier(reinterpret_cast<const uint8_t*>(m_Blob.GetBuffer()), m_Blob.GetBufferSize(), options);
+        assert(res::VerifyTextureBinaryBuffer(verifier));
+        ASDX_UNUSED(verifier);
     }
+#endif
 
-    return LoadFromMemory(pBuffer, bufferSize);
+    return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -92,63 +67,19 @@ bool TextureBinary::LoadA(const char* path)
 //-----------------------------------------------------------------------------
 bool TextureBinary::LoadW(const wchar_t* path)
 {
-    void*  pBuffer    = nullptr;
-    size_t bufferSize = 0;
+    if (!m_Blob.LoadW(path))
+    { return false; }
 
-    // テクスチャファイル(*.txb)をロード.
-    {
-        if (path == nullptr)
-        {
-            ELOG("Error : Invalid Argument.");
-            return false;
-        }
-
-        FILE* fp = nullptr;
-        auto err = _wfopen_s(&fp, path, L"rb");
-        if (err != 0 || fp == nullptr)
-        {
-            ELOG("Error : File Open Failed. path = %ls", path);
-            return false;
-        }
-
-        auto begin = ftell(fp);
-        fseek(fp, 0, SEEK_END);
-        auto end = ftell(fp);
-        bufferSize = end - begin;
-        fseek(fp, 0, SEEK_SET);
-
-        pBuffer = malloc(bufferSize);
-        if (pBuffer == nullptr)
-        {
-            fclose(fp);
-            ELOG("Error : Out of Memory.");
-            return false;
-        }
-
-        fread(pBuffer, bufferSize, 1, fp);
-        fclose(fp);
-    }
-
-    return LoadFromMemory(pBuffer, bufferSize);
-}
-
-//-----------------------------------------------------------------------------
-//      メモリからロードします.
-//-----------------------------------------------------------------------------
-bool TextureBinary::LoadFromMemory(void* pBinary, size_t binarySize)
-{
-    ASDX_UNUSED(binarySize);
 #if ASDX_DEBUG
     // データ整合性をチェック.
     {
         flatbuffers::Verifier::Options options;
-        flatbuffers::Verifier verifier(reinterpret_cast<const uint8_t*>(pBinary), binarySize, options);
+        flatbuffers::Verifier verifier(reinterpret_cast<const uint8_t*>(m_Blob.GetBuffer()), m_Blob.GetBufferSize(), options);
         assert(res::VerifyTextureBinaryBuffer(verifier));
         ASDX_UNUSED(verifier);
     }
 #endif
 
-    m_pBinary = pBinary;
     return true;
 }
 
@@ -156,21 +87,15 @@ bool TextureBinary::LoadFromMemory(void* pBinary, size_t binarySize)
 //      終了処理を行います.
 //-----------------------------------------------------------------------------
 void TextureBinary::Term()
-{
-    if (m_pBinary != nullptr)
-    {
-        free(m_pBinary);
-        m_pBinary = nullptr;
-    }
-}
+{ m_Blob.Term(); }
 
 //-----------------------------------------------------------------------------
 //      リソースを取得します.
 //-----------------------------------------------------------------------------
 ResTexture TextureBinary::GetResource() const
 {
-    assert(m_pBinary != nullptr);
-    auto pTextureBinary = res::GetTextureBinary(m_pBinary);
+    assert(m_Blob.GetBuffer() != nullptr);
+    auto pTextureBinary = res::GetTextureBinary(m_Blob.GetBuffer());
 
     ResTexture result = {};
     result.Dimension        = TEXTURE_DIMENSION(pTextureBinary->Dimension());
