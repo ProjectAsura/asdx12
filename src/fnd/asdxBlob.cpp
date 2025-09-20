@@ -12,150 +12,239 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cassert>
+#include <atomic>
 
 
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
-// Blob structure
+// Blob class
 ///////////////////////////////////////////////////////////////////////////////
-
-//-----------------------------------------------------------------------------
-//      コンストラクタです.
-//-----------------------------------------------------------------------------
-Blob::Blob()
-: m_pBuffer     (nullptr)
-, m_BufferSize  (0)
-{ /* DO_NOTHING */ }
-
-//-----------------------------------------------------------------------------
-//      デストラクタです.
-//-----------------------------------------------------------------------------
-Blob::~Blob()
-{ Term(); }
-
-//-----------------------------------------------------------------------------
-//      初期化処理を行います.
-//-----------------------------------------------------------------------------
-bool Blob::Init(size_t size)
+class Blob : public asdx::IBlob
 {
-    assert(m_pBuffer == nullptr);
-    m_pBuffer = malloc(size);
-    if (m_pBuffer == nullptr)
+    //=========================================================================
+    // list of friend classes and methods.
+    //=========================================================================
+    /* NOTHING */
+
+public:
+    //=========================================================================
+    // public variables.
+    //=========================================================================
+    size_t m_Size = 0;
+    void*  m_Buffer = nullptr;
+
+    //=========================================================================
+    // public methods.
+    //=========================================================================
+
+    //-------------------------------------------------------------------------
+    //      コンストラクタです.
+    //-------------------------------------------------------------------------
+    Blob()
+    : m_Count(1)
+    { /* DO_NOTHING */ }
+
+    //-------------------------------------------------------------------------
+    //      デストラクタです.
+    //-------------------------------------------------------------------------
+    ~Blob()
     {
-        ELOG("Error : Out of Memory.");
+        if (m_Buffer)
+        {
+            free(m_Buffer);
+            m_Buffer = nullptr;
+        }
+        m_Size = 0;
+    }
+
+    //-------------------------------------------------------------------------
+    //      メモリを確保します.
+    //-------------------------------------------------------------------------
+    bool Alloc(size_t size)
+    {
+        m_Buffer = malloc(size);
+        if (m_Buffer == nullptr)
+        { return false; }
+
+        m_Size = size;
+        return true;
+    }
+
+    //-------------------------------------------------------------------------
+    //      参照カウントを上げます.
+    //-------------------------------------------------------------------------
+    void AddRef() override
+    { m_Count++; }
+
+    //-------------------------------------------------------------------------
+    //      参照カウントを下げます.
+    //-------------------------------------------------------------------------
+    void Release() override
+    {
+        m_Count--;
+        if (m_Count == 0)
+        { delete this; }
+    }
+
+    //-------------------------------------------------------------------------
+    //      参照カウントを取得します.
+    //-------------------------------------------------------------------------
+    uint32_t GetCount() const override
+    { return m_Count; }
+
+    //-------------------------------------------------------------------------
+    //      バッファサイズを取得します.
+    //-------------------------------------------------------------------------
+    size_t GetBufferSize() override
+    { return m_Size; }
+
+    //-------------------------------------------------------------------------
+    //      バッファデータを取得します.
+    //-------------------------------------------------------------------------
+    void* GetBuffer() override
+    { return m_Buffer; }
+
+private:
+    //=========================================================================
+    // private variables.
+    //=========================================================================
+    std::atomic<uint32_t> m_Count = {};
+
+    //=========================================================================
+    // private methods.
+    //=========================================================================
+    /* NOTHING */
+};
+
+//-----------------------------------------------------------------------------
+//      バイナリラージオブジェクトを生成します.
+//-----------------------------------------------------------------------------
+bool CreateBlob(size_t size, IBlob** ppResult)
+{
+    auto blob = new Blob();
+    if (!blob->Alloc(size))
+    {
+        delete blob;
         return false;
     }
 
-    m_BufferSize = size;
+    *ppResult = blob;
     return true;
 }
 
 //-----------------------------------------------------------------------------
-//      終了処理を行います.
+//      バイナリラージオブジェクトに読み込みます.
 //-----------------------------------------------------------------------------
-void Blob::Term()
+bool ReadFileToBlobA(const char* filename, IBlob** ppResult)
 {
-    if (m_pBuffer)
+    FILE* pFile = nullptr;
+    auto err = fopen_s(&pFile, filename, "rb");
+    if (err != 0 || pFile == nullptr)
     {
-        free(m_pBuffer);
-        m_pBuffer = nullptr;
+        ELOGA("Error : ReadFileToBlobA() File. File open failed. path = %s, errcode = 0x%x", filename, err);
+        return false;
     }
-    m_BufferSize = 0;
+
+    auto prevpos = ftell(pFile);
+    fseek(pFile, 0, SEEK_END);
+    auto currpos = ftell(pFile);
+    fseek(pFile, 0, SEEK_SET);
+
+    auto size = uint64_t(currpos) - uint64_t(prevpos);
+    auto ptr = malloc(size);
+    if (ptr == nullptr)
+    {
+        ELOG("Error : Out of memory.");
+        fclose(pFile);
+        return false;
+    }
+
+    fread(ptr, size, 1, pFile);
+    fclose(pFile);
+
+    auto blob = new Blob();
+    blob->m_Buffer = ptr;
+    blob->m_Size = size;
+
+    *ppResult = blob;
+    return true;
 }
 
 //-----------------------------------------------------------------------------
-//      バイナリをロードします.
+//      バイナリラージオブジェクトに読み込みます.
 //-----------------------------------------------------------------------------
-bool Blob::LoadA(const char* path)
+bool ReadFileToBlobW(const wchar_t* filename, IBlob** ppResult)
 {
-    // バイナリをロード.
+    FILE* pFile = nullptr;
+    auto err = _wfopen_s(&pFile, filename, L"rb");
+    if (err != 0 || pFile == nullptr)
     {
-        if (path == nullptr)
-        {
-            ELOG("Error : Invalid Argument.");
-            return false;
-        }
-
-        FILE* fp = nullptr;
-        auto err = fopen_s(&fp, path, "rb");
-        if (err != 0 || fp == nullptr)
-        {
-            ELOG("Error : File Open Failed. path = %s", path);
-            return false;
-        }
-
-        auto begin = ftell(fp);
-        fseek(fp, 0, SEEK_END);
-        auto end = ftell(fp);
-        size_t bufferSize = end - begin;
-        fseek(fp, 0, SEEK_SET);
-
-        if (!Init(bufferSize))
-        {
-            fclose(fp);
-            ELOG("Error : Out of Memory.");
-            return false;
-        }
-
-        fread(GetBuffer(), bufferSize, 1, fp);
-        fclose(fp);
+        ELOG("Error : ReadFileToBlobW() Failed. File open failed. path = %ls, errcode = 0x%x", filename, err);
+        return false;
     }
+
+    auto prevpos = ftell(pFile);
+    fseek(pFile, 0, SEEK_END);
+    auto currpos = ftell(pFile);
+    fseek(pFile, 0, SEEK_SET);
+
+    auto size = uint64_t(currpos) - uint64_t(prevpos);
+    auto ptr = malloc(size);
+    if (ptr == nullptr)
+    {
+        fclose(pFile);
+        return false;
+    }
+
+    fread(ptr, size, 1, pFile);
+    fclose(pFile);
+
+    auto blob = new Blob();
+    blob->m_Buffer = ptr;
+    blob->m_Size = size;
+
+    *ppResult = blob;
+    return true;
+}
+
+
+//-----------------------------------------------------------------------------
+//      バイナリラージオブジェクトを書き出します.
+//-----------------------------------------------------------------------------
+bool WriteBlobToFileA(IBlob* pBlob, const char* filename)
+{
+    FILE* pFile = nullptr;
+    auto err = fopen_s(&pFile, filename, "wb");
+    if (err != 0 || pFile == nullptr)
+    {
+        ELOG("Error : WriteBlobToFileA() Failed. File open failed. path = %s, errcode = 0x%x", filename, err);
+        return false;
+    }
+
+    fwrite(pBlob->GetBuffer(), pBlob->GetBufferSize(), 1, pFile);
+    fclose(pFile);
 
     return true;
 }
 
 //-----------------------------------------------------------------------------
-//      バイナリをロードします.
+//      バイナリラージオブジェクトを書き出します.
 //-----------------------------------------------------------------------------
-bool Blob::LoadW(const wchar_t* path)
+bool WriteBlobToFileW(IBlob* pBlob, const wchar_t* filename)
 {
-    // バイナリをロード.
+    FILE* pFile = nullptr;
+    auto err = _wfopen_s(&pFile, filename, L"wb");
+    if (err != 0 || pFile == nullptr)
     {
-        if (path == nullptr)
-        {
-            ELOG("Error : Invalid Argument.");
-            return false;
-        }
-
-        FILE* fp = nullptr;
-        auto err = _wfopen_s(&fp, path, L"rb");
-        if (err != 0 || fp == nullptr)
-        {
-            ELOG("Error : File Open Failed. path = %ls", path);
-            return false;
-        }
-
-        auto begin = ftell(fp);
-        fseek(fp, 0, SEEK_END);
-        auto end = ftell(fp);
-        size_t bufferSize = end - begin;
-        fseek(fp, 0, SEEK_SET);
-
-        if (!Init(bufferSize))
-        {
-            fclose(fp);
-            ELOG("Error : Out of Memory.");
-            return false;
-        }
-
-        fread(GetBuffer(), bufferSize, 1, fp);
-        fclose(fp);
+        ELOG("Error : WriteBlobToFileW() Failed. File open failed. path = %ls, errcode = 0x%x", filename, err);
+        return false;
     }
+
+    fwrite(pBlob->GetBuffer(), pBlob->GetBufferSize(), 1, pFile);
+    fclose(pFile);
 
     return true;
 }
-
-//-----------------------------------------------------------------------------
-//      バッファデータを取得します.
-//-----------------------------------------------------------------------------
-void* Blob::GetBuffer() const
-{ return m_pBuffer; }
-
-//-----------------------------------------------------------------------------
-//      バッファサイズを返却します.
-//-----------------------------------------------------------------------------
-size_t Blob::GetBufferSize() const
-{ return m_BufferSize; }
 
 } // namespace asdx

@@ -1,0 +1,42 @@
+﻿namespace asdx.res;
+
+table MapChip
+{
+    Width  : uint;
+    Height : uint;
+    Format : uint;
+    Pixels : [ubyte];
+}
+
+table Layer
+{
+    Name        : string;
+    Id          : uint;
+    Rows        : uint;
+    Columns     : uint;
+    Data        : [uint];
+}
+
+table TileSet
+{
+    Name            : string;
+    FirstChipId     : uint;
+    Columns         : uint;
+    TileCount       : uint;
+    TileWidth       : uint;
+    TileHeight      : uint;
+    Image           : MapChip;
+}
+
+table MapChipBinary
+{
+    Version     : uint;
+    Rows        : uint;
+    Columns     : uint;
+    TileWidth   : uint;
+    TileHeight  : uint;
+    TileSets    : [TileSet];
+    Layers      : [Layer];
+}
+
+root_type MapChipBinary;

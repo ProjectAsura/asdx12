@@ -809,7 +809,7 @@ bool PipelineState::ReloadShader
 
     result.clear();
     result.resize(blob->GetBufferSize());
-    memcpy(result.data(), blob->GetBufferPointer(), blob->GetBufferSize());
+    memcpy(result.data(), blob->GetBuffer(), blob->GetBufferSize());
 
     return true;
 }

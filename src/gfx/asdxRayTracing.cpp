@@ -743,7 +743,7 @@ bool RayTracingPipelineState::ReloadShader(const char* path, const char* shaderM
 
     result.clear();
     result.resize(blob->GetBufferSize());
-    memcpy(result.data(), blob->GetBufferPointer(), blob->GetBufferSize());
+    memcpy(result.data(), blob->GetBuffer(), blob->GetBufferSize());
 
     return true;
 }

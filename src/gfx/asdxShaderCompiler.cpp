@@ -82,181 +82,11 @@ HRESULT CreateShaderReflectionOld(const void* pData, size_t size, ID3D12ShaderRe
 }
 #endif
 
-
-///////////////////////////////////////////////////////////////////////////////
-// Blob class
-///////////////////////////////////////////////////////////////////////////////
-class Blob : public asdx::IBlob
-{
-    //=========================================================================
-    // list of friend classes and methods.
-    //=========================================================================
-    /* NOTHING */
-
-public:
-    //=========================================================================
-    // public variables.
-    //=========================================================================
-    size_t m_Size = 0;
-    void*  m_Buffer = nullptr;
-
-    //=========================================================================
-    // public methods.
-    //=========================================================================
-
-    //-------------------------------------------------------------------------
-    //      コンストラクタです.
-    //-------------------------------------------------------------------------
-    Blob()
-    : m_Count(1)
-    { /* DO_NOTHING */ }
-
-    //-------------------------------------------------------------------------
-    //      デストラクタです.
-    //-------------------------------------------------------------------------
-    ~Blob()
-    {
-        if (m_Buffer)
-        {
-            free(m_Buffer);
-            m_Buffer = nullptr;
-        }
-        m_Size = 0;
-    }
-
-    //-------------------------------------------------------------------------
-    //      メモリを確保します.
-    //-------------------------------------------------------------------------
-    bool Alloc(size_t size)
-    {
-        m_Buffer = malloc(size);
-        if (m_Buffer == nullptr)
-        { return false; }
-
-        m_Size = size;
-        return true;
-    }
-
-    //-------------------------------------------------------------------------
-    //      参照カウントを上げます.
-    //-------------------------------------------------------------------------
-    void AddRef() override
-    { m_Count++; }
-
-    //-------------------------------------------------------------------------
-    //      参照カウントを下げます.
-    //-------------------------------------------------------------------------
-    void Release() override
-    {
-        m_Count--;
-        if (m_Count == 0)
-        { delete this; }
-    }
-
-    //-------------------------------------------------------------------------
-    //      参照カウントを取得します.
-    //-------------------------------------------------------------------------
-    uint32_t GetCount() const override
-    { return m_Count; }
-
-    //-------------------------------------------------------------------------
-    //      バッファサイズを取得します.
-    //-------------------------------------------------------------------------
-    size_t GetBufferSize() override
-    { return m_Size; }
-
-    //-------------------------------------------------------------------------
-    //      バッファポインタを取得します.
-    //-------------------------------------------------------------------------
-    void* GetBufferPointer() override
-    { return m_Buffer; }
-
-private:
-    //=========================================================================
-    // private variables.
-    //=========================================================================
-    std::atomic<uint32_t> m_Count;
-
-    //=========================================================================
-    // private methods.
-    //=========================================================================
-    /* NOTHING */
-};
-
 } // namespace
 
 
 namespace asdx {
 
-//-----------------------------------------------------------------------------
-//      バイナリラージオブジェクトを生成します.
-//-----------------------------------------------------------------------------
-bool CreateBlob(size_t size, IBlob** ppResult)
-{
-    auto blob = new Blob();
-    if (!blob->Alloc(size))
-    {
-        delete blob;
-        return false;
-    }
-
-    *ppResult = blob;
-    return true;
-}
-
-//-----------------------------------------------------------------------------
-//      バイナリラージオブジェクトに読み込みます.
-//-----------------------------------------------------------------------------
-bool ReadFileToBlob(const char* filename, IBlob** ppResult)
-{
-    FILE* pFile;
-    auto err = fopen_s(&pFile, filename, "rb");
-    if (err != 0 || pFile == nullptr)
-    {
-        return false;
-    }
-
-    auto prevpos = ftell(pFile);
-    fseek(pFile, 0, SEEK_END);
-    auto currpos = ftell(pFile);
-    fseek(pFile, 0, SEEK_SET);
-
-    auto size = uint64_t(currpos) - uint64_t(prevpos);
-    auto ptr = malloc(size);
-    if (ptr == nullptr)
-    {
-        fclose(pFile);
-        return false;
-    }
-
-    fread(ptr, size, 1, pFile);
-    fclose(pFile);
-
-    auto blob = new Blob();
-    blob->m_Buffer = ptr;
-    blob->m_Size = size;
-
-    *ppResult = blob;
-    return true;
-}
-
-//-----------------------------------------------------------------------------
-//      バイナリラージオブジェクトを書き出します.
-//-----------------------------------------------------------------------------
-bool WriteBlobToFile(IBlob* pBlob, const char* filename)
-{
-    FILE* pFile;
-    auto err = fopen_s(&pFile, filename, "wb");
-    if (err != 0)
-    {
-        return false;
-    }
-
-    fwrite(pBlob->GetBufferPointer(), pBlob->GetBufferSize(), 1, pFile);
-    fclose(pFile);
-
-    return true;
-}
 
 //-----------------------------------------------------------------------------
 //      シェーダコンパイルします.
@@ -366,11 +196,14 @@ bool CompileFromFileA
     RefPtr<IDxcBlob> pShader;
     pResults->GetResult(pShader.GetAddress());
 
-    auto blob = new Blob();
-    blob->m_Buffer = malloc(pShader->GetBufferSize());
-    blob->m_Size   = pShader->GetBufferSize();
+    IBlob* blob = nullptr;
+    if (!CreateBlob(pShader->GetBufferSize(), &blob))
+    {
+        ELOG("Error : CreateBlob() Failed.");
+        return false;
+    }
 
-    memcpy(blob->m_Buffer, pShader->GetBufferPointer(), pShader->GetBufferSize());
+    memcpy(blob->GetBuffer(), pShader->GetBufferPointer(), pShader->GetBufferSize());
     *ppResult = blob;
 
     return true;
@@ -392,11 +225,13 @@ bool CompileFromFileA
         return false;
     }
 
-    auto blob = new Blob();
-    blob->m_Buffer = malloc(pShader->GetBufferSize());
-    blob->m_Size = pShader->GetBufferSize();
-    assert(blob->m_Buffer != nullptr);
-    memcpy(blob->m_Buffer, pShader->GetBufferPointer(), pShader->GetBufferSize());
+    IBlob* blob = nullptr;
+    if (!CreateBlob(pShader->GetBufferSize(), &blob))
+    {
+        ELOG("Error : CreateBlob() Failed.");
+        return false;
+    }
+    memcpy(blob->GetBuffer(), pShader->GetBufferPointer(), pShader->GetBufferSize());
     *ppResult = blob;
 
     return true;
@@ -509,11 +344,14 @@ bool CompileFromFileW
     RefPtr<IDxcBlob> pShader;
     pResults->GetResult(pShader.GetAddress());
 
-    auto blob = new Blob();
-    blob->m_Buffer = malloc(pShader->GetBufferSize());
-    blob->m_Size   = pShader->GetBufferSize();
+    IBlob* blob = nullptr;
+    if (!CreateBlob(pShader->GetBufferSize(), &blob))
+    {
+        ELOG("Error : CreateBlob() Failed.");
+        return false;
+    }
 
-    memcpy(blob->m_Buffer, pShader->GetBufferPointer(), pShader->GetBufferSize());
+    memcpy(blob->GetBuffer(), pShader->GetBufferPointer(), pShader->GetBufferSize());
     *ppResult = blob;
 
     return true;
@@ -535,11 +373,14 @@ bool CompileFromFileW
         return false;
     }
 
-    auto blob = new Blob();
-    blob->m_Buffer = malloc(pShader->GetBufferSize());
-    blob->m_Size = pShader->GetBufferSize();
-    assert(blob->m_Buffer != nullptr);
-    memcpy(blob->m_Buffer, pShader->GetBufferPointer(), pShader->GetBufferSize());
+    IBlob* blob = nullptr;
+    if (!CreateBlob(pShader->GetBufferSize(), &blob))
+    {
+        ELOG("Error : CreateBlob() Failed.");
+        return false;
+    }
+
+    memcpy(blob->GetBuffer(), pShader->GetBufferPointer(), pShader->GetBufferSize());
     *ppResult = blob;
 
     return true;
@@ -608,11 +449,14 @@ bool CompileFromFile
     RefPtr<IDxcBlobUtf16> pShaderName;
     pResults->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(pShader.GetAddress()), pShaderName.GetAddress());
 
-    auto blob = new Blob();
-    blob->m_Buffer = malloc(pShader->GetBufferSize());
-    blob->m_Size = pShader->GetBufferSize();
+    IBlob* blob = nullptr;
+    if (!CreateBlob(pShader->GetBufferSize(), &blob))
+    {
+        ELOG("Error : CreateBlob() Failed.");
+        return false;
+    }
 
-    memcpy(blob->m_Buffer, pShader->GetBufferPointer(), pShader->GetBufferSize());
+    memcpy(blob->GetBuffer(), pShader->GetBufferPointer(), pShader->GetBufferSize());
     *ppResult = blob;
 
     return true;
