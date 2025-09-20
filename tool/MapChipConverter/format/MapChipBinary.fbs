@@ -2,10 +2,12 @@
 
 table MapChip
 {
-    Width  : uint;
-    Height : uint;
-    Format : uint;
-    Pixels : [ubyte];
+    Width       : uint;
+    Height      : uint;
+    Format      : uint;
+    RowPitch    : uint;
+    SlicePitch  : uint;
+    Pixels      : [ubyte];
 }
 
 table Layer

@@ -124,7 +124,7 @@ bool MapChipConverter::Convert(const Desc& desc)
                 auto path = image->Attribute("source");
 
                 // テクスチャロード.
-                DirectX::TexMetadata  metaData = {};
+                DirectX::TexMetadata  metaData     = {};
                 DirectX::ScratchImage scratchImage = {};
 
                 std::wstring inputPath = ToStringW(path);
@@ -140,11 +140,15 @@ bool MapChipConverter::Convert(const Desc& desc)
                 pixels.resize(scratchImage.GetPixelsSize());
                 memcpy(pixels.data(), scratchImage.GetPixels(), pixels.size());
 
+                auto images = scratchImage.GetImages();
+
                 mapChip = asdx::res::CreateMapChipDirect(
                     builder,
                     imageWidth,
                     imageHeight,
                     uint32_t(metaData.format),
+                    uint32_t(images[0].rowPitch),
+                    uint32_t(images[0].slicePitch),
                     &pixels);
 
                 scratchImage.Release();

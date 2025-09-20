@@ -53,6 +53,7 @@ bool ModelBinary::LoadA(const char* path)
 #if ASDX_DEBUG
     // データ整合性をチェック.
     {
+        assert(m_pBlob != nullptr);
         flatbuffers::Verifier::Options options;
         flatbuffers::Verifier verifier(reinterpret_cast<const uint8_t*>(m_pBlob->GetBuffer()), m_pBlob->GetBufferSize(), options);
         assert(res::VerifyModelBinaryBuffer(verifier));
