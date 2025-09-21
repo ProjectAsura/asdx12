@@ -205,6 +205,7 @@
     <ClCompile Include="..\external\meshoptimizer\vertexfilter.cpp" />
     <ClCompile Include="..\external\meshoptimizer\vfetchanalyzer.cpp" />
     <ClCompile Include="..\external\meshoptimizer\vfetchoptimizer.cpp" />
+    <ClCompile Include="..\external\simdjson\src\simdjson.cpp" />
     <ClCompile Include="..\external\tinyxml2\tinyxml2.cpp" />
     <ClCompile Include="..\src\edit\asdxEditParam.cpp" />
     <ClCompile Include="..\src\edit\asdxFileWatcher.cpp" />
@@ -216,6 +217,7 @@
     <ClCompile Include="..\src\fnd\asdxBlob.cpp" />
     <ClCompile Include="..\src\fnd\asdxFrameHeap.cpp" />
     <ClCompile Include="..\src\fnd\asdxGamePad.cpp" />
+    <ClCompile Include="..\src\fnd\asdxHidManager.cpp" />
     <ClCompile Include="..\src\fnd\asdxJob.cpp" />
     <ClCompile Include="..\src\fnd\asdxKeyboard.cpp" />
     <ClCompile Include="..\src\fnd\asdxLogger.cpp" />

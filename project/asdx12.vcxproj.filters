@@ -58,6 +58,9 @@
     <Filter Include="ソース ファイル\external\Cflat">
       <UniqueIdentifier>{e1cc366b-9bd2-45a0-90e7-96dcec3ce9be}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ソース ファイル\external\simdjson">
+      <UniqueIdentifier>{a306abf8-7b01-4260-9cc2-74a78b16d44f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\external\imgui\imgui.cpp">
@@ -269,6 +272,12 @@
     </ClCompile>
     <ClCompile Include="..\src\res\asdxResMapChip.cpp">
       <Filter>ソース ファイル\res</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\simdjson\src\simdjson.cpp">
+      <Filter>ソース ファイル\external\simdjson</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\fnd\asdxHidManager.cpp">
+      <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
