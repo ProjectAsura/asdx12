@@ -12,7 +12,6 @@
 #include <gfx/asdxCommandList.h>
 #include <gfx/asdxDevice.h>
 #include <fnd/asdxLogger.h>
-#include <pix3.h>
 
 
 namespace asdx {

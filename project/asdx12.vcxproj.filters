@@ -273,11 +273,11 @@
     <ClCompile Include="..\src\res\asdxResMapChip.cpp">
       <Filter>ソース ファイル\res</Filter>
     </ClCompile>
-    <ClCompile Include="..\external\simdjson\src\simdjson.cpp">
-      <Filter>ソース ファイル\external\simdjson</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\fnd\asdxHidManager.cpp">
       <Filter>ソース ファイル\fnd</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\simdjson\src\simdjson.cpp">
+      <Filter>ソース ファイル\external\simdjson</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -559,7 +559,6 @@
     <None Include="..\res\shaders\Random.hlsli">
       <Filter>リソース ファイル</Filter>
     </None>
-    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\res\shaders\CopyPS.hlsl">
