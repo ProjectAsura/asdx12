@@ -292,7 +292,7 @@ bool GuiMgr::Init
             return false;
         }
 
-        io.Fonts->TexID = (void*)m_FontTexture.GetCpuHandleSRV().ptr;
+        io.Fonts->SetTexID((ImTextureID)m_FontTexture.GetGpuHandleSRV().ptr);
     }
 
     auto pDevice = GetD3D12Device();
@@ -553,11 +553,11 @@ void GuiMgr::Update( uint32_t width, uint32_t height )
 
     auto& io = ImGui::GetIO();
     io.DeltaTime     = elapsedSec;
-    io.DisplaySize.x = float( width );
-    io.DisplaySize.y = float( height );
-    io.KeyCtrl       = ( GetKeyState( VK_CONTROL ) & 0x8000 ) != 0;
-    io.KeyShift      = ( GetKeyState( VK_SHIFT )   & 0x8000 ) != 0;
-    io.KeyAlt        = ( GetKeyState( VK_MENU )    & 0x8000 ) != 0;
+    io.DisplaySize.x = float(width);
+    io.DisplaySize.y = float(height);
+    io.KeyCtrl       = !!(GetKeyState(VK_CONTROL) & 0x8000);
+    io.KeyShift      = !!(GetKeyState(VK_SHIFT)   & 0x8000);
+    io.KeyAlt        = !!(GetKeyState(VK_MENU)    & 0x8000);
 
     ImGui::NewFrame();
 
@@ -684,7 +684,7 @@ void GuiMgr::Draw(ID3D12GraphicsCommandList* pCmdList)
                 {
                     // テクスチャが渡された場合は変更.
                     auto textureId = pCmd->GetTexID();
-                    if (textureId != 0)
+                    if (textureId != ImTextureID_Invalid)
                     {
                         D3D12_GPU_DESCRIPTOR_HANDLE handle = {};
                         handle.ptr = textureId;
