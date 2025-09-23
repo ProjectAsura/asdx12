@@ -288,8 +288,8 @@ FLOAT App::GetFPS()
 bool App::InitApp()
 {
     // COMライブラリの初期化.
-    HRESULT hr = CoInitialize( nullptr );
-    if ( FAILED(hr) )
+    HRESULT hr = CoInitialize(nullptr);
+    if (FAILED(hr))
     {
         DLOG( "Error : Com Library Initialize Failed." );
         return false;
@@ -308,39 +308,39 @@ bool App::InitApp()
         NULL);
 
     // セキュリティ設定の結果をチェック.
-    if ( FAILED(hr) )
+    if (FAILED(hr))
     {
         DLOG( "Error : Com Library Initialize Security Failed." );
         return false;
     }
 
     // ウィンドウの初期化.
-    if ( m_CreateWindow && !InitWnd() )
+    if (m_CreateWindow && !InitWnd())
     {
         DLOG( "Error : InitWnd() Failed." );
         return false;
     }
 
     // Direct3Dの初期化.
-    if ( !InitD3D() )
+    if (!InitD3D())
     {
         DLOG( "Error : InitD3D() Failed." );
         return false;
     }
 
     // アプリケーション固有の初期化.
-    if ( !OnInit() )
+    if (!OnInit())
     {
         ELOG( "Error : OnInit() Failed." );
         return false;
     }
 
     // ウィンドウを表示します.
-    ShowWindow( m_hWnd, SW_SHOWNORMAL );
-    UpdateWindow( m_hWnd );
+    UpdateWindow(m_hWnd);
+    ShowWindow(m_hWnd, SW_SHOWNORMAL);
 
     // フォーカスを設定します.
-    SetFocus( m_hWnd );
+    SetFocus(m_hWnd);
 
     // 正常終了.
     return true;
@@ -374,29 +374,28 @@ void App::TermApp()
 bool App::InitWnd()
 {
     // インスタンスハンドルを取得.
-    HINSTANCE hInst = GetModuleHandle( nullptr );
-    if ( !hInst )
+    HINSTANCE hInst = GetModuleHandle(nullptr);
+    if (!hInst)
     {
         DLOG( "Error : GetModuleHandle() Failed. ");
         return false;
     }
 
     // アイコンなしの場合はロード.
-    if ( m_hIcon == nullptr )
+    if (m_hIcon == nullptr)
     {
         // 最初にみつかったものをアイコンとして設定する.
         WCHAR exePath[MAX_PATH];
-        GetModuleFileName( NULL, exePath, MAX_PATH );
-        m_hIcon = ExtractIcon( hInst, exePath, 0 );
+        GetModuleFileNameW(NULL, exePath, MAX_PATH);
+        m_hIcon = ExtractIconW(hInst, exePath, 0);
 
         // それでも見つからなった場合.
         if (m_hIcon == nullptr)
-        { m_hIcon = LoadIcon( hInst, IDI_APPLICATION ); }
+        { m_hIcon = LoadIcon(hInst, IDI_APPLICATION); }
     }
 
-
     // 拡張ウィンドウクラスの設定.
-    WNDCLASSEXW wc;
+    WNDCLASSEXW wc = {};
     wc.cbSize           = sizeof( WNDCLASSEXW );
     wc.style            = CS_HREDRAW | CS_VREDRAW;
     wc.lpfnWndProc      = MsgProc;
@@ -404,14 +403,14 @@ bool App::InitWnd()
     wc.cbWndExtra       = 0;
     wc.hInstance        = hInst;
     wc.hIcon            = m_hIcon;
-    wc.hCursor          = LoadCursor( NULL, IDC_ARROW );
-    wc.hbrBackground    = (HBRUSH)( COLOR_WINDOW + 1 );
+    wc.hCursor          = LoadCursor(NULL, IDC_ARROW);
+    wc.hbrBackground    = (HBRUSH)(COLOR_WINDOW + 1);
     wc.lpszMenuName     = NULL;
     wc.lpszClassName    = ASDX_WND_CLASSNAME;
     wc.hIconSm          = m_hIcon;
 
     // ウィンドウクラスを登録します.
-    if ( !RegisterClassExW( &wc ) )
+    if (!RegisterClassExW(&wc))
     {
         // エラーログ出力.
         DLOG( "Error : RegisterClassEx() Failed." );
@@ -424,7 +423,7 @@ bool App::InitWnd()
     m_hInst = hInst;
 
     // 矩形の設定.
-    RECT rc = { 0, 0, static_cast<LONG>(m_Width), static_cast<LONG>(m_Height) };
+    RECT rc = {0, 0, LONG(m_Width), LONG(m_Height)};
 
 #if 0 // リサイズしたくない場合.
     //DWORD style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MAXIMIZEBOX | WS_MINIMIZEBOX;
@@ -432,7 +431,7 @@ bool App::InitWnd()
     DWORD style = WS_OVERLAPPEDWINDOW;
 #endif
     // 指定されたクライアント領域を確保するために必要なウィンドウ座標を計算します.
-    AdjustWindowRect( &rc, style, FALSE );
+    AdjustWindowRect(&rc, style, FALSE);
 
     // ウィンドウを生成します.
     m_hWnd = CreateWindowW(
@@ -446,11 +445,10 @@ bool App::InitWnd()
         NULL,
         m_hMenu,
         hInst,
-        this
-    );
+        this);
 
     // 生成チェック.
-    if ( !m_hWnd )
+    if (!m_hWnd)
     {
         // エラーログ出力.
         DLOG( "Error : CreateWindow() Failed." );
@@ -473,16 +471,16 @@ void App::TermWnd()
 
     // ウィンドウクラスの登録を解除.
     if ( m_hInst != nullptr )
-    { UnregisterClass( ASDX_WND_CLASSNAME, m_hInst ); }
+    { UnregisterClass(ASDX_WND_CLASSNAME, m_hInst); }
 
     if ( m_hAccel )
-    { DestroyAcceleratorTable( m_hAccel ); }
+    { DestroyAcceleratorTable(m_hAccel); }
 
     if ( m_hMenu )
-    { DestroyMenu( m_hMenu ); }
+    { DestroyMenu(m_hMenu); }
 
     if ( m_hIcon )
-    { DestroyIcon( m_hIcon ); }
+    { DestroyIcon(m_hIcon); }
 
     // タイトル名をクリア.
     m_Title = nullptr;
@@ -552,7 +550,7 @@ bool App::InitD3D()
 
         // ウィンドウサイズを取得します.
         RECT rc;
-        GetClientRect( m_hWnd, &rc );
+        GetClientRect(m_hWnd, &rc);
         UINT w = rc.right  - rc.left;
         UINT h = rc.bottom - rc.top;
 
@@ -598,7 +596,7 @@ bool App::InitD3D()
 
             // IDXGISwapChain4にキャスト.
             hr = pSwapChain1->QueryInterface(IID_PPV_ARGS(m_pSwapChain4.GetAddress()));
-            if ( FAILED( hr ) )
+            if (FAILED(hr))
             {
                 m_pSwapChain4.Reset();
                 ELOG( "Warning : IDXGISwapChain4 Conversion Faild.");
@@ -656,8 +654,8 @@ bool App::InitD3D()
         }
 
         // ビューポートの設定.
-        m_Viewport.Width    = (FLOAT)supportedInfo.Width;
-        m_Viewport.Height   = (FLOAT)supportedInfo.Height;
+        m_Viewport.Width    = FLOAT(supportedInfo.Width);
+        m_Viewport.Height   = FLOAT(supportedInfo.Height);
         m_Viewport.MinDepth = 0.0f;
         m_Viewport.MaxDepth = 1.0f;
         m_Viewport.TopLeftX = 0;
@@ -712,23 +710,23 @@ void App::TermD3D()
 //-----------------------------------------------------------------------------
 int App::MainLoop()
 {
-    MSG msg = { 0 };
+    MSG msg = {};
 
     FrameEventArgs frameEventArgs;
 
     auto frameCount = 0;
 
-    while( WM_QUIT != msg.message )
+    while(WM_QUIT != msg.message)
     {
-        auto gotMsg = PeekMessage( &msg, nullptr, 0, 0, PM_REMOVE );
+        auto hasMsg = PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE);
 
-        if ( gotMsg )
+        if (hasMsg)
         {
-            auto ret = TranslateAccelerator( m_hWnd, m_hAccel, &msg );
-            if ( 0 == ret )
+            auto ret = TranslateAccelerator(m_hWnd, m_hAccel, &msg);
+            if (0 == ret)
             {
-                TranslateMessage( &msg );
-                DispatchMessage( &msg );
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
             }
         }
         else
@@ -738,11 +736,11 @@ int App::MainLoop()
             double elapsedTime;
 
             // 時間を取得.
-            m_Timer.GetValues( time, absTime, elapsedTime );
+            m_Timer.GetValues(time, absTime, elapsedTime);
 
             // 0.5秒ごとにFPSを更新.
-            auto interval = float( time - m_LatestUpdateTime );
-            if ( interval > 0.5 )
+            auto interval = float(time - m_LatestUpdateTime);
+            if (interval > 0.5f)
             {
                 // FPSを算出.
                 m_FPS = frameCount / interval;
@@ -758,13 +756,13 @@ int App::MainLoop()
             frameEventArgs.ElapsedTimeSec  = elapsedTime;
 
             // フレーム遷移処理.
-            OnFrameMove( frameEventArgs );
+            OnFrameMove(frameEventArgs);
 
             // 描画停止フラグが立っていない場合.
-            if ( !IsStopRendering() )
+            if (!IsStopRendering())
             {
                 // フレーム描画処理.
-                OnFrameRender( frameEventArgs );
+                OnFrameRender(frameEventArgs);
 
                 // フレームカウントをインクリメント.
                 m_FrameCount++;
@@ -785,7 +783,7 @@ int App::Run()
     int ret = -1;
 
     // アプリケーションの初期化処理.
-    if ( InitApp() )
+    if (InitApp())
     {
         // メインループ処理.
         ret = MainLoop();
@@ -819,8 +817,8 @@ void App::ResizeEvent(const ResizeEventArgs& param)
     { return; }
 
     // マルチサンプル数以下になるとハングすることがあるので，処理をスキップする.
-    if ( param.Width  <= m_MultiSampleCount 
-      || param.Height <= m_MultiSampleCount)
+    if (param.Width  <= m_MultiSampleCount 
+     || param.Height <= m_MultiSampleCount)
     { return; }
 
     auto format = GetNoSRGBFormat(m_SwapChainFormat);
@@ -874,7 +872,7 @@ void App::ResizeEvent(const ResizeEventArgs& param)
     m_ScissorRect.top    = 0;
     m_ScissorRect.bottom = m_Height;
 
-    if ( m_pSwapChain4 != nullptr )
+    if (m_pSwapChain4 != nullptr)
     {
         // コマンドの完了を待機.
         SystemWaitIdle();
@@ -925,27 +923,27 @@ void App::ResizeEvent(const ResizeEventArgs& param)
 //-----------------------------------------------------------------------------
 //      ウィンドウプロシージャ.
 //-----------------------------------------------------------------------------
-LRESULT CALLBACK App::MsgProc( HWND hWnd, UINT uMsg, WPARAM wp, LPARAM lp )
+LRESULT CALLBACK App::MsgProc(HWND hWnd, UINT uMsg, WPARAM wp, LPARAM lp)
 {
     auto pInstance = reinterpret_cast<App*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
 
     PAINTSTRUCT ps;
     HDC         hdc;
 
-    if ( ( uMsg == WM_KEYDOWN )
-      || ( uMsg == WM_SYSKEYDOWN )
-      || ( uMsg == WM_KEYUP )
-      || ( uMsg == WM_SYSKEYUP ) )
+    if ( (uMsg == WM_KEYDOWN)
+      || (uMsg == WM_SYSKEYDOWN)
+      || (uMsg == WM_KEYUP)
+      || (uMsg == WM_SYSKEYUP) )
     {
         if (pInstance != nullptr)
         {
-            bool isKeyDown = ( uMsg == WM_KEYDOWN  || uMsg == WM_SYSKEYDOWN );
+            bool isKeyDown = (uMsg == WM_KEYDOWN || uMsg == WM_SYSKEYDOWN);
 
-            DWORD mask = ( 1 << 29 );
-            bool isAltDown =( ( lp & mask ) != 0 );
+            DWORD mask = (1 << 29);
+            bool isAltDown = !!(lp & mask);
 
             KeyEventArgs args;
-            args.KeyCode   = uint32_t( wp );
+            args.KeyCode   = uint32_t(wp);
             args.IsAltDown = isAltDown;
             args.IsKeyDown = isKeyDown;
 
@@ -953,43 +951,40 @@ LRESULT CALLBACK App::MsgProc( HWND hWnd, UINT uMsg, WPARAM wp, LPARAM lp )
         }
     }
 
-    // 古いWM_MOUSEWHEELの定義.
-    const UINT OLD_WM_MOUSEWHEEL = 0x020A;
-
-    if ( ( uMsg == WM_LBUTTONDOWN )
-      || ( uMsg == WM_LBUTTONUP )
-      || ( uMsg == WM_LBUTTONDBLCLK )
-      || ( uMsg == WM_MBUTTONDOWN )
-      || ( uMsg == WM_MBUTTONUP )
-      || ( uMsg == WM_MBUTTONDBLCLK )
-      || ( uMsg == WM_RBUTTONDOWN )
-      || ( uMsg == WM_RBUTTONUP )
-      || ( uMsg == WM_RBUTTONDBLCLK )
-      || ( uMsg == WM_XBUTTONDOWN )
-      || ( uMsg == WM_XBUTTONUP )
-      || ( uMsg == WM_XBUTTONDBLCLK )
-      || ( uMsg == WM_MOUSEHWHEEL )             // このWM_MOUSEWHEELは0x020Eを想定.
-      || ( uMsg == WM_MOUSEMOVE )
-      || ( uMsg == OLD_WM_MOUSEWHEEL ) )
+    if ( (uMsg == WM_LBUTTONDOWN)
+      || (uMsg == WM_LBUTTONUP)
+      || (uMsg == WM_LBUTTONDBLCLK)
+      || (uMsg == WM_MBUTTONDOWN)
+      || (uMsg == WM_MBUTTONUP)
+      || (uMsg == WM_MBUTTONDBLCLK)
+      || (uMsg == WM_RBUTTONDOWN)
+      || (uMsg == WM_RBUTTONUP)
+      || (uMsg == WM_RBUTTONDBLCLK)
+      || (uMsg == WM_XBUTTONDOWN)
+      || (uMsg == WM_XBUTTONUP)
+      || (uMsg == WM_XBUTTONDBLCLK)
+      || (uMsg == WM_MOUSEHWHEEL)
+      || (uMsg == WM_MOUSEMOVE)
+      || (uMsg == WM_MOUSEWHEEL) )
     {
         if (pInstance != nullptr)
         {
-            int x = int(LOWORD( lp ));
-            int y = int(HIWORD( lp ));
+            int x = int(LOWORD(lp));
+            int y = int(HIWORD(lp));
 
             int wheelDelta = 0;
-            if ( ( uMsg == WM_MOUSEHWHEEL )
-              || ( uMsg == OLD_WM_MOUSEWHEEL ) )
+            if ((uMsg == WM_MOUSEHWHEEL)
+             || (uMsg == WM_MOUSEWHEEL))
             {
                 POINT pt = {};
                 pt.x = x;
                 pt.y = y;
 
-                ScreenToClient( hWnd, &pt );
+                ScreenToClient(hWnd, &pt);
                 x = pt.x;
                 y = pt.y;
 
-                wheelDelta += int(HIWORD( wp ));
+                wheelDelta += int(HIWORD(wp));
             }
 
             int  mask = LOWORD( wp );
@@ -1034,26 +1029,26 @@ LRESULT CALLBACK App::MsgProc( HWND hWnd, UINT uMsg, WPARAM wp, LPARAM lp )
 
     case WM_PAINT:
         {
-            hdc = BeginPaint( hWnd, &ps );
-            EndPaint( hWnd, &ps );
+            hdc = BeginPaint(hWnd, &ps);
+            EndPaint(hWnd, &ps);
         }
         break;
 
     case WM_DESTROY:
-        { PostQuitMessage( 0 ); }
+        { PostQuitMessage(0); }
         break;
 
     case WM_SIZE:
         {
-            UINT w = (UINT)LOWORD( lp );
-            UINT h = (UINT)HIWORD( lp );
+            UINT w = (UINT)LOWORD(lp);
+            UINT h = (UINT)HIWORD(lp);
 
             // ウインドウ非表示状態に移行する時に縦横1ピクセルのリサイズイベントが発行される
             // マルチサンプル等の関係で縦横1ピクセルは問題が起こるので最少サイズを設定
             ResizeEventArgs args;
-            args.Width  = asdx::Max( w, (uint32_t)8 );
-            args.Height = asdx::Max( h, (uint32_t)8 );
-            args.AspectRatio = float( args.Width ) / args.Height;
+            args.Width  = asdx::Max(w, 8u);
+            args.Height = asdx::Max(h, 8u);
+            args.AspectRatio = float(args.Width) / args.Height;
 
             if (pInstance != nullptr)
             { pInstance->ResizeEvent(args); }
@@ -1066,14 +1061,14 @@ LRESULT CALLBACK App::MsgProc( HWND hWnd, UINT uMsg, WPARAM wp, LPARAM lp )
             uint32_t numFiles = DragQueryFileW((HDROP)wp, 0xFFFFFFFF, NULL, 0);
 
             // 作業用のバッファを確保.
-            const WCHAR** dropFiles = new const WCHAR*[ numFiles ];
+            const WCHAR** dropFiles = new const WCHAR*[numFiles];
 
             for (uint32_t i=0; i < numFiles; i++)
             {
                 // ドロップされたファイル名を取得.
                 WCHAR* dropFile = new WCHAR[ MAX_PATH ];
                 DragQueryFileW((HDROP)wp, i, dropFile, MAX_PATH);
-                dropFiles[ i ] = dropFile;
+                dropFiles[i] = dropFile;
             }
 
             if (pInstance != nullptr)
@@ -1081,8 +1076,8 @@ LRESULT CALLBACK App::MsgProc( HWND hWnd, UINT uMsg, WPARAM wp, LPARAM lp )
 
             // 作業用のバッファを解放.
             for (uint32_t i=0; i < numFiles; i++)
-            { SafeDelete( dropFiles[ i ] ); }
-            SafeDelete( dropFiles );
+            { SafeDelete(dropFiles[i]); }
+            SafeDelete(dropFiles);
 
             DragFinish((HDROP)wp);
         }
@@ -1106,7 +1101,7 @@ LRESULT CALLBACK App::MsgProc( HWND hWnd, UINT uMsg, WPARAM wp, LPARAM lp )
         {
             if (pInstance != nullptr)
             {
-                auto keyCode = static_cast<uint32_t>( wp );
+                auto keyCode = static_cast<uint32_t>(wp);
                 pInstance->OnTyping(keyCode);
             }
         }
@@ -1165,10 +1160,10 @@ void App::Present(uint32_t syncInterval)
     HRESULT hr = S_OK;
 
     // スタンバイモードかどうかチェック.
-    if ( m_IsStandbyMode )
+    if (m_IsStandbyMode)
     {
         // テストする.
-        hr = m_pSwapChain4->Present( syncInterval, DXGI_PRESENT_TEST );
+        hr = m_pSwapChain4->Present(syncInterval, DXGI_PRESENT_TEST);
 
         // スタンバイモードが解除されたかをチェック.
         if ( hr == S_OK )
@@ -1179,7 +1174,7 @@ void App::Present(uint32_t syncInterval)
     }
 
     // 画面更新する.
-    hr = m_pSwapChain4->Present( syncInterval, 0 );
+    hr = m_pSwapChain4->Present(syncInterval, 0);
 
     switch( hr )
     {
@@ -1187,16 +1182,16 @@ void App::Present(uint32_t syncInterval)
     case DXGI_ERROR_DEVICE_RESET:
         {
             // エラーログ出力.
-            ELOG( "Fatal Error : IDXGISwapChain::Present() Failed. ErrorCode = DXGI_ERROR_DEVICE_RESET." );
+            ELOG("Fatal Error : IDXGISwapChain::Present() Failed. ErrorCode = DXGI_ERROR_DEVICE_RESET.");
 
             // エラー表示.
             ReportDRED(GetD3D12Device(), hr);
 
             // 続行できないのでダイアログを表示.
-            MessageBoxW( m_hWnd, L"A Fatal Error Occured. Shutting down.", L"FATAL ERROR", MB_OK | MB_ICONERROR );
+            MessageBoxW(m_hWnd, L"A Fatal Error Occured. Shutting down.", L"FATAL ERROR", MB_OK | MB_ICONERROR);
 
             // 終了メッセージを送る.
-            PostQuitMessage( 1 );
+            PostQuitMessage(1);
         }
         break;
 
@@ -1204,16 +1199,16 @@ void App::Present(uint32_t syncInterval)
     case DXGI_ERROR_DEVICE_REMOVED:
         {
             // エラーログ出力.
-            ELOG( "Fatal Error : IDXGISwapChain::Present() Failed. ErrorCode = DXGI_ERROR_DEVICE_REMOVED." );
+            ELOG("Fatal Error : IDXGISwapChain::Present() Failed. ErrorCode = DXGI_ERROR_DEVICE_REMOVED.");
 
             // エラー表示.
             ReportDRED(GetD3D12Device(), hr);
 
             // 続行できないのでダイアログを表示.
-            MessageBoxW( m_hWnd, L"A Fatal Error Occured. Shutting down.", L"FATAL ERROR", MB_OK | MB_ICONERROR );
+            MessageBoxW(m_hWnd, L"A Fatal Error Occured. Shutting down.", L"FATAL ERROR", MB_OK | MB_ICONERROR);
 
             // 終了メッセージを送る.
-            PostQuitMessage( 2 );
+            PostQuitMessage(2);
         }
         break;
 
@@ -1440,7 +1435,7 @@ bool App::GetDisplayRefreshRate(DXGI_RATIONAL& result) const
 {
     auto hMonitor = MonitorFromWindow(m_hWnd, MONITOR_DEFAULTTONEAREST);
 
-    MONITORINFOEX monitorInfo;
+    MONITORINFOEX monitorInfo = {};
     monitorInfo.cbSize = sizeof(monitorInfo);
     auto ret = GetMonitorInfo(hMonitor, &monitorInfo);
     if (ret == 0)
@@ -1449,7 +1444,7 @@ bool App::GetDisplayRefreshRate(DXGI_RATIONAL& result) const
         return false;
     }
 
-    DEVMODE devMode;
+    DEVMODE devMode = {};
     devMode.dmSize          = sizeof(devMode);
     devMode.dmDriverExtra   = 0;
     ret = EnumDisplaySettings(monitorInfo.szDevice, ENUM_CURRENT_SETTINGS, &devMode);

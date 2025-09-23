@@ -4092,6 +4092,28 @@ inline Vector3 Unorm3::ToVector3() const
         asdx::Saturate(z / 255.0f));
 }
 
+//-----------------------------------------------------------------------------
+//      Unorm3に変換します.
+//-----------------------------------------------------------------------------
+inline Unorm3 Unorm3::FromRGB(uint32_t value)
+{
+    uint8_t r = (value >> 16) & 0xff;
+    uint8_t g = (value >>  8) & 0xff;
+    uint8_t b = (value & 0xff);
+    return Unorm3(r, g, b);
+}
+
+//-----------------------------------------------------------------------------
+//      Unorm3に変換します.
+//-----------------------------------------------------------------------------
+inline Unorm3 Unorm3::FromBGR(uint32_t value)
+{
+    uint8_t b = (value >> 16) & 0xff;
+    uint8_t g = (value >>  8) & 0xff;
+    uint8_t r = (value & 0xff);
+    return Unorm3(r, g, b);
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Unorm4 structure
@@ -4127,6 +4149,54 @@ inline Vector4 Unorm4::ToVector4() const
         asdx::Saturate(y / 255.0f),
         asdx::Saturate(z / 255.0f),
         asdx::Saturate(w / 255.0f));
+}
+
+//-----------------------------------------------------------------------------
+//      Unorm4に変換します.
+//-----------------------------------------------------------------------------
+inline Unorm4 Unorm4::FromRGBA(uint32_t value)
+{
+    uint8_t r = (value >> 24) & 0xff;
+    uint8_t g = (value >> 16) & 0xff;
+    uint8_t b = (value >>  8) & 0xff;
+    uint8_t a = (value & 0xff);
+    return Unorm4(r, g, b, a);
+}
+
+//-----------------------------------------------------------------------------
+//      Unorm4に変換します.
+//-----------------------------------------------------------------------------
+inline Unorm4 Unorm4::FromARGB(uint32_t value)
+{
+    uint8_t a = (value >> 24) & 0xff;
+    uint8_t r = (value >> 16) & 0xff;
+    uint8_t g = (value >>  8) & 0xff;
+    uint8_t b = (value & 0xff);
+    return Unorm4(r, g, b, a);
+}
+
+//-----------------------------------------------------------------------------
+//      Unorm4に変換します.
+//-----------------------------------------------------------------------------
+inline Unorm4 Unorm4::FromBGRA(uint32_t value)
+{
+    uint8_t b = (value >> 24) & 0xff;
+    uint8_t g = (value >> 16) & 0xff;
+    uint8_t r = (value >>  8) & 0xff;
+    uint8_t a = (value & 0xff);
+    return Unorm4(r, g, b, a);
+}
+
+//-----------------------------------------------------------------------------
+//      Unorm4に変換します.
+//-----------------------------------------------------------------------------
+inline Unorm4 Unorm4::FromABGR(uint32_t value)
+{
+    uint8_t a = (value >> 24) & 0xff;
+    uint8_t b = (value >> 16) & 0xff;
+    uint8_t g = (value >>  8) & 0xff;
+    uint8_t r = (value & 0xff);
+    return Unorm4(r, g, b, a);
 }
 
 
