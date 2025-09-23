@@ -41,6 +41,24 @@ enum PAD_BUTTON
     PAD_Y           = 0x08000L,     //!< Yボタン.
     PAD_TRIGGER_L   = 0x10000L,     //!< 左トリガー.
     PAD_TRIGGER_R   = 0x20000L,     //!< 右トリガー.
+
+    // 任意のボタン.
+    PAD_ANY         = PAD_UP
+                    | PAD_DOWN
+                    | PAD_LEFT
+                    | PAD_RIGHT
+                    | PAD_START
+                    | PAD_BACK
+                    | PAD_THUMB_L
+                    | PAD_THUMB_R
+                    | PAD_SHOULDER_L
+                    | PAD_SHOULDER_R
+                    | PAD_A
+                    | PAD_B
+                    | PAD_X
+                    | PAD_Y
+                    | PAD_TRIGGER_L
+                    | PAD_TRIGGER_R,
 };
 
 
