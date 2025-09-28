@@ -25,7 +25,7 @@ namespace asdx {
 class CflatScopedLock
 {
 public:
-    CflatScopedLock ()
+    CflatScopedLock()
     { CflatLock(); }
     
     ~CflatScopedLock()

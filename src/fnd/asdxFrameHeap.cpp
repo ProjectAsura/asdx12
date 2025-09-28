@@ -10,6 +10,7 @@
 #include <new>
 #include <fnd/asdxFrameHeap.h>
 #include <fnd/asdxLogger.h>
+#include <fnd/asdxMisc.h>
 
 
 namespace asdx {
@@ -77,13 +78,14 @@ void FrameHeap::Reset()
 //-----------------------------------------------------------------------------
 //      メモリ確保を行います.
 //-----------------------------------------------------------------------------
-void* FrameHeap::Alloc(size_t size)
+void* FrameHeap::Alloc(size_t size, size_t alignment)
 {
-    if (GetRestSize() < size)
+    auto upsize = RoundUp(size, alignment);
+    if (GetRestSize() < upsize)
     { return nullptr; }
 
     auto ptr = m_pBuffer + m_Offset;
-    m_Offset += size;
+    m_Offset += upsize;
     return ptr;
 }
 

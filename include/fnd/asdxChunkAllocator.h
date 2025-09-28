@@ -32,7 +32,7 @@ public:
     //=========================================================================
     // public variables.
     //=========================================================================
-    /* NOTHING */
+    static const size_t kDefaultAlignment = 4;
 
     //=========================================================================
     // pubilc methods.
@@ -61,7 +61,7 @@ public:
     //! @return     AllocChunk() が呼び出し後は, 確保メモリへのポインタを返却します.
     //!             AllocChunk() が呼び出し前は，nullptr を返却します.
     //-------------------------------------------------------------------------
-    void* Alloc(size_t size, size_t alignment = 4)
+    void* Alloc(size_t size, size_t alignment = kDefaultAlignment)
     {
         auto addSize = (size + (alignment - 1)) & ~(alignment - 1);
         if (m_Buffer == nullptr)

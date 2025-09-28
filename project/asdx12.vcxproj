@@ -91,7 +91,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;ASDX_AUTO_LINK;ASDX_ENABLE_DXC;ASDX_ENABLE_IMGUI;ASDX_ENABLE_TINYXML2;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;$(ProjectDir)..\external\meshoptimizer;$(ProjectDir)..\external\flatbuffers\include;$(ProjectDir)..\external\cflat;$(ProjectDir)..\external\simdjson\include;$(ProjectDir)..\external\simdjson\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;$(ProjectDir)..\external\meshoptimizer;$(ProjectDir)..\external\flatbuffers\include;$(ProjectDir)..\external\cflat;$(ProjectDir)..\external\simdjson\include;$(ProjectDir)..\external\simdjson\src;$(ProjectDir)..\external\im3d;$(ProjectDir)..\external\implot;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -114,7 +114,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;ASDX_AUTO_LINK;ASDX_ENABLE_DXC;ASDX_ENABLE_IMGUI;ASDX_ENABLE_TINYXML2;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;$(ProjectDir)..\external\meshoptimizer;$(ProjectDir)..\external\flatbuffers\include;$(ProjectDir)..\external\cflat;$(ProjectDir)..\external\simdjson\include;$(ProjectDir)..\external\simdjson\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;$(ProjectDir)..\external\meshoptimizer;$(ProjectDir)..\external\flatbuffers\include;$(ProjectDir)..\external\cflat;$(ProjectDir)..\external\simdjson\include;$(ProjectDir)..\external\simdjson\src;$(ProjectDir)..\external\im3d;$(ProjectDir)..\external\implot;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -139,7 +139,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;ASDX_AUTO_LINK;ASDX_ENABLE_DXC;ASDX_ENABLE_IMGUI;ASDX_ENABLE_TINYXML2;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;$(ProjectDir)..\external\meshoptimizer;$(ProjectDir)..\external\flatbuffers\include;$(ProjectDir)..\external\cflat;$(ProjectDir)..\external\simdjson\include;$(ProjectDir)..\external\simdjson\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;$(ProjectDir)..\external\meshoptimizer;$(ProjectDir)..\external\flatbuffers\include;$(ProjectDir)..\external\cflat;$(ProjectDir)..\external\simdjson\include;$(ProjectDir)..\external\simdjson\src;$(ProjectDir)..\external\im3d;$(ProjectDir)..\external\implot;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -165,7 +165,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;ASDX_AUTO_LINK;ASDX_ENABLE_DXC;ASDX_ENABLE_IMGUI;ASDX_ENABLE_TINYXML2;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;$(ProjectDir)..\external\meshoptimizer;$(ProjectDir)..\external\flatbuffers\include;$(ProjectDir)..\external\cflat;$(ProjectDir)..\external\simdjson\include;$(ProjectDir)..\external\simdjson\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;$(ProjectDir)..\external\meshoptimizer;$(ProjectDir)..\external\flatbuffers\include;$(ProjectDir)..\external\cflat;$(ProjectDir)..\external\simdjson\include;$(ProjectDir)..\external\simdjson\src;$(ProjectDir)..\external\im3d;$(ProjectDir)..\external\implot;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -185,10 +185,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\external\Cflat\Cflat.cpp" />
+    <ClCompile Include="..\external\im3d\im3d.cpp" />
     <ClCompile Include="..\external\imgui\imgui.cpp" />
     <ClCompile Include="..\external\imgui\imgui_draw.cpp" />
     <ClCompile Include="..\external\imgui\imgui_tables.cpp" />
     <ClCompile Include="..\external\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="..\external\implot\implot.cpp" />
+    <ClCompile Include="..\external\implot\implot_items.cpp" />
     <ClCompile Include="..\external\meshoptimizer\allocator.cpp" />
     <ClCompile Include="..\external\meshoptimizer\clusterizer.cpp" />
     <ClCompile Include="..\external\meshoptimizer\indexcodec.cpp" />
@@ -264,12 +267,17 @@
     <ClInclude Include="..\external\Cflat\CflatGlobalConfig.h" />
     <ClInclude Include="..\external\Cflat\CflatHelper.h" />
     <ClInclude Include="..\external\Cflat\CflatMacros.h" />
+    <ClInclude Include="..\external\im3d\im3d.h" />
+    <ClInclude Include="..\external\im3d\im3d_config.h" />
+    <ClInclude Include="..\external\im3d\im3d_math.h" />
     <ClInclude Include="..\external\imgui\imconfig.h" />
     <ClInclude Include="..\external\imgui\imgui.h" />
     <ClInclude Include="..\external\imgui\imgui_internal.h" />
     <ClInclude Include="..\external\imgui\imstb_rectpack.h" />
     <ClInclude Include="..\external\imgui\imstb_textedit.h" />
     <ClInclude Include="..\external\imgui\imstb_truetype.h" />
+    <ClInclude Include="..\external\implot\implot.h" />
+    <ClInclude Include="..\external\implot\implot_internal.h" />
     <ClInclude Include="..\external\meshoptimizer\meshoptimizer.h" />
     <ClInclude Include="..\external\tinyxml2\tinyxml2.h" />
     <ClInclude Include="..\include\edit\asdxEditParam.h" />

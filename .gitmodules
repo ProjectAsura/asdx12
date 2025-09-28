@@ -22,3 +22,9 @@
 [submodule "external/Cflat"]
 	path = external/Cflat
 	url = https://github.com/ProjectAsura/Cflat.git
+[submodule "external/im3d"]
+	path = external/im3d
+	url = https://github.com/john-chapman/im3d.git
+[submodule "external/implot"]
+	path = external/implot
+	url = https://github.com/epezent/implot
