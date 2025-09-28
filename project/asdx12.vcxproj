@@ -215,6 +215,7 @@
     <ClCompile Include="..\src\edit\asdxHistory.cpp" />
     <ClCompile Include="..\src\edit\asdxP4VHelper.cpp" />
     <ClCompile Include="..\src\edit\asdxTcpConnector.cpp" />
+    <ClCompile Include="..\src\fnd\asdxAsyncFileLoader.cpp" />
     <ClCompile Include="..\src\fnd\asdxBit.cpp" />
     <ClCompile Include="..\src\fnd\asdxBlob.cpp" />
     <ClCompile Include="..\src\fnd\asdxFrameHeap.cpp" />
@@ -287,6 +288,7 @@
     <ClInclude Include="..\include\edit\asdxP4VHelper.h" />
     <ClInclude Include="..\include\edit\asdxTcpConnector.h" />
     <ClInclude Include="..\include\fnd\asdxArrayView.h" />
+    <ClInclude Include="..\include\fnd\asdxAsyncFileLoader.h" />
     <ClInclude Include="..\include\fnd\asdxBit.h" />
     <ClInclude Include="..\include\fnd\asdxBlob.h" />
     <ClInclude Include="..\include\fnd\asdxChunkAllocator.h" />

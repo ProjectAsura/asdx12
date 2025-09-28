@@ -294,6 +294,9 @@
     <ClCompile Include="..\external\implot\implot_items.cpp">
       <Filter>ソース ファイル\external\implot</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\fnd\asdxAsyncFileLoader.cpp">
+      <Filter>ソース ファイル\fnd</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\external\imgui\imconfig.h">
@@ -544,6 +547,9 @@
     </ClInclude>
     <ClInclude Include="..\external\implot\implot_internal.h">
       <Filter>ソース ファイル\external\implot</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fnd\asdxAsyncFileLoader.h">
+      <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
