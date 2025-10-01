@@ -203,17 +203,39 @@ bool Texture::Init(ID3D12GraphicsCommandList* pCmdList, const ResTexture& resour
         D3D12_RESOURCE_FLAG_NONE
     };
 
-    auto hr = pDevice->CreateCommittedResource(
-        &props,
-        D3D12_HEAP_FLAG_NONE,
-        &desc,
-        initState,
-        nullptr,
-        IID_PPV_ARGS(m_Resource.GetAddress()));
-    if (FAILED(hr))
+    auto allocator = GetD3D12MA();
+    if (allocator != nullptr)
     {
-        ELOG("Error : ID3D12Device::CreateCommitedResource() Failed. errcode = 0x%x", hr);
-        return false;
+        D3D12MA::ALLOCATION_DESC allocDesc = {};
+        allocDesc.HeapType = heapType;
+
+        auto hr = allocator->CreateResource(
+            &allocDesc,
+            &desc,
+            initState,
+            nullptr,
+            m_Allocation.GetAddress(),
+            IID_PPV_ARGS(m_Resource.GetAddress()));
+        if (FAILED(hr))
+        {
+            ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
+            return false;
+        }
+    }
+    else
+    {
+        auto hr = pDevice->CreateCommittedResource(
+            &props,
+            D3D12_HEAP_FLAG_NONE,
+            &desc,
+            initState,
+            nullptr,
+            IID_PPV_ARGS(m_Resource.GetAddress()));
+        if (FAILED(hr))
+        {
+            ELOG("Error : ID3D12Device::CreateCommitedResource() Failed. errcode = 0x%x", hr);
+            return false;
+        }
     }
 
     m_HandleSRV = GetResourceDescriptorHeap()->Alloc(1);
@@ -280,6 +302,7 @@ void Texture::Term()
 
     auto resource = m_Resource.Detach();
     Dispose(resource);
+    m_Allocation.Reset();
 }
 
 //-----------------------------------------------------------------------------

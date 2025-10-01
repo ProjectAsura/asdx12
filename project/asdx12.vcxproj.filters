@@ -67,6 +67,9 @@
     <Filter Include="ソース ファイル\external\implot">
       <UniqueIdentifier>{0e1b19af-3a20-470d-8d44-fbd15b73e910}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ソース ファイル\external\D3D12MA">
+      <UniqueIdentifier>{b9afb970-fc06-45f7-be9d-b1801116a8e8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\external\imgui\imgui.cpp">
@@ -296,6 +299,9 @@
     </ClCompile>
     <ClCompile Include="..\src\fnd\asdxAsyncFileLoader.cpp">
       <Filter>ソース ファイル\fnd</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\D3D12MemoryAllocator\src\D3D12MemAlloc.cpp">
+      <Filter>ソース ファイル\external\D3D12MA</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -551,6 +557,9 @@
     <ClInclude Include="..\include\fnd\asdxAsyncFileLoader.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
+    <ClInclude Include="..\external\D3D12MemoryAllocator\include\D3D12MemAlloc.h">
+      <Filter>ソース ファイル\external\D3D12MA</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\res\shaders\BRDF.hlsli">
@@ -648,5 +657,10 @@
     <FxCompile Include="..\res\shaders\FadePS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\external\D3D12MemoryAllocator\src\D3D12MemAlloc.natvis">
+      <Filter>ソース ファイル\external\D3D12MA</Filter>
+    </Natvis>
   </ItemGroup>
 </Project>

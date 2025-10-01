@@ -9,6 +9,7 @@
 //-----------------------------------------------------------------------------
 #include <fnd/asdxLogger.h>
 #include <gfx/asdxSprite.h>
+#include <gfx/asdxDevice.h>
 
 
 namespace {
@@ -134,7 +135,6 @@ SpriteRenderer::~SpriteRenderer()
 //-----------------------------------------------------------------------------
 bool SpriteRenderer::Init
 (
-    ID3D12Device*   pDevice,
     uint32_t        w,
     uint32_t        h,
     uint32_t        maxSpriteCount,
@@ -143,6 +143,19 @@ bool SpriteRenderer::Init
     DXGI_FORMAT     dsvFormat
 )
 {
+    auto pDevice = GetD3D12Device();
+
+    D3D12_FEATURE_DATA_D3D12_OPTIONS16 options16 = {};
+    bool gpuUploadHeapSupported = false;
+    if (SUCCEEDED(pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS16, &options16, sizeof(options16))))
+    { gpuUploadHeapSupported = options16.GPUUploadHeapSupported; }
+
+    auto heapType = gpuUploadHeapSupported 
+        ? D3D12_HEAP_TYPE_GPU_UPLOAD 
+        : D3D12_HEAP_TYPE_UPLOAD;
+
+    auto allocator = GetD3D12MA();
+
     for(auto i=0; i<2; ++i)
     {
         // 頂点バッファ生成.
@@ -150,7 +163,7 @@ bool SpriteRenderer::Init
             auto count = maxSpriteCount * kVertexCountPerSprite;
 
             D3D12_HEAP_PROPERTIES props = {};
-            props.Type                  = D3D12_HEAP_TYPE_UPLOAD;
+            props.Type                  = heapType;
             props.CPUPageProperty       = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
             props.MemoryPoolPreference  = D3D12_MEMORY_POOL_UNKNOWN;
             props.VisibleNodeMask       = 1;
@@ -168,18 +181,39 @@ bool SpriteRenderer::Init
             desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
             desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
 
-            auto state = D3D12_RESOURCE_STATE_GENERIC_READ;
+            auto state = D3D12_RESOURCE_STATE_COMMON;
             auto flags = D3D12_HEAP_FLAG_NONE;
 
-            auto hr = pDevice->CreateCommittedResource(
-                &props, flags, &desc, state, nullptr, IID_PPV_ARGS(m_VB[i].GetAddress()));
-            if (FAILED(hr))
+            if (allocator != nullptr)
             {
-                ELOG("Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr);
-                return false;
+                D3D12MA::ALLOCATION_DESC allocDesc = {};
+                allocDesc.HeapType = heapType;
+
+                auto hr = allocator->CreateResource(
+                    &allocDesc,
+                    &desc,
+                    state,
+                    nullptr,
+                    m_AllocationVB[i].GetAddress(),
+                    IID_PPV_ARGS(m_VB[i].GetAddress()));
+                if (FAILED(hr))
+                {
+                    ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
+                    return false;
+                }
+            }
+            else
+            {
+                auto hr = pDevice->CreateCommittedResource(
+                    &props, flags, &desc, state, nullptr, IID_PPV_ARGS(m_VB[i].GetAddress()));
+                if (FAILED(hr))
+                {
+                    ELOG("Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr);
+                    return false;
+                }
             }
 
-            hr = m_VB[i]->Map(0, nullptr, reinterpret_cast<void**>(&m_pVertices[i]));
+            auto hr = m_VB[i]->Map(0, nullptr, reinterpret_cast<void**>(&m_pVertices[i]));
             if (FAILED(hr))
             {
                 ELOG("Error : ID3D12Resource::Map() Failed. errcode = 0x%x", hr);
@@ -193,7 +227,7 @@ bool SpriteRenderer::Init
         auto count = maxSpriteCount * kIndexCountPerSprite;
 
         D3D12_HEAP_PROPERTIES props = {};
-        props.Type                  = D3D12_HEAP_TYPE_UPLOAD;
+        props.Type                  = heapType;
         props.CPUPageProperty       = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
         props.MemoryPoolPreference  = D3D12_MEMORY_POOL_UNKNOWN;
         props.VisibleNodeMask       = 1;
@@ -211,19 +245,40 @@ bool SpriteRenderer::Init
         desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
         desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
 
-        auto state = D3D12_RESOURCE_STATE_GENERIC_READ;
+        auto state = D3D12_RESOURCE_STATE_COMMON;
         auto flags = D3D12_HEAP_FLAG_NONE;
 
-        auto hr = pDevice->CreateCommittedResource(
-            &props, flags, &desc, state, nullptr, IID_PPV_ARGS(m_IB.GetAddress()));
-        if (FAILED(hr))
+        if (allocator != nullptr)
         {
-            ELOG("Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr);
-            return false;
+            D3D12MA::ALLOCATION_DESC allocDesc = {};
+            allocDesc.HeapType = heapType;
+
+            auto hr = allocator->CreateResource(
+                &allocDesc,
+                &desc,
+                state,
+                nullptr,
+                m_AllocationIB.GetAddress(),
+                IID_PPV_ARGS(m_IB.GetAddress()));
+            if (FAILED(hr))
+            {
+                ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
+                return false;
+            }
+        }
+        else
+        {
+            auto hr = pDevice->CreateCommittedResource(
+                &props, flags, &desc, state, nullptr, IID_PPV_ARGS(m_IB.GetAddress()));
+            if (FAILED(hr))
+            {
+                ELOG("Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr);
+                return false;
+            }
         }
 
         uint32_t* pIndices = nullptr;
-        hr = m_IB->Map(0, nullptr, reinterpret_cast<void**>(&pIndices));
+        auto hr = m_IB->Map(0, nullptr, reinterpret_cast<void**>(&pIndices));
         if (FAILED(hr))
         {
             ELOG("Error : ID3D12Resource::Map() Failed. errcode = 0x%x", hr);
@@ -354,9 +409,12 @@ void SpriteRenderer::Term()
         }
 
         m_VB[i].Reset();
+        m_AllocationVB[i].Reset();
         m_pVertices[i] = nullptr;
     }
     m_IB.Reset();
+    m_AllocationIB.Reset();
+
     m_RootSig.Reset();
     m_PSO.Reset();
 

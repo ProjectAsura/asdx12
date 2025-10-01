@@ -111,7 +111,7 @@ bool SampleApp::OnInit()
         return false;
     }
 
-    if (!g_SpriteRenderer.Init(pDevice, m_Width, m_Height, 512, 16, m_SwapChainFormat, m_DepthStencilFormat))
+    if (!g_SpriteRenderer.Init(m_Width, m_Height, 512, 16, m_SwapChainFormat, m_DepthStencilFormat))
     {
         ELOG("Error : SpriteRenderer::Init() Failed.");
         return false;

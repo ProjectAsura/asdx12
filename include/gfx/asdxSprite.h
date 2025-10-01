@@ -12,6 +12,7 @@
 #include <d3d12.h>
 #include <fnd/asdxRef.h>
 #include <fnd/asdxMath.h>
+#include <D3D12MemAlloc.h>
 
 
 namespace asdx {
@@ -48,8 +49,7 @@ public:
 
     //-------------------------------------------------------------------------
     //! @brief      初期化処理を行います.
-    //! 
-    //! @param[in]      pDevice         デバイスです.
+    //!
     //! @param[in]      screenWidth     スクリーンの横幅.
     //! @param[in]      screenHeight    スクリーンの縦幅.
     //! @param[in]      maxSpriteCount  最大スプライト数.
@@ -60,7 +60,6 @@ public:
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
     bool Init(
-        ID3D12Device*   pDevice,
         uint32_t        screenWidth,
         uint32_t        srceenHeight,
         uint32_t        maxSpriteCount,
@@ -283,6 +282,8 @@ private:
     DXGI_FORMAT                 m_ColorFormat       = DXGI_FORMAT_UNKNOWN;
     DXGI_FORMAT                 m_DepthFormat       = DXGI_FORMAT_UNKNOWN;
     uint32_t                    m_Param[4]          = {};
+    RefPtr<D3D12MA::Allocation> m_AllocationVB[2];
+    RefPtr<D3D12MA::Allocation> m_AllocationIB;
 
     //=========================================================================
     // private methods.

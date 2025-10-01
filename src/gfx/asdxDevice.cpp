@@ -258,6 +258,11 @@ public:
     //-------------------------------------------------------------------------
     const VertexBuffer& GetQuadVB() const { return m_QuadVB; }
 
+    //-------------------------------------------------------------------------
+    //! @brief      D3D12メモリアロケータを取得します.
+    //-------------------------------------------------------------------------
+    D3D12MA::Allocator* GetAllocator() const { return m_pAllocator.GetPtr(); }
+
 private:
     //=========================================================================
     // private variables.
@@ -272,14 +277,15 @@ private:
     RefPtr<CommandQueue>            m_pGraphicsQueue;           //!< グラフィックスキュー.
     RefPtr<CommandQueue>            m_pComputeQueue;            //!< コンピュートキュー.
     RefPtr<CommandQueue>            m_pCopyQueue;               //!< コピーキュー.
-    DescriptorHeap                  m_HeapRTV;
-    DescriptorHeap                  m_HeapDSV;
-    DescriptorHeap                  m_HeapResource;
-    DescriptorHeap                  m_HeapSampler;
+    DescriptorHeap                  m_HeapRTV;                  //!< RTVディスクリプタヒープ.
+    DescriptorHeap                  m_HeapDSV;                  //!< DSVディスクリプタヒープ.
+    DescriptorHeap                  m_HeapResource;             //!< リソースディスクリプタヒープ.
+    DescriptorHeap                  m_HeapSampler;              //!< サンプラーヒープ.
     Disposer<ID3D12Object>          m_ObjectDisposer;           //!< オブジェクトディスポーザー.
     Disposer<DescriptorPair>        m_DescriptorDisposer;       //!< ディスクリプタディスポーザー.
     SpinLock                        m_SpinLock;                 //!< スピンロックです.
-    VertexBuffer                    m_QuadVB;
+    VertexBuffer                    m_QuadVB;                   //!< フルスクリーン描画用三角形.
+    RefPtr<D3D12MA::Allocator>      m_pAllocator;               //!< D3D12メモリアロケータ.
 
     //=========================================================================
     // private methods
@@ -456,6 +462,21 @@ bool GraphicsSystem::Init(const DeviceDesc& deviceDesc)
         }
     }
 
+    // D3D12MA
+    {
+        D3D12MA::ALLOCATOR_DESC desc = {};
+        desc.Flags      = D3D12MA::ALLOCATOR_FLAG_DEFAULT_POOLS_NOT_ZEROED;
+        desc.pDevice    = m_pDevice.GetPtr();
+        desc.pAdapter   = m_pAdapter.GetPtr();
+
+        auto hr = D3D12MA::CreateAllocator(&desc, m_pAllocator.GetAddress());
+        if (FAILED(hr))
+        {
+            ELOG("Error : D3D12MA::CreateAllocator() Failed. errcode = 0x%x", hr);
+            return false;
+        }
+    }
+
     // 定数バッファ・シェーダリソース・アンオーダードアクセスビュー用ディスクリプタヒープ.
     {
         D3D12_DESCRIPTOR_HEAP_DESC desc = {};
@@ -577,6 +598,8 @@ void GraphicsSystem::Term()
     m_HeapDSV       .Term();
     m_HeapResource  .Term();
     m_HeapSampler   .Term();
+
+    m_pAllocator.Reset();
 
     m_pOutput   .Reset();
     m_pDevice   .Reset();
@@ -797,6 +820,12 @@ void GetDisplayInfo(DXGI_FORMAT format, std::vector<DisplayInfo>& result)
 { GraphicsSystem::Instance().GetDisplayInfo(format, result); }
 
 //-----------------------------------------------------------------------------
+//      D3D12メモリアロケータを取得します.
+//-----------------------------------------------------------------------------
+D3D12MA::Allocator* GetD3D12MA()
+{ return GraphicsSystem::Instance().GetAllocator(); }
+
+//-----------------------------------------------------------------------------
 //      フルスクリーン矩形を描画します.
 //-----------------------------------------------------------------------------
 void DrawQuad(ID3D12GraphicsCommandList* pCmd)
@@ -807,6 +836,5 @@ void DrawQuad(ID3D12GraphicsCommandList* pCmd)
     pCmd->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     pCmd->DrawInstanced(3, 1, 0, 0);
 }
-
 
 } // namespace asdx

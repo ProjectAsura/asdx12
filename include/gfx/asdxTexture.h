@@ -11,6 +11,7 @@
 #include <d3d12.h>
 #include <fnd/asdxRef.h>
 #include <fnd/asdxOffsetAllocator.h>
+#include <D3D12MemAlloc.h>
 
 
 namespace asdx {
@@ -97,8 +98,9 @@ private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    RefPtr<ID3D12Resource>  m_Resource;
-    OffsetHandle            m_HandleSRV;
+    RefPtr<ID3D12Resource>      m_Resource;     //!< リソースです.
+    RefPtr<D3D12MA::Allocation> m_Allocation;   //!< アロケーション情報です.
+    OffsetHandle                m_HandleSRV;    //!< オフセットハンドルです.
 
     //=========================================================================
     // private methods.

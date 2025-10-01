@@ -12,6 +12,7 @@
 #include <dxgi1_6.h>
 #include <fnd/asdxOffsetAllocator.h>
 #include <fnd/asdxRef.h>
+#include <D3D12MemAlloc.h>
 
 
 namespace asdx {
@@ -199,6 +200,7 @@ private:
     // private variables.
     //=========================================================================
     RefPtr<ID3D12Resource>      m_pResource;
+    RefPtr<D3D12MA::Allocation> m_Allocation;
     OffsetHandle                m_HandleRTV;
     OffsetHandle                m_HandleSRV;
     TargetDesc                  m_Desc;
@@ -359,6 +361,7 @@ private:
     // private variables.
     //=========================================================================
     RefPtr<ID3D12Resource>      m_pResource;
+    RefPtr<D3D12MA::Allocation> m_Allocation;
     OffsetHandle                m_HandleDSV;
     OffsetHandle                m_HandleSRV;
     TargetDesc                  m_Desc;
@@ -551,6 +554,7 @@ private:
     // private variables.
     //=========================================================================
     RefPtr<ID3D12Resource>          m_pResource;
+    RefPtr<D3D12MA::Allocation>     m_Allocation;
     OffsetHandle                    m_HandleUAV;
     OffsetHandle                    m_HandleSRV;
     TargetDesc                      m_Desc;

@@ -11,6 +11,7 @@
 #include <d3d12.h>
 #include <fnd/asdxMath.h>
 #include <fnd/asdxRef.h>
+#include <D3D12MemAlloc.h>
 
 
 namespace asdx {
@@ -57,7 +58,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      初期化処理を行います.
     //-------------------------------------------------------------------------
-    bool Init(ID3D12Device* pDevice, DXGI_FORMAT colorFormat, DXGI_FORMAT depthFormat);
+    bool Init(DXGI_FORMAT colorFormat, DXGI_FORMAT depthFormat);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.
@@ -99,6 +100,7 @@ private:
     asdx::RefPtr<ID3D12PipelineState>   m_TranslucentState;
     asdx::RefPtr<ID3D12PipelineState>   m_WireframeState;
     asdx::RefPtr<ID3D12Resource>        m_CameraBuffer;
+    asdx::RefPtr<D3D12MA::Allocation>   m_CameraBufferAllocation;
     uint8_t                             m_BufferIndex = 0;
     asdx::Matrix                        m_View;
     asdx::Matrix                        m_Proj;
@@ -177,11 +179,14 @@ protected:
     uint8_t                         m_BufferIndex = 0;  //!< バッファインデックです.
     uint32_t                        m_IndexCount  = 0;  //!< インデックス数です.
 
+    asdx::RefPtr<D3D12MA::Allocation>   m_AllocationVB;
+    asdx::RefPtr<D3D12MA::Allocation>   m_AllocationIB;
+    asdx::RefPtr<D3D12MA::Allocation>   m_AllocationCB;
+
     //=========================================================================
     // protected methods.
     //=========================================================================
     bool InitBuffer(
-        ID3D12Device*           pDevice,
         const asdx::Vector3*    positions,
         size_t                  positionCount,
         const uint32_t*         indices,
@@ -231,7 +236,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      初期化処理を行います.
     //-------------------------------------------------------------------------
-    bool Init(ID3D12Device* pDevice, float size);
+    bool Init(float size);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.
@@ -272,7 +277,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      初期化処理を行います.
     //-------------------------------------------------------------------------
-    bool Init(ID3D12Device* pDevice, float radius, uint32_t sliceCount);
+    bool Init(float radius, uint32_t sliceCount);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.
@@ -313,7 +318,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      初期化処理を行います.
     //-------------------------------------------------------------------------
-    bool Init(ID3D12Device* pDevice, float radius, uint32_t sliceCount);
+    bool Init(float radius, uint32_t sliceCount);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.
@@ -354,7 +359,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      初期化処理を行います.
     //-------------------------------------------------------------------------
-    bool Init(ID3D12Device* pDevice, float height, float radius, uint32_t sliceCount);
+    bool Init(float height, float radius, uint32_t sliceCount);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.
@@ -395,7 +400,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      初期化処理を行います.
     //-------------------------------------------------------------------------
-    bool Init(ID3D12Device* pDevice, float length, float width);
+    bool Init(float length, float width);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.
@@ -436,7 +441,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      初期化処理を行います.
     //-------------------------------------------------------------------------
-    bool Init(ID3D12Device* pDevice, float radius, float height, uint32_t sliceCount);
+    bool Init(float radius, float height, uint32_t sliceCount);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.
@@ -477,7 +482,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      初期化処理を行います.
     //-------------------------------------------------------------------------
-    bool Init(ID3D12Device* pDevice, float width, float height);
+    bool Init(float width, float height);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.
@@ -518,7 +523,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      初期化処理を行います.
     //-------------------------------------------------------------------------
-    bool Init(ID3D12Device* pDevice, float length, float radius, uint32_t sliceCount);
+    bool Init(float length, float radius, uint32_t sliceCount);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.
@@ -558,7 +563,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      初期化処理を行います.
     //-------------------------------------------------------------------------
-    bool Init(ID3D12Device* pDevice, float radius, uint32_t sliceCount);
+    bool Init(float radius, uint32_t sliceCount);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.
@@ -599,7 +604,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      初期化処理を行います.
     //-------------------------------------------------------------------------
-    bool Init(ID3D12Device* pDevice, float radius, float startAngleRad, float sweepAngleRad, uint32_t sliceCount);
+    bool Init(float radius, float startAngleRad, float sweepAngleRad, uint32_t sliceCount);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.
@@ -640,7 +645,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      初期化処理を行います.
     //-------------------------------------------------------------------------
-    bool Init(ID3D12Device* pDevice, float length, float width);
+    bool Init(float length, float width);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.

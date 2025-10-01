@@ -231,17 +231,39 @@ bool ColorTarget::Init(const TargetDesc* pDesc)
         clearValue.Color[2] = pDesc->ClearColor[2];
         clearValue.Color[3] = pDesc->ClearColor[3];
 
-        hr = GetD3D12Device()->CreateCommittedResource( 
-            &props,
-            D3D12_HEAP_FLAG_NONE,
-            &desc,
-            pDesc->InitState,
-            &clearValue,
-            IID_PPV_ARGS(m_pResource.GetAddress()));
-        if ( FAILED( hr ) )
+        auto allocator = GetD3D12MA();
+        if (allocator != nullptr)
         {
-            ELOG( "Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr );
-            return false;
+            D3D12MA::ALLOCATION_DESC allocDesc = {};
+            allocDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
+
+            hr = allocator->CreateResource(
+                &allocDesc,
+                &desc,
+                pDesc->InitState,
+                &clearValue,
+                m_Allocation.GetAddress(),
+                IID_PPV_ARGS(m_pResource.GetAddress()));
+            if (FAILED(hr))
+            {
+                ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
+                return false;
+            }
+        }
+        else
+        {
+            hr = GetD3D12Device()->CreateCommittedResource( 
+                &props,
+                D3D12_HEAP_FLAG_NONE,
+                &desc,
+                pDesc->InitState,
+                &clearValue,
+                IID_PPV_ARGS(m_pResource.GetAddress()));
+            if (FAILED(hr))
+            {
+                ELOG( "Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr );
+                return false;
+            }
         }
     }
 
@@ -499,6 +521,8 @@ void ColorTarget::Term()
     auto resource = m_pResource.Detach();
     Dispose(resource);
 
+    m_Allocation.Reset();
+
     memset(&m_Desc, 0, sizeof(m_Desc));
 }
 
@@ -651,17 +675,39 @@ bool DepthTarget::Init(const TargetDesc* pDesc)
         clearValue.DepthStencil.Depth   = pDesc->ClearDepth;
         clearValue.DepthStencil.Stencil = pDesc->ClearStencil;
 
-        hr = GetD3D12Device()->CreateCommittedResource( 
-            &props,
-            D3D12_HEAP_FLAG_NONE,
-            &desc,
-            pDesc->InitState,
-            &clearValue,
-            IID_PPV_ARGS(m_pResource.GetAddress()));
-        if ( FAILED( hr ) )
+        auto allocator = GetD3D12MA();
+        if (allocator != nullptr)
         {
-            ELOG( "Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr );
-            return false;
+            D3D12MA::ALLOCATION_DESC allocDesc = {};
+            allocDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
+
+            hr = allocator->CreateResource(
+                &allocDesc,
+                &desc,
+                pDesc->InitState,
+                &clearValue,
+                m_Allocation.GetAddress(),
+                IID_PPV_ARGS(m_pResource.GetAddress()));
+            if (FAILED(hr))
+            {
+                ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
+                return false;
+            }
+        }
+        else
+        {
+            hr = GetD3D12Device()->CreateCommittedResource( 
+                &props,
+                D3D12_HEAP_FLAG_NONE,
+                &desc,
+                pDesc->InitState,
+                &clearValue,
+                IID_PPV_ARGS(m_pResource.GetAddress()));
+            if (FAILED(hr))
+            {
+                ELOG( "Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr );
+                return false;
+            }
         }
     }
 
@@ -804,6 +850,8 @@ void DepthTarget::Term()
 
     auto resource = m_pResource.Detach();
     Dispose(resource);
+
+    m_Allocation.Reset();
 
     memset(&m_Desc, 0, sizeof(m_Desc));
 }
@@ -949,17 +997,39 @@ bool ComputeTarget::Init(const TargetDesc* pDesc, uint32_t stride)
             D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS
         };
 
-        hr = GetD3D12Device()->CreateCommittedResource( 
-            &props,
-            D3D12_HEAP_FLAG_NONE,
-            &desc,
-            pDesc->InitState,
-            nullptr,
-            IID_PPV_ARGS(m_pResource.GetAddress()));
-        if ( FAILED( hr ) )
+        auto allocator = GetD3D12MA();
+        if (allocator != nullptr)
         {
-            ELOG( "Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr );
-            return false;
+            D3D12MA::ALLOCATION_DESC allocDesc = {};
+            allocDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
+
+            hr = allocator->CreateResource(
+                &allocDesc,
+                &desc,
+                pDesc->InitState,
+                nullptr,
+                m_Allocation.GetAddress(),
+                IID_PPV_ARGS(m_pResource.GetAddress()));
+            if (FAILED(hr))
+            {
+                ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
+                return false;
+            }
+        }
+        else
+        {
+            hr = GetD3D12Device()->CreateCommittedResource( 
+                &props,
+                D3D12_HEAP_FLAG_NONE,
+                &desc,
+                pDesc->InitState,
+                nullptr,
+                IID_PPV_ARGS(m_pResource.GetAddress()));
+            if (FAILED(hr))
+            {
+                ELOG( "Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr );
+                return false;
+            }
         }
     }
 
@@ -1227,6 +1297,8 @@ void ComputeTarget::Term()
 
     auto resource = m_pResource.Detach();
     Dispose(resource);
+
+    m_Allocation.Reset();
  
     memset(&m_Desc, 0, sizeof(m_Desc));
     m_Stride = 0;

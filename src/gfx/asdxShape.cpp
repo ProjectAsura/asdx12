@@ -12,6 +12,7 @@
 #include <fnd/asdxMisc.h>
 #include <gfx/asdxShape.h>
 #include <gfx/asdxPipelineState.h>
+#include <gfx/asdxDevice.h>
 
 
 namespace {
@@ -1049,8 +1050,10 @@ ShapeStates::~ShapeStates()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool ShapeStates::Init(ID3D12Device* pDevice, DXGI_FORMAT colorFormat, DXGI_FORMAT depthFormat)
+bool ShapeStates::Init(DXGI_FORMAT colorFormat, DXGI_FORMAT depthFormat)
 {
+    auto pDevice = GetD3D12Device();
+
     if (pDevice == nullptr)
     { return false; }
 
@@ -1167,12 +1170,25 @@ bool ShapeStates::Init(ID3D12Device* pDevice, DXGI_FORMAT colorFormat, DXGI_FORM
         }
     }
 
+    bool gpuUploadHeapSupported = false;
+    {
+        D3D12_FEATURE_DATA_D3D12_OPTIONS16 options16 = {};
+        if (SUCCEEDED(pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS16, &options16, sizeof(options16))))
+        {
+            gpuUploadHeapSupported = options16.GPUUploadHeapSupported;
+        }
+    }
+
+    auto heapType = (gpuUploadHeapSupported) 
+        ? D3D12_HEAP_TYPE_GPU_UPLOAD
+        : D3D12_HEAP_TYPE_UPLOAD;
+
     // カメラ定数バッファ生成.
     {
         auto size = asdx::RoundUp(sizeof(ShapeParam), 256) * 2;
 
         D3D12_HEAP_PROPERTIES props = {
-            D3D12_HEAP_TYPE_UPLOAD,
+            heapType,
             D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
             D3D12_MEMORY_POOL_UNKNOWN,
             1,
@@ -1192,17 +1208,39 @@ bool ShapeStates::Init(ID3D12Device* pDevice, DXGI_FORMAT colorFormat, DXGI_FORM
             D3D12_RESOURCE_FLAG_NONE
         };
 
-        auto hr = pDevice->CreateCommittedResource(
-            &props,
-            D3D12_HEAP_FLAG_NONE,
-            &desc,
-            D3D12_RESOURCE_STATE_GENERIC_READ,
-            nullptr,
-            IID_PPV_ARGS(m_CameraBuffer.GetAddress()));
-        if ( FAILED( hr ) )
+        auto allocator = GetD3D12MA();
+        if (allocator != nullptr)
         {
-            ELOG( "Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr );
-            return false;
+            D3D12MA::ALLOCATION_DESC allocDesc = {};
+            allocDesc.HeapType = heapType;
+
+            auto hr = allocator->CreateResource(
+                &allocDesc,
+                &desc,
+                D3D12_RESOURCE_STATE_GENERIC_READ,
+                nullptr,
+                m_CameraBufferAllocation.GetAddress(),
+                IID_PPV_ARGS(m_CameraBuffer.GetAddress()));
+            if (FAILED(hr))
+            {
+                ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
+                return false;
+            }
+        }
+        else
+        {
+            auto hr = pDevice->CreateCommittedResource(
+                &props,
+                D3D12_HEAP_FLAG_NONE,
+                &desc,
+                D3D12_RESOURCE_STATE_GENERIC_READ,
+                nullptr,
+                IID_PPV_ARGS(m_CameraBuffer.GetAddress()));
+            if ( FAILED( hr ) )
+            {
+                ELOG( "Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr );
+                return false;
+            }
         }
     }
 
@@ -1219,6 +1257,8 @@ void ShapeStates::Term()
     m_TranslucentState.Reset();
     m_OpaqueState     .Reset();
     m_RootSignature   .Reset();
+
+    m_CameraBufferAllocation.Reset();
 }
 
 //-----------------------------------------------------------------------------
@@ -1339,17 +1379,33 @@ const asdx::Vector4& ShapeBase::GetColor() const
 //-----------------------------------------------------------------------------
 bool ShapeBase::InitBuffer
 (
-    ID3D12Device*           pDevice,
     const asdx::Vector3*    positions,
     size_t                  positionCount,
     const uint32_t*         indices,
     size_t                  indexCount
 )
 {
+    auto pDevice = GetD3D12Device();
+
+    bool gpuUploadHeapSupported = false;
+    {
+        D3D12_FEATURE_DATA_D3D12_OPTIONS16 options16 = {};
+        if (SUCCEEDED(pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS16, &options16, sizeof(options16))))
+        {
+            gpuUploadHeapSupported = options16.GPUUploadHeapSupported;
+        }
+    }
+
+    auto heapType = (gpuUploadHeapSupported) 
+        ? D3D12_HEAP_TYPE_GPU_UPLOAD
+        : D3D12_HEAP_TYPE_UPLOAD;
+
+    auto allocator = GetD3D12MA();
+
     // 頂点バッファ生成.
     {
         D3D12_HEAP_PROPERTIES prop = {};
-        prop.Type                   = D3D12_HEAP_TYPE_UPLOAD;
+        prop.Type                   = heapType;
         prop.CPUPageProperty        = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
         prop.MemoryPoolPreference   = D3D12_MEMORY_POOL_UNKNOWN;
         prop.VisibleNodeMask        = 1;
@@ -1370,17 +1426,38 @@ bool ShapeBase::InitBuffer
         auto state = D3D12_RESOURCE_STATE_GENERIC_READ;
         auto flags = D3D12_HEAP_FLAG_NONE;
 
-        auto hr = pDevice->CreateCommittedResource(
-            &prop,
-            flags,
-            &desc,
-            state,
-            nullptr,
-            IID_PPV_ARGS(m_VB.GetAddress()));
-        if ( FAILED(hr) )
+        if (allocator != nullptr)
         {
-            ELOG("Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr);
-            return false;
+            D3D12MA::ALLOCATION_DESC allocDesc = {};
+            allocDesc.HeapType = heapType;
+
+            auto hr = allocator->CreateResource(
+                &allocDesc,
+                &desc,
+                state,
+                nullptr,
+                m_AllocationVB.GetAddress(),
+                IID_PPV_ARGS(m_VB.GetAddress()));
+            if (FAILED(hr))
+            {
+                ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
+                return false;
+            }
+        }
+        else
+        {
+            auto hr = pDevice->CreateCommittedResource(
+                &prop,
+                flags,
+                &desc,
+                state,
+                nullptr,
+                IID_PPV_ARGS(m_VB.GetAddress()));
+            if (FAILED(hr))
+            {
+                ELOG("Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr);
+                return false;
+            }
         }
 
         m_VBV.BufferLocation = m_VB->GetGPUVirtualAddress();
@@ -1407,7 +1484,7 @@ bool ShapeBase::InitBuffer
     if (indexCount > 0)
     {
         D3D12_HEAP_PROPERTIES prop = {};
-        prop.Type                   = D3D12_HEAP_TYPE_UPLOAD;
+        prop.Type                   = heapType;
         prop.CPUPageProperty        = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
         prop.MemoryPoolPreference   = D3D12_MEMORY_POOL_UNKNOWN;
         prop.VisibleNodeMask        = 1;
@@ -1428,17 +1505,38 @@ bool ShapeBase::InitBuffer
         auto state = D3D12_RESOURCE_STATE_GENERIC_READ;
         auto flags = D3D12_HEAP_FLAG_NONE;
 
-        auto hr = pDevice->CreateCommittedResource(
-            &prop,
-            flags,
-            &desc,
-            state,
-            nullptr,
-            IID_PPV_ARGS(m_IB.GetAddress()));
-        if ( FAILED(hr) )
+        if (allocator != nullptr)
         {
-            ELOG("Error : ID3D12Device::CreateCommittedResource() Failed. errode = 0x%x", hr);
-            return false;
+            D3D12MA::ALLOCATION_DESC allocDesc = {};
+            allocDesc.HeapType = heapType;
+
+            auto hr = allocator->CreateResource(
+                &allocDesc,
+                &desc,
+                state,
+                nullptr,
+                m_AllocationIB.GetAddress(),
+                IID_PPV_ARGS(m_IB.GetAddress()));
+            if (FAILED(hr))
+            {
+                ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
+                return false;
+            }
+        }
+        else
+        {
+            auto hr = pDevice->CreateCommittedResource(
+                &prop,
+                flags,
+                &desc,
+                state,
+                nullptr,
+                IID_PPV_ARGS(m_IB.GetAddress()));
+            if (FAILED(hr))
+            {
+                ELOG("Error : ID3D12Device::CreateCommittedResource() Failed. errode = 0x%x", hr);
+                return false;
+            }
         }
 
         m_IndexCount = uint32_t(indexCount);
@@ -1467,7 +1565,7 @@ bool ShapeBase::InitBuffer
         auto size = asdx::RoundUp(sizeof(ShapeParam), 256) * 2;
 
         D3D12_HEAP_PROPERTIES props = {
-            D3D12_HEAP_TYPE_UPLOAD,
+            heapType,
             D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
             D3D12_MEMORY_POOL_UNKNOWN,
             1,
@@ -1487,17 +1585,38 @@ bool ShapeBase::InitBuffer
             D3D12_RESOURCE_FLAG_NONE
         };
 
-        auto hr = pDevice->CreateCommittedResource(
-            &props,
-            D3D12_HEAP_FLAG_NONE,
-            &desc,
-            D3D12_RESOURCE_STATE_GENERIC_READ,
-            nullptr,
-            IID_PPV_ARGS(m_CB.GetAddress()));
-        if ( FAILED( hr ) )
+        if (allocator != nullptr)
         {
-            ELOG( "Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr );
-            return false;
+            D3D12MA::ALLOCATION_DESC allocDesc = {};
+            allocDesc.HeapType = heapType;
+
+            auto hr = allocator->CreateResource(
+                &allocDesc,
+                &desc,
+                D3D12_RESOURCE_STATE_GENERIC_READ,
+                nullptr,
+                m_AllocationCB.GetAddress(),
+                IID_PPV_ARGS(m_CB.GetAddress()));
+            if (FAILED(hr))
+            {
+                ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
+                return false;
+            }
+        }
+        else
+        {
+            auto hr = pDevice->CreateCommittedResource(
+                &props,
+                D3D12_HEAP_FLAG_NONE,
+                &desc,
+                D3D12_RESOURCE_STATE_GENERIC_READ,
+                nullptr,
+                IID_PPV_ARGS(m_CB.GetAddress()));
+            if (FAILED(hr))
+            {
+                ELOG( "Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr );
+                return false;
+            }
         }
     }
 
@@ -1515,6 +1634,10 @@ void ShapeBase::Reset()
     m_BufferIndex = 0;
     m_Param.World = asdx::Matrix::CreateIdentity();
     m_Param.Color = asdx::Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+
+    m_AllocationVB.Reset();
+    m_AllocationIB.Reset();
+    m_AllocationCB.Reset();
 }
 
 //-----------------------------------------------------------------------------
@@ -1569,14 +1692,14 @@ BoxShape::~BoxShape()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool BoxShape::Init(ID3D12Device* pDevice, float size)
+bool BoxShape::Init(float size)
 {
     std::vector<asdx::Vector3> positions;
     std::vector<uint32_t>      indices;
 
     CreateBoxShape(size, size, size, positions, indices);
 
-    if (!InitBuffer(pDevice,
+    if (!InitBuffer(
         positions.data(), positions.size(),
         indices  .data(), indices  .size()))
     {
@@ -1613,14 +1736,14 @@ SphereShape::~SphereShape()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool SphereShape::Init(ID3D12Device* pDevice, float radius, uint32_t sliceCount)
+bool SphereShape::Init(float radius, uint32_t sliceCount)
 {
     std::vector<asdx::Vector3> positions;
     std::vector<uint32_t>      indices;
 
     CreateSphereShape(radius, sliceCount, sliceCount, positions, indices);
 
-    if (!InitBuffer(pDevice,
+    if (!InitBuffer(
         positions.data(), positions.size(),
         indices  .data(), indices  .size()))
     {
@@ -1657,14 +1780,14 @@ HemisphereShape::~HemisphereShape()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool HemisphereShape::Init(ID3D12Device* pDevice, float radius, uint32_t sliceCount)
+bool HemisphereShape::Init(float radius, uint32_t sliceCount)
 {
     std::vector<asdx::Vector3> positions;
     std::vector<uint32_t>      indices;
 
     CreateHemisphereShape(radius, sliceCount, sliceCount, positions, indices);
 
-    if (!InitBuffer(pDevice,
+    if (!InitBuffer(
         positions.data(), positions.size(),
         indices  .data(), indices  .size()))
     {
@@ -1701,14 +1824,14 @@ ConeShape::~ConeShape()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool ConeShape::Init(ID3D12Device* pDevice, float height, float radius, uint32_t sliceCount)
+bool ConeShape::Init(float height, float radius, uint32_t sliceCount)
 {
     std::vector<asdx::Vector3> positions;
     std::vector<uint32_t>      indices;
 
     CreateConeShape(radius, height, sliceCount, positions, indices);
 
-    if (!InitBuffer(pDevice,
+    if (!InitBuffer(
         positions.data(), positions.size(),
         indices  .data(), indices  .size()))
     {
@@ -1745,14 +1868,14 @@ PyramidShape::~PyramidShape()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool PyramidShape::Init(ID3D12Device* pDevice, float length, float width)
+bool PyramidShape::Init(float length, float width)
 {
     std::vector<asdx::Vector3> positions;
     std::vector<uint32_t>      indices;
 
     CreatePyramidShape(width, width, length, positions, indices);
 
-    if (!InitBuffer(pDevice,
+    if (!InitBuffer(
         positions.data(), positions.size(),
         indices  .data(), indices  .size()))
     {
@@ -1789,14 +1912,14 @@ CylinderShape::~CylinderShape()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool CylinderShape::Init(ID3D12Device* pDevice, float radius, float height, uint32_t sliceCount)
+bool CylinderShape::Init(float radius, float height, uint32_t sliceCount)
 {
     std::vector<asdx::Vector3> positions;
     std::vector<uint32_t>      indices;
 
     CreateCylinderShape(radius, height, sliceCount, positions, indices);
 
-    if (!InitBuffer(pDevice,
+    if (!InitBuffer(
         positions.data(), positions.size(),
         indices  .data(), indices  .size()))
     {
@@ -1833,14 +1956,14 @@ PlaneShape::~PlaneShape()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool PlaneShape::Init(ID3D12Device* pDevice, float width, float height)
+bool PlaneShape::Init(float width, float height)
 {
     std::vector<asdx::Vector3> positions;
     std::vector<uint32_t>      indices;
 
     CreatePlaneShape(width, height, 1, 1, positions, indices);
 
-    if (!InitBuffer(pDevice,
+    if (!InitBuffer(
         positions.data(), positions.size(),
         indices  .data(), indices  .size()))
     {
@@ -1877,14 +2000,14 @@ CapsuleShape::~CapsuleShape()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool CapsuleShape::Init(ID3D12Device* pDevice, float length, float radius, uint32_t sliceCount)
+bool CapsuleShape::Init(float length, float radius, uint32_t sliceCount)
 {
     std::vector<asdx::Vector3> positions;
     std::vector<uint32_t>      indices;
 
     CreateCapsuleShape(radius, length, sliceCount, sliceCount, positions, indices);
 
-    if (!InitBuffer(pDevice,
+    if (!InitBuffer(
         positions.data(), positions.size(),
         indices  .data(), indices  .size()))
     {
@@ -1921,14 +2044,14 @@ DiskShape::~DiskShape()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool DiskShape::Init(ID3D12Device* pDevice, float radius, uint32_t sliceCount)
+bool DiskShape::Init(float radius, uint32_t sliceCount)
 {
     std::vector<asdx::Vector3> positions;
     std::vector<uint32_t>      indices;
 
     CreateDiskShape(radius, sliceCount, positions, indices);
 
-    if (!InitBuffer(pDevice,
+    if (!InitBuffer(
         positions.data(), positions.size(),
         indices  .data(), indices  .size()))
     {
@@ -1965,14 +2088,14 @@ FanShape::~FanShape()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool FanShape::Init(ID3D12Device* pDevice, float radius, float startAngleRad, float sweepAngleRad, uint32_t sliceCount)
+bool FanShape::Init(float radius, float startAngleRad, float sweepAngleRad, uint32_t sliceCount)
 {
     std::vector<asdx::Vector3> positions;
     std::vector<uint32_t>      indices;
 
     CreateFanShape(radius, startAngleRad, sweepAngleRad, sliceCount, positions, indices);
 
-    if (!InitBuffer(pDevice,
+    if (!InitBuffer(
         positions.data(), positions.size(),
         indices.data(), indices.size()))
     {
@@ -2009,7 +2132,7 @@ BoneShape::~BoneShape()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool BoneShape::Init(ID3D12Device* pDevice, float length, float width)
+bool BoneShape::Init(float length, float width)
 {
     auto s = width * 0.5f;
     asdx::Vector3 vertices[6] = {
@@ -2046,7 +2169,7 @@ bool BoneShape::Init(ID3D12Device* pDevice, float length, float width)
         4, 1, 5,
     };
 
-    if (!InitBuffer(pDevice, vertices, 6, indices, 24))
+    if (!InitBuffer(vertices, 6, indices, 24))
     {
         return false;
     }

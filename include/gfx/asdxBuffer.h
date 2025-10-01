@@ -11,6 +11,7 @@
 #include <d3d12.h>
 #include <fnd/asdxRef.h>
 #include <fnd/asdxOffsetAllocator.h>
+#include <D3D12MemAlloc.h>
 
 
 namespace asdx {
@@ -109,6 +110,7 @@ private:
     // private variables.
     //=========================================================================
     RefPtr<ID3D12Resource>      m_Resource;     //!< リソースです.
+    RefPtr<D3D12MA::Allocation> m_Allocation;   //!< アロケーション情報.
     D3D12_VERTEX_BUFFER_VIEW    m_View;         //!< 頂点バッファビューです.
 
     //=========================================================================
@@ -212,6 +214,7 @@ private:
     // private variables.
     //=========================================================================
     RefPtr<ID3D12Resource>      m_Resource;     //!< リソースです.
+    RefPtr<D3D12MA::Allocation> m_Allocation;   //!< アロケーション情報です.
     D3D12_INDEX_BUFFER_VIEW     m_View;         //!< インデックスバッファビューです.
 
     //=========================================================================
@@ -320,8 +323,9 @@ private:
     //=========================================================================
     // private varaibles.
     //=========================================================================
-    RefPtr<ID3D12Resource>      m_Resource;
-    uint64_t                    m_Size;
+    RefPtr<ID3D12Resource>      m_Resource;     //!< リソースです.
+    RefPtr<D3D12MA::Allocation> m_Allocation;   //!< アロケーション情報です.
+    uint64_t                    m_Size = 0;     //!< サイズです.
 
     //=========================================================================
     // private methods.
@@ -474,9 +478,10 @@ private:
     //=========================================================================
     // private variables
     //=========================================================================
-    RefPtr<ID3D12Resource>      m_Resource;
-    OffsetHandle                m_HandleSRV;
-    D3D12_RESOURCE_STATES       m_State = D3D12_RESOURCE_STATE_COMMON;
+    RefPtr<ID3D12Resource>      m_Resource;     //!< リソースです.
+    OffsetHandle                m_HandleSRV;    //!< オフセットハンドルです.
+    RefPtr<D3D12MA::Allocation> m_Allocation;   //!< アロケーション情報.
+    D3D12_RESOURCE_STATES       m_State = D3D12_RESOURCE_STATE_COMMON;  //!< リソースステートです.
 
     //=========================================================================
     // private methods.
@@ -631,9 +636,10 @@ private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    RefPtr<ID3D12Resource>          m_Resource;
-    OffsetHandle                    m_HandleSRV;
-    D3D12_RESOURCE_STATES           m_State = D3D12_RESOURCE_STATE_COMMON;
+    RefPtr<ID3D12Resource>      m_Resource;                             //!< リソースです.
+    OffsetHandle                m_HandleSRV;                            //!< オフセットハンドルです.
+    RefPtr<D3D12MA::Allocation> m_Allocation;                           //!< アロケーション情報.
+    D3D12_RESOURCE_STATES       m_State = D3D12_RESOURCE_STATE_COMMON;  //!< リソースステートです.
 
     //=========================================================================
     // private methods.

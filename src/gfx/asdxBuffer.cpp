@@ -15,6 +15,24 @@
 #include <fnd/asdxLogger.h>
 
 
+namespace {
+
+//-----------------------------------------------------------------------------
+//      GPUアップロードがサポートされているかどうかチェックします.
+//-----------------------------------------------------------------------------
+bool IsSupportGpuUploadHeap(ID3D12Device* pDevice)
+{
+    D3D12_FEATURE_DATA_D3D12_OPTIONS16 options16 = {};
+    bool gpuUploadHeapSupported = false;
+    if (SUCCEEDED(pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS16, &options16, sizeof(options16))))
+    {
+        gpuUploadHeapSupported = options16.GPUUploadHeapSupported;
+    }
+    return gpuUploadHeapSupported;
+}
+
+} // namespace
+
 namespace asdx {
 
 //-----------------------------------------------------------------------------
@@ -42,8 +60,12 @@ bool VertexBuffer::Init(uint64_t size, uint32_t stride)
         return false;
     }
 
+    auto heapType = IsSupportGpuUploadHeap(pDevice)
+        ? D3D12_HEAP_TYPE_GPU_UPLOAD
+        : D3D12_HEAP_TYPE_UPLOAD;
+
     D3D12_HEAP_PROPERTIES prop = {};
-    prop.Type                   = D3D12_HEAP_TYPE_UPLOAD;
+    prop.Type                   = heapType;
     prop.CPUPageProperty        = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
     prop.MemoryPoolPreference   = D3D12_MEMORY_POOL_UNKNOWN;
     prop.VisibleNodeMask        = 1;
@@ -61,20 +83,42 @@ bool VertexBuffer::Init(uint64_t size, uint32_t stride)
     desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
     desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
 
-    auto state = D3D12_RESOURCE_STATE_GENERIC_READ;
+    auto state = D3D12_RESOURCE_STATE_COMMON;
     auto flags = D3D12_HEAP_FLAG_NONE;
 
-    auto hr = pDevice->CreateCommittedResource(
-        &prop,
-        flags,
-        &desc,
-        state,
-        nullptr,
-        IID_PPV_ARGS(m_Resource.GetAddress()));
-    if ( FAILED(hr) )
+    auto pAllocator = GetD3D12MA();
+    if (pAllocator != nullptr)
     {
-        ELOG("Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr);
-        return false;
+        D3D12MA::ALLOCATION_DESC allocDesc = {};
+        allocDesc.HeapType = heapType;
+
+        auto hr = pAllocator->CreateResource(
+            &allocDesc,
+            &desc,
+            state,
+            nullptr,
+            m_Allocation.GetAddress(),
+            IID_PPV_ARGS(m_Resource.GetAddress()));
+        if (FAILED(hr))
+        {
+            ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
+            return false;
+        }
+    }
+    else
+    {
+        auto hr = pDevice->CreateCommittedResource(
+            &prop,
+            flags,
+            &desc,
+            state,
+            nullptr,
+            IID_PPV_ARGS(m_Resource.GetAddress()));
+        if (FAILED(hr))
+        {
+            ELOG("Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr);
+            return false;
+        }
     }
 
     m_View.BufferLocation   = m_Resource->GetGPUVirtualAddress();
@@ -92,6 +136,7 @@ void VertexBuffer::Term()
     auto resource = m_Resource.Detach();
     Dispose(resource);
     memset(&m_View, 0, sizeof(m_View));
+    m_Allocation.Reset();
 }
 
 //-----------------------------------------------------------------------------
@@ -175,8 +220,12 @@ bool IndexBuffer::Init(uint64_t size, bool isShortFormat)
         return false;
     }
 
+    auto heapType = IsSupportGpuUploadHeap(pDevice)
+        ? D3D12_HEAP_TYPE_GPU_UPLOAD
+        : D3D12_HEAP_TYPE_UPLOAD;
+
     D3D12_HEAP_PROPERTIES prop = {};
-    prop.Type                   = D3D12_HEAP_TYPE_UPLOAD;
+    prop.Type                   = heapType;
     prop.CPUPageProperty        = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
     prop.MemoryPoolPreference   = D3D12_MEMORY_POOL_UNKNOWN;
     prop.VisibleNodeMask        = 1;
@@ -194,20 +243,42 @@ bool IndexBuffer::Init(uint64_t size, bool isShortFormat)
     desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
     desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
 
-    auto state = D3D12_RESOURCE_STATE_GENERIC_READ;
+    auto state = D3D12_RESOURCE_STATE_COMMON;
     auto flags = D3D12_HEAP_FLAG_NONE;
 
-    auto hr = pDevice->CreateCommittedResource(
-        &prop,
-        flags,
-        &desc,
-        state,
-        nullptr,
-        IID_PPV_ARGS(m_Resource.GetAddress()));
-    if ( FAILED(hr) )
+    auto pAllocator = GetD3D12MA();
+    if (pAllocator != nullptr)
     {
-        ELOG("Error : ID3D12Device::CreateCommittedResource() Failed. errode = 0x%x", hr);
-        return false;
+        D3D12MA::ALLOCATION_DESC allocDesc = {};
+        allocDesc.HeapType = heapType;
+
+        auto hr = pAllocator->CreateResource(
+            &allocDesc,
+            &desc,
+            state,
+            nullptr,
+            m_Allocation.GetAddress(),
+            IID_PPV_ARGS(m_Resource.GetAddress()));
+        if (FAILED(hr))
+        {
+            ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
+            return false;
+        }
+    }
+    else
+    {
+        auto hr = pDevice->CreateCommittedResource(
+            &prop,
+            flags,
+            &desc,
+            state,
+            nullptr,
+            IID_PPV_ARGS(m_Resource.GetAddress()));
+        if (FAILED(hr))
+        {
+            ELOG("Error : ID3D12Device::CreateCommittedResource() Failed. errode = 0x%x", hr);
+            return false;
+        }
     }
 
     m_View.BufferLocation   = m_Resource->GetGPUVirtualAddress();
@@ -225,6 +296,7 @@ void IndexBuffer::Term()
     auto resource = m_Resource.Detach();
     Dispose(resource);
     memset(&m_View, 0, sizeof(m_View));
+    m_Allocation.Reset();
 }
 
 //-----------------------------------------------------------------------------
@@ -315,8 +387,12 @@ bool ConstantBuffer::Init(uint64_t size)
 
     auto pDevice = GetD3D12Device();
 
+    auto heapType = IsSupportGpuUploadHeap(pDevice)
+        ? D3D12_HEAP_TYPE_GPU_UPLOAD
+        : D3D12_HEAP_TYPE_UPLOAD;
+
     D3D12_HEAP_PROPERTIES props = {
-        D3D12_HEAP_TYPE_UPLOAD,
+        heapType,
         D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
         D3D12_MEMORY_POOL_UNKNOWN,
         1,
@@ -336,17 +412,39 @@ bool ConstantBuffer::Init(uint64_t size)
         D3D12_RESOURCE_FLAG_NONE
     };
 
-    auto hr = pDevice->CreateCommittedResource(
-        &props,
-        D3D12_HEAP_FLAG_NONE,
-        &desc,
-        D3D12_RESOURCE_STATE_GENERIC_READ,
-        nullptr,
-        IID_PPV_ARGS(m_Resource.GetAddress()));
-    if ( FAILED( hr ) )
+    auto allocator = GetD3D12MA();
+    if (allocator != nullptr)
     {
-        ELOG( "Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr );
-        return false;
+        D3D12MA::ALLOCATION_DESC allocDesc = {};
+        allocDesc.HeapType = heapType;
+
+        auto hr = allocator->CreateResource(
+            &allocDesc,
+            &desc,
+            D3D12_RESOURCE_STATE_COMMON,
+            nullptr,
+            m_Allocation.GetAddress(),
+            IID_PPV_ARGS(m_Resource.GetAddress()));
+        if (FAILED(hr))
+        {
+            ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
+            return false;
+        }
+    }
+    else
+    {
+        auto hr = pDevice->CreateCommittedResource(
+            &props,
+            D3D12_HEAP_FLAG_NONE,
+            &desc,
+            D3D12_RESOURCE_STATE_COMMON,
+            nullptr,
+            IID_PPV_ARGS(m_Resource.GetAddress()));
+        if (FAILED(hr))
+        {
+            ELOG( "Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr );
+            return false;
+        }
     }
 
     m_Size = size;
@@ -361,7 +459,7 @@ void ConstantBuffer::Term()
 {
     auto resource = m_Resource.Detach();
     Dispose(resource);
-
+    m_Allocation.Reset();
     m_Size = 0;
 }
 
@@ -485,17 +583,39 @@ bool ByteAddressBuffer::Init(uint64_t size, D3D12_RESOURCE_STATES state)
 
     auto flags = D3D12_HEAP_FLAG_NONE;
 
-    auto hr = pDevice->CreateCommittedResource(
-        &prop,
-        flags,
-        &desc,
-        state,
-        nullptr,
-        IID_PPV_ARGS(m_Resource.GetAddress()));
-    if ( FAILED(hr) )
+    auto allocator = GetD3D12MA();
+    if (allocator != nullptr)
     {
-        ELOG("Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr);
-        return false;
+        D3D12MA::ALLOCATION_DESC allocDesc = {};
+        allocDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
+
+        auto hr = allocator->CreateResource(
+            &allocDesc,
+            &desc,
+            state,
+            nullptr,
+            m_Allocation.GetAddress(),
+            IID_PPV_ARGS(m_Resource.GetAddress()));
+        if (FAILED(hr))
+        {
+            ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
+            return false;
+        }
+    }
+    else
+    {
+        auto hr = pDevice->CreateCommittedResource(
+            &prop,
+            flags,
+            &desc,
+            state,
+            nullptr,
+            IID_PPV_ARGS(m_Resource.GetAddress()));
+        if (FAILED(hr))
+        {
+            ELOG("Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr);
+            return false;
+        }
     }
 
     D3D12_SHADER_RESOURCE_VIEW_DESC viewDesc = {};
@@ -560,6 +680,7 @@ void ByteAddressBuffer::Term()
 
     auto resource = m_Resource.Detach();
     Dispose(resource);
+    m_Allocation.Reset();
 }
 
 //-----------------------------------------------------------------------------
@@ -679,17 +800,39 @@ bool StructuredBuffer::Init(uint64_t count, uint32_t stride, D3D12_RESOURCE_STAT
 
     auto flags = D3D12_HEAP_FLAG_NONE;
 
-    auto hr = pDevice->CreateCommittedResource(
-        &prop,
-        flags,
-        &desc,
-        state,
-        nullptr,
-        IID_PPV_ARGS(m_Resource.GetAddress()));
-    if ( FAILED(hr) )
+    auto allocator = GetD3D12MA();
+    if (allocator != nullptr)
     {
-        ELOG("Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr);
-        return false;
+        D3D12MA::ALLOCATION_DESC allocDesc = {};
+        allocDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
+
+        auto hr = allocator->CreateResource(
+            &allocDesc,
+            &desc,
+            state,
+            nullptr,
+            m_Allocation.GetAddress(),
+            IID_PPV_ARGS(m_Resource.GetAddress()));
+        if (FAILED(hr))
+        {
+            ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
+            return false;
+        }
+    }
+    else
+    {
+        auto hr = pDevice->CreateCommittedResource(
+            &prop,
+            flags,
+            &desc,
+            state,
+            nullptr,
+            IID_PPV_ARGS(m_Resource.GetAddress()));
+        if (FAILED(hr))
+        {
+            ELOG("Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr);
+            return false;
+        }
     }
 
     D3D12_SHADER_RESOURCE_VIEW_DESC viewDesc = {};
@@ -755,6 +898,7 @@ void StructuredBuffer::Term()
 
     auto resource = m_Resource.Detach();
     Dispose(resource);
+    m_Allocation.Reset();
 }
 
 //-----------------------------------------------------------------------------
