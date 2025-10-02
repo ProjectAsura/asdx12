@@ -22,7 +22,6 @@ namespace asdx {
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
 MapChipBinary::MapChipBinary()
-: m_pBlob(nullptr)
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
@@ -34,46 +33,20 @@ MapChipBinary::~MapChipBinary()
 //-----------------------------------------------------------------------------
 //      バイナリをロードします.
 //-----------------------------------------------------------------------------
-bool MapChipBinary::LoadA(const char* path)
+void MapChipBinary::Load(std::vector<uint8_t>&& blob)
 {
-    if (!ReadFileToBlobA(path, &m_pBlob))
-    { return false; }
+    m_Blob = std::move(blob);
 
 #if ASDX_DEBUG
     // デバッグ整合性をチェック.
     {
-        assert(m_pBlob != nullptr);
+        assert(!m_Blob.empty());
         flatbuffers::Verifier::Options options;
-        flatbuffers::Verifier verifier(reinterpret_cast<const uint8_t*>(m_pBlob->GetBuffer()), m_pBlob->GetBufferSize());
+        flatbuffers::Verifier verifier(reinterpret_cast<const uint8_t*>(m_Blob.data()), m_Blob.size());
         assert(res::VerifyMapChipBinaryBuffer(verifier));
         ASDX_UNUSED(verifier);
     }
 #endif
-
-    return true;
-}
-
-//-----------------------------------------------------------------------------
-//      バイナリをロードします.
-//-----------------------------------------------------------------------------
-bool MapChipBinary::LoadW(const wchar_t* path)
-{
-    if (!ReadFileToBlobW(path, &m_pBlob))
-    { return false; }
-
-#if ASDX_DEBUG
-    // デバッグ整合性をチェック.
-    {
-        assert(m_pBlob != nullptr);
-        flatbuffers::Verifier::Options options;
-        flatbuffers::Verifier verifier(reinterpret_cast<const uint8_t*>(m_pBlob->GetBuffer()), m_pBlob->GetBufferSize());
-        assert(res::VerifyMapChipBinaryBuffer(verifier));
-        ASDX_UNUSED(verifier);
-    }
-#endif
-
-    return true;
-
 }
 
 //-----------------------------------------------------------------------------
@@ -81,11 +54,8 @@ bool MapChipBinary::LoadW(const wchar_t* path)
 //-----------------------------------------------------------------------------
 void MapChipBinary::Term()
 {
-    if (m_pBlob != nullptr)
-    {
-        m_pBlob->Release();
-        m_pBlob = nullptr;
-    }
+    m_Blob.clear();
+    m_Blob.shrink_to_fit();
 }
 
 //-----------------------------------------------------------------------------
@@ -93,9 +63,8 @@ void MapChipBinary::Term()
 //-----------------------------------------------------------------------------
 uint32_t MapChipBinary::GetRows() const
 {
-    assert(m_pBlob != nullptr);
-    assert(m_pBlob->GetBuffer() != nullptr);
-    return res::GetMapChipBinary(m_pBlob->GetBuffer())->Rows();
+    assert(!m_Blob.empty());
+    return res::GetMapChipBinary(m_Blob.data())->Rows();
 }
 
 //-----------------------------------------------------------------------------
@@ -103,9 +72,8 @@ uint32_t MapChipBinary::GetRows() const
 //-----------------------------------------------------------------------------
 uint32_t MapChipBinary::GetColumns() const
 {
-    assert(m_pBlob != nullptr);
-    assert(m_pBlob->GetBuffer() != nullptr);
-    return res::GetMapChipBinary(m_pBlob->GetBuffer())->Columns();
+    assert(!m_Blob.empty());
+    return res::GetMapChipBinary(m_Blob.data())->Columns();
 }
 
 //-----------------------------------------------------------------------------
@@ -113,9 +81,8 @@ uint32_t MapChipBinary::GetColumns() const
 //-----------------------------------------------------------------------------
 uint32_t MapChipBinary::GetTileWidth() const
 {
-    assert(m_pBlob != nullptr);
-    assert(m_pBlob->GetBuffer() != nullptr);
-    return res::GetMapChipBinary(m_pBlob->GetBuffer())->TileWidth();
+    assert(!m_Blob.empty());
+    return res::GetMapChipBinary(m_Blob.data())->TileWidth();
 }
 
 //-----------------------------------------------------------------------------
@@ -123,9 +90,8 @@ uint32_t MapChipBinary::GetTileWidth() const
 //-----------------------------------------------------------------------------
 uint32_t MapChipBinary::GetTileHeight() const
 {
-    assert(m_pBlob != nullptr);
-    assert(m_pBlob->GetBuffer() != nullptr);
-    return res::GetMapChipBinary(m_pBlob->GetBuffer())->TileHeight();
+    assert(!m_Blob.empty());
+    return res::GetMapChipBinary(m_Blob.data())->TileHeight();
 }
 
 //-----------------------------------------------------------------------------
@@ -133,9 +99,8 @@ uint32_t MapChipBinary::GetTileHeight() const
 //-----------------------------------------------------------------------------
 uint32_t MapChipBinary::GetTileSetCount() const
 {
-    assert(m_pBlob != nullptr);
-    assert(m_pBlob->GetBuffer() != nullptr);
-    return res::GetMapChipBinary(m_pBlob->GetBuffer())->TileSets()->size();
+    assert(!m_Blob.empty());
+    return res::GetMapChipBinary(m_Blob.data())->TileSets()->size();
 }
 
 //-----------------------------------------------------------------------------
@@ -143,10 +108,8 @@ uint32_t MapChipBinary::GetTileSetCount() const
 //-----------------------------------------------------------------------------
 ResTileSet MapChipBinary::GetTileSet(uint32_t tileSetIndex) const
 {
-    assert(m_pBlob != nullptr);
-    assert(m_pBlob->GetBuffer() != nullptr);
-
-    auto tileSet = res::GetMapChipBinary(m_pBlob->GetBuffer())->TileSets()->Get(tileSetIndex);
+    assert(!m_Blob.empty());
+    auto tileSet = res::GetMapChipBinary(m_Blob.data())->TileSets()->Get(tileSetIndex);
 
     ResTileSet result = {};
     result.FirstChipId  = tileSet->FirstChipId();
@@ -162,10 +125,8 @@ ResTileSet MapChipBinary::GetTileSet(uint32_t tileSetIndex) const
 //-----------------------------------------------------------------------------
 ResTexture MapChipBinary::GetMapChip(uint32_t tileSetIndex) const
 {
-    assert(m_pBlob != nullptr);
-    assert(m_pBlob->GetBuffer() != nullptr);
-
-    auto tileSet = res::GetMapChipBinary(m_pBlob->GetBuffer())->TileSets()->Get(tileSetIndex);
+    assert(!m_Blob.empty());
+    auto tileSet = res::GetMapChipBinary(m_Blob.data())->TileSets()->Get(tileSetIndex);
 
     ResTexture result = {};
     result.Dimension                    = TEXTURE_DIMENSION_2D;
@@ -188,9 +149,8 @@ ResTexture MapChipBinary::GetMapChip(uint32_t tileSetIndex) const
 //-----------------------------------------------------------------------------
 uint32_t MapChipBinary::GetLayerCount() const
 {
-    assert(m_pBlob != nullptr);
-    assert(m_pBlob->GetBuffer() != nullptr);
-    return res::GetMapChipBinary(m_pBlob->GetBuffer())->Layers()->size();
+    assert(!m_Blob.empty());
+    return res::GetMapChipBinary(m_Blob.data())->Layers()->size();
 }
 
 //-----------------------------------------------------------------------------
@@ -198,9 +158,8 @@ uint32_t MapChipBinary::GetLayerCount() const
 //-----------------------------------------------------------------------------
 ResTileMapLayer MapChipBinary::GetLayer(uint32_t layerIndex) const
 {
-    assert(m_pBlob != nullptr);
-    assert(m_pBlob->GetBuffer() != nullptr);
-    auto layer = res::GetMapChipBinary(m_pBlob->GetBuffer())->Layers()->Get(layerIndex);
+    assert(!m_Blob.empty());
+    auto layer = res::GetMapChipBinary(m_Blob.data())->Layers()->Get(layerIndex);
 
     ResTileMapLayer result = {};
     result.Id       = layer->Id();

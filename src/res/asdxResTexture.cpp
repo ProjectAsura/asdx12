@@ -32,7 +32,6 @@ namespace asdx {
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
 TextureBinary::TextureBinary()
-: m_pBlob(nullptr)
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
@@ -44,45 +43,19 @@ TextureBinary::~TextureBinary()
 //-----------------------------------------------------------------------------
 //      ファイルからロードします.
 //-----------------------------------------------------------------------------
-bool TextureBinary::LoadA(const char* path)
+void TextureBinary::Load(std::vector<uint8_t>&& blob)
 {
-    if (!ReadFileToBlobA(path, &m_pBlob))
-    { return false; }
-
+    m_Blob = std::move(blob);
 #if ASDX_DEBUG
     // データ整合性をチェック.
     {
-        assert(m_pBlob != nullptr);
+        assert(!m_Blob.empty());
         flatbuffers::Verifier::Options options;
-        flatbuffers::Verifier verifier(reinterpret_cast<const uint8_t*>(m_pBlob->GetBuffer()), m_pBlob->GetBufferSize(), options);
+        flatbuffers::Verifier verifier(reinterpret_cast<const uint8_t*>(m_Blob.data()), m_Blob.size(), options);
         assert(res::VerifyTextureBinaryBuffer(verifier));
         ASDX_UNUSED(verifier);
     }
 #endif
-
-    return true;
-}
-
-//-----------------------------------------------------------------------------
-//      ファイルからロードします.
-//-----------------------------------------------------------------------------
-bool TextureBinary::LoadW(const wchar_t* path)
-{
-    if (!ReadFileToBlobW(path, &m_pBlob))
-    { return false; }
-
-#if ASDX_DEBUG
-    // データ整合性をチェック.
-    {
-        assert(m_pBlob != nullptr);
-        flatbuffers::Verifier::Options options;
-        flatbuffers::Verifier verifier(reinterpret_cast<const uint8_t*>(m_pBlob->GetBuffer()), m_pBlob->GetBufferSize(), options);
-        assert(res::VerifyTextureBinaryBuffer(verifier));
-        ASDX_UNUSED(verifier);
-    }
-#endif
-
-    return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -90,11 +63,8 @@ bool TextureBinary::LoadW(const wchar_t* path)
 //-----------------------------------------------------------------------------
 void TextureBinary::Term()
 {
-    if (m_pBlob != nullptr)
-    {
-        m_pBlob->Release();
-        m_pBlob = nullptr;
-    }
+    m_Blob.clear();
+    m_Blob.shrink_to_fit();
 }
 
 //-----------------------------------------------------------------------------
@@ -102,9 +72,8 @@ void TextureBinary::Term()
 //-----------------------------------------------------------------------------
 ResTexture TextureBinary::GetResource() const
 {
-    assert(m_pBlob != nullptr);
-    assert(m_pBlob->GetBuffer() != nullptr);
-    auto pTextureBinary = res::GetTextureBinary(m_pBlob->GetBuffer());
+    assert(!m_Blob.empty());
+    auto pTextureBinary = res::GetTextureBinary(m_Blob.data());
 
     ResTexture result = {};
     result.Dimension        = TEXTURE_DIMENSION(pTextureBinary->Dimension());

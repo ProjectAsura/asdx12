@@ -114,19 +114,15 @@ Font::~Font()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool Font::Init(ID3D12GraphicsCommandList* pCmd, const char* path)
+bool Font::Init(ID3D12GraphicsCommandList* pCmd, std::vector<uint8_t>&& blob)
 {
-    if (pCmd == nullptr || path == nullptr)
+    if (pCmd == nullptr || blob.empty())
     {
         ELOG("Error : Invalid Argument.");
         return false;
     }
 
-    if (!m_Binary.LoadA(path))
-    {
-        ELOG("Error : FontBinary Load Failed.");
-        return false;
-    }
+    m_Binary.Load(std::move(blob));
 
     ResTexture res = {};
     res.Dimension           = TEXTURE_DIMENSION_2D;

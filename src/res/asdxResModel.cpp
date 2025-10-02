@@ -33,7 +33,6 @@ namespace asdx {
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
 ModelBinary::ModelBinary()
-: m_pBlob(nullptr)
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
@@ -43,46 +42,22 @@ ModelBinary::~ModelBinary()
 { Term(); }
 
 //-----------------------------------------------------------------------------
-//      バイナリをロードします.
+//      メモリからロードします.
 //-----------------------------------------------------------------------------
-bool ModelBinary::LoadA(const char* path)
+void ModelBinary::Load(std::vector<uint8_t>&& blob)
 {
-    if (!ReadFileToBlobA(path, &m_pBlob))
-    { return false; }
+    m_Blob = std::move(blob);
 
 #if ASDX_DEBUG
     // データ整合性をチェック.
     {
-        assert(m_pBlob != nullptr);
+        assert(!m_Blob.empty());
         flatbuffers::Verifier::Options options;
-        flatbuffers::Verifier verifier(reinterpret_cast<const uint8_t*>(m_pBlob->GetBuffer()), m_pBlob->GetBufferSize(), options);
+        flatbuffers::Verifier verifier(reinterpret_cast<const uint8_t*>(m_Blob.data()), m_Blob.size(), options);
         assert(res::VerifyModelBinaryBuffer(verifier));
         ASDX_UNUSED(verifier);
     }
 #endif
-
-    return true;
-}
-
-//-----------------------------------------------------------------------------
-//      バイナリをロードします.
-//-----------------------------------------------------------------------------
-bool ModelBinary::LoadW(const wchar_t* path)
-{
-    if (!ReadFileToBlobW(path, &m_pBlob))
-    { return false; }
-
-#if ASDX_DEBUG
-    // データ整合性をチェック.
-    {
-        flatbuffers::Verifier::Options options;
-        flatbuffers::Verifier verifier(reinterpret_cast<const uint8_t*>(m_pBlob->GetBuffer()), m_pBlob->GetBufferSize(), options);
-        assert(res::VerifyModelBinaryBuffer(verifier));
-        ASDX_UNUSED(verifier);
-    }
-#endif
-
-    return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -90,11 +65,8 @@ bool ModelBinary::LoadW(const wchar_t* path)
 //-----------------------------------------------------------------------------
 void ModelBinary::Term()
 {
-    if (m_pBlob != nullptr)
-    {
-        m_pBlob->Release();
-        m_pBlob = nullptr;
-    }
+    m_Blob.clear();
+    m_Blob.shrink_to_fit();
 }
 
 //-----------------------------------------------------------------------------
@@ -102,9 +74,8 @@ void ModelBinary::Term()
 //-----------------------------------------------------------------------------
 const Matrix* ModelBinary::GetRootTransform() const
 {
-    assert(m_pBlob != nullptr);
-    assert(m_pBlob->GetBuffer() != nullptr);
-    return reinterpret_cast<const Matrix*>(res::GetModelBinary(m_pBlob->GetBuffer())->RootTransform());
+    assert(!m_Blob.empty());
+    return reinterpret_cast<const Matrix*>(res::GetModelBinary(m_Blob.data())->RootTransform());
 }
 
 //-----------------------------------------------------------------------------
@@ -112,9 +83,8 @@ const Matrix* ModelBinary::GetRootTransform() const
 //-----------------------------------------------------------------------------
 const Matrix* ModelBinary::GetInverseRootTransform() const
 {
-    assert(m_pBlob != nullptr);
-    assert(m_pBlob->GetBuffer() != nullptr);
-    return reinterpret_cast<const Matrix*>(res::GetModelBinary(m_pBlob->GetBuffer())->InvRootTransform());
+    assert(!m_Blob.empty());
+    return reinterpret_cast<const Matrix*>(res::GetModelBinary(m_Blob.data())->InvRootTransform());
 }
 
 //-----------------------------------------------------------------------------
@@ -122,9 +92,8 @@ const Matrix* ModelBinary::GetInverseRootTransform() const
 //-----------------------------------------------------------------------------
 uint32_t ModelBinary::GetMeshCount() const
 {
-    assert(m_pBlob != nullptr);
-    assert(m_pBlob->GetBuffer() != nullptr);
-    return res::GetModelBinary(m_pBlob->GetBuffer())->Meshes()->size();
+    assert(!m_Blob.empty());
+    return res::GetModelBinary(m_Blob.data())->Meshes()->size();
 }
 
 //-----------------------------------------------------------------------------
@@ -132,9 +101,8 @@ uint32_t ModelBinary::GetMeshCount() const
 //-----------------------------------------------------------------------------
 const char* ModelBinary::GetMeshName(uint32_t meshIndex) const
 {
-    assert(m_pBlob != nullptr);
-    assert(m_pBlob->GetBuffer() != nullptr);
-    auto mesh = res::GetModelBinary(m_pBlob->GetBuffer())->Meshes()->Get(meshIndex);
+    assert(!m_Blob.empty());
+    auto mesh = res::GetModelBinary(m_Blob.data())->Meshes()->Get(meshIndex);
     return mesh->Name()->c_str();
 }
 
@@ -143,9 +111,8 @@ const char* ModelBinary::GetMeshName(uint32_t meshIndex) const
 //-----------------------------------------------------------------------------
 const char* ModelBinary::GetMaterialName(uint32_t meshIndex) const
 {
-    assert(m_pBlob != nullptr);
-    assert(m_pBlob->GetBuffer() != nullptr);
-    auto mesh = res::GetModelBinary(m_pBlob->GetBuffer())->Meshes()->Get(meshIndex);
+    assert(!m_Blob.empty());
+    auto mesh = res::GetModelBinary(m_Blob.data())->Meshes()->Get(meshIndex);
     return mesh->MaterialTag()->c_str();
 }
 
@@ -154,9 +121,8 @@ const char* ModelBinary::GetMaterialName(uint32_t meshIndex) const
 //-----------------------------------------------------------------------------
 ArrayView<Vector3> ModelBinary::GetPositions(uint32_t meshIndex) const
 {
-    assert(m_pBlob != nullptr);
-    assert(m_pBlob->GetBuffer() != nullptr);
-    auto mesh = res::GetModelBinary(m_pBlob->GetBuffer())->Meshes()->Get(meshIndex);
+    assert(!m_Blob.empty());
+    auto mesh = res::GetModelBinary(m_Blob.data())->Meshes()->Get(meshIndex);
     return ArrayView<Vector3>(
         reinterpret_cast<const Vector3*>(mesh->Positions()->data()),
         mesh->Positions()->size());
@@ -167,9 +133,8 @@ ArrayView<Vector3> ModelBinary::GetPositions(uint32_t meshIndex) const
 //-----------------------------------------------------------------------------
 ArrayView<Vector3> ModelBinary::GetNormals(uint32_t meshIndex) const
 {
-    assert(m_pBlob != nullptr);
-    assert(m_pBlob->GetBuffer() != nullptr);
-    auto mesh = res::GetModelBinary(m_pBlob->GetBuffer())->Meshes()->Get(meshIndex);
+    assert(!m_Blob.empty());
+    auto mesh = res::GetModelBinary(m_Blob.data())->Meshes()->Get(meshIndex);
     return ArrayView<Vector3>(
         reinterpret_cast<const Vector3*>(mesh->Normals()->data()),
         mesh->Normals()->size());
@@ -180,9 +145,8 @@ ArrayView<Vector3> ModelBinary::GetNormals(uint32_t meshIndex) const
 //-----------------------------------------------------------------------------
 ArrayView<Vector4> ModelBinary::GetTangents(uint32_t meshIndex) const
 {
-    assert(m_pBlob != nullptr);
-    assert(m_pBlob->GetBuffer() != nullptr);
-    auto mesh = res::GetModelBinary(m_pBlob->GetBuffer())->Meshes()->Get(meshIndex);
+    assert(!m_Blob.empty());
+    auto mesh = res::GetModelBinary(m_Blob.data())->Meshes()->Get(meshIndex);
     return ArrayView<Vector4>(
         reinterpret_cast<const Vector4*>(mesh->Tangents()->data()),
         mesh->Tangents()->size());
@@ -193,9 +157,8 @@ ArrayView<Vector4> ModelBinary::GetTangents(uint32_t meshIndex) const
 //-----------------------------------------------------------------------------
 ArrayView<Vector2> ModelBinary::GetTexCoords(uint32_t meshIndex) const
 {
-    assert(m_pBlob != nullptr);
-    assert(m_pBlob->GetBuffer() != nullptr);
-    auto mesh = res::GetModelBinary(m_pBlob->GetBuffer())->Meshes()->Get(meshIndex);
+    assert(!m_Blob.empty());
+    auto mesh = res::GetModelBinary(m_Blob.data())->Meshes()->Get(meshIndex);
     return ArrayView<Vector2>(
         reinterpret_cast<const Vector2*>(mesh->TexCoords()->data()),
         mesh->TexCoords()->size());
@@ -206,9 +169,8 @@ ArrayView<Vector2> ModelBinary::GetTexCoords(uint32_t meshIndex) const
 //-----------------------------------------------------------------------------
 ArrayView<Unorm4> ModelBinary::GetColors(uint32_t meshIndex) const
 {
-    assert(m_pBlob != nullptr);
-    assert(m_pBlob->GetBuffer() != nullptr);
-    auto mesh = res::GetModelBinary(m_pBlob->GetBuffer())->Meshes()->Get(meshIndex);
+    assert(!m_Blob.empty());
+    auto mesh = res::GetModelBinary(m_Blob.data())->Meshes()->Get(meshIndex);
     return ArrayView<Unorm4>(
         reinterpret_cast<const Unorm4*>(mesh->Colors()->data()),
         mesh->Colors()->size());
@@ -219,9 +181,8 @@ ArrayView<Unorm4> ModelBinary::GetColors(uint32_t meshIndex) const
 //-----------------------------------------------------------------------------
 ArrayView<Vector4> ModelBinary::GetBoneWeights(uint32_t meshIndex) const
 {
-    assert(m_pBlob != nullptr);
-    assert(m_pBlob->GetBuffer() != nullptr);
-    auto mesh = res::GetModelBinary(m_pBlob->GetBuffer())->Meshes()->Get(meshIndex);
+    assert(!m_Blob.empty());
+    auto mesh = res::GetModelBinary(m_Blob.data())->Meshes()->Get(meshIndex);
     return ArrayView<Vector4>(
         reinterpret_cast<const Vector4*>(mesh->BoneWeights()->data()),
         mesh->BoneWeights()->size());
@@ -232,9 +193,8 @@ ArrayView<Vector4> ModelBinary::GetBoneWeights(uint32_t meshIndex) const
 //-----------------------------------------------------------------------------
 ArrayView<Uint4> ModelBinary::GetBoneIndices(uint32_t meshIndex) const
 {
-    assert(m_pBlob != nullptr);
-    assert(m_pBlob->GetBuffer() != nullptr);
-    auto mesh = res::GetModelBinary(m_pBlob->GetBuffer())->Meshes()->Get(meshIndex);
+    assert(!m_Blob.empty());
+    auto mesh = res::GetModelBinary(m_Blob.data())->Meshes()->Get(meshIndex);
     return ArrayView<Uint4>(
         reinterpret_cast<const Uint4*>(mesh->BoneIndices()->data()),
         mesh->BoneIndices()->size());
@@ -245,9 +205,8 @@ ArrayView<Uint4> ModelBinary::GetBoneIndices(uint32_t meshIndex) const
 //-----------------------------------------------------------------------------
 ArrayView<uint32_t> ModelBinary::GetVertexIndices(uint32_t meshIndex) const
 {
-    assert(m_pBlob != nullptr);
-    assert(m_pBlob->GetBuffer() != nullptr);
-    auto mesh = res::GetModelBinary(m_pBlob->GetBuffer())->Meshes()->Get(meshIndex);
+    assert(!m_Blob.empty());
+    auto mesh = res::GetModelBinary(m_Blob.data())->Meshes()->Get(meshIndex);
     return ArrayView<uint32_t>(
         reinterpret_cast<const uint32_t*>(mesh->VertexIndices()->data()),
         mesh->VertexIndices()->size());
@@ -258,9 +217,8 @@ ArrayView<uint32_t> ModelBinary::GetVertexIndices(uint32_t meshIndex) const
 //-----------------------------------------------------------------------------
 uint32_t ModelBinary::GetBoneCount() const
 {
-    assert(m_pBlob != nullptr);
-    assert(m_pBlob->GetBuffer() != nullptr);
-    return res::GetModelBinary(m_pBlob->GetBuffer())->Bones()->size();
+    assert(!m_Blob.empty());
+    return res::GetModelBinary(m_Blob.data())->Bones()->size();
 }
 
 //-----------------------------------------------------------------------------
@@ -268,9 +226,8 @@ uint32_t ModelBinary::GetBoneCount() const
 //-----------------------------------------------------------------------------
 const char* ModelBinary::GetBoneName(uint32_t boneIndex) const
 {
-    assert(m_pBlob != nullptr);
-    assert(m_pBlob->GetBuffer() != nullptr);
-    auto bone = res::GetModelBinary(m_pBlob->GetBuffer())->Bones()->Get(boneIndex);
+    assert(!m_Blob.empty());
+    auto bone = res::GetModelBinary(m_Blob.data())->Bones()->Get(boneIndex);
     return bone->Name()->c_str();
 }
 
@@ -279,9 +236,8 @@ const char* ModelBinary::GetBoneName(uint32_t boneIndex) const
 //-----------------------------------------------------------------------------
 const Matrix* ModelBinary::GetBoneOffsetMatrix(uint32_t boneIndex) const
 {
-    assert(m_pBlob != nullptr);
-    assert(m_pBlob->GetBuffer() != nullptr);
-    auto bone = res::GetModelBinary(m_pBlob->GetBuffer())->Bones()->Get(boneIndex);
+    assert(!m_Blob.empty());
+    auto bone = res::GetModelBinary(m_Blob.data())->Bones()->Get(boneIndex);
     return reinterpret_cast<const Matrix*>(bone->OffsetMatrix());
 }
 

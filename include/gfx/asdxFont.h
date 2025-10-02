@@ -73,11 +73,11 @@ public:
     //! @brief      初期化処理を行います.
     //! 
     //! @param[in]      pCmd        グラフィックスコマンドリストです.
-    //! @param[in]      path        フォントバイナリのファイルパスです.
+    //! @param[in]      blob        バイナリラージオブジェクトです.
     //! @retval true    初期化に成功.
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
-    bool Init(ID3D12GraphicsCommandList* pCmd, const char* path);
+    bool Init(ID3D12GraphicsCommandList* pCmd, std::vector<uint8_t>&& blob);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.

@@ -33,7 +33,6 @@ namespace asdx {
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
 FontBinary::FontBinary()
-: m_pBlob(nullptr)
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
@@ -43,46 +42,22 @@ FontBinary::~FontBinary()
 { Term(); }
 
 //-----------------------------------------------------------------------------
-//      ファイルからロードします.
+//      メモリからロードします.
 //-----------------------------------------------------------------------------
-bool FontBinary::LoadA(const char* path)
+void FontBinary::Load(std::vector<uint8_t>&& blob)
 {
-    if (!ReadFileToBlobA(path, &m_pBlob))
-    { return false; }
+    m_Blob = std::move(blob);
 
 #if ASDX_DEBUG
     // データ整合性をチェック.
     {
+        assert(!m_Blob.empty());
         flatbuffers::Verifier::Options options;
-        flatbuffers::Verifier verifier(reinterpret_cast<const uint8_t*>(m_pBlob->GetBuffer()), m_pBlob->GetBufferSize(), options);
+        flatbuffers::Verifier verifier(reinterpret_cast<const uint8_t*>(blob.data()), blob.size(), options);
         assert(res::VerifyFontBinaryBuffer(verifier));
         ASDX_UNUSED(verifier);
     }
 #endif
-
-    return true;
-}
-
-//-----------------------------------------------------------------------------
-//      ファイルからロードします.
-//-----------------------------------------------------------------------------
-bool FontBinary::LoadW(const wchar_t* path)
-{
-    if (!ReadFileToBlobW(path, &m_pBlob))
-    { return false; }
-
-#if ASDX_DEBUG
-    // データ整合性をチェック.
-    {
-        assert(m_pBlob != nullptr);
-        flatbuffers::Verifier::Options options;
-        flatbuffers::Verifier verifier(reinterpret_cast<const uint8_t*>(m_pBlob->GetBuffer()), m_pBlob->GetBufferSize(), options);
-        assert(res::VerifyFontBinaryBuffer(verifier));
-        ASDX_UNUSED(verifier);
-    }
-#endif
-
-    return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -90,11 +65,8 @@ bool FontBinary::LoadW(const wchar_t* path)
 //-----------------------------------------------------------------------------
 void FontBinary::Term()
 {
-    if (m_pBlob != nullptr)
-    {
-        m_pBlob->Release();
-        m_pBlob = nullptr;
-    }
+    m_Blob.clear();
+    m_Blob.shrink_to_fit();
 }
 
 //-----------------------------------------------------------------------------
@@ -102,9 +74,8 @@ void FontBinary::Term()
 //-----------------------------------------------------------------------------
 float FontBinary::GetDistanceRange() const
 {
-    assert(m_pBlob != nullptr);
-    assert(m_pBlob->GetBuffer() != nullptr);
-    return res::GetFontBinary(m_pBlob->GetBuffer())->DistanceRange();
+    assert(!m_Blob.empty());
+    return res::GetFontBinary(m_Blob.data())->DistanceRange();
 }
 
 //-----------------------------------------------------------------------------
@@ -112,9 +83,8 @@ float FontBinary::GetDistanceRange() const
 //-----------------------------------------------------------------------------
 uint32_t FontBinary::GetFontSize() const
 {
-    assert(m_pBlob != nullptr);
-    assert(m_pBlob->GetBuffer() != nullptr);
-    return res::GetFontBinary(m_pBlob->GetBuffer())->FontSize();
+    assert(!m_Blob.empty());
+    return res::GetFontBinary(m_Blob.data())->FontSize();
 }
 
 //-----------------------------------------------------------------------------
@@ -122,9 +92,8 @@ uint32_t FontBinary::GetFontSize() const
 //-----------------------------------------------------------------------------
 float FontBinary::GetLineHeight() const
 {
-    assert(m_pBlob != nullptr);
-    assert(m_pBlob->GetBuffer() != nullptr);
-    return res::GetFontBinary(m_pBlob->GetBuffer())->LineHeight();
+    assert(!m_Blob.empty());
+    return res::GetFontBinary(m_Blob.data())->LineHeight();
 }
 
 //-----------------------------------------------------------------------------
@@ -132,9 +101,8 @@ float FontBinary::GetLineHeight() const
 //-----------------------------------------------------------------------------
 float FontBinary::GetAscender() const
 {
-    assert(m_pBlob != nullptr);
-    assert(m_pBlob->GetBuffer() != nullptr);
-    return res::GetFontBinary(m_pBlob->GetBuffer())->Ascender();
+    assert(!m_Blob.empty());
+    return res::GetFontBinary(m_Blob.data())->Ascender();
 }
 
 //-----------------------------------------------------------------------------
@@ -142,9 +110,8 @@ float FontBinary::GetAscender() const
 //-----------------------------------------------------------------------------
 float FontBinary::GetDescender() const
 {
-    assert(m_pBlob != nullptr);
-    assert(m_pBlob->GetBuffer() != nullptr);
-    return res::GetFontBinary(m_pBlob->GetBuffer())->Descender();
+    assert(!m_Blob.empty());
+    return res::GetFontBinary(m_Blob.data())->Descender();
 }
 
 //-----------------------------------------------------------------------------
@@ -152,9 +119,8 @@ float FontBinary::GetDescender() const
 //-----------------------------------------------------------------------------
 uint32_t FontBinary::GetWidth() const
 {
-    assert(m_pBlob != nullptr);
-    assert(m_pBlob->GetBuffer() != nullptr);
-    return res::GetFontBinary(m_pBlob->GetBuffer())->Width();
+    assert(!m_Blob.empty());
+    return res::GetFontBinary(m_Blob.data())->Width();
 }
 
 //-----------------------------------------------------------------------------
@@ -162,9 +128,8 @@ uint32_t FontBinary::GetWidth() const
 //-----------------------------------------------------------------------------
 uint32_t FontBinary::GetHeight() const
 {
-    assert(m_pBlob != nullptr);
-    assert(m_pBlob->GetBuffer() != nullptr);
-    return res::GetFontBinary(m_pBlob->GetBuffer())->Height();
+    assert(!m_Blob.empty());
+    return res::GetFontBinary(m_Blob.data())->Height();
 }
 
 //-----------------------------------------------------------------------------
@@ -172,9 +137,8 @@ uint32_t FontBinary::GetHeight() const
 //-----------------------------------------------------------------------------
 uint32_t FontBinary::GetRowPitch() const
 {
-    assert(m_pBlob != nullptr);
-    assert(m_pBlob->GetBuffer() != nullptr);
-    return res::GetFontBinary(m_pBlob->GetBuffer())->RowPitch();
+    assert(!m_Blob.empty());
+    return res::GetFontBinary(m_Blob.data())->RowPitch();
 }
 
 //-----------------------------------------------------------------------------
@@ -182,9 +146,8 @@ uint32_t FontBinary::GetRowPitch() const
 //-----------------------------------------------------------------------------
 uint32_t FontBinary::GetSlicePitch() const
 {
-    assert(m_pBlob != nullptr);
-    assert(m_pBlob->GetBuffer() != nullptr);
-    return res::GetFontBinary(m_pBlob->GetBuffer())->SlicePitch();
+    assert(!m_Blob.empty());
+    return res::GetFontBinary(m_Blob.data())->SlicePitch();
 }
 
 //-----------------------------------------------------------------------------
@@ -192,9 +155,8 @@ uint32_t FontBinary::GetSlicePitch() const
 //-----------------------------------------------------------------------------
 DXGI_FORMAT FontBinary::GetFormat() const
 {
-    assert(m_pBlob != nullptr);
-    assert(m_pBlob->GetBuffer() != nullptr);
-    return DXGI_FORMAT(res::GetFontBinary(m_pBlob->GetBuffer())->TextureFormat());
+    assert(!m_Blob.empty());
+    return DXGI_FORMAT(res::GetFontBinary(m_Blob.data())->TextureFormat());
 }
 
 //-----------------------------------------------------------------------------
@@ -202,9 +164,8 @@ DXGI_FORMAT FontBinary::GetFormat() const
 //-----------------------------------------------------------------------------
 const uint8_t* FontBinary::GetTexels() const
 {
-    assert(m_pBlob != nullptr);
-    assert(m_pBlob->GetBuffer() != nullptr);
-    return res::GetFontBinary(m_pBlob->GetBuffer())->Texels()->data();
+    assert(!m_Blob.empty());
+    return res::GetFontBinary(m_Blob.data())->Texels()->data();
 }
 
 //-----------------------------------------------------------------------------
@@ -212,9 +173,8 @@ const uint8_t* FontBinary::GetTexels() const
 //-----------------------------------------------------------------------------
 bool FontBinary::FindGlyph(uint32_t unicode, ResGlyph& result) const
 {
-    assert(m_pBlob != nullptr);
-    assert(m_pBlob->GetBuffer() != nullptr);
-    auto glyph = res::GetFontBinary(m_pBlob->GetBuffer())->Glyphs()->LookupByKey(unicode);
+    assert(!m_Blob.empty());
+    auto glyph = res::GetFontBinary(m_Blob.data())->Glyphs()->LookupByKey(unicode);
     if (glyph == nullptr)
     { return false; }
 
