@@ -297,11 +297,11 @@
     <ClCompile Include="..\external\implot\implot_items.cpp">
       <Filter>ソース ファイル\external\implot</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\fnd\asdxAsyncFileLoader.cpp">
-      <Filter>ソース ファイル\fnd</Filter>
-    </ClCompile>
     <ClCompile Include="..\external\D3D12MemoryAllocator\src\D3D12MemAlloc.cpp">
       <Filter>ソース ファイル\external\D3D12MA</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\fnd\asdxAsyncFileIO.cpp">
+      <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -554,11 +554,11 @@
     <ClInclude Include="..\external\implot\implot_internal.h">
       <Filter>ソース ファイル\external\implot</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\fnd\asdxAsyncFileLoader.h">
-      <Filter>ヘッダー ファイル\fnd</Filter>
-    </ClInclude>
     <ClInclude Include="..\external\D3D12MemoryAllocator\include\D3D12MemAlloc.h">
       <Filter>ソース ファイル\external\D3D12MA</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fnd\asdxAsyncFileIO.h">
+      <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
