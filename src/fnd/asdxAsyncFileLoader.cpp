@@ -87,13 +87,28 @@ public:
     }
 
     //-------------------------------------------------------------------------
-    //      ロードがおわったかどうかチェックします.
+    //      ロードが完了したかどうかチェックします.
     //-------------------------------------------------------------------------
-    bool IsReady(uint64_t handle) override
+    bool IsFinished(uint64_t handle) override
     {
         std::lock_guard<std::mutex> locker(m_Mutex);
         auto itr = m_Requests.find(handle);
         return (itr != m_Requests.end()) && (itr->second->Done.load()); 
+    }
+
+    //-------------------------------------------------------------------------
+    //      ロードが完了したかどうかチェックします.
+    //-------------------------------------------------------------------------
+    bool IsAllFinished() override
+    {
+        std::lock_guard<std::mutex> locker(m_Mutex);
+        for(auto& itr : m_Requests)
+        {
+            if (!itr.second->Done.load())
+                return false;
+        }
+
+        return true;
     }
 
     //-------------------------------------------------------------------------
