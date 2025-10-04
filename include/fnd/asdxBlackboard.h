@@ -53,7 +53,7 @@ public:
     //! @param[in]      pBuffer     バッファ.
     //! @param[in]      size        バッファサイズ.
     //-------------------------------------------------------------------------
-    void Set(const char* tag, const uint8_t* pBuffer, size_t size);
+    void Set(const char* tag, const void* pBuffer, size_t size);
 
     //-------------------------------------------------------------------------
     //! @brief      データを設定します.
@@ -80,7 +80,7 @@ public:
     //! @retval true    取得に成功.
     //! @retval false   取得に失敗.
     //-------------------------------------------------------------------------
-    bool Get(const char* tag, uint8_t* pBuffer, size_t size) const;
+    bool Get(const char* tag, void* pBuffer, size_t size) const;
 
     //-------------------------------------------------------------------------
     //! @brief      指定したタグ名が含まれるかチェックします
@@ -174,7 +174,7 @@ public:
     //! @param[in]      pBuffer     バッファ.
     //! @param[in]      size        バッファサイズ.
     //-------------------------------------------------------------------------
-    void Set(const char* tag, const uint8_t* pBuffer, size_t size)
+    void Set(const char* tag, const void* pBuffer, size_t size)
     {
         ScopedLock<SpinLock> locker(m_SpinLock);
         m_Blackboard.Set(tag, pBuffer, size);
@@ -213,7 +213,7 @@ public:
     //! @retval true    取得に成功.
     //! @retval false   取得に失敗.
     //-------------------------------------------------------------------------
-    bool Get(const char* tag, uint8_t* pBuffer, size_t size)
+    bool Get(const char* tag, void* pBuffer, size_t size)
     {
         ScopedLock<SpinLock> locker(m_SpinLock);
         return m_Blackboard.Get(tag, pBuffer, size);

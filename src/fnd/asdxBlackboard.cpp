@@ -40,7 +40,7 @@ Blackboard::~Blackboard()
 //-----------------------------------------------------------------------------
 //      データを設定します.
 //-----------------------------------------------------------------------------
-void Blackboard::Set(const char* tag, const uint8_t* pBuffer, size_t size)
+void Blackboard::Set(const char* tag, const void* pBuffer, size_t size)
 {
     auto& item = m_Dictionary[tag];
 
@@ -70,7 +70,7 @@ const std::vector<uint8_t>& Blackboard::Get(const char* tag) const
 //-----------------------------------------------------------------------------
 //      データを取得します.
 //-----------------------------------------------------------------------------
-bool Blackboard::Get(const char* tag, uint8_t* pBuffer, size_t size) const
+bool Blackboard::Get(const char* tag, void* pBuffer, size_t size) const
 {
     if (!Contains(tag))
         return false;
