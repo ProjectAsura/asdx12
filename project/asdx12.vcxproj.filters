@@ -303,6 +303,9 @@
     <ClCompile Include="..\src\fnd\asdxFileIO.cpp">
       <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\fnd\asdxBlackboard.cpp">
+      <Filter>ソース ファイル\fnd</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\external\imgui\imconfig.h">
@@ -558,6 +561,9 @@
       <Filter>ソース ファイル\external\D3D12MA</Filter>
     </ClInclude>
     <ClInclude Include="..\include\fnd\asdxFileIO.h">
+      <Filter>ヘッダー ファイル\fnd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fnd\asdxBlackboard.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
   </ItemGroup>
