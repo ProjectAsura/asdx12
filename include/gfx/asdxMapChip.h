@@ -209,8 +209,8 @@ private:
     int             m_DrawTileH     = 0;
     uint32_t        m_ScreenWidth   = 0;
     uint32_t        m_ScreenHeight  = 0;
-    uint32_t        m_DrawRows      = 0;
-    uint32_t        m_DrawCols      = 0;
+    int             m_DrawRows      = 0;
+    int             m_DrawCols      = 0;
 
     std::vector<Texture> m_Textures = {};
 

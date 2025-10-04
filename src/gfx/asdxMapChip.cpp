@@ -119,19 +119,25 @@ void MapChip::Draw(ID3D12GraphicsCommandList* pCmd, SpriteRenderer& renderer, D3
     renderer.SetPipelineState(pCmd);
     renderer.SetTexture(m_Textures[0].GetGpuHandleSRV(), sampler);
 
+    auto tileSet = m_Binary.GetTileSet(0);
+
     // レイヤーごとに描画.
     for(auto l=0u; l<m_Binary.GetLayerCount(); ++l)
     {
         auto layer = m_Binary.GetLayer(l);
-        for(auto y=0u; y<layer.Rows; ++y)
+
+        for(int y=-1; y<=m_DrawRows; ++y) // 前後1タイル分の余白を考慮.
         {
-            for(auto x=0u; x<layer.Columns; ++x)
+            for(int x=-1; x<=m_DrawCols; ++x) // 前後1タイル分の余白を考慮.
             {
-                auto idX = (x + m_TileOffsetX) % layer.Columns;
-                auto idY = (y + m_TileOffsetY) % layer.Rows;
+                auto tx = (x >= 0) ? x : layer.Columns - 1;
+                auto ty = (y >= 0) ? y : layer.Rows - 1;
+
+                auto idX = (tx + m_TileOffsetX) % layer.Columns;
+                auto idY = (ty + m_TileOffsetY) % layer.Rows;
 
                 auto id = idX + (idY * layer.Columns);
-                auto tileId = layer.Data[id];
+                auto tileId = layer.Data[id] - tileSet.FirstChipId;
 
                 auto coord = m_Binary.GetCoord(0, tileId);
                 renderer.Add(
@@ -145,40 +151,36 @@ void MapChip::Draw(ID3D12GraphicsCommandList* pCmd, SpriteRenderer& renderer, D3
         }
     }
 
-    // タイルの描画横幅を超えたら，スクロール値をリセットしてオフセットを調整する.
+    auto layer0 = m_Binary.GetLayer(0);
+
+    // X方向のスクロール値と，オフセットを更新.
     if (m_ScrollX >= m_DrawTileW)
     {
         m_ScrollX = 0;
-        if (m_TileOffsetX + 1 < m_DrawCols)
-        { m_TileOffsetX++; }
+        if (int(m_TileOffsetX) - 1 < 0)
+        { m_TileOffsetX = layer0.Columns - 1; }
         else
-        { m_TileOffsetX = 0; }
+        { m_TileOffsetX--; }
     }
     else if (m_ScrollX <= -m_DrawTileW)
     {
         m_ScrollX = 0;
-        if (int(m_TileOffsetX) - 1 <= 0)
-        { m_TileOffsetX = m_DrawCols - 1; }
-        else
-        { m_TileOffsetX--; }
+        m_TileOffsetX = (m_TileOffsetX + 1) % layer0.Columns;
     }
 
-    // タイルの描画縦幅を超えたら，スクロール値をリセットしてオフセットを調整する.
+    // X方向のスクロール値と，オフセットを更新.
     if (m_ScrollY >= m_DrawTileH)
     {
         m_ScrollY = 0;
-        if (m_TileOffsetY + 1 < m_DrawRows)
-        { m_TileOffsetY++; }
+        if (int(m_TileOffsetY) - 1 < 0)
+        { m_TileOffsetY = layer0.Rows - 1; }
         else
-        { m_TileOffsetY = 0; }
+        { m_TileOffsetY--; }
     }
     else if (m_ScrollY <= -m_DrawTileH)
     {
         m_ScrollY = 0;
-        if (int(m_TileOffsetY) - 1 <= 0)
-        { m_TileOffsetY = 0; }
-        else
-        { m_TileOffsetY--; }
+        m_TileOffsetY = (m_TileOffsetY + 1) % layer0.Rows;
     }
 }
 
@@ -297,8 +299,8 @@ uint16_t MapChip::GetTileId(uint32_t layerId, uint32_t x, uint32_t y) const
 //-----------------------------------------------------------------------------
 void MapChip::UpdateDrawCount()
 {
-    m_DrawRows = m_ScreenWidth  / m_DrawTileW;
-    m_DrawCols = m_ScreenHeight / m_DrawTileH;
+    m_DrawCols = int(ceil(float(m_ScreenWidth)  / float(m_DrawTileW)));
+    m_DrawRows = int(ceil(float(m_ScreenHeight) / float(m_DrawTileH)));
 }
 
 } // namespace asdx
