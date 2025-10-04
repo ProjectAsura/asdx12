@@ -16,7 +16,7 @@ table Layer
     Id          : uint;
     Rows        : uint;
     Columns     : uint;
-    Data        : [uint];
+    Data        : [ushort];
 }
 
 table TileSet

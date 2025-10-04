@@ -50,15 +50,15 @@ std::wstring ToStringW( const std::string& value )
 //-----------------------------------------------------------------------------
 //      カンマ区切りを配列に変換します.
 //-----------------------------------------------------------------------------
-std::vector<uint32_t> ParseCsv(const char* csv)
+std::vector<uint16_t> ParseCsv(const char* csv)
 {
     std::istringstream stream(csv);
 
     std::string field;
-    std::vector<uint32_t> result;
+    std::vector<uint16_t> result;
     while (std::getline(stream, field, ','))
     {
-        auto u = uint32_t(std::stoi(field));
+        auto u = uint16_t(std::stoi(field));
         result.push_back(u);
     }
     return result;
@@ -187,8 +187,8 @@ bool MapChipConverter::Convert(const Desc& desc)
         {
             auto id         = layer->UnsignedAttribute("id");
             auto name       = layer->Attribute("name");
-            auto rowCount   = layer->UnsignedAttribute("width");
-            auto colCount   = layer->UnsignedAttribute("height");
+            auto rowCount   = layer->UnsignedAttribute("height");
+            auto colCount   = layer->UnsignedAttribute("width");
             auto data       = layer->FirstChildElement("data");
 
             auto encoding = data->Attribute("encoding");

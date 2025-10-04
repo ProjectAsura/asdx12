@@ -439,10 +439,13 @@ void SpriteRenderer::Reset()
     m_BatchCount  = 0;
     m_SubmitCount = 0;
 
-    m_Batches[0].IndexCount  = 0;
-    m_Batches[0].IndexOffset = 0;
-    m_Batches[0].SRV         = {};
-    m_Batches[0].Sampler     = {};
+    if (!m_Batches.empty())
+    {
+        m_Batches[0].IndexCount  = 0;
+        m_Batches[0].IndexOffset = 0;
+        m_Batches[0].SRV         = {};
+        m_Batches[0].Sampler     = {};
+    }
 
     m_HandleSRV     = {};
     m_HandleSampler = {};

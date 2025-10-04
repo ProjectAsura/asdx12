@@ -160,8 +160,8 @@ struct Layer FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   uint32_t Columns() const {
     return GetField<uint32_t>(VT_COLUMNS, 0);
   }
-  const ::flatbuffers::Vector<uint32_t> *Data() const {
-    return GetPointer<const ::flatbuffers::Vector<uint32_t> *>(VT_DATA);
+  const ::flatbuffers::Vector<uint16_t> *Data() const {
+    return GetPointer<const ::flatbuffers::Vector<uint16_t> *>(VT_DATA);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -192,7 +192,7 @@ struct LayerBuilder {
   void add_Columns(uint32_t Columns) {
     fbb_.AddElement<uint32_t>(Layer::VT_COLUMNS, Columns, 0);
   }
-  void add_Data(::flatbuffers::Offset<::flatbuffers::Vector<uint32_t>> Data) {
+  void add_Data(::flatbuffers::Offset<::flatbuffers::Vector<uint16_t>> Data) {
     fbb_.AddOffset(Layer::VT_DATA, Data);
   }
   explicit LayerBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
@@ -212,7 +212,7 @@ inline ::flatbuffers::Offset<Layer> CreateLayer(
     uint32_t Id = 0,
     uint32_t Rows = 0,
     uint32_t Columns = 0,
-    ::flatbuffers::Offset<::flatbuffers::Vector<uint32_t>> Data = 0) {
+    ::flatbuffers::Offset<::flatbuffers::Vector<uint16_t>> Data = 0) {
   LayerBuilder builder_(_fbb);
   builder_.add_Data(Data);
   builder_.add_Columns(Columns);
@@ -228,9 +228,9 @@ inline ::flatbuffers::Offset<Layer> CreateLayerDirect(
     uint32_t Id = 0,
     uint32_t Rows = 0,
     uint32_t Columns = 0,
-    const std::vector<uint32_t> *Data = nullptr) {
+    const std::vector<uint16_t> *Data = nullptr) {
   auto Name__ = Name ? _fbb.CreateString(Name) : 0;
-  auto Data__ = Data ? _fbb.CreateVector<uint32_t>(*Data) : 0;
+  auto Data__ = Data ? _fbb.CreateVector<uint16_t>(*Data) : 0;
   return asdx::res::CreateLayer(
       _fbb,
       Name__,

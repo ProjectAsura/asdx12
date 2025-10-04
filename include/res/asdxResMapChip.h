@@ -10,6 +10,7 @@
 //-----------------------------------------------------------------------------
 #include <vector>
 #include <fnd/asdxArrayView.h>
+#include <fnd/asdxMath.h>
 #include <res/asdxResTexture.h>
 
 
@@ -35,7 +36,16 @@ struct ResTileMapLayer
     uint32_t            Id;
     uint32_t            Rows;
     uint32_t            Columns;
-    ArrayView<uint32_t> Data;
+    ArrayView<uint16_t> Data;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// ResTileCoord structure
+///////////////////////////////////////////////////////////////////////////////
+struct ResTileCoord
+{
+    Vector2 Uv0;
+    Vector2 Uv1;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -145,6 +155,15 @@ public:
     //! @return     指定されたレイヤーを返却します.
     //-------------------------------------------------------------------------
     ResTileMapLayer GetLayer(uint32_t layerIndex) const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      指定タイルのテクスチャ座標を取得します.
+    //! 
+    //! @param[in]      tileSetIndex    タイルセット番号.
+    //! @param[in]      tileId          タイル番号.
+    //! @return     指定タイルのテクスチャ座標を返却します.
+    //-------------------------------------------------------------------------
+    ResTileCoord GetCoord(uint32_t tileSetIndex, uint32_t tileId) const;
 
 private:
     //=========================================================================

@@ -169,14 +169,14 @@ uint32_t GamePad::GetPlayerIndex() const
 //-----------------------------------------------------------------------------
 //      ボタンが押されたかチェックします.
 //-----------------------------------------------------------------------------
-bool GamePad::IsDown(PAD_BUTTON type) const
-{ return !!(m_PressedButtons & type); }
+bool GamePad::IsDown(uint32_t buttonMask) const
+{ return !!(m_PressedButtons & buttonMask); }
 
 //-----------------------------------------------------------------------------
 //      ボタンが押されているかチェックします.
 //-----------------------------------------------------------------------------
-bool GamePad::IsHold(PAD_BUTTON type) const
-{ return !!(m_Buttons & type); }
+bool GamePad::IsHold(uint32_t buttonMask) const
+{ return !!(m_Buttons & buttonMask); }
 
 //-----------------------------------------------------------------------------
 //      左サムスティックのX成分を取得します.

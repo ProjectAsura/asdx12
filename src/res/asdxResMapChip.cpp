@@ -166,7 +166,29 @@ ResTileMapLayer MapChipBinary::GetLayer(uint32_t layerIndex) const
     result.Id       = layer->Id();
     result.Rows     = layer->Rows();
     result.Columns  = layer->Columns();
-    result.Data     = ArrayView<uint32_t>(layer->Data()->data(), layer->Data()->size());
+    result.Data     = ArrayView<uint16_t>(layer->Data()->data(), layer->Data()->size());
+    return result;
+}
+
+//-----------------------------------------------------------------------------
+//      指定タイルのテクスチャ座標を取得します.
+//-----------------------------------------------------------------------------
+ResTileCoord MapChipBinary::GetCoord(uint32_t tileSetIndex, uint32_t tileId) const
+{
+    assert(!m_Blob.empty());
+    auto tileSet = res::GetMapChipBinary(m_Blob.data())->TileSets()->Get(tileSetIndex);
+    auto x = tileId % tileSet->Columns();
+    auto y = tileId / tileSet->Columns();
+
+    auto u = float(tileSet->TileWidth ()) / float(tileSet->Image()->Width ());
+    auto v = float(tileSet->TileHeight()) / float(tileSet->Image()->Height());
+
+    ResTileCoord result;
+    result.Uv0.x = u * x;
+    result.Uv0.y = v * (y + 1);
+    result.Uv1.x = u * (x + 1);
+    result.Uv1.y = v * y;
+
     return result;
 }
 

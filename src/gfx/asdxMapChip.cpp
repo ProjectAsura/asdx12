@@ -1,0 +1,304 @@
+﻿//-----------------------------------------------------------------------------
+// File : asdxMapChip.cpp
+// Desc : Map Chip.
+// Copyright(c) Project Asura. All right reserved.
+//-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+// Includes
+//-----------------------------------------------------------------------------
+#include <gfx/asdxMapChip.h>
+#include <fnd/asdxLogger.h>
+#include <utility>
+
+
+namespace asdx {
+
+///////////////////////////////////////////////////////////////////////////////
+// MapChip class
+///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      コンストラクタです.
+//-----------------------------------------------------------------------------
+MapChip::MapChip()
+: m_ScrollX     (0)
+, m_ScrollY     (0)
+, m_TileOffsetX (0)
+, m_TileOffsetY (0)
+, m_DrawTileW   (0)
+, m_DrawTileH   (0)
+, m_ScreenWidth (0)
+, m_ScreenHeight(0)
+{ /* DO_NOTHING */ }
+
+//-----------------------------------------------------------------------------
+//      デストラクタです.
+//-----------------------------------------------------------------------------
+MapChip::~MapChip()
+{ Term(); }
+
+//-----------------------------------------------------------------------------
+//      初期化処理を行います.
+//-----------------------------------------------------------------------------
+bool MapChip::Init
+(
+    ID3D12GraphicsCommandList*  pCmd,
+    std::vector<uint8_t>&       blob,
+    uint32_t                    screenWidth,
+    uint32_t                    screenHeight,
+    int                         drawTileWidth,
+    int                         drawTileHeight
+)
+{
+    m_Binary.Load(std::move(blob));
+
+    m_Textures.resize(m_Binary.GetTileSetCount());
+
+    for(auto i=0u; i<m_Binary.GetTileSetCount(); ++i)
+    {
+        auto res = m_Binary.GetMapChip(i);
+        if (!m_Textures[i].Init(pCmd, res))
+        {
+            ELOG("Error : Texture Init Failed. index = %u", i);
+            return false;
+        }
+    }
+
+    m_ScrollX = 0;
+    m_ScrollY = 0;
+
+    m_ScreenWidth  = screenWidth;
+    m_ScreenHeight = screenHeight;
+
+    m_DrawTileW = drawTileWidth;
+    m_DrawTileH = drawTileHeight;
+
+    UpdateDrawCount();
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      終了処理を行います.
+//-----------------------------------------------------------------------------
+void MapChip::Term()
+{
+    m_Binary.Term();
+
+    m_ScrollX = 0;
+    m_ScrollY = 0;
+
+    m_ScreenWidth  = 0;
+    m_ScreenHeight = 0;
+
+    m_DrawTileW = 0;
+    m_DrawTileH = 0;
+
+    m_DrawRows = 0;
+    m_DrawCols = 0;
+
+    for(size_t i=0; i<m_Textures.size(); ++i)
+    { m_Textures[i].Term(); }
+
+    m_Textures.clear();
+    m_Textures.shrink_to_fit();
+}
+
+//-----------------------------------------------------------------------------
+//      マップチップバイナリを取得します.
+//-----------------------------------------------------------------------------
+const MapChipBinary& MapChip::GetBinary() const
+{ return m_Binary; }
+
+//-----------------------------------------------------------------------------
+//      描画処理を行います.
+//-----------------------------------------------------------------------------
+void MapChip::Draw(ID3D12GraphicsCommandList* pCmd, SpriteRenderer& renderer, D3D12_GPU_DESCRIPTOR_HANDLE sampler)
+{
+    renderer.SetPipelineState(pCmd);
+    renderer.SetTexture(m_Textures[0].GetGpuHandleSRV(), sampler);
+
+    // レイヤーごとに描画.
+    for(auto l=0u; l<m_Binary.GetLayerCount(); ++l)
+    {
+        auto layer = m_Binary.GetLayer(l);
+        for(auto y=0u; y<layer.Rows; ++y)
+        {
+            for(auto x=0u; x<layer.Columns; ++x)
+            {
+                auto idX = (x + m_TileOffsetX) % layer.Columns;
+                auto idY = (y + m_TileOffsetY) % layer.Rows;
+
+                auto id = idX + (idY * layer.Columns);
+                auto tileId = layer.Data[id];
+
+                auto coord = m_Binary.GetCoord(0, tileId);
+                renderer.Add(
+                    x * m_DrawTileW + m_ScrollX,
+                    y * m_DrawTileH + m_ScrollY,
+                    m_DrawTileW,
+                    m_DrawTileH,
+                    coord.Uv0,
+                    coord.Uv1);
+            }
+        }
+    }
+
+    // タイルの描画横幅を超えたら，スクロール値をリセットしてオフセットを調整する.
+    if (m_ScrollX >= m_DrawTileW)
+    {
+        m_ScrollX = 0;
+        if (m_TileOffsetX + 1 < m_DrawCols)
+        { m_TileOffsetX++; }
+        else
+        { m_TileOffsetX = 0; }
+    }
+    else if (m_ScrollX <= -m_DrawTileW)
+    {
+        m_ScrollX = 0;
+        if (int(m_TileOffsetX) - 1 <= 0)
+        { m_TileOffsetX = m_DrawCols - 1; }
+        else
+        { m_TileOffsetX--; }
+    }
+
+    // タイルの描画縦幅を超えたら，スクロール値をリセットしてオフセットを調整する.
+    if (m_ScrollY >= m_DrawTileH)
+    {
+        m_ScrollY = 0;
+        if (m_TileOffsetY + 1 < m_DrawRows)
+        { m_TileOffsetY++; }
+        else
+        { m_TileOffsetY = 0; }
+    }
+    else if (m_ScrollY <= -m_DrawTileH)
+    {
+        m_ScrollY = 0;
+        if (int(m_TileOffsetY) - 1 <= 0)
+        { m_TileOffsetY = 0; }
+        else
+        { m_TileOffsetY--; }
+    }
+}
+
+//-----------------------------------------------------------------------------
+//      タイルオフセットを設定します.
+//-----------------------------------------------------------------------------
+void MapChip::SetTileOffset(uint32_t x, uint32_t y)
+{
+    m_TileOffsetX = x;
+    m_TileOffsetY = y;
+}
+
+//-----------------------------------------------------------------------------
+//      スクロールオフセットを設定します.
+//-----------------------------------------------------------------------------
+void MapChip::SetScroll(int x, int y)
+{
+    assert(abs(x) <= m_DrawTileW);
+    assert(abs(y) <= m_DrawTileH);
+    m_ScrollX = x;
+    m_ScrollY = y;
+}
+
+//-----------------------------------------------------------------------------
+//      スクリーンサイズを設定します.
+//-----------------------------------------------------------------------------
+void MapChip::SetScreenSize(uint32_t w, uint32_t h)
+{
+    m_ScreenWidth  = w;
+    m_ScreenHeight = h;
+
+    UpdateDrawCount();
+}
+
+//-----------------------------------------------------------------------------
+//      描画タイルサイズを設定します.
+//-----------------------------------------------------------------------------
+void MapChip::SetDrawTileSize(int w, int h)
+{
+    m_DrawTileW = w;
+    m_DrawTileH = h;
+
+    UpdateDrawCount();
+}
+
+//-----------------------------------------------------------------------------
+//      X方向のタイルオフセットを取得します.
+//-----------------------------------------------------------------------------
+uint32_t MapChip::GetTileOffsetX() const
+{ return m_TileOffsetX; }
+
+//-----------------------------------------------------------------------------
+//      Y方向のタイルオフセットを取得します.
+//-----------------------------------------------------------------------------
+uint32_t MapChip::getTileOffsetY() const
+{ return m_TileOffsetY; }
+
+//-----------------------------------------------------------------------------
+//      X方向のスクロール値を取得します.
+//-----------------------------------------------------------------------------
+int MapChip::GetScrollX() const
+{ return m_ScrollX; }
+
+//-----------------------------------------------------------------------------
+//      Y方向のスクロール値を取得します.
+//-----------------------------------------------------------------------------
+int MapChip::GetScrollY() const
+{ return m_ScrollY; }
+
+//-----------------------------------------------------------------------------
+//      描画タイル横幅を取得します.
+//-----------------------------------------------------------------------------
+int MapChip::GetDrawTileWidth() const
+{ return m_DrawTileW; }
+
+//-----------------------------------------------------------------------------
+//      描画タイル縦幅を取得します.
+//-----------------------------------------------------------------------------
+int MapChip::GetDrawTileHeight() const
+{ return m_DrawTileH; }
+
+//-----------------------------------------------------------------------------
+//      スクリーンの横幅を取得します.
+//-----------------------------------------------------------------------------
+uint32_t MapChip::GetScreenWidth() const
+{ return m_ScreenWidth; }
+
+//-----------------------------------------------------------------------------
+//      スクリーンの縦幅を取得します.
+//-----------------------------------------------------------------------------
+uint32_t MapChip::GetScreenHeight() const
+{ return m_ScreenHeight; }
+
+//-----------------------------------------------------------------------------
+//      コリジョンがあるかどうかチェックします.
+//-----------------------------------------------------------------------------
+bool MapChip::HasCollision(uint32_t x, uint32_t y) const
+{ return GetTileId(1, x, y) != 0; }
+
+//-----------------------------------------------------------------------------
+//      タイルIDを取得します.
+//-----------------------------------------------------------------------------
+uint16_t MapChip::GetTileId(uint32_t layerId, uint32_t x, uint32_t y) const
+{
+    auto layer = m_Binary.GetLayer(layerId);
+
+    auto idX = x % layer.Columns;
+    auto idY = y % layer.Rows;
+
+    auto id = idX + (idY * layer.Columns);
+    return layer.Data[id];
+}
+
+//-----------------------------------------------------------------------------
+//      描画数を更新します.
+//-----------------------------------------------------------------------------
+void MapChip::UpdateDrawCount()
+{
+    m_DrawRows = m_ScreenWidth  / m_DrawTileW;
+    m_DrawCols = m_ScreenHeight / m_DrawTileH;
+}
+
+} // namespace asdx
