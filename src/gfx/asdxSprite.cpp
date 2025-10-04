@@ -595,6 +595,9 @@ void SpriteRenderer::SetPipelineState(ID3D12GraphicsCommandList* pCmdList, ID3D1
 //-----------------------------------------------------------------------------
 void SpriteRenderer::Draw(ID3D12GraphicsCommandList* pCmdList)
 {
+    if (m_SpriteCount == 0 || pCmdList == nullptr)
+        return;
+
     D3D12_VERTEX_BUFFER_VIEW vbv = {};
     vbv.BufferLocation  = m_VB[m_BufferIndex]->GetGPUVirtualAddress();
     vbv.SizeInBytes     = UINT(m_VB[m_BufferIndex]->GetDesc().Width);
