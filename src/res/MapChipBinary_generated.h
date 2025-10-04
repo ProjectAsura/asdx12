@@ -22,11 +22,53 @@ struct MapChipBuilder;
 struct Layer;
 struct LayerBuilder;
 
+struct Tile;
+
 struct TileSet;
 struct TileSetBuilder;
 
 struct MapChipBinary;
 struct MapChipBinaryBuilder;
+
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Tile FLATBUFFERS_FINAL_CLASS {
+ private:
+  uint16_t Id_;
+  uint8_t Collision_;
+  int8_t padding0__;
+  uint32_t Event_;
+
+ public:
+  Tile()
+      : Id_(0),
+        Collision_(0),
+        padding0__(0),
+        Event_(0) {
+    (void)padding0__;
+  }
+  Tile(uint16_t _Id, bool _Collision, uint32_t _Event)
+      : Id_(::flatbuffers::EndianScalar(_Id)),
+        Collision_(::flatbuffers::EndianScalar(static_cast<uint8_t>(_Collision))),
+        padding0__(0),
+        Event_(::flatbuffers::EndianScalar(_Event)) {
+    (void)padding0__;
+  }
+  uint16_t Id() const {
+    return ::flatbuffers::EndianScalar(Id_);
+  }
+  bool KeyCompareLessThan(const Tile * const o) const {
+    return Id() < o->Id();
+  }
+  int KeyCompareWithValue(uint16_t _Id) const {
+    return static_cast<int>(Id() > _Id) - static_cast<int>(Id() < _Id);
+  }
+  bool Collision() const {
+    return ::flatbuffers::EndianScalar(Collision_) != 0;
+  }
+  uint32_t Event() const {
+    return ::flatbuffers::EndianScalar(Event_);
+  }
+};
+FLATBUFFERS_STRUCT_END(Tile, 8);
 
 struct MapChip FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef MapChipBuilder Builder;
@@ -249,13 +291,14 @@ struct TileSet FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
     VT_TILECOUNT = 10,
     VT_TILEWIDTH = 12,
     VT_TILEHEIGHT = 14,
-    VT_IMAGE = 16
+    VT_IMAGE = 16,
+    VT_TILES = 18
   };
   const ::flatbuffers::String *Name() const {
     return GetPointer<const ::flatbuffers::String *>(VT_NAME);
   }
-  uint32_t FirstChipId() const {
-    return GetField<uint32_t>(VT_FIRSTCHIPID, 0);
+  uint16_t FirstChipId() const {
+    return GetField<uint16_t>(VT_FIRSTCHIPID, 0);
   }
   uint32_t Columns() const {
     return GetField<uint32_t>(VT_COLUMNS, 0);
@@ -272,17 +315,22 @@ struct TileSet FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   const asdx::res::MapChip *Image() const {
     return GetPointer<const asdx::res::MapChip *>(VT_IMAGE);
   }
+  const ::flatbuffers::Vector<const asdx::res::Tile *> *Tiles() const {
+    return GetPointer<const ::flatbuffers::Vector<const asdx::res::Tile *> *>(VT_TILES);
+  }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_NAME) &&
            verifier.VerifyString(Name()) &&
-           VerifyField<uint32_t>(verifier, VT_FIRSTCHIPID, 4) &&
+           VerifyField<uint16_t>(verifier, VT_FIRSTCHIPID, 2) &&
            VerifyField<uint32_t>(verifier, VT_COLUMNS, 4) &&
            VerifyField<uint32_t>(verifier, VT_TILECOUNT, 4) &&
            VerifyField<uint32_t>(verifier, VT_TILEWIDTH, 4) &&
            VerifyField<uint32_t>(verifier, VT_TILEHEIGHT, 4) &&
            VerifyOffset(verifier, VT_IMAGE) &&
            verifier.VerifyTable(Image()) &&
+           VerifyOffset(verifier, VT_TILES) &&
+           verifier.VerifyVector(Tiles()) &&
            verifier.EndTable();
   }
 };
@@ -294,8 +342,8 @@ struct TileSetBuilder {
   void add_Name(::flatbuffers::Offset<::flatbuffers::String> Name) {
     fbb_.AddOffset(TileSet::VT_NAME, Name);
   }
-  void add_FirstChipId(uint32_t FirstChipId) {
-    fbb_.AddElement<uint32_t>(TileSet::VT_FIRSTCHIPID, FirstChipId, 0);
+  void add_FirstChipId(uint16_t FirstChipId) {
+    fbb_.AddElement<uint16_t>(TileSet::VT_FIRSTCHIPID, FirstChipId, 0);
   }
   void add_Columns(uint32_t Columns) {
     fbb_.AddElement<uint32_t>(TileSet::VT_COLUMNS, Columns, 0);
@@ -312,6 +360,9 @@ struct TileSetBuilder {
   void add_Image(::flatbuffers::Offset<asdx::res::MapChip> Image) {
     fbb_.AddOffset(TileSet::VT_IMAGE, Image);
   }
+  void add_Tiles(::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::Tile *>> Tiles) {
+    fbb_.AddOffset(TileSet::VT_TILES, Tiles);
+  }
   explicit TileSetBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -326,33 +377,37 @@ struct TileSetBuilder {
 inline ::flatbuffers::Offset<TileSet> CreateTileSet(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     ::flatbuffers::Offset<::flatbuffers::String> Name = 0,
-    uint32_t FirstChipId = 0,
+    uint16_t FirstChipId = 0,
     uint32_t Columns = 0,
     uint32_t TileCount = 0,
     uint32_t TileWidth = 0,
     uint32_t TileHeight = 0,
-    ::flatbuffers::Offset<asdx::res::MapChip> Image = 0) {
+    ::flatbuffers::Offset<asdx::res::MapChip> Image = 0,
+    ::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::Tile *>> Tiles = 0) {
   TileSetBuilder builder_(_fbb);
+  builder_.add_Tiles(Tiles);
   builder_.add_Image(Image);
   builder_.add_TileHeight(TileHeight);
   builder_.add_TileWidth(TileWidth);
   builder_.add_TileCount(TileCount);
   builder_.add_Columns(Columns);
-  builder_.add_FirstChipId(FirstChipId);
   builder_.add_Name(Name);
+  builder_.add_FirstChipId(FirstChipId);
   return builder_.Finish();
 }
 
 inline ::flatbuffers::Offset<TileSet> CreateTileSetDirect(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     const char *Name = nullptr,
-    uint32_t FirstChipId = 0,
+    uint16_t FirstChipId = 0,
     uint32_t Columns = 0,
     uint32_t TileCount = 0,
     uint32_t TileWidth = 0,
     uint32_t TileHeight = 0,
-    ::flatbuffers::Offset<asdx::res::MapChip> Image = 0) {
+    ::flatbuffers::Offset<asdx::res::MapChip> Image = 0,
+    std::vector<asdx::res::Tile> *Tiles = nullptr) {
   auto Name__ = Name ? _fbb.CreateString(Name) : 0;
+  auto Tiles__ = Tiles ? _fbb.CreateVectorOfSortedStructs<asdx::res::Tile>(Tiles) : 0;
   return asdx::res::CreateTileSet(
       _fbb,
       Name__,
@@ -361,7 +416,8 @@ inline ::flatbuffers::Offset<TileSet> CreateTileSetDirect(
       TileCount,
       TileWidth,
       TileHeight,
-      Image);
+      Image,
+      Tiles__);
 }
 
 struct MapChipBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {

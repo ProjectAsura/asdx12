@@ -19,15 +19,23 @@ table Layer
     Data        : [ushort];
 }
 
+struct Tile
+{
+    Id        : ushort (key);
+    Collision : bool;
+    Event     : uint;
+}
+
 table TileSet
 {
     Name            : string;
-    FirstChipId     : uint;
+    FirstChipId     : ushort;
     Columns         : uint;
     TileCount       : uint;
     TileWidth       : uint;
     TileHeight      : uint;
     Image           : MapChip;
+    Tiles           : [Tile];
 }
 
 table MapChipBinary

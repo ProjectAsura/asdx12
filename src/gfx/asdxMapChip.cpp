@@ -57,7 +57,7 @@ bool MapChip::Init
 
     for(auto i=0u; i<m_Binary.GetTileSetCount(); ++i)
     {
-        auto res = m_Binary.GetMapChip(i);
+        auto res = m_Binary.GetTexture(i);
         if (!m_Textures[i].Init(pCmd, res))
         {
             ELOG("Error : Texture Init Failed. index = %u", i);
@@ -275,15 +275,24 @@ uint32_t MapChip::GetScreenHeight() const
 { return m_ScreenHeight; }
 
 //-----------------------------------------------------------------------------
-//      コリジョンがあるかどうかチェックします.
+//      チップIDを取得します.
 //-----------------------------------------------------------------------------
-bool MapChip::HasCollision(uint32_t x, uint32_t y) const
-{ return GetTileId(1, x, y) != 0; }
+uint16_t MapChip::GetChipId(uint32_t x, uint32_t y) const
+{ return GetChipId(0, x, y); }
 
 //-----------------------------------------------------------------------------
-//      タイルIDを取得します.
+//      プロパティを持つかどうかチェックします.
 //-----------------------------------------------------------------------------
-uint16_t MapChip::GetTileId(uint32_t layerId, uint32_t x, uint32_t y) const
+bool MapChip::HasProperty(uint32_t x, uint32_t y, ResChipProperty& prop) const
+{
+    auto chipId = GetChipId(x, y);
+    return m_Binary.FindChipProperty(0, chipId, prop);
+}
+
+//-----------------------------------------------------------------------------
+//      チップIDを取得します.
+//-----------------------------------------------------------------------------
+uint16_t MapChip::GetChipId(uint32_t layerId, uint32_t x, uint32_t y) const
 {
     auto layer = m_Binary.GetLayer(layerId);
 

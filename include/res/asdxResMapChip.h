@@ -17,15 +17,26 @@
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
+// ResChipProperty structure
+///////////////////////////////////////////////////////////////////////////////
+struct ResChipProperty
+{
+    uint16_t    Id;         //!< マップチップ番号.
+    bool        Collision;  //!< コリジョン.
+    uint32_t    Event;      //!< イベントID.
+};
+
+///////////////////////////////////////////////////////////////////////////////
 // ResTileSet structure
 ///////////////////////////////////////////////////////////////////////////////
 struct ResTileSet
 {
-    uint32_t    FirstChipId;
-    uint32_t    Columns;
-    uint32_t    TileCount;
-    uint32_t    TileWidth;
-    uint32_t    TileHeight;
+    const char* Name;           //!< 名前.
+    uint32_t    FirstChipId;    //!< 最初のチップ番号.
+    uint32_t    Columns;        //!< 列数(X方向の数).
+    uint32_t    TileCount;      //!< タイル数.
+    uint32_t    TileWidth;      //!< タイルの横幅.
+    uint32_t    TileHeight;     //!< タイルの縦幅.
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -33,10 +44,11 @@ struct ResTileSet
 ///////////////////////////////////////////////////////////////////////////////
 struct ResTileMapLayer
 {
-    uint32_t            Id;
-    uint32_t            Rows;
-    uint32_t            Columns;
-    ArrayView<uint16_t> Data;
+    const char*         Name;       //!< 名前.
+    uint32_t            Id;         //!< ID.
+    uint32_t            Columns;    //!< 列数(X方向の数).
+    uint32_t            Rows;       //!< 行数(Y方向の数).
+    ArrayView<uint16_t> Data;       //!< マップチップ番号データ.
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -44,8 +56,8 @@ struct ResTileMapLayer
 ///////////////////////////////////////////////////////////////////////////////
 struct ResTileCoord
 {
-    Vector2 Uv0;
-    Vector2 Uv1;
+    Vector2 Uv0;    //!< 左上のテクスチャ座標.
+    Vector2 Uv1;    //!< 右下のテクスチャ座標.
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -134,12 +146,12 @@ public:
     ResTileSet GetTileSet(uint32_t tileSetIndex) const;
 
     //-------------------------------------------------------------------------
-    //! @brief      マップチップを取得します.
+    //! @brief      テクスチャを取得します.
     //! 
     //! @param[in]      tileSetIndex        タイルセット番号.
-    //! @return     指定されたマップチップを返却します.
+    //! @return     指定されたテクスチャを返却します.
     //-------------------------------------------------------------------------
-    ResTexture GetMapChip(uint32_t tileSetIndex) const;
+    ResTexture GetTexture(uint32_t tileSetIndex) const;
 
     //-------------------------------------------------------------------------
     //! @brief      レイヤー数を取得します.
@@ -165,11 +177,22 @@ public:
     //-------------------------------------------------------------------------
     ResTileCoord GetCoord(uint32_t tileSetIndex, uint32_t tileId) const;
 
+    //-------------------------------------------------------------------------
+    //! @brief      チッププロパティを取得します.
+    //! 
+    //! @param[in]      tileSetIndex    タイルセット番号.
+    //! @param[in]      chipId          チップ番号.
+    //! @param[out]     result          チッププロパティの格納先.
+    //! @retval true    検索にヒット.
+    //! @retval false   見つかりませんでした.
+    //-------------------------------------------------------------------------
+    bool FindChipProperty(uint32_t tileSetIndex, uint16_t chipId, ResChipProperty& result) const;
+
 private:
     //=========================================================================
     // private varaibles.
     //=========================================================================
-    std::vector<uint8_t>    m_Blob;
+    std::vector<uint8_t>    m_Blob; //!< バイナリデータ.
 
     //=========================================================================
     // private methods.

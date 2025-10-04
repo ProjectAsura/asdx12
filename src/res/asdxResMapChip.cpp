@@ -112,6 +112,7 @@ ResTileSet MapChipBinary::GetTileSet(uint32_t tileSetIndex) const
     auto tileSet = res::GetMapChipBinary(m_Blob.data())->TileSets()->Get(tileSetIndex);
 
     ResTileSet result = {};
+    result.Name         = tileSet->Name()->c_str();
     result.FirstChipId  = tileSet->FirstChipId();
     result.Columns      = tileSet->Columns();
     result.TileCount    = tileSet->TileCount();
@@ -121,9 +122,9 @@ ResTileSet MapChipBinary::GetTileSet(uint32_t tileSetIndex) const
 }
 
 //-----------------------------------------------------------------------------
-//      マップチップを取得します.
+//      テクスチャを取得します.
 //-----------------------------------------------------------------------------
-ResTexture MapChipBinary::GetMapChip(uint32_t tileSetIndex) const
+ResTexture MapChipBinary::GetTexture(uint32_t tileSetIndex) const
 {
     assert(!m_Blob.empty());
     auto tileSet = res::GetMapChipBinary(m_Blob.data())->TileSets()->Get(tileSetIndex);
@@ -163,6 +164,7 @@ ResTileMapLayer MapChipBinary::GetLayer(uint32_t layerIndex) const
     auto layer = res::GetMapChipBinary(m_Blob.data())->Layers()->Get(layerIndex);
 
     ResTileMapLayer result = {};
+    result.Name     = layer->Name()->c_str();
     result.Id       = layer->Id();
     result.Rows     = layer->Rows();
     result.Columns  = layer->Columns();
@@ -190,6 +192,31 @@ ResTileCoord MapChipBinary::GetCoord(uint32_t tileSetIndex, uint32_t tileId) con
     result.Uv1.y = v * y;
 
     return result;
+}
+
+//-----------------------------------------------------------------------------
+//      チッププロパティを検索します.
+//-----------------------------------------------------------------------------
+bool MapChipBinary::FindChipProperty(uint32_t tileSetIndex, uint16_t chipId, ResChipProperty& result) const
+{
+    assert(!m_Blob.empty());
+    auto chip = res::GetMapChipBinary(m_Blob.data())
+                ->TileSets()
+                ->Get(tileSetIndex)
+                ->Tiles()
+                ->LookupByKey(chipId);
+    if (chip == nullptr)
+    {
+        result.Id        = chipId;
+        result.Collision = false;
+        result.Event     = 0;
+        return false;
+    }
+
+    result.Id        = chip->Id();
+    result.Collision = chip->Collision();
+    result.Event     = chip->Event();
+    return true;
 }
 
 } // namespace asdx

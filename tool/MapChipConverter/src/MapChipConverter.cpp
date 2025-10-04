@@ -168,6 +168,34 @@ bool MapChipConverter::Convert(const Desc& desc)
             auto tileCount      = tileset->UnsignedAttribute("tilecount");
             auto columnCount    = tileset->UnsignedAttribute("columns");
 
+            std::vector<asdx::res::Tile> tiles;
+            for(auto tile = tileset->FirstChildElement("tile"); tile != nullptr; tile = tile->NextSiblingElement("tile"))
+            {
+                uint16_t id = uint16_t(tile->UnsignedAttribute("id"));
+
+                bool     collision = false;
+                uint32_t eventId   = 0;
+
+                auto props = tile->FirstChildElement("properties");
+                if (props != nullptr)
+                {
+                    for(auto prop = props->FirstChildElement("property"); prop != nullptr; prop = prop->NextSiblingElement("property"))
+                    {
+                        auto name = prop->Attribute("name");
+                        if (_stricmp(name, "collision") == 0)
+                        {
+                            collision = prop->BoolAttribute("value");
+                        }
+                        else if (_stricmp(name, "event") == 0)
+                        {
+                            eventId = prop->UnsignedAttribute("value");
+                        }
+                    }
+                }
+
+                tiles.emplace_back(id, collision, eventId);
+            }
+
             tilesets.emplace_back(
                 asdx::res::CreateTileSetDirect(
                     builder,
@@ -177,7 +205,8 @@ bool MapChipConverter::Convert(const Desc& desc)
                     tileCount,
                     tileW,
                     tileH,
-                    mapChip));
+                    mapChip,
+                    &tiles));
         }
     }
 
