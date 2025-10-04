@@ -81,6 +81,13 @@ bool MapChipConverter::Convert(const Desc& desc)
         return false;
     }
 
+    auto hr = CoInitialize(nullptr);
+    if (FAILED(hr))
+    {
+        ELOG("Error : CoInitilalize() Failed. errcode = 0x%x", hr);
+        return false;
+    }
+
     tinyxml2::XMLDocument doc;
     auto err = doc.LoadFile(desc.InputPath.c_str());
     if (err != tinyxml2::XML_SUCCESS)
@@ -108,7 +115,7 @@ bool MapChipConverter::Convert(const Desc& desc)
 
     // tileset
     {
-        for(auto tileset = doc.FirstChildElement("tileset"); tileset != nullptr; tileset->NextSiblingElement("tileset"))
+        for(auto tileset = map->FirstChildElement("tileset"); tileset != nullptr; tileset = tileset->NextSiblingElement("tileset"))
         {
             auto image = tileset->FirstChildElement("image");
             uint32_t imageWidth  = 0;
@@ -176,15 +183,24 @@ bool MapChipConverter::Convert(const Desc& desc)
 
     // layer
     {
-        for(auto layer = doc.FirstChildElement("layer"); layer != nullptr; layer->NextSiblingElement("layer"))
+        for(auto layer = map->FirstChildElement("layer"); layer != nullptr; layer = layer->NextSiblingElement("layer"))
         {
             auto id         = layer->UnsignedAttribute("id");
             auto name       = layer->Attribute("name");
             auto rowCount   = layer->UnsignedAttribute("width");
             auto colCount   = layer->UnsignedAttribute("height");
-            auto csv        = layer->Attribute("data");
+            auto data       = layer->FirstChildElement("data");
 
-            auto data = ParseCsv(csv);
+            auto encoding = data->Attribute("encoding");
+            auto ret = (strcmp(encoding, "csv") == 0);
+            assert(ret);
+            if (!ret)
+            {
+                ELOG("Error : data encoding is not \"csv\".");
+                return false;
+            }
+
+            auto datas = ParseCsv(data->GetText());
 
             layers.emplace_back(
                 asdx::res::CreateLayerDirect(
@@ -193,7 +209,7 @@ bool MapChipConverter::Convert(const Desc& desc)
                     id,
                     rowCount,
                     colCount,
-                    &data));
+                    &datas));
         }
     }
 
@@ -225,6 +241,8 @@ bool MapChipConverter::Convert(const Desc& desc)
         fwrite(buf, size, 1, fp);
         fclose(fp);
     }
+
+    CoUninitialize();
 
     return true;
 }

@@ -133,6 +133,7 @@ ResTexture MapChipBinary::GetMapChip(uint32_t tileSetIndex) const
     result.Width                        = tileSet->Image()->Width();
     result.Height                       = tileSet->Image()->Height();
     result.DepthOrArraySize             = 1;
+    result.Format                       = tileSet->Image()->Format();
     result.MipLevels                    = 1;
     result.SubResourceCount             = 1;
     result.SubResources[0].Width        = tileSet->Image()->Width();
