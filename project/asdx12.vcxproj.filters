@@ -300,7 +300,7 @@
     <ClCompile Include="..\external\D3D12MemoryAllocator\src\D3D12MemAlloc.cpp">
       <Filter>ソース ファイル\external\D3D12MA</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\fnd\asdxAsyncFileIO.cpp">
+    <ClCompile Include="..\src\fnd\asdxFileIO.cpp">
       <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
   </ItemGroup>
@@ -557,7 +557,7 @@
     <ClInclude Include="..\external\D3D12MemoryAllocator\include\D3D12MemAlloc.h">
       <Filter>ソース ファイル\external\D3D12MA</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\fnd\asdxAsyncFileIO.h">
+    <ClInclude Include="..\include\fnd\asdxFileIO.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
   </ItemGroup>

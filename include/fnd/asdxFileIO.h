@@ -1,6 +1,6 @@
 ﻿//-----------------------------------------------------------------------------
-// File : asdxAsyncFileIO.h
-// Desc : Async File I/O.
+// File : asdxFileIO.h
+// Desc : File I/O.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 #pragma once
@@ -61,7 +61,7 @@ RequestId RequestLoad(const char* path);
 //! @param[in]      blob        バイナリラージオブジェクト.
 //! @return     リクエストIDを返却します.
 //-----------------------------------------------------------------------------
-RequestId RequestSave(const char* path, std::vector<uint8_t>& blob);
+RequestId RequestSave(const char* path, const std::vector<uint8_t>& blob);
 
 //-----------------------------------------------------------------------------
 //! @brief      リクエストが完了したかどうか確認します.
@@ -91,5 +91,25 @@ std::vector<uint8_t> GetLoadResult(RequestId requestId);
 //!             内部でメモリ解放を行うため，呼び出しされないとメモリリークが発生します.
 //-----------------------------------------------------------------------------
 bool GetSaveResult(RequestId requestId);
+
+//-----------------------------------------------------------------------------
+//! @brief      同期読み込みを行います.
+//! 
+//! @param[in]      path        ファイルパス.
+//! @param[in]      blob        バイナリラージオブジェクトの格納先.
+//! @retval true    読み込みに成功.
+//! @retval false   読み込みに失敗.
+//-----------------------------------------------------------------------------
+bool Load(const char* path, std::vector<uint8_t>& blob);
+
+//-----------------------------------------------------------------------------
+//! @brief      同期書き込みを行います.
+//! 
+//! @param[in]      path        ファイルパス.
+//! @param[in]      blob        バイナリラージオブジェクト.
+//! @retval true    書き込みに成功.
+//! @retval false   書き込みに失敗.
+//-----------------------------------------------------------------------------
+bool Save(const char* path, const std::vector<uint8_t>& blob);
 
 } // namespace asdx

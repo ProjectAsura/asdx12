@@ -1,13 +1,13 @@
 ﻿//-----------------------------------------------------------------------------
-// File : asdxAsyncFileIO.cpp
-// Desc : Async File I/O.
+// File : asdxFileIO.cpp
+// Desc : File I/O.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <fnd/asdxAsyncFileIO.h>
+#include <fnd/asdxFileIO.h>
 #include <cassert>
 #include <thread>
 #include <mutex>
@@ -87,7 +87,7 @@ public:
     //-------------------------------------------------------------------------
     //      セーブリクエストをします.
     //-------------------------------------------------------------------------
-    uint32_t RequestSave(const char* path, std::vector<uint8_t>& blob)
+    uint32_t RequestSave(const char* path, const std::vector<uint8_t>& blob)
     {
         auto handle = m_NextHandle++;
         auto req = std::make_shared<Request>();
@@ -300,7 +300,7 @@ RequestId RequestLoad(const char* path)
 //-----------------------------------------------------------------------------
 //      非同期書き込みリクエストを行います.
 //-----------------------------------------------------------------------------
-RequestId RequestSave(const char* path, std::vector<uint8_t>& blob)
+RequestId RequestSave(const char* path, const std::vector<uint8_t>& blob)
 {
     assert(s_pAsyncFileIO != nullptr);
     if (s_pAsyncFileIO == nullptr)
@@ -343,6 +343,44 @@ bool GetSaveResult(RequestId requestId)
         return {};
 
     return s_pAsyncFileIO->GetSaveResult(requestId);
+}
+
+//-----------------------------------------------------------------------------
+//      同期読み込みを行います.
+//-----------------------------------------------------------------------------
+bool Load(const char* path, std::vector<uint8_t>& blob)
+{
+    FILE* fp = nullptr;
+    auto err = fopen_s(&fp, path, "rb");
+    if (err != 0 || fp == nullptr)
+        return false;
+
+    fseek(fp, 0, SEEK_END);
+    auto size = ftell(fp);
+    rewind(fp);
+
+    blob.resize(size);
+    fread(blob.data(), size, 1, fp);
+    fclose(fp);
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      同期書き込みを行います.
+//-----------------------------------------------------------------------------
+bool Save(const char* path, const std::vector<uint8_t>& blob)
+{
+    FILE* fp = nullptr;
+
+    auto err = fopen_s(&fp, path, "wb");
+    if (err != 0 || fp == nullptr)
+        return false;
+
+    fwrite(blob.data(), blob.size(), 1, fp);
+    fclose(fp);
+
+    return true;
 }
 
 } // namespace asdx
