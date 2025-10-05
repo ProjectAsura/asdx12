@@ -31,3 +31,6 @@
 [submodule "external/D3D12MemoryAllocator"]
 	path = external/D3D12MemoryAllocator
 	url = https://github.com/GPUOpen-LibrariesAndSDKs/D3D12MemoryAllocator.git
+[submodule "external/OpenXLSX"]
+	path = external/OpenXLSX
+	url = https://github.com/troldal/OpenXLSX.git
