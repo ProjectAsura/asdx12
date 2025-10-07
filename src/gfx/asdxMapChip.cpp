@@ -30,6 +30,9 @@ MapChip::MapChip()
 , m_DrawTileH   (0)
 , m_ScreenWidth (0)
 , m_ScreenHeight(0)
+, m_DrawRows    (0)
+, m_DrawCols    (0)
+, m_Clamp       (false)
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
@@ -98,6 +101,8 @@ void MapChip::Term()
     m_DrawRows = 0;
     m_DrawCols = 0;
 
+    m_Clamp = false;
+
     for(size_t i=0; i<m_Textures.size(); ++i)
     { m_Textures[i].Term(); }
 
@@ -133,8 +138,17 @@ void MapChip::Draw(ID3D12GraphicsCommandList* pCmd, SpriteRenderer& renderer, D3
                 auto tx = (x >= 0) ? x : layer.Columns - 1;
                 auto ty = (y >= 0) ? y : layer.Rows - 1;
 
-                auto idX = (tx + m_TileOffsetX) % layer.Columns;
-                auto idY = (ty + m_TileOffsetY) % layer.Rows;
+                uint32_t idX, idY;
+                if (m_Clamp)
+                {
+                    idX = asdx::Clamp(tx + m_TileOffsetX, 0u, layer.Columns);
+                    idY = asdx::Clamp(ty + m_TileOffsetY, 0u, layer.Rows);
+                }
+                else
+                {
+                    idX = (tx + m_TileOffsetX) % layer.Columns;
+                    idY = (ty + m_TileOffsetY) % layer.Rows;
+                }
 
                 auto id = idX + (idY * layer.Columns);
                 auto tileId = layer.Data[id] - tileSet.FirstChipId;
@@ -151,37 +165,8 @@ void MapChip::Draw(ID3D12GraphicsCommandList* pCmd, SpriteRenderer& renderer, D3
         }
     }
 
-    auto layer0 = m_Binary.GetLayer(0);
-
-    // X方向のスクロール値と，オフセットを更新.
-    if (m_ScrollX >= m_DrawTileW)
-    {
-        m_ScrollX = 0;
-        if (int(m_TileOffsetX) - 1 < 0)
-        { m_TileOffsetX = layer0.Columns - 1; }
-        else
-        { m_TileOffsetX--; }
-    }
-    else if (m_ScrollX <= -m_DrawTileW)
-    {
-        m_ScrollX = 0;
-        m_TileOffsetX = (m_TileOffsetX + 1) % layer0.Columns;
-    }
-
-    // X方向のスクロール値と，オフセットを更新.
-    if (m_ScrollY >= m_DrawTileH)
-    {
-        m_ScrollY = 0;
-        if (int(m_TileOffsetY) - 1 < 0)
-        { m_TileOffsetY = layer0.Rows - 1; }
-        else
-        { m_TileOffsetY--; }
-    }
-    else if (m_ScrollY <= -m_DrawTileH)
-    {
-        m_ScrollY = 0;
-        m_TileOffsetY = (m_TileOffsetY + 1) % layer0.Rows;
-    }
+    // タイルオフセット値を更新します.
+    UpdateTileOffset();
 }
 
 //-----------------------------------------------------------------------------
@@ -290,6 +275,18 @@ bool MapChip::HasProperty(uint32_t x, uint32_t y, ResChipProperty& prop) const
 }
 
 //-----------------------------------------------------------------------------
+//      クランプフラグを設定します.
+//-----------------------------------------------------------------------------
+void MapChip::SetClamp(bool value)
+{ m_Clamp = value; }
+
+//-----------------------------------------------------------------------------
+//      クランプフラグを取得します.
+//-----------------------------------------------------------------------------
+bool MapChip::IsClamp() const
+{ return m_Clamp; }
+
+//-----------------------------------------------------------------------------
 //      チップIDを取得します.
 //-----------------------------------------------------------------------------
 uint16_t MapChip::GetChipId(uint32_t layerId, uint32_t x, uint32_t y) const
@@ -310,6 +307,108 @@ void MapChip::UpdateDrawCount()
 {
     m_DrawCols = int(ceil(float(m_ScreenWidth)  / float(m_DrawTileW)));
     m_DrawRows = int(ceil(float(m_ScreenHeight) / float(m_DrawTileH)));
+}
+
+//-----------------------------------------------------------------------------
+//      タイルオフセット値を更新します.
+//-----------------------------------------------------------------------------
+void MapChip::UpdateTileOffset()
+{
+    auto layer0 = m_Binary.GetLayer(0);
+
+    // X方向のスクロール値と，オフセットを更新.
+    if (m_Clamp)
+    {
+        if (m_ScrollX >= m_DrawTileW)
+        {
+            if (int(m_TileOffsetX) - 1 < 0)
+            {
+                m_ScrollX = m_DrawTileW;
+                m_TileOffsetX = 0;
+            }
+            else
+            {
+                m_ScrollX = 0;
+                m_TileOffsetX--;
+            }
+        }
+        else if (m_ScrollX <= -m_DrawTileW)
+        {
+            if (m_TileOffsetX + 1 < layer0.Columns)
+            {
+                m_ScrollX = 0;
+                m_TileOffsetX++;
+            }
+            else
+            {
+                m_ScrollX = -m_DrawTileW;
+                m_TileOffsetX = layer0.Columns - 1;
+            }
+        }
+    }
+    else
+    {
+        if (m_ScrollX >= m_DrawTileW)
+        {
+            m_ScrollX = 0;
+            if (int(m_TileOffsetX) - 1 < 0)
+            { m_TileOffsetX = layer0.Columns - 1; }
+            else
+            { m_TileOffsetX--; }
+        }
+        else if (m_ScrollX <= -m_DrawTileW)
+        {
+            m_ScrollX = 0;
+            m_TileOffsetX = (m_TileOffsetX + 1) % layer0.Columns;
+        }
+    }
+
+    // X方向のスクロール値と，オフセットを更新.
+    if (m_Clamp)
+    {
+        if (m_ScrollY >= m_DrawTileH)
+        {
+            if (int(m_TileOffsetY) - 1 < 0)
+            {
+                m_ScrollY = m_DrawTileH;
+                m_TileOffsetY = 0;
+            }
+            else
+            {
+                m_ScrollY = 0;
+                m_TileOffsetY--;
+            }
+        }
+        else if (m_ScrollY <= -m_DrawTileH)
+        {
+            if (m_TileOffsetY + 1 < layer0.Rows)
+            {
+                m_ScrollY = 0;
+                m_TileOffsetY++;
+            }
+            else 
+            {
+                m_ScrollY = -m_DrawTileH;
+                m_TileOffsetY = layer0.Rows - 1;
+            }
+        }
+    }
+    else
+    {
+        if (m_ScrollY >= m_DrawTileH)
+        {
+            m_ScrollY = 0;
+            if (int(m_TileOffsetY) - 1 < 0)
+            { m_TileOffsetY = layer0.Rows - 1; }
+            else
+            { m_TileOffsetY--; }
+        }
+        else if (m_ScrollY <= -m_DrawTileH)
+        {
+            m_ScrollY = 0;
+            m_TileOffsetY = (m_TileOffsetY + 1) % layer0.Rows;
+        }
+    }
 }
 
 } // namespace asdx
