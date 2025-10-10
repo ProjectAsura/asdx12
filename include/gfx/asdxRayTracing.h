@@ -461,7 +461,7 @@ private:
 ///////////////////////////////////////////////////////////////////////////////
 // RayTracingPipelineState class
 ///////////////////////////////////////////////////////////////////////////////
-class RayTracingPipelineState : public IFileUpdateListener
+class RayTracingPipelineState : public IFileListener
 {
     //=========================================================================
     // list of friend classes and methods.
@@ -537,7 +537,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      ファイル更新時の処理です.
     //-------------------------------------------------------------------------
-    void OnUpdate(const FileUpdateEventArgs& arg) override;
+    void OnChanged(const FileEventArgs& arg) override;
 
     //-------------------------------------------------------------------------
     //! @brief      リビルドを要求します.

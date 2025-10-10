@@ -115,7 +115,7 @@ struct GEOMETRY_PIPELINE_STATE_DESC
 ///////////////////////////////////////////////////////////////////////////////
 // PipelineState class
 ///////////////////////////////////////////////////////////////////////////////
-class PipelineState : public IFileUpdateListener
+class PipelineState : public IFileListener
 {
     //=========================================================================
     // list of friend classes and methods.
@@ -243,7 +243,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      ファイル更新時の処理です.
     //-------------------------------------------------------------------------
-    void OnUpdate(const FileUpdateEventArgs& args) override;
+    void OnChanged(const FileEventArgs& args) override;
 
     //-------------------------------------------------------------------------
     //! @brief      リビルドを要求します.

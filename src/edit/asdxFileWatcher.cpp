@@ -12,25 +12,10 @@
 #include <Windows.h>
 #include <edit/asdxFileWatcher.h>
 #include <fnd/asdxLogger.h>
+#include <fnd/asdxMisc.h>
 
 
 namespace {
-
-//-----------------------------------------------------------------------------
-//      マルチバイト文字列に変換します.
-//-----------------------------------------------------------------------------
-std::string ToStringA(const std::wstring& value)
-{
-    auto length = WideCharToMultiByte(CP_ACP, 0, value.c_str(), int(value.size() + 1), nullptr, 0, nullptr, nullptr);
-    auto buffer = new char[length];
-
-    WideCharToMultiByte(CP_ACP, 0, value.c_str(), int(value.size() + 1), buffer, length, nullptr, nullptr);
-
-    std::string result(buffer);
-    delete[] buffer;
-
-    return result;
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Worker structure
@@ -44,7 +29,7 @@ struct Worker
     std::string                 DirectoryPath   = {};
     std::atomic<bool>*          pFinish         = nullptr;
 
-    std::list<asdx::IFileUpdateListener*> pListeners = {};
+    std::list<asdx::IFileListener*> pListeners = {};
 
     Worker()
     { /* DO_NOTHING */ }
@@ -163,7 +148,7 @@ struct Worker
                 for (;;)
                 {
                     // ファイル名取得.
-                    auto path = ToStringA(pInfos->FileName);
+                    auto path = asdx::ToStringA(pInfos->FileName);
 
                     // 末尾にカンマが来ることがあるので，それを取り除く.
                     auto pos = path.find_last_of(',');
@@ -173,25 +158,33 @@ struct Worker
                     // 強制的に開いて閉じる.
                     // これでたま～にファイルがオープンできない問題を解決できる.
                     {
-                        auto handle = CreateFileA(path.c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, nullptr);
+                        auto handle = CreateFileA(
+                            path.c_str(),
+                            GENERIC_READ, 
+                            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                            nullptr,
+                            OPEN_EXISTING,
+                            FILE_FLAG_SEQUENTIAL_SCAN,
+                            nullptr);
                         if (handle != INVALID_HANDLE_VALUE)
                         { CloseHandle(handle); }
                     }
 
-                    asdx::FileUpdateEventArgs args;
-                    args.Type           = asdx::ACTION_TYPE(pInfos->Action);
+                    asdx::FileEventArgs args;
+                    args.Type           = asdx::FileEventArgs::TYPE(pInfos->Action);
                     args.DirectoryPath  = DirectoryPath;
                     args.RelativePath   = path;
 
                     for(auto& listener : pListeners)
-                    { listener->OnUpdate(args); }
+                    { listener->OnChanged(args); }
 
                     // 次のエントリがなければ終了.
                     if (pInfos->NextEntryOffset == 0)
                     { break; }
 
                     // 次のエントリまで移動.
-                    pInfos = reinterpret_cast<FILE_NOTIFY_INFORMATION*>(reinterpret_cast<uint8_t*>(pInfos) + pInfos->NextEntryOffset);
+                    pInfos = reinterpret_cast<FILE_NOTIFY_INFORMATION*>(
+                        reinterpret_cast<uint8_t*>(pInfos) + pInfos->NextEntryOffset);
                 }
             }
         }

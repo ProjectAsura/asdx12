@@ -17,42 +17,39 @@
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
-// ACTION_TYPE enum
+// FileEventArgs structure
 ///////////////////////////////////////////////////////////////////////////////
-enum ACTION_TYPE
+struct FileEventArgs
 {
-    ACTION_ADDED            = 0x1,      //!< ディレクトリにファイルが追加された.
-    ACTION_REMOVED          = 0x2,      //!< ディレクトリからファイルが削除された.
-    ACTION_MODIFIED         = 0x3,      //!< ファイルが変更された.
-    ACTION_RENAMED_OLD_NAME = 0x4,      //!< ファイルがリネームされ，通知される古いファイル名.
-    ACTION_RENAMED_NEW_NAME = 0x5,      //!< ファイルがリネームされ，通知される新しいファイル名.
+    enum TYPE
+    {
+        Added           = 0x1,  //!< ディレクトリにファイルが追加された.
+        Removed         = 0x2,  //!< ディレクトリからファイルが削除された.
+        Modified        = 0x3,  //!< ファイルが変更された.
+        RenamedOldName  = 0x4,  //!< ファイルがリネームされ，通知される古いファイル名
+        RenamedNewName  = 0x5,  //!< ファイルがリネームされ，通知される新しいファイル名.
+    };
+
+    TYPE            Type;           //!< ファイルイベントタイプ.
+    std::string     DirectoryPath;  //!< ディレクトリパス.
+    std::string     RelativePath;   //!< (ディレクトリパスからの)相対パス.
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-// FileUpdateEventArgs structure
+// IFileListener interface
 ///////////////////////////////////////////////////////////////////////////////
-struct FileUpdateEventArgs
-{
-    ACTION_TYPE     Type;
-    std::string     DirectoryPath;
-    std::string     RelativePath;
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// IFileUpdateListener interface
-///////////////////////////////////////////////////////////////////////////////
-struct IFileUpdateListener
+struct IFileListener
 {
     //-------------------------------------------------------------------------
     //! @brief      デストラクタです.
     //-------------------------------------------------------------------------
-    virtual ~IFileUpdateListener()
+    virtual ~IFileListener()
     { /* DO_NOTHING */ }
 
     //-------------------------------------------------------------------------
-    //! @brief      ファイル更新時の処理です.
+    //! @brief      ファイル変更の処理です.
     //-------------------------------------------------------------------------
-    virtual void OnUpdate(const FileUpdateEventArgs& args) = 0;
+    virtual void OnChanged(const FileEventArgs& args) = 0;
 };
 
 
@@ -72,10 +69,11 @@ public:
     ///////////////////////////////////////////////////////////////////////////
     struct Desc
     {
-        const char* DirectoryPath;      //!< 監視対象ディレクトリ.
-        size_t      BufferSize;         //!< バッファサイズ.
-        uint32_t    WaitTimeMsec;       //!< 1ループの待機時間(ミリ秒単位)
-        std::list<IFileUpdateListener*> pListeners; //!< 変更通知先.
+        size_t      BufferSize      = 4096;         //!< バッファサイズ.
+        uint32_t    WaitTimeMsec    = 60;           //!< 1ループの待機時間(ミリ秒単位)
+        const char* DirectoryPath   = nullptr;      //!< 監視対象ディレクトリ.
+
+        std::list<IFileListener*> pListeners;       //!< 変更通知先.
     };
 
     //=========================================================================

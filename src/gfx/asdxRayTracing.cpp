@@ -699,7 +699,7 @@ void RayTracingPipelineState::SetDependencies(const std::vector<std::string>& de
 //-----------------------------------------------------------------------------
 //      ファイル更新時の処理です.
 //-----------------------------------------------------------------------------
-void RayTracingPipelineState::OnUpdate(const FileUpdateEventArgs& args)
+void RayTracingPipelineState::OnChanged(const FileEventArgs& args)
 {
     std::string path = args.DirectoryPath;
     path += "/";
@@ -709,8 +709,8 @@ void RayTracingPipelineState::OnUpdate(const FileUpdateEventArgs& args)
 
     switch(args.Type)
     {
-    case ACTION_MODIFIED:
-    case ACTION_RENAMED_NEW_NAME:
+    case FileEventArgs::Modified:
+    case FileEventArgs::RenamedNewName:
         {
             if (!m_ReloadPathLib.empty() && m_ReloadPathLib == path)
             { m_Dirty = true; }

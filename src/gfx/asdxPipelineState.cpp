@@ -748,7 +748,7 @@ void PipelineState::SetDependencies(const std::vector<std::string>& dependencies
 //-----------------------------------------------------------------------------
 //      ファイル更新時の処理です.
 //-----------------------------------------------------------------------------
-void PipelineState::OnUpdate(const FileUpdateEventArgs& args)
+void PipelineState::OnChanged(const FileEventArgs& args)
 {
     std::string path = args.DirectoryPath;
     path += "/";
@@ -758,8 +758,8 @@ void PipelineState::OnUpdate(const FileUpdateEventArgs& args)
 
     switch(args.Type)
     {
-    case ACTION_MODIFIED:
-    case ACTION_RENAMED_NEW_NAME:
+    case FileEventArgs::Modified:
+    case FileEventArgs::RenamedNewName:
         {
             if (!m_ReloadPathVS.empty() && m_ReloadPathVS == path)
             { m_Dirty = true; }
