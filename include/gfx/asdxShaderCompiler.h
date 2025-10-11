@@ -9,7 +9,8 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <string>
-#include <fnd/asdxBlob.h>
+#include <vector>
+#include <fnd/asdxRef.h>
 
 
 //-----------------------------------------------------------------------------
@@ -34,7 +35,7 @@ namespace asdx {
 //! @param[in]      includeDirs         インクルードディレクトリ.
 //! @param[in]      entryPoint          エントリーポイント名で末.
 //! @param[in]      shaderModel         シェーダモデルです.
-//! @param[out]     ppResult            シェーダバイナリの格納先です.
+//! @param[out]     binary              シェーダバイナリの格納先です.
 //! @retval true    コンパイルに成功.
 //! @retval false   コンパイルに失敗.
 //-----------------------------------------------------------------------------
@@ -43,7 +44,7 @@ bool CompileFromFileA(
     std::vector<std::string>    includeDirs,
     const char*                 entryPoint,
     const char*                 shaderModel,
-    IBlob**                     ppResult);
+    std::vector<uint8_t>&       binary);
 
 
 //-----------------------------------------------------------------------------
@@ -53,7 +54,7 @@ bool CompileFromFileA(
 //! @param[in]      includeDirs         インクルードディレクトリ.
 //! @param[in]      entryPoint          エントリーポイント名で末.
 //! @param[in]      shaderModel         シェーダモデルです.
-//! @param[out]     ppResult            シェーダバイナリの格納先です.
+//! @param[out]     binary              シェーダバイナリの格納先です.
 //! @retval true    コンパイルに成功.
 //! @retval false   コンパイルに失敗.
 //-----------------------------------------------------------------------------
@@ -62,7 +63,7 @@ bool CompileFromFileW(
     std::vector<std::wstring> includeDirs,
     const char*               entryPoint,
     const char*               shaderModel,
-    IBlob**                   ppResult);
+    std::vector<uint8_t>&     binary);
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -134,4 +135,4 @@ private:
     /* NOTHING */
 };
 
-} // namespace
+} // namespace asdx

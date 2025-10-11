@@ -701,11 +701,7 @@ void RayTracingPipelineState::SetDependencies(const std::vector<std::string>& de
 //-----------------------------------------------------------------------------
 void RayTracingPipelineState::OnChanged(const FileEventArgs& args)
 {
-    std::string path = args.DirectoryPath;
-    path += "/";
-    path += args.RelativePath;
-
-    path = ToFullPathA(path.c_str());
+    std::string path = args.FullPath;
 
     switch(args.Type)
     {
@@ -736,16 +732,8 @@ void RayTracingPipelineState::OnChanged(const FileEventArgs& args)
 //-----------------------------------------------------------------------------
 bool RayTracingPipelineState::ReloadShader(const char* path, const char* shaderModel, std::vector<uint8_t>& result)
 {
-    RefPtr<IBlob> blob;
     // シェーダコンパイル.
-    if (!CompileFromFileA(path, m_IncludeDirs, "", shaderModel, blob.GetAddress()))
-    { return false; }
-
-    result.clear();
-    result.resize(blob->GetBufferSize());
-    memcpy(result.data(), blob->GetBuffer(), blob->GetBufferSize());
-
-    return true;
+    return CompileFromFileA(path, m_IncludeDirs, "", shaderModel, result);
 }
 
 //-----------------------------------------------------------------------------

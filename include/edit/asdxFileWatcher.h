@@ -31,8 +31,7 @@ struct FileEventArgs
     };
 
     TYPE            Type;           //!< ファイルイベントタイプ.
-    std::string     DirectoryPath;  //!< ディレクトリパス.
-    std::string     RelativePath;   //!< (ディレクトリパスからの)相対パス.
+    std::string     FullPath;       //!< フルパス.
 };
 
 ///////////////////////////////////////////////////////////////////////////////

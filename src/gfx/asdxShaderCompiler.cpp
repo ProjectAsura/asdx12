@@ -97,7 +97,7 @@ bool CompileFromFileA
     std::vector<std::string>    includeDirs,
     const char*                 entryPoint,
     const char*                 shaderModel,
-    IBlob**                     ppResult
+    std::vector<uint8_t>&       binary
 )
 {
 #ifdef ASDX_ENABLE_DXC
@@ -196,15 +196,9 @@ bool CompileFromFileA
     RefPtr<IDxcBlob> pShader;
     pResults->GetResult(pShader.GetAddress());
 
-    IBlob* blob = nullptr;
-    if (!CreateBlob(pShader->GetBufferSize(), &blob))
-    {
-        ELOG("Error : CreateBlob() Failed.");
-        return false;
-    }
+    binary.resize(pShader->GetBufferSize());
 
-    memcpy(blob->GetBuffer(), pShader->GetBufferPointer(), pShader->GetBufferSize());
-    *ppResult = blob;
+    memcpy(binary.data(), pShader->GetBufferPointer(), pShader->GetBufferSize());
 
     return true;
 #else
@@ -225,14 +219,8 @@ bool CompileFromFileA
         return false;
     }
 
-    IBlob* blob = nullptr;
-    if (!CreateBlob(pShader->GetBufferSize(), &blob))
-    {
-        ELOG("Error : CreateBlob() Failed.");
-        return false;
-    }
-    memcpy(blob->GetBuffer(), pShader->GetBufferPointer(), pShader->GetBufferSize());
-    *ppResult = blob;
+    binary.resize(pShader->GetBufferSize());
+    memcpy(binary.data(), pShader->GetBufferPointer(), pShader->GetBufferSize());
 
     return true;
 #endif
@@ -248,7 +236,7 @@ bool CompileFromFileW
     std::vector<std::wstring> includeDirs,
     const char*               entryPoint,
     const char*               shaderModel,
-    IBlob**                   ppResult
+    std::vector<uint8_t>&     binary
 )
 {
 #ifdef ASDX_ENABLE_DXC
@@ -344,15 +332,8 @@ bool CompileFromFileW
     RefPtr<IDxcBlob> pShader;
     pResults->GetResult(pShader.GetAddress());
 
-    IBlob* blob = nullptr;
-    if (!CreateBlob(pShader->GetBufferSize(), &blob))
-    {
-        ELOG("Error : CreateBlob() Failed.");
-        return false;
-    }
-
-    memcpy(blob->GetBuffer(), pShader->GetBufferPointer(), pShader->GetBufferSize());
-    *ppResult = blob;
+    binary.resize(pShader->GetBufferSize());
+    memcpy(binary.data(), pShader->GetBufferPointer(), pShader->GetBufferSize());
 
     return true;
 #else
@@ -373,117 +354,110 @@ bool CompileFromFileW
         return false;
     }
 
-    IBlob* blob = nullptr;
-    if (!CreateBlob(pShader->GetBufferSize(), &blob))
-    {
-        ELOG("Error : CreateBlob() Failed.");
-        return false;
-    }
-
-    memcpy(blob->GetBuffer(), pShader->GetBufferPointer(), pShader->GetBufferSize());
-    *ppResult = blob;
+    binary.resize(pShader->GetBufferSize());
+    memcpy(binary.data(), pShader->GetBufferPointer(), pShader->GetBufferSize());
 
     return true;
 #endif
 }
 
-//-----------------------------------------------------------------------------
-//      シェーダコンパイルします.
-//-----------------------------------------------------------------------------
-bool CompileFromFile
-(
-    const wchar_t*  filename,
-    const wchar_t** compileArgs,
-    uint32_t        countCompileArgs,
-    IBlob**         ppResult
-)
-{
-#ifdef ASDX_ENABLE_DXC
-    HRESULT hr = S_OK;
-    RefPtr<IDxcUtils> pUtils;
-    RefPtr<IDxcCompiler3> pCompiler;
-    DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(pUtils.GetAddress()));
-    DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(pCompiler.GetAddress()));
-
-    RefPtr<IDxcIncludeHandler> pIncludeHandler;
-    hr = pUtils->CreateDefaultIncludeHandler(pIncludeHandler.GetAddress());
-    if (FAILED(hr))
-    { return false; }
-
-    RefPtr<IDxcBlobEncoding> pSource;
-    pUtils->LoadFile(filename, nullptr, pSource.GetAddress());
-
-    BOOL known;
-    UINT32 codePage;
-    pSource->GetEncoding(&known, &codePage);
-
-    DxcBuffer source;
-    source.Ptr = pSource->GetBufferPointer();
-    source.Size = pSource->GetBufferSize();
-    source.Encoding = (known == TRUE) ? codePage : DXC_CP_UTF8;
-
-    RefPtr<IDxcResult> pResults;
-    pCompiler->Compile(
-        &source,
-        compileArgs,
-        countCompileArgs,
-        pIncludeHandler.GetPtr(),
-        IID_PPV_ARGS(pResults.GetAddress()));
-
-    RefPtr<IDxcBlobUtf8> pErrors;
-    pResults->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(pErrors.GetAddress()), nullptr);
-    if (pErrors.GetPtr() != nullptr && pErrors->GetStringLength() != 0)
-    {
-        ELOGA("Warnings and Errors:\n%s", pErrors->GetStringPointer());
-    }
-
-    HRESULT ret;
-    pResults->GetStatus(&ret);
-    if (FAILED(ret))
-    {
-        ELOGA("Compilation Failed. errcode = 0x%x", ret);
-        return false;
-    }
-
-    RefPtr<IDxcBlob> pShader;
-    RefPtr<IDxcBlobUtf16> pShaderName;
-    pResults->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(pShader.GetAddress()), pShaderName.GetAddress());
-
-    IBlob* blob = nullptr;
-    if (!CreateBlob(pShader->GetBufferSize(), &blob))
-    {
-        ELOG("Error : CreateBlob() Failed.");
-        return false;
-    }
-
-    memcpy(blob->GetBuffer(), pShader->GetBufferPointer(), pShader->GetBufferSize());
-    *ppResult = blob;
-
-    return true;
-#else
-    std::string entryPoint = "main";
-    std::string shaderModel = "vs_5_0";
-    UINT flags = 0;
-
-    for(auto i=0u; i<countCompileArgs; ++i)
-    {
-        // エントリーポイント.
-        if (wcscmp(compileArgs[i], L"-E") == 0)
-        {
-            i++;
-            entryPoint = asdx::ToStringA(compileArgs[i]);
-        }
-        // シェーダプロファイル.
-        else if (wcscmp(compileArgs[i], L"-T") == 0)
-        {
-            i++;
-            shaderModel = asdx::ToStringA(compileArgs[i]);
-        }
-    }
-
-    return CompileFromFile(filename, entryPoint.c_str(), shaderModel.c_str(), ppResult);
-#endif
-}
+////-----------------------------------------------------------------------------
+////      シェーダコンパイルします.
+////-----------------------------------------------------------------------------
+//bool CompileFromFile
+//(
+//    const wchar_t*          filename,
+//    const wchar_t**         compileArgs,
+//    uint32_t                countCompileArgs,
+//    std::vector<uint8_t>&   binary
+//)
+//{
+//#ifdef ASDX_ENABLE_DXC
+//    HRESULT hr = S_OK;
+//    RefPtr<IDxcUtils> pUtils;
+//    RefPtr<IDxcCompiler3> pCompiler;
+//    DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(pUtils.GetAddress()));
+//    DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(pCompiler.GetAddress()));
+//
+//    RefPtr<IDxcIncludeHandler> pIncludeHandler;
+//    hr = pUtils->CreateDefaultIncludeHandler(pIncludeHandler.GetAddress());
+//    if (FAILED(hr))
+//    { return false; }
+//
+//    RefPtr<IDxcBlobEncoding> pSource;
+//    pUtils->LoadFile(filename, nullptr, pSource.GetAddress());
+//
+//    BOOL known;
+//    UINT32 codePage;
+//    pSource->GetEncoding(&known, &codePage);
+//
+//    DxcBuffer source;
+//    source.Ptr = pSource->GetBufferPointer();
+//    source.Size = pSource->GetBufferSize();
+//    source.Encoding = (known == TRUE) ? codePage : DXC_CP_UTF8;
+//
+//    RefPtr<IDxcResult> pResults;
+//    pCompiler->Compile(
+//        &source,
+//        compileArgs,
+//        countCompileArgs,
+//        pIncludeHandler.GetPtr(),
+//        IID_PPV_ARGS(pResults.GetAddress()));
+//
+//    RefPtr<IDxcBlobUtf8> pErrors;
+//    pResults->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(pErrors.GetAddress()), nullptr);
+//    if (pErrors.GetPtr() != nullptr && pErrors->GetStringLength() != 0)
+//    {
+//        ELOGA("Warnings and Errors:\n%s", pErrors->GetStringPointer());
+//    }
+//
+//    HRESULT ret;
+//    pResults->GetStatus(&ret);
+//    if (FAILED(ret))
+//    {
+//        ELOGA("Compilation Failed. errcode = 0x%x", ret);
+//        return false;
+//    }
+//
+//    RefPtr<IDxcBlob> pShader;
+//    RefPtr<IDxcBlobUtf16> pShaderName;
+//    pResults->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(pShader.GetAddress()), pShaderName.GetAddress());
+//
+//    IBlob* blob = nullptr;
+//    if (!CreateBlob(pShader->GetBufferSize(), &blob))
+//    {
+//        ELOG("Error : CreateBlob() Failed.");
+//        return false;
+//    }
+//
+//    memcpy(blob->GetBuffer(), pShader->GetBufferPointer(), pShader->GetBufferSize());
+//    *ppResult = blob;
+//
+//    return true;
+//#else
+//    std::string entryPoint = "main";
+//    std::string shaderModel = "vs_5_0";
+//    UINT flags = 0;
+//
+//    for(auto i=0u; i<countCompileArgs; ++i)
+//    {
+//        // エントリーポイント.
+//        if (wcscmp(compileArgs[i], L"-E") == 0)
+//        {
+//            i++;
+//            entryPoint = asdx::ToStringA(compileArgs[i]);
+//        }
+//        // シェーダプロファイル.
+//        else if (wcscmp(compileArgs[i], L"-T") == 0)
+//        {
+//            i++;
+//            shaderModel = asdx::ToStringA(compileArgs[i]);
+//        }
+//    }
+//
+//    return CompileFromFile(filename, entryPoint.c_str(), shaderModel.c_str(), ppResult);
+//#endif
+//}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -509,7 +483,7 @@ bool ShaderReflection::Init(const void* pData, size_t size)
 {
 #ifdef ASDX_ENABLE_DXC
 
-#if 0 // 新しいやつ.
+#if 1 // 新しいやつ.
     asdx::RefPtr<IDxcUtils> pUtil;
     auto hr = DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(pUtil.GetAddress()));
     if (FAILED(hr))

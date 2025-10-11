@@ -15,6 +15,8 @@
 #include <gfx/asdxPipelineState.h>
 #include <gfx/asdxDevice.h>
 #include <gfx/asdxShaderCompiler.h>
+#include <fnd/asdxHash.h>
+#include <fnd/asdxMacro.h>
 
 
 // ヘッダにあるとバグの原因となるので，ソース側に定義.
@@ -23,13 +25,6 @@
 #endif//__ID3D12GraphicsCommandList6_INTERFACE_DEFINED__
 
 namespace {
-
-namespace internal {
-#include "../res/shaders/Compiled/SpriteVS.inc"
-#include "../res/shaders/Compiled/SpritePS.inc"
-#include "../res/shaders/Compiled/FullScreenVS.inc"
-#include "../res/shaders/Compiled/CopyPS.inc"
-} // namespace internal
 
 ///////////////////////////////////////////////////////////////////////////////
 // ROOT_PARAM_TYPE
@@ -108,9 +103,9 @@ using PSS_FLAGS          = SubObject< D3D12_PIPELINE_STATE_FLAGS,  PSST(FLAGS) >
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// GPS_DESC structure
+// MsPsoDesc structure
 ///////////////////////////////////////////////////////////////////////////////
-struct GPS_DESC
+struct MsPsoDesc
 {
     PSS_ROOT_SIGNATURE  RootSignature;
 #ifdef ASDX_ENABLE_MESH_SHADER
@@ -129,10 +124,10 @@ struct GPS_DESC
     PSS_CACHED_PSO      CachedPSO;
     PSS_FLAGS           Flags;
 
-    GPS_DESC()
+    MsPsoDesc()
     { /* DO_NOTHING */ }
 
-    GPS_DESC(const asdx::GEOMETRY_PIPELINE_STATE_DESC* pValue)
+    MsPsoDesc(const asdx::MESH_SHADER_PIPELINE_STATE_DESC* pValue)
     {
         RootSignature       = pValue->pRootSignature;
     #ifdef ASDX_ENABLE_MESH_SHADER
@@ -153,32 +148,39 @@ struct GPS_DESC
     }
 };
 
-//-----------------------------------------------------------------------------
-//      DynamicResourcesをサポートしているかどうかチェックします.
-//-----------------------------------------------------------------------------
-bool CheckSupportDynamicResources(ID3D12Device8* pDevice)
+uint64_t CalcDescHash(const D3D12_GRAPHICS_PIPELINE_STATE_DESC* pDesc)
 {
-    // D3D12_RESOURCE_BINDING_TIER3 と D3D_SHADER_MODEL_6_6 以上であることが必須.
-    // また、シェーダコンパイルする側で
-    // D3D_SHADER_REQUIRES_RESOURCE_HEAP_INDEXING(0x02000000)
-    // D3D_SHADER_REQUIRES_SAMPLER_HEAP_INDEXING(0x04000000)
-    // のフラグを設定しておく必要がある.
+    auto hash = asdx::CalcHash(pDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
+    if (pDesc->VS.pShaderBytecode != nullptr && pDesc->VS.BytecodeLength > 0)
+    { hash = asdx::CalcHashWithSeed(pDesc->VS.pShaderBytecode, pDesc->VS.BytecodeLength, hash); }
+    if (pDesc->PS.pShaderBytecode != nullptr && pDesc->PS.BytecodeLength > 0)
+    { hash = asdx::CalcHashWithSeed(pDesc->PS.pShaderBytecode, pDesc->PS.BytecodeLength, hash); }
+    if (pDesc->DS.pShaderBytecode != nullptr && pDesc->DS.BytecodeLength > 0)
+    { hash = asdx::CalcHashWithSeed(pDesc->DS.pShaderBytecode, pDesc->DS.BytecodeLength, hash); }
+    if (pDesc->HS.pShaderBytecode != nullptr && pDesc->HS.BytecodeLength > 0)
+    { hash = asdx::CalcHashWithSeed(pDesc->HS.pShaderBytecode, pDesc->HS.BytecodeLength, hash); }
+    if (pDesc->GS.pShaderBytecode != nullptr && pDesc->GS.BytecodeLength > 0)
+    { hash = asdx::CalcHashWithSeed(pDesc->GS.pShaderBytecode, pDesc->GS.BytecodeLength, hash); }
+    return hash;
+}
 
-    D3D12_FEATURE_DATA_D3D12_OPTIONS options = {};
-    if (FAILED(pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &options, sizeof(options))))
-    { return false; }
+uint64_t CalcDescHash(const D3D12_COMPUTE_PIPELINE_STATE_DESC* pDesc)
+{
+    auto hash = asdx::CalcHash(pDesc, sizeof(D3D12_COMPUTE_PIPELINE_STATE_DESC));
+    hash = asdx::CalcHashWithSeed(pDesc->CS.pShaderBytecode, pDesc->CS.BytecodeLength, hash);
+    return hash;
+}
 
-    if (options.ResourceBindingTier != D3D12_RESOURCE_BINDING_TIER_3)
-    { return false; }
-
-    D3D12_FEATURE_DATA_SHADER_MODEL shaderModel = {};
-    if (FAILED(pDevice->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &shaderModel, sizeof(shaderModel))))
-    { return false; }
-
-    if (shaderModel.HighestShaderModel < D3D_SHADER_MODEL_6_6)
-    { return false; }
-
-    return true;
+uint64_t CalcDescHash(const asdx::MESH_SHADER_PIPELINE_STATE_DESC* pDesc)
+{
+    auto hash = asdx::CalcHash(pDesc, sizeof(asdx::MESH_SHADER_PIPELINE_STATE_DESC));
+    if (pDesc->AS.pShaderBytecode != nullptr && pDesc->AS.BytecodeLength > 0)
+    { hash = asdx::CalcHashWithSeed(pDesc->AS.pShaderBytecode, pDesc->AS.BytecodeLength, hash); }
+    if (pDesc->MS.pShaderBytecode != nullptr && pDesc->MS.BytecodeLength > 0)
+    { hash = asdx::CalcHashWithSeed(pDesc->MS.pShaderBytecode, pDesc->MS.BytecodeLength, hash); }
+    if (pDesc->PS.pShaderBytecode != nullptr && pDesc->PS.BytecodeLength > 0)
+    { hash = asdx::CalcHashWithSeed(pDesc->PS.pShaderBytecode, pDesc->PS.BytecodeLength, hash); }
+    return hash;
 }
 
 } // namespace
@@ -187,383 +189,171 @@ bool CheckSupportDynamicResources(ID3D12Device8* pDevice)
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
-// Preset class
+// PipelineStateManager class
 ///////////////////////////////////////////////////////////////////////////////
-const D3D12_RASTERIZER_DESC Preset::CullNone = {
-    D3D12_FILL_MODE_SOLID,
-    D3D12_CULL_MODE_NONE,
-    FALSE,
-    D3D12_DEFAULT_DEPTH_BIAS,
-    D3D12_DEFAULT_DEPTH_BIAS_CLAMP,
-    D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS,
-    TRUE,
-    FALSE,
-    FALSE,
-    0,
-    D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF
-};
-const D3D12_RASTERIZER_DESC Preset::CullBack = {
-    D3D12_FILL_MODE_SOLID,
-    D3D12_CULL_MODE_BACK,
-    FALSE,
-    D3D12_DEFAULT_DEPTH_BIAS,
-    D3D12_DEFAULT_DEPTH_BIAS_CLAMP,
-    D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS,
-    TRUE,
-    FALSE,
-    FALSE,
-    0,
-    D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF
-};
-const D3D12_RASTERIZER_DESC Preset::CullFront = {
-    D3D12_FILL_MODE_SOLID,
-    D3D12_CULL_MODE_FRONT,
-    FALSE,
-    D3D12_DEFAULT_DEPTH_BIAS,
-    D3D12_DEFAULT_DEPTH_BIAS_CLAMP,
-    D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS,
-    TRUE,
-    FALSE,
-    FALSE,
-    0,
-    D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF
-};
-const D3D12_RASTERIZER_DESC Preset::Wireframe = {
-    D3D12_FILL_MODE_WIREFRAME,
-    D3D12_CULL_MODE_NONE,
-    FALSE,
-    D3D12_DEFAULT_DEPTH_BIAS,
-    D3D12_DEFAULT_DEPTH_BIAS_CLAMP,
-    D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS,
-    TRUE,
-    FALSE,
-    FALSE,
-    0,
-    D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF
-};
-
-const D3D12_DEPTH_STENCILOP_DESC Preset::StencilDefault = {
-    D3D12_STENCIL_OP_KEEP,
-    D3D12_STENCIL_OP_KEEP,
-    D3D12_STENCIL_OP_KEEP,
-    D3D12_COMPARISON_FUNC_ALWAYS
-};
-
-const D3D12_DEPTH_STENCIL_DESC Preset::DepthDefault = {
-    TRUE,
-    D3D12_DEPTH_WRITE_MASK_ALL,
-    D3D12_COMPARISON_FUNC_LESS_EQUAL,
-    FALSE,
-    D3D12_DEFAULT_STENCIL_READ_MASK,
-    D3D12_DEFAULT_STENCIL_WRITE_MASK,
-    StencilDefault,
-    StencilDefault
-};
-const D3D12_DEPTH_STENCIL_DESC Preset::DepthNone = {
-    FALSE,
-    D3D12_DEPTH_WRITE_MASK_ZERO,
-    D3D12_COMPARISON_FUNC_ALWAYS,
-    FALSE,
-    D3D12_DEFAULT_STENCIL_READ_MASK,
-    D3D12_DEFAULT_STENCIL_WRITE_MASK,
-    StencilDefault,
-    StencilDefault
-};
-const D3D12_DEPTH_STENCIL_DESC Preset::DepthReadOnly = {
-    TRUE,
-    D3D12_DEPTH_WRITE_MASK_ZERO,
-    D3D12_COMPARISON_FUNC_LESS_EQUAL,
-    FALSE,
-    D3D12_DEFAULT_STENCIL_READ_MASK,
-    D3D12_DEFAULT_STENCIL_WRITE_MASK,
-    StencilDefault,
-    StencilDefault
-};
-const D3D12_DEPTH_STENCIL_DESC Preset::DepthWriteOnly = {
-    FALSE,
-    D3D12_DEPTH_WRITE_MASK_ALL,
-    D3D12_COMPARISON_FUNC_LESS_EQUAL,
-    FALSE,
-    D3D12_DEFAULT_STENCIL_READ_MASK,
-    D3D12_DEFAULT_STENCIL_WRITE_MASK,
-    StencilDefault,
-    StencilDefault
-};
-
-const D3D12_RENDER_TARGET_BLEND_DESC Preset::RTB_Opaque = {
-    FALSE,
-    FALSE,
-    D3D12_BLEND_ONE,
-    D3D12_BLEND_ZERO,
-    D3D12_BLEND_OP_ADD,
-    D3D12_BLEND_ONE,
-    D3D12_BLEND_ZERO,
-    D3D12_BLEND_OP_ADD,
-    D3D12_LOGIC_OP_NOOP,
-    D3D12_COLOR_WRITE_ENABLE_ALL
-};
-const D3D12_RENDER_TARGET_BLEND_DESC Preset::RTB_AlphaBlend = {
-    TRUE,
-    FALSE,
-    D3D12_BLEND_SRC_ALPHA,
-    D3D12_BLEND_INV_SRC_ALPHA,
-    D3D12_BLEND_OP_ADD,
-    D3D12_BLEND_SRC_ALPHA,
-    D3D12_BLEND_INV_SRC_ALPHA,
-    D3D12_BLEND_OP_ADD,
-    D3D12_LOGIC_OP_NOOP,
-    D3D12_COLOR_WRITE_ENABLE_ALL
-};
-const D3D12_RENDER_TARGET_BLEND_DESC Preset::RTB_Additive = {
-    TRUE,
-    FALSE,
-    D3D12_BLEND_SRC_ALPHA,
-    D3D12_BLEND_ONE,
-    D3D12_BLEND_OP_ADD,
-    D3D12_BLEND_SRC_ALPHA,
-    D3D12_BLEND_ONE,
-    D3D12_BLEND_OP_ADD,
-    D3D12_LOGIC_OP_NOOP,
-    D3D12_COLOR_WRITE_ENABLE_ALL
-};
-const D3D12_RENDER_TARGET_BLEND_DESC Preset::RTB_Subtract = {
-    TRUE,
-    FALSE,
-    D3D12_BLEND_SRC_ALPHA,
-    D3D12_BLEND_ONE,
-    D3D12_BLEND_OP_REV_SUBTRACT,
-    D3D12_BLEND_SRC_ALPHA,
-    D3D12_BLEND_ONE,
-    D3D12_BLEND_OP_REV_SUBTRACT,
-    D3D12_LOGIC_OP_NOOP,
-    D3D12_COLOR_WRITE_ENABLE_ALL
-};
-const D3D12_RENDER_TARGET_BLEND_DESC Preset::RTB_Premultiplied = {
-    TRUE,
-    FALSE,
-    D3D12_BLEND_ONE,
-    D3D12_BLEND_INV_SRC_ALPHA,
-    D3D12_BLEND_OP_ADD,
-    D3D12_BLEND_ONE,
-    D3D12_BLEND_INV_SRC_ALPHA,
-    D3D12_BLEND_OP_ADD,
-    D3D12_LOGIC_OP_NOOP,
-    D3D12_COLOR_WRITE_ENABLE_ALL
-};
-const D3D12_RENDER_TARGET_BLEND_DESC Preset::RTB_Multiply = {
-    TRUE,
-    FALSE,
-    D3D12_BLEND_ZERO,
-    D3D12_BLEND_SRC_COLOR,
-    D3D12_BLEND_OP_ADD,
-    D3D12_BLEND_ZERO,
-    D3D12_BLEND_SRC_ALPHA,
-    D3D12_BLEND_OP_ADD,
-    D3D12_LOGIC_OP_NOOP,
-    D3D12_COLOR_WRITE_ENABLE_ALL
-};
-
-const D3D12_RENDER_TARGET_BLEND_DESC Preset::RTB_Screen = {
-    TRUE,
-    FALSE,
-    D3D12_BLEND_DEST_COLOR,
-    D3D12_BLEND_ONE,
-    D3D12_BLEND_OP_ADD,
-    D3D12_BLEND_DEST_ALPHA,
-    D3D12_BLEND_ONE,
-    D3D12_BLEND_OP_ADD,
-    D3D12_LOGIC_OP_NOOP,
-    D3D12_COLOR_WRITE_ENABLE_ALL
-};
-
-const D3D12_BLEND_DESC Preset::Opaque = {
-    FALSE,
-    FALSE,
-    { RTB_Opaque, RTB_Opaque, RTB_Opaque, RTB_Opaque, RTB_Opaque, RTB_Opaque, RTB_Opaque, RTB_Opaque }
-};
-const D3D12_BLEND_DESC Preset::AlphaBlend = {
-    FALSE,
-    FALSE,
-    { RTB_AlphaBlend, RTB_AlphaBlend, RTB_AlphaBlend, RTB_AlphaBlend, RTB_AlphaBlend, RTB_AlphaBlend, RTB_AlphaBlend, RTB_AlphaBlend }
-};
-const D3D12_BLEND_DESC Preset::Additive = {
-    FALSE,
-    FALSE,
-    { RTB_Additive, RTB_Additive, RTB_Additive, RTB_Additive, RTB_Additive, RTB_Additive, RTB_Additive, RTB_Additive }
-};
-const D3D12_BLEND_DESC Preset::Subtract = {
-    FALSE,
-    FALSE,
-    { RTB_Subtract, RTB_Subtract, RTB_Subtract, RTB_Subtract, RTB_Subtract, RTB_Subtract, RTB_Subtract, RTB_Subtract }
-};
-const D3D12_BLEND_DESC Preset::Premultiplied = {
-    FALSE,
-    FALSE,
-    { RTB_Premultiplied, RTB_Premultiplied, RTB_Premultiplied, RTB_Premultiplied, RTB_Premultiplied, RTB_Premultiplied, RTB_Premultiplied, RTB_Premultiplied }
-};
-const D3D12_BLEND_DESC Preset::Multiply = {
-    FALSE,
-    FALSE,
-    { RTB_Multiply, RTB_Multiply, RTB_Multiply, RTB_Multiply, RTB_Multiply, RTB_Multiply, RTB_Multiply, RTB_Multiply }
-};
-const D3D12_BLEND_DESC Preset::Screen = {
-    FALSE,
-    FALSE,
-    { RTB_Screen, RTB_Screen, RTB_Screen, RTB_Screen, RTB_Screen, RTB_Screen, RTB_Screen, RTB_Screen }
-};
-
-const D3D12_SHADER_BYTECODE Preset::FullScreenVS = { internal::FullScreenVS, sizeof(internal::FullScreenVS) };
-const D3D12_SHADER_BYTECODE Preset::CopyPS       = { internal::CopyPS,       sizeof(internal::CopyPS) };
-const D3D12_SHADER_BYTECODE Preset::SpriteVS     = { internal::SpriteVS,     sizeof(internal::SpriteVS) };
-const D3D12_SHADER_BYTECODE Preset::SpritePS     = { internal::SpritePS,     sizeof(internal::SpritePS) };
-
-#define DEF_STATIC_SAMPLER(filter, addressMode, maxAnisotropy, comparison, borderColor, shaderRegister) \
-    { filter, addressMode, addressMode, addressMode, 0.0f, maxAnisotropy, comparison, borderColor, 0.0f, D3D12_FLOAT32_MAX, shaderRegister, 0, D3D12_SHADER_VISIBILITY_ALL }
-
-const D3D12_STATIC_SAMPLER_DESC Preset::StaticSamplers[11] = {
-    DEF_STATIC_SAMPLER(D3D12_FILTER_MIN_MAG_MIP_POINT,  D3D12_TEXTURE_ADDRESS_MODE_WRAP,   0,  D3D12_COMPARISON_FUNC_NEVER,      D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK, 0),
-    DEF_STATIC_SAMPLER(D3D12_FILTER_MIN_MAG_MIP_POINT,  D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  0,  D3D12_COMPARISON_FUNC_NEVER,      D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK, 1),
-    DEF_STATIC_SAMPLER(D3D12_FILTER_MIN_MAG_MIP_POINT,  D3D12_TEXTURE_ADDRESS_MODE_MIRROR, 0,  D3D12_COMPARISON_FUNC_NEVER,      D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK, 2),
-    DEF_STATIC_SAMPLER(D3D12_FILTER_MIN_MAG_MIP_LINEAR, D3D12_TEXTURE_ADDRESS_MODE_WRAP,   0,  D3D12_COMPARISON_FUNC_NEVER,      D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK, 3),
-    DEF_STATIC_SAMPLER(D3D12_FILTER_MIN_MAG_MIP_LINEAR, D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  0,  D3D12_COMPARISON_FUNC_NEVER,      D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK, 4),
-    DEF_STATIC_SAMPLER(D3D12_FILTER_MIN_MAG_MIP_LINEAR, D3D12_TEXTURE_ADDRESS_MODE_MIRROR, 0,  D3D12_COMPARISON_FUNC_NEVER,      D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK, 5),
-    DEF_STATIC_SAMPLER(D3D12_FILTER_ANISOTROPIC,        D3D12_TEXTURE_ADDRESS_MODE_WRAP,   16, D3D12_COMPARISON_FUNC_NEVER,      D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK, 6),
-    DEF_STATIC_SAMPLER(D3D12_FILTER_ANISOTROPIC,        D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  16, D3D12_COMPARISON_FUNC_NEVER,      D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK, 7),
-    DEF_STATIC_SAMPLER(D3D12_FILTER_ANISOTROPIC,        D3D12_TEXTURE_ADDRESS_MODE_MIRROR, 16, D3D12_COMPARISON_FUNC_NEVER,      D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK, 8),
-    DEF_STATIC_SAMPLER(D3D12_FILTER_MIN_MAG_MIP_LINEAR, D3D12_TEXTURE_ADDRESS_MODE_BORDER, 0,  D3D12_COMPARISON_FUNC_LESS_EQUAL, D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE,      9),
-    DEF_STATIC_SAMPLER(D3D12_FILTER_MIN_MAG_MIP_LINEAR, D3D12_TEXTURE_ADDRESS_MODE_BORDER, 0,  D3D12_COMPARISON_FUNC_GREATER,    D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE,     10),
-};
-#undef DEF_STATIC_SAMPLER
-
-const D3D12_INPUT_ELEMENT_DESC Preset::QuadElements[2] = {
-    { "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-    { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 8, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-};
-
-D3D12_SHADER_BYTECODE Preset::GetQuadVS()
-{
-    D3D12_SHADER_BYTECODE result = {};
-    result.pShaderBytecode = internal::FullScreenVS;
-    result.BytecodeLength  = sizeof(internal::FullScreenVS);
-    return result;
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-// PipelineState class
-///////////////////////////////////////////////////////////////////////////////
+PipelineStateManager PipelineStateManager::s_Instance = {};
 
 //-----------------------------------------------------------------------------
-//      コンストラクタです.
+//      シングルトンインスタンスを取得します.
 //-----------------------------------------------------------------------------
-PipelineState::PipelineState()
-: m_Type(PIPELINE_TYPE_GRAPHICS)
-{ /* DO_NOTHING */ }
-
-//-----------------------------------------------------------------------------
-//      デストラクタです.
-//-----------------------------------------------------------------------------
-PipelineState::~PipelineState()
-{ Term(); }
+PipelineStateManager& PipelineStateManager::Instance()
+{ return s_Instance; }
 
 //-----------------------------------------------------------------------------
-//      グラフィックスパイプラインとして初期化します.
+//      グラフィックスパイプラインステートを生成します.
 //-----------------------------------------------------------------------------
-bool PipelineState::Init(ID3D12Device* pDevice, const D3D12_GRAPHICS_PIPELINE_STATE_DESC* pDesc)
-{
-    if (pDevice == nullptr || pDesc == nullptr)
-    {
-        ELOG("Error : Inavlid Argument.");
-        return false;
-    }
-
-    if (pDesc->pRootSignature == nullptr)
-    {
-        ELOG("Error : Invalid Argument.");
-        return false;
-    }
-
-    m_VS.resize(pDesc->VS.BytecodeLength);
-    memcpy(m_VS.data(), pDesc->VS.pShaderBytecode, m_VS.size());
-
-    m_PS.resize(pDesc->PS.BytecodeLength);
-    memcpy(m_PS.data(), pDesc->PS.pShaderBytecode, m_PS.size());
-
-    m_Type = PIPELINE_TYPE_GRAPHICS;
-    m_Desc.Graphics                     = *pDesc;
-    m_Desc.Graphics.VS.pShaderBytecode  = m_VS.data();
-    m_Desc.Graphics.PS.pShaderBytecode  = m_PS.data();
-
-    // パイプラインステート生成.
-    {
-        auto hr = pDevice->CreateGraphicsPipelineState(&m_Desc.Graphics, IID_PPV_ARGS(m_DefaultPSO.GetAddress()));
-        if (FAILED(hr))
-        {
-            ELOG("Error : ID3D12Device::CreateGraphicsPipelineState() Failed. errcode = 0x%x", hr);
-            return false;
-        }
-
-        m_DefaultPSO->SetName(L"asdxGraphicsPipelineState");
-    }
-
-    return true;
-}
-
-//-----------------------------------------------------------------------------
-//      コンピュートパイプラインとして初期化します.
-//-----------------------------------------------------------------------------
-bool PipelineState::Init(ID3D12Device* pDevice, const D3D12_COMPUTE_PIPELINE_STATE_DESC* pDesc)
+bool PipelineStateManager::Create(const D3D12_GRAPHICS_PIPELINE_STATE_DESC* pDesc, PipelineStateHandle& handle)
 {
     if (pDesc == nullptr)
     {
-        ELOG("Error : Invalid Argument.");
+        ELOG("Error : Invalid Arguments.");
         return false;
     }
 
-    if (pDesc->pRootSignature == nullptr)
+    // ハッシュ値を計算.
+    auto hash = CalcDescHash(pDesc);
+
+    // 既に作成済みかどうかチェック.
+    if (m_PipelineStates.find(hash) != m_PipelineStates.end())
     {
-        ELOG("Error : Invalid Argument.");
+        ELOG("Error : Already Registered.");
         return false;
     }
 
-    m_CS.resize(pDesc->CS.BytecodeLength);
-    memcpy(m_CS.data(), pDesc->CS.pShaderBytecode, m_CS.size());
+    auto pDevice = GetD3D12Device();
+    assert(pDevice != nullptr);
 
-    m_Type = PIPELINE_TYPE_COMPUTE;
-    m_Desc.Compute                      = *pDesc;
-    m_Desc.Compute.CS.pShaderBytecode   = m_CS.data();
-
-    // パイプラインステート生成.
+    ID3D12PipelineState* pPipelineState = nullptr;
+    auto hr = pDevice->CreateGraphicsPipelineState(pDesc, IID_PPV_ARGS(&pPipelineState));
+    if (FAILED(hr))
     {
-        auto hr = pDevice->CreateComputePipelineState(&m_Desc.Compute, IID_PPV_ARGS(m_DefaultPSO.GetAddress()));
-        if (FAILED(hr))
+        if (pPipelineState != nullptr)
         {
-            ELOG("Error : ID3D12Device::CreateComputePipelineState() Failed. errcode = 0x%x", hr);
-            return false;
+            pPipelineState->Release();
+            pPipelineState = nullptr;
         }
-
-        m_DefaultPSO->SetName(L"asdxComputePipelineState");
+        ELOG("Error : ID3D12Device::CreateGraphicsState() Failed. errcode = 0x%x", hr);
+        return false;
     }
+
+    m_PipelineStates[hash] = pPipelineState;
+
+    PipelineStateDesc desc;
+    desc.Type = PIPELINE_TYPE_GRAPHICS;
+    desc.Graphics = (*pDesc);
+
+    if (pDesc->VS.pShaderBytecode != nullptr && pDesc->VS.BytecodeLength > 0)
+    {
+        desc.VS.resize(pDesc->VS.BytecodeLength);
+        memcpy(desc.VS.data(), pDesc->VS.pShaderBytecode, pDesc->VS.BytecodeLength);
+        desc.Graphics.VS.pShaderBytecode = desc.VS.data();
+        desc.Graphics.VS.BytecodeLength  = desc.VS.size();
+    }
+    if (pDesc->PS.pShaderBytecode != nullptr && pDesc->PS.BytecodeLength > 0)
+    {
+        desc.PS.resize(pDesc->PS.BytecodeLength);
+        memcpy(desc.PS.data(), pDesc->PS.pShaderBytecode, pDesc->PS.BytecodeLength);
+        desc.Graphics.PS.pShaderBytecode = desc.PS.data();
+        desc.Graphics.PS.BytecodeLength  = desc.PS.size();
+    }
+    if (pDesc->DS.pShaderBytecode != nullptr && pDesc->DS.BytecodeLength > 0)
+    {
+        desc.DS.resize(pDesc->DS.BytecodeLength);
+        memcpy(desc.DS.data(), pDesc->DS.pShaderBytecode, pDesc->DS.BytecodeLength);
+        desc.Graphics.DS.pShaderBytecode = desc.DS.data();
+        desc.Graphics.DS.BytecodeLength  = desc.DS.size();
+    }
+    if (pDesc->HS.pShaderBytecode != nullptr && pDesc->HS.BytecodeLength > 0)
+    {
+        desc.HS.resize(pDesc->HS.BytecodeLength);
+        memcpy(desc.HS.data(), pDesc->HS.pShaderBytecode, pDesc->HS.BytecodeLength);
+        desc.Graphics.HS.pShaderBytecode = desc.HS.data();
+        desc.Graphics.HS.BytecodeLength  = desc.HS.size();
+    }
+    if (pDesc->HS.pShaderBytecode != nullptr && pDesc->HS.BytecodeLength > 0)
+    {
+        desc.GS.resize(pDesc->GS.BytecodeLength);
+        memcpy(desc.GS.data(), pDesc->GS.pShaderBytecode, pDesc->GS.BytecodeLength);
+        desc.Graphics.GS.pShaderBytecode = desc.GS.data();
+        desc.Graphics.GS.BytecodeLength  = desc.GS.size();
+    }
+
+    m_Descs[hash] = desc;
+    handle = hash;
 
     return true;
 }
 
 //-----------------------------------------------------------------------------
-//      ジオメトリパイプラインとして初期化します.
+//      コンピュートパイプラインステートを生成します.
 //-----------------------------------------------------------------------------
-bool PipelineState::Init(ID3D12Device2* pDevice, const GEOMETRY_PIPELINE_STATE_DESC* pDesc)
+bool PipelineStateManager::Create(const D3D12_COMPUTE_PIPELINE_STATE_DESC* pDesc, PipelineStateHandle& handle)
 {
-    if (pDevice == nullptr || pDesc == nullptr)
+    if (pDesc == nullptr)
     {
-        ELOG("Error : Invalid Argument.");
+        ELOG("Error : Invalid Arguments.");
         return false;
     }
 
-    if (pDesc->pRootSignature == nullptr)
+    // ハッシュ値を計算.
+    auto hash = CalcDescHash(pDesc);
+
+    // 既に作成済みかどうかチェック.
+    if (m_PipelineStates.find(hash) != m_PipelineStates.end())
     {
-        ELOG("Error : Invalid Argument.");
+        ELOG("Error : Already Registered.");
         return false;
     }
+
+    auto pDevice = GetD3D12Device();
+    assert(pDevice != nullptr);
+
+    ID3D12PipelineState* pPipelineState = nullptr;
+    auto hr = pDevice->CreateComputePipelineState(pDesc, IID_PPV_ARGS(&pPipelineState));
+    if (FAILED(hr))
+    {
+        if (pPipelineState != nullptr)
+        {
+            pPipelineState->Release();
+            pPipelineState = nullptr;
+        }
+        ELOG("Error : ID3D12Device::CreateComputePipelineState() Failed. errcode = 0x%x", hr);
+        return false;
+    }
+
+    m_PipelineStates[hash] = pPipelineState;
+
+    PipelineStateDesc desc;
+    desc.Type    = PIPELINE_TYPE_COMPUTE;
+    desc.Compute = (*pDesc);
+
+    if (pDesc->CS.pShaderBytecode != nullptr && pDesc->CS.BytecodeLength > 0)
+    {
+        desc.CS.resize(pDesc->CS.BytecodeLength);
+        memcpy(desc.CS.data(), pDesc->CS.pShaderBytecode, pDesc->CS.BytecodeLength);
+        desc.Compute.CS.pShaderBytecode = desc.CS.data();
+        desc.Compute.CS.BytecodeLength  = desc.CS.size();
+    }
+
+    m_Descs[hash] = desc;
+    handle = hash;
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      メッシュシェーダパイプラインステートを生成します.
+//-----------------------------------------------------------------------------
+bool PipelineStateManager::Create(const MESH_SHADER_PIPELINE_STATE_DESC* pDesc, PipelineStateHandle& handle)
+{
+    if (pDesc == nullptr)
+    {
+        ELOG("Error : Invalid Arguments.");
+        return false;
+    }
+
+    auto pDevice = GetD3D12Device();
+    assert(pDevice != nullptr);
 
 #ifdef ASDX_ENABLE_MESH_SHADER
     // シェーダモデルをチェック.
@@ -587,343 +377,561 @@ bool PipelineState::Init(ID3D12Device2* pDevice, const GEOMETRY_PIPELINE_STATE_D
             return false;
         }
     }
+#endif
 
-    m_MS.resize(pDesc->MS.BytecodeLength);
-    memcpy(m_MS.data(), pDesc->MS.pShaderBytecode, m_MS.size());
+    // ハッシュ値を計算.
+    auto hash = CalcDescHash(pDesc);
 
-    if (pDesc->AS.BytecodeLength > 0)
+    // 既に作成済みかどうかチェック.
+    if (m_PipelineStates.find(hash) != m_PipelineStates.end())
     {
-        m_AS.resize(pDesc->AS.BytecodeLength);
-        memcpy(m_AS.data(), pDesc->AS.pShaderBytecode, m_AS.size());
+        ELOG("Error : Already Registered.");
+        return false;
     }
+
+    MsPsoDesc msPsoDesc(pDesc);
+
+    D3D12_PIPELINE_STATE_STREAM_DESC pssDesc = {};
+    pssDesc.SizeInBytes = sizeof(msPsoDesc);
+    pssDesc.pPipelineStateSubobjectStream = &msPsoDesc;
+
+    // パイプラインステート生成.
+    ID3D12PipelineState* pPipelineState = nullptr;
+    auto hr = pDevice->CreatePipelineState(&pssDesc, IID_PPV_ARGS(&pPipelineState));
+    if (FAILED(hr))
+    {
+        if (pPipelineState != nullptr)
+        {
+            pPipelineState->Release();
+            pPipelineState = nullptr;
+        }
+
+        ELOG("Error : ID3D12Device::CreatePipelineState() Failed. errcode = 0x%x", hr);
+        return false;
+    }
+
+    m_PipelineStates[hash] = pPipelineState;
+
+    PipelineStateDesc desc;
+    desc.Type       = PIPELINE_TYPE_MESH_SHADER;
+    desc.MeshShader = (*pDesc);
+
+    if (pDesc->AS.pShaderBytecode != nullptr && pDesc->AS.BytecodeLength > 0)
+    {
+        desc.AS.resize(pDesc->AS.BytecodeLength);
+        memcpy(desc.AS.data(), pDesc->AS.pShaderBytecode, pDesc->AS.BytecodeLength);
+        desc.MeshShader.AS.pShaderBytecode = desc.AS.data();
+        desc.MeshShader.AS.BytecodeLength  = desc.AS.size();
+    }
+    if (pDesc->MS.pShaderBytecode != nullptr && pDesc->MS.BytecodeLength > 0)
+    {
+        desc.MS.resize(pDesc->MS.BytecodeLength);
+        memcpy(desc.MS.data(), pDesc->MS.pShaderBytecode, pDesc->MS.BytecodeLength);
+        desc.MeshShader.MS.pShaderBytecode = desc.MS.data();
+        desc.MeshShader.MS.BytecodeLength  = desc.MS.size();
+    }
+    if (pDesc->PS.pShaderBytecode != nullptr && pDesc->PS.BytecodeLength > 0)
+    {
+        desc.PS.resize(pDesc->PS.BytecodeLength);
+        memcpy(desc.PS.data(), pDesc->PS.pShaderBytecode, pDesc->PS.BytecodeLength);
+        desc.MeshShader.PS.pShaderBytecode = desc.PS.data();
+        desc.MeshShader.PS.BytecodeLength  = desc.PS.size();
+    }
+
+    m_Descs[hash] = desc;
+    handle = hash;
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      パイプラインステートを検索します.
+//-----------------------------------------------------------------------------
+ID3D12PipelineState* PipelineStateManager::FindPipelineState(const PipelineStateHandle& handle)
+{
+    auto itr = m_PipelineStates.find(handle);
+    if (itr != m_PipelineStates.end())
+        return itr->second;
+
+    return nullptr;
+}
+
+//-----------------------------------------------------------------------------
+//      クリア処理を行います.
+//-----------------------------------------------------------------------------
+void PipelineStateManager::Clear()
+{
+    for(auto& itr : m_PipelineStates)
+    {
+        auto pso = itr.second;
+        itr.second = nullptr;
+
+        if (pso != nullptr)
+        {
+            pso->Release();
+            pso = nullptr;
+        }
+    }
+
+    m_PipelineStates.clear();
+    m_Descs.clear();
+}
+
+#if ASDX_ENABLE_PIPELINE_STATE_RELOAD
+//-----------------------------------------------------------------------------
+//      シェーダを登録します.
+//-----------------------------------------------------------------------------
+ShaderHandle PipelineStateManager::RegisterShader(SHADER_TYPE type, const char* path, uint32_t pipelineCounts, const PipelineStateHandle* handles)
+{
+    auto fullPath = ToFullPathA(path);
+    auto hash     = CalcHash(fullPath.data(), fullPath.length());
+    auto itr      = m_Reloads.find(hash);
+
+    // 未登録であれば情報を設定.
+    if (itr == m_Reloads.end())
+    {
+        m_Reloads[hash] = Reload(type, fullPath, pipelineCounts, handles);
+    }
+#if ASDX_DEBUG
+    // 登録済みであればデバッグチェック.
     else
     {
-        m_AS.clear();
+        const auto& reload = m_Reloads[hash];
+        assert(type   == reload.Type);
+        assert(path   == reload.Path);
+        assert(size_t(pipelineCounts) == reload.Handles.size());
+        for(size_t i=0; i<reload.Handles.size(); ++i)
+        { assert(handles[i] == reload.Handles[i]); }
     }
-
-    m_PS.resize(pDesc->PS.BytecodeLength);
-    memcpy(m_PS.data(), pDesc->PS.pShaderBytecode, m_PS.size());
-
-    m_Type = PIPELINE_TYPE_GEOMETRY;
-    m_Desc.Geometry = *pDesc;
-    m_Desc.Geometry.MS.pShaderBytecode = m_MS.data();
-    m_Desc.Geometry.PS.pShaderBytecode = m_PS.data();
-
-    if (pDesc->AS.BytecodeLength > 0)
-    { m_Desc.Geometry.AS.pShaderBytecode = m_AS.data(); }
-
-    // ジオメトリパイプラインステートを生成.
-    {
-        GPS_DESC gpsDesc(&m_Desc.Geometry);
-
-        D3D12_PIPELINE_STATE_STREAM_DESC pssDesc = {};
-        pssDesc.SizeInBytes = sizeof(gpsDesc);
-        pssDesc.pPipelineStateSubobjectStream = &gpsDesc;
-
-        // パイプラインステート生成.
-        auto hr = pDevice->CreatePipelineState(&pssDesc, IID_PPV_ARGS(m_DefaultPSO.GetAddress()));
-        if (FAILED(hr))
-        {
-            ELOG("Error : ID3D12Device::CreateGraphicsPipelineState() Failed. errcode = 0x%x", hr);
-            return false;
-        }
-
-        m_DefaultPSO->SetName(L"asdxGeometryPipelineState");
-    }
-
-    return true;
-#else
-    ELOG("Error : Not Support Geometry Pipeline.");
-    return false;
 #endif
+
+    return hash;
 }
 
 //-----------------------------------------------------------------------------
-//      終了処理を行います.
+//      シェーダの登録を解除します.
 //-----------------------------------------------------------------------------
-void PipelineState::Term()
+void PipelineStateManager::UnregisterShader(ShaderHandle handle)
 {
-    m_DefaultPSO .Reset();
-    m_ReloadedPSO.Reset();
-
-    m_ReloadPathVS.clear();
-    m_ReloadPathPS.clear();
-    m_ReloadPathCS.clear();
-    m_ReloadPathAS.clear();
-    m_ReloadPathMS.clear();
-
-    m_ShaderModelVS.clear();
-    m_ShaderModelPS.clear();
-    m_ShaderModelCS.clear();
-    m_ShaderModelAS.clear();
-    m_ShaderModelMS.clear();
-
-    m_VS.clear();
-    m_PS.clear();
-    m_CS.clear();
-    m_MS.clear();
-    m_AS.clear();
+    auto itr = m_Reloads.find(handle);
+    if (itr != m_Reloads.end())
+    { m_Reloads.erase(itr); }
 }
 
 //-----------------------------------------------------------------------------
-//      パイプラインステートを設定します.
+//      インクルードを登録します.
 //-----------------------------------------------------------------------------
-void PipelineState::SetState(ID3D12GraphicsCommandList* pCmdList)
+ShaderHandle PipelineStateManager::RegisterInclude(const char* path, uint32_t shaderCount, const ShaderHandle* handles)
 {
-    Rebuild();
+    auto fullPath = ToFullPathA(path);
+    auto hash     = CalcHash(fullPath.data(), fullPath.length());
+    auto itr      = m_Dependencies.find(hash);
 
-    auto pso = (m_ReloadedPSO.GetPtr() != nullptr) 
-        ? m_ReloadedPSO.GetPtr()
-        : m_DefaultPSO.GetPtr();
-    pCmdList->SetPipelineState(pso);
-}
-
-//-----------------------------------------------------------------------------
-//      パイプラインタイプを取得します.
-//-----------------------------------------------------------------------------
-PIPELINE_TYPE PipelineState::GetType() const
-{ return m_Type; }
-
-//-----------------------------------------------------------------------------
-//      頂点シェーダのリロードパスを設定します.
-//-----------------------------------------------------------------------------
-void PipelineState::SetReloadPathVS(const char* path, const char* shaderModel)
-{
-    m_ReloadPathVS  = ToFullPathA(path);
-    m_ShaderModelVS = shaderModel;
-}
-
-//-----------------------------------------------------------------------------
-//      ピクセルシェーダのリロードパスを設定します.
-//-----------------------------------------------------------------------------
-void PipelineState::SetReloadPathPS(const char* path, const char* shaderModel)
-{
-    m_ReloadPathPS  = ToFullPathA(path);
-    m_ShaderModelPS = shaderModel;
-}
-
-//-----------------------------------------------------------------------------
-//      コンピュートシェーダのリロードパスを設定します.
-//-----------------------------------------------------------------------------
-void PipelineState::SetReloadPathCS(const char* path, const char* shaderModel)
-{
-    m_ReloadPathCS  = ToFullPathA(path);
-    m_ShaderModelCS = shaderModel;
-}
-
-//-----------------------------------------------------------------------------
-//      増幅シェーダのリロードパスを設定します.
-//-----------------------------------------------------------------------------
-void PipelineState::SetReloadPathAS(const char* path, const char* shaderModel)
-{
-    m_ReloadPathAS  = ToFullPathA(path);
-    m_ShaderModelAS = shaderModel;
-}
-
-//-----------------------------------------------------------------------------
-//      メッシュシェーダのリロードパスを設定します.
-//-----------------------------------------------------------------------------
-void PipelineState::SetReloadPathMS(const char* path, const char* shaderModel)
-{
-    m_ReloadPathMS  = ToFullPathA(path);
-    m_ShaderModelMS = shaderModel;
-}
-
-//-----------------------------------------------------------------------------
-//      インクルードディレクトリを設定します.
-//-----------------------------------------------------------------------------
-void PipelineState::SetIncludeDirs(const std::vector<std::string>& dirs)
-{ m_IncludeDirs = dirs; }
-
-//-----------------------------------------------------------------------------
-//      依存ファイル名を設定します.
-//-----------------------------------------------------------------------------
-void PipelineState::SetDependencies(const std::vector<std::string>& dependencies)
-{
-    m_Dependencies.resize(dependencies.size());
-    for(auto i=0; i<dependencies.size(); ++i)
-    { m_Dependencies[i] = ToFullPathA(dependencies[i].c_str()); }
-}
-
-//-----------------------------------------------------------------------------
-//      ファイル更新時の処理です.
-//-----------------------------------------------------------------------------
-void PipelineState::OnChanged(const FileEventArgs& args)
-{
-    std::string path = args.DirectoryPath;
-    path += "/";
-    path += args.RelativePath;
-
-    path = ToFullPathA(path.c_str());
-
-    switch(args.Type)
+    if (itr == m_Dependencies.end())
     {
-    case FileEventArgs::Modified:
-    case FileEventArgs::RenamedNewName:
+        m_Dependencies[hash] = Dependency(path, shaderCount, handles);
+    }
+#if ASDX_DEBUG
+    else
+    {
+        const auto& dependency = m_Dependencies[hash];
+        assert(path == dependency.Path);
+        assert(size_t(shaderCount) == dependency.Shaders.size());
+        for(size_t i=0; i<dependency.Shaders.size(); ++i)
+        { assert(handles[i] == dependency.Shaders[i]); }
+    }
+#endif
+
+    return hash;
+}
+
+//-----------------------------------------------------------------------------
+//      インクルードの登録を解除します.
+//-----------------------------------------------------------------------------
+void PipelineStateManager::UnregisterInclude(ShaderHandle handle)
+{
+    auto itr = m_Dependencies.find(handle);
+    if (itr != m_Dependencies.end())
+    { m_Dependencies.erase(itr); }
+}
+
+//-----------------------------------------------------------------------------
+//      インクルードディレクトリを追加します.
+//-----------------------------------------------------------------------------
+void PipelineStateManager::AddIncludeDirs(const char* dirPath)
+{
+    auto fullPath = ToFullPathA(dirPath);
+    m_IncludeDirs.emplace_back(fullPath);
+}
+
+//-----------------------------------------------------------------------------
+//      パイプラインステートを検索します.
+//-----------------------------------------------------------------------------
+ID3D12PipelineState* PipelineStateManager::FindPipelineStateEx(const PipelineStateHandle& handle)
+{
+    {
+        auto itr = m_ReloadPipelineStates.find(handle);
+        if (itr != m_ReloadPipelineStates.end())
+            return itr->second;
+    }
+
+    return FindPipelineState(handle);
+}
+
+//-----------------------------------------------------------------------------
+//      クリア処理を行います.
+//-----------------------------------------------------------------------------
+void PipelineStateManager::ClearEx()
+{
+    for(auto& itr : m_ReloadPipelineStates)
+    {
+        auto pso = itr.second;
+        itr.second = nullptr;
+
+        if (pso != nullptr)
         {
-            if (!m_ReloadPathVS.empty() && m_ReloadPathVS == path)
-            { m_Dirty = true; }
-
-            if (!m_ReloadPathPS.empty() && m_ReloadPathPS == path)
-            { m_Dirty = true; }
-
-            if (!m_ReloadPathCS.empty() && m_ReloadPathCS == path)
-            { m_Dirty = true; }
-
-            if (!m_ReloadPathAS.empty() && m_ReloadPathAS == path)
-            { m_Dirty = true; }
-
-            if (!m_ReloadPathMS.empty() && m_ReloadPathMS == path)
-            { m_Dirty = true; }
-
-            for(auto& dep : m_Dependencies)
-            {
-                if (!dep.empty() && dep == path)
-                {
-                    m_Dirty = true;
-                    break;
-                }
-            }
+            pso->Release();
+            pso = nullptr;
         }
-        break;
-
-    default:
-        break;
     }
+    m_ReloadPipelineStates.clear();
+    m_Reloads             .clear();
+    m_Dependencies        .clear();
+    m_RequestDescs        .clear();
+
+    Clear();
 }
 
 //-----------------------------------------------------------------------------
-//      シェーダをリロードします.
+//      再生成をリクエストします.
 //-----------------------------------------------------------------------------
-bool PipelineState::ReloadShader
-(
-    const char*             path,
-    const char*             shaderModel,
-    std::vector<uint8_t>&   result
-)
+void PipelineStateManager::RequestRecreate(PipelineStateHandle pipelineHandle, ShaderHandle shaderHandle)
 {
-    RefPtr<IBlob> blob;
-    // シェーダコンパイル.
-    if (!CompileFromFileA(path, m_IncludeDirs, "main", shaderModel, blob.GetAddress()))
-    { return false; }
-
-    result.clear();
-    result.resize(blob->GetBufferSize());
-    memcpy(result.data(), blob->GetBuffer(), blob->GetBufferSize());
-
-    return true;
-}
-
-//-----------------------------------------------------------------------------
-//      パイプラインステートを再生成します.
-//-----------------------------------------------------------------------------
-void PipelineState::Rebuild()
-{
-    if (!m_Dirty)
-    { return; }
-
-    m_Dirty = false;
-
-    // シェーダリロード.
-    bool reloaded = false;
-    {
-        // 頂点シェーダ.
-        if (!m_ReloadPathVS.empty())
-        { reloaded = ReloadShader(m_ReloadPathVS.c_str(), m_ShaderModelVS.c_str(), m_VS); }
-
-        // ピクセルシェーダ.
-        if (!m_ReloadPathPS.empty())
-        { reloaded = ReloadShader(m_ReloadPathPS.c_str(), m_ShaderModelPS.c_str(), m_PS); }
-
-        // コンピュートシェーダ.
-        if (!m_ReloadPathCS.empty())
-        { reloaded = ReloadShader(m_ReloadPathCS.c_str(), m_ShaderModelCS.c_str(), m_CS); }
-
-        // 増幅シェーダ.
-        if (!m_ReloadPathAS.empty())
-        { reloaded = ReloadShader(m_ReloadPathAS.c_str(), m_ShaderModelAS.c_str(), m_AS); }
-
-        // メッシュシェーダ.
-        if (!m_ReloadPathMS.empty())
-        { reloaded = ReloadShader(m_ReloadPathMS.c_str(), m_ShaderModelMS.c_str(), m_MS); }
-    }
-
-    if (!reloaded)
+    // 登録されているかチェック.
+    auto itrDesc = m_Descs.find(pipelineHandle);
+    if (itrDesc == m_Descs.end())
         return;
 
-    if (!m_ReloadedPSO.GetPtr())
+    // シェーダリロード設定に存在するかどうかチェック.
+    auto itrShader = m_Reloads.find(shaderHandle);
+    if (itrShader == m_Reloads.end())
+        return;
+
+    // 未登録なら構成データを設定.
+    auto itrReq = m_RequestDescs.find(pipelineHandle);
+    if (itrReq == m_RequestDescs.end())
+    { m_RequestDescs[pipelineHandle] = itrDesc->second; }
+
+    switch(itrShader->second.Type)
     {
-        auto pso = m_ReloadedPSO.Detach();
+        case SHADER_TYPE_VS: { CompileFromFileA(itrShader->second.Path.c_str(), m_IncludeDirs, "main", "vs_6_5", itrReq->second.VS); } break;
+        case SHADER_TYPE_PS: { CompileFromFileA(itrShader->second.Path.c_str(), m_IncludeDirs, "main", "ps_6_5", itrReq->second.PS); } break;
+        case SHADER_TYPE_HS: { CompileFromFileA(itrShader->second.Path.c_str(), m_IncludeDirs, "main", "hs_6_6", itrReq->second.HS); } break;
+        case SHADER_TYPE_DS: { CompileFromFileA(itrShader->second.Path.c_str(), m_IncludeDirs, "main", "ds_6_5", itrReq->second.DS); } break;
+        case SHADER_TYPE_GS: { CompileFromFileA(itrShader->second.Path.c_str(), m_IncludeDirs, "main", "gs_6_5", itrReq->second.GS); } break;
+        case SHADER_TYPE_AS: { CompileFromFileA(itrShader->second.Path.c_str(), m_IncludeDirs, "main", "as_6_5", itrReq->second.AS); } break;
+        case SHADER_TYPE_MS: { CompileFromFileA(itrShader->second.Path.c_str(), m_IncludeDirs, "main", "ms_6_5", itrReq->second.MS); } break;
+        case SHADER_TYPE_CS: { CompileFromFileA(itrShader->second.Path.c_str(), m_IncludeDirs, "main", "cs_6_5", itrReq->second.CS); } break;
+        default: break;
+    }
+}
+
+//-----------------------------------------------------------------------------
+//      ファイル変更時の処理です.
+//-----------------------------------------------------------------------------
+void PipelineStateManager::OnChanged(const FileEventArgs& args)
+{
+    auto hash = CalcHash(args.FullPath.data(), args.FullPath.length());
+
+    // インクルードファイルに存在するかどうかチェック.
+    {
+        auto itr = m_Dependencies.find(hash);
+        if (itr != m_Dependencies.end())
+        {
+            // 依存するシェーダをチェック.
+            for(const auto& pipelineHandle : itr->second.Shaders)
+            { RequestRecreate(pipelineHandle, itr->first); }
+        }
+    }
+
+    // シェーダファイルに存在するかどうかチェック.
+    {
+        auto itr = m_Reloads.find(hash);
+        if (itr != m_Reloads.end())
+        {
+            for(const auto& pipelineHandle : itr->second.Handles)
+            { RequestRecreate(pipelineHandle, itr->first); }
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+//      グラフィックスパイプラインステートの再生成を行います.
+//-----------------------------------------------------------------------------
+void PipelineStateManager::Recreate(const D3D12_GRAPHICS_PIPELINE_STATE_DESC* pDesc, const PipelineStateHandle& handle)
+{
+    if (pDesc == nullptr)
+    {
+        ELOG("Error : Invalid Arguments.");
+        return;
+    }
+
+    // 既に作成済みかどうかチェック.
+    auto itr = m_ReloadPipelineStates.find(handle);
+    if (itr != m_ReloadPipelineStates.end())
+    {
+        auto pso = itr->second;
+        itr->second = nullptr;
+
+        // 遅延解放.
         Dispose(pso);
     }
 
-    if (m_Type == PIPELINE_TYPE_GRAPHICS)
+    auto pDevice = GetD3D12Device();
+    assert(pDevice != nullptr);
+
+    PipelineStateDesc desc;
+    desc.Type     = PIPELINE_TYPE_GRAPHICS;
+    desc.Graphics = (*pDesc);
+
+    if (pDesc->VS.pShaderBytecode != nullptr && pDesc->VS.BytecodeLength > 0)
     {
-        D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = m_Desc.Graphics;
-        desc.VS.pShaderBytecode = m_VS.data();
-        desc.VS.BytecodeLength  = m_VS.size();
-        desc.PS.pShaderBytecode = m_PS.data();
-        desc.PS.BytecodeLength  = m_PS.size();
-
-        auto hr = GetD3D12Device()->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(m_ReloadedPSO.GetAddress()));
-        if (FAILED(hr))
-        {
-            ELOGA("Error : ID3D12Device::CreateGraphicsPipelineState() Failed. errcode = 0x%x", hr);
-            return;
-        }
-
-         m_ReloadedPSO->SetName(L"asdxGraphicsPipelineState_Reload");
-         ILOGA("Info : Shader Reloaded! VS=%s(%s), PS=%s(%s)",
-             m_ReloadPathVS.c_str(), m_ShaderModelVS.c_str(),
-             m_ReloadPathPS.c_str(), m_ShaderModelPS.c_str());
+        desc.VS.resize(pDesc->VS.BytecodeLength);
+        memcpy(desc.VS.data(), pDesc->VS.pShaderBytecode, pDesc->VS.BytecodeLength);
+        desc.Graphics.VS.pShaderBytecode = desc.VS.data();
+        desc.Graphics.VS.BytecodeLength  = desc.VS.size();
     }
-    else if (m_Type == PIPELINE_TYPE_COMPUTE)
+    if (pDesc->PS.pShaderBytecode != nullptr && pDesc->PS.BytecodeLength > 0)
     {
-        D3D12_COMPUTE_PIPELINE_STATE_DESC desc = m_Desc.Compute;
-        desc.CS.pShaderBytecode = m_CS.data();
-        desc.CS.BytecodeLength  = m_CS.size();
-
-        auto hr = GetD3D12Device()->CreateComputePipelineState(&desc, IID_PPV_ARGS(m_ReloadedPSO.GetAddress()));
-        if (FAILED(hr))
-        {
-            ELOGA("Error : ID3D12Device::CreateComputePipelineState() Failed. errcode = 0x%x", hr);
-            return;
-        }
-
-        m_ReloadedPSO->SetName(L"asdxComputePipelineState_Reload");
-        ILOGA("Info : Shader Reloaded! CS=%s(%s)", m_ReloadPathCS.c_str(), m_ShaderModelCS.c_str());
+        desc.PS.resize(pDesc->PS.BytecodeLength);
+        memcpy(desc.PS.data(), pDesc->PS.pShaderBytecode, pDesc->PS.BytecodeLength);
+        desc.Graphics.PS.pShaderBytecode = desc.PS.data();
+        desc.Graphics.PS.BytecodeLength  = desc.PS.size();
     }
-    else
+    if (pDesc->DS.pShaderBytecode != nullptr && pDesc->DS.BytecodeLength > 0)
     {
-        GEOMETRY_PIPELINE_STATE_DESC desc = m_Desc.Geometry;
-        desc.AS.pShaderBytecode = m_AS.data();
-        desc.AS.BytecodeLength  = m_AS.size();
-        desc.MS.pShaderBytecode = m_MS.data();
-        desc.MS.BytecodeLength  = m_MS.size();
-        desc.PS.pShaderBytecode = m_PS.data();
-        desc.PS.BytecodeLength  = m_PS.size();
-
-        GPS_DESC gpsDesc(&desc);
-
-        D3D12_PIPELINE_STATE_STREAM_DESC pssDesc = {};
-        pssDesc.SizeInBytes = sizeof(gpsDesc);
-        pssDesc.pPipelineStateSubobjectStream = &gpsDesc;
-
-        // パイプラインステート生成.
-        auto hr = GetD3D12Device()->CreatePipelineState(&pssDesc, IID_PPV_ARGS(m_ReloadedPSO.GetAddress()));
-        if (FAILED(hr))
-        {
-            ELOGA("Error : ID3D12Device::CreateGraphicsPipelineState() Failed. errcode = 0x%x", hr);
-            return;
-        }
-
-        m_ReloadedPSO->SetName(L"asdxGeometryPipelineState_Reload");
-        ILOGA("Info : Shader Reloaded! AS=%s(%s), MS=%s(%s), PS=%s(%s)",
-            m_ReloadPathAS.c_str(), m_ShaderModelAS.c_str(),
-            m_ReloadPathMS.c_str(), m_ShaderModelMS.c_str(),
-            m_ReloadPathPS.c_str(), m_ShaderModelPS.c_str());
+        desc.DS.resize(pDesc->DS.BytecodeLength);
+        memcpy(desc.DS.data(), pDesc->DS.pShaderBytecode, pDesc->DS.BytecodeLength);
+        desc.Graphics.DS.pShaderBytecode = desc.DS.data();
+        desc.Graphics.DS.BytecodeLength  = desc.DS.size();
     }
+    if (pDesc->HS.pShaderBytecode != nullptr && pDesc->HS.BytecodeLength > 0)
+    {
+        desc.HS.resize(pDesc->HS.BytecodeLength);
+        memcpy(desc.HS.data(), pDesc->HS.pShaderBytecode, pDesc->HS.BytecodeLength);
+        desc.Graphics.HS.pShaderBytecode = desc.HS.data();
+        desc.Graphics.HS.BytecodeLength  = desc.HS.size();
+    }
+    if (pDesc->HS.pShaderBytecode != nullptr && pDesc->HS.BytecodeLength > 0)
+    {
+        desc.GS.resize(pDesc->GS.BytecodeLength);
+        memcpy(desc.GS.data(), pDesc->GS.pShaderBytecode, pDesc->GS.BytecodeLength);
+        desc.Graphics.GS.pShaderBytecode = desc.GS.data();
+        desc.Graphics.GS.BytecodeLength  = desc.GS.size();
+    }
+
+    ID3D12PipelineState* pPipelineState = nullptr;
+    auto hr = pDevice->CreateGraphicsPipelineState(&desc.Graphics, IID_PPV_ARGS(&pPipelineState));
+    if (FAILED(hr))
+    {
+        if (pPipelineState != nullptr)
+        {
+            pPipelineState->Release();
+            pPipelineState = nullptr;
+        }
+        ELOG("Error : ID3D12Device::CreateGraphicsState() Failed. errcode = 0x%x", hr);
+        return;
+    }
+
+    m_ReloadPipelineStates[handle] = pPipelineState;
+
+    m_Descs[handle] = desc;
 }
+
+//-----------------------------------------------------------------------------
+//      コンピュートパイプラインステートを再生成します.
+//-----------------------------------------------------------------------------
+void PipelineStateManager::Recreate(const D3D12_COMPUTE_PIPELINE_STATE_DESC* pDesc, const PipelineStateHandle& handle)
+{
+    if (pDesc == nullptr)
+    {
+        ELOG("Error : Invalid Arguments.");
+        return;
+    }
+
+    auto itr = m_ReloadPipelineStates.find(handle);
+    if (itr != m_ReloadPipelineStates.end())
+    {
+        auto pso = itr->second;
+        itr->second = nullptr;
+
+        // 遅延解放.
+        Dispose(pso);
+    }
+
+    auto pDevice = GetD3D12Device();
+    assert(pDevice != nullptr);
+
+
+    PipelineStateDesc desc;
+    desc.Type    = PIPELINE_TYPE_COMPUTE;
+    desc.Compute = (*pDesc);
+
+    if (pDesc->CS.pShaderBytecode != nullptr && pDesc->CS.BytecodeLength > 0)
+    {
+        desc.CS.resize(pDesc->CS.BytecodeLength);
+        memcpy(desc.CS.data(), pDesc->CS.pShaderBytecode, pDesc->CS.BytecodeLength);
+        desc.Compute.CS.pShaderBytecode = desc.CS.data();
+        desc.Compute.CS.BytecodeLength  = desc.CS.size();
+    }
+
+    ID3D12PipelineState* pPipelineState = nullptr;
+    auto hr = pDevice->CreateComputePipelineState(&desc.Compute, IID_PPV_ARGS(&pPipelineState));
+    if (FAILED(hr))
+    {
+        if (pPipelineState != nullptr)
+        {
+            pPipelineState->Release();
+            pPipelineState = nullptr;
+        }
+        ELOG("Error : ID3D12Device::CreateComputePipelineState() Failed. errcode = 0x%x", hr);
+        return;
+    }
+
+    m_ReloadPipelineStates[handle] = pPipelineState;
+
+    m_Descs[handle] = desc;
+}
+
+//-----------------------------------------------------------------------------
+//      メッシュシェーダパイプラインステートを再生成します.
+//-----------------------------------------------------------------------------
+void PipelineStateManager::Recreate(const MESH_SHADER_PIPELINE_STATE_DESC* pDesc, const PipelineStateHandle& handle)
+{
+    if (pDesc == nullptr)
+    {
+        ELOG("Error : Invalid Arguments.");
+        return;
+    }
+
+    auto pDevice = GetD3D12Device();
+    assert(pDevice != nullptr);
+
+#ifdef ASDX_ENABLE_MESH_SHADER
+    // シェーダモデルをチェック.
+    {
+        D3D12_FEATURE_DATA_SHADER_MODEL shaderModel = { D3D_SHADER_MODEL_6_5 };
+        auto hr = pDevice->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &shaderModel, sizeof(shaderModel));
+        if (FAILED(hr) || (shaderModel.HighestShaderModel < D3D_SHADER_MODEL_6_5))
+        {
+            ELOG("Error : Shader Model 6.5 is not supported.");
+            return;
+        }
+    }
+
+    // メッシュシェーダをサポートしているかどうかチェック.
+    {
+        D3D12_FEATURE_DATA_D3D12_OPTIONS7 features = {};
+        auto hr = pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &features, sizeof(features));
+        if (FAILED(hr) || (features.MeshShaderTier == D3D12_MESH_SHADER_TIER_NOT_SUPPORTED))
+        {
+            ELOG("Error : Mesh Shaders aren't supported.");
+            return;
+        }
+    }
+#endif
+
+
+    PipelineStateDesc desc;
+    desc.Type       = PIPELINE_TYPE_MESH_SHADER;
+    desc.MeshShader = (*pDesc);
+
+    // 既に作成済みかどうかチェック.
+    auto itr = m_ReloadPipelineStates.find(handle);
+    if (itr != m_ReloadPipelineStates.end())
+    {
+        auto pso = itr->second;
+        itr->second = nullptr;
+
+        // 遅延解放.
+        Dispose(pso);
+    }
+
+    if (pDesc->AS.pShaderBytecode != nullptr && pDesc->AS.BytecodeLength > 0)
+    {
+        desc.AS.resize(pDesc->AS.BytecodeLength);
+        memcpy(desc.AS.data(), pDesc->AS.pShaderBytecode, pDesc->AS.BytecodeLength);
+        desc.MeshShader.AS.pShaderBytecode = desc.AS.data();
+        desc.MeshShader.AS.BytecodeLength  = desc.AS.size();
+    }
+    if (pDesc->MS.pShaderBytecode != nullptr && pDesc->MS.BytecodeLength > 0)
+    {
+        desc.MS.resize(pDesc->MS.BytecodeLength);
+        memcpy(desc.MS.data(), pDesc->MS.pShaderBytecode, pDesc->MS.BytecodeLength);
+        desc.MeshShader.MS.pShaderBytecode = desc.MS.data();
+        desc.MeshShader.MS.BytecodeLength  = desc.MS.size();
+    }
+    if (pDesc->PS.pShaderBytecode != nullptr && pDesc->PS.BytecodeLength > 0)
+    {
+        desc.PS.resize(pDesc->PS.BytecodeLength);
+        memcpy(desc.PS.data(), pDesc->PS.pShaderBytecode, pDesc->PS.BytecodeLength);
+        desc.MeshShader.PS.pShaderBytecode = desc.PS.data();
+        desc.MeshShader.PS.BytecodeLength  = desc.PS.size();
+    }
+
+    MsPsoDesc msPsoDesc(&desc.MeshShader);
+
+    D3D12_PIPELINE_STATE_STREAM_DESC pssDesc = {};
+    pssDesc.SizeInBytes = sizeof(msPsoDesc);
+    pssDesc.pPipelineStateSubobjectStream = &msPsoDesc;
+
+    // パイプラインステート生成.
+    ID3D12PipelineState* pPipelineState = nullptr;
+    auto hr = pDevice->CreatePipelineState(&pssDesc, IID_PPV_ARGS(&pPipelineState));
+    if (FAILED(hr))
+    {
+        if (pPipelineState != nullptr)
+        {
+            pPipelineState->Release();
+            pPipelineState = nullptr;
+        }
+
+        ELOG("Error : ID3D12Device::CreatePipelineState() Failed. errcode = 0x%x", hr);
+        return;
+    }
+
+    m_ReloadPipelineStates[handle] = pPipelineState;
+
+    m_Descs[handle] = desc;
+}
+
+//-----------------------------------------------------------------------------
+//      更新処理を行います.
+//-----------------------------------------------------------------------------
+void PipelineStateManager::Update()
+{
+    if (m_RequestDescs.empty())
+        return;
+
+    for(const auto& desc : m_RequestDescs)
+    {
+        switch(desc.second.Type)
+        {
+            case PIPELINE_TYPE_GRAPHICS    : { Recreate(&desc.second.Graphics  , desc.first); } break;
+            case PIPELINE_TYPE_COMPUTE     : { Recreate(&desc.second.Compute   , desc.first); } break;
+            case PIPELINE_TYPE_MESH_SHADER : { Recreate(&desc.second.MeshShader, desc.first); } break;
+            default: break;
+        }
+    }
+
+    m_RequestDescs.clear();
+}
+
+#endif
+
+///////////////////////////////////////////////////////////////////////////////
+// Functions.
+///////////////////////////////////////////////////////////////////////////////
 
 //-----------------------------------------------------------------------------
 //      SRVレンジとして初期化します.

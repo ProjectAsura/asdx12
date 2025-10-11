@@ -9,46 +9,35 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <cstdint>
-#include <cstring>
+
 
 namespace asdx {
 
 //-----------------------------------------------------------------------------
-//! @brief      FNV1によるハッシュ値を計算します.
+//! @brief      バッファからハッシュキーを計算します.
 //! 
-//! @param[in]      buffer      バッファ.
+//! @param[in]      pBuffer     バッファ.
 //! @param[in]      size        バッファサイズ.
-//! @return     ハッシュ値を返却します.
+//! @return     ハッシュキーを返却します.
 //-----------------------------------------------------------------------------
-inline uint32_t CalcHash(const uint8_t* buffer, uint32_t size)
-{
-    const uint32_t kOffset  = 2166136261;
-    const uint32_t kPrime   = 16777619;
-
-    auto hash = kOffset;
-    for(auto i=0u; i<size; ++i)
-    { hash = (kPrime * hash) ^ buffer[i]; }
-
-    return hash;
-}
+uint64_t CalcHash(const void* pBuffer, size_t size);
 
 //-----------------------------------------------------------------------------
-//! @brief      FNV1によるハッシュ値を計算します.
+//! @brief      文字列からハッシュキーを計算します.
 //! 
-//! @param[in]      buffer      文字列.
-//! @return     ハッシュ値を返却します.
+//! @param[in]      strings     NULL終端文字列.
+//! @return     ハッシュキーを返却します.
 //-----------------------------------------------------------------------------
-inline uint32_t CalcHash(const char* buffer)
-{
-    const uint32_t kOffset  = 2166136261;
-    const uint32_t kPrime   = 16777619;
+uint64_t CalcHash(const char* strings);
 
-    auto hash = kOffset;
-    auto size = strlen(buffer);
-    for(auto i=0u; i<size; ++i)
-    { hash = (kPrime * hash) ^ buffer[i]; }
-
-    return hash;
-}
+//-----------------------------------------------------------------------------
+//! @brief      シード値を用いてハッシュキーを計算します.
+//!
+//! @param[in]      pBuffer     バッファ.
+//! @param[in]      size        バッファサイズ.
+//! @param[in]      prevHash    シード値.
+//! @return     ハッシュキーを返却します.
+//-----------------------------------------------------------------------------
+uint64_t CalcHashWithSeed(const void* pBuffer, size_t size, uint64_t prevHash);
 
 } // namespace asdx

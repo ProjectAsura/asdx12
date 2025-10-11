@@ -9,7 +9,7 @@
 //-----------------------------------------------------------------------------
 #include <gfx/asdxFade.h>
 #include <gfx/asdxDevice.h>
-#include <gfx/asdxPipelineState.h>
+#include <gfx/asdxPresetState.h>
 #include <res/asdxResTexture.h>
 #include <fnd/asdxLogger.h>
 

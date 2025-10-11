@@ -70,6 +70,9 @@
     <Filter Include="ソース ファイル\external\D3D12MA">
       <UniqueIdentifier>{b9afb970-fc06-45f7-be9d-b1801116a8e8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ソース ファイル\external\xxHash">
+      <UniqueIdentifier>{933492be-dad0-415e-96ea-e20cf9f6e4d1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\external\imgui\imgui.cpp">
@@ -308,6 +311,15 @@
     </ClCompile>
     <ClCompile Include="..\src\gfx\asdxMapChip.cpp">
       <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gfx\asdxPresetState.cpp">
+      <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\xxHash\xxhash.c">
+      <Filter>ソース ファイル\external\xxHash</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\fnd\asdxHash.cpp">
+      <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -571,6 +583,12 @@
     </ClInclude>
     <ClInclude Include="..\include\gfx\asdxMapChip.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\gfx\asdxPresetState.h">
+      <Filter>ヘッダー ファイル\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\external\xxHash\xxhash.h">
+      <Filter>ソース ファイル\external\xxHash</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

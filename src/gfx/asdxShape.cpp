@@ -11,6 +11,7 @@
 #include <fnd/asdxLogger.h>
 #include <fnd/asdxMisc.h>
 #include <gfx/asdxShape.h>
+#include <gfx/asdxPresetState.h>
 #include <gfx/asdxPipelineState.h>
 #include <gfx/asdxDevice.h>
 

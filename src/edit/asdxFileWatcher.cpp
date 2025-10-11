@@ -170,10 +170,11 @@ struct Worker
                         { CloseHandle(handle); }
                     }
 
+                    auto fullPath = std::string(DirectoryPath) + "/" + path;
+
                     asdx::FileEventArgs args;
-                    args.Type           = asdx::FileEventArgs::TYPE(pInfos->Action);
-                    args.DirectoryPath  = DirectoryPath;
-                    args.RelativePath   = path;
+                    args.Type     = asdx::FileEventArgs::TYPE(pInfos->Action);
+                    args.FullPath = asdx::ToFullPathA(fullPath.c_str());
 
                     for(auto& listener : pListeners)
                     { listener->OnChanged(args); }
