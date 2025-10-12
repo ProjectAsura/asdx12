@@ -97,6 +97,10 @@ namespace asdx {
 ///////////////////////////////////////////////////////////////////////////////
 // TextureConverter class
 ///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      変換処理を行います.
+//-----------------------------------------------------------------------------
 bool TextureConverter::Convert(const Desc& desc)
 {
     if (desc.InputPath.empty() || desc.OutputPath.empty())
@@ -190,6 +194,67 @@ bool TextureConverter::Convert(const Desc& desc)
     }
 
     // 正常終了.
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      変換処理を行います.
+//-----------------------------------------------------------------------------
+bool TextureConverter::Convert(const DirectX::ScratchImage& scratchImage, std::vector<uint8_t>& output)
+{
+    const auto& texMetaData = scratchImage.GetMetadata();
+
+    if (texMetaData.format == DXGI_FORMAT_UNKNOWN)
+    {
+        fprintf_s(stderr, "Converter Error: Unsupported Resource Format. format = 0x%x\n", texMetaData.format);
+        return false;
+    }
+
+    if (texMetaData.mipLevels >= 15)
+    {
+        fprintf_s(stderr,"Converter Error: Invalid MipLevles. mipLevels = %zu\n", texMetaData.mipLevels);
+        return false;
+    }
+
+    // 独自バイナリ形式に変換.
+    {
+        flatbuffers::FlatBufferBuilder builder(1024);
+
+        // サブリソースを準備.
+        std::vector<asdx::res::SubresourceInfo> subresources;
+        subresources.resize(scratchImage.GetImageCount());
+
+        // サブリソース構築.
+        const auto* images = scratchImage.GetImages();
+        for(size_t i=0; i<scratchImage.GetImageCount(); ++i)
+        {
+            subresources[i] = asdx::res::SubresourceInfo(
+                uint32_t(images[i].width),
+                uint32_t(images[i].height),
+                uint32_t(images[i].rowPitch),
+                uint32_t(images[i].slicePitch));
+        }
+
+        // テクスチャバイナリを作成.
+        auto resource = CreateTextureBinary(
+            builder,
+            CURRENT_VERSION,
+            GetDimension(texMetaData),
+            uint32_t(texMetaData.width),
+            uint32_t(texMetaData.height),
+            GetDepthOrArraySize(texMetaData),
+            uint16_t(texMetaData.mipLevels),
+            uint32_t(texMetaData.format),
+            builder.CreateVectorOfStructs<asdx::res::SubresourceInfo>(subresources),
+            builder.CreateVector<uint8_t>(scratchImage.GetPixels(), scratchImage.GetPixelsSize()));
+        
+        // ビルド終了.
+        builder.Finish(resource);
+
+        output.resize(builder.GetSize());
+        memcpy(output.data(), builder.GetBufferPointer(), builder.GetSize());
+    }
+
     return true;
 }
 

@@ -21,8 +21,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{e8e1ed03-6b41-444c-ab75-5aa7299969dc}</ProjectGuid>
-    <RootNamespace>MaterialConverter</RootNamespace>
+    <ProjectGuid>{998ffd51-597d-4a1f-9753-130ef47c22a1}</ProjectGuid>
+    <RootNamespace>TextureViewer</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -100,19 +100,18 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ASDX_AUTO_LINK;ASDX_ENABLE_IMGUI;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\..\..\external\cmdline;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\..\..\include;$(ProjectDir)..\..\TextureConverter\include;$(ProjectDir)..\..\..\external\D3D12MemoryAllocator\include;$(ProjectDir)..\..\..\external\imgui;$(ProjectDir)..\..\..\external\DirectXTex\DirectXTex;$(ProjectDir)..\..\..\external\flatbuffers\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
-    <PreBuildEvent>
-      <Command>$(ProjectDir)..\..\..\external\flatbuffers\bin\flatc.exe --cpp -o $(ProjectDir)..\include $(ProjectDir)..\format\MaterialBinary.fbs --no-warnings
-xcopy $(ProjectDir)..\include\MaterialBinary_generated.h $(ProjectDir)..\..\..\src\res /y /c</Command>
-    </PreBuildEvent>
+    <Manifest>
+      <EnableDpiAwareness>true</EnableDpiAwareness>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -120,26 +119,34 @@ xcopy $(ProjectDir)..\include\MaterialBinary_generated.h $(ProjectDir)..\..\..\s
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ASDX_AUTO_LINK;ASDX_ENABLE_IMGUI;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\..\..\external\cmdline;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\..\..\include;$(ProjectDir)..\..\TextureConverter\include;$(ProjectDir)..\..\..\external\D3D12MemoryAllocator\include;$(ProjectDir)..\..\..\external\imgui;$(ProjectDir)..\..\..\external\DirectXTex\DirectXTex;$(ProjectDir)..\..\..\external\flatbuffers\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
-    <PreBuildEvent>
-      <Command>$(ProjectDir)..\..\..\external\flatbuffers\bin\flatc.exe --cpp -o $(ProjectDir)..\include $(ProjectDir)..\format\MaterialBinary.fbs --no-warnings
-xcopy $(ProjectDir)..\include\MaterialBinary_generated.h $(ProjectDir)..\..\..\src\res /y /c</Command>
-    </PreBuildEvent>
+    <Manifest>
+      <EnableDpiAwareness>true</EnableDpiAwareness>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\src\main.cpp" />
+    <ClCompile Include="..\src\TextureViewer.cpp" />
+    <ClCompile Include="..\src\TextureViewerUtil.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="MaterialConverterLib.vcxproj">
-      <Project>{41562745-5e3a-4c0e-9767-3acd6d35e175}</Project>
+    <ClInclude Include="..\include\TextureViewer.h" />
+    <ClInclude Include="..\include\TextureViewerUtil.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\project\asdx12.vcxproj">
+      <Project>{ecd906d6-5deb-4b5b-b919-05c147194c1d}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\TextureConverter\project\TextureConverterLib.vcxproj">
+      <Project>{e549eb2f-2172-47b4-b323-f74909a9acf6}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

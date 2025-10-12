@@ -9,14 +9,19 @@
 // * DDS
 // * TGA
 // * HDR
-// * WIC(BMP, JPEG, PNG, TIFF, GIT, HD Photo).
+// * WIC(BMP, JPEG, PNG, TIFF, GIF, HD Photo).
 
 
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
 #include <string>
+#include <vector>
 
+
+namespace DirectX {
+class ScratchImage;
+} // namespace DirectX
 
 namespace asdx {
 
@@ -67,6 +72,16 @@ public:
     //! @retval false   変換に失敗.
     //-------------------------------------------------------------------------
     bool Convert(const Desc& desc);
+
+    //-------------------------------------------------------------------------
+    //! @brief      変換処理を行います.
+    //! 
+    //! @param[in]      input       入力テクスチャ.
+    //! @param[out]     output      出力バイナリ.
+    //! @retval true    変換に成功.
+    //! @retval false   変換に失敗.
+    //-------------------------------------------------------------------------
+    bool Convert(const DirectX::ScratchImage& input, std::vector<uint8_t>& output);
 
 private:
     //=========================================================================
