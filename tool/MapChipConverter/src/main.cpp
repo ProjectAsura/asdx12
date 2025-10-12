@@ -10,6 +10,7 @@
 #include <MapChipConverter.h>
 #include <cmdline.h>
 
+
 //-----------------------------------------------------------------------------
 //      メインエントリーポイントです.
 //-----------------------------------------------------------------------------
@@ -31,7 +32,7 @@ int main(int argc, char** argv)
     parser.parse_check(argc, argv);
 
     MapChipConverter::Desc desc = {};
-    desc.InputPath = parser.get<std::string>("input");
+    desc.InputPath  = parser.get<std::string>("input");
     desc.OutputPath = parser.get<std::string>("output");
 
     auto ret = MapChipConverter().Convert(desc);

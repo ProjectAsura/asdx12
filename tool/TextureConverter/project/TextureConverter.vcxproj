@@ -134,15 +134,10 @@ xcopy $(ProjectDir)..\include\TextureBinary_generated.h $(ProjectDir)..\..\..\sr
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\src\main.cpp" />
-    <ClCompile Include="..\src\TextureConverter.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\include\TextureBinary_generated.h" />
-    <ClInclude Include="..\include\TextureConverter.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\external\DirectXTex\DirectXTex\DirectXTex_Desktop_2022.vcxproj">
-      <Project>{371b9fa9-4c90-4ac6-a123-aced756d6c77}</Project>
+    <ProjectReference Include="TextureConverterLib.vcxproj">
+      <Project>{e549eb2f-2172-47b4-b323-f74909a9acf6}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

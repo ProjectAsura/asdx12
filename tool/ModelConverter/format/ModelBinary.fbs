@@ -39,25 +39,25 @@ struct Unorm4
 
 struct Float4x4
 {
-    e11 : float;
-    e12 : float;
-    e13 : float;
-    e14 : float;
+    M11 : float;
+    M12 : float;
+    M13 : float;
+    M14 : float;
 
-    e21 : float;
-    e22 : float;
-    e23 : float;
-    e24 : float;
+    M21 : float;
+    M22 : float;
+    M23 : float;
+    M24 : float;
 
-    e31 : float;
-    e32 : float;
-    e33 : float;
-    e34 : float;
+    M31 : float;
+    M32 : float;
+    M33 : float;
+    M34 : float;
 
-    e41 : float;
-    e42 : float;
-    e43 : float;
-    e44 : float;
+    M41 : float;
+    M42 : float;
+    M43 : float;
+    M44 : float;
 }
 
 table Bone

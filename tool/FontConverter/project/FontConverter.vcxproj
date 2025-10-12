@@ -137,16 +137,14 @@ xcopy $(ProjectDir)..\include\FontBinary_generated.h $(ProjectDir)..\..\..\src\r
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\external\simdjson\src\simdjson.cpp" />
-    <ClCompile Include="..\src\FontConverter.cpp" />
     <ClCompile Include="..\src\main.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\include\FontConverter.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\external\DirectXTex\DirectXTex\DirectXTex_Desktop_2022.vcxproj">
       <Project>{371b9fa9-4c90-4ac6-a123-aced756d6c77}</Project>
+    </ProjectReference>
+    <ProjectReference Include="FontConverterLib.vcxproj">
+      <Project>{0ddf2399-cb08-43ba-b623-e8827d407a08}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

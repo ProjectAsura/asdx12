@@ -148,6 +148,9 @@ struct MsPsoDesc
     }
 };
 
+//-----------------------------------------------------------------------------
+//      グラフィックスパイプラインステート設定のハッシュ値を計算します.
+//-----------------------------------------------------------------------------
 uint64_t CalcDescHash(const D3D12_GRAPHICS_PIPELINE_STATE_DESC* pDesc)
 {
     auto hash = asdx::CalcHash(pDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
@@ -164,6 +167,9 @@ uint64_t CalcDescHash(const D3D12_GRAPHICS_PIPELINE_STATE_DESC* pDesc)
     return hash;
 }
 
+//-----------------------------------------------------------------------------
+//      コンピュートパイプラインステート設定のハッシュ値を計算します.
+//-----------------------------------------------------------------------------
 uint64_t CalcDescHash(const D3D12_COMPUTE_PIPELINE_STATE_DESC* pDesc)
 {
     auto hash = asdx::CalcHash(pDesc, sizeof(D3D12_COMPUTE_PIPELINE_STATE_DESC));
@@ -171,6 +177,9 @@ uint64_t CalcDescHash(const D3D12_COMPUTE_PIPELINE_STATE_DESC* pDesc)
     return hash;
 }
 
+//-----------------------------------------------------------------------------
+//      メッシュシェーダパイプラインステート設定のハッシュ値を計算します.
+//-----------------------------------------------------------------------------
 uint64_t CalcDescHash(const asdx::MESH_SHADER_PIPELINE_STATE_DESC* pDesc)
 {
     auto hash = asdx::CalcHash(pDesc, sizeof(asdx::MESH_SHADER_PIPELINE_STATE_DESC));

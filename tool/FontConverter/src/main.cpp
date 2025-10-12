@@ -24,9 +24,9 @@ int main(int argc, char** argv)
     cmdline::parser parser;
 
     // 引数指定を設定.
-    parser.add<std::string>("texture", 't', "Input DDS file Path", true, "");
-    parser.add<std::string>("json", 'j', "Input Glyph JSON File Path", true, "");
-    parser.add<std::string>("output", 'o', "Output Font Binary Path", true, "");
+    parser.add<std::string>("texture", 't', "Input DDS file Path",        true, "");
+    parser.add<std::string>("json",    'j', "Input Glyph JSON File Path", true, "");
+    parser.add<std::string>("output",  'o', "Output Font Binary Path",    true, "");
 
     // 解析実行.
     parser.parse_check(argc, argv);

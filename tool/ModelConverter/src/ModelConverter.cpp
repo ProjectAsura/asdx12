@@ -8,8 +8,14 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <cstdio>
+#include <map>
+#include <fnd/asdxMath.h>
 #include <ModelConverter.h>
 #include <mikktspace.h>
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+#include <ModelBinary_generated.h>
 
 
 #ifndef ELOG
@@ -22,6 +28,16 @@ namespace {
 // Constant Values.
 //-----------------------------------------------------------------------------
 static constexpr uint32_t CURRENT_VERION = 1u;  //!< 現在サポートされているバージョン.
+
+///////////////////////////////////////////////////////////////////////////////
+// BoneInfo structure
+///////////////////////////////////////////////////////////////////////////////
+struct BoneInfo
+{
+    uint32_t        Index;          // Bone Index.
+    std::string     Name;           // Name of Bone.
+    asdx::Matrix    OffsetMatrix;   // Inverse Bind Pose Matrix.
+};
 
 //-----------------------------------------------------------------------------
 //      Unorm4 に変換します.
@@ -47,129 +63,13 @@ asdx::res::Float4x4 ToFloat4x4(const asdx::Matrix& matrix)
         matrix._41, matrix._42, matrix._43, matrix._44);
 }
 
-} // namespace
-
-///////////////////////////////////////////////////////////////////////////////
-// ModelConverter class
-///////////////////////////////////////////////////////////////////////////////
-
-//-----------------------------------------------------------------------------
-//      変換処理を行います.
-//-----------------------------------------------------------------------------
-bool ModelConverter::Convert(const Desc& desc)
-{
-    if (desc.InputPath.empty() || desc.OutputPath.empty())
-    {
-        ELOG("Error : Invalid Argument.");
-        return false;
-    }
-
-    int flag = 0;
-    flag |= aiProcess_Triangulate;
-    flag |= aiProcess_PreTransformVertices;
-    flag |= aiProcess_GenSmoothNormals;
-    flag |= aiProcess_GenUVCoords;
-    flag |= aiProcess_RemoveRedundantMaterials;
-    flag |= aiProcess_OptimizeMeshes;
-    flag |= aiProcess_LimitBoneWeights;
-
-    Assimp::Importer importer;
-    auto pScene = importer.ReadFile(desc.InputPath.c_str(), flag);
-
-    if (pScene == nullptr)
-    {
-        ELOG("Error : Importer::ReadFile() Failed. path = %s", desc.InputPath.c_str());
-        return false;
-    }
-
-    flatbuffers::FlatBufferBuilder builder(1024);
-
-    // メッシュデータを変換.
-    std::vector<flatbuffers::Offset<asdx::res::Mesh>> meshes;
-    meshes.resize(pScene->mNumMeshes);
-    for(auto i=0u; i<pScene->mNumMeshes; ++i)
-    {
-        const auto srcMesh = pScene->mMeshes[i];
-        auto& dstMesh = meshes[i];
-
-        auto materialTag = pScene->mMaterials[srcMesh->mMaterialIndex]->GetName().C_Str();
-
-        ParseMesh(builder, materialTag, dstMesh, srcMesh);
-    }
-
-    // ボーンデータを変換.
-    std::vector<flatbuffers::Offset<asdx::res::Bone>> bones;
-    bones.reserve(m_BoneMap.size());
-    for(auto& itr : m_BoneMap)
-    {
-        auto mtx = ToFloat4x4(itr.second.OffsetMatrix);
-        auto bone = asdx::res::CreateBoneDirect(
-            builder,
-            itr.second.Name.c_str(),
-            &mtx);
-        bones.emplace_back(bone);
-    }
-
-    auto rootMtx = asdx::Matrix(
-        pScene->mRootNode->mTransformation.a1,
-        pScene->mRootNode->mTransformation.a2,
-        pScene->mRootNode->mTransformation.a3,
-        pScene->mRootNode->mTransformation.a4,
-        pScene->mRootNode->mTransformation.b1,
-        pScene->mRootNode->mTransformation.b2,
-        pScene->mRootNode->mTransformation.b3,
-        pScene->mRootNode->mTransformation.b4,
-        pScene->mRootNode->mTransformation.c1,
-        pScene->mRootNode->mTransformation.c2,
-        pScene->mRootNode->mTransformation.c3,
-        pScene->mRootNode->mTransformation.c4,
-        pScene->mRootNode->mTransformation.d1,
-        pScene->mRootNode->mTransformation.d2,
-        pScene->mRootNode->mTransformation.d3,
-        pScene->mRootNode->mTransformation.d4);
-    auto invRootMtx = asdx::Matrix::Invert(rootMtx);
-
-    auto resRootMtx    = ToFloat4x4(rootMtx);
-    auto resInvRootMtx = ToFloat4x4(invRootMtx);
-
-    auto bin = asdx::res::CreateModelBinaryDirect(
-        builder,
-        CURRENT_VERION,
-        &meshes,
-        &bones,
-        &resRootMtx,
-        &resInvRootMtx);
-
-    builder.Finish(bin);
-
-    // バイナリファイルに出力.
-    {
-        auto buffer     = builder.GetBufferPointer();
-        auto bufferSize = builder.GetSize();
-
-        FILE* fp = nullptr;
-        auto err = fopen_s(&fp, desc.OutputPath.c_str(), "wb");
-        if (err != 0)
-        {
-            ELOG("Error : Output File Open Failed. path = %s", desc.OutputPath.c_str());
-            return false;
-        }
-
-        fwrite(buffer, bufferSize, 1, fp);
-        fclose(fp);
-    }
-
-    pScene = nullptr;
-
-    return true;
-}
-
 //-----------------------------------------------------------------------------
 //      メッシュを解析します.
 //-----------------------------------------------------------------------------
-void ModelConverter::ParseMesh
+void ParseMesh
 (
     flatbuffers::FlatBufferBuilder&         builder,
+    std::map<std::string, BoneInfo>&        boneMap,
     const char*                             materialTag,
     flatbuffers::Offset<asdx::res::Mesh>&   dstMesh,
     const aiMesh*                           srcMesh
@@ -226,9 +126,9 @@ void ModelConverter::ParseMesh
             auto boneName = std::string(bone->mName.C_Str());
 
             uint32_t boneId = 0;
-            if (m_BoneMap.find(boneName) == std::end(m_BoneMap))
+            if (boneMap.find(boneName) == std::end(boneMap))
             {
-                boneId = uint32_t(m_BoneMap.size());
+                boneId = uint32_t(boneMap.size());
                 BoneInfo info;
                 info.Index = boneId;
                 info.Name  = boneName;
@@ -253,11 +153,11 @@ void ModelConverter::ParseMesh
                     bone->mOffsetMatrix.d3,
                     bone->mOffsetMatrix.d4);
 
-                m_BoneMap[boneName] = info;
+                boneMap[boneName] = info;
             }
             else
             {
-                boneId = m_BoneMap[boneName].Index;
+                boneId = boneMap[boneName].Index;
             }
 
             for(auto j=0u; j<bone->mNumWeights; ++j)
@@ -465,4 +365,122 @@ void ModelConverter::ParseMesh
         &boneWeights,
         &boneIndices,
         &vertexIndices);
+}
+
+} // namespace
+
+///////////////////////////////////////////////////////////////////////////////
+// ModelConverter class
+///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      変換処理を行います.
+//-----------------------------------------------------------------------------
+bool ModelConverter::Convert(const Desc& desc)
+{
+    if (desc.InputPath.empty() || desc.OutputPath.empty())
+    {
+        ELOG("Error : Invalid Argument.");
+        return false;
+    }
+
+    int flag = 0;
+    flag |= aiProcess_Triangulate;
+    flag |= aiProcess_PreTransformVertices;
+    flag |= aiProcess_GenSmoothNormals;
+    flag |= aiProcess_GenUVCoords;
+    flag |= aiProcess_RemoveRedundantMaterials;
+    flag |= aiProcess_OptimizeMeshes;
+    flag |= aiProcess_LimitBoneWeights;
+
+    Assimp::Importer importer;
+    auto pScene = importer.ReadFile(desc.InputPath.c_str(), flag);
+
+    if (pScene == nullptr)
+    {
+        ELOG("Error : Importer::ReadFile() Failed. path = %s", desc.InputPath.c_str());
+        return false;
+    }
+
+    flatbuffers::FlatBufferBuilder builder(1024);
+
+    // メッシュデータを変換.
+    std::vector<flatbuffers::Offset<asdx::res::Mesh>> meshes;
+    std::map<std::string, BoneInfo> boneMap;
+    meshes.resize(pScene->mNumMeshes);
+    for(auto i=0u; i<pScene->mNumMeshes; ++i)
+    {
+        const auto srcMesh = pScene->mMeshes[i];
+        auto& dstMesh = meshes[i];
+
+        auto materialTag = pScene->mMaterials[srcMesh->mMaterialIndex]->GetName().C_Str();
+
+        ParseMesh(builder, boneMap, materialTag, dstMesh, srcMesh);
+    }
+
+    // ボーンデータを変換.
+    std::vector<flatbuffers::Offset<asdx::res::Bone>> bones;
+    bones.reserve(boneMap.size());
+    for(auto& itr : boneMap)
+    {
+        auto mtx = ToFloat4x4(itr.second.OffsetMatrix);
+        auto bone = asdx::res::CreateBoneDirect(
+            builder,
+            itr.second.Name.c_str(),
+            &mtx);
+        bones.emplace_back(bone);
+    }
+
+    auto rootMtx = asdx::Matrix(
+        pScene->mRootNode->mTransformation.a1,
+        pScene->mRootNode->mTransformation.a2,
+        pScene->mRootNode->mTransformation.a3,
+        pScene->mRootNode->mTransformation.a4,
+        pScene->mRootNode->mTransformation.b1,
+        pScene->mRootNode->mTransformation.b2,
+        pScene->mRootNode->mTransformation.b3,
+        pScene->mRootNode->mTransformation.b4,
+        pScene->mRootNode->mTransformation.c1,
+        pScene->mRootNode->mTransformation.c2,
+        pScene->mRootNode->mTransformation.c3,
+        pScene->mRootNode->mTransformation.c4,
+        pScene->mRootNode->mTransformation.d1,
+        pScene->mRootNode->mTransformation.d2,
+        pScene->mRootNode->mTransformation.d3,
+        pScene->mRootNode->mTransformation.d4);
+    auto invRootMtx = asdx::Matrix::Invert(rootMtx);
+
+    auto resRootMtx    = ToFloat4x4(rootMtx);
+    auto resInvRootMtx = ToFloat4x4(invRootMtx);
+
+    auto bin = asdx::res::CreateModelBinaryDirect(
+        builder,
+        CURRENT_VERION,
+        &meshes,
+        &bones,
+        &resRootMtx,
+        &resInvRootMtx);
+
+    builder.Finish(bin);
+
+    // バイナリファイルに出力.
+    {
+        auto buffer     = builder.GetBufferPointer();
+        auto bufferSize = builder.GetSize();
+
+        FILE* fp = nullptr;
+        auto err = fopen_s(&fp, desc.OutputPath.c_str(), "wb");
+        if (err != 0)
+        {
+            ELOG("Error : Output File Open Failed. path = %s", desc.OutputPath.c_str());
+            return false;
+        }
+
+        fwrite(buffer, bufferSize, 1, fp);
+        fclose(fp);
+    }
+
+    pScene = nullptr;
+
+    return true;
 }
