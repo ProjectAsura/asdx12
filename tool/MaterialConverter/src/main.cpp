@@ -25,17 +25,17 @@ int main(int argc, char** argv)
     cmdline::parser parser;
 
     // 引数指定を設定.
-    parser.add<std::string>("input", 'i', "Input Mep file path", true, "");
+    parser.add<std::string>("input",  'i', "Input Mep file path", true, "");
     parser.add<std::string>("output", 'o', "Output Material Binary Path", true, "");
 
     // 解析実行.
     parser.parse_check(argc, argv);
 
-    MaterialConverter::Desc desc = {};
+    asdx::MaterialConverter::Desc desc = {};
     desc.InputPath  = parser.get<std::string>("input");
     desc.OutputPath = parser.get<std::string>("output");
 
-    auto ret = MaterialConverter().Convert(desc);
+    auto ret = asdx::MaterialConverter::Convert(desc);
     if (ret)
     {
         fprintf_s(stdout, "Material Convert Success! OutputPath = %s\n", desc.OutputPath.c_str());

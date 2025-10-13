@@ -22,6 +22,13 @@ int main(int argc, char** argv)
         return -1;
     }
 
+    auto hr = CoInitialize(nullptr);
+    if (FAILED(hr))
+    {
+        fprintf_s(stderr, "Error : CoInitilalize() Failed. errcode = 0x%x", hr);
+        return false;
+    }
+
     cmdline::parser parser;
 
     // 引数指定を設定.
@@ -31,11 +38,14 @@ int main(int argc, char** argv)
     // 解析実行.
     parser.parse_check(argc, argv);
 
-    MapChipConverter::Desc desc = {};
+    asdx::MapChipConverter::Desc desc = {};
     desc.InputPath  = parser.get<std::string>("input");
     desc.OutputPath = parser.get<std::string>("output");
 
-    auto ret = MapChipConverter().Convert(desc);
+    auto ret = asdx::MapChipConverter::Convert(desc);
+
+    CoUninitialize();
+
     if (ret)
     {
         fprintf_s(stdout, "MapChip Convert Success! OutputPath = %s\n", desc.OutputPath.c_str());

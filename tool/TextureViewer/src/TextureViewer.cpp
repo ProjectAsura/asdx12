@@ -648,11 +648,10 @@ void TextureViewer::MenuHelp()
 //-----------------------------------------------------------------------------
 void TextureViewer::RecreateTexture(ID3D12GraphicsCommandList* pCmd)
 {
-    std::vector<uint8_t>   blob;
-    asdx::TextureConverter conv;
+    std::vector<uint8_t> blob;
 
     // asdx形式に変換.
-    if (!conv.Convert(m_ScratchImage, blob))
+    if (!asdx::TextureConverter::Convert(m_ScratchImage, blob))
     {
         ELOG("Error : TexutreConverter::Convret() Failed.");
         return;
@@ -683,9 +682,8 @@ void TextureViewer::SaveTextureBinary(const char* path)
     if (m_ScratchImage.GetImageCount() == 0 || path == nullptr)
         return;
 
-    std::vector<uint8_t>   blob;
-    asdx::TextureConverter conv;
-    if (!conv.Convert(m_ScratchImage, blob))
+    std::vector<uint8_t> blob;
+    if (!asdx::TextureConverter::Convert(m_ScratchImage, blob))
     {
         ELOG("Error : TextureConverter::Convert() Failed.");
         return;
@@ -719,12 +717,13 @@ bool TextureViewer::LoadScratchImage(const wchar_t* path)
             return false;
         }
 
-        asdx::TextureConverter conv;
-        if (!conv.ReverseConvert(blob, scratchImage))
+        if (!asdx::TextureConverter::ReverseConvert(blob, scratchImage))
         {
             ELOG("Error : TextureConverter::ReverseConvert() Failed. path = %ls", path);
             return false;
         }
+
+        hr = S_OK;
     }
     else if (ext == L"dds")
     {
@@ -773,24 +772,18 @@ bool TextureViewer::SaveScratchImage(const wchar_t* path)
     DirectX::ScratchImage scratchImage;
     if (ext == L"txb")
     {
-        std::vector<uint8_t>   blob;
-        asdx::TextureConverter conv;
-        if (!conv.Convert(m_ScratchImage, blob))
+        std::vector<uint8_t> blob;
+        if (!asdx::TextureConverter::Convert(m_ScratchImage, blob))
         {
             ELOG("Error : TextureConverter::Convert() Failed.");
             return false;
         }
 
-        FILE* fp = nullptr;
-        auto err = _wfopen_s(&fp, path, L"wb");
-        if (err != 0)
+        if (!asdx::SaveW(path, blob))
         {
-            ELOG("Error : File Open Failed. path = %s", path);
+            ELOG("Error : SaveW() failed. path = %ls", path);
             return false;
         }
-
-        fwrite(blob.data(), blob.size(), 1, fp);
-        fclose(fp);
 
         hr = S_OK;
     }

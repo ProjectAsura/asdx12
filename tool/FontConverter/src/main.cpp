@@ -31,12 +31,12 @@ int main(int argc, char** argv)
     // 解析実行.
     parser.parse_check(argc, argv);
 
-    FontConverter::Desc desc = {};
+    asdx::FontConverter::Desc desc = {};
     desc.DdsPath    = parser.get<std::string>("texture");
     desc.JsonPath   = parser.get<std::string>("json");
     desc.OutputPath = parser.get<std::string>("output");
 
-    auto ret = FontConverter().Convert(desc);
+    auto ret = asdx::FontConverter::Convert(desc);
 
     if (ret)
     {

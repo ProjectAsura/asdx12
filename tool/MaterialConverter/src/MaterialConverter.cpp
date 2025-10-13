@@ -16,6 +16,13 @@
 #define ELOG(x, ...) fprintf_s(stderr, "[File:%s, Line:%d] " x "\n", __FILE__, __LINE__, ##__VA_ARGS__ )
 #endif//ELOG
 
+namespace {
+
+
+} // namespace
+
+
+namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
 // MaterialConverter class
@@ -36,3 +43,5 @@ bool MaterialConverter::Convert(const Desc& desc)
 
     return false;
 }
+
+} // namespace asdx

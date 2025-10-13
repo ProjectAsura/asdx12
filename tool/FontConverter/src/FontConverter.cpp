@@ -44,6 +44,8 @@ std::wstring ToStringW( const std::string& value )
 } // namespace
 
 
+namespace asdx {
+
 ///////////////////////////////////////////////////////////////////////////////
 // FontConvert class
 ///////////////////////////////////////////////////////////////////////////////
@@ -223,3 +225,5 @@ bool FontConverter::Convert(const Desc& desc)
 
     return true;
 }
+
+} // namespace asdx

@@ -5,12 +5,19 @@
 //-----------------------------------------------------------------------------
 #pragma once
 
-// MEMO : 出力サポート形式は次の通りです.
-// * DDS
-// * TGA
-// * HDR
-// * WIC(BMP, JPEG, PNG, TIFF, GIF, HD Photo).
-
+// MEMO : 入力サポート形式は次の通りです.
+// * Direct Draw Surface (*.dds)
+// * Truevision Graphics Adapter (*.tga)
+// * Radiance HDR (*.hdr)
+// * Window Bitmap (*.bmp)
+// * Join Photographic Experts Group (*.jpg, *.jpeg)
+// * Portable Network Graphic (*.png)
+// * Tagged Image File Format (*.tif, *.tiff)
+// * Graphics Interchanged Format (*.gif)
+// * HD Photo (*.hdp)
+// * Window Media Photo (*.wdp)
+// * JPEG XR (*.jxr)
+// * High Efficiency Image File (*.heif, *.heic)
 
 //-----------------------------------------------------------------------------
 // Includes
@@ -55,23 +62,13 @@ public:
     //=========================================================================
 
     //-------------------------------------------------------------------------
-    //! @brief      コンストラクタです.
-    //-------------------------------------------------------------------------
-    TextureConverter() = default;
-
-    //-------------------------------------------------------------------------
-    //! @brief      デストラクタです.
-    //-------------------------------------------------------------------------
-    ~TextureConverter() = default;
-
-    //-------------------------------------------------------------------------
     //! @brief      変換処理を行います.
     //! 
     //! @param[in]      desc        変換設定です.
     //! @retval true    変換に成功.
     //! @retval false   変換に失敗.
     //-------------------------------------------------------------------------
-    bool Convert(const Desc& desc);
+    static bool Convert(const Desc& desc);
 
     //-------------------------------------------------------------------------
     //! @brief      変換処理を行います.
@@ -81,7 +78,7 @@ public:
     //! @retval true    変換に成功.
     //! @retval false   変換に失敗.
     //-------------------------------------------------------------------------
-    bool Convert(const DirectX::ScratchImage& input, std::vector<uint8_t>& output);
+    static bool Convert(const DirectX::ScratchImage& input, std::vector<uint8_t>& output);
 
     //-------------------------------------------------------------------------
     //! @brief      逆変換処理を行います.
@@ -91,7 +88,7 @@ public:
     //! @retval true    逆変換に成功.
     //! @retval fasle   逆変換に失敗.
     //-------------------------------------------------------------------------
-    bool ReverseConvert(const std::vector<uint8_t>& input, DirectX::ScratchImage& output);
+    static bool ReverseConvert(const std::vector<uint8_t>& input, DirectX::ScratchImage& output);
 
 private:
     //=========================================================================

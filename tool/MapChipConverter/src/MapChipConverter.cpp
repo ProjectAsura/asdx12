@@ -66,6 +66,8 @@ std::vector<uint16_t> ParseCsv(const char* csv)
 
 } // namespace
 
+namespace asdx {
+
 ///////////////////////////////////////////////////////////////////////////////
 // MapChipConverter class
 ///////////////////////////////////////////////////////////////////////////////
@@ -78,13 +80,6 @@ bool MapChipConverter::Convert(const Desc& desc)
     if (desc.InputPath.empty() || desc.OutputPath.empty())
     {
         ELOG("Error : Invalid Argument.");
-        return false;
-    }
-
-    auto hr = CoInitialize(nullptr);
-    if (FAILED(hr))
-    {
-        ELOG("Error : CoInitilalize() Failed. errcode = 0x%x", hr);
         return false;
     }
 
@@ -271,7 +266,7 @@ bool MapChipConverter::Convert(const Desc& desc)
         fclose(fp);
     }
 
-    CoUninitialize();
-
     return true;
 }
+
+} // namespace asdx
