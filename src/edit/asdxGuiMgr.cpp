@@ -745,7 +745,7 @@ void GuiMgr::OnMouse( int x, int y, int wheelDelta, bool isDownL, bool isDownM, 
     }
     else
     {
-        io.MouseWheel = 0;
+        io.MouseWheel = 0.0f;
     }
 }
 

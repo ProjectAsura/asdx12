@@ -100,7 +100,17 @@ bool GetSaveResult(RequestId requestId);
 //! @retval true    読み込みに成功.
 //! @retval false   読み込みに失敗.
 //-----------------------------------------------------------------------------
-bool Load(const char* path, std::vector<uint8_t>& blob);
+bool LoadA(const char* path, std::vector<uint8_t>& blob);
+
+//-----------------------------------------------------------------------------
+//! @brief      同期読み込みを行います.
+//! 
+//! @param[in]      path        ファイルパス.
+//! @param[in]      blob        バイナリラージオブジェクトの格納先.
+//! @retval true    読み込みに成功.
+//! @retval false   読み込みに失敗.
+//-----------------------------------------------------------------------------
+bool LoadW(const wchar_t* path, std::vector<uint8_t>& blob);
 
 //-----------------------------------------------------------------------------
 //! @brief      同期書き込みを行います.
@@ -110,6 +120,17 @@ bool Load(const char* path, std::vector<uint8_t>& blob);
 //! @retval true    書き込みに成功.
 //! @retval false   書き込みに失敗.
 //-----------------------------------------------------------------------------
-bool Save(const char* path, const std::vector<uint8_t>& blob);
+bool SaveA(const char* path, const std::vector<uint8_t>& blob);
+
+//-----------------------------------------------------------------------------
+//! @brief      同期書き込みを行います.
+//! 
+//! @param[in]      path        ファイルパス.
+//! @param[in]      blob        バイナリラージオブジェクト.
+//! @retval true    書き込みに成功.
+//! @retval false   書き込みに失敗.
+//-----------------------------------------------------------------------------
+bool SaveW(const wchar_t* path, const std::vector<uint8_t>& blob);
+
 
 } // namespace asdx

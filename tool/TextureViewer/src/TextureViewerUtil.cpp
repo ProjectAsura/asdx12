@@ -135,3 +135,18 @@ int GetFormatCount()
 //-----------------------------------------------------------------------------
 DXGI_FORMAT GetDXGIFormat(int combBoxIndex)
 { return g_FormatTable[combBoxIndex].Format; }
+
+//-----------------------------------------------------------------------------
+//      フォーマット番号を取得します.
+//-----------------------------------------------------------------------------
+int GetFormatIndex(DXGI_FORMAT format)
+{
+    auto count = GetFormatCount();
+    for(auto i=0; i<count; ++i)
+    {
+        if (g_FormatTable[i].Format == format)
+            return i;
+    }
+
+    return -1;
+}

@@ -303,41 +303,91 @@ void TextureViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
         ImGui::EndPopup();
     }
 
+    // フォーマット変換処理.
     if (doConvert)
     {
-        auto format = GetDXGIFormat(m_FormatIndex);
+        auto nextFormat = GetDXGIFormat(m_FormatIndex);
+        auto prevFormat = m_ScratchImage.GetMetadata().format;
 
         // 同じフォーマットの場合は変換せずに終了.
-        if (format == m_ScratchImage.GetMetadata().format)
+        if (prevFormat == nextFormat)
             return;
 
         DirectX::ScratchImage scratchImage;
         HRESULT hr = S_OK;
 
-        if (asdx::IsCompressed(format))
+        // 非圧縮 ---> 圧縮.
+        if (!asdx::IsCompressed(prevFormat) && asdx::IsCompressed(nextFormat))
         {
             hr = DirectX::Compress(
                 m_ScratchImage.GetImages(), m_ScratchImage.GetImageCount(), m_ScratchImage.GetMetadata(),
-                format,
+                nextFormat,
                 DirectX::TEX_COMPRESS_PARALLEL,
                 DirectX::TEX_THRESHOLD_DEFAULT,
                 scratchImage);
         }
-        else
+        // 圧縮 ---> 圧縮.
+        else if (asdx::IsCompressed(prevFormat) && asdx::IsCompressed(nextFormat))
+        {
+            hr = DirectX::Decompress(
+                m_ScratchImage.GetImages(), m_ScratchImage.GetImageCount(), m_ScratchImage.GetMetadata(),
+                DXGI_FORMAT_UNKNOWN,
+                scratchImage);
+            if (SUCCEEDED(hr))
+            {
+                DirectX::ScratchImage compressImage;
+                hr = DirectX::Compress(
+                    scratchImage.GetImages(), scratchImage.GetImageCount(), scratchImage.GetMetadata(),
+                    nextFormat,
+                    DirectX::TEX_COMPRESS_PARALLEL,
+                    DirectX::TEX_THRESHOLD_DEFAULT,
+                    compressImage);
+                if (SUCCEEDED(hr))
+                {
+                    scratchImage = std::move(compressImage);
+                }
+            }
+        }
+        // 圧縮 ---> 非圧縮.
+        else if (asdx::IsCompressed(prevFormat) && !asdx::IsCompressed(nextFormat))
+        {
+            hr = DirectX::Decompress(
+                m_ScratchImage.GetImages(), m_ScratchImage.GetImageCount(), m_ScratchImage.GetMetadata(),
+                DXGI_FORMAT_UNKNOWN,
+                scratchImage);
+            if (SUCCEEDED(hr))
+            {
+                DirectX::ScratchImage convImage;
+                hr = DirectX::Convert(
+                    scratchImage.GetImages(), scratchImage.GetImageCount(), scratchImage.GetMetadata(),
+                    nextFormat,
+                    DirectX::TEX_FILTER_DEFAULT,
+                    DirectX::TEX_THRESHOLD_DEFAULT,
+                    convImage);
+                if (SUCCEEDED(hr))
+                {
+                    scratchImage = std::move(convImage);
+                }
+            }
+        }
+        else // 非圧縮 ---> 非圧縮
         {
             hr = DirectX::Convert(
                 m_ScratchImage.GetImages(), m_ScratchImage.GetImageCount(), m_ScratchImage.GetMetadata(),
-                format,
+                nextFormat,
                 DirectX::TEX_FILTER_DEFAULT,
                 DirectX::TEX_THRESHOLD_DEFAULT,
                 scratchImage);
         }
+
         if (SUCCEEDED(hr))
         {
             m_ScratchImage = std::move(scratchImage);
             RecreateTexture(pCmd);
         }
     }
+
+    // リサイズ処理.
     if (doResize)
     {
         // サイズが同じ場合は処理しない.
@@ -359,7 +409,6 @@ void TextureViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
             RecreateTexture(pCmd);
         }
     }
-
 }
 
 //-----------------------------------------------------------------------------
@@ -491,7 +540,8 @@ void TextureViewer::MenuFile(ID3D12GraphicsCommandList* pCmd)
     if (ImGui::MenuItem(u8"開く"))
     {
         const char* filter = 
-            "テクスチャファイル(*.dds, *.tga, *.hdr, *.bmp, *.jpg, *.jpeg, *.png, *.tif, *.tiff, *.gif, *.hdp)\0*.dds;*.tga;*.hdr;*.bmp;*.jpg;*.jpeg;*.png;*.tif;*.tiff;*.gif;*.hdp;*.jxr;*.wdp;*.heif;*.heic\0"
+            "テクスチャファイル(*.txb, *.dds, *.tga, *.hdr, *.bmp, *.jpg, *.jpeg, *.png, *.tif, *.tiff, *.gif, *.hdp)\0*.txb;*.dds;*.tga;*.hdr;*.bmp;*.jpg;*.jpeg;*.png;*.tif;*.tiff;*.gif;*.hdp;*.jxr;*.wdp;*.heif;*.heic\0"
+            "Project Asura Texture Binary (*.txb)\0*.txb\0"
             "Direct Draw Surface (*.dds)\0*.dds\0"
             "Truevision Graphics Adapter (*.tga)\0*.tga\0"
             "Radiance HDR (*.hdr)\0*.hdr\0"
@@ -568,12 +618,12 @@ void TextureViewer::MenuFormat(ID3D12GraphicsCommandList* pCmd)
     if (ImGui::MenuItem(u8"フォーマット変換"))
     {
         m_OpenConvert = true;
+        m_FormatIndex = GetFormatIndex(m_ScratchImage.GetMetadata().format);
     }
     if (ImGui::MenuItem(u8"テクスチャをリサイズ"))
     {
         m_OpenResize = true;
     }
-
 }
 
 //-----------------------------------------------------------------------------
@@ -584,8 +634,8 @@ void TextureViewer::MenuHelp()
     if (ImGui::MenuItem(u8"バージョン情報"))
     {
         asdx::InfoDlg("Version Info",
-            "TextureViewer ver 0.0\n"
-            "Build 0.0\n"
+            "TextureViewer ver 0.1\n"
+            "Build 0.1\n"
             "Copyright(c) Project Asura.");
     }
     if (ImGui::MenuItem(u8"ライセンス情報"))
@@ -641,16 +691,11 @@ void TextureViewer::SaveTextureBinary(const char* path)
         return;
     }
 
-    FILE* fp = nullptr;
-    auto err = fopen_s(&fp, path, "wb");
-    if (err != 0)
+    if (!asdx::SaveA(path, blob))
     {
-        ELOG("Error : File Open Failed. path = %s", path);
+        ELOG("Error : SaveA() Failed. path = %s", path);
         return;
     }
-
-    fwrite(blob.data(), blob.size(), 1, fp);
-    fclose(fp);
 
     ILOG("Info : TextureBinary Output success. path = %s", path);
 }
@@ -665,7 +710,23 @@ bool TextureViewer::LoadScratchImage(const wchar_t* path)
 
     HRESULT hr = S_OK;
     DirectX::ScratchImage scratchImage;
-    if (ext == L"dds")
+    if (ext == L"txb")
+    {
+        std::vector<uint8_t> blob;
+        if (!asdx::LoadW(path, blob))
+        {
+            ELOG("Error : LoadW() File Failed. path = %ls", path);
+            return false;
+        }
+
+        asdx::TextureConverter conv;
+        if (!conv.ReverseConvert(blob, scratchImage))
+        {
+            ELOG("Error : TextureConverter::ReverseConvert() Failed. path = %ls", path);
+            return false;
+        }
+    }
+    else if (ext == L"dds")
     {
         hr = DirectX::LoadFromDDSFile(path, DirectX::DDS_FLAGS_NONE, nullptr, scratchImage);
     }
@@ -691,7 +752,9 @@ bool TextureViewer::LoadScratchImage(const wchar_t* path)
 
     if (SUCCEEDED(hr))
     {
-        m_ScratchImage = std::move(scratchImage);
+        m_ScratchImage  = std::move(scratchImage);
+        m_ResizedWidth  = m_ScratchImage.GetMetadata().width;
+        m_ResizedHeight = m_ScratchImage.GetMetadata().height;
         return true;
     }
 

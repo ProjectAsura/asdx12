@@ -348,7 +348,7 @@ bool GetSaveResult(RequestId requestId)
 //-----------------------------------------------------------------------------
 //      同期読み込みを行います.
 //-----------------------------------------------------------------------------
-bool Load(const char* path, std::vector<uint8_t>& blob)
+bool LoadA(const char* path, std::vector<uint8_t>& blob)
 {
     FILE* fp = nullptr;
     auto err = fopen_s(&fp, path, "rb");
@@ -367,13 +367,51 @@ bool Load(const char* path, std::vector<uint8_t>& blob)
 }
 
 //-----------------------------------------------------------------------------
+//      同期読み込みを行います.
+//-----------------------------------------------------------------------------
+bool LoadW(const wchar_t* path, std::vector<uint8_t>& blob)
+{
+    FILE* fp = nullptr;
+    auto err = _wfopen_s(&fp, path, L"rb");
+    if (err != 0 || fp == nullptr)
+        return false;
+
+    fseek(fp, 0, SEEK_END);
+    auto size = ftell(fp);
+    rewind(fp);
+
+    blob.resize(size);
+    fread(blob.data(), size, 1, fp);
+    fclose(fp);
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
 //      同期書き込みを行います.
 //-----------------------------------------------------------------------------
-bool Save(const char* path, const std::vector<uint8_t>& blob)
+bool SaveA(const char* path, const std::vector<uint8_t>& blob)
 {
     FILE* fp = nullptr;
 
     auto err = fopen_s(&fp, path, "wb");
+    if (err != 0 || fp == nullptr)
+        return false;
+
+    fwrite(blob.data(), blob.size(), 1, fp);
+    fclose(fp);
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      同期書き込みを行います.
+//-----------------------------------------------------------------------------
+bool SaveW(const wchar_t* path, const std::vector<uint8_t>& blob)
+{
+    FILE* fp = nullptr;
+
+    auto err = _wfopen_s(&fp, path, L"wb");
     if (err != 0 || fp == nullptr)
         return false;
 
