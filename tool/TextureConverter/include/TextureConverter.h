@@ -83,6 +83,16 @@ public:
     //-------------------------------------------------------------------------
     bool Convert(const DirectX::ScratchImage& input, std::vector<uint8_t>& output);
 
+    //-------------------------------------------------------------------------
+    //! @brief      逆変換処理を行います.
+    //! 
+    //! @param[in]      input       入力バイナリ.
+    //! @param[out]     output      出力テクスチャ.
+    //! @retval true    逆変換に成功.
+    //! @retval fasle   逆変換に失敗.
+    //-------------------------------------------------------------------------
+    bool ReverseConvert(const std::vector<uint8_t>& input, DirectX::ScratchImage& output);
+
 private:
     //=========================================================================
     // private variables.

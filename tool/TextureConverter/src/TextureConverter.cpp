@@ -258,4 +258,70 @@ bool TextureConverter::Convert(const DirectX::ScratchImage& scratchImage, std::v
     return true;
 }
 
+//-----------------------------------------------------------------------------
+//      逆変換処理を行います.
+//-----------------------------------------------------------------------------
+bool TextureConverter::ReverseConvert(const std::vector<uint8_t>& input, DirectX::ScratchImage& output)
+{
+    if (input.empty())
+    {
+        fprintf_s(stderr, "Converter Error : Invalid Argument.\n");
+        return false;
+    }
+
+    auto bin = asdx::res::GetTextureBinary(input.data());
+
+    std::vector<DirectX::Image> images;
+    images.resize(bin->DepthOrArraySize());
+
+    auto pixels = const_cast<uint8_t*>(bin->Texels()->data());
+    uint64_t offset = 0;
+
+    for(auto i=0u; i<bin->Subresources()->size(); ++i)
+    {
+        auto subres = bin->Subresources()->Get(i);
+        images[i].width         = subres->Width();
+        images[i].height        = subres->Height();
+        images[i].format        = DXGI_FORMAT(bin->Format());
+        images[i].rowPitch      = subres->RowPitch();
+        images[i].slicePitch    = subres->SlicePitch();
+        images[i].pixels        = pixels + offset;
+
+        offset += subres->SlicePitch();
+    }
+
+    HRESULT hr = S_OK;
+
+    switch(bin->Dimension())
+    {
+    case TEXTURE_DIMENSION_1D:
+    case TEXTURE_DIMENSION_2D:
+        {
+            hr = output.InitializeArrayFromImages(images.data(), images.size());
+        }
+        break;
+
+    case TEXTURE_DIMENSION_3D:
+        {
+            hr = output.Initialize3DFromImages(images.data(), images.size());
+        }
+        break;
+
+    case TEXTURE_DIMENSION_CUBE:
+        {
+            hr = output.InitializeCubeFromImages(images.data(), images.size());
+        }
+        break;
+    }
+
+    if (FAILED(hr))
+    {
+        fprintf_s(stderr, "ReverseConvert Failed. errcode = 0x%x", hr);
+        return false;
+    }
+
+    return true;
+}
+
+
 } // namespace asdx
