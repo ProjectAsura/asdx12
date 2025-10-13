@@ -15,8 +15,16 @@
 #include <fnd/asdxMisc.h>
 #include <edit/asdxGuiMgr.h>
 #include <res/asdxResTexture.h>
+#include <gfx/asdxGfxMisc.h>
 #include <imgui.h>
 
+
+namespace {
+
+static const uint32_t kMaxSpriteCount = 4096;
+static const uint32_t kMaxBatchCount  = 16;
+
+} // namespace
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -29,7 +37,7 @@
 TextureViewer::TextureViewer()
 : asdx::App(L"TexxtureViewer", 1920, 1080, nullptr, nullptr, nullptr)
 {
-    m_SwapChainFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+    m_SwapChainFormat    = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
     m_DepthStencilFormat = DXGI_FORMAT_D32_FLOAT;
 
     m_ClearColor[0] = 0.2f;
@@ -79,6 +87,35 @@ bool TextureViewer::OnInit()
         }
     }
 
+    // スプライトレンダラー初期化.
+    {
+        if (!m_SpriteRenderer.Init(m_Width, m_Height, kMaxSpriteCount, kMaxBatchCount, m_SwapChainFormat, m_DepthStencilFormat))
+        {
+            ELOG("Error : SpriteRenderer::Init() Failed.");
+            return false;
+        }
+    }
+
+    // ポイントサンプラー初期化.
+    {
+        auto desc = asdx::Sampler::PointClamp;
+        if (!m_PointClamp.Init(&desc))
+        {
+            ELOG("Error : PointClamp Init Failed.");
+            return false;
+        }
+    }
+
+    // リニアサンプラー初期化.
+    {
+        auto desc = asdx::Sampler::LinearClamp;
+        if (!m_LinearClamp.Init(&desc))
+        {
+            ELOG("Error : LinearClamp Init Failed.");
+            return false;
+        }
+    }
+
     // コマンドの記録を終了.
     pCmd->Close();
 
@@ -107,6 +144,13 @@ bool TextureViewer::OnInit()
 //-----------------------------------------------------------------------------
 void TextureViewer::OnTerm()
 {
+    m_PointClamp.Term();
+    m_LinearClamp.Term();
+    m_SpriteRenderer.Term();
+    m_Texture.Term();
+
+    m_ScratchImage.Release();
+
     asdx::TermAsyncFileIO();
     asdx::GuiMgr::Instance().Term();
 }
@@ -118,12 +162,27 @@ void TextureViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
 {
     auto pCmd = m_GfxCmdList.Reset();
 
+    m_SpriteRenderer.Reset();
+    m_SpriteRenderer.SetScreenSize(m_Width, m_Height);
+
+    // ファイルドロップされたものを処理.
+    if (m_DirtyScratchImage)
+    {
+        RecreateTexture(pCmd);
+        m_DirtyScratchImage = false;
+    }
+
     asdx::GuiMgr::Instance().Update(m_Width, m_Height);
 
     // 情報表示.
     {
-        ImGui::SetNextWindowPos(ImVec2(10, 10));
-        ImGui::SetNextWindowSize(ImVec2(250, 150));
+        const auto w = 350.0f;
+        const auto h = 150.0f;
+        const auto x = 10.0f;
+        const auto y = 10.0f;
+
+        ImGui::SetNextWindowPos(ImVec2(m_Width - (w + x), m_Height - (h + y)));
+        ImGui::SetNextWindowSize(ImVec2(w, h));
 
         auto flags = ImGuiWindowFlags_NoMove
             | ImGuiWindowFlags_NoResize
@@ -135,13 +194,13 @@ void TextureViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
 
             const auto& meta = m_ScratchImage.GetMetadata();
    
-            ImGui::Text(u8"Dimension : %s", FromDimension(meta.dimension));
+            ImGui::Text(u8"Dimension : %s", ToString(meta.dimension));
             ImGui::Text(u8"Width     : %zu", meta.width);
             ImGui::Text(u8"Height    : %zu", meta.height);
             ImGui::Text(u8"Depth     : %zu", meta.depth);
             ImGui::Text(u8"ArraySize : %zu", meta.arraySize);
             ImGui::Text(u8"MipLevels : %zu", meta.mipLevels);
-            ImGui::Text(u8"Format    : %s", FromDXGIFormat(meta.format));
+            ImGui::Text(u8"Format    : %s", asdx::ToString(meta.format));
 
             ImGui::End();
         }
@@ -160,7 +219,7 @@ void TextureViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
                 ImGui::EndMenu();
             }
             // テクスチャが読み込まれているときのみ.
-            //if (m_ScratchImage.GetImageCount() > 0)
+            if (m_ScratchImage.GetImageCount() > 0)
             {
                 if (ImGui::BeginMenu(u8"フォーマット"))
                 {
@@ -176,7 +235,6 @@ void TextureViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
             ImGui::EndPopup();
         }
     }
-
 
     if (m_OpenConvert)
     {
@@ -195,7 +253,7 @@ void TextureViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
 
     if (ImGui::BeginPopupModal(u8"FormatConversion"))
     {
-        ImGui::Text(u8"変換前フォーマット : %s", FromDXGIFormat(m_ScratchImage.GetMetadata().format));
+        ImGui::Text(u8"変換前フォーマット : %s", asdx::ToString(m_ScratchImage.GetMetadata().format));
         ImGui::Combo(u8"変換後フォーマット", &m_FormatIndex, EnumrateFormat, nullptr, GetFormatCount());
 
         auto close = false;
@@ -254,13 +312,26 @@ void TextureViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
             return;
 
         DirectX::ScratchImage scratchImage;
+        HRESULT hr = S_OK;
 
-        auto hr = DirectX::Convert(
-            m_ScratchImage.GetImages(), m_ScratchImage.GetImageCount(), m_ScratchImage.GetMetadata(),
-            format,
-            DirectX::TEX_FILTER_DEFAULT,
-            DirectX::TEX_THRESHOLD_DEFAULT,
-            scratchImage);
+        if (asdx::IsCompressed(format))
+        {
+            hr = DirectX::Compress(
+                m_ScratchImage.GetImages(), m_ScratchImage.GetImageCount(), m_ScratchImage.GetMetadata(),
+                format,
+                DirectX::TEX_COMPRESS_PARALLEL,
+                DirectX::TEX_THRESHOLD_DEFAULT,
+                scratchImage);
+        }
+        else
+        {
+            hr = DirectX::Convert(
+                m_ScratchImage.GetImages(), m_ScratchImage.GetImageCount(), m_ScratchImage.GetMetadata(),
+                format,
+                DirectX::TEX_FILTER_DEFAULT,
+                DirectX::TEX_THRESHOLD_DEFAULT,
+                scratchImage);
+        }
         if (SUCCEEDED(hr))
         {
             m_ScratchImage = std::move(scratchImage);
@@ -320,8 +391,18 @@ void TextureViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
     pCmd->RSSetScissorRects(1, &m_ScissorRect);
 
     // テクスチャを描画.
+    if (m_Texture.GetGpuHandleSRV().ptr != 0)
     {
+        auto& meta = m_ScratchImage.GetMetadata();
+
+        auto w = (m_Width  < meta.width)  ? m_Width  : meta.width;
+        auto h = (m_Height < meta.height) ? m_Height : meta.height;
+
+        m_SpriteRenderer.SetPipelineState(pCmd);
+        m_SpriteRenderer.SetTexture(m_Texture.GetGpuHandleSRV(), m_PointClamp.GetGpuHandle());
+        m_SpriteRenderer.Add(0, 0, int(w), int(h));
     }
+    m_SpriteRenderer.Draw(pCmd);
 
     // GUIを描画.
     asdx::GuiMgr::Instance().Draw(pCmd);
@@ -399,6 +480,7 @@ void TextureViewer::OnDrop(const wchar_t** dropFiles, uint32_t fileCount)
         return;
 
     // 最初の1つだけ処理する.
+    m_DirtyScratchImage = LoadScratchImage(dropFiles[0]);
 }
 
 //-----------------------------------------------------------------------------
@@ -428,56 +510,38 @@ void TextureViewer::MenuFile(ID3D12GraphicsCommandList* pCmd)
         if (asdx::OpenFileDlg(filter, path))
         {
             auto wpath = asdx::ToStringW(path);
-
-            // テクスチャを読み込む.
-            auto ext = asdx::ToLower(asdx::GetExtA(path.c_str()).c_str());
-
-            HRESULT hr = S_OK;
-            DirectX::ScratchImage scratchImage;
-            if (ext == "dds")
-            {
-                hr = DirectX::LoadFromDDSFile(wpath.c_str(), DirectX::DDS_FLAGS_NONE, nullptr, scratchImage);
-            }
-            else if (ext == "tga")
-            {
-                hr = DirectX::LoadFromTGAFile(wpath.c_str(), DirectX::TGA_FLAGS_NONE, nullptr, scratchImage);
-            }
-            else if (ext == "hdr")
-            {
-                hr = DirectX::LoadFromHDRFile(wpath.c_str(), nullptr, scratchImage);
-            }
-            else if (ext == "bmp" || ext == "jpg" || ext == "jpeg" || ext == "png" || ext == "tif" || ext == "tiff" || ext == "gif" || ext == "hdp" || ext == "wdp" || ext == "jxr" || ext == "heic" || ext == "heic")
-            {
-                hr = DirectX::LoadFromWICFile(wpath.c_str(), DirectX::WIC_FLAGS_NONE, nullptr, scratchImage);
-            }
-            else
-            {
-                hr = E_FAIL;
-                ELOG("Error : Unsupported File Extension (%s)", ext.c_str());
-            }
-
-            if (SUCCEEDED(hr))
-            {
-                m_ScratchImage = std::move(scratchImage);
-                RecreateTexture(pCmd);
-            }
+            if (LoadScratchImage(wpath.c_str()))
+            { RecreateTexture(pCmd); }
         }
     }
     if (ImGui::MenuItem(u8"名前を付けて保存"))
     {
-        const char* filter = "ASDXテクスチャバイナリファイル(*.txb)\0*.txb\0\0";
+        const char* filter = 
+            "Project Asura Texture Binary(*.txb)\0*.txb\0"
+            "Direct Draw Surface (*.dds)\0*.dds\0"
+            "Truevision Graphics Adapter (*.tga)\0*.tga\0"
+            "Radiance HDR (*.hdr)\0*.hdr\0"
+            "Window Bitmap (*.bmp)\0*.bmp\0"
+            "Portable Network Graphics (*.png)\0*.png\0"
+            "Tagged Image File Format (*.tif)\0*.tif\0"
+            "HD Photo (*.hdp)\0*.hdp\0"
+            "JPEG XR (*.jxr)\0*.jxr\0"
+            "Window Media Photo (*.wdp)\0*.wpd\0"
+            "High Efficiency Image File (*.heif)\0*.heif\0\0";
         std::string base;
         std::string ext = ".txb";
 
         if (asdx::SaveFileDlg(filter, base, ext))
         {
             m_OutputPath = base + ext;
-            SaveTextureBinary(m_OutputPath.c_str());
+            auto wpath = asdx::ToStringW(m_OutputPath);
+            SaveScratchImage(wpath.c_str());
         }
     }
     if (ImGui::MenuItem(u8"上書き保存"))
     {
-        SaveTextureBinary(m_OutputPath.c_str());
+        auto wpath = asdx::ToStringW(m_OutputPath);
+        SaveScratchImage(wpath.c_str());
     }
 }
 
@@ -486,7 +550,7 @@ void TextureViewer::MenuFile(ID3D12GraphicsCommandList* pCmd)
 //-----------------------------------------------------------------------------
 void TextureViewer::MenuFormat(ID3D12GraphicsCommandList* pCmd)
 {
-    //assert(m_ScratchImage.GetImageCount() > 0);
+    assert(m_ScratchImage.GetImageCount() > 0);
 
     if (ImGui::MenuItem(u8"ミップマップ生成"))
     {
@@ -589,4 +653,177 @@ void TextureViewer::SaveTextureBinary(const char* path)
     fclose(fp);
 
     ILOG("Info : TextureBinary Output success. path = %s", path);
+}
+
+//-----------------------------------------------------------------------------
+//      スクラッチイメージをロードします.
+//-----------------------------------------------------------------------------
+bool TextureViewer::LoadScratchImage(const wchar_t* path)
+{
+    // テクスチャを読み込む.
+    auto ext = asdx::ToLowerW(asdx::GetExtW(path).c_str());
+
+    HRESULT hr = S_OK;
+    DirectX::ScratchImage scratchImage;
+    if (ext == L"dds")
+    {
+        hr = DirectX::LoadFromDDSFile(path, DirectX::DDS_FLAGS_NONE, nullptr, scratchImage);
+    }
+    else if (ext == L"tga")
+    {
+        hr = DirectX::LoadFromTGAFile(path, DirectX::TGA_FLAGS_NONE, nullptr, scratchImage);
+    }
+    else if (ext == L"hdr")
+    {
+        hr = DirectX::LoadFromHDRFile(path, nullptr, scratchImage);
+    }
+    else if (ext == L"bmp" || ext == L"jpg" || ext == L"jpeg" || ext == L"png" || ext == L"tif" 
+          || ext == L"tiff" || ext == L"gif" || ext == L"hdp" || ext == L"wdp" || ext == L"jxr"
+          || ext == L"heif" || ext == L"heic")
+    {
+        hr = DirectX::LoadFromWICFile(path, DirectX::WIC_FLAGS_NONE, nullptr, scratchImage);
+    }
+    else
+    {
+        hr = E_FAIL;
+        ELOG("Error : Unsupported File Extension (%s)", ext.c_str());
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        m_ScratchImage = std::move(scratchImage);
+        return true;
+    }
+
+    return false;
+}
+
+//-----------------------------------------------------------------------------
+//      スクラッチイメージをロードします.
+//-----------------------------------------------------------------------------
+bool TextureViewer::SaveScratchImage(const wchar_t* path)
+{
+    // テクスチャを読み込む.
+    auto ext = asdx::ToLowerW(asdx::GetExtW(path).c_str());
+
+    HRESULT hr = S_OK;
+    DirectX::ScratchImage scratchImage;
+    if (ext == L"txb")
+    {
+        std::vector<uint8_t>   blob;
+        asdx::TextureConverter conv;
+        if (!conv.Convert(m_ScratchImage, blob))
+        {
+            ELOG("Error : TextureConverter::Convert() Failed.");
+            return false;
+        }
+
+        FILE* fp = nullptr;
+        auto err = _wfopen_s(&fp, path, L"wb");
+        if (err != 0)
+        {
+            ELOG("Error : File Open Failed. path = %s", path);
+            return false;
+        }
+
+        fwrite(blob.data(), blob.size(), 1, fp);
+        fclose(fp);
+
+        hr = S_OK;
+    }
+    else if (ext == L"dds")
+    {
+        hr = DirectX::SaveToDDSFile(
+            m_ScratchImage.GetImages(),
+            m_ScratchImage.GetImageCount(),
+            m_ScratchImage.GetMetadata(),
+            DirectX::DDS_FLAGS_NONE,
+            path);
+    }
+    else if (ext == L"tga")
+    {
+        assert(m_ScratchImage.GetImageCount() > 0);
+        auto images = m_ScratchImage.GetImages();
+        auto meta = m_ScratchImage.GetMetadata();
+        hr = DirectX::SaveToTGAFile(
+            images[0],
+            DirectX::TGA_FLAGS_NONE,
+            path,
+            &meta);
+    }
+    else if (ext == L"hdr")
+    {
+        assert(m_ScratchImage.GetImageCount() > 0);
+        auto images = m_ScratchImage.GetImages();
+        hr = DirectX::SaveToHDRFile(
+            images[0],
+            path);
+    }
+    else if (ext == L"bmp")
+    {
+        hr = DirectX::SaveToWICFile(
+            m_ScratchImage.GetImages(),
+            m_ScratchImage.GetImageCount(),
+            DirectX::WIC_FLAGS_NONE,
+            DirectX::GetWICCodec(DirectX::WIC_CODEC_BMP),
+            path);
+    }
+    else if (ext == L"jpg")
+    {
+        hr = DirectX::SaveToWICFile(
+            m_ScratchImage.GetImages(),
+            m_ScratchImage.GetImageCount(),
+            DirectX::WIC_FLAGS_NONE,
+            DirectX::GetWICCodec(DirectX::WIC_CODEC_JPEG),
+            path);
+    }
+    else if (ext == L"png")
+    {
+        hr = DirectX::SaveToWICFile(
+            m_ScratchImage.GetImages(),
+            m_ScratchImage.GetImageCount(),
+            DirectX::WIC_FLAGS_NONE,
+            DirectX::GetWICCodec(DirectX::WIC_CODEC_PNG),
+            path);
+    }
+    else if (ext == L"tif")
+    {
+        hr = DirectX::SaveToWICFile(
+            m_ScratchImage.GetImages(),
+            m_ScratchImage.GetImageCount(),
+            DirectX::WIC_FLAGS_NONE,
+            DirectX::GetWICCodec(DirectX::WIC_CODEC_TIFF),
+            path);
+    }
+    else if (ext == L"hdp" || ext == L"jxr" || ext == L"wdp")
+    {
+        hr = DirectX::SaveToWICFile(
+            m_ScratchImage.GetImages(),
+            m_ScratchImage.GetImageCount(),
+            DirectX::WIC_FLAGS_NONE,
+            DirectX::GetWICCodec(DirectX::WIC_CODEC_WMP),
+            path);
+    }
+    else if (ext == L"heif" || ext == L"heic")
+    {
+        hr = DirectX::SaveToWICFile(
+            m_ScratchImage.GetImages(),
+            m_ScratchImage.GetImageCount(),
+            DirectX::WIC_FLAGS_NONE,
+            DirectX::GetWICCodec(DirectX::WIC_CODEC_HEIF),
+            path);
+    }
+    else
+    {
+        hr = E_FAIL;
+        ELOG("Error : Unsupported File Extension (%s)", ext.c_str());
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        ILOG("Info : Texture Output success. path = %s", path);
+        return true;
+    }
+
+    return false;
 }

@@ -15,6 +15,7 @@
 #include <fw/asdxApp.h>
 #include <gfx/asdxCommandQueue.h>
 #include <gfx/asdxDred.h>
+#include <gfx/asdxGfxMisc.h>
 
 #if defined(DEBUG) || defined(_DEBUG)
 #include <DXGIDebug.h>
@@ -88,87 +89,6 @@ inline UINT GetCoord(float value)
 //-----------------------------------------------------------------------------
 inline UINT GetLuma(float value)
 { return static_cast<UINT>(value * 10000.0f); }
-
-//-----------------------------------------------------------------------------
-//      sRGBフォーマットかどうかチェックします.
-//-----------------------------------------------------------------------------
-bool IsSRGBFormat(DXGI_FORMAT value)
-{
-    bool result = false;
-    switch(value)
-    {
-    case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
-        { result = true; }
-        break;
-
-    case DXGI_FORMAT_BC1_UNORM_SRGB:
-        { result = true; }
-        break;
-
-    case DXGI_FORMAT_BC2_UNORM_SRGB:
-        { result = true; }
-        break;
-
-    case DXGI_FORMAT_BC3_UNORM_SRGB:
-        { result = true; }
-        break;
-
-    case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
-        { result = true; }
-        break;
-
-    case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
-        { result = true; }
-        break;
-
-    case DXGI_FORMAT_BC7_UNORM_SRGB:
-        { result = true; }
-        break;
-    }
-
-    return result;
-}
-
-//-----------------------------------------------------------------------------
-//      非sRGBフォーマットに変換します.
-//-----------------------------------------------------------------------------
-DXGI_FORMAT GetNoSRGBFormat(DXGI_FORMAT value)
-{
-    DXGI_FORMAT result = value;
-
-    switch( value )
-    {
-    case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
-        { result = DXGI_FORMAT_R8G8B8A8_UNORM; }
-        break;
-
-    case DXGI_FORMAT_BC1_UNORM_SRGB:
-        { result = DXGI_FORMAT_BC1_UNORM; }
-        break;
-
-    case DXGI_FORMAT_BC2_UNORM_SRGB:
-        { result = DXGI_FORMAT_BC2_UNORM; }
-        break;
-
-    case DXGI_FORMAT_BC3_UNORM_SRGB:
-        { result = DXGI_FORMAT_BC3_UNORM; }
-        break;
-
-    case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
-        { result = DXGI_FORMAT_B8G8R8A8_UNORM; }
-        break;
-
-    case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
-        { result = DXGI_FORMAT_B8G8R8X8_UNORM; }
-        break;
-
-    case DXGI_FORMAT_BC7_UNORM_SRGB:
-        { result = DXGI_FORMAT_BC7_UNORM; }
-        break;
-    }
-
-    return result;
-}
 
 } // namespace /* anonymous */
 
@@ -618,7 +538,7 @@ bool App::InitD3D()
 
             for(auto i=0u; i<m_SwapChainCount; ++i)
             {
-                if (!m_ColorTarget[i].Init(m_pSwapChain4.GetPtr(), i))
+                if (!m_ColorTarget[i].Init(m_pSwapChain4.GetPtr(), i, IsSRGBFormat(m_SwapChainFormat)))
                 {
                     ELOG("Error : ColorTarget::Init() Failed.");
                     return false;
@@ -896,7 +816,7 @@ void App::ResizeEvent(const ResizeEventArgs& param)
 
         for(auto i=0u; i<m_SwapChainCount; ++i)
         {
-            if (!m_ColorTarget[i].Init(m_pSwapChain4.GetPtr(), i))
+            if (!m_ColorTarget[i].Init(m_pSwapChain4.GetPtr(), i, IsSRGBFormat(m_SwapChainFormat)))
             { DLOG("Error : ColorTarget::Init() Failed."); }
         }
 

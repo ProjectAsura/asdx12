@@ -9,9 +9,10 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <fw/asdxApp.h>
-#include <fw/asdxAppCamera.h>
 #include <gfx/asdxCommandQueue.h>
 #include <gfx/asdxTexture.h>
+#include <gfx/asdxSprite.h>
+#include <gfx/asdxSampler.h>
 #include <DirectXTex.h>
 #include <string>
 
@@ -52,15 +53,20 @@ private:
     // private variables.
     //=========================================================================
     asdx::WaitPoint         m_FrameWaitPoint;
+    asdx::SpriteRenderer    m_SpriteRenderer;
+    asdx::Sampler           m_PointClamp;
+    asdx::Sampler           m_LinearClamp;
     asdx::Texture           m_Texture;
     DirectX::ScratchImage   m_ScratchImage;
     std::string             m_InputPath;
     std::string             m_OutputPath;
-    size_t                  m_ResizedWidth = 0;
+    size_t                  m_ResizedWidth  = 0;
     size_t                  m_ResizedHeight = 0;
-    bool                    m_OpenConvert = false;
-    bool                    m_OpenResize  = false;
-    int                     m_FormatIndex = 0;
+    bool                    m_OpenConvert   = false;
+    bool                    m_OpenResize    = false;
+    int                     m_FormatIndex   = 0;
+    bool                    m_DirtyScratchImage = false;
+
 
     //=========================================================================
     // private methods.
@@ -135,4 +141,14 @@ private:
     //! @brief      テクスチャバイナリを保存します.
     //-------------------------------------------------------------------------
     void SaveTextureBinary(const char* path);
+
+    //-------------------------------------------------------------------------
+    //! @brief      スクラッチイメージをロードします
+    //-------------------------------------------------------------------------
+    bool LoadScratchImage(const wchar_t* path);
+
+    //-------------------------------------------------------------------------
+    //! @brief      スクラッチイメージをセーブします.
+    //-------------------------------------------------------------------------
+    bool SaveScratchImage(const wchar_t* path);
 };

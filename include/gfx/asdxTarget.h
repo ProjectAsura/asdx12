@@ -80,10 +80,11 @@ public:
     //!
     //! @param[in]      pSwapChain          スワップチェインです.
     //! @param[in]      backbufferIndex     バックバッファ番号です.
+    //! @param[in]      sRGB                sRGBが適用可能な場合にsRGBフォーマットにする場合は true.
     //! @retval true    初期化成功.
     //! @retval false   初期化失敗.
     //-------------------------------------------------------------------------
-    bool Init(IDXGISwapChain* pSwapChain, uint32_t backbufferIndex);
+    bool Init(IDXGISwapChain* pSwapChain, uint32_t backbufferIndex, bool sRGB);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.

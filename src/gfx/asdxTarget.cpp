@@ -11,156 +11,8 @@
 #include <gfx/asdxTarget.h>
 #include <gfx/asdxDevice.h>
 #include <gfx/asdxDescriptorHeap.h>
+#include <gfx/asdxGfxMisc.h>
 #include <fnd/asdxLogger.h>
-
-
-namespace /* anonymous */ {
-
-//-----------------------------------------------------------------------------
-//      sRGBフォーマットに変換します.
-//-----------------------------------------------------------------------------
-DXGI_FORMAT GetSRGBFormat(DXGI_FORMAT value)
-{
-    DXGI_FORMAT result = value;
-
-    switch( value )
-    {
-    case DXGI_FORMAT_R8G8B8A8_UNORM:
-        { result = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB; }
-        break;
-
-    case DXGI_FORMAT_BC1_UNORM:
-        { result = DXGI_FORMAT_BC1_UNORM_SRGB; }
-        break;
-
-    case DXGI_FORMAT_BC2_UNORM:
-        { result = DXGI_FORMAT_BC2_UNORM_SRGB; }
-        break;
-
-    case DXGI_FORMAT_BC3_UNORM:
-        { result = DXGI_FORMAT_BC3_UNORM_SRGB; }
-        break;
-
-    case DXGI_FORMAT_B8G8R8A8_UNORM:
-        { result = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB; }
-        break;
-
-    case DXGI_FORMAT_B8G8R8X8_UNORM:
-        { result = DXGI_FORMAT_B8G8R8X8_UNORM_SRGB; }
-        break;
-
-    case DXGI_FORMAT_BC7_UNORM:
-        { result = DXGI_FORMAT_BC7_UNORM_SRGB; }
-        break;
-    }
-
-    return result;
-}
-
-//-----------------------------------------------------------------------------
-//      深度フォーマットからリソースフォーマットに変換します.
-//-----------------------------------------------------------------------------
-DXGI_FORMAT GetResourceFormat(DXGI_FORMAT value, bool isStencil)
-{
-    DXGI_FORMAT result = value;
-
-    switch(value)
-    {
-    case DXGI_FORMAT_D16_UNORM:
-        { result = DXGI_FORMAT_R16_UNORM; }
-        break;
-
-    case DXGI_FORMAT_D24_UNORM_S8_UINT:
-        {
-            if (!isStencil)
-                result = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
-            else
-                result = DXGI_FORMAT_X24_TYPELESS_G8_UINT;
-        }
-        break;
-
-    case DXGI_FORMAT_D32_FLOAT:
-        { result = DXGI_FORMAT_R32_FLOAT; }
-        break;
-
-    case DXGI_FORMAT_D32_FLOAT_S8X24_UINT:
-        {
-            if (!isStencil)
-                result = DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS;
-            else
-                result = DXGI_FORMAT_X32_TYPELESS_G8X24_UINT;
-        }
-        break;
-    }
-
-    return result;
-}
-
-//-----------------------------------------------------------------------------
-//      非sRGBフォーマットに変換します.
-//-----------------------------------------------------------------------------
-DXGI_FORMAT GetNoSRGBFormat(DXGI_FORMAT value)
-{
-    DXGI_FORMAT result = value;
-
-    switch( value )
-    {
-    case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
-        { result = DXGI_FORMAT_R8G8B8A8_UNORM; }
-        break;
-
-    case DXGI_FORMAT_BC1_UNORM_SRGB:
-        { result = DXGI_FORMAT_BC1_UNORM; }
-        break;
-
-    case DXGI_FORMAT_BC2_UNORM_SRGB:
-        { result = DXGI_FORMAT_BC2_UNORM; }
-        break;
-
-    case DXGI_FORMAT_BC3_UNORM_SRGB:
-        { result = DXGI_FORMAT_BC3_UNORM; }
-        break;
-
-    case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
-        { result = DXGI_FORMAT_B8G8R8A8_UNORM; }
-        break;
-
-    case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
-        { result = DXGI_FORMAT_B8G8R8X8_UNORM; }
-        break;
-
-    case DXGI_FORMAT_BC7_UNORM_SRGB:
-        { result = DXGI_FORMAT_BC7_UNORM; }
-        break;
-    }
-
-    return result;
-}
-
-//-----------------------------------------------------------------------------
-//      sRGBフォーマットかどうか?
-//-----------------------------------------------------------------------------
-bool IsSRGBFormat(DXGI_FORMAT value)
-{
-    bool result = false;
-
-    switch( value )
-    {
-    case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
-    case DXGI_FORMAT_BC1_UNORM_SRGB:
-    case DXGI_FORMAT_BC2_UNORM_SRGB:
-    case DXGI_FORMAT_BC3_UNORM_SRGB:
-    case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
-    case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
-    case DXGI_FORMAT_BC7_UNORM_SRGB:
-        { result = true; }
-        break;
-    }
-
-    return result;
-}
-
-} // namespace /* anonymouus */
 
 
 namespace asdx {
@@ -401,7 +253,8 @@ bool ColorTarget::Init(const TargetDesc* pDesc)
 bool ColorTarget::Init
 (
     IDXGISwapChain* pSwapChain,
-    uint32_t        backBufferIndex
+    uint32_t        backBufferIndex,
+    bool            sRGB
 )
 {
     HRESULT hr = S_OK;
@@ -419,6 +272,9 @@ bool ColorTarget::Init
         ELOG( "Error : Invalid Resource Dimension. ");
         return false;
     }
+
+    if (sRGB)
+    { desc.Format = GetSRGBFormat(desc.Format); }
 
 #if ASDX_IS_SCARLETT
     auto mostDetailedMip = (pDesc->MipLevels - 1);

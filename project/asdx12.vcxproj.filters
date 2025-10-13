@@ -321,6 +321,9 @@
     <ClCompile Include="..\src\fnd\asdxHash.cpp">
       <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\gfx\asdxGfxMisc.cpp">
+      <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\external\imgui\imconfig.h">
@@ -589,6 +592,9 @@
     </ClInclude>
     <ClInclude Include="..\external\xxHash\xxhash.h">
       <Filter>ソース ファイル\external\xxHash</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\gfx\asdxGfxMisc.h">
+      <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

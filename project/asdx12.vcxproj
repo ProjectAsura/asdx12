@@ -249,6 +249,7 @@
     <ClCompile Include="..\src\gfx\asdxDred.cpp" />
     <ClCompile Include="..\src\gfx\asdxFade.cpp" />
     <ClCompile Include="..\src\gfx\asdxFont.cpp" />
+    <ClCompile Include="..\src\gfx\asdxGfxMisc.cpp" />
     <ClCompile Include="..\src\gfx\asdxMapChip.cpp" />
     <ClCompile Include="..\src\gfx\asdxPipelineState.cpp" />
     <ClCompile Include="..\src\gfx\asdxPresetState.cpp" />
@@ -340,6 +341,7 @@
     <ClInclude Include="..\include\gfx\asdxDred.h" />
     <ClInclude Include="..\include\gfx\asdxFade.h" />
     <ClInclude Include="..\include\gfx\asdxFont.h" />
+    <ClInclude Include="..\include\gfx\asdxGfxMisc.h" />
     <ClInclude Include="..\include\gfx\asdxMapChip.h" />
     <ClInclude Include="..\include\gfx\asdxPipelineState.h" />
     <ClInclude Include="..\include\gfx\asdxPresetState.h" />
