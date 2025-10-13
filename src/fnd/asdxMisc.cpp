@@ -628,7 +628,7 @@ bool SaveFileDlg(const char* fileFilter, std::string& base, std::string& ext, co
         else
         {
             char* tag = const_cast<char*>(fileFilter);
-            for(auto i=1; i<ofn.nFilterIndex; ++i)
+            for(auto i=1u; i<ofn.nFilterIndex; ++i)
             {
                 tag += strlen(tag) + 1;
                 tag += strlen(tag) + 1;

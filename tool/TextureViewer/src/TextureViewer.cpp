@@ -46,9 +46,9 @@ TextureViewer::TextureViewer()
     m_ClearColor[3] = 1.0f;
 
     m_DeviceDesc.MaxShaderResourceCount = 8192;
-    m_DeviceDesc.MaxSamplerCount = 128;
-    m_DeviceDesc.MaxColorTargetCount = 256;
-    m_DeviceDesc.MaxDepthTargetCount = 256;
+    m_DeviceDesc.MaxSamplerCount        = 128;
+    m_DeviceDesc.MaxColorTargetCount    = 256;
+    m_DeviceDesc.MaxDepthTargetCount    = 256;
 
 #if ASDX_DEBUG
     m_DeviceDesc.EnableDebug = true;
@@ -537,7 +537,7 @@ void TextureViewer::OnDrop(const wchar_t** dropFiles, uint32_t fileCount)
 //-----------------------------------------------------------------------------
 void TextureViewer::MenuFile(ID3D12GraphicsCommandList* pCmd)
 {
-    if (ImGui::MenuItem(u8"開く"))
+    if (ImGui::MenuItem(u8"ファイルを開く"))
     {
         const char* filter = 
             "テクスチャファイル(*.txb, *.dds, *.tga, *.hdr, *.bmp, *.jpg, *.jpeg, *.png, *.tif, *.tiff, *.gif, *.hdp)\0*.txb;*.dds;*.tga;*.hdr;*.bmp;*.jpg;*.jpeg;*.png;*.tif;*.tiff;*.gif;*.hdp;*.jxr;*.wdp;*.heif;*.heic\0"
