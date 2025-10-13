@@ -487,4 +487,102 @@ bool ModelConverter::Convert(const Desc& desc)
     return true;
 }
 
+//-----------------------------------------------------------------------------
+//      変換処理を行います.
+//-----------------------------------------------------------------------------
+bool ModelConverter::Convert(const std::string& path, std::vector<uint8_t>& binary)
+{
+    if (path.empty())
+    {
+        ELOG("Error : Invalid Argument.");
+        return false;
+    }
+
+    int flag = 0;
+    flag |= aiProcess_Triangulate;
+    flag |= aiProcess_PreTransformVertices;
+    flag |= aiProcess_GenSmoothNormals;
+    flag |= aiProcess_GenUVCoords;
+    flag |= aiProcess_RemoveRedundantMaterials;
+    flag |= aiProcess_OptimizeMeshes;
+    flag |= aiProcess_LimitBoneWeights;
+
+    Assimp::Importer importer;
+    auto pScene = importer.ReadFile(path.c_str(), flag);
+
+    if (pScene == nullptr)
+    {
+        ELOG("Error : Importer::ReadFile() Failed. path = %s", path.c_str());
+        return false;
+    }
+
+    flatbuffers::FlatBufferBuilder builder(1024);
+
+    // メッシュデータを変換.
+    std::vector<flatbuffers::Offset<asdx::res::Mesh>> meshes;
+    std::map<std::string, BoneInfo> boneMap;
+    meshes.resize(pScene->mNumMeshes);
+    for(auto i=0u; i<pScene->mNumMeshes; ++i)
+    {
+        const auto srcMesh = pScene->mMeshes[i];
+        auto& dstMesh = meshes[i];
+
+        auto materialTag = pScene->mMaterials[srcMesh->mMaterialIndex]->GetName().C_Str();
+
+        ParseMesh(builder, boneMap, materialTag, dstMesh, srcMesh);
+    }
+
+    // ボーンデータを変換.
+    std::vector<flatbuffers::Offset<asdx::res::Bone>> bones;
+    bones.reserve(boneMap.size());
+    for(auto& itr : boneMap)
+    {
+        auto mtx = ToFloat4x4(itr.second.OffsetMatrix);
+        auto bone = asdx::res::CreateBoneDirect(
+            builder,
+            itr.second.Name.c_str(),
+            &mtx);
+        bones.emplace_back(bone);
+    }
+
+    auto rootMtx = asdx::Matrix(
+        pScene->mRootNode->mTransformation.a1,
+        pScene->mRootNode->mTransformation.a2,
+        pScene->mRootNode->mTransformation.a3,
+        pScene->mRootNode->mTransformation.a4,
+        pScene->mRootNode->mTransformation.b1,
+        pScene->mRootNode->mTransformation.b2,
+        pScene->mRootNode->mTransformation.b3,
+        pScene->mRootNode->mTransformation.b4,
+        pScene->mRootNode->mTransformation.c1,
+        pScene->mRootNode->mTransformation.c2,
+        pScene->mRootNode->mTransformation.c3,
+        pScene->mRootNode->mTransformation.c4,
+        pScene->mRootNode->mTransformation.d1,
+        pScene->mRootNode->mTransformation.d2,
+        pScene->mRootNode->mTransformation.d3,
+        pScene->mRootNode->mTransformation.d4);
+    auto invRootMtx = asdx::Matrix::Invert(rootMtx);
+
+    auto resRootMtx    = ToFloat4x4(rootMtx);
+    auto resInvRootMtx = ToFloat4x4(invRootMtx);
+
+    auto bin = asdx::res::CreateModelBinaryDirect(
+        builder,
+        CURRENT_VERION,
+        &meshes,
+        &bones,
+        &resRootMtx,
+        &resInvRootMtx);
+
+    builder.Finish(bin);
+
+    binary.resize(builder.GetSize());
+    memcpy(binary.data(), builder.GetBufferPointer(), builder.GetSize());
+
+    pScene = nullptr;
+
+    return true;
+}
+
 } // namespace asdx
