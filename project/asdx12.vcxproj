@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="DebugMD|x64">
@@ -211,6 +211,7 @@
     <ClCompile Include="..\external\simdjson\src\simdjson.cpp" />
     <ClCompile Include="..\external\tinyxml2\tinyxml2.cpp" />
     <ClCompile Include="..\external\xxHash\xxhash.c" />
+    <ClCompile Include="..\src\edit\asdxBlink.cpp" />
     <ClCompile Include="..\src\edit\asdxEditParam.cpp" />
     <ClCompile Include="..\src\edit\asdxFileWatcher.cpp" />
     <ClCompile Include="..\src\edit\asdxGuiMgr.cpp" />
@@ -232,6 +233,7 @@
     <ClCompile Include="..\src\fnd\asdxMisc.cpp" />
     <ClCompile Include="..\src\fnd\asdxMouse.cpp" />
     <ClCompile Include="..\src\fnd\asdxOffsetAllocator.cpp" />
+    <ClCompile Include="..\src\fnd\asdxRef.cpp" />
     <ClCompile Include="..\src\fnd\asdxStateMachine.cpp" />
     <ClCompile Include="..\src\fnd\asdxTablet.cpp" />
     <ClCompile Include="..\src\fnd\asdxThreadPool.cpp" />
@@ -251,6 +253,10 @@
     <ClCompile Include="..\src\gfx\asdxFont.cpp" />
     <ClCompile Include="..\src\gfx\asdxGfxMisc.cpp" />
     <ClCompile Include="..\src\gfx\asdxMapChip.cpp" />
+    <ClCompile Include="..\src\gfx\asdxMeshImpl.cpp" />
+    <ClCompile Include="..\src\gfx\asdxModelImpl.cpp" />
+    <ClCompile Include="..\src\gfx\asdxModelInstanceImpl.cpp" />
+    <ClCompile Include="..\src\gfx\asdxModelManagerImpl.cpp" />
     <ClCompile Include="..\src\gfx\asdxPipelineState.cpp" />
     <ClCompile Include="..\src\gfx\asdxPresetState.cpp" />
     <ClCompile Include="..\src\gfx\asdxRayTracing.cpp" />
@@ -290,6 +296,7 @@
     <ClInclude Include="..\external\meshoptimizer\meshoptimizer.h" />
     <ClInclude Include="..\external\tinyxml2\tinyxml2.h" />
     <ClInclude Include="..\external\xxHash\xxhash.h" />
+    <ClInclude Include="..\include\edit\asdxBlink.h" />
     <ClInclude Include="..\include\edit\asdxEditParam.h" />
     <ClInclude Include="..\include\edit\asdxFileWatcher.h" />
     <ClInclude Include="..\include\edit\asdxGuiMgr.h" />
@@ -343,6 +350,7 @@
     <ClInclude Include="..\include\gfx\asdxFont.h" />
     <ClInclude Include="..\include\gfx\asdxGfxMisc.h" />
     <ClInclude Include="..\include\gfx\asdxMapChip.h" />
+    <ClInclude Include="..\include\gfx\asdxModel.h" />
     <ClInclude Include="..\include\gfx\asdxPipelineState.h" />
     <ClInclude Include="..\include\gfx\asdxPresetState.h" />
     <ClInclude Include="..\include\gfx\asdxSampler.h" />
@@ -359,6 +367,10 @@
     <ClInclude Include="..\include\res\asdxResMapChip.h" />
     <ClInclude Include="..\include\res\asdxResModel.h" />
     <ClInclude Include="..\include\res\asdxResTexture.h" />
+    <ClInclude Include="..\src\gfx\asdxMeshImpl.h" />
+    <ClInclude Include="..\src\gfx\asdxModelImpl.h" />
+    <ClInclude Include="..\src\gfx\asdxModelInstanceImpl.h" />
+    <ClInclude Include="..\src\gfx\asdxModelManagerImpl.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\include\fnd\asdxMath.inl" />

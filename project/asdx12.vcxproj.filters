@@ -324,6 +324,24 @@
     <ClCompile Include="..\src\gfx\asdxGfxMisc.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\edit\asdxBlink.cpp">
+      <Filter>ソース ファイル\edit</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gfx\asdxModelInstanceImpl.cpp">
+      <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gfx\asdxModelImpl.cpp">
+      <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gfx\asdxMeshImpl.cpp">
+      <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gfx\asdxModelManagerImpl.cpp">
+      <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\fnd\asdxRef.cpp">
+      <Filter>ソース ファイル\fnd</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\external\imgui\imconfig.h">
@@ -351,9 +369,6 @@
       <Filter>ヘッダー ファイル\edit</Filter>
     </ClInclude>
     <ClInclude Include="..\include\edit\asdxFileWatcher.h">
-      <Filter>ヘッダー ファイル\edit</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\edit\asdxGuiMgr.h">
       <Filter>ヘッダー ファイル\edit</Filter>
     </ClInclude>
     <ClInclude Include="..\include\edit\asdxHistory.h">
@@ -595,6 +610,27 @@
     </ClInclude>
     <ClInclude Include="..\include\gfx\asdxGfxMisc.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\edit\asdxBlink.h">
+      <Filter>ヘッダー ファイル\edit</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\edit\asdxGuiMgr.h">
+      <Filter>ヘッダー ファイル\fnd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\gfx\asdxModelInstanceImpl.h">
+      <Filter>ソース ファイル\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\gfx\asdxModelImpl.h">
+      <Filter>ソース ファイル\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\gfx\asdxMeshImpl.h">
+      <Filter>ソース ファイル\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\gfx\asdxModel.h">
+      <Filter>ヘッダー ファイル\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\gfx\asdxModelManagerImpl.h">
+      <Filter>ソース ファイル\gfx</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

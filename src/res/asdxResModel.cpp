@@ -70,146 +70,12 @@ void ModelBinary::Term()
 }
 
 //-----------------------------------------------------------------------------
-//      ルート変換行列を取得します.
-//-----------------------------------------------------------------------------
-const Matrix* ModelBinary::GetRootTransform() const
-{
-    assert(!m_Blob.empty());
-    return reinterpret_cast<const Matrix*>(res::GetModelBinary(m_Blob.data())->RootTransform());
-}
-
-//-----------------------------------------------------------------------------
-//      逆ルート変換行列を取得します.
-//-----------------------------------------------------------------------------
-const Matrix* ModelBinary::GetInverseRootTransform() const
-{
-    assert(!m_Blob.empty());
-    return reinterpret_cast<const Matrix*>(res::GetModelBinary(m_Blob.data())->InvRootTransform());
-}
-
-//-----------------------------------------------------------------------------
 //      メッシュ数を取得します.
 //-----------------------------------------------------------------------------
 uint32_t ModelBinary::GetMeshCount() const
 {
     assert(!m_Blob.empty());
     return res::GetModelBinary(m_Blob.data())->Meshes()->size();
-}
-
-//-----------------------------------------------------------------------------
-//      メッシュ名を取得します.
-//-----------------------------------------------------------------------------
-const char* ModelBinary::GetMeshName(uint32_t meshIndex) const
-{
-    assert(!m_Blob.empty());
-    auto mesh = res::GetModelBinary(m_Blob.data())->Meshes()->Get(meshIndex);
-    return mesh->Name()->c_str();
-}
-
-//-----------------------------------------------------------------------------
-//      マテリアル名を取得します.
-//-----------------------------------------------------------------------------
-const char* ModelBinary::GetMaterialName(uint32_t meshIndex) const
-{
-    assert(!m_Blob.empty());
-    auto mesh = res::GetModelBinary(m_Blob.data())->Meshes()->Get(meshIndex);
-    return mesh->MaterialTag()->c_str();
-}
-
-//-----------------------------------------------------------------------------
-//      位置座標を取得します.
-//-----------------------------------------------------------------------------
-ArrayView<Vector3> ModelBinary::GetPositions(uint32_t meshIndex) const
-{
-    assert(!m_Blob.empty());
-    auto mesh = res::GetModelBinary(m_Blob.data())->Meshes()->Get(meshIndex);
-    return ArrayView<Vector3>(
-        reinterpret_cast<const Vector3*>(mesh->Positions()->data()),
-        mesh->Positions()->size());
-}
-
-//-----------------------------------------------------------------------------
-//      法線ベクトルを取得します.
-//-----------------------------------------------------------------------------
-ArrayView<Vector3> ModelBinary::GetNormals(uint32_t meshIndex) const
-{
-    assert(!m_Blob.empty());
-    auto mesh = res::GetModelBinary(m_Blob.data())->Meshes()->Get(meshIndex);
-    return ArrayView<Vector3>(
-        reinterpret_cast<const Vector3*>(mesh->Normals()->data()),
-        mesh->Normals()->size());
-}
-
-//-----------------------------------------------------------------------------
-//      接線ベクトルを取得します.
-//-----------------------------------------------------------------------------
-ArrayView<Vector4> ModelBinary::GetTangents(uint32_t meshIndex) const
-{
-    assert(!m_Blob.empty());
-    auto mesh = res::GetModelBinary(m_Blob.data())->Meshes()->Get(meshIndex);
-    return ArrayView<Vector4>(
-        reinterpret_cast<const Vector4*>(mesh->Tangents()->data()),
-        mesh->Tangents()->size());
-}
-
-//-----------------------------------------------------------------------------
-//      テクスチャ座標を取得します.
-//-----------------------------------------------------------------------------
-ArrayView<Vector2> ModelBinary::GetTexCoords(uint32_t meshIndex) const
-{
-    assert(!m_Blob.empty());
-    auto mesh = res::GetModelBinary(m_Blob.data())->Meshes()->Get(meshIndex);
-    return ArrayView<Vector2>(
-        reinterpret_cast<const Vector2*>(mesh->TexCoords()->data()),
-        mesh->TexCoords()->size());
-}
-
-//-----------------------------------------------------------------------------
-//      頂点カラーを取得します.
-//-----------------------------------------------------------------------------
-ArrayView<Unorm4> ModelBinary::GetColors(uint32_t meshIndex) const
-{
-    assert(!m_Blob.empty());
-    auto mesh = res::GetModelBinary(m_Blob.data())->Meshes()->Get(meshIndex);
-    return ArrayView<Unorm4>(
-        reinterpret_cast<const Unorm4*>(mesh->Colors()->data()),
-        mesh->Colors()->size());
-}
-
-//-----------------------------------------------------------------------------
-//      ボーンウェイトを取得します.
-//-----------------------------------------------------------------------------
-ArrayView<Vector4> ModelBinary::GetBoneWeights(uint32_t meshIndex) const
-{
-    assert(!m_Blob.empty());
-    auto mesh = res::GetModelBinary(m_Blob.data())->Meshes()->Get(meshIndex);
-    return ArrayView<Vector4>(
-        reinterpret_cast<const Vector4*>(mesh->BoneWeights()->data()),
-        mesh->BoneWeights()->size());
-}
-
-//-----------------------------------------------------------------------------
-//      ボーン番号を取得します.
-//-----------------------------------------------------------------------------
-ArrayView<Uint4> ModelBinary::GetBoneIndices(uint32_t meshIndex) const
-{
-    assert(!m_Blob.empty());
-    auto mesh = res::GetModelBinary(m_Blob.data())->Meshes()->Get(meshIndex);
-    return ArrayView<Uint4>(
-        reinterpret_cast<const Uint4*>(mesh->BoneIndices()->data()),
-        mesh->BoneIndices()->size());
-}
-
-//-----------------------------------------------------------------------------
-//      頂点インデックスを取得します.
-//-----------------------------------------------------------------------------
-ArrayView<uint32_t> ModelBinary::GetVertexIndices(uint32_t meshIndex) const
-{
-    assert(!m_Blob.empty());
-    auto mesh = res::GetModelBinary(m_Blob.data())->Meshes()->Get(meshIndex);
-    return ArrayView<uint32_t>(
-        reinterpret_cast<const uint32_t*>(mesh->VertexIndices()->data()),
-        mesh->VertexIndices()->size());
 }
 
 //-----------------------------------------------------------------------------
@@ -222,23 +88,74 @@ uint32_t ModelBinary::GetBoneCount() const
 }
 
 //-----------------------------------------------------------------------------
-//      ボーン名を取得します.
+//      マテリアル数を取得します.
 //-----------------------------------------------------------------------------
-const char* ModelBinary::GetBoneName(uint32_t boneIndex) const
+uint32_t ModelBinary::GetMaterialCount() const
 {
     assert(!m_Blob.empty());
-    auto bone = res::GetModelBinary(m_Blob.data())->Bones()->Get(boneIndex);
-    return bone->Name()->c_str();
+    return res::GetModelBinary(m_Blob.data())->Materials()->size();
 }
 
 //-----------------------------------------------------------------------------
-//      ボーンオフセット行列を取得します.
+//      メッシュを取得します.
 //-----------------------------------------------------------------------------
-const Matrix* ModelBinary::GetBoneOffsetMatrix(uint32_t boneIndex) const
+ResMesh ModelBinary::GetMesh(uint32_t meshIndex) const
 {
     assert(!m_Blob.empty());
-    auto bone = res::GetModelBinary(m_Blob.data())->Bones()->Get(boneIndex);
-    return reinterpret_cast<const Matrix*>(bone->OffsetMatrix());
+    auto bin  = res::GetModelBinary(m_Blob.data());
+    auto mesh = bin->Meshes()->Get(meshIndex);
+
+    ResMesh result;
+    result.Name          = StringView(mesh->Name()->c_str());
+    result.MaterialId    = mesh->MaterialId();
+    result.Positions     = ArrayView<Vector3>(reinterpret_cast<const Vector3*>(mesh->Positions  ()->data()), mesh->Positions  ()->size());
+    result.Normals       = ArrayView<Vector3>(reinterpret_cast<const Vector3*>(mesh->Normals    ()->data()), mesh->Normals    ()->size());
+    result.Tangents      = ArrayView<Vector4>(reinterpret_cast<const Vector4*>(mesh->Tangents   ()->data()), mesh->Tangents   ()->size());
+    result.Colors        = ArrayView<Unorm4> (reinterpret_cast<const Unorm4*> (mesh->Colors     ()->data()), mesh->Colors     ()->size());
+    result.TexCoords     = ArrayView<Vector2>(reinterpret_cast<const Vector2*>(mesh->TexCoords  ()->data()), mesh->TexCoords  ()->size());
+    result.BoneIndices   = ArrayView<Uint4>  (reinterpret_cast<const Uint4*>  (mesh->BoneIndices()->data()), mesh->BoneIndices()->size());
+    result.BoneWeights   = ArrayView<Vector4>(reinterpret_cast<const Vector4*>(mesh->BoneWeights()->data()), mesh->BoneWeights()->size());
+    result.VertexIndices = ArrayView<uint32_t>(reinterpret_cast<const uint32_t*>(mesh->VertexIndices()->data()), mesh->VertexIndices()->size());
+    return result;
+}
+
+//-----------------------------------------------------------------------------
+//      ボーンを取得します.
+//-----------------------------------------------------------------------------
+ResBone ModelBinary::GetBone(uint32_t meshIndex) const
+{
+    assert(!m_Blob.empty());
+    auto bin = res::GetModelBinary(m_Blob.data());
+    auto bone = bin->Bones()->Get(meshIndex);
+
+    ResBone result;
+    result.Name         = StringView(bone->Name()->c_str());
+    result.OffsetMatrix = *reinterpret_cast<const Matrix*>(bone->OffsetMatrix());
+    return result;
+}
+
+//-----------------------------------------------------------------------------
+//      マテリアルを取得します.
+//-----------------------------------------------------------------------------
+const char* ModelBinary::GetMaterial(uint32_t materialIndex) const
+{
+    assert(!m_Blob.empty());
+    return res::GetModelBinary(m_Blob.data())->Materials()->Get(materialIndex)->c_str();
+}
+
+//-----------------------------------------------------------------------------
+//      ボーンを検索します.
+//-----------------------------------------------------------------------------
+bool ModelBinary::FindBone(const char* name, ResBone& result) const
+{
+    assert(!m_Blob.empty());
+    auto bone = res::GetModelBinary(m_Blob.data())->Bones()->LookupByKey(name);
+    if (bone == nullptr)
+        return false;
+
+    result.Name         = bone->Name()->c_str();
+    result.OffsetMatrix = (*reinterpret_cast<const Matrix*>(bone->OffsetMatrix()));
+    return true;
 }
 
 } // namespace asdx

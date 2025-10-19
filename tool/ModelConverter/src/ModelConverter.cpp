@@ -70,7 +70,6 @@ void ParseMesh
 (
     flatbuffers::FlatBufferBuilder&         builder,
     std::map<std::string, BoneInfo>&        boneMap,
-    const char*                             materialTag,
     flatbuffers::Offset<asdx::res::Mesh>&   dstMesh,
     const aiMesh*                           srcMesh
 )
@@ -356,7 +355,7 @@ void ParseMesh
     dstMesh = asdx::res::CreateMeshDirect(
         builder,
         srcMesh->mName.C_Str(),
-        materialTag,
+        srcMesh->mMaterialIndex,
         &positions,
         &normals,
         &tangents,
@@ -415,9 +414,7 @@ bool ModelConverter::Convert(const Desc& desc)
         const auto srcMesh = pScene->mMeshes[i];
         auto& dstMesh = meshes[i];
 
-        auto materialTag = pScene->mMaterials[srcMesh->mMaterialIndex]->GetName().C_Str();
-
-        ParseMesh(builder, boneMap, materialTag, dstMesh, srcMesh);
+        ParseMesh(builder, boneMap, dstMesh, srcMesh);
     }
 
     // ボーンデータを変換.
@@ -431,6 +428,15 @@ bool ModelConverter::Convert(const Desc& desc)
             itr.second.Name.c_str(),
             &mtx);
         bones.emplace_back(bone);
+    }
+
+    // マテリアルデータを変換.
+    std::vector<flatbuffers::Offset<flatbuffers::String>> materials;
+    materials.resize(pScene->mNumMaterials);
+    for(auto i=0u; i<pScene->mNumMaterials; ++i)
+    {
+        const auto srcMat = pScene->mMaterials[i];
+        materials.push_back(builder.CreateString(srcMat->GetName().C_Str()));
     }
 
     auto rootMtx = asdx::Matrix(
@@ -459,9 +465,8 @@ bool ModelConverter::Convert(const Desc& desc)
         builder,
         CURRENT_VERION,
         &meshes,
-        &bones,
-        &resRootMtx,
-        &resInvRootMtx);
+        &materials,
+        &bones);
 
     builder.Finish(bin);
 
@@ -527,9 +532,7 @@ bool ModelConverter::Convert(const std::string& path, std::vector<uint8_t>& bina
         const auto srcMesh = pScene->mMeshes[i];
         auto& dstMesh = meshes[i];
 
-        auto materialTag = pScene->mMaterials[srcMesh->mMaterialIndex]->GetName().C_Str();
-
-        ParseMesh(builder, boneMap, materialTag, dstMesh, srcMesh);
+        ParseMesh(builder, boneMap, dstMesh, srcMesh);
     }
 
     // ボーンデータを変換.
@@ -545,35 +548,21 @@ bool ModelConverter::Convert(const std::string& path, std::vector<uint8_t>& bina
         bones.emplace_back(bone);
     }
 
-    auto rootMtx = asdx::Matrix(
-        pScene->mRootNode->mTransformation.a1,
-        pScene->mRootNode->mTransformation.a2,
-        pScene->mRootNode->mTransformation.a3,
-        pScene->mRootNode->mTransformation.a4,
-        pScene->mRootNode->mTransformation.b1,
-        pScene->mRootNode->mTransformation.b2,
-        pScene->mRootNode->mTransformation.b3,
-        pScene->mRootNode->mTransformation.b4,
-        pScene->mRootNode->mTransformation.c1,
-        pScene->mRootNode->mTransformation.c2,
-        pScene->mRootNode->mTransformation.c3,
-        pScene->mRootNode->mTransformation.c4,
-        pScene->mRootNode->mTransformation.d1,
-        pScene->mRootNode->mTransformation.d2,
-        pScene->mRootNode->mTransformation.d3,
-        pScene->mRootNode->mTransformation.d4);
-    auto invRootMtx = asdx::Matrix::Invert(rootMtx);
-
-    auto resRootMtx    = ToFloat4x4(rootMtx);
-    auto resInvRootMtx = ToFloat4x4(invRootMtx);
+    // マテリアルデータを変換.
+    std::vector<flatbuffers::Offset<flatbuffers::String>> materials;
+    materials.resize(pScene->mNumMaterials);
+    for(auto i=0u; i<pScene->mNumMaterials; ++i)
+    {
+        const auto srcMat = pScene->mMaterials[i];
+        materials.push_back(builder.CreateString(srcMat->GetName().C_Str()));
+    }
 
     auto bin = asdx::res::CreateModelBinaryDirect(
         builder,
         CURRENT_VERION,
         &meshes,
-        &bones,
-        &resRootMtx,
-        &resInvRootMtx);
+        &materials,
+        &bones);
 
     builder.Finish(bin);
 

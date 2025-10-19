@@ -381,7 +381,7 @@ struct Mesh FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef MeshBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_NAME = 4,
-    VT_MATERIALTAG = 6,
+    VT_MATERIALID = 6,
     VT_POSITIONS = 8,
     VT_NORMALS = 10,
     VT_TANGENTS = 12,
@@ -394,8 +394,8 @@ struct Mesh FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   const ::flatbuffers::String *Name() const {
     return GetPointer<const ::flatbuffers::String *>(VT_NAME);
   }
-  const ::flatbuffers::String *MaterialTag() const {
-    return GetPointer<const ::flatbuffers::String *>(VT_MATERIALTAG);
+  uint32_t MaterialId() const {
+    return GetField<uint32_t>(VT_MATERIALID, 0);
   }
   const ::flatbuffers::Vector<const asdx::res::Float3 *> *Positions() const {
     return GetPointer<const ::flatbuffers::Vector<const asdx::res::Float3 *> *>(VT_POSITIONS);
@@ -425,8 +425,7 @@ struct Mesh FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_NAME) &&
            verifier.VerifyString(Name()) &&
-           VerifyOffset(verifier, VT_MATERIALTAG) &&
-           verifier.VerifyString(MaterialTag()) &&
+           VerifyField<uint32_t>(verifier, VT_MATERIALID, 4) &&
            VerifyOffset(verifier, VT_POSITIONS) &&
            verifier.VerifyVector(Positions()) &&
            VerifyOffset(verifier, VT_NORMALS) &&
@@ -454,8 +453,8 @@ struct MeshBuilder {
   void add_Name(::flatbuffers::Offset<::flatbuffers::String> Name) {
     fbb_.AddOffset(Mesh::VT_NAME, Name);
   }
-  void add_MaterialTag(::flatbuffers::Offset<::flatbuffers::String> MaterialTag) {
-    fbb_.AddOffset(Mesh::VT_MATERIALTAG, MaterialTag);
+  void add_MaterialId(uint32_t MaterialId) {
+    fbb_.AddElement<uint32_t>(Mesh::VT_MATERIALID, MaterialId, 0);
   }
   void add_Positions(::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::Float3 *>> Positions) {
     fbb_.AddOffset(Mesh::VT_POSITIONS, Positions);
@@ -495,7 +494,7 @@ struct MeshBuilder {
 inline ::flatbuffers::Offset<Mesh> CreateMesh(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     ::flatbuffers::Offset<::flatbuffers::String> Name = 0,
-    ::flatbuffers::Offset<::flatbuffers::String> MaterialTag = 0,
+    uint32_t MaterialId = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::Float3 *>> Positions = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::Float3 *>> Normals = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::Float4 *>> Tangents = 0,
@@ -513,7 +512,7 @@ inline ::flatbuffers::Offset<Mesh> CreateMesh(
   builder_.add_Tangents(Tangents);
   builder_.add_Normals(Normals);
   builder_.add_Positions(Positions);
-  builder_.add_MaterialTag(MaterialTag);
+  builder_.add_MaterialId(MaterialId);
   builder_.add_Name(Name);
   return builder_.Finish();
 }
@@ -521,7 +520,7 @@ inline ::flatbuffers::Offset<Mesh> CreateMesh(
 inline ::flatbuffers::Offset<Mesh> CreateMeshDirect(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     const char *Name = nullptr,
-    const char *MaterialTag = nullptr,
+    uint32_t MaterialId = 0,
     const std::vector<asdx::res::Float3> *Positions = nullptr,
     const std::vector<asdx::res::Float3> *Normals = nullptr,
     const std::vector<asdx::res::Float4> *Tangents = nullptr,
@@ -531,7 +530,6 @@ inline ::flatbuffers::Offset<Mesh> CreateMeshDirect(
     const std::vector<asdx::res::Uint4> *BoneIndices = nullptr,
     const std::vector<uint32_t> *VertexIndices = nullptr) {
   auto Name__ = Name ? _fbb.CreateString(Name) : 0;
-  auto MaterialTag__ = MaterialTag ? _fbb.CreateString(MaterialTag) : 0;
   auto Positions__ = Positions ? _fbb.CreateVectorOfStructs<asdx::res::Float3>(*Positions) : 0;
   auto Normals__ = Normals ? _fbb.CreateVectorOfStructs<asdx::res::Float3>(*Normals) : 0;
   auto Tangents__ = Tangents ? _fbb.CreateVectorOfStructs<asdx::res::Float4>(*Tangents) : 0;
@@ -543,7 +541,7 @@ inline ::flatbuffers::Offset<Mesh> CreateMeshDirect(
   return asdx::res::CreateMesh(
       _fbb,
       Name__,
-      MaterialTag__,
+      MaterialId,
       Positions__,
       Normals__,
       Tangents__,
@@ -559,9 +557,8 @@ struct ModelBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_VERSION = 4,
     VT_MESHES = 6,
-    VT_BONES = 8,
-    VT_ROOTTRANSFORM = 10,
-    VT_INVROOTTRANSFORM = 12
+    VT_MATERIALS = 8,
+    VT_BONES = 10
   };
   uint32_t Version() const {
     return GetField<uint32_t>(VT_VERSION, 0);
@@ -569,14 +566,11 @@ struct ModelBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::Mesh>> *Meshes() const {
     return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::Mesh>> *>(VT_MESHES);
   }
+  const ::flatbuffers::Vector<::flatbuffers::Offset<::flatbuffers::String>> *Materials() const {
+    return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<::flatbuffers::String>> *>(VT_MATERIALS);
+  }
   const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::Bone>> *Bones() const {
     return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::Bone>> *>(VT_BONES);
-  }
-  const asdx::res::Float4x4 *RootTransform() const {
-    return GetStruct<const asdx::res::Float4x4 *>(VT_ROOTTRANSFORM);
-  }
-  const asdx::res::Float4x4 *InvRootTransform() const {
-    return GetStruct<const asdx::res::Float4x4 *>(VT_INVROOTTRANSFORM);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -584,11 +578,12 @@ struct ModelBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
            VerifyOffset(verifier, VT_MESHES) &&
            verifier.VerifyVector(Meshes()) &&
            verifier.VerifyVectorOfTables(Meshes()) &&
+           VerifyOffset(verifier, VT_MATERIALS) &&
+           verifier.VerifyVector(Materials()) &&
+           verifier.VerifyVectorOfStrings(Materials()) &&
            VerifyOffset(verifier, VT_BONES) &&
            verifier.VerifyVector(Bones()) &&
            verifier.VerifyVectorOfTables(Bones()) &&
-           VerifyField<asdx::res::Float4x4>(verifier, VT_ROOTTRANSFORM, 4) &&
-           VerifyField<asdx::res::Float4x4>(verifier, VT_INVROOTTRANSFORM, 4) &&
            verifier.EndTable();
   }
 };
@@ -603,14 +598,11 @@ struct ModelBinaryBuilder {
   void add_Meshes(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::Mesh>>> Meshes) {
     fbb_.AddOffset(ModelBinary::VT_MESHES, Meshes);
   }
+  void add_Materials(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<::flatbuffers::String>>> Materials) {
+    fbb_.AddOffset(ModelBinary::VT_MATERIALS, Materials);
+  }
   void add_Bones(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::Bone>>> Bones) {
     fbb_.AddOffset(ModelBinary::VT_BONES, Bones);
-  }
-  void add_RootTransform(const asdx::res::Float4x4 *RootTransform) {
-    fbb_.AddStruct(ModelBinary::VT_ROOTTRANSFORM, RootTransform);
-  }
-  void add_InvRootTransform(const asdx::res::Float4x4 *InvRootTransform) {
-    fbb_.AddStruct(ModelBinary::VT_INVROOTTRANSFORM, InvRootTransform);
   }
   explicit ModelBinaryBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -627,13 +619,11 @@ inline ::flatbuffers::Offset<ModelBinary> CreateModelBinary(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t Version = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::Mesh>>> Meshes = 0,
-    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::Bone>>> Bones = 0,
-    const asdx::res::Float4x4 *RootTransform = nullptr,
-    const asdx::res::Float4x4 *InvRootTransform = nullptr) {
+    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<::flatbuffers::String>>> Materials = 0,
+    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::Bone>>> Bones = 0) {
   ModelBinaryBuilder builder_(_fbb);
-  builder_.add_InvRootTransform(InvRootTransform);
-  builder_.add_RootTransform(RootTransform);
   builder_.add_Bones(Bones);
+  builder_.add_Materials(Materials);
   builder_.add_Meshes(Meshes);
   builder_.add_Version(Version);
   return builder_.Finish();
@@ -643,18 +633,17 @@ inline ::flatbuffers::Offset<ModelBinary> CreateModelBinaryDirect(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t Version = 0,
     const std::vector<::flatbuffers::Offset<asdx::res::Mesh>> *Meshes = nullptr,
-    std::vector<::flatbuffers::Offset<asdx::res::Bone>> *Bones = nullptr,
-    const asdx::res::Float4x4 *RootTransform = nullptr,
-    const asdx::res::Float4x4 *InvRootTransform = nullptr) {
+    const std::vector<::flatbuffers::Offset<::flatbuffers::String>> *Materials = nullptr,
+    std::vector<::flatbuffers::Offset<asdx::res::Bone>> *Bones = nullptr) {
   auto Meshes__ = Meshes ? _fbb.CreateVector<::flatbuffers::Offset<asdx::res::Mesh>>(*Meshes) : 0;
+  auto Materials__ = Materials ? _fbb.CreateVector<::flatbuffers::Offset<::flatbuffers::String>>(*Materials) : 0;
   auto Bones__ = Bones ? _fbb.CreateVectorOfSortedTables<asdx::res::Bone>(Bones) : 0;
   return asdx::res::CreateModelBinary(
       _fbb,
       Version,
       Meshes__,
-      Bones__,
-      RootTransform,
-      InvRootTransform);
+      Materials__,
+      Bones__);
 }
 
 inline const asdx::res::ModelBinary *GetModelBinary(const void *buf) {

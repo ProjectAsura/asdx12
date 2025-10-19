@@ -69,7 +69,7 @@ table Bone
 table Mesh
 {
     Name          : string;
-    MaterialTag   : string;
+    MaterialId    : uint;
     Positions     : [Float3];
     Normals       : [Float3];
     Tangents      : [Float4];
@@ -84,9 +84,8 @@ table ModelBinary
 {
     Version          : uint;
     Meshes           : [Mesh];
+    Materials        : [string];
     Bones            : [Bone];
-    RootTransform    : Float4x4;
-    InvRootTransform : Float4x4;
 }
 
 root_type ModelBinary;

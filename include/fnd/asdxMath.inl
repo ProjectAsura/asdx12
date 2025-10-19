@@ -2225,6 +2225,35 @@ inline Matrix& Matrix::Identity()
     return (*this);
 }
 
+//----------------------------------------------------------------------------
+//      基底Xベクトルを取得します.
+//----------------------------------------------------------------------------
+inline Vector3 Matrix::GetBasisX() const
+{ return Vector3(_11, _21, _31); }
+
+//----------------------------------------------------------------------------
+//      基底Yベクトルを取得します.
+//----------------------------------------------------------------------------
+inline Vector3 Matrix::GetBasisY() const
+{ return Vector3(_12, _22, _32); }
+
+//----------------------------------------------------------------------------
+//      基底Zベクトルを取得します.
+//----------------------------------------------------------------------------
+inline Vector3 Matrix::GetBasisZ() const
+{ return Vector3(_13, _23, _33); }
+
+//-----------------------------------------------------------------------------
+//      スケール成分を求めます.
+//-----------------------------------------------------------------------------
+inline Vector3 Matrix::CalcScale() const
+{
+    auto x = GetBasisX().Length();
+    auto y = GetBasisY().Length();
+    auto z = GetBasisZ().Length();
+    return Vector3(x, y, z);
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Matrix Methods (row-major)
@@ -3707,6 +3736,376 @@ inline Quaternion Quaternion::Squad
     auto e = Quaternion::Slerp(a, b, amount);
     return Quaternion::Slerp(d, e, 2.0f * amount * (1.0f - amount));
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
+// BoundingBox2 structure
+///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      コンストラクタです.
+//-----------------------------------------------------------------------------
+inline BoundingBox2::BoundingBox2()
+: Mini( FLT_MAX,  FLT_MAX)
+, Maxi(-FLT_MAX, -FLT_MAX)
+{ /* DO_NOTHING */ }
+
+//-----------------------------------------------------------------------------
+//      引数付きコンストラクタです.
+//-----------------------------------------------------------------------------
+inline BoundingBox2::BoundingBox2(const Vector2& mini, const Vector2& maxi)
+: Mini(mini)
+, Maxi(maxi)
+{ /* DO_NOTHING */ }
+
+//-----------------------------------------------------------------------------
+//      中心座標を求めます.
+//-----------------------------------------------------------------------------
+inline Vector2 BoundingBox2::GetCenter() const
+{ return (Maxi + Mini) * 0.5f; }
+
+//-----------------------------------------------------------------------------
+//      サイズを求めます.
+//-----------------------------------------------------------------------------
+inline Vector2 BoundingBox2::GetSize() const
+{ return Vector2::Abs(Maxi - Mini); }
+
+//-----------------------------------------------------------------------------
+//      点が含まれるかどうか判定します.
+//-----------------------------------------------------------------------------
+inline bool BoundingBox2::Contains(const Vector2& value) const
+{
+    return (value.x >= Mini.x && value.x <= Maxi.x
+         && value.y >= Mini.y && value.y <= Maxi.y);
+}
+
+//-----------------------------------------------------------------------------
+//      バウンディングボックスが含まれるかどうか判定します.
+//-----------------------------------------------------------------------------
+inline bool BoundingBox2::Contains(const BoundingBox2& value) const
+{
+    return (value.Mini.x >= Mini.x && value.Maxi.x <= Maxi.x
+         && value.Mini.y >= Mini.y && value.Maxi.y <= Maxi.y);
+}
+
+//-----------------------------------------------------------------------------
+//      代入演算子です.
+//-----------------------------------------------------------------------------
+inline BoundingBox2& BoundingBox2::operator = (const BoundingBox2& value)
+{
+    Mini = value.Mini;
+    Maxi = value.Maxi;
+    return *this;
+}
+
+//-----------------------------------------------------------------------------
+//      マージ処理を行います.
+//-----------------------------------------------------------------------------
+inline BoundingBox2 BoundingBox2::Merge(const BoundingBox2& lhs, const BoundingBox2& rhs)
+{
+    BoundingBox2 result;
+    result.Mini = Vector2::Min(lhs.Mini, rhs.Mini);
+    result.Maxi = Vector2::Max(lhs.Maxi, rhs.Maxi);
+    return result;
+}
+
+//-----------------------------------------------------------------------------
+//      マージ処理を行います.
+//-----------------------------------------------------------------------------
+inline BoundingBox2 BoundingBox2::Merge(const BoundingBox2& lhs, const Vector2& rhs)
+{
+    BoundingBox2 result;
+    result.Mini = Vector2::Min(lhs.Mini, rhs);
+    result.Maxi = Vector2::Max(lhs.Maxi, rhs);
+    return result;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// BoundingBox3 structure
+///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      コンストラクタです.
+//-----------------------------------------------------------------------------
+inline BoundingBox3::BoundingBox3()
+: Mini( FLT_MAX,  FLT_MAX,  FLT_MAX)
+, Maxi(-FLT_MAX, -FLT_MAX, -FLT_MAX)
+{ /* DO_NOTHING */ }
+
+//-----------------------------------------------------------------------------
+//      引数付きコンストラクタです.
+//-----------------------------------------------------------------------------
+inline BoundingBox3::BoundingBox3(const Vector3& mini, const Vector3& maxi)
+: Mini(mini)
+, Maxi(maxi)
+{ /* DO_NOTHING */ }
+
+//-----------------------------------------------------------------------------
+//      中心座標を求めます.
+//-----------------------------------------------------------------------------
+inline Vector3 BoundingBox3::GetCenter() const
+{ return (Maxi + Mini) * 0.5f; }
+
+//-----------------------------------------------------------------------------
+//      サイズを求めます.
+//-----------------------------------------------------------------------------
+inline Vector3 BoundingBox3::GetSize() const
+{ return Vector3::Abs(Maxi - Mini); }
+
+//-----------------------------------------------------------------------------
+//      点が含まれるかどうか判定します
+//-----------------------------------------------------------------------------
+inline bool BoundingBox3::Contains(const Vector3& value) const
+{
+    return (value.x >= Mini.x && value.x <= Maxi.x 
+         && value.y >= Mini.y && value.y <= Maxi.y
+         && value.z >= Mini.z && value.z <= Maxi.z);
+}
+
+//-----------------------------------------------------------------------------
+//      バウンディングボックスが含まれるかどうか判定します.
+//-----------------------------------------------------------------------------
+inline bool BoundingBox3::Contains(const BoundingBox3& value) const
+{
+    return (value.Mini.x >= Mini.x && value.Maxi.x <= Maxi.x
+         && value.Mini.y >= Mini.y && value.Maxi.y <= Maxi.y
+         && value.Mini.z >= Mini.z && value.Maxi.z <= Maxi.z);
+}
+
+//-----------------------------------------------------------------------------
+//      代入演算子です.
+//-----------------------------------------------------------------------------
+inline BoundingBox3& BoundingBox3::operator = (const BoundingBox3& value)
+{
+    Mini = value.Mini;
+    Maxi = value.Maxi;
+    return *this;
+}
+
+//-----------------------------------------------------------------------------
+//      マージ処理を行います.
+//-----------------------------------------------------------------------------
+inline BoundingBox3 BoundingBox3::Merge(const BoundingBox3& lhs, const BoundingBox3& rhs)
+{
+    BoundingBox3 result;
+    result.Mini = Vector3::Min(lhs.Mini, rhs.Mini);
+    result.Maxi = Vector3::Max(lhs.Maxi, rhs.Maxi);
+    return result;
+}
+
+//-----------------------------------------------------------------------------
+//      マージ処理を行います.
+//-----------------------------------------------------------------------------
+inline BoundingBox3 BoundingBox3::Merge(const BoundingBox3& lhs, const Vector3& rhs)
+{
+    BoundingBox3 result;
+    result.Mini = Vector3::Min(lhs.Mini, rhs);
+    result.Maxi = Vector3::Max(lhs.Maxi, rhs);
+    return result;
+}
+
+//-----------------------------------------------------------------------------
+//      指定行列で変換処理を行います.
+//-----------------------------------------------------------------------------
+inline BoundingBox3 BoundingBox3::Transform(const BoundingBox3& box, const Matrix& matrix)
+{
+    Vector3 corners[8] = {
+        Vector3(box.Mini.x, box.Mini.y, box.Mini.z),
+        Vector3(box.Maxi.x, box.Mini.y, box.Mini.z),
+        Vector3(box.Mini.x, box.Maxi.y, box.Mini.z),
+        Vector3(box.Maxi.x, box.Maxi.y, box.Mini.z),
+        Vector3(box.Mini.x, box.Mini.y, box.Maxi.z),
+        Vector3(box.Maxi.x, box.Mini.y, box.Maxi.z),
+        Vector3(box.Mini.x, box.Maxi.y, box.Maxi.z),
+        Vector3(box.Maxi.x, box.Maxi.y, box.Maxi.z),
+    };
+
+    BoundingBox3 result;
+    for(auto i=0; i<8; ++i)
+    {
+        auto p = Vector3::Transform(corners[i], matrix);
+
+        result.Mini = Vector3::Min(result.Mini, p);
+        result.Maxi = Vector3::Max(result.Maxi, p);
+    }
+
+    return result;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// BoundingSphere2 structure
+///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      引数付きコンストラクタです.
+//-----------------------------------------------------------------------------
+inline BoundingSphere2::BoundingSphere2(const Vector2& center, float radius)
+: Center(center)
+, Radius(radius)
+{ /* DO_NOTHING */ }
+
+//-----------------------------------------------------------------------------
+//      点を含むかどうか判定します.
+//-----------------------------------------------------------------------------
+inline bool BoundingSphere2::Contains(const Vector2& value) const
+{
+    auto diff = value - Center;
+    return Vector2::Dot(diff, diff) <= (Radius * Radius);
+}
+
+//-----------------------------------------------------------------------------
+//      バウンディングスフィアを含むかどうか判定します.
+//-----------------------------------------------------------------------------
+inline bool BoundingSphere2::Contains(const BoundingSphere2& value) const
+{
+    auto diff = value.Center - Center;
+    return Vector2::Dot(diff, diff) <= ((Radius - value.Radius) * (Radius - value.Radius));
+}
+
+//-----------------------------------------------------------------------------
+//      代入演算子です.
+//-----------------------------------------------------------------------------
+inline BoundingSphere2& BoundingSphere2::operator = (const BoundingSphere2& value)
+{
+    Center = value.Center;
+    Radius = value.Radius;
+    return *this;
+}
+
+//-----------------------------------------------------------------------------
+//      マージ処理を行います.
+//-----------------------------------------------------------------------------
+inline BoundingSphere2 BoundingSphere2::Merge(const BoundingSphere2& lhs, const BoundingSphere2& rhs)
+{
+    auto diff = rhs.Center - lhs.Center;
+    auto dist = diff.Length();
+
+    // 一方が他方を完全に包含している場合.
+    if (lhs.Radius >= dist + rhs.Radius) return lhs;
+    if (rhs.Radius >= dist + lhs.Radius) return rhs;
+
+    // 新しい半径と中心補間.
+    auto newRadius = (dist + lhs.Radius + rhs.Radius) * 0.5f;
+    auto t = (newRadius - lhs.Radius) / dist;
+
+    auto newCenter = lhs.Center + diff * t;
+    return BoundingSphere2(newCenter, newRadius);
+}
+
+//-----------------------------------------------------------------------------
+//      マージ処理を行います.
+//-----------------------------------------------------------------------------
+inline BoundingSphere2 BoundingSphere2::Merge(const BoundingSphere2& lhs, const Vector2& rhs)
+{
+    auto diff = rhs - lhs.Center;
+    auto dist = diff.Length();
+
+    // 既に点を含んでいる場合はそのまま返す.
+    if (dist <= lhs.Radius) return lhs;
+
+    // 新しい半径.
+    auto newRadius = (lhs.Radius + dist) * 0.5f;
+    auto t = (newRadius - lhs.Radius) / dist;
+
+    auto newCenter = lhs.Center + diff * t;
+    return BoundingSphere2(newCenter, newRadius);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// BoundingSphere3 structure
+///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      引数付きコンストラクタです.
+//-----------------------------------------------------------------------------
+inline BoundingSphere3::BoundingSphere3(const Vector3& center, float radius)
+: Center(center)
+, Radius(radius)
+{ /* DO_NOTHING */ }
+
+//-----------------------------------------------------------------------------
+//      点を含むかどうか判定します.
+//-----------------------------------------------------------------------------
+inline bool BoundingSphere3::Contains(const Vector3& value) const
+{
+    auto diff = value - Center;
+    return Vector3::Dot(diff, diff) <= (Radius * Radius);
+}
+
+//-----------------------------------------------------------------------------
+//      バウンディングスフィアを含むかどうか判定します.
+//-----------------------------------------------------------------------------
+inline bool BoundingSphere3::Contains(const BoundingSphere3& value) const
+{
+    auto diff = value.Center - Center;
+    return Vector3::Dot(diff, diff) <= ((Radius - value.Radius) * (Radius - value.Radius));
+}
+
+//-----------------------------------------------------------------------------
+//      代入演算子です.
+//-----------------------------------------------------------------------------
+inline BoundingSphere3& BoundingSphere3::operator = (const BoundingSphere3& value)
+{
+    Center = value.Center;
+    Radius = value.Radius;
+    return *this;
+}
+
+//-----------------------------------------------------------------------------
+//      マージ処理を行います.
+//-----------------------------------------------------------------------------
+inline BoundingSphere3 BoundingSphere3::Merge(const BoundingSphere3& lhs, const BoundingSphere3& rhs)
+{
+    auto diff = rhs.Center - lhs.Center;
+    auto dist = diff.Length();
+
+    // 一方が他方を完全に包含している場合.
+    if (lhs.Radius >= dist + rhs.Radius) return lhs;
+    if (rhs.Radius >= dist + lhs.Radius) return rhs;
+
+    // 新しい半径と中心補間.
+    auto newRadius = (dist + lhs.Radius + rhs.Radius) * 0.5f;
+    auto t = (newRadius - lhs.Radius) / dist;
+
+    auto newCenter = lhs.Center + diff * t;
+    return BoundingSphere3(newCenter, newRadius);
+}
+
+//-----------------------------------------------------------------------------
+//      マージ処理を行います.
+//-----------------------------------------------------------------------------
+inline BoundingSphere3 BoundingSphere3::Merge(const BoundingSphere3& lhs, const Vector3& rhs)
+{
+    auto diff = rhs - lhs.Center;
+    auto dist = diff.Length();
+
+    // 既に点を含んでいる場合はそのまま返す.
+    if (dist <= lhs.Radius) return lhs;
+
+    // 新しい半径.
+    auto newRadius = (lhs.Radius + dist) * 0.5f;
+    auto t = (newRadius - lhs.Radius) / dist;
+
+    auto newCenter = lhs.Center + diff * t;
+    return BoundingSphere3(newCenter, newRadius);
+}
+
+//-----------------------------------------------------------------------------
+//      指定行列で変換処理を行います.
+//-----------------------------------------------------------------------------
+inline BoundingSphere3 BoundingSphere3::Transform(const BoundingSphere3& sphere, const Matrix& matrix)
+{
+    auto center = Vector3::Transform(sphere.Center, matrix);
+    auto scale  = matrix.CalcScale();
+
+    auto maxScale = Max(scale.x, Max(scale.y, scale.z));
+    auto radius   = sphere.Radius * maxScale;
+    return BoundingSphere3(center, radius);
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // XorShift class

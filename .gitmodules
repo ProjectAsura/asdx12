@@ -37,3 +37,6 @@
 [submodule "external/xxHash"]
 	path = external/xxHash
 	url = https://github.com/Cyan4973/xxHash.git
+[submodule "external/blink"]
+	path = external/blink
+	url = https://github.com/ProjectAsura/blink.git
