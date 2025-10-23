@@ -11,6 +11,7 @@
 #include <fnd/asdxLogger.h>
 #include <fnd/asdxMisc.h>
 #include <map>
+#include <algorithm>
 #include <Windows.h>
 
 
@@ -27,6 +28,26 @@ void ShowError(uint32_t ret)
     char buf[512] = {};
     mciGetErrorStringA(ret, buf, sizeof(buf));
     ELOG("Error : %s", buf);
+}
+
+//-----------------------------------------------------------------------------
+//      ファイルパスから拡張子を取得します.
+//-----------------------------------------------------------------------------
+std::string GetExtA( const char* filePath )
+{
+    std::string path = filePath;
+    auto idx = path.find_last_of( "." );
+    if ( idx != std::string::npos )
+    {
+        std::string result = path.substr( idx + 1 );
+
+        // 小文字化.
+        std::transform( result.begin(), result.end(), result.begin(), tolower );
+
+        return result;
+    }
+
+    return std::string();
 }
 
 } // namespace

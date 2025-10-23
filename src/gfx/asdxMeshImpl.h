@@ -71,7 +71,7 @@ public:
     //! 
     //! @return     マテリアルIDを返却します.
     //-------------------------------------------------------------------------
-    size_t GetMaterialId() const override;
+    uint32_t GetMaterialId() const override;
 
     //-------------------------------------------------------------------------
     //! @brief      メッシュ名を取得します.
@@ -137,18 +137,25 @@ public:
     const IndexBuffer& GetVertexIndices() const override;
 
     //-------------------------------------------------------------------------
+    //! @brief      頂点数を取得します.
+    //! 
+    //! @return     頂点数を返却します.
+    //-------------------------------------------------------------------------
+    uint32_t GetVertexCount() const override;
+
+    //-------------------------------------------------------------------------
     //! @brief      頂点インデックス数を取得します.
     //! 
     //! @return     頂点インデックス数を返却します.
     //-------------------------------------------------------------------------
-    uint32_t GetVertexIndexCount() const override;
+    uint32_t GetIndexCount() const override;
 
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
     std::string     m_Name;                 //!< メッシュ名.
-    size_t          m_MaterialId;           //!< マテリアルID.
+    uint32_t        m_MaterialId;           //!< マテリアルID.
     VertexBuffer    m_Positions;            //!< 位置座標バッファ.
     VertexBuffer    m_Normals;              //!< 法線バッファ.
     VertexBuffer    m_Tangents;             //!< 接線バッファ.
@@ -157,7 +164,8 @@ private:
     VertexBuffer    m_BoneIndices;          //!< ボーンインデックスバッファ.
     VertexBuffer    m_BoneWeights;          //!< ボーンウェイトバッファ.
     IndexBuffer     m_VertexIndices;        //!< 頂点インデックスバッファ.
-    uint32_t        m_VertexIndexCount = 0; //!< 頂点インデックス数.
+    uint32_t        m_VertexCount   = 0;    //!< 頂点数.
+    uint32_t        m_IndexCount    = 0;    //!< 頂点インデックス数.
 
     //=========================================================================
     // private methods.

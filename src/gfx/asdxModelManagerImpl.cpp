@@ -9,6 +9,7 @@
 //-----------------------------------------------------------------------------
 #include "asdxModelManagerImpl.h"
 #include <res/asdxResModel.h>
+#include <fnd/asdxLogger.h>
 
 
 namespace asdx {
@@ -98,6 +99,7 @@ bool ModelManager::CreateModel(const std::vector<uint8_t>& blob, IModel** ppMode
     Model* pModel = nullptr;
     if (!Model::Create(binary, &pModel))
     {
+        ELOG("Error : Model::Create() Failed.");
         return false;
     }
 
@@ -116,6 +118,7 @@ bool ModelManager::CreateModelInstance(IModel* pModel, IModelInstance** ppInstan
     ModelInstance* pInstance = nullptr;
     if (!ModelInstance::Create(static_cast<Model*>(pModel), handle, &pInstance))
     {
+        ELOG("Error : ModelInstance::Create() Failed.");
         return false;
     }
 

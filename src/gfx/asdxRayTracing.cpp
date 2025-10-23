@@ -9,6 +9,7 @@
 //-----------------------------------------------------------------------------
 #include <fnd/asdxLogger.h>
 #include <fnd/asdxMisc.h>
+#include <fnd/asdxPath.h>
 #include <gfx/asdxRayTracing.h>
 #include <gfx/asdxDevice.h>
 #include <gfx/asdxShaderCompiler.h>
@@ -672,7 +673,7 @@ void RayTracingPipelineState::Term()
 //-----------------------------------------------------------------------------
 void RayTracingPipelineState::SetReloadPathLib(const char* path, const char* shaderModel)
 {
-    m_ReloadPathLib  = ToFullPathA(path);
+    m_ReloadPathLib  = ToFullPath(path).string();
     m_ShaderModelLib = shaderModel;
 }
 
@@ -683,7 +684,7 @@ void RayTracingPipelineState::SetIncludeDirs(const std::vector<std::string>& dir
 {
     m_IncludeDirs.resize(dirs.size());
     for(auto i=0; i<dirs.size(); ++i)
-    { m_IncludeDirs[i] = ToFullPathA(dirs[i].c_str()); }
+    { m_IncludeDirs[i] = ToFullPath(dirs[i].c_str()).string(); }
 }
 
 //-----------------------------------------------------------------------------
@@ -693,7 +694,7 @@ void RayTracingPipelineState::SetDependencies(const std::vector<std::string>& de
 {
     m_Dependencies.resize(dependencies.size());
     for(auto i=0; i<dependencies.size(); ++i)
-    { m_Dependencies[i] = ToFullPathA(dependencies[i].c_str()); }
+    { m_Dependencies[i] = ToFullPath(dependencies[i].c_str()).string(); }
 }
 
 //-----------------------------------------------------------------------------

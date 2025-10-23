@@ -93,6 +93,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;$(ProjectDir)..\external\meshoptimizer;$(ProjectDir)..\external\flatbuffers\include;$(ProjectDir)..\external\cflat;$(ProjectDir)..\external\simdjson\include;$(ProjectDir)..\external\simdjson\src;$(ProjectDir)..\external\im3d;$(ProjectDir)..\external\implot;$(ProjectDir)..\external\D3D12MemoryAllocator\include;$(ProjectDir)..\external\xxHash;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -116,6 +117,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;$(ProjectDir)..\external\meshoptimizer;$(ProjectDir)..\external\flatbuffers\include;$(ProjectDir)..\external\cflat;$(ProjectDir)..\external\simdjson\include;$(ProjectDir)..\external\simdjson\src;$(ProjectDir)..\external\im3d;$(ProjectDir)..\external\implot;$(ProjectDir)..\external\D3D12MemoryAllocator\include;$(ProjectDir)..\external\xxHash;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -141,6 +143,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;$(ProjectDir)..\external\meshoptimizer;$(ProjectDir)..\external\flatbuffers\include;$(ProjectDir)..\external\cflat;$(ProjectDir)..\external\simdjson\include;$(ProjectDir)..\external\simdjson\src;$(ProjectDir)..\external\im3d;$(ProjectDir)..\external\implot;$(ProjectDir)..\external\D3D12MemoryAllocator\include;$(ProjectDir)..\external\xxHash;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -167,6 +170,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;$(ProjectDir)..\external\meshoptimizer;$(ProjectDir)..\external\flatbuffers\include;$(ProjectDir)..\external\cflat;$(ProjectDir)..\external\simdjson\include;$(ProjectDir)..\external\simdjson\src;$(ProjectDir)..\external\im3d;$(ProjectDir)..\external\implot;$(ProjectDir)..\external\D3D12MemoryAllocator\include;$(ProjectDir)..\external\xxHash;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -233,6 +237,7 @@
     <ClCompile Include="..\src\fnd\asdxMisc.cpp" />
     <ClCompile Include="..\src\fnd\asdxMouse.cpp" />
     <ClCompile Include="..\src\fnd\asdxOffsetAllocator.cpp" />
+    <ClCompile Include="..\src\fnd\asdxPath.cpp" />
     <ClCompile Include="..\src\fnd\asdxRef.cpp" />
     <ClCompile Include="..\src\fnd\asdxStateMachine.cpp" />
     <ClCompile Include="..\src\fnd\asdxTablet.cpp" />
@@ -321,6 +326,7 @@
     <ClInclude Include="..\include\fnd\asdxMessage.h" />
     <ClInclude Include="..\include\fnd\asdxMisc.h" />
     <ClInclude Include="..\include\fnd\asdxOffsetAllocator.h" />
+    <ClInclude Include="..\include\fnd\asdxPath.h" />
     <ClInclude Include="..\include\fnd\asdxPool.h" />
     <ClInclude Include="..\include\fnd\asdxQueue.h" />
     <ClInclude Include="..\include\fnd\asdxRef.h" />
@@ -350,6 +356,7 @@
     <ClInclude Include="..\include\gfx\asdxFont.h" />
     <ClInclude Include="..\include\gfx\asdxGfxMisc.h" />
     <ClInclude Include="..\include\gfx\asdxMapChip.h" />
+    <ClInclude Include="..\include\gfx\asdxMaterial.h" />
     <ClInclude Include="..\include\gfx\asdxModel.h" />
     <ClInclude Include="..\include\gfx\asdxPipelineState.h" />
     <ClInclude Include="..\include\gfx\asdxPresetState.h" />

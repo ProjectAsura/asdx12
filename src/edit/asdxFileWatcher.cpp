@@ -17,6 +17,17 @@
 
 namespace {
 
+//-----------------------------------------------------------------------------
+//      フルパスに変換します.
+//-----------------------------------------------------------------------------
+std::string ToFullPathA(const char* path)
+{
+    char fullPath[512] = {};
+
+    GetFullPathNameA(path, 512, fullPath, nullptr);
+    return std::string(fullPath);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Worker structure
 ///////////////////////////////////////////////////////////////////////////////
@@ -174,7 +185,7 @@ struct Worker
 
                     asdx::FileEventArgs args;
                     args.Type     = asdx::FileEventArgs::TYPE(pInfos->Action);
-                    args.FullPath = asdx::ToFullPathA(fullPath.c_str());
+                    args.FullPath = ToFullPathA(fullPath.c_str());
 
                     for(auto& listener : pListeners)
                     { listener->OnChanged(args); }

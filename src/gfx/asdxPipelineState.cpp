@@ -12,6 +12,7 @@
 #include <d3d12shader.h>
 #include <fnd/asdxLogger.h>
 #include <fnd/asdxMisc.h>
+#include <fnd/asdxPath.h>
 #include <gfx/asdxPipelineState.h>
 #include <gfx/asdxDevice.h>
 #include <gfx/asdxShaderCompiler.h>
@@ -492,7 +493,7 @@ void PipelineStateManager::Clear()
 //-----------------------------------------------------------------------------
 ShaderHandle PipelineStateManager::RegisterShader(SHADER_TYPE type, const char* path, uint32_t pipelineCounts, const PipelineStateHandle* handles)
 {
-    auto fullPath = ToFullPathA(path);
+    auto fullPath = ToFullPath(path).string();
     auto hash     = CalcHash(fullPath.data(), fullPath.length());
     auto itr      = m_Reloads.find(hash);
 
@@ -532,7 +533,7 @@ void PipelineStateManager::UnregisterShader(ShaderHandle handle)
 //-----------------------------------------------------------------------------
 ShaderHandle PipelineStateManager::RegisterInclude(const char* path, uint32_t shaderCount, const ShaderHandle* handles)
 {
-    auto fullPath = ToFullPathA(path);
+    auto fullPath = ToFullPath(path).string();
     auto hash     = CalcHash(fullPath.data(), fullPath.length());
     auto itr      = m_Dependencies.find(hash);
 
@@ -569,7 +570,7 @@ void PipelineStateManager::UnregisterInclude(ShaderHandle handle)
 //-----------------------------------------------------------------------------
 void PipelineStateManager::AddIncludeDirs(const char* dirPath)
 {
-    auto fullPath = ToFullPathA(dirPath);
+    auto fullPath = ToFullPath(dirPath).string();
     m_IncludeDirs.emplace_back(fullPath);
 }
 

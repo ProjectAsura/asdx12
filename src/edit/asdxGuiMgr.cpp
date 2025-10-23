@@ -12,6 +12,7 @@
 #ifdef ASDX_ENABLE_IMGUI
 #include <fnd/asdxMisc.h>
 #include <fnd/asdxLogger.h>
+#include <fnd/asdxPath.h>
 #include <gfx/asdxDevice.h>
 #include <gfx/asdxCommandList.h>
 #include <res/asdxResTexture.h>
@@ -257,11 +258,15 @@ bool GuiMgr::Init
     auto& io = ImGui::GetIO();
 
     {
-        std::string path;
-        if (asdx::SearchFilePathA(fontPath, path))
+        fs::path path;
+        if (asdx::SearchFilePath(fontPath, path))
         {
-            auto utf8_path = asdx::ToStringUTF8(path);
+            auto utf8_path = path.string();
+        #if _HAS_CXX20
+            io.Fonts->AddFontFromFileTTF(reinterpret_cast<const char*>(utf8_path.c_str()), 12.0f, nullptr, io.Fonts->GetGlyphRangesJapanese());
+        #else
             io.Fonts->AddFontFromFileTTF(utf8_path.c_str(), 12.0f, nullptr, io.Fonts->GetGlyphRangesJapanese());
+        #endif
         }
 
         uint8_t* pPixels;

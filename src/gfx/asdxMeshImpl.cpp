@@ -143,8 +143,11 @@ bool Mesh::Init(const ResMesh& mesh)
         return false;
     }
 
+    // 頂点数を設定.
+    m_VertexCount = uint32_t(mesh.Positions.size());
+
     // 頂点インデックス数設定.
-    m_VertexIndexCount = uint32_t(mesh.VertexIndices.size());
+    m_IndexCount = uint32_t(mesh.VertexIndices.size());
 
     // 正常終了.
     return true;
@@ -156,8 +159,9 @@ bool Mesh::Init(const ResMesh& mesh)
 void Mesh::Term()
 {
     m_Name.clear();
-    m_VertexIndexCount = 0;
-    m_MaterialId       = SIZE_MAX;
+    m_VertexCount   = 0;
+    m_IndexCount    = 0;
+    m_MaterialId    = UINT32_MAX;
 
     m_Positions     .Term();
     m_Normals       .Term();
@@ -178,7 +182,7 @@ const std::string& Mesh::GetName() const
 //-----------------------------------------------------------------------------
 //      マテリアルIDを取得します.
 //-----------------------------------------------------------------------------
-size_t Mesh::GetMaterialId() const
+uint32_t Mesh::GetMaterialId() const
 { return m_MaterialId; }
 
 //-----------------------------------------------------------------------------
@@ -230,9 +234,15 @@ const IndexBuffer& Mesh::GetVertexIndices() const
 { return m_VertexIndices; }
 
 //-----------------------------------------------------------------------------
+//      頂点数を取得します.
+//-----------------------------------------------------------------------------
+uint32_t Mesh::GetVertexCount() const
+{ return m_VertexCount; }
+
+//-----------------------------------------------------------------------------
 //      頂点インデックス数を取得します.
 //-----------------------------------------------------------------------------
-uint32_t Mesh::GetVertexIndexCount() const
-{ return m_VertexIndexCount; }
+uint32_t Mesh::GetIndexCount() const
+{ return m_IndexCount; }
 
 } // namespace asdx

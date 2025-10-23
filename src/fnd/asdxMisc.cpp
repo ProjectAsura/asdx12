@@ -7,407 +7,14 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <cstdio>
-#include <cassert>
 #include <algorithm>
 #include <shlwapi.h>
 #include <locale>
-#include <codecvt>
 #include <sstream>
-#include <direct.h>
-#include <ShObjIdl.h>
-#include <fnd/asdxLogger.h>
 #include <fnd/asdxMisc.h>
 
 
 namespace asdx {
-
-//-----------------------------------------------------------------------------
-//      ファイルパスを検索します.
-//-----------------------------------------------------------------------------
-bool SearchFilePathW( const wchar_t* filePath, std::wstring& result )
-{
-    if ( filePath == nullptr )
-    { return false; }
-
-    if ( wcscmp( filePath, L" " ) == 0 || wcscmp( filePath, L"" ) == 0 )
-    { return false; }
-
-    wchar_t exePath[ 520 ] = { 0 };
-    GetModuleFileNameW( nullptr, exePath, 520  );
-    exePath[ 519 ] = 0; // null終端化.
-    PathRemoveFileSpecW( exePath );
-
-    wchar_t dstPath[ 520 ] = { 0 };
-
-    wcscpy_s( dstPath, filePath );
-    if ( PathFileExistsW( dstPath ) == TRUE )
-    {
-        result = dstPath;
-        return true;
-    }
-
-    swprintf_s( dstPath, L"..\\%s", filePath );
-    if ( PathFileExistsW( dstPath ) == TRUE )
-    {
-        result = dstPath;
-        return true;
-    }
-
-    swprintf_s( dstPath, L"..\\..\\%s", filePath );
-    if ( PathFileExistsW( dstPath ) == TRUE )
-    {
-        result = dstPath;
-        return true;
-    }
-
-    swprintf_s( dstPath, L"\\res\\%s", filePath );
-    if ( PathFileExistsW( dstPath ) == TRUE )
-    {
-        result = dstPath;
-        return true;
-    }
-
-    swprintf_s( dstPath, L"%s\\%s", exePath, filePath );
-    if ( PathFileExistsW( dstPath ) == TRUE )
-    {
-        result = dstPath;
-        return true;
-    }
-
-    swprintf_s( dstPath, L"%s\\..\\%s", exePath, filePath );
-    if ( PathFileExistsW( dstPath ) == TRUE )
-    {
-        result = dstPath;
-        return true;
-    }
-
-    swprintf_s( dstPath, L"%s\\..\\..\\%s", exePath, filePath );
-    if ( PathFileExistsW( dstPath ) == TRUE )
-    {
-        result = dstPath;
-        return true;
-    }
-
-    swprintf_s( dstPath, L"%s\\res\\%s", exePath, filePath );
-    if ( PathFileExistsW( dstPath ) == TRUE )
-    {
-        result = dstPath;
-        return true;
-    }
-
-    return false;
-}
-
-//-----------------------------------------------------------------------------
-//      ファイルパスを検索します.
-//-----------------------------------------------------------------------------
-bool SearchFilePathA( const char* filePath, std::string& result )
-{
-    if ( filePath == nullptr )
-    { return false; }
-
-    if ( strcmp( filePath, " " ) == 0 || strcmp( filePath, "" ) == 0 )
-    { return false; }
-
-    char exePath[ 520 ] = { 0 };
-    GetModuleFileNameA( nullptr, exePath, 520  );
-    exePath[ 519 ] = 0; // null終端化.
-    PathRemoveFileSpecA( exePath );
-
-    char dstPath[ 520 ] = { 0 };
-
-    strcpy_s( dstPath, filePath );
-    if ( PathFileExistsA( dstPath ) == TRUE )
-    {
-        result = dstPath;
-        return true;
-    }
-
-    sprintf_s( dstPath, "..\\%s", filePath );
-    if ( PathFileExistsA( dstPath ) == TRUE )
-    {
-        result = dstPath;
-        return true;
-    }
-
-    sprintf_s( dstPath, "..\\..\\%s", filePath );
-    if ( PathFileExistsA( dstPath ) == TRUE )
-    {
-        result = dstPath;
-        return true;
-    }
-
-    sprintf_s( dstPath, "\\res\\%s", filePath );
-    if ( PathFileExistsA( dstPath ) == TRUE )
-    {
-        result = dstPath;
-        return true;
-    }
-
-    sprintf_s( dstPath, "%s\\%s", exePath, filePath );
-    if ( PathFileExistsA( dstPath ) == TRUE )
-    {
-        result = dstPath;
-        return true;
-    }
-
-    sprintf_s( dstPath, "%s\\..\\%s", exePath, filePath );
-    if ( PathFileExistsA( dstPath ) == TRUE )
-    {
-        result = dstPath;
-        return true;
-    }
-
-    sprintf_s( dstPath, "%s\\..\\..\\%s", exePath, filePath );
-    if ( PathFileExistsA( dstPath ) == TRUE )
-    {
-        result = dstPath;
-        return true;
-    }
-
-    sprintf_s( dstPath, "%s\\res\\%s", exePath, filePath );
-    if ( PathFileExistsA( dstPath ) == TRUE )
-    {
-        result = dstPath;
-        return true;
-    }
-
-    return false;
-}
-
-//-----------------------------------------------------------------------------
-//      ファイルパスからディレクトリ名を取得します.
-//-----------------------------------------------------------------------------
-std::wstring GetDirectoryPathW( const wchar_t* filePath )
-{
-    std::wstring path = filePath;
-    auto idx = path.find_last_of( L"/" );
-    if ( idx != std::wstring::npos )
-    {
-        auto result = path.substr( 0, idx + 1 );
-        return result;
-    }
-
-    idx = path.find_last_of( L"\\" );
-    if ( idx != std::wstring::npos )
-    {
-        auto result = path.substr( 0, idx + 1 );
-        return result;
-    }
-
-    return std::wstring();
-}
-
-//-----------------------------------------------------------------------------
-//      ファイルパスからディレクトリ名を取得します.
-//-----------------------------------------------------------------------------
-std::string GetDirectoryPathA( const char* filePath )
-{
-    std::string path = filePath;
-    auto idx = path.find_last_of( "/" );
-    if ( idx != std::string::npos )
-    {
-        auto result = path.substr( 0, idx + 1 );
-        return result;
-    }
-
-    idx = path.find_last_of( "\\" );
-    if ( idx != std::string::npos )
-    {
-        auto result = path.substr( 0, idx + 1 );
-        return result;
-    }
-
-    return std::string();
-}
-
-//-----------------------------------------------------------------------------
-//      ファイルパスからディレクトリ名を削除します.
-//-----------------------------------------------------------------------------
-std::wstring RemoveDirectoryPathW( const wchar_t* filePath )
-{
-    std::wstring path = filePath;
-    auto idx = path.find_last_of( L"/" );
-    if ( idx != std::wstring::npos )
-    {
-        auto result = path.substr( idx + 1 );
-        return result;
-    }
-
-    idx = path.find_last_of( L"\\" );
-    if ( idx != std::wstring::npos )
-    {
-        auto result = path.substr( idx + 1 );
-        return result;
-    }
-
-    return path;
-}
-
-//-----------------------------------------------------------------------------
-//      ファイルパスからディレクトリ名を削除します.
-//-----------------------------------------------------------------------------
-std::string RemoveDirectoryPathA( const char* filePath )
-{
-    std::string path = filePath;
-    auto idx = path.find_last_of( "/" );
-    if ( idx != std::string::npos )
-    {
-        auto result = path.substr( idx + 1 );
-        return result;
-    }
-
-    idx = path.find_last_of( "\\" );
-    if ( idx != std::string::npos )
-    {
-        auto result = path.substr( idx + 1 );
-        return result;
-    }
-
-    return path;
-}
-
-//-----------------------------------------------------------------------------
-//      実行ファイルのファイルパスを取得します.
-//-----------------------------------------------------------------------------
-std::wstring GetExePathW()
-{
-    wchar_t exePath[ 520 ] = { 0 };
-    GetModuleFileNameW( nullptr, exePath, 520  );
-    exePath[ 519 ] = 0; // null終端化.
-
-    return asdx::GetDirectoryPathW( exePath );
-}
-
-//-----------------------------------------------------------------------------
-//      実行ファイルのファイルパスを取得します.
-//-----------------------------------------------------------------------------
-std::string GetExePathA()
-{
-    char exePath[ 520 ] = { 0 };
-    GetModuleFileNameA( nullptr, exePath, 520  );
-    exePath[ 519 ] = 0; // null終端化.
-
-    return asdx::GetDirectoryPathA( exePath );
-}
-
-//-----------------------------------------------------------------------------
-//      ファイルパスから拡張子を取得します.
-//-----------------------------------------------------------------------------
-std::wstring GetExtW( const wchar_t* filePath )
-{
-    std::wstring path = filePath;
-    auto idx = path.find_last_of( L"." );
-    if ( idx != std::wstring::npos )
-    {
-        std::wstring result = path.substr( idx + 1 );
-
-        // 小文字化.
-        std::transform( result.begin(), result.end(), result.begin(), tolower );
-
-        return result;
-    }
-
-    return std::wstring();
-}
-
-//-----------------------------------------------------------------------------
-//      ファイルパスから拡張子を取得します.
-//-----------------------------------------------------------------------------
-std::string GetExtA( const char* filePath )
-{
-    std::string path = filePath;
-    auto idx = path.find_last_of( "." );
-    if ( idx != std::string::npos )
-    {
-        std::string result = path.substr( idx + 1 );
-
-        // 小文字化.
-        std::transform( result.begin(), result.end(), result.begin(), tolower );
-
-        return result;
-    }
-
-    return std::string();
-}
-
-//-----------------------------------------------------------------------------
-//      拡張子を取り除いたファイルパスを取得します.
-//-----------------------------------------------------------------------------
-std::wstring GetPathWithoutExtW( const wchar_t* filePath )
-{
-    std::wstring path = filePath;
-    auto idx = path.find_last_of( L"." );
-    if ( idx != std::wstring::npos )
-    {
-        return path.substr( 0, idx );
-    }
-
-    return path;
-}
-
-//-----------------------------------------------------------------------------
-//      拡張子を取り除いたファイルパスを取得します.
-//-----------------------------------------------------------------------------
-std::string GetPathWithoutExtA( const char* filePath )
-{
-    std::string path = filePath;
-    auto idx = path.find_last_of( "." );
-    if ( idx != std::string::npos )
-    {
-        return path.substr( 0, idx );
-    }
-
-    return path;
-}
-
-
-//-----------------------------------------------------------------------------
-//      指定されたファイルパスが存在するかチェックします.
-//-----------------------------------------------------------------------------
-bool IsExistFilePathW( const wchar_t* filePath )
-{
-    if ( PathFileExistsW( filePath ) == TRUE )
-    { return true; }
-
-    return false;
-}
-
-//-----------------------------------------------------------------------------
-//      指定されたファイルパスが存在するかチェックします.
-//-----------------------------------------------------------------------------
-bool IsExistFilePathA( const char* filePath )
-{
-    if ( PathFileExistsA( filePath ) == TRUE )
-    { return true; }
-
-    return false;
-}
-
-//-----------------------------------------------------------------------------
-//      指定されたフォルダパスが存在するかチェックします.
-//-----------------------------------------------------------------------------
-bool IsExistFolderPathA( const char* folderPath )
-{
-    if ( PathFileExistsA ( folderPath ) == TRUE
-      && PathIsDirectoryA( folderPath ) != FALSE ) // PathIsDirectoryA() は TRUE を返却しないので注意!!
-    { return true; }
-
-    return false;
-}
-
-//-----------------------------------------------------------------------------
-//      指定されたフォルダパスが存在するかチェックします.
-//-----------------------------------------------------------------------------
-bool IsExistFolderPathW( const wchar_t* folderPath )
-{
-    if ( PathFileExistsW ( folderPath ) == TRUE
-      && PathIsDirectoryW( folderPath ) != FALSE ) // PathIsDirectoryW() は TRUE を返却しないので注意!!
-    { return true; }
-
-    return false;
-}
 
 //-----------------------------------------------------------------------------
 //      ワイド文字列に変換します.
@@ -441,6 +48,30 @@ std::string ToStringA( const std::wstring& value )
     return result;
 }
 
+#if _HAS_CXX20
+//-----------------------------------------------------------------------------
+//      UTF-8文字列に変換します.
+//-----------------------------------------------------------------------------
+std::u8string ToStringUTF8(const std::wstring& src)
+{
+    auto const dest_size = ::WideCharToMultiByte(CP_UTF8, 0U, src.data(), -1, nullptr, 0, nullptr, nullptr);
+    std::vector<char> dest(dest_size, '\0');
+    if (::WideCharToMultiByte(CP_UTF8, 0U, src.data(), -1, dest.data(), int(dest.size()), nullptr, nullptr) == 0) {
+        throw std::system_error{static_cast<int>(::GetLastError()), std::system_category()};
+    }
+    return std::u8string(dest.begin(), dest.end());
+}
+
+//-----------------------------------------------------------------------------
+//      UTF-8文字列に変換します.
+//-----------------------------------------------------------------------------
+std::u8string ToStringUTF8(const std::string& value)
+{
+    auto wide = ToStringW(value);
+    return ToStringUTF8(wide);
+}
+
+#else
 //-----------------------------------------------------------------------------
 //      UTF-8文字列に変換します.
 //-----------------------------------------------------------------------------
@@ -462,6 +93,7 @@ std::string ToStringUTF8(const std::string& value)
     auto wide = ToStringW(value);
     return ToStringUTF8(wide);
 }
+#endif
 
 //-----------------------------------------------------------------------------
 //      指定文字で文字列を分割します.
@@ -490,6 +122,23 @@ std::vector<std::wstring> Split(const std::wstring& input, wchar_t delimiter)
     { result.push_back(field); }
     return result;
 }
+
+#if _HAS_CXX20
+//-----------------------------------------------------------------------------
+//      指定文字で文字列を分割します.
+//-----------------------------------------------------------------------------
+std::vector<std::u8string> Split(const std::u8string& input, char8_t delimiter)
+{
+    using u8istringstream = std::basic_istringstream<char8_t, std::char_traits<char8_t>, std::allocator<char8_t>>;
+    u8istringstream stream(input);
+
+    std::u8string field;
+    std::vector<std::u8string> result;
+    while (std::getline(stream, field, delimiter))
+    { result.push_back(field); }
+    return result;
+}
+#endif
 
 //-----------------------------------------------------------------------------
 //      外部プロセスを実行します.
@@ -541,242 +190,6 @@ bool RunProcess(const char* cmd, bool wait, int* retcode)
     return true;
 }
 
-//-----------------------------------------------------------------------------
-//      オープンファイルダイアログです.
-//-----------------------------------------------------------------------------
-bool OpenFileDlg(const char* fileFilter, std::string& result, const std::string& defaultPath)
-{
-    OPENFILENAMEA ofn;
-    ZeroMemory( &ofn, sizeof(ofn) );
-
-    CHAR inputFile     [ MAX_PATH ] = { 0 };
-    CHAR inputFileTitle[ MAX_PATH ] = { 0 };
-    CHAR initDir       [ MAX_PATH ] = { 0 };
-
-    // パスが設定されていれば初期ディレク処理を設定.
-    if (!defaultPath.empty() && defaultPath != "")
-    {
-        auto path = defaultPath;
-        auto idx = path.find_last_of("\\");
-        if (idx != std::string::npos && idx == path.length() - 1)
-        { path = path.substr(0, idx); }
-        strcpy_s(initDir, path.c_str());
-    }
-
-    ofn.lStructSize     = sizeof(OPENFILENAMEA);
-    ofn.hwndOwner       = nullptr;
-    ofn.lpstrFilter     = fileFilter;
-    ofn.nMaxFile        = MAX_PATH;
-    ofn.nMaxFileTitle   = MAX_PATH;
-    ofn.Flags           = OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
-    ofn.lpstrTitle      = "Open";
-    ofn.lpstrFile       = inputFile;
-    ofn.lpstrFileTitle  = inputFileTitle;
-    ofn.lpstrInitialDir = initDir;
-
-    if ( GetOpenFileNameA( &ofn ) == TRUE )
-    {
-        result = inputFile;
-        return true;
-    }
-
-    return false;
-}
-
-//-----------------------------------------------------------------------------
-//      セーブファイルダイアログです.
-//-----------------------------------------------------------------------------
-bool SaveFileDlg(const char* fileFilter, std::string& base, std::string& ext, const std::string& defaultPath)
-{
-    OPENFILENAMEA ofn;
-    ZeroMemory( &ofn, sizeof(ofn) );
-
-    CHAR inputFile     [ MAX_PATH ] = { 0 };
-    CHAR inputFileTitle[ MAX_PATH ] = { 0 };
-    CHAR templateName  [ MAX_PATH ] = { 0 };
-    CHAR initDir       [ MAX_PATH ] = { 0 };
-
-    if (!defaultPath.empty() && defaultPath != "")
-    {
-        auto path = defaultPath;
-        auto idx = path.find_last_of("\\");
-        if (idx != std::string::npos && idx == path.length() - 1)
-        { path = path.substr(0, idx); }
-        strcpy_s(initDir, path.c_str());
-    }
-
-    ofn.lStructSize     = sizeof(OPENFILENAMEA);
-    ofn.hwndOwner       = nullptr;
-    ofn.lpstrFilter     = fileFilter;
-    ofn.nMaxFile        = MAX_PATH;
-    ofn.nMaxFileTitle   = MAX_PATH;
-    ofn.nFilterIndex    = 1;
-    ofn.Flags           = OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY;
-    ofn.lpstrTitle      = "Save As";
-    ofn.lpstrFile       = inputFile;
-    ofn.lpstrFileTitle  = inputFileTitle;
-    ofn.lpTemplateName  = templateName;
-    ofn.lpstrInitialDir = initDir;
-
-    if ( GetSaveFileNameA( &ofn ) == TRUE )
-    {
-        base = std::string( inputFile ).substr( 0, ofn.nFileExtension - 1 );
-        if ( ofn.nFileExtension != 0 )
-        {
-            ext = std::string( inputFile ).substr( ofn.nFileExtension );
-        }
-        else
-        {
-            char* tag = const_cast<char*>(fileFilter);
-            for(auto i=1u; i<ofn.nFilterIndex; ++i)
-            {
-                tag += strlen(tag) + 1;
-                tag += strlen(tag) + 1;
-            }
-            tag += strlen(tag) + 1;
-            tag ++;  // *
-            ext = std::string(tag);
-        }
-        return true;
-    }
-
-    return false;
-}
-
-//-----------------------------------------------------------------------------
-//      フォルダ選択ダイアログを開きます.
-//-----------------------------------------------------------------------------
-bool OpenFolderDlg(std::string& result, const std::string& defaultPath)
-{
-    IFileDialog* pDlg       = nullptr;
-    IShellItem*  pShellItem = nullptr;
-    IShellItem*  pDefaultItem = nullptr;
-    DWORD options = 0;
-
-    auto ret = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_PPV_ARGS(&pDlg));
-    if (FAILED(ret))
-    { return false; }
-
-    if (!defaultPath.empty() && defaultPath != "")
-    {
-        auto folder = asdx::ToStringW(defaultPath);
-        auto pos = folder.find_last_of(L"\\");
-        if (pos != std::wstring::npos && pos == folder.length() - 1)
-        { folder = folder.substr(0, pos); }
-
-        ret = SHCreateItemFromParsingName(folder.c_str(), nullptr, IID_PPV_ARGS(&pDefaultItem));
-        if (FAILED(ret))
-        {
-            WLOG("LOG_LEVEL_WARNING : SHCreateItemFromParsingName() Failed");
-            if (pDefaultItem != nullptr)
-            {
-                pDefaultItem->Release();
-                pDefaultItem = nullptr;
-            }
-        }
-    }
-
-    if (pDefaultItem != nullptr)
-    {
-        pDlg->SetFolder(pDefaultItem);
-    }
-
-    pDlg->GetOptions(&options);
-    pDlg->SetOptions(options | FOS_PICKFOLDERS);
-    ret = pDlg->Show(nullptr);
-    if (FAILED(ret))
-    {
-        if (pShellItem != nullptr)
-        {
-            pShellItem->Release();
-            pShellItem = nullptr;
-        }
-
-        if (pDlg != nullptr)
-        {
-            pDlg->Release();
-            pDlg = nullptr;
-        }
-
-        if (pDefaultItem != nullptr)
-        {
-            pDefaultItem->Release();
-            pDefaultItem = nullptr;
-        }
-        return false;
-    }
-
-    ret = pDlg->GetResult(&pShellItem);
-    if (FAILED(ret))
-    {
-        if (pShellItem != nullptr)
-        {
-            pShellItem->Release();
-            pShellItem = nullptr;
-        }
-
-        if (pDlg != nullptr)
-        {
-            pDlg->Release();
-            pDlg = nullptr;
-        }
-
-        if (pDefaultItem != nullptr)
-        {
-            pDefaultItem->Release();
-            pDefaultItem = nullptr;
-        }
-        return false;
-    }
-    
-    PWSTR path;
-    ret = pShellItem->GetDisplayName(SIGDN_FILESYSPATH, &path);
-
-    if (FAILED(ret))
-    {
-        if (pShellItem != nullptr)
-        {
-            pShellItem->Release();
-            pShellItem = nullptr;
-        }
-
-        if (pDlg != nullptr)
-        {
-            pDlg->Release();
-            pDlg = nullptr;
-        }
-
-        if (pDefaultItem != nullptr)
-        {
-            pDefaultItem->Release();
-            pDefaultItem = nullptr;
-        }
-        return false;
-    }
-
-    result = asdx::ToStringA(path);
-    CoTaskMemFree(path);
-
-    if (pShellItem != nullptr)
-    {
-        pShellItem->Release();
-        pShellItem = nullptr;
-    }
-
-    if (pDlg != nullptr)
-    {
-        pDlg->Release();
-        pDlg = nullptr;
-    }
-
-    if (pDefaultItem != nullptr)
-    {
-        pDefaultItem->Release();
-        pDefaultItem = nullptr;
-    }
-
-    return true;
-}
 
 //-----------------------------------------------------------------------------
 //      情報ダイアログです.
@@ -795,241 +208,6 @@ void ErrorDlg(const char* title, const char* msg )
 }
 
 //-----------------------------------------------------------------------------
-//      ディレクトリを一括削除します.
-//-----------------------------------------------------------------------------
-bool DeleteDirA(const char* path)
-{
-    WIN32_FIND_DATAA find;
-
-    std::string targetDir = path;
-    targetDir += "*";
-
-    auto handle = FindFirstFileA(targetDir.c_str(), &find);
-    if (handle == INVALID_HANDLE_VALUE)
-    { return false; }
-
-    std::string dir  = path;
-    std::string file;
-
-    if (find.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-    {
-        if (strcmp(find.cFileName, ".") != 0)
-        {
-            dir += find.cFileName;
-            if (!DeleteDirA(dir.c_str()))
-            {
-                FindClose(handle);
-                return false;
-            }
-        }
-    }
-    else
-    {
-        file = dir;
-        file += find.cFileName;
-        if (DeleteFileA(file.c_str()) == FALSE)
-        {
-            FindClose(handle);
-            return false;
-        }
-    }
-
-    while (FindNextFileA(handle, &find))
-    {
-        if (find.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-        {
-            if (strcmp(find.cFileName, "..") != 0)
-            {
-                dir = path;
-                dir += find.cFileName;
-                if (!DeleteDirA(dir.c_str()))
-                {
-                    FindClose(handle);
-                    return false;
-                }
-            }
-        }
-        else
-        {
-            file = dir;
-            file += find.cFileName;
-            if (DeleteFileA(file.c_str()) == FALSE)
-            {
-                FindClose(handle);
-                return false;
-            }
-        }
-    }
-
-    FindClose(handle);
-    return (RemoveDirectoryA(path) != FALSE);
-}
-
-//-----------------------------------------------------------------------------
-//      ディレクトリを一括削除します.
-//-----------------------------------------------------------------------------
-bool DeleteDirW(const wchar_t* path)
-{
-    WIN32_FIND_DATAW find;
-
-    std::wstring targetDir = path;
-    targetDir += L"*";
-
-    auto handle = FindFirstFileW(targetDir.c_str(), &find);
-    if (handle == INVALID_HANDLE_VALUE)
-    { return false; }
-
-    std::wstring dir  = path;
-    std::wstring file;
-
-    if (find.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-    {
-        if (wcscmp(find.cFileName, L".") != 0)
-        {
-            dir += find.cFileName;
-            if (!DeleteDirW(dir.c_str()))
-            {
-                FindClose(handle);
-                return false;
-            }
-        }
-    }
-    else
-    {
-        file = dir;
-        file += find.cFileName;
-        if (DeleteFileW(file.c_str()) == FALSE)
-        {
-            FindClose(handle);
-            return false;
-        }
-    }
-
-    while (FindNextFileW(handle, &find))
-    {
-        if (find.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-        {
-            if (wcscmp(find.cFileName, L"..") != 0)
-            {
-                dir = path;
-                dir += find.cFileName;
-                if (!DeleteDirW(dir.c_str()))
-                {
-                    FindClose(handle);
-                    return false;
-                }
-            }
-        }
-        else
-        {
-            file = dir;
-            file += find.cFileName;
-            if (DeleteFileW(file.c_str()) == FALSE)
-            {
-                FindClose(handle);
-                return false;
-            }
-        }
-    }
-
-    FindClose(handle);
-    return (RemoveDirectoryW(path) != FALSE);
-}
-
-//-----------------------------------------------------------------------------
-//      特定ディレクトリ下の指定拡張子を持つファイルリストを取得します.
-//-----------------------------------------------------------------------------
-bool SearchFilesA(const char* directory, const char* ext, std::list<std::string>& result)
-{
-    WIN32_FIND_DATAA find;
-
-    std::string targetDir = directory;
-    std::string dir = directory;
-
-    auto pos = targetDir.find_last_of("\\");
-    if (pos != targetDir.size() - 1)
-    {
-        targetDir += "\\";
-        dir += "\\";
-    }
-
-    targetDir += "*";
-
-    if (ext != nullptr && strcmp(ext, "") != 0)
-    { targetDir += ext; }
-
-    auto handle = FindFirstFileA(targetDir.c_str(), &find);
-    if (handle == INVALID_HANDLE_VALUE)
-    { return false; }
-
-    std::string file;
-
-    // ディレクトリじゃない場合.
-    if ((find.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
-    {
-        file = dir;
-        file += find.cFileName;
-        result.push_back(file);
-    }
-
-    while (FindNextFileA(handle, &find))
-    {
-        // ディレクトリじゃない場合
-        if ((find.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
-        {
-            file = dir;
-            file += find.cFileName;
-            result.push_back(file);
-        }
-    }
-
-    FindClose(handle);
-    return result.empty() == false;
-}
-
-
-//-----------------------------------------------------------------------------
-//      フルパスに変換します.
-//-----------------------------------------------------------------------------
-std::string ToFullPathA(const char* path)
-{
-    char fullPath[512] = {};
-
-    GetFullPathNameA(path, 512, fullPath, nullptr);
-    return std::string(fullPath);
-}
-
-//-----------------------------------------------------------------------------
-//      フルパスに変換します.
-//-----------------------------------------------------------------------------
-std::wstring ToFullPathW(const wchar_t* path)
-{
-    wchar_t fullPath[512] = {};
-    GetFullPathNameW(path, 512, fullPath, nullptr);
-    return std::wstring(fullPath);
-}
-
-//-----------------------------------------------------------------------------
-//      相対パスに変換します.
-//-----------------------------------------------------------------------------
-std::string ToRelativePath(const char* base, const char* path, bool directory)
-{
-    char relativePath[MAX_PATH];
-    DWORD attribute = directory ? FILE_ATTRIBUTE_DIRECTORY : FILE_ATTRIBUTE_NORMAL;
-
-    char srcPath[512];
-    GetFullPathNameA(path, 512, srcPath, nullptr);
-
-    char basePath[512];
-    GetFullPathNameA(base, 512, basePath, nullptr);
-
-    if (PathRelativePathToA(relativePath, basePath, attribute, srcPath, attribute) == TRUE)
-    { return std::string(relativePath); }
-
-    return std::string();
-}
-
-//-----------------------------------------------------------------------------
 //      バックスラッシュをスラッシュに変更します.
 //-----------------------------------------------------------------------------
 std::string ToSlash(const std::string& path)
@@ -1043,6 +221,23 @@ std::string ToSlash(const std::string& path)
     }
     return ret;
 }
+
+#if _HAS_CXX20
+//-----------------------------------------------------------------------------
+//      バックスラッシュをスラッシュに変更します.
+//-----------------------------------------------------------------------------
+std::u8string ToSlash(const std::u8string& path)
+{
+    std::u8string ret = path;
+    auto pos = ret.find(u8'\\');
+    while (pos != std::u8string::npos)
+    {
+        ret[pos] = u8'/';
+        pos = ret.find(u8'\\');
+    }
+    return ret;
+}
+#endif
 
 //-----------------------------------------------------------------------------
 //      文字列を置換します.
@@ -1066,21 +261,29 @@ std::string Replace
     return result;
 }
 
+#if _HAS_CXX20
 //-----------------------------------------------------------------------------
-//      相対パスに変換し，スラッシュに変更します.
+//      文字列を置換します.
 //-----------------------------------------------------------------------------
-std::string ToRelativePathWithSlash(const std::string& base, const std::string& value)
+std::u8string Replace
+(
+    const std::u8string&  input,
+    std::u8string         pattern,
+    std::u8string         replace
+)
 {
-    auto ext = asdx::GetExtA(base.c_str());
-    auto is_dir = (ext.empty() || ext == "") ? true : false;
+    std::u8string result = input;
+    auto pos = result.find( pattern );
 
-    auto path = ToRelativePath(base.c_str(), value.c_str(), is_dir);
-    auto pos = path.find(".\\");
-    if (pos != std::string::npos && pos == 0)
-    { path = path.substr(2); }
+    while( pos != std::u8string::npos )
+    {
+        result.replace( pos, pattern.length(), replace );
+        pos = result.find( pattern, pos + replace.length() );
+    }
 
-    return ToSlash(path);
+    return result;
 }
+#endif
 
 //-----------------------------------------------------------------------------
 //      小文字に変換します.
@@ -1101,6 +304,18 @@ std::wstring ToLowerW(const std::wstring& value)
     std::transform(result.begin(), result.end(), result.begin(), tolower);
     return result;
 }
+
+#if _HAS_CXX20
+//-----------------------------------------------------------------------------
+//      小文字に変換します.
+//-----------------------------------------------------------------------------
+std::u8string ToLowerUTF8(const std::u8string& value)
+{
+    std::u8string result = value;
+    std::transform(result.begin(), result.end(), result.begin(), tolower);
+    return result;
+}
+#endif
 
 //-----------------------------------------------------------------------------
 //      環境変数を取得します.
