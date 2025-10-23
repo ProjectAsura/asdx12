@@ -27,6 +27,7 @@ namespace {
 //-----------------------------------------------------------------------------
 #include "../res/shaders/Compiled/ImGuiVS.inc"
 #include "../res/shaders/Compiled/ImGuiPS.inc"
+#include "YasashisaGothic.h"
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -262,11 +263,20 @@ bool GuiMgr::Init
         if (asdx::SearchFilePath(fontPath, path))
         {
             auto utf8_path = path.string();
-        #if _HAS_CXX20
-            io.Fonts->AddFontFromFileTTF(reinterpret_cast<const char*>(utf8_path.c_str()), 12.0f, nullptr, io.Fonts->GetGlyphRangesJapanese());
-        #else
-            io.Fonts->AddFontFromFileTTF(utf8_path.c_str(), 12.0f, nullptr, io.Fonts->GetGlyphRangesJapanese());
-        #endif
+            io.Fonts->AddFontFromFileTTF(
+                utf8_path.c_str(),
+                12.0f,
+                nullptr,
+                io.Fonts->GetGlyphRangesJapanese());
+        }
+        else
+        {
+            io.Fonts->AddFontFromMemoryCompressedTTF(
+                YasashisaGothic_compressed_data,
+                YasashisaGothic_compressed_size,
+                12.0f,
+                nullptr,
+                io.Fonts->GetGlyphRangesJapanese());
         }
 
         uint8_t* pPixels;
