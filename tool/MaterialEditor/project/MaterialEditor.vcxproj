@@ -103,6 +103,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\..\..\external\cmdline;$(ProjectDir)..\..\..\external\flatbuffers\include;$(ProjectDir)..\..\..\external\simdjson\include;$(ProjectDir)..\..\..\external\simdjson\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -118,6 +119,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\..\..\external\cmdline;$(ProjectDir)..\..\..\external\flatbuffers\include;$(ProjectDir)..\..\..\external\simdjson\include;$(ProjectDir)..\..\..\external\simdjson\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -128,12 +130,12 @@
     <ClCompile Include="..\..\..\external\simdjson\src\simdjson.cpp" />
     <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="..\src\MaterialEditor.cpp" />
-    <ClCompile Include="..\src\MaterialEditorProject.cpp" />
+    <ClCompile Include="..\src\WorkSpace.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\external\cmdline\cmdline.h" />
     <ClInclude Include="..\include\MaterialEditor.h" />
-    <ClInclude Include="..\include\MaterialEditorProject.h" />
+    <ClInclude Include="..\include\WorkSpace.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -7,8 +7,8 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <MaterialConverter.h>
 #include <cstdio>
+#include <MaterialConverter.h>
 #include <MaterialBinary_generated.h>
 
 

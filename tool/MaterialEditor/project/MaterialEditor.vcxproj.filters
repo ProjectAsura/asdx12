@@ -30,22 +30,22 @@
     <ClCompile Include="..\src\MaterialEditor.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\MaterialEditorProject.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\external\simdjson\src\simdjson.cpp">
       <Filter>external\simdjson</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\WorkSpace.cpp">
+      <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\MaterialEditor.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\MaterialEditorProject.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\external\cmdline\cmdline.h">
       <Filter>external\cmdline</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\WorkSpace.h">
+      <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
