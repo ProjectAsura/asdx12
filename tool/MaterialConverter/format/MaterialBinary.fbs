@@ -1,41 +1,66 @@
 ﻿namespace asdx.res;
 
-enum PropertyType : ubyte
+enum MaterialBlendType : ubyte
+{
+    Opaque,
+    Masked,
+    AlphaBlend,
+    Additive,
+    Subtract,
+    Premultiplied,
+    Multiply,
+    Screen,
+}
+
+enum MaterialCullType : ubyte
+{
+    None,
+    Back,
+    Front,
+}
+
+enum MaterialDepthType : ubyte
+{
+    ReadWrite,
+    ReadOnly,
+    WriteOnly,
+    None,
+}
+
+enum MaterialDataType : ubyte
 {
     Bool,
-    S8,
-    S16,
-    S32,
-    S64,
-    U8,
-    U16,
-    U32,
-    U64,
-    F32,
-    F64,
+    Sint,
+    Uint,
+    Float,
 }
 
-table Property
+table MaterialProperty
 {
-    Name     : string;
-    Type     : PropertyType;
-    Offset   : uint;
+    Name     : string (key);
+    Type     : MaterialDataType;
     Elements : uint;
+    Offset   : uint;
+    Value    : [ubyte];
 }
 
-table Material
+table MaterialTexture
 {
-    Name           : string (key);
-    ShaderPath     : string;
-    Properties     : [Property];
-    Textures       : [string];
-    ConstantBuffer : [ubyte];
+    BindName : string (key);
+    Path     : string;
 }
 
 table MaterialBinary
 {
-    Version   : uint;
-    Materials : [Material];
+    Version     : uint;
+    Name        : string;
+    Blend       : MaterialBlendType;
+    Cull        : MaterialCullType;
+    Depth       : MaterialDepthType;
+    ShaderName  : string;
+    BufferSize  : uint;
+    Props       : [MaterialProperty];
+    Textures    : [MaterialTexture];
 }
 
 root_type MaterialBinary;

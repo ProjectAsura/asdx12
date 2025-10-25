@@ -26,10 +26,10 @@ public:
 
     static const D3D12_DEPTH_STENCILOP_DESC StencilDefault; //!< ステンシルデフォルト.
 
-    static const D3D12_DEPTH_STENCIL_DESC DepthDefault;     //!< 深度テストON ・書き込み有り.
-    static const D3D12_DEPTH_STENCIL_DESC DepthNone;        //!< 深度テストOFF・書き込み無し.
+    static const D3D12_DEPTH_STENCIL_DESC DepthReadWrite;   //!< 深度テストON ・書き込み有り.
     static const D3D12_DEPTH_STENCIL_DESC DepthReadOnly;    //!< 深度テストON ・書き込み無し.
     static const D3D12_DEPTH_STENCIL_DESC DepthWriteOnly;   //!< 深度テストOFF・書き込み有り.
+    static const D3D12_DEPTH_STENCIL_DESC DepthNone;        //!< 深度テストOFF・書き込み無し.
 
     static const D3D12_RENDER_TARGET_BLEND_DESC RTB_Opaque;         //!< 不透明.
     static const D3D12_RENDER_TARGET_BLEND_DESC RTB_AlphaBlend;     //!< アルファブレンド.

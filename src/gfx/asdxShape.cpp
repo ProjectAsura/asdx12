@@ -1102,7 +1102,7 @@ bool ShapeStates::Init(DXGI_FORMAT colorFormat, DXGI_FORMAT depthFormat)
         desc.BlendState             = asdx::Preset::Opaque;
         desc.SampleMask             = D3D12_DEFAULT_SAMPLE_MASK;
         desc.RasterizerState        = asdx::Preset::CullNone;
-        desc.DepthStencilState      = asdx::Preset::DepthDefault;
+        desc.DepthStencilState      = asdx::Preset::DepthReadWrite;
         desc.PrimitiveTopologyType  = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
         desc.InputLayout            = { elements, 1 };
         desc.NumRenderTargets       = 1;
@@ -1154,7 +1154,7 @@ bool ShapeStates::Init(DXGI_FORMAT colorFormat, DXGI_FORMAT depthFormat)
         desc.BlendState             = asdx::Preset::Opaque;
         desc.SampleMask             = D3D12_DEFAULT_SAMPLE_MASK;
         desc.RasterizerState        = asdx::Preset::Wireframe;
-        desc.DepthStencilState      = asdx::Preset::DepthDefault;
+        desc.DepthStencilState      = asdx::Preset::DepthReadWrite;
         desc.PrimitiveTopologyType  = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
         desc.InputLayout            = { elements, 1 };
         desc.NumRenderTargets       = 1;

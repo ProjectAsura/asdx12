@@ -19,14 +19,14 @@ namespace asdx {
 //-----------------------------------------------------------------------------
 //      ワイド文字列に変換します.
 //-----------------------------------------------------------------------------
-std::wstring ToStringW( const std::string& value )
+std::wstring ToStringW(const std::string& value)
 {
     auto length = MultiByteToWideChar(CP_ACP, 0, value.c_str(), int(value.size() + 1), nullptr, 0 );
     auto buffer = new wchar_t[length];
 
     MultiByteToWideChar(CP_ACP, 0, value.c_str(), int(value.size() + 1),  buffer, length );
 
-    std::wstring result( buffer );
+    std::wstring result(buffer);
     delete[] buffer;
 
     return result;
@@ -35,7 +35,7 @@ std::wstring ToStringW( const std::string& value )
 //-----------------------------------------------------------------------------
 //      マルチバイト文字列に変換します.
 //-----------------------------------------------------------------------------
-std::string ToStringA( const std::wstring& value )
+std::string ToStringA(const std::wstring& value)
 {
     auto length = WideCharToMultiByte(CP_ACP, 0, value.c_str(), int(value.size() + 1), nullptr, 0, nullptr, nullptr); 
     auto buffer = new char[length];
@@ -190,22 +190,17 @@ bool RunProcess(const char* cmd, bool wait, int* retcode)
     return true;
 }
 
-
 //-----------------------------------------------------------------------------
 //      情報ダイアログです.
 //-----------------------------------------------------------------------------
 void InfoDlg(const char* title, const char* msg)
-{
-    MessageBoxA( nullptr, msg, title, MB_ICONINFORMATION | MB_OK );
-}
+{ MessageBoxA(nullptr, msg, title, MB_ICONINFORMATION | MB_OK); }
 
 //-----------------------------------------------------------------------------
 //      エラーダイアログです.
 //-----------------------------------------------------------------------------
 void ErrorDlg(const char* title, const char* msg )
-{
-    MessageBoxA( nullptr, msg, title, MB_ICONERROR | MB_OK );
-}
+{ MessageBoxA(nullptr, msg, title, MB_ICONERROR | MB_OK); }
 
 //-----------------------------------------------------------------------------
 //      バックスラッシュをスラッシュに変更します.

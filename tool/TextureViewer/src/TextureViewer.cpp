@@ -13,6 +13,7 @@
 #include <fnd/asdxLogger.h>
 #include <fnd/asdxFileIO.h>
 #include <fnd/asdxMisc.h>
+#include <fnd/asdxPath.h>
 #include <edit/asdxGuiMgr.h>
 #include <res/asdxResTexture.h>
 #include <gfx/asdxGfxMisc.h>
@@ -79,8 +80,7 @@ bool TextureViewer::OnInit()
     auto pCmd = m_GfxCmdList.GetD3D12CommandList();
 
     {
-        const auto path = "../res/font/07やさしさゴシック.ttf";
-        if (!asdx::GuiMgr::Instance().Init(pCmd, m_hWnd, m_Width, m_Height, m_SwapChainFormat, path))
+        if (!asdx::GuiMgr::Instance().Init(pCmd, m_hWnd, m_Width, m_Height, m_SwapChainFormat, nullptr))
         {
             ELOG("Error : GuiMgr::Init() Failed.");
             return false;
@@ -556,10 +556,10 @@ void TextureViewer::MenuFile(ID3D12GraphicsCommandList* pCmd)
             "High Efficiency Image File (*.heif, *.heic)\0*.heif;*.heic\0"
             "全てのファイル (*.*)\0*.*\0\0";
 
-        std::string path;
+        asdx::fs::path path;
         if (asdx::OpenFileDlg(filter, path))
         {
-            auto wpath = asdx::ToStringW(path);
+            auto wpath = path.wstring();
             if (LoadScratchImage(wpath.c_str()))
             { RecreateTexture(pCmd); }
         }
@@ -581,10 +581,11 @@ void TextureViewer::MenuFile(ID3D12GraphicsCommandList* pCmd)
         std::string base;
         std::string ext = ".txb";
 
-        if (asdx::SaveFileDlg(filter, base, ext))
+        asdx::fs::path path;
+        if (asdx::SaveFileDlg(filter, path))
         {
-            m_OutputPath = base + ext;
-            auto wpath = asdx::ToStringW(m_OutputPath);
+            m_OutputPath = path.string();
+            auto wpath = path.wstring();
             SaveScratchImage(wpath.c_str());
         }
     }
@@ -704,7 +705,7 @@ void TextureViewer::SaveTextureBinary(const char* path)
 bool TextureViewer::LoadScratchImage(const wchar_t* path)
 {
     // テクスチャを読み込む.
-    auto ext = asdx::ToLowerW(asdx::GetExtW(path).c_str());
+    auto ext = asdx::fs::path(path).extension().wstring();
 
     HRESULT hr = S_OK;
     DirectX::ScratchImage scratchImage;
@@ -766,7 +767,7 @@ bool TextureViewer::LoadScratchImage(const wchar_t* path)
 bool TextureViewer::SaveScratchImage(const wchar_t* path)
 {
     // テクスチャを読み込む.
-    auto ext = asdx::ToLowerW(asdx::GetExtW(path).c_str());
+    auto ext = asdx::fs::path(path).extension().wstring();
 
     HRESULT hr = S_OK;
     DirectX::ScratchImage scratchImage;

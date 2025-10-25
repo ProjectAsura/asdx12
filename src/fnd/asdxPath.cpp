@@ -148,12 +148,12 @@ bool SearchFilePath(const fs::path& filePath, fs::path& result)
 //-----------------------------------------------------------------------------
 //      特定ディレクトリ下の指定拡張子を持つファイルリストを取得します.
 //-----------------------------------------------------------------------------
-bool SearchFilesA(const char* directory, const char* ext, std::list<std::string>& result)
+bool SearchFilesA(const fs::path& directory, const char* ext, std::list<fs::path>& result)
 {
     WIN32_FIND_DATAA find;
 
-    std::string targetDir = directory;
-    std::string dir = directory;
+    std::string targetDir = directory.string();
+    std::string dir = directory.string();
 
     auto pos = targetDir.find_last_of("\\");
     if (pos != targetDir.size() - 1)

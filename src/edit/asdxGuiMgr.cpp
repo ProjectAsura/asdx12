@@ -10,11 +10,9 @@
 #include <edit/asdxGuiMgr.h>
 
 #ifdef ASDX_ENABLE_IMGUI
-#include <fnd/asdxMisc.h>
 #include <fnd/asdxLogger.h>
 #include <fnd/asdxPath.h>
 #include <gfx/asdxDevice.h>
-#include <gfx/asdxCommandList.h>
 #include <res/asdxResTexture.h>
 #include <imgui.h>
 #include <imgui_internal.h>
@@ -260,7 +258,7 @@ bool GuiMgr::Init
 
     {
         fs::path path;
-        if (asdx::SearchFilePath(fontPath, path))
+        if (fontPath != nullptr && asdx::SearchFilePath(fontPath, path))
         {
             auto utf8_path = path.string();
             io.Fonts->AddFontFromFileTTF(

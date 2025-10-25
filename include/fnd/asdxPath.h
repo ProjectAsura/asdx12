@@ -82,7 +82,7 @@ bool SearchFilePath(const fs::path& filename, fs::path& result);
 //! @retval true    ファイルが見つかった.
 //! @retval false   ファイルが見つからなかった.
 //-------------------------------------------------------------------------------------------------
-bool SearchFilesA(const char* directory, const char* ext, std::list<std::string>& result);
+bool SearchFilesA(const fs::path& directory, const char* ext, std::list<fs::path>& result);
 
 //-------------------------------------------------------------------------------------------------
 //! @brief      ファイルを開くダイアログを出します.
