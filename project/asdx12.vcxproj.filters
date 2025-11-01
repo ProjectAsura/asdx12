@@ -73,6 +73,12 @@
     <Filter Include="ソース ファイル\external\xxHash">
       <UniqueIdentifier>{933492be-dad0-415e-96ea-e20cf9f6e4d1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ソース ファイル\external\fpng">
+      <UniqueIdentifier>{a0853da9-8fef-4edb-abfd-a0484d213248}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\external\implot3d">
+      <UniqueIdentifier>{27b42742-041f-4a58-a5f8-aedfdbe99ec2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\external\imgui\imgui.cpp">
@@ -353,6 +359,18 @@
     </ClCompile>
     <ClCompile Include="..\src\fnd\asdxIndexHeap.cpp">
       <Filter>ソース ファイル\fnd</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\fpng\src\fpng.cpp">
+      <Filter>ソース ファイル\external\fpng</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\implot3d\implot3d.cpp">
+      <Filter>ソース ファイル\external\implot3d</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\implot3d\implot3d_items.cpp">
+      <Filter>ソース ファイル\external\implot3d</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\implot3d\implot3d_meshes.cpp">
+      <Filter>ソース ファイル\external\implot3d</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -656,11 +674,14 @@
     <ClInclude Include="..\include\res\asdxResLight.h">
       <Filter>ヘッダー ファイル\res</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\gfx\asdxLight.h">
-      <Filter>ヘッダー ファイル\gfx</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\fnd\asdxIndexHeap.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\external\implot3d\implot3d.h">
+      <Filter>ソース ファイル\external\implot3d</Filter>
+    </ClInclude>
+    <ClInclude Include="..\external\implot3d\implot3d_internal.h">
+      <Filter>ソース ファイル\external\implot3d</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

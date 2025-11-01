@@ -190,11 +190,15 @@
   <ItemGroup>
     <ClCompile Include="..\external\Cflat\Cflat.cpp" />
     <ClCompile Include="..\external\D3D12MemoryAllocator\src\D3D12MemAlloc.cpp" />
+    <ClCompile Include="..\external\fpng\src\fpng.cpp" />
     <ClCompile Include="..\external\im3d\im3d.cpp" />
     <ClCompile Include="..\external\imgui\imgui.cpp" />
     <ClCompile Include="..\external\imgui\imgui_draw.cpp" />
     <ClCompile Include="..\external\imgui\imgui_tables.cpp" />
     <ClCompile Include="..\external\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="..\external\implot3d\implot3d.cpp" />
+    <ClCompile Include="..\external\implot3d\implot3d_items.cpp" />
+    <ClCompile Include="..\external\implot3d\implot3d_meshes.cpp" />
     <ClCompile Include="..\external\implot\implot.cpp" />
     <ClCompile Include="..\external\implot\implot_items.cpp" />
     <ClCompile Include="..\external\meshoptimizer\allocator.cpp" />
@@ -299,6 +303,8 @@
     <ClInclude Include="..\external\imgui\imstb_rectpack.h" />
     <ClInclude Include="..\external\imgui\imstb_textedit.h" />
     <ClInclude Include="..\external\imgui\imstb_truetype.h" />
+    <ClInclude Include="..\external\implot3d\implot3d.h" />
+    <ClInclude Include="..\external\implot3d\implot3d_internal.h" />
     <ClInclude Include="..\external\implot\implot.h" />
     <ClInclude Include="..\external\implot\implot_internal.h" />
     <ClInclude Include="..\external\meshoptimizer\meshoptimizer.h" />
@@ -360,7 +366,6 @@
     <ClInclude Include="..\include\gfx\asdxFade.h" />
     <ClInclude Include="..\include\gfx\asdxFont.h" />
     <ClInclude Include="..\include\gfx\asdxGfxMisc.h" />
-    <ClInclude Include="..\include\gfx\asdxLight.h" />
     <ClInclude Include="..\include\gfx\asdxMapChip.h" />
     <ClInclude Include="..\include\gfx\asdxModel.h" />
     <ClInclude Include="..\include\gfx\asdxPipelineState.h" />
