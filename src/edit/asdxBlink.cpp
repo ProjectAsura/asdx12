@@ -69,7 +69,7 @@ bool InitBlink(const char* path)
 
         g_hProcess = processInfo.hProcess;
         g_hThread  = processInfo.hThread;
-        ILOG("blink launch sucesss. cmd = %s", cmd.c_str());
+        ILOGA("blink launch sucesss. cmd = %s", cmd.c_str());
     }
 
     return true;
