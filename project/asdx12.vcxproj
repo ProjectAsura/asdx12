@@ -373,6 +373,7 @@
     <ClInclude Include="..\include\gfx\asdxTexture.h" />
     <ClInclude Include="..\include\gfx\asdxUpdateCommand.h" />
     <ClInclude Include="..\include\res\asdxResFont.h" />
+    <ClInclude Include="..\include\res\asdxResLight.h" />
     <ClInclude Include="..\include\res\asdxResMapChip.h" />
     <ClInclude Include="..\include\res\asdxResMaterial.h" />
     <ClInclude Include="..\include\res\asdxResModel.h" />

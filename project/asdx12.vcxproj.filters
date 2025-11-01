@@ -650,6 +650,9 @@
     <ClInclude Include="..\include\gfx\asdxDXR.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\res\asdxResLight.h">
+      <Filter>ヘッダー ファイル\res</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\res\shaders\BRDF.hlsli">
