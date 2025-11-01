@@ -3737,6 +3737,117 @@ inline Quaternion Quaternion::Squad
     return Quaternion::Slerp(d, e, 2.0f * amount * (1.0f - amount));
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// Transform3x4 structure
+///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      コンストラクタです.
+//-----------------------------------------------------------------------------
+inline Transform3x4::Transform3x4()
+: _11(1.0f), _12(0.0f), _13(0.0f), _14(0.0f)
+, _21(0.0f), _22(1.0f), _23(0.0f), _24(0.0f)
+, _31(0.0f), _32(0.0f), _33(1.0f), _34(0.0f)
+{ /* DO_NOTHING */ }
+
+//-----------------------------------------------------------------------------
+//      引数付きコンストラクタです.
+//-----------------------------------------------------------------------------
+inline Transform3x4::Transform3x4
+(
+    float m11, float m12, float m13, float m14,
+    float m21, float m22, float m23, float m24,
+    float m31, float m32, float m33, float m34
+)
+: _11(m11), _12(m12), _13(m13), _14(m14)
+, _21(m21), _22(m22), _23(m23), _24(m24)
+, _31(m31), _32(m32), _33(m33), _34(m34)
+{ /* DO_NOTHING */ }
+
+//-----------------------------------------------------------------------------
+//      float* 型へのキャストです.
+//-----------------------------------------------------------------------------
+inline Transform3x4::operator float* ()
+{ return &_11; }
+
+//-----------------------------------------------------------------------------
+//      const float* 型へのキャストです.
+//-----------------------------------------------------------------------------
+inline Transform3x4::operator const float* () const
+{ return &_11; }
+
+//-----------------------------------------------------------------------------
+//      代入演算子です.
+//-----------------------------------------------------------------------------
+inline Transform3x4& Transform3x4::operator = (const Transform3x4& value)
+{
+    _11 = value._11; _12 = value._12; _13 = value._13; _14 = value._14;
+    _21 = value._21; _22 = value._22; _23 = value._23; _24 = value._24;
+    _31 = value._31; _32 = value._32; _33 = value._33; _34 = value._34;
+    return *this;
+}
+
+//-----------------------------------------------------------------------------
+//      正符号演算子です.
+//-----------------------------------------------------------------------------
+inline Transform3x4 Transform3x4::operator + () const
+{ return *this; }
+
+//-----------------------------------------------------------------------------
+//      負符号演算子です.
+//-----------------------------------------------------------------------------
+inline Transform3x4 Transform3x4::operator - () const
+{
+    return Transform3x4(
+        -_11, -_12, -_13, -_14,
+        -_21, -_22, -_23, -_24,
+        -_31, -_32, -_33, -_34 );
+}
+
+//-----------------------------------------------------------------------------
+//      等価比較演算子です.
+//-----------------------------------------------------------------------------
+inline bool Transform3x4::operator == (const Transform3x4& value) const
+{
+    return IsEqual(_11, value._11) && IsEqual(_12, value._12) && IsEqual(_13, value._13) && IsEqual(_14, value._14)
+        && IsEqual(_21, value._21) && IsEqual(_22, value._22) && IsEqual(_23, value._23) && IsEqual(_24, value._24)
+        && IsEqual(_31, value._31) && IsEqual(_32, value._32) && IsEqual(_33, value._33) && IsEqual(_34, value._34);
+}
+
+//-----------------------------------------------------------------------------
+//      非等価比較演算子です.
+//-----------------------------------------------------------------------------
+inline bool Transform3x4::operator != (const Transform3x4& value) const
+{
+    return !IsEqual(_11, value._11) || !IsEqual(_12, value._12) || !IsEqual(_13, value._13) || !IsEqual(_14, value._14)
+        || !IsEqual(_21, value._21) || !IsEqual(_22, value._22) || !IsEqual(_23, value._23) || !IsEqual(_24, value._24)
+        || !IsEqual(_31, value._31) || !IsEqual(_32, value._32) || !IsEqual(_33, value._33) || !IsEqual(_34, value._34);
+}
+
+//-----------------------------------------------------------------------------
+//      Matrix から Transform3x4 へ変換します.
+//-----------------------------------------------------------------------------
+inline Transform3x4 Transform3x4::FromMatrix(const Matrix& value)
+{
+    // 転置しながら格納.
+    return Transform3x4(
+        value.m[0][0], value.m[1][0], value.m[2][0], value.m[3][0],
+        value.m[0][1], value.m[1][1], value.m[2][1], value.m[3][1],
+        value.m[0][2], value.m[1][2], value.m[2][2], value.m[3][2]);
+}
+
+//-----------------------------------------------------------------------------
+//      Transform3x4 から Matrix へ変換します.
+//-----------------------------------------------------------------------------
+inline Matrix Transform3x4::ToMatrix(const Transform3x4& value)
+{
+    // 転置しながら格納.
+    return Matrix(
+        value._11, value._21, value._31, 0.0f,
+        value._12, value._22, value._32, 0.0f,
+        value._13, value._23, value._33, 0.0f,
+        value._14, value._24, value._34, 1.0f );
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // BoundingBox2 structure
@@ -4372,12 +4483,12 @@ inline void CalcFrustumPlanes(const Matrix& view, const Matrix& proj, Vector4* p
     // https://www.gamedevs.org/
     auto vp = Matrix::MultiplyTranspose(view, proj);
 
-    planes[PLANE_LEFT]   = Vector4::NormalizePlane(vp.v[3] + vp.v[0]);
-    planes[PLANE_RIGHT]  = Vector4::NormalizePlane(vp.v[3] - vp.v[0]);
-    planes[PLANE_BOTTOM] = Vector4::NormalizePlane(vp.v[3] + vp.v[1]);
-    planes[PLANE_TOP]    = Vector4::NormalizePlane(vp.v[3] - vp.v[1]);
-    planes[PLANE_NEAR]   = Vector4::NormalizePlane(vp.v[2]);
-    planes[PLANE_FAR]    = Vector4::NormalizePlane(vp.v[3] - vp.v[2]);
+    planes[PLANE_LEFT]   = Vector4::NormalizePlane(vp.row[3] + vp.row[0]);
+    planes[PLANE_RIGHT]  = Vector4::NormalizePlane(vp.row[3] - vp.row[0]);
+    planes[PLANE_BOTTOM] = Vector4::NormalizePlane(vp.row[3] + vp.row[1]);
+    planes[PLANE_TOP]    = Vector4::NormalizePlane(vp.row[3] - vp.row[1]);
+    planes[PLANE_NEAR]   = Vector4::NormalizePlane(vp.row[2]);
+    planes[PLANE_FAR]    = Vector4::NormalizePlane(vp.row[3] - vp.row[2]);
 }
 
 //-----------------------------------------------------------------------------
