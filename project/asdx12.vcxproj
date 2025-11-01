@@ -230,6 +230,7 @@
     <ClCompile Include="..\src\fnd\asdxGamePad.cpp" />
     <ClCompile Include="..\src\fnd\asdxHash.cpp" />
     <ClCompile Include="..\src\fnd\asdxHidManager.cpp" />
+    <ClCompile Include="..\src\fnd\asdxIndexHeap.cpp" />
     <ClCompile Include="..\src\fnd\asdxJob.cpp" />
     <ClCompile Include="..\src\fnd\asdxKeyboard.cpp" />
     <ClCompile Include="..\src\fnd\asdxLogger.cpp" />
@@ -320,6 +321,7 @@
     <ClInclude Include="..\include\fnd\asdxFunction.h" />
     <ClInclude Include="..\include\fnd\asdxHash.h" />
     <ClInclude Include="..\include\fnd\asdxHid.h" />
+    <ClInclude Include="..\include\fnd\asdxIndexHeap.h" />
     <ClInclude Include="..\include\fnd\asdxJob.h" />
     <ClInclude Include="..\include\fnd\asdxList.h" />
     <ClInclude Include="..\include\fnd\asdxLogger.h" />
@@ -358,6 +360,7 @@
     <ClInclude Include="..\include\gfx\asdxFade.h" />
     <ClInclude Include="..\include\gfx\asdxFont.h" />
     <ClInclude Include="..\include\gfx\asdxGfxMisc.h" />
+    <ClInclude Include="..\include\gfx\asdxLight.h" />
     <ClInclude Include="..\include\gfx\asdxMapChip.h" />
     <ClInclude Include="..\include\gfx\asdxModel.h" />
     <ClInclude Include="..\include\gfx\asdxPipelineState.h" />

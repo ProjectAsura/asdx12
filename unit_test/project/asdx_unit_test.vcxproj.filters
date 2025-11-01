@@ -11,9 +11,6 @@
     <ClCompile Include="..\src\fnd\ListTest.cpp">
       <Filter>fnd</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\fnd\OctreeTest.cpp">
-      <Filter>fnd</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\fnd\QueueTest.cpp">
       <Filter>fnd</Filter>
     </ClCompile>

@@ -70,7 +70,6 @@
     <ClCompile Include="..\src\fnd\IndexHeapTest.cpp" />
     <ClCompile Include="..\src\fnd\JobSystemTest.cpp" />
     <ClCompile Include="..\src\fnd\ListTest.cpp" />
-    <ClCompile Include="..\src\fnd\OctreeTest.cpp" />
     <ClCompile Include="..\src\fnd\OffsetAllocatorTest.cpp" />
     <ClCompile Include="..\src\fnd\QueueTest.cpp" />
     <ClCompile Include="..\src\fnd\RelativePtrTest.cpp" />
