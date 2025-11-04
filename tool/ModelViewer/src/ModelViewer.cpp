@@ -10,11 +10,14 @@
 #include <ModelViewer.h>
 #include <fnd/asdxMacro.h>
 #include <fnd/asdxLogger.h>
-#include <fnd/asdxFileIO.h>
 #include <fnd/asdxMisc.h>
+#include <fnd/asdxPath.h>
+#include <fnd/asdxMisc.h>
+#include <fnd/asdxFileIO.h>
 #include <edit/asdxGuiMgr.h>
 #include <imgui.h>
 #include <im3d.h>
+#include "ModelConverter.h"
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -59,25 +62,24 @@ bool ModelViewer::OnInit()
 {
     auto pDevice = asdx::GetD3D12Device();
 
-    if (!asdx::InitAsyncFileIO())
-    {
-        ELOG("Error : InitFileLoader() Failed.");
-        return false;
-    }
-
     m_GfxCmdList.Reset();
     auto pCmd = m_GfxCmdList.GetD3D12CommandList();
 
     // GUIマネージャの初期化処理.
     {
-        const auto path = "../res/font/07やさしさゴシック.ttf";
-        if (!asdx::GuiMgr::Instance().Init(pCmd, m_hWnd, m_Width, m_Height, m_SwapChainFormat, path))
+        if (!asdx::GuiMgr::Instance().Init(pCmd, m_hWnd, m_Width, m_Height, m_SwapChainFormat, nullptr))
         {
             ELOG("Error : GuiMgr::Init() Failed.");
             return false;
         }
     }
 
+    // モデルマネージャの初期化.
+    if (!asdx::InitModelManager(32))
+    {
+        ELOGA("Error : InitModelManager() Failed.");
+        return false;
+    }
 
     // コマンドの記録を終了.
     pCmd->Close();
@@ -107,8 +109,10 @@ bool ModelViewer::OnInit()
 //-----------------------------------------------------------------------------
 void ModelViewer::OnTerm()
 {
+    // モデルマネージャの終了処理.
+    asdx::TermModelManager();
 
-    asdx::TermAsyncFileIO();
+    // GUIマネージャの終了処理.
     asdx::GuiMgr::Instance().Term();
 }
 
@@ -121,19 +125,63 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
 
     asdx::GuiMgr::Instance().Update(m_Width, m_Height);
 
+    // 情報表示.
+    {
+        const auto w = 200.0f;
+        const auto h = 100.0f;
+        const auto x = 10.0f;
+        const auto y = 10.0f;
+
+        ImGui::SetNextWindowPos(ImVec2(m_Width - (w + x), m_Height - (h + y)));
+        ImGui::SetNextWindowSize(ImVec2(w, h));
+
+        auto flags = ImGuiWindowFlags_NoMove
+            | ImGuiWindowFlags_NoResize
+            | ImGuiWindowFlags_NoTitleBar;
+        if (ImGui::Begin("Info", nullptr, flags))
+        {
+            ImGui::Text("FPS : %.2f", GetFPS());
+            ImGui::Separator();
+
+            uint32_t meshCount     = 0;
+            uint32_t materialCount = 0;
+            uint32_t vertexCount   = 0;
+            uint32_t indexCount    = 0;
+
+            if (!m_ModelBinary.empty() && m_Model.GetPtr() != nullptr)
+            {
+                meshCount     = uint32_t(m_Model->GetMeshCount());
+                materialCount = uint32_t(m_Model->GetMaterialCount());
+
+                for(size_t i=0; i<m_Model->GetMeshCount(); ++i)
+                {
+                    vertexCount += m_Model->GetMesh(i)->GetVertexCount();
+                    indexCount  += m_Model->GetMesh(i)->GetIndexCount();
+                }
+            }
+
+            ImGui::Text((const char*)u8"メッシュ数     : %u",  meshCount);
+            ImGui::Text((const char*)u8"マテリアル数   : %u",  materialCount);
+            ImGui::Text((const char*)u8"頂点数         : %u", vertexCount);
+            ImGui::Text((const char*)u8"インデックス数 : %u",  indexCount);
+
+            ImGui::End();
+        }
+    }
+
     // コンテキストメニュー.
     {
         if (ImGui::IsMouseClicked(1))
-        { ImGui::OpenPopup(u8"ContextMenu"); }
+        { ImGui::OpenPopup("ContextMenu"); }
 
-        if (ImGui::BeginPopup(u8"ContextMenu"))
+        if (ImGui::BeginPopup("ContextMenu"))
         {
-            if (ImGui::BeginMenu(u8"ファイル"))
+            if (ImGui::BeginMenu((const char*)u8"ファイル"))
             {
                 MenuFile(pCmd);
                 ImGui::EndMenu();
             }
-            if (ImGui::BeginMenu(u8"ヘルプ"))
+            if (ImGui::BeginMenu((const char*)u8"ヘルプ"))
             {
                 MenuHelp();
                 ImGui::EndMenu();
@@ -251,6 +299,7 @@ void ModelViewer::OnDrop(const wchar_t** dropFiles, uint32_t fileCount)
     if (dropFiles == nullptr || fileCount == 0)
         return;
 
+    // 最初の1つだけ処理する.
 }
 
 //-----------------------------------------------------------------------------
@@ -258,14 +307,65 @@ void ModelViewer::OnDrop(const wchar_t** dropFiles, uint32_t fileCount)
 //-----------------------------------------------------------------------------
 void ModelViewer::MenuFile(ID3D12GraphicsCommandList* pCmd)
 {
-    if (ImGui::MenuItem(u8"ファイルを開く"))
+    // モデルファイルを開く.
+    if (ImGui::MenuItem((const char*)u8"ファイルを開く"))
     {
+        const char* filter = 
+            "モデルファイル(*.mdb, *.dae, *.xml, *.gtlf, *.fbx, *.ply, *.dxf, *.smd, *.vta, *.mdl, *.md2, *.md3, *.md5mesh, *.md5anim, *.x, *.obj, *.ms3d, *.lwo, *.lows)\0*.mdb;*.dae;*.xml;*.gltf;*.fbx;*.ply;*.dxf;*.smd;*.vta;*.mdl;*.md2;*.md3;*.md5mesh;*.md5anim;*.x;*.obj;*.ms3d;*.lwo;*.lws\0"
+            "Project Asura Model Binary (*.mdb)\0*.mdb\0"
+            "Collada (*.dae, *.xml)\0*.dae;*.xml\0"
+            "glTF (*.gltf)\0*.gltf\0"
+            "Film Box (*.fbx)\0*.fbx\0"
+            "Standard Polygon Library (*.ply)\0*.ply\0"
+            "Autodesk DXF (*.dxf)\0*.dxf\0"
+            "Valve Model (*.smd, *.vta)\0*.smd;*.vta\0"
+            "Quake1 Model (*.mdl)\0*.mdl\0"
+            "Quake2 Model (*.md2)\0*.md2\0"
+            "Quake3 Model (*.md3)\0*.md3\0"
+            "Doom3 Model (*.md5mesh, *.md5anim)\0*.md5mesh;*.md5anim\0"
+            "DirectX X File (*.x)\0*.x\0"
+            "Wavefront Object (*.obj)\0*.obj\0"
+            "Milkshape 3D (*.ms3d)\0*.ms3d\0"
+            "LightWave Model (*.lwo)\0*.lwo\0"
+            "LightWave Scene (*.lws)\0*.lws\0"
+            "全てのファイル (*.*)\0*.*\0\0";
+
+        asdx::fs::path path;
+        if (asdx::OpenFileDlg(filter, path))
+        {
+            auto input = path.string();
+
+            std::vector<uint8_t> modelBinary;
+            if (asdx::ModelConverter::Convert(input.c_str(), modelBinary))
+            {
+                m_ModelBinary = std::move(modelBinary);
+                RecreateModel();
+            }
+        }
     }
-    if (ImGui::MenuItem(u8"名前を付けて保存"))
+
+    // 保存処理.
+    if (!m_ModelBinary.empty())
     {
-    }
-    if (ImGui::MenuItem(u8"上書き保存"))
-    {
+        if (ImGui::MenuItem((const char*)u8"名前を付けて保存"))
+        {
+            const char* filter = 
+                "Project Asura Model Binary (*.mdb)\0*.mdb\0";
+            std::string base;
+            std::string ext = ".mdb";
+
+            asdx::fs::path path;
+            if (asdx::SaveFileDlg(filter, path))
+            {
+                m_OutputPath = path.string();
+                SaveModelBinary(m_OutputPath.c_str());
+            }
+        }
+
+        if (ImGui::MenuItem((const char*)u8"上書き保存"))
+        {
+            SaveModelBinary(m_OutputPath.c_str());
+        }
     }
 }
 
@@ -274,14 +374,52 @@ void ModelViewer::MenuFile(ID3D12GraphicsCommandList* pCmd)
 //-----------------------------------------------------------------------------
 void ModelViewer::MenuHelp()
 {
-    if (ImGui::MenuItem(u8"バージョン情報"))
+    // バージョン情報.
+    if (ImGui::MenuItem((const char*)u8"バージョン情報"))
     {
         asdx::InfoDlg("Version Info",
             "ModelViewer ver 0.1\n"
             "Build 0.1\n"
             "Copyright(c) Project Asura.");
     }
-    if (ImGui::MenuItem(u8"ライセンス情報"))
+
+    // ライセンス情報.
+    if (ImGui::MenuItem((const char*)u8"ライセンス情報"))
     {
     }
+}
+
+//-----------------------------------------------------------------------------
+//      モデルを再生成します.
+//-----------------------------------------------------------------------------
+void ModelViewer::RecreateModel()
+{
+    asdx::IModel* pModel = nullptr;
+
+    // モデルを生成をします.
+    if (!asdx::GetModelManager().CreateModel(m_ModelBinary, &pModel))
+    {
+        ELOGA("Error : ModelManager::CreateModel() Failed.");
+        return;
+    }
+
+    // 成功したら差し替え.
+    m_Model.Attach(pModel);
+}
+
+//-----------------------------------------------------------------------------
+//      モデルバイナリを保存します.
+//-----------------------------------------------------------------------------
+void ModelViewer::SaveModelBinary(const char* path)
+{
+    if (path == nullptr)
+        return;
+
+    if (!asdx::SaveA(path, m_ModelBinary))
+    {
+        ELOG("Error : SaveA() Failed path = %s", path);
+        return;
+    }
+
+    ILOG("Info : ModelBinary Output success. path = %s", path);
 }

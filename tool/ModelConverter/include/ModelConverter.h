@@ -1,6 +1,6 @@
 ﻿//-----------------------------------------------------------------------------
 // File : ModelConverter.h
-// Desc : Model Converter.
+// Desc : Model Binary (*.mdb) Converter.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 #pragma once

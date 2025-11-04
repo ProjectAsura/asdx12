@@ -1,6 +1,6 @@
 ﻿//-----------------------------------------------------------------------------
 // File : ModelConverter.cpp
-// Desc : Model Converter.
+// Desc : Model Binary (*.mdb) Converter.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 
@@ -432,7 +432,7 @@ bool ModelConverter::Convert(const Desc& desc)
 
     // マテリアルデータを変換.
     std::vector<flatbuffers::Offset<flatbuffers::String>> materials;
-    materials.resize(pScene->mNumMaterials);
+    materials.reserve(pScene->mNumMaterials);
     for(auto i=0u; i<pScene->mNumMaterials; ++i)
     {
         const auto srcMat = pScene->mMaterials[i];
@@ -550,7 +550,7 @@ bool ModelConverter::Convert(const std::string& path, std::vector<uint8_t>& bina
 
     // マテリアルデータを変換.
     std::vector<flatbuffers::Offset<flatbuffers::String>> materials;
-    materials.resize(pScene->mNumMaterials);
+    materials.reserve(pScene->mNumMaterials);
     for(auto i=0u; i<pScene->mNumMaterials; ++i)
     {
         const auto srcMat = pScene->mMaterials[i];

@@ -42,8 +42,12 @@ ModelManager& ModelManager::Instance()
 //-----------------------------------------------------------------------------
 bool ModelManager::Init(uint32_t maxInstanceCount)
 {
+    if (m_Init)
+        return false;
+
     auto size = uint32_t(sizeof(uint32_t) * maxInstanceCount);
     m_OffsetAllocator.Init(size, maxInstanceCount);
+    m_Init = true;
 
     return true;
 }
@@ -53,6 +57,9 @@ bool ModelManager::Init(uint32_t maxInstanceCount)
 //-----------------------------------------------------------------------------
 void ModelManager::Term()
 {
+    if (!m_Init)
+        return;
+
     // モデルリストを破棄します.
     {
         auto itr = m_Models.begin();
@@ -85,7 +92,15 @@ void ModelManager::Term()
 
     // オフセットアロケータの終了処理.
     m_OffsetAllocator.Term();
+
+    m_Init = false;
 }
+
+//-----------------------------------------------------------------------------
+//      初期化済みかどうかチェックします.
+//-----------------------------------------------------------------------------
+bool ModelManager::IsInit() const
+{ return m_Init; }
 
 //-----------------------------------------------------------------------------
 //      モデルを生成します.
@@ -192,5 +207,29 @@ const List<Model>& ModelManager::GetModels() const
 //-----------------------------------------------------------------------------
 const List<ModelInstance>& ModelManager::GetModelInstances() const
 { return m_ModelInstances; }
+
+//-----------------------------------------------------------------------------
+//      モデルマネージャの初期化処理を行います.
+//-----------------------------------------------------------------------------
+bool InitModelManager(uint32_t maxInstanceCount)
+{ return ModelManager::Instance().Init(maxInstanceCount); }
+
+//-----------------------------------------------------------------------------
+//      モデルマネージャの終了処理を行います.
+//-----------------------------------------------------------------------------
+void TermModelManager()
+{ ModelManager::Instance().Term(); }
+
+//-----------------------------------------------------------------------------
+//      モデルマネージャが初期化済みかどうかチェックします.
+//-----------------------------------------------------------------------------
+bool IsInitModelManager()
+{ return ModelManager::Instance().IsInit(); }
+
+//-----------------------------------------------------------------------------
+//      モデルマネージャを取得します.
+//-----------------------------------------------------------------------------
+IModelManager& GetModelManager()
+{ return ModelManager::Instance(); }
 
 } // namespace asdx
