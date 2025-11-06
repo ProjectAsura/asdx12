@@ -16,8 +16,6 @@
 #include <fnd/asdxFileIO.h>
 #include <edit/asdxGuiMgr.h>
 #include <gfx/asdxPresetState.h>
-#include <imgui.h>
-#include <im3d.h>
 #include "ModelConverter.h"
 
 
@@ -44,7 +42,7 @@ static const D3D12_INPUT_ELEMENT_DESC InputElements[] = {
     { "NORMAL"     , 0, DXGI_FORMAT_R32G32B32_FLOAT   , 1, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
     { "TANGENT"    , 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 2, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
     { "TEXCOORD"   , 0, DXGI_FORMAT_R32G32_FLOAT      , 3, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-    //{ "COLOR"      , 0, DXGI_FORMAT_R8G8B8A8_UNORM    , 4, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+    { "COLOR"      , 0, DXGI_FORMAT_R8G8B8A8_UNORM    , 4, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
     //{ "BLENDINDEX" , 0, DXGI_FORMAT_R32G32B32A32_UINT , 5, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
     //{ "BLENDWEIGHT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 6, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 };
@@ -64,11 +62,12 @@ struct alignas(256) ParamScene
 
 const char* kDrawModes[] = {
     (const char*)u8"デフォルト",
-    (const char*)u8"NDC位置座標",
+    (const char*)u8"スクリーン空間位置座標",
     (const char*)u8"法線ベクトル",
     (const char*)u8"接線ベクトル",
     (const char*)u8"従接線ベクトル",
     (const char*)u8"テクスチャ座標",
+    (const char*)u8"頂点カラー",
 };
 
 } // namespace
@@ -83,6 +82,9 @@ const char* kDrawModes[] = {
 //-----------------------------------------------------------------------------
 ModelViewer::ModelViewer()
 : asdx::App(L"ModelViewer", 1920, 1080, nullptr, nullptr, nullptr)
+, m_ModelTranslation(0.0f, 0.0f, 0.0f)
+, m_ModelRotation   (0.0f, 0.0f, 0.0f)
+, m_ModelScale      (1.0f, 1.0f, 1.0f)
 {
     m_SwapChainFormat    = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
     m_DepthStencilFormat = DXGI_FORMAT_D32_FLOAT;
@@ -174,7 +176,14 @@ bool ModelViewer::OnInit()
         desc.SampleDesc.Count               = 1;
         desc.SampleDesc.Quality             = 0;
 
-        if (!asdx::PipelineStateManager::Instance().Create(&desc, m_PipelineStateHandle))
+        if (!asdx::PipelineStateManager::Instance().Create(&desc, m_SolidState))
+        {
+            ELOGA("Error : PipelineStateManager::Create() Failed.");
+            return false;
+        }
+
+        desc.RasterizerState = asdx::Preset::Wireframe;
+        if (!asdx::PipelineStateManager::Instance().Create(&desc, m_WireframeState))
         {
             ELOGA("Error : PipelineStateManager::Create() Failed.");
             return false;
@@ -252,6 +261,9 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
 
     asdx::GuiMgr::Instance().Update(m_Width, m_Height);
 
+    ImGuizmo::BeginFrame();
+    ImGuizmo::SetImGuiContext(ImGui::GetCurrentContext());
+
     // 情報表示.
     {
         const auto w = 200.0f;
@@ -306,18 +318,46 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
         }
     }
 
+    asdx::Matrix modelWorld = asdx::Matrix::CreateIdentity();
+
+    constexpr auto fov = asdx::ToRadian(37.5f);
+    auto aspect = float(m_Width) / float(m_Height);
+    m_Proj = asdx::Matrix::CreatePerspectiveFieldOfView(fov, aspect, m_Camera.GetNearClip(), m_Camera.GetFarClip());
+
+    // ギズモ表示.
+    if (m_EnableGuizmo)
+    {
+        auto& view = m_Camera.GetView();
+        auto& proj = m_Proj;
+        auto& io = ImGui::GetIO();
+
+        float matrix[16] = {};
+        ImGuizmo::RecomposeMatrixFromComponents(&m_ModelTranslation.x, &m_ModelRotation.x, &m_ModelScale.x, matrix);
+        ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
+        if (ImGuizmo::Manipulate(&view._11, &proj._11, m_GuizmoOperation, ImGuizmo::MODE::LOCAL, matrix))
+        {
+            ImGuizmo::DecomposeMatrixToComponents(
+                matrix, &m_ModelTranslation.x, &m_ModelRotation.x, &m_ModelScale.x);
+        }
+    }
+
+    // 定数バッファを更新.
     {
         auto idx = GetCurrentBackBufferIndex();
 
-        auto fov = asdx::ToRadian(37.5f);
-        auto aspect = float(m_Width) / float(m_Height);
+        modelWorld = asdx::Matrix::CreateTranslation(m_ModelTranslation)
+            * asdx::Matrix::CreateRotationFromYawPitchRoll(
+                asdx::ToRadian(m_ModelRotation.y),
+                asdx::ToRadian(m_ModelRotation.x),
+                asdx::ToRadian(m_ModelRotation.z))
+            * asdx::Matrix::CreateScale(m_ModelScale);
 
         auto param = m_SceneCB[idx].MapAs<ParamScene>();
         assert(param != nullptr);
 
-        param->World        = asdx::Matrix::CreateIdentity();
+        param->World        = modelWorld;
         param->View         = m_Camera.GetView();
-        param->Proj         = asdx::Matrix::CreatePerspectiveFieldOfView(fov, aspect, m_Camera.GetNearClip(), m_Camera.GetFarClip());
+        param->Proj         = m_Proj;
         param->CameraPos    = m_Camera.GetPosition();
         param->FieldOfView  = fov;
         param->NearClip     = m_Camera.GetNearClip();
@@ -361,7 +401,7 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
     if (m_ModelInfo.MeshCount > 0)
     {
         pCmd->SetGraphicsRootSignature(m_RootSignature.GetPtr());
-        asdx::PipelineStateManager::Instance().SetState(pCmd, m_PipelineStateHandle);
+        asdx::PipelineStateManager::Instance().SetState(pCmd, m_EnableWireframe ? m_WireframeState : m_SolidState);
 
         pCmd->SetGraphicsRootConstantBufferView(ROOT_PARAM_B0, m_SceneCB[idx].GetGpuAddress());
         pCmd->SetGraphicsRoot32BitConstants(ROOT_PARAM_B1, 1, &m_DrawMode, 0);
@@ -375,7 +415,8 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
                 mesh->GetPositions().GetVBV(),
                 mesh->GetNormals  ().GetVBV(),
                 mesh->GetTangents ().GetVBV(),
-                mesh->GetTexCoords().GetVBV()
+                mesh->GetTexCoords().GetVBV(),
+                mesh->GetColors   ().GetVBV(),
             };
 
             auto IBV = mesh->GetVertexIndices().GetIBV();
@@ -384,6 +425,30 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
             pCmd->IASetIndexBuffer(&IBV);
 
             pCmd->DrawIndexedInstanced(mesh->GetIndexCount(), 1, 0, 0, 0);
+        }
+
+        // バウンディングスフィア表示.
+        if (m_DrawBoundingSphere)
+        {
+            for(size_t i=0; i<m_Model->GetMeshCount(); ++i)
+            {
+                auto& sphere = m_Model->GetMesh(i)->GetBoundingSphere();
+            }
+
+            {
+                auto& sphere = m_Model->GetBoundingSphere();
+            }
+        }
+
+        // ボーン表示.
+        if (m_DrawBones)
+        {
+            for(size_t i=0; i<m_Model->GetBoneCount(); ++i)
+            {
+                auto offsetMtx = m_Model->GetBoneOffsetMatrix(i);
+
+                //
+            }
         }
     }
 
@@ -438,6 +503,54 @@ void ModelViewer::OnKey(const asdx::App::KeyEventArgs& args)
     asdx::GuiMgr::Instance().OnKey(args.KeyCode, args.IsKeyDown, args.IsAltDown);
 
     m_Camera.OnKey(args.KeyCode, args.IsKeyDown, args.IsAltDown);
+
+    if (args.IsKeyDown)
+    {
+        switch(args.KeyCode)
+        {
+        // 移動ツール.
+        case 'W':
+            {
+                if (m_EnableGuizmo)
+                { m_EnableGuizmo = false; }
+                else
+                {
+                    m_EnableGuizmo    = true;
+                    m_GuizmoOperation = ImGuizmo::OPERATION::TRANSLATE;
+                }
+            }
+            break;
+
+        // 回転ツール.
+        case 'E':
+            {
+                if (m_EnableGuizmo)
+                { m_EnableGuizmo = false; }
+                else
+                {
+                    m_EnableGuizmo    = true;
+                    m_GuizmoOperation = ImGuizmo::OPERATION::ROTATE;
+                }
+            }
+            break;
+
+        // スケールツール.
+        case 'R':
+            {
+                if (m_EnableGuizmo)
+                { m_EnableGuizmo = false; }
+                else
+                {
+                    m_EnableGuizmo    = true;
+                    m_GuizmoOperation = ImGuizmo::OPERATION::SCALE;
+                }
+            }
+            break;
+
+        default:
+            break;
+        }
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -481,6 +594,13 @@ void ModelViewer::OnDrop(const wchar_t** dropFiles, uint32_t fileCount)
         return;
 
     // 最初の1つだけ処理する.
+    auto path = asdx::fs::path(dropFiles[0]);
+    std::vector<uint8_t> modelBinary;
+    if (asdx::ModelConverter::Convert(path.string().c_str(), modelBinary))
+    {
+        m_ModelBinary = std::move(modelBinary);
+        RecreateModel();
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -558,6 +678,10 @@ void ModelViewer::MenuView()
     int mode = (int)m_DrawMode;
     ImGui::Combo((const char*)u8"描画モード", &mode, kDrawModes, _countof(kDrawModes));
     m_DrawMode = mode;
+
+    ImGui::Checkbox((const char*)u8"ワイヤーフレーム", &m_EnableWireframe);
+
+    ImGui::Checkbox((const char*)u8"バウンディングスフィア", &m_DrawBoundingSphere);
 }
 
 //-----------------------------------------------------------------------------

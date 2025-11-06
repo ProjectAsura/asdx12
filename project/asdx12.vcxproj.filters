@@ -61,9 +61,6 @@
     <Filter Include="ソース ファイル\external\simdjson">
       <UniqueIdentifier>{a306abf8-7b01-4260-9cc2-74a78b16d44f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ソース ファイル\external\im3d">
-      <UniqueIdentifier>{cbbe3d2c-c8df-4bfc-9923-e7fff6b39288}</UniqueIdentifier>
-    </Filter>
     <Filter Include="ソース ファイル\external\implot">
       <UniqueIdentifier>{0e1b19af-3a20-470d-8d44-fbd15b73e910}</UniqueIdentifier>
     </Filter>
@@ -78,6 +75,9 @@
     </Filter>
     <Filter Include="ソース ファイル\external\implot3d">
       <UniqueIdentifier>{27b42742-041f-4a58-a5f8-aedfdbe99ec2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\external\ImGuizmo">
+      <UniqueIdentifier>{8fb098a6-69e0-4c9f-88dd-3187e70fd05e}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -297,9 +297,6 @@
     <ClCompile Include="..\external\simdjson\src\simdjson.cpp">
       <Filter>ソース ファイル\external\simdjson</Filter>
     </ClCompile>
-    <ClCompile Include="..\external\im3d\im3d.cpp">
-      <Filter>ソース ファイル\external\im3d</Filter>
-    </ClCompile>
     <ClCompile Include="..\external\implot\implot.cpp">
       <Filter>ソース ファイル\external\implot</Filter>
     </ClCompile>
@@ -371,6 +368,21 @@
     </ClCompile>
     <ClCompile Include="..\external\implot3d\implot3d_meshes.cpp">
       <Filter>ソース ファイル\external\implot3d</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\ImGuizmo\GraphEditor.cpp">
+      <Filter>ソース ファイル\external\ImGuizmo</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\ImGuizmo\ImCurveEdit.cpp">
+      <Filter>ソース ファイル\external\ImGuizmo</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\ImGuizmo\ImGradient.cpp">
+      <Filter>ソース ファイル\external\ImGuizmo</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\ImGuizmo\ImGuizmo.cpp">
+      <Filter>ソース ファイル\external\ImGuizmo</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\ImGuizmo\ImSequencer.cpp">
+      <Filter>ソース ファイル\external\ImGuizmo</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -605,15 +617,6 @@
     <ClInclude Include="..\include\res\asdxResMapChip.h">
       <Filter>ヘッダー ファイル\res</Filter>
     </ClInclude>
-    <ClInclude Include="..\external\im3d\im3d.h">
-      <Filter>ソース ファイル\external\im3d</Filter>
-    </ClInclude>
-    <ClInclude Include="..\external\im3d\im3d_config.h">
-      <Filter>ソース ファイル\external\im3d</Filter>
-    </ClInclude>
-    <ClInclude Include="..\external\im3d\im3d_math.h">
-      <Filter>ソース ファイル\external\im3d</Filter>
-    </ClInclude>
     <ClInclude Include="..\external\implot\implot.h">
       <Filter>ソース ファイル\external\implot</Filter>
     </ClInclude>
@@ -682,6 +685,24 @@
     </ClInclude>
     <ClInclude Include="..\external\implot3d\implot3d_internal.h">
       <Filter>ソース ファイル\external\implot3d</Filter>
+    </ClInclude>
+    <ClInclude Include="..\external\ImGuizmo\GraphEditor.h">
+      <Filter>ソース ファイル\external\ImGuizmo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\external\ImGuizmo\ImCurveEdit.h">
+      <Filter>ソース ファイル\external\ImGuizmo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\external\ImGuizmo\ImGradient.h">
+      <Filter>ソース ファイル\external\ImGuizmo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\external\ImGuizmo\ImGuizmo.h">
+      <Filter>ソース ファイル\external\ImGuizmo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\external\ImGuizmo\ImSequencer.h">
+      <Filter>ソース ファイル\external\ImGuizmo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\external\ImGuizmo\ImZoomSlider.h">
+      <Filter>ソース ファイル\external\ImGuizmo</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

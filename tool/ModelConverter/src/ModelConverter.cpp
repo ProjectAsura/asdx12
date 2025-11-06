@@ -94,7 +94,7 @@ void ParseMesh
     {
         auto pos = srcMesh->mVertices[i];
         auto nrm = srcMesh->mNormals[i];
-        auto tex = srcMesh->mTextureCoords[0][i];
+        auto tex = srcMesh->HasTextureCoords(0) ? srcMesh->mTextureCoords[0][i] : kZero;
         auto col = srcMesh->HasVertexColors(0) ? srcMesh->mColors[0][i] : kWhite;
 
         positions[i] = asdx::res::Float3(pos.x, pos.y, pos.z);
@@ -393,13 +393,7 @@ bool ModelConverter::Convert(const Desc& desc)
     }
 
     int flag = 0;
-    flag |= aiProcess_Triangulate;
-    flag |= aiProcess_PreTransformVertices;
-    flag |= aiProcess_GenSmoothNormals;
-    flag |= aiProcess_GenUVCoords;
-    flag |= aiProcess_RemoveRedundantMaterials;
-    flag |= aiProcess_OptimizeMeshes;
-    flag |= aiProcess_LimitBoneWeights;
+    flag |= aiProcessPreset_TargetRealtime_MaxQuality;
     flag |= aiProcess_FlipUVs;
     flag |= aiProcess_FlipWindingOrder;
 
@@ -496,13 +490,7 @@ bool ModelConverter::Convert(const std::string& path, std::vector<uint8_t>& bina
     }
 
     int flag = 0;
-    flag |= aiProcess_Triangulate;
-    flag |= aiProcess_PreTransformVertices;
-    flag |= aiProcess_GenSmoothNormals;
-    flag |= aiProcess_GenUVCoords;
-    flag |= aiProcess_RemoveRedundantMaterials;
-    flag |= aiProcess_OptimizeMeshes;
-    flag |= aiProcess_LimitBoneWeights;
+    flag |= aiProcessPreset_TargetRealtime_MaxQuality;
     flag |= aiProcess_FlipUVs;
     flag |= aiProcess_FlipWindingOrder;
 

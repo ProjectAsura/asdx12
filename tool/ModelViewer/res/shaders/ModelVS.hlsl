@@ -13,7 +13,7 @@ struct VSInput
     float3  Normal      : NORMAL;
     float4  Tangent     : TANGENT;
     float2  TexCoord    : TEXCOORD0;
-    //float4  Color       : COLOR0;
+    float4  Color       : COLOR0;
     //uint4   BoneIndices : BONEINDICES;
     //float4  BoneWeights : BONEWEIGHTS;
 };
@@ -27,7 +27,7 @@ struct VSOutput
     float3  Normal      : NORMAL;
     float4  Tangent     : TANGENT;
     float2  TexCoord    : TEXCOORD0;
-    //float4  Color       : COLOR0;
+    float4  Color       : COLOR0;
     //uint4   BoneIndices : BONEINDICES;
     //float4  BoneWeights : BONEWEIGHTS;
 };
@@ -66,7 +66,7 @@ VSOutput main(const VSInput input)
     output.Normal       = worldNormal;
     output.Tangent      = float4(worldTangent, input.Tangent.w);
     output.TexCoord     = input.TexCoord;
-    //output.Color        = input.Color;
+    output.Color        = input.Color;
     //output.BoneIndices  = input.BoneIndices;
     //output.BoneWeights  = input.BoneWeights;
 

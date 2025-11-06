@@ -13,7 +13,7 @@ struct VSOutput
     float3  Normal      : NORMAL;
     float4  Tangent     : TANGENT;
     float2  TexCoord    : TEXCOORD0;
-    //float4  Color       : COLOR0;
+    float4  Color       : COLOR0;
     //uint4   BoneIndices : BONEINDICES;
     //float4  BoneWeights : BONEWEIGHTS;
 };
@@ -101,7 +101,11 @@ float4 main(const VSOutput input) : SV_TARGET0
         break;
 
     case MODE_POSITION:
-        { output.xyz = input.Position.xyz * 0.5f + 0.5f; }
+        {
+            output.x = input.Position.x / TargetWidth;
+            output.y = input.Position.y / TargetHeight;
+            output.z = input.Position.z;
+        }
         break;
 
     case MODE_NORMAL:
@@ -120,9 +124,9 @@ float4 main(const VSOutput input) : SV_TARGET0
         { output.xy = input.TexCoord; }
         break;
 
-    //case MODE_COLOR:
-    //    { output = input.Color; }
-    //    break;
+    case MODE_COLOR:
+        { output = input.Color; }
+        break;
 
     //case MODE_BLENDINDEX:
     //    {

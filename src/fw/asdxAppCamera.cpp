@@ -92,25 +92,25 @@ void AppCamera::OnKey( uint32_t keyCode, bool isKeyDown, bool isAltDown )
 //-----------------------------------------------------------------------------
 //      ビュー行列を取得します.
 //-----------------------------------------------------------------------------
-asdx::Matrix AppCamera::GetView() const
+const asdx::Matrix& AppCamera::GetView() const
 { return m_Camera.GetView(); }
 
 //-----------------------------------------------------------------------------
 //      位置座標を取得します.
 //-----------------------------------------------------------------------------
-asdx::Vector3 AppCamera::GetPosition() const
+const asdx::Vector3& AppCamera::GetPosition() const
 { return m_Camera.GetPosition(); }
 
 //-----------------------------------------------------------------------------
 //      注視点を取得します.
 //-----------------------------------------------------------------------------
-asdx::Vector3 AppCamera::GetTarget() const
+const asdx::Vector3& AppCamera::GetTarget() const
 { return m_Camera.GetTarget(); }
 
 //-----------------------------------------------------------------------------
 //      上向き方向を取得します.
 //-----------------------------------------------------------------------------
-asdx::Vector3 AppCamera::GetUpward() const
+const asdx::Vector3& AppCamera::GetUpward() const
 { return m_Camera.GetUpward(); }
 
 //-----------------------------------------------------------------------------

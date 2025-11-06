@@ -14,6 +14,8 @@
 #include <gfx/asdxModel.h>
 #include <gfx/asdxPipelineState.h>
 #include <gfx/asdxBuffer.h>
+#include <imgui.h>
+#include <ImGuizmo.h>
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -63,11 +65,21 @@ private:
     asdx::RefPtr<asdx::IModel>          m_Model;
     std::string                         m_OutputPath;
     asdx::RefPtr<ID3D12RootSignature>   m_RootSignature;
-    asdx::PipelineStateHandle           m_PipelineStateHandle;
+    asdx::PipelineStateHandle           m_SolidState;
+    asdx::PipelineStateHandle           m_WireframeState;
     ModelInfo                           m_ModelInfo = {};
     asdx::ConstantBuffer                m_SceneCB[2];
     asdx::AppCamera                     m_Camera;
-    uint32_t                            m_DrawMode = 0;
+    uint32_t                            m_DrawMode           = 0;
+    bool                                m_DrawBoundingSphere = false;
+    bool                                m_DrawBones          = false;
+    bool                                m_EnableWireframe    = false;
+    asdx::Vector3                       m_ModelTranslation;
+    asdx::Vector3                       m_ModelRotation;
+    asdx::Vector3                       m_ModelScale;
+    bool                                m_EnableGuizmo = false;
+    ImGuizmo::OPERATION                 m_GuizmoOperation;
+    asdx::Matrix                        m_Proj;
 
     //=========================================================================
     // private methods.
