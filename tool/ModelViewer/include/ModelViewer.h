@@ -9,8 +9,11 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <fw/asdxApp.h>
+#include <fw/asdxAppCamera.h>
 #include <gfx/asdxCommandQueue.h>
 #include <gfx/asdxModel.h>
+#include <gfx/asdxPipelineState.h>
+#include <gfx/asdxBuffer.h>
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -43,13 +46,28 @@ public:
     ~ModelViewer();
 
 private:
+    struct ModelInfo
+    {
+        size_t  MeshCount;
+        size_t  MaterialCount;
+        size_t  VertexCount;
+        size_t  IndexCount;
+        size_t  BoneCount;
+    };
+
     //=========================================================================
     // private variables.
     //=========================================================================
-    asdx::WaitPoint             m_FrameWaitPoint;
-    std::vector<uint8_t>        m_ModelBinary;
-    asdx::RefPtr<asdx::IModel>  m_Model;
-    std::string                 m_OutputPath;
+    asdx::WaitPoint                     m_FrameWaitPoint;
+    std::vector<uint8_t>                m_ModelBinary;
+    asdx::RefPtr<asdx::IModel>          m_Model;
+    std::string                         m_OutputPath;
+    asdx::RefPtr<ID3D12RootSignature>   m_RootSignature;
+    asdx::PipelineStateHandle           m_PipelineStateHandle;
+    ModelInfo                           m_ModelInfo = {};
+    asdx::ConstantBuffer                m_SceneCB[2];
+    asdx::AppCamera                     m_Camera;
+    uint32_t                            m_DrawMode = 0;
 
     //=========================================================================
     // private methods.
@@ -104,6 +122,11 @@ private:
     //! @brief      ファイルメニュー処理です.
     //-------------------------------------------------------------------------
     void MenuFile(ID3D12GraphicsCommandList* pCmd);
+
+    //-------------------------------------------------------------------------
+    //! @brief      表示メニュー処理です.
+    //-------------------------------------------------------------------------
+    void MenuView();
 
     //-------------------------------------------------------------------------
     //! @brief      ヘルプメニュー処理です.

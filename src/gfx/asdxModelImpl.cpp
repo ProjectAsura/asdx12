@@ -75,6 +75,7 @@ bool Model::Init(const ModelBinary& binary)
         m_MaterialSlots[i].pMaterial = nullptr;
     }
 
+
     m_Meshes.resize(binary.GetMeshCount());
     for(auto i=0u; i<binary.GetMeshCount(); ++i)
     {
@@ -94,6 +95,8 @@ bool Model::Init(const ModelBinary& binary)
         m_BoneNames[i]          = res.Name.c_str();
         m_BoneOffsetMatrices[i] = res.OffsetMatrix;
     }
+
+    m_BoundingSphere = binary.GetBoundingSphere();
 
     return true;
 }

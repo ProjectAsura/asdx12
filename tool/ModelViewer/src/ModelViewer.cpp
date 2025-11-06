@@ -15,9 +15,63 @@
 #include <fnd/asdxMisc.h>
 #include <fnd/asdxFileIO.h>
 #include <edit/asdxGuiMgr.h>
+#include <gfx/asdxPresetState.h>
 #include <imgui.h>
 #include <im3d.h>
 #include "ModelConverter.h"
+
+
+namespace {
+
+//-----------------------------------------------------------------------------
+// Shaders
+//-----------------------------------------------------------------------------
+#include "../res/shaders/Compiled/ModelVS.inc"
+#include "../res/shaders/Compiled/ModelPS.inc"
+
+enum ROOT_PARAM
+{
+    ROOT_PARAM_B0,
+    ROOT_PARAM_B1,
+    ROOT_PARAM_T0,  // BaseColor
+    ROOT_PARAM_T1,  // Normal
+    ROOT_PARAM_T2,  // ORM
+    ROOT_PARAM_T3,  // Emissive.
+};
+
+static const D3D12_INPUT_ELEMENT_DESC InputElements[] = {
+    { "POSITION"   , 0, DXGI_FORMAT_R32G32B32_FLOAT   , 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+    { "NORMAL"     , 0, DXGI_FORMAT_R32G32B32_FLOAT   , 1, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+    { "TANGENT"    , 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 2, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+    { "TEXCOORD"   , 0, DXGI_FORMAT_R32G32_FLOAT      , 3, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+    //{ "COLOR"      , 0, DXGI_FORMAT_R8G8B8A8_UNORM    , 4, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+    //{ "BLENDINDEX" , 0, DXGI_FORMAT_R32G32B32A32_UINT , 5, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+    //{ "BLENDWEIGHT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 6, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+};
+
+struct alignas(256) ParamScene
+{
+    asdx::Matrix    World;
+    asdx::Matrix    View;
+    asdx::Matrix    Proj;
+    asdx::Vector3   CameraPos;
+    float           FieldOfView;
+    float           NearClip;
+    float           FarClip;
+    float           TargetWidth;
+    float           TargetHeight;
+};
+
+const char* kDrawModes[] = {
+    (const char*)u8"デフォルト",
+    (const char*)u8"NDC位置座標",
+    (const char*)u8"法線ベクトル",
+    (const char*)u8"接線ベクトル",
+    (const char*)u8"従接線ベクトル",
+    (const char*)u8"テクスチャ座標",
+};
+
+} // namespace
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -81,6 +135,68 @@ bool ModelViewer::OnInit()
         return false;
     }
 
+    // ルートシグニチャの生成.
+    {
+        D3D12_ROOT_PARAMETER params[2] = {};
+        asdx::InitAsCBV(params[0], 0, D3D12_SHADER_VISIBILITY_ALL);
+        asdx::InitAsConstants(params[1], 1, 4, D3D12_SHADER_VISIBILITY_ALL);
+
+        D3D12_ROOT_SIGNATURE_DESC desc = {};
+        desc.NumParameters      = _countof(params);
+        desc.pParameters        = params;
+        desc.NumStaticSamplers  = _countof(asdx::Preset::StaticSamplers);
+        desc.pStaticSamplers    = asdx::Preset::StaticSamplers;
+        desc.Flags              = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+
+        if (!asdx::InitRootSignature(pDevice, &desc, m_RootSignature.GetAddress()))
+        {
+            ELOGA("Error : InitRootSignature() Failed.");
+            return false;
+        }
+    }
+
+    // パイプラインステートの生成,
+    {
+        D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = {};
+        desc.pRootSignature                 = m_RootSignature.GetPtr();
+        desc.VS                             = { ModelVS, sizeof(ModelVS) };
+        desc.PS                             = { ModelPS, sizeof(ModelPS) };
+        desc.BlendState                     = asdx::Preset::Opaque;
+        desc.SampleMask                     = D3D12_DEFAULT_SAMPLE_MASK;
+        desc.RasterizerState                = asdx::Preset::CullBack;
+        desc.DepthStencilState              = asdx::Preset::DepthReadWrite;
+        desc.InputLayout.NumElements        = _countof(InputElements);
+        desc.InputLayout.pInputElementDescs = InputElements;
+        desc.PrimitiveTopologyType          = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+        desc.NumRenderTargets               = 1;
+        desc.RTVFormats[0]                  = m_SwapChainFormat;
+        desc.DSVFormat                      = m_DepthStencilFormat;
+        desc.SampleDesc.Count               = 1;
+        desc.SampleDesc.Quality             = 0;
+
+        if (!asdx::PipelineStateManager::Instance().Create(&desc, m_PipelineStateHandle))
+        {
+            ELOGA("Error : PipelineStateManager::Create() Failed.");
+            return false;
+        }
+    }
+
+    for(auto i=0; i<2; ++i)
+    {
+        if (!m_SceneCB[i].Init(sizeof(ParamScene)))
+        {
+            ELOG("Error : ConstantBuffer::Init() Failed.");
+            return false;
+        }
+    }
+
+    m_Camera.Init(
+        asdx::Vector3(0.0f, 0.0f, 5.0f),
+        asdx::Vector3(0.0f, 0.0f, 0.0f),
+        asdx::Vector3(0.0f, 1.0f, 0.0f),
+        0.1f,
+        10000.0f);
+
     // コマンドの記録を終了.
     pCmd->Close();
 
@@ -109,6 +225,17 @@ bool ModelViewer::OnInit()
 //-----------------------------------------------------------------------------
 void ModelViewer::OnTerm()
 {
+    for(auto i=0; i<2; ++i)
+    {
+        m_SceneCB[i].Term();
+    }
+
+    asdx::PipelineStateManager::Instance().Reset();
+
+    m_RootSignature.Reset();
+
+    m_Model.Reset();
+
     // モデルマネージャの終了処理.
     asdx::TermModelManager();
 
@@ -128,7 +255,7 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
     // 情報表示.
     {
         const auto w = 200.0f;
-        const auto h = 100.0f;
+        const auto h = 115.0f;
         const auto x = 10.0f;
         const auto y = 10.0f;
 
@@ -143,27 +270,11 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
             ImGui::Text("FPS : %.2f", GetFPS());
             ImGui::Separator();
 
-            uint32_t meshCount     = 0;
-            uint32_t materialCount = 0;
-            uint32_t vertexCount   = 0;
-            uint32_t indexCount    = 0;
-
-            if (!m_ModelBinary.empty() && m_Model.GetPtr() != nullptr)
-            {
-                meshCount     = uint32_t(m_Model->GetMeshCount());
-                materialCount = uint32_t(m_Model->GetMaterialCount());
-
-                for(size_t i=0; i<m_Model->GetMeshCount(); ++i)
-                {
-                    vertexCount += m_Model->GetMesh(i)->GetVertexCount();
-                    indexCount  += m_Model->GetMesh(i)->GetIndexCount();
-                }
-            }
-
-            ImGui::Text((const char*)u8"メッシュ数     : %u",  meshCount);
-            ImGui::Text((const char*)u8"マテリアル数   : %u",  materialCount);
-            ImGui::Text((const char*)u8"頂点数         : %u", vertexCount);
-            ImGui::Text((const char*)u8"インデックス数 : %u",  indexCount);
+            ImGui::Text((const char*)u8"メッシュ数     : %zu",  m_ModelInfo.MeshCount);
+            ImGui::Text((const char*)u8"マテリアル数   : %zu",  m_ModelInfo.MaterialCount);
+            ImGui::Text((const char*)u8"ボーン数       : %zu", m_ModelInfo.BoneCount);
+            ImGui::Text((const char*)u8"頂点数         : %zu",  m_ModelInfo.VertexCount);
+            ImGui::Text((const char*)u8"インデックス数 : %zu",  m_ModelInfo.IndexCount);
 
             ImGui::End();
         }
@@ -181,6 +292,11 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
                 MenuFile(pCmd);
                 ImGui::EndMenu();
             }
+            if (ImGui::BeginMenu((const char*)u8"表示"))
+            {
+                MenuView();
+                ImGui::EndMenu();
+            }
             if (ImGui::BeginMenu((const char*)u8"ヘルプ"))
             {
                 MenuHelp();
@@ -188,6 +304,28 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
             }
             ImGui::EndPopup();
         }
+    }
+
+    {
+        auto idx = GetCurrentBackBufferIndex();
+
+        auto fov = asdx::ToRadian(37.5f);
+        auto aspect = float(m_Width) / float(m_Height);
+
+        auto param = m_SceneCB[idx].MapAs<ParamScene>();
+        assert(param != nullptr);
+
+        param->World        = asdx::Matrix::CreateIdentity();
+        param->View         = m_Camera.GetView();
+        param->Proj         = asdx::Matrix::CreatePerspectiveFieldOfView(fov, aspect, m_Camera.GetNearClip(), m_Camera.GetFarClip());
+        param->CameraPos    = m_Camera.GetPosition();
+        param->FieldOfView  = fov;
+        param->NearClip     = m_Camera.GetNearClip();
+        param->FarClip      = m_Camera.GetFarClip();
+        param->TargetWidth  = float(m_Width);
+        param->TargetHeight = float(m_Height);
+
+        m_SceneCB[idx].Unmap();
     }
 }
 
@@ -220,7 +358,33 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
     pCmd->RSSetScissorRects(1, &m_ScissorRect);
 
     // モデルを描画
+    if (m_ModelInfo.MeshCount > 0)
     {
+        pCmd->SetGraphicsRootSignature(m_RootSignature.GetPtr());
+        asdx::PipelineStateManager::Instance().SetState(pCmd, m_PipelineStateHandle);
+
+        pCmd->SetGraphicsRootConstantBufferView(ROOT_PARAM_B0, m_SceneCB[idx].GetGpuAddress());
+        pCmd->SetGraphicsRoot32BitConstants(ROOT_PARAM_B1, 1, &m_DrawMode, 0);
+        pCmd->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+        for(size_t i=0; i<m_Model->GetMeshCount(); ++i)
+        {
+            auto mesh = m_Model->GetMesh(i);
+
+            D3D12_VERTEX_BUFFER_VIEW VBVs[] = {
+                mesh->GetPositions().GetVBV(),
+                mesh->GetNormals  ().GetVBV(),
+                mesh->GetTangents ().GetVBV(),
+                mesh->GetTexCoords().GetVBV()
+            };
+
+            auto IBV = mesh->GetVertexIndices().GetIBV();
+
+            pCmd->IASetVertexBuffers(0, _countof(VBVs), VBVs);
+            pCmd->IASetIndexBuffer(&IBV);
+
+            pCmd->DrawIndexedInstanced(mesh->GetIndexCount(), 1, 0, 0, 0);
+        }
     }
 
     // GUIを描画.
@@ -272,6 +436,8 @@ void ModelViewer::OnResize(const asdx::App::ResizeEventArgs& args)
 void ModelViewer::OnKey(const asdx::App::KeyEventArgs& args)
 {
     asdx::GuiMgr::Instance().OnKey(args.KeyCode, args.IsKeyDown, args.IsAltDown);
+
+    m_Camera.OnKey(args.KeyCode, args.IsKeyDown, args.IsAltDown);
 }
 
 //-----------------------------------------------------------------------------
@@ -279,8 +445,23 @@ void ModelViewer::OnKey(const asdx::App::KeyEventArgs& args)
 //-----------------------------------------------------------------------------
 void ModelViewer::OnMouse(const asdx::App::MouseEventArgs& args)
 {
-    asdx::GuiMgr::Instance().OnMouse(
-        args.X, args.Y, args.WheelDelta, args.IsDownL, args.IsDownM, args.IsDownR);
+    if (args.IsAltDown)
+    {
+        m_Camera.OnMouse(
+            args.X,
+            args.Y,
+            args.WheelDelta,
+            args.IsDownL,
+            args.IsDownR,
+            args.IsDownM,
+            args.IsDownX1,
+            args.IsDownX2);
+    }
+    else
+    {
+        asdx::GuiMgr::Instance().OnMouse(
+            args.X, args.Y, args.WheelDelta, args.IsDownL, args.IsDownM, args.IsDownR);
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -370,6 +551,16 @@ void ModelViewer::MenuFile(ID3D12GraphicsCommandList* pCmd)
 }
 
 //-----------------------------------------------------------------------------
+//      表示メニュー処理です.
+//-----------------------------------------------------------------------------
+void ModelViewer::MenuView()
+{
+    int mode = (int)m_DrawMode;
+    ImGui::Combo((const char*)u8"描画モード", &mode, kDrawModes, _countof(kDrawModes));
+    m_DrawMode = mode;
+}
+
+//-----------------------------------------------------------------------------
 //      ヘルプメニュー処理です.
 //-----------------------------------------------------------------------------
 void ModelViewer::MenuHelp()
@@ -405,6 +596,30 @@ void ModelViewer::RecreateModel()
 
     // 成功したら差し替え.
     m_Model.Attach(pModel);
+
+
+    m_ModelInfo.MeshCount     = m_Model->GetMeshCount();
+    m_ModelInfo.MaterialCount = m_Model->GetMaterialCount();
+    m_ModelInfo.BoneCount     = m_Model->GetBoneCount();
+
+    m_ModelInfo.VertexCount = 0;
+    m_ModelInfo.IndexCount  = 0;
+
+    for(auto i=0; i<m_Model->GetMeshCount(); ++i)
+    {
+        auto mesh = m_Model->GetMesh(i);
+        m_ModelInfo.VertexCount += mesh->GetVertexCount();
+        m_ModelInfo.IndexCount  += mesh->GetIndexCount();
+    }
+
+    auto sphere = m_Model->GetBoundingSphere();
+    m_Camera.Init(
+        asdx::Vector3(0.0f, 0.0f, sphere.Radius * 3.0f),
+        asdx::Vector3(0.0f, 0.0f, 0.0f),
+        asdx::Vector3(0.0f, 0.0f, 1.0f),
+        0.1f,
+        1000.0f);
+    m_Camera.Present();
 }
 
 //-----------------------------------------------------------------------------

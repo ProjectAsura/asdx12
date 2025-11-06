@@ -78,6 +78,7 @@ table Mesh
     BoneWeights   : [Float4];
     BoneIndices   : [Uint4];
     VertexIndices : [uint];
+    Bounds        : Float4;
 }
 
 table ModelBinary
@@ -86,6 +87,7 @@ table ModelBinary
     Meshes           : [Mesh];
     Materials        : [string];
     Bones            : [Bone];
+    Bounds           : Float4;
 }
 
 root_type ModelBinary;

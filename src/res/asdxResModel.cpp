@@ -106,16 +106,17 @@ ResMesh ModelBinary::GetMesh(uint32_t meshIndex) const
     auto mesh = bin->Meshes()->Get(meshIndex);
 
     ResMesh result;
-    result.Name          = StringView(mesh->Name()->c_str());
-    result.MaterialId    = mesh->MaterialId();
-    result.Positions     = ArrayView<Vector3>(reinterpret_cast<const Vector3*>(mesh->Positions  ()->data()), mesh->Positions  ()->size());
-    result.Normals       = ArrayView<Vector3>(reinterpret_cast<const Vector3*>(mesh->Normals    ()->data()), mesh->Normals    ()->size());
-    result.Tangents      = ArrayView<Vector4>(reinterpret_cast<const Vector4*>(mesh->Tangents   ()->data()), mesh->Tangents   ()->size());
-    result.Colors        = ArrayView<Unorm4> (reinterpret_cast<const Unorm4*> (mesh->Colors     ()->data()), mesh->Colors     ()->size());
-    result.TexCoords     = ArrayView<Vector2>(reinterpret_cast<const Vector2*>(mesh->TexCoords  ()->data()), mesh->TexCoords  ()->size());
-    result.BoneIndices   = ArrayView<Uint4>  (reinterpret_cast<const Uint4*>  (mesh->BoneIndices()->data()), mesh->BoneIndices()->size());
-    result.BoneWeights   = ArrayView<Vector4>(reinterpret_cast<const Vector4*>(mesh->BoneWeights()->data()), mesh->BoneWeights()->size());
-    result.VertexIndices = ArrayView<uint32_t>(reinterpret_cast<const uint32_t*>(mesh->VertexIndices()->data()), mesh->VertexIndices()->size());
+    result.Name           = StringView(mesh->Name()->c_str());
+    result.MaterialId     = mesh->MaterialId();
+    result.Positions      = ArrayView<Vector3>(reinterpret_cast<const Vector3*>(mesh->Positions  ()->data()), mesh->Positions  ()->size());
+    result.Normals        = ArrayView<Vector3>(reinterpret_cast<const Vector3*>(mesh->Normals    ()->data()), mesh->Normals    ()->size());
+    result.Tangents       = ArrayView<Vector4>(reinterpret_cast<const Vector4*>(mesh->Tangents   ()->data()), mesh->Tangents   ()->size());
+    result.Colors         = ArrayView<Unorm4> (reinterpret_cast<const Unorm4*> (mesh->Colors     ()->data()), mesh->Colors     ()->size());
+    result.TexCoords      = ArrayView<Vector2>(reinterpret_cast<const Vector2*>(mesh->TexCoords  ()->data()), mesh->TexCoords  ()->size());
+    result.BoneIndices    = ArrayView<Uint4>  (reinterpret_cast<const Uint4*>  (mesh->BoneIndices()->data()), mesh->BoneIndices()->size());
+    result.BoneWeights    = ArrayView<Vector4>(reinterpret_cast<const Vector4*>(mesh->BoneWeights()->data()), mesh->BoneWeights()->size());
+    result.VertexIndices  = ArrayView<uint32_t>(reinterpret_cast<const uint32_t*>(mesh->VertexIndices()->data()), mesh->VertexIndices()->size());
+    result.BoundingSphere = BoundingSphere3(mesh->Bounds()->X(), mesh->Bounds()->Y(), mesh->Bounds()->Z(), mesh->Bounds()->W());
     return result;
 }
 
@@ -141,6 +142,16 @@ const char* ModelBinary::GetMaterial(uint32_t materialIndex) const
 {
     assert(!m_Blob.empty());
     return res::GetModelBinary(m_Blob.data())->Materials()->Get(materialIndex)->c_str();
+}
+
+//-----------------------------------------------------------------------------
+//      バウンディングスフィアを取得します.
+//-----------------------------------------------------------------------------
+BoundingSphere3 ModelBinary::GetBoundingSphere() const
+{
+    assert(!m_Blob.empty());
+    auto val = res::GetModelBinary(m_Blob.data())->Bounds();
+    return BoundingSphere3(val->X(), val->Y(), val->Z(), val->W());
 }
 
 //-----------------------------------------------------------------------------

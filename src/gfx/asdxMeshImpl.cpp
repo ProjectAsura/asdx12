@@ -146,8 +146,11 @@ bool Mesh::Init(const ResMesh& mesh)
     // 頂点数を設定.
     m_VertexCount = uint32_t(mesh.Positions.size());
 
-    // 頂点インデックス数設定.
+    // 頂点インデックス数を設定.
     m_IndexCount = uint32_t(mesh.VertexIndices.size());
+
+    // バウンディングスフィアを設定.
+    m_BoundingSphere = mesh.BoundingSphere;
 
     // 正常終了.
     return true;
@@ -244,5 +247,11 @@ uint32_t Mesh::GetVertexCount() const
 //-----------------------------------------------------------------------------
 uint32_t Mesh::GetIndexCount() const
 { return m_IndexCount; }
+
+//-----------------------------------------------------------------------------
+//      バウンディングスフィアを取得します.
+//-----------------------------------------------------------------------------
+const BoundingSphere3& Mesh::GetBoundingSphere() const
+{ return m_BoundingSphere; }
 
 } // namespace asdx

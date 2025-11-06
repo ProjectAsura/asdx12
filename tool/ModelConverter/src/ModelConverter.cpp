@@ -71,7 +71,8 @@ void ParseMesh
     flatbuffers::FlatBufferBuilder&         builder,
     std::map<std::string, BoneInfo>&        boneMap,
     flatbuffers::Offset<asdx::res::Mesh>&   dstMesh,
-    const aiMesh*                           srcMesh
+    const aiMesh*                           srcMesh,
+    asdx::BoundingSphere3&                  boundSphere
 )
 {
     std::vector<asdx::res::Float3> positions;
@@ -352,6 +353,11 @@ void ParseMesh
         assert(ret == 1);
     }
 
+    auto sphere = asdx::BoundingSphere3::Create(&srcMesh->mVertices[0].x, srcMesh->mNumVertices, sizeof(aiVector3D));
+    boundSphere = asdx::BoundingSphere3::Merge(boundSphere, sphere);
+
+    auto bounds = asdx::res::Float4(sphere.Center.x, sphere.Center.y, sphere.Center.z, sphere.Radius);
+
     dstMesh = asdx::res::CreateMeshDirect(
         builder,
         srcMesh->mName.C_Str(),
@@ -363,7 +369,8 @@ void ParseMesh
         &texcoords,
         &boneWeights,
         &boneIndices,
-        &vertexIndices);
+        &vertexIndices,
+        &bounds);
 }
 
 } // namespace
@@ -393,6 +400,8 @@ bool ModelConverter::Convert(const Desc& desc)
     flag |= aiProcess_RemoveRedundantMaterials;
     flag |= aiProcess_OptimizeMeshes;
     flag |= aiProcess_LimitBoneWeights;
+    flag |= aiProcess_FlipUVs;
+    flag |= aiProcess_FlipWindingOrder;
 
     Assimp::Importer importer;
     auto pScene = importer.ReadFile(desc.InputPath.c_str(), flag);
@@ -402,6 +411,8 @@ bool ModelConverter::Convert(const Desc& desc)
         ELOG("Error : Importer::ReadFile() Failed. path = %s", desc.InputPath.c_str());
         return false;
     }
+
+    BoundingSphere3 bounds(Vector3(0.0f, 0.0f, 0.0f), 0.0f);
 
     flatbuffers::FlatBufferBuilder builder(1024);
 
@@ -414,7 +425,7 @@ bool ModelConverter::Convert(const Desc& desc)
         const auto srcMesh = pScene->mMeshes[i];
         auto& dstMesh = meshes[i];
 
-        ParseMesh(builder, boneMap, dstMesh, srcMesh);
+        ParseMesh(builder, boneMap, dstMesh, srcMesh, bounds);
     }
 
     // ボーンデータを変換.
@@ -439,34 +450,15 @@ bool ModelConverter::Convert(const Desc& desc)
         materials.push_back(builder.CreateString(srcMat->GetName().C_Str()));
     }
 
-    auto rootMtx = asdx::Matrix(
-        pScene->mRootNode->mTransformation.a1,
-        pScene->mRootNode->mTransformation.a2,
-        pScene->mRootNode->mTransformation.a3,
-        pScene->mRootNode->mTransformation.a4,
-        pScene->mRootNode->mTransformation.b1,
-        pScene->mRootNode->mTransformation.b2,
-        pScene->mRootNode->mTransformation.b3,
-        pScene->mRootNode->mTransformation.b4,
-        pScene->mRootNode->mTransformation.c1,
-        pScene->mRootNode->mTransformation.c2,
-        pScene->mRootNode->mTransformation.c3,
-        pScene->mRootNode->mTransformation.c4,
-        pScene->mRootNode->mTransformation.d1,
-        pScene->mRootNode->mTransformation.d2,
-        pScene->mRootNode->mTransformation.d3,
-        pScene->mRootNode->mTransformation.d4);
-    auto invRootMtx = asdx::Matrix::Invert(rootMtx);
-
-    auto resRootMtx    = ToFloat4x4(rootMtx);
-    auto resInvRootMtx = ToFloat4x4(invRootMtx);
+    auto sphere = asdx::res::Float4(bounds.Center.x, bounds.Center.y, bounds.Center.z, bounds.Radius);
 
     auto bin = asdx::res::CreateModelBinaryDirect(
         builder,
         CURRENT_VERION,
         &meshes,
         &materials,
-        &bones);
+        &bones,
+        &sphere);
 
     builder.Finish(bin);
 
@@ -511,6 +503,8 @@ bool ModelConverter::Convert(const std::string& path, std::vector<uint8_t>& bina
     flag |= aiProcess_RemoveRedundantMaterials;
     flag |= aiProcess_OptimizeMeshes;
     flag |= aiProcess_LimitBoneWeights;
+    flag |= aiProcess_FlipUVs;
+    flag |= aiProcess_FlipWindingOrder;
 
     Assimp::Importer importer;
     auto pScene = importer.ReadFile(path.c_str(), flag);
@@ -520,6 +514,8 @@ bool ModelConverter::Convert(const std::string& path, std::vector<uint8_t>& bina
         ELOG("Error : Importer::ReadFile() Failed. path = %s", path.c_str());
         return false;
     }
+
+    BoundingSphere3 bounds(Vector3(0.0f, 0.0f, 0.0f), 0.0f);
 
     flatbuffers::FlatBufferBuilder builder(1024);
 
@@ -532,7 +528,7 @@ bool ModelConverter::Convert(const std::string& path, std::vector<uint8_t>& bina
         const auto srcMesh = pScene->mMeshes[i];
         auto& dstMesh = meshes[i];
 
-        ParseMesh(builder, boneMap, dstMesh, srcMesh);
+        ParseMesh(builder, boneMap, dstMesh, srcMesh, bounds);
     }
 
     // ボーンデータを変換.
@@ -557,12 +553,15 @@ bool ModelConverter::Convert(const std::string& path, std::vector<uint8_t>& bina
         materials.push_back(builder.CreateString(srcMat->GetName().C_Str()));
     }
 
+    auto sphere = asdx::res::Float4(bounds.Center.x, bounds.Center.y, bounds.Center.z, bounds.Radius);
+
     auto bin = asdx::res::CreateModelBinaryDirect(
         builder,
         CURRENT_VERION,
         &meshes,
         &materials,
-        &bones);
+        &bones,
+        &sphere);
 
     builder.Finish(bin);
 

@@ -3931,6 +3931,27 @@ inline BoundingBox2 BoundingBox2::Merge(const BoundingBox2& lhs, const Vector2& 
     return result;
 }
 
+//-----------------------------------------------------------------------------
+//      頂点列からバウンディングスフィアを求めます.
+//-----------------------------------------------------------------------------
+inline BoundingBox2 BoundingBox2::Create(const float* pVertices, size_t vertexCount, size_t vertexStride)
+{
+    auto vertex = pVertices;
+    BoundingBox2 result;
+    result.Mini = Vector2(vertex[0], vertex[1]);
+    result.Maxi = Vector2(vertex[0], vertex[1]);
+    vertex += vertexStride;
+
+    for(size_t i=1; i<vertexCount; ++i)
+    {
+        auto pos = Vector2(vertex[0], vertex[1]);
+        result = Merge(result, pos);
+        vertex += vertexStride;
+    }
+
+    return result;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // BoundingBox3 structure
@@ -4044,10 +4065,47 @@ inline BoundingBox3 BoundingBox3::Transform(const BoundingBox3& box, const Matri
     return result;
 }
 
+//-----------------------------------------------------------------------------
+//      頂点列からバウンディングスフィアを求めます.
+//-----------------------------------------------------------------------------
+inline BoundingBox3 BoundingBox3::Create(const float* pVertices, size_t vertexCount, size_t vertexStride)
+{
+    auto vertex = pVertices;
+    BoundingBox3 result;
+    result.Mini = Vector3(vertex[0], vertex[1], vertex[2]);
+    result.Maxi = Vector3(vertex[0], vertex[1], vertex[2]);
+    vertex += vertexStride;
+
+    for(size_t i=1; i<vertexCount; ++i)
+    {
+        auto pos = Vector3(vertex[0], vertex[1], vertex[2]);
+        result = Merge(result, pos);
+        vertex += vertexStride;
+    }
+
+    return result;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // BoundingSphere2 structure
 ///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      コンストラクタです.
+//-----------------------------------------------------------------------------
+inline BoundingSphere2::BoundingSphere2()
+: Center(0.0f, 0.0f)
+, Radius(0.0f)
+{ /* DO_NOTHING */ }
+
+//-----------------------------------------------------------------------------
+//      引数付きコンストラクタです.
+//-----------------------------------------------------------------------------
+inline BoundingSphere2::BoundingSphere2(float x, float y, float radius)
+: Center(x, y)
+, Radius(radius)
+{ /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
@@ -4124,10 +4182,84 @@ inline BoundingSphere2 BoundingSphere2::Merge(const BoundingSphere2& lhs, const 
     return BoundingSphere2(newCenter, newRadius);
 }
 
+//-----------------------------------------------------------------------------
+//      頂点列からバウンディングスフィアを求めます.
+//-----------------------------------------------------------------------------
+inline BoundingSphere2 BoundingSphere2::Create(const float* pVertices, size_t vertexCount, size_t vertexStride)
+{
+    // Ritter法.
+    BoundingSphere2 result;
+    if (pVertices == nullptr || vertexCount == 0 || vertexStride == 0)
+    { return result; }
+
+    auto vertex = pVertices;
+    auto stride = vertexStride / sizeof(float);
+
+    // 最も離れた2点を探す.
+    auto pos = Vector2(vertex[0], vertex[1]);
+
+    Vector2 xMin = pos;
+    Vector2 xMax = pos;
+
+    Vector2 yMin = pos;
+    Vector2 yMax = pos;
+
+    for(size_t i=0; i<vertexCount; ++i)
+    {
+        pos = Vector2(vertex[0], vertex[1]);
+        if (pos.x < xMin.x) xMin = pos;
+        if (pos.x > xMax.x) xMax = pos;
+        if (pos.y < yMin.y) yMin = pos;
+        if (pos.y > yMax.y) yMax = pos;
+        vertex += stride;
+    }
+
+    auto dx = Vector2::DistanceSq(xMax, xMin);
+    auto dy = Vector2::DistanceSq(yMax, yMin);
+
+    Vector2 p1 = xMin;
+    Vector2 p2 = xMax;
+    if (dy > dx)
+    {
+        p1 = yMin;
+        p2 = yMax;
+    }
+
+    result.Center = (p1 + p2) * 0.5f;
+    result.Radius = Vector2::Distance(p2, result.Center);
+
+    // 全ての点を内包するように拡大.
+    vertex = pVertices;
+    for(size_t i=0; i<vertexCount; ++i)
+    {
+        pos = Vector2(vertex[0], vertex[1]);
+        result = Merge(result, pos);
+        vertex += stride;
+    }
+
+    return result;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // BoundingSphere3 structure
 ///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      コンストラクタです.
+//-----------------------------------------------------------------------------
+inline BoundingSphere3::BoundingSphere3()
+: Center(0.0f, 0.0f, 0.0f)
+, Radius(0.0f)
+{ /* DO_NOTHING */ }
+
+//-----------------------------------------------------------------------------
+//      引数付きコンストラクタです.
+//-----------------------------------------------------------------------------
+inline BoundingSphere3::BoundingSphere3(float x, float y, float z, float radius)
+: Center(x, y, z)
+, Radius(radius)
+{ /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
@@ -4215,6 +4347,75 @@ inline BoundingSphere3 BoundingSphere3::Transform(const BoundingSphere3& sphere,
     auto maxScale = Max(scale.x, Max(scale.y, scale.z));
     auto radius   = sphere.Radius * maxScale;
     return BoundingSphere3(center, radius);
+}
+
+//-----------------------------------------------------------------------------
+//      頂点列からバウンディングスフィアを求めます.
+//-----------------------------------------------------------------------------
+inline BoundingSphere3 BoundingSphere3::Create(const float* pVertices, size_t vertexCount, size_t vertexStride)
+{
+    // Ritter法.
+    BoundingSphere3 result;
+    if (pVertices == nullptr || vertexCount == 0 || vertexStride == 0)
+    { return result; }
+
+    auto vertex = pVertices;
+    auto stride = vertexStride / sizeof(float);
+
+    // 最も離れた2点を探す.
+    auto pos = Vector3(vertex[0], vertex[1], vertex[2]);
+
+    Vector3 xMin = pos;
+    Vector3 xMax = pos;
+
+    Vector3 yMin = pos;
+    Vector3 yMax = pos;
+
+    Vector3 zMin = pos;
+    Vector3 zMax = pos;
+
+    for(size_t i=0; i<vertexCount; ++i)
+    {
+        pos = Vector3(vertex[0], vertex[1], vertex[2]);
+        if (pos.x < xMin.x) xMin = pos;
+        if (pos.x > xMax.x) xMax = pos;
+        if (pos.y < yMin.y) yMin = pos;
+        if (pos.y > yMax.y) yMax = pos;
+        if (pos.z < zMin.z) zMin = pos;
+        if (pos.z > zMax.z) zMax = pos;
+        vertex += stride;
+    }
+
+    auto dx = Vector3::DistanceSq(xMax, xMin);
+    auto dy = Vector3::DistanceSq(yMax, yMin);
+    auto dz = Vector3::DistanceSq(zMax, zMin);
+
+    Vector3 p1 = xMin;
+    Vector3 p2 = xMax;
+    if (dy > dx && dy > dz)
+    {
+        p1 = yMin;
+        p2 = yMax;
+    }
+    else if (dz > dx && dz > dy)
+    {
+        p1 = zMin;
+        p2 = zMax;
+    }
+
+    result.Center = (p1 + p2) * 0.5f;
+    result.Radius = Vector3::Distance(p2, result.Center);
+
+    // 全ての点を内包するように拡大.
+    vertex = pVertices;
+    for(size_t i=0; i<vertexCount; ++i)
+    {
+        pos = Vector3(vertex[0], vertex[1], vertex[2]);
+        result = Merge(result, pos);
+        vertex += stride;
+    }
+
+    return result;
 }
 
 
