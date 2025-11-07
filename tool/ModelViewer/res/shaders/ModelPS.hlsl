@@ -96,7 +96,7 @@ float4 main(const VSOutput input) : SV_TARGET0
     default:
         {
             float3 L = normalize(View._31_32_33);
-            output.xyz = saturate(dot(N, L)).xxx;
+            output.xyz = saturate(dot(N, L)).xxx * 0.5f.xxx;    // 陰影を見やすくするために白ではなく0.5にした.
         }
         break;
 

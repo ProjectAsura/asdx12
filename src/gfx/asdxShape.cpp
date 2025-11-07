@@ -1060,15 +1060,19 @@ bool ShapeStates::Init(DXGI_FORMAT colorFormat, DXGI_FORMAT depthFormat)
 
     // ルートシグニチャ生成.
     {
-        D3D12_ROOT_PARAMETER params[2] = {};
+        D3D12_ROOT_PARAMETER params[6] = {};
         asdx::InitAsCBV(params[0], 0, D3D12_SHADER_VISIBILITY_ALL);
         asdx::InitAsCBV(params[1], 1, D3D12_SHADER_VISIBILITY_ALL);
+        asdx::InitAsCBV(params[2], 2, D3D12_SHADER_VISIBILITY_ALL);
+        asdx::InitAsConstants(params[3], 3, 4, D3D12_SHADER_VISIBILITY_ALL);
+        asdx::InitAsSRV(params[4], 0, D3D12_SHADER_VISIBILITY_ALL); 
+        asdx::InitAsSRV(params[5], 1, D3D12_SHADER_VISIBILITY_ALL); 
 
         D3D12_ROOT_SIGNATURE_DESC desc = {};
         desc.pParameters        = params;
         desc.NumParameters      = _countof(params);
-        desc.pStaticSamplers    = nullptr;
-        desc.NumStaticSamplers  = 0;
+        desc.pStaticSamplers    = Preset::StaticSamplers;
+        desc.NumStaticSamplers  = _countof(Preset::StaticSamplers);
         desc.Flags              = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
         asdx::RefPtr<ID3DBlob> pBlob;
@@ -1186,7 +1190,7 @@ bool ShapeStates::Init(DXGI_FORMAT colorFormat, DXGI_FORMAT depthFormat)
 
     // カメラ定数バッファ生成.
     {
-        auto size = asdx::RoundUp(sizeof(ShapeParam), 256) * 2;
+        auto size = asdx::RoundUp(sizeof(CameraParam), 256) * 2;
 
         D3D12_HEAP_PROPERTIES props = {
             heapType,
@@ -1218,7 +1222,7 @@ bool ShapeStates::Init(DXGI_FORMAT colorFormat, DXGI_FORMAT depthFormat)
             auto hr = allocator->CreateResource(
                 &allocDesc,
                 &desc,
-                D3D12_RESOURCE_STATE_GENERIC_READ,
+                D3D12_RESOURCE_STATE_COMMON,
                 nullptr,
                 m_CameraBufferAllocation.GetAddress(),
                 IID_PPV_ARGS(m_CameraBuffer.GetAddress()));
@@ -1234,7 +1238,7 @@ bool ShapeStates::Init(DXGI_FORMAT colorFormat, DXGI_FORMAT depthFormat)
                 &props,
                 D3D12_HEAP_FLAG_NONE,
                 &desc,
-                D3D12_RESOURCE_STATE_GENERIC_READ,
+                D3D12_RESOURCE_STATE_COMMON,
                 nullptr,
                 IID_PPV_ARGS(m_CameraBuffer.GetAddress()));
             if ( FAILED( hr ) )
@@ -1265,7 +1269,7 @@ void ShapeStates::Term()
 //-----------------------------------------------------------------------------
 //      ビュー行列と射影行列を設定します.
 //-----------------------------------------------------------------------------
-void ShapeStates::SetMatrix(const asdx::Matrix& view, const asdx::Matrix& proj)
+void ShapeStates::SetViewProj(const asdx::Matrix& view, const asdx::Matrix& proj)
 {
     m_View = view;
     m_Proj = proj;
@@ -1332,6 +1336,180 @@ void ShapeStates::ApplyWireframeState(ID3D12GraphicsCommandList* pCmd)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+// ShapeParams class
+///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      コンストラクタです.
+//-----------------------------------------------------------------------------
+ShapeParams::ShapeParams()
+: m_BufferIndex(0)
+{ /* DO_NOTHING */ }
+
+//-----------------------------------------------------------------------------
+//      デストラクタです.
+//-----------------------------------------------------------------------------
+ShapeParams::~ShapeParams()
+{ Term(); }
+
+//-----------------------------------------------------------------------------
+//      初期化処理を行います.
+//-----------------------------------------------------------------------------
+bool ShapeParams::Init(uint32_t count)
+{
+    auto pDevice = GetD3D12Device();
+    assert(pDevice != nullptr);
+
+    bool gpuUploadHeapSupported = false;
+    {
+        D3D12_FEATURE_DATA_D3D12_OPTIONS16 options16 = {};
+        if (SUCCEEDED(pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS16, &options16, sizeof(options16))))
+        { gpuUploadHeapSupported = options16.GPUUploadHeapSupported; }
+    }
+
+    auto allocator = GetD3D12MA();
+
+    auto heapType = (gpuUploadHeapSupported) 
+        ? D3D12_HEAP_TYPE_GPU_UPLOAD
+        : D3D12_HEAP_TYPE_UPLOAD;
+
+    // 定数バッファ生成.
+    {
+        auto size = RoundUp(sizeof(Param) * count, 256) * 2;
+
+        D3D12_HEAP_PROPERTIES props = {
+            heapType,
+            D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
+            D3D12_MEMORY_POOL_UNKNOWN,
+            1,
+            1
+        };
+
+        D3D12_RESOURCE_DESC desc = {
+            D3D12_RESOURCE_DIMENSION_BUFFER,
+            0,
+            size,
+            1,
+            1,
+            1,
+            DXGI_FORMAT_UNKNOWN,
+            { 1, 0 },
+            D3D12_TEXTURE_LAYOUT_ROW_MAJOR,
+            D3D12_RESOURCE_FLAG_NONE
+        };
+
+        if (allocator != nullptr)
+        {
+            D3D12MA::ALLOCATION_DESC allocDesc = {};
+            allocDesc.HeapType = heapType;
+
+            auto hr = allocator->CreateResource(
+                &allocDesc,
+                &desc,
+                D3D12_RESOURCE_STATE_GENERIC_READ,
+                nullptr,
+                m_AllocationPB.GetAddress(),
+                IID_PPV_ARGS(m_ParamBuffer.GetAddress()));
+            if (FAILED(hr))
+            {
+                ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
+                return false;
+            }
+        }
+        else
+        {
+            auto hr = pDevice->CreateCommittedResource(
+                &props,
+                D3D12_HEAP_FLAG_NONE,
+                &desc,
+                D3D12_RESOURCE_STATE_GENERIC_READ,
+                nullptr,
+                IID_PPV_ARGS(m_ParamBuffer.GetAddress()));
+            if (FAILED(hr))
+            {
+                ELOG( "Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr );
+                return false;
+            }
+        }
+    }
+
+    m_Params.resize(count);
+    for(size_t i=0; i<count; ++i)
+    {
+        m_Params[i].World = Matrix::CreateIdentity();
+        m_Params[i].Color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+    }
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      終了処理を行います.
+//-----------------------------------------------------------------------------
+void ShapeParams::Term()
+{
+    m_ParamBuffer.Reset();
+    m_Params.clear();
+    m_Params.shrink_to_fit();
+    m_AllocationPB.Reset();
+    m_BufferIndex = 0;
+}
+
+//-----------------------------------------------------------------------------
+//      ワールド行列を設定します.
+//-----------------------------------------------------------------------------
+void ShapeParams::SetWorld(uint32_t index, const asdx::Matrix& value)
+{
+    assert(index < m_Params.size());
+    m_Params[index].World = value;
+}
+
+//-----------------------------------------------------------------------------
+//      カラーを設定します.
+//-----------------------------------------------------------------------------
+void ShapeParams::SetColor(uint32_t index, const asdx::Vector4& value)
+{
+    assert(index < m_Params.size());
+    m_Params[index].Color = value;
+}
+
+//-----------------------------------------------------------------------------
+//      ワールド行列を取得します.
+//-----------------------------------------------------------------------------
+const Matrix& ShapeParams::GetWorld(uint32_t index) const
+{
+    assert(index < m_Params.size());
+    return m_Params[index].World;
+}
+
+//-----------------------------------------------------------------------------
+//      カラーを取得します.
+//-----------------------------------------------------------------------------
+const Vector4& ShapeParams::GetColor(uint32_t index) const
+{
+    assert(index < m_Params.size());
+    return m_Params[index].Color;
+}
+
+//-----------------------------------------------------------------------------
+//      更新処理を行います.
+//-----------------------------------------------------------------------------
+D3D12_GPU_VIRTUAL_ADDRESS ShapeParams::Update()
+{
+    const auto size   = asdx::RoundUp(sizeof(Param) * m_Params.size(), 256);
+    const auto offset = m_BufferIndex * size;
+
+    uint8_t* pData = nullptr;
+    auto hr = m_ParamBuffer->Map(0, nullptr, reinterpret_cast<void**>(&pData));
+    if (SUCCEEDED(hr))
+    { memcpy(pData + offset, m_Params.data(), sizeof(Param) * m_Params.size()); }
+    m_ParamBuffer->Unmap(0, nullptr);
+
+    m_BufferIndex = (m_BufferIndex + 1) & 0x1;
+    return m_ParamBuffer->GetGPUVirtualAddress() + offset;
+}
+
+///////////////////////////////////////////////////////////////////////////////
 // ShapeBase class
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -1339,41 +1517,13 @@ void ShapeStates::ApplyWireframeState(ID3D12GraphicsCommandList* pCmd)
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
 ShapeBase::ShapeBase()
-{
-    m_Param.World = asdx::Matrix::CreateIdentity();
-    m_Param.Color = asdx::Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-    m_BufferIndex = 0;
-}
+{ /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      デストラクタです.
 //-----------------------------------------------------------------------------
 ShapeBase::~ShapeBase()
 { Reset(); }
-
-//-----------------------------------------------------------------------------
-//      ワールド行列を設定します.
-//-----------------------------------------------------------------------------
-void ShapeBase::SetWorld(const asdx::Matrix& value)
-{ m_Param.World = value; }
-
-//-----------------------------------------------------------------------------
-//      カラーを設定します.
-//-----------------------------------------------------------------------------
-void ShapeBase::SetColor(const asdx::Vector4& value)
-{ m_Param.Color = value; }
-
-//-----------------------------------------------------------------------------
-//      ワールド行列を取得します.
-//-----------------------------------------------------------------------------
-const asdx::Matrix& ShapeBase::GetWorld() const
-{ return m_Param.World; }
-
-//-----------------------------------------------------------------------------
-//      カラーを取得します.
-//-----------------------------------------------------------------------------
-const asdx::Vector4& ShapeBase::GetColor() const
-{ return m_Param.Color; }
 
 //-----------------------------------------------------------------------------
 //      バッファを初期化します.
@@ -1392,9 +1542,7 @@ bool ShapeBase::InitBuffer
     {
         D3D12_FEATURE_DATA_D3D12_OPTIONS16 options16 = {};
         if (SUCCEEDED(pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS16, &options16, sizeof(options16))))
-        {
-            gpuUploadHeapSupported = options16.GPUUploadHeapSupported;
-        }
+        { gpuUploadHeapSupported = options16.GPUUploadHeapSupported; }
     }
 
     auto heapType = (gpuUploadHeapSupported) 
@@ -1424,7 +1572,7 @@ bool ShapeBase::InitBuffer
         desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
         desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
 
-        auto state = D3D12_RESOURCE_STATE_GENERIC_READ;
+        auto state = D3D12_RESOURCE_STATE_COMMON;
         auto flags = D3D12_HEAP_FLAG_NONE;
 
         if (allocator != nullptr)
@@ -1503,7 +1651,7 @@ bool ShapeBase::InitBuffer
         desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
         desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
 
-        auto state = D3D12_RESOURCE_STATE_GENERIC_READ;
+        auto state = D3D12_RESOURCE_STATE_COMMON;
         auto flags = D3D12_HEAP_FLAG_NONE;
 
         if (allocator != nullptr)
@@ -1561,66 +1709,6 @@ bool ShapeBase::InitBuffer
         }
     }
 
-    // 定数バッファ生成.
-    {
-        auto size = asdx::RoundUp(sizeof(ShapeParam), 256) * 2;
-
-        D3D12_HEAP_PROPERTIES props = {
-            heapType,
-            D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
-            D3D12_MEMORY_POOL_UNKNOWN,
-            1,
-            1
-        };
-
-        D3D12_RESOURCE_DESC desc = {
-            D3D12_RESOURCE_DIMENSION_BUFFER,
-            0,
-            size,
-            1,
-            1,
-            1,
-            DXGI_FORMAT_UNKNOWN,
-            { 1, 0 },
-            D3D12_TEXTURE_LAYOUT_ROW_MAJOR,
-            D3D12_RESOURCE_FLAG_NONE
-        };
-
-        if (allocator != nullptr)
-        {
-            D3D12MA::ALLOCATION_DESC allocDesc = {};
-            allocDesc.HeapType = heapType;
-
-            auto hr = allocator->CreateResource(
-                &allocDesc,
-                &desc,
-                D3D12_RESOURCE_STATE_GENERIC_READ,
-                nullptr,
-                m_AllocationCB.GetAddress(),
-                IID_PPV_ARGS(m_CB.GetAddress()));
-            if (FAILED(hr))
-            {
-                ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
-                return false;
-            }
-        }
-        else
-        {
-            auto hr = pDevice->CreateCommittedResource(
-                &props,
-                D3D12_HEAP_FLAG_NONE,
-                &desc,
-                D3D12_RESOURCE_STATE_GENERIC_READ,
-                nullptr,
-                IID_PPV_ARGS(m_CB.GetAddress()));
-            if (FAILED(hr))
-            {
-                ELOG( "Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr );
-                return false;
-            }
-        }
-    }
-
     return true;
 }
 
@@ -1631,33 +1719,9 @@ void ShapeBase::Reset()
 {
     m_VB.Reset();
     m_IB.Reset();
-    m_CB.Reset();
-    m_BufferIndex = 0;
-    m_Param.World = asdx::Matrix::CreateIdentity();
-    m_Param.Color = asdx::Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 
     m_AllocationVB.Reset();
     m_AllocationIB.Reset();
-    m_AllocationCB.Reset();
-}
-
-//-----------------------------------------------------------------------------
-//      定数バッファを更新します.
-//-----------------------------------------------------------------------------
-D3D12_GPU_VIRTUAL_ADDRESS ShapeBase::UpdateParam()
-{
-    auto size   = asdx::RoundUp(sizeof(ShapeParam), 256);
-    auto offset = m_BufferIndex * size;
-
-    uint8_t* pData = nullptr;
-    auto hr = m_CB->Map(0, nullptr, reinterpret_cast<void**>(&pData));
-    if (SUCCEEDED(hr))
-    { memcpy(pData + offset, &m_Param, sizeof(m_Param)); }
-    m_CB->Unmap(0, nullptr);
-
-    m_BufferIndex = (m_BufferIndex + 1) & 0x1;
-
-    return m_CB->GetGPUVirtualAddress() + offset;
 }
 
 //-----------------------------------------------------------------------------
@@ -1665,11 +1729,8 @@ D3D12_GPU_VIRTUAL_ADDRESS ShapeBase::UpdateParam()
 //-----------------------------------------------------------------------------
 void ShapeBase::Draw(ID3D12GraphicsCommandList* pCmd)
 {
-    auto address = UpdateParam();
-
     pCmd->IASetVertexBuffers(0, 1, &m_VBV);
     pCmd->IASetIndexBuffer(&m_IBV);
-    pCmd->SetGraphicsRootConstantBufferView(1, address);
     pCmd->DrawIndexedInstanced(m_IndexCount, 1, 0, 0, 0);
 }
 

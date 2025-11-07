@@ -206,6 +206,30 @@ bool ModelViewer::OnInit()
         0.1f,
         10000.0f);
 
+    if (!m_ShapeStates.Init(m_SwapChainFormat, m_DepthStencilFormat))
+    {
+        ELOG("Error : ShapeStates::Init() Failed.");
+        return false;
+    }
+
+    if (!m_ShapeParams.Init(UINT16_MAX))
+    {
+        ELOG("Error : ShapeParams::Init() Failed.");
+        return false;
+    }
+
+    if (!m_BoneShape.Init(1.0f, 0.25f))
+    {
+        ELOG("Error : BoneShape::Init() Failed.");
+        return false;
+    }
+
+    if (!m_SphereShape.Init(1.0f, 10))
+    {
+        ELOG("Error : SphereShape::Init() Failed.");
+        return false;
+    }
+
     // コマンドの記録を終了.
     pCmd->Close();
 
@@ -234,6 +258,11 @@ bool ModelViewer::OnInit()
 //-----------------------------------------------------------------------------
 void ModelViewer::OnTerm()
 {
+    m_SphereShape.Term();
+    m_BoneShape  .Term();
+    m_ShapeParams.Term();
+    m_ShapeStates.Term();
+
     for(auto i=0; i<2; ++i)
     {
         m_SceneCB[i].Term();
@@ -324,22 +353,67 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
     auto aspect = float(m_Width) / float(m_Height);
     m_Proj = asdx::Matrix::CreatePerspectiveFieldOfView(fov, aspect, m_Camera.GetNearClip(), m_Camera.GetFarClip());
 
-    // ギズモ表示.
-    if (m_EnableGuizmo)
+    if (m_ModelInfo.MeshCount > 0)
     {
-        auto& view = m_Camera.GetView();
-        auto& proj = m_Proj;
-        auto& io = ImGui::GetIO();
-
-        float matrix[16] = {};
-        ImGuizmo::RecomposeMatrixFromComponents(&m_ModelTranslation.x, &m_ModelRotation.x, &m_ModelScale.x, matrix);
-        ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
-        if (ImGuizmo::Manipulate(&view._11, &proj._11, m_GuizmoOperation, ImGuizmo::MODE::LOCAL, matrix))
+        // ギズモ表示.
+        if (m_EnableGuizmo)
         {
-            ImGuizmo::DecomposeMatrixToComponents(
-                matrix, &m_ModelTranslation.x, &m_ModelRotation.x, &m_ModelScale.x);
+            auto& view = m_Camera.GetView();
+            auto& proj = m_Proj;
+            auto& io = ImGui::GetIO();
+
+            float matrix[16] = {};
+            ImGuizmo::RecomposeMatrixFromComponents(&m_ModelTranslation.x, &m_ModelRotation.x, &m_ModelScale.x, matrix);
+            ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
+            if (ImGuizmo::Manipulate(&view._11, &proj._11, m_GuizmoOperation, ImGuizmo::MODE::LOCAL, matrix))
+            {
+                ImGuizmo::DecomposeMatrixToComponents(
+                    matrix, &m_ModelTranslation.x, &m_ModelRotation.x, &m_ModelScale.x);
+            }
+        }
+
+        // バウンディングスフィア表示.
+        if (m_DrawBoundingSphere)
+        {
+            for(size_t i=0; i<m_Model->GetMeshCount(); ++i)
+            {
+                auto& sphere = m_Model->GetMesh(i)->GetBoundingSphere();
+                auto world = asdx::Matrix::CreateTranslation(sphere.Center)
+                    * asdx::Matrix::CreateScale(sphere.Radius);
+
+                uint32_t index = uint32_t(i);
+                m_ShapeParams.SetWorld(index, world);
+                m_ShapeParams.SetColor(index, asdx::Vector4(0.0f, 1.0f, 0.0f, 0.1f));
+            }
+
+            {
+                auto& sphere = m_Model->GetBoundingSphere();
+                auto world = asdx::Matrix::CreateTranslation(sphere.Center)
+                    * asdx::Matrix::CreateScale(sphere.Radius);
+
+                uint32_t index = uint32_t(m_Model->GetMeshCount());
+                m_ShapeParams.SetWorld(index, world);
+                m_ShapeParams.SetColor(index, asdx::Vector4(0.0f, 1.0f, 0.0f, 0.1f));
+            }
+        }
+
+        // ボーン表示.
+        if (m_DrawBones)
+        {
+            auto offset = m_Model->GetMeshCount() + 1;
+            for(size_t i=0; i<m_Model->GetBoneCount(); ++i)
+            {
+                auto offsetMtx = m_Model->GetBoneOffsetMatrix(i);
+                uint32_t index = uint32_t(offset + i);
+                m_ShapeParams.SetWorld(index, offsetMtx);
+                m_ShapeParams.SetColor(index, asdx::Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+            }
         }
     }
+
+    // シェイプ用のカメラ行列を設定.
+    m_ShapeStates.SetViewProj(m_Camera.GetView(), m_Proj);
+
 
     // 定数バッファを更新.
     {
@@ -400,6 +474,8 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
     // モデルを描画
     if (m_ModelInfo.MeshCount > 0)
     {
+        auto addressParam = m_ShapeParams.Update();
+
         pCmd->SetGraphicsRootSignature(m_RootSignature.GetPtr());
         asdx::PipelineStateManager::Instance().SetState(pCmd, m_EnableWireframe ? m_WireframeState : m_SolidState);
 
@@ -427,27 +503,36 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
             pCmd->DrawIndexedInstanced(mesh->GetIndexCount(), 1, 0, 0, 0);
         }
 
-        // バウンディングスフィア表示.
         if (m_DrawBoundingSphere)
         {
+            m_ShapeStates.ApplyTranslucentState(pCmd);
+            pCmd->SetGraphicsRootShaderResourceView(asdx::ShapeStates::SRV0, addressParam);
+
             for(size_t i=0; i<m_Model->GetMeshCount(); ++i)
             {
-                auto& sphere = m_Model->GetMesh(i)->GetBoundingSphere();
+                uint32_t index = uint32_t(i);
+                pCmd->SetGraphicsRoot32BitConstant(asdx::ShapeStates::Constants3, index, 0);
+                m_SphereShape.Draw(pCmd);
             }
 
             {
-                auto& sphere = m_Model->GetBoundingSphere();
+                uint32_t index = uint32_t(m_Model->GetMeshCount());
+                pCmd->SetGraphicsRoot32BitConstant(asdx::ShapeStates::Constants3, index, 0);
+                m_SphereShape.Draw(pCmd);
             }
         }
 
-        // ボーン表示.
         if (m_DrawBones)
         {
+            m_ShapeStates.ApplyOpaqueState(pCmd);
+            pCmd->SetGraphicsRootShaderResourceView(asdx::ShapeStates::SRV0, addressParam);
+
+            uint32_t offset = uint32_t(m_Model->GetMeshCount() + 1);
             for(size_t i=0; i<m_Model->GetBoneCount(); ++i)
             {
-                auto offsetMtx = m_Model->GetBoneOffsetMatrix(i);
-
-                //
+                uint32_t index = uint32_t(i) + offset;
+                pCmd->SetGraphicsRoot32BitConstant(asdx::ShapeStates::Constants3, index, 0);
+                m_BoneShape.Draw(pCmd);
             }
         }
     }
@@ -596,10 +681,21 @@ void ModelViewer::OnDrop(const wchar_t** dropFiles, uint32_t fileCount)
     // 最初の1つだけ処理する.
     auto path = asdx::fs::path(dropFiles[0]);
     std::vector<uint8_t> modelBinary;
-    if (asdx::ModelConverter::Convert(path.string().c_str(), modelBinary))
+    if (path.extension().string() == ".mdb")
     {
-        m_ModelBinary = std::move(modelBinary);
-        RecreateModel();
+        if (asdx::LoadA(path.string().c_str(), modelBinary))
+        {
+            m_ModelBinary = std::move(modelBinary);
+            RecreateModel();
+        }
+    }
+    else
+    {
+        if (asdx::ModelConverter::Convert(path.string().c_str(), modelBinary))
+        {
+            m_ModelBinary = std::move(modelBinary);
+            RecreateModel();
+        }
     }
 }
 
@@ -612,23 +708,28 @@ void ModelViewer::MenuFile(ID3D12GraphicsCommandList* pCmd)
     if (ImGui::MenuItem((const char*)u8"ファイルを開く"))
     {
         const char* filter = 
-            "モデルファイル(*.mdb, *.dae, *.xml, *.gtlf, *.fbx, *.ply, *.dxf, *.smd, *.vta, *.mdl, *.md2, *.md3, *.md5mesh, *.md5anim, *.x, *.obj, *.ms3d, *.lwo, *.lows)\0*.mdb;*.dae;*.xml;*.gltf;*.fbx;*.ply;*.dxf;*.smd;*.vta;*.mdl;*.md2;*.md3;*.md5mesh;*.md5anim;*.x;*.obj;*.ms3d;*.lwo;*.lws\0"
+            "モデルファイル(*.mdb, *.dae, *.xml, *.3ds, *.ase *.gtlf, *.fbx, *.ply, *.dxf, *.smd, *.vta, *.mdl, *.md2, *.md3, *.md5mesh, *.md5anim, *.x, *.obj, *.ms3d, *.lwo, *.lows)\0*.mdb;*.dae;*.xml;*.3ds;*.ase;*.gltf;*.fbx;*.ply;*.dxf;*.smd;*.vta;*.mdl;*.md2;*.md3;*.md5mesh;*.md5anim;*.x;*.obj;*.ter;*.ms3d;*.lxo;*.lwo;*.lws;*.pmd;*.pmx;*.vmd\0"
             "Project Asura Model Binary (*.mdb)\0*.mdb\0"
             "Collada (*.dae, *.xml)\0*.dae;*.xml\0"
-            "glTF (*.gltf)\0*.gltf\0"
+            "3D Studio Max 3DS (*.3ds)\0*.3ds\0"
+            "3D Studio Max ASE (*.ase)\0*.ase\0"
+            "GL Transmission Format (*.gltf)\0*.gltf\0"
             "Film Box (*.fbx)\0*.fbx\0"
             "Standard Polygon Library (*.ply)\0*.ply\0"
             "Autodesk DXF (*.dxf)\0*.dxf\0"
             "Valve Model (*.smd, *.vta)\0*.smd;*.vta\0"
             "Quake1 Model (*.mdl)\0*.mdl\0"
             "Quake2 Model (*.md2)\0*.md2\0"
-            "Quake3 Model (*.md3)\0*.md3\0"
+            "Quake3 Model (*.md3, *.md4)\0*.md3, *.md4\0"
             "Doom3 Model (*.md5mesh, *.md5anim)\0*.md5mesh;*.md5anim\0"
             "DirectX X File (*.x)\0*.x\0"
             "Wavefront Object (*.obj)\0*.obj\0"
+            "Terragen Terrain (*.ter)\0*.ter\0"
             "Milkshape 3D (*.ms3d)\0*.ms3d\0"
+            "Modo Model (*.lxo)\0*.lxo\0"
             "LightWave Model (*.lwo)\0*.lwo\0"
             "LightWave Scene (*.lws)\0*.lws\0"
+            "MikuMikuDance (*.pmd, *.pmx, *.vmd)\0*.pmd;*pmx;*.vmd\0"
             "全てのファイル (*.*)\0*.*\0\0";
 
         asdx::fs::path path;
@@ -637,10 +738,21 @@ void ModelViewer::MenuFile(ID3D12GraphicsCommandList* pCmd)
             auto input = path.string();
 
             std::vector<uint8_t> modelBinary;
-            if (asdx::ModelConverter::Convert(input.c_str(), modelBinary))
+            if (path.extension().string() == ".mdb")
             {
-                m_ModelBinary = std::move(modelBinary);
-                RecreateModel();
+                if (asdx::LoadA(input.c_str(), modelBinary))
+                {
+                    m_ModelBinary = std::move(modelBinary);
+                    RecreateModel();
+                }
+            }
+            else
+            {
+                if (asdx::ModelConverter::Convert(input.c_str(), modelBinary))
+                {
+                    m_ModelBinary = std::move(modelBinary);
+                    RecreateModel();
+                }
             }
         }
     }
@@ -680,8 +792,8 @@ void ModelViewer::MenuView()
     m_DrawMode = mode;
 
     ImGui::Checkbox((const char*)u8"ワイヤーフレーム", &m_EnableWireframe);
-
-    ImGui::Checkbox((const char*)u8"バウンディングスフィア", &m_DrawBoundingSphere);
+    ImGui::Checkbox((const char*)u8"バウンディングスフィア表示", &m_DrawBoundingSphere);
+    ImGui::Checkbox((const char*)u8"ボーン表示", &m_DrawBones);
 }
 
 //-----------------------------------------------------------------------------

@@ -21,6 +21,15 @@ struct VSOutput
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+// Param structure
+//////////////////////////////////////////////////////////////////////////////
+struct Param
+{
+    float4x4 World;
+    float4   Color;
+};
+
+///////////////////////////////////////////////////////////////////////////////
 // CbCamera constant buffers.
 ///////////////////////////////////////////////////////////////////////////////
 cbuffer CbCamera : register(b0)
@@ -30,13 +39,17 @@ cbuffer CbCamera : register(b0)
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-// CbShape constant buffers.
-///////////////////////////////////////////////////////////////////////////////
-cbuffer CbShape : register(b1)
+// CbIndex constant buffers.
+//////////////////////////////////////////////////////////////////////////////
+cbuffer CbIndex : register(b3)
 {
-    float4x4 World;
-    float4   Color;
+    uint  ParamIndex;
 };
+
+//-----------------------------------------------------------------------------
+// Resources
+//-----------------------------------------------------------------------------
+StructuredBuffer<Param> Params : register(t0);
 
 //-----------------------------------------------------------------------------
 //      メインエントリーポイントです.
@@ -46,7 +59,7 @@ VSOutput main(const VSInput input)
     VSOutput output = (VSOutput)0;
     
     float4 localPos = float4(input.Position, 1.0f);
-    float4 worldPos = mul(World, localPos);
+    float4 worldPos = mul(Params[ParamIndex].World, localPos);
     float4 viewPos  = mul(View,  worldPos);
     float4 projPos  = mul(Proj,  viewPos);
 

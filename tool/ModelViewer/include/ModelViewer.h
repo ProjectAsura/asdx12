@@ -14,6 +14,7 @@
 #include <gfx/asdxModel.h>
 #include <gfx/asdxPipelineState.h>
 #include <gfx/asdxBuffer.h>
+#include <gfx/asdxShape.h>
 #include <imgui.h>
 #include <ImGuizmo.h>
 
@@ -80,6 +81,10 @@ private:
     bool                                m_EnableGuizmo = false;
     ImGuizmo::OPERATION                 m_GuizmoOperation;
     asdx::Matrix                        m_Proj;
+    asdx::BoneShape                     m_BoneShape;
+    asdx::SphereShape                   m_SphereShape;
+    asdx::ShapeStates                   m_ShapeStates;
+    asdx::ShapeParams                   m_ShapeParams;
 
     //=========================================================================
     // private methods.
