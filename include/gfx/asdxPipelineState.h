@@ -9,8 +9,8 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <d3d12.h>
+#include <string>
 #include <fnd/asdxRef.h>
-#include <fnd/asdxStringView.h>
 
 
 #if defined(DEBUG) || defined(_DEBUG)
@@ -63,8 +63,8 @@ struct RAYTRACING_PIPELINE_STATE_DESC
 ///////////////////////////////////////////////////////////////////////////////
 struct ShaderInfo
 {
-    std::string             Path;
-    std::vector<uint8_t>    Blob;
+    std::string             Path;       //!< ファイルパス.
+    std::vector<uint8_t>    Blob;       //!< シェーダバイナリ.
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -479,7 +479,6 @@ private:
 
 bool InitPipelineStateWatcher(const char* directory, const std::vector<std::string>& includes);
 void TermPipelineStateWatcher();
-
 
 void InitRangeAsSRV(D3D12_DESCRIPTOR_RANGE& range, UINT registerIndex, UINT count = 1, UINT registerSpace = 0);
 void InitRangeAsUAV(D3D12_DESCRIPTOR_RANGE& range, UINT registerIndex, UINT count = 1, UINT registerSpace = 0);
