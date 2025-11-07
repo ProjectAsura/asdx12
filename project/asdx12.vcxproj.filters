@@ -348,9 +348,6 @@
     <ClCompile Include="..\src\res\asdxResMaterial.cpp">
       <Filter>ソース ファイル\res</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxDXR.cpp">
-      <Filter>ソース ファイル\gfx</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\fnd\asdxIndexHeap.cpp">
       <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
@@ -435,9 +432,6 @@
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
     <ClInclude Include="..\include\gfx\asdxPipelineState.h">
-      <Filter>ヘッダー ファイル\gfx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\gfx\asdxRayTracing.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
     <ClInclude Include="..\include\gfx\asdxTarget.h">
@@ -670,9 +664,6 @@
     </ClInclude>
     <ClInclude Include="..\include\res\asdxResMaterial.h">
       <Filter>ヘッダー ファイル\res</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\gfx\asdxDXR.h">
-      <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
     <ClInclude Include="..\include\res\asdxResLight.h">
       <Filter>ヘッダー ファイル\res</Filter>
