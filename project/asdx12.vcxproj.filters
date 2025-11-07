@@ -384,6 +384,9 @@
     <ClCompile Include="..\external\ImGuizmo\ImSequencer.cpp">
       <Filter>ソース ファイル\external\ImGuizmo</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\res\asdxResAnimationClip.cpp">
+      <Filter>ソース ファイル\res</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\external\imgui\imconfig.h">
@@ -706,6 +709,9 @@
     </ClInclude>
     <ClInclude Include="..\src\gfx\asdxBoneImpl.h">
       <Filter>ソース ファイル\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\res\asdxResAnimationClip.h">
+      <Filter>ヘッダー ファイル\res</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

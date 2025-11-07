@@ -51,8 +51,7 @@ void MaterialBinary::Load(std::vector<uint8_t>&& blob)
     // データ整合性をチェック.
     {
         assert(!m_Blob.empty());
-        flatbuffers::Verifier::Options options;
-        flatbuffers::Verifier verifier(m_Blob.data(), m_Blob.size(), options);
+        flatbuffers::Verifier verifier(m_Blob.data(), m_Blob.size());
         assert(res::VerifyMaterialBinaryBuffer(verifier));
         ASDX_UNUSED(verifier);
     }

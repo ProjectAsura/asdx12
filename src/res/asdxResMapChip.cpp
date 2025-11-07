@@ -41,8 +41,7 @@ void MapChipBinary::Load(std::vector<uint8_t>&& blob)
     // デバッグ整合性をチェック.
     {
         assert(!m_Blob.empty());
-        flatbuffers::Verifier::Options options;
-        flatbuffers::Verifier verifier(reinterpret_cast<const uint8_t*>(m_Blob.data()), m_Blob.size());
+        flatbuffers::Verifier verifier(m_Blob.data(), m_Blob.size());
         assert(res::VerifyMapChipBinaryBuffer(verifier));
         ASDX_UNUSED(verifier);
     }

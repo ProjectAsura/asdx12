@@ -52,8 +52,7 @@ void ModelBinary::Load(std::vector<uint8_t>&& blob)
     // データ整合性をチェック.
     {
         assert(!m_Blob.empty());
-        flatbuffers::Verifier::Options options;
-        flatbuffers::Verifier verifier(reinterpret_cast<const uint8_t*>(m_Blob.data()), m_Blob.size(), options);
+        flatbuffers::Verifier verifier(m_Blob.data(), m_Blob.size());
         assert(res::VerifyModelBinaryBuffer(verifier));
         ASDX_UNUSED(verifier);
     }
