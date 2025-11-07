@@ -9,6 +9,7 @@
 //-----------------------------------------------------------------------------
 #include <cassert>
 #include <algorithm>
+#include <list>
 #include <d3d12shader.h>
 #include <fnd/asdxLogger.h>
 #include <fnd/asdxMisc.h>
@@ -18,6 +19,7 @@
 #include <gfx/asdxShaderCompiler.h>
 #include <fnd/asdxHash.h>
 #include <fnd/asdxMacro.h>
+#include <edit/asdxFileWatcher.h>
 
 
 // ヘッダにあるとバグの原因となるので，ソース側に定義.
@@ -149,49 +151,195 @@ struct MsPsoDesc
     }
 };
 
-//-----------------------------------------------------------------------------
-//      グラフィックスパイプラインステート設定のハッシュ値を計算します.
-//-----------------------------------------------------------------------------
-uint64_t CalcDescHash(const D3D12_GRAPHICS_PIPELINE_STATE_DESC* pDesc)
+///////////////////////////////////////////////////////////////////////////////
+// PipelineStateListener class
+///////////////////////////////////////////////////////////////////////////////
+class PipelineStateListener : public asdx::IFileListener
 {
-    auto hash = asdx::CalcHash(pDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
-    if (pDesc->VS.pShaderBytecode != nullptr && pDesc->VS.BytecodeLength > 0)
-    { hash = asdx::CalcHashWithSeed(pDesc->VS.pShaderBytecode, pDesc->VS.BytecodeLength, hash); }
-    if (pDesc->PS.pShaderBytecode != nullptr && pDesc->PS.BytecodeLength > 0)
-    { hash = asdx::CalcHashWithSeed(pDesc->PS.pShaderBytecode, pDesc->PS.BytecodeLength, hash); }
-    if (pDesc->DS.pShaderBytecode != nullptr && pDesc->DS.BytecodeLength > 0)
-    { hash = asdx::CalcHashWithSeed(pDesc->DS.pShaderBytecode, pDesc->DS.BytecodeLength, hash); }
-    if (pDesc->HS.pShaderBytecode != nullptr && pDesc->HS.BytecodeLength > 0)
-    { hash = asdx::CalcHashWithSeed(pDesc->HS.pShaderBytecode, pDesc->HS.BytecodeLength, hash); }
-    if (pDesc->GS.pShaderBytecode != nullptr && pDesc->GS.BytecodeLength > 0)
-    { hash = asdx::CalcHashWithSeed(pDesc->GS.pShaderBytecode, pDesc->GS.BytecodeLength, hash); }
-    return hash;
+public:
+    PipelineStateListener()
+    { /* DO_NOTHING */ }
+
+    ~PipelineStateListener()
+    { Reset(); }
+
+    void Reset()
+    {
+        m_Graphics   .clear();
+        m_Computes   .clear();
+        m_MeshShaders.clear();
+        m_RayTracings.clear();
+    }
+
+    void AddGraphics(asdx::GraphicsPipelineState* item)
+    {
+        m_Graphics.push_back(item);
+    }
+
+    void AddCompute(asdx::ComputePipelineState* item)
+    {
+        m_Computes.push_back(item);
+    }
+
+    void AddMeshShader(asdx::MeshShaderPipelineState* item)
+    {
+        m_MeshShaders.push_back(item);
+    }
+
+    void AddRayTracing(asdx::RayTracingPipelineState* item)
+    {
+        m_RayTracings.push_back(item);
+    }
+
+    void RemoveGraphics(asdx::GraphicsPipelineState* item)
+    {
+        m_Graphics.remove(item);
+    }
+
+    void RemoveCompute(asdx::ComputePipelineState* item)
+    {
+        m_Computes.remove(item);
+    }
+
+    void RemoveMeshShader(asdx::MeshShaderPipelineState* item)
+    {
+        m_MeshShaders.remove(item);
+    }
+
+    void RemoveRayTracing(asdx::RayTracingPipelineState* item)
+    {
+        m_RayTracings.remove(item);
+    }
+
+    void OnChanged(const asdx::FileEventArgs& args) override
+    {
+        if (args.Type == asdx::FileEventArgs::Modified ||
+            args.Type == asdx::FileEventArgs::RenamedNewName)
+        {
+            for(auto& itr : m_Graphics)
+            { itr->OnReload(args.FullPath); }
+
+            for(auto& itr : m_Computes)
+            { itr->OnReload(args.FullPath); }
+
+            for(auto& itr : m_MeshShaders)
+            { itr->OnReload(args.FullPath); }
+
+            for(auto& itr : m_RayTracings)
+            { itr->OnReload(args.FullPath); }
+        }
+    }
+
+private:
+    std::list<asdx::GraphicsPipelineState*>   m_Graphics;
+    std::list<asdx::ComputePipelineState*>    m_Computes;
+    std::list<asdx::MeshShaderPipelineState*> m_MeshShaders;
+    std::list<asdx::RayTracingPipelineState*> m_RayTracings;
+};
+
+std::vector<std::string>    g_Includes;
+asdx::FileWatcher           g_Watcher;
+PipelineStateListener       g_Listener;
+bool                        g_Initialized = false;
+
+//-----------------------------------------------------------------------------
+//      シェーダコードからBlobを設定します.
+//-----------------------------------------------------------------------------
+void SetBlob(asdx::ShaderInfo& info, D3D12_SHADER_BYTECODE& code)
+{
+    if (code.pShaderBytecode == nullptr || code.BytecodeLength == 0)
+        return;
+
+    info.Blob.resize(code.BytecodeLength);
+    memcpy(info.Blob.data(), code.pShaderBytecode, code.BytecodeLength);
+    code.pShaderBytecode = info.Blob.data();
 }
 
 //-----------------------------------------------------------------------------
-//      コンピュートパイプラインステート設定のハッシュ値を計算します.
+//      Blobでシェーダコードを置き換えます.
 //-----------------------------------------------------------------------------
-uint64_t CalcDescHash(const D3D12_COMPUTE_PIPELINE_STATE_DESC* pDesc)
+void ReplaceCode(asdx::ShaderInfo& info, D3D12_SHADER_BYTECODE& code)
 {
-    auto hash = asdx::CalcHash(pDesc, sizeof(D3D12_COMPUTE_PIPELINE_STATE_DESC));
-    hash = asdx::CalcHashWithSeed(pDesc->CS.pShaderBytecode, pDesc->CS.BytecodeLength, hash);
-    return hash;
+    code.pShaderBytecode = info.Blob.data();
+    code.BytecodeLength  = info.Blob.size();
 }
 
 //-----------------------------------------------------------------------------
-//      メッシュシェーダパイプラインステート設定のハッシュ値を計算します.
+//      シェーダテーブルを生成します.
 //-----------------------------------------------------------------------------
-uint64_t CalcDescHash(const asdx::MESH_SHADER_PIPELINE_STATE_DESC* pDesc)
+bool CreateShaderTable
+(
+    ID3D12Device*           pDevice,
+    std::vector<void*>      shaderIdentifiers,
+    ID3D12Resource**        ppResource
+)
 {
-    auto hash = asdx::CalcHash(pDesc, sizeof(asdx::MESH_SHADER_PIPELINE_STATE_DESC));
-    if (pDesc->AS.pShaderBytecode != nullptr && pDesc->AS.BytecodeLength > 0)
-    { hash = asdx::CalcHashWithSeed(pDesc->AS.pShaderBytecode, pDesc->AS.BytecodeLength, hash); }
-    if (pDesc->MS.pShaderBytecode != nullptr && pDesc->MS.BytecodeLength > 0)
-    { hash = asdx::CalcHashWithSeed(pDesc->MS.pShaderBytecode, pDesc->MS.BytecodeLength, hash); }
-    if (pDesc->PS.pShaderBytecode != nullptr && pDesc->PS.BytecodeLength > 0)
-    { hash = asdx::CalcHashWithSeed(pDesc->PS.pShaderBytecode, pDesc->PS.BytecodeLength, hash); }
-    return hash;
+    auto isGpuUploadHeap = false;
+
+    D3D12_FEATURE_DATA_D3D12_OPTIONS16 options16 = {};
+    if (SUCCEEDED(pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS16, &options16, sizeof(options16))))
+    {
+        if (options16.GPUUploadHeapSupported)
+        { isGpuUploadHeap = true; }
+    }
+
+    auto recordSize = asdx::RoundUp(
+        uint32_t(D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES),
+        uint32_t(D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT));
+
+    auto bufferSize = recordSize * shaderIdentifiers.size();
+
+    D3D12_HEAP_PROPERTIES props = {};
+    props.Type                  = (isGpuUploadHeap) ? D3D12_HEAP_TYPE_GPU_UPLOAD : D3D12_HEAP_TYPE_UPLOAD;
+    props.CPUPageProperty       = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+    props.MemoryPoolPreference  = D3D12_MEMORY_POOL_UNKNOWN;
+    props.CreationNodeMask      = 1;
+    props.VisibleNodeMask       = 1;
+
+    D3D12_RESOURCE_DESC desc = {};
+    desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
+    desc.Alignment          = 0;
+    desc.Width              = bufferSize;
+    desc.Height             = 1;
+    desc.DepthOrArraySize   = 1;
+    desc.MipLevels          = 1;
+    desc.Format             = DXGI_FORMAT_UNKNOWN;
+    desc.SampleDesc.Count   = 1;
+    desc.SampleDesc.Quality = 0;
+    desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+    desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
+
+    auto hr = pDevice->CreateCommittedResource(
+        &props,
+        D3D12_HEAP_FLAG_NONE,
+        &desc,
+        D3D12_RESOURCE_STATE_GENERIC_READ,
+        nullptr,
+        IID_PPV_ARGS(ppResource));
+    if (FAILED(hr))
+    {
+        ELOGA("Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr);
+        return false;
+    }
+
+    uint8_t* ptr = nullptr;
+    hr = (*ppResource)->Map(0, nullptr, reinterpret_cast<void**>(&ptr));
+    if (FAILED(hr))
+    {
+        ELOG("Error : ID3D12Resource::Map() Failed. errcode = 0x%x", hr);
+        return false;
+    }
+
+    for(size_t i=0u; i<shaderIdentifiers.size(); ++i)
+    {
+        memcpy(ptr, shaderIdentifiers[i], D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+        ptr += recordSize;
+    }
+    (*ppResource)->Unmap(0, nullptr);
+
+    return true;
 }
+
 
 } // namespace
 
@@ -199,171 +347,345 @@ uint64_t CalcDescHash(const asdx::MESH_SHADER_PIPELINE_STATE_DESC* pDesc)
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
-// PipelineStateManager class
+// GraphicsPipelineState class
 ///////////////////////////////////////////////////////////////////////////////
-PipelineStateManager PipelineStateManager::s_Instance = {};
 
 //-----------------------------------------------------------------------------
-//      シングルトンインスタンスを取得します.
+//      コンストラクタです.
 //-----------------------------------------------------------------------------
-PipelineStateManager& PipelineStateManager::Instance()
-{ return s_Instance; }
+GraphicsPipelineState::GraphicsPipelineState()
+{ /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
-//      グラフィックスパイプラインステートを生成します.
+//      デストラクタです.
 //-----------------------------------------------------------------------------
-bool PipelineStateManager::Create(const D3D12_GRAPHICS_PIPELINE_STATE_DESC* pDesc, PipelineStateHandle& handle)
+GraphicsPipelineState::~GraphicsPipelineState()
+{ Term(); }
+
+//-----------------------------------------------------------------------------
+//      初期化処理を行います.
+//-----------------------------------------------------------------------------
+bool GraphicsPipelineState::Init(const D3D12_GRAPHICS_PIPELINE_STATE_DESC* pDesc)
 {
-    if (pDesc == nullptr)
-    {
-        ELOG("Error : Invalid Arguments.");
-        return false;
-    }
-
-    // ハッシュ値を計算.
-    auto hash = CalcDescHash(pDesc);
-
-    // 既に作成済みかどうかチェック.
-    if (m_PipelineStates.find(hash) != m_PipelineStates.end())
-    {
-        ELOG("Error : Already Registered.");
-        return false;
-    }
-
     auto pDevice = GetD3D12Device();
-    assert(pDevice != nullptr);
 
-    ID3D12PipelineState* pPipelineState = nullptr;
-    auto hr = pDevice->CreateGraphicsPipelineState(pDesc, IID_PPV_ARGS(&pPipelineState));
+    auto hr = pDevice->CreateGraphicsPipelineState(pDesc, IID_PPV_ARGS(m_State.GetAddress()));
     if (FAILED(hr))
     {
-        if (pPipelineState != nullptr)
-        {
-            pPipelineState->Release();
-            pPipelineState = nullptr;
-        }
-        ELOG("Error : ID3D12Device::CreateGraphicsState() Failed. errcode = 0x%x", hr);
+        ELOG("Error : ID3D12Device::CreateGraphicsPipelineState() Failed. errcode = 0x%x", hr);
         return false;
     }
 
-    m_PipelineStates[hash] = pPipelineState;
+    m_Desc = *pDesc;
+    SetBlob(m_VS, m_Desc.VS);
+    SetBlob(m_PS, m_Desc.PS);
+    SetBlob(m_HS, m_Desc.HS);
+    SetBlob(m_DS, m_Desc.DS);
+    SetBlob(m_GS, m_Desc.GS);
 
-    PipelineStateDesc desc;
-    desc.Type = PIPELINE_TYPE_GRAPHICS;
-    desc.Graphics = (*pDesc);
-
-    if (pDesc->VS.pShaderBytecode != nullptr && pDesc->VS.BytecodeLength > 0)
-    {
-        desc.VS.resize(pDesc->VS.BytecodeLength);
-        memcpy(desc.VS.data(), pDesc->VS.pShaderBytecode, pDesc->VS.BytecodeLength);
-        desc.Graphics.VS.pShaderBytecode = desc.VS.data();
-        desc.Graphics.VS.BytecodeLength  = desc.VS.size();
-    }
-    if (pDesc->PS.pShaderBytecode != nullptr && pDesc->PS.BytecodeLength > 0)
-    {
-        desc.PS.resize(pDesc->PS.BytecodeLength);
-        memcpy(desc.PS.data(), pDesc->PS.pShaderBytecode, pDesc->PS.BytecodeLength);
-        desc.Graphics.PS.pShaderBytecode = desc.PS.data();
-        desc.Graphics.PS.BytecodeLength  = desc.PS.size();
-    }
-    if (pDesc->DS.pShaderBytecode != nullptr && pDesc->DS.BytecodeLength > 0)
-    {
-        desc.DS.resize(pDesc->DS.BytecodeLength);
-        memcpy(desc.DS.data(), pDesc->DS.pShaderBytecode, pDesc->DS.BytecodeLength);
-        desc.Graphics.DS.pShaderBytecode = desc.DS.data();
-        desc.Graphics.DS.BytecodeLength  = desc.DS.size();
-    }
-    if (pDesc->HS.pShaderBytecode != nullptr && pDesc->HS.BytecodeLength > 0)
-    {
-        desc.HS.resize(pDesc->HS.BytecodeLength);
-        memcpy(desc.HS.data(), pDesc->HS.pShaderBytecode, pDesc->HS.BytecodeLength);
-        desc.Graphics.HS.pShaderBytecode = desc.HS.data();
-        desc.Graphics.HS.BytecodeLength  = desc.HS.size();
-    }
-    if (pDesc->HS.pShaderBytecode != nullptr && pDesc->HS.BytecodeLength > 0)
-    {
-        desc.GS.resize(pDesc->GS.BytecodeLength);
-        memcpy(desc.GS.data(), pDesc->GS.pShaderBytecode, pDesc->GS.BytecodeLength);
-        desc.Graphics.GS.pShaderBytecode = desc.GS.data();
-        desc.Graphics.GS.BytecodeLength  = desc.GS.size();
-    }
-
-    m_Descs[hash] = desc;
-    handle = hash;
-
+    g_Listener.AddGraphics(this);
     return true;
 }
 
 //-----------------------------------------------------------------------------
-//      コンピュートパイプラインステートを生成します.
+//      終了処理を行います.
 //-----------------------------------------------------------------------------
-bool PipelineStateManager::Create(const D3D12_COMPUTE_PIPELINE_STATE_DESC* pDesc, PipelineStateHandle& handle)
+void GraphicsPipelineState::Term()
 {
-    if (pDesc == nullptr)
+    g_Listener.RemoveGraphics(this);
+    m_State.Reset();
+    m_ReloadState.Reset();
+}
+
+//-----------------------------------------------------------------------------
+//      パイプラインステートを設定します.
+//-----------------------------------------------------------------------------
+void GraphicsPipelineState::SetState(ID3D12GraphicsCommandList* pCmd)
+{
+    if (pCmd == nullptr)
+        return;
+
+    if (m_Dirty)
+    { Recreate(); }
+
+    if (m_ReloadState.GetPtr() != nullptr)
     {
-        ELOG("Error : Invalid Arguments.");
-        return false;
+        pCmd->SetPipelineState(m_ReloadState.GetPtr());
+        return;
     }
+ 
+    pCmd->SetPipelineState(m_State.GetPtr());
+}
 
-    // ハッシュ値を計算.
-    auto hash = CalcDescHash(pDesc);
+//-----------------------------------------------------------------------------
+//      頂点シェーダのリロードファイルパスを設定します.
+//-----------------------------------------------------------------------------
+void GraphicsPipelineState::SetReloadPathVS(const std::string& value)
+{ m_VS.Path = ToFullPath(value).string(); }
 
-    // 既に作成済みかどうかチェック.
-    if (m_PipelineStates.find(hash) != m_PipelineStates.end())
+//-----------------------------------------------------------------------------
+//      ピクセルシェーダのリロードファイルパスを設定します.
+//-----------------------------------------------------------------------------
+void GraphicsPipelineState::SetReloadPathPS(const std::string& value)
+{ m_PS.Path = ToFullPath(value).string(); }
+
+//-----------------------------------------------------------------------------
+//      ハルシェーダのリロードファイルパスを設定します.
+//-----------------------------------------------------------------------------
+void GraphicsPipelineState::SetReloadPathHS(const std::string& value)
+{ m_HS.Path = ToFullPath(value).string(); }
+
+//-----------------------------------------------------------------------------
+//      ドメインシェーダのリロードファイルパスを設定します.
+//-----------------------------------------------------------------------------
+void GraphicsPipelineState::SetReloadPathDS(const std::string& value)
+{ m_DS.Path = ToFullPath(value).string(); }
+
+//-----------------------------------------------------------------------------
+//      ジオメトリシェーダのリロードファイルパスを設定します.
+//-----------------------------------------------------------------------------
+void GraphicsPipelineState::SetReloadPathGS(const std::string& value)
+{ m_GS.Path = ToFullPath(value).string(); }
+
+//-----------------------------------------------------------------------------
+//      リロード時の処理です.
+//-----------------------------------------------------------------------------
+void GraphicsPipelineState::OnReload(const std::string& fullPath)
+{
+    if (fullPath.empty())
+        return;
+
+    if (m_VS.Path == fullPath)
     {
-        ELOG("Error : Already Registered.");
-        return false;
+        std::vector<uint8_t> binary;
+        if (CompileFromFileA(fullPath.c_str(), g_Includes, "main", "vs_6_6", binary))
+        {
+            m_VS.Blob = std::move(binary);
+            ReplaceCode(m_VS, m_Desc.VS);
+            m_Dirty = true;
+        }
     }
+    if (m_PS.Path == fullPath)
+    {
+        std::vector<uint8_t> binary;
+        if (CompileFromFileA(fullPath.c_str(), g_Includes, "main", "ps_6_6", binary))
+        {
+            m_PS.Blob = std::move(binary);
+            ReplaceCode(m_PS, m_Desc.PS);
+            m_Dirty = true;
+        }
+    }
+    if (m_HS.Path == fullPath)
+    {
+        std::vector<uint8_t> binary;
+        if (CompileFromFileA(fullPath.c_str(), g_Includes, "main", "hs_6_6", binary))
+        {
+            m_HS.Blob = std::move(binary);
+            ReplaceCode(m_HS, m_Desc.HS);
+            m_Dirty = true;
+        }
+    }
+    if (m_DS.Path == fullPath)
+    {
+        std::vector<uint8_t> binary;
+        if (CompileFromFileA(fullPath.c_str(), g_Includes, "main", "ds_6_6", binary))
+        {
+            m_DS.Blob = std::move(binary);
+            ReplaceCode(m_DS, m_Desc.DS);
+            m_Dirty = true;
+        }
+    }
+    if (m_GS.Path == fullPath)
+    {
+        std::vector<uint8_t> binary;
+        if (CompileFromFileA(fullPath.c_str(), g_Includes, "main", "gs_6_6", binary))
+        {
+            m_GS.Blob = std::move(binary);
+            ReplaceCode(m_GS, m_Desc.GS);
+            m_Dirty = true;
+        }
+    }
+}
 
-    auto pDevice = GetD3D12Device();
-    assert(pDevice != nullptr);
+//-----------------------------------------------------------------------------
+//      再生成処理です.
+//-----------------------------------------------------------------------------
+void GraphicsPipelineState::Recreate()
+{
+    if (!m_Dirty)
+        return;
 
     ID3D12PipelineState* pPipelineState = nullptr;
-    auto hr = pDevice->CreateComputePipelineState(pDesc, IID_PPV_ARGS(&pPipelineState));
+
+    auto pDevice = GetD3D12Device();
+    auto hr = pDevice->CreateGraphicsPipelineState(&m_Desc, IID_PPV_ARGS(&pPipelineState));
     if (FAILED(hr))
     {
-        if (pPipelineState != nullptr)
-        {
-            pPipelineState->Release();
-            pPipelineState = nullptr;
-        }
+        ELOGA("Error : ID3D12Device::CreateGraphicsPipelineState() Failed. errcode = 0x%x", hr);
+
+        // 失敗した場合もダーティフラグを下す.
+        m_Dirty = false;
+
+        // おしまい.
+        return;
+    }
+
+    // 遅延解放.
+    auto pso = m_ReloadState.Detach();
+    Dispose(pso);
+
+    // 差し替え.
+    m_ReloadState.Attach(pPipelineState);
+
+    // ダーティフラグを下す.
+    m_Dirty = false;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// ComputePipelineState class
+///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      コンストラクタです.
+//-----------------------------------------------------------------------------
+ComputePipelineState::ComputePipelineState()
+{ /* DO_NOTHING */ }
+
+//-----------------------------------------------------------------------------
+//      デストラクタです.
+//-----------------------------------------------------------------------------
+ComputePipelineState::~ComputePipelineState()
+{ Term(); }
+
+//-----------------------------------------------------------------------------
+//      初期化処理です.
+//-----------------------------------------------------------------------------
+bool ComputePipelineState::Init(const D3D12_COMPUTE_PIPELINE_STATE_DESC* pDesc)
+{
+    auto pDevice = GetD3D12Device();
+
+    auto hr = pDevice->CreateComputePipelineState(pDesc, IID_PPV_ARGS(m_State.GetAddress()));
+    if (FAILED(hr))
+    {
         ELOG("Error : ID3D12Device::CreateComputePipelineState() Failed. errcode = 0x%x", hr);
         return false;
     }
 
-    m_PipelineStates[hash] = pPipelineState;
-
-    PipelineStateDesc desc;
-    desc.Type    = PIPELINE_TYPE_COMPUTE;
-    desc.Compute = (*pDesc);
-
-    if (pDesc->CS.pShaderBytecode != nullptr && pDesc->CS.BytecodeLength > 0)
-    {
-        desc.CS.resize(pDesc->CS.BytecodeLength);
-        memcpy(desc.CS.data(), pDesc->CS.pShaderBytecode, pDesc->CS.BytecodeLength);
-        desc.Compute.CS.pShaderBytecode = desc.CS.data();
-        desc.Compute.CS.BytecodeLength  = desc.CS.size();
-    }
-
-    m_Descs[hash] = desc;
-    handle = hash;
-
+    m_Desc = (*pDesc);
+    SetBlob(m_CS, m_Desc.CS);
+    g_Listener.AddCompute(this);
     return true;
 }
 
 //-----------------------------------------------------------------------------
-//      メッシュシェーダパイプラインステートを生成します.
+//      終了処理です.
 //-----------------------------------------------------------------------------
-bool PipelineStateManager::Create(const MESH_SHADER_PIPELINE_STATE_DESC* pDesc, PipelineStateHandle& handle)
+void ComputePipelineState::Term()
 {
-    if (pDesc == nullptr)
+    g_Listener.RemoveCompute(this);
+    m_ReloadState.Reset();
+    m_State.Reset();
+}
+
+//-----------------------------------------------------------------------------
+//      パイプラインステートを設定します.
+//-----------------------------------------------------------------------------
+void ComputePipelineState::SetState(ID3D12GraphicsCommandList* pCmd)
+{
+    if (pCmd == nullptr)
+        return;
+
+    if (m_Dirty)
+    { Recreate(); }
+
+    if (m_ReloadState.GetPtr() != nullptr)
     {
-        ELOG("Error : Invalid Arguments.");
-        return false;
+        pCmd->SetPipelineState(m_ReloadState.GetPtr());
+        return;
     }
+ 
+    pCmd->SetPipelineState(m_State.GetPtr());
+}
+
+//-----------------------------------------------------------------------------
+//      コンピュートシェーダのリロードファイルパスを設定します.
+//-----------------------------------------------------------------------------
+void ComputePipelineState::SetReloadPathCS(const std::string& value)
+{ m_CS.Path = ToFullPath(value).string(); }
+
+//-----------------------------------------------------------------------------
+//      リロード時の処理です.
+//-----------------------------------------------------------------------------
+void ComputePipelineState::OnReload(const std::string& fullPath)
+{
+    if (fullPath.empty())
+        return;
+
+    if (m_CS.Path == fullPath)
+    {
+        std::vector<uint8_t> binary;
+        if (CompileFromFileA(fullPath.c_str(), g_Includes, "main", "cs_6_6", binary))
+        {
+            m_CS.Blob = std::move(binary);
+            ReplaceCode(m_CS, m_Desc.CS);
+            m_Dirty = true;
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+//      再生成処理です.
+//-----------------------------------------------------------------------------
+void ComputePipelineState::Recreate()
+{
+    if (!m_Dirty)
+        return;
 
     auto pDevice = GetD3D12Device();
-    assert(pDevice != nullptr);
+
+    // パイプラインステートを生成.
+    ID3D12PipelineState* pPipelineState = nullptr;
+    auto hr = pDevice->CreateComputePipelineState(&m_Desc, IID_PPV_ARGS(&pPipelineState));
+    if (FAILED(hr))
+    {
+        ELOG("Error : ID3D12Device::CreateComputePipelineState() Failed. errcode = 0x%x", hr);
+        m_Dirty = false;
+        return;
+    }
+
+    // 遅延解放.
+    auto pso = m_ReloadState.Detach();
+    Dispose(pso);
+
+    // 差し替え.
+    m_ReloadState.Attach(pPipelineState);
+
+    // ダーティフラグを下す.
+    m_Dirty = false;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// MeshShaderPipelineState class
+///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      コンストラクタです.
+//-----------------------------------------------------------------------------
+MeshShaderPipelineState::MeshShaderPipelineState()
+{ /* DO_NOTHING */ }
+
+//-----------------------------------------------------------------------------
+//      デストラクタです.
+//-----------------------------------------------------------------------------
+MeshShaderPipelineState::~MeshShaderPipelineState()
+{ Term(); }
+
+//-----------------------------------------------------------------------------
+//      初期化処理を行います.
+//-----------------------------------------------------------------------------
+bool MeshShaderPipelineState::Init(const MESH_SHADER_PIPELINE_STATE_DESC* pDesc)
+{
+    auto pDevice = GetD3D12Device();
 
 #ifdef ASDX_ENABLE_MESH_SHADER
     // シェーダモデルをチェック.
@@ -388,17 +710,6 @@ bool PipelineStateManager::Create(const MESH_SHADER_PIPELINE_STATE_DESC* pDesc, 
         }
     }
 #endif
-
-    // ハッシュ値を計算.
-    auto hash = CalcDescHash(pDesc);
-
-    // 既に作成済みかどうかチェック.
-    if (m_PipelineStates.find(hash) != m_PipelineStates.end())
-    {
-        ELOG("Error : Already Registered.");
-        return false;
-    }
-
     MsPsoDesc msPsoDesc(pDesc);
 
     D3D12_PIPELINE_STATE_STREAM_DESC pssDesc = {};
@@ -406,490 +717,117 @@ bool PipelineStateManager::Create(const MESH_SHADER_PIPELINE_STATE_DESC* pDesc, 
     pssDesc.pPipelineStateSubobjectStream = &msPsoDesc;
 
     // パイプラインステート生成.
-    ID3D12PipelineState* pPipelineState = nullptr;
-    auto hr = pDevice->CreatePipelineState(&pssDesc, IID_PPV_ARGS(&pPipelineState));
+    auto hr = pDevice->CreatePipelineState(&pssDesc, IID_PPV_ARGS(m_State.GetAddress()));
     if (FAILED(hr))
     {
-        if (pPipelineState != nullptr)
-        {
-            pPipelineState->Release();
-            pPipelineState = nullptr;
-        }
-
         ELOG("Error : ID3D12Device::CreatePipelineState() Failed. errcode = 0x%x", hr);
         return false;
     }
 
-    m_PipelineStates[hash] = pPipelineState;
-
-    PipelineStateDesc desc;
-    desc.Type       = PIPELINE_TYPE_MESH_SHADER;
-    desc.MeshShader = (*pDesc);
-
-    if (pDesc->AS.pShaderBytecode != nullptr && pDesc->AS.BytecodeLength > 0)
-    {
-        desc.AS.resize(pDesc->AS.BytecodeLength);
-        memcpy(desc.AS.data(), pDesc->AS.pShaderBytecode, pDesc->AS.BytecodeLength);
-        desc.MeshShader.AS.pShaderBytecode = desc.AS.data();
-        desc.MeshShader.AS.BytecodeLength  = desc.AS.size();
-    }
-    if (pDesc->MS.pShaderBytecode != nullptr && pDesc->MS.BytecodeLength > 0)
-    {
-        desc.MS.resize(pDesc->MS.BytecodeLength);
-        memcpy(desc.MS.data(), pDesc->MS.pShaderBytecode, pDesc->MS.BytecodeLength);
-        desc.MeshShader.MS.pShaderBytecode = desc.MS.data();
-        desc.MeshShader.MS.BytecodeLength  = desc.MS.size();
-    }
-    if (pDesc->PS.pShaderBytecode != nullptr && pDesc->PS.BytecodeLength > 0)
-    {
-        desc.PS.resize(pDesc->PS.BytecodeLength);
-        memcpy(desc.PS.data(), pDesc->PS.pShaderBytecode, pDesc->PS.BytecodeLength);
-        desc.MeshShader.PS.pShaderBytecode = desc.PS.data();
-        desc.MeshShader.PS.BytecodeLength  = desc.PS.size();
-    }
-
-    m_Descs[hash] = desc;
-    handle = hash;
-
+    m_Desc = (*pDesc);
+    SetBlob(m_AS, m_Desc.AS);
+    SetBlob(m_MS, m_Desc.MS);
+    SetBlob(m_PS, m_Desc.PS);
+    g_Listener.AddMeshShader(this);
     return true;
 }
 
 //-----------------------------------------------------------------------------
-//      パイプラインステートを検索します.
+//      終了処理を行います.
 //-----------------------------------------------------------------------------
-ID3D12PipelineState* PipelineStateManager::FindPipelineState(const PipelineStateHandle& handle)
+void MeshShaderPipelineState::Term()
 {
-    auto itr = m_PipelineStates.find(handle);
-    if (itr != m_PipelineStates.end())
-        return itr->second;
-
-    return nullptr;
+    g_Listener.RemoveMeshShader(this);
+    m_ReloadState.Reset();
+    m_State.Reset();
 }
 
 //-----------------------------------------------------------------------------
-//      クリア処理を行います.
+//      パイプラインステートを設定します.
 //-----------------------------------------------------------------------------
-void PipelineStateManager::Clear()
+void MeshShaderPipelineState::SetState(ID3D12GraphicsCommandList* pCmd)
 {
-    for(auto& itr : m_PipelineStates)
+    if (m_Dirty)
+        Recreate();
+
+    if (m_ReloadState.GetPtr() != nullptr)
     {
-        auto pso = itr.second;
-        itr.second = nullptr;
-
-        if (pso != nullptr)
-        {
-            pso->Release();
-            pso = nullptr;
-        }
-    }
-
-    m_PipelineStates.clear();
-    m_Descs.clear();
-}
-
-#if ASDX_ENABLE_PIPELINE_STATE_RELOAD
-//-----------------------------------------------------------------------------
-//      シェーダを登録します.
-//-----------------------------------------------------------------------------
-ShaderHandle PipelineStateManager::RegisterShader(SHADER_TYPE type, const char* path, uint32_t pipelineCounts, const PipelineStateHandle* handles)
-{
-    auto fullPath = ToFullPath(path).string();
-    auto hash     = CalcHash(fullPath.data(), fullPath.length());
-    auto itr      = m_Reloads.find(hash);
-
-    // 未登録であれば情報を設定.
-    if (itr == m_Reloads.end())
-    {
-        m_Reloads[hash] = Reload(type, fullPath, pipelineCounts, handles);
-    }
-#if ASDX_DEBUG
-    // 登録済みであればデバッグチェック.
-    else
-    {
-        const auto& reload = m_Reloads[hash];
-        assert(type   == reload.Type);
-        assert(path   == reload.Path);
-        assert(size_t(pipelineCounts) == reload.Handles.size());
-        for(size_t i=0; i<reload.Handles.size(); ++i)
-        { assert(handles[i] == reload.Handles[i]); }
-    }
-#endif
-
-    return hash;
-}
-
-//-----------------------------------------------------------------------------
-//      シェーダの登録を解除します.
-//-----------------------------------------------------------------------------
-void PipelineStateManager::UnregisterShader(ShaderHandle handle)
-{
-    auto itr = m_Reloads.find(handle);
-    if (itr != m_Reloads.end())
-    { m_Reloads.erase(itr); }
-}
-
-//-----------------------------------------------------------------------------
-//      インクルードを登録します.
-//-----------------------------------------------------------------------------
-ShaderHandle PipelineStateManager::RegisterInclude(const char* path, uint32_t shaderCount, const ShaderHandle* handles)
-{
-    auto fullPath = ToFullPath(path).string();
-    auto hash     = CalcHash(fullPath.data(), fullPath.length());
-    auto itr      = m_Dependencies.find(hash);
-
-    if (itr == m_Dependencies.end())
-    {
-        m_Dependencies[hash] = Dependency(path, shaderCount, handles);
-    }
-#if ASDX_DEBUG
-    else
-    {
-        const auto& dependency = m_Dependencies[hash];
-        assert(path == dependency.Path);
-        assert(size_t(shaderCount) == dependency.Shaders.size());
-        for(size_t i=0; i<dependency.Shaders.size(); ++i)
-        { assert(handles[i] == dependency.Shaders[i]); }
-    }
-#endif
-
-    return hash;
-}
-
-//-----------------------------------------------------------------------------
-//      インクルードの登録を解除します.
-//-----------------------------------------------------------------------------
-void PipelineStateManager::UnregisterInclude(ShaderHandle handle)
-{
-    auto itr = m_Dependencies.find(handle);
-    if (itr != m_Dependencies.end())
-    { m_Dependencies.erase(itr); }
-}
-
-//-----------------------------------------------------------------------------
-//      インクルードディレクトリを追加します.
-//-----------------------------------------------------------------------------
-void PipelineStateManager::AddIncludeDirs(const char* dirPath)
-{
-    auto fullPath = ToFullPath(dirPath).string();
-    m_IncludeDirs.emplace_back(fullPath);
-}
-
-//-----------------------------------------------------------------------------
-//      パイプラインステートを検索します.
-//-----------------------------------------------------------------------------
-ID3D12PipelineState* PipelineStateManager::FindPipelineStateEx(const PipelineStateHandle& handle)
-{
-    {
-        auto itr = m_ReloadPipelineStates.find(handle);
-        if (itr != m_ReloadPipelineStates.end())
-            return itr->second;
-    }
-
-    return FindPipelineState(handle);
-}
-
-//-----------------------------------------------------------------------------
-//      クリア処理を行います.
-//-----------------------------------------------------------------------------
-void PipelineStateManager::ClearEx()
-{
-    for(auto& itr : m_ReloadPipelineStates)
-    {
-        auto pso = itr.second;
-        itr.second = nullptr;
-
-        if (pso != nullptr)
-        {
-            pso->Release();
-            pso = nullptr;
-        }
-    }
-    m_ReloadPipelineStates.clear();
-    m_Reloads             .clear();
-    m_Dependencies        .clear();
-    m_RequestDescs        .clear();
-
-    Clear();
-}
-
-//-----------------------------------------------------------------------------
-//      再生成をリクエストします.
-//-----------------------------------------------------------------------------
-void PipelineStateManager::RequestRecreate(PipelineStateHandle pipelineHandle, ShaderHandle shaderHandle)
-{
-    // 登録されているかチェック.
-    auto itrDesc = m_Descs.find(pipelineHandle);
-    if (itrDesc == m_Descs.end())
-        return;
-
-    // シェーダリロード設定に存在するかどうかチェック.
-    auto itrShader = m_Reloads.find(shaderHandle);
-    if (itrShader == m_Reloads.end())
-        return;
-
-    // 未登録なら構成データを設定.
-    auto itrReq = m_RequestDescs.find(pipelineHandle);
-    if (itrReq == m_RequestDescs.end())
-    { m_RequestDescs[pipelineHandle] = itrDesc->second; }
-
-    switch(itrShader->second.Type)
-    {
-        case SHADER_TYPE_VS: { CompileFromFileA(itrShader->second.Path.c_str(), m_IncludeDirs, "main", "vs_6_5", itrReq->second.VS); } break;
-        case SHADER_TYPE_PS: { CompileFromFileA(itrShader->second.Path.c_str(), m_IncludeDirs, "main", "ps_6_5", itrReq->second.PS); } break;
-        case SHADER_TYPE_HS: { CompileFromFileA(itrShader->second.Path.c_str(), m_IncludeDirs, "main", "hs_6_6", itrReq->second.HS); } break;
-        case SHADER_TYPE_DS: { CompileFromFileA(itrShader->second.Path.c_str(), m_IncludeDirs, "main", "ds_6_5", itrReq->second.DS); } break;
-        case SHADER_TYPE_GS: { CompileFromFileA(itrShader->second.Path.c_str(), m_IncludeDirs, "main", "gs_6_5", itrReq->second.GS); } break;
-        case SHADER_TYPE_AS: { CompileFromFileA(itrShader->second.Path.c_str(), m_IncludeDirs, "main", "as_6_5", itrReq->second.AS); } break;
-        case SHADER_TYPE_MS: { CompileFromFileA(itrShader->second.Path.c_str(), m_IncludeDirs, "main", "ms_6_5", itrReq->second.MS); } break;
-        case SHADER_TYPE_CS: { CompileFromFileA(itrShader->second.Path.c_str(), m_IncludeDirs, "main", "cs_6_5", itrReq->second.CS); } break;
-        default: break;
-    }
-}
-
-//-----------------------------------------------------------------------------
-//      ファイル変更時の処理です.
-//-----------------------------------------------------------------------------
-void PipelineStateManager::OnChanged(const FileEventArgs& args)
-{
-    auto hash = CalcHash(args.FullPath.data(), args.FullPath.length());
-
-    // インクルードファイルに存在するかどうかチェック.
-    {
-        auto itr = m_Dependencies.find(hash);
-        if (itr != m_Dependencies.end())
-        {
-            // 依存するシェーダをチェック.
-            for(const auto& pipelineHandle : itr->second.Shaders)
-            { RequestRecreate(pipelineHandle, itr->first); }
-        }
-    }
-
-    // シェーダファイルに存在するかどうかチェック.
-    {
-        auto itr = m_Reloads.find(hash);
-        if (itr != m_Reloads.end())
-        {
-            for(const auto& pipelineHandle : itr->second.Handles)
-            { RequestRecreate(pipelineHandle, itr->first); }
-        }
-    }
-}
-
-//-----------------------------------------------------------------------------
-//      グラフィックスパイプラインステートの再生成を行います.
-//-----------------------------------------------------------------------------
-void PipelineStateManager::Recreate(const D3D12_GRAPHICS_PIPELINE_STATE_DESC* pDesc, const PipelineStateHandle& handle)
-{
-    if (pDesc == nullptr)
-    {
-        ELOG("Error : Invalid Arguments.");
+        pCmd->SetPipelineState(m_ReloadState.GetPtr());
         return;
     }
 
-    // 既に作成済みかどうかチェック.
-    auto itr = m_ReloadPipelineStates.find(handle);
-    if (itr != m_ReloadPipelineStates.end())
-    {
-        auto pso = itr->second;
-        itr->second = nullptr;
+    pCmd->SetPipelineState(m_State.GetPtr());
+}
 
-        // 遅延解放.
-        Dispose(pso);
+//-----------------------------------------------------------------------------
+//      増幅シェーダのリロードファイルパスを設定します.
+//-----------------------------------------------------------------------------
+void MeshShaderPipelineState::SetReloadPathAS(const std::string& value)
+{ m_AS.Path = ToFullPath(value).string(); }
+
+//-----------------------------------------------------------------------------
+//      メッシュシェーダのリロードファイルパスを設定します.
+//-----------------------------------------------------------------------------
+void MeshShaderPipelineState::SetReloadPathMS(const std::string& value)
+{ m_MS.Path = ToFullPath(value).string(); }
+
+//-----------------------------------------------------------------------------
+//      ピクセルシェーダのリロードファイルパスを設定します.
+//-----------------------------------------------------------------------------
+void MeshShaderPipelineState::SetRelaodPathPS(const std::string& value)
+{ m_PS.Path = ToFullPath(value).string(); }
+
+//-----------------------------------------------------------------------------
+//      リロード時の処理です.
+//-----------------------------------------------------------------------------
+void MeshShaderPipelineState::OnReload(const std::string& fullPath)
+{
+    if (fullPath.empty())
+        return;
+
+    if (m_AS.Path == fullPath)
+    {
+        std::vector<uint8_t> binary;
+        if (CompileFromFileA(fullPath.c_str(), g_Includes, "main", "as_6_6", binary))
+        {
+            m_AS.Blob = std::move(binary);
+            ReplaceCode(m_AS, m_Desc.AS);
+            m_Dirty = true;
+        }
     }
+    if (m_MS.Path == fullPath)
+    {
+        std::vector<uint8_t> binary;
+        if (CompileFromFileA(fullPath.c_str(), g_Includes, "main", "ms_6_6", binary))
+        {
+            m_MS.Blob = std::move(binary);
+            ReplaceCode(m_MS, m_Desc.MS);
+            m_Dirty = true;
+        }
+    }
+    if (m_PS.Path == fullPath)
+    {
+        std::vector<uint8_t> binary;
+        if (CompileFromFileA(fullPath.c_str(), g_Includes, "main", "ps_6_6", binary))
+        {
+            m_PS.Blob = std::move(binary);
+            ReplaceCode(m_PS, m_Desc.PS);
+            m_Dirty = true;
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+//      再生成処理です.
+//-----------------------------------------------------------------------------
+void MeshShaderPipelineState::Recreate()
+{
+    if (!m_Dirty)
+        return;
 
     auto pDevice = GetD3D12Device();
-    assert(pDevice != nullptr);
 
-    PipelineStateDesc desc;
-    desc.Type     = PIPELINE_TYPE_GRAPHICS;
-    desc.Graphics = (*pDesc);
-
-    if (pDesc->VS.pShaderBytecode != nullptr && pDesc->VS.BytecodeLength > 0)
-    {
-        desc.VS.resize(pDesc->VS.BytecodeLength);
-        memcpy(desc.VS.data(), pDesc->VS.pShaderBytecode, pDesc->VS.BytecodeLength);
-        desc.Graphics.VS.pShaderBytecode = desc.VS.data();
-        desc.Graphics.VS.BytecodeLength  = desc.VS.size();
-    }
-    if (pDesc->PS.pShaderBytecode != nullptr && pDesc->PS.BytecodeLength > 0)
-    {
-        desc.PS.resize(pDesc->PS.BytecodeLength);
-        memcpy(desc.PS.data(), pDesc->PS.pShaderBytecode, pDesc->PS.BytecodeLength);
-        desc.Graphics.PS.pShaderBytecode = desc.PS.data();
-        desc.Graphics.PS.BytecodeLength  = desc.PS.size();
-    }
-    if (pDesc->DS.pShaderBytecode != nullptr && pDesc->DS.BytecodeLength > 0)
-    {
-        desc.DS.resize(pDesc->DS.BytecodeLength);
-        memcpy(desc.DS.data(), pDesc->DS.pShaderBytecode, pDesc->DS.BytecodeLength);
-        desc.Graphics.DS.pShaderBytecode = desc.DS.data();
-        desc.Graphics.DS.BytecodeLength  = desc.DS.size();
-    }
-    if (pDesc->HS.pShaderBytecode != nullptr && pDesc->HS.BytecodeLength > 0)
-    {
-        desc.HS.resize(pDesc->HS.BytecodeLength);
-        memcpy(desc.HS.data(), pDesc->HS.pShaderBytecode, pDesc->HS.BytecodeLength);
-        desc.Graphics.HS.pShaderBytecode = desc.HS.data();
-        desc.Graphics.HS.BytecodeLength  = desc.HS.size();
-    }
-    if (pDesc->HS.pShaderBytecode != nullptr && pDesc->HS.BytecodeLength > 0)
-    {
-        desc.GS.resize(pDesc->GS.BytecodeLength);
-        memcpy(desc.GS.data(), pDesc->GS.pShaderBytecode, pDesc->GS.BytecodeLength);
-        desc.Graphics.GS.pShaderBytecode = desc.GS.data();
-        desc.Graphics.GS.BytecodeLength  = desc.GS.size();
-    }
-
-    ID3D12PipelineState* pPipelineState = nullptr;
-    auto hr = pDevice->CreateGraphicsPipelineState(&desc.Graphics, IID_PPV_ARGS(&pPipelineState));
-    if (FAILED(hr))
-    {
-        if (pPipelineState != nullptr)
-        {
-            pPipelineState->Release();
-            pPipelineState = nullptr;
-        }
-        ELOG("Error : ID3D12Device::CreateGraphicsState() Failed. errcode = 0x%x", hr);
-        return;
-    }
-
-    m_ReloadPipelineStates[handle] = pPipelineState;
-
-    m_Descs[handle] = desc;
-}
-
-//-----------------------------------------------------------------------------
-//      コンピュートパイプラインステートを再生成します.
-//-----------------------------------------------------------------------------
-void PipelineStateManager::Recreate(const D3D12_COMPUTE_PIPELINE_STATE_DESC* pDesc, const PipelineStateHandle& handle)
-{
-    if (pDesc == nullptr)
-    {
-        ELOG("Error : Invalid Arguments.");
-        return;
-    }
-
-    auto itr = m_ReloadPipelineStates.find(handle);
-    if (itr != m_ReloadPipelineStates.end())
-    {
-        auto pso = itr->second;
-        itr->second = nullptr;
-
-        // 遅延解放.
-        Dispose(pso);
-    }
-
-    auto pDevice = GetD3D12Device();
-    assert(pDevice != nullptr);
-
-
-    PipelineStateDesc desc;
-    desc.Type    = PIPELINE_TYPE_COMPUTE;
-    desc.Compute = (*pDesc);
-
-    if (pDesc->CS.pShaderBytecode != nullptr && pDesc->CS.BytecodeLength > 0)
-    {
-        desc.CS.resize(pDesc->CS.BytecodeLength);
-        memcpy(desc.CS.data(), pDesc->CS.pShaderBytecode, pDesc->CS.BytecodeLength);
-        desc.Compute.CS.pShaderBytecode = desc.CS.data();
-        desc.Compute.CS.BytecodeLength  = desc.CS.size();
-    }
-
-    ID3D12PipelineState* pPipelineState = nullptr;
-    auto hr = pDevice->CreateComputePipelineState(&desc.Compute, IID_PPV_ARGS(&pPipelineState));
-    if (FAILED(hr))
-    {
-        if (pPipelineState != nullptr)
-        {
-            pPipelineState->Release();
-            pPipelineState = nullptr;
-        }
-        ELOG("Error : ID3D12Device::CreateComputePipelineState() Failed. errcode = 0x%x", hr);
-        return;
-    }
-
-    m_ReloadPipelineStates[handle] = pPipelineState;
-
-    m_Descs[handle] = desc;
-}
-
-//-----------------------------------------------------------------------------
-//      メッシュシェーダパイプラインステートを再生成します.
-//-----------------------------------------------------------------------------
-void PipelineStateManager::Recreate(const MESH_SHADER_PIPELINE_STATE_DESC* pDesc, const PipelineStateHandle& handle)
-{
-    if (pDesc == nullptr)
-    {
-        ELOG("Error : Invalid Arguments.");
-        return;
-    }
-
-    auto pDevice = GetD3D12Device();
-    assert(pDevice != nullptr);
-
-#ifdef ASDX_ENABLE_MESH_SHADER
-    // シェーダモデルをチェック.
-    {
-        D3D12_FEATURE_DATA_SHADER_MODEL shaderModel = { D3D_SHADER_MODEL_6_5 };
-        auto hr = pDevice->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &shaderModel, sizeof(shaderModel));
-        if (FAILED(hr) || (shaderModel.HighestShaderModel < D3D_SHADER_MODEL_6_5))
-        {
-            ELOG("Error : Shader Model 6.5 is not supported.");
-            return;
-        }
-    }
-
-    // メッシュシェーダをサポートしているかどうかチェック.
-    {
-        D3D12_FEATURE_DATA_D3D12_OPTIONS7 features = {};
-        auto hr = pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &features, sizeof(features));
-        if (FAILED(hr) || (features.MeshShaderTier == D3D12_MESH_SHADER_TIER_NOT_SUPPORTED))
-        {
-            ELOG("Error : Mesh Shaders aren't supported.");
-            return;
-        }
-    }
-#endif
-
-
-    PipelineStateDesc desc;
-    desc.Type       = PIPELINE_TYPE_MESH_SHADER;
-    desc.MeshShader = (*pDesc);
-
-    // 既に作成済みかどうかチェック.
-    auto itr = m_ReloadPipelineStates.find(handle);
-    if (itr != m_ReloadPipelineStates.end())
-    {
-        auto pso = itr->second;
-        itr->second = nullptr;
-
-        // 遅延解放.
-        Dispose(pso);
-    }
-
-    if (pDesc->AS.pShaderBytecode != nullptr && pDesc->AS.BytecodeLength > 0)
-    {
-        desc.AS.resize(pDesc->AS.BytecodeLength);
-        memcpy(desc.AS.data(), pDesc->AS.pShaderBytecode, pDesc->AS.BytecodeLength);
-        desc.MeshShader.AS.pShaderBytecode = desc.AS.data();
-        desc.MeshShader.AS.BytecodeLength  = desc.AS.size();
-    }
-    if (pDesc->MS.pShaderBytecode != nullptr && pDesc->MS.BytecodeLength > 0)
-    {
-        desc.MS.resize(pDesc->MS.BytecodeLength);
-        memcpy(desc.MS.data(), pDesc->MS.pShaderBytecode, pDesc->MS.BytecodeLength);
-        desc.MeshShader.MS.pShaderBytecode = desc.MS.data();
-        desc.MeshShader.MS.BytecodeLength  = desc.MS.size();
-    }
-    if (pDesc->PS.pShaderBytecode != nullptr && pDesc->PS.BytecodeLength > 0)
-    {
-        desc.PS.resize(pDesc->PS.BytecodeLength);
-        memcpy(desc.PS.data(), pDesc->PS.pShaderBytecode, pDesc->PS.BytecodeLength);
-        desc.MeshShader.PS.pShaderBytecode = desc.PS.data();
-        desc.MeshShader.PS.BytecodeLength  = desc.PS.size();
-    }
-
-    MsPsoDesc msPsoDesc(&desc.MeshShader);
+    MsPsoDesc msPsoDesc(&m_Desc);
 
     D3D12_PIPELINE_STATE_STREAM_DESC pssDesc = {};
     pssDesc.SizeInBytes = sizeof(msPsoDesc);
@@ -900,48 +838,519 @@ void PipelineStateManager::Recreate(const MESH_SHADER_PIPELINE_STATE_DESC* pDesc
     auto hr = pDevice->CreatePipelineState(&pssDesc, IID_PPV_ARGS(&pPipelineState));
     if (FAILED(hr))
     {
-        if (pPipelineState != nullptr)
-        {
-            pPipelineState->Release();
-            pPipelineState = nullptr;
-        }
-
-        ELOG("Error : ID3D12Device::CreatePipelineState() Failed. errcode = 0x%x", hr);
+        ELOG("Error : ID3D12Device::CreateComputePipelineState() Failed. errcode = 0x%x", hr);
+        m_Dirty = false;
         return;
     }
 
-    m_ReloadPipelineStates[handle] = pPipelineState;
+    // 遅延解放.
+    auto pso = m_ReloadState.Detach();
+    Dispose(pso);
 
-    m_Descs[handle] = desc;
+    // 差し替え.
+    m_ReloadState.Attach(pPipelineState);
+
+    // ダーティフラグを下す.
+    m_Dirty = false;
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+// RayTracingPipelineState class
+///////////////////////////////////////////////////////////////////////////////
+
 //-----------------------------------------------------------------------------
-//      更新処理を行います.
+//      リセット処理です.
 //-----------------------------------------------------------------------------
-void PipelineStateManager::Update()
+void RayTracingPipelineState::State::Reset()
 {
-    if (m_RequestDescs.empty())
-        return;
-
-    for(const auto& desc : m_RequestDescs)
+    // ステートオブジェクトを遅延解放.
     {
-        switch(desc.second.Type)
+        auto item = Object.Detach();
+        Dispose(item);
+    }
+
+    // プロパティを遅延解放.
+    {
+        auto item = Props.Detach();
+        Dispose(item);
+    }
+
+    // レイ生成テーブルを遅延解放.
+    {
+        auto item = RayGenTable.Detach();
+        Dispose(item);
+    }
+
+    // ミステーブルを遅延解放.
+    {
+        auto item = MissTable.Detach();
+        Dispose(item);
+    }
+
+    // ヒットグループを遅延解放.
+    {
+        auto item = HitGroupTable.Detach();
+        Dispose(item);
+    }
+}
+
+//-----------------------------------------------------------------------------
+//      有効かどうかチェックします.
+//-----------------------------------------------------------------------------
+bool RayTracingPipelineState::State::IsValid() const
+{ return (Object.GetPtr() != nullptr) && (RayGenTable.GetPtr() != nullptr); }
+
+//-----------------------------------------------------------------------------
+//      コンストラクタです.
+//-----------------------------------------------------------------------------
+RayTracingPipelineState::RayTracingPipelineState()
+{ /* DO_NOTHING */ }
+
+//-----------------------------------------------------------------------------
+//      デストラクタです.
+//-----------------------------------------------------------------------------
+RayTracingPipelineState::~RayTracingPipelineState()
+{ Term(); }
+
+//-----------------------------------------------------------------------------
+//      初期化処理を行います.
+//-----------------------------------------------------------------------------
+bool RayTracingPipelineState::Init(const RAYTRACING_PIPELINE_STATE_DESC& desc)
+{
+    if (!IsSupportDXR())
+    {
+        ELOG("Error : Not Support DXR");
+        return false;
+    }
+
+    auto pDevice = GetD3D12Device();
+    assert(pDevice != nullptr);
+
+    auto objCount = 5u * desc.HitGroups.size();
+    std::vector<D3D12_STATE_SUBOBJECT> objDescs;
+    objDescs.resize(objCount);
+
+    std::vector<D3D12_EXPORT_DESC> exports;
+    {
+        exports.push_back({desc.RayGeneration.c_str(), nullptr, D3D12_EXPORT_FLAG_NONE});
+        for(auto i=0u; i<desc.HitGroups.size(); ++i)
         {
-            case PIPELINE_TYPE_GRAPHICS    : { Recreate(&desc.second.Graphics  , desc.first); } break;
-            case PIPELINE_TYPE_COMPUTE     : { Recreate(&desc.second.Compute   , desc.first); } break;
-            case PIPELINE_TYPE_MESH_SHADER : { Recreate(&desc.second.MeshShader, desc.first); } break;
-            default: break;
+            auto& hit = desc.HitGroups[i];
+
+            if (hit.AnyHitShaderImport)
+            { exports.push_back({hit.AnyHitShaderImport, nullptr, D3D12_EXPORT_FLAG_NONE}); }
+
+            if (hit.ClosestHitShaderImport)
+            { exports.push_back({hit.ClosestHitShaderImport, nullptr, D3D12_EXPORT_FLAG_NONE}); }
+
+            if (hit.IntersectionShaderImport)
+            { exports.push_back({hit.IntersectionShaderImport, nullptr, D3D12_EXPORT_FLAG_NONE}); }
+        }
+
+        for(auto i=0u; i<desc.MissTables.size(); ++i)
+        {
+            exports.push_back({desc.MissTables[i].c_str(), nullptr, D3D12_EXPORT_FLAG_NONE});
         }
     }
 
-    m_RequestDescs.clear();
+    auto index = 0;
+
+    D3D12_GLOBAL_ROOT_SIGNATURE globalRootSignature = {};
+    globalRootSignature.pGlobalRootSignature = desc.pRootSignature;
+
+    objDescs[index].Type  = D3D12_STATE_SUBOBJECT_TYPE_GLOBAL_ROOT_SIGNATURE;
+    objDescs[index].pDesc = &globalRootSignature;
+    index++;
+
+    D3D12_DXIL_LIBRARY_DESC libDesc = {};
+    libDesc.DXILLibrary = desc.Shader;
+    libDesc.NumExports  = UINT(exports.size());
+    libDesc.pExports    = exports.data();
+
+    objDescs[index].Type     = D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY;
+    objDescs[index].pDesc    = &libDesc;
+    index++;
+
+    D3D12_RAYTRACING_SHADER_CONFIG shaderConfig = {};
+    shaderConfig.MaxAttributeSizeInBytes = desc.MaxAttributeSize;
+    shaderConfig.MaxPayloadSizeInBytes   = desc.MaxPayloadSize;
+
+    objDescs[index].Type     = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_SHADER_CONFIG;
+    objDescs[index].pDesc    = &shaderConfig;
+    index++;
+
+    D3D12_RAYTRACING_PIPELINE_CONFIG pipelineConfig = {};
+    pipelineConfig.MaxTraceRecursionDepth = desc.MaxTraceDepth;
+
+    objDescs[index].Type     = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_PIPELINE_CONFIG;
+    objDescs[index].pDesc    = &pipelineConfig;
+    index++;
+
+    for(auto i=0u; i<desc.HitGroups.size(); ++i)
+    {
+        objDescs[index].Type  = D3D12_STATE_SUBOBJECT_TYPE_HIT_GROUP;
+        objDescs[index].pDesc = &desc.HitGroups[i];
+        index++;
+    }
+
+    D3D12_STATE_OBJECT_DESC stateObjectDesc = {};
+    stateObjectDesc.Type            = D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE;
+    stateObjectDesc.NumSubobjects   = index;
+    stateObjectDesc.pSubobjects     = objDescs.data();
+
+    auto hr = pDevice->CreateStateObject(&stateObjectDesc, IID_PPV_ARGS(m_State.Object.GetAddress()));
+
+    // メモリ解放.
+    objDescs.clear();
+
+    if (FAILED(hr))
+    {
+        ELOG("Error : ID3D12Device5::CreateStateObject() Failed. errcode = 0x%x", hr);
+        return false;
+    }
+
+    hr = m_State.Object->QueryInterface(IID_PPV_ARGS(m_State.Props.GetAddress()));
+    if (FAILED(hr))
+    {
+        ELOG("Error : ID3D12StateObject::QueryInterface() Failed. errcode = 0x%x", hr);
+        return false;
+    }
+
+    // レイ生成テーブル.
+    {
+        std::vector<void*> shaderIdentifers;
+        shaderIdentifers.resize(1);
+        shaderIdentifers[0] = m_State.Props->GetShaderIdentifier(desc.RayGeneration.c_str());
+
+        if (!CreateShaderTable(
+            pDevice,
+            shaderIdentifers,
+            m_State.RayGenTable.GetAddress()))
+        {
+            ELOG("Error : RayGeneration Table Init Failed.");
+            return false;
+        }
+    }
+
+    // ミステーブル.
+    {
+        std::vector<void*> shaderIdentifers;
+        shaderIdentifers.resize(desc.MissTables.size());
+        for(size_t i=0; i<shaderIdentifers.size(); ++i)
+        {
+            shaderIdentifers[i] = m_State.Props->GetShaderIdentifier(desc.MissTables[i].c_str());
+        }
+
+        if (!CreateShaderTable(
+            pDevice,
+            shaderIdentifers,
+            m_State.MissTable.GetAddress()))
+        {
+            ELOG("Error : Miss Shader Table Init Failed.");
+            return false;
+        }
+    }
+
+    // ヒットグループ.
+    {
+        std::vector<void*> shaderIdentifers;
+        shaderIdentifers.resize(desc.HitGroups.size());
+        for(size_t i=0; i<shaderIdentifers.size(); ++i)
+        {
+            shaderIdentifers[i] = m_State.Props->GetShaderIdentifier(desc.HitGroups[i].HitGroupExport);
+        }
+
+        if (!CreateShaderTable(
+            pDevice,
+            shaderIdentifers,
+            m_State.HitGroupTable.GetAddress()))
+        {
+            ELOG("Error : HitGroup Table Init Failed.");
+            return false;
+        }
+    }
+
+    m_Desc = desc;
+    SetBlob(m_Lib, m_Desc.Shader);
+    g_Listener.AddRayTracing(this);
+    return true;
 }
 
-#endif
+//-----------------------------------------------------------------------------
+//      終了処理を行います.
+//-----------------------------------------------------------------------------
+void RayTracingPipelineState::Term()
+{
+    g_Listener.RemoveRayTracing(this);
+    m_State.Reset();
+    m_ReloadState.Reset();
+}
+
+//-----------------------------------------------------------------------------
+//      レイトレーシングパイプラインを起動します.
+//-----------------------------------------------------------------------------
+void RayTracingPipelineState::DispatchRays
+(
+    ID3D12GraphicsCommandList4* pCmd,
+    uint32_t                    width,
+    uint32_t                    height
+)
+{
+    assert(pCmd != nullptr);
+    assert(width  > 0);
+    assert(height > 0);
+
+    if (m_Dirty)
+        Recreate();
+
+    auto recordSize = asdx::RoundUp(
+        uint32_t(D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES),
+        uint32_t(D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT));
+
+    auto state = (m_ReloadState.IsValid()) ? &m_ReloadState : &m_State;
+
+    D3D12_DISPATCH_RAYS_DESC desc = {};
+    desc.RayGenerationShaderRecord.StartAddress = state->RayGenTable->GetGPUVirtualAddress();
+    desc.RayGenerationShaderRecord.SizeInBytes  = state->RayGenTable->GetDesc().Width;
+
+    desc.MissShaderTable.StartAddress   = state->MissTable->GetGPUVirtualAddress();
+    desc.MissShaderTable.SizeInBytes    = state->MissTable->GetDesc().Width;
+    desc.MissShaderTable.StrideInBytes  = recordSize;
+
+    desc.HitGroupTable.StartAddress     = state->HitGroupTable->GetGPUVirtualAddress();
+    desc.HitGroupTable.SizeInBytes      = state->HitGroupTable->GetDesc().Width;
+    desc.HitGroupTable.StrideInBytes    = recordSize;
+
+    desc.Width  = width;
+    desc.Height = height;
+    desc.Depth  = 1;
+
+    pCmd->SetPipelineState1(state->Object.GetPtr());
+    pCmd->DispatchRays(&desc);
+}
+
+//-----------------------------------------------------------------------------
+//      DXILライブラリのリロードファイルパスを設定します.
+//-----------------------------------------------------------------------------
+void RayTracingPipelineState::SetReloadPath(const std::string& path)
+{ m_Lib.Path = ToFullPath(path).string(); }
+
+//-----------------------------------------------------------------------------
+//      リロード時の処理です.
+//-----------------------------------------------------------------------------
+void RayTracingPipelineState::OnReload(const std::string& fullPath)
+{
+    if (fullPath.empty())
+        return;
+
+    if (m_Lib.Path == fullPath)
+    {
+        std::vector<uint8_t> binary;
+        if (CompileFromFileA(fullPath.c_str(), g_Includes, "", "lib_6_6", binary))
+        {
+            m_Lib.Blob = std::move(binary);
+            ReplaceCode(m_Lib, m_Desc.Shader);
+            m_Dirty = true;
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+//      再生成処理です.
+//-----------------------------------------------------------------------------
+void RayTracingPipelineState::Recreate()
+{
+    auto pDevice = GetD3D12Device();
+    assert(pDevice != nullptr);
+
+    auto objCount = 5u * m_Desc.HitGroups.size();
+    std::vector<D3D12_STATE_SUBOBJECT> objDescs;
+    objDescs.resize(objCount);
+
+    std::vector<D3D12_EXPORT_DESC> exports;
+    {
+        exports.push_back({m_Desc.RayGeneration.c_str(), nullptr, D3D12_EXPORT_FLAG_NONE});
+        for(auto i=0u; i<m_Desc.HitGroups.size(); ++i)
+        {
+            auto& hit = m_Desc.HitGroups[i];
+
+            if (hit.AnyHitShaderImport)
+            { exports.push_back({hit.AnyHitShaderImport, nullptr, D3D12_EXPORT_FLAG_NONE}); }
+
+            if (hit.ClosestHitShaderImport)
+            { exports.push_back({hit.ClosestHitShaderImport, nullptr, D3D12_EXPORT_FLAG_NONE}); }
+
+            if (hit.IntersectionShaderImport)
+            { exports.push_back({hit.IntersectionShaderImport, nullptr, D3D12_EXPORT_FLAG_NONE}); }
+        }
+
+        for(auto i=0u; i<m_Desc.MissTables.size(); ++i)
+        {
+            exports.push_back({m_Desc.MissTables[i].c_str(), nullptr, D3D12_EXPORT_FLAG_NONE});
+        }
+    }
+
+    auto index = 0;
+
+    D3D12_GLOBAL_ROOT_SIGNATURE globalRootSignature = {};
+    globalRootSignature.pGlobalRootSignature = m_Desc.pRootSignature;
+
+    objDescs[index].Type  = D3D12_STATE_SUBOBJECT_TYPE_GLOBAL_ROOT_SIGNATURE;
+    objDescs[index].pDesc = &globalRootSignature;
+    index++;
+
+    D3D12_DXIL_LIBRARY_DESC libDesc = {};
+    libDesc.DXILLibrary = m_Desc.Shader;
+    libDesc.NumExports  = UINT(exports.size());
+    libDesc.pExports    = exports.data();
+
+    objDescs[index].Type     = D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY;
+    objDescs[index].pDesc    = &libDesc;
+    index++;
+
+    D3D12_RAYTRACING_SHADER_CONFIG shaderConfig = {};
+    shaderConfig.MaxAttributeSizeInBytes = m_Desc.MaxAttributeSize;
+    shaderConfig.MaxPayloadSizeInBytes   = m_Desc.MaxPayloadSize;
+
+    objDescs[index].Type     = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_SHADER_CONFIG;
+    objDescs[index].pDesc    = &shaderConfig;
+    index++;
+
+    D3D12_RAYTRACING_PIPELINE_CONFIG pipelineConfig = {};
+    pipelineConfig.MaxTraceRecursionDepth = m_Desc.MaxTraceDepth;
+
+    objDescs[index].Type     = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_PIPELINE_CONFIG;
+    objDescs[index].pDesc    = &pipelineConfig;
+    index++;
+
+    for(auto i=0u; i<m_Desc.HitGroups.size(); ++i)
+    {
+        objDescs[index].Type  = D3D12_STATE_SUBOBJECT_TYPE_HIT_GROUP;
+        objDescs[index].pDesc = &m_Desc.HitGroups[i];
+        index++;
+    }
+
+    State state;
+
+    D3D12_STATE_OBJECT_DESC stateObjectDesc = {};
+    stateObjectDesc.Type            = D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE;
+    stateObjectDesc.NumSubobjects   = index;
+    stateObjectDesc.pSubobjects     = objDescs.data();
+
+    auto hr = pDevice->CreateStateObject(&stateObjectDesc, IID_PPV_ARGS(state.Object.GetAddress()));
+
+    // メモリ解放.
+    objDescs.clear();
+
+    m_Dirty = false;
+
+    if (FAILED(hr))
+    {
+        ELOG("Error : ID3D12Device5::CreateStateObject() Failed. errcode = 0x%x", hr);
+    }
+
+    hr = m_ReloadState.Object->QueryInterface(IID_PPV_ARGS(state.Props.GetAddress()));
+    if (FAILED(hr))
+    {
+        ELOG("Error : ID3D12StateObject::QueryInterface() Failed. errcode = 0x%x", hr);
+    }
+
+    // レイ生成テーブル.
+    {
+        std::vector<void*> shaderIdentifers;
+        shaderIdentifers.resize(1);
+        shaderIdentifers[0] = state.Props->GetShaderIdentifier(m_Desc.RayGeneration.c_str());
+
+        if (!CreateShaderTable(
+            pDevice,
+            shaderIdentifers,
+            state.RayGenTable.GetAddress()))
+        {
+            ELOG("Error : RayGeneration Table Init Failed.");
+        }
+    }
+
+    // ミステーブル.
+    {
+        std::vector<void*> shaderIdentifers;
+        shaderIdentifers.resize(m_Desc.MissTables.size());
+        for(size_t i=0; i<shaderIdentifers.size(); ++i)
+        {
+            shaderIdentifers[i] = state.Props->GetShaderIdentifier(m_Desc.MissTables[i].c_str());
+        }
+
+        if (!CreateShaderTable(
+            pDevice,
+            shaderIdentifers,
+            state.MissTable.GetAddress()))
+        {
+            ELOG("Error : Miss Shader Table Init Failed.");
+        }
+    }
+
+    // ヒットグループ.
+    {
+        std::vector<void*> shaderIdentifers;
+        shaderIdentifers.resize(m_Desc.HitGroups.size());
+        for(size_t i=0; i<shaderIdentifers.size(); ++i)
+        {
+            shaderIdentifers[i] = state.Props->GetShaderIdentifier(m_Desc.HitGroups[i].HitGroupExport);
+        }
+
+        if (!CreateShaderTable(
+            pDevice,
+            shaderIdentifers,
+            state.HitGroupTable.GetAddress()))
+        {
+            ELOG("Error : HitGroup Table Init Failed.");
+        }
+    }
+
+    m_ReloadState.Reset();
+    m_ReloadState = state;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Functions.
 ///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      パイプラインステートウォッチャーの初期化処理.
+//-----------------------------------------------------------------------------
+bool InitPipelineStateWatcher(const char* directory, const std::vector<std::string>& includes)
+{
+    if (g_Initialized)
+        return false;
+
+    FileWatcher::Desc desc;
+    desc.DirectoryPath = directory;
+    desc.pListeners.push_back(&g_Listener);
+    if (!g_Watcher.Init(desc))
+    {
+        ELOG("Error : FileWatcher::Init() Failed.");
+        return false;
+    }
+
+    g_Includes = includes;
+    g_Initialized = true;
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      パイプラインステートウォッチャーの終了処理.
+//-----------------------------------------------------------------------------
+void TermPipelineStateWatcher()
+{
+    if (!g_Initialized)
+        return;
+
+    g_Watcher .Term();
+    g_Listener.Reset();
+    g_Includes.clear();
+    g_Includes.shrink_to_fit();
+    g_Initialized = false;
+}
 
 //-----------------------------------------------------------------------------
 //      SRVレンジとして初期化します.

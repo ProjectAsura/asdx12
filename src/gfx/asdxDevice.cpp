@@ -263,6 +263,11 @@ public:
     //-------------------------------------------------------------------------
     D3D12MA::Allocator* GetAllocator() const { return m_pAllocator.GetPtr(); }
 
+    //-------------------------------------------------------------------------
+    //! @brief      DXRをサポートしているかどうか.
+    //-------------------------------------------------------------------------
+    bool IsSupportDXR() const { return m_SupportDXR; }
+
 private:
     //=========================================================================
     // private variables.
@@ -286,6 +291,7 @@ private:
     SpinLock                        m_SpinLock;                 //!< スピンロックです.
     VertexBuffer                    m_QuadVB;                   //!< フルスクリーン描画用三角形.
     RefPtr<D3D12MA::Allocator>      m_pAllocator;               //!< D3D12メモリアロケータ.
+    bool                            m_SupportDXR = false;       //!< DXRに対応しているかどうか.
 
     //=========================================================================
     // private methods
@@ -576,6 +582,13 @@ bool GraphicsSystem::Init(const DeviceDesc& deviceDesc)
         m_QuadVB.Unmap();
     }
 
+    // DXRのサポートチェック.
+    m_SupportDXR = false;
+    D3D12_FEATURE_DATA_D3D12_OPTIONS5 options = {};
+    auto hr = m_pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &options, sizeof(options));
+    if (SUCCEEDED(hr))
+    { m_SupportDXR = (options.RaytracingTier != D3D12_RAYTRACING_TIER_NOT_SUPPORTED); }
+
     // 正常終了.
     return true;
 }
@@ -836,5 +849,11 @@ void DrawQuad(ID3D12GraphicsCommandList* pCmd)
     pCmd->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     pCmd->DrawInstanced(3, 1, 0, 0);
 }
+
+//-----------------------------------------------------------------------------
+//      DXRをサポートしているかどうかチェックします.
+//-----------------------------------------------------------------------------
+bool IsSupportDXR()
+{ return GraphicsSystem::Instance().IsSupportDXR(); }
 
 } // namespace asdx

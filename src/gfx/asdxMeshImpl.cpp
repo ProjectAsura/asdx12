@@ -254,4 +254,20 @@ uint32_t Mesh::GetIndexCount() const
 const BoundingSphere3& Mesh::GetBoundingSphere() const
 { return m_BoundingSphere; }
 
+//-----------------------------------------------------------------------------
+//      レイトレーシングジオメトリトライアングル設定を取得します.
+//-----------------------------------------------------------------------------
+D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC Mesh::GetRayTracingGeometryTrianglesDesc() const
+{
+    D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC result = {};
+    result.IndexFormat                  = DXGI_FORMAT_R32_UINT;
+    result.VertexFormat                 = DXGI_FORMAT_R32G32B32_FLOAT;
+    result.IndexCount                   = m_IndexCount;
+    result.VertexCount                  = m_VertexCount;
+    result.IndexBuffer                  = m_VertexIndices.GetResource()->GetGPUVirtualAddress();
+    result.VertexBuffer.StartAddress    = m_Positions    .GetResource()->GetGPUVirtualAddress();
+    result.VertexBuffer.StrideInBytes   = sizeof(Vector3);
+    return result;
+}
+
 } // namespace asdx

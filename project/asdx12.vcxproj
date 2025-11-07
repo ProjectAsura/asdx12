@@ -274,7 +274,6 @@
     <ClCompile Include="..\src\gfx\asdxModelManagerImpl.cpp" />
     <ClCompile Include="..\src\gfx\asdxPipelineState.cpp" />
     <ClCompile Include="..\src\gfx\asdxPresetState.cpp" />
-    <ClCompile Include="..\src\gfx\asdxRayTracing.cpp" />
     <ClCompile Include="..\src\gfx\asdxSampler.cpp" />
     <ClCompile Include="..\src\gfx\asdxScreenCapture.cpp" />
     <ClCompile Include="..\src\gfx\asdxShaderCompiler.cpp" />

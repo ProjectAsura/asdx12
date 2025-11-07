@@ -5,19 +5,12 @@
 //-----------------------------------------------------------------------------
 #pragma once
 
-// リロード有効定義.
-#ifndef ASDX_ENABLE_PIPELINE_STATE_RELOAD
-#define ASDX_ENABLE_PIPELINE_STATE_RELOAD       (1)
-#endif//ASDX_ENABLE_PIPELINE_STATE_RELOAD
-
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <unordered_map>
 #include <d3d12.h>
-#if ASDX_ENABLE_PIPELINE_STATE_RELOAD
-#include <edit/asdxFileWatcher.h>
-#endif//ASDX_ENABLE_PIPELINE_STATE_RELOAD
+#include <fnd/asdxRef.h>
+#include <fnd/asdxStringView.h>
 
 
 #if defined(DEBUG) || defined(_DEBUG)
@@ -27,40 +20,8 @@
 
 namespace asdx {
 
-//-----------------------------------------------------------------------------
-// Type Aliasing.
-//-----------------------------------------------------------------------------
-using PipelineStateHandle = uint64_t;
-using ShaderHandle        = uint64_t;
-
-
 ///////////////////////////////////////////////////////////////////////////////
-// SHADER_TYPE
-///////////////////////////////////////////////////////////////////////////////
-enum SHADER_TYPE
-{
-    SHADER_TYPE_VS,      // Vertex Shader.
-    SHADER_TYPE_PS,      // Pixel Shader.
-    SHADER_TYPE_DS,      // Domain Shader.
-    SHADER_TYPE_HS,      // Hull Shader.
-    SHADER_TYPE_GS,      // Geometry Shader.
-    SHADER_TYPE_CS,      // Compute Shader.
-    SHADER_TYPE_AS,      // Amplification Shader.
-    SHADER_TYPE_MS,      // Mesh Shader.
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// PIPELINE_TYPE
-///////////////////////////////////////////////////////////////////////////////
-enum PIPELINE_TYPE
-{
-    PIPELINE_TYPE_GRAPHICS,     //!< Legacy Graphics Pipeline.
-    PIPELINE_TYPE_COMPUTE,      //!< Compute Pipeline.
-    PIPELINE_TYPE_MESH_SHADER,  //!< Mesh Shader Pipeline.
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// GEOMETRY_PIPELINE_STATE_DESC structure
+// MESH_SAHDER_PIPELINE_STATE_DESC structure
 ///////////////////////////////////////////////////////////////////////////////
 struct MESH_SHADER_PIPELINE_STATE_DESC
 {
@@ -80,13 +41,36 @@ struct MESH_SHADER_PIPELINE_STATE_DESC
     D3D12_PIPELINE_STATE_FLAGS  Flags;                  //!< フラグ.
 };
 
+
 ///////////////////////////////////////////////////////////////////////////////
-// PipelineStateManager 
+// RAYTRACING_PIPELINE_STATE_DESC structure
 ///////////////////////////////////////////////////////////////////////////////
-class PipelineStateManager 
-#if ASDX_ENABLE_PIPELINE_STATE_RELOAD
-: public IFileListener
-#endif
+struct RAYTRACING_PIPELINE_STATE_DESC
+{
+    ID3D12RootSignature*                pRootSignature;     //!< ルートシグニチャ.
+    D3D12_SHADER_BYTECODE               Shader;             //!< シェーダコード.
+    std::wstring                        RayGeneration;      //!< レイ生成の関数名.
+    std::vector<D3D12_HIT_GROUP_DESC>   HitGroups;          //!< ヒットグループ.
+    std::vector<std::wstring>           MissTables;         //!< ミステーブル.
+    uint32_t                            MaxPayloadSize;     //!< ペイロードサイズの最大値.
+    uint32_t                            MaxAttributeSize;   //!< アトリビュートサイズの最大値.
+    uint32_t                            MaxTraceDepth;      //!< 最大トレース深度.
+};
+
+
+///////////////////////////////////////////////////////////////////////////////
+// ShaderInfo structure
+///////////////////////////////////////////////////////////////////////////////
+struct ShaderInfo
+{
+    std::string             Path;
+    std::vector<uint8_t>    Blob;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// GraphicsPipelineState class
+///////////////////////////////////////////////////////////////////////////////
+class GraphicsPipelineState
 {
     //=========================================================================
     // list of friend classes and methods.
@@ -104,317 +88,397 @@ public:
     //=========================================================================
 
     //-------------------------------------------------------------------------
-    //! @brief      シングルトンインスタンスを取得します.
-    //! 
-    //! @return     シングルトンインスタンスを返却します.
+    //! @brief      コンストラクタです.
     //-------------------------------------------------------------------------
-    static PipelineStateManager& Instance();
+    GraphicsPipelineState();
 
     //-------------------------------------------------------------------------
-    //! @brief      リセット処理を行います.
+    //! @brief      デストラクタです.
     //-------------------------------------------------------------------------
-    void Reset()
-    {
-    #if ASDX_ENABLE_PIPELINE_STATE_RELOAD
-        ClearEx();
-    #else
-        Clear();
-    #endif
-    }
+    ~GraphicsPipelineState();
 
     //-------------------------------------------------------------------------
-    //! @brief      パイプラインステートを生成します.
+    //! @brief      初期化処理を行います.
     //! 
-    //! @param[in]      pDesc       構成設定.
-    //! @param[out]     handle      パイプラインステートハンドルの格納先.
-    //! @retval true    生成に成功.
-    //! @retval false   生成に失敗.
+    //! @param[in]      desc        構成設定です.
+    //! @retval true    初期化に成功.
+    //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
-    bool Create(const D3D12_GRAPHICS_PIPELINE_STATE_DESC* pDesc, PipelineStateHandle& handle);
+    bool Init(const D3D12_GRAPHICS_PIPELINE_STATE_DESC* desc);
 
     //-------------------------------------------------------------------------
-    //! @brief      パイプラインステートを生成します.
-    //! 
-    //! @param[in]      pDesc       構成設定.
-    //! @param[out]     handle      パイプラインステートハンドルの格納先.
-    //! @retval true    生成に成功.
-    //! @retval false   生成に失敗.
+    //! @brief      終了処理を行います.
     //-------------------------------------------------------------------------
-    bool Create(const D3D12_COMPUTE_PIPELINE_STATE_DESC* pDesc, PipelineStateHandle& handle);
-
-    //-------------------------------------------------------------------------
-    //! @brief      パイプラインステートを生成します.
-    //! 
-    //! @param[in]      pDesc       構成設定.
-    //! @param[out]     handle      パイプラインステートハンドルの格納先.
-    //! @retval true    生成に成功.
-    //! @retval false   生成に失敗.
-    //-------------------------------------------------------------------------
-    bool Create(const MESH_SHADER_PIPELINE_STATE_DESC* pDesc, PipelineStateHandle& handle);
+    void Term();
 
     //-------------------------------------------------------------------------
     //! @brief      パイプラインステートを設定します.
     //! 
-    //! @param[in]      pCmd        グラフィックスコマンドリストです.
-    //! @param[in]      handle      パイプラインステートハンドルです.
+    //! @param[in]      pCmd        グラフィックスコマンドリスト.
     //-------------------------------------------------------------------------
-    void SetState(ID3D12GraphicsCommandList* pCmd, const PipelineStateHandle& handle)
-    {
-    #if ASDX_ENABLE_PIPELINE_STATE_RELOAD
-        auto pipelineState = FindPipelineStateEx(handle);
-    #else
-        auto pipelineState = FindPipelineState(handle);
-    #endif
-        if (pipelineState == nullptr)
-            return;
+    void SetState(ID3D12GraphicsCommandList* pCmd);
 
-        pCmd->SetPipelineState(pipelineState);
-    }
-
-#if ASDX_ENABLE_PIPELINE_STATE_RELOAD
     //-------------------------------------------------------------------------
-    //! @brief      リロードするシェーダを登録します.
+    //! @brief      頂点シェーダのリロードファイルパスを設定します.
     //! 
-    //! @param[in]      type            シェーダタイプです.
-    //! @param[in]      path            ファイルパスです.
-    //! @param[in]      pipelineCount   パイプライン数です.
-    //! @param[in]      handles         パイプラインハンドルの配列です.
-    //! @return     シェーダハンドルを返却します.
+    //! @param[in]      value       設定するパス.
     //-------------------------------------------------------------------------
-    ShaderHandle RegisterShader(SHADER_TYPE type, const char* path, uint32_t pipelineCounts, const PipelineStateHandle* handles);
+    void SetReloadPathVS(const std::string& value);
 
     //-------------------------------------------------------------------------
-    //! @brief      リロードするシェーダを登録します.
+    //! @brief      ピクセルシェーダのリロードファイルパスを設定します.
     //! 
-    //! @param[in]      type            シェーダタイプです.
-    //! @param[in]      path            ファイルパスです.
-    //! @param[in]      handle          パイプラインハンドル
-    //! @return     シェーダハンドルを返却します.
+    //! @param[in]      value       設定するパス.
     //-------------------------------------------------------------------------
-    ShaderHandle RegisterShader(SHADER_TYPE type, const char* path, PipelineStateHandle handle)
-    { return RegisterShader(type, path, 1, &handle); }
+    void SetReloadPathPS(const std::string& value);
 
     //-------------------------------------------------------------------------
-    //! @brief      リロードするシェーダを登録解除します.
+    //! @brief      ハルシェーダのリロードファイルパスを設定します.
     //! 
-    //! @param[in]      handle      登録解除するシェーダハンドルです.
+    //! @param[in]      value       設定するパス.
     //-------------------------------------------------------------------------
-    void UnregisterShader(ShaderHandle handle);
+    void SetReloadPathHS(const std::string& value);
 
     //-------------------------------------------------------------------------
-    //! @brief      リロードするシェーダインクルードファイルを登録します.
+    //! @brief      ドメインシェーダのリロードファイルパスを設定します.
     //! 
-    //! @param[in]      path                ファイルパス.
-    //! @param[in]      dependencyCount     依存シェーダファイル数.
-    //! @param[in]      handles             依存シェーダファイルの配列.
-    //! @return     依存ファイルハンドルを返却します.
-    //! @note       主にインクルードファイルの変更によるシェーダの変更を通知するために使用します.
+    //! @param[in]      value       設定するパス.
     //-------------------------------------------------------------------------
-    ShaderHandle RegisterInclude(const char* path, uint32_t shaderCount, const ShaderHandle* handles);
+    void SetReloadPathDS(const std::string& value);
 
     //-------------------------------------------------------------------------
-    //! @brief      リロードするシェーダインクルードファイルを登録します.
+    //! @brief      ジオメトリシェーダのリロードファイルパスを設定します.
     //! 
-    //! @param[in]      path                ファイルパス.
-    //! @param[in]      handle              依存シェーダファイル.
-    //! @return     依存ファイルハンドルを返却します.
-    //! @note       主にインクルードファイルの変更によるシェーダの変更を通知するために使用します.
+    //! @param[in]      value       設定するパス.
     //-------------------------------------------------------------------------
-    ShaderHandle RegisterInclude(const char* path, ShaderHandle handle)
-    { return RegisterInclude(path, 1, &handle); }
+    void SetReloadPathGS(const std::string& value);
 
     //-------------------------------------------------------------------------
-    //! @brief      リロードするシェーダインクルードファイルの登録解除します.
+    //! @brief      リロード時の処理です.
     //! 
-    //! @param[in]      handle      登録解除する依存ファイルハンドルです.
+    //! @param[in]      fullPath    変更ファイルのフルパス.
     //-------------------------------------------------------------------------
-    void UnregisterInclude(ShaderHandle handle);
-
-    //-------------------------------------------------------------------------
-    //! @brief      インクルードディレクトリを追加します.
-    //! 
-    //! @param[in]      dirPath     追加するインクルードディレクトリです.
-    //-------------------------------------------------------------------------
-    void AddIncludeDirs(const char* dirPath);
-
-    //-------------------------------------------------------------------------
-    //! @brief      ファイル変更時の処理です.
-    //! 
-    //! @param[in]      args        ファイルイベント引数.
-    //-------------------------------------------------------------------------
-    void OnChanged(const FileEventArgs& args) override;
-
-    //-------------------------------------------------------------------------
-    //! @brief      更新処理を行います.
-    //-------------------------------------------------------------------------
-    void Update();
-#endif
+    void OnReload(const std::string& fullPath);
 
 private:
-    ///////////////////////////////////////////////////////////////////////////
-    // PipelineStateDesc structure
-    ///////////////////////////////////////////////////////////////////////////
-    struct PipelineStateDesc
-    {
-        PIPELINE_TYPE   Type;
-        union {
-            D3D12_GRAPHICS_PIPELINE_STATE_DESC Graphics;
-            D3D12_COMPUTE_PIPELINE_STATE_DESC  Compute;
-            MESH_SHADER_PIPELINE_STATE_DESC    MeshShader;
-        };
-        std::vector<uint8_t>    VS;
-        std::vector<uint8_t>    PS;
-        std::vector<uint8_t>    HS;
-        std::vector<uint8_t>    DS;
-        std::vector<uint8_t>    GS;
-        std::vector<uint8_t>    CS;
-        std::vector<uint8_t>    AS;
-        std::vector<uint8_t>    MS;
-    };
-
-#if ASDX_ENABLE_PIPELINE_STATE_RELOAD
-    ///////////////////////////////////////////////////////////////////////////
-    // Reload structure
-    ///////////////////////////////////////////////////////////////////////////
-    struct Reload
-    {
-        SHADER_TYPE                         Type;
-        std::string                         Path;
-        std::vector<PipelineStateHandle>    Handles;
-
-        Reload() = default;
-
-        Reload(SHADER_TYPE type, const std::string& path, uint32_t pipelineCount, const PipelineStateHandle* handles)
-        : Type  (type)
-        , Path  (path)
-        {
-            if (handles != nullptr)
-            {
-                Handles.resize(pipelineCount);
-                for(auto i=0u; i<pipelineCount; ++i)
-                { Handles[i] = handles[i]; }
-            }
-        }
-    };
-
-    ///////////////////////////////////////////////////////////////////////////
-    // Dependency structure
-    ///////////////////////////////////////////////////////////////////////////
-    struct Dependency
-    {
-        std::string                 Path;
-        std::vector<ShaderHandle>   Shaders;
-
-        Dependency() = default;
-
-        Dependency(const std::string& path, uint32_t shaderCount, const ShaderHandle* handles)
-            : Path(path)
-        {
-            if (handles != nullptr)
-            {
-                Shaders.resize(shaderCount);
-                for(auto i=0u; i<shaderCount; ++i)
-                { Shaders[i] = handles[i]; }
-            }
-        }
-    };
-#endif
-
     //=========================================================================
     // private variables.
     //=========================================================================
-    static PipelineStateManager s_Instance; //!< シングルトンインスタンスです.
-    std::unordered_map<PipelineStateHandle, PipelineStateDesc>      m_Descs;                //!< パイプラインステート設定です.
-    std::unordered_map<PipelineStateHandle, ID3D12PipelineState*>   m_PipelineStates;       //!< パイプラインステートです.
-#if ASDX_ENABLE_PIPELINE_STATE_RELOAD
-    std::vector<std::string>                                        m_IncludeDirs;          //!< インクルードディレクトリ.
-    std::unordered_map<ShaderHandle, Reload>                        m_Reloads;              //!< リロード情報.
-    std::unordered_map<ShaderHandle, Dependency>                    m_Dependencies;         //!< 依存情報.
-    std::unordered_map<PipelineStateHandle, ID3D12PipelineState*>   m_ReloadPipelineStates; //!< リロードで生成したパイプラインステートです.
-    std::unordered_map<PipelineStateHandle, PipelineStateDesc>      m_RequestDescs;         //!< 再生成リクエスト設定です.
-#endif
+    RefPtr<ID3D12PipelineState>         m_State;
+    D3D12_GRAPHICS_PIPELINE_STATE_DESC  m_Desc;
+    RefPtr<ID3D12PipelineState>         m_ReloadState;
+    ShaderInfo                          m_VS;
+    ShaderInfo                          m_PS;
+    ShaderInfo                          m_HS;
+    ShaderInfo                          m_DS;
+    ShaderInfo                          m_GS;
+    bool                                m_Dirty = false;
 
     //=========================================================================
     // private methods.
     //=========================================================================
 
     //-------------------------------------------------------------------------
-    //! @brief      パイプラインステートを検索します.
-    //! 
-    //! @param[in]      handle      パイプラインステートハンドル.
-    //! @return     パイプラインステートを返却します.
-    //!             見つからなかった場合は nullptr を返却します.
+    //! @brief
     //-------------------------------------------------------------------------
-    ID3D12PipelineState* FindPipelineState(const PipelineStateHandle& handle);
+    void Recreate();
+};
 
-    //-------------------------------------------------------------------------
-    //! @brief      クリア処理を行います.
-    //-------------------------------------------------------------------------
-    void Clear();
+///////////////////////////////////////////////////////////////////////////////
+// ComputePipelineState class
+///////////////////////////////////////////////////////////////////////////////
+class ComputePipelineState
+{
+    //=========================================================================
+    // list of friend classes and methods.
+    //=========================================================================
+    /* NOTHING */
 
-#if ASDX_ENABLE_PIPELINE_STATE_RELOAD
-    //-------------------------------------------------------------------------
-    //! @brief      パイプラインステートを検索します.
-    //! 
-    //! @param[in]      handle      パイプラインステートハンドル.
-    //! @return     パイプラインステートを返却します.
-    //!             見つからなかった場合は nullptr を返却します.
-    //-------------------------------------------------------------------------
-    ID3D12PipelineState* FindPipelineStateEx(const PipelineStateHandle& handle);
+public:
+    //=========================================================================
+    // public variables.
+    //=========================================================================
+    /* NOTHING */
 
-    //-------------------------------------------------------------------------
-    //! @brief      クリア処理を行います.
-    //-------------------------------------------------------------------------
-    void ClearEx();
-
-    //-------------------------------------------------------------------------
-    //! @brief      再生成要求を発行します.
-    //! 
-    //! @param[in]      pipelineHandle      パイプラインステートハンドル.
-    //! @param[in]      shaderHandle        シェーダハンドル.
-    //-------------------------------------------------------------------------
-    void RequestRecreate(PipelineStateHandle pipelineHandle, ShaderHandle shaderHandle);
-
-    //-------------------------------------------------------------------------
-    //! @brief      パイプラインステートを生成します.
-    //! 
-    //! @param[in]      pDesc       構成設定.
-    //! @param[in]      handle      パイプラインステートハンドル.
-    //-------------------------------------------------------------------------
-    void Recreate(const D3D12_GRAPHICS_PIPELINE_STATE_DESC* pDesc, const PipelineStateHandle& handle);
-
-    //-------------------------------------------------------------------------
-    //! @brief      パイプラインステートを生成します.
-    //! 
-    //! @param[in]      pDesc       構成設定.
-    //! @param[in]      handle      パイプラインステートハンドル.
-    //-------------------------------------------------------------------------
-    void Recreate(const D3D12_COMPUTE_PIPELINE_STATE_DESC* pDesc, const PipelineStateHandle& handle);
-
-    //-------------------------------------------------------------------------
-    //! @brief      パイプラインステートを生成します.
-    //! 
-    //! @param[in]      pDesc       構成設定.
-    //! @param[int]     handle      パイプラインステートハンドル.
-    //-------------------------------------------------------------------------
-    void Recreate(const MESH_SHADER_PIPELINE_STATE_DESC* pDesc, const PipelineStateHandle& handle);
-#endif
+    //=========================================================================
+    // public methods.
+    //=========================================================================
 
     //-------------------------------------------------------------------------
     //! @brief      コンストラクタです.
     //-------------------------------------------------------------------------
-    PipelineStateManager()
-    { /* DO_NOTHING */ }
+    ComputePipelineState();
 
     //-------------------------------------------------------------------------
     //! @brief      デストラクタです.
     //-------------------------------------------------------------------------
-    ~PipelineStateManager()
-    { Clear(); }
+    ~ComputePipelineState();
 
-    PipelineStateManager             (const PipelineStateManager&) = delete;
-    PipelineStateManager& operator = (const PipelineStateManager&) = delete;
+    //-------------------------------------------------------------------------
+    //! @brief      初期化処理です.
+    //! 
+    //! @param[in]      desc        構成設定.
+    //! @retval true    初期化に成功.
+    //! @retval false   初期化に失敗.
+    //-------------------------------------------------------------------------
+    bool Init(const D3D12_COMPUTE_PIPELINE_STATE_DESC* desc);
+
+    //-------------------------------------------------------------------------
+    //! @brief      終了処理です.
+    //-------------------------------------------------------------------------
+    void Term();
+
+    //-------------------------------------------------------------------------
+    //! @brief      パイプラインステートを設定します.
+    //! 
+    //! @param[in]      pCmd        グラフィックスコマンドリスト.
+    //-------------------------------------------------------------------------
+    void SetState(ID3D12GraphicsCommandList* pCmd);
+
+    //-------------------------------------------------------------------------
+    //! @brief      コンピュートシェーダのリロードファイルパスを設定します.
+    //! 
+    //! @param[in]      value       設定するパス.
+    //-------------------------------------------------------------------------
+    void SetReloadPathCS(const std::string& value);
+
+    //-------------------------------------------------------------------------
+    //! @brief      リロード時の処理です.
+    //! 
+    //! @param[in]      fullPath    変更ファイルのフルパス.
+    //-------------------------------------------------------------------------
+    void OnReload(const std::string& fullPath);
+
+private:
+    //=========================================================================
+    // private variables.
+    //=========================================================================
+    RefPtr<ID3D12PipelineState>         m_State;
+    D3D12_COMPUTE_PIPELINE_STATE_DESC   m_Desc;
+    RefPtr<ID3D12PipelineState>         m_ReloadState;
+    ShaderInfo                          m_CS;
+    bool                                m_Dirty = false;
+
+    //=========================================================================
+    // private methods.
+    //=========================================================================
+
+    //-------------------------------------------------------------------------
+    //! @brief
+    //-------------------------------------------------------------------------
+    void Recreate();
 };
+
+///////////////////////////////////////////////////////////////////////////////
+// MeshShaderPipelineState class
+///////////////////////////////////////////////////////////////////////////////
+class MeshShaderPipelineState
+{
+    //=========================================================================
+    // list of friend classes and methods.
+    //=========================================================================
+    /* NOTHING */
+
+public:
+    //=========================================================================
+    // public variables.
+    //=========================================================================
+    /* NOTHING */
+
+    //=========================================================================
+    // public methods.
+    //=========================================================================
+
+    //-------------------------------------------------------------------------
+    //! @brief      コンストラクタです.
+    //-------------------------------------------------------------------------
+    MeshShaderPipelineState();
+
+    //-------------------------------------------------------------------------
+    //! @brief      デストラクタです.
+    //-------------------------------------------------------------------------
+    ~MeshShaderPipelineState();
+
+    //-------------------------------------------------------------------------
+    //! @brief      初期化処理です.
+    //! 
+    //! @param[in]      desc        構成設定です.
+    //! @retval true    初期化に成功.
+    //! @retval false   初期化に失敗.
+    //-------------------------------------------------------------------------
+    bool Init(const MESH_SHADER_PIPELINE_STATE_DESC* desc);
+
+    //-------------------------------------------------------------------------
+    //! @brief      終了処理です.
+    //-------------------------------------------------------------------------
+    void Term();
+
+    //-------------------------------------------------------------------------
+    //! @brief      パイプラインステートを設定します.
+    //! 
+    //! @param[in]      pCmd        グラフィックスコマンドリスト.
+    //-------------------------------------------------------------------------
+    void SetState(ID3D12GraphicsCommandList* pCmd);
+
+    //-------------------------------------------------------------------------
+    //! @brief      増幅シェーダのリロードファイルパスを設定します.
+    //! 
+    //! @param[in]      value       設定するパス.
+    //-------------------------------------------------------------------------
+    void SetReloadPathAS(const std::string& value);
+
+    //-------------------------------------------------------------------------
+    //! @brief      メッシュシェーダのリロードファイルパスを設定します.
+    //! 
+    //! @param[in]      value       設定するパス.
+    //-------------------------------------------------------------------------
+    void SetReloadPathMS(const std::string& value);
+
+    //-------------------------------------------------------------------------
+    //! @brief      ピクセルシェーダのリロードファイルパスを設定します.
+    //! 
+    //! @param[in]      value       設定するパス.
+    //-------------------------------------------------------------------------
+    void SetRelaodPathPS(const std::string& value);
+
+    //-------------------------------------------------------------------------
+    //! @brief      リロード時の処理です.
+    //! 
+    //! @param[in]      fullPath    変更ファイルのフルパス.
+    //-------------------------------------------------------------------------
+    void OnReload(const std::string& fullPath);
+
+private:
+    //=========================================================================
+    // private variables.
+    //=========================================================================
+    RefPtr<ID3D12PipelineState>     m_State;
+    MESH_SHADER_PIPELINE_STATE_DESC m_Desc;
+    RefPtr<ID3D12PipelineState>     m_ReloadState;
+    ShaderInfo                      m_AS;
+    ShaderInfo                      m_MS;
+    ShaderInfo                      m_PS;
+    bool                            m_Dirty = false;
+
+    //=========================================================================
+    // private methods.
+    //=========================================================================
+
+    //-------------------------------------------------------------------------
+    //! @brief      再生成処理です.
+    //-------------------------------------------------------------------------
+    void Recreate();
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// RayTracingPipelineState class
+///////////////////////////////////////////////////////////////////////////////
+class RayTracingPipelineState
+{
+    //=========================================================================
+    // list of friend classes and methods.
+    //=========================================================================
+    /* NOTHING */
+
+public:
+    //=========================================================================
+    // public variables.
+    //=========================================================================
+    /* NOTHING */
+
+    //=========================================================================
+    // public methods.
+    //=========================================================================
+
+    //-------------------------------------------------------------------------
+    //! @brief      コンストラクタです.
+    //-------------------------------------------------------------------------
+    RayTracingPipelineState();
+
+    //-------------------------------------------------------------------------
+    //! @brief      デストラクタです.
+    //-------------------------------------------------------------------------
+    ~RayTracingPipelineState();
+
+    //-------------------------------------------------------------------------
+    //! @brief      初期化処理を行います.
+    //! 
+    //! @param[in]      desc        構成設定です.
+    //! @retval true    初期化に成功.
+    //! @retval false   初期化に失敗.
+    //-------------------------------------------------------------------------
+    bool Init(const RAYTRACING_PIPELINE_STATE_DESC& desc);
+
+    //-------------------------------------------------------------------------
+    //! @brief      終了処理を行います.
+    //-------------------------------------------------------------------------
+    void Term();
+
+    //-------------------------------------------------------------------------
+    //! @brief      レイトレーシングパイプラインを起動します.
+    //! 
+    //! @param[in]      pCmd        グラフィクスコマンドリストです.
+    //! @param[in]      width       横幅.
+    //! @param[in]      height      縦幅.
+    //-------------------------------------------------------------------------
+    void DispatchRays(
+        ID3D12GraphicsCommandList4* pCmd,
+        uint32_t width,
+        uint32_t height);
+
+    //-------------------------------------------------------------------------
+    //! @brief      DXILライブラリのリロードファイルパスを設定します.
+    //! 
+    //! @param[in]      path        設定するパス.
+    //-------------------------------------------------------------------------
+    void SetReloadPath(const std::string& path);
+
+    //-------------------------------------------------------------------------
+    //! @brief      リロード時の処理です.
+    //! 
+    //! @param[in]      fullPath        変更がファイルのフルパス.
+    //-------------------------------------------------------------------------
+    void OnReload(const std::string& fullPath);
+
+private:
+    ///////////////////////////////////////////////////////////////////////////
+    // State structure
+    ///////////////////////////////////////////////////////////////////////////
+    struct State
+    {
+        RefPtr<ID3D12StateObject>           Object;
+        RefPtr<ID3D12StateObjectProperties> Props;
+        RefPtr<ID3D12Resource>              RayGenTable;
+        RefPtr<ID3D12Resource>              MissTable;
+        RefPtr<ID3D12Resource>              HitGroupTable;
+
+        void Reset();
+
+        bool IsValid() const;
+    };
+
+    //=========================================================================
+    // private variables.
+    //=========================================================================
+    State                           m_State;
+    State                           m_ReloadState;
+    RAYTRACING_PIPELINE_STATE_DESC  m_Desc;
+    ShaderInfo                      m_Lib;
+    bool                            m_Dirty = false;
+
+    //=========================================================================
+    // private methods.
+    //=========================================================================
+
+    //-------------------------------------------------------------------------
+    //! @brief      再生成処理です.
+    //-------------------------------------------------------------------------
+    void Recreate();
+};
+
+
+bool InitPipelineStateWatcher(const char* directory, const std::vector<std::string>& includes);
+void TermPipelineStateWatcher();
 
 
 void InitRangeAsSRV(D3D12_DESCRIPTOR_RANGE& range, UINT registerIndex, UINT count = 1, UINT registerSpace = 0);

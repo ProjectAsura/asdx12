@@ -120,9 +120,6 @@
     <ClCompile Include="..\src\gfx\asdxPipelineState.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxRayTracing.cpp">
-      <Filter>ソース ファイル\gfx</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\gfx\asdxTarget.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>

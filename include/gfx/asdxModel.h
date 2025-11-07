@@ -10,6 +10,7 @@
 //-----------------------------------------------------------------------------
 #include <string>
 #include <vector>
+#include <d3d12.h>
 #include <fnd/asdxRef.h>
 #include <fnd/asdxMath.h>
 #include <fnd/asdxList.h>
@@ -172,6 +173,13 @@ struct IMesh
     //! @return     バウンディングスフィアを返却します.
     //-------------------------------------------------------------------------
     virtual const BoundingSphere3& GetBoundingSphere() const = 0;
+
+    //-------------------------------------------------------------------------
+    //! @brief      レイトレーシングジオメトリトライアングル設定を取得します.
+    //! 
+    //! @return     レイトレーシングジオメトリトライアングル設定を返却します.
+    //-------------------------------------------------------------------------
+    virtual D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC GetRayTracingGeometryTrianglesDesc() const = 0;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
