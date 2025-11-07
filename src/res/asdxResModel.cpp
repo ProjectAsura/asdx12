@@ -116,7 +116,7 @@ ResMesh ModelBinary::GetMesh(uint32_t meshIndex) const
     result.BoneIndices    = ArrayView<Uint4>  (reinterpret_cast<const Uint4*>  (mesh->BoneIndices()->data()), mesh->BoneIndices()->size());
     result.BoneWeights    = ArrayView<Vector4>(reinterpret_cast<const Vector4*>(mesh->BoneWeights()->data()), mesh->BoneWeights()->size());
     result.VertexIndices  = ArrayView<uint32_t>(reinterpret_cast<const uint32_t*>(mesh->VertexIndices()->data()), mesh->VertexIndices()->size());
-    result.BoundingSphere = BoundingSphere3(mesh->Bounds()->X(), mesh->Bounds()->Y(), mesh->Bounds()->Z(), mesh->Bounds()->W());
+    result.BoundingSphere = BoundingSphere3(mesh->Bounds()->Center().X(), mesh->Bounds()->Center().Y(), mesh->Bounds()->Center().Z(), mesh->Bounds()->Radius());
     return result;
 }
 
@@ -130,8 +130,11 @@ ResBone ModelBinary::GetBone(uint32_t meshIndex) const
     auto bone = bin->Bones()->Get(meshIndex);
 
     ResBone result;
-    result.Name         = StringView(bone->Name()->c_str());
-    result.OffsetMatrix = *reinterpret_cast<const Matrix*>(bone->OffsetMatrix());
+    result.Name           = StringView(bone->Name()->c_str());
+    result.ParentId       = bone->Parent();
+    result.OffsetMatrix   = *reinterpret_cast<const Matrix*>(bone->OffsetMatrix());
+    result.Children       = ArrayView(bone->Children()->data(), bone->Children()->size());
+
     return result;
 }
 
@@ -151,7 +154,7 @@ BoundingSphere3 ModelBinary::GetBoundingSphere() const
 {
     assert(!m_Blob.empty());
     auto val = res::GetModelBinary(m_Blob.data())->Bounds();
-    return BoundingSphere3(val->X(), val->Y(), val->Z(), val->W());
+    return BoundingSphere3(val->Center().X(), val->Center().Y(), val->Center().Z(), val->Radius());
 }
 
 //-----------------------------------------------------------------------------

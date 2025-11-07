@@ -1,69 +1,13 @@
-﻿namespace asdx.res;
+﻿include "../../../res/format/ResTypes.fbs";
 
-struct Float2
-{
-    X : float;
-    Y : float;
-}
-
-struct Float3
-{
-    X : float;
-    Y : float;
-    Z : float;
-}
-
-struct Float4
-{
-    X : float;
-    Y : float;
-    Z : float;
-    W : float;
-}
-
-struct Uint4
-{
-    X : uint;
-    Y : uint;
-    Z : uint;
-    W : uint;
-}
-
-struct Unorm4
-{
-    X : ubyte;
-    Y : ubyte;
-    Z : ubyte;
-    W : ubyte;
-}
-
-struct Float4x4
-{
-    M11 : float;
-    M12 : float;
-    M13 : float;
-    M14 : float;
-
-    M21 : float;
-    M22 : float;
-    M23 : float;
-    M24 : float;
-
-    M31 : float;
-    M32 : float;
-    M33 : float;
-    M34 : float;
-
-    M41 : float;
-    M42 : float;
-    M43 : float;
-    M44 : float;
-}
+namespace asdx.res;
 
 table Bone
 {
-    Name         : string (key);
-    OffsetMatrix : Float4x4;
+    Name            : string (key);
+    Parent          : int;
+    OffsetMatrix    : Float4x4;
+    Children        : [int];
 }
 
 table Mesh
@@ -78,7 +22,7 @@ table Mesh
     BoneWeights   : [Float4];
     BoneIndices   : [Uint4];
     VertexIndices : [uint];
-    Bounds        : Float4;
+    Bounds        : BoundingSphere;
 }
 
 table ModelBinary
@@ -87,7 +31,9 @@ table ModelBinary
     Meshes           : [Mesh];
     Materials        : [string];
     Bones            : [Bone];
-    Bounds           : Float4;
+    Bounds           : BoundingSphere;
+    RootTransform    : Float4x4;
+    InvRootTransform : Float4x4;
 }
 
 root_type ModelBinary;

@@ -87,13 +87,18 @@ bool Model::Init(const ModelBinary& binary)
         }
     }
 
-    m_BoneNames.resize(binary.GetBoneCount());
-    m_BoneOffsetMatrices.resize(binary.GetBoneCount());
+    m_Bones.resize(binary.GetBoneCount());
     for(auto i=0u; i<binary.GetBoneCount(); ++i)
     {
         auto res = binary.GetBone(i);
-        m_BoneNames[i]          = res.Name.c_str();
-        m_BoneOffsetMatrices[i] = res.OffsetMatrix;
+        m_Bones[i].SetName(res.Name.c_str());
+        m_Bones[i].SetParent((res.ParentId >= 0) ? &m_Bones[res.ParentId] : nullptr);
+        m_Bones[i].SetOffsetMatrix(res.OffsetMatrix);
+
+        auto& children = m_Bones[i].GetChildren();
+        children.resize(res.Children.size());
+        for(size_t i=0; i<children.size(); ++i)
+        { children[i] = &m_Bones[res.Children[i]]; }
     }
 
     m_BoundingSphere = binary.GetBoundingSphere();
@@ -125,8 +130,7 @@ void Model::Term()
     }
 
     m_Meshes            .clear();
-    m_BoneNames         .clear();
-    m_BoneOffsetMatrices.clear();
+    m_Bones             .clear();
     m_MaterialSlots     .clear();
     m_MeshVisibilities  .clear();
 
@@ -172,28 +176,19 @@ void Model::SetMaterial(size_t index, IMaterial* pMaterial)
 //      ボーンを持つかどうかチェックします.
 //-----------------------------------------------------------------------------
 bool Model::HasBone() const
-{ return !m_BoneNames.empty(); }
+{ return !m_Bones.empty(); }
 
 //-----------------------------------------------------------------------------
 //      ボーン数を取得します.
 //-----------------------------------------------------------------------------
 size_t Model::GetBoneCount() const
-{ return m_BoneNames.size(); }
+{ return m_Bones.size(); }
 
 //-----------------------------------------------------------------------------
 //      ボーン名を取得します.
 //-----------------------------------------------------------------------------
-const std::string& Model::GetBoneName(size_t i) const
-{ return m_BoneNames[i]; }
-
-//-----------------------------------------------------------------------------
-//      ボーンオフセット行列を取得します.
-//-----------------------------------------------------------------------------
-const Matrix& Model::GetBoneOffsetMatrix(size_t index) const
-{
-    assert(index < m_BoneOffsetMatrices.size());
-    return m_BoneOffsetMatrices[index];
-}
+const IBone* Model::GetBone(size_t i) const
+{ return &m_Bones[i]; }
 
 //-----------------------------------------------------------------------------
 //      メッシュ数を取得します.

@@ -34,9 +34,9 @@ static constexpr uint32_t CURRENT_VERION = 1u;  //!< 現在サポートされて
 ///////////////////////////////////////////////////////////////////////////////
 struct BoneInfo
 {
-    uint32_t        Index;          // Bone Index.
-    std::string     Name;           // Name of Bone.
-    asdx::Matrix    OffsetMatrix;   // Inverse Bind Pose Matrix.
+    int                 Index;          // Bone Index.
+    std::string         Name;           // Name of Bone.
+    asdx::Matrix        OffsetMatrix;   // Inverse Bind Pose Matrix.
 };
 
 //-----------------------------------------------------------------------------
@@ -126,12 +126,15 @@ void ParseMesh
             auto boneName = std::string(bone->mName.C_Str());
 
             uint32_t boneId = 0;
-            if (boneMap.find(boneName) == std::end(boneMap))
+            auto itr = boneMap.find(boneName);
+            if (itr == std::end(boneMap))
             {
                 boneId = uint32_t(boneMap.size());
                 BoneInfo info;
                 info.Index = boneId;
                 info.Name  = boneName;
+
+                // Row-Majorなのでそのまま突っ込めばいい.
                 info.OffsetMatrix = asdx::Matrix(
                     bone->mOffsetMatrix.a1,
                     bone->mOffsetMatrix.a2,
@@ -157,7 +160,7 @@ void ParseMesh
             }
             else
             {
-                boneId = boneMap[boneName].Index;
+                boneId = itr->second.Index;
             }
 
             for(auto j=0u; j<bone->mNumWeights; ++j)
@@ -356,7 +359,7 @@ void ParseMesh
     auto sphere = asdx::BoundingSphere3::Create(&srcMesh->mVertices[0].x, srcMesh->mNumVertices, sizeof(aiVector3D));
     boundSphere = asdx::BoundingSphere3::Merge(boundSphere, sphere);
 
-    auto bounds = asdx::res::Float4(sphere.Center.x, sphere.Center.y, sphere.Center.z, sphere.Radius);
+    auto bounds = asdx::res::BoundingSphere(asdx::res::Float3(sphere.Center.x, sphere.Center.y, sphere.Center.z), sphere.Radius);
 
     dstMesh = asdx::res::CreateMeshDirect(
         builder,
@@ -392,75 +395,15 @@ bool ModelConverter::Convert(const Desc& desc)
         return false;
     }
 
-    int flag = 0;
-    flag |= aiProcessPreset_TargetRealtime_MaxQuality;
-    flag |= aiProcess_FlipUVs;
-    flag |= aiProcess_FlipWindingOrder;
-
-    Assimp::Importer importer;
-    auto pScene = importer.ReadFile(desc.InputPath.c_str(), flag);
-
-    if (pScene == nullptr)
+    std::vector<uint8_t> binary;
+    if (!Convert(desc.InputPath.c_str(), binary))
     {
-        ELOG("Error : Importer::ReadFile() Failed. path = %s", desc.InputPath.c_str());
+        ELOG("Error : Convert Failed.");
         return false;
     }
 
-    BoundingSphere3 bounds(Vector3(0.0f, 0.0f, 0.0f), 0.0f);
-
-    flatbuffers::FlatBufferBuilder builder(1024);
-
-    // メッシュデータを変換.
-    std::vector<flatbuffers::Offset<asdx::res::Mesh>> meshes;
-    std::map<std::string, BoneInfo> boneMap;
-    meshes.resize(pScene->mNumMeshes);
-    for(auto i=0u; i<pScene->mNumMeshes; ++i)
-    {
-        const auto srcMesh = pScene->mMeshes[i];
-        auto& dstMesh = meshes[i];
-
-        ParseMesh(builder, boneMap, dstMesh, srcMesh, bounds);
-    }
-
-    // ボーンデータを変換.
-    std::vector<flatbuffers::Offset<asdx::res::Bone>> bones;
-    bones.reserve(boneMap.size());
-    for(auto& itr : boneMap)
-    {
-        auto mtx = ToFloat4x4(itr.second.OffsetMatrix);
-        auto bone = asdx::res::CreateBoneDirect(
-            builder,
-            itr.second.Name.c_str(),
-            &mtx);
-        bones.emplace_back(bone);
-    }
-
-    // マテリアルデータを変換.
-    std::vector<flatbuffers::Offset<flatbuffers::String>> materials;
-    materials.reserve(pScene->mNumMaterials);
-    for(auto i=0u; i<pScene->mNumMaterials; ++i)
-    {
-        const auto srcMat = pScene->mMaterials[i];
-        materials.push_back(builder.CreateString(srcMat->GetName().C_Str()));
-    }
-
-    auto sphere = asdx::res::Float4(bounds.Center.x, bounds.Center.y, bounds.Center.z, bounds.Radius);
-
-    auto bin = asdx::res::CreateModelBinaryDirect(
-        builder,
-        CURRENT_VERION,
-        &meshes,
-        &materials,
-        &bones,
-        &sphere);
-
-    builder.Finish(bin);
-
     // バイナリファイルに出力.
     {
-        auto buffer     = builder.GetBufferPointer();
-        auto bufferSize = builder.GetSize();
-
         FILE* fp = nullptr;
         auto err = fopen_s(&fp, desc.OutputPath.c_str(), "wb");
         if (err != 0)
@@ -469,11 +412,9 @@ bool ModelConverter::Convert(const Desc& desc)
             return false;
         }
 
-        fwrite(buffer, bufferSize, 1, fp);
+        fwrite(binary.data(), binary.size(), 1, fp);
         fclose(fp);
     }
-
-    pScene = nullptr;
 
     return true;
 }
@@ -525,10 +466,47 @@ bool ModelConverter::Convert(const std::string& path, std::vector<uint8_t>& bina
     for(auto& itr : boneMap)
     {
         auto mtx = ToFloat4x4(itr.second.OffsetMatrix);
+        auto name = itr.second.Name.c_str();
+
+        int32_t parentId = -1;
+        std::vector<int32_t> childrenIds;
+        auto localTransform = ToFloat4x4(Matrix::CreateIdentity());
+
+        // 対応するボーンノードを見つける.
+        auto srcNode = pScene->mRootNode->FindNode(name);
+        if (srcNode != nullptr)
+        {
+            // 親がいる場合.
+            if (srcNode->mParent != nullptr)
+            {
+                // 親の番号を設定.
+                auto parent = boneMap.find(srcNode->mParent->mName.C_Str());
+                if (parent != boneMap.end())
+                {
+                    parentId = parent->second.Index;
+                }
+            }
+
+            // 子供がいる場合.
+            for(auto i=0u; i<srcNode->mNumChildren; ++i)
+            {
+                // 子供の番号を設定.
+                auto child = boneMap.find(srcNode->mChildren[i]->mName.C_Str());
+                if (child != boneMap.end())
+                {
+                    childrenIds.push_back(child->second.Index);
+                }
+            }
+        }
+
         auto bone = asdx::res::CreateBoneDirect(
             builder,
-            itr.second.Name.c_str(),
-            &mtx);
+            name,
+            parentId,
+            &mtx,
+            &childrenIds);
+
+        // ボーンを追加.
         bones.emplace_back(bone);
     }
 
@@ -541,7 +519,7 @@ bool ModelConverter::Convert(const std::string& path, std::vector<uint8_t>& bina
         materials.push_back(builder.CreateString(srcMat->GetName().C_Str()));
     }
 
-    auto sphere = asdx::res::Float4(bounds.Center.x, bounds.Center.y, bounds.Center.z, bounds.Radius);
+    auto sphere = asdx::res::BoundingSphere(asdx::res::Float3(bounds.Center.x, bounds.Center.y, bounds.Center.z), bounds.Radius);
 
     auto bin = asdx::res::CreateModelBinaryDirect(
         builder,

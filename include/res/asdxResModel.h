@@ -40,8 +40,10 @@ struct ResMesh
 ///////////////////////////////////////////////////////////////////////////////
 struct ResBone
 {
-    StringView      Name;
-    Matrix          OffsetMatrix;
+    StringView          Name;
+    int32_t             ParentId;
+    Matrix              OffsetMatrix;
+    ArrayView<int32_t>  Children;
 };
 
 ///////////////////////////////////////////////////////////////////////////////

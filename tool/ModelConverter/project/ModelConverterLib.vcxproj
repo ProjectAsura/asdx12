@@ -111,7 +111,11 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PreBuildEvent>
-      <Command>xcopy "C:\Program Files\Assimp\bin\x64\assimp-vc143-mt.dll" "$(OutDir)" /Y /Q</Command>
+      <Command>xcopy "C:\Program Files\Assimp\bin\x64\assimp-vc143-mt.dll" "$(OutDir)" /Y /Q
+$(ProjectDir)..\..\..\external\flatbuffers\bin\flatc.exe --cpp -o $(ProjectDir)..\include $(ProjectDir)..\..\..\res\format\ResTypes.fbs --no-warnings
+xcopy $(ProjectDir)..\include\ResTypes_generated.h $(ProjectDir)..\..\..\src\res /y /c
+$(ProjectDir)..\..\..\external\flatbuffers\bin\flatc.exe --cpp -o $(ProjectDir)..\include $(ProjectDir)..\format\ModelBinary.fbs --no-warnings
+xcopy $(ProjectDir)..\include\ModelBinary_generated.h $(ProjectDir)..\..\..\src\res /y /c</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -131,7 +135,11 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PreBuildEvent>
-      <Command>xcopy "C:\Program Files\Assimp\bin\x64\assimp-vc143-mt.dll" "$(OutDir)" /Y /Q</Command>
+      <Command>xcopy "C:\Program Files\Assimp\bin\x64\assimp-vc143-mt.dll" "$(OutDir)" /Y /Q
+$(ProjectDir)..\..\..\external\flatbuffers\bin\flatc.exe --cpp -o $(ProjectDir)..\include $(ProjectDir)..\..\..\res\format\ResTypes.fbs --no-warnings
+xcopy $(ProjectDir)..\include\ResTypes_generated.h $(ProjectDir)..\..\..\src\res /y /c
+$(ProjectDir)..\..\..\external\flatbuffers\bin\flatc.exe --cpp -o $(ProjectDir)..\include $(ProjectDir)..\format\ModelBinary.fbs --no-warnings
+xcopy $(ProjectDir)..\include\ModelBinary_generated.h $(ProjectDir)..\..\..\src\res /y /c</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

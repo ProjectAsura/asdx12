@@ -17,6 +17,7 @@
 #include <edit/asdxGuiMgr.h>
 #include <gfx/asdxPresetState.h>
 #include "ModelConverter.h"
+#include <assimp/Exporter.hpp>
 
 
 namespace {
@@ -100,7 +101,8 @@ ModelViewer::ModelViewer()
     m_DeviceDesc.MaxDepthTargetCount    = 256;
 
 #if ASDX_DEBUG
-    m_DeviceDesc.EnableDebug = true;
+    m_DeviceDesc.EnableDebug   = true;
+    m_DeviceDesc.EnableCapture = true;
 #endif
 }
 
@@ -224,7 +226,7 @@ bool ModelViewer::OnInit()
         return false;
     }
 
-    if (!m_SphereShape.Init(1.0f, 10))
+    if (!m_SphereShape.Init(1.0f, 20))
     {
         ELOG("Error : SphereShape::Init() Failed.");
         return false;
@@ -378,8 +380,7 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
             for(size_t i=0; i<m_Model->GetMeshCount(); ++i)
             {
                 auto& sphere = m_Model->GetMesh(i)->GetBoundingSphere();
-                auto world = asdx::Matrix::CreateTranslation(sphere.Center)
-                    * asdx::Matrix::CreateScale(sphere.Radius);
+                auto world = asdx::Matrix::CreateScale(sphere.Radius) * asdx::Matrix::CreateTranslation(sphere.Center);
 
                 uint32_t index = uint32_t(i);
                 m_ShapeParams.SetWorld(index, world);
@@ -388,12 +389,11 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
 
             {
                 auto& sphere = m_Model->GetBoundingSphere();
-                auto world = asdx::Matrix::CreateTranslation(sphere.Center)
-                    * asdx::Matrix::CreateScale(sphere.Radius);
+                auto world = asdx::Matrix::CreateScale(sphere.Radius) * asdx::Matrix::CreateTranslation(sphere.Center);
 
                 uint32_t index = uint32_t(m_Model->GetMeshCount());
                 m_ShapeParams.SetWorld(index, world);
-                m_ShapeParams.SetColor(index, asdx::Vector4(0.0f, 1.0f, 0.0f, 0.1f));
+                m_ShapeParams.SetColor(index, asdx::Vector4(1.0f, 1.0f, 0.0f, 0.1f));
             }
         }
 
@@ -403,10 +403,17 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
             auto offset = m_Model->GetMeshCount() + 1;
             for(size_t i=0; i<m_Model->GetBoneCount(); ++i)
             {
-                auto offsetMtx = m_Model->GetBoneOffsetMatrix(i);
+                auto bone = m_Model->GetBone(i);
                 uint32_t index = uint32_t(offset + i);
-                m_ShapeParams.SetWorld(index, offsetMtx);
-                m_ShapeParams.SetColor(index, asdx::Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+
+                asdx::Matrix matrix = bone->GetOffsetMatrix();
+                if (bone->GetParent() != nullptr)
+                {
+                    matrix = bone->GetParent()->GetOffsetMatrix() * matrix;
+                }
+
+                m_ShapeParams.SetWorld(index, matrix);
+                m_ShapeParams.SetColor(index, asdx::Vector4(0.0f, 0.0f, 0.75f, 1.0f));
             }
         }
     }
@@ -854,7 +861,7 @@ void ModelViewer::RecreateModel()
         asdx::Vector3(0.0f, 0.0f, 0.0f),
         asdx::Vector3(0.0f, 0.0f, 1.0f),
         0.1f,
-        1000.0f);
+        10000.0f);
     m_Camera.Present();
 }
 

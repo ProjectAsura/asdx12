@@ -185,19 +185,10 @@ bool ModelInstance::HasBone() const
 //-----------------------------------------------------------------------------
 //      ボーン名を取得します.
 //-----------------------------------------------------------------------------
-const std::string& ModelInstance::GetBoneName(size_t index) const
+const IBone* ModelInstance::GetBone(size_t index) const
 {
     assert(m_pMasterModel != nullptr);
-    return m_pMasterModel->GetBoneName(index);
-}
-
-//-----------------------------------------------------------------------------
-//      ボーンオフセット行列を取得します.
-//-----------------------------------------------------------------------------
-const Matrix& ModelInstance::GetBoneOffsetMatrix(size_t index) const
-{
-    assert(m_pMasterModel != nullptr);
-    return m_pMasterModel->GetBoneOffsetMatrix(index);
+    return m_pMasterModel->GetBone(index);
 }
 
 //-----------------------------------------------------------------------------

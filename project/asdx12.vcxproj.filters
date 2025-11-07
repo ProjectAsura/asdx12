@@ -704,6 +704,9 @@
     <ClInclude Include="..\external\ImGuizmo\ImZoomSlider.h">
       <Filter>ソース ファイル\external\ImGuizmo</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\gfx\asdxBoneImpl.h">
+      <Filter>ソース ファイル\gfx</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\res\shaders\BRDF.hlsli">

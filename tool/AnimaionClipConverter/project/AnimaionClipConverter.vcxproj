@@ -21,8 +21,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{f05ad1cf-edf9-4eb4-bc8f-df7aacf07a94}</ProjectGuid>
-    <RootNamespace>ModelConverter</RootNamespace>
+    <ProjectGuid>{30acb3fd-8fc1-42fc-a161-074415a3fdc2}</ProjectGuid>
+    <RootNamespace>AnimaionClipConverter</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -102,17 +102,14 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\..\..\include;$(ProjectDir)..\..\..\external\flatbuffers\include;$(ProjectDir)..\..\..\external\cmdline;$(ProjectDir)..\..\..\external\MikkTSpace;C:\Program Files\Assimp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\..\..\external\cmdline;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Program Files\Assimp\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>assimp-vc143-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
-    <PreBuildEvent />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -122,25 +119,17 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\..\..\include;$(ProjectDir)..\..\..\external\flatbuffers\include;$(ProjectDir)..\..\..\external\cmdline;$(ProjectDir)..\..\..\external\MikkTSpace;C:\Program Files\Assimp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\..\..\external\cmdline;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Program Files\Assimp\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>assimp-vc143-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
-    <PreBuildEvent />
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\src\main.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="ModelConverterLib.vcxproj">
-      <Project>{fc0db75a-4298-47de-813a-3123fdf35d4d}</Project>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

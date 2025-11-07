@@ -11,6 +11,7 @@
 #include <atomic>
 #include <fnd/asdxList.h>
 #include "asdxMeshImpl.h"
+#include "asdxBoneImpl.h"
 
 
 namespace asdx {
@@ -117,20 +118,12 @@ public:
     size_t GetBoneCount() const override;
 
     //-------------------------------------------------------------------------
-    //! @brief      ボーン名を取得します.
+    //! @brief      ボーンを取得します.
     //! 
     //! @param[in]      index       ボーン番号.
-    //! @return     指定されたボーン名を返却します.
+    //! @return     指定されたボーンを返却します.
     //-------------------------------------------------------------------------
-    const std::string& GetBoneName(size_t index) const override;
-
-    //-------------------------------------------------------------------------
-    //! @brief      ボーンオフセット行列を取得します.
-    //! 
-    //! @param[in]      index       ボーン番号.
-    //! @return     指定されたボーンオフセット行列を返却します.
-    //-------------------------------------------------------------------------
-    const Matrix& GetBoneOffsetMatrix(size_t index) const override;
+    const IBone* GetBone(size_t index) const override;
 
     //-------------------------------------------------------------------------
     //! @brief      メッシュ数を取得します.
@@ -214,8 +207,7 @@ private:
     //=========================================================================
     std::atomic<uint32_t>       m_RefCount  = {};               //!< 参照カウントです.
     std::vector<MaterialSlot>   m_MaterialSlots;                //!< マテリアルスロットです.
-    std::vector<std::string>    m_BoneNames;                    //!< ボーン名です.
-    std::vector<Matrix>         m_BoneOffsetMatrices;           //!< ボーンオフセット行列です.
+    std::vector<Bone>           m_Bones;                        //!< ボーンです.
     std::vector<Mesh>           m_Meshes;                       //!< メッシュです.
     std::vector<bool>           m_MeshVisibilities;             //!< メッシュ可視性です.
     BoundingSphere3             m_BoundingSphere;               //!< バウンディングスフィアです.

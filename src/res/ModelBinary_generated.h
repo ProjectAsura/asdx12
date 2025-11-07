@@ -13,20 +13,10 @@ static_assert(FLATBUFFERS_VERSION_MAJOR == 25 &&
               FLATBUFFERS_VERSION_REVISION == 10,
              "Non-compatible flatbuffers version included");
 
+#include "ResTypes_generated.h"
+
 namespace asdx {
 namespace res {
-
-struct Float2;
-
-struct Float3;
-
-struct Float4;
-
-struct Uint4;
-
-struct Unorm4;
-
-struct Float4x4;
 
 struct Bone;
 struct BoneBuilder;
@@ -37,275 +27,13 @@ struct MeshBuilder;
 struct ModelBinary;
 struct ModelBinaryBuilder;
 
-FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Float2 FLATBUFFERS_FINAL_CLASS {
- private:
-  float X_;
-  float Y_;
-
- public:
-  Float2()
-      : X_(0),
-        Y_(0) {
-  }
-  Float2(float _X, float _Y)
-      : X_(::flatbuffers::EndianScalar(_X)),
-        Y_(::flatbuffers::EndianScalar(_Y)) {
-  }
-  float X() const {
-    return ::flatbuffers::EndianScalar(X_);
-  }
-  float Y() const {
-    return ::flatbuffers::EndianScalar(Y_);
-  }
-};
-FLATBUFFERS_STRUCT_END(Float2, 8);
-
-FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Float3 FLATBUFFERS_FINAL_CLASS {
- private:
-  float X_;
-  float Y_;
-  float Z_;
-
- public:
-  Float3()
-      : X_(0),
-        Y_(0),
-        Z_(0) {
-  }
-  Float3(float _X, float _Y, float _Z)
-      : X_(::flatbuffers::EndianScalar(_X)),
-        Y_(::flatbuffers::EndianScalar(_Y)),
-        Z_(::flatbuffers::EndianScalar(_Z)) {
-  }
-  float X() const {
-    return ::flatbuffers::EndianScalar(X_);
-  }
-  float Y() const {
-    return ::flatbuffers::EndianScalar(Y_);
-  }
-  float Z() const {
-    return ::flatbuffers::EndianScalar(Z_);
-  }
-};
-FLATBUFFERS_STRUCT_END(Float3, 12);
-
-FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Float4 FLATBUFFERS_FINAL_CLASS {
- private:
-  float X_;
-  float Y_;
-  float Z_;
-  float W_;
-
- public:
-  Float4()
-      : X_(0),
-        Y_(0),
-        Z_(0),
-        W_(0) {
-  }
-  Float4(float _X, float _Y, float _Z, float _W)
-      : X_(::flatbuffers::EndianScalar(_X)),
-        Y_(::flatbuffers::EndianScalar(_Y)),
-        Z_(::flatbuffers::EndianScalar(_Z)),
-        W_(::flatbuffers::EndianScalar(_W)) {
-  }
-  float X() const {
-    return ::flatbuffers::EndianScalar(X_);
-  }
-  float Y() const {
-    return ::flatbuffers::EndianScalar(Y_);
-  }
-  float Z() const {
-    return ::flatbuffers::EndianScalar(Z_);
-  }
-  float W() const {
-    return ::flatbuffers::EndianScalar(W_);
-  }
-};
-FLATBUFFERS_STRUCT_END(Float4, 16);
-
-FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Uint4 FLATBUFFERS_FINAL_CLASS {
- private:
-  uint32_t X_;
-  uint32_t Y_;
-  uint32_t Z_;
-  uint32_t W_;
-
- public:
-  Uint4()
-      : X_(0),
-        Y_(0),
-        Z_(0),
-        W_(0) {
-  }
-  Uint4(uint32_t _X, uint32_t _Y, uint32_t _Z, uint32_t _W)
-      : X_(::flatbuffers::EndianScalar(_X)),
-        Y_(::flatbuffers::EndianScalar(_Y)),
-        Z_(::flatbuffers::EndianScalar(_Z)),
-        W_(::flatbuffers::EndianScalar(_W)) {
-  }
-  uint32_t X() const {
-    return ::flatbuffers::EndianScalar(X_);
-  }
-  uint32_t Y() const {
-    return ::flatbuffers::EndianScalar(Y_);
-  }
-  uint32_t Z() const {
-    return ::flatbuffers::EndianScalar(Z_);
-  }
-  uint32_t W() const {
-    return ::flatbuffers::EndianScalar(W_);
-  }
-};
-FLATBUFFERS_STRUCT_END(Uint4, 16);
-
-FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(1) Unorm4 FLATBUFFERS_FINAL_CLASS {
- private:
-  uint8_t X_;
-  uint8_t Y_;
-  uint8_t Z_;
-  uint8_t W_;
-
- public:
-  Unorm4()
-      : X_(0),
-        Y_(0),
-        Z_(0),
-        W_(0) {
-  }
-  Unorm4(uint8_t _X, uint8_t _Y, uint8_t _Z, uint8_t _W)
-      : X_(::flatbuffers::EndianScalar(_X)),
-        Y_(::flatbuffers::EndianScalar(_Y)),
-        Z_(::flatbuffers::EndianScalar(_Z)),
-        W_(::flatbuffers::EndianScalar(_W)) {
-  }
-  uint8_t X() const {
-    return ::flatbuffers::EndianScalar(X_);
-  }
-  uint8_t Y() const {
-    return ::flatbuffers::EndianScalar(Y_);
-  }
-  uint8_t Z() const {
-    return ::flatbuffers::EndianScalar(Z_);
-  }
-  uint8_t W() const {
-    return ::flatbuffers::EndianScalar(W_);
-  }
-};
-FLATBUFFERS_STRUCT_END(Unorm4, 4);
-
-FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Float4x4 FLATBUFFERS_FINAL_CLASS {
- private:
-  float M11_;
-  float M12_;
-  float M13_;
-  float M14_;
-  float M21_;
-  float M22_;
-  float M23_;
-  float M24_;
-  float M31_;
-  float M32_;
-  float M33_;
-  float M34_;
-  float M41_;
-  float M42_;
-  float M43_;
-  float M44_;
-
- public:
-  Float4x4()
-      : M11_(0),
-        M12_(0),
-        M13_(0),
-        M14_(0),
-        M21_(0),
-        M22_(0),
-        M23_(0),
-        M24_(0),
-        M31_(0),
-        M32_(0),
-        M33_(0),
-        M34_(0),
-        M41_(0),
-        M42_(0),
-        M43_(0),
-        M44_(0) {
-  }
-  Float4x4(float _M11, float _M12, float _M13, float _M14, float _M21, float _M22, float _M23, float _M24, float _M31, float _M32, float _M33, float _M34, float _M41, float _M42, float _M43, float _M44)
-      : M11_(::flatbuffers::EndianScalar(_M11)),
-        M12_(::flatbuffers::EndianScalar(_M12)),
-        M13_(::flatbuffers::EndianScalar(_M13)),
-        M14_(::flatbuffers::EndianScalar(_M14)),
-        M21_(::flatbuffers::EndianScalar(_M21)),
-        M22_(::flatbuffers::EndianScalar(_M22)),
-        M23_(::flatbuffers::EndianScalar(_M23)),
-        M24_(::flatbuffers::EndianScalar(_M24)),
-        M31_(::flatbuffers::EndianScalar(_M31)),
-        M32_(::flatbuffers::EndianScalar(_M32)),
-        M33_(::flatbuffers::EndianScalar(_M33)),
-        M34_(::flatbuffers::EndianScalar(_M34)),
-        M41_(::flatbuffers::EndianScalar(_M41)),
-        M42_(::flatbuffers::EndianScalar(_M42)),
-        M43_(::flatbuffers::EndianScalar(_M43)),
-        M44_(::flatbuffers::EndianScalar(_M44)) {
-  }
-  float M11() const {
-    return ::flatbuffers::EndianScalar(M11_);
-  }
-  float M12() const {
-    return ::flatbuffers::EndianScalar(M12_);
-  }
-  float M13() const {
-    return ::flatbuffers::EndianScalar(M13_);
-  }
-  float M14() const {
-    return ::flatbuffers::EndianScalar(M14_);
-  }
-  float M21() const {
-    return ::flatbuffers::EndianScalar(M21_);
-  }
-  float M22() const {
-    return ::flatbuffers::EndianScalar(M22_);
-  }
-  float M23() const {
-    return ::flatbuffers::EndianScalar(M23_);
-  }
-  float M24() const {
-    return ::flatbuffers::EndianScalar(M24_);
-  }
-  float M31() const {
-    return ::flatbuffers::EndianScalar(M31_);
-  }
-  float M32() const {
-    return ::flatbuffers::EndianScalar(M32_);
-  }
-  float M33() const {
-    return ::flatbuffers::EndianScalar(M33_);
-  }
-  float M34() const {
-    return ::flatbuffers::EndianScalar(M34_);
-  }
-  float M41() const {
-    return ::flatbuffers::EndianScalar(M41_);
-  }
-  float M42() const {
-    return ::flatbuffers::EndianScalar(M42_);
-  }
-  float M43() const {
-    return ::flatbuffers::EndianScalar(M43_);
-  }
-  float M44() const {
-    return ::flatbuffers::EndianScalar(M44_);
-  }
-};
-FLATBUFFERS_STRUCT_END(Float4x4, 64);
-
 struct Bone FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef BoneBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_NAME = 4,
-    VT_OFFSETMATRIX = 6
+    VT_PARENT = 6,
+    VT_OFFSETMATRIX = 8,
+    VT_CHILDREN = 10
   };
   const ::flatbuffers::String *Name() const {
     return GetPointer<const ::flatbuffers::String *>(VT_NAME);
@@ -322,14 +50,23 @@ struct Bone FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
     if (_Name < Name()->c_str()) return 1;
     return 0;
   }
+  int32_t Parent() const {
+    return GetField<int32_t>(VT_PARENT, 0);
+  }
   const asdx::res::Float4x4 *OffsetMatrix() const {
     return GetStruct<const asdx::res::Float4x4 *>(VT_OFFSETMATRIX);
+  }
+  const ::flatbuffers::Vector<int32_t> *Children() const {
+    return GetPointer<const ::flatbuffers::Vector<int32_t> *>(VT_CHILDREN);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffsetRequired(verifier, VT_NAME) &&
            verifier.VerifyString(Name()) &&
+           VerifyField<int32_t>(verifier, VT_PARENT, 4) &&
            VerifyField<asdx::res::Float4x4>(verifier, VT_OFFSETMATRIX, 4) &&
+           VerifyOffset(verifier, VT_CHILDREN) &&
+           verifier.VerifyVector(Children()) &&
            verifier.EndTable();
   }
 };
@@ -341,8 +78,14 @@ struct BoneBuilder {
   void add_Name(::flatbuffers::Offset<::flatbuffers::String> Name) {
     fbb_.AddOffset(Bone::VT_NAME, Name);
   }
+  void add_Parent(int32_t Parent) {
+    fbb_.AddElement<int32_t>(Bone::VT_PARENT, Parent, 0);
+  }
   void add_OffsetMatrix(const asdx::res::Float4x4 *OffsetMatrix) {
     fbb_.AddStruct(Bone::VT_OFFSETMATRIX, OffsetMatrix);
+  }
+  void add_Children(::flatbuffers::Offset<::flatbuffers::Vector<int32_t>> Children) {
+    fbb_.AddOffset(Bone::VT_CHILDREN, Children);
   }
   explicit BoneBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -359,9 +102,13 @@ struct BoneBuilder {
 inline ::flatbuffers::Offset<Bone> CreateBone(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     ::flatbuffers::Offset<::flatbuffers::String> Name = 0,
-    const asdx::res::Float4x4 *OffsetMatrix = nullptr) {
+    int32_t Parent = 0,
+    const asdx::res::Float4x4 *OffsetMatrix = nullptr,
+    ::flatbuffers::Offset<::flatbuffers::Vector<int32_t>> Children = 0) {
   BoneBuilder builder_(_fbb);
+  builder_.add_Children(Children);
   builder_.add_OffsetMatrix(OffsetMatrix);
+  builder_.add_Parent(Parent);
   builder_.add_Name(Name);
   return builder_.Finish();
 }
@@ -369,12 +116,17 @@ inline ::flatbuffers::Offset<Bone> CreateBone(
 inline ::flatbuffers::Offset<Bone> CreateBoneDirect(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     const char *Name = nullptr,
-    const asdx::res::Float4x4 *OffsetMatrix = nullptr) {
+    int32_t Parent = 0,
+    const asdx::res::Float4x4 *OffsetMatrix = nullptr,
+    const std::vector<int32_t> *Children = nullptr) {
   auto Name__ = Name ? _fbb.CreateString(Name) : 0;
+  auto Children__ = Children ? _fbb.CreateVector<int32_t>(*Children) : 0;
   return asdx::res::CreateBone(
       _fbb,
       Name__,
-      OffsetMatrix);
+      Parent,
+      OffsetMatrix,
+      Children__);
 }
 
 struct Mesh FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
@@ -422,8 +174,8 @@ struct Mesh FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   const ::flatbuffers::Vector<uint32_t> *VertexIndices() const {
     return GetPointer<const ::flatbuffers::Vector<uint32_t> *>(VT_VERTEXINDICES);
   }
-  const asdx::res::Float4 *Bounds() const {
-    return GetStruct<const asdx::res::Float4 *>(VT_BOUNDS);
+  const asdx::res::BoundingSphere *Bounds() const {
+    return GetStruct<const asdx::res::BoundingSphere *>(VT_BOUNDS);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -446,7 +198,7 @@ struct Mesh FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
            verifier.VerifyVector(BoneIndices()) &&
            VerifyOffset(verifier, VT_VERTEXINDICES) &&
            verifier.VerifyVector(VertexIndices()) &&
-           VerifyField<asdx::res::Float4>(verifier, VT_BOUNDS, 4) &&
+           VerifyField<asdx::res::BoundingSphere>(verifier, VT_BOUNDS, 4) &&
            verifier.EndTable();
   }
 };
@@ -485,7 +237,7 @@ struct MeshBuilder {
   void add_VertexIndices(::flatbuffers::Offset<::flatbuffers::Vector<uint32_t>> VertexIndices) {
     fbb_.AddOffset(Mesh::VT_VERTEXINDICES, VertexIndices);
   }
-  void add_Bounds(const asdx::res::Float4 *Bounds) {
+  void add_Bounds(const asdx::res::BoundingSphere *Bounds) {
     fbb_.AddStruct(Mesh::VT_BOUNDS, Bounds);
   }
   explicit MeshBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
@@ -511,7 +263,7 @@ inline ::flatbuffers::Offset<Mesh> CreateMesh(
     ::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::Float4 *>> BoneWeights = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::Uint4 *>> BoneIndices = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<uint32_t>> VertexIndices = 0,
-    const asdx::res::Float4 *Bounds = nullptr) {
+    const asdx::res::BoundingSphere *Bounds = nullptr) {
   MeshBuilder builder_(_fbb);
   builder_.add_Bounds(Bounds);
   builder_.add_VertexIndices(VertexIndices);
@@ -539,7 +291,7 @@ inline ::flatbuffers::Offset<Mesh> CreateMeshDirect(
     const std::vector<asdx::res::Float4> *BoneWeights = nullptr,
     const std::vector<asdx::res::Uint4> *BoneIndices = nullptr,
     const std::vector<uint32_t> *VertexIndices = nullptr,
-    const asdx::res::Float4 *Bounds = nullptr) {
+    const asdx::res::BoundingSphere *Bounds = nullptr) {
   auto Name__ = Name ? _fbb.CreateString(Name) : 0;
   auto Positions__ = Positions ? _fbb.CreateVectorOfStructs<asdx::res::Float3>(*Positions) : 0;
   auto Normals__ = Normals ? _fbb.CreateVectorOfStructs<asdx::res::Float3>(*Normals) : 0;
@@ -571,7 +323,9 @@ struct ModelBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
     VT_MESHES = 6,
     VT_MATERIALS = 8,
     VT_BONES = 10,
-    VT_BOUNDS = 12
+    VT_BOUNDS = 12,
+    VT_ROOTTRANSFORM = 14,
+    VT_INVROOTTRANSFORM = 16
   };
   uint32_t Version() const {
     return GetField<uint32_t>(VT_VERSION, 0);
@@ -585,8 +339,14 @@ struct ModelBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::Bone>> *Bones() const {
     return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::Bone>> *>(VT_BONES);
   }
-  const asdx::res::Float4 *Bounds() const {
-    return GetStruct<const asdx::res::Float4 *>(VT_BOUNDS);
+  const asdx::res::BoundingSphere *Bounds() const {
+    return GetStruct<const asdx::res::BoundingSphere *>(VT_BOUNDS);
+  }
+  const asdx::res::Float4x4 *RootTransform() const {
+    return GetStruct<const asdx::res::Float4x4 *>(VT_ROOTTRANSFORM);
+  }
+  const asdx::res::Float4x4 *InvRootTransform() const {
+    return GetStruct<const asdx::res::Float4x4 *>(VT_INVROOTTRANSFORM);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -600,7 +360,9 @@ struct ModelBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
            VerifyOffset(verifier, VT_BONES) &&
            verifier.VerifyVector(Bones()) &&
            verifier.VerifyVectorOfTables(Bones()) &&
-           VerifyField<asdx::res::Float4>(verifier, VT_BOUNDS, 4) &&
+           VerifyField<asdx::res::BoundingSphere>(verifier, VT_BOUNDS, 4) &&
+           VerifyField<asdx::res::Float4x4>(verifier, VT_ROOTTRANSFORM, 4) &&
+           VerifyField<asdx::res::Float4x4>(verifier, VT_INVROOTTRANSFORM, 4) &&
            verifier.EndTable();
   }
 };
@@ -621,8 +383,14 @@ struct ModelBinaryBuilder {
   void add_Bones(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::Bone>>> Bones) {
     fbb_.AddOffset(ModelBinary::VT_BONES, Bones);
   }
-  void add_Bounds(const asdx::res::Float4 *Bounds) {
+  void add_Bounds(const asdx::res::BoundingSphere *Bounds) {
     fbb_.AddStruct(ModelBinary::VT_BOUNDS, Bounds);
+  }
+  void add_RootTransform(const asdx::res::Float4x4 *RootTransform) {
+    fbb_.AddStruct(ModelBinary::VT_ROOTTRANSFORM, RootTransform);
+  }
+  void add_InvRootTransform(const asdx::res::Float4x4 *InvRootTransform) {
+    fbb_.AddStruct(ModelBinary::VT_INVROOTTRANSFORM, InvRootTransform);
   }
   explicit ModelBinaryBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -641,8 +409,12 @@ inline ::flatbuffers::Offset<ModelBinary> CreateModelBinary(
     ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::Mesh>>> Meshes = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<::flatbuffers::String>>> Materials = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::Bone>>> Bones = 0,
-    const asdx::res::Float4 *Bounds = nullptr) {
+    const asdx::res::BoundingSphere *Bounds = nullptr,
+    const asdx::res::Float4x4 *RootTransform = nullptr,
+    const asdx::res::Float4x4 *InvRootTransform = nullptr) {
   ModelBinaryBuilder builder_(_fbb);
+  builder_.add_InvRootTransform(InvRootTransform);
+  builder_.add_RootTransform(RootTransform);
   builder_.add_Bounds(Bounds);
   builder_.add_Bones(Bones);
   builder_.add_Materials(Materials);
@@ -657,7 +429,9 @@ inline ::flatbuffers::Offset<ModelBinary> CreateModelBinaryDirect(
     const std::vector<::flatbuffers::Offset<asdx::res::Mesh>> *Meshes = nullptr,
     const std::vector<::flatbuffers::Offset<::flatbuffers::String>> *Materials = nullptr,
     std::vector<::flatbuffers::Offset<asdx::res::Bone>> *Bones = nullptr,
-    const asdx::res::Float4 *Bounds = nullptr) {
+    const asdx::res::BoundingSphere *Bounds = nullptr,
+    const asdx::res::Float4x4 *RootTransform = nullptr,
+    const asdx::res::Float4x4 *InvRootTransform = nullptr) {
   auto Meshes__ = Meshes ? _fbb.CreateVector<::flatbuffers::Offset<asdx::res::Mesh>>(*Meshes) : 0;
   auto Materials__ = Materials ? _fbb.CreateVector<::flatbuffers::Offset<::flatbuffers::String>>(*Materials) : 0;
   auto Bones__ = Bones ? _fbb.CreateVectorOfSortedTables<asdx::res::Bone>(Bones) : 0;
@@ -667,7 +441,9 @@ inline ::flatbuffers::Offset<ModelBinary> CreateModelBinaryDirect(
       Meshes__,
       Materials__,
       Bones__,
-      Bounds);
+      Bounds,
+      RootTransform,
+      InvRootTransform);
 }
 
 inline const asdx::res::ModelBinary *GetModelBinary(const void *buf) {

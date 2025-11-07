@@ -1,0 +1,39 @@
+﻿include "../../../res/format/ResTypes.fbs";
+
+namespace asdx.res;
+
+struct KeyFloat3
+{
+    Time  : float (key);
+    Value : Float3;
+}
+
+struct KeyQuaternion
+{
+    Time  : float (key);
+    Value : Float4;
+}
+
+table BoneAnimation
+{
+    BoneName  : string (key);
+    Positions : [KeyFloat3];
+    Rotations : [KeyQuaternion];
+    Scalings  : [KeyFloat3];
+}
+
+table AnimationClip
+{
+    Name           : string (key);
+    Duration       : float;
+    TicksPerSecond : float;
+    Bones          : [BoneAnimation];
+}
+
+table AnimationClipBinary
+{
+    Version : uint;
+    Clips   : [AnimationClip];
+}
+
+root_type AnimationClipBinary;

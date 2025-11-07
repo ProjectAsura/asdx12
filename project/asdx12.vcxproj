@@ -393,6 +393,7 @@
     <ClInclude Include="..\include\res\asdxResMaterial.h" />
     <ClInclude Include="..\include\res\asdxResModel.h" />
     <ClInclude Include="..\include\res\asdxResTexture.h" />
+    <ClInclude Include="..\src\gfx\asdxBoneImpl.h" />
     <ClInclude Include="..\src\gfx\asdxMeshImpl.h" />
     <ClInclude Include="..\src\gfx\asdxModelImpl.h" />
     <ClInclude Include="..\src\gfx\asdxModelInstanceImpl.h" />

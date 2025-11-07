@@ -104,7 +104,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>ASDX_AUTO_LINK;ASDX_ENABLE_IMGUI;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\..\ModelConverter\include;$(ProjectDir)..\..\..\include;$(ProjectDir)..\..\..\external\D3D12MemoryAllocator\include;$(ProjectDir)..\..\..\external\imgui;$(ProjectDir)..\..\..\external\ImGuizmo;$(ProjectDir)..\..\..\external\implot;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\..\ModelConverter\include;$(ProjectDir)..\..\..\include;$(ProjectDir)..\..\..\external\D3D12MemoryAllocator\include;$(ProjectDir)..\..\..\external\imgui;$(ProjectDir)..\..\..\external\ImGuizmo;$(ProjectDir)..\..\..\external\implot;C:\Program Files\Assimp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
@@ -134,7 +134,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>ASDX_AUTO_LINK;ASDX_ENABLE_IMGUI;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\..\ModelConverter\include;$(ProjectDir)..\..\..\include;$(ProjectDir)..\..\..\external\D3D12MemoryAllocator\include;$(ProjectDir)..\..\..\external\imgui;$(ProjectDir)..\..\..\external\ImGuizmo;$(ProjectDir)..\..\..\external\implot;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\..\ModelConverter\include;$(ProjectDir)..\..\..\include;$(ProjectDir)..\..\..\external\D3D12MemoryAllocator\include;$(ProjectDir)..\..\..\external\imgui;$(ProjectDir)..\..\..\external\ImGuizmo;$(ProjectDir)..\..\..\external\implot;C:\Program Files\Assimp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
@@ -178,18 +178,6 @@
     </FxCompile>
     <FxCompile Include="..\res\shaders\ModelVS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
-    </FxCompile>
-    <FxCompile Include="..\res\shaders\PrimitivePS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
-    </FxCompile>
-    <FxCompile Include="..\res\shaders\PrimitiveVS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
     </FxCompile>
   </ItemGroup>

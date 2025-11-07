@@ -1,0 +1,138 @@
+﻿namespace asdx.res;
+
+struct Float2
+{
+    X : float;
+    Y : float;
+}
+
+struct Float3
+{
+    X : float;
+    Y : float;
+    Z : float;
+}
+
+struct Float4
+{
+    X : float;
+    Y : float;
+    Z : float;
+    W : float;
+}
+
+struct Int2
+{
+    X : int;
+    Y : int;
+}
+
+struct Int3
+{
+    X : int;
+    Y : int;
+    Z : int;
+}
+
+struct Int4
+{
+    X : int;
+    Y : int;
+    Z : int;
+    W : int;
+}
+
+struct Uint2
+{
+    X : uint;
+    Y : uint;
+}
+
+struct Uint3
+{
+    X : uint;
+    Y : uint;
+    Z : uint;
+}
+
+struct Uint4
+{
+    X : uint;
+    Y : uint;
+    Z : uint;
+    W : uint;
+}
+
+struct Unorm2
+{
+    X : ubyte;
+    Y : ubyte;
+}
+
+struct Unorm3
+{
+    X : ubyte;
+    Y : ubyte;
+    Z : ubyte;
+}
+
+struct Unorm4
+{
+    X : ubyte;
+    Y : ubyte;
+    Z : ubyte;
+    W : ubyte;
+}
+
+struct Float3x4
+{
+    M11 : float;
+    M12 : float;
+    M13 : float;
+    M14 : float;
+
+    M21 : float;
+    M22 : float;
+    M23 : float;
+    M24 : float;
+
+    M31 : float;
+    M32 : float;
+    M33 : float;
+    M34 : float;
+}
+
+struct Float4x4
+{
+    M11 : float;
+    M12 : float;
+    M13 : float;
+    M14 : float;
+
+    M21 : float;
+    M22 : float;
+    M23 : float;
+    M24 : float;
+
+    M31 : float;
+    M32 : float;
+    M33 : float;
+    M34 : float;
+
+    M41 : float;
+    M42 : float;
+    M43 : float;
+    M44 : float;
+}
+
+struct BoundingBox
+{
+    Min : Float3;
+    Max : Float3;
+}
+
+struct BoundingSphere
+{
+    Center : Float3;
+    Radius : float;
+}
