@@ -1,6 +1,6 @@
 ﻿//-----------------------------------------------------------------------------
-// File : asdxMeshImpl.cpp
-// Desc : Mesh Implementation.
+// File : asdxModel.cpp
+// Desc : Model.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 
@@ -8,9 +8,9 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <cassert>
-#include "asdxMeshImpl.h"
 #include <res/asdxResModel.h>
 #include <fnd/asdxLogger.h>
+#include <gfx/asdxModel.h>
 
 
 namespace {
@@ -233,7 +233,7 @@ const VertexBuffer& Mesh::GetBoneWeights() const
 //-----------------------------------------------------------------------------
 //      頂点インデックスバッファを取得します.
 //-----------------------------------------------------------------------------
-const IndexBuffer& Mesh::GetVertexIndices() const
+const IndexBuffer& Mesh::GetIndices() const
 { return m_VertexIndices; }
 
 //-----------------------------------------------------------------------------
@@ -257,7 +257,7 @@ const BoundingSphere3& Mesh::GetBoundingSphere() const
 //-----------------------------------------------------------------------------
 //      レイトレーシングジオメトリトライアングル設定を取得します.
 //-----------------------------------------------------------------------------
-D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC Mesh::GetRayTracingGeometryTrianglesDesc() const
+D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC Mesh::GetTrianglesDesc() const
 {
     D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC result = {};
     result.IndexFormat                  = DXGI_FORMAT_R32_UINT;
@@ -268,6 +268,226 @@ D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC Mesh::GetRayTracingGeometryTrianglesDes
     result.VertexBuffer.StartAddress    = m_Positions    .GetResource()->GetGPUVirtualAddress();
     result.VertexBuffer.StrideInBytes   = sizeof(Vector3);
     return result;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Model class
+///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      コンストラクタです.
+//-----------------------------------------------------------------------------
+Model::Model()
+: m_RefCount(1)
+{ /* DO_NOTHING */ }
+
+//-----------------------------------------------------------------------------
+//      デストラクタです.
+//-----------------------------------------------------------------------------
+Model::~Model()
+{ Term(); }
+
+//-----------------------------------------------------------------------------
+//      参照カウンタを増やします.
+//-----------------------------------------------------------------------------
+void Model::AddRef()
+{ m_RefCount++; }
+
+//-----------------------------------------------------------------------------
+//      解放処理を行います.
+//-----------------------------------------------------------------------------
+void Model::Release()
+{
+    m_RefCount--;
+    if (m_RefCount == 0)
+    { delete this; }
+}
+
+//-----------------------------------------------------------------------------
+//      参照カウンタを取得します.
+//-----------------------------------------------------------------------------
+uint32_t Model::GetRefCount() const
+{ return m_RefCount; }
+
+//-----------------------------------------------------------------------------
+//      初期化処理を行います.
+//-----------------------------------------------------------------------------
+bool Model::Init(std::vector<uint8_t>&& binary)
+{
+    // モデルバイナリロード.
+    m_ModelBinary.Load(std::move(binary));
+
+    // マテリアルスロット確保.
+    m_MaterialSlots.resize(m_ModelBinary.GetMaterialCount());
+    for(auto i=0u; i<m_ModelBinary.GetMaterialCount(); ++i)
+    { m_MaterialSlots[i] = 0; }
+
+    // メッシュ生成.
+    m_Meshes.resize(m_ModelBinary.GetMeshCount());
+    for(auto i=0u; i<m_ModelBinary.GetMeshCount(); ++i)
+    {
+        auto res = m_ModelBinary.GetMesh(i);
+        if (!m_Meshes[i].Init(res))
+        {
+            ELOG("Error : Mesh Initialize Failed. index = %zu", i);
+            return false;
+        }
+    }
+
+    // バウンディングスフィア設定.
+    m_BoundingSphere = m_ModelBinary.GetBoundingSphere();
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      終了処理を行います.
+//-----------------------------------------------------------------------------
+void Model::Term()
+{
+    // メッシュ解放.
+    for(size_t i=0; i<m_Meshes.size(); ++i)
+    {
+        m_Meshes[i].Term();
+    }
+    m_Meshes.clear();
+
+    // マテリアルスロット解放.
+    m_MaterialSlots.clear();
+
+    // バウンディングスフィア初期化.
+    m_BoundingSphere = BoundingSphere3();
+
+    // モデルバイナリ破棄.
+    m_ModelBinary.Term();
+}
+
+//-----------------------------------------------------------------------------
+//      マテリアル数を取得します.
+//-----------------------------------------------------------------------------
+uint32_t Model::GetMaterialCount() const
+{ return m_ModelBinary.GetMaterialCount(); }
+
+//-----------------------------------------------------------------------------
+//      マテリアル名を取得します.
+//-----------------------------------------------------------------------------
+const char* Model::GetMaterialName(uint32_t index) const
+{ return m_ModelBinary.GetMaterial(index); }
+
+//-----------------------------------------------------------------------------
+//      マテリアルを取得します.
+//-----------------------------------------------------------------------------
+uintptr_t Model::GetMaterial(uint32_t index) const
+{
+    assert(index < m_MaterialSlots.size());
+    return m_MaterialSlots[index];
+}
+
+//-----------------------------------------------------------------------------
+//      マテリアルを設定します.
+//-----------------------------------------------------------------------------
+void Model::SetMaterial(uint32_t index, uintptr_t pMaterial)
+{
+    assert(index < m_MaterialSlots.size());
+    m_MaterialSlots[index] = pMaterial;
+}
+
+//-----------------------------------------------------------------------------
+//      ボーンを持つかどうかチェックします.
+//-----------------------------------------------------------------------------
+bool Model::HasBone() const
+{ return m_ModelBinary.GetBoneCount() > 0; }
+
+//-----------------------------------------------------------------------------
+//      ボーン数を取得します.
+//-----------------------------------------------------------------------------
+uint32_t Model::GetBoneCount() const
+{ return m_ModelBinary.GetBoneCount(); }
+
+//-----------------------------------------------------------------------------
+//      ボーン名を取得します.
+//-----------------------------------------------------------------------------
+ResBone Model::GetBone(uint32_t index) const
+{ return m_ModelBinary.GetBone(index); }
+
+//-----------------------------------------------------------------------------
+//      メッシュ数を取得します.
+//-----------------------------------------------------------------------------
+uint32_t Model::GetMeshCount() const
+{ return uint32_t(m_Meshes.size()); }
+
+//-----------------------------------------------------------------------------
+//      メッシュを取得します.
+//-----------------------------------------------------------------------------
+const Mesh* Model::GetMesh(uint32_t index) const
+{
+    assert(index < m_Meshes.size());
+    return &m_Meshes[index];
+}
+
+//-----------------------------------------------------------------------------
+//      リソースメッシュを取得します.
+//-----------------------------------------------------------------------------
+ResMesh Model::GetResMesh(uint32_t index) const
+{ return m_ModelBinary.GetMesh(index); }
+
+//-----------------------------------------------------------------------------
+//      バウンディングスフィアを取得します.
+//-----------------------------------------------------------------------------
+const BoundingSphere3& Model::GetBoundingSphere() const
+{ return m_BoundingSphere; }
+
+//-----------------------------------------------------------------------------
+//      ユーザーデータを設定します.
+//-----------------------------------------------------------------------------
+void Model::SetUserData(void* value)
+{ m_pUserData = value; }
+
+//-----------------------------------------------------------------------------
+//      ユーザーデータを取得します.
+//-----------------------------------------------------------------------------
+void* Model::GetUserData() const
+{ return m_pUserData; }
+
+//-----------------------------------------------------------------------------
+//      ボーン名を検索します.
+//-----------------------------------------------------------------------------
+bool Model::FindBone(const char* name, ResBone& bone) const
+{ return m_ModelBinary.FindBone(name, bone); }
+
+//-----------------------------------------------------------------------------
+//      マテリアル名を検索します.
+//-----------------------------------------------------------------------------
+bool Model::FindMaterial(const char* name, uint32_t& materialId) const
+{ return m_ModelBinary.FindMaterial(name, materialId); }
+
+//-----------------------------------------------------------------------------
+//      メッシュ名を検索します.
+//-----------------------------------------------------------------------------
+bool Model::FindMesh(const char* name, uint32_t& meshId) const
+{ return m_ModelBinary.FindMesh(name, meshId); }
+
+//-----------------------------------------------------------------------------
+//      モデルを生成します.
+//-----------------------------------------------------------------------------
+bool Model::Create(std::vector<uint8_t>&& binary, Model** ppModel)
+{
+    auto instance = new(std::nothrow) Model();
+    if (instance == nullptr)
+    {
+        ELOG("Error : Out of Memory.");
+        return false;
+    }
+
+    if (!instance->Init(std::move(binary)))
+    {
+        ELOG("Error : Model::Init() Failed.");
+        instance->Release();
+        return false;
+    }
+
+    (*ppModel) = instance;
+    return true;
 }
 
 } // namespace asdx

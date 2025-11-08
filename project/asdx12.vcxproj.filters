@@ -327,18 +327,6 @@
     <ClCompile Include="..\src\edit\asdxBlink.cpp">
       <Filter>ソース ファイル\edit</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxModelInstanceImpl.cpp">
-      <Filter>ソース ファイル\gfx</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxModelImpl.cpp">
-      <Filter>ソース ファイル\gfx</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxMeshImpl.cpp">
-      <Filter>ソース ファイル\gfx</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxModelManagerImpl.cpp">
-      <Filter>ソース ファイル\gfx</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\fnd\asdxRef.cpp">
       <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
@@ -383,6 +371,9 @@
     </ClCompile>
     <ClCompile Include="..\src\res\asdxResHelper.cpp">
       <Filter>ソース ファイル\res</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gfx\asdxModel.cpp">
+      <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -647,20 +638,8 @@
     <ClInclude Include="..\include\edit\asdxGuiMgr.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\gfx\asdxModelInstanceImpl.h">
-      <Filter>ソース ファイル\gfx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\gfx\asdxModelImpl.h">
-      <Filter>ソース ファイル\gfx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\gfx\asdxMeshImpl.h">
-      <Filter>ソース ファイル\gfx</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\gfx\asdxModel.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\gfx\asdxModelManagerImpl.h">
-      <Filter>ソース ファイル\gfx</Filter>
     </ClInclude>
     <ClInclude Include="..\include\fnd\asdxPath.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
@@ -697,9 +676,6 @@
     </ClInclude>
     <ClInclude Include="..\external\ImGuizmo\ImZoomSlider.h">
       <Filter>ソース ファイル\external\ImGuizmo</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\gfx\asdxBoneImpl.h">
-      <Filter>ソース ファイル\gfx</Filter>
     </ClInclude>
     <ClInclude Include="..\include\res\asdxResAnimationClip.h">
       <Filter>ヘッダー ファイル\res</Filter>

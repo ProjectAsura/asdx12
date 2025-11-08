@@ -267,10 +267,7 @@
     <ClCompile Include="..\src\gfx\asdxFont.cpp" />
     <ClCompile Include="..\src\gfx\asdxGfxMisc.cpp" />
     <ClCompile Include="..\src\gfx\asdxMapChip.cpp" />
-    <ClCompile Include="..\src\gfx\asdxMeshImpl.cpp" />
-    <ClCompile Include="..\src\gfx\asdxModelImpl.cpp" />
-    <ClCompile Include="..\src\gfx\asdxModelInstanceImpl.cpp" />
-    <ClCompile Include="..\src\gfx\asdxModelManagerImpl.cpp" />
+    <ClCompile Include="..\src\gfx\asdxModel.cpp" />
     <ClCompile Include="..\src\gfx\asdxPipelineState.cpp" />
     <ClCompile Include="..\src\gfx\asdxPresetState.cpp" />
     <ClCompile Include="..\src\gfx\asdxSampler.cpp" />
@@ -393,11 +390,6 @@
     <ClInclude Include="..\include\res\asdxResMaterial.h" />
     <ClInclude Include="..\include\res\asdxResModel.h" />
     <ClInclude Include="..\include\res\asdxResTexture.h" />
-    <ClInclude Include="..\src\gfx\asdxBoneImpl.h" />
-    <ClInclude Include="..\src\gfx\asdxMeshImpl.h" />
-    <ClInclude Include="..\src\gfx\asdxModelImpl.h" />
-    <ClInclude Include="..\src\gfx\asdxModelInstanceImpl.h" />
-    <ClInclude Include="..\src\gfx\asdxModelManagerImpl.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\include\fnd\asdxMath.inl" />

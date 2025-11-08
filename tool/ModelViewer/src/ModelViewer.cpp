@@ -132,13 +132,6 @@ bool ModelViewer::OnInit()
         }
     }
 
-    // モデルマネージャの初期化.
-    if (!asdx::InitModelManager(32))
-    {
-        ELOGA("Error : InitModelManager() Failed.");
-        return false;
-    }
-
     // ルートシグニチャの生成.
     {
         D3D12_ROOT_PARAMETER params[2] = {};
@@ -178,14 +171,14 @@ bool ModelViewer::OnInit()
         desc.SampleDesc.Count               = 1;
         desc.SampleDesc.Quality             = 0;
 
-        if (!asdx::PipelineStateManager::Instance().Create(&desc, m_SolidState))
+        if (!m_SolidState.Init(&desc))
         {
             ELOGA("Error : PipelineStateManager::Create() Failed.");
             return false;
         }
 
         desc.RasterizerState = asdx::Preset::Wireframe;
-        if (!asdx::PipelineStateManager::Instance().Create(&desc, m_WireframeState))
+        if (!m_WireframeState.Init(&desc))
         {
             ELOGA("Error : PipelineStateManager::Create() Failed.");
             return false;
@@ -270,14 +263,12 @@ void ModelViewer::OnTerm()
         m_SceneCB[i].Term();
     }
 
-    asdx::PipelineStateManager::Instance().Reset();
+    m_SolidState.Term();
+    m_WireframeState.Term();
 
     m_RootSignature.Reset();
 
     m_Model.Reset();
-
-    // モデルマネージャの終了処理.
-    asdx::TermModelManager();
 
     // GUIマネージャの終了処理.
     asdx::GuiMgr::Instance().Term();
@@ -377,7 +368,7 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
         // バウンディングスフィア表示.
         if (m_DrawBoundingSphere)
         {
-            for(size_t i=0; i<m_Model->GetMeshCount(); ++i)
+            for(auto i=0u; i<m_Model->GetMeshCount(); ++i)
             {
                 auto& sphere = m_Model->GetMesh(i)->GetBoundingSphere();
                 auto world = asdx::Matrix::CreateScale(sphere.Radius) * asdx::Matrix::CreateTranslation(sphere.Center);
@@ -401,15 +392,15 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
         if (m_DrawBones)
         {
             auto offset = m_Model->GetMeshCount() + 1;
-            for(size_t i=0; i<m_Model->GetBoneCount(); ++i)
+            for(auto i=0u; i<m_Model->GetBoneCount(); ++i)
             {
                 auto bone = m_Model->GetBone(i);
                 uint32_t index = uint32_t(offset + i);
 
-                asdx::Matrix matrix = bone->GetOffsetMatrix();
-                if (bone->GetParent() != nullptr)
+                asdx::Matrix matrix = bone.OffsetMatrix;
+                if (bone.ParentId != -1)
                 {
-                    matrix = bone->GetParent()->GetOffsetMatrix() * matrix;
+                    matrix = m_Model->GetBone(bone.ParentId).OffsetMatrix * matrix;
                 }
 
                 m_ShapeParams.SetWorld(index, matrix);
@@ -484,13 +475,16 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
         auto addressParam = m_ShapeParams.Update();
 
         pCmd->SetGraphicsRootSignature(m_RootSignature.GetPtr());
-        asdx::PipelineStateManager::Instance().SetState(pCmd, m_EnableWireframe ? m_WireframeState : m_SolidState);
+        if (m_EnableWireframe)
+        { m_WireframeState.SetState(pCmd); }
+        else
+        { m_SolidState.SetState(pCmd); }
 
         pCmd->SetGraphicsRootConstantBufferView(ROOT_PARAM_B0, m_SceneCB[idx].GetGpuAddress());
         pCmd->SetGraphicsRoot32BitConstants(ROOT_PARAM_B1, 1, &m_DrawMode, 0);
         pCmd->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-        for(size_t i=0; i<m_Model->GetMeshCount(); ++i)
+        for(auto i=0u; i<m_Model->GetMeshCount(); ++i)
         {
             auto mesh = m_Model->GetMesh(i);
 
@@ -502,7 +496,7 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
                 mesh->GetColors   ().GetVBV(),
             };
 
-            auto IBV = mesh->GetVertexIndices().GetIBV();
+            auto IBV = mesh->GetIndices().GetIBV();
 
             pCmd->IASetVertexBuffers(0, _countof(VBVs), VBVs);
             pCmd->IASetIndexBuffer(&IBV);
@@ -828,10 +822,11 @@ void ModelViewer::MenuHelp()
 //-----------------------------------------------------------------------------
 void ModelViewer::RecreateModel()
 {
-    asdx::IModel* pModel = nullptr;
+    asdx::Model* pModel = nullptr;
 
     // モデルを生成をします.
-    if (!asdx::GetModelManager().CreateModel(m_ModelBinary, &pModel))
+    std::vector<uint8_t> copyBinary = m_ModelBinary;
+    if (!asdx::Model::Create(std::move(copyBinary), &pModel))
     {
         ELOGA("Error : ModelManager::CreateModel() Failed.");
         return;
@@ -848,7 +843,7 @@ void ModelViewer::RecreateModel()
     m_ModelInfo.VertexCount = 0;
     m_ModelInfo.IndexCount  = 0;
 
-    for(auto i=0; i<m_Model->GetMeshCount(); ++i)
+    for(auto i=0u; i<m_Model->GetMeshCount(); ++i)
     {
         auto mesh = m_Model->GetMesh(i);
         m_ModelInfo.VertexCount += mesh->GetVertexCount();

@@ -171,4 +171,72 @@ bool ModelBinary::FindBone(const char* name, ResBone& result) const
     return true;
 }
 
+//-----------------------------------------------------------------------------
+//      マテリアルを検索します.
+//-----------------------------------------------------------------------------
+bool ModelBinary::FindMaterial(const char* name, uint32_t& materialId) const
+{
+    assert(!m_Blob.empty());
+    auto mats = res::GetModelBinary(m_Blob.data())->Materials();
+
+    uint32_t lhs = 0;
+    uint32_t rhs = mats->size();
+
+    while(lhs < rhs)
+    {
+        uint32_t mid = lhs + (rhs - lhs) / 2;
+        auto ret = strcmp(mats->Get(mid)->c_str(), name);
+        if (ret == 0)
+        {
+            materialId = mid;
+            return true;
+        }
+        else if (ret < 0)
+        {
+            lhs = mid + 1;
+        }
+        else
+        {
+            rhs = mid;
+        }
+    }
+
+    materialId = UINT32_MAX;
+    return false;
+}
+
+//-----------------------------------------------------------------------------
+//      メッシュを検索します.
+//-----------------------------------------------------------------------------
+bool ModelBinary::FindMesh(const char* name, uint32_t& meshId) const
+{
+    assert(!m_Blob.empty());
+    auto meshes = res::GetModelBinary(m_Blob.data())->Meshes();
+
+    uint32_t lhs = 0;
+    uint32_t rhs = meshes->size();
+ 
+    while(lhs < rhs)
+    {
+        uint32_t mid = lhs + (rhs - lhs) / 2;
+        auto ret = strcmp(meshes->Get(mid)->Name()->c_str(), name);
+        if (ret == 0)
+        {
+            meshId = mid;
+            return true;
+        }
+        else if (ret < 0)
+        {
+            lhs = mid + 1;
+        }
+        else
+        {
+            rhs = mid;
+        }
+    }
+
+    meshId = UINT32_MAX;
+    return false;
+}
+
 } // namespace asdx

@@ -38,7 +38,6 @@ public:
     //-------------------------------------------------------------------------
     StringView()
     : m_Ptr (nullptr)
-    , m_Size(0)
     { /* DO_NOTHING */ }
 
     //-------------------------------------------------------------------------
@@ -46,7 +45,6 @@ public:
     //-------------------------------------------------------------------------
     StringView(const char* value)
     : m_Ptr (value)
-    , m_Size(strlen(value))
     { /* DO_NOTHING */ }
 
     //-------------------------------------------------------------------------
@@ -57,19 +55,30 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      文字数取得.
     //-------------------------------------------------------------------------
-    size_t size() const { return m_Size; }
+    size_t size() const { return strlen(m_Ptr); }
 
     //-------------------------------------------------------------------------
     //! @brief      空かどうかチェックします.
     //-------------------------------------------------------------------------
     bool empty() const { return m_Ptr == nullptr; }
 
+    bool operator == (const StringView& value) const
+    { return strcmp(m_Ptr, value.m_Ptr) == 0; }
+
+    bool operator != (const StringView& value) const
+    { return strcmp(m_Ptr, value.m_Ptr) != 0; }
+
+    bool operator < (const StringView& value) const
+    { return strcmp(m_Ptr, value.m_Ptr) < 0; }
+
+    bool operator > (const StringView& value) const
+    { return strcmp(m_Ptr, value.m_Ptr) > 0; }
+
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
     const char* m_Ptr  = nullptr;
-    size_t      m_Size = 0;
 
     //=========================================================================
     // private methods.
@@ -103,7 +112,6 @@ public:
     //-------------------------------------------------------------------------
     WStringView()
     : m_Ptr (nullptr)
-    , m_Size(0)
     { /* DO_NOTHING */ }
 
     //-------------------------------------------------------------------------
@@ -111,7 +119,6 @@ public:
     //-------------------------------------------------------------------------
     WStringView(const wchar_t* value)
     : m_Ptr (value)
-    , m_Size(wcslen(value))
     { /* DO_NOTHING */ }
 
     //-------------------------------------------------------------------------
@@ -122,19 +129,30 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      文字数取得.
     //-------------------------------------------------------------------------
-    size_t size() const { return m_Size; }
+    size_t size() const { return wcslen(m_Ptr); }
 
     //-------------------------------------------------------------------------
     //! @brief      空かどうかチェックします.
     //-------------------------------------------------------------------------
     bool empty() const { return m_Ptr == nullptr; }
 
+    bool operator == (const WStringView& value) const
+    { return wcscmp(m_Ptr, value.m_Ptr) == 0; }
+
+    bool operator != (const WStringView& value) const
+    { return wcscmp(m_Ptr, value.m_Ptr) != 0; }
+
+    bool operator < (const WStringView& value) const
+    { return wcscmp(m_Ptr, value.m_Ptr) < 0; }
+
+    bool operator > (const WStringView& value) const
+    { return wcscmp(m_Ptr, value.m_Ptr) > 0; }
+
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
     const wchar_t* m_Ptr  = nullptr;
-    size_t         m_Size = 0;
 
     //=========================================================================
     // private methods.

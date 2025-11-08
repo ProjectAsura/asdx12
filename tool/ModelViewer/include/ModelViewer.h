@@ -63,11 +63,11 @@ private:
     //=========================================================================
     asdx::WaitPoint                     m_FrameWaitPoint;
     std::vector<uint8_t>                m_ModelBinary;
-    asdx::RefPtr<asdx::IModel>          m_Model;
+    asdx::RefPtr<asdx::Model>           m_Model;
     std::string                         m_OutputPath;
     asdx::RefPtr<ID3D12RootSignature>   m_RootSignature;
-    asdx::PipelineStateHandle           m_SolidState;
-    asdx::PipelineStateHandle           m_WireframeState;
+    asdx::GraphicsPipelineState         m_SolidState;
+    asdx::GraphicsPipelineState         m_WireframeState;
     ModelInfo                           m_ModelInfo = {};
     asdx::ConstantBuffer                m_SceneCB[2];
     asdx::AppCamera                     m_Camera;
