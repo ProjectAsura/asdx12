@@ -10,7 +10,6 @@
 #include <cassert>
 #include <gfx/asdxBuffer.h>
 #include <gfx/asdxDevice.h>
-#include <gfx/asdxDescriptorHeap.h>
 #include <gfx/asdxUpdateCommand.h>
 #include <fnd/asdxLogger.h>
 
@@ -665,23 +664,6 @@ bool ByteAddressBuffer::Init(uint64_t size, D3D12_RESOURCE_STATES state)
         }
     }
 
-    D3D12_SHADER_RESOURCE_VIEW_DESC viewDesc = {};
-    viewDesc.Format                     = DXGI_FORMAT_R32_TYPELESS;
-    viewDesc.ViewDimension              = D3D12_SRV_DIMENSION_BUFFER;
-    viewDesc.Shader4ComponentMapping    = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    viewDesc.Buffer.FirstElement        = 0;
-    viewDesc.Buffer.NumElements         = UINT(size / 4);
-    viewDesc.Buffer.StructureByteStride = 0;
-    viewDesc.Buffer.Flags               = D3D12_BUFFER_SRV_FLAG_RAW;
-
-    m_HandleSRV = GetResourceDescriptorHeap()->Alloc(1);
-    if (!m_HandleSRV.IsValid())
-    {
-        ELOG("Error : DescriptorHeap::Alloc() Failed.");
-        return false;
-    }
-
-    pDevice->CreateShaderResourceView(m_Resource.GetPtr(), &viewDesc, GetCpuHandleSRV());
     m_State = state;
 
     return true;
@@ -722,9 +704,6 @@ bool ByteAddressBuffer::Init
 //-----------------------------------------------------------------------------
 void ByteAddressBuffer::Term()
 {
-    if (m_HandleSRV.IsValid())
-    { GetResourceDescriptorHeap()->Free(m_HandleSRV); }
-
     auto resource = m_Resource.Detach();
     Dispose(resource);
     m_Allocation.Reset();
@@ -735,34 +714,6 @@ void ByteAddressBuffer::Term()
 //-----------------------------------------------------------------------------
 ID3D12Resource* ByteAddressBuffer::GetResource() const
 { return m_Resource.GetPtr(); }
-
-//-----------------------------------------------------------------------------
-//      オフセットハンドルを取得します.
-//-----------------------------------------------------------------------------
-const OffsetHandle& ByteAddressBuffer::GetOffsetHandleSRV() const
-{ return m_HandleSRV; }
-
-//-----------------------------------------------------------------------------
-//      CPUディスクリプタハンドルを取得します.
-//-----------------------------------------------------------------------------
-D3D12_CPU_DESCRIPTOR_HANDLE ByteAddressBuffer::GetCpuHandleSRV() const
-{
-    D3D12_CPU_DESCRIPTOR_HANDLE result = {};
-    if (m_HandleSRV.IsValid())
-    { result = GetResourceDescriptorHeap()->GetHandleCPU(m_HandleSRV); }
-    return result;
-}
-
-//-----------------------------------------------------------------------------
-//      GPUディスクリプタハンドルを取得します.
-//-----------------------------------------------------------------------------
-D3D12_GPU_DESCRIPTOR_HANDLE ByteAddressBuffer::GetGpuHandleSRV() const
-{
-    D3D12_GPU_DESCRIPTOR_HANDLE result = {};
-    if (m_HandleSRV.IsValid())
-    { result = GetResourceDescriptorHeap()->GetHandleGPU(m_HandleSRV); }
-    return result;
-}
 
 //-----------------------------------------------------------------------------
 //      GPUアドレスを取得します.
@@ -882,23 +833,6 @@ bool StructuredBuffer::Init(uint64_t count, uint32_t stride, D3D12_RESOURCE_STAT
         }
     }
 
-    D3D12_SHADER_RESOURCE_VIEW_DESC viewDesc = {};
-    viewDesc.Format                     = DXGI_FORMAT_UNKNOWN;
-    viewDesc.ViewDimension              = D3D12_SRV_DIMENSION_BUFFER;
-    viewDesc.Shader4ComponentMapping    = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    viewDesc.Buffer.FirstElement        = 0;
-    viewDesc.Buffer.NumElements         = UINT(count);
-    viewDesc.Buffer.StructureByteStride = stride;
-    viewDesc.Buffer.Flags               = D3D12_BUFFER_SRV_FLAG_NONE;
-
-    m_HandleSRV = GetResourceDescriptorHeap()->Alloc(1);
-    if (!m_HandleSRV.IsValid())
-    {
-        ELOG("Error : DescriptorHeap::Alloc() Failed.");
-        return false;
-    }
-
-    pDevice->CreateShaderResourceView(m_Resource.GetPtr(), &viewDesc, GetCpuHandleSRV());
     m_State = state;
 
     return true;
@@ -940,9 +874,6 @@ bool StructuredBuffer::Init
 //-----------------------------------------------------------------------------
 void StructuredBuffer::Term()
 {
-    if (m_HandleSRV.IsValid())
-    { GetResourceDescriptorHeap()->Free(m_HandleSRV); }
-
     auto resource = m_Resource.Detach();
     Dispose(resource);
     m_Allocation.Reset();
@@ -953,34 +884,6 @@ void StructuredBuffer::Term()
 //-----------------------------------------------------------------------------
 ID3D12Resource* StructuredBuffer::GetResource() const
 { return m_Resource.GetPtr(); }
-
-//-----------------------------------------------------------------------------
-//      オフセットハンドルを取得します.
-//-----------------------------------------------------------------------------
-const OffsetHandle& StructuredBuffer::GetOffsetHandleSRV() const
-{ return m_HandleSRV; }
-
-//-----------------------------------------------------------------------------
-//      CPUディスクリプタハンドルを取得します.
-//-----------------------------------------------------------------------------
-D3D12_CPU_DESCRIPTOR_HANDLE StructuredBuffer::GetCpuHandleSRV() const
-{
-    D3D12_CPU_DESCRIPTOR_HANDLE result = {};
-    if (m_HandleSRV.IsValid())
-    { result = GetResourceDescriptorHeap()->GetHandleCPU(m_HandleSRV); }
-    return result;
-}
-
-//-----------------------------------------------------------------------------
-//      GPUディスクリプタハンドルを取得します.
-//-----------------------------------------------------------------------------
-D3D12_GPU_DESCRIPTOR_HANDLE StructuredBuffer::GetGpuHandleSRV() const
-{
-    D3D12_GPU_DESCRIPTOR_HANDLE result = {};
-    if (m_HandleSRV.IsValid())
-    { result = GetResourceDescriptorHeap()->GetHandleGPU(m_HandleSRV); }
-    return result;
-}
 
 //-----------------------------------------------------------------------------
 //      GPUアドレスを取得します.

@@ -381,6 +381,9 @@
     <ClCompile Include="..\src\res\asdxResAnimationClip.cpp">
       <Filter>ソース ファイル\res</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\res\asdxResHelper.cpp">
+      <Filter>ソース ファイル\res</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\external\imgui\imconfig.h">
@@ -699,6 +702,9 @@
       <Filter>ソース ファイル\gfx</Filter>
     </ClInclude>
     <ClInclude Include="..\include\res\asdxResAnimationClip.h">
+      <Filter>ヘッダー ファイル\res</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\res\asdxResHelper.h">
       <Filter>ヘッダー ファイル\res</Filter>
     </ClInclude>
   </ItemGroup>
