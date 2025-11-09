@@ -154,6 +154,12 @@ float3 UniformSampleTriangle(float2 u)
 }
 
 //-----------------------------------------------------------------------------
+//      乱数の種を設定します.
+//-----------------------------------------------------------------------------
+uint4 SetSeed(uint2 pixelCoords, uint frameIndex)
+{ return uint4(pixelCoords, frameIndex, 0); }
+
+//-----------------------------------------------------------------------------
 //      Permuted Congruential Generator (PCG)
 //-----------------------------------------------------------------------------
 uint4 PCG(uint4 v)
@@ -186,7 +192,7 @@ float FloatPCG(inout uint4 seed)
 //-----------------------------------------------------------------------------
 //      IbukiHashによる疑似乱数を生成します.
 //-----------------------------------------------------------------------------
-float Ibuki(float4 v)
+float Ibuki(inout uint4 u)
 {
     // IbukiHash by Andante
     // This work is marked with CC0 1.0. To view a copy of this license, visit https://creativecommons.org/publicdomain/zero/1.0/
@@ -194,8 +200,7 @@ float Ibuki(float4 v)
     // [Andante 2024] Andaten, "屋根裏工房改: 高速で頑健なシェーダー乱数の比較と提案", 2024.
     // https://andantesoft.hatenablog.com/entry/2024/12/19/193517
     const uint4 mult = uint4(0xae3cc725, 0x9fe72885, 0xae36bfb5, 0x82c1fcad);
- 
-    uint4 u = uint4(v);
+
     u = u * mult;
     u ^= u.wxyz ^ u >> 13;
 
