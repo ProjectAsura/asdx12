@@ -268,6 +268,16 @@ public:
     //-------------------------------------------------------------------------
     bool IsSupportDXR() const { return m_SupportDXR; }
 
+    //-------------------------------------------------------------------------
+    //! @brief      DXR Tier を取得します.
+    //-------------------------------------------------------------------------
+    D3D12_RAYTRACING_TIER GetDXRTier() const { return m_DxrTier; }
+
+    //-------------------------------------------------------------------------
+    //! @brief      GPUアップロードヒープをサポートしているかどうか.
+    //-------------------------------------------------------------------------
+    bool IsSupportGpuUploadHeap() const { return m_SupportGpuUploadHeap; }
+
 private:
     //=========================================================================
     // private variables.
@@ -291,7 +301,10 @@ private:
     SpinLock                        m_SpinLock;                 //!< スピンロックです.
     VertexBuffer                    m_QuadVB;                   //!< フルスクリーン描画用三角形.
     RefPtr<D3D12MA::Allocator>      m_pAllocator;               //!< D3D12メモリアロケータ.
-    bool                            m_SupportDXR = false;       //!< DXRに対応しているかどうか.
+
+    D3D12_RAYTRACING_TIER           m_DxrTier               = D3D12_RAYTRACING_TIER_NOT_SUPPORTED;
+    bool                            m_SupportDXR            = false;    //!< DXRに対応しているかどうか.
+    bool                            m_SupportGpuUploadHeap  = false;    //!< GPUアップロードヒープに対応しているかどうか.
 
     //=========================================================================
     // private methods
@@ -584,10 +597,21 @@ bool GraphicsSystem::Init(const DeviceDesc& deviceDesc)
 
     // DXRのサポートチェック.
     m_SupportDXR = false;
+    m_DxrTier    = D3D12_RAYTRACING_TIER_NOT_SUPPORTED;
     D3D12_FEATURE_DATA_D3D12_OPTIONS5 options = {};
     auto hr = m_pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &options, sizeof(options));
     if (SUCCEEDED(hr))
-    { m_SupportDXR = (options.RaytracingTier != D3D12_RAYTRACING_TIER_NOT_SUPPORTED); }
+    {
+        m_DxrTier    = options.RaytracingTier;
+        m_SupportDXR = (m_DxrTier != D3D12_RAYTRACING_TIER_NOT_SUPPORTED);
+    }
+
+    // GPUアップロードヒープのサポートチェック.
+    m_SupportGpuUploadHeap = false;
+    D3D12_FEATURE_DATA_D3D12_OPTIONS16 options16 = {};
+    hr = m_pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS16, &options16, sizeof(options16));
+    if (SUCCEEDED(hr))
+    { m_SupportGpuUploadHeap = options16.GPUUploadHeapSupported; }
 
     // 正常終了.
     return true;
@@ -855,5 +879,17 @@ void DrawQuad(ID3D12GraphicsCommandList* pCmd)
 //-----------------------------------------------------------------------------
 bool IsSupportDXR()
 { return GraphicsSystem::Instance().IsSupportDXR(); }
+
+//-----------------------------------------------------------------------------
+//      DXR Tierを取得します.
+//-----------------------------------------------------------------------------
+D3D12_RAYTRACING_TIER GetDXRTier()
+{ return GraphicsSystem::Instance().GetDXRTier(); }
+
+//-----------------------------------------------------------------------------
+//      GPUアップロードヒープをサポートしているかどうかチェックします.
+//-----------------------------------------------------------------------------
+bool IsSupportGpuUploadHeap()
+{ return GraphicsSystem::Instance().IsSupportGpuUploadHeap(); }
 
 } // namespace asdx

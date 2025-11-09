@@ -12,23 +12,10 @@
 #include <gfx/asdxDevice.h>
 #include <gfx/asdxUpdateCommand.h>
 #include <fnd/asdxLogger.h>
+#include <fnd/asdxMisc.h>
 
 
-namespace {
-
-//-----------------------------------------------------------------------------
-//      GPUアップロードがサポートされているかどうかチェックします.
-//-----------------------------------------------------------------------------
-bool IsSupportGpuUploadHeap(ID3D12Device* pDevice)
-{
-    D3D12_FEATURE_DATA_D3D12_OPTIONS16 options16 = {};
-    bool gpuUploadHeapSupported = false;
-    if (SUCCEEDED(pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS16, &options16, sizeof(options16))))
-    {
-        gpuUploadHeapSupported = options16.GPUUploadHeapSupported;
-    }
-    return gpuUploadHeapSupported;
-}
+namespace asdx {
 
 //-----------------------------------------------------------------------------
 //      バッファUAVを生成します.
@@ -37,8 +24,8 @@ bool CreateBufferUAV
 (
     ID3D12Device*           pDevice,
     UINT64                  bufferSize,
-    ID3D12Resource**        ppResource,
-    D3D12_RESOURCE_STATES   initialResourceState
+    D3D12_RESOURCE_STATES   initState,
+    ID3D12Resource**        ppResource
 )
 {
     D3D12_HEAP_PROPERTIES props = {};
@@ -61,11 +48,14 @@ bool CreateBufferUAV
     desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
     desc.Flags              = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 
+    if (initState == D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE)
+    { desc.Flags |= D3D12_RESOURCE_FLAG_RAYTRACING_ACCELERATION_STRUCTURE; }
+
     auto hr = pDevice->CreateCommittedResource(
         &props,
         D3D12_HEAP_FLAG_NONE,
         &desc,
-        initialResourceState,
+        initState,
         nullptr,
         IID_PPV_ARGS(ppResource));
     if (FAILED(hr))
@@ -77,9 +67,53 @@ bool CreateBufferUAV
     return true;
 }
 
-} // namespace
+//-----------------------------------------------------------------------------
+//      アップロードバッファを生成します.
+//-----------------------------------------------------------------------------
+bool CreateUploadBuffer
+(
+    ID3D12Device*           pDevice,
+    UINT64                  bufferSize,
+    ID3D12Resource**        ppResource
+)
+{
+    auto isGpuUpload = IsSupportGpuUploadHeap();
 
-namespace asdx {
+    D3D12_HEAP_PROPERTIES props = {};
+    props.Type                  = (isGpuUpload) ? D3D12_HEAP_TYPE_GPU_UPLOAD : D3D12_HEAP_TYPE_UPLOAD;
+    props.CPUPageProperty       = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+    props.MemoryPoolPreference  = D3D12_MEMORY_POOL_UNKNOWN;
+    props.CreationNodeMask      = 1;
+    props.VisibleNodeMask       = 1;
+
+    D3D12_RESOURCE_DESC desc = {};
+    desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
+    desc.Alignment          = 0;
+    desc.Width              = bufferSize;
+    desc.Height             = 1;
+    desc.DepthOrArraySize   = 1;
+    desc.MipLevels          = 1;
+    desc.Format             = DXGI_FORMAT_UNKNOWN;
+    desc.SampleDesc.Count   = 1;
+    desc.SampleDesc.Quality = 0;
+    desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+    desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
+
+    auto hr = pDevice->CreateCommittedResource(
+        &props,
+        D3D12_HEAP_FLAG_NONE,
+        &desc,
+        D3D12_RESOURCE_STATE_GENERIC_READ,
+        nullptr,
+        IID_PPV_ARGS(ppResource));
+    if (FAILED(hr))
+    {
+        ELOGA("Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr);
+        return false;
+    }
+
+    return true;
+}
 
 //-----------------------------------------------------------------------------
 //      コンストラクタです.
@@ -106,7 +140,7 @@ bool VertexBuffer::Init(uint64_t size, uint32_t stride)
         return false;
     }
 
-    auto heapType = IsSupportGpuUploadHeap(pDevice)
+    auto heapType = IsSupportGpuUploadHeap()
         ? D3D12_HEAP_TYPE_GPU_UPLOAD
         : D3D12_HEAP_TYPE_UPLOAD;
 
@@ -266,7 +300,7 @@ bool IndexBuffer::Init(uint64_t size, bool isShortFormat)
         return false;
     }
 
-    auto heapType = IsSupportGpuUploadHeap(pDevice)
+    auto heapType = IsSupportGpuUploadHeap()
         ? D3D12_HEAP_TYPE_GPU_UPLOAD
         : D3D12_HEAP_TYPE_UPLOAD;
 
@@ -433,7 +467,7 @@ bool ConstantBuffer::Init(uint64_t size)
 
     auto pDevice = GetD3D12Device();
 
-    auto heapType = IsSupportGpuUploadHeap(pDevice)
+    auto heapType = IsSupportGpuUploadHeap()
         ? D3D12_HEAP_TYPE_GPU_UPLOAD
         : D3D12_HEAP_TYPE_UPLOAD;
 
@@ -594,6 +628,13 @@ ByteAddressBuffer::~ByteAddressBuffer()
 //-----------------------------------------------------------------------------
 bool ByteAddressBuffer::Init(uint64_t size, D3D12_RESOURCE_STATES state)
 {
+    auto rest = size % 4;
+    if ( rest != 0 )
+    {
+        ELOG( "Error : ByteAddressBuffer must be 4 byte alignment., (size %% 4) = %u", rest );
+        return false;
+    }
+
     auto pDevice = GetD3D12Device();
 
     if (pDevice == nullptr || size == 0)
@@ -602,11 +643,8 @@ bool ByteAddressBuffer::Init(uint64_t size, D3D12_RESOURCE_STATES state)
         return false;
     }
 
-    auto rest = size % 4;
-    if (rest != 0)
-    {
-        size += rest;
-    }
+    // 4 byte アライメントにする.
+    auto bufferSize = RoundUp(size, 4llu);
 
     D3D12_HEAP_PROPERTIES prop = {};
     prop.Type                   = D3D12_HEAP_TYPE_DEFAULT;
@@ -617,7 +655,7 @@ bool ByteAddressBuffer::Init(uint64_t size, D3D12_RESOURCE_STATES state)
 
     D3D12_RESOURCE_DESC desc = {};
     desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
-    desc.Width              = size;
+    desc.Width              = bufferSize;
     desc.Height             = 1;
     desc.DepthOrArraySize   = 1;
     desc.Format             = DXGI_FORMAT_UNKNOWN;
@@ -679,6 +717,100 @@ bool ByteAddressBuffer::Init
     const void*                 pInitData
 )
 {
+    if (IsSupportGpuUploadHeap())
+    {
+        auto rest = size % 4;
+        if ( rest != 0 )
+        {
+            ELOG( "Error : ByteAddressBuffer must be 4 byte alignment., (size %% 4) = %u", rest );
+            return false;
+        }
+
+        auto pDevice = GetD3D12Device();
+
+        if (pDevice == nullptr || size == 0)
+        {
+            ELOG("Error : Invalid Argument.");
+            return false;
+        }
+
+        // 4 byte アライメントにする.
+        auto bufferSize = RoundUp(size, 4llu);
+
+        D3D12_HEAP_PROPERTIES prop = {};
+        prop.Type                   = D3D12_HEAP_TYPE_GPU_UPLOAD;
+        prop.CPUPageProperty        = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+        prop.MemoryPoolPreference   = D3D12_MEMORY_POOL_UNKNOWN;
+        prop.VisibleNodeMask        = 1;
+        prop.CreationNodeMask       = 1;
+
+        D3D12_RESOURCE_DESC desc = {};
+        desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
+        desc.Width              = bufferSize;
+        desc.Height             = 1;
+        desc.DepthOrArraySize   = 1;
+        desc.Format             = DXGI_FORMAT_UNKNOWN;
+        desc.MipLevels          = 1;
+        desc.SampleDesc.Count   = 1;
+        desc.SampleDesc.Quality = 0;
+        desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+        desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
+
+        auto flags = D3D12_HEAP_FLAG_NONE;
+
+        auto allocator = GetD3D12MA();
+        if (allocator != nullptr)
+        {
+            D3D12MA::ALLOCATION_DESC allocDesc = {};
+            allocDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
+
+            auto hr = allocator->CreateResource(
+                &allocDesc,
+                &desc,
+                D3D12_RESOURCE_STATE_COMMON,
+                nullptr,
+                m_Allocation.GetAddress(),
+                IID_PPV_ARGS(m_Resource.GetAddress()));
+            if (FAILED(hr))
+            {
+                ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
+                return false;
+            }
+        }
+        else
+        {
+            auto hr = pDevice->CreateCommittedResource(
+                &prop,
+                flags,
+                &desc,
+                D3D12_RESOURCE_STATE_COMMON,
+                nullptr,
+                IID_PPV_ARGS(m_Resource.GetAddress()));
+            if (FAILED(hr))
+            {
+                ELOG("Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr);
+                return false;
+            }
+        }
+
+        {
+            uint8_t* ptr = nullptr;
+            auto hr = m_Resource->Map(0, nullptr, reinterpret_cast<void**>(&ptr));
+            if (FAILED(hr))
+            {
+                ELOG("Error : ID3D12Resource::Map() Failed. errcode = 0x%x", hr);
+                return false;
+            }
+
+            memcpy(ptr, pInitData, size);
+            m_Resource->Unmap(0, nullptr);
+        }
+
+        m_State = D3D12_RESOURCE_STATE_COMMON;
+
+        return true;
+    }
+
     if (!Init(size, D3D12_RESOURCE_STATE_COMMON))
     { return false; }
 
@@ -762,19 +894,20 @@ StructuredBuffer::~StructuredBuffer()
 //-----------------------------------------------------------------------------
 bool StructuredBuffer::Init(uint64_t count, uint32_t stride, D3D12_RESOURCE_STATES state)
 {
+    auto size = count * stride;
+    auto rest = size % 4;
+    if ( rest != 0 )
+    {
+        ELOG( "Error : StructuredBuffer must be 4 byte alignment., (size %% 4) = %u", rest );
+        return false;
+    }
+
     auto pDevice = GetD3D12Device();
 
     if (pDevice == nullptr || count == 0 || stride == 0)
     {
         ELOG("Error : Invalid Argument.");
         return false;
-    }
-
-    uint64_t size = count * stride;
-    auto rest = size % 4;
-    if (rest != 0)
-    {
-        size += rest;
     }
 
     D3D12_HEAP_PROPERTIES prop = {};
@@ -849,6 +982,84 @@ bool StructuredBuffer::Init
     const void*                 pInitData
 )
 {
+    if (IsSupportGpuUploadHeap())
+    {
+        auto size = count * stride;
+        auto rest = size % 4;
+        if ( rest != 0 )
+        {
+            ELOG( "Error : StructuredBuffer must be 4 byte alignment., (size %% 4) = %u", rest );
+            return false;
+        }
+
+        auto pDevice = GetD3D12Device();
+
+        if (pDevice == nullptr || count == 0 || stride == 0)
+        {
+            ELOG("Error : Invalid Argument.");
+            return false;
+        }
+
+        D3D12_HEAP_PROPERTIES prop = {};
+        prop.Type                   = D3D12_HEAP_TYPE_GPU_UPLOAD;
+        prop.CPUPageProperty        = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+        prop.MemoryPoolPreference   = D3D12_MEMORY_POOL_UNKNOWN;
+        prop.VisibleNodeMask        = 1;
+        prop.CreationNodeMask       = 1;
+
+        D3D12_RESOURCE_DESC desc = {};
+        desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
+        desc.Width              = size;
+        desc.Height             = 1;
+        desc.DepthOrArraySize   = 1;
+        desc.Format             = DXGI_FORMAT_UNKNOWN;
+        desc.MipLevels          = 1;
+        desc.SampleDesc.Count   = 1;
+        desc.SampleDesc.Quality = 0;
+        desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+        desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
+
+        auto flags = D3D12_HEAP_FLAG_NONE;
+
+        auto allocator = GetD3D12MA();
+        if (allocator != nullptr)
+        {
+            D3D12MA::ALLOCATION_DESC allocDesc = {};
+            allocDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
+
+            auto hr = allocator->CreateResource(
+                &allocDesc,
+                &desc,
+                D3D12_RESOURCE_STATE_COMMON,
+                nullptr,
+                m_Allocation.GetAddress(),
+                IID_PPV_ARGS(m_Resource.GetAddress()));
+            if (FAILED(hr))
+            {
+                ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
+                return false;
+            }
+        }
+        else
+        {
+            auto hr = pDevice->CreateCommittedResource(
+                &prop,
+                flags,
+                &desc,
+                D3D12_RESOURCE_STATE_COMMON,
+                nullptr,
+                IID_PPV_ARGS(m_Resource.GetAddress()));
+            if (FAILED(hr))
+            {
+                ELOG("Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr);
+                return false;
+            }
+        }
+
+        m_State = D3D12_RESOURCE_STATE_COMMON;
+        return true;
+    }
+
     if (!Init(count, stride, D3D12_RESOURCE_STATE_COMMON))
     { return false;  }
 
@@ -951,8 +1162,8 @@ bool AccelerationStructure::Init
     if (!CreateBufferUAV(
         pDevice,
         prebuildInfo.ResultDataMaxSizeInBytes,
-        m_Resource.GetAddress(),
-        D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE))
+        D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
+        m_Resource.GetAddress()))
     {
         ELOG("Error : CreateBufferUAV() Failed.");
         return false;
@@ -963,8 +1174,8 @@ bool AccelerationStructure::Init
     if (!CreateBufferUAV(
         pDevice,
         size,
-        scratchBuffer.GetAddress(),
-        D3D12_RESOURCE_STATE_COMMON))
+        D3D12_RESOURCE_STATE_COMMON,
+        scratchBuffer.GetAddress()))
     {
         ELOG("Error : CreateBufferUAV() Failed.");
         return false;

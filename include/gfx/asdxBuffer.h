@@ -683,4 +683,34 @@ private:
     /* NOTHING */
 };
 
+//-----------------------------------------------------------------------------
+//! @brief      バッファUAVを生成します.
+//! 
+//! @param[in]      pDevice         デバイスです.
+//! @param[in]      bufferSize      バッファサイズです.
+//! @param[in]      initState       リソースステートです.
+//! @param[out]     ppResource      リソースの格納先です.
+//! @retval true    生成に成功.
+//! @retval false   生成に失敗.
+//-----------------------------------------------------------------------------
+bool CreateBufferUAV(
+    ID3D12Device*           pDevice,
+    UINT64                  bufferSize,
+    D3D12_RESOURCE_STATES   initState,
+    ID3D12Resource**        ppResource);
+
+//-----------------------------------------------------------------------------
+//! @brief      アップロードバッファを生成します.
+//! 
+//! @param[in]      pDevice         デバイスです.
+//! @param[in]      bufferSize      バッファサイズです.
+//! @param[out]     ppResource      リソースの格納先です.
+//! @retval true    生成に成功.
+//! @retval false   生成に失敗.
+//-----------------------------------------------------------------------------
+bool CreateUploadBuffer(
+    ID3D12Device*       pDevice,
+    UINT64              bufferSize,
+    ID3D12Resource**    ppResource);
+
 } // namespace asdx
