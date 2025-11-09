@@ -11,7 +11,7 @@
 #include <fnd/asdxLogger.h>
 #include <res/asdxResMaterial.h>
 #include "MaterialBinary_generated.h"
-
+#include <res/asdxResHelper.h>
 
 namespace {
 
@@ -68,124 +68,98 @@ void MaterialBinary::Term()
 }
 
 //-----------------------------------------------------------------------------
-//      プロパティ数を取得します.
+//      マテリアル数を取得します.
 //-----------------------------------------------------------------------------
-uint32_t MaterialBinary::GetPropertyCount() const
+uint32_t MaterialBinary::GetMaterialCount() const
 {
     assert(!m_Blob.empty());
-    return res::GetMaterialBinary(m_Blob.data())->Props()->size();
+    return res::GetMaterialBinary(m_Blob.data())->Materials()->size();
 }
 
 //-----------------------------------------------------------------------------
-//      テクスチャ数を取得します.
+//      マテリアルを取得します.
 //-----------------------------------------------------------------------------
-uint32_t MaterialBinary::GetTextureCount() const
+ResMaterial MaterialBinary::GetMaterial(uint32_t index) const
 {
     assert(!m_Blob.empty());
-    return res::GetMaterialBinary(m_Blob.data())->Textures()->size();
-}
+    auto mat = res::GetMaterialBinary(m_Blob.data())->Materials()->Get(index);
 
-//-----------------------------------------------------------------------------
-//      ブレンドタイプを取得します.
-//-----------------------------------------------------------------------------
-MaterialBlendType MaterialBinary::GetBlendType() const
-{
-    assert(!m_Blob.empty());
-    return MaterialBlendType(res::GetMaterialBinary(m_Blob.data())->Blend());
-}
-
-//-----------------------------------------------------------------------------
-//      カリングタイプを取得します.
-//-----------------------------------------------------------------------------
-MaterialCullType MaterialBinary::GetCullType() const
-{
-    assert(!m_Blob.empty());
-    return MaterialCullType(res::GetMaterialBinary(m_Blob.data())->Cull());
-}
-
-//-----------------------------------------------------------------------------
-//      深度タイプを取得します.
-//-----------------------------------------------------------------------------
-MaterialDepthType MaterialBinary::GetDepthType() const
-{
-    assert(!m_Blob.empty());
-    return MaterialDepthType(res::GetMaterialBinary(m_Blob.data())->Depth());
-}
-
-//-----------------------------------------------------------------------------
-//      定数バッファサイズを取得します.
-//-----------------------------------------------------------------------------
-uint32_t MaterialBinary::GetBufferSize() const
-{
-    assert(!m_Blob.empty());
-    return res::GetMaterialBinary(m_Blob.data())->BufferSize();
-}
-
-//-----------------------------------------------------------------------------
-//      プロパティを取得します.
-//-----------------------------------------------------------------------------
-ResMaterialProperty MaterialBinary::GetProperty(uint32_t index) const
-{
-    assert(!m_Blob.empty());
-    auto prop = res::GetMaterialBinary(m_Blob.data())->Props()->Get(index);
-
-    ResMaterialProperty result;
-    result.Name     = StringView(prop->Name()->c_str());
-    result.Type     = MaterialDataType(prop->Type());
-    result.Elements = prop->Elements();
-    result.Offset   = prop->Offset();
-    result.Value =   ArrayView<uint8_t>(prop->Value()->data(), prop->Value()->size());
+    ResMaterial result = {};
+    result.BindName         = StringView(mat->BindName    ()->c_str());
+    result.BaseColorMap     = StringView(mat->BaseColorMap()->c_str());
+    result.NormalMap        = StringView(mat->NormalMap   ()->c_str());
+    result.OrmMap           = StringView(mat->OrmMap      ()->c_str());
+    result.EmissiveMap      = StringView(mat->EmissiveMap ()->c_str());
+    result.BaseColorFactor  = FromFloat3(*(mat->BaseColorFactor()));
+    result.OcclusionFactor  = mat->OcclusionFactor();
+    result.RoughnessFactor  = mat->RoughnessFactor();
+    result.MetalnessFactor  = mat->MetalnessFactor();
+    result.EmissiveFactor   = FromFloat3(*(mat->EmissiveFactor()));
+    result.Ior              = mat->Ior();
+    result.AlphaThreshold   = mat->AlphaThreshold();
 
     return result;
 }
 
 //-----------------------------------------------------------------------------
-//      テクスチャを取得します.
+//      マテリアルを検索します.
 //-----------------------------------------------------------------------------
-ResMaterialTexture MaterialBinary::GetTexture(uint32_t index) const
+bool MaterialBinary::FindMaterial(const char* name, ResMaterial& result) const
 {
     assert(!m_Blob.empty());
-    auto tex = res::GetMaterialBinary(m_Blob.data())->Textures()->Get(index);
+    auto mat = res::GetMaterialBinary(m_Blob.data())->Materials();
+    auto find = mat->LookupByKey(name);
+    if (find == nullptr)
+        return false;
 
-    ResMaterialTexture result;
-    result.BindName = StringView(tex->BindName()->c_str());
-    result.Path     = StringView(tex->Path()->c_str());
-    return result;
-}
-
-//-----------------------------------------------------------------------------
-//      プロパティを検索します.
-//-----------------------------------------------------------------------------
-bool MaterialBinary::FindProperty(const char* name, ResMaterialProperty& result) const
-{
-    assert(!m_Blob.empty());
-    auto prop = res::GetMaterialBinary(m_Blob.data())->Props()->LookupByKey(name);
-    if (prop == nullptr)
-    { return false; }
-
-    result.Name     = StringView(prop->Name()->c_str());
-    result.Type     = MaterialDataType(prop->Type());
-    result.Elements = prop->Elements();
-    result.Offset   = prop->Offset();
-    result.Value =   ArrayView<uint8_t>(prop->Value()->data(), prop->Value()->size());
+    result.BindName         = StringView(find->BindName    ()->c_str());
+    result.BaseColorMap     = StringView(find->BaseColorMap()->c_str());
+    result.NormalMap        = StringView(find->NormalMap   ()->c_str());
+    result.OrmMap           = StringView(find->OrmMap      ()->c_str());
+    result.EmissiveMap      = StringView(find->EmissiveMap ()->c_str());
+    result.BaseColorFactor  = FromFloat3(*(find->BaseColorFactor()));
+    result.OcclusionFactor  = find->OcclusionFactor();
+    result.RoughnessFactor  = find->RoughnessFactor();
+    result.MetalnessFactor  = find->MetalnessFactor();
+    result.EmissiveFactor   = FromFloat3(*(find->EmissiveFactor()));
+    result.Ior              = find->Ior();
+    result.AlphaThreshold   = find->AlphaThreshold();
 
     return true;
 }
 
 //-----------------------------------------------------------------------------
-//      テクスチャを検索します.
+//      マテリアル番号を検索します.
 //-----------------------------------------------------------------------------
-bool MaterialBinary::FindTexture(const char* name, ResMaterialTexture& result) const
+bool MaterialBinary::FindMaterialId(const char* name, uint32_t& result) const
 {
     assert(!m_Blob.empty());
-    auto tex = res::GetMaterialBinary(m_Blob.data())->Textures()->LookupByKey(name);
-    if (tex == nullptr)
-    { return false; }
+    auto mat = res::GetMaterialBinary(m_Blob.data())->Materials();
 
-    result.BindName = StringView(tex->BindName()->c_str());
-    result.Path     = StringView(tex->Path()->c_str());
+    uint32_t lhs = 0;
+    uint32_t rhs = mat->size();
 
-    return true;
+    while(lhs < rhs)
+    {
+        uint32_t mid = lhs + (rhs - lhs) / 2;
+        auto ret = strcmp(mat->Get(mid)->BindName()->c_str(), name);
+        if (ret == 0)
+        {
+            result = mid;
+            return true;
+        }
+        else if (ret < 0)
+        {
+            lhs = mid + 1;
+        }
+        else
+        {
+            rhs = mid;
+        }
+    }
+
+    result = UINT32_MAX;
+    return false;
 }
 
 } // namespace asdx

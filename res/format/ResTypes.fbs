@@ -136,3 +136,9 @@ struct BoundingSphere
     Center : Float3;
     Radius : float;
 }
+
+struct Range
+{
+    Offset : uint;
+    Count  : uint;
+}

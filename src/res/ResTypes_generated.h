@@ -48,6 +48,8 @@ struct BoundingBox;
 
 struct BoundingSphere;
 
+struct Range;
+
 FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Float2 FLATBUFFERS_FINAL_CLASS {
  private:
   float X_;
@@ -631,6 +633,29 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) BoundingSphere FLATBUFFERS_FINAL_CLASS {
   }
 };
 FLATBUFFERS_STRUCT_END(BoundingSphere, 16);
+
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Range FLATBUFFERS_FINAL_CLASS {
+ private:
+  uint32_t Offset_;
+  uint32_t Count_;
+
+ public:
+  Range()
+      : Offset_(0),
+        Count_(0) {
+  }
+  Range(uint32_t _Offset, uint32_t _Count)
+      : Offset_(::flatbuffers::EndianScalar(_Offset)),
+        Count_(::flatbuffers::EndianScalar(_Count)) {
+  }
+  uint32_t Offset() const {
+    return ::flatbuffers::EndianScalar(Offset_);
+  }
+  uint32_t Count() const {
+    return ::flatbuffers::EndianScalar(Count_);
+  }
+};
+FLATBUFFERS_STRUCT_END(Range, 8);
 
 }  // namespace res
 }  // namespace asdx

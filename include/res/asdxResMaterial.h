@@ -102,6 +102,16 @@ public:
     //-------------------------------------------------------------------------
     bool FindMaterial(const char* name, ResMaterial& material) const;
 
+    //-------------------------------------------------------------------------
+    //! @brief      マテリアル番号を検索します.
+    //! 
+    //! @param[in]      name            検索するマテリアル名.
+    //! @param[out]     materialId      マテリアル番号の格納先.
+    //! @retval true    検索にヒット.
+    //! @retval fasle   見つかりませんでした.
+    //-------------------------------------------------------------------------
+    bool FindMaterialId(const char* name, uint32_t& materialId) const;
+
 private:
     //=========================================================================
     // private variables.

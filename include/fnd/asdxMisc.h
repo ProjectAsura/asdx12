@@ -281,7 +281,7 @@ std::string GetEnv(const char* name);
 //!             検索にヒットしない場合はSIZE_MAXを返却します.
 //-----------------------------------------------------------------------------
 template<typename T>
-size_t BinarySearch(const T items[], size_t count, const T& key)
+inline size_t BinarySearch(const T items[], size_t count, const T& key)
 {
     // Wikipedia, 二分探索 - 左端要素を探索する手続き.
     // https://ja.wikipedia.org/wiki/%E4%BA%8C%E5%88%86%E6%8E%A2%E7%B4%A2
@@ -294,6 +294,37 @@ size_t BinarySearch(const T items[], size_t count, const T& key)
         if (items[mid] == key)
             return mid;
         else if (items[mid] < key)
+            lhs = mid + 1;
+        else
+            rhs = mid;
+    }
+
+    return SIZE_MAX;
+}
+
+//-----------------------------------------------------------------------------
+//! @brief      二分検索を行います.
+//! 
+//! @param[in]      items       検索対象の配列.
+//! @param[in]      count       配列の数.
+//! @param[in]      key         検索キー.
+//! @param[in]      comp        比較関数です.
+//! @return     検索にヒットした配列番号を返却します.
+//!             検索にヒットしない場合はSIZE_MAXを返却します.
+//-----------------------------------------------------------------------------
+template<typename T, typename Compare>
+inline size_t BinarySearch(const T items[], size_t count, const T& key, Compare comp)
+{
+    size_t lhs = 0;
+    size_t rhs = count;
+
+    while(lhs < rhs)
+    {
+        size_t mid = lhs + (rhs - lhs) / 2;
+        int ret = comp(items[mid], key);
+        if (ret == 0)
+            return mid;
+        else if (ret < key)
             lhs = mid + 1;
         else
             rhs = mid;

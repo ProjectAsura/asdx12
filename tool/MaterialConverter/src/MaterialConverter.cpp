@@ -55,6 +55,7 @@ bool ConvertFromJSON
     //              "occlusion_factor" : float,
     //              "roughness_factor" : float,
     //              "metalness_factor" : float,
+    //              "emissive_factor" : [float, float, float],
     //              "ior" : float,
     //              "alpha_threshold" : float,
     //          },
@@ -80,7 +81,6 @@ bool ConvertFromJSON
         float ior             = 1.0f;
         float alphaThreshold  = 0.0f;
 
-        // TODO : 変換処理を実装.
         bindName     = m["bind_name"]     .get_string().value().data();
         baseColorMap = m["base_color_map"].get_string().value().data();
         normalMap    = m["normal_map"]    .get_string().value().data();
@@ -171,7 +171,8 @@ bool ConvertByAssimp
     for(auto i=0u; i<pScene->mNumMaterials; ++i)
     {
         const auto src = pScene->mMaterials[i];
-        const char* bindName     = src->GetName().C_Str();
+
+        const char* bindName = src->GetName().C_Str();
 
         asdx::res::Float3 baseColorFactor(1.0f, 1.0f, 1.0f);
         asdx::res::Float3 emissiveFactor (1.0f, 1.0f, 1.0f);
