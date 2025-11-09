@@ -1,6 +1,6 @@
 ﻿//-----------------------------------------------------------------------------
 // File : MaterialConverter.h
-// Desc : Material Converter.
+// Desc : Material Binary (*.mtb) Converter. 
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 #pragma once
@@ -50,6 +50,16 @@ public:
     //! @retval false   変換に失敗.
     //-------------------------------------------------------------------------
     static bool Convert(const Desc& desc);
+
+    //-------------------------------------------------------------------------
+    //! @brief      変換処理を行います.
+    //! 
+    //! @param[in]      inputPath   入力ファイルパス.
+    //! @param[out]     binary      バイナリ格納先.
+    //! @retval true    変換に成功.
+    //! @retval false   変換に失敗.
+    //-------------------------------------------------------------------------
+    static bool Convert(const char* inputPath, std::vector<uint8_t>& binary);
 
 private:
     //=========================================================================

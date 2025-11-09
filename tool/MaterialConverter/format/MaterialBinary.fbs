@@ -1,66 +1,28 @@
-﻿namespace asdx.res;
+﻿include "../../../res/format/ResTypes.fbs";
 
-enum MaterialBlendType : ubyte
-{
-    Opaque,
-    Masked,
-    AlphaBlend,
-    Additive,
-    Subtract,
-    Premultiplied,
-    Multiply,
-    Screen,
-}
+namespace asdx.res;
 
-enum MaterialCullType : ubyte
+table Material
 {
-    None,
-    Back,
-    Front,
-}
+    BindName     : string (key);
+    BaseColorMap : string;
+    NormalMap    : string;
+    OrmMap       : string;
+    EmissiveMap  : string;
 
-enum MaterialDepthType : ubyte
-{
-    ReadWrite,
-    ReadOnly,
-    WriteOnly,
-    None,
-}
-
-enum MaterialDataType : ubyte
-{
-    Bool,
-    Sint,
-    Uint,
-    Float,
-}
-
-table MaterialProperty
-{
-    Name     : string (key);
-    Type     : MaterialDataType;
-    Elements : uint;
-    Offset   : uint;
-    Value    : [ubyte];
-}
-
-table MaterialTexture
-{
-    BindName : string (key);
-    Path     : string;
+    BaseColorFactor : Float3;
+    OcclusionFactor : float;
+    RoughnessFactor : float;
+    MetalnessFactor : float;
+    EmissiveFactor  : Float3;
+    Ior             : float;
+    AlphaThreshold  : float;
 }
 
 table MaterialBinary
 {
     Version     : uint;
-    Name        : string;
-    Blend       : MaterialBlendType;
-    Cull        : MaterialCullType;
-    Depth       : MaterialDepthType;
-    ShaderName  : string;
-    BufferSize  : uint;
-    Props       : [MaterialProperty];
-    Textures    : [MaterialTexture];
+    Materials   : [Material];
 }
 
 root_type MaterialBinary;

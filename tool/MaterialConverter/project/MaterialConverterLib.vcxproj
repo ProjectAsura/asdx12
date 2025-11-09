@@ -102,13 +102,20 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\..\..\include;$(ProjectDir)..\..\..\external\flatbuffers\include;$(ProjectDir)..\..\..\external\simdjson\include;$(ProjectDir)..\..\..\external\simdjson\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\..\..\include;$(ProjectDir)..\..\..\external\flatbuffers\include;$(ProjectDir)..\..\..\external\simdjson\include;$(ProjectDir)..\..\..\external\simdjson\src;C:\Program Files\Assimp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PreBuildEvent>
+      <Command>xcopy "C:\Program Files\Assimp\bin\x64\assimp-vc143-mt.dll" "$(OutDir)" /Y /Q
+$(ProjectDir)..\..\..\external\flatbuffers\bin\flatc.exe --cpp -o $(ProjectDir)..\include $(ProjectDir)..\..\..\res\format\ResTypes.fbs --no-warnings
+$(ProjectDir)..\..\..\external\flatbuffers\bin\flatc.exe --cpp -o $(ProjectDir)..\include $(ProjectDir)..\format\MaterialBinary.fbs --no-warnings
+xcopy $(ProjectDir)..\include\MaterialBinary_generated.h $(ProjectDir)..\..\..\src\res /y /c</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -118,13 +125,20 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\..\..\include;$(ProjectDir)..\..\..\external\flatbuffers\include;$(ProjectDir)..\..\..\external\simdjson\include;$(ProjectDir)..\..\..\external\simdjson\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\..\..\include;$(ProjectDir)..\..\..\external\flatbuffers\include;$(ProjectDir)..\..\..\external\simdjson\include;$(ProjectDir)..\..\..\external\simdjson\src;C:\Program Files\Assimp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PreBuildEvent>
+      <Command>xcopy "C:\Program Files\Assimp\bin\x64\assimp-vc143-mt.dll" "$(OutDir)" /Y /Q
+$(ProjectDir)..\..\..\external\flatbuffers\bin\flatc.exe --cpp -o $(ProjectDir)..\include $(ProjectDir)..\..\..\res\format\ResTypes.fbs --no-warnings
+$(ProjectDir)..\..\..\external\flatbuffers\bin\flatc.exe --cpp -o $(ProjectDir)..\include $(ProjectDir)..\format\MaterialBinary.fbs --no-warnings
+xcopy $(ProjectDir)..\include\MaterialBinary_generated.h $(ProjectDir)..\..\..\src\res /y /c</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\external\simdjson\src\simdjson.cpp" />

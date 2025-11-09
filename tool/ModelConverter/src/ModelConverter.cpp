@@ -27,7 +27,7 @@ namespace {
 //-----------------------------------------------------------------------------
 // Constant Values.
 //-----------------------------------------------------------------------------
-static constexpr uint32_t CURRENT_VERION = 1u;  //!< 現在サポートされているバージョン.
+static constexpr uint32_t CURRENT_VERSION = 1u;  //!< 現在サポートされているバージョン.
 
 ///////////////////////////////////////////////////////////////////////////////
 // BoneInfo structure
@@ -523,7 +523,7 @@ bool ModelConverter::Convert(const std::string& path, std::vector<uint8_t>& bina
 
     auto bin = asdx::res::CreateModelBinaryDirect(
         builder,
-        CURRENT_VERION,
+        CURRENT_VERSION,
         &meshes,
         &materials,
         &bones,
