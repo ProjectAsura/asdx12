@@ -332,7 +332,7 @@ float EncodeTangent(float3 normal, float3 tangent)
 
     t1 = normalize(t1);
     float3 t2 = cross(t1, normal);
-    float2 packedTangent = float2(dot(tangent, t1), dot2(tangent, t2));
+    float2 packedTangent = float2(dot(tangent, t1), dot(tangent, t2));
     return EncodeDiamond(packedTangent);
 }
 

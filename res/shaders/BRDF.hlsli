@@ -10,67 +10,69 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include "Math.hlsli"
+#include "TangentSpace.hlsli"
+#include "Random.hlsli"
 
 
 
-//-----------------------------------------------------------------------------
-//      グロシネスに変換します.
-//-----------------------------------------------------------------------------
-float RoughnessToGlossiness(float roughness)
-{
-    return saturate(1.0f - roughness);
-}
+////-----------------------------------------------------------------------------
+////      グロシネスに変換します.
+////-----------------------------------------------------------------------------
+//float RoughnessToGlossiness(float roughness)
+//{
+//    return saturate(1.0f - roughness);
+//}
 
-//-----------------------------------------------------------------------------
-//      ラフネスに変換します.
-//-----------------------------------------------------------------------------
-float GlossinessToRoughness(float glossiness)
-{
-    return saturate(1.0f - glossiness);
-}
+////-----------------------------------------------------------------------------
+////      ラフネスに変換します.
+////-----------------------------------------------------------------------------
+//float GlossinessToRoughness(float glossiness)
+//{
+//    return saturate(1.0f - glossiness);
+//}
 
-//-----------------------------------------------------------------------------
-//      PBR RoughnessからTradiational Specular Powerに変換します.
-//-----------------------------------------------------------------------------
-float GlossinessToSpecularPower(float glossiness)
-{
-    // Sebastien Lagarade, "Adopting a physically based shading model", 
-    // https://seblagarde.wordpress.com/2011/08/17/hello-world/
-    // ※有効範囲は[2, 2048]まで.
-    return exp2(10.0f * glossiness + 1.0f);
-}
+////-----------------------------------------------------------------------------
+////      PBR RoughnessからTradiational Specular Powerに変換します.
+////-----------------------------------------------------------------------------
+//float GlossinessToSpecularPower(float glossiness)
+//{
+//    // Sebastien Lagarade, "Adopting a physically based shading model", 
+//    // https://seblagarde.wordpress.com/2011/08/17/hello-world/
+//    // ※有効範囲は[2, 2048]まで.
+//    return exp2(10.0f * glossiness + 1.0f);
+//}
 
-//-----------------------------------------------------------------------------
-//      Traditional Specular Power から PBR Glossinessに変換します.
-//-----------------------------------------------------------------------------
-float SpecularPowerToGlossiness(float specularPower)
-{
-    return log2(specularPower) * 0.01f - 1.0f;
-}
+////-----------------------------------------------------------------------------
+////      Traditional Specular Power から PBR Glossinessに変換します.
+////-----------------------------------------------------------------------------
+//float SpecularPowerToGlossiness(float specularPower)
+//{
+//    return log2(specularPower) * 0.01f - 1.0f;
+//}
 
-//-----------------------------------------------------------------------------
-//      Traditional Specular Power から　PBR Roughnessに変換します.
-//-----------------------------------------------------------------------------
-float SpecularPowerToRoughness(float specularPower)
-{
-    return SpecularPowerToRoughness(SpecularPowerToGlossiness(specularPower));
-}
+////-----------------------------------------------------------------------------
+////      Traditional Specular Power から　PBR Roughnessに変換します.
+////-----------------------------------------------------------------------------
+//float SpecularPowerToRoughness(float specularPower)
+//{
+//    return SpecularPowerToRoughness(SpecularPowerToGlossiness(specularPower));
+//}
 
-//-----------------------------------------------------------------------------
-//      ラフネスからスペキュラー指数を求めます.
-//-----------------------------------------------------------------------------
-float ToSpecularPower(float roughness)
-{ return 2.0f / min(0.99999f, max(0.0002f, roughness * roughness)) - 2.0f; }
+////-----------------------------------------------------------------------------
+////      ラフネスからスペキュラー指数を求めます.
+////-----------------------------------------------------------------------------
+//float ToSpecularPower(float roughness)
+//{ return 2.0f / min(0.99999f, max(0.0002f, roughness * roughness)) - 2.0f; }
 
-//-----------------------------------------------------------------------------
-//      スペキュラー指数からラフネス値を求めます.
-//-----------------------------------------------------------------------------
-float ToRoughness(float specularPower)
-{
-    // Dimiatr Lazarov, "Physically-based lighting in Call of Duty: Black Ops",
-    // SIGGRAPH 2011 Cources: Advances in Real-Time Rendering in 3D Graphics.
-    return sqrt(2.0f / (specularPower + 2.0f));
-}
+////-----------------------------------------------------------------------------
+////      スペキュラー指数からラフネス値を求めます.
+////-----------------------------------------------------------------------------
+//float ToRoughness(float specularPower)
+//{
+//    // Dimiatr Lazarov, "Physically-based lighting in Call of Duty: Black Ops",
+//    // SIGGRAPH 2011 Cources: Advances in Real-Time Rendering in 3D Graphics.
+//    return sqrt(2.0f / (specularPower + 2.0f));
+//}
 
 //-----------------------------------------------------------------------------
 //      ディフューズ反射率を求めます.
@@ -179,7 +181,7 @@ float GetSpecularLobeHalfAngle(float linearRoughess, float percentOfVolume /*= 0
 float CalcSpecularAO(float NoV, float ao, float roughness)
 {
     // Moving Frostbite to PBR v3.2 Listing 26.
-    return saturate(Pow(max(NoV + ao, 0.0f), exp2(-16.0f * roughness - 1.0f)) - 1.0f + ao);
+    return saturate(pow(max(NoV + ao, 0.0f), exp2(-16.0f * roughness - 1.0f)) - 1.0f + ao);
 }
 
 //-----------------------------------------------------------------------------
@@ -238,7 +240,7 @@ float DisneyDiffuse(float NdotV, float NdotL, float LdotH, float roughness)
 float PhongSpecular(float3 N, float3 V, float3 L, float shininess)
 {
     float3 R = -V + (2.0f * dot(N, V) * N);
-    return Pow(max(dot(L, R), 0.0f), shininess) * ((shininess + 2.0f) / (2.0 * F_PI));
+    return pow(max(dot(L, R), 0.0f), shininess) * ((shininess + 2.0f) / (2.0 * F_PI));
 }
 
 //-----------------------------------------------------------------------------
@@ -291,7 +293,7 @@ float D_Charlie(float linearRoughness, float NoH)
     float invAlpha = 1.0f / linearRoughness;
     float cos2h = NoH * NoH;
     float sin2h = max(1.0f - cos2h, 0.0078125f); // 2^(-14/2), so sin2h^2 0 in fp16
-    return (2.0f + invAlpha) * Pow(sin2h, invAlpha * 0.5f) / (2.0f * F_PI);
+    return (2.0f + invAlpha) * pow(sin2h, invAlpha * 0.5f) / (2.0f * F_PI);
 }
 
 //-----------------------------------------------------------------------------
@@ -341,7 +343,7 @@ float ScheuermannSingleSpecularTerm(float3 T, float3 H, float exponent)
     // Thorsten Scheuermann, "Hair Rendering and Shading", ShaderX 3, p.244　参照.
     float ToH   = dot(T, H);
     float sinTH = sqrt(1.0f - ToH * ToH);
-    return Pow(sinTH, exponent);
+    return pow(sinTH, exponent);
 }
 
 //-----------------------------------------------------------------------------
@@ -438,8 +440,8 @@ float3 EvaluateKajiyaKay
     float specular1 = max(0, cosTRL1 * cosTV + sinTRL1 * sinTV);
 
     // スペキュラー値.
-    float power0 = Pow(specular0, SpecularPower0) * Normalize0;
-    float power1 = Pow(specular1, SpecularPower1) * Normalize1;
+    float power0 = pow(specular0, SpecularPower0) * Normalize0;
+    float power1 = pow(specular1, SpecularPower1) * Normalize1;
 
     // レンダリング方程式の余弦項.
     float NoL = saturate(dot(N, L));
@@ -639,7 +641,7 @@ void EvaluateThinGlass
     const float3 C = float3(cosRefractedTheta, cosRefractedTheta, cosRefractedTheta);
 
     // 吸収を考慮するための係数.
-    const float3 K = Pow(max(baseColor, 0.001), 1 / C);
+    const float3 K = pow(max(baseColor, 0.001), 1 / C);
     const float3 RK = R * K;
 
     transmittance   = saturate(T * T * K / (1 - RK * RK));
@@ -699,8 +701,12 @@ float3 EvaluateDirectLightClearCoat
 //-----------------------------------------------------------------------------
 float3 SampleLambert(float2 u)
 {
-    // PDF = NoL / F_PI
-    return UniformSampleHemisphere(u);
+    float z = 1.0f - 2.0f * u.x;
+    float r = sqrt(max(0.0f, 1.0f - z * z));
+    float phi = 2.0f * F_PI * u.y;
+
+    // PDF = 1.0f / (4.0f * F_PI);
+    return float3(r * cos(phi), r * sin(phi), z);
 }
 
 //-----------------------------------------------------------------------------
@@ -807,6 +813,5 @@ float TokuyoshiRoughness(float3 normal, float roughness, float sigma2, float kap
     float kernelRoughness2 = min(2.0f * variance, kappa);
     return sqrt(saturate(roughness * roughness + kernelRoughness2));
 }
-
 
 #endif//ADX_BRDF_HLSLI
