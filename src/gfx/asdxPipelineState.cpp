@@ -508,6 +508,70 @@ void GraphicsPipelineState::OnReload(const std::string& fullPath)
 }
 
 //-----------------------------------------------------------------------------
+//      強制リロードを行います.
+//-----------------------------------------------------------------------------
+void GraphicsPipelineState::ForceReload()
+{
+    auto changed = false;
+
+    if (!m_VS.Path.empty())
+    {
+        std::vector<uint8_t> binary;
+        if (CompileFromFileA(m_VS.Path.c_str(), g_Includes, "main", "vs_6_6", binary))
+        {
+            m_VS.Blob = std::move(binary);
+            ReplaceCode(m_VS, m_Desc.VS);
+            changed = true;
+        }
+    }
+    if (!m_PS.Path.empty())
+    {
+        std::vector<uint8_t> binary;
+        if (CompileFromFileA(m_PS.Path.c_str(), g_Includes, "main", "ps_6_6", binary))
+        {
+            m_PS.Blob = std::move(binary);
+            ReplaceCode(m_PS, m_Desc.PS);
+            changed = true;
+        }
+    }
+    if (!m_HS.Path.empty())
+    {
+        std::vector<uint8_t> binary;
+        if (CompileFromFileA(m_HS.Path.c_str(), g_Includes, "main", "hs_6_6", binary))
+        {
+            m_HS.Blob = std::move(binary);
+            ReplaceCode(m_HS, m_Desc.HS);
+            changed = true;
+        }
+    }
+    if (!m_DS.Path.empty())
+    {
+        std::vector<uint8_t> binary;
+        if (CompileFromFileA(m_DS.Path.c_str(), g_Includes, "main", "ds_6_6", binary))
+        {
+            m_DS.Blob = std::move(binary);
+            ReplaceCode(m_DS, m_Desc.DS);
+            changed = true;
+        }
+    }
+    if (!m_GS.Path.empty())
+    {
+        std::vector<uint8_t> binary;
+        if (CompileFromFileA(m_GS.Path.c_str(), g_Includes, "main", "gs_6_6", binary))
+        {
+            m_GS.Blob = std::move(binary);
+            ReplaceCode(m_GS, m_Desc.GS);
+            changed = true;
+        }
+    }
+
+    if (changed)
+    {
+        m_Dirty = true;
+    }
+}
+
+//-----------------------------------------------------------------------------
 //      再生成処理です.
 //-----------------------------------------------------------------------------
 void GraphicsPipelineState::Recreate()
@@ -630,6 +694,23 @@ void ComputePipelineState::OnReload(const std::string& fullPath)
             ReplaceCode(m_CS, m_Desc.CS);
             m_Dirty = true;
         }
+    }
+}
+
+//-----------------------------------------------------------------------------
+//      強制リロードを行います.
+//-----------------------------------------------------------------------------
+void ComputePipelineState::ForceReload()
+{
+    if (!m_CS.Path.empty())
+        return;
+
+    std::vector<uint8_t> binary;
+    if (CompileFromFileA(m_CS.Path.c_str(), g_Includes, "main", "cs_6_6", binary))
+    {
+        m_CS.Blob = std::move(binary);
+        ReplaceCode(m_CS, m_Desc.CS);
+        m_Dirty = true;
     }
 }
 
@@ -814,6 +895,50 @@ void MeshShaderPipelineState::OnReload(const std::string& fullPath)
             ReplaceCode(m_PS, m_Desc.PS);
             m_Dirty = true;
         }
+    }
+}
+
+//-----------------------------------------------------------------------------
+//      強制リロードを行います.
+//-----------------------------------------------------------------------------
+void MeshShaderPipelineState::ForceReload()
+{
+    auto changed = false;
+
+    if (!m_AS.Path.empty())
+    {
+        std::vector<uint8_t> binary;
+        if (CompileFromFileA(m_AS.Path.c_str(), g_Includes, "main", "as_6_6", binary))
+        {
+            m_AS.Blob = std::move(binary);
+            ReplaceCode(m_AS, m_Desc.AS);
+            changed = true;
+        }
+    }
+    if (!m_MS.Path.empty())
+    {
+        std::vector<uint8_t> binary;
+        if (CompileFromFileA(m_MS.Path.c_str(), g_Includes, "main", "ms_6_6", binary))
+        {
+            m_MS.Blob = std::move(binary);
+            ReplaceCode(m_MS, m_Desc.MS);
+            changed = true;
+        }
+    }
+    if (!m_PS.Path.empty())
+    {
+        std::vector<uint8_t> binary;
+        if (CompileFromFileA(m_PS.Path.c_str(), g_Includes, "main", "ps_6_6", binary))
+        {
+            m_PS.Blob = std::move(binary);
+            ReplaceCode(m_PS, m_Desc.PS);
+            changed = true;
+        }
+    }
+
+    if (changed)
+    {
+        m_Dirty = true;
     }
 }
 
@@ -1153,6 +1278,23 @@ void RayTracingPipelineState::OnReload(const std::string& fullPath)
             ReplaceCode(m_Lib, m_Desc.Shader);
             m_Dirty = true;
         }
+    }
+}
+
+//-----------------------------------------------------------------------------
+//      強制リロードを行います.
+//-----------------------------------------------------------------------------
+void RayTracingPipelineState::ForceReload()
+{
+    if (m_Lib.Path.empty())
+        return;
+
+    std::vector<uint8_t> binary;
+    if (CompileFromFileA(m_Lib.Path.c_str(), g_Includes, "", "lib_6_6", binary))
+    {
+        m_Lib.Blob = std::move(binary);
+        ReplaceCode(m_Lib, m_Desc.Shader);
+        m_Dirty = true;
     }
 }
 

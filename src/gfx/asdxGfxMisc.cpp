@@ -409,7 +409,7 @@ bool IsCompressed(DXGI_FORMAT format)
 }
 
 //-----------------------------------------------------------------------------
-//
+//      DXGIフォーマットを文字列に変換します.
 //-----------------------------------------------------------------------------
 const char* ToString(DXGI_FORMAT format)
 {
@@ -549,7 +549,7 @@ const char* ToString(DXGI_FORMAT format)
 }
 
 //-----------------------------------------------------------------------------
-//
+//      D3D12_RESOURCE_DIMENSIONを文字列に変換します.
 //-----------------------------------------------------------------------------
 const char* ToString(D3D12_RESOURCE_DIMENSION dimension)
 {
@@ -565,7 +565,7 @@ const char* ToString(D3D12_RESOURCE_DIMENSION dimension)
 }
 
 //-----------------------------------------------------------------------------
-//
+//      D3D12_RTV_DIMENSIONを文字列に変換します.
 //-----------------------------------------------------------------------------
 const char* ToString(D3D12_RTV_DIMENSION dimension)
 {
@@ -585,7 +585,7 @@ const char* ToString(D3D12_RTV_DIMENSION dimension)
 }
 
 //-----------------------------------------------------------------------------
-//
+//      D3D12_DSV_DIMENSIONを文字列に変換します.
 //-----------------------------------------------------------------------------
 const char* ToString(D3D12_DSV_DIMENSION dimension)
 {
@@ -603,7 +603,30 @@ const char* ToString(D3D12_DSV_DIMENSION dimension)
 }
 
 //-----------------------------------------------------------------------------
-//
+//      D3D12_SRV_DIMENSIONを文字列に変換します.
+//-----------------------------------------------------------------------------
+const char* ToString(D3D12_SRV_DIMENSION dimension)
+{
+    switch(dimension)
+    {
+        CASE_STRING(D3D12_SRV_DIMENSION_UNKNOWN)
+        CASE_STRING(D3D12_SRV_DIMENSION_BUFFER)
+        CASE_STRING(D3D12_SRV_DIMENSION_TEXTURE1D)
+        CASE_STRING(D3D12_SRV_DIMENSION_TEXTURE1DARRAY)
+        CASE_STRING(D3D12_SRV_DIMENSION_TEXTURE2D)
+        CASE_STRING(D3D12_SRV_DIMENSION_TEXTURE2DARRAY)
+        CASE_STRING(D3D12_SRV_DIMENSION_TEXTURE2DMS)
+        CASE_STRING(D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY)
+        CASE_STRING(D3D12_SRV_DIMENSION_TEXTURE3D)
+        CASE_STRING(D3D12_SRV_DIMENSION_TEXTURECUBE)
+        CASE_STRING(D3D12_SRV_DIMENSION_TEXTURECUBEARRAY)
+        CASE_STRING(D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE)
+        default: return "UNKNOWN";
+    }
+}
+
+//-----------------------------------------------------------------------------
+//      D3D12_UAV_DIMENSIONを文字列に変換します.
 //-----------------------------------------------------------------------------
 const char* ToString(D3D12_UAV_DIMENSION dimension)
 {
@@ -623,7 +646,7 @@ const char* ToString(D3D12_UAV_DIMENSION dimension)
 }
 
 //-----------------------------------------------------------------------------
-//
+//      D3D12_RESOURCE_STATESを文字列に変換します.
 //-----------------------------------------------------------------------------
 const char* ToString(D3D12_RESOURCE_STATES states)
 {
