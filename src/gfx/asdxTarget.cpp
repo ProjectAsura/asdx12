@@ -13,6 +13,7 @@
 #include <gfx/asdxDescriptorHeap.h>
 #include <gfx/asdxGfxMisc.h>
 #include <fnd/asdxLogger.h>
+#include <D3D12MemAlloc.h>
 
 
 namespace asdx {
@@ -89,18 +90,22 @@ bool ColorTarget::Init(const TargetDesc* pDesc)
             D3D12MA::ALLOCATION_DESC allocDesc = {};
             allocDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
 
+            D3D12MA::Allocation* pAllocation;
+
             hr = allocator->CreateResource(
                 &allocDesc,
                 &desc,
                 pDesc->InitState,
                 &clearValue,
-                m_Allocation.GetAddress(),
+                &pAllocation,
                 IID_PPV_ARGS(m_pResource.GetAddress()));
             if (FAILED(hr))
             {
                 ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
                 return false;
             }
+
+            m_HolderAlloc = AllocationHolder(pAllocation);
         }
         else
         {
@@ -220,24 +225,27 @@ bool ColorTarget::Init(const TargetDesc* pDesc)
         return false;
     }
 
-    m_HandleRTV = GetRtvDescriptorHeap()->Alloc(1);
-    if (!m_HandleRTV.IsValid())
-    {
-        ELOG("Error : DescriptorHeap::Alloc() Failed.");
-        return false;
-    }
-
     auto pDevice = GetD3D12Device();
     assert(pDevice != nullptr);
-    pDevice->CreateRenderTargetView(m_pResource.GetPtr(), &rtv_desc, GetCpuHandleRTV());
 
-    m_HandleSRV = GetResourceDescriptorHeap()->Alloc(1);
-    if (!m_HandleSRV.IsValid())
+    auto handleRTV = GetRtvDescriptorHeap()->Alloc(1);
+    if (!handleRTV.IsValid())
     {
         ELOG("Error : DescriptorHeap::Alloc() Failed.");
         return false;
     }
 
+    m_HolderRTV = DescriptorHolder(DescriptorHolder::HEAP_RTV, handleRTV);
+    pDevice->CreateRenderTargetView(m_pResource.GetPtr(), &rtv_desc, GetCpuHandleRTV());
+
+    auto handleSRV = GetResourceDescriptorHeap()->Alloc(1);
+    if (!handleSRV.IsValid())
+    {
+        ELOG("Error : DescriptorHeap::Alloc() Failed.");
+        return false;
+    }
+
+    m_HolderSRV = DescriptorHolder(DescriptorHolder::HEAP_RES, handleSRV);
     pDevice->CreateShaderResourceView(m_pResource.GetPtr(), &srv_desc, GetCpuHandleSRV());
 
     memcpy(&m_Desc, pDesc, sizeof(m_Desc));
@@ -338,24 +346,25 @@ bool ColorTarget::Init
         }
     }
 
-    m_HandleRTV = GetRtvDescriptorHeap()->Alloc(1);
-    if (!m_HandleRTV.IsValid())
-    {
-        ELOG("Error : DescriptorHeap::Alloc() Failed.");
-        return false;
-    }
-
     auto pDevice = GetD3D12Device();
     assert(pDevice != nullptr);
-    pDevice->CreateRenderTargetView(m_pResource.GetPtr(), &rtv_desc, GetCpuHandleRTV());
 
-    m_HandleSRV = GetResourceDescriptorHeap()->Alloc(1);
-    if (!m_HandleSRV.IsValid())
+    auto handleRTV = GetRtvDescriptorHeap()->Alloc(1);
+    if (!handleRTV.IsValid())
     {
         ELOG("Error : DescriptorHeap::Alloc() Failed.");
         return false;
     }
+    m_HolderRTV = DescriptorHolder(DescriptorHolder::HEAP_RTV, handleRTV);
+    pDevice->CreateRenderTargetView(m_pResource.GetPtr(), &rtv_desc, GetCpuHandleRTV());
 
+    auto handleSRV = GetResourceDescriptorHeap()->Alloc(1);
+    if (!handleSRV.IsValid())
+    {
+        ELOG("Error : DescriptorHeap::Alloc() Failed.");
+        return false;
+    }
+    m_HolderSRV = DescriptorHolder(DescriptorHolder::HEAP_RES, handleSRV);
     pDevice->CreateShaderResourceView(m_pResource.GetPtr(), &srv_desc, GetCpuHandleSRV());
 
     m_PrevState = D3D12_RESOURCE_STATE_COMMON;
@@ -368,16 +377,12 @@ bool ColorTarget::Init
 //-----------------------------------------------------------------------------
 void ColorTarget::Term()
 {
-    if (m_HandleRTV.IsValid())
-    { GetRtvDescriptorHeap()->Free(m_HandleRTV); }
-
-    if (m_HandleSRV.IsValid())
-    { GetResourceDescriptorHeap()->Free(m_HandleSRV); }
+    m_HolderAlloc.Reset();
+    m_HolderRTV  .Reset();
+    m_HolderSRV  .Reset();
 
     auto resource = m_pResource.Detach();
     Dispose(resource);
-
-    m_Allocation.Reset();
 
     memset(&m_Desc, 0, sizeof(m_Desc));
 }
@@ -402,48 +407,28 @@ ID3D12Resource* ColorTarget::GetResource() const
 { return m_pResource.GetPtr(); }
 
 //-----------------------------------------------------------------------------
-//      レンダーターゲットビュー用オフセットハンドルを取得します.
-//-----------------------------------------------------------------------------
-const OffsetHandle& ColorTarget::GetOffsetHandleRTV() const
-{ return m_HandleRTV; }
-
-//-----------------------------------------------------------------------------
 //      レンダーターゲットビュー用CPUディスクリプタハンドルを取得します.
 //-----------------------------------------------------------------------------
 D3D12_CPU_DESCRIPTOR_HANDLE ColorTarget::GetCpuHandleRTV() const
-{
-    D3D12_CPU_DESCRIPTOR_HANDLE result = {};
-    if (m_HandleRTV.IsValid())
-    { result = GetRtvDescriptorHeap()->GetHandleCPU(m_HandleRTV); }
-    return result;
-}
+{ return m_HolderRTV.GetHandleCPU(); }
 
 //-----------------------------------------------------------------------------
-//      シェーダリソースビュー用オフセットハンドルを取得します.
+//      シェーダリソースビュー用バインドレスインデックスを取得します.
 //-----------------------------------------------------------------------------
-const OffsetHandle& ColorTarget::GetOffsetHandleSRV() const
-{ return m_HandleSRV; }
+uint32_t ColorTarget::GetBindlessIndexSRV() const
+{ return m_HolderSRV.GetIndex(); }
 
 //-----------------------------------------------------------------------------
 //      シェーダリソースビュー用CPUディスクリプタハンドルを取得します.
 //-----------------------------------------------------------------------------
 D3D12_CPU_DESCRIPTOR_HANDLE ColorTarget::GetCpuHandleSRV() const
-{
-    D3D12_CPU_DESCRIPTOR_HANDLE result = {};
-    if (m_HandleSRV.IsValid())
-    { result = GetResourceDescriptorHeap()->GetHandleCPU(m_HandleSRV); }
-    return result;
-}
+{ return m_HolderSRV.GetHandleCPU(); }
+
 //-----------------------------------------------------------------------------
 //      シェーダリソースビュー用GPUディスクリプタハンドルを取得します.
 //-----------------------------------------------------------------------------
 D3D12_GPU_DESCRIPTOR_HANDLE ColorTarget::GetGpuHandleSRV() const
-{
-    D3D12_GPU_DESCRIPTOR_HANDLE result = {};
-    if (m_HandleSRV.IsValid())
-    { result = GetResourceDescriptorHeap()->GetHandleGPU(m_HandleSRV); }
-    return result;
-}
+{ return m_HolderSRV.GetHandleGPU(); }
 
 //-----------------------------------------------------------------------------
 //      構成設定を取得します.
@@ -537,18 +522,22 @@ bool DepthTarget::Init(const TargetDesc* pDesc)
             D3D12MA::ALLOCATION_DESC allocDesc = {};
             allocDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
 
+            D3D12MA::Allocation* pAllocation = nullptr;
+
             hr = allocator->CreateResource(
                 &allocDesc,
                 &desc,
                 pDesc->InitState,
                 &clearValue,
-                m_Allocation.GetAddress(),
+                &pAllocation,
                 IID_PPV_ARGS(m_pResource.GetAddress()));
             if (FAILED(hr))
             {
                 ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
                 return false;
             }
+
+            m_HolderAlloc = AllocationHolder(pAllocation);
         }
         else
         {
@@ -665,25 +654,25 @@ bool DepthTarget::Init(const TargetDesc* pDesc)
         return false;
     }
 
-    m_HandleDSV = GetDsvDescriptorHeap()->Alloc(1);
-    if (!m_HandleDSV.IsValid())
-    {
-        ELOG("Error : DescriptorHeap::Alloc() Failed.");
-        return false;
-    }
-
     auto pDevice = GetD3D12Device();
     assert(pDevice != nullptr);
 
-    pDevice->CreateDepthStencilView(m_pResource.GetPtr(), &dsv_desc, GetCpuHandleDSV());
-
-    m_HandleSRV = GetResourceDescriptorHeap()->Alloc(1);
-    if (!m_HandleSRV.IsValid())
+    auto handleDSV = GetDsvDescriptorHeap()->Alloc(1);
+    if (!handleDSV.IsValid())
     {
         ELOG("Error : DescriptorHeap::Alloc() Failed.");
         return false;
     }
+    m_HolderDSV = DescriptorHolder(DescriptorHolder::HEAP_DSV, handleDSV);
+    pDevice->CreateDepthStencilView(m_pResource.GetPtr(), &dsv_desc, GetCpuHandleDSV());
 
+    auto handleSRV = GetResourceDescriptorHeap()->Alloc(1);
+    if (!handleSRV.IsValid())
+    {
+        ELOG("Error : DescriptorHeap::Alloc() Failed.");
+        return false;
+    }
+    m_HolderSRV = DescriptorHolder(DescriptorHolder::HEAP_RES, handleSRV);
     pDevice->CreateShaderResourceView(m_pResource.GetPtr(), &srv_desc, GetCpuHandleSRV());
 
     memcpy(&m_Desc, pDesc, sizeof(m_Desc));
@@ -698,16 +687,12 @@ bool DepthTarget::Init(const TargetDesc* pDesc)
 //-----------------------------------------------------------------------------
 void DepthTarget::Term()
 {
-    if (m_HandleSRV.IsValid())
-    { GetResourceDescriptorHeap()->Free(m_HandleSRV); }
-
-    if (m_HandleDSV.IsValid())
-    { GetDsvDescriptorHeap()->Free(m_HandleDSV); }
+    m_HolderAlloc.Reset();
+    m_HolderDSV  .Reset();
+    m_HolderSRV  .Reset();
 
     auto resource = m_pResource.Detach();
     Dispose(resource);
-
-    m_Allocation.Reset();
 
     memset(&m_Desc, 0, sizeof(m_Desc));
 }
@@ -732,49 +717,28 @@ ID3D12Resource* DepthTarget::GetResource() const
 { return m_pResource.GetPtr(); }
 
 //-----------------------------------------------------------------------------
-//      深度ステンシルビュー用オフセットハンドルを取得します.
-//-----------------------------------------------------------------------------
-const OffsetHandle& DepthTarget::GetOffsetHandleDSV() const
-{ return m_HandleDSV; }
-
-//-----------------------------------------------------------------------------
 //      深度ステンシルビュー用CPUディスクリプタハンドルを取得します.
 //-----------------------------------------------------------------------------
 D3D12_CPU_DESCRIPTOR_HANDLE DepthTarget::GetCpuHandleDSV() const
-{
-    D3D12_CPU_DESCRIPTOR_HANDLE result = {};
-    if (m_HandleDSV.IsValid())
-    { result = GetDsvDescriptorHeap()->GetHandleCPU(m_HandleDSV); } 
-    return result;
-}
+{ return m_HolderDSV.GetHandleCPU(); }
 
 //-----------------------------------------------------------------------------
-//      シェーダリソースビューを取得します.
+//      シェーダリソースビュー用バインドレスインデックスを取得します.
 //-----------------------------------------------------------------------------
-const OffsetHandle& DepthTarget::GetOffsetHandleSRV() const
-{ return m_HandleSRV; }
+uint32_t DepthTarget::GetBindlessIndexSRV() const
+{ return m_HolderSRV.GetIndex(); }
 
 //-----------------------------------------------------------------------------
 //      シェーダリソースビュー用CPUディスクリプタハンドルを取得します.
 //-----------------------------------------------------------------------------
 D3D12_CPU_DESCRIPTOR_HANDLE DepthTarget::GetCpuHandleSRV() const
-{
-    D3D12_CPU_DESCRIPTOR_HANDLE result = {};
-    if (m_HandleSRV.IsValid())
-    { result = GetResourceDescriptorHeap()->GetHandleCPU(m_HandleSRV); }
-    return result;
-}
+{ return m_HolderSRV.GetHandleCPU(); }
 
 //-----------------------------------------------------------------------------
 //      シェーダリソースビュー用CPUディスクリプタハンドルを取得します.
 //-----------------------------------------------------------------------------
 D3D12_GPU_DESCRIPTOR_HANDLE DepthTarget::GetGpuHandleSRV() const
-{
-    D3D12_GPU_DESCRIPTOR_HANDLE result = {};
-    if (m_HandleSRV.IsValid())
-    { result = GetResourceDescriptorHeap()->GetHandleGPU(m_HandleSRV); }
-    return result;
-}
+{ return m_HolderSRV.GetHandleGPU(); }
 
 //-----------------------------------------------------------------------------
 //      構成設定を取得します
@@ -859,18 +823,22 @@ bool ComputeTarget::Init(const TargetDesc* pDesc, uint32_t stride)
             D3D12MA::ALLOCATION_DESC allocDesc = {};
             allocDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
 
+            D3D12MA::Allocation* pAllocation = nullptr;
+
             hr = allocator->CreateResource(
                 &allocDesc,
                 &desc,
                 pDesc->InitState,
                 nullptr,
-                m_Allocation.GetAddress(),
+                &pAllocation,
                 IID_PPV_ARGS(m_pResource.GetAddress()));
             if (FAILED(hr))
             {
                 ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
                 return false;
             }
+
+            m_HolderAlloc = AllocationHolder(pAllocation);
         }
         else
         {
@@ -991,25 +959,25 @@ bool ComputeTarget::Init(const TargetDesc* pDesc, uint32_t stride)
         srv_desc.Buffer.Flags               = (stride == 0) ? D3D12_BUFFER_SRV_FLAG_RAW : D3D12_BUFFER_SRV_FLAG_NONE;
     }
 
-    m_HandleUAV = GetResourceDescriptorHeap()->Alloc(1);
-    if (!m_HandleUAV.IsValid())
-    {
-        ELOG("Error : DescriptorHeap::Alloc() Failed.");
-        return false;
-    }
-
     auto pDevice = GetD3D12Device();
     assert(pDevice != nullptr);
 
-    pDevice->CreateUnorderedAccessView(m_pResource.GetPtr(), nullptr, &uav_desc, GetCpuHandleUAV());
-
-    m_HandleSRV = GetResourceDescriptorHeap()->Alloc(1);
-    if (!m_HandleSRV.IsValid())
+    auto handleUAV = GetResourceDescriptorHeap()->Alloc(1);
+    if (!handleUAV.IsValid())
     {
         ELOG("Error : DescriptorHeap::Alloc() Failed.");
         return false;
     }
+    m_HolderUAV = DescriptorHolder(DescriptorHolder::HEAP_RES, handleUAV);
+    pDevice->CreateUnorderedAccessView(m_pResource.GetPtr(), nullptr, &uav_desc, GetCpuHandleUAV());
 
+    auto handleSRV = GetResourceDescriptorHeap()->Alloc(1);
+    if (!handleSRV.IsValid())
+    {
+        ELOG("Error : DescriptorHeap::Alloc() Failed.");
+        return false;
+    }
+    m_HolderSRV = DescriptorHolder(DescriptorHolder::HEAP_RES, handleSRV);
     pDevice->CreateShaderResourceView(m_pResource.GetPtr(), &srv_desc, GetCpuHandleSRV());
 
     memcpy(&m_Desc, pDesc, sizeof(m_Desc));
@@ -1112,25 +1080,25 @@ bool ComputeTarget::Init(ColorTarget& target)
         return false;
     }
 
-    m_HandleUAV = GetResourceDescriptorHeap()->Alloc(1);
-    if (!m_HandleUAV.IsValid())
-    {
-        ELOG("Error : DescriptorHeap::Alloc() Failed.");
-        return false;
-    }
-
     auto pDevice = GetD3D12Device();
     assert(pDevice != nullptr);
 
-    pDevice->CreateUnorderedAccessView(m_pResource.GetPtr(), nullptr, &uav_desc, GetCpuHandleUAV());
-
-    m_HandleSRV = GetResourceDescriptorHeap()->Alloc(1);
-    if (!m_HandleSRV.IsValid())
+    auto handleUAV = GetResourceDescriptorHeap()->Alloc(1);
+    if (!handleUAV.IsValid())
     {
         ELOG("Error : DescriptorHeap::Alloc() Failed.");
         return false;
     }
+    m_HolderUAV = DescriptorHolder(DescriptorHolder::HEAP_RES, handleUAV);
+    pDevice->CreateUnorderedAccessView(m_pResource.GetPtr(), nullptr, &uav_desc, GetCpuHandleUAV());
 
+    auto handleSRV = GetResourceDescriptorHeap()->Alloc(1);
+    if (!handleSRV.IsValid())
+    {
+        ELOG("Error : DescriptorHeap::Alloc() Failed.");
+        return false;
+    }
+    m_HolderSRV = DescriptorHolder(DescriptorHolder::HEAP_RES, handleSRV);
     pDevice->CreateShaderResourceView(m_pResource.GetPtr(), &srv_desc, GetCpuHandleSRV());
 
     memcpy(&m_Desc, &desc, sizeof(m_Desc));
@@ -1145,16 +1113,12 @@ bool ComputeTarget::Init(ColorTarget& target)
 //-----------------------------------------------------------------------------
 void ComputeTarget::Term()
 {
-    if (m_HandleSRV.IsValid())
-    { GetResourceDescriptorHeap()->Free(m_HandleSRV); }
-
-    if (m_HandleUAV.IsValid())
-    { GetResourceDescriptorHeap()->Free(m_HandleUAV); }
+    m_HolderAlloc.Reset();
+    m_HolderUAV  .Reset();
+    m_HolderSRV  .Reset();
 
     auto resource = m_pResource.Detach();
     Dispose(resource);
-
-    m_Allocation.Reset();
  
     memset(&m_Desc, 0, sizeof(m_Desc));
     m_Stride = 0;
@@ -1184,58 +1148,38 @@ ID3D12Resource* ComputeTarget::GetResource() const
 //-----------------------------------------------------------------------------
 //      アンオーダードアクセスビュー用オフセットハンドルを取得します.
 //-----------------------------------------------------------------------------
-const OffsetHandle& ComputeTarget::GetOffsetHandleUAV() const
-{ return m_HandleUAV; }
+uint32_t ComputeTarget::GetBindlessIndexUAV() const
+{ return m_HolderUAV.GetIndex(); }
 
 //-----------------------------------------------------------------------------
 //      アンオーダードアクセスビュー用CPUディスクリプタハンドルを取得します.
 //-----------------------------------------------------------------------------
 D3D12_CPU_DESCRIPTOR_HANDLE ComputeTarget::GetCpuHandleUAV() const
-{
-    D3D12_CPU_DESCRIPTOR_HANDLE result = {};
-    if (m_HandleUAV.IsValid())
-    { result = GetResourceDescriptorHeap()->GetHandleCPU(m_HandleUAV); }
-    return result;
-}
+{ return m_HolderUAV.GetHandleCPU(); }
 
 //-----------------------------------------------------------------------------
 //      アンオーダードアクセスビュー用GPUディスクリプタハンドルを取得します.
 //-----------------------------------------------------------------------------
 D3D12_GPU_DESCRIPTOR_HANDLE ComputeTarget::GetGpuHandleUAV() const
-{
-    D3D12_GPU_DESCRIPTOR_HANDLE result = {};
-    if (m_HandleUAV.IsValid())
-    { result = GetResourceDescriptorHeap()->GetHandleGPU(m_HandleUAV); }
-    return result;
-}
+{ return m_HolderUAV.GetHandleGPU(); }
 
 //-----------------------------------------------------------------------------
-//      シェーダリソースビュー用オフセットハンドルを取得します.
+//      シェーダリソースビュー用バインドレスインデックスを取得します.
 //-----------------------------------------------------------------------------
-const OffsetHandle& ComputeTarget::GetOffsetHandleSRV() const
-{ return m_HandleSRV; }
+uint32_t ComputeTarget::GetBindlessIndexSRV() const
+{ return m_HolderSRV.GetIndex(); }
 
 //-----------------------------------------------------------------------------
 //      シェーダリソースビュー用CPUディスクリプタハンドルを取得します.
 //-----------------------------------------------------------------------------
 D3D12_CPU_DESCRIPTOR_HANDLE ComputeTarget::GetCpuHandleSRV() const
-{
-    D3D12_CPU_DESCRIPTOR_HANDLE result = {};
-    if (m_HandleSRV.IsValid())
-    { result = GetResourceDescriptorHeap()->GetHandleCPU(m_HandleSRV); }
-    return result;
-}
+{ return m_HolderSRV.GetHandleCPU(); }
 
 //-----------------------------------------------------------------------------
 //      シェーダリソースビュー用GPUディスクリプタハンドルを取得します.
 //-----------------------------------------------------------------------------
 D3D12_GPU_DESCRIPTOR_HANDLE ComputeTarget::GetGpuHandleSRV() const
-{
-    D3D12_GPU_DESCRIPTOR_HANDLE result = {};
-    if (m_HandleSRV.IsValid())
-    { result = GetResourceDescriptorHeap()->GetHandleGPU(m_HandleSRV); }
-    return result;
-}
+{ return m_HolderSRV.GetHandleGPU(); }
 
 //-----------------------------------------------------------------------------
 //      構成設定を取得します.

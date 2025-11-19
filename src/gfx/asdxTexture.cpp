@@ -14,6 +14,7 @@
 #include <gfx/asdxDescriptorHeap.h>
 #include <res/asdxResTexture.h>
 #include <fnd/asdxLogger.h>
+#include <D3D12MemAlloc.h>
 
 
 #if (D3D12_SDK_VERSION >= 613 || D3D12_PREVIEW_SDK_VERSION >= 710)
@@ -203,18 +204,22 @@ bool Texture::Init(ID3D12GraphicsCommandList* pCmdList, const ResTexture& resour
         D3D12MA::ALLOCATION_DESC allocDesc = {};
         allocDesc.HeapType = heapType;
 
+        D3D12MA::Allocation* pAllocation = nullptr;
+
         auto hr = allocator->CreateResource(
             &allocDesc,
             &desc,
             initState,
             nullptr,
-            m_Allocation.GetAddress(),
+            &pAllocation,
             IID_PPV_ARGS(m_Resource.GetAddress()));
         if (FAILED(hr))
         {
             ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
             return false;
         }
+
+        m_Allocation = AllocationHolder(pAllocation);
     }
     else
     {
@@ -232,13 +237,14 @@ bool Texture::Init(ID3D12GraphicsCommandList* pCmdList, const ResTexture& resour
         }
     }
 
-    m_HandleSRV = GetResourceDescriptorHeap()->Alloc(1);
-    if (!m_HandleSRV.IsValid())
+    auto handleSRV = GetResourceDescriptorHeap()->Alloc(1);
+    if (!handleSRV.IsValid())
     {
         ELOG("Error : DescriptorHeap::Alloc() Failed.");
         return false;
     }
 
+    m_DescriptorSRV = DescriptorHolder(DescriptorHolder::HEAP_RES, handleSRV);
     pDevice->CreateShaderResourceView(m_Resource.GetPtr(), &viewDesc, GetCpuHandleSRV());
 
     // 直接書き込める場合.
@@ -291,41 +297,30 @@ bool Texture::Init(ID3D12GraphicsCommandList* pCmdList, const ResTexture& resour
 //-----------------------------------------------------------------------------
 void Texture::Term()
 {
-    if (m_HandleSRV.IsValid())
-    { GetResourceDescriptorHeap()->Free(m_HandleSRV); }
+    m_DescriptorSRV.Reset();
+    m_Allocation.Reset();
 
     auto resource = m_Resource.Detach();
     Dispose(resource);
-    m_Allocation.Reset();
 }
 
 //-----------------------------------------------------------------------------
-//      オフセットハンドルを取得します.
+//      バインドレスインデックスを取得します.
 //-----------------------------------------------------------------------------
-const OffsetHandle& Texture::GetOffsetHandleSRV() const
-{ return m_HandleSRV; }
+uint32_t Texture::GetBindlessIndexSRV() const
+{ return m_DescriptorSRV.GetIndex(); }
 
 //-----------------------------------------------------------------------------
 //      CPUディスクリプタハンドルを取得します.
 //-----------------------------------------------------------------------------
 D3D12_CPU_DESCRIPTOR_HANDLE Texture::GetCpuHandleSRV() const
-{
-    D3D12_CPU_DESCRIPTOR_HANDLE result = {};
-    if (m_HandleSRV.IsValid())
-    { result = GetResourceDescriptorHeap()->GetHandleCPU(m_HandleSRV); }
-    return result;
-}
+{ return m_DescriptorSRV.GetHandleCPU(); }
 
 //-----------------------------------------------------------------------------
 //      GPUディスクリプタハンドルを取得します.
 //-----------------------------------------------------------------------------
 D3D12_GPU_DESCRIPTOR_HANDLE Texture::GetGpuHandleSRV() const
-{
-    D3D12_GPU_DESCRIPTOR_HANDLE result = {};
-    if (m_HandleSRV.IsValid())
-    { result = GetResourceDescriptorHeap()->GetHandleGPU(m_HandleSRV); }
-    return result;
-}
+{ return m_DescriptorSRV.GetHandleGPU(); }
 
 //-----------------------------------------------------------------------------
 //      デバッグ名を設定します.

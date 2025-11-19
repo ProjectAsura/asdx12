@@ -256,11 +256,13 @@
     <ClCompile Include="..\src\fw\asdxAppCamera.cpp" />
     <ClCompile Include="..\src\fw\asdxScript.cpp" />
     <ClCompile Include="..\src\fw\asdxSound.cpp" />
+    <ClCompile Include="..\src\gfx\asdxAllocationHolder.cpp" />
     <ClCompile Include="..\src\gfx\asdxBuffer.cpp" />
     <ClCompile Include="..\src\gfx\asdxCamera.cpp" />
     <ClCompile Include="..\src\gfx\asdxCommandList.cpp" />
     <ClCompile Include="..\src\gfx\asdxCommandQueue.cpp" />
     <ClCompile Include="..\src\gfx\asdxDescriptorHeap.cpp" />
+    <ClCompile Include="..\src\gfx\asdxDescriptorHolder.cpp" />
     <ClCompile Include="..\src\gfx\asdxDevice.cpp" />
     <ClCompile Include="..\src\gfx\asdxDred.cpp" />
     <ClCompile Include="..\src\gfx\asdxFade.cpp" />
@@ -358,11 +360,13 @@
     <ClInclude Include="..\include\fw\asdxAppCamera.h" />
     <ClInclude Include="..\include\fw\asdxScript.h" />
     <ClInclude Include="..\include\fw\asdxSound.h" />
+    <ClInclude Include="..\include\gfx\asdxAllocationHolder.h" />
     <ClInclude Include="..\include\gfx\asdxBuffer.h" />
     <ClInclude Include="..\include\gfx\asdxCamera.h" />
     <ClInclude Include="..\include\gfx\asdxCommandList.h" />
     <ClInclude Include="..\include\gfx\asdxCommandQueue.h" />
     <ClInclude Include="..\include\gfx\asdxDescriptorHeap.h" />
+    <ClInclude Include="..\include\gfx\asdxDescriptorHolder.h" />
     <ClInclude Include="..\include\gfx\asdxDevice.h" />
     <ClInclude Include="..\include\gfx\asdxDisposer.h" />
     <ClInclude Include="..\include\gfx\asdxDred.h" />

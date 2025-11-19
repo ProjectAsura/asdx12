@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <tuple>
 #include <ShlObj.h>
+#include <D3D12MemAlloc.h>
 
 
 namespace {

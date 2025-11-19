@@ -12,7 +12,8 @@
 #include <dxgi1_6.h>
 #include <fnd/asdxOffsetAllocator.h>
 #include <fnd/asdxRef.h>
-#include <D3D12MemAlloc.h>
+#include <gfx/asdxAllocationHolder.h>
+#include <gfx/asdxDescriptorHolder.h>
 
 
 namespace asdx {
@@ -109,13 +110,6 @@ public:
     ID3D12Resource* GetResource() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      オフセットハンドルを取得します(RTV用).
-    //!
-    //! @return     オフセットハンドルを返却します(RTV用).
-    //-------------------------------------------------------------------------
-    const OffsetHandle& GetOffsetHandleRTV() const;
-
-    //-------------------------------------------------------------------------
     //! @brief      CPUディスクリプタハンドルを取得します(RTV用).
     //! 
     //! @return     CPUディスクリプタハンドルを返却します(RTV用).
@@ -123,11 +117,11 @@ public:
     D3D12_CPU_DESCRIPTOR_HANDLE GetCpuHandleRTV() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      オフセットハンドルを取得します(SRV用).
+    //! @brief      バインドレスインデックスを取得します(SRV用).
     //!
-    //! @return     オフセットハンドルを返却します(SRV用).
+    //! @return     バインドレスインデックスを返却します(SRV用).
     //-------------------------------------------------------------------------
-    const OffsetHandle& GetOffsetHandleSRV() const;
+    uint32_t GetBindlessIndexSRV() const;
 
     //-------------------------------------------------------------------------
     //! @brief      CPUディスクリプタハンドルを取得します(SRV用).
@@ -201,9 +195,9 @@ private:
     // private variables.
     //=========================================================================
     RefPtr<ID3D12Resource>      m_pResource;
-    RefPtr<D3D12MA::Allocation> m_Allocation;
-    OffsetHandle                m_HandleRTV;
-    OffsetHandle                m_HandleSRV;
+    AllocationHolder            m_HolderAlloc;
+    DescriptorHolder            m_HolderRTV;
+    DescriptorHolder            m_HolderSRV;
     TargetDesc                  m_Desc;
     D3D12_RESOURCE_STATES       m_PrevState = D3D12_RESOURCE_STATE_COMMON;
 
@@ -277,13 +271,6 @@ public:
     ID3D12Resource* GetResource() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      オフセットハンドルを取得します(DSV用).
-    //!
-    //! @return     オフセットハンドルを返却します(DSV用).
-    //-------------------------------------------------------------------------
-    const OffsetHandle& GetOffsetHandleDSV() const;
-
-    //-------------------------------------------------------------------------
     //! @brief      CPUディスクリプタハンドルを取得します(DSV用).
     //! 
     //! @return     CPUディスクリプタハンドルを返却します(DSV用).
@@ -291,11 +278,11 @@ public:
     D3D12_CPU_DESCRIPTOR_HANDLE GetCpuHandleDSV() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      オフセットハンドルを取得します(SRV用).
+    //! @brief      バインドレスインデックスを取得します(SRV用).
     //!
-    //! @return     オフセットハンドルを返却します(SRV用).
+    //! @return     バインドレスインデックスを返却します(SRV用).
     //-------------------------------------------------------------------------
-    const OffsetHandle& GetOffsetHandleSRV() const;
+    uint32_t GetBindlessIndexSRV() const;
 
     //-------------------------------------------------------------------------
     //! @brief      CPUディスクリプタハンドルを取得します(SRV用).
@@ -362,9 +349,9 @@ private:
     // private variables.
     //=========================================================================
     RefPtr<ID3D12Resource>      m_pResource;
-    RefPtr<D3D12MA::Allocation> m_Allocation;
-    OffsetHandle                m_HandleDSV;
-    OffsetHandle                m_HandleSRV;
+    AllocationHolder            m_HolderAlloc;
+    DescriptorHolder            m_HolderDSV;
+    DescriptorHolder            m_HolderSRV;
     TargetDesc                  m_Desc;
     D3D12_RESOURCE_STATES       m_PrevState = D3D12_RESOURCE_STATE_COMMON;
 
@@ -449,11 +436,11 @@ public:
     ID3D12Resource* GetResource() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      オフセットハンドルを取得します(UAV用).
+    //! @brief      バインドレスインデックスを取得します(UAV用).
     //!
-    //! @return     オフセットハンドルを返却します(UAV用).
+    //! @return     バインドレスインデックスを返却します(UAV用).
     //-------------------------------------------------------------------------
-    const OffsetHandle& GetOffsetHandleUAV() const;
+    uint32_t GetBindlessIndexUAV() const;
 
     //-------------------------------------------------------------------------
     //! @brief      CPUディスクリプタハンドルを取得します(UAV用).
@@ -470,11 +457,11 @@ public:
     D3D12_GPU_DESCRIPTOR_HANDLE GetGpuHandleUAV() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      オフセットハンドルを取得します(SRV用).
+    //! @brief      バインドレスインデックスを取得します(SRV用).
     //!
-    //! @return     オフセットハンドルを返却します(SRV用).
+    //! @return     バインドレスインデックスを返却します(SRV用).
     //-------------------------------------------------------------------------
-    const OffsetHandle& GetOffsetHandleSRV() const;
+    uint32_t GetBindlessIndexSRV() const;
 
     //-------------------------------------------------------------------------
     //! @brief      CPUディスクリプタハンドルを取得します(SRV用).
@@ -555,9 +542,9 @@ private:
     // private variables.
     //=========================================================================
     RefPtr<ID3D12Resource>          m_pResource;
-    RefPtr<D3D12MA::Allocation>     m_Allocation;
-    OffsetHandle                    m_HandleUAV;
-    OffsetHandle                    m_HandleSRV;
+    AllocationHolder                m_HolderAlloc;
+    DescriptorHolder                m_HolderUAV;
+    DescriptorHolder                m_HolderSRV;
     TargetDesc                      m_Desc;
     D3D12_RESOURCE_STATES           m_PrevState = D3D12_RESOURCE_STATE_COMMON;
     uint32_t                        m_Stride    = 0;

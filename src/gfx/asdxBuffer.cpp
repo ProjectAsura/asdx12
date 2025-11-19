@@ -13,6 +13,7 @@
 #include <gfx/asdxUpdateCommand.h>
 #include <fnd/asdxLogger.h>
 #include <fnd/asdxMisc.h>
+#include <D3D12MemAlloc.h>
 
 
 namespace asdx {
@@ -172,18 +173,22 @@ bool VertexBuffer::Init(uint64_t size, uint32_t stride)
         D3D12MA::ALLOCATION_DESC allocDesc = {};
         allocDesc.HeapType = heapType;
 
+        D3D12MA::Allocation* pAllocation = nullptr;
+
         auto hr = pAllocator->CreateResource(
             &allocDesc,
             &desc,
             state,
             nullptr,
-            m_Allocation.GetAddress(),
+            &pAllocation,
             IID_PPV_ARGS(m_Resource.GetAddress()));
         if (FAILED(hr))
         {
             ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
             return false;
         }
+
+        m_Holder = AllocationHolder(pAllocation);
     }
     else
     {
@@ -216,7 +221,7 @@ void VertexBuffer::Term()
     auto resource = m_Resource.Detach();
     Dispose(resource);
     memset(&m_View, 0, sizeof(m_View));
-    m_Allocation.Reset();
+    m_Holder.Reset();
 }
 
 //-----------------------------------------------------------------------------
@@ -332,18 +337,22 @@ bool IndexBuffer::Init(uint64_t size, bool isShortFormat)
         D3D12MA::ALLOCATION_DESC allocDesc = {};
         allocDesc.HeapType = heapType;
 
+        D3D12MA::Allocation* pAllocation = nullptr;
+
         auto hr = pAllocator->CreateResource(
             &allocDesc,
             &desc,
             state,
             nullptr,
-            m_Allocation.GetAddress(),
+            &pAllocation,
             IID_PPV_ARGS(m_Resource.GetAddress()));
         if (FAILED(hr))
         {
             ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
             return false;
         }
+
+        m_Holder = AllocationHolder(pAllocation);
     }
     else
     {
@@ -376,7 +385,7 @@ void IndexBuffer::Term()
     auto resource = m_Resource.Detach();
     Dispose(resource);
     memset(&m_View, 0, sizeof(m_View));
-    m_Allocation.Reset();
+    m_Holder.Reset();
 }
 
 //-----------------------------------------------------------------------------
@@ -498,18 +507,22 @@ bool ConstantBuffer::Init(uint64_t size)
         D3D12MA::ALLOCATION_DESC allocDesc = {};
         allocDesc.HeapType = heapType;
 
+        D3D12MA::Allocation* pAllocation = nullptr;
+
         auto hr = allocator->CreateResource(
             &allocDesc,
             &desc,
             D3D12_RESOURCE_STATE_COMMON,
             nullptr,
-            m_Allocation.GetAddress(),
+            &pAllocation,
             IID_PPV_ARGS(m_Resource.GetAddress()));
         if (FAILED(hr))
         {
             ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
             return false;
         }
+
+        m_Holder = AllocationHolder(pAllocation);
     }
     else
     {
@@ -539,7 +552,7 @@ void ConstantBuffer::Term()
 {
     auto resource = m_Resource.Detach();
     Dispose(resource);
-    m_Allocation.Reset();
+    m_Holder.Reset();
     m_Size = 0;
 }
 
@@ -673,18 +686,22 @@ bool ByteAddressBuffer::Init(uint64_t size, D3D12_RESOURCE_STATES state)
         D3D12MA::ALLOCATION_DESC allocDesc = {};
         allocDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
 
+        D3D12MA::Allocation* pAllocation = nullptr;
+
         auto hr = allocator->CreateResource(
             &allocDesc,
             &desc,
             state,
             nullptr,
-            m_Allocation.GetAddress(),
+            &pAllocation,
             IID_PPV_ARGS(m_Resource.GetAddress()));
         if (FAILED(hr))
         {
             ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
             return false;
         }
+
+        m_Holder = AllocationHolder(pAllocation);
     }
     else
     {
@@ -764,18 +781,22 @@ bool ByteAddressBuffer::Init
             D3D12MA::ALLOCATION_DESC allocDesc = {};
             allocDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
 
+            D3D12MA::Allocation* pAllocation = nullptr;
+
             auto hr = allocator->CreateResource(
                 &allocDesc,
                 &desc,
                 D3D12_RESOURCE_STATE_COMMON,
                 nullptr,
-                m_Allocation.GetAddress(),
+                &pAllocation,
                 IID_PPV_ARGS(m_Resource.GetAddress()));
             if (FAILED(hr))
             {
                 ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
                 return false;
             }
+
+            m_Holder = AllocationHolder(pAllocation);
         }
         else
         {
@@ -838,7 +859,7 @@ void ByteAddressBuffer::Term()
 {
     auto resource = m_Resource.Detach();
     Dispose(resource);
-    m_Allocation.Reset();
+    m_Holder.Reset();
 }
 
 //-----------------------------------------------------------------------------
@@ -937,18 +958,22 @@ bool StructuredBuffer::Init(uint64_t count, uint32_t stride, D3D12_RESOURCE_STAT
         D3D12MA::ALLOCATION_DESC allocDesc = {};
         allocDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
 
+        D3D12MA::Allocation* pAllocation = nullptr;
+
         auto hr = allocator->CreateResource(
             &allocDesc,
             &desc,
             state,
             nullptr,
-            m_Allocation.GetAddress(),
+            &pAllocation,
             IID_PPV_ARGS(m_Resource.GetAddress()));
         if (FAILED(hr))
         {
             ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
             return false;
         }
+
+        m_Holder = AllocationHolder(pAllocation);
     }
     else
     {
@@ -1027,18 +1052,22 @@ bool StructuredBuffer::Init
             D3D12MA::ALLOCATION_DESC allocDesc = {};
             allocDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
 
+            D3D12MA::Allocation* pAllocation = nullptr;
+
             auto hr = allocator->CreateResource(
                 &allocDesc,
                 &desc,
                 D3D12_RESOURCE_STATE_COMMON,
                 nullptr,
-                m_Allocation.GetAddress(),
+                &pAllocation,
                 IID_PPV_ARGS(m_Resource.GetAddress()));
             if (FAILED(hr))
             {
                 ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
                 return false;
             }
+
+            m_Holder = AllocationHolder(pAllocation);
         }
         else
         {
@@ -1087,7 +1116,7 @@ void StructuredBuffer::Term()
 {
     auto resource = m_Resource.Detach();
     Dispose(resource);
-    m_Allocation.Reset();
+    m_Holder.Reset();
 }
 
 //-----------------------------------------------------------------------------
@@ -1119,6 +1148,116 @@ void StructuredBuffer::UAVBarrier(ID3D12GraphicsCommandList* pCmdList)
 
     pCmdList->ResourceBarrier(1, &barrier);
 }
+
+///////////////////////////////////////////////////////////////////////////////
+// ScratchBuffer class
+///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      コンストラクタです.
+//-----------------------------------------------------------------------------
+ScratchBuffer::ScratchBuffer()
+{ /* DO_NOTHING */ }
+
+//-----------------------------------------------------------------------------
+//      デストラクタです.
+//-----------------------------------------------------------------------------
+ScratchBuffer::~ScratchBuffer()
+{ Term(); }
+
+//-----------------------------------------------------------------------------
+//      初期化処理を行います.
+//-----------------------------------------------------------------------------
+bool ScratchBuffer::Init(size_t size)
+{
+    auto pDevice = GetD3D12Device();
+    assert(pDevice != nullptr);
+
+    D3D12_HEAP_PROPERTIES props = {};
+    props.Type                  = D3D12_HEAP_TYPE_DEFAULT;
+    props.CPUPageProperty       = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+    props.MemoryPoolPreference  = D3D12_MEMORY_POOL_UNKNOWN;
+    props.CreationNodeMask      = 1;
+    props.VisibleNodeMask       = 1;
+
+    D3D12_RESOURCE_DESC desc = {};
+    desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
+    desc.Alignment          = 0;
+    desc.Width              = size;
+    desc.Height             = 1;
+    desc.DepthOrArraySize   = 1;
+    desc.MipLevels          = 1;
+    desc.Format             = DXGI_FORMAT_UNKNOWN;
+    desc.SampleDesc.Count   = 1;
+    desc.SampleDesc.Quality = 0;
+    desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+    desc.Flags              = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+
+    auto allocator = GetD3D12MA();
+    if (allocator != nullptr)
+    {
+        D3D12MA::ALLOCATION_DESC allocDesc = {};
+        allocDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
+
+        D3D12MA::Allocation* pAllocation = nullptr;
+
+        auto hr = allocator->CreateResource(
+            &allocDesc,
+            &desc,
+            D3D12_RESOURCE_STATE_COMMON,
+            nullptr,
+            &pAllocation,
+            IID_PPV_ARGS(m_Resource.GetAddress()));
+        if (FAILED(hr))
+        {
+            ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
+            return false;
+        }
+
+        m_Holder = AllocationHolder(pAllocation);
+    }
+    else
+    {
+        auto hr = pDevice->CreateCommittedResource(
+            &props,
+            D3D12_HEAP_FLAG_NONE,
+            &desc,
+            D3D12_RESOURCE_STATE_COMMON,
+            nullptr,
+            IID_PPV_ARGS(m_Resource.GetAddress()));
+        if (FAILED(hr))
+        {
+            ELOGA("Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr);
+            return false;
+        }
+    }
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      終了処理を行います.
+//-----------------------------------------------------------------------------
+void ScratchBuffer::Term()
+{
+    auto resource = m_Resource.Detach();
+    Dispose(resource);
+
+    m_Holder.Reset();
+}
+
+//-----------------------------------------------------------------------------
+//      GPU仮想アドレスを取得します.
+//-----------------------------------------------------------------------------
+D3D12_GPU_VIRTUAL_ADDRESS ScratchBuffer::GetGpuAddress() const
+{ return m_Resource->GetGPUVirtualAddress(); }
+
+//-----------------------------------------------------------------------------
+//      リソースを取得します.
+//-----------------------------------------------------------------------------
+ID3D12Resource* ScratchBuffer::GetResource() const
+{ return m_Resource.GetPtr(); }
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // AccelerationStructure class
@@ -1159,25 +1298,73 @@ bool AccelerationStructure::Init
         : prebuildInfo.UpdateScratchDataSizeInBytes;
 
     // 高速化機構用バッファを生成.
-    if (!CreateBufferUAV(
-        pDevice,
-        prebuildInfo.ResultDataMaxSizeInBytes,
-        D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
-        m_Resource.GetAddress()))
     {
-        ELOG("Error : CreateBufferUAV() Failed.");
-        return false;
+        D3D12_HEAP_PROPERTIES props = {};
+        props.Type                  = D3D12_HEAP_TYPE_DEFAULT;
+        props.CPUPageProperty       = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+        props.MemoryPoolPreference  = D3D12_MEMORY_POOL_UNKNOWN;
+        props.CreationNodeMask      = 1;
+        props.VisibleNodeMask       = 1;
+
+        D3D12_RESOURCE_DESC desc = {};
+        desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
+        desc.Alignment          = 0;
+        desc.Width              = size;
+        desc.Height             = 1;
+        desc.DepthOrArraySize   = 1;
+        desc.MipLevels          = 1;
+        desc.Format             = DXGI_FORMAT_UNKNOWN;
+        desc.SampleDesc.Count   = 1;
+        desc.SampleDesc.Quality = 0;
+        desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+        desc.Flags              = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS
+                                | D3D12_RESOURCE_FLAG_RAYTRACING_ACCELERATION_STRUCTURE;
+
+        auto allocator = GetD3D12MA();
+        if (allocator != nullptr)
+        {
+            D3D12MA::ALLOCATION_DESC allocDesc = {};
+            allocDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
+
+            D3D12MA::Allocation* pAllocation = nullptr;
+
+            auto hr = allocator->CreateResource(
+                &allocDesc,
+                &desc,
+                D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
+                nullptr,
+                &pAllocation,
+                IID_PPV_ARGS(m_Resource.GetAddress()));
+            if (FAILED(hr))
+            {
+                ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
+                return false;
+            }
+
+            m_Holder = AllocationHolder(pAllocation);
+        }
+        else
+        {
+            auto hr = pDevice->CreateCommittedResource(
+                &props,
+                D3D12_HEAP_FLAG_NONE,
+                &desc,
+                D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
+                nullptr,
+                IID_PPV_ARGS(m_Resource.GetAddress()));
+            if (FAILED(hr))
+            {
+                ELOGA("Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr);
+                return false;
+            }
+        }
     }
 
     // スクラッチバッファ生成.
-    RefPtr<ID3D12Resource> scratchBuffer;
-    if (!CreateBufferUAV(
-        pDevice,
-        size,
-        D3D12_RESOURCE_STATE_COMMON,
-        scratchBuffer.GetAddress()))
+    ScratchBuffer scratchBuffer;
+    if (!scratchBuffer.Init(size))
     {
-        ELOG("Error : CreateBufferUAV() Failed.");
+        ELOG("Error : ScratchBuffer::Init() Failed.");
         return false;
     }
 
@@ -1186,7 +1373,7 @@ bool AccelerationStructure::Init
         D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC desc = {};
         desc.Inputs                           = (*pInputs);
         desc.DestAccelerationStructureData    = m_Resource->GetGPUVirtualAddress();
-        desc.ScratchAccelerationStructureData = scratchBuffer->GetGPUVirtualAddress();
+        desc.ScratchAccelerationStructureData = scratchBuffer.GetGpuAddress();
 
         pCmd->BuildRaytracingAccelerationStructure(&desc, 0, nullptr);
 
@@ -1197,10 +1384,7 @@ bool AccelerationStructure::Init
     }
 
     // スクラッチバッファを遅延解放.
-    {
-        auto resource = scratchBuffer.Detach();
-        Dispose(resource);
-    }
+    scratchBuffer.Term();
 
     return true;
 }
@@ -1212,6 +1396,8 @@ void AccelerationStructure::Term()
 {
     auto resource = m_Resource.Detach();
     Dispose(resource);
+
+    m_Holder.Reset();
 }
 
 //-----------------------------------------------------------------------------

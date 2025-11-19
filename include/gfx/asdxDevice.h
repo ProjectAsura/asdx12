@@ -11,8 +11,11 @@
 #include <d3d12.h>
 #include <dxgi1_6.h>
 #include <vector>
-#include <D3D12MemAlloc.h>
 
+
+namespace D3D12MA {
+class Allocator;
+} // namespace D3D12MA
 
 namespace asdx {
 
