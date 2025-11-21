@@ -618,6 +618,214 @@ void ConstantBuffer::SetName(LPCWSTR tag)
     { m_Resource->SetName(tag); }
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// DoubledConstantBuffer
+////////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      コンストラクタです.
+//-----------------------------------------------------------------------------
+DoubledConstantBuffer::DoubledConstantBuffer()
+{ /* DO_NOTHING */ }
+
+//-----------------------------------------------------------------------------
+//      デストラクタです.
+//-----------------------------------------------------------------------------
+DoubledConstantBuffer::~DoubledConstantBuffer()
+{ Term(); }
+
+//-----------------------------------------------------------------------------
+//      初期化処理を行います.
+//-----------------------------------------------------------------------------
+bool DoubledConstantBuffer::Init(uint64_t size)
+{
+    if ( size == 0 )
+    {
+        ELOG( "Error : Invalid Argument." );
+        return false;
+    }
+
+    auto rest = size % 256;
+    if ( rest != 0 )
+    {
+        ELOG( "Error : ConstantBuffer must be 256 byte alignment., (size %% 256) = %u", rest );
+        return false;
+    }
+
+    auto alignedSize = RoundUp(size, 256lu);
+
+    auto pDevice = GetD3D12Device();
+
+    auto heapType = IsSupportGpuUploadHeap()
+        ? D3D12_HEAP_TYPE_GPU_UPLOAD
+        : D3D12_HEAP_TYPE_UPLOAD;
+
+    D3D12_HEAP_PROPERTIES props = {
+        heapType,
+        D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
+        D3D12_MEMORY_POOL_UNKNOWN,
+        1,
+        1
+    };
+
+    D3D12_RESOURCE_DESC desc = {
+        D3D12_RESOURCE_DIMENSION_BUFFER,
+        0,
+        alignedSize * 2,    // ダブルバッファなので.
+        1,
+        1,
+        1,
+        DXGI_FORMAT_UNKNOWN,
+        { 1, 0 },
+        D3D12_TEXTURE_LAYOUT_ROW_MAJOR,
+        D3D12_RESOURCE_FLAG_NONE
+    };
+
+    auto allocator = GetD3D12MA();
+    if (allocator != nullptr)
+    {
+        D3D12MA::ALLOCATION_DESC allocDesc = {};
+        allocDesc.HeapType = heapType;
+
+        D3D12MA::Allocation* pAllocation = nullptr;
+
+        auto hr = allocator->CreateResource(
+            &allocDesc,
+            &desc,
+            D3D12_RESOURCE_STATE_COMMON,
+            nullptr,
+            &pAllocation,
+            IID_PPV_ARGS(m_Resource.GetAddress()));
+        if (FAILED(hr))
+        {
+            ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
+            return false;
+        }
+
+        m_Holder = AllocationHolder(pAllocation);
+    }
+    else
+    {
+        auto hr = pDevice->CreateCommittedResource(
+            &props,
+            D3D12_HEAP_FLAG_NONE,
+            &desc,
+            D3D12_RESOURCE_STATE_COMMON,
+            nullptr,
+            IID_PPV_ARGS(m_Resource.GetAddress()));
+        if (FAILED(hr))
+        {
+            ELOG( "Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr );
+            return false;
+        }
+    }
+
+    m_Size  = alignedSize;
+    m_Index = 0;
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      メモリマッピングを行います.
+//-----------------------------------------------------------------------------
+void* DoubledConstantBuffer::Map()
+{
+    if (m_Resource.GetPtr() == nullptr)
+    { return nullptr; }
+ 
+    void* pData = nullptr;
+    auto hr = m_Resource->Map(0, nullptr, &pData);
+    if (FAILED(hr))
+    {
+        ELOG("Error : ID3D12Resource::Map() Failed. errcode = 0x%x", hr);
+        return nullptr;
+    }
+    return static_cast<uint8_t*>(pData) + (m_Index * m_Size);
+}
+
+//-----------------------------------------------------------------------------
+//      メモリマッピングを解除します.
+//-----------------------------------------------------------------------------
+void DoubledConstantBuffer::Unmap()
+{
+    if (m_Resource.GetPtr() == nullptr)
+    { return; }
+    m_Resource->Unmap(0, nullptr);
+}
+
+//-----------------------------------------------------------------------------
+//      終了処理を行います.
+//-----------------------------------------------------------------------------
+ID3D12Resource* DoubledConstantBuffer::GetResource() const
+{ return m_Resource.GetPtr(); }
+
+//-----------------------------------------------------------------------------
+//      GPUアドレスを取得します.
+//-----------------------------------------------------------------------------
+D3D12_GPU_VIRTUAL_ADDRESS DoubledConstantBuffer::GetGpuAddress() const
+{
+    D3D12_GPU_VIRTUAL_ADDRESS result = {};
+    if (m_Resource.GetPtr() != nullptr)
+    { result = m_Resource->GetGPUVirtualAddress() + (m_Index * m_Size);  }
+    return result;
+}
+
+//-----------------------------------------------------------------------------
+//      指定インデックスのGPUアドレスを取得します.
+//-----------------------------------------------------------------------------
+D3D12_GPU_VIRTUAL_ADDRESS DoubledConstantBuffer::GetGpuAddress(uint8_t index) const
+{
+    assert(index < 2);
+    D3D12_GPU_VIRTUAL_ADDRESS result = {};
+    if (m_Resource.GetPtr() != nullptr && index < 2)
+    { result = m_Resource->GetGPUVirtualAddress() + (index * m_Size); }
+    return result;
+}
+
+//-----------------------------------------------------------------------------
+//      サイズを取得します.
+//-----------------------------------------------------------------------------
+uint64_t DoubledConstantBuffer::GetSize() const
+{ return m_Size; }
+
+//-----------------------------------------------------------------------------
+//     データを更新します.
+//-----------------------------------------------------------------------------
+void DoubledConstantBuffer::Update(const void* pData, uint64_t size, uint64_t offset)
+{ Update(m_Index, pData, size, offset); }
+
+//-----------------------------------------------------------------------------
+//     指定インデックスのデータを更新します.
+//-----------------------------------------------------------------------------
+void DoubledConstantBuffer::Update(uint8_t index, const void* pData, uint64_t size, uint64_t offset)
+{
+    assert(index < 2);
+    assert(pData != nullptr);
+    assert(size + offset <= m_Size);
+    void* pDest = Map();
+    if (pDest)
+    {
+        memcpy(static_cast<uint8_t*>(pDest) + (index * m_Size) + offset, pData, size);
+        Unmap();
+    }
+}
+
+//-----------------------------------------------------------------------------
+//      バッファを入れ替えます.
+//-----------------------------------------------------------------------------
+void DoubledConstantBuffer::SwapBfuffer()
+{ m_Index = (m_Index + 1) & 0x1; }
+
+//-----------------------------------------------------------------------------
+//      デバッグ名を設定します.
+//-----------------------------------------------------------------------------
+void DoubledConstantBuffer::SetName(LPCWSTR tag)
+{
+    if (m_Resource)
+    { m_Resource->SetName(tag); }
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // ByteAddressBuffer class
