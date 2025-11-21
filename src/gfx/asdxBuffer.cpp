@@ -1100,6 +1100,15 @@ void ByteAddressBuffer::UAVBarrier(ID3D12GraphicsCommandList* pCmdList)
     pCmdList->ResourceBarrier(1, &barrier);
 }
 
+//-----------------------------------------------------------------------------
+//      デバッグ名を設定します.
+//-----------------------------------------------------------------------------
+void ByteAddressBuffer::SetName(LPCWSTR tag)
+{
+    if (m_Resource)
+    { m_Resource->SetName(tag); }
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // StructuredBuffer class
@@ -1357,6 +1366,15 @@ void StructuredBuffer::UAVBarrier(ID3D12GraphicsCommandList* pCmdList)
     pCmdList->ResourceBarrier(1, &barrier);
 }
 
+//-----------------------------------------------------------------------------
+//      デバッグ名を設定します.
+//-----------------------------------------------------------------------------
+void StructuredBuffer::SetName(LPCWSTR tag)
+{
+    if (m_Resource)
+    { m_Resource->SetName(tag); }
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // ScratchBuffer class
 ///////////////////////////////////////////////////////////////////////////////
@@ -1466,6 +1484,14 @@ D3D12_GPU_VIRTUAL_ADDRESS ScratchBuffer::GetGpuAddress() const
 ID3D12Resource* ScratchBuffer::GetResource() const
 { return m_Resource.GetPtr(); }
 
+//-----------------------------------------------------------------------------
+//      デバッグ名を設定します.
+//-----------------------------------------------------------------------------
+void ScratchBuffer::SetName(LPCWSTR tag)
+{
+    if (m_Resource)
+    { m_Resource->SetName(tag); }
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // AccelerationStructure class
@@ -1623,7 +1649,10 @@ ID3D12Resource* AccelerationStructure::GetResource() const
 //-----------------------------------------------------------------------------
 //      デバッグ名を設定します.
 //-----------------------------------------------------------------------------
-void AccelerationStructure::SetName(LPCWSTR name)
-{ m_Resource->SetName(name); }
+void AccelerationStructure::SetName(LPCWSTR tag)
+{
+    if (m_Resource)
+    { m_Resource->SetName(tag); }
+}
 
 } // namespace asdx
