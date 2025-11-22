@@ -814,7 +814,7 @@ void DoubledConstantBuffer::Update(uint8_t index, const void* pData, uint64_t si
 //-----------------------------------------------------------------------------
 //      バッファを入れ替えます.
 //-----------------------------------------------------------------------------
-void DoubledConstantBuffer::SwapBfuffer()
+void DoubledConstantBuffer::SwapBuffer()
 { m_Index = (m_Index + 1) & 0x1; }
 
 //-----------------------------------------------------------------------------
