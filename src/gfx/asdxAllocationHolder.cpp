@@ -29,7 +29,10 @@ AllocationHolder::AllocationHolder()
 //-----------------------------------------------------------------------------
 AllocationHolder::AllocationHolder(D3D12MA::Allocation* value)
 : m_Allocation(value)
-{ /* DO_NOTHING */ }
+{
+    if (m_Allocation != nullptr)
+    { m_Allocation->AddRef(); }
+}
 
 //-----------------------------------------------------------------------------
 //      デストラクタです.
@@ -42,11 +45,31 @@ AllocationHolder::~AllocationHolder()
 //-----------------------------------------------------------------------------
 void AllocationHolder::Reset()
 {
-    if (m_Allocation)
+    if (m_Allocation != nullptr)
     {
         m_Allocation->Release();
         m_Allocation = nullptr;
     }
+}
+
+//-----------------------------------------------------------------------------
+//      アタッチします.
+//-----------------------------------------------------------------------------
+void AllocationHolder::Attach(D3D12MA::Allocation* value)
+{
+    if (m_Allocation != nullptr)
+    { m_Allocation->Release(); }
+    m_Allocation = value;
+}
+
+//-----------------------------------------------------------------------------
+//      デタッチします.
+//-----------------------------------------------------------------------------
+D3D12MA::Allocation* AllocationHolder::Detach()
+{
+    auto res = m_Allocation;
+    m_Allocation = nullptr;
+    return res;
 }
 
 } // namespace asdx

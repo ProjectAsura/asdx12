@@ -62,8 +62,7 @@ bool Texture::Init(ID3D12GraphicsCommandList* pCmdList, const ResTexture& resour
     D3D12_SHADER_RESOURCE_VIEW_DESC viewDesc = {};
     viewDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
-    bool gpuUploadHeapsSupported     = false;
-    bool isUnifiedMemoryArchitecture = false;
+    bool directCopy = false;
 
     auto heapType  = D3D12_HEAP_TYPE_DEFAULT;
     auto initState = D3D12_RESOURCE_STATE_COPY_DEST;
@@ -73,16 +72,16 @@ bool Texture::Init(ID3D12GraphicsCommandList* pCmdList, const ResTexture& resour
     {
         if (architecture.UMA)
         {
-            isUnifiedMemoryArchitecture = true;
-            initState = D3D12_RESOURCE_STATE_COMMON;
+            initState  = D3D12_RESOURCE_STATE_COMMON;
+            directCopy = true;
         }
     }
 
     if (IsSupportGpuUploadHeap())
     {
-        gpuUploadHeapsSupported = true;
-        heapType  = D3D12_HEAP_TYPE_GPU_UPLOAD;
-        initState = D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE;
+        heapType   = D3D12_HEAP_TYPE_GPU_UPLOAD;
+        initState  = D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE;
+        directCopy = true;
     }
 
     D3D12_HEAP_PROPERTIES props = {
@@ -248,7 +247,7 @@ bool Texture::Init(ID3D12GraphicsCommandList* pCmdList, const ResTexture& resour
     pDevice->CreateShaderResourceView(m_Resource.GetPtr(), &viewDesc, GetCpuHandleSRV());
 
     // ’¼Ú‘‚«‚ß‚éê‡.
-    if (gpuUploadHeapsSupported || isUnifiedMemoryArchitecture)
+    if (directCopy)
     {
         auto count = resource.SubResourceCount;
         for(auto i=0u; i<count; ++i)

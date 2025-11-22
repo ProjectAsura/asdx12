@@ -358,6 +358,13 @@ bool GraphicsSystem::Init(const DeviceDesc& deviceDesc)
                 m_pDebug->EnableDebugLayer();
                 m_pDebug->SetEnableGPUBasedValidation(TRUE);
             }
+
+            asdx::RefPtr<ID3D12Debug5> pDebug5;
+            hr = debug->QueryInterface(IID_PPV_ARGS(pDebug5.GetAddress()));
+            if (SUCCEEDED(hr))
+            {
+                pDebug5->SetEnableAutoName(TRUE);
+            }
         }
     }
 

@@ -108,7 +108,7 @@ bool CreateUploadBuffer
         &props,
         D3D12_HEAP_FLAG_NONE,
         &desc,
-        D3D12_RESOURCE_STATE_GENERIC_READ,
+        D3D12_RESOURCE_STATE_COMMON,
         nullptr,
         IID_PPV_ARGS(ppResource));
     if (FAILED(hr))
@@ -192,7 +192,7 @@ bool VertexBuffer::Init(uint64_t size, uint32_t stride)
             return false;
         }
 
-        m_Holder = AllocationHolder(pAllocation);
+        m_Holder.Attach(pAllocation);
     }
     else
     {
@@ -356,7 +356,7 @@ bool IndexBuffer::Init(uint64_t size, bool isShortFormat)
             return false;
         }
 
-        m_Holder = AllocationHolder(pAllocation);
+        m_Holder.Attach(pAllocation);
     }
     else
     {
@@ -526,7 +526,7 @@ bool ConstantBuffer::Init(uint64_t size)
             return false;
         }
 
-        m_Holder = AllocationHolder(pAllocation);
+        m_Holder.Attach(pAllocation);
     }
     else
     {
@@ -825,7 +825,7 @@ bool ByteAddressBuffer::Init(uint64_t size, D3D12_RESOURCE_STATES state)
             return false;
         }
 
-        m_Holder = AllocationHolder(pAllocation);
+        m_Holder.Attach(pAllocation);
     }
     else
     {
@@ -920,7 +920,7 @@ bool ByteAddressBuffer::Init
                 return false;
             }
 
-            m_Holder = AllocationHolder(pAllocation);
+            m_Holder.Attach(pAllocation);
         }
         else
         {
@@ -1106,7 +1106,7 @@ bool StructuredBuffer::Init(uint64_t count, uint32_t stride, D3D12_RESOURCE_STAT
             return false;
         }
 
-        m_Holder = AllocationHolder(pAllocation);
+        m_Holder.Attach(pAllocation);
     }
     else
     {
@@ -1200,7 +1200,7 @@ bool StructuredBuffer::Init
                 return false;
             }
 
-            m_Holder = AllocationHolder(pAllocation);
+            m_Holder.Attach(pAllocation);
         }
         else
         {
@@ -1356,7 +1356,7 @@ bool ScratchBuffer::Init(size_t size)
             return false;
         }
 
-        m_Holder = AllocationHolder(pAllocation);
+        m_Holder.Attach(pAllocation);
     }
     else
     {
@@ -1382,10 +1382,9 @@ bool ScratchBuffer::Init(size_t size)
 //-----------------------------------------------------------------------------
 void ScratchBuffer::Term()
 {
+    m_Holder.Reset();
     auto resource = m_Resource.Detach();
     Dispose(resource);
-
-    m_Holder.Reset();
 }
 
 //-----------------------------------------------------------------------------
@@ -1443,7 +1442,7 @@ bool AccelerationStructure::Init
     if (prebuildInfo.ResultDataMaxSizeInBytes == 0)
     { return false; }
 
-    auto size = (prebuildInfo.ScratchDataSizeInBytes > prebuildInfo.UpdateScratchDataSizeInBytes)
+    auto scratchBufferSize = (prebuildInfo.ScratchDataSizeInBytes > prebuildInfo.UpdateScratchDataSizeInBytes)
         ? prebuildInfo.ScratchDataSizeInBytes
         : prebuildInfo.UpdateScratchDataSizeInBytes;
 
@@ -1459,7 +1458,7 @@ bool AccelerationStructure::Init
         D3D12_RESOURCE_DESC desc = {};
         desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
         desc.Alignment          = 0;
-        desc.Width              = size;
+        desc.Width              = prebuildInfo.ResultDataMaxSizeInBytes;
         desc.Height             = 1;
         desc.DepthOrArraySize   = 1;
         desc.MipLevels          = 1;
@@ -1512,7 +1511,7 @@ bool AccelerationStructure::Init
 
     // スクラッチバッファ生成.
     ScratchBuffer scratchBuffer;
-    if (!scratchBuffer.Init(size))
+    if (!scratchBuffer.Init(scratchBufferSize))
     {
         ELOG("Error : ScratchBuffer::Init() Failed.");
         return false;
