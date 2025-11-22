@@ -23,12 +23,14 @@ namespace asdx {
 //-----------------------------------------------------------------------------
 bool CreateBufferUAV
 (
-    ID3D12Device*           pDevice,
     UINT64                  bufferSize,
     D3D12_RESOURCE_STATES   initState,
     ID3D12Resource**        ppResource
 )
 {
+    auto pDevice = GetD3D12Device();
+    assert(pDevice != nullptr);
+
     D3D12_HEAP_PROPERTIES props = {};
     props.Type                  = D3D12_HEAP_TYPE_DEFAULT;
     props.CPUPageProperty       = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
@@ -73,11 +75,13 @@ bool CreateBufferUAV
 //-----------------------------------------------------------------------------
 bool CreateUploadBuffer
 (
-    ID3D12Device*           pDevice,
     UINT64                  bufferSize,
     ID3D12Resource**        ppResource
 )
 {
+    auto pDevice = GetD3D12Device();
+    assert(pDevice != nullptr);
+
     auto isGpuUpload = IsSupportGpuUploadHeap();
 
     D3D12_HEAP_PROPERTIES props = {};

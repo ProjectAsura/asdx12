@@ -910,7 +910,6 @@ private:
 //! @retval false   生成に失敗.
 //-----------------------------------------------------------------------------
 bool CreateBufferUAV(
-    ID3D12Device*           pDevice,
     UINT64                  bufferSize,
     D3D12_RESOURCE_STATES   initState,
     ID3D12Resource**        ppResource);
@@ -923,10 +922,8 @@ bool CreateBufferUAV(
 //! @param[out]     ppResource      リソースの格納先です.
 //! @retval true    生成に成功.
 //! @retval false   生成に失敗.
+//! @note   D3D12_RESOURCE_STATE_GENERIC_READとして生成します.
 //-----------------------------------------------------------------------------
-bool CreateUploadBuffer(
-    ID3D12Device*       pDevice,
-    UINT64              bufferSize,
-    ID3D12Resource**    ppResource);
+bool CreateUploadBuffer(UINT64 bufferSize, ID3D12Resource** ppResource);
 
 } // namespace asdx
