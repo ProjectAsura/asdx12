@@ -27,20 +27,20 @@ std::string ToFullPathA(const char* path)
     GetFullPathNameA(path, 512, fullPath, nullptr);
     return std::string(fullPath);
 }
+} // namespace
+
+namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
 // Worker structure
 ///////////////////////////////////////////////////////////////////////////////
-struct Worker
+struct FileWatcher::Worker
 {
-    HANDLE                      hEvent          = nullptr;
-    HANDLE                      hDir            = nullptr;
-    uint32_t                    WaitTimeMsec    = 0;
-    std::vector<uint8_t>        Buffer          = {};
-    std::string                 DirectoryPath   = {};
-    std::atomic<bool>*          pFinish         = nullptr;
-
-    std::list<asdx::IFileListener*> pListeners = {};
+    HANDLE                  hEvent          = nullptr;
+    HANDLE                  hDir            = nullptr;
+    std::vector<uint8_t>    Buffer          = {};
+    std::string             DirectoryPath   = {};
+    OVERLAPPED*             pOverlapped     = nullptr;
 
     Worker()
     { /* DO_NOTHING */ }
@@ -48,10 +48,10 @@ struct Worker
     ~Worker()
     { /* DO_NOTHING */ }
 
-    bool Prepare(asdx::FileWatcher::Desc& desc, std::atomic<bool>* pFlags)
+    bool Prepare(const std::string& dirPath, size_t bufferSize)
     {
         hDir = CreateFileA(
-            desc.DirectoryPath,
+            dirPath.c_str(),
             FILE_LIST_DIRECTORY,
             FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
             nullptr,
@@ -61,7 +61,7 @@ struct Worker
         );
         if (hDir == INVALID_HANDLE_VALUE)
         {
-            ELOGA("Error : CreateFileA() Failed. path = %s, errcode = 0x%x", desc.DirectoryPath, GetLastError());
+            ELOGA("Error : CreateFileA() Failed. path = %s, errcode = 0x%x", DirectoryPath.c_str(), GetLastError());
             hDir = nullptr;
             return false;
         }
@@ -75,147 +75,99 @@ struct Worker
             return false;
         }
 
-        pFinish         = pFlags;
-        DirectoryPath   = desc.DirectoryPath;
-        pListeners      = std::move(desc.pListeners);
-        WaitTimeMsec    = desc.WaitTimeMsec;
-        Buffer.resize(desc.BufferSize);
+        DirectoryPath   = dirPath;
+        Buffer.resize(bufferSize);
 
         return true;
     }
 
-    void operator()()
+    void BeginWatch()
     {
-        void* pBuf = Buffer.data();
-        auto bufSize = uint32_t(Buffer.size());
+        ResetEvent(hEvent);
 
-        // フィルタ.
-        uint32_t filter =
+        DWORD filter =
             FILE_NOTIFY_CHANGE_FILE_NAME  |   // ファイル名の変更.
             FILE_NOTIFY_CHANGE_DIR_NAME   |   // ディレクトリ名の変更.
             FILE_NOTIFY_CHANGE_ATTRIBUTES |   // 属性の変更.
             FILE_NOTIFY_CHANGE_SIZE       |   // サイズの変更.
             FILE_NOTIFY_CHANGE_LAST_WRITE;    // 最終書き込み日時の変更.
 
-        // 終了フラグが立つまでループ.
-        for (;;)
+        auto pOverlapped = new OVERLAPPED();
+        ZeroMemory(pOverlapped, sizeof(OVERLAPPED));
+        pOverlapped->hEvent = hEvent;
+
+        ReadDirectoryChangesW(
+            hDir,
+            Buffer.data(),
+            DWORD(Buffer.size()),
+            TRUE,
+            filter,
+            nullptr,
+            pOverlapped,
+            nullptr
+        );
+    }
+
+    void Process(std::vector<asdx::FileEventArgs>& outEvents)
+    {
+        DWORD bytes = 0;
+
+        if (!GetOverlappedResult(hDir, nullptr, &bytes, FALSE))
+            return;
+
+        if (bytes == 0)
+            return;
+
+        auto pInfo = reinterpret_cast<FILE_NOTIFY_INFORMATION*>(Buffer.data());
+
+        for(;;)
         {
-            ResetEvent(hEvent);
+            std::wstring ws(pInfo->FileName, pInfo->FileNameLength / sizeof(wchar_t));
 
-            OVERLAPPED olp = {};
-            olp.hEvent = hEvent;
+            auto fileName = asdx::ToStringA(ws.c_str());
+            auto fullPath = DirectoryPath + "/" + fileName;
 
-            // 変更を監視.
-            if (!ReadDirectoryChangesW(
-                hDir,
-                pBuf,
-                bufSize,
-                TRUE,
-                filter,
-                nullptr,
-                &olp,
-                nullptr))
-            {
-                ELOG("LOG_LEVEL_ERROR : ReadDirectoryChangesW() Failed.");
+            asdx::FileEventArgs args;
+            args.Type     = asdx::FileEventArgs::TYPE(pInfo->Action);
+            args.FullPath = ToFullPathA(fullPath.c_str());
+
+            outEvents.push_back(args);
+
+            if (pInfo->NextEntryOffset == 0)
                 break;
-            }
 
-            while (!pFinish->load())
-            {
-                auto ret = WaitForSingleObject(hEvent, WaitTimeMsec);
-                if (ret != WAIT_TIMEOUT)
-                {
-                    break;
-                }
-            }
-
-            // 終了フラグが立っていたら終了.
-            if (pFinish->load())
-            {
-                // 非同期I/Oをキャンセル.
-                CancelIo(hDir);
-
-                // Overlapped構造体をシステムが使わなくなるまで待機する.
-                WaitForSingleObject(hEvent, INFINITE);
-
-                // おしまい.
-                break;
-            }
-
-            // 非同期I/Oの結果を取得.
-            DWORD retSize = 0;
-            if (!GetOverlappedResult(hDir, &olp, &retSize, FALSE))
-            {
-                ELOG("LOG_LEVEL_ERROR : GetOverlappedResult() Failed.");
-                break;
-            }
-
-            // バッファオーバーフローでない場合.
-            if (retSize != 0)
-            {
-                auto pInfos = reinterpret_cast<FILE_NOTIFY_INFORMATION*>(pBuf);
-                size_t offset = 0;
-
-                for (;;)
-                {
-                    // ファイル名取得.
-                    auto path = asdx::ToStringA(pInfos->FileName);
-
-                    // 末尾にカンマが来ることがあるので，それを取り除く.
-                    auto pos = path.find_last_of(',');
-                    if (pos != std::string::npos && pos == path.size() - 1)
-                    { path = path.substr(0, pos); }
-
-                    // 強制的に開いて閉じる.
-                    // これでたま～にファイルがオープンできない問題を解決できる.
-                    {
-                        auto handle = CreateFileA(
-                            path.c_str(),
-                            GENERIC_READ, 
-                            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                            nullptr,
-                            OPEN_EXISTING,
-                            FILE_FLAG_SEQUENTIAL_SCAN,
-                            nullptr);
-                        if (handle != INVALID_HANDLE_VALUE)
-                        { CloseHandle(handle); }
-                    }
-
-                    auto fullPath = std::string(DirectoryPath) + "/" + path;
-
-                    asdx::FileEventArgs args;
-                    args.Type     = asdx::FileEventArgs::TYPE(pInfos->Action);
-                    args.FullPath = ToFullPathA(fullPath.c_str());
-
-                    for(auto& listener : pListeners)
-                    { listener->OnChanged(args); }
-
-                    // 次のエントリがなければ終了.
-                    if (pInfos->NextEntryOffset == 0)
-                    { break; }
-
-                    // 次のエントリまで移動.
-                    pInfos = reinterpret_cast<FILE_NOTIFY_INFORMATION*>(
-                        reinterpret_cast<uint8_t*>(pInfos) + pInfos->NextEntryOffset);
-                }
-            }
+            pInfo = reinterpret_cast<FILE_NOTIFY_INFORMATION*>(
+                reinterpret_cast<uint8_t*>(pInfo) + pInfo->NextEntryOffset);
         }
 
-        CloseHandle(hEvent);
-        CloseHandle(hDir);
+        BeginWatch();
+    }
 
-        hEvent      = nullptr;
-        hDir        = nullptr;
-        pFinish     = nullptr;
-        pListeners.clear();
+    void Release()
+    {
+        if (hDir)
+        {
+            CloseHandle(hDir);
+            hDir = nullptr;
+        }
+
+        if (hEvent)
+        {
+            CloseHandle(hEvent);
+            hEvent = nullptr;
+        }
+
         Buffer.clear();
         Buffer.shrink_to_fit();
+
+        if (pOverlapped != nullptr)
+        {
+            delete pOverlapped;
+            pOverlapped = nullptr;
+        }
     }
 };
 
-} // namespace
-
-namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
 // FileWatcher class
@@ -238,19 +190,67 @@ FileWatcher::~FileWatcher()
 //-----------------------------------------------------------------------------
 bool FileWatcher::Init(Desc& desc)
 {
+    if (desc.pListeners.empty() || desc.Dirs.empty())
+    {
+        ELOG("Error : Invalid Argument.");
+        return false;
+    }
+
     // 念のために終了させる.
     Term();
 
     // 終了フラグを下す.
     m_Finish = false;
 
-    // ワーカーを初期化.
-    Worker worker;
-    if (!worker.Prepare(desc, &m_Finish))
-    { return false; }
+    m_DirCount      = desc.Dirs.size();
+    m_WaitTimeMsec  = desc.WaitTimeMsec; 
+
+    m_Listeners.assign(desc.pListeners.begin(), desc.pListeners.end());
+
+    m_pWorkers = new(std::nothrow) Worker[m_DirCount];
+    if (m_pWorkers == nullptr)
+    {
+        ELOG("Error : Out of Memory.");
+        return false;
+    }
+
+    for(size_t i=0; i<m_DirCount; ++i)
+    {
+        if (!m_pWorkers[i].Prepare(desc.Dirs[i], desc.BufferSize))
+        {
+            ELOG("Error : Worker::Prepare() Failed.");
+            return false;
+        }
+
+        m_Events.push_back(m_pWorkers[i].hEvent);
+    }
 
     // 監視スレッド起動.
-    m_pThread = new std::thread(worker);
+    m_pThread = new std::thread([this]()
+    {
+        std::vector<asdx::FileEventArgs> events;
+
+        while(!m_Finish)
+        {
+            DWORD ret = WaitForMultipleObjects(
+                DWORD(m_Events.size()),
+                m_Events.data(),
+                FALSE,
+                m_WaitTimeMsec);
+
+            if (ret >= WAIT_OBJECT_0 && ret < WAIT_OBJECT_0 + m_DirCount)
+            {
+                size_t index = ret - WAIT_OBJECT_0;
+                events.clear();
+
+                m_pWorkers[index].Process(events);
+                for(auto& listener : m_Listeners)
+                {
+                    listener->OnChanged(events);
+                }
+            }
+        }
+    });
     if (m_pThread == nullptr)
     { return false; }
 
@@ -280,6 +280,19 @@ void FileWatcher::Term()
     // スレッド破棄.
     delete m_pThread;
     m_pThread = nullptr;
+
+    for(size_t i=0; i<m_DirCount; ++i)
+    {
+        m_pWorkers[i].Release();
+    }
+
+    delete [] m_pWorkers;
+    m_pWorkers = nullptr;
+
+    m_Events.clear();
+
+    m_DirCount     = 0;
+    m_WaitTimeMsec = 0;
 }
 
 } // namespace asdx

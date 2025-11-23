@@ -48,7 +48,7 @@ struct IFileListener
     //-------------------------------------------------------------------------
     //! @brief      ファイル変更の処理です.
     //-------------------------------------------------------------------------
-    virtual void OnChanged(const FileEventArgs& args) = 0;
+    virtual void OnChanged(const std::vector<FileEventArgs>& args) = 0;
 };
 
 
@@ -68,11 +68,11 @@ public:
     ///////////////////////////////////////////////////////////////////////////
     struct Desc
     {
-        size_t      BufferSize      = 4096;         //!< バッファサイズ.
-        uint32_t    WaitTimeMsec    = 60;           //!< 1ループの待機時間(ミリ秒単位)
-        const char* DirectoryPath   = nullptr;      //!< 監視対象ディレクトリ.
+        size_t   BufferSize   = 4096;         //!< バッファサイズ.
+        uint32_t WaitTimeMsec = 100;          //!< 1ループの待機時間(ミリ秒単位)
 
-        std::list<IFileListener*> pListeners;       //!< 変更通知先.
+        std::vector<std::string>    Dirs;           //!< 監視ディレクトリ.
+        std::list<IFileListener*>   pListeners;     //!< 変更通知先.
     };
 
     //=========================================================================
@@ -109,11 +109,18 @@ public:
     void Term();
 
 private:
+    struct Worker;
+
     //=========================================================================
     // private variables.
     //=========================================================================
-    std::atomic<bool> m_Finish  = {};       //!< 終了フラグ.
-    std::thread*      m_pThread = nullptr;  //!< 監視スレッド.
+    Worker*                             m_pWorkers      = nullptr;
+    size_t                              m_DirCount      = 0;
+    DWORD                               m_WaitTimeMsec  = 0;
+    std::vector<HANDLE>                 m_Events;
+    std::vector<asdx::IFileListener*>   m_Listeners;
+    std::atomic<bool>                   m_Finish  = {};       //!< 終了フラグ.
+    std::thread*                        m_pThread = nullptr;  //!< 監視スレッド.
 
     //=========================================================================
     // private methods.

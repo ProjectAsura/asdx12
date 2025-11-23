@@ -17,8 +17,6 @@
 #include <gfx/asdxPipelineState.h>
 #include <gfx/asdxDevice.h>
 #include <gfx/asdxShaderCompiler.h>
-#include <fnd/asdxHash.h>
-#include <fnd/asdxMacro.h>
 #include <edit/asdxFileWatcher.h>
 
 
@@ -211,22 +209,25 @@ public:
         m_RayTracings.remove(item);
     }
 
-    void OnChanged(const asdx::FileEventArgs& args) override
+    void OnChanged(const std::vector<asdx::FileEventArgs>& args) override
     {
-        if (args.Type == asdx::FileEventArgs::Modified ||
-            args.Type == asdx::FileEventArgs::RenamedNewName)
+        for(const auto& arg : args)
         {
-            for(auto& itr : m_Graphics)
-            { itr->OnReload(args.FullPath); }
+            if (arg.Type == asdx::FileEventArgs::Modified ||
+                arg.Type == asdx::FileEventArgs::RenamedNewName)
+            {
+                for(auto& itr : m_Graphics)
+                { itr->OnReload(arg.FullPath); }
 
-            for(auto& itr : m_Computes)
-            { itr->OnReload(args.FullPath); }
+                for(auto& itr : m_Computes)
+                { itr->OnReload(arg.FullPath); }
 
-            for(auto& itr : m_MeshShaders)
-            { itr->OnReload(args.FullPath); }
+                for(auto& itr : m_MeshShaders)
+                { itr->OnReload(arg.FullPath); }
 
-            for(auto& itr : m_RayTracings)
-            { itr->OnReload(args.FullPath); }
+                for(auto& itr : m_RayTracings)
+                { itr->OnReload(arg.FullPath); }
+            }
         }
     }
 
@@ -1460,13 +1461,13 @@ void RayTracingPipelineState::Recreate()
 //-----------------------------------------------------------------------------
 //      パイプラインステートウォッチャーの初期化処理.
 //-----------------------------------------------------------------------------
-bool InitPipelineStateWatcher(const char* directory, const std::vector<std::string>& includes)
+bool InitPipelineStateWatcher(const std::vector<std::string>& dirs, const std::vector<std::string>& includes)
 {
     if (g_Initialized)
         return false;
 
     FileWatcher::Desc desc;
-    desc.DirectoryPath = directory;
+    desc.Dirs = dirs;
     desc.pListeners.push_back(&g_Listener);
     if (!g_Watcher.Init(desc))
     {

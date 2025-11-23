@@ -12,6 +12,7 @@
 #include <fnd/asdxMisc.h>
 #include <cstdio>
 #include <sstream>
+#include <iomanip>
 
 
 namespace {
@@ -248,11 +249,11 @@ void ReportBreadcrumbNode(std::stringstream& stream, const D3D12_AUTO_BREADCRUMB
     stream << "Breadcrumb Node : " << std::hex << (void*)pNode << std::dec << std::endl;
 
     if (count == lastIndex && count > 0)
-    { stream << "  State : Completed." << std::endl; }
+    { stream << "  State                : Completed." << std::endl; }
     else if (lastIndex == 0)
-    { stream << "  State : Not Started." << std::endl; }
+    { stream << "  State                : Not Started." << std::endl; }
     else
-    { stream << "  State : Incompleted!" << std::endl; }
+    { stream << "  State                : Incompleted!" << std::endl; }
 
     stream << "  BreadcrumbCount     : " << count << std::endl;
     stream << "  LastBreadcrumbValue : " << lastIndex << std::endl;
@@ -284,10 +285,8 @@ void ReportBreadcrumbNode(std::stringstream& stream, const D3D12_AUTO_BREADCRUMB
         const char* mark = (i < lastIndex) ? "OK" : (i == lastIndex) ? "NG" : "  ";
         auto op = pNode->pCommandHistory[i];
 
-        stream << "Index:" << i << "[" << mark << "] Op = " << ToString(op) << std::endl;
+        stream << "    Command Index=" << std::setfill('0') << std::setw(5) << i << std::setfill(' ') << " [" << mark << "] Op = " << ToString(op) << std::endl;
     }
-
-    stream << "  ---" << std::endl;
 }
 
 //-----------------------------------------------------------------------------
@@ -304,16 +303,16 @@ void ReportBreadcrumbNode1(std::stringstream& stream, const D3D12_AUTO_BREADCRUM
     stream << "Breadcrumb Node : " << std::hex << (void*)pNode << std::dec << std::endl;
 
     if (count == lastIndex && count > 0)
-    { stream << "  State : Completed." << std::endl; }
+    { stream << "  State                : Completed." << std::endl; }
     else if (lastIndex == 0)
-    { stream << "  State : Not Started." << std::endl; }
+    { stream << "  State                : Not Started." << std::endl; }
     else
-    { stream << "  State : Incompleted!" << std::endl; }
+    { stream << "  State                : Incompleted!" << std::endl; }
 
     stream << "  Breadcrumb Count     : " << count << std::endl;
     stream << "  Last BreadcrumbValue : " << lastIndex << std::endl;
     stream << "  Has Next             : " << ((pNode->pNext == nullptr) ? "No" : "Yes") << std::endl;
-    stream << "  Context Count        : " << pNode->BreadcrumbContextsCount;
+    stream << "  Context Count        : " << pNode->BreadcrumbContextsCount << std::endl;
 
     if (pNode->pCommandList != nullptr)
     {
@@ -341,10 +340,8 @@ void ReportBreadcrumbNode1(std::stringstream& stream, const D3D12_AUTO_BREADCRUM
         const char* mark = (i < lastIndex) ? "OK" : (i == lastIndex) ? "NG" : "  ";
         auto op = pNode->pCommandHistory[i];
 
-        stream << "  Index:" << i << "[" << mark << "] Op = " << ToString(op) << std::endl;
+        stream << "    Command Index=" << std::setfill('0') << std::setw(5) << i << std::setfill(' ') << " [" << mark << "] Op = " << ToString(op) << std::endl;
     }
-
-    stream << "  ---" << std::endl;
 
     for(auto i=0u; i<pNode->BreadcrumbContextsCount; ++i)
     {
@@ -352,8 +349,6 @@ void ReportBreadcrumbNode1(std::stringstream& stream, const D3D12_AUTO_BREADCRUM
                << ", BreadcrumbIndex = " << pNode->pBreadcrumbContexts[i].BreadcrumbIndex
                << ", String = " << asdx::ToStringA(pNode->pBreadcrumbContexts[i].pContextString).c_str() << std::endl;
     }
-
-    stream << "  ---" << std::endl;
 }
 
 //-----------------------------------------------------------------------------
@@ -610,7 +605,7 @@ bool ReportDred2(std::stringstream& stream, ID3D12Device* pDevice)
     { return false; }
 
     auto state = dred->GetDeviceState();
-    stream << "DeviceState : " <<  ToString(state) << std::endl;
+    stream << "DeviceState           : " <<  ToString(state) << std::endl;
 
     D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT1 breadcrumbsOutput1 = {};
     hr = dred->GetAutoBreadcrumbsOutput1(&breadcrumbsOutput1);
