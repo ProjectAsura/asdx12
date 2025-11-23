@@ -131,7 +131,6 @@ float3 RecalcTangent(float3 normalMappedN, float3 T)
     return normalize(T - dot(T, normalMappedN) * normalMappedN);
 }
 
-
 //-----------------------------------------------------------------------------
 //      正規直交基底を求めます.
 //-----------------------------------------------------------------------------

@@ -27,6 +27,19 @@ uint BitfieldInsert(uint src, uint insert, uint bits)
 //-----------------------------------------------------------------------------
 //      モートンオーダーにリマップします.
 //-----------------------------------------------------------------------------
+uint2 RemapLane4x4(uint2 dispatchId, uint groupIndex)
+{
+    uint2 remappedId;
+    remappedId.x = BitfieldInsert(BitfieldExtract(groupIndex, 1u, 2u), groupIndex, 0u);
+    remappedId.y = BitfieldInsert(BitfieldExtract(groupIndex, 2u, 2u), BitfieldExtract(groupIndex, 0u, 1u), 1u);
+
+    uint2 dispatchGroupId = uint2(dispatchId) / 4;  // 4未満切り捨て.
+    return (dispatchGroupId * 4) + remappedId;
+}
+
+//-----------------------------------------------------------------------------
+//      モートンオーダーにリマップします.
+//-----------------------------------------------------------------------------
 uint2 RemapLane8x8(uint2 dispatchId, uint groupIndex)
 {
     uint2 remappedId;
@@ -35,6 +48,20 @@ uint2 RemapLane8x8(uint2 dispatchId, uint groupIndex)
 
     uint2 dispatchGroupId = uint2(dispatchId) / 8; // 8未満切り捨て.
     return (dispatchGroupId * 8) + remappedId;
+}
+
+//-----------------------------------------------------------------------------
+//      モートンオーダーにリマップします.
+//-----------------------------------------------------------------------------
+uint2 RemapLane16x16(uint2 dispatchId, uint groupIndex)
+{
+    // 16x16 は 4x4 サブブロックごとにビットを抽出して組み合わせ
+    uint2 remappedId;
+    remappedId.x = BitfieldInsert(BitfieldExtract(groupIndex, 2u, 2u), BitfieldExtract(groupIndex, 0u, 2u), 0u);
+    remappedId.y = BitfieldInsert(BitfieldExtract(groupIndex, 4u, 2u), BitfieldExtract(groupIndex, 2u, 2u), 2u);
+
+    uint2 dispatchGroupId = uint2(dispatchId) / 16; // 16未満切り捨て.
+    return (dispatchGroupId * 16) + remappedId;
 }
 
 #endif//ASDX_COMPUTE_UTIL_HLSLI

@@ -12,14 +12,7 @@
 #include "Math.hlsli"
 #include "Random.hlsli"
 
-// ディザ判定用テールブル.
-static const float F_DITHER_LIST[4][4] =
-{
-    { 0.37647f, 0.87450f, 0.50196f, 0.99000f },
-    { 0.62352f, 0.12549f, 0.75294f, 0.25098f },
-    { 0.43921f, 0.93725f, 0.31372f, 0.81568f },
-    { 0.68627f, 0.18823f, 0.56470f, 0.06274f },
-};
+
 
 //-----------------------------------------------------------------------------
 //      リニアからSRGBへの変換.
@@ -404,52 +397,6 @@ float3 AP1_To_AP0(float3 color)
     return mul(conversion, color);
 }
 
-//-----------------------------------------------------------------------------
-//      ディザ処理.
-//-----------------------------------------------------------------------------
-void Dithering(float2 sv_position, float alpha)
-{
-    uint2 screenPos = (uint2) fmod(sv_position, 4.0f);
-    if (alpha < F_DITHER_LIST[screenPos.x][screenPos.y])
-    {
-        discard;
-    }
-}
-
-//-----------------------------------------------------------------------------
-//      Jimenezによるディザーを計算します.
-//-----------------------------------------------------------------------------
-float4 DitherJimenez(float2 uv, float time, float4 rgba)
-{
-    // Jimenez 2014, "Next Generation Post-Processing in Call of Duty"
-    float noise = InterleavedGradientNoise(uv.xy + time);
-    // remap from [0..1[ to [-1..1[
-    noise = (noise * 2.0) - 1.0;
-    return float4(rgba.rgb + noise / 255.0, rgba.a);
-}
-
-//------------------------------------------------------------------------------
-//      Gj?lによるディザーを計算します.
-//------------------------------------------------------------------------------
-float4 DitherTriangleNoise(float4 rgba, float2 uv, float2 screenSize, float time)
-{
-    // Gj?l 2016, "Banding in Games: A Noisy Rant", http://loopit.dk/banding_in_games.pdf.
-    return rgba + TriangleNoise(uv * screenSize, time) / 255.0;
-}
-
-//-----------------------------------------------------------------------------
-//      Gj?lによるRGBディザーを計算します.
-//-----------------------------------------------------------------------------
-float4 DitherTriangleNoiseRGB(float4 rgba, float2 uv, float2 screenSize, float time)
-{
-    // Gj?l 2016, "Banding in Games: A Noisy Rant", http://loopit.dk/banding_in_games.pdf.
-    float2 st = uv * screenSize;
-    float3 dither = float3(
-            TriangleNoise(st, time),
-            TriangleNoise(st + 0.1337, time),
-            TriangleNoise(st + 0.3141, time)) / 255.0;
-    return float4(rgba.rgb + dither, rgba.a + dither.x);
-}
 
 //-----------------------------------------------------------------------------
 //      RGBE形式に圧縮します.
@@ -577,6 +524,5 @@ float3 FakeFilm(float3 V, float3 N, float mask, float thickness, float ior)
     n_color *= n_color * 2.0f;
     return n_color;
 }
-
 
 #endif//ASDX_COLOR_HLSLI

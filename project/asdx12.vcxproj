@@ -102,7 +102,7 @@
     </Link>
     <PreBuildEvent />
     <FxCompile>
-      <ShaderModel>6.0</ShaderModel>
+      <ShaderModel>6.5</ShaderModel>
       <VariableName>%(Filename)</VariableName>
       <HeaderFileOutput>$(ProjectDir)..\res\shaders\Compiled\%(Filename).inc</HeaderFileOutput>
       <AdditionalIncludeDirectories>$(ProjectDir)..\res\shaders;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -126,7 +126,7 @@
     </Link>
     <PreBuildEvent />
     <FxCompile>
-      <ShaderModel>6.0</ShaderModel>
+      <ShaderModel>6.5</ShaderModel>
       <VariableName>%(Filename)</VariableName>
       <HeaderFileOutput>$(ProjectDir)..\res\shaders\Compiled\%(Filename).inc</HeaderFileOutput>
       <AdditionalIncludeDirectories>$(ProjectDir)..\res\shaders;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -154,7 +154,7 @@
     </Link>
     <PreBuildEvent />
     <FxCompile>
-      <ShaderModel>6.0</ShaderModel>
+      <ShaderModel>6.5</ShaderModel>
       <VariableName>%(Filename)</VariableName>
       <HeaderFileOutput>$(ProjectDir)..\res\shaders\Compiled\%(Filename).inc</HeaderFileOutput>
       <AdditionalIncludeDirectories>$(ProjectDir)..\res\shaders;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -181,7 +181,7 @@
     </Link>
     <PreBuildEvent />
     <FxCompile>
-      <ShaderModel>6.0</ShaderModel>
+      <ShaderModel>6.5</ShaderModel>
       <VariableName>%(Filename)</VariableName>
       <HeaderFileOutput>$(ProjectDir)..\res\shaders\Compiled\%(Filename).inc</HeaderFileOutput>
       <AdditionalIncludeDirectories>$(ProjectDir)..\res\shaders;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -403,7 +403,8 @@
     <None Include="..\res\shaders\Culling.hlsli" />
     <None Include="..\res\shaders\Math.hlsli" />
     <None Include="..\res\shaders\Random.hlsli" />
-    <None Include="..\res\shaders\RayQuery.hlsli" />
+    <None Include="..\res\shaders\Reservior.hlsli" />
+    <None Include="..\res\shaders\RtCommon.hlsli" />
     <None Include="..\res\shaders\Samplers.hlsli" />
     <None Include="..\res\shaders\Shadow.hlsli" />
     <None Include="..\res\shaders\SphericalHarmonics.hlsli" />

@@ -15,64 +15,66 @@
 
 
 
-////-----------------------------------------------------------------------------
-////      グロシネスに変換します.
-////-----------------------------------------------------------------------------
-//float RoughnessToGlossiness(float roughness)
-//{
-//    return saturate(1.0f - roughness);
-//}
+//-----------------------------------------------------------------------------
+//      グロシネスに変換します.
+//-----------------------------------------------------------------------------
+float RoughnessToGlossiness(float roughness)
+{
+    return saturate(1.0f - roughness);
+}
 
-////-----------------------------------------------------------------------------
-////      ラフネスに変換します.
-////-----------------------------------------------------------------------------
-//float GlossinessToRoughness(float glossiness)
-//{
-//    return saturate(1.0f - glossiness);
-//}
+//-----------------------------------------------------------------------------
+//      ラフネスに変換します.
+//-----------------------------------------------------------------------------
+float GlossinessToRoughness(float glossiness)
+{
+    return saturate(1.0f - glossiness);
+}
 
-////-----------------------------------------------------------------------------
-////      PBR RoughnessからTradiational Specular Powerに変換します.
-////-----------------------------------------------------------------------------
-//float GlossinessToSpecularPower(float glossiness)
-//{
-//    // Sebastien Lagarade, "Adopting a physically based shading model", 
-//    // https://seblagarde.wordpress.com/2011/08/17/hello-world/
-//    // ※有効範囲は[2, 2048]まで.
-//    return exp2(10.0f * glossiness + 1.0f);
-//}
+//-----------------------------------------------------------------------------
+//      PBR RoughnessからTradiational Specular Powerに変換します.
+//-----------------------------------------------------------------------------
+float GlossinessToSpecularPower(float glossiness)
+{
+    // Sebastien Lagarade, "Adopting a physically based shading model", 
+    // https://seblagarde.wordpress.com/2011/08/17/hello-world/
+    // ※有効範囲は[2, 2048]まで.
+    return exp2(10.0f * glossiness + 1.0f);
+}
 
-////-----------------------------------------------------------------------------
-////      Traditional Specular Power から PBR Glossinessに変換します.
-////-----------------------------------------------------------------------------
-//float SpecularPowerToGlossiness(float specularPower)
-//{
-//    return log2(specularPower) * 0.01f - 1.0f;
-//}
+//-----------------------------------------------------------------------------
+//      Traditional Specular Power から PBR Glossinessに変換します.
+//-----------------------------------------------------------------------------
+float SpecularPowerToGlossiness(float specularPower)
+{
+    return log2(specularPower) * 0.01f - 1.0f;
+}
 
-////-----------------------------------------------------------------------------
-////      Traditional Specular Power から　PBR Roughnessに変換します.
-////-----------------------------------------------------------------------------
-//float SpecularPowerToRoughness(float specularPower)
-//{
-//    return SpecularPowerToRoughness(SpecularPowerToGlossiness(specularPower));
-//}
+//-----------------------------------------------------------------------------
+//      Traditional Specular Power から　PBR Roughnessに変換します.
+//-----------------------------------------------------------------------------
+float SpecularPowerToRoughness(float specularPower)
+{
+    return SpecularPowerToRoughness(SpecularPowerToGlossiness(specularPower));
+}
 
-////-----------------------------------------------------------------------------
-////      ラフネスからスペキュラー指数を求めます.
-////-----------------------------------------------------------------------------
-//float ToSpecularPower(float roughness)
-//{ return 2.0f / min(0.99999f, max(0.0002f, roughness * roughness)) - 2.0f; }
+//-----------------------------------------------------------------------------
+//      ラフネスからスペキュラー指数を求めます.
+//-----------------------------------------------------------------------------
+float ToSpecularPower(float roughness)
+{
+    return (2.0f / max(0.0002f, roughness * roughness)) - 2.0f;
+}
 
-////-----------------------------------------------------------------------------
-////      スペキュラー指数からラフネス値を求めます.
-////-----------------------------------------------------------------------------
-//float ToRoughness(float specularPower)
-//{
-//    // Dimiatr Lazarov, "Physically-based lighting in Call of Duty: Black Ops",
-//    // SIGGRAPH 2011 Cources: Advances in Real-Time Rendering in 3D Graphics.
-//    return sqrt(2.0f / (specularPower + 2.0f));
-//}
+//-----------------------------------------------------------------------------
+//      スペキュラー指数からラフネス値を求めます.
+//-----------------------------------------------------------------------------
+float ToRoughness(float specularPower)
+{
+    // Dimiatr Lazarov, "Physically-based lighting in Call of Duty: Black Ops",
+    // SIGGRAPH 2011 Cources: Advances in Real-Time Rendering in 3D Graphics.
+    return sqrt(2.0f / (specularPower + 2.0f));
+}
 
 //-----------------------------------------------------------------------------
 //      ディフューズ反射率を求めます.

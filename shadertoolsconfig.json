@@ -1,0 +1,8 @@
+﻿{
+    "hlsl.preprocessorDefinitions": {
+        "__HLSL_VERSION": 2021
+    },
+    "hlsl.additionalIncludeDirectories": [
+        ".\\res\\shaders"
+    ]
+}
