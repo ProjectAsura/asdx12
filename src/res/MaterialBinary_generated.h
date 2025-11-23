@@ -18,27 +18,175 @@ static_assert(FLATBUFFERS_VERSION_MAJOR == 25 &&
 namespace asdx {
 namespace res {
 
+struct MaterialTexture;
+struct MaterialTextureBuilder;
+
 struct Material;
 struct MaterialBuilder;
 
 struct MaterialBinary;
 struct MaterialBinaryBuilder;
 
+enum TextureKind : int8_t {
+  TextureKind_BaseColor = 0,
+  TextureKind_Normal = 1,
+  TextureKind_Orm = 2,
+  TextureKind_Emissive = 3,
+  TextureKind_Anisotropy = 4,
+  TextureKind_ClearCoat = 5,
+  TextureKind_ClearCoatRoughness = 6,
+  TextureKind_ClearCoatNormal = 7,
+  TextureKind_SheenColor = 8,
+  TextureKind_SheenRoughness = 9,
+  TextureKind_Transmission = 10,
+  TextureKind_Thickness = 11,
+  TextureKind_Iridescence = 12,
+  TextureKind_IridescenceThickness = 13,
+  TextureKind_MIN = TextureKind_BaseColor,
+  TextureKind_MAX = TextureKind_IridescenceThickness
+};
+
+inline const TextureKind (&EnumValuesTextureKind())[14] {
+  static const TextureKind values[] = {
+    TextureKind_BaseColor,
+    TextureKind_Normal,
+    TextureKind_Orm,
+    TextureKind_Emissive,
+    TextureKind_Anisotropy,
+    TextureKind_ClearCoat,
+    TextureKind_ClearCoatRoughness,
+    TextureKind_ClearCoatNormal,
+    TextureKind_SheenColor,
+    TextureKind_SheenRoughness,
+    TextureKind_Transmission,
+    TextureKind_Thickness,
+    TextureKind_Iridescence,
+    TextureKind_IridescenceThickness
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesTextureKind() {
+  static const char * const names[15] = {
+    "BaseColor",
+    "Normal",
+    "Orm",
+    "Emissive",
+    "Anisotropy",
+    "ClearCoat",
+    "ClearCoatRoughness",
+    "ClearCoatNormal",
+    "SheenColor",
+    "SheenRoughness",
+    "Transmission",
+    "Thickness",
+    "Iridescence",
+    "IridescenceThickness",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNameTextureKind(TextureKind e) {
+  if (::flatbuffers::IsOutRange(e, TextureKind_BaseColor, TextureKind_IridescenceThickness)) return "";
+  const size_t index = static_cast<size_t>(e);
+  return EnumNamesTextureKind()[index];
+}
+
+struct MaterialTexture FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef MaterialTextureBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_PATH = 4,
+    VT_KIND = 6
+  };
+  const ::flatbuffers::String *Path() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_PATH);
+  }
+  asdx::res::TextureKind Kind() const {
+    return static_cast<asdx::res::TextureKind>(GetField<int8_t>(VT_KIND, 0));
+  }
+  bool KeyCompareLessThan(const MaterialTexture * const o) const {
+    return Kind() < o->Kind();
+  }
+  int KeyCompareWithValue(int8_t _Kind) const {
+    return static_cast<int>(Kind() > _Kind) - static_cast<int>(Kind() < _Kind);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_PATH) &&
+           verifier.VerifyString(Path()) &&
+           VerifyField<int8_t>(verifier, VT_KIND, 1) &&
+           verifier.EndTable();
+  }
+};
+
+struct MaterialTextureBuilder {
+  typedef MaterialTexture Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_Path(::flatbuffers::Offset<::flatbuffers::String> Path) {
+    fbb_.AddOffset(MaterialTexture::VT_PATH, Path);
+  }
+  void add_Kind(asdx::res::TextureKind Kind) {
+    fbb_.AddElement<int8_t>(MaterialTexture::VT_KIND, static_cast<int8_t>(Kind), 0);
+  }
+  explicit MaterialTextureBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<MaterialTexture> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<MaterialTexture>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<MaterialTexture> CreateMaterialTexture(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    ::flatbuffers::Offset<::flatbuffers::String> Path = 0,
+    asdx::res::TextureKind Kind = asdx::res::TextureKind_BaseColor) {
+  MaterialTextureBuilder builder_(_fbb);
+  builder_.add_Path(Path);
+  builder_.add_Kind(Kind);
+  return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<MaterialTexture> CreateMaterialTextureDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    const char *Path = nullptr,
+    asdx::res::TextureKind Kind = asdx::res::TextureKind_BaseColor) {
+  auto Path__ = Path ? _fbb.CreateString(Path) : 0;
+  return asdx::res::CreateMaterialTexture(
+      _fbb,
+      Path__,
+      Kind);
+}
+
 struct Material FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef MaterialBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_BINDNAME = 4,
-    VT_BASECOLORMAP = 6,
-    VT_NORMALMAP = 8,
-    VT_ORMMAP = 10,
-    VT_EMISSIVEMAP = 12,
-    VT_BASECOLORFACTOR = 14,
-    VT_OCCLUSIONFACTOR = 16,
-    VT_ROUGHNESSFACTOR = 18,
-    VT_METALNESSFACTOR = 20,
-    VT_EMISSIVEFACTOR = 22,
-    VT_IOR = 24,
-    VT_ALPHATHRESHOLD = 26
+    VT_FEATUREMASK = 6,
+    VT_TEXTURES = 8,
+    VT_BASECOLORFACTOR = 10,
+    VT_OCCLUSIONFACTOR = 12,
+    VT_ROUGHNESSFACTOR = 14,
+    VT_METALNESSFACTOR = 16,
+    VT_EMISSIVEFACTOR = 18,
+    VT_ALPHATHRESHOLD = 20,
+    VT_ANISOTROPYSTRENGTH = 22,
+    VT_ANISOTROPYROTATION = 24,
+    VT_CLEARCOATFACTOR = 26,
+    VT_CLEARCOATROUGHNESSFACTOR = 28,
+    VT_SHEENCOLORFACTOR = 30,
+    VT_SHEENROUGHNESSFACTOR = 32,
+    VT_IOR = 34,
+    VT_DISPERSION = 36,
+    VT_TRANSMISSIONFACTOR = 38,
+    VT_IRIDESCENCEFACTOR = 40,
+    VT_IRIDESCENCEIOR = 42,
+    VT_IRIDESCENCETHICKNESSMINIMUM = 44,
+    VT_IRIDESCENCETHICKNESSMAXIMUM = 46
   };
   const ::flatbuffers::String *BindName() const {
     return GetPointer<const ::flatbuffers::String *>(VT_BINDNAME);
@@ -55,17 +203,11 @@ struct Material FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
     if (_BindName < BindName()->c_str()) return 1;
     return 0;
   }
-  const ::flatbuffers::String *BaseColorMap() const {
-    return GetPointer<const ::flatbuffers::String *>(VT_BASECOLORMAP);
+  uint32_t FeatureMask() const {
+    return GetField<uint32_t>(VT_FEATUREMASK, 0);
   }
-  const ::flatbuffers::String *NormalMap() const {
-    return GetPointer<const ::flatbuffers::String *>(VT_NORMALMAP);
-  }
-  const ::flatbuffers::String *OrmMap() const {
-    return GetPointer<const ::flatbuffers::String *>(VT_ORMMAP);
-  }
-  const ::flatbuffers::String *EmissiveMap() const {
-    return GetPointer<const ::flatbuffers::String *>(VT_EMISSIVEMAP);
+  const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MaterialTexture>> *Textures() const {
+    return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MaterialTexture>> *>(VT_TEXTURES);
   }
   const asdx::res::Float3 *BaseColorFactor() const {
     return GetStruct<const asdx::res::Float3 *>(VT_BASECOLORFACTOR);
@@ -82,31 +224,75 @@ struct Material FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   const asdx::res::Float3 *EmissiveFactor() const {
     return GetStruct<const asdx::res::Float3 *>(VT_EMISSIVEFACTOR);
   }
+  float AlphaThreshold() const {
+    return GetField<float>(VT_ALPHATHRESHOLD, 0.0f);
+  }
+  float AnisotropyStrength() const {
+    return GetField<float>(VT_ANISOTROPYSTRENGTH, 0.0f);
+  }
+  const asdx::res::Float2 *AnisotropyRotation() const {
+    return GetStruct<const asdx::res::Float2 *>(VT_ANISOTROPYROTATION);
+  }
+  float ClearCoatFactor() const {
+    return GetField<float>(VT_CLEARCOATFACTOR, 0.0f);
+  }
+  float ClearCoatRoughnessFactor() const {
+    return GetField<float>(VT_CLEARCOATROUGHNESSFACTOR, 0.0f);
+  }
+  const asdx::res::Float3 *SheenColorFactor() const {
+    return GetStruct<const asdx::res::Float3 *>(VT_SHEENCOLORFACTOR);
+  }
+  float SheenRoughnessFactor() const {
+    return GetField<float>(VT_SHEENROUGHNESSFACTOR, 0.0f);
+  }
   float Ior() const {
     return GetField<float>(VT_IOR, 0.0f);
   }
-  float AlphaThreshold() const {
-    return GetField<float>(VT_ALPHATHRESHOLD, 0.0f);
+  float Dispersion() const {
+    return GetField<float>(VT_DISPERSION, 0.0f);
+  }
+  float TransmissionFactor() const {
+    return GetField<float>(VT_TRANSMISSIONFACTOR, 0.0f);
+  }
+  float IridescenceFactor() const {
+    return GetField<float>(VT_IRIDESCENCEFACTOR, 0.0f);
+  }
+  float IridescenceIor() const {
+    return GetField<float>(VT_IRIDESCENCEIOR, 0.0f);
+  }
+  float IridescenceThicknessMinimum() const {
+    return GetField<float>(VT_IRIDESCENCETHICKNESSMINIMUM, 0.0f);
+  }
+  float iridescenceThicknessMaximum() const {
+    return GetField<float>(VT_IRIDESCENCETHICKNESSMAXIMUM, 0.0f);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffsetRequired(verifier, VT_BINDNAME) &&
            verifier.VerifyString(BindName()) &&
-           VerifyOffset(verifier, VT_BASECOLORMAP) &&
-           verifier.VerifyString(BaseColorMap()) &&
-           VerifyOffset(verifier, VT_NORMALMAP) &&
-           verifier.VerifyString(NormalMap()) &&
-           VerifyOffset(verifier, VT_ORMMAP) &&
-           verifier.VerifyString(OrmMap()) &&
-           VerifyOffset(verifier, VT_EMISSIVEMAP) &&
-           verifier.VerifyString(EmissiveMap()) &&
+           VerifyField<uint32_t>(verifier, VT_FEATUREMASK, 4) &&
+           VerifyOffset(verifier, VT_TEXTURES) &&
+           verifier.VerifyVector(Textures()) &&
+           verifier.VerifyVectorOfTables(Textures()) &&
            VerifyField<asdx::res::Float3>(verifier, VT_BASECOLORFACTOR, 4) &&
            VerifyField<float>(verifier, VT_OCCLUSIONFACTOR, 4) &&
            VerifyField<float>(verifier, VT_ROUGHNESSFACTOR, 4) &&
            VerifyField<float>(verifier, VT_METALNESSFACTOR, 4) &&
            VerifyField<asdx::res::Float3>(verifier, VT_EMISSIVEFACTOR, 4) &&
-           VerifyField<float>(verifier, VT_IOR, 4) &&
            VerifyField<float>(verifier, VT_ALPHATHRESHOLD, 4) &&
+           VerifyField<float>(verifier, VT_ANISOTROPYSTRENGTH, 4) &&
+           VerifyField<asdx::res::Float2>(verifier, VT_ANISOTROPYROTATION, 4) &&
+           VerifyField<float>(verifier, VT_CLEARCOATFACTOR, 4) &&
+           VerifyField<float>(verifier, VT_CLEARCOATROUGHNESSFACTOR, 4) &&
+           VerifyField<asdx::res::Float3>(verifier, VT_SHEENCOLORFACTOR, 4) &&
+           VerifyField<float>(verifier, VT_SHEENROUGHNESSFACTOR, 4) &&
+           VerifyField<float>(verifier, VT_IOR, 4) &&
+           VerifyField<float>(verifier, VT_DISPERSION, 4) &&
+           VerifyField<float>(verifier, VT_TRANSMISSIONFACTOR, 4) &&
+           VerifyField<float>(verifier, VT_IRIDESCENCEFACTOR, 4) &&
+           VerifyField<float>(verifier, VT_IRIDESCENCEIOR, 4) &&
+           VerifyField<float>(verifier, VT_IRIDESCENCETHICKNESSMINIMUM, 4) &&
+           VerifyField<float>(verifier, VT_IRIDESCENCETHICKNESSMAXIMUM, 4) &&
            verifier.EndTable();
   }
 };
@@ -118,17 +304,11 @@ struct MaterialBuilder {
   void add_BindName(::flatbuffers::Offset<::flatbuffers::String> BindName) {
     fbb_.AddOffset(Material::VT_BINDNAME, BindName);
   }
-  void add_BaseColorMap(::flatbuffers::Offset<::flatbuffers::String> BaseColorMap) {
-    fbb_.AddOffset(Material::VT_BASECOLORMAP, BaseColorMap);
+  void add_FeatureMask(uint32_t FeatureMask) {
+    fbb_.AddElement<uint32_t>(Material::VT_FEATUREMASK, FeatureMask, 0);
   }
-  void add_NormalMap(::flatbuffers::Offset<::flatbuffers::String> NormalMap) {
-    fbb_.AddOffset(Material::VT_NORMALMAP, NormalMap);
-  }
-  void add_OrmMap(::flatbuffers::Offset<::flatbuffers::String> OrmMap) {
-    fbb_.AddOffset(Material::VT_ORMMAP, OrmMap);
-  }
-  void add_EmissiveMap(::flatbuffers::Offset<::flatbuffers::String> EmissiveMap) {
-    fbb_.AddOffset(Material::VT_EMISSIVEMAP, EmissiveMap);
+  void add_Textures(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MaterialTexture>>> Textures) {
+    fbb_.AddOffset(Material::VT_TEXTURES, Textures);
   }
   void add_BaseColorFactor(const asdx::res::Float3 *BaseColorFactor) {
     fbb_.AddStruct(Material::VT_BASECOLORFACTOR, BaseColorFactor);
@@ -145,11 +325,47 @@ struct MaterialBuilder {
   void add_EmissiveFactor(const asdx::res::Float3 *EmissiveFactor) {
     fbb_.AddStruct(Material::VT_EMISSIVEFACTOR, EmissiveFactor);
   }
+  void add_AlphaThreshold(float AlphaThreshold) {
+    fbb_.AddElement<float>(Material::VT_ALPHATHRESHOLD, AlphaThreshold, 0.0f);
+  }
+  void add_AnisotropyStrength(float AnisotropyStrength) {
+    fbb_.AddElement<float>(Material::VT_ANISOTROPYSTRENGTH, AnisotropyStrength, 0.0f);
+  }
+  void add_AnisotropyRotation(const asdx::res::Float2 *AnisotropyRotation) {
+    fbb_.AddStruct(Material::VT_ANISOTROPYROTATION, AnisotropyRotation);
+  }
+  void add_ClearCoatFactor(float ClearCoatFactor) {
+    fbb_.AddElement<float>(Material::VT_CLEARCOATFACTOR, ClearCoatFactor, 0.0f);
+  }
+  void add_ClearCoatRoughnessFactor(float ClearCoatRoughnessFactor) {
+    fbb_.AddElement<float>(Material::VT_CLEARCOATROUGHNESSFACTOR, ClearCoatRoughnessFactor, 0.0f);
+  }
+  void add_SheenColorFactor(const asdx::res::Float3 *SheenColorFactor) {
+    fbb_.AddStruct(Material::VT_SHEENCOLORFACTOR, SheenColorFactor);
+  }
+  void add_SheenRoughnessFactor(float SheenRoughnessFactor) {
+    fbb_.AddElement<float>(Material::VT_SHEENROUGHNESSFACTOR, SheenRoughnessFactor, 0.0f);
+  }
   void add_Ior(float Ior) {
     fbb_.AddElement<float>(Material::VT_IOR, Ior, 0.0f);
   }
-  void add_AlphaThreshold(float AlphaThreshold) {
-    fbb_.AddElement<float>(Material::VT_ALPHATHRESHOLD, AlphaThreshold, 0.0f);
+  void add_Dispersion(float Dispersion) {
+    fbb_.AddElement<float>(Material::VT_DISPERSION, Dispersion, 0.0f);
+  }
+  void add_TransmissionFactor(float TransmissionFactor) {
+    fbb_.AddElement<float>(Material::VT_TRANSMISSIONFACTOR, TransmissionFactor, 0.0f);
+  }
+  void add_IridescenceFactor(float IridescenceFactor) {
+    fbb_.AddElement<float>(Material::VT_IRIDESCENCEFACTOR, IridescenceFactor, 0.0f);
+  }
+  void add_IridescenceIor(float IridescenceIor) {
+    fbb_.AddElement<float>(Material::VT_IRIDESCENCEIOR, IridescenceIor, 0.0f);
+  }
+  void add_IridescenceThicknessMinimum(float IridescenceThicknessMinimum) {
+    fbb_.AddElement<float>(Material::VT_IRIDESCENCETHICKNESSMINIMUM, IridescenceThicknessMinimum, 0.0f);
+  }
+  void add_iridescenceThicknessMaximum(float iridescenceThicknessMaximum) {
+    fbb_.AddElement<float>(Material::VT_IRIDESCENCETHICKNESSMAXIMUM, iridescenceThicknessMaximum, 0.0f);
   }
   explicit MaterialBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -166,29 +382,49 @@ struct MaterialBuilder {
 inline ::flatbuffers::Offset<Material> CreateMaterial(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     ::flatbuffers::Offset<::flatbuffers::String> BindName = 0,
-    ::flatbuffers::Offset<::flatbuffers::String> BaseColorMap = 0,
-    ::flatbuffers::Offset<::flatbuffers::String> NormalMap = 0,
-    ::flatbuffers::Offset<::flatbuffers::String> OrmMap = 0,
-    ::flatbuffers::Offset<::flatbuffers::String> EmissiveMap = 0,
+    uint32_t FeatureMask = 0,
+    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MaterialTexture>>> Textures = 0,
     const asdx::res::Float3 *BaseColorFactor = nullptr,
     float OcclusionFactor = 0.0f,
     float RoughnessFactor = 0.0f,
     float MetalnessFactor = 0.0f,
     const asdx::res::Float3 *EmissiveFactor = nullptr,
+    float AlphaThreshold = 0.0f,
+    float AnisotropyStrength = 0.0f,
+    const asdx::res::Float2 *AnisotropyRotation = nullptr,
+    float ClearCoatFactor = 0.0f,
+    float ClearCoatRoughnessFactor = 0.0f,
+    const asdx::res::Float3 *SheenColorFactor = nullptr,
+    float SheenRoughnessFactor = 0.0f,
     float Ior = 0.0f,
-    float AlphaThreshold = 0.0f) {
+    float Dispersion = 0.0f,
+    float TransmissionFactor = 0.0f,
+    float IridescenceFactor = 0.0f,
+    float IridescenceIor = 0.0f,
+    float IridescenceThicknessMinimum = 0.0f,
+    float iridescenceThicknessMaximum = 0.0f) {
   MaterialBuilder builder_(_fbb);
-  builder_.add_AlphaThreshold(AlphaThreshold);
+  builder_.add_iridescenceThicknessMaximum(iridescenceThicknessMaximum);
+  builder_.add_IridescenceThicknessMinimum(IridescenceThicknessMinimum);
+  builder_.add_IridescenceIor(IridescenceIor);
+  builder_.add_IridescenceFactor(IridescenceFactor);
+  builder_.add_TransmissionFactor(TransmissionFactor);
+  builder_.add_Dispersion(Dispersion);
   builder_.add_Ior(Ior);
+  builder_.add_SheenRoughnessFactor(SheenRoughnessFactor);
+  builder_.add_SheenColorFactor(SheenColorFactor);
+  builder_.add_ClearCoatRoughnessFactor(ClearCoatRoughnessFactor);
+  builder_.add_ClearCoatFactor(ClearCoatFactor);
+  builder_.add_AnisotropyRotation(AnisotropyRotation);
+  builder_.add_AnisotropyStrength(AnisotropyStrength);
+  builder_.add_AlphaThreshold(AlphaThreshold);
   builder_.add_EmissiveFactor(EmissiveFactor);
   builder_.add_MetalnessFactor(MetalnessFactor);
   builder_.add_RoughnessFactor(RoughnessFactor);
   builder_.add_OcclusionFactor(OcclusionFactor);
   builder_.add_BaseColorFactor(BaseColorFactor);
-  builder_.add_EmissiveMap(EmissiveMap);
-  builder_.add_OrmMap(OrmMap);
-  builder_.add_NormalMap(NormalMap);
-  builder_.add_BaseColorMap(BaseColorMap);
+  builder_.add_Textures(Textures);
+  builder_.add_FeatureMask(FeatureMask);
   builder_.add_BindName(BindName);
   return builder_.Finish();
 }
@@ -196,36 +432,53 @@ inline ::flatbuffers::Offset<Material> CreateMaterial(
 inline ::flatbuffers::Offset<Material> CreateMaterialDirect(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     const char *BindName = nullptr,
-    const char *BaseColorMap = nullptr,
-    const char *NormalMap = nullptr,
-    const char *OrmMap = nullptr,
-    const char *EmissiveMap = nullptr,
+    uint32_t FeatureMask = 0,
+    std::vector<::flatbuffers::Offset<asdx::res::MaterialTexture>> *Textures = nullptr,
     const asdx::res::Float3 *BaseColorFactor = nullptr,
     float OcclusionFactor = 0.0f,
     float RoughnessFactor = 0.0f,
     float MetalnessFactor = 0.0f,
     const asdx::res::Float3 *EmissiveFactor = nullptr,
+    float AlphaThreshold = 0.0f,
+    float AnisotropyStrength = 0.0f,
+    const asdx::res::Float2 *AnisotropyRotation = nullptr,
+    float ClearCoatFactor = 0.0f,
+    float ClearCoatRoughnessFactor = 0.0f,
+    const asdx::res::Float3 *SheenColorFactor = nullptr,
+    float SheenRoughnessFactor = 0.0f,
     float Ior = 0.0f,
-    float AlphaThreshold = 0.0f) {
+    float Dispersion = 0.0f,
+    float TransmissionFactor = 0.0f,
+    float IridescenceFactor = 0.0f,
+    float IridescenceIor = 0.0f,
+    float IridescenceThicknessMinimum = 0.0f,
+    float iridescenceThicknessMaximum = 0.0f) {
   auto BindName__ = BindName ? _fbb.CreateString(BindName) : 0;
-  auto BaseColorMap__ = BaseColorMap ? _fbb.CreateString(BaseColorMap) : 0;
-  auto NormalMap__ = NormalMap ? _fbb.CreateString(NormalMap) : 0;
-  auto OrmMap__ = OrmMap ? _fbb.CreateString(OrmMap) : 0;
-  auto EmissiveMap__ = EmissiveMap ? _fbb.CreateString(EmissiveMap) : 0;
+  auto Textures__ = Textures ? _fbb.CreateVectorOfSortedTables<asdx::res::MaterialTexture>(Textures) : 0;
   return asdx::res::CreateMaterial(
       _fbb,
       BindName__,
-      BaseColorMap__,
-      NormalMap__,
-      OrmMap__,
-      EmissiveMap__,
+      FeatureMask,
+      Textures__,
       BaseColorFactor,
       OcclusionFactor,
       RoughnessFactor,
       MetalnessFactor,
       EmissiveFactor,
+      AlphaThreshold,
+      AnisotropyStrength,
+      AnisotropyRotation,
+      ClearCoatFactor,
+      ClearCoatRoughnessFactor,
+      SheenColorFactor,
+      SheenRoughnessFactor,
       Ior,
-      AlphaThreshold);
+      Dispersion,
+      TransmissionFactor,
+      IridescenceFactor,
+      IridescenceIor,
+      IridescenceThicknessMinimum,
+      iridescenceThicknessMaximum);
 }
 
 struct MaterialBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {

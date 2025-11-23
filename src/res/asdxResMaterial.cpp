@@ -13,12 +13,108 @@
 #include "MaterialBinary_generated.h"
 #include <res/asdxResHelper.h>
 
+
 namespace {
 
 //-----------------------------------------------------------------------------
 // Constant Values.
 //-----------------------------------------------------------------------------
 static constexpr uint32_t CURRENT_VERSION = 1u;     //!< 現在ランタイムでサポートされているバージョン.
+
+
+//-----------------------------------------------------------------------------
+//      ResMaterialに変換します.
+//-----------------------------------------------------------------------------
+void ToResMaterial(asdx::ResMaterial& result, const asdx::res::Material* mat)
+{
+   result.BindName = asdx::StringView(mat->BindName()->c_str());
+
+    for(auto tex : *(mat->Textures()))
+    {
+        auto path = tex->Path()->c_str();
+        switch(tex->Kind())
+        {
+        case asdx::res::TextureKind_BaseColor:
+            result.BaseColorMap = asdx::StringView(path);
+            break;
+
+        case asdx::res::TextureKind_Normal:
+            result.NormalMap = asdx::StringView(path);
+            break;
+
+        case asdx::res::TextureKind_Orm:
+            result.OrmMap = asdx::StringView(path);
+            break;
+
+        case asdx::res::TextureKind_Emissive:
+            result.EmissiveMap = asdx::StringView(path);
+            break;
+
+        case asdx::res::TextureKind_Anisotropy:
+            result.AnisotropyMap = asdx::StringView(path);
+            break;
+
+        case asdx::res::TextureKind_ClearCoat:
+            result.ClearCoatMap = asdx::StringView(path);
+            break;
+
+        case asdx::res::TextureKind_ClearCoatNormal:
+            result.ClearCoatNormalMap = asdx::StringView(path);
+            break;
+
+        case asdx::res::TextureKind_ClearCoatRoughness:
+            result.ClearCoatRoughnessMap = asdx::StringView(path);
+            break;
+
+        case asdx::res::TextureKind_SheenColor:
+            result.SheenColorMap = asdx::StringView(path);
+            break;
+
+        case asdx::res::TextureKind_SheenRoughness:
+            result.SheenRoughnessMap = asdx::StringView(path);
+            break;
+
+        case asdx::res::TextureKind_Transmission:
+            result.TransmissionMap = asdx::StringView(path);
+            break;
+
+        case asdx::res::TextureKind_Thickness:
+            result.ThicknessMap = asdx::StringView(path);
+            break;
+
+        case asdx::res::TextureKind_Iridescence:
+            result.IridescenceMap = asdx::StringView(path);
+            break;
+
+        case asdx::res::TextureKind_IridescenceThickness:
+            result.IridescenceThicknessMap = asdx::StringView(path);
+            break;
+
+        default:
+            break;
+        }
+    }
+
+    result.BaseColorFactor              = asdx::FromFloat3(*(mat->BaseColorFactor()));
+    result.OcclusionFactor              = mat->OcclusionFactor();
+    result.RoughnessFactor              = mat->RoughnessFactor();
+    result.MetalnessFactor              = mat->MetalnessFactor();
+    result.EmissiveFactor               = asdx::FromFloat3(*(mat->EmissiveFactor()));
+    result.AlphaThreshold               = mat->AlphaThreshold();
+    result.AnisotropyStrength           = mat->AnisotropyStrength();
+    result.AnisotropyRotation           = asdx::FromFloat2(*(mat->AnisotropyRotation()));
+    result.ClearCoatFactor              = mat->ClearCoatFactor();
+    result.ClearCoatRoughnessFactor     = mat->ClearCoatRoughnessFactor();
+    result.SheenColorFactor             = asdx::FromFloat3(*(mat->SheenColorFactor()));
+    result.SheenRoughnessFactor         = mat->SheenRoughnessFactor();
+    result.Ior                          = mat->Ior();
+    result.Dispersion                   = mat->Dispersion();
+    result.TransimissionFactor          = mat->TransmissionFactor();
+    result.IridescenceFactor            = mat->IridescenceFactor();
+    result.IridescenceIor               = mat->IridescenceIor();
+    result.IridescenceThicknessMinimum  = mat->IridescenceThicknessMinimum();
+    result.IridescenceThicknessMaximum  = mat->iridescenceThicknessMaximum();
+}
 
 } // namespace
 
@@ -85,19 +181,7 @@ ResMaterial MaterialBinary::GetMaterial(uint32_t index) const
     auto mat = res::GetMaterialBinary(m_Blob.data())->Materials()->Get(index);
 
     ResMaterial result = {};
-    result.BindName         = StringView(mat->BindName    ()->c_str());
-    result.BaseColorMap     = StringView(mat->BaseColorMap()->c_str());
-    result.NormalMap        = StringView(mat->NormalMap   ()->c_str());
-    result.OrmMap           = StringView(mat->OrmMap      ()->c_str());
-    result.EmissiveMap      = StringView(mat->EmissiveMap ()->c_str());
-    result.BaseColorFactor  = FromFloat3(*(mat->BaseColorFactor()));
-    result.OcclusionFactor  = mat->OcclusionFactor();
-    result.RoughnessFactor  = mat->RoughnessFactor();
-    result.MetalnessFactor  = mat->MetalnessFactor();
-    result.EmissiveFactor   = FromFloat3(*(mat->EmissiveFactor()));
-    result.Ior              = mat->Ior();
-    result.AlphaThreshold   = mat->AlphaThreshold();
-
+    ToResMaterial(result, mat);
     return result;
 }
 
@@ -107,24 +191,12 @@ ResMaterial MaterialBinary::GetMaterial(uint32_t index) const
 bool MaterialBinary::FindMaterial(const char* name, ResMaterial& result) const
 {
     assert(!m_Blob.empty());
-    auto mat = res::GetMaterialBinary(m_Blob.data())->Materials();
-    auto find = mat->LookupByKey(name);
-    if (find == nullptr)
+    auto materials = res::GetMaterialBinary(m_Blob.data())->Materials();
+    auto mat = materials->LookupByKey(name);
+    if (mat == nullptr)
         return false;
 
-    result.BindName         = StringView(find->BindName    ()->c_str());
-    result.BaseColorMap     = StringView(find->BaseColorMap()->c_str());
-    result.NormalMap        = StringView(find->NormalMap   ()->c_str());
-    result.OrmMap           = StringView(find->OrmMap      ()->c_str());
-    result.EmissiveMap      = StringView(find->EmissiveMap ()->c_str());
-    result.BaseColorFactor  = FromFloat3(*(find->BaseColorFactor()));
-    result.OcclusionFactor  = find->OcclusionFactor();
-    result.RoughnessFactor  = find->RoughnessFactor();
-    result.MetalnessFactor  = find->MetalnessFactor();
-    result.EmissiveFactor   = FromFloat3(*(find->EmissiveFactor()));
-    result.Ior              = find->Ior();
-    result.AlphaThreshold   = find->AlphaThreshold();
-
+    ToResMaterial(result, mat);
     return true;
 }
 

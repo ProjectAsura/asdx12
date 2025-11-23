@@ -2,21 +2,55 @@
 
 namespace asdx.res;
 
+enum TextureKind : byte
+{
+    BaseColor,
+    Normal,
+    Orm,
+    Emissive,
+    Anisotropy,
+    ClearCoat,
+    ClearCoatRoughness,
+    ClearCoatNormal,
+    SheenColor,
+    SheenRoughness,
+    Transmission,
+    Thickness,
+    Iridescence,
+    IridescenceThickness,
+}
+
+table MaterialTexture
+{
+    Path : string;
+    Kind : TextureKind (key);
+}
+
 table Material
 {
-    BindName     : string (key);
-    BaseColorMap : string;
-    NormalMap    : string;
-    OrmMap       : string;
-    EmissiveMap  : string;
+    BindName            : string (key);
+    FeatureMask         : uint;
+    Textures            : [MaterialTexture];
 
-    BaseColorFactor : Float3;
-    OcclusionFactor : float;
-    RoughnessFactor : float;
-    MetalnessFactor : float;
-    EmissiveFactor  : Float3;
-    Ior             : float;
-    AlphaThreshold  : float;
+    BaseColorFactor             : Float3;
+    OcclusionFactor             : float;
+    RoughnessFactor             : float;
+    MetalnessFactor             : float;
+    EmissiveFactor              : Float3;
+    AlphaThreshold              : float;
+    AnisotropyStrength          : float;
+    AnisotropyRotation          : Float2;
+    ClearCoatFactor             : float;
+    ClearCoatRoughnessFactor    : float;
+    SheenColorFactor            : Float3;
+    SheenRoughnessFactor        : float;
+    Ior                         : float;
+    Dispersion                  : float;
+    TransmissionFactor          : float;
+    IridescenceFactor           : float;
+    IridescenceIor              : float;
+    IridescenceThicknessMinimum : float;
+    iridescenceThicknessMaximum : float;
 }
 
 table MaterialBinary
