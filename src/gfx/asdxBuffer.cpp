@@ -271,6 +271,17 @@ ID3D12Resource* VertexBuffer::GetResource() const
 { return m_Resource.GetPtr(); }
 
 //-----------------------------------------------------------------------------
+//      GPU仮想アドレスを取得します.
+//-----------------------------------------------------------------------------
+D3D12_GPU_VIRTUAL_ADDRESS VertexBuffer::GetGpuAddress() const
+{
+    D3D12_GPU_VIRTUAL_ADDRESS result = {};
+    if (m_Resource.GetPtr() != nullptr)
+    { result = m_Resource->GetGPUVirtualAddress(); }
+    return result;
+}
+
+//-----------------------------------------------------------------------------
 //      デバッグ名を設定します.
 //-----------------------------------------------------------------------------
 void VertexBuffer::SetName(LPCWSTR tag)
@@ -433,6 +444,17 @@ D3D12_INDEX_BUFFER_VIEW IndexBuffer::GetIBV() const
 //-----------------------------------------------------------------------------
 ID3D12Resource* IndexBuffer::GetResource() const
 { return m_Resource.GetPtr(); }
+
+//-----------------------------------------------------------------------------
+//      GPU仮想アドレスを取得します.
+//-----------------------------------------------------------------------------
+D3D12_GPU_VIRTUAL_ADDRESS IndexBuffer::GetGpuAddress() const
+{
+    D3D12_GPU_VIRTUAL_ADDRESS result = {};
+    if (m_Resource.GetPtr() != nullptr)
+    { result = m_Resource->GetGPUVirtualAddress(); }
+    return result;
+}
 
 //-----------------------------------------------------------------------------
 //      デバッグ名を設定します.
