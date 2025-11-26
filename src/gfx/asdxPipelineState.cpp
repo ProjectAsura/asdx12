@@ -1393,7 +1393,7 @@ void RayTracingPipelineState::Recreate()
         ELOG("Error : ID3D12Device5::CreateStateObject() Failed. errcode = 0x%x", hr);
     }
 
-    hr = m_ReloadState.Object->QueryInterface(IID_PPV_ARGS(state.Props.GetAddress()));
+    hr = state.Object->QueryInterface(IID_PPV_ARGS(state.Props.GetAddress()));
     if (FAILED(hr))
     {
         ELOG("Error : ID3D12StateObject::QueryInterface() Failed. errcode = 0x%x", hr);

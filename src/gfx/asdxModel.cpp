@@ -264,8 +264,8 @@ D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC Mesh::GetTrianglesDesc() const
     result.VertexFormat                 = DXGI_FORMAT_R32G32B32_FLOAT;
     result.IndexCount                   = m_IndexCount;
     result.VertexCount                  = m_VertexCount;
-    result.IndexBuffer                  = m_VertexIndices.GetResource()->GetGPUVirtualAddress();
-    result.VertexBuffer.StartAddress    = m_Positions    .GetResource()->GetGPUVirtualAddress();
+    result.IndexBuffer                  = m_VertexIndices.GetGpuAddress();
+    result.VertexBuffer.StartAddress    = m_Positions    .GetGpuAddress();
     result.VertexBuffer.StrideInBytes   = sizeof(Vector3);
     return result;
 }
