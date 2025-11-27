@@ -1413,7 +1413,12 @@ void ScratchBuffer::Term()
 //      GPU仮想アドレスを取得します.
 //-----------------------------------------------------------------------------
 D3D12_GPU_VIRTUAL_ADDRESS ScratchBuffer::GetGpuAddress() const
-{ return m_Resource->GetGPUVirtualAddress(); }
+{ 
+    D3D12_GPU_VIRTUAL_ADDRESS result = {};
+    if (m_Resource.GetPtr() != nullptr)
+    { result = m_Resource->GetGPUVirtualAddress(); }
+    return result;
+}
 
 //-----------------------------------------------------------------------------
 //      リソースを取得します.
@@ -1575,7 +1580,12 @@ void AccelerationStructure::Term()
 //      GPU仮想アドレスを取得します.
 //-----------------------------------------------------------------------------
 D3D12_GPU_VIRTUAL_ADDRESS AccelerationStructure::GetGpuAddress() const 
-{ return m_Resource->GetGPUVirtualAddress(); }
+{
+    D3D12_GPU_VIRTUAL_ADDRESS result = {};
+    if (m_Resource.GetPtr() != nullptr)
+    { result = m_Resource->GetGPUVirtualAddress(); }
+    return result;
+}
 
 //-----------------------------------------------------------------------------
 //      リソースを取得します.
