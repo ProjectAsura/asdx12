@@ -497,7 +497,7 @@ private:
 };
 
 
-bool InitPipelineStateWatcher(const char* directory, const std::vector<std::string>& includes);
+bool InitPipelineStateWatcher(const std::vector<std::string>& dirs, const std::vector<std::string>& includes);
 void TermPipelineStateWatcher();
 
 void InitRangeAsSRV(D3D12_DESCRIPTOR_RANGE& range, UINT registerIndex, UINT count = 1, UINT registerSpace = 0);

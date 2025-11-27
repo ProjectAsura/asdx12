@@ -61,7 +61,7 @@ struct FileWatcher::Worker
         );
         if (hDir == INVALID_HANDLE_VALUE)
         {
-            ELOGA("Error : CreateFileA() Failed. path = %s, errcode = 0x%x", DirectoryPath.c_str(), GetLastError());
+            ELOGA("Error : CreateFileA() Failed. path = %s, errcode = 0x%x", dirPath.c_str(), GetLastError());
             hDir = nullptr;
             return false;
         }
