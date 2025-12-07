@@ -1,13 +1,13 @@
 ﻿//-----------------------------------------------------------------------------
 // File : main.cpp
-// Desc : Animation Clip Converter.
+// Desc : Motion (*.mob) Converter.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <AnimationClipConverter.h>
+#include <MotionConverter.h>
 #include <cmdline.h>
 
 
@@ -18,7 +18,7 @@ int main(int argc, char** argv)
 {
     if (argc < 2)
     {
-        printf_s("AnimationClipConverter Failed. Invalid Arguments.\n");
+        printf_s("MotionConverter Failed. Invalid Arguments.\n");
         return -1;
     }
 
@@ -32,21 +32,21 @@ int main(int argc, char** argv)
     parser.parse_check(argc, argv);
 
     // 変換設定.
-    asdx::AnimationClipConverter::Desc desc = {};
+    asdx::MotionConverter::Desc desc = {};
     desc.InputPath  = parser.get<std::string>("input");
     desc.OutputPath = parser.get<std::string>("output");
 
     // 変換処理実行.
-    auto ret = asdx::AnimationClipConverter::Convert(desc);
+    auto ret = asdx::MotionConverter::Convert(desc);
 
     // 正常終了.
     if (ret)
     {
-        fprintf_s(stdout, "AnimationClip Convert Success! OutputPath = %s\n", desc.OutputPath.c_str());
+        fprintf_s(stdout, "Motion Convert Success! OutputPath = %s\n", desc.OutputPath.c_str());
         return 0;
     }
 
-    fprintf_s(stderr, "AnimationClip Convert Failed... InputPath = %s\n", desc.InputPath.c_str());
+    fprintf_s(stderr, "Motion Convert Failed... InputPath = %s\n", desc.InputPath.c_str());
     return -1;
 }
 

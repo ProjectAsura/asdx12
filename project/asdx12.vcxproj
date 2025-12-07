@@ -281,12 +281,12 @@
     <ClCompile Include="..\src\gfx\asdxTarget.cpp" />
     <ClCompile Include="..\src\gfx\asdxTexture.cpp" />
     <ClCompile Include="..\src\gfx\asdxUpdateCommand.cpp" />
-    <ClCompile Include="..\src\res\asdxResAnimationClip.cpp" />
     <ClCompile Include="..\src\res\asdxResFont.cpp" />
     <ClCompile Include="..\src\res\asdxResHelper.cpp" />
     <ClCompile Include="..\src\res\asdxResMapChip.cpp" />
     <ClCompile Include="..\src\res\asdxResMaterial.cpp" />
     <ClCompile Include="..\src\res\asdxResModel.cpp" />
+    <ClCompile Include="..\src\res\asdxResMotion.cpp" />
     <ClCompile Include="..\src\res\asdxResTexture.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -386,13 +386,13 @@
     <ClInclude Include="..\include\gfx\asdxTarget.h" />
     <ClInclude Include="..\include\gfx\asdxTexture.h" />
     <ClInclude Include="..\include\gfx\asdxUpdateCommand.h" />
-    <ClInclude Include="..\include\res\asdxResAnimationClip.h" />
     <ClInclude Include="..\include\res\asdxResFont.h" />
     <ClInclude Include="..\include\res\asdxResHelper.h" />
     <ClInclude Include="..\include\res\asdxResLight.h" />
     <ClInclude Include="..\include\res\asdxResMapChip.h" />
     <ClInclude Include="..\include\res\asdxResMaterial.h" />
     <ClInclude Include="..\include\res\asdxResModel.h" />
+    <ClInclude Include="..\include\res\asdxResMotion.h" />
     <ClInclude Include="..\include\res\asdxResTexture.h" />
   </ItemGroup>
   <ItemGroup>

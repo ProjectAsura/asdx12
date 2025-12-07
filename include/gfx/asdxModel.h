@@ -1,5 +1,5 @@
 ﻿//-----------------------------------------------------------------------------
-// File : asdxModelSystem.h
+// File : asdxModel.h
 // Desc : Model System.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
@@ -161,23 +161,38 @@ public:
     //-------------------------------------------------------------------------
     D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC GetTrianglesDesc() const;
 
+    //-------------------------------------------------------------------------
+    //! @brief      ユーザーデータを設定します.
+    //! 
+    //! @param[in]      value       設定するユーザーデータです.
+    //-------------------------------------------------------------------------
+    void SetUserData(void* value);
+
+    //-------------------------------------------------------------------------
+    //! @brief      ユーザーデータを取得します.
+    //! 
+    //! @return     ユーザーデータを返却します.
+    //-------------------------------------------------------------------------
+    void* GetUserData() const;
+
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    std::string     m_Name;                 //!< メッシュ名.
-    uint32_t        m_MaterialId;           //!< マテリアルID.
-    VertexBuffer    m_Positions;            //!< 位置座標バッファ.
-    VertexBuffer    m_Normals;              //!< 法線バッファ.
-    VertexBuffer    m_Tangents;             //!< 接線バッファ.
-    VertexBuffer    m_Colors;               //!< カラーバッファ.
-    VertexBuffer    m_TexCoords;            //!< テクスチャ座標バッファ.
-    VertexBuffer    m_BoneIndices;          //!< ボーンインデックスバッファ.
-    VertexBuffer    m_BoneWeights;          //!< ボーンウェイトバッファ.
-    IndexBuffer     m_VertexIndices;        //!< 頂点インデックスバッファ.
-    uint32_t        m_VertexCount   = 0;    //!< 頂点数.
-    uint32_t        m_IndexCount    = 0;    //!< 頂点インデックス数.
-    BoundingSphere3 m_BoundingSphere;       //!< バウンディングスフィア.
+    std::string     m_Name;                         //!< メッシュ名.
+    uint32_t        m_MaterialId    = UINT32_MAX;   //!< マテリアルID.
+    uint32_t        m_VertexCount   = 0;            //!< 頂点数.
+    uint32_t        m_IndexCount    = 0;            //!< 頂点インデックス数.
+    VertexBuffer    m_Positions;                    //!< 位置座標バッファ.
+    VertexBuffer    m_Normals;                      //!< 法線バッファ.
+    VertexBuffer    m_Tangents;                     //!< 接線バッファ.
+    VertexBuffer    m_Colors;                       //!< カラーバッファ.
+    VertexBuffer    m_TexCoords;                    //!< テクスチャ座標バッファ.
+    VertexBuffer    m_BoneIndices;                  //!< ボーンインデックスバッファ.
+    VertexBuffer    m_BoneWeights;                  //!< ボーンウェイトバッファ.
+    IndexBuffer     m_VertexIndices;                //!< 頂点インデックスバッファ.
+    BoundingSphere3 m_BoundingSphere;               //!< バウンディングスフィア.
+    void*           m_pUserData     = nullptr;      //!< ユーザーデータです.
 
     //=========================================================================
     // private methods.
@@ -404,6 +419,5 @@ private:
     Model             (const Model&) = delete;
     Model& operator = (const Model&) = delete;
 };
-
 
 } // namespace asdx

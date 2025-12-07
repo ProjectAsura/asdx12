@@ -18,6 +18,12 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\MotionConverter.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\include\MotionConverter.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
@@ -46,7 +52,7 @@
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -114,8 +120,8 @@
       <Command>xcopy "C:\Program Files\Assimp\bin\x64\assimp-vc143-mt.dll" "$(OutDir)" /Y /Q
 $(ProjectDir)..\..\..\external\flatbuffers\bin\flatc.exe --cpp -o $(ProjectDir)..\include $(ProjectDir)..\..\..\res\format\ResTypes.fbs --no-warnings
 xcopy $(ProjectDir)..\include\ResTypes_generated.h $(ProjectDir)..\..\..\src\res /y /c
-$(ProjectDir)..\..\..\external\flatbuffers\bin\flatc.exe --cpp -o $(ProjectDir)..\include $(ProjectDir)..\format\AnimationClipBinary.fbs --no-warnings
-xcopy $(ProjectDir)..\include\AnimationClipBInary_generated.h $(ProjectDir)..\..\..\src\res /y /c</Command>
+$(ProjectDir)..\..\..\external\flatbuffers\bin\flatc.exe --cpp -o $(ProjectDir)..\include $(ProjectDir)..\format\MotionBinary.fbs --no-warnings
+xcopy $(ProjectDir)..\include\MotionBinary_generated.h $(ProjectDir)..\..\..\src\res /y /c</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -138,16 +144,10 @@ xcopy $(ProjectDir)..\include\AnimationClipBInary_generated.h $(ProjectDir)..\..
       <Command>xcopy "C:\Program Files\Assimp\bin\x64\assimp-vc143-mt.dll" "$(OutDir)" /Y /Q
 $(ProjectDir)..\..\..\external\flatbuffers\bin\flatc.exe --cpp -o $(ProjectDir)..\include $(ProjectDir)..\..\..\res\format\ResTypes.fbs --no-warnings
 xcopy $(ProjectDir)..\include\ResTypes_generated.h $(ProjectDir)..\..\..\src\res /y /c
-$(ProjectDir)..\..\..\external\flatbuffers\bin\flatc.exe --cpp -o $(ProjectDir)..\include $(ProjectDir)..\format\AnimationClipBinary.fbs --no-warnings
-xcopy $(ProjectDir)..\include\AnimationClipBInary_generated.h $(ProjectDir)..\..\..\src\res /y /c</Command>
+$(ProjectDir)..\..\..\external\flatbuffers\bin\flatc.exe --cpp -o $(ProjectDir)..\include $(ProjectDir)..\format\MotionBinary.fbs --no-warnings
+xcopy $(ProjectDir)..\include\MotionBinary_generated.h $(ProjectDir)..\..\..\src\res /y /c</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="..\src\AnimationClipConverter.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\include\AnimationClipConverter.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

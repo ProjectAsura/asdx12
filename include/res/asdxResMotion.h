@@ -1,6 +1,6 @@
 ﻿//-----------------------------------------------------------------------------
-// File : asdxResAnimationClip.h
-// Desc : Animation Clip Resource.
+// File : asdxResMotion.h
+// Desc : Motion Resource.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 #pragma once
@@ -18,15 +18,16 @@
 //-----------------------------------------------------------------------------
 namespace asdx::res {
 struct BoneAnimation;
-struct AnimationClip;
+struct MotionClip;
 } // namespace asdx::res
+
 
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
-// AnimationClipBinary class
+// MotionBinary class
 ///////////////////////////////////////////////////////////////////////////////
-class AnimationClipBinary
+class MotionBinary
 {
     //=========================================================================
     // list of friend classes and methods.
@@ -46,12 +47,12 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      コンストラクタです.
     //-------------------------------------------------------------------------
-    AnimationClipBinary();
+    MotionBinary();
 
     //-------------------------------------------------------------------------
     //! @brief      デストラクタです.
     //-------------------------------------------------------------------------
-    ~AnimationClipBinary();
+    ~MotionBinary();
 
     //-------------------------------------------------------------------------
     //! @brief      ロード処理を行います.
@@ -78,7 +79,7 @@ public:
     //! @param[in]      index       クリップ番号.
     //! @return     クリップを返却します.
     //-------------------------------------------------------------------------
-    const res::AnimationClip* GetClip(uint32_t index) const;
+    const res::MotionClip* GetClip(uint32_t index) const;
 
     //-------------------------------------------------------------------------
     //! @brief      クリップを検索します.
@@ -86,7 +87,7 @@ public:
     //! @param[in]      name        クリップ名.
     //! @return     クリップを返却します.
     //-------------------------------------------------------------------------
-    const res::AnimationClip* FindClip(const char* name) const;
+    const res::MotionClip* FindClip(const char* name) const;
 
 private:
     //=========================================================================
@@ -150,7 +151,7 @@ Matrix ComputeLocalTransform(const res::BoneAnimation* boneAnim, float timeSec);
 //! @param[in]      clip        アニメーションクリップ.
 //! @return     クリップ名を返却します.
 //-----------------------------------------------------------------------------
-const char* GetClipName(const res::AnimationClip* clip);
+const char* GetMotionClipName(const res::MotionClip* clip);
 
 //-----------------------------------------------------------------------------
 //! @brief      アニメーション間隔を取得します.
@@ -158,7 +159,7 @@ const char* GetClipName(const res::AnimationClip* clip);
 //! @param[in]      clip        アニメーションクリップ.
 //! @return     アニメーション間隔を返却します.
 //-----------------------------------------------------------------------------
-float GetDuration(const res::AnimationClip* clip);
+float GetDuration(const res::MotionClip* clip);
 
 //-----------------------------------------------------------------------------
 //! @brief      1秒あたりの処理時間を取得します.
@@ -166,7 +167,7 @@ float GetDuration(const res::AnimationClip* clip);
 //! @param[in]      clip        アニメーションクリップ.
 //! @return     1秒あたりの処理時間(TPS)を返却します.
 //-----------------------------------------------------------------------------
-float GetTicksPerSecond(const res::AnimationClip* clip);
+float GetTicksPerSecond(const res::MotionClip* clip);
 
 //-----------------------------------------------------------------------------
 //! @brief      ボーンアニメーション数を取得します.
@@ -174,7 +175,7 @@ float GetTicksPerSecond(const res::AnimationClip* clip);
 //! @param[in]      clip        アニメーションクリップ.
 //! @return     ボーンアニメーション数を返却します.
 //-----------------------------------------------------------------------------
-uint32_t GetBoneAnimationCount(const res::AnimationClip* clip);
+uint32_t GetBoneAnimationCount(const res::MotionClip* clip);
 
 //-----------------------------------------------------------------------------
 //! @brief      ボーンアニメーションを取得します.
@@ -183,7 +184,7 @@ uint32_t GetBoneAnimationCount(const res::AnimationClip* clip);
 //! @param[in]      index       ボーンアニメーション番号.
 //! @return     ボーンアニメーションを返却します.
 //-----------------------------------------------------------------------------
-const res::BoneAnimation* GetBoneAnimation(const res::AnimationClip* clip, uint32_t index);
+const res::BoneAnimation* GetBoneAnimation(const res::MotionClip* clip, uint32_t index);
 
 //----------------------------------------------------------------------------
 //! @brief      ボーンアニメーションを検索します.
@@ -192,6 +193,6 @@ const res::BoneAnimation* GetBoneAnimation(const res::AnimationClip* clip, uint3
 //! @param[in]      name        ボーン名.
 //! @return     ボーンアニメーションを返却します.
 //----------------------------------------------------------------------------
-const res::BoneAnimation* FindBoneAnimation(const res::AnimationClip* clip, const char* name);
+const res::BoneAnimation* FindBoneAnimation(const res::MotionClip* clip, const char* name);
 
 } // namespace asdx

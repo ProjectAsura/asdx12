@@ -1,6 +1,6 @@
 ﻿//-----------------------------------------------------------------------------
-// File : AnimationClipConverter.h
-// Desc : Animation Clip (*.acb) Converter.
+// File : MotionConverter.h
+// Desc : Motion (*.mob) Converter.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 #pragma once
@@ -15,9 +15,9 @@
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
-// AnimationClipConverter class
+// MotionConverter class
 ///////////////////////////////////////////////////////////////////////////////
-class AnimationClipConverter
+class MotionConverter
 {
     //=========================================================================
     // list of friend classes and methods.

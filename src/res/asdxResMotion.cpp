@@ -1,6 +1,6 @@
 ﻿//-----------------------------------------------------------------------------
-// File : asdxResAnimationClip.cpp
-// Desc : Animation Clip Resource.
+// File : asdxResMotion.cpp
+// Desc : Mootion Resource.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 
@@ -8,32 +8,32 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <fnd/asdxMacro.h>
-#include <res/asdxResAnimationClip.h>
-#include "AnimationClipBinary_generated.h"
+#include <res/asdxResMotion.h>
+#include "MotionBinary_generated.h"
 
 
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
-// AnimationClipBinary class
+// MotionBinary class
 ///////////////////////////////////////////////////////////////////////////////
 
 //-----------------------------------------------------------------------------
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
-AnimationClipBinary::AnimationClipBinary()
+MotionBinary::MotionBinary()
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      デストラクタです.
 //-----------------------------------------------------------------------------
-AnimationClipBinary::~AnimationClipBinary()
+MotionBinary::~MotionBinary()
 { Term(); }
 
 //-----------------------------------------------------------------------------
 //      ロード処理を行います.
 //-----------------------------------------------------------------------------
-void AnimationClipBinary::Load(std::vector<uint8_t>&& blob)
+void MotionBinary::Load(std::vector<uint8_t>&& blob)
 {
     m_Blob = std::move(blob);
 
@@ -42,7 +42,7 @@ void AnimationClipBinary::Load(std::vector<uint8_t>&& blob)
     {
         assert(!m_Blob.empty());
         flatbuffers::Verifier verifier(m_Blob.data(), m_Blob.size());
-        assert(res::VerifySizePrefixedAnimationClipBinaryBuffer(verifier));
+        assert(res::VerifySizePrefixedMotionBinaryBuffer(verifier));
         ASDX_UNUSED(verifier);
     }
 #endif
@@ -51,7 +51,7 @@ void AnimationClipBinary::Load(std::vector<uint8_t>&& blob)
 //-----------------------------------------------------------------------------
 //      終了処理を行います.
 //-----------------------------------------------------------------------------
-void AnimationClipBinary::Term()
+void MotionBinary::Term()
 {
     m_Blob.clear();
     m_Blob.shrink_to_fit();
@@ -60,28 +60,28 @@ void AnimationClipBinary::Term()
 //-----------------------------------------------------------------------------
 //      クリップ数を取得します.
 //-----------------------------------------------------------------------------
-uint32_t AnimationClipBinary::GetClipCount() const
+uint32_t MotionBinary::GetClipCount() const
 {
     assert(!m_Blob.empty());
-    return res::GetAnimationClipBinary(m_Blob.data())->Clips()->size();
+    return res::GetMotionBinary(m_Blob.data())->Clips()->size();
 }
 
 //-----------------------------------------------------------------------------
 //      クリップを取得します.
 //-----------------------------------------------------------------------------
-const res::AnimationClip* AnimationClipBinary::GetClip(uint32_t index) const
+const res::MotionClip* MotionBinary::GetClip(uint32_t index) const
 {
     assert(!m_Blob.empty());
-    return res::GetAnimationClipBinary(m_Blob.data())->Clips()->Get(index);
+    return res::GetMotionBinary(m_Blob.data())->Clips()->Get(index);
 }
 
 //-----------------------------------------------------------------------------
 //      クリップを検索します.
 //-----------------------------------------------------------------------------
-const res::AnimationClip* AnimationClipBinary::FindClip(const char* name) const
+const res::MotionClip* MotionBinary::FindClip(const char* name) const
 {
     assert(!m_Blob.empty());
-    return res::GetAnimationClipBinary(m_Blob.data())->Clips()->LookupByKey(name);
+    return res::GetMotionBinary(m_Blob.data())->Clips()->LookupByKey(name);
 }
 
 //=============================================================================
@@ -173,7 +173,7 @@ Matrix ComputeLocalTransform(const res::BoneAnimation* boneAnim, float timeSec)
 //-----------------------------------------------------------------------------
 //      クリップ名を取得します.
 //-----------------------------------------------------------------------------
-const char* GetClipName(const res::AnimationClip* clip)
+const char* GetMotionClipName(const res::MotionClip* clip)
 {
     assert(clip != nullptr);
     return clip->Name()->c_str();
@@ -182,7 +182,7 @@ const char* GetClipName(const res::AnimationClip* clip)
 //-----------------------------------------------------------------------------
 //      アニメーション間隔を取得します.
 //-----------------------------------------------------------------------------
-float GetDuration(const res::AnimationClip* clip)
+float GetDuration(const res::MotionClip* clip)
 {
     assert(clip != nullptr);
     return clip->Duration();
@@ -191,7 +191,7 @@ float GetDuration(const res::AnimationClip* clip)
 //-----------------------------------------------------------------------------
 //      1秒あたりの処理時間を取得します.
 //-----------------------------------------------------------------------------
-float GetTicksPerSecond(const res::AnimationClip* clip)
+float GetTicksPerSecond(const res::MotionClip* clip)
 {
     assert(clip != nullptr);
     return clip->TicksPerSecond();
@@ -200,7 +200,7 @@ float GetTicksPerSecond(const res::AnimationClip* clip)
 //-----------------------------------------------------------------------------
 //      ボーンアニメーション数を取得します.
 //-----------------------------------------------------------------------------
-uint32_t GetBoneAnimationCount(const res::AnimationClip* clip)
+uint32_t GetBoneAnimationCount(const res::MotionClip* clip)
 {
     assert(clip != nullptr);
     return clip->Bones()->size();
@@ -209,7 +209,7 @@ uint32_t GetBoneAnimationCount(const res::AnimationClip* clip)
 //-----------------------------------------------------------------------------
 //      ボーンアニメーションを取得します.
 //-----------------------------------------------------------------------------
-const res::BoneAnimation* GetBoneAnimation(const res::AnimationClip* clip, uint32_t index)
+const res::BoneAnimation* GetBoneAnimation(const res::MotionClip* clip, uint32_t index)
 {
     assert(clip != nullptr);
     return clip->Bones()->Get(index);
@@ -218,7 +218,7 @@ const res::BoneAnimation* GetBoneAnimation(const res::AnimationClip* clip, uint3
 //-----------------------------------------------------------------------------
 //      ボーンアニメーションを検索します.
 //-----------------------------------------------------------------------------
-const res::BoneAnimation* FindBoneAnimation(const res::AnimationClip* clip, const char* name)
+const res::BoneAnimation* FindBoneAnimation(const res::MotionClip* clip, const char* name)
 {
     assert(clip != nullptr);
     return clip->Bones()->LookupByKey(name);

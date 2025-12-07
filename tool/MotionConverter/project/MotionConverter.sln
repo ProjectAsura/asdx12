@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.14.36623.8
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AnimaionClipConverter", "AnimaionClipConverter.vcxproj", "{30ACB3FD-8FC1-42FC-A161-074415A3FDC2}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MotionConverter", "MotionConverter.vcxproj", "{30ACB3FD-8FC1-42FC-A161-074415A3FDC2}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AnimationClipConverterLIb", "AnimationClipConverterLib.vcxproj", "{3E002619-F36F-4199-B293-F27306180DBD}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MotionConverterLib", "MotionConverterLib.vcxproj", "{3E002619-F36F-4199-B293-F27306180DBD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

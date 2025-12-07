@@ -366,9 +366,6 @@
     <ClCompile Include="..\external\ImGuizmo\ImSequencer.cpp">
       <Filter>ソース ファイル\external\ImGuizmo</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\res\asdxResAnimationClip.cpp">
-      <Filter>ソース ファイル\res</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\res\asdxResHelper.cpp">
       <Filter>ソース ファイル\res</Filter>
     </ClCompile>
@@ -380,6 +377,9 @@
     </ClCompile>
     <ClCompile Include="..\src\gfx\asdxAllocationHolder.cpp">
       <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\res\asdxResMotion.cpp">
+      <Filter>ソース ファイル\res</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -683,9 +683,6 @@
     <ClInclude Include="..\external\ImGuizmo\ImZoomSlider.h">
       <Filter>ソース ファイル\external\ImGuizmo</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\res\asdxResAnimationClip.h">
-      <Filter>ヘッダー ファイル\res</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\res\asdxResHelper.h">
       <Filter>ヘッダー ファイル\res</Filter>
     </ClInclude>
@@ -694,6 +691,9 @@
     </ClInclude>
     <ClInclude Include="..\include\gfx\asdxAllocationHolder.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\res\asdxResMotion.h">
+      <Filter>ヘッダー ファイル\res</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

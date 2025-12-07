@@ -22,7 +22,7 @@ table BoneAnimation
     Scalings  : [KeyFloat3];
 }
 
-table AnimationClip
+table MotionClip
 {
     Name           : string (key);
     Duration       : float;
@@ -30,10 +30,10 @@ table AnimationClip
     Bones          : [BoneAnimation];
 }
 
-table AnimationClipBinary
+table MotionBinary
 {
     Version : uint;
-    Clips   : [AnimationClip];
+    Clips   : [MotionClip];
 }
 
-root_type AnimationClipBinary;
+root_type MotionBinary;

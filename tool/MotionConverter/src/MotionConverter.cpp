@@ -1,6 +1,6 @@
 ﻿//-----------------------------------------------------------------------------
-// File : AnimationClipConverter.cpp
-// Desc : Animation Clip (*.acb) Converter.
+// File : MotionConverter.cpp
+// Desc : Motion (*.mob) Converter.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 
@@ -8,12 +8,11 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <cstdio>
-#include <AnimationClipConverter.h>
+#include <MotionConverter.h>
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
-#include <AnimationClipBinary_generated.h>
-
+#include <MotionBinary_generated.h>
 
 #ifndef ELOG
 #define ELOG(x, ...) fprintf_s(stderr, "[File:%s, Line:%d] " x "\n", __FILE__, __LINE__, ##__VA_ARGS__ )
@@ -54,13 +53,13 @@ asdx::res::KeyQuaternion ToKeyQuaternion(const aiQuatKey& value)
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
-// AnimationClipConverter class
+// MotionConverter class
 ///////////////////////////////////////////////////////////////////////////////
 
 //-----------------------------------------------------------------------------
 //      変換処理を行います.
 //-----------------------------------------------------------------------------
-bool AnimationClipConverter::Convert(const Desc& desc)
+bool MotionConverter::Convert(const Desc& desc)
 {
     // 引数チェック.
     if (desc.InputPath.empty() || desc.OutputPath.empty())
@@ -98,7 +97,7 @@ bool AnimationClipConverter::Convert(const Desc& desc)
 //-----------------------------------------------------------------------------
 //      変換処理を行います.
 //-----------------------------------------------------------------------------
-bool AnimationClipConverter::Convert(const std::string& path, std::vector<uint8_t>& binary)
+bool MotionConverter::Convert(const std::string& path, std::vector<uint8_t>& binary)
 {
     if (path.empty())
     {
@@ -131,7 +130,7 @@ bool AnimationClipConverter::Convert(const std::string& path, std::vector<uint8_
     flatbuffers::FlatBufferBuilder builder(1024);
 
     // データを変換.
-    std::vector<flatbuffers::Offset<asdx::res::AnimationClip>> clips;
+    std::vector<flatbuffers::Offset<asdx::res::MotionClip>> clips;
     for(auto i=0u; i<pScene->mNumAnimations; ++i)
     {
         const auto srcAnim = pScene->mAnimations[i];
@@ -188,7 +187,7 @@ bool AnimationClipConverter::Convert(const std::string& path, std::vector<uint8_
         }
 
         // アニメーションクリップ生成.
-        auto clip = asdx::res::CreateAnimationClipDirect(
+        auto clip = asdx::res::CreateMotionClipDirect(
             builder,
             name,
             duration,
@@ -200,7 +199,7 @@ bool AnimationClipConverter::Convert(const std::string& path, std::vector<uint8_
     }
 
     // バイナリ生成.
-    auto bin = asdx::res::CreateAnimationClipBinaryDirect(
+    auto bin = asdx::res::CreateMotionBinaryDirect(
         builder,
         CURRENT_VERION,
         &clips);

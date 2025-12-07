@@ -20,6 +20,18 @@ namespace {
 //-----------------------------------------------------------------------------
 static constexpr uint32_t CURRENT_VERSION = 1u; //!< 現在ランタイムでサポートされているバージョン.
 
+//-----------------------------------------------------------------------------
+//      配列ビューに変換します.
+//-----------------------------------------------------------------------------
+template<typename T, typename U>
+asdx::ArrayView<T> ToArrayView(const flatbuffers::Vector<U>* value)
+{
+    if (value == nullptr)
+        return asdx::ArrayView<T>();
+
+    return asdx::ArrayView<T>(reinterpret_cast<const T*>(value->data()), value->size()); 
+}
+
 } // namespace
 
 
@@ -107,14 +119,14 @@ ResMesh ModelBinary::GetMesh(uint32_t meshIndex) const
     ResMesh result;
     result.Name           = StringView(mesh->Name()->c_str());
     result.MaterialId     = mesh->MaterialId();
-    result.Positions      = ArrayView<Vector3>(reinterpret_cast<const Vector3*>(mesh->Positions  ()->data()), mesh->Positions  ()->size());
-    result.Normals        = ArrayView<Vector3>(reinterpret_cast<const Vector3*>(mesh->Normals    ()->data()), mesh->Normals    ()->size());
-    result.Tangents       = ArrayView<Vector4>(reinterpret_cast<const Vector4*>(mesh->Tangents   ()->data()), mesh->Tangents   ()->size());
-    result.Colors         = ArrayView<Unorm4> (reinterpret_cast<const Unorm4*> (mesh->Colors     ()->data()), mesh->Colors     ()->size());
-    result.TexCoords      = ArrayView<Vector2>(reinterpret_cast<const Vector2*>(mesh->TexCoords  ()->data()), mesh->TexCoords  ()->size());
-    result.BoneIndices    = ArrayView<Uint4>  (reinterpret_cast<const Uint4*>  (mesh->BoneIndices()->data()), mesh->BoneIndices()->size());
-    result.BoneWeights    = ArrayView<Vector4>(reinterpret_cast<const Vector4*>(mesh->BoneWeights()->data()), mesh->BoneWeights()->size());
-    result.VertexIndices  = ArrayView<uint32_t>(reinterpret_cast<const uint32_t*>(mesh->VertexIndices()->data()), mesh->VertexIndices()->size());
+    result.Positions      = ToArrayView<Vector3> (mesh->Positions    ());
+    result.Normals        = ToArrayView<Vector3> (mesh->Normals      ());
+    result.Tangents       = ToArrayView<Vector4> (mesh->Tangents     ());
+    result.Colors         = ToArrayView<Unorm4>  (mesh->Colors       ());
+    result.TexCoords      = ToArrayView<Vector2> (mesh->TexCoords    ());
+    result.BoneIndices    = ToArrayView<Uint4>   (mesh->BoneIndices  ());
+    result.BoneWeights    = ToArrayView<Vector4> (mesh->BoneWeights  ());
+    result.VertexIndices  = ToArrayView<uint32_t>(mesh->VertexIndices());
     result.BoundingSphere = BoundingSphere3(mesh->Bounds()->Center().X(), mesh->Bounds()->Center().Y(), mesh->Bounds()->Center().Z(), mesh->Bounds()->Radius());
     return result;
 }
@@ -132,7 +144,7 @@ ResBone ModelBinary::GetBone(uint32_t meshIndex) const
     result.Name           = StringView(bone->Name()->c_str());
     result.ParentId       = bone->Parent();
     result.OffsetMatrix   = *reinterpret_cast<const Matrix*>(bone->OffsetMatrix());
-    result.Children       = ArrayView(bone->Children()->data(), bone->Children()->size());
+    result.Children       = ToArrayView<int32_t>(bone->Children());
 
     return result;
 }
