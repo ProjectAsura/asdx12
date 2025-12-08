@@ -31,24 +31,12 @@ struct CameraEvent
         EVENT_RESET   = 0x000001 << 5,     //!< リセット.
     };
 
-    asdx::Vector2   Rotate;     //!< 回転角です.
-    asdx::Vector2   PanTilt;    //!< パン・チルト角.
-    asdx::Vector3   Truck;      //!< トラック量です.
-    float           Twist;      //!< ツイスト角です.
-    float           Dolly;      //!< ドリー量です.
-    uint32_t        Flags;      //!< フラグです.
-
-    //-------------------------------------------------------------------------
-    //! @brief      コンストラクタです.
-    //-------------------------------------------------------------------------
-    CameraEvent()
-    : Rotate    ( 0.0f, 0.0f )
-    , PanTilt   ( 0.0f, 0.0f )
-    , Truck     ( 0.0f, 0.0f, 0.0f )
-    , Twist     ( 0.0f )
-    , Dolly     ( 0.0f )
-    , Flags     ( 0 )
-    { /* DO_NOTHING */ }
+    Vector2   Rotate    = Vector2(0.0f, 0.0f);          //!< 回転角です.
+    Vector2   PanTilt   = Vector2(0.0f, 0.0f);          //!< パン・チルト角.
+    Vector3   Truck     = Vector3(0.0f, 0.0f, 0.0f);    //!< トラック量です.
+    float     Twist     = 0.0f;                         //!< ツイスト角です.
+    float     Dolly     = 0.0f;                         //!< ドリー量です.
+    uint32_t  Flags     = 0;                            //!< フラグです.
 };
 
 
@@ -68,28 +56,14 @@ public:
     //=========================================================================
     struct Param
     {
-        asdx::Vector3 Position;      //!< カメラの位置です.
-        asdx::Vector3 Target;        //!< カメラの注視点です.
-        asdx::Vector3 Upward;        //!< カメラの上向きベクトルです.
-        asdx::Vector2 Rotate;        //!< 回転角です.
-        asdx::Vector2 PanTilt;       //!< パン・チルト角です.
-        float         Twist;         //!< ツイスト角です.
-        float         MinDist;       //!< ターゲットとの最小距離です.
-        float         MaxDist;       //!< ターゲットとの最大距離です.
-
-        //---------------------------------------------------------------------
-        //! @brief      コンストラクタです.
-        //---------------------------------------------------------------------
-        Param()
-        : Position  ( 0.0f, 0.0f, 5.0f )
-        , Target    ( 0.0f, 0.0f, 0.0f )
-        , Upward    ( 0.0f, 1.0f, 0.0f )
-        , Rotate    ( 0.0f, 0.0f )
-        , PanTilt   ( 0.0f, 0.0f )
-        , Twist     ( 0.0f )
-        , MinDist   ( 0.01f )
-        , MaxDist   ( 1000.0f )
-        { /* DO_NOTHING */ }
+        Vector3 Position    = Vector3(0.0f, 0.0f, 10.0f);   //!< カメラの位置です.
+        Vector3 Target      = Vector3(0.0f, 0.0f, 0.0f);    //!< カメラの注視点です.
+        Vector3 Upward      = Vector3(0.0f, 0.0f, 1.0f);    //!< カメラの上向きベクトルです.
+        Vector2 Rotate      = Vector2(0.0f, 0.0f);          //!< 回転角です.
+        Vector2 PanTilt     = Vector2(0.0f, 0.0f);          //!< パン・チルト角です.
+        float   Twist       = 0.0f;                         //!< ツイスト角です.
+        float   MinDist     = 1e-4f;                        //!< ターゲットとの最小距離です.
+        float   MaxDist     = 1000.0f;                      //!< ターゲットとの最大距離です.
     };
 
     //=========================================================================
@@ -111,21 +85,21 @@ public:
     //!
     //! @param [in]     position        設定するカメラ位置です.
     //-------------------------------------------------------------------------
-    void SetPosition( const asdx::Vector3& position );
+    void SetPosition(const asdx::Vector3& position);
 
     //-------------------------------------------------------------------------
     //! @brief      カメラ注視点を設定します.
     //!
     //! @param [in]     target          設定するカメラ注視点です.
     //-------------------------------------------------------------------------
-    void SetTarget( const asdx::Vector3& target );
+    void SetTarget(const asdx::Vector3& target);
 
     //-------------------------------------------------------------------------
     //! @brief      カメラ上向きベクトルを設定します.
     //!
     //! @param [in]     upward          設定するカメラ上向きベクトルです.
     //-------------------------------------------------------------------------
-    void SetUpward( const asdx::Vector3& upward );
+    void SetUpward(const asdx::Vector3& upward);
 
     //-------------------------------------------------------------------------
     //! @brief      ツイスト角を設定します.
@@ -140,7 +114,7 @@ public:
     //! @param [in]     minDist         設定するカメラ注視点との最小距離.
     //! @param [in]     maxDist         設定するカメラ注視点との最大距離.
     //-------------------------------------------------------------------------
-    void SetRange( const float minDist, const float maxDist );
+    void SetRange(float minDist, float maxDist);
 
     //-------------------------------------------------------------------------
     //! @brief      カメラパラメータを記憶します.
@@ -160,7 +134,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      カメライベントを基にビュー行列を更新します.
     //-------------------------------------------------------------------------
-    void UpdateByEvent( const CameraEvent& camEvent );
+    void UpdateByEvent(const CameraEvent& camEvent);
 
     //-------------------------------------------------------------------------
     //! @brief      ビュー行列を取得します.

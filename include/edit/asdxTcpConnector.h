@@ -69,7 +69,7 @@ public:
     //! @retval true    接続に成功.
     //! @retval false   接続に失敗.
     //-------------------------------------------------------------------------
-    bool Connect( const Desc& info );
+    bool Connect(const Desc& info);
 
     //-------------------------------------------------------------------------
     //! @brief      切断処理を行います.
@@ -92,7 +92,7 @@ public:
     //! @retval true    送信に成功.
     //! @retval false   送信に失敗.
     //-------------------------------------------------------------------------
-    bool Send( const void* pBuffer, int size );
+    bool Send(const void* pBuffer, int size);
 
     //-------------------------------------------------------------------------
     //! @brief      受信処理を行います.
@@ -102,7 +102,7 @@ public:
     //! @retval true    受信に成功.
     //! @retval false   受信に失敗.
     //-------------------------------------------------------------------------
-    bool Receive( void* pBuffer, int size );
+    bool Receive(void* pBuffer, int size);
 
 protected:
     //=========================================================================

@@ -381,6 +381,9 @@
     <ClCompile Include="..\src\res\asdxResMotion.cpp">
       <Filter>ソース ファイル\res</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\edit\asdxRingMenu.cpp">
+      <Filter>ソース ファイル\edit</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\external\imgui\imconfig.h">
@@ -694,6 +697,9 @@
     </ClInclude>
     <ClInclude Include="..\include\res\asdxResMotion.h">
       <Filter>ヘッダー ファイル\res</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\edit\asdxRingMenu.h">
+      <Filter>ヘッダー ファイル\edit</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

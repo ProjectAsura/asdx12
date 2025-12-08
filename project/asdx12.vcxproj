@@ -229,6 +229,7 @@
     <ClCompile Include="..\src\edit\asdxGuiMgr.cpp" />
     <ClCompile Include="..\src\edit\asdxHistory.cpp" />
     <ClCompile Include="..\src\edit\asdxP4VHelper.cpp" />
+    <ClCompile Include="..\src\edit\asdxRingMenu.cpp" />
     <ClCompile Include="..\src\edit\asdxTcpConnector.cpp" />
     <ClCompile Include="..\src\fnd\asdxBit.cpp" />
     <ClCompile Include="..\src\fnd\asdxBlackboard.cpp" />
@@ -322,6 +323,7 @@
     <ClInclude Include="..\include\edit\asdxGuiMgr.h" />
     <ClInclude Include="..\include\edit\asdxHistory.h" />
     <ClInclude Include="..\include\edit\asdxP4VHelper.h" />
+    <ClInclude Include="..\include\edit\asdxRingMenu.h" />
     <ClInclude Include="..\include\edit\asdxTcpConnector.h" />
     <ClInclude Include="..\include\fnd\asdxArrayView.h" />
     <ClInclude Include="..\include\fnd\asdxBit.h" />

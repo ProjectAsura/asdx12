@@ -10,6 +10,7 @@
 #include <SampleApp.h>
 #include <fnd/asdxMisc.h>
 #include <fnd/asdxLogger.h>
+#include <fnd/asdxFileIO.h>
 #include <edit/asdxGuiMgr.h>
 
 #define TEST (1)
@@ -88,8 +89,7 @@ bool SampleApp::OnInit()
     #if ASDX_ENABLE_IMGUI
     // GUI初期化.
     {
-        const auto path = "../res/font/07やさしさゴシック.ttf";
-        if (!asdx::GuiMgr::Instance().Init(pCmd, m_hWnd, m_Width, m_Height, m_SwapChainFormat, path))
+        if (!asdx::GuiMgr::Instance().Init(pCmd, m_hWnd, m_Width, m_Height, m_SwapChainFormat))
         {
             ELOGA("Error : GuiMgr::Init() Failed.");
             return false;
@@ -98,10 +98,15 @@ bool SampleApp::OnInit()
     #endif
 
 #if TEST
-    if (!g_TextureBinary.LoadA("../res/texture/air_ship.txb"))
     {
-        ELOG("Texture Load Failed.");
-        return false;
+        std::vector<uint8_t> texBin;
+        if (!asdx::LoadA("../res/texture/air_ship.txb", texBin))
+        {
+            ELOG("Texture Load Failed.");
+            return false;
+        }
+
+        g_TextureBinary.Load(std::move(texBin));
     }
 
     auto res = g_TextureBinary.GetResource();
@@ -126,10 +131,15 @@ bool SampleApp::OnInit()
         }
     }
 
-    if (!g_Font.Init(pCmd, "../res/font/yasashisa_gothic.fnb"))
     {
-        ELOG("Error : Font::Init Failed.");
-        return false;
+        std::vector<uint8_t> fontBin;
+        if (!asdx::LoadA("../res/font/yasashisa_gothic.fnb", fontBin))
+        {
+            ELOG("Error : Font::Init Failed.");
+            return false;
+        }
+
+        g_Font.Init(pCmd, std::move(fontBin));
     }
 
     if (!asdx::FontRenderer::Instance().Init(g_SpriteRenderer))
