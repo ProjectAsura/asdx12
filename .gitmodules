@@ -43,3 +43,6 @@
 [submodule "external/ImGuizmo"]
 	path = external/ImGuizmo
 	url = https://github.com/CedricGuillemet/ImGuizmo.git
+[submodule "external/ImGuiRingMenu"]
+	path = external/ImGuiRingMenu
+	url = https://github.com/ProjectAsura/ImGuiRingMenu.git

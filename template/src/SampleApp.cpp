@@ -22,6 +22,7 @@
 #include <gfx/asdxFont.h>
 #include <gfx/asdxSpriteAnimation.h>
 #include <gfx/asdxFade.h>
+#include "../external/ImGuiRingMenu/ImGuiRingMenu.h"
 #endif
 
 namespace {
@@ -33,6 +34,7 @@ asdx::Texture       g_Texture;
 asdx::Sampler       g_Sampler;
 asdx::Font          g_Font;
 asdx::TimerSpriteAnimation g_AirShipAnim;
+ImGuiRingMenu      g_TestMenu;
 #endif
 
 } // namespace
@@ -169,6 +171,25 @@ bool SampleApp::OnInit()
     asdx::Fade::Instance().SetChangeSec(3.0f);
     asdx::Fade::Instance().SetEnablePulse(true);
     asdx::Fade::Instance().SetPulseSpeed(4.0f);
+
+    g_TestMenu.Add({0, "TestA"});
+    g_TestMenu.Add({0, "TestB"});
+    g_TestMenu.Add({0, "TestC"});
+    g_TestMenu.Add({0, "TestD"});
+    g_TestMenu.Add({0, "TestE"});
+    g_TestMenu.Add({0, "TestF"});
+    g_TestMenu.Add({0, "TestG"});
+    g_TestMenu.Add({0, "TestH"});
+    g_TestMenu.Add({0, "TestI"});
+    g_TestMenu.Add({0, "TestJ"});
+    g_TestMenu.Add({0, "TestK"});
+    g_TestMenu.Add({0, "TestL"});
+    g_TestMenu.Add({0, "TestM"});
+    g_TestMenu.Add({0, "TestN"});
+    g_TestMenu.Add({0, "TestO"});
+    g_TestMenu.Add({0, "IIIIHISTHEIATestP"});
+
+    //g_TestMenu.StartEnter();
 #endif
 
     // コマンドの記録を終了.
@@ -242,6 +263,9 @@ void SampleApp::OnFrameRender(const asdx::App::FrameEventArgs& args)
 
 #if TEST
     g_SpriteRenderer.Reset();
+    g_TestMenu.Update(args.ElapsedTimeSec);
+    int selectedId = 0;
+    g_TestMenu.Draw(selectedId);
 #endif
 
     // コマンド記録開始.

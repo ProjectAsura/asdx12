@@ -79,6 +79,9 @@
     <Filter Include="ソース ファイル\external\ImGuizmo">
       <UniqueIdentifier>{8fb098a6-69e0-4c9f-88dd-3187e70fd05e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ソース ファイル\external\ImGuiRingMenu">
+      <UniqueIdentifier>{5e28bc64-a79f-4cbb-a154-ebcb679630b5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\external\imgui\imgui.cpp">
@@ -381,8 +384,8 @@
     <ClCompile Include="..\src\res\asdxResMotion.cpp">
       <Filter>ソース ファイル\res</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\edit\asdxRingMenu.cpp">
-      <Filter>ソース ファイル\edit</Filter>
+    <ClCompile Include="..\external\ImGuiRingMenu\ImGuiRingMenu.cpp">
+      <Filter>ソース ファイル\external\ImGuiRingMenu</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -698,8 +701,8 @@
     <ClInclude Include="..\include\res\asdxResMotion.h">
       <Filter>ヘッダー ファイル\res</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\edit\asdxRingMenu.h">
-      <Filter>ヘッダー ファイル\edit</Filter>
+    <ClInclude Include="..\external\ImGuiRingMenu\ImGuiRingMenu.h">
+      <Filter>ソース ファイル\external\ImGuiRingMenu</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

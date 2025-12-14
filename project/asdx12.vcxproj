@@ -191,6 +191,7 @@
     <ClCompile Include="..\external\Cflat\Cflat.cpp" />
     <ClCompile Include="..\external\D3D12MemoryAllocator\src\D3D12MemAlloc.cpp" />
     <ClCompile Include="..\external\fpng\src\fpng.cpp" />
+    <ClCompile Include="..\external\ImGuiRingMenu\ImGuiRingMenu.cpp" />
     <ClCompile Include="..\external\ImGuizmo\GraphEditor.cpp" />
     <ClCompile Include="..\external\ImGuizmo\ImCurveEdit.cpp" />
     <ClCompile Include="..\external\ImGuizmo\ImGradient.cpp" />
@@ -229,7 +230,6 @@
     <ClCompile Include="..\src\edit\asdxGuiMgr.cpp" />
     <ClCompile Include="..\src\edit\asdxHistory.cpp" />
     <ClCompile Include="..\src\edit\asdxP4VHelper.cpp" />
-    <ClCompile Include="..\src\edit\asdxRingMenu.cpp" />
     <ClCompile Include="..\src\edit\asdxTcpConnector.cpp" />
     <ClCompile Include="..\src\fnd\asdxBit.cpp" />
     <ClCompile Include="..\src\fnd\asdxBlackboard.cpp" />
@@ -298,6 +298,7 @@
     <ClInclude Include="..\external\Cflat\CflatHelper.h" />
     <ClInclude Include="..\external\Cflat\CflatMacros.h" />
     <ClInclude Include="..\external\D3D12MemoryAllocator\include\D3D12MemAlloc.h" />
+    <ClInclude Include="..\external\ImGuiRingMenu\ImGuiRingMenu.h" />
     <ClInclude Include="..\external\ImGuizmo\GraphEditor.h" />
     <ClInclude Include="..\external\ImGuizmo\ImCurveEdit.h" />
     <ClInclude Include="..\external\ImGuizmo\ImGradient.h" />
@@ -323,7 +324,6 @@
     <ClInclude Include="..\include\edit\asdxGuiMgr.h" />
     <ClInclude Include="..\include\edit\asdxHistory.h" />
     <ClInclude Include="..\include\edit\asdxP4VHelper.h" />
-    <ClInclude Include="..\include\edit\asdxRingMenu.h" />
     <ClInclude Include="..\include\edit\asdxTcpConnector.h" />
     <ClInclude Include="..\include\fnd\asdxArrayView.h" />
     <ClInclude Include="..\include\fnd\asdxBit.h" />

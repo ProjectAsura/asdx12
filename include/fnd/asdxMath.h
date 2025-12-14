@@ -365,6 +365,54 @@ template<typename T> inline
 constexpr T Sign(T value) noexcept
 { return (value < T(0)) ? T(-1) : T(1); }
 
+//-----------------------------------------------------------------------------
+//! @brief      指定範囲内で繰り返します.
+//! 
+//! @param[in]      value       値.
+//! @param[in]      low         下限値.
+//! @param[in]      high        上限値.
+//! @return     指定範囲内に収めた値を返却します.
+//-----------------------------------------------------------------------------
+template<typename T>
+inline T Wrap(T value, T low, T high)
+{
+    assert(low < high);
+    const T n = (value - low) % (high - low);
+    return (n >= 0) ? (n + low) : (n + high);
+}
+
+//-----------------------------------------------------------------------------
+//! @brief      指定範囲内で繰り返します.
+//! 
+//! @param[in]      value       値.
+//! @param[in]      low         下限値.
+//! @param[in]      high        上限値.
+//! @return     指定範囲内に収めた値を返却します.
+//-----------------------------------------------------------------------------
+template<>
+inline float Wrap<float>(float value, float low, float high)
+{
+    assert(low < high);
+    const float n = fmodf(value - low, high - low);
+    return (n >= 0.0f) ? (n + low) : (n + high);
+}
+
+//-----------------------------------------------------------------------------
+//! @brief      指定範囲内で繰り返します.
+//! 
+//! @param[in]      value       値.
+//! @param[in]      low         下限値.
+//! @param[in]      high        上限値.
+//! @return     指定範囲内に収めた値を返却します.
+//-----------------------------------------------------------------------------
+template<>
+inline double Wrap<double>(double value, double low, double high)
+{
+    assert(low < high);
+    const double n = fmod(value - low, high - low);
+    return (n >= 0.0) ? (n + low) : (n + high);
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Vector2 strucutre

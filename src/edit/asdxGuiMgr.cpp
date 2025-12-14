@@ -765,7 +765,7 @@ void GuiMgr::OnMouse( int x, int y, int wheelDelta, bool isDownL, bool isDownM, 
 //-----------------------------------------------------------------------------
 //      キーの処理です.
 //-----------------------------------------------------------------------------
-void GuiMgr::OnKey( bool isDown, bool isAltDown, uint32_t code )
+void GuiMgr::OnKey(uint32_t code, bool isDown, bool isAltDown)
 {
     auto& io = ImGui::GetIO();
     auto key = ToImGuiKey(code);
