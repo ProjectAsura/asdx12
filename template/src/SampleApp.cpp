@@ -263,7 +263,7 @@ void SampleApp::OnFrameRender(const asdx::App::FrameEventArgs& args)
 
 #if TEST
     g_SpriteRenderer.Reset();
-    g_TestMenu.Update(args.ElapsedTimeSec);
+    g_TestMenu.Update(float(args.ElapsedTimeSec));
     int selectedId = 0;
     g_TestMenu.Draw(selectedId);
 #endif
@@ -297,9 +297,9 @@ void SampleApp::OnFrameRender(const asdx::App::FrameEventArgs& args)
 
         g_SpriteRenderer.SetPipelineState(pCmd);
         g_SpriteRenderer.SetTexture(g_Texture.GetGpuHandleSRV(), g_Sampler.GetGpuHandle());
-        g_AirShipAnim.Add(g_SpriteRenderer, 100, 256);
-        //g_SpriteRenderer.Add( 10, 10, 64, 64 );
-        g_SpriteRenderer.Draw(pCmd);
+        //g_AirShipAnim.Add(g_SpriteRenderer, 100, 256);
+        ////g_SpriteRenderer.Add( 10, 10, 64, 64 );
+        //g_SpriteRenderer.Draw(pCmd);
 
         asdx::FontRenderer::Instance().SetEnableOuter(true);
         asdx::FontRenderer::Instance().SetEnableOffset(true);
@@ -312,8 +312,8 @@ void SampleApp::OnFrameRender(const asdx::App::FrameEventArgs& args)
 
         g_SpriteRenderer.Draw(pCmd);
 
-        asdx::Fade::Instance().Update(float(args.ElapsedTimeSec));
-        asdx::Fade::Instance().Draw(pCmd);
+        //asdx::Fade::Instance().Update(float(args.ElapsedTimeSec));
+        //asdx::Fade::Instance().Draw(pCmd);
 #endif
     }
 

@@ -14,6 +14,7 @@
 #include <fnd/asdxLogger.h>
 #include <fnd/asdxMisc.h>
 #include <fnd/asdxPath.h>
+#include <fnd/asdxMath.h>
 #include <gfx/asdxPipelineState.h>
 #include <gfx/asdxDevice.h>
 #include <gfx/asdxShaderCompiler.h>
@@ -284,7 +285,7 @@ bool CreateShaderTable
         { isGpuUploadHeap = true; }
     }
 
-    auto recordSize = asdx::RoundUp(
+    auto recordSize = asdx::RoundUp<uint32_t>(
         uint32_t(D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES),
         uint32_t(D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT));
 

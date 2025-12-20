@@ -10,7 +10,7 @@
 #include <new>
 #include <fnd/asdxFrameHeap.h>
 #include <fnd/asdxLogger.h>
-#include <fnd/asdxMisc.h>
+#include <fnd/asdxMath.h>
 
 
 namespace asdx {

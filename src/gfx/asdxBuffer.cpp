@@ -12,7 +12,7 @@
 #include <gfx/asdxDevice.h>
 #include <gfx/asdxUpdateCommand.h>
 #include <fnd/asdxLogger.h>
-#include <fnd/asdxMisc.h>
+#include <fnd/asdxMath.h>
 #include <D3D12MemAlloc.h>
 
 
@@ -803,7 +803,7 @@ bool ByteAddressBuffer::Init(uint64_t size, D3D12_RESOURCE_STATES state)
     }
 
     // 4 byte アライメントにする.
-    auto bufferSize = RoundUp(size, 4llu);
+    auto bufferSize = RoundUp<uint64_t>(size, 4llu);
 
     D3D12_HEAP_PROPERTIES prop = {};
     prop.Type                   = D3D12_HEAP_TYPE_DEFAULT;

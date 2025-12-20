@@ -366,6 +366,39 @@ constexpr T Sign(T value) noexcept
 { return (value < T(0)) ? T(-1) : T(1); }
 
 //-----------------------------------------------------------------------------
+//! @brief      指定された数値の倍数に切り上げます.
+//!
+//! @param [in]     val     数値.
+//! @param [in]     base    倍数.
+//! @return     val を base の倍数に切り上げた結果を返却します.
+//-----------------------------------------------------------------------------
+template<typename T> inline
+T RoundUp(T val, T base)
+{ return (val + (base - 1)) & ~(base - 1); }
+
+//-----------------------------------------------------------------------------
+//! @brief      指定された数値の倍数に切り下げます.
+//!
+//! @param [in]     val     数値.
+//! @param [in]     base    倍数.
+//! @return     val を base の倍数に切り下げた結果を返却します.
+//-----------------------------------------------------------------------------
+template<typename T> inline
+T RoundDown(T val, T base)
+{ return val & ~(base - 1); }
+
+//-----------------------------------------------------------------------------
+//! @brief      指定された値で切り上げを考慮した除算を行います.
+//! 
+//! @param[in]      val     数値
+//! @param[in]      div     割る数.
+//! @return     val を div で除算して切り上げた結果を返却します.
+//-----------------------------------------------------------------------------
+template<typename T> inline
+T RoundDiv(T val, T div)
+{ return (val + (div - 1)) / div; }
+
+//-----------------------------------------------------------------------------
 //! @brief      指定範囲内で繰り返します.
 //! 
 //! @param[in]      value       値.
@@ -373,8 +406,8 @@ constexpr T Sign(T value) noexcept
 //! @param[in]      high        上限値.
 //! @return     指定範囲内に収めた値を返却します.
 //-----------------------------------------------------------------------------
-template<typename T>
-inline T Wrap(T value, T low, T high)
+template<typename T> inline
+T Wrap(T value, T low, T high)
 {
     assert(low < high);
     const T n = (value - low) % (high - low);
@@ -389,8 +422,8 @@ inline T Wrap(T value, T low, T high)
 //! @param[in]      high        上限値.
 //! @return     指定範囲内に収めた値を返却します.
 //-----------------------------------------------------------------------------
-template<>
-inline float Wrap<float>(float value, float low, float high)
+template<> inline
+float Wrap<float>(float value, float low, float high)
 {
     assert(low < high);
     const float n = fmodf(value - low, high - low);
@@ -405,14 +438,24 @@ inline float Wrap<float>(float value, float low, float high)
 //! @param[in]      high        上限値.
 //! @return     指定範囲内に収めた値を返却します.
 //-----------------------------------------------------------------------------
-template<>
-inline double Wrap<double>(double value, double low, double high)
+template<> inline
+double Wrap<double>(double value, double low, double high)
 {
     assert(low < high);
     const double n = fmod(value - low, high - low);
     return (n >= 0.0) ? (n + low) : (n + high);
 }
 
+//-----------------------------------------------------------------------------
+//! @brief      2のべき乗かどうかをチェックします.
+//! 
+//! @param[in]      val     チェックする値.
+//! @retval true    2のべき乗です.
+//! @retval false   2のべき乗ではありません.
+//-----------------------------------------------------------------------------
+template<typename T> inline
+bool IsPowerOf2(T val)
+{ return (val != 0) && !(val & (val - 1)); }
 
 ///////////////////////////////////////////////////////////////////////////////
 // Vector2 strucutre

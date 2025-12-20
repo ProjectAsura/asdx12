@@ -9,7 +9,7 @@
 //-----------------------------------------------------------------------------
 #include <vector>
 #include <fnd/asdxLogger.h>
-#include <fnd/asdxMisc.h>
+#include <fnd/asdxMath.h>
 #include <gfx/asdxShape.h>
 #include <gfx/asdxPresetState.h>
 #include <gfx/asdxPipelineState.h>
@@ -1190,7 +1190,7 @@ bool ShapeStates::Init(DXGI_FORMAT colorFormat, DXGI_FORMAT depthFormat)
 
     // カメラ定数バッファ生成.
     {
-        auto size = asdx::RoundUp(sizeof(CameraParam), 256) * 2;
+        auto size = asdx::RoundUp<size_t>(sizeof(CameraParam), 256) * 2;
 
         D3D12_HEAP_PROPERTIES props = {
             heapType,
@@ -1278,7 +1278,7 @@ void ShapeStates::SetViewProj(const asdx::Matrix& view, const asdx::Matrix& proj
     param.View = m_View;
     param.Proj = m_Proj;
 
-    auto size   = asdx::RoundUp(sizeof(CameraParam), 256);
+    auto size   = asdx::RoundUp<size_t>(sizeof(CameraParam), 256);
     auto offset = m_BufferIndex * size;
 
     uint8_t* pData = nullptr;
@@ -1295,7 +1295,7 @@ void ShapeStates::SetViewProj(const asdx::Matrix& view, const asdx::Matrix& proj
 //-----------------------------------------------------------------------------
 void ShapeStates::ApplyOpaqueState(ID3D12GraphicsCommandList* pCmd)
 {
-    auto size    = asdx::RoundUp(sizeof(CameraParam), 256);
+    auto size    = asdx::RoundUp<size_t>(sizeof(CameraParam), 256);
     auto offset  = m_BufferIndex * size;
     auto address = m_CameraBuffer->GetGPUVirtualAddress() + offset;
 
@@ -1310,7 +1310,7 @@ void ShapeStates::ApplyOpaqueState(ID3D12GraphicsCommandList* pCmd)
 //-----------------------------------------------------------------------------
 void ShapeStates::ApplyTranslucentState(ID3D12GraphicsCommandList* pCmd)
 {
-    auto size    = asdx::RoundUp(sizeof(CameraParam), 256);
+    auto size    = asdx::RoundUp<size_t>(sizeof(CameraParam), 256);
     auto offset  = m_BufferIndex * size;
     auto address = m_CameraBuffer->GetGPUVirtualAddress() + offset;
 
@@ -1325,7 +1325,7 @@ void ShapeStates::ApplyTranslucentState(ID3D12GraphicsCommandList* pCmd)
 //-----------------------------------------------------------------------------
 void ShapeStates::ApplyWireframeState(ID3D12GraphicsCommandList* pCmd)
 {
-    auto size    = asdx::RoundUp(sizeof(CameraParam), 256);
+    auto size    = asdx::RoundUp<size_t>(sizeof(CameraParam), 256);
     auto offset  = m_BufferIndex * size;
     auto address = m_CameraBuffer->GetGPUVirtualAddress() + offset;
 
@@ -1375,7 +1375,7 @@ bool ShapeParams::Init(uint32_t count)
 
     // 定数バッファ生成.
     {
-        auto size = RoundUp(sizeof(Param) * count, 256) * 2;
+        auto size = RoundUp<size_t>(sizeof(Param) * count, 256) * 2;
 
         D3D12_HEAP_PROPERTIES props = {
             heapType,
@@ -1496,7 +1496,7 @@ const Vector4& ShapeParams::GetColor(uint32_t index) const
 //-----------------------------------------------------------------------------
 D3D12_GPU_VIRTUAL_ADDRESS ShapeParams::Update()
 {
-    const auto size   = asdx::RoundUp(sizeof(Param) * m_Params.size(), 256);
+    const auto size   = asdx::RoundUp<size_t>(sizeof(Param) * m_Params.size(), 256);
     const auto offset = m_BufferIndex * size;
 
     uint8_t* pData = nullptr;
