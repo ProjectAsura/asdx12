@@ -312,9 +312,9 @@ void SampleApp::OnFrameRender(const asdx::App::FrameEventArgs& args)
 
         g_SpriteRenderer.SetPipelineState(pCmd);
         g_SpriteRenderer.SetTexture(g_Texture->GetGpuHandleSRV(), g_Sampler.GetGpuHandle());
-        g_AirShipAnim.Add(g_SpriteRenderer, 100, 256);
-        //g_SpriteRenderer.Add( 10, 10, 64, 64 );
-        g_SpriteRenderer.Draw(pCmd);
+        //g_AirShipAnim.Add(g_SpriteRenderer, 100, 256);
+        ////g_SpriteRenderer.Add( 10, 10, 64, 64 );
+        //g_SpriteRenderer.Draw(pCmd);
 
         asdx::FontRenderer::Instance().SetEnableOuter(true);
         asdx::FontRenderer::Instance().SetEnableOffset(true);
@@ -396,7 +396,7 @@ void SampleApp::OnKey(const asdx::App::KeyEventArgs& args)
     }
     #endif
 
-#if 1
+#if TEST
     if (args.IsKeyDown)
     {
         if (args.KeyCode == 'R')
@@ -404,7 +404,6 @@ void SampleApp::OnKey(const asdx::App::KeyEventArgs& args)
             asdx::Fade::Instance().ResetState();
         }
     }
-
 #endif
 }
 

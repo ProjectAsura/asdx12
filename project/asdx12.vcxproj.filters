@@ -704,10 +704,10 @@
     <ClInclude Include="..\external\ImGuiRingMenu\ImGuiRingMenu.h">
       <Filter>ソース ファイル\external\ImGuiRingMenu</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\gfx\asdxMaterial.h">
-      <Filter>ヘッダー ファイル\fnd</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\gfx\asdxTextureManager.h">
+      <Filter>ヘッダー ファイル\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\gfx\asdxMaterial.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
   </ItemGroup>
