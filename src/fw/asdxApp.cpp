@@ -16,6 +16,7 @@
 #include <gfx/asdxCommandQueue.h>
 #include <gfx/asdxDred.h>
 #include <gfx/asdxGfxMisc.h>
+#include <gfx/asdxTextureManager.h>
 
 #if defined(DEBUG) || defined(_DEBUG)
 #include <DXGIDebug.h>
@@ -604,6 +605,11 @@ bool App::InitD3D()
 
     m_CopyCmdList.SetName(L"AppCopyCommandList");
 
+    if (!TextureManager::Instance().Init())
+    {
+        ELOG("Error : TextureManager::Init() Failed.");
+    }
+
     return true;
 }
 
@@ -612,6 +618,8 @@ bool App::InitD3D()
 //-----------------------------------------------------------------------------
 void App::TermD3D()
 {
+    TextureManager::Instance().Term();
+
     if (m_CreateWindow)
     {
         for(size_t i=0; i<m_ColorTarget.size(); ++i)

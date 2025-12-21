@@ -10,6 +10,7 @@
 #include <cassert>
 #include <gfx/asdxMaterial.h>
 #include <gfx/asdxTexture.h>
+#include <gfx/asdxDevice.h>
 
 
 namespace asdx {
@@ -38,7 +39,9 @@ Material::~Material()
 //-----------------------------------------------------------------------------
 void Material::Reset()
 {
-    m_ConstantBuffer.Reset();
+    auto resource = m_ConstantBuffer.Detach();
+    Dispose(resource);
+
     for(auto i=0; i<m_Textures.size(); ++i)
     { m_Textures[i] = nullptr; }
 }

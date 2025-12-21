@@ -297,7 +297,7 @@ bool Texture::Init(ID3D12GraphicsCommandList* pCmdList, const ResTexture& resour
 void Texture::Term()
 {
     m_DescriptorSRV.Reset();
-    m_Allocation.Reset();
+    m_Allocation   .Reset();
 
     auto resource = m_Resource.Detach();
     Dispose(resource);

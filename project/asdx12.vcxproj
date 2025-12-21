@@ -94,6 +94,7 @@
       <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;$(ProjectDir)..\external\meshoptimizer;$(ProjectDir)..\external\flatbuffers\include;$(ProjectDir)..\external\cflat;$(ProjectDir)..\external\simdjson\include;$(ProjectDir)..\external\simdjson\src;$(ProjectDir)..\external\ImGuizmo;$(ProjectDir)..\external\implot;$(ProjectDir)..\external\implot3d;$(ProjectDir)..\external\D3D12MemoryAllocator\include;$(ProjectDir)..\external\xxHash;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -118,6 +119,7 @@
       <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;$(ProjectDir)..\external\meshoptimizer;$(ProjectDir)..\external\flatbuffers\include;$(ProjectDir)..\external\cflat;$(ProjectDir)..\external\simdjson\include;$(ProjectDir)..\external\simdjson\src;$(ProjectDir)..\external\ImGuizmo;$(ProjectDir)..\external\implot;$(ProjectDir)..\external\implot3d;$(ProjectDir)..\external\D3D12MemoryAllocator\include;$(ProjectDir)..\external\xxHash;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -144,6 +146,7 @@
       <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;$(ProjectDir)..\external\meshoptimizer;$(ProjectDir)..\external\flatbuffers\include;$(ProjectDir)..\external\cflat;$(ProjectDir)..\external\simdjson\include;$(ProjectDir)..\external\simdjson\src;$(ProjectDir)..\external\ImGuizmo;$(ProjectDir)..\external\implot;$(ProjectDir)..\external\implot3d;$(ProjectDir)..\external\D3D12MemoryAllocator\include;$(ProjectDir)..\external\xxHash;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -171,6 +174,7 @@
       <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;$(ProjectDir)..\external\meshoptimizer;$(ProjectDir)..\external\flatbuffers\include;$(ProjectDir)..\external\cflat;$(ProjectDir)..\external\simdjson\include;$(ProjectDir)..\external\simdjson\src;$(ProjectDir)..\external\ImGuizmo;$(ProjectDir)..\external\implot;$(ProjectDir)..\external\implot3d;$(ProjectDir)..\external\D3D12MemoryAllocator\include;$(ProjectDir)..\external\xxHash;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -282,6 +286,7 @@
     <ClCompile Include="..\src\gfx\asdxSpriteAnimation.cpp" />
     <ClCompile Include="..\src\gfx\asdxTarget.cpp" />
     <ClCompile Include="..\src\gfx\asdxTexture.cpp" />
+    <ClCompile Include="..\src\gfx\asdxTextureManager.cpp" />
     <ClCompile Include="..\src\gfx\asdxUpdateCommand.cpp" />
     <ClCompile Include="..\src\res\asdxResFont.cpp" />
     <ClCompile Include="..\src\res\asdxResHelper.cpp" />
@@ -388,6 +393,7 @@
     <ClInclude Include="..\include\gfx\asdxSpriteAnimation.h" />
     <ClInclude Include="..\include\gfx\asdxTarget.h" />
     <ClInclude Include="..\include\gfx\asdxTexture.h" />
+    <ClInclude Include="..\include\gfx\asdxTextureManager.h" />
     <ClInclude Include="..\include\gfx\asdxUpdateCommand.h" />
     <ClInclude Include="..\include\res\asdxResFont.h" />
     <ClInclude Include="..\include\res\asdxResHelper.h" />

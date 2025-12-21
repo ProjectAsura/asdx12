@@ -8,7 +8,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <SampleApp.h>
-#include <fnd/asdxMisc.h>
+#include <fnd/asdxPath.h>
 #include <fnd/asdxLogger.h>
 #include <fnd/asdxFileIO.h>
 #include <edit/asdxGuiMgr.h>
@@ -22,6 +22,7 @@
 #include <gfx/asdxFont.h>
 #include <gfx/asdxSpriteAnimation.h>
 #include <gfx/asdxFade.h>
+#include <gfx/asdxTextureManager.h>
 #include "../external/ImGuiRingMenu/ImGuiRingMenu.h"
 #endif
 
@@ -29,8 +30,7 @@ namespace {
 
 #if TEST
 asdx::SpriteRenderer g_SpriteRenderer;
-asdx::TextureBinary g_TextureBinary;
-asdx::Texture       g_Texture;
+const asdx::Texture* g_Texture = nullptr;
 asdx::Sampler       g_Sampler;
 asdx::Font          g_Font;
 asdx::TimerSpriteAnimation g_AirShipAnim;
@@ -100,22 +100,37 @@ bool SampleApp::OnInit()
     #endif
 
 #if TEST
+    //{
+    //    std::vector<uint8_t> texBin;
+    //    if (!asdx::LoadA("../res/texture/air_ship.txb", texBin))
+    //    {
+    //        ELOG("Texture Load Failed.");
+    //        return false;
+    //    }
+
+    //    g_TextureBinary.Load(std::move(texBin));
+    //}
+
+    //auto res = g_TextureBinary.GetResource();
+    //if (!g_Texture.Init(pCmd, res))
+    //{
+    //    ELOG("Texture::Init() Failed.");
+    //    return false;
+    //}
+
     {
-        std::vector<uint8_t> texBin;
-        if (!asdx::LoadA("../res/texture/air_ship.txb", texBin))
+        asdx::fs::path path;
+        if (!asdx::SearchFilePath("../res/texture/air_ship.txb", path))
         {
-            ELOG("Texture Load Failed.");
+            ELOG("Error : File Not Found.");
             return false;
         }
-
-        g_TextureBinary.Load(std::move(texBin));
-    }
-
-    auto res = g_TextureBinary.GetResource();
-    if (!g_Texture.Init(pCmd, res))
-    {
-        ELOG("Texture::Init() Failed.");
-        return false;
+        g_Texture = asdx::TextureManager::Instance().GetOrCreate(path.string().c_str());
+        if (g_Texture == nullptr)
+        {
+            ELOG("Error : TextureManager::GetOrCreate() failed.");
+            return false;
+        }
     }
 
     if (!g_SpriteRenderer.Init(m_Width, m_Height, 512, 16, m_SwapChainFormat, m_DepthStencilFormat))
@@ -296,10 +311,10 @@ void SampleApp::OnFrameRender(const asdx::App::FrameEventArgs& args)
         g_AirShipAnim.Update(float(args.ElapsedTimeSec));
 
         g_SpriteRenderer.SetPipelineState(pCmd);
-        g_SpriteRenderer.SetTexture(g_Texture.GetGpuHandleSRV(), g_Sampler.GetGpuHandle());
-        //g_AirShipAnim.Add(g_SpriteRenderer, 100, 256);
-        ////g_SpriteRenderer.Add( 10, 10, 64, 64 );
-        //g_SpriteRenderer.Draw(pCmd);
+        g_SpriteRenderer.SetTexture(g_Texture->GetGpuHandleSRV(), g_Sampler.GetGpuHandle());
+        g_AirShipAnim.Add(g_SpriteRenderer, 100, 256);
+        //g_SpriteRenderer.Add( 10, 10, 64, 64 );
+        g_SpriteRenderer.Draw(pCmd);
 
         asdx::FontRenderer::Instance().SetEnableOuter(true);
         asdx::FontRenderer::Instance().SetEnableOffset(true);
@@ -307,7 +322,7 @@ void SampleApp::OnFrameRender(const asdx::App::FrameEventArgs& args)
         asdx::FontRenderer::Instance().SetOuterOffset(-1.0f, -1.0f);
         asdx::FontRenderer::Instance().SetState(pCmd, g_SpriteRenderer, g_Font);
         asdx::FontRenderer::Instance().SetScale(2.0f);
-        asdx::FontRenderer::Instance().Add(g_SpriteRenderer, g_Font, 10, 74, u8"てすとですよ!テスト!");
+        asdx::FontRenderer::Instance().Add(g_SpriteRenderer, g_Font, 10, 74, (char*)u8"てすとですよ!テスト!");
         asdx::FontRenderer::Instance().AddFormat(g_SpriteRenderer, g_Font, 10, 142, "FPS : %f", args.FPS);
 
         g_SpriteRenderer.Draw(pCmd);
