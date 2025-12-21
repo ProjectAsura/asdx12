@@ -10,7 +10,6 @@
 //-----------------------------------------------------------------------------
 #include <d3d12.h>
 #include <fnd/asdxRef.h>
-#include <fnd/asdxOffsetAllocator.h>
 #include <gfx/asdxAllocationHolder.h>
 #include <gfx/asdxDescriptorHolder.h>
 

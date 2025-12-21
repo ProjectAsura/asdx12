@@ -336,9 +336,6 @@
     <ClCompile Include="..\src\fnd\asdxPath.cpp">
       <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\res\asdxResMaterial.cpp">
-      <Filter>ソース ファイル\res</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\fnd\asdxIndexHeap.cpp">
       <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
@@ -386,6 +383,9 @@
     </ClCompile>
     <ClCompile Include="..\external\ImGuiRingMenu\ImGuiRingMenu.cpp">
       <Filter>ソース ファイル\external\ImGuiRingMenu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gfx\asdxMaterial.cpp">
+      <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -656,9 +656,6 @@
     <ClInclude Include="..\include\fnd\asdxPath.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\res\asdxResMaterial.h">
-      <Filter>ヘッダー ファイル\res</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\res\asdxResLight.h">
       <Filter>ヘッダー ファイル\res</Filter>
     </ClInclude>
@@ -703,6 +700,9 @@
     </ClInclude>
     <ClInclude Include="..\external\ImGuiRingMenu\ImGuiRingMenu.h">
       <Filter>ソース ファイル\external\ImGuiRingMenu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\gfx\asdxMaterial.h">
+      <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

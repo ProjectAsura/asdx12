@@ -8,113 +8,139 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
+#include <cstdint>
+#include <array>
+#include <d3d12.h>
 #include <fnd/asdxRef.h>
-#include <gfx/asdxBuffer.h>
-#include <res/asdxResMaterial.h>
 
 
 namespace asdx {
 
+//-----------------------------------------------------------------------------
+// Forward Decalarations.
+//-----------------------------------------------------------------------------
+class Texture;
+
+
 ///////////////////////////////////////////////////////////////////////////////
-// MaterialParam structure
+// Material class
 ///////////////////////////////////////////////////////////////////////////////
-struct MaterialParam
+class Material
 {
-    uint32_t    FeatureMask;                    //!< 機能マスク.
-    uint32_t    BaseColorMap;
-    uint32_t    NormalMap;
-    uint32_t    OrmMap;
+    //=========================================================================
+    // list of friend classes and methods.
+    //=========================================================================
+    /* NOTHING */
 
-    uint32_t    EmissiveMap;
-    uint32_t    AnisotropyMap;
-    uint32_t    ClearCoatMap;
-    uint32_t    ClearCoatRoughnessMap;
-
-    uint32_t    ClearCoatNormalMap;
-    uint32_t    SheenColorMap;
-    uint32_t    SheenRoughnessMap;
-    uint32_t    TransmissionMap;
-
-    uint32_t    TicknessMap;
-    uint32_t    IrradianceMap;
-    uint32_t    IrradianceThicknessMap;
-
-    Vector3     BaseColorFactor;                //!< ベースカラー因子.
-
-    float       AlphaThreshold;                 //!< アルファテスト閾値.
-    float       OcclusionFactor;                //!< オクルージョン因子.
-    float       RoughnessFactor;                //!< ラフネス因子.
-    float       MetalnessFactor;                //!< メタルネス因子.
-
-    float       Ior;                            //!< 屈折率.
-    Vector3     EmissiveFactor;                 //!< エミッシブ因子.
-
-    float       AnisotropyStrength;             //!< 異方性強度.
-    Vector2     AnisotropyRotation;             //!< 異方性回転.
-    float       ClearCoatFactor;                //!< クリアコート因子.
-
-    float       ClearCoatRoughnessFactor;       //!< クリアコートラフネス因子.
-    Vector3     SheenColorFactor;               //!< 光沢カラー因子.
-
-    float       SheenRoughnessFactor;           //!< 光沢ラフネス因子.
-    float       Dispersion;                     //!< 分散値.
-    float       TransimissionFactor;            //!< 透過因子.
-    float       IridescenceFactor;              //!< 玉虫色因子.
-
-    float       IridescenceIor;                 //!< 玉虫色屈折率
-    float       IridescenceThicknessMinimum;    //!< 玉虫色最小厚み.
-    float       IridescenceThicknessMaximum;    //!< 玉虫色最大厚み.
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// IMaterial interface
-///////////////////////////////////////////////////////////////////////////////
-struct IMaterial
-{
-    virtual ~IMaterial() {}
-    virtual bool Init(const ResMaterial& value) = 0;
-    virtual void Term();
-    virtual ID3D12Resource* GetResource() const = 0;
-    virtual D3D12_GPU_VIRTUAL_ADDRESS GetGpuAddress() const = 0;
-    virtual void SetName(LPCWSTR tag) = 0;
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// StaticMaterial class
-///////////////////////////////////////////////////////////////////////////////
-class StaticMaterial : public IMaterial
-{
 public:
-    bool Init(const ResMaterial& value) override;
-    void Term() override;
+    //=========================================================================
+    // public variables.
+    //=========================================================================
+    static const uint8_t kMaxTextureCount = 8;  //!< 最大テクスチャ数.
 
-    ID3D12Resource* GetResource() const override;
-    D3D12_GPU_VIRTUAL_ADDRESS GetGpuAddress() const override;
-    void SetName(LPCWSTR tag) override;
+    //=========================================================================
+    // public methods.
+    //=========================================================================
+
+    //-------------------------------------------------------------------------
+    //! @brief      コンストラクタです.
+    //-------------------------------------------------------------------------
+    Material();
+
+    //-------------------------------------------------------------------------
+    //! @brief      デストラクタです.
+    //-------------------------------------------------------------------------
+    ~Material();
+
+    //-------------------------------------------------------------------------
+    //! @brief      リセットします.
+    //-------------------------------------------------------------------------
+    void Reset();
+
+    //-------------------------------------------------------------------------
+    //! @brief      定数バッファを設定します.
+    //! 
+    //! @param[in]      pResource       設定する定数バッファ.
+    //-------------------------------------------------------------------------
+    void SetConstantBuffer(ID3D12Resource* pResource);
+
+    //-------------------------------------------------------------------------
+    //! @brief      テクスチャ数を設定します.
+    //! 
+    //! @param[in]      count       設定するテクスチャ数.
+    //-------------------------------------------------------------------------
+    void SetTextureCount(uint32_t count);
+
+    //-------------------------------------------------------------------------
+    //! @brief      テクスチャを設定します.
+    //! 
+    //! @param[in]      index       テクスチャ番号.
+    //! @param[in]      pTexture    設定するテクスチャ.
+    //-------------------------------------------------------------------------
+    void SetTexture(uint32_t index, const Texture* pTexture);
+
+    //-------------------------------------------------------------------------
+    //! @brief      定数バッファを取得します.
+    //! 
+    //! @return     定数バッファを返却します.
+    //-------------------------------------------------------------------------
+    ID3D12Resource* GetConstantBuffer() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      定数バッファのGPU仮想アドレスを取得します.
+    //! 
+    //! @return     定数バッファのGPU仮想アドレスを返却します.
+    //-------------------------------------------------------------------------
+    D3D12_GPU_VIRTUAL_ADDRESS GetGpuAddress() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      テクスチャ数を取得します.
+    //! 
+    //! @return     テクスチャ数を返却します.
+    //-------------------------------------------------------------------------
+    uint32_t GetTextureCount() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      テクスチャを取得します.
+    //! 
+    //! @param[in]      index       テクスチャ番号.
+    //! @return     テクスチャを返却します.
+    //-------------------------------------------------------------------------
+    const Texture* GetTexture(uint32_t index) const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      GPUディスクリプタハンドルを取得します.
+    //! 
+    //! @param[in]      index       テクスチャ番号.
+    //! @return     GPUディスクリプタハンドルを返却します.
+    //-------------------------------------------------------------------------
+    D3D12_GPU_DESCRIPTOR_HANDLE GetGpuHandleSRV(uint32_t index) const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      バインドレスインデックスを取得します.
+    //! 
+    //! @param[in]      index       テクスチャ番号.
+    //! @return     バインドレスインデックスを返却します.
+    //-------------------------------------------------------------------------
+    uint32_t GetBindlessIndexSRV(uint32_t index) const;
 
 private:
-    ConstantBuffer  m_ConstantBuffer;
+    //-------------------------------------------------------------------------
+    // Types.
+    //-------------------------------------------------------------------------
+    using TextureList = std::array<const Texture*, kMaxTextureCount>;
+
+    //=========================================================================
+    // private variables;
+    //=========================================================================
+    RefPtr<ID3D12Resource>      m_ConstantBuffer;       //!< 定数バッファ.
+    uint32_t                    m_TextureCount   = 0;   //!< テクスチャ数.
+    TextureList                 m_Textures       = {};  //!< テクスチャリスト.
+
+    //=========================================================================
+    // private methods.
+    //=========================================================================
+    /* NOTHING */
 };
-
-///////////////////////////////////////////////////////////////////////////////
-// DynamicMaterial class
-///////////////////////////////////////////////////////////////////////////////
-class DynamicMaterial : public IMaterial
-{
-public:
-    bool Init(const ResMaterial& value) override;
-    void Term() override;
-
-    ID3D12Resource* GetResource() const override;
-    D3D12_GPU_VIRTUAL_ADDRESS GetGpuAddress() const override;
-    void SetName(LPCWSTR tag) override;
-
-    MaterialParam* GetParam() const;
-    void Update();
-
-private:
-    DoubledConstantBuffer   m_ConstantBuffer;
-};
-
 
 } // namespace asdx

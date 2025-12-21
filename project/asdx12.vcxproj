@@ -270,6 +270,7 @@
     <ClCompile Include="..\src\gfx\asdxFont.cpp" />
     <ClCompile Include="..\src\gfx\asdxGfxMisc.cpp" />
     <ClCompile Include="..\src\gfx\asdxMapChip.cpp" />
+    <ClCompile Include="..\src\gfx\asdxMaterial.cpp" />
     <ClCompile Include="..\src\gfx\asdxModel.cpp" />
     <ClCompile Include="..\src\gfx\asdxPipelineState.cpp" />
     <ClCompile Include="..\src\gfx\asdxPresetState.cpp" />
@@ -285,7 +286,6 @@
     <ClCompile Include="..\src\res\asdxResFont.cpp" />
     <ClCompile Include="..\src\res\asdxResHelper.cpp" />
     <ClCompile Include="..\src\res\asdxResMapChip.cpp" />
-    <ClCompile Include="..\src\res\asdxResMaterial.cpp" />
     <ClCompile Include="..\src\res\asdxResModel.cpp" />
     <ClCompile Include="..\src\res\asdxResMotion.cpp" />
     <ClCompile Include="..\src\res\asdxResTexture.cpp" />
@@ -376,6 +376,7 @@
     <ClInclude Include="..\include\gfx\asdxFont.h" />
     <ClInclude Include="..\include\gfx\asdxGfxMisc.h" />
     <ClInclude Include="..\include\gfx\asdxMapChip.h" />
+    <ClInclude Include="..\include\gfx\asdxMaterial.h" />
     <ClInclude Include="..\include\gfx\asdxModel.h" />
     <ClInclude Include="..\include\gfx\asdxPipelineState.h" />
     <ClInclude Include="..\include\gfx\asdxPresetState.h" />
@@ -392,7 +393,6 @@
     <ClInclude Include="..\include\res\asdxResHelper.h" />
     <ClInclude Include="..\include\res\asdxResLight.h" />
     <ClInclude Include="..\include\res\asdxResMapChip.h" />
-    <ClInclude Include="..\include\res\asdxResMaterial.h" />
     <ClInclude Include="..\include\res\asdxResModel.h" />
     <ClInclude Include="..\include\res\asdxResMotion.h" />
     <ClInclude Include="..\include\res\asdxResTexture.h" />
