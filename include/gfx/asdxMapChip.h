@@ -227,7 +227,7 @@ private:
     int             m_DrawCols      = 0;
     bool            m_Clamp         = false;
 
-    std::vector<Texture> m_Textures = {};
+    std::vector<Texture*> m_Textures = {};
 
     //=========================================================================
     // private methods.

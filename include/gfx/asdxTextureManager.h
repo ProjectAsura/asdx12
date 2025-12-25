@@ -11,7 +11,6 @@
 #include <unordered_map>
 #include <fnd/asdxSpinLock.h>
 #include <gfx/asdxTexture.h>
-#include <gfx/asdxCommandList.h>
 
 
 namespace asdx {

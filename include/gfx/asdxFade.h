@@ -191,7 +191,7 @@ private:
     static Fade                 s_Instance;         //!< シングルトンインスタンスです.
     RefPtr<ID3D12RootSignature> m_RootSig;          //!< ルートシグニチャです.
     RefPtr<ID3D12PipelineState> m_PipelineState;    //!< パイプラインステートです.
-    Texture                     m_WhiteTexture;     //!< テクスチャ.
+    Texture*                    m_WhiteTexture;     //!< テクスチャ.
     asdx::Vector4               m_Color0;           //!< カラー0です.
     asdx::Vector4               m_Color1;           //!< カラー1です.
     float                       m_ChangeSec;        //!< 切り替え時間(秒)です.

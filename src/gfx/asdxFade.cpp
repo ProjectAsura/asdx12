@@ -35,7 +35,8 @@ Fade Fade::s_Instance = {};
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
 Fade::Fade()
-: m_Color0      (0.0f, 0.0f, 0.0f, 0.0f)
+: m_WhiteTexture(nullptr)
+, m_Color0      (0.0f, 0.0f, 0.0f, 0.0f)
 , m_Color1      (1.0f, 1.0f, 1.0f, 1.0f)
 , m_ChangeSec   (1.0f)
 , m_ElapsedSec  (0.0f)
@@ -85,7 +86,7 @@ bool Fade::Init(ID3D12GraphicsCommandList* pCmd, DXGI_FORMAT rtvFormat)
         res.SubResources[0].SlicePitch  = 16 * 16 * 4;
         res.SubResources[0].pPixels     = pixels.data();
 
-        if (!m_WhiteTexture.Init(pCmd, res))
+        if (!Texture::Create(pCmd, res, &m_WhiteTexture))
         {
             ELOG("Error : WhiteTexture Init Failed.");
             return false;
@@ -179,7 +180,11 @@ bool Fade::Init(ID3D12GraphicsCommandList* pCmd, DXGI_FORMAT rtvFormat)
 //-----------------------------------------------------------------------------
 void Fade::Term()
 {
-    m_WhiteTexture .Term();
+    if (m_WhiteTexture)
+    {
+        m_WhiteTexture->Release();
+        m_WhiteTexture = nullptr;
+    }
     m_PipelineState.Reset();
     m_RootSig      .Reset();
 
@@ -243,7 +248,7 @@ void Fade::Draw(ID3D12GraphicsCommandList* pCmd, D3D12_GPU_DESCRIPTOR_HANDLE han
 //      描画処理を行います.
 //-----------------------------------------------------------------------------
 void Fade::Draw(ID3D12GraphicsCommandList* pCmd)
-{ Draw(pCmd, m_WhiteTexture.GetGpuHandleSRV()); }
+{ Draw(pCmd, m_WhiteTexture->GetGpuHandleSRV()); }
 
 //-----------------------------------------------------------------------------
 //      カラー0を設定します.

@@ -113,7 +113,7 @@ private:
     ConstantBuffer                          m_CB[2];
     RefPtr<ID3D12RootSignature>             m_RootSig;
     RefPtr<ID3D12PipelineState>             m_PSO;
-    Texture                                 m_FontTexture;
+    Texture*                                m_FontTexture = nullptr;
     std::chrono::system_clock::time_point   m_LastTime    = {};
     uint32_t                                m_SizeVB      = 0;
     uint32_t                                m_SizeIB      = 0;

@@ -61,7 +61,7 @@ bool MapChip::Init
     for(auto i=0u; i<m_Binary.GetTileSetCount(); ++i)
     {
         auto res = m_Binary.GetTexture(i);
-        if (!m_Textures[i].Init(pCmd, res))
+        if (!Texture::Create(pCmd, res, &m_Textures[i]))
         {
             ELOG("Error : Texture Init Failed. index = %u", i);
             return false;
@@ -104,7 +104,10 @@ void MapChip::Term()
     m_Clamp = false;
 
     for(size_t i=0; i<m_Textures.size(); ++i)
-    { m_Textures[i].Term(); }
+    { 
+        m_Textures[i]->Release(); 
+        m_Textures[i] = nullptr;
+    }
 
     m_Textures.clear();
     m_Textures.shrink_to_fit();
@@ -122,7 +125,7 @@ const MapChipBinary& MapChip::GetBinary() const
 void MapChip::Draw(ID3D12GraphicsCommandList* pCmd, SpriteRenderer& renderer, D3D12_GPU_DESCRIPTOR_HANDLE sampler)
 {
     renderer.SetPipelineState(pCmd);
-    renderer.SetTexture(m_Textures[0].GetGpuHandleSRV(), sampler);
+    renderer.SetTexture(m_Textures[0]->GetGpuHandleSRV(), sampler);
 
     auto tileSet = m_Binary.GetTileSet(0);
 

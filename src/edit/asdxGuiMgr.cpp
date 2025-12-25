@@ -223,13 +223,18 @@ GuiMgr GuiMgr::s_Instance;
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
 GuiMgr::GuiMgr()
+: m_FontTexture (nullptr)
+, m_SizeVB      (0)
+, m_SizeIB      (0)
+, m_pGuiContext (nullptr)
+, m_BufferIndex (0)
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      デストラクタです.
 //-----------------------------------------------------------------------------
 GuiMgr::~GuiMgr()
-{ /* DO_NOTHING */ }
+{ Term(); }
 
 //-----------------------------------------------------------------------------
 //      シングルトンインスタンスを取得します.
@@ -299,13 +304,13 @@ bool GuiMgr::Init
         res.SubResourceCount    = 1;
         res.SubResources[0]     = subRes;
 
-        if (!m_FontTexture.Init(pCmdList, res))
+        if (!Texture::Create(pCmdList, res, &m_FontTexture))
         {
             ELOG("Error : Texture::Init() Failed.");
             return false;
         }
 
-        io.Fonts->SetTexID((ImTextureID)m_FontTexture.GetGpuHandleSRV().ptr);
+        io.Fonts->SetTexID((ImTextureID)m_FontTexture->GetGpuHandleSRV().ptr);
     }
 
     auto pDevice = GetD3D12Device();
@@ -542,7 +547,11 @@ void GuiMgr::Term()
         m_IB[i].Term();
         m_CB[i].Term();
     }
-    m_FontTexture.Term();
+    if (m_FontTexture)
+    {
+        m_FontTexture->Release();
+        m_FontTexture = nullptr;
+    }
 
     m_RootSig.Reset();
     m_PSO    .Reset();
@@ -672,7 +681,7 @@ void GuiMgr::Draw(ID3D12GraphicsCommandList* pCmdList)
         pCmdList->SetGraphicsRootSignature(m_RootSig.GetPtr());
         pCmdList->SetPipelineState(m_PSO.GetPtr());
         pCmdList->SetGraphicsRootConstantBufferView(0, m_CB[m_BufferIndex].GetGpuAddress());
-        pCmdList->SetGraphicsRootDescriptorTable(1, m_FontTexture.GetGpuHandleSRV());
+        pCmdList->SetGraphicsRootDescriptorTable(1, m_FontTexture->GetGpuHandleSRV());
         pCmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         pCmdList->IASetVertexBuffers(0, 1, &vbv);
         pCmdList->IASetIndexBuffer(&ibv);
@@ -709,7 +718,7 @@ void GuiMgr::Draw(ID3D12GraphicsCommandList* pCmdList)
                         // フォントのテクスチャに戻す.
                         if (changeTexture)
                         {
-                            D3D12_GPU_DESCRIPTOR_HANDLE handle = m_FontTexture.GetGpuHandleSRV();
+                            D3D12_GPU_DESCRIPTOR_HANDLE handle = m_FontTexture->GetGpuHandleSRV();
                             pCmdList->SetGraphicsRootDescriptorTable(1, handle);
                             changeTexture = false;
                         }

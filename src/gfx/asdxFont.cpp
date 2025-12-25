@@ -103,6 +103,7 @@ namespace asdx {
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
 Font::Font()
+: m_Texture(nullptr)
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
@@ -139,7 +140,7 @@ bool Font::Init(ID3D12GraphicsCommandList* pCmd, std::vector<uint8_t>&& blob)
     res.SubResources[0].SlicePitch  = m_Binary.GetSlicePitch();
     res.SubResources[0].pPixels     = m_Binary.GetTexels();
 
-    if (!m_Texture.Init(pCmd, res))
+    if (!Texture::Create(pCmd, res, &m_Texture))
     {
         ELOG("Error : Font Texture Init Failed.");
         return false;
@@ -153,14 +154,18 @@ bool Font::Init(ID3D12GraphicsCommandList* pCmd, std::vector<uint8_t>&& blob)
 //-----------------------------------------------------------------------------
 void Font::Term()
 {
-    m_Texture.Term();
+    if (m_Texture)
+    {
+        m_Texture->Release();
+        m_Texture = nullptr;
+    }
     m_Binary .Term();
 }
 
 //-----------------------------------------------------------------------------
 //      テクスチャを取得します.
 //-----------------------------------------------------------------------------
-const Texture& Font::GetTexture() const
+const Texture* Font::GetTexture() const
 { return m_Texture; }
 
 //-----------------------------------------------------------------------------
@@ -364,7 +369,7 @@ void FontRenderer::SetState
 )
 {
     renderer.SetPipelineState(pCmdList, m_PipelineState.GetPtr());
-    renderer.SetTexture(font.GetTexture().GetGpuHandleSRV(), m_LinearClamp.GetGpuHandle());
+    renderer.SetTexture(font.GetTexture()->GetGpuHandleSRV(), m_LinearClamp.GetGpuHandle());
     renderer.SetParam(4, GetParam(), 0);
 }
 

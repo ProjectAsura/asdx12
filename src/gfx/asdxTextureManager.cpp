@@ -60,7 +60,8 @@ bool TextureManager::Init()
         auto type = D3D12_COMMAND_LIST_TYPE_DIRECT;
 
         // コマンドアロケータを生成.
-        auto hr = pDevice->CreateCommandAllocator(type, IID_PPV_ARGS(m_CmdAllocator[i].GetAddress()));
+        auto hr = pDevice->CreateCommandAllocator(
+            type, IID_PPV_ARGS(m_CmdAllocator[i].GetAddress()));
         if (FAILED(hr))
         {
             ELOG("Error : ID3D12Device::CreateCommandAllocator() Failed. errcode = 0x%x", hr);
@@ -68,7 +69,8 @@ bool TextureManager::Init()
         }
 
         // コマンドリスト生成.
-        hr = pDevice->CreateCommandList(0, type, m_CmdAllocator[i].GetPtr(), nullptr, IID_PPV_ARGS(m_CmdList[i].GetAddress()));
+        hr = pDevice->CreateCommandList(
+            0, type, m_CmdAllocator[i].GetPtr(), nullptr, IID_PPV_ARGS(m_CmdList[i].GetAddress()));
         if (FAILED(hr))
         {
             ELOG("Error : ID3D12Device::CreateCommandList() Failed. errcode = 0x%x", hr);
@@ -119,7 +121,7 @@ void TextureManager::Term()
         itr.second = nullptr;
         if (item)
         {
-            delete item;
+            item->Release();
             item = nullptr;
         }
     }
@@ -165,20 +167,19 @@ const Texture* TextureManager::GetOrCreate(const char* fullPath)
     binary.Load(std::move(blob));
 
     // テクスチャ初期化.
-    auto texture = new Texture();
     auto resource = binary.GetResource();
-    if (!texture->Init(m_CmdList[m_BufferIndex].GetPtr(), resource))
+    Texture* pTexture = nullptr;
+    if (!Texture::Create(m_CmdList[m_BufferIndex].GetPtr(), resource, &pTexture))
     {
         ELOGA("Error : Texture Init failed. path = %s", fullPath);
-        delete texture;
         return nullptr;
     }
 
     // テクスチャ登録.
-    m_Textures[hash] = texture;
+    m_Textures[hash] = pTexture;
 
     // 生成したテクスチャを返却する.
-    return texture;
+    return pTexture;
 }
 
 //-----------------------------------------------------------------------------
@@ -214,7 +215,7 @@ void TextureManager::Remove(uint64_t hash)
 
         if (item)
         {
-            delete item;
+            item->Release();
             item = nullptr;
         }
     }
