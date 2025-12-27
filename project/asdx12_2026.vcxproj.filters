@@ -348,10 +348,22 @@
     <ClCompile Include="..\external\implot3d\implot3d_meshes.cpp">
       <Filter>ソース ファイル\external\implot3d</Filter>
     </ClCompile>
+    <ClCompile Include="..\external\xxHash\xxhash.c">
+      <Filter>ソース ファイル\external\xxHash</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\tinyxml2\tinyxml2.cpp">
+      <Filter>ソース ファイル\external\tinyxml2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\simdjson\src\simdjson.cpp">
+      <Filter>ソース ファイル\external\simdjson</Filter>
+    </ClCompile>
     <ClCompile Include="..\external\meshoptimizer\allocator.cpp">
       <Filter>ソース ファイル\external\meshoptimizer</Filter>
     </ClCompile>
     <ClCompile Include="..\external\meshoptimizer\clusterizer.cpp">
+      <Filter>ソース ファイル\external\meshoptimizer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\meshoptimizer\indexanalyzer.cpp">
       <Filter>ソース ファイル\external\meshoptimizer</Filter>
     </ClCompile>
     <ClCompile Include="..\external\meshoptimizer\indexcodec.cpp">
@@ -360,10 +372,16 @@
     <ClCompile Include="..\external\meshoptimizer\indexgenerator.cpp">
       <Filter>ソース ファイル\external\meshoptimizer</Filter>
     </ClCompile>
-    <ClCompile Include="..\external\meshoptimizer\overdrawanalyzer.cpp">
+    <ClCompile Include="..\external\meshoptimizer\overdrawoptimizer.cpp">
       <Filter>ソース ファイル\external\meshoptimizer</Filter>
     </ClCompile>
-    <ClCompile Include="..\external\meshoptimizer\overdrawoptimizer.cpp">
+    <ClCompile Include="..\external\meshoptimizer\partition.cpp">
+      <Filter>ソース ファイル\external\meshoptimizer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\meshoptimizer\quantization.cpp">
+      <Filter>ソース ファイル\external\meshoptimizer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\meshoptimizer\rasterizer.cpp">
       <Filter>ソース ファイル\external\meshoptimizer</Filter>
     </ClCompile>
     <ClCompile Include="..\external\meshoptimizer\simplifier.cpp">
@@ -375,9 +393,6 @@
     <ClCompile Include="..\external\meshoptimizer\stripifier.cpp">
       <Filter>ソース ファイル\external\meshoptimizer</Filter>
     </ClCompile>
-    <ClCompile Include="..\external\meshoptimizer\vcacheanalyzer.cpp">
-      <Filter>ソース ファイル\external\meshoptimizer</Filter>
-    </ClCompile>
     <ClCompile Include="..\external\meshoptimizer\vcacheoptimizer.cpp">
       <Filter>ソース ファイル\external\meshoptimizer</Filter>
     </ClCompile>
@@ -387,20 +402,8 @@
     <ClCompile Include="..\external\meshoptimizer\vertexfilter.cpp">
       <Filter>ソース ファイル\external\meshoptimizer</Filter>
     </ClCompile>
-    <ClCompile Include="..\external\meshoptimizer\vfetchanalyzer.cpp">
-      <Filter>ソース ファイル\external\meshoptimizer</Filter>
-    </ClCompile>
     <ClCompile Include="..\external\meshoptimizer\vfetchoptimizer.cpp">
       <Filter>ソース ファイル\external\meshoptimizer</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\xxHash\xxhash.c">
-      <Filter>ソース ファイル\external\xxHash</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\tinyxml2\tinyxml2.cpp">
-      <Filter>ソース ファイル\external\tinyxml2</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\simdjson\src\simdjson.cpp">
-      <Filter>ソース ファイル\external\simdjson</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -719,14 +722,14 @@
     <ClInclude Include="..\external\implot3d\implot3d_internal.h">
       <Filter>ソース ファイル\external\implot3d</Filter>
     </ClInclude>
-    <ClInclude Include="..\external\meshoptimizer\meshoptimizer.h">
-      <Filter>ソース ファイル\external\meshoptimizer</Filter>
-    </ClInclude>
     <ClInclude Include="..\external\xxHash\xxhash.h">
       <Filter>ソース ファイル\external\xxHash</Filter>
     </ClInclude>
     <ClInclude Include="..\external\tinyxml2\tinyxml2.h">
       <Filter>ソース ファイル\external\tinyxml2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\external\meshoptimizer\meshoptimizer.h">
+      <Filter>ソース ファイル\external\meshoptimizer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
