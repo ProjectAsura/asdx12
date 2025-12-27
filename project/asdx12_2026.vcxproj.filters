@@ -168,9 +168,6 @@
     <ClCompile Include="..\src\fnd\asdxTablet.cpp">
       <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\fnd\asdxThread.cpp">
-      <Filter>ソース ファイル\fnd</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\fnd\asdxThreadPool.cpp">
       <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
@@ -291,13 +288,7 @@
     <ClCompile Include="..\external\Cflat\Cflat.cpp">
       <Filter>ソース ファイル\external\Cflat</Filter>
     </ClCompile>
-    <ClCompile Include="..\external\D3D12MemoryAllocator\src\Common.cpp">
-      <Filter>ソース ファイル\external\D3D12MA</Filter>
-    </ClCompile>
     <ClCompile Include="..\external\D3D12MemoryAllocator\src\D3D12MemAlloc.cpp">
-      <Filter>ソース ファイル\external\D3D12MA</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\D3D12MemoryAllocator\src\D3D12Sample.cpp">
       <Filter>ソース ファイル\external\D3D12MA</Filter>
     </ClCompile>
     <ClCompile Include="..\external\fpng\src\fpng.cpp">
@@ -519,9 +510,6 @@
       <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
     <ClInclude Include="..\include\fnd\asdxTablet.h">
-      <Filter>ヘッダー ファイル\fnd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\fnd\asdxThread.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
     <ClInclude Include="..\include\fnd\asdxThreadPool.h">
@@ -777,6 +765,9 @@
     </None>
     <None Include="..\res\shaders\asdxWaveHelper.hlsli">
       <Filter>リソース ファイル\shaders</Filter>
+    </None>
+    <None Include="..\include\fnd\asdxMath.inl">
+      <Filter>ヘッダー ファイル</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

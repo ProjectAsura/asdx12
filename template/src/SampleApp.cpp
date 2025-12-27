@@ -13,29 +13,9 @@
 #include <fnd/asdxFileIO.h>
 #include <edit/asdxGuiMgr.h>
 
-#define TEST (1)
-#if TEST
-#include <gfx/asdxSprite.h>
-#include <res/asdxResTexture.h>
-#include <gfx/asdxTexture.h>
-#include <gfx/asdxSampler.h>
-#include <gfx/asdxFont.h>
-#include <gfx/asdxSpriteAnimation.h>
-#include <gfx/asdxFade.h>
-#include <gfx/asdxTextureManager.h>
-#include "../external/ImGuiRingMenu/ImGuiRingMenu.h"
-#endif
 
 namespace {
 
-#if TEST
-asdx::SpriteRenderer g_SpriteRenderer;
-const asdx::Texture* g_Texture = nullptr;
-asdx::Sampler       g_Sampler;
-asdx::Font          g_Font;
-asdx::TimerSpriteAnimation g_AirShipAnim;
-ImGuiRingMenu      g_TestMenu;
-#endif
 
 } // namespace
 
@@ -99,114 +79,6 @@ bool SampleApp::OnInit()
     }
     #endif
 
-#if TEST
-    //{
-    //    std::vector<uint8_t> texBin;
-    //    if (!asdx::LoadA("../res/texture/air_ship.txb", texBin))
-    //    {
-    //        ELOG("Texture Load Failed.");
-    //        return false;
-    //    }
-
-    //    g_TextureBinary.Load(std::move(texBin));
-    //}
-
-    //auto res = g_TextureBinary.GetResource();
-    //if (!g_Texture.Init(pCmd, res))
-    //{
-    //    ELOG("Texture::Init() Failed.");
-    //    return false;
-    //}
-
-    {
-        asdx::fs::path path;
-        if (!asdx::SearchFilePath("../res/texture/air_ship.txb", path))
-        {
-            ELOG("Error : File Not Found.");
-            return false;
-        }
-        g_Texture = asdx::TextureManager::Instance().GetOrCreate(path.string().c_str());
-        if (g_Texture == nullptr)
-        {
-            ELOG("Error : TextureManager::GetOrCreate() failed.");
-            return false;
-        }
-    }
-
-    if (!g_SpriteRenderer.Init(m_Width, m_Height, 512, 16, m_SwapChainFormat, m_DepthStencilFormat))
-    {
-        ELOG("Error : SpriteRenderer::Init() Failed.");
-        return false;
-    }
-
-    {
-        auto desc = asdx::Sampler::PointClamp;
-        if (!g_Sampler.Init(&desc))
-        {
-            ELOG("Error : Sampler::Init() Failed.");
-            return false;
-        }
-    }
-
-    {
-        std::vector<uint8_t> fontBin;
-        if (!asdx::LoadA("../res/font/yasashisa_gothic.fnb", fontBin))
-        {
-            ELOG("Error : Font::Init Failed.");
-            return false;
-        }
-
-        g_Font.Init(pCmd, std::move(fontBin));
-    }
-
-    if (!asdx::FontRenderer::Instance().Init(g_SpriteRenderer))
-    {
-        ELOG("Error : FontRenderer::Init() Failed.");
-        return false;
-    }
-
-    {
-        asdx::Vector2 oneSize(16.0f / 64.0f, 16.0f / 64.0f);
-
-        std::vector<asdx::SpriteAnimation::Frame> frames{
-            { asdx::Vector2(0.0f, 40.0f/64.0f), asdx::Vector2(oneSize.x, 40.0f / 64.0f + oneSize.y) },
-            { asdx::Vector2(20.0f / 64.0f, 20.0f / 64.0f), asdx::Vector2(20.0f / 64.0f + oneSize.x, 20.0f / 64.0f + oneSize.y) },
-        };
-
-        g_AirShipAnim.Init(128, 128, 0.025f, frames);
-    }
-
-    if (!asdx::Fade::Instance().Init(pCmd, m_SwapChainFormat))
-    {
-        ELOG("Error : Fade::Init() Failed.");
-        return false;
-    }
-
-    asdx::Fade::Instance().SetColor1(asdx::Vector4(1.0f, 0.0f, 0.0f, 1.0f));
-    asdx::Fade::Instance().SetChangeSec(3.0f);
-    asdx::Fade::Instance().SetEnablePulse(true);
-    asdx::Fade::Instance().SetPulseSpeed(4.0f);
-
-    g_TestMenu.Add({0, "TestA"});
-    g_TestMenu.Add({0, "TestB"});
-    g_TestMenu.Add({0, "TestC"});
-    g_TestMenu.Add({0, "TestD"});
-    g_TestMenu.Add({0, "TestE"});
-    g_TestMenu.Add({0, "TestF"});
-    g_TestMenu.Add({0, "TestG"});
-    g_TestMenu.Add({0, "TestH"});
-    g_TestMenu.Add({0, "TestI"});
-    g_TestMenu.Add({0, "TestJ"});
-    g_TestMenu.Add({0, "TestK"});
-    g_TestMenu.Add({0, "TestL"});
-    g_TestMenu.Add({0, "TestM"});
-    g_TestMenu.Add({0, "TestN"});
-    g_TestMenu.Add({0, "TestO"});
-    g_TestMenu.Add({0, "IIIIHISTHEIATestP"});
-
-    //g_TestMenu.StartEnter();
-#endif
-
     // コマンドの記録を終了.
     pCmd->Close();
 
@@ -245,20 +117,6 @@ void SampleApp::OnTerm()
         asdx::GuiMgr::Instance().Term();
     }
     #endif
-}
-
-//-----------------------------------------------------------------------------
-//      フレーム遷移時の処理です.
-//-----------------------------------------------------------------------------
-void SampleApp::OnFrameMove(const asdx::App::FrameEventArgs& args)
-{
-
-    #if ASDX_ENABLE_IMGUI
-    {
-        // ImGuiフレーム開始処理.
-        asdx::GuiMgr::Instance().Update(m_Width, m_Height);
-    }
-    #endif
 
     #if ASDX_ENABLE_SOUND
     {
@@ -266,7 +124,23 @@ void SampleApp::OnFrameMove(const asdx::App::FrameEventArgs& args)
         asdx::TermSoundMgr();
     }
     #endif
+}
 
+//-----------------------------------------------------------------------------
+//      フレーム遷移時の処理です.
+//-----------------------------------------------------------------------------
+void SampleApp::OnFrameMove(const asdx::App::FrameEventArgs& args)
+{
+    #if ASDX_ENABLE_IMGUI
+    {
+        // ImGuiフレーム開始処理.
+        asdx::GuiMgr::Instance().Update(m_Width, m_Height);
+    }
+    #endif
+
+    // TODO : Implementation.
+    {
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -275,13 +149,6 @@ void SampleApp::OnFrameMove(const asdx::App::FrameEventArgs& args)
 void SampleApp::OnFrameRender(const asdx::App::FrameEventArgs& args)
 {
     auto idx = GetCurrentBackBufferIndex();
-
-#if TEST
-    g_SpriteRenderer.Reset();
-    g_TestMenu.Update(float(args.ElapsedTimeSec));
-    int selectedId = 0;
-    g_TestMenu.Draw(selectedId);
-#endif
 
     // コマンド記録開始.
     m_GfxCmdList.Reset();
@@ -306,32 +173,7 @@ void SampleApp::OnFrameRender(const asdx::App::FrameEventArgs& args)
 
     // TODO : 描画処理.
     {
-
-#if TEST
-        g_AirShipAnim.Update(float(args.ElapsedTimeSec));
-
-        g_SpriteRenderer.SetPipelineState(pCmd);
-        g_SpriteRenderer.SetTexture(g_Texture->GetGpuHandleSRV(), g_Sampler.GetGpuHandle());
-        //g_AirShipAnim.Add(g_SpriteRenderer, 100, 256);
-        ////g_SpriteRenderer.Add( 10, 10, 64, 64 );
-        //g_SpriteRenderer.Draw(pCmd);
-
-        asdx::FontRenderer::Instance().SetEnableOuter(true);
-        asdx::FontRenderer::Instance().SetEnableOffset(true);
-        asdx::FontRenderer::Instance().SetOuterColor(1.0f, 0.0f, 0.0f, 1.0f);
-        asdx::FontRenderer::Instance().SetOuterOffset(-1.0f, -1.0f);
-        asdx::FontRenderer::Instance().SetState(pCmd, g_SpriteRenderer, g_Font);
-        asdx::FontRenderer::Instance().SetScale(2.0f);
-        asdx::FontRenderer::Instance().Add(g_SpriteRenderer, g_Font, 10, 74, (char*)u8"てすとですよ!テスト!");
-        asdx::FontRenderer::Instance().AddFormat(g_SpriteRenderer, g_Font, 10, 142, "FPS : %f", args.FPS);
-
-        g_SpriteRenderer.Draw(pCmd);
-
-        //asdx::Fade::Instance().Update(float(args.ElapsedTimeSec));
-        //asdx::Fade::Instance().Draw(pCmd);
-#endif
     }
-
 
     #if ASDX_ENABLE_IMGUI
     {
@@ -381,6 +223,9 @@ void SampleApp::OnFrameRender(const asdx::App::FrameEventArgs& args)
 //-----------------------------------------------------------------------------
 void SampleApp::OnResize(const asdx::App::ResizeEventArgs& args)
 {
+    // TODO : Implementation.
+    {
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -395,16 +240,6 @@ void SampleApp::OnKey(const asdx::App::KeyEventArgs& args)
         asdx::GuiMgr::Instance().OnKey(args.KeyCode, args.IsKeyDown, args.IsAltDown);
     }
     #endif
-
-#if TEST
-    if (args.IsKeyDown)
-    {
-        if (args.KeyCode == 'R')
-        {
-            asdx::Fade::Instance().ResetState();
-        }
-    }
-#endif
 }
 
 //-----------------------------------------------------------------------------
