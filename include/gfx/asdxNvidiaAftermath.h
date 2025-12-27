@@ -1,0 +1,59 @@
+﻿//-----------------------------------------------------------------------------
+// File : asdxNvidiaAftermath.h
+// Desc : NVIDIA Aftermath Reporter.
+// Copyright(c) Project Asura. All right reserved.
+//-----------------------------------------------------------------------------
+#pragma once
+#if ASDX_ENABLE_NV_AFTERMATH
+
+//-----------------------------------------------------------------------------
+// Includes
+//-----------------------------------------------------------------------------
+#include <string>
+#include <vector>
+
+struct ID3D12Device;
+
+//-----------------------------------------------------------------------------
+//! @brief      GPUクラッシュトラッカーを初期化します.
+//! 
+//! @param[in]      appName                 アプリ名.
+//! @param[in]      appVersion              アプリバージョン.
+//! @param[in]      outputDir               出力ディレクトリ.
+//! @param[in]      shaderBinaryDirs        シェーダバイナリディレクトリ.
+//! @param[in]      shaderPdbDirs           シェーダPDBディレクトリ.
+//! @note       InitAftermath() よりも前にコールしてください.
+//-----------------------------------------------------------------------------
+void InitGpuCrashTracker(
+    const char* appName,
+    const char* appVersion,
+    const char* outputDir,
+    const std::vector<std::string>& shaderBinaryDirs,
+    const std::vector<std::string>& shaderPdbDirs);
+
+//-----------------------------------------------------------------------------
+//! @brief      GPUクラッシュトラッカーを終了します.
+//-----------------------------------------------------------------------------
+void TermGpuCrashTracker();
+
+//-----------------------------------------------------------------------------
+//! @brief      Aftermathを初期化します.
+//! 
+//! @param[in]      pDevice     デバイスです.
+//! @retval true    初期化に成功.
+//! @retval false   初期化に失敗.
+//-----------------------------------------------------------------------------
+bool InitAftermath(ID3D12Device* pDevice);
+
+//-----------------------------------------------------------------------------
+//! @brief      Aftermathを終了します.
+//-----------------------------------------------------------------------------
+void TermAftermath();
+
+//-----------------------------------------------------------------------------
+//! @brief      GPUクラッシュダンプ
+//-----------------------------------------------------------------------------
+void ReportAftermath();
+
+#endif//ASDX_ENABLE_NV_AFTERMATH
+

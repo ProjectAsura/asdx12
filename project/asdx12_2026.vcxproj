@@ -74,7 +74,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);ASDX_AUTO_LINK;ASDX_ENABLE_DXC;ASDX_ENABLE_IMGUI;ASDX_ENABLE_TINYXML2</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;ASDX_AUTO_LINK;ASDX_ENABLE_DXC;ASDX_ENABLE_IMGUI;ASDX_ENABLE_TINYXML2;ASDX_ENABLE_NV_AFTERMATH;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;$(ProjectDir)..\external\meshoptimizer;$(ProjectDir)..\external\flatbuffers\include;$(ProjectDir)..\external\cflat;$(ProjectDir)..\external\simdjson\include;$(ProjectDir)..\external\simdjson\src;$(ProjectDir)..\external\ImGuizmo;$(ProjectDir)..\external\implot;$(ProjectDir)..\external\implot3d;$(ProjectDir)..\external\D3D12MemoryAllocator\include;$(ProjectDir)..\external\xxHash;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -96,7 +96,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);ASDX_AUTO_LINK;ASDX_ENABLE_DXC;ASDX_ENABLE_IMGUI;ASDX_ENABLE_TINYXML2</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;ASDX_AUTO_LINK;ASDX_ENABLE_DXC;ASDX_ENABLE_IMGUI;ASDX_ENABLE_TINYXML2;ASDX_ENABLE_NV_AFTERMATH;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;$(ProjectDir)..\external\meshoptimizer;$(ProjectDir)..\external\flatbuffers\include;$(ProjectDir)..\external\cflat;$(ProjectDir)..\external\simdjson\include;$(ProjectDir)..\external\simdjson\src;$(ProjectDir)..\external\ImGuizmo;$(ProjectDir)..\external\implot;$(ProjectDir)..\external\implot3d;$(ProjectDir)..\external\D3D12MemoryAllocator\include;$(ProjectDir)..\external\xxHash;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -120,7 +120,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);ASDX_AUTO_LINK;ASDX_ENABLE_DXC;ASDX_ENABLE_IMGUI;ASDX_ENABLE_TINYXML2</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;ASDX_AUTO_LINK;ASDX_ENABLE_DXC;ASDX_ENABLE_IMGUI;ASDX_ENABLE_TINYXML2;ASDX_ENABLE_NV_AFTERMATH;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;$(ProjectDir)..\external\meshoptimizer;$(ProjectDir)..\external\flatbuffers\include;$(ProjectDir)..\external\cflat;$(ProjectDir)..\external\simdjson\include;$(ProjectDir)..\external\simdjson\src;$(ProjectDir)..\external\ImGuizmo;$(ProjectDir)..\external\implot;$(ProjectDir)..\external\implot3d;$(ProjectDir)..\external\D3D12MemoryAllocator\include;$(ProjectDir)..\external\xxHash;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -144,7 +144,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);ASDX_AUTO_LINK;ASDX_ENABLE_DXC;ASDX_ENABLE_IMGUI;ASDX_ENABLE_TINYXML2</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;ASDX_AUTO_LINK;ASDX_ENABLE_DXC;ASDX_ENABLE_IMGUI;ASDX_ENABLE_TINYXML2;ASDX_ENABLE_NV_AFTERMATH;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;$(ProjectDir)..\external\meshoptimizer;$(ProjectDir)..\external\flatbuffers\include;$(ProjectDir)..\external\cflat;$(ProjectDir)..\external\simdjson\include;$(ProjectDir)..\external\simdjson\src;$(ProjectDir)..\external\ImGuizmo;$(ProjectDir)..\external\implot;$(ProjectDir)..\external\implot3d;$(ProjectDir)..\external\D3D12MemoryAllocator\include;$(ProjectDir)..\external\xxHash;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -248,6 +248,7 @@
     <ClCompile Include="..\src\gfx\asdxMapChip.cpp" />
     <ClCompile Include="..\src\gfx\asdxMaterial.cpp" />
     <ClCompile Include="..\src\gfx\asdxModel.cpp" />
+    <ClCompile Include="..\src\gfx\asdxNvidiaAftermath.cpp" />
     <ClCompile Include="..\src\gfx\asdxPipelineState.cpp" />
     <ClCompile Include="..\src\gfx\asdxPresetState.cpp" />
     <ClCompile Include="..\src\gfx\asdxSampler.cpp" />
@@ -356,6 +357,7 @@
     <ClInclude Include="..\include\gfx\asdxMapChip.h" />
     <ClInclude Include="..\include\gfx\asdxMaterial.h" />
     <ClInclude Include="..\include\gfx\asdxModel.h" />
+    <ClInclude Include="..\include\gfx\asdxNvidiaAftermath.h" />
     <ClInclude Include="..\include\gfx\asdxPipelineState.h" />
     <ClInclude Include="..\include\gfx\asdxPresetState.h" />
     <ClInclude Include="..\include\gfx\asdxSampler.h" />

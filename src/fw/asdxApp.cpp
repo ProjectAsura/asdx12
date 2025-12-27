@@ -17,6 +17,10 @@
 #include <gfx/asdxDred.h>
 #include <gfx/asdxGfxMisc.h>
 #include <gfx/asdxTextureManager.h>
+#if ASDX_ENABLE_NV_AFTERMATH
+#include <gfx/asdxNvidiaAftermath.h>
+#endif//ASDX_ENABLE_NV_AFTERMATH
+
 
 #if defined(DEBUG) || defined(_DEBUG)
 #include <DXGIDebug.h>
@@ -1115,6 +1119,11 @@ void App::Present(uint32_t syncInterval)
             // エラー表示.
             ReportDRED(GetD3D12Device(), hr);
 
+        #if ASDX_ENABLE_NV_AFTERMATH
+            // GPUクラッシュダンプを出力.
+            ReportAftermath();
+        #endif
+
             // 続行できないのでダイアログを表示.
             MessageBoxW(m_hWnd, L"A Fatal Error Occured. Shutting down.", L"FATAL ERROR", MB_OK | MB_ICONERROR);
 
@@ -1131,6 +1140,11 @@ void App::Present(uint32_t syncInterval)
 
             // エラー表示.
             ReportDRED(GetD3D12Device(), hr);
+
+        #if ASDX_ENABLE_NV_AFTERMATH
+            // GPUクラッシュダンプを出力.
+            ReportAftermath();
+        #endif
 
             // 続行できないのでダイアログを表示.
             MessageBoxW(m_hWnd, L"A Fatal Error Occured. Shutting down.", L"FATAL ERROR", MB_OK | MB_ICONERROR);

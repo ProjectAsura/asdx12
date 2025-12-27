@@ -396,6 +396,9 @@
     <ClCompile Include="..\external\meshoptimizer\vfetchoptimizer.cpp">
       <Filter>ソース ファイル\external\meshoptimizer</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\gfx\asdxNvidiaAftermath.cpp">
+      <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\edit\asdxBlink.h">
@@ -718,6 +721,9 @@
     </ClInclude>
     <ClInclude Include="..\external\meshoptimizer\meshoptimizer.h">
       <Filter>ソース ファイル\external\meshoptimizer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\gfx\asdxNvidiaAftermath.h">
+      <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
