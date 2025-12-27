@@ -19,8 +19,8 @@ namespace {
 //-----------------------------------------------------------------------------
 // Constant Values.
 //-----------------------------------------------------------------------------
-#include "../res/shaders/Compiled/FullScreenVS.inc"
-#include "../res/shaders/Compiled/FadePS.inc"
+#include "../res/shaders/Compiled/asdxFullScreenVS.inc"
+#include "../res/shaders/Compiled/asdxFadePS.inc"
 
 } // namespace
 
@@ -149,8 +149,8 @@ bool Fade::Init(ID3D12GraphicsCommandList* pCmd, DXGI_FORMAT rtvFormat)
     {
         D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = {};
         desc.pRootSignature                 = m_RootSig.GetPtr();
-        desc.VS                             = { FullScreenVS, sizeof(FullScreenVS) };
-        desc.PS                             = { FadePS, sizeof(FadePS) };
+        desc.VS                             = { asdxFullScreenVS, sizeof(asdxFullScreenVS) };
+        desc.PS                             = { asdxFadePS, sizeof(asdxFadePS) };
         desc.BlendState                     = Preset::AlphaBlend;
         desc.SampleMask                     = D3D12_DEFAULT_SAMPLE_MASK;
         desc.RasterizerState                = Preset::CullBack;

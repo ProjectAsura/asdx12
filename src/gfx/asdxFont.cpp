@@ -29,7 +29,7 @@ namespace {
 //----------------------------------------------------------------------------
 // Constant Values.
 //----------------------------------------------------------------------------
-#include "../res/shaders/Compiled/FontPS.inc"
+#include "../res/shaders/Compiled/asdxFontPS.inc"
 
 
 //----------------------------------------------------------------------------
@@ -238,7 +238,7 @@ bool FontRenderer::Init(SpriteRenderer& renderer)
 
     // パイプラインステートを生成します.
     {
-        D3D12_SHADER_BYTECODE ps = { FontPS, sizeof(FontPS) };
+        D3D12_SHADER_BYTECODE ps = { asdxFontPS, sizeof(asdxFontPS) };
         if (!renderer.CreateSpriteState(pDevice, ps, true, m_PipelineState.GetAddress()))
         {
             ELOG("Error : PipelineState Init Failed.");

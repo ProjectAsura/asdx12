@@ -1,0 +1,10 @@
+<Solution>
+  <Configurations>
+    <BuildType Name="DebugMD" />
+    <BuildType Name="DebugMT" />
+    <BuildType Name="ReleaseMD" />
+    <BuildType Name="ReleaseMT" />
+    <Platform Name="x64" />
+  </Configurations>
+  <Project Path="asdx12_2026.vcxproj" Id="2218c996-fe59-4e14-988f-c6a7250d5978" />
+</Solution>

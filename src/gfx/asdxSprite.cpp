@@ -17,8 +17,8 @@ namespace {
 //-----------------------------------------------------------------------------
 // Constant Values.
 //-----------------------------------------------------------------------------
-#include "../res/shaders/Compiled/SpriteVS.inc"
-#include "../res/shaders/Compiled/SpritePS.inc"
+#include "../res/shaders/Compiled/asdxSpriteVS.inc"
+#include "../res/shaders/Compiled/asdxSpritePS.inc"
 
 static constexpr uint32_t kVertexCountPerSprite = 4;
 static constexpr uint32_t kIndexCountPerSprite  = 6;
@@ -376,7 +376,7 @@ bool SpriteRenderer::Init
         m_ColorFormat = rtvFormat;
         m_DepthFormat = dsvFormat;
 
-        D3D12_SHADER_BYTECODE ps = { SpritePS, sizeof(SpritePS) };
+        D3D12_SHADER_BYTECODE ps = { asdxSpritePS, sizeof(asdxSpritePS) };
         if (!CreateSpriteState(pDevice, ps, false, m_PSO.GetAddress()))
         { return false; }
     }
@@ -661,7 +661,7 @@ bool SpriteRenderer::CreateSpriteState
     {
         D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = {};
         desc.pRootSignature                 = m_RootSig.GetPtr();
-        desc.VS                             = { SpriteVS, sizeof(SpriteVS) };
+        desc.VS                             = { asdxSpriteVS, sizeof(asdxSpriteVS) };
         desc.PS                             = pixelShader;
         desc.BlendState                     = (preMultipliedAlpha) ? kPremultiplied : kAlphaBlend;
         desc.SampleMask                     = D3D12_DEFAULT_SAMPLE_MASK;

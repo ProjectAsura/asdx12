@@ -23,8 +23,8 @@ namespace {
 //-----------------------------------------------------------------------------
 // Global Varaibles.
 //-----------------------------------------------------------------------------
-#include "../res/shaders/Compiled/ImGuiVS.inc"
-#include "../res/shaders/Compiled/ImGuiPS.inc"
+#include "../res/shaders/Compiled/asdxImGuiVS.inc"
+#include "../res/shaders/Compiled/asdxImGuiPS.inc"
 #include "YasashisaGothic.h"
 
 
@@ -428,8 +428,8 @@ bool GuiMgr::Init
 
         D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = {};
         desc.pRootSignature         = m_RootSig.GetPtr();
-        desc.VS                     = { ImGuiVS, sizeof(ImGuiVS) };
-        desc.PS                     = { ImGuiPS, sizeof(ImGuiPS) };
+        desc.VS                     = { asdxImGuiVS, sizeof(asdxImGuiVS) };
+        desc.PS                     = { asdxImGuiPS, sizeof(asdxImGuiPS) };
         desc.BlendState             = blendDesc;
         desc.SampleMask             = D3D12_DEFAULT_SAMPLE_MASK;
         desc.RasterizerState        = rasterizerDesc;

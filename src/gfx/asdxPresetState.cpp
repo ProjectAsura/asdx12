@@ -16,10 +16,10 @@ namespace internal {
 //-----------------------------------------------------------------------------
 // Shaders
 //-----------------------------------------------------------------------------
-#include "../res/shaders/Compiled/SpriteVS.inc"
-#include "../res/shaders/Compiled/SpritePS.inc"
-#include "../res/shaders/Compiled/FullScreenVS.inc"
-#include "../res/shaders/Compiled/CopyPS.inc"
+#include "../res/shaders/Compiled/asdxSpriteVS.inc"
+#include "../res/shaders/Compiled/asdxSpritePS.inc"
+#include "../res/shaders/Compiled/asdxFullScreenVS.inc"
+#include "../res/shaders/Compiled/asdxCopyPS.inc"
 
 } // namespace internal
 } // namespace
@@ -253,10 +253,10 @@ const D3D12_BLEND_DESC Preset::Screen = {
     { RTB_Screen, RTB_Screen, RTB_Screen, RTB_Screen, RTB_Screen, RTB_Screen, RTB_Screen, RTB_Screen }
 };
 
-const D3D12_SHADER_BYTECODE Preset::FullScreenVS = { internal::FullScreenVS, sizeof(internal::FullScreenVS) };
-const D3D12_SHADER_BYTECODE Preset::CopyPS       = { internal::CopyPS,       sizeof(internal::CopyPS) };
-const D3D12_SHADER_BYTECODE Preset::SpriteVS     = { internal::SpriteVS,     sizeof(internal::SpriteVS) };
-const D3D12_SHADER_BYTECODE Preset::SpritePS     = { internal::SpritePS,     sizeof(internal::SpritePS) };
+const D3D12_SHADER_BYTECODE Preset::FullScreenVS = { internal::asdxFullScreenVS, sizeof(internal::asdxFullScreenVS) };
+const D3D12_SHADER_BYTECODE Preset::CopyPS       = { internal::asdxCopyPS,       sizeof(internal::asdxCopyPS) };
+const D3D12_SHADER_BYTECODE Preset::SpriteVS     = { internal::asdxSpriteVS,     sizeof(internal::asdxSpriteVS) };
+const D3D12_SHADER_BYTECODE Preset::SpritePS     = { internal::asdxSpritePS,     sizeof(internal::asdxSpritePS) };
 
 #define DEF_STATIC_SAMPLER(filter, addressMode, maxAnisotropy, comparison, borderColor, shaderRegister) \
     { filter, addressMode, addressMode, addressMode, 0.0f, maxAnisotropy, comparison, borderColor, 0.0f, D3D12_FLOAT32_MAX, shaderRegister, 0, D3D12_SHADER_VISIBILITY_ALL }

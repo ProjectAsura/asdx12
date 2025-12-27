@@ -18,8 +18,8 @@
 
 namespace {
 
-#include "../res/shaders/Compiled/ShapeVS.inc"
-#include "../res/shaders/Compiled/ShapePS.inc"
+#include "../res/shaders/Compiled/asdxShapeVS.inc"
+#include "../res/shaders/Compiled/asdxShapePS.inc"
 
 ///////////////////////////////////////////////////////////////////////////////
 // CameraParam structure
@@ -1101,8 +1101,8 @@ bool ShapeStates::Init(DXGI_FORMAT colorFormat, DXGI_FORMAT depthFormat)
     {
         D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = {};
         desc.pRootSignature         = m_RootSignature.GetPtr();
-        desc.VS                     = { ShapeVS, sizeof(ShapeVS) };
-        desc.PS                     = { ShapePS, sizeof(ShapePS) };
+        desc.VS                     = { asdxShapeVS, sizeof(asdxShapeVS) };
+        desc.PS                     = { asdxShapePS, sizeof(asdxShapePS) };
         desc.BlendState             = asdx::Preset::Opaque;
         desc.SampleMask             = D3D12_DEFAULT_SAMPLE_MASK;
         desc.RasterizerState        = asdx::Preset::CullNone;
@@ -1127,8 +1127,8 @@ bool ShapeStates::Init(DXGI_FORMAT colorFormat, DXGI_FORMAT depthFormat)
     {
         D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = {};
         desc.pRootSignature         = m_RootSignature.GetPtr();
-        desc.VS                     = { ShapeVS, sizeof(ShapeVS) };
-        desc.PS                     = { ShapePS, sizeof(ShapePS) };
+        desc.VS                     = { asdxShapeVS, sizeof(asdxShapeVS) };
+        desc.PS                     = { asdxShapePS, sizeof(asdxShapePS) };
         desc.BlendState             = asdx::Preset::AlphaBlend;
         desc.SampleMask             = D3D12_DEFAULT_SAMPLE_MASK;
         desc.RasterizerState        = asdx::Preset::CullNone;
@@ -1153,8 +1153,8 @@ bool ShapeStates::Init(DXGI_FORMAT colorFormat, DXGI_FORMAT depthFormat)
     {
         D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = {};
         desc.pRootSignature         = m_RootSignature.GetPtr();
-        desc.VS                     = { ShapeVS, sizeof(ShapeVS) };
-        desc.PS                     = { ShapePS, sizeof(ShapePS) };
+        desc.VS                     = { asdxShapeVS, sizeof(asdxShapeVS) };
+        desc.PS                     = { asdxShapePS, sizeof(asdxShapePS) };
         desc.BlendState             = asdx::Preset::Opaque;
         desc.SampleMask             = D3D12_DEFAULT_SAMPLE_MASK;
         desc.RasterizerState        = asdx::Preset::Wireframe;
