@@ -49,9 +49,6 @@
     <Filter Include="ソース ファイル\external">
       <UniqueIdentifier>{503f7289-95c5-4fbf-aadb-70faf6e6900e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ソース ファイル\external\Cflat">
-      <UniqueIdentifier>{20bd38c6-569a-490b-898a-088632332a1b}</UniqueIdentifier>
-    </Filter>
     <Filter Include="ソース ファイル\external\D3D12MA">
       <UniqueIdentifier>{f0791fb1-091e-4c93-a08e-ab8a2284a46f}</UniqueIdentifier>
     </Filter>
@@ -87,9 +84,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\edit\asdxBlink.cpp">
-      <Filter>ソース ファイル\edit</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\edit\asdxEditParam.cpp">
       <Filter>ソース ファイル\edit</Filter>
     </ClCompile>
@@ -178,9 +172,6 @@
       <Filter>ソース ファイル\fw</Filter>
     </ClCompile>
     <ClCompile Include="..\src\fw\asdxAppCamera.cpp">
-      <Filter>ソース ファイル\fw</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\fw\asdxScript.cpp">
       <Filter>ソース ファイル\fw</Filter>
     </ClCompile>
     <ClCompile Include="..\src\fw\asdxSound.cpp">
@@ -284,9 +275,6 @@
     </ClCompile>
     <ClCompile Include="..\src\res\asdxResTexture.cpp">
       <Filter>ソース ファイル\res</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\Cflat\Cflat.cpp">
-      <Filter>ソース ファイル\external\Cflat</Filter>
     </ClCompile>
     <ClCompile Include="..\external\D3D12MemoryAllocator\src\D3D12MemAlloc.cpp">
       <Filter>ソース ファイル\external\D3D12MA</Filter>
@@ -396,14 +384,8 @@
     <ClCompile Include="..\external\meshoptimizer\vfetchoptimizer.cpp">
       <Filter>ソース ファイル\external\meshoptimizer</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxNvidiaAftermath.cpp">
-      <Filter>ソース ファイル\gfx</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\include\edit\asdxBlink.h">
-      <Filter>ヘッダー ファイル\edit</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\edit\asdxEditParam.h">
       <Filter>ヘッダー ファイル\edit</Filter>
     </ClInclude>
@@ -527,9 +509,6 @@
     <ClInclude Include="..\include\fw\asdxAppCamera.h">
       <Filter>ヘッダー ファイル\fw</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\fw\asdxScript.h">
-      <Filter>ヘッダー ファイル\fw</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\fw\asdxSound.h">
       <Filter>ヘッダー ファイル\fw</Filter>
     </ClInclude>
@@ -638,24 +617,6 @@
     <ClInclude Include="..\include\res\asdxResTexture.h">
       <Filter>ヘッダー ファイル\res</Filter>
     </ClInclude>
-    <ClInclude Include="..\external\Cflat\Cflat.h">
-      <Filter>ソース ファイル\external\Cflat</Filter>
-    </ClInclude>
-    <ClInclude Include="..\external\Cflat\CflatConfig.h">
-      <Filter>ソース ファイル\external\Cflat</Filter>
-    </ClInclude>
-    <ClInclude Include="..\external\Cflat\CflatGlobal.h">
-      <Filter>ソース ファイル\external\Cflat</Filter>
-    </ClInclude>
-    <ClInclude Include="..\external\Cflat\CflatGlobalConfig.h">
-      <Filter>ソース ファイル\external\Cflat</Filter>
-    </ClInclude>
-    <ClInclude Include="..\external\Cflat\CflatHelper.h">
-      <Filter>ソース ファイル\external\Cflat</Filter>
-    </ClInclude>
-    <ClInclude Include="..\external\Cflat\CflatMacros.h">
-      <Filter>ソース ファイル\external\Cflat</Filter>
-    </ClInclude>
     <ClInclude Include="..\external\D3D12MemoryAllocator\include\D3D12MemAlloc.h">
       <Filter>ソース ファイル\external\D3D12MA</Filter>
     </ClInclude>
@@ -722,8 +683,8 @@
     <ClInclude Include="..\external\meshoptimizer\meshoptimizer.h">
       <Filter>ソース ファイル\external\meshoptimizer</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\gfx\asdxNvidiaAftermath.h">
-      <Filter>ヘッダー ファイル\gfx</Filter>
+    <ClInclude Include="..\include\edit\asdxLivePP.h">
+      <Filter>ヘッダー ファイル\edit</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

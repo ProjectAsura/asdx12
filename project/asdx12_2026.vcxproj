@@ -77,9 +77,11 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;ASDX_AUTO_LINK;ASDX_ENABLE_DXC;ASDX_ENABLE_IMGUI;ASDX_ENABLE_TINYXML2;ASDX_ENABLE_NV_AFTERMATH;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;$(ProjectDir)..\external\meshoptimizer;$(ProjectDir)..\external\flatbuffers\include;$(ProjectDir)..\external\cflat;$(ProjectDir)..\external\simdjson\include;$(ProjectDir)..\external\simdjson\src;$(ProjectDir)..\external\ImGuizmo;$(ProjectDir)..\external\implot;$(ProjectDir)..\external\implot3d;$(ProjectDir)..\external\D3D12MemoryAllocator\include;$(ProjectDir)..\external\xxHash;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;$(ProjectDir)..\external\meshoptimizer;$(ProjectDir)..\external\flatbuffers\include;$(ProjectDir)..\external\simdjson\include;$(ProjectDir)..\external\simdjson\src;$(ProjectDir)..\external\ImGuizmo;$(ProjectDir)..\external\implot;$(ProjectDir)..\external\implot3d;$(ProjectDir)..\external\D3D12MemoryAllocator\include;$(ProjectDir)..\external\xxHash;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CreateHotpatchableImage>true</CreateHotpatchableImage>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -102,6 +104,8 @@
       <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;$(ProjectDir)..\external\meshoptimizer;$(ProjectDir)..\external\flatbuffers\include;$(ProjectDir)..\external\cflat;$(ProjectDir)..\external\simdjson\include;$(ProjectDir)..\external\simdjson\src;$(ProjectDir)..\external\ImGuizmo;$(ProjectDir)..\external\implot;$(ProjectDir)..\external\implot3d;$(ProjectDir)..\external\D3D12MemoryAllocator\include;$(ProjectDir)..\external\xxHash;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CreateHotpatchableImage>true</CreateHotpatchableImage>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -123,9 +127,10 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;ASDX_AUTO_LINK;ASDX_ENABLE_DXC;ASDX_ENABLE_IMGUI;ASDX_ENABLE_TINYXML2;ASDX_ENABLE_NV_AFTERMATH;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;$(ProjectDir)..\external\meshoptimizer;$(ProjectDir)..\external\flatbuffers\include;$(ProjectDir)..\external\cflat;$(ProjectDir)..\external\simdjson\include;$(ProjectDir)..\external\simdjson\src;$(ProjectDir)..\external\ImGuizmo;$(ProjectDir)..\external\implot;$(ProjectDir)..\external\implot3d;$(ProjectDir)..\external\D3D12MemoryAllocator\include;$(ProjectDir)..\external\xxHash;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;$(ProjectDir)..\external\meshoptimizer;$(ProjectDir)..\external\flatbuffers\include;$(ProjectDir)..\external\simdjson\include;$(ProjectDir)..\external\simdjson\src;$(ProjectDir)..\external\ImGuizmo;$(ProjectDir)..\external\implot;$(ProjectDir)..\external\implot3d;$(ProjectDir)..\external\D3D12MemoryAllocator\include;$(ProjectDir)..\external\xxHash;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <CreateHotpatchableImage>true</CreateHotpatchableImage>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -147,9 +152,10 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;ASDX_AUTO_LINK;ASDX_ENABLE_DXC;ASDX_ENABLE_IMGUI;ASDX_ENABLE_TINYXML2;ASDX_ENABLE_NV_AFTERMATH;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;$(ProjectDir)..\external\meshoptimizer;$(ProjectDir)..\external\flatbuffers\include;$(ProjectDir)..\external\cflat;$(ProjectDir)..\external\simdjson\include;$(ProjectDir)..\external\simdjson\src;$(ProjectDir)..\external\ImGuizmo;$(ProjectDir)..\external\implot;$(ProjectDir)..\external\implot3d;$(ProjectDir)..\external\D3D12MemoryAllocator\include;$(ProjectDir)..\external\xxHash;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;$(ProjectDir)..\external\meshoptimizer;$(ProjectDir)..\external\flatbuffers\include;$(ProjectDir)..\external\simdjson\include;$(ProjectDir)..\external\simdjson\src;$(ProjectDir)..\external\ImGuizmo;$(ProjectDir)..\external\implot;$(ProjectDir)..\external\implot3d;$(ProjectDir)..\external\D3D12MemoryAllocator\include;$(ProjectDir)..\external\xxHash;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <CreateHotpatchableImage>true</CreateHotpatchableImage>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -163,7 +169,6 @@
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\external\Cflat\Cflat.cpp" />
     <ClCompile Include="..\external\D3D12MemoryAllocator\src\D3D12MemAlloc.cpp" />
     <ClCompile Include="..\external\fpng\src\fpng.cpp" />
     <ClCompile Include="..\external\ImGuiRingMenu\ImGuiRingMenu.cpp" />
@@ -200,7 +205,6 @@
     <ClCompile Include="..\external\simdjson\src\simdjson.cpp" />
     <ClCompile Include="..\external\tinyxml2\tinyxml2.cpp" />
     <ClCompile Include="..\external\xxHash\xxhash.c" />
-    <ClCompile Include="..\src\edit\asdxBlink.cpp" />
     <ClCompile Include="..\src\edit\asdxEditParam.cpp" />
     <ClCompile Include="..\src\edit\asdxFileWatcher.cpp" />
     <ClCompile Include="..\src\edit\asdxGuiMgr.cpp" />
@@ -231,7 +235,6 @@
     <ClCompile Include="..\src\fnd\asdxTokenizer.cpp" />
     <ClCompile Include="..\src\fw\asdxApp.cpp" />
     <ClCompile Include="..\src\fw\asdxAppCamera.cpp" />
-    <ClCompile Include="..\src\fw\asdxScript.cpp" />
     <ClCompile Include="..\src\fw\asdxSound.cpp" />
     <ClCompile Include="..\src\gfx\asdxAllocationHolder.cpp" />
     <ClCompile Include="..\src\gfx\asdxBuffer.cpp" />
@@ -248,7 +251,6 @@
     <ClCompile Include="..\src\gfx\asdxMapChip.cpp" />
     <ClCompile Include="..\src\gfx\asdxMaterial.cpp" />
     <ClCompile Include="..\src\gfx\asdxModel.cpp" />
-    <ClCompile Include="..\src\gfx\asdxNvidiaAftermath.cpp" />
     <ClCompile Include="..\src\gfx\asdxPipelineState.cpp" />
     <ClCompile Include="..\src\gfx\asdxPresetState.cpp" />
     <ClCompile Include="..\src\gfx\asdxSampler.cpp" />
@@ -269,12 +271,6 @@
     <ClCompile Include="..\src\res\asdxResTexture.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\external\Cflat\Cflat.h" />
-    <ClInclude Include="..\external\Cflat\CflatConfig.h" />
-    <ClInclude Include="..\external\Cflat\CflatGlobal.h" />
-    <ClInclude Include="..\external\Cflat\CflatGlobalConfig.h" />
-    <ClInclude Include="..\external\Cflat\CflatHelper.h" />
-    <ClInclude Include="..\external\Cflat\CflatMacros.h" />
     <ClInclude Include="..\external\D3D12MemoryAllocator\include\D3D12MemAlloc.h" />
     <ClInclude Include="..\external\fpng\src\fpng.h" />
     <ClInclude Include="..\external\ImGuiRingMenu\ImGuiRingMenu.h" />
@@ -297,11 +293,11 @@
     <ClInclude Include="..\external\meshoptimizer\meshoptimizer.h" />
     <ClInclude Include="..\external\tinyxml2\tinyxml2.h" />
     <ClInclude Include="..\external\xxHash\xxhash.h" />
-    <ClInclude Include="..\include\edit\asdxBlink.h" />
     <ClInclude Include="..\include\edit\asdxEditParam.h" />
     <ClInclude Include="..\include\edit\asdxFileWatcher.h" />
     <ClInclude Include="..\include\edit\asdxGuiMgr.h" />
     <ClInclude Include="..\include\edit\asdxHistory.h" />
+    <ClInclude Include="..\include\edit\asdxLivePP.h" />
     <ClInclude Include="..\include\edit\asdxP4VHelper.h" />
     <ClInclude Include="..\include\edit\asdxTcpConnector.h" />
     <ClInclude Include="..\include\fnd\asdxArrayView.h" />
@@ -339,7 +335,6 @@
     <ClInclude Include="..\include\fnd\asdxTokenizer.h" />
     <ClInclude Include="..\include\fw\asdxApp.h" />
     <ClInclude Include="..\include\fw\asdxAppCamera.h" />
-    <ClInclude Include="..\include\fw\asdxScript.h" />
     <ClInclude Include="..\include\fw\asdxSound.h" />
     <ClInclude Include="..\include\gfx\asdxAllocationHolder.h" />
     <ClInclude Include="..\include\gfx\asdxBuffer.h" />
@@ -357,7 +352,6 @@
     <ClInclude Include="..\include\gfx\asdxMapChip.h" />
     <ClInclude Include="..\include\gfx\asdxMaterial.h" />
     <ClInclude Include="..\include\gfx\asdxModel.h" />
-    <ClInclude Include="..\include\gfx\asdxNvidiaAftermath.h" />
     <ClInclude Include="..\include\gfx\asdxPipelineState.h" />
     <ClInclude Include="..\include\gfx\asdxPresetState.h" />
     <ClInclude Include="..\include\gfx\asdxSampler.h" />

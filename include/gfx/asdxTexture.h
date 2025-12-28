@@ -54,6 +54,16 @@ public:
     static bool Create(ID3D12GraphicsCommandList* pCmdList, const ResTexture& resource, Texture** ppTexture);
 
     //-------------------------------------------------------------------------
+    //! @brief      テクスチャを生成します.
+    //! 
+    //! @param[in]      resource        テクスチャリソース.
+    //! @param[out]     ppTexture       テクスチャの格納先.
+    //! @retval true    生成に成功.
+    //! @retval false   生成に失敗.
+    //-------------------------------------------------------------------------
+    static bool Create(const ResTexture& resource, Texture** ppTexture);
+
+    //-------------------------------------------------------------------------
     //! @brief      参照カウンタを増やします.
     //-------------------------------------------------------------------------
     void AddRef() override;
@@ -129,6 +139,15 @@ private:
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
     bool Init(ID3D12GraphicsCommandList* pCmdList, const ResTexture& resource);
+
+    //-------------------------------------------------------------------------
+    //! @brief      初期化処理を行います.
+    //!
+    //! @param[in]      resource            リソーステクスチャです.
+    //! @retval true    初期化に成功.
+    //! @retval false   初期化に失敗.
+    //-------------------------------------------------------------------------
+    bool Init(const ResTexture& resource);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.

@@ -279,6 +279,11 @@ public:
     //-------------------------------------------------------------------------
     bool IsSupportGpuUploadHeap() const { return m_SupportGpuUploadHeap; }
 
+    //-------------------------------------------------------------------------
+    //! @brief      UMAかどうか.
+    //-------------------------------------------------------------------------
+    bool IsUMA() const { return m_SupportUMA; }
+
 private:
     //=========================================================================
     // private variables.
@@ -306,6 +311,7 @@ private:
     D3D12_RAYTRACING_TIER           m_DxrTier               = D3D12_RAYTRACING_TIER_NOT_SUPPORTED;
     bool                            m_SupportDXR            = false;    //!< DXRに対応しているかどうか.
     bool                            m_SupportGpuUploadHeap  = false;    //!< GPUアップロードヒープに対応しているかどうか.
+    bool                            m_SupportUMA            = false;    //!< Unified Memory Architectureかどうか.
 
     //=========================================================================
     // private methods
@@ -621,6 +627,13 @@ bool GraphicsSystem::Init(const DeviceDesc& deviceDesc)
     if (SUCCEEDED(hr))
     { m_SupportGpuUploadHeap = options16.GPUUploadHeapSupported; }
 
+    // ユニファイドメモリアーキテクチャかどうかチェック.
+    m_SupportUMA = false;
+    D3D12_FEATURE_DATA_ARCHITECTURE architecture = {};
+    hr = m_pDevice->CheckFeatureSupport(D3D12_FEATURE_ARCHITECTURE, &architecture, sizeof(architecture));
+    if (SUCCEEDED(hr))
+    { m_SupportUMA = architecture.UMA; }
+
     // 正常終了.
     return true;
 }
@@ -899,5 +912,11 @@ D3D12_RAYTRACING_TIER GetDXRTier()
 //-----------------------------------------------------------------------------
 bool IsSupportGpuUploadHeap()
 { return GraphicsSystem::Instance().IsSupportGpuUploadHeap(); }
+
+//-----------------------------------------------------------------------------
+//      Unified Memory Architectureかどうかチェックします.
+//-----------------------------------------------------------------------------
+bool IsUMA()
+{ return GraphicsSystem::Instance().IsUMA(); }
 
 } // namespace asdx

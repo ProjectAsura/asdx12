@@ -13,6 +13,9 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <SampleApp.h>
+#if ASDX_ENABLE_LPP
+#include <edit/asdxLivePP.h>
+#endif
 
 //-----------------------------------------------------------------------------
 //      メインエントリーポイントです.
@@ -22,6 +25,12 @@ int main(int argc, char** argv)
 #if defined(DEBUG) || defined(_DEBUG)
     _CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
 #endif//defined(DEBUG) || defined(_DEBUG)
+
+#if ASDX_ENABLE_LPP
+    asdx::LivePP livePP(L"../external/asdx12/external/LivePP");
+    if (!livePP.IsValid())
+    { return -1; }
+#endif
 
     return SampleApp().Run();
 }

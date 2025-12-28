@@ -12,6 +12,15 @@
 #include <string>
 #include <vector>
 
+
+#if ASDX_AUTO_LINK
+//-----------------------------------------------------------------------------
+// Linker
+//-----------------------------------------------------------------------------
+#pragma comment(lib, "NVIDIA_Nsight_Aftermath_SDK/lib/x64/GFSDK_Aftermath_Lib.x64.lib")
+#endif//ASDX_AUTO_LINK
+
+
 struct ID3D12Device;
 
 //-----------------------------------------------------------------------------

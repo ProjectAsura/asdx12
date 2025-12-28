@@ -55,9 +55,6 @@
     <Filter Include="ソース ファイル\external\meshoptimizer">
       <UniqueIdentifier>{46543bdd-ffc5-45ee-ba45-318107a7250c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ソース ファイル\external\Cflat">
-      <UniqueIdentifier>{e1cc366b-9bd2-45a0-90e7-96dcec3ce9be}</UniqueIdentifier>
-    </Filter>
     <Filter Include="ソース ファイル\external\simdjson">
       <UniqueIdentifier>{a306abf8-7b01-4260-9cc2-74a78b16d44f}</UniqueIdentifier>
     </Filter>
@@ -225,12 +222,6 @@
     <ClCompile Include="..\src\gfx\asdxFont.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\fw\asdxScript.cpp">
-      <Filter>ソース ファイル\fw</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\Cflat\Cflat.cpp">
-      <Filter>ソース ファイル\external\Cflat</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\fnd\asdxStateMachine.cpp">
       <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
@@ -281,9 +272,6 @@
     </ClCompile>
     <ClCompile Include="..\src\gfx\asdxGfxMisc.cpp">
       <Filter>ソース ファイル\gfx</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\edit\asdxBlink.cpp">
-      <Filter>ソース ファイル\edit</Filter>
     </ClCompile>
     <ClCompile Include="..\src\fnd\asdxRef.cpp">
       <Filter>ソース ファイル\fnd</Filter>
@@ -581,27 +569,6 @@
     <ClInclude Include="..\include\gfx\asdxFont.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\fw\asdxScript.h">
-      <Filter>ヘッダー ファイル\fw</Filter>
-    </ClInclude>
-    <ClInclude Include="..\external\Cflat\Cflat.h">
-      <Filter>ソース ファイル\external\Cflat</Filter>
-    </ClInclude>
-    <ClInclude Include="..\external\Cflat\CflatConfig.h">
-      <Filter>ソース ファイル\external\Cflat</Filter>
-    </ClInclude>
-    <ClInclude Include="..\external\Cflat\CflatGlobal.h">
-      <Filter>ソース ファイル\external\Cflat</Filter>
-    </ClInclude>
-    <ClInclude Include="..\external\Cflat\CflatGlobalConfig.h">
-      <Filter>ソース ファイル\external\Cflat</Filter>
-    </ClInclude>
-    <ClInclude Include="..\external\Cflat\CflatHelper.h">
-      <Filter>ソース ファイル\external\Cflat</Filter>
-    </ClInclude>
-    <ClInclude Include="..\external\Cflat\CflatMacros.h">
-      <Filter>ソース ファイル\external\Cflat</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\fnd\asdxStateMachine.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
@@ -646,9 +613,6 @@
     </ClInclude>
     <ClInclude Include="..\include\gfx\asdxGfxMisc.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\edit\asdxBlink.h">
-      <Filter>ヘッダー ファイル\edit</Filter>
     </ClInclude>
     <ClInclude Include="..\include\edit\asdxGuiMgr.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
@@ -713,6 +677,12 @@
     <ClInclude Include="..\external\meshoptimizer\meshoptimizer.h">
       <Filter>ソース ファイル\external\meshoptimizer</Filter>
     </ClInclude>
+    <ClInclude Include="..\external\fpng\src\fpng.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\edit\asdxLivePP.h">
+      <Filter>ヘッダー ファイル\edit</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\res\shaders\asdxBRDF.hlsli">
@@ -760,6 +730,7 @@
     <None Include="..\res\shaders\asdxReservior.hlsli">
       <Filter>リソース ファイル</Filter>
     </None>
+    <None Include="..\res\shaders\asdxDebugPrint.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\res\shaders\asdxCopyPS.hlsl">

@@ -19,9 +19,6 @@
 [submodule "external/MikkTSpace"]
 	path = external/MikkTSpace
 	url = https://github.com/mmikk/MikkTSpace.git
-[submodule "external/Cflat"]
-	path = external/Cflat
-	url = https://github.com/ProjectAsura/Cflat.git
 [submodule "external/implot"]
 	path = external/implot
 	url = https://github.com/epezent/implot
@@ -34,9 +31,6 @@
 [submodule "external/xxHash"]
 	path = external/xxHash
 	url = https://github.com/Cyan4973/xxHash.git
-[submodule "external/blink"]
-	path = external/blink
-	url = https://github.com/ProjectAsura/blink.git
 [submodule "external/implot3d"]
 	path = external/implot3d
 	url = https://github.com/brenocq/implot3d.git

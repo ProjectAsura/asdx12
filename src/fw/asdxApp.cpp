@@ -12,14 +12,11 @@
 #include <fnd/asdxMacro.h>
 #include <fnd/asdxMath.h>
 #include <fnd/asdxLogger.h>
-#include <fw/asdxApp.h>
 #include <gfx/asdxCommandQueue.h>
 #include <gfx/asdxDred.h>
 #include <gfx/asdxGfxMisc.h>
 #include <gfx/asdxTextureManager.h>
-#if ASDX_ENABLE_NV_AFTERMATH
-#include <gfx/asdxNvidiaAftermath.h>
-#endif//ASDX_ENABLE_NV_AFTERMATH
+#include <fw/asdxApp.h>
 
 
 #if defined(DEBUG) || defined(_DEBUG)
@@ -1119,10 +1116,8 @@ void App::Present(uint32_t syncInterval)
             // エラー表示.
             ReportDRED(GetD3D12Device(), hr);
 
-        #if ASDX_ENABLE_NV_AFTERMATH
-            // GPUクラッシュダンプを出力.
-            ReportAftermath();
-        #endif
+            // GPUクラッシュ時の処理.
+            OnGpuCrash();
 
             // 続行できないのでダイアログを表示.
             MessageBoxW(m_hWnd, L"A Fatal Error Occured. Shutting down.", L"FATAL ERROR", MB_OK | MB_ICONERROR);
@@ -1141,10 +1136,8 @@ void App::Present(uint32_t syncInterval)
             // エラー表示.
             ReportDRED(GetD3D12Device(), hr);
 
-        #if ASDX_ENABLE_NV_AFTERMATH
-            // GPUクラッシュダンプを出力.
-            ReportAftermath();
-        #endif
+            // GPUクラッシュ時の処理.
+            OnGpuCrash();
 
             // 続行できないのでダイアログを表示.
             MessageBoxW(m_hWnd, L"A Fatal Error Occured. Shutting down.", L"FATAL ERROR", MB_OK | MB_ICONERROR);
@@ -1448,6 +1441,12 @@ void App::OnDrop(const wchar_t**, uint32_t)
 //      メッセージプロシージャの処理.
 //-----------------------------------------------------------------------------
 void App::OnMsgProc(HWND, UINT, WPARAM, LPARAM)
+{ /* DO_NOTHING */ }
+
+//-----------------------------------------------------------------------------
+//      GPUクラッシュ時の処理.
+//-----------------------------------------------------------------------------
+void App::OnGpuCrash()
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------

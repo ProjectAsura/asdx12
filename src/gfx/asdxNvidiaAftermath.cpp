@@ -24,13 +24,6 @@
 #include "../external/NVIDIA_Nsight_Aftermath_SDK/include/GFSDK_Aftermath_GpuCrashDump.h"
 #include "../external/NVIDIA_Nsight_Aftermath_SDK/include/GFSDK_Aftermath_GpuCrashDumpDecoding.h"
 
-#if ASDX_AUTO_LINK
-//-----------------------------------------------------------------------------
-// Linker
-//-----------------------------------------------------------------------------
-#pragma comment(lib, "../external/NVIDIA_Nsight_Aftermath_SDK/lib/x64/GFSDK_Aftermath_Lib.x64.lib")
-#endif//ASDX_AUTO_LINK
-
 
 //-----------------------------------------------------------------------------
 //! @brief      大小比較演算子です.
