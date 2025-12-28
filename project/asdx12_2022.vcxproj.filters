@@ -703,9 +703,6 @@
     <None Include="..\res\shaders\asdxSamplers.hlsli">
       <Filter>リソース ファイル</Filter>
     </None>
-    <None Include="..\res\shaders\asdxSphericalHarmonics.hlsli">
-      <Filter>リソース ファイル</Filter>
-    </None>
     <None Include="..\res\shaders\asdxWaveHelper.hlsli">
       <Filter>リソース ファイル</Filter>
     </None>
@@ -731,6 +728,9 @@
       <Filter>リソース ファイル</Filter>
     </None>
     <None Include="..\res\shaders\asdxDebugPrint.hlsli" />
+    <None Include="..\res\shaders\asdxSH.hlsli">
+      <Filter>リソース ファイル</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\res\shaders\asdxCopyPS.hlsl">

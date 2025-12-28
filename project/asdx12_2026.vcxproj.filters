@@ -721,9 +721,6 @@
     <None Include="..\res\shaders\asdxShadow.hlsli">
       <Filter>リソース ファイル\shaders</Filter>
     </None>
-    <None Include="..\res\shaders\asdxSphericalHarmonics.hlsli">
-      <Filter>リソース ファイル\shaders</Filter>
-    </None>
     <None Include="..\res\shaders\asdxTangentSpace.hlsli">
       <Filter>リソース ファイル\shaders</Filter>
     </None>
@@ -735,6 +732,9 @@
     </None>
     <None Include="..\include\fnd\asdxMath.inl">
       <Filter>ヘッダー ファイル</Filter>
+    </None>
+    <None Include="..\res\shaders\asdxSH.hlsli">
+      <Filter>リソース ファイル\shaders</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

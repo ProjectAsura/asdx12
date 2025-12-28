@@ -1,10 +1,10 @@
 ﻿//----------------------------------------------------------------------------
-// File : asdxSpericalHarmonics.hlsli
+// File : asdxSH.hlsli
 // Desc : Sperical Harmonics Utility.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
-#ifndef ASDX_SPHERICAL_HARMONICS_HLSLI
-#define ASDX_SPHERICAL_HARMONCIS_HLSLI
+#ifndef ASDX_SH_HLSLI
+#define ASDX_SH_HLSLI
 
 ///////////////////////////////////////////////////////////////////////////////
 // SH2 - Spherical Harmonics L1

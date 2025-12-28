@@ -384,8 +384,8 @@
     <None Include="..\res\shaders\asdxReservior.hlsli" />
     <None Include="..\res\shaders\asdxDXR.hlsli" />
     <None Include="..\res\shaders\asdxSamplers.hlsli" />
+    <None Include="..\res\shaders\asdxSH.hlsli" />
     <None Include="..\res\shaders\asdxShadow.hlsli" />
-    <None Include="..\res\shaders\asdxSphericalHarmonics.hlsli" />
     <None Include="..\res\shaders\asdxTangentSpace.hlsli" />
     <None Include="..\res\shaders\asdxTextureUtil.hlsli" />
     <None Include="..\res\shaders\asdxWaveHelper.hlsli" />
