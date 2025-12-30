@@ -421,12 +421,20 @@ bool GraphicsSystem::Init(const DeviceDesc& deviceDesc)
             if (FAILED(hr))
             { continue; }
 
+            // ソフトウェアは回避する.
+            if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
+            { continue; }
+
             hr = D3D12CreateDevice(pAdapter.GetPtr(), D3D_FEATURE_LEVEL_11_0, __uuidof(ID3D12Device), nullptr);
             if (SUCCEEDED(hr))
             {
+                // 最初に見つかったものをD3D12デバイス生成として利用する.
                 if (m_pAdapter.GetPtr() == nullptr)
                 { m_pAdapter = pAdapter.GetPtr(); }
 
+                // 下記の処理は，ノートPCでRTX 3050 Laptopなどの場合に必ず失敗するので要注意!!
+                // ノートPCのGPUは基本的には，IDXGIOutputが取れないことがほとんど.
+                // そのため, IDXGIOutput用には見つかったものをかならず使うこと.
                 RefPtr<IDXGIOutput> pOutput;
                 hr = pAdapter->EnumOutputs(0, pOutput.GetAddress());
                 if (FAILED(hr))
