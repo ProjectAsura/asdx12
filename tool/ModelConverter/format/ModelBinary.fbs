@@ -12,7 +12,7 @@ table Bone
 
 table Mesh
 {
-    Name          : string;
+    Name          : string (key);
     MaterialId    : uint;
     Positions     : [Float3];
     Normals       : [Float3];

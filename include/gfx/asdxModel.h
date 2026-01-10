@@ -56,7 +56,7 @@ public:
     //! @retval true    初期化に成功.
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
-    bool Init(const ResMesh& mesh);
+    bool Init(const res::Mesh& mesh);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.
@@ -301,7 +301,7 @@ public:
     //! @param[in]      index       ボーン番号.
     //! @return     指定されたボーンを返却します.
     //-------------------------------------------------------------------------
-    ResBone GetBone(uint32_t index) const;
+    const res::Bone& GetBone(uint32_t index) const;
 
     //-------------------------------------------------------------------------
     //! @brief      メッシュ数を取得します.
@@ -324,7 +324,7 @@ public:
     //! @param[in]      index       メッシュ番号.
     //! @return     指定されたリソースメッシュを返却します.
     //-------------------------------------------------------------------------
-    ResMesh GetResMesh(uint32_t index) const;
+    const res::Mesh& GetResMesh(uint32_t index) const;
 
     //-------------------------------------------------------------------------
     //! @brief      バウンディングスフィアを取得します.
@@ -351,31 +351,31 @@ public:
     //! @brief      ボーンを検索します.
     //! 
     //! @param[in]      name        検索するボーン名.
-    //! @param[out]     bone        ボーンデータの格納先.
+    //! @param[out]     index       ボーンデータの格納先.
     //! @retval true    検索にヒット.
     //! @retval false   見つからなかった.
     //-------------------------------------------------------------------------
-    bool FindBone(const char* name, ResBone& bone) const;
+    bool FindBone(const char* name, uint32_t& index) const;
 
     //-------------------------------------------------------------------------
     //! @brief      マテリアルを検索します.
     //! 
     //! @param[in]      name        検索するマテリアル名.
-    //! @param[out]     materialId  マテリアル番号の格納先.
+    //! @param[out]     index       マテリアル番号の格納先.
     //! @retval true    検索にヒット.
     //! @retval false   見つからなかった.
     //-------------------------------------------------------------------------
-    bool FindMaterial(const char* name, uint32_t& mateiralId) const;
+    bool FindMaterial(const char* name, uint32_t& index) const;
 
     //-------------------------------------------------------------------------
     //! @brief      メッシュを検索します.
     //! 
     //! @param[in]      name        検索するメッシュ名.
-    //! @param[out]     meshId      メッシュ番号の格納先.
+    //! @param[out]     index       メッシュ番号の格納先.
     //! @retval true    検索にヒット.
     //! @retval false   見つからなかった.
     //-------------------------------------------------------------------------
-    bool FindMesh(const char* name, uint32_t& meshId) const;
+    bool FindMesh(const char* name, uint32_t& index) const;
 
 private:
     //=========================================================================

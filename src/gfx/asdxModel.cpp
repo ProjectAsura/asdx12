@@ -79,78 +79,86 @@ Mesh::~Mesh()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool Mesh::Init(const ResMesh& mesh)
+bool Mesh::Init(const res::Mesh& mesh)
 {
     // 名前を設定.
-    m_Name = mesh.Name.c_str();
+    m_Name = MeshProxy::GetName(mesh).c_str();
 
     // マテリアルIDを設定.
-    m_MaterialId = mesh.MaterialId;
+    m_MaterialId = MeshProxy::GetMaterialId(mesh);
 
     // 位置座標バッファ初期化.
-    if (!InitVB(m_Positions, mesh.Positions))
+    auto pos = MeshProxy::GetPositions(mesh);
+    if (!InitVB(m_Positions, pos))
     {
         ELOG("Error : Positions Initialize Failed.");
         return false;
     }
 
     // 法線バッファ初期化.
-    if (!InitVB(m_Normals, mesh.Normals))
+    auto nrm = MeshProxy::GetNormals(mesh);
+    if (!InitVB(m_Normals, nrm))
     {
         ELOG("Error : Normal Initailize Failed.");
         return false;
     }
 
     // 接線バッファ初期化.
-    if (!InitVB(m_Tangents, mesh.Tangents))
+    auto tans = MeshProxy::GetTangents(mesh);
+    if (!InitVB(m_Tangents, tans))
     {
         ELOG("Error : Tangents Initialize Failed.");
         return false;
     }
 
     // カラーバッファ初期化.
-    if (!InitVB(m_Colors, mesh.Colors))
+    auto cols = MeshProxy::GetColors(mesh);
+    if (!InitVB(m_Colors, cols))
     {
         ELOG("Error : Colors Initialize Failed.");
         return false;
     }
 
     // テクスチャ座標バッファ初期化.
-    if (!InitVB(m_TexCoords, mesh.TexCoords))
+    auto uvs = MeshProxy::GetTexCoords(mesh);
+    if (!InitVB(m_TexCoords, uvs))
     {
         ELOG("Error : TexCoords Initialize Failed.");
         return false;
     }
 
     // ボーンインデックスバッファ初期化.
-    if (!InitVB(m_BoneIndices, mesh.BoneIndices))
+    auto boneIds = MeshProxy::GetBoneIndices(mesh);
+    if (!InitVB(m_BoneIndices, boneIds))
     {
         ELOG("Error : BoneIndices Initialize Failed.");
         return false;
     }
 
     // ボーンウェイトバッファ初期化.
-    if (!InitVB(m_BoneWeights, mesh.BoneWeights))
+    auto boneWeights = MeshProxy::GetBoneWeights(mesh);
+    if (!InitVB(m_BoneWeights, boneWeights))
     {
         ELOG("Error : BoneWeights Initailize Failed.");
         return false;
     }
 
     // 頂点インデックスバッファ初期化.
-    if (!InitIB(m_VertexIndices, mesh.VertexIndices))
+    auto vertIds = MeshProxy::GetVerexIndices(mesh);
+    if (!InitIB(m_VertexIndices, vertIds))
     {
         ELOG("Error : VertexIndices Initailize Failed.");
         return false;
     }
 
     // 頂点数を設定.
-    m_VertexCount = uint32_t(mesh.Positions.size());
+    m_VertexCount = uint32_t(pos.size());
 
     // 頂点インデックス数を設定.
-    m_IndexCount = uint32_t(mesh.VertexIndices.size());
+    m_IndexCount = uint32_t(vertIds.size());
 
     // バウンディングスフィアを設定.
-    m_BoundingSphere = mesh.BoundingSphere;
+    m_BoundingSphere = MeshProxy::GetBounds(mesh);
 
     // 正常終了.
     return true;
@@ -339,7 +347,7 @@ bool Model::Init(std::vector<uint8_t>&& binary)
     m_Meshes.resize(m_ModelBinary.GetMeshCount());
     for(auto i=0u; i<m_ModelBinary.GetMeshCount(); ++i)
     {
-        auto res = m_ModelBinary.GetMesh(i);
+        const auto& res = m_ModelBinary.GetMesh(i);
         if (!m_Meshes[i].Init(res))
         {
             ELOG("Error : Mesh Initialize Failed. index = %zu", i);
@@ -420,7 +428,7 @@ uint32_t Model::GetBoneCount() const
 //-----------------------------------------------------------------------------
 //      ボーン名を取得します.
 //-----------------------------------------------------------------------------
-ResBone Model::GetBone(uint32_t index) const
+const res::Bone& Model::GetBone(uint32_t index) const
 { return m_ModelBinary.GetBone(index); }
 
 //-----------------------------------------------------------------------------
@@ -441,7 +449,7 @@ const Mesh* Model::GetMesh(uint32_t index) const
 //-----------------------------------------------------------------------------
 //      リソースメッシュを取得します.
 //-----------------------------------------------------------------------------
-ResMesh Model::GetResMesh(uint32_t index) const
+const res::Mesh& Model::GetResMesh(uint32_t index) const
 { return m_ModelBinary.GetMesh(index); }
 
 //-----------------------------------------------------------------------------
@@ -465,20 +473,20 @@ void* Model::GetUserData() const
 //-----------------------------------------------------------------------------
 //      ボーン名を検索します.
 //-----------------------------------------------------------------------------
-bool Model::FindBone(const char* name, ResBone& bone) const
-{ return m_ModelBinary.FindBone(name, bone); }
+bool Model::FindBone(const char* name, uint32_t& index) const
+{ return m_ModelBinary.FindBone(name, index); }
 
 //-----------------------------------------------------------------------------
 //      マテリアル名を検索します.
 //-----------------------------------------------------------------------------
-bool Model::FindMaterial(const char* name, uint32_t& materialId) const
-{ return m_ModelBinary.FindMaterial(name, materialId); }
+bool Model::FindMaterial(const char* name, uint32_t& index) const
+{ return m_ModelBinary.FindMaterial(name, index); }
 
 //-----------------------------------------------------------------------------
 //      メッシュ名を検索します.
 //-----------------------------------------------------------------------------
-bool Model::FindMesh(const char* name, uint32_t& meshId) const
-{ return m_ModelBinary.FindMesh(name, meshId); }
+bool Model::FindMesh(const char* name, uint32_t& index) const
+{ return m_ModelBinary.FindMesh(name, index); }
 
 //-----------------------------------------------------------------------------
 //      モデルを生成します.

@@ -32,6 +32,45 @@ asdx::ArrayView<T> ToArrayView(const flatbuffers::Vector<U>* value)
     return asdx::ArrayView<T>(reinterpret_cast<const T*>(value->data()), value->size()); 
 }
 
+//-----------------------------------------------------------------------------
+//      名前から番号を求めます.
+//-----------------------------------------------------------------------------
+template<typename T>
+bool FindIndex(T& items, const char* name, uint32_t& index)
+{
+    if (name == nullptr)
+    {
+        index = UINT32_MAX;
+        return false;
+    }
+
+    uint32_t lhs = 0;
+    uint32_t rhs = items->size();
+ 
+    while(lhs < rhs)
+    {
+        uint32_t mid = lhs + (rhs - lhs) / 2;
+        auto item = items->Get(mid);
+        auto ret = item->KeyCompareWithValue(name);
+        if (ret == 0)
+        {
+            index = mid;
+            return true;
+        }
+        else if (ret < 0)
+        {
+            lhs = mid + 1;
+        }
+        else
+        {
+            rhs = mid;
+        }
+    }
+
+    index = UINT32_MAX;
+    return false;
+}
+
 } // namespace
 
 
@@ -110,43 +149,21 @@ uint32_t ModelBinary::GetMaterialCount() const
 //-----------------------------------------------------------------------------
 //      メッシュを取得します.
 //-----------------------------------------------------------------------------
-ResMesh ModelBinary::GetMesh(uint32_t meshIndex) const
+const res::Mesh& ModelBinary::GetMesh(uint32_t index) const
 {
     assert(!m_Blob.empty());
     auto bin  = res::GetModelBinary(m_Blob.data());
-    auto mesh = bin->Meshes()->Get(meshIndex);
-
-    ResMesh result;
-    result.Name           = StringView(mesh->Name()->c_str());
-    result.MaterialId     = mesh->MaterialId();
-    result.Positions      = ToArrayView<Vector3> (mesh->Positions    ());
-    result.Normals        = ToArrayView<Vector3> (mesh->Normals      ());
-    result.Tangents       = ToArrayView<Vector4> (mesh->Tangents     ());
-    result.Colors         = ToArrayView<Unorm4>  (mesh->Colors       ());
-    result.TexCoords      = ToArrayView<Vector2> (mesh->TexCoords    ());
-    result.BoneIndices    = ToArrayView<Uint4>   (mesh->BoneIndices  ());
-    result.BoneWeights    = ToArrayView<Vector4> (mesh->BoneWeights  ());
-    result.VertexIndices  = ToArrayView<uint32_t>(mesh->VertexIndices());
-    result.BoundingSphere = BoundingSphere3(mesh->Bounds()->Center().X(), mesh->Bounds()->Center().Y(), mesh->Bounds()->Center().Z(), mesh->Bounds()->Radius());
-    return result;
+    return *(bin->Meshes()->Get(index));
 }
 
 //-----------------------------------------------------------------------------
 //      ボーンを取得します.
 //-----------------------------------------------------------------------------
-ResBone ModelBinary::GetBone(uint32_t meshIndex) const
+const res::Bone& ModelBinary::GetBone(uint32_t index) const
 {
     assert(!m_Blob.empty());
     auto bin = res::GetModelBinary(m_Blob.data());
-    auto bone = bin->Bones()->Get(meshIndex);
-
-    ResBone result;
-    result.Name           = StringView(bone->Name()->c_str());
-    result.ParentId       = bone->Parent();
-    result.OffsetMatrix   = *reinterpret_cast<const Matrix*>(bone->OffsetMatrix());
-    result.Children       = ToArrayView<int32_t>(bone->Children());
-
-    return result;
+    return *(bin->Bones()->Get(index));
 }
 
 //-----------------------------------------------------------------------------
@@ -171,36 +188,37 @@ BoundingSphere3 ModelBinary::GetBoundingSphere() const
 //-----------------------------------------------------------------------------
 //      ボーンを検索します.
 //-----------------------------------------------------------------------------
-bool ModelBinary::FindBone(const char* name, ResBone& result) const
+bool ModelBinary::FindBone(const char* name, uint32_t& index) const
 {
     assert(!m_Blob.empty());
-    auto bone = res::GetModelBinary(m_Blob.data())->Bones()->LookupByKey(name);
-    if (bone == nullptr)
-        return false;
-
-    result.Name         = bone->Name()->c_str();
-    result.OffsetMatrix = (*reinterpret_cast<const Matrix*>(bone->OffsetMatrix()));
-    return true;
+    auto bones = res::GetModelBinary(m_Blob.data())->Bones();
+    return FindIndex(bones, name, index);
 }
 
 //-----------------------------------------------------------------------------
 //      マテリアルを検索します.
 //-----------------------------------------------------------------------------
-bool ModelBinary::FindMaterial(const char* name, uint32_t& materialId) const
+bool ModelBinary::FindMaterial(const char* name, uint32_t& index) const
 {
     assert(!m_Blob.empty());
     auto mats = res::GetModelBinary(m_Blob.data())->Materials();
+    if (name == nullptr)
+    {
+        index = UINT32_MAX;
+        return false;
+    }
 
     uint32_t lhs = 0;
     uint32_t rhs = mats->size();
-
+ 
     while(lhs < rhs)
     {
         uint32_t mid = lhs + (rhs - lhs) / 2;
-        auto ret = strcmp(mats->Get(mid)->c_str(), name);
+        auto mat = mats->Get(mid);
+        auto ret = strcmp(mat->c_str(), name);
         if (ret == 0)
         {
-            materialId = mid;
+            index = mid;
             return true;
         }
         else if (ret < 0)
@@ -213,42 +231,123 @@ bool ModelBinary::FindMaterial(const char* name, uint32_t& materialId) const
         }
     }
 
-    materialId = UINT32_MAX;
+    index = UINT32_MAX;
     return false;
 }
 
 //-----------------------------------------------------------------------------
 //      メッシュを検索します.
 //-----------------------------------------------------------------------------
-bool ModelBinary::FindMesh(const char* name, uint32_t& meshId) const
+bool ModelBinary::FindMesh(const char* name, uint32_t& index) const
 {
     assert(!m_Blob.empty());
     auto meshes = res::GetModelBinary(m_Blob.data())->Meshes();
-
-    uint32_t lhs = 0;
-    uint32_t rhs = meshes->size();
- 
-    while(lhs < rhs)
-    {
-        uint32_t mid = lhs + (rhs - lhs) / 2;
-        auto ret = strcmp(meshes->Get(mid)->Name()->c_str(), name);
-        if (ret == 0)
-        {
-            meshId = mid;
-            return true;
-        }
-        else if (ret < 0)
-        {
-            lhs = mid + 1;
-        }
-        else
-        {
-            rhs = mid;
-        }
-    }
-
-    meshId = UINT32_MAX;
-    return false;
+    return FindIndex(meshes, name, index);
 }
+
+///////////////////////////////////////////////////////////////////////////////
+// MeshProxy class
+///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      メッシュ名を取得します.
+//-----------------------------------------------------------------------------
+StringView MeshProxy::GetName(const res::Mesh& mesh)
+{ return StringView(mesh.Name()->c_str()); }
+
+//-----------------------------------------------------------------------------
+//      マテリアルIDを取得します.
+//-----------------------------------------------------------------------------
+uint32_t MeshProxy::GetMaterialId(const res::Mesh& mesh)
+{ return mesh.MaterialId(); }
+
+//-----------------------------------------------------------------------------
+//      位置配列を取得します.
+//-----------------------------------------------------------------------------
+ArrayView<Vector3> MeshProxy::GetPositions(const res::Mesh& mesh)
+{ return ToArrayView<Vector3>(mesh.Positions()); }
+
+//-----------------------------------------------------------------------------
+//      法線配列を取得します.
+//-----------------------------------------------------------------------------
+ArrayView<Vector3> MeshProxy::GetNormals(const res::Mesh& mesh)
+{ return ToArrayView<Vector3>(mesh.Normals()); }
+
+//-----------------------------------------------------------------------------
+//      接線配列を取得します.
+//-----------------------------------------------------------------------------
+ArrayView<Vector4> MeshProxy::GetTangents(const res::Mesh& mesh)
+{ return ToArrayView<Vector4>(mesh.Tangents()); }
+
+//-----------------------------------------------------------------------------
+//      頂点カラー配列を取得します.
+//-----------------------------------------------------------------------------
+ArrayView<Unorm4> MeshProxy::GetColors(const res::Mesh& mesh)
+{ return ToArrayView<Unorm4>(mesh.Colors()); }
+
+//-----------------------------------------------------------------------------
+//      テクスチャ座標配列を取得します.
+//-----------------------------------------------------------------------------
+ArrayView<Vector2> MeshProxy::GetTexCoords(const res::Mesh& mesh)
+{ return ToArrayView<Vector2>(mesh.TexCoords()); }
+
+//-----------------------------------------------------------------------------
+//      ボーンインデックス配列を取得します.
+//-----------------------------------------------------------------------------
+ArrayView<Uint4> MeshProxy::GetBoneIndices(const res::Mesh& mesh)
+{ return ToArrayView<Uint4>(mesh.BoneIndices()); }
+
+//-----------------------------------------------------------------------------
+//      ボーンウェイト配列を取得します.
+//-----------------------------------------------------------------------------
+ArrayView<Vector4> MeshProxy::GetBoneWeights(const res::Mesh& mesh)
+{ return ToArrayView<Vector4>(mesh.BoneWeights()); }
+
+//-----------------------------------------------------------------------------
+//      頂点インデックス配列を取得します.
+//-----------------------------------------------------------------------------
+ArrayView<uint32_t> MeshProxy::GetVerexIndices(const res::Mesh& mesh)
+{ return ToArrayView<uint32_t>(mesh.VertexIndices()); }
+
+//-----------------------------------------------------------------------------
+//      バウンディングスフィアを取得します.
+//-----------------------------------------------------------------------------
+BoundingSphere3 MeshProxy::GetBounds(const res::Mesh& mesh)
+{
+    auto val = mesh.Bounds();
+    return BoundingSphere3(
+        val->Center().X(),
+        val->Center().Y(),
+        val->Center().Z(),
+        val->Radius());
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// BoneProxy class
+///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      ボーン名を取得します.
+//-----------------------------------------------------------------------------
+StringView BoneProxy::GetName(const res::Bone& bone)
+{ return StringView(bone.Name()->c_str()); }
+
+//-----------------------------------------------------------------------------
+//      親ボーンIDを取得します.
+//-----------------------------------------------------------------------------
+int32_t BoneProxy::GetParentId(const res::Bone& bone)
+{ return bone.Parent(); }
+
+//-----------------------------------------------------------------------------
+//      オフセット行列を取得します.
+//-----------------------------------------------------------------------------
+Matrix BoneProxy::GetOffsetMatrix(const res::Bone& bone)
+{ return *reinterpret_cast<const Matrix*>(bone.OffsetMatrix()); }
+
+//-----------------------------------------------------------------------------
+//      子ボーンID配列を取得します.
+//-----------------------------------------------------------------------------
+ArrayView<int32_t> BoneProxy::GetChildren(const res::Bone& bone)
+{ return ToArrayView<int32_t>(bone.Children()); }
 
 } // namespace asdx
