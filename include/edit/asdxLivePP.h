@@ -64,11 +64,11 @@ public:
     //-------------------------------------------------------------------------
     ~LivePP()
     {
-        if (m_Valid)
-        {
-            lpp::LppDestroyDefaultAgent(&m_Agent);
-            m_Valid = false;
-        }
+        if (!m_Valid)
+            return;
+
+        lpp::LppDestroyDefaultAgent(&m_Agent);
+        m_Valid = false;
     }
 
     //-------------------------------------------------------------------------
