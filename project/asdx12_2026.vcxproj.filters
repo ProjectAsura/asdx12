@@ -58,9 +58,6 @@
     <Filter Include="ソース ファイル\external\imgui">
       <UniqueIdentifier>{2c963b9a-d7c0-4f5b-bfeb-ac1ec7f8f924}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ソース ファイル\external\ImGuiRingMenu">
-      <UniqueIdentifier>{ab8f2b49-14f7-4950-b68c-8c428c1999cc}</UniqueIdentifier>
-    </Filter>
     <Filter Include="ソース ファイル\external\ImGuizmo">
       <UniqueIdentifier>{4602854d-f19c-4436-b741-636200973dad}</UniqueIdentifier>
     </Filter>
@@ -81,6 +78,9 @@
     </Filter>
     <Filter Include="ソース ファイル\external\xxHash">
       <UniqueIdentifier>{c857f23b-7b16-4289-9fc4-964a16f3b1f5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\external\ImRing">
+      <UniqueIdentifier>{c4846cfa-c31f-41dd-99c2-73cad051a9fd}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -294,9 +294,6 @@
     <ClCompile Include="..\external\imgui\imgui_widgets.cpp">
       <Filter>ソース ファイル\external\imgui</Filter>
     </ClCompile>
-    <ClCompile Include="..\external\ImGuiRingMenu\ImGuiRingMenu.cpp">
-      <Filter>ソース ファイル\external\ImGuiRingMenu</Filter>
-    </ClCompile>
     <ClCompile Include="..\external\ImGuizmo\GraphEditor.cpp">
       <Filter>ソース ファイル\external\ImGuizmo</Filter>
     </ClCompile>
@@ -383,6 +380,9 @@
     </ClCompile>
     <ClCompile Include="..\external\meshoptimizer\vfetchoptimizer.cpp">
       <Filter>ソース ファイル\external\meshoptimizer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\ImRing\ImRing.cpp">
+      <Filter>ソース ファイル\external\ImRing</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -641,9 +641,6 @@
     <ClInclude Include="..\external\imgui\imconfig.h">
       <Filter>ソース ファイル\external\imgui</Filter>
     </ClInclude>
-    <ClInclude Include="..\external\ImGuiRingMenu\ImGuiRingMenu.h">
-      <Filter>ソース ファイル\external\ImGuiRingMenu</Filter>
-    </ClInclude>
     <ClInclude Include="..\external\ImGuizmo\GraphEditor.h">
       <Filter>ソース ファイル\external\ImGuizmo</Filter>
     </ClInclude>
@@ -685,6 +682,9 @@
     </ClInclude>
     <ClInclude Include="..\include\edit\asdxLivePP.h">
       <Filter>ヘッダー ファイル\edit</Filter>
+    </ClInclude>
+    <ClInclude Include="..\external\ImRing\ImRing.h">
+      <Filter>ソース ファイル\external\ImRing</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

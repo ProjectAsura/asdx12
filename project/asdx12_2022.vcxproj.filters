@@ -76,8 +76,8 @@
     <Filter Include="ソース ファイル\external\ImGuizmo">
       <UniqueIdentifier>{8fb098a6-69e0-4c9f-88dd-3187e70fd05e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ソース ファイル\external\ImGuiRingMenu">
-      <UniqueIdentifier>{5e28bc64-a79f-4cbb-a154-ebcb679630b5}</UniqueIdentifier>
+    <Filter Include="ソース ファイル\external\ImRing">
+      <UniqueIdentifier>{da9f8b6a-9b24-470a-8380-a7feaf9efae1}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -324,9 +324,6 @@
     <ClCompile Include="..\src\res\asdxResMotion.cpp">
       <Filter>ソース ファイル\res</Filter>
     </ClCompile>
-    <ClCompile Include="..\external\ImGuiRingMenu\ImGuiRingMenu.cpp">
-      <Filter>ソース ファイル\external\ImGuiRingMenu</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\gfx\asdxMaterial.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
@@ -380,6 +377,9 @@
     </ClCompile>
     <ClCompile Include="..\external\meshoptimizer\vfetchoptimizer.cpp">
       <Filter>ソース ファイル\external\meshoptimizer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\ImRing\ImRing.cpp">
+      <Filter>ソース ファイル\external\ImRing</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -665,9 +665,6 @@
     <ClInclude Include="..\include\res\asdxResMotion.h">
       <Filter>ヘッダー ファイル\res</Filter>
     </ClInclude>
-    <ClInclude Include="..\external\ImGuiRingMenu\ImGuiRingMenu.h">
-      <Filter>ソース ファイル\external\ImGuiRingMenu</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\gfx\asdxTextureManager.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
@@ -682,6 +679,9 @@
     </ClInclude>
     <ClInclude Include="..\include\edit\asdxLivePP.h">
       <Filter>ヘッダー ファイル\edit</Filter>
+    </ClInclude>
+    <ClInclude Include="..\external\ImRing\ImRing.h">
+      <Filter>ソース ファイル\external\ImRing</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

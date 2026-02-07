@@ -171,7 +171,6 @@
   <ItemGroup>
     <ClCompile Include="..\external\D3D12MemoryAllocator\src\D3D12MemAlloc.cpp" />
     <ClCompile Include="..\external\fpng\src\fpng.cpp" />
-    <ClCompile Include="..\external\ImGuiRingMenu\ImGuiRingMenu.cpp" />
     <ClCompile Include="..\external\ImGuizmo\GraphEditor.cpp" />
     <ClCompile Include="..\external\ImGuizmo\ImCurveEdit.cpp" />
     <ClCompile Include="..\external\ImGuizmo\ImGradient.cpp" />
@@ -186,6 +185,7 @@
     <ClCompile Include="..\external\implot3d\implot3d_meshes.cpp" />
     <ClCompile Include="..\external\implot\implot.cpp" />
     <ClCompile Include="..\external\implot\implot_items.cpp" />
+    <ClCompile Include="..\external\ImRing\ImRing.cpp" />
     <ClCompile Include="..\external\meshoptimizer\allocator.cpp" />
     <ClCompile Include="..\external\meshoptimizer\clusterizer.cpp" />
     <ClCompile Include="..\external\meshoptimizer\indexanalyzer.cpp" />
@@ -273,7 +273,6 @@
   <ItemGroup>
     <ClInclude Include="..\external\D3D12MemoryAllocator\include\D3D12MemAlloc.h" />
     <ClInclude Include="..\external\fpng\src\fpng.h" />
-    <ClInclude Include="..\external\ImGuiRingMenu\ImGuiRingMenu.h" />
     <ClInclude Include="..\external\ImGuizmo\GraphEditor.h" />
     <ClInclude Include="..\external\ImGuizmo\ImCurveEdit.h" />
     <ClInclude Include="..\external\ImGuizmo\ImGradient.h" />
@@ -290,6 +289,7 @@
     <ClInclude Include="..\external\implot3d\implot3d_internal.h" />
     <ClInclude Include="..\external\implot\implot.h" />
     <ClInclude Include="..\external\implot\implot_internal.h" />
+    <ClInclude Include="..\external\ImRing\ImRing.h" />
     <ClInclude Include="..\external\meshoptimizer\meshoptimizer.h" />
     <ClInclude Include="..\external\tinyxml2\tinyxml2.h" />
     <ClInclude Include="..\external\xxHash\xxhash.h" />
