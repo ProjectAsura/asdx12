@@ -381,6 +381,9 @@
     <ClCompile Include="..\external\ImRing\ImRing.cpp">
       <Filter>ソース ファイル\external\ImRing</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\edit\asdxGitHelper.cpp">
+      <Filter>ソース ファイル\edit</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\external\imgui\imconfig.h">
@@ -682,6 +685,9 @@
     </ClInclude>
     <ClInclude Include="..\external\ImRing\ImRing.h">
       <Filter>ソース ファイル\external\ImRing</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\edit\asdxGitHelper.h">
+      <Filter>ヘッダー ファイル\edit</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -230,6 +230,7 @@
     <ClCompile Include="..\external\xxHash\xxhash.c" />
     <ClCompile Include="..\src\edit\asdxEditParam.cpp" />
     <ClCompile Include="..\src\edit\asdxFileWatcher.cpp" />
+    <ClCompile Include="..\src\edit\asdxGitHelper.cpp" />
     <ClCompile Include="..\src\edit\asdxGuiMgr.cpp" />
     <ClCompile Include="..\src\edit\asdxHistory.cpp" />
     <ClCompile Include="..\src\edit\asdxP4VHelper.cpp" />
@@ -318,6 +319,7 @@
     <ClInclude Include="..\external\xxHash\xxhash.h" />
     <ClInclude Include="..\include\edit\asdxEditParam.h" />
     <ClInclude Include="..\include\edit\asdxFileWatcher.h" />
+    <ClInclude Include="..\include\edit\asdxGitHelper.h" />
     <ClInclude Include="..\include\edit\asdxGuiMgr.h" />
     <ClInclude Include="..\include\edit\asdxHistory.h" />
     <ClInclude Include="..\include\edit\asdxLivePP.h" />
