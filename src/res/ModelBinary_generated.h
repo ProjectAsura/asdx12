@@ -32,8 +32,9 @@ struct Bone FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_NAME = 4,
     VT_PARENT = 6,
-    VT_OFFSETMATRIX = 8,
-    VT_CHILDREN = 10
+    VT_BINDPOSE = 8,
+    VT_INVERSEBINDPOSE = 10,
+    VT_CHILDREN = 12
   };
   const ::flatbuffers::String *Name() const {
     return GetPointer<const ::flatbuffers::String *>(VT_NAME);
@@ -53,8 +54,11 @@ struct Bone FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   int32_t Parent() const {
     return GetField<int32_t>(VT_PARENT, 0);
   }
-  const asdx::res::Float4x4 *OffsetMatrix() const {
-    return GetStruct<const asdx::res::Float4x4 *>(VT_OFFSETMATRIX);
+  const asdx::res::Float4x4 *BindPose() const {
+    return GetStruct<const asdx::res::Float4x4 *>(VT_BINDPOSE);
+  }
+  const asdx::res::Float4x4 *InverseBindPose() const {
+    return GetStruct<const asdx::res::Float4x4 *>(VT_INVERSEBINDPOSE);
   }
   const ::flatbuffers::Vector<int32_t> *Children() const {
     return GetPointer<const ::flatbuffers::Vector<int32_t> *>(VT_CHILDREN);
@@ -64,7 +68,8 @@ struct Bone FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
            VerifyOffsetRequired(verifier, VT_NAME) &&
            verifier.VerifyString(Name()) &&
            VerifyField<int32_t>(verifier, VT_PARENT, 4) &&
-           VerifyField<asdx::res::Float4x4>(verifier, VT_OFFSETMATRIX, 4) &&
+           VerifyField<asdx::res::Float4x4>(verifier, VT_BINDPOSE, 4) &&
+           VerifyField<asdx::res::Float4x4>(verifier, VT_INVERSEBINDPOSE, 4) &&
            VerifyOffset(verifier, VT_CHILDREN) &&
            verifier.VerifyVector(Children()) &&
            verifier.EndTable();
@@ -81,8 +86,11 @@ struct BoneBuilder {
   void add_Parent(int32_t Parent) {
     fbb_.AddElement<int32_t>(Bone::VT_PARENT, Parent, 0);
   }
-  void add_OffsetMatrix(const asdx::res::Float4x4 *OffsetMatrix) {
-    fbb_.AddStruct(Bone::VT_OFFSETMATRIX, OffsetMatrix);
+  void add_BindPose(const asdx::res::Float4x4 *BindPose) {
+    fbb_.AddStruct(Bone::VT_BINDPOSE, BindPose);
+  }
+  void add_InverseBindPose(const asdx::res::Float4x4 *InverseBindPose) {
+    fbb_.AddStruct(Bone::VT_INVERSEBINDPOSE, InverseBindPose);
   }
   void add_Children(::flatbuffers::Offset<::flatbuffers::Vector<int32_t>> Children) {
     fbb_.AddOffset(Bone::VT_CHILDREN, Children);
@@ -103,11 +111,13 @@ inline ::flatbuffers::Offset<Bone> CreateBone(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     ::flatbuffers::Offset<::flatbuffers::String> Name = 0,
     int32_t Parent = 0,
-    const asdx::res::Float4x4 *OffsetMatrix = nullptr,
+    const asdx::res::Float4x4 *BindPose = nullptr,
+    const asdx::res::Float4x4 *InverseBindPose = nullptr,
     ::flatbuffers::Offset<::flatbuffers::Vector<int32_t>> Children = 0) {
   BoneBuilder builder_(_fbb);
   builder_.add_Children(Children);
-  builder_.add_OffsetMatrix(OffsetMatrix);
+  builder_.add_InverseBindPose(InverseBindPose);
+  builder_.add_BindPose(BindPose);
   builder_.add_Parent(Parent);
   builder_.add_Name(Name);
   return builder_.Finish();
@@ -117,7 +127,8 @@ inline ::flatbuffers::Offset<Bone> CreateBoneDirect(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     const char *Name = nullptr,
     int32_t Parent = 0,
-    const asdx::res::Float4x4 *OffsetMatrix = nullptr,
+    const asdx::res::Float4x4 *BindPose = nullptr,
+    const asdx::res::Float4x4 *InverseBindPose = nullptr,
     const std::vector<int32_t> *Children = nullptr) {
   auto Name__ = Name ? _fbb.CreateString(Name) : 0;
   auto Children__ = Children ? _fbb.CreateVector<int32_t>(*Children) : 0;
@@ -125,7 +136,8 @@ inline ::flatbuffers::Offset<Bone> CreateBoneDirect(
       _fbb,
       Name__,
       Parent,
-      OffsetMatrix,
+      BindPose,
+      InverseBindPose,
       Children__);
 }
 

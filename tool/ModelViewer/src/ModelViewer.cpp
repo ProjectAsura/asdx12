@@ -62,13 +62,13 @@ struct alignas(256) ParamScene
 };
 
 const char* kDrawModes[] = {
-    (const char*)u8"デフォルト",
-    (const char*)u8"スクリーン空間位置座標",
-    (const char*)u8"法線ベクトル",
-    (const char*)u8"接線ベクトル",
-    (const char*)u8"従接線ベクトル",
-    (const char*)u8"テクスチャ座標",
-    (const char*)u8"頂点カラー",
+    asdx::ToChar(u8"デフォルト"),
+    asdx::ToChar(u8"スクリーン空間位置座標"),
+    asdx::ToChar(u8"法線ベクトル"),
+    asdx::ToChar(u8"接線ベクトル"),
+    asdx::ToChar(u8"従接線ベクトル"),
+    asdx::ToChar(u8"テクスチャ座標"),
+    asdx::ToChar(u8"頂点カラー"),
 };
 
 } // namespace
@@ -304,11 +304,12 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
             ImGui::Text("FPS : %.2f", GetFPS());
             ImGui::Separator();
 
-            ImGui::Text((const char*)u8"メッシュ数     : %zu",  m_ModelInfo.MeshCount);
-            ImGui::Text((const char*)u8"マテリアル数   : %zu",  m_ModelInfo.MaterialCount);
-            ImGui::Text((const char*)u8"ボーン数       : %zu", m_ModelInfo.BoneCount);
-            ImGui::Text((const char*)u8"頂点数         : %zu",  m_ModelInfo.VertexCount);
-            ImGui::Text((const char*)u8"インデックス数 : %zu",  m_ModelInfo.IndexCount);
+
+            ImGui::Text(asdx::ToChar(u8"メッシュ数     : %zu"),  m_ModelInfo.MeshCount);
+            ImGui::Text(asdx::ToChar(u8"マテリアル数   : %zu"),  m_ModelInfo.MaterialCount);
+            ImGui::Text(asdx::ToChar(u8"ボーン数       : %zu"), m_ModelInfo.BoneCount);
+            ImGui::Text(asdx::ToChar(u8"頂点数         : %zu"),  m_ModelInfo.VertexCount);
+            ImGui::Text(asdx::ToChar(u8"インデックス数 : %zu"),  m_ModelInfo.IndexCount);
 
             ImGui::End();
         }
@@ -321,17 +322,17 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
 
         if (ImGui::BeginPopup("ContextMenu"))
         {
-            if (ImGui::BeginMenu((const char*)u8"ファイル"))
+            if (ImGui::BeginMenu(asdx::ToChar(u8"ファイル")))
             {
                 MenuFile(pCmd);
                 ImGui::EndMenu();
             }
-            if (ImGui::BeginMenu((const char*)u8"表示"))
+            if (ImGui::BeginMenu(asdx::ToChar(u8"表示")))
             {
                 MenuView();
                 ImGui::EndMenu();
             }
-            if (ImGui::BeginMenu((const char*)u8"ヘルプ"))
+            if (ImGui::BeginMenu(asdx::ToChar(u8"ヘルプ")))
             {
                 MenuHelp();
                 ImGui::EndMenu();
@@ -397,12 +398,12 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
                 auto& bone = m_Model->GetBone(i);
                 uint32_t index = uint32_t(offset + i);
 
-                auto matrix = asdx::BoneProxy::GetOffsetMatrix(bone);
+                auto matrix   = asdx::BoneProxy::GetBindPoseMatrix(bone);
                 auto parentId = asdx::BoneProxy::GetParentId(bone);
                 if (parentId != -1)
                 {
                     auto& parentBone   = m_Model->GetBone(parentId);
-                    auto  parentMatrix = asdx::BoneProxy::GetOffsetMatrix(parentBone);
+                    auto  parentMatrix = asdx::BoneProxy::GetBindPoseMatrix(parentBone);
                     matrix = parentMatrix * matrix;
                 }
 
@@ -764,7 +765,7 @@ void ModelViewer::MenuFile(ID3D12GraphicsCommandList* pCmd)
     // 保存処理.
     if (!m_ModelBinary.empty())
     {
-        if (ImGui::MenuItem((const char*)u8"名前を付けて保存"))
+        if (ImGui::MenuItem(asdx::ToChar(u8"名前を付けて保存")))
         {
             const char* filter = 
                 "Project Asura Model Binary (*.mdb)\0*.mdb\0";
@@ -779,7 +780,7 @@ void ModelViewer::MenuFile(ID3D12GraphicsCommandList* pCmd)
             }
         }
 
-        if (ImGui::MenuItem((const char*)u8"上書き保存"))
+        if (ImGui::MenuItem(asdx::ToChar(u8"上書き保存")))
         {
             SaveModelBinary(m_OutputPath.c_str());
         }
@@ -792,12 +793,12 @@ void ModelViewer::MenuFile(ID3D12GraphicsCommandList* pCmd)
 void ModelViewer::MenuView()
 {
     int mode = (int)m_DrawMode;
-    ImGui::Combo((const char*)u8"描画モード", &mode, kDrawModes, _countof(kDrawModes));
+    ImGui::Combo(asdx::ToChar(u8"描画モード"), &mode, kDrawModes, _countof(kDrawModes));
     m_DrawMode = mode;
 
-    ImGui::Checkbox((const char*)u8"ワイヤーフレーム", &m_EnableWireframe);
-    ImGui::Checkbox((const char*)u8"バウンディングスフィア表示", &m_DrawBoundingSphere);
-    ImGui::Checkbox((const char*)u8"ボーン表示", &m_DrawBones);
+    ImGui::Checkbox(asdx::ToChar(u8"ワイヤーフレーム"), &m_EnableWireframe);
+    ImGui::Checkbox(asdx::ToChar(u8"バウンディングスフィア表示"), &m_DrawBoundingSphere);
+    ImGui::Checkbox(asdx::ToChar(u8"ボーン表示"), &m_DrawBones);
 }
 
 //-----------------------------------------------------------------------------
@@ -806,7 +807,7 @@ void ModelViewer::MenuView()
 void ModelViewer::MenuHelp()
 {
     // バージョン情報.
-    if (ImGui::MenuItem((const char*)u8"バージョン情報"))
+    if (ImGui::MenuItem(asdx::ToChar(u8"バージョン情報")))
     {
         asdx::InfoDlg("Version Info",
             "ModelViewer ver 0.1\n"
@@ -815,7 +816,7 @@ void ModelViewer::MenuHelp()
     }
 
     // ライセンス情報.
-    if (ImGui::MenuItem((const char*)u8"ライセンス情報"))
+    if (ImGui::MenuItem(asdx::ToChar(u8"ライセンス情報")))
     {
     }
 }
@@ -837,7 +838,6 @@ void ModelViewer::RecreateModel()
 
     // 成功したら差し替え.
     m_Model.Attach(pModel);
-
 
     m_ModelInfo.MeshCount     = m_Model->GetMeshCount();
     m_ModelInfo.MaterialCount = m_Model->GetMaterialCount();

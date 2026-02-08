@@ -1,0 +1,14 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="../../../external/DirectXTex/DirectXTex/DirectXTex_Desktop_2022.vcxproj" Id="371b9fa9-4c90-4ac6-a123-aced756d6c77" />
+  <Project Path="../../../project/asdx12_2026.vcxproj" Id="2218c996-fe59-4e14-988f-c6a7250d5978">
+    <BuildType Solution="Debug|*" Project="DebugMD" />
+    <BuildType Solution="Release|*" Project="ReleaseMT" />
+    <Platform Project="x64" />
+  </Project>
+  <Project Path="../../TextureConverter/project/TextureConverterLib.vcxproj" Id="e549eb2f-2172-47b4-b323-f74909a9acf6" />
+  <Project Path="TextureViewer.vcxproj" Id="998ffd51-597d-4a1f-9753-130ef47c22a1" />
+</Solution>

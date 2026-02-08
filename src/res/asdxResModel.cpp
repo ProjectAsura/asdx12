@@ -339,10 +339,16 @@ int32_t BoneProxy::GetParentId(const res::Bone& bone)
 { return bone.Parent(); }
 
 //-----------------------------------------------------------------------------
-//      オフセット行列を取得します.
+//      バインドポーズ行列を取得します.
 //-----------------------------------------------------------------------------
-Matrix BoneProxy::GetOffsetMatrix(const res::Bone& bone)
-{ return *reinterpret_cast<const Matrix*>(bone.OffsetMatrix()); }
+Matrix BoneProxy::GetBindPoseMatrix(const res::Bone& bone)
+{ return *reinterpret_cast<const Matrix*>(bone.BindPose()); }
+
+//-----------------------------------------------------------------------------
+//      バインドポーズ逆行列を取得します.
+//-----------------------------------------------------------------------------
+Matrix BoneProxy::GetInverseBindPoseMatrix(const res::Bone& bone)
+{ return *reinterpret_cast<const Matrix*>(bone.InverseBindPose()); }
 
 //-----------------------------------------------------------------------------
 //      子ボーンID配列を取得します.

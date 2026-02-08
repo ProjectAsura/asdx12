@@ -6,7 +6,8 @@ table Bone
 {
     Name            : string (key);
     Parent          : int;
-    OffsetMatrix    : Float4x4;
+    BindPose        : Float4x4;
+    InverseBindPose : Float4x4;
     Children        : [int];
 }
 

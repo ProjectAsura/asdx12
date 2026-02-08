@@ -34,9 +34,10 @@ static constexpr uint32_t CURRENT_VERSION = 1u;  //!< 現在サポートされ�
 ///////////////////////////////////////////////////////////////////////////////
 struct BoneInfo
 {
-    int                 Index;          // Bone Index.
-    std::string         Name;           // Name of Bone.
-    asdx::Matrix        OffsetMatrix;   // Inverse Bind Pose Matrix.
+    int             Index;              // Bone Index.
+    std::string     Name;               // Name of Bone.
+    asdx::Matrix    BindPose;           // Bind Pose Matrix.
+    asdx::Matrix    InverseBindPose;    // Inverse Bind Pose Matrix.
 };
 
 //-----------------------------------------------------------------------------
@@ -134,8 +135,33 @@ void ParseMesh
                 info.Index = boneId;
                 info.Name  = boneName;
 
+                // バインドポーズ行列を求める.
+                auto& bindPose = bone->mOffsetMatrix.Inverse();
+
                 // Row-Majorなのでそのまま突っ込めばいい.
-                info.OffsetMatrix = asdx::Matrix(
+                info.BindPose = asdx::Matrix(
+                    bindPose.a1,
+                    bindPose.a2,
+                    bindPose.a3,
+                    bindPose.a4,
+
+                    bindPose.b1,
+                    bindPose.b2,
+                    bindPose.b3,
+                    bindPose.b4,
+
+                    bindPose.c1,
+                    bindPose.c2,
+                    bindPose.c3,
+                    bindPose.c4,
+
+                    bindPose.d1,
+                    bindPose.d2,
+                    bindPose.d3,
+                    bindPose.d4);
+
+                // Row-Majorなのでそのまま突っ込めばいい.
+                info.InverseBindPose = asdx::Matrix(
                     bone->mOffsetMatrix.a1,
                     bone->mOffsetMatrix.a2,
                     bone->mOffsetMatrix.a3,
@@ -271,6 +297,16 @@ void ParseMesh
                         iw = boneId;
                     }
                     break;
+                }
+
+                // 正規化
+                auto mag = sqrtf((fx * fx) + (fy * fy) + (fz * fz) + (fw * fw));
+                if (mag > 0.0f)
+                {
+                    fx /= mag;
+                    fy /= mag;
+                    fz /= mag;
+                    fw /= mag;
                 }
 
                 boneWeights[vertId] = asdx::res::Float4(fx, fy, fz, fw);
@@ -465,8 +501,9 @@ bool ModelConverter::Convert(const std::string& path, std::vector<uint8_t>& bina
     bones.reserve(boneMap.size());
     for(auto& itr : boneMap)
     {
-        auto mtx = ToFloat4x4(itr.second.OffsetMatrix);
-        auto name = itr.second.Name.c_str();
+        auto bindPose    = ToFloat4x4(itr.second.BindPose);
+        auto invBindPose = ToFloat4x4(itr.second.InverseBindPose);
+        auto name        = itr.second.Name.c_str();
 
         int32_t parentId = -1;
         std::vector<int32_t> childrenIds;
@@ -503,7 +540,8 @@ bool ModelConverter::Convert(const std::string& path, std::vector<uint8_t>& bina
             builder,
             name,
             parentId,
-            &mtx,
+            &bindPose,
+            &invBindPose,
             &childrenIds);
 
         // ボーンを追加.

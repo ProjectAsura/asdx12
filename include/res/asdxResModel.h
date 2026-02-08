@@ -15,10 +15,12 @@
 #include <fnd/asdxStringView.h>
 
 
-namespace asdx::res {
-struct Mesh;
-struct Bone;
-}//namespace asdx::res
+//-----------------------------------------------------------------------------
+// Forward Declarations.
+//-----------------------------------------------------------------------------
+namespace asdx::res { struct Mesh; }
+namespace asdx::res { struct Bone; }
+
 
 namespace asdx {
 
@@ -265,9 +267,14 @@ public:
     static int32_t GetParentId(const res::Bone& bone);
 
     //-------------------------------------------------------------------------
-    //! @brief      オフセット行列を取得します.
+    //! @brief      バインドポーズ行列を取得します.
     //-------------------------------------------------------------------------
-    static Matrix GetOffsetMatrix(const res::Bone& bone);
+    static Matrix GetBindPoseMatrix(const res::Bone& bone);
+
+    //-------------------------------------------------------------------------
+    //! @brief      バインドポーズ逆行列を取得します.
+    //-------------------------------------------------------------------------
+    static Matrix GetInverseBindPoseMatrix(const res::Bone& bone);
 
     //-------------------------------------------------------------------------
     //! @brief      子ボーンID配列を取得します.

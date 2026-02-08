@@ -913,7 +913,7 @@ LRESULT CALLBACK App::MsgProc(HWND hWnd, UINT uMsg, WPARAM wp, LPARAM lp)
                 x = pt.x;
                 y = pt.y;
 
-                wheelDelta += int(HIWORD(wp));
+                wheelDelta += GET_WHEEL_DELTA_WPARAM(wp);
             }
 
             int  mask = LOWORD( wp );

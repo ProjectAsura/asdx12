@@ -191,56 +191,56 @@ void TextureViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
         auto flags = ImGuiWindowFlags_NoMove
             | ImGuiWindowFlags_NoResize
             | ImGuiWindowFlags_NoTitleBar;
-        if (ImGui::Begin(u8"Info", nullptr, flags))
+        if (ImGui::Begin(asdx::ToChar(u8"Info"), nullptr, flags))
         {
-            ImGui::Text(u8"FPS : %.2f", GetFPS());
+            ImGui::Text(asdx::ToChar(u8"FPS : %.2f"), GetFPS());
             ImGui::Separator();
 
             const auto& meta = m_ScratchImage.GetMetadata();
 
-            ImGui::BeginTable(u8"TextureStatus", 2);
+            ImGui::BeginTable(asdx::ToChar(u8"TextureStatus"), 2);
 
             ImGui::TableNextRow();
             ImGui::TableSetColumnIndex(0);
-            ImGui::Text(u8"Dimension");
+            ImGui::Text(asdx::ToChar(u8"Dimension"));
             ImGui::TableSetColumnIndex(1);
-            ImGui::Text(u8"%s", ToString(meta.dimension));
+            ImGui::Text(asdx::ToChar(u8"%s"), ToString(meta.dimension));
 
             ImGui::TableNextRow();
             ImGui::TableSetColumnIndex(0);
-            ImGui::Text(u8"Width");
+            ImGui::Text(asdx::ToChar(u8"Width"));
             ImGui::TableSetColumnIndex(1);
-            ImGui::Text(u8"%zu", meta.width);
+            ImGui::Text(asdx::ToChar(u8"%zu"), meta.width);
 
             ImGui::TableNextRow();
             ImGui::TableSetColumnIndex(0);
-            ImGui::Text(u8"Height");
+            ImGui::Text(asdx::ToChar(u8"Height"));
             ImGui::TableSetColumnIndex(1);
-            ImGui::Text(u8"%zu", meta.height);
+            ImGui::Text(asdx::ToChar(u8"%zu"), meta.height);
 
             ImGui::TableNextRow();
             ImGui::TableSetColumnIndex(0);
-            ImGui::Text(u8"Depth");
+            ImGui::Text(asdx::ToChar(u8"Depth"));
             ImGui::TableSetColumnIndex(1);
-            ImGui::Text(u8"%zu", meta.depth);
+            ImGui::Text(asdx::ToChar(u8"%zu"), meta.depth);
 
             ImGui::TableNextRow();
             ImGui::TableSetColumnIndex(0);
-            ImGui::Text(u8"ArraySize");
+            ImGui::Text(asdx::ToChar(u8"ArraySize"));
             ImGui::TableSetColumnIndex(1);
-            ImGui::Text(u8"%zu", meta.arraySize);
+            ImGui::Text(asdx::ToChar(u8"%zu"), meta.arraySize);
 
             ImGui::TableNextRow();
             ImGui::TableSetColumnIndex(0);
-            ImGui::Text(u8"MipLevels");
+            ImGui::Text(asdx::ToChar(u8"MipLevels"));
             ImGui::TableSetColumnIndex(1);
-            ImGui::Text(u8"%zu", meta.mipLevels);
+            ImGui::Text(asdx::ToChar(u8"%zu"), meta.mipLevels);
 
             ImGui::TableNextRow();
             ImGui::TableSetColumnIndex(0);
-            ImGui::Text(u8"Format");
+            ImGui::Text(asdx::ToChar(u8"Format"));
             ImGui::TableSetColumnIndex(1);
-            ImGui::Text(u8"%s", asdx::ToString(meta.format));
+            ImGui::Text(asdx::ToChar(u8"%s"), asdx::ToString(meta.format));
 
             ImGui::EndTable();
  
@@ -259,11 +259,11 @@ void TextureViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
     // コンテキストメニュー.
     {
         if (ImGui::IsMouseClicked(1))
-        { ImGui::OpenPopup(u8"ContextMenu"); }
+        { ImGui::OpenPopup(asdx::ToChar(u8"ContextMenu")); }
 
-        if (ImGui::BeginPopup(u8"ContextMenu"))
+        if (ImGui::BeginPopup(asdx::ToChar(u8"ContextMenu")))
         {
-            if (ImGui::BeginMenu(u8"ファイル"))
+            if (ImGui::BeginMenu(asdx::ToChar(u8"ファイル")))
             {
                 MenuFile(pCmd);
                 ImGui::EndMenu();
@@ -271,13 +271,13 @@ void TextureViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
             // テクスチャが読み込まれているときのみ.
             if (m_ScratchImage.GetImageCount() > 0)
             {
-                if (ImGui::BeginMenu(u8"フォーマット"))
+                if (ImGui::BeginMenu(asdx::ToChar(u8"フォーマット")))
                 {
                     MenuFormat(pCmd);
                     ImGui::EndMenu();
                 }
             }
-            if (ImGui::BeginMenu(u8"ヘルプ"))
+            if (ImGui::BeginMenu(asdx::ToChar(u8"ヘルプ")))
             {
                 MenuHelp();
                 ImGui::EndMenu();
@@ -288,31 +288,31 @@ void TextureViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
 
     if (m_OpenConvert)
     {
-        ImGui::OpenPopup(u8"FormatConversion");
+        ImGui::OpenPopup(asdx::ToChar(u8"FormatConversion"));
         m_OpenConvert = false;
     }
 
     if (m_OpenResize)
     { 
-        ImGui::OpenPopup(u8"Resize");
+        ImGui::OpenPopup(asdx::ToChar(u8"Resize"));
         m_OpenResize = false;
     }
 
     auto doConvert = false;
     auto doResize  = false;
 
-    if (ImGui::BeginPopupModal(u8"FormatConversion"))
+    if (ImGui::BeginPopupModal(asdx::ToChar(u8"FormatConversion")))
     {
-        ImGui::Text(u8"変換前フォーマット : %s", asdx::ToString(m_ScratchImage.GetMetadata().format));
-        ImGui::Combo(u8"変換後フォーマット", &m_FormatIndex, EnumrateFormat, nullptr, GetFormatCount());
+        ImGui::Text(asdx::ToChar(u8"変換前フォーマット : %s"), asdx::ToString(m_ScratchImage.GetMetadata().format));
+        ImGui::Combo(asdx::ToChar(u8"変換後フォーマット"), &m_FormatIndex, EnumrateFormat, nullptr, GetFormatCount());
 
         auto close = false;
-        if (ImGui::Button(u8"キャンセル"))
+        if (ImGui::Button(asdx::ToChar(u8"キャンセル")))
         {
             close = true;
         }
         ImGui::SameLine();
-        if (ImGui::Button(u8"OK"))
+        if (ImGui::Button(asdx::ToChar(u8"OK")))
         {
             doConvert = true;
             close = true;
@@ -324,24 +324,24 @@ void TextureViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
         ImGui::EndPopup();
     }
 
-    if (ImGui::BeginPopupModal(u8"Resize"))
+    if (ImGui::BeginPopupModal(asdx::ToChar(u8"Resize")))
     {
         int w = int(m_ResizedWidth);
         int h = int(m_ResizedHeight);
 
-        if (ImGui::InputInt(u8"横幅", &w))
+        if (ImGui::InputInt(asdx::ToChar(u8"横幅"), &w))
         { m_ResizedWidth = size_t(w); }
 
-        if (ImGui::InputInt(u8"高さ", &h))
+        if (ImGui::InputInt(asdx::ToChar(u8"高さ"), &h))
         { m_ResizedHeight = size_t(h); }
 
         auto close = false;
-        if (ImGui::Button(u8"キャンセル"))
+        if (ImGui::Button(asdx::ToChar(u8"キャンセル")))
         {
             close = true;
         }
         ImGui::SameLine();
-        if (ImGui::Button(u8"OK"))
+        if (ImGui::Button(asdx::ToChar(u8"OK")))
         {
             doResize = true;
             close = true;
@@ -587,7 +587,7 @@ void TextureViewer::OnDrop(const wchar_t** dropFiles, uint32_t fileCount)
 //-----------------------------------------------------------------------------
 void TextureViewer::MenuFile(ID3D12GraphicsCommandList* pCmd)
 {
-    if (ImGui::MenuItem(u8"ファイルを開く"))
+    if (ImGui::MenuItem(asdx::ToChar(u8"ファイルを開く")))
     {
         const char* filter = 
             "テクスチャファイル(*.txb, *.dds, *.tga, *.hdr, *.bmp, *.jpg, *.jpeg, *.png, *.tif, *.tiff, *.gif, *.hdp)\0*.txb;*.dds;*.tga;*.hdr;*.bmp;*.jpg;*.jpeg;*.png;*.tif;*.tiff;*.gif;*.hdp;*.jxr;*.wdp;*.heif;*.heic\0"
@@ -614,7 +614,7 @@ void TextureViewer::MenuFile(ID3D12GraphicsCommandList* pCmd)
             { RecreateTexture(pCmd); }
         }
     }
-    if (ImGui::MenuItem(u8"名前を付けて保存"))
+    if (ImGui::MenuItem(asdx::ToChar(u8"名前を付けて保存")))
     {
         const char* filter = 
             "Project Asura Texture Binary(*.txb)\0*.txb\0"
@@ -639,7 +639,7 @@ void TextureViewer::MenuFile(ID3D12GraphicsCommandList* pCmd)
             SaveScratchImage(wpath.c_str());
         }
     }
-    if (ImGui::MenuItem(u8"上書き保存"))
+    if (ImGui::MenuItem(asdx::ToChar(u8"上書き保存")))
     {
         auto wpath = asdx::ToStringW(m_OutputPath);
         SaveScratchImage(wpath.c_str());
@@ -653,7 +653,7 @@ void TextureViewer::MenuFormat(ID3D12GraphicsCommandList* pCmd)
 {
     assert(m_ScratchImage.GetImageCount() > 0);
 
-    if (ImGui::MenuItem(u8"ミップマップ生成"))
+    if (ImGui::MenuItem(asdx::ToChar(u8"ミップマップ生成")))
     {
         DirectX::ScratchImage scratchImage;
 
@@ -666,12 +666,12 @@ void TextureViewer::MenuFormat(ID3D12GraphicsCommandList* pCmd)
             RecreateTexture(pCmd);
         }
     }
-    if (ImGui::MenuItem(u8"フォーマット変換"))
+    if (ImGui::MenuItem(asdx::ToChar(u8"フォーマット変換")))
     {
         m_OpenConvert = true;
         m_FormatIndex = GetFormatIndex(m_ScratchImage.GetMetadata().format);
     }
-    if (ImGui::MenuItem(u8"テクスチャをリサイズ"))
+    if (ImGui::MenuItem(asdx::ToChar(u8"テクスチャをリサイズ")))
     {
         m_OpenResize = true;
     }
@@ -682,14 +682,14 @@ void TextureViewer::MenuFormat(ID3D12GraphicsCommandList* pCmd)
 //-----------------------------------------------------------------------------
 void TextureViewer::MenuHelp()
 {
-    if (ImGui::MenuItem(u8"バージョン情報"))
+    if (ImGui::MenuItem(asdx::ToChar(u8"バージョン情報")))
     {
         asdx::InfoDlg("Version Info",
             "TextureViewer ver 0.1\n"
             "Build 0.1\n"
             "Copyright(c) Project Asura.");
     }
-    if (ImGui::MenuItem(u8"ライセンス情報"))
+    if (ImGui::MenuItem(asdx::ToChar(u8"ライセンス情報")))
     {
     }
 }
