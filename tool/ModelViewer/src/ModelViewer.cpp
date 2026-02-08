@@ -394,13 +394,16 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
             auto offset = m_Model->GetMeshCount() + 1;
             for(auto i=0u; i<m_Model->GetBoneCount(); ++i)
             {
-                auto bone = m_Model->GetBone(i);
+                auto& bone = m_Model->GetBone(i);
                 uint32_t index = uint32_t(offset + i);
 
-                asdx::Matrix matrix = bone.OffsetMatrix;
-                if (bone.ParentId != -1)
+                auto matrix = asdx::BoneProxy::GetOffsetMatrix(bone);
+                auto parentId = asdx::BoneProxy::GetParentId(bone);
+                if (parentId != -1)
                 {
-                    matrix = m_Model->GetBone(bone.ParentId).OffsetMatrix * matrix;
+                    auto& parentBone   = m_Model->GetBone(parentId);
+                    auto  parentMatrix = asdx::BoneProxy::GetOffsetMatrix(parentBone);
+                    matrix = parentMatrix * matrix;
                 }
 
                 m_ShapeParams.SetWorld(index, matrix);

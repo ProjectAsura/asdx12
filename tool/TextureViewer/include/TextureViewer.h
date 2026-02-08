@@ -56,7 +56,7 @@ private:
     asdx::SpriteRenderer    m_SpriteRenderer;
     asdx::Sampler           m_PointClamp;
     asdx::Sampler           m_LinearClamp;
-    asdx::Texture           m_Texture;
+    asdx::Texture*          m_Texture = nullptr;
     DirectX::ScratchImage   m_ScratchImage;
     std::string             m_InputPath;
     std::string             m_OutputPath;

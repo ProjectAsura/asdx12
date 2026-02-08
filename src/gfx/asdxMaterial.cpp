@@ -23,91 +23,80 @@ namespace asdx {
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
 Material::Material()
-: m_ConstantBuffer  (nullptr)
-, m_TextureCount    (0)
-, m_Textures        ()
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      デストラクタです.
 //-----------------------------------------------------------------------------
 Material::~Material()
-{ Reset(); }
+{ Term(); }
 
 //-----------------------------------------------------------------------------
-//      リセットします.
+//      初期化処理を行います.
 //-----------------------------------------------------------------------------
-void Material::Reset()
+bool Material::Init(uint64_t bufferSize, uint32_t textureCount)
 {
-    auto resource = m_ConstantBuffer.Detach();
-    Dispose(resource);
+    if (!m_Buffer.Init(bufferSize))
+    { return false; }
 
-    for(auto i=0; i<m_Textures.size(); ++i)
-    { m_Textures[i] = nullptr; }
+    m_Textures.resize(textureCount);
+    return true;
 }
 
 //-----------------------------------------------------------------------------
-//      定数バッファを設定します.
+//      終了処理を行います.
 //-----------------------------------------------------------------------------
-void Material::SetConstantBuffer(ID3D12Resource* pResource)
-{ m_ConstantBuffer = pResource; }
-
-//-----------------------------------------------------------------------------
-//      テクスチャ数を設定します.
-//-----------------------------------------------------------------------------
-void Material::SetTextureCount(uint32_t count)
+void Material::Term()
 {
-    assert(count < kMaxTextureCount);
-    m_TextureCount = count;
+    m_Buffer.Term();
+
+    m_Textures.clear();
+    m_Textures.shrink_to_fit();
 }
 
 //-----------------------------------------------------------------------------
 //      テクスチャを設定します.
 //-----------------------------------------------------------------------------
 void Material::SetTexture(uint32_t index, const Texture* pTexture)
-{
-    assert(index < m_TextureCount);
-    m_Textures[index] = pTexture;
-}
+{ m_Textures[index] = pTexture; }
 
 //-----------------------------------------------------------------------------
 //      定数バッファを取得します.
 //-----------------------------------------------------------------------------
-ID3D12Resource* Material::GetConstantBuffer() const
-{ return m_ConstantBuffer.GetPtr(); }
+ConstantBuffer& Material::GetBuffer()
+{ return m_Buffer; }
+
+//-----------------------------------------------------------------------------
+//      定数バッファを取得します.
+//-----------------------------------------------------------------------------
+const ConstantBuffer& Material::GetBuffer() const
+{ return m_Buffer; }
 
 //-----------------------------------------------------------------------------
 //      定数バッファのGPU仮想アドレスを取得します.
 //-----------------------------------------------------------------------------
 D3D12_GPU_VIRTUAL_ADDRESS Material::GetGpuAddress() const
-{
-    D3D12_GPU_VIRTUAL_ADDRESS result = {};
-    if (m_ConstantBuffer.GetPtr() != nullptr)
-    { result = m_ConstantBuffer->GetGPUVirtualAddress(); }
-    return result;
-}
+{ return m_Buffer.GetGpuAddress(); }
 
 //-----------------------------------------------------------------------------
 //      テクスチャ数を取得します.
 //-----------------------------------------------------------------------------
 uint32_t Material::GetTextureCount() const
-{ return m_TextureCount; }
+{ return uint32_t(m_Textures.size()); }
 
 //-----------------------------------------------------------------------------
 //      テクスチャを取得します.
 //-----------------------------------------------------------------------------
 const Texture* Material::GetTexture(uint32_t index) const
-{
-    assert(index < m_TextureCount);
-    return m_Textures[index];
-}
+{ return m_Textures[index]; }
 
 //-----------------------------------------------------------------------------
 //      GPUディスクリプタハンドルを取得します.
 //-----------------------------------------------------------------------------
 D3D12_GPU_DESCRIPTOR_HANDLE Material::GetGpuHandleSRV(uint32_t index) const
 {
-    assert(index < m_TextureCount);
+    if (m_Textures[index] == nullptr)
+        return {};
     return m_Textures[index]->GetGpuHandleSRV();
 }
 
@@ -116,7 +105,8 @@ D3D12_GPU_DESCRIPTOR_HANDLE Material::GetGpuHandleSRV(uint32_t index) const
 //-----------------------------------------------------------------------------
 uint32_t Material::GetBindlessIndexSRV(uint32_t index) const
 {
-    assert(index < m_TextureCount);
+    if (m_Textures[index] == nullptr)
+        return UINT32_MAX;
     return m_Textures[index]->GetBindlessIndexSRV();
 }
 

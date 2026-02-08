@@ -1,0 +1,8 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="ModelConverter.vcxproj" Id="f05ad1cf-edf9-4eb4-bc8f-df7aacf07a94" />
+  <Project Path="ModelConverterLib.vcxproj" Id="fc0db75a-4298-47de-813a-3123fdf35d4d" />
+</Solution>

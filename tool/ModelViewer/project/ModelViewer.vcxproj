@@ -42,13 +42,13 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -164,7 +164,7 @@
     <ClInclude Include="..\include\ModelViewer.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\project\asdx12.vcxproj">
+    <ProjectReference Include="..\..\..\project\asdx12_2026.vcxproj">
       <Project>{ecd906d6-5deb-4b5b-b919-05c147194c1d}</Project>
     </ProjectReference>
     <ProjectReference Include="..\..\ModelConverter\project\ModelConverterLib.vcxproj">

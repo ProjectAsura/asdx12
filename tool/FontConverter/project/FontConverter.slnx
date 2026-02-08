@@ -1,0 +1,9 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="../../../external/DirectXTex/DirectXTex/DirectXTex_Desktop_2022.vcxproj" Id="371b9fa9-4c90-4ac6-a123-aced756d6c77" />
+  <Project Path="FontConverter.vcxproj" Id="9b28e065-f9f0-44ce-b860-9d8b252bbd0c" />
+  <Project Path="FontConverterLib.vcxproj" Id="0ddf2399-cb08-43ba-b623-e8827d407a08" />
+</Solution>

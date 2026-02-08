@@ -147,7 +147,11 @@ void TextureViewer::OnTerm()
     m_PointClamp.Term();
     m_LinearClamp.Term();
     m_SpriteRenderer.Term();
-    m_Texture.Term();
+    if (m_Texture)
+    {
+        m_Texture->Release();
+        m_Texture = nullptr;
+    }
 
     m_ScratchImage.Release();
 
@@ -193,14 +197,60 @@ void TextureViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
             ImGui::Separator();
 
             const auto& meta = m_ScratchImage.GetMetadata();
-   
-            ImGui::Text(u8"Dimension : %s", ToString(meta.dimension));
-            ImGui::Text(u8"Width     : %zu", meta.width);
-            ImGui::Text(u8"Height    : %zu", meta.height);
-            ImGui::Text(u8"Depth     : %zu", meta.depth);
-            ImGui::Text(u8"ArraySize : %zu", meta.arraySize);
-            ImGui::Text(u8"MipLevels : %zu", meta.mipLevels);
-            ImGui::Text(u8"Format    : %s", asdx::ToString(meta.format));
+
+            ImGui::BeginTable(u8"TextureStatus", 2);
+
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text(u8"Dimension");
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Text(u8"%s", ToString(meta.dimension));
+
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text(u8"Width");
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Text(u8"%zu", meta.width);
+
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text(u8"Height");
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Text(u8"%zu", meta.height);
+
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text(u8"Depth");
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Text(u8"%zu", meta.depth);
+
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text(u8"ArraySize");
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Text(u8"%zu", meta.arraySize);
+
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text(u8"MipLevels");
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Text(u8"%zu", meta.mipLevels);
+
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text(u8"Format");
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Text(u8"%s", asdx::ToString(meta.format));
+
+            ImGui::EndTable();
+ 
+            //ImGui::Text(u8"Dimension : %s", ToString(meta.dimension));
+            //ImGui::Text(u8"Width     : %zu", meta.width);
+            //ImGui::Text(u8"Height    : %zu", meta.height);
+            //ImGui::Text(u8"Depth     : %zu", meta.depth);
+            //ImGui::Text(u8"ArraySize : %zu", meta.arraySize);
+            //ImGui::Text(u8"MipLevels : %zu", meta.mipLevels);
+            //ImGui::Text(u8"Format    : %s", asdx::ToString(meta.format));
 
             ImGui::End();
         }
@@ -440,7 +490,7 @@ void TextureViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
     pCmd->RSSetScissorRects(1, &m_ScissorRect);
 
     // テクスチャを描画.
-    if (m_Texture.GetGpuHandleSRV().ptr != 0)
+    if (m_Texture && m_Texture->GetGpuHandleSRV().ptr != 0)
     {
         auto& meta = m_ScratchImage.GetMetadata();
 
@@ -448,7 +498,7 @@ void TextureViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
         auto h = (m_Height < meta.height) ? m_Height : meta.height;
 
         m_SpriteRenderer.SetPipelineState(pCmd);
-        m_SpriteRenderer.SetTexture(m_Texture.GetGpuHandleSRV(), m_PointClamp.GetGpuHandle());
+        m_SpriteRenderer.SetTexture(m_Texture->GetGpuHandleSRV(), m_PointClamp.GetGpuHandle());
         m_SpriteRenderer.Add(0, 0, int(w), int(h));
     }
     m_SpriteRenderer.Draw(pCmd);
@@ -659,7 +709,11 @@ void TextureViewer::RecreateTexture(ID3D12GraphicsCommandList* pCmd)
     }
 
     // テクスチャを遅延解放.
-    m_Texture.Term();
+    if (m_Texture != nullptr)
+    {
+        m_Texture->Release();
+        m_Texture = nullptr;
+    }
 
     // テクスチャバイナリをロード.
     asdx::TextureBinary bin;
@@ -669,7 +723,7 @@ void TextureViewer::RecreateTexture(ID3D12GraphicsCommandList* pCmd)
     asdx::ResTexture res = bin.GetResource();
 
     // テクスチャ初期化.
-    if (!m_Texture.Init(pCmd, res))
+    if (!asdx::Texture::Create(res, &m_Texture))
     {
         ELOG("Error : Texture::Init() Failed.");
     }
@@ -709,7 +763,7 @@ bool TextureViewer::LoadScratchImage(const wchar_t* path)
 
     HRESULT hr = S_OK;
     DirectX::ScratchImage scratchImage;
-    if (ext == L"txb")
+    if (ext == L".txb")
     {
         std::vector<uint8_t> blob;
         if (!asdx::LoadW(path, blob))
@@ -726,21 +780,21 @@ bool TextureViewer::LoadScratchImage(const wchar_t* path)
 
         hr = S_OK;
     }
-    else if (ext == L"dds")
+    else if (ext == L".dds")
     {
         hr = DirectX::LoadFromDDSFile(path, DirectX::DDS_FLAGS_NONE, nullptr, scratchImage);
     }
-    else if (ext == L"tga")
+    else if (ext == L".tga")
     {
         hr = DirectX::LoadFromTGAFile(path, DirectX::TGA_FLAGS_NONE, nullptr, scratchImage);
     }
-    else if (ext == L"hdr")
+    else if (ext == L".hdr")
     {
         hr = DirectX::LoadFromHDRFile(path, nullptr, scratchImage);
     }
-    else if (ext == L"bmp" || ext == L"jpg" || ext == L"jpeg" || ext == L"png" || ext == L"tif" 
-          || ext == L"tiff" || ext == L"gif" || ext == L"hdp" || ext == L"wdp" || ext == L"jxr"
-          || ext == L"heif" || ext == L"heic")
+    else if (ext == L".bmp" || ext == L".jpg" || ext == L".jpeg" || ext == L".png" || ext == L".tif" 
+          || ext == L".tiff" || ext == L".gif" || ext == L".hdp" || ext == L".wdp" || ext == L".jxr"
+          || ext == L".heif" || ext == L".heic")
     {
         hr = DirectX::LoadFromWICFile(path, DirectX::WIC_FLAGS_NONE, nullptr, scratchImage);
     }
@@ -771,7 +825,7 @@ bool TextureViewer::SaveScratchImage(const wchar_t* path)
 
     HRESULT hr = S_OK;
     DirectX::ScratchImage scratchImage;
-    if (ext == L"txb")
+    if (ext == L".txb")
     {
         std::vector<uint8_t> blob;
         if (!asdx::TextureConverter::Convert(m_ScratchImage, blob))
@@ -788,7 +842,7 @@ bool TextureViewer::SaveScratchImage(const wchar_t* path)
 
         hr = S_OK;
     }
-    else if (ext == L"dds")
+    else if (ext == L".dds")
     {
         hr = DirectX::SaveToDDSFile(
             m_ScratchImage.GetImages(),
@@ -797,7 +851,7 @@ bool TextureViewer::SaveScratchImage(const wchar_t* path)
             DirectX::DDS_FLAGS_NONE,
             path);
     }
-    else if (ext == L"tga")
+    else if (ext == L".tga")
     {
         assert(m_ScratchImage.GetImageCount() > 0);
         auto images = m_ScratchImage.GetImages();
@@ -808,7 +862,7 @@ bool TextureViewer::SaveScratchImage(const wchar_t* path)
             path,
             &meta);
     }
-    else if (ext == L"hdr")
+    else if (ext == L".hdr")
     {
         assert(m_ScratchImage.GetImageCount() > 0);
         auto images = m_ScratchImage.GetImages();
@@ -816,7 +870,7 @@ bool TextureViewer::SaveScratchImage(const wchar_t* path)
             images[0],
             path);
     }
-    else if (ext == L"bmp")
+    else if (ext == L".bmp")
     {
         hr = DirectX::SaveToWICFile(
             m_ScratchImage.GetImages(),
@@ -825,7 +879,7 @@ bool TextureViewer::SaveScratchImage(const wchar_t* path)
             DirectX::GetWICCodec(DirectX::WIC_CODEC_BMP),
             path);
     }
-    else if (ext == L"jpg")
+    else if (ext == L".jpg")
     {
         hr = DirectX::SaveToWICFile(
             m_ScratchImage.GetImages(),
@@ -834,7 +888,7 @@ bool TextureViewer::SaveScratchImage(const wchar_t* path)
             DirectX::GetWICCodec(DirectX::WIC_CODEC_JPEG),
             path);
     }
-    else if (ext == L"png")
+    else if (ext == L".png")
     {
         hr = DirectX::SaveToWICFile(
             m_ScratchImage.GetImages(),
@@ -843,7 +897,7 @@ bool TextureViewer::SaveScratchImage(const wchar_t* path)
             DirectX::GetWICCodec(DirectX::WIC_CODEC_PNG),
             path);
     }
-    else if (ext == L"tif")
+    else if (ext == L".tif")
     {
         hr = DirectX::SaveToWICFile(
             m_ScratchImage.GetImages(),
@@ -852,7 +906,7 @@ bool TextureViewer::SaveScratchImage(const wchar_t* path)
             DirectX::GetWICCodec(DirectX::WIC_CODEC_TIFF),
             path);
     }
-    else if (ext == L"hdp" || ext == L"jxr" || ext == L"wdp")
+    else if (ext == L".hdp" || ext == L".jxr" || ext == L".wdp")
     {
         hr = DirectX::SaveToWICFile(
             m_ScratchImage.GetImages(),
@@ -861,7 +915,7 @@ bool TextureViewer::SaveScratchImage(const wchar_t* path)
             DirectX::GetWICCodec(DirectX::WIC_CODEC_WMP),
             path);
     }
-    else if (ext == L"heif" || ext == L"heic")
+    else if (ext == L".heif" || ext == L".heic")
     {
         hr = DirectX::SaveToWICFile(
             m_ScratchImage.GetImages(),
