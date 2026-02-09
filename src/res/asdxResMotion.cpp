@@ -84,28 +84,29 @@ const res::MotionClip* MotionBinary::FindClip(const char* name) const
     return res::GetMotionBinary(m_Blob.data())->Clips()->LookupByKey(name);
 }
 
-//=============================================================================
-// Functions.
-//=============================================================================
+
+///////////////////////////////////////////////////////////////////////////////
+// MotionTrackProxy class
+///////////////////////////////////////////////////////////////////////////////
 
 //-----------------------------------------------------------------------------
-//      ボーン名を取得します.
+//      トラック名を取得します.
 //-----------------------------------------------------------------------------
-const char* GetBoneName(const res::BoneAnimation* boneAnim)
+const char* MotionTrackProxy::GetName(const res::MotionTrack* track)
 {
-    assert(boneAnim != nullptr);
-    return boneAnim->BoneName()->c_str();
+    assert(track != nullptr);
+    return track->Name()->c_str();
 }
 
 //-----------------------------------------------------------------------------
 //      平行移動アニメーションキーフレームを検索します.
 //-----------------------------------------------------------------------------
-Vector3 FindTranslationKey(const res::BoneAnimation* boneAnim, float timeSec)
+Vector3 MotionTrackProxy::FindTranslationKey(const res::MotionTrack* track, float timeSec)
 {
-    assert(boneAnim != nullptr);
+    assert(track != nullptr);
     Vector3 result(0.0f, 0.0f, 0.0f);
 
-    auto frame = boneAnim->Positions()->LookupByKey(timeSec);
+    auto frame = track->Positions()->LookupByKey(timeSec);
     if (frame != nullptr)
     {
         result.x = frame->Value().X();
@@ -118,12 +119,12 @@ Vector3 FindTranslationKey(const res::BoneAnimation* boneAnim, float timeSec)
 //-----------------------------------------------------------------------------
 //      回転アニメーションキーフレームを検索します.
 //-----------------------------------------------------------------------------
-Quaternion FindRotationKey(const res::BoneAnimation* boneAnim, float timeSec)
+Quaternion MotionTrackProxy::FindRotationKey(const res::MotionTrack* track, float timeSec)
 {
-    assert(boneAnim != nullptr);
+    assert(track != nullptr);
     Quaternion result(0.0f, 0.0f, 0.0f, 0.0f);
 
-    auto frame = boneAnim->Rotations()->LookupByKey(timeSec);
+    auto frame = track->Rotations()->LookupByKey(timeSec);
     if (frame != nullptr)
     {
         result.x = frame->Value().X();
@@ -137,12 +138,12 @@ Quaternion FindRotationKey(const res::BoneAnimation* boneAnim, float timeSec)
 //-----------------------------------------------------------------------------
 //      拡縮アニメーションキーフレームを検索します.
 //-----------------------------------------------------------------------------
-Vector3 FindScaleKey(const res::BoneAnimation* boneAnim, float timeSec)
+Vector3 MotionTrackProxy::FindScaleKey(const res::MotionTrack* track, float timeSec)
 {
-    assert(boneAnim != nullptr);
+    assert(track != nullptr);
     Vector3 result(1.0f, 1.0f, 1.0f);
 
-    auto frame = boneAnim->Scalings()->LookupByKey(timeSec);
+    auto frame = track->Scalings()->LookupByKey(timeSec);
     if (frame != nullptr)
     {
         result.x = frame->Value().X();
@@ -155,13 +156,13 @@ Vector3 FindScaleKey(const res::BoneAnimation* boneAnim, float timeSec)
 //-----------------------------------------------------------------------------
 //      ローカル変換行列を求めます.
 //-----------------------------------------------------------------------------
-Matrix ComputeLocalTransform(const res::BoneAnimation* boneAnim, float timeSec)
+Matrix MotionTrackProxy::CalcLocalTransform(const res::MotionTrack* track, float timeSec)
 {
-    assert(boneAnim != nullptr);
+    assert(track != nullptr);
 
-    auto S = FindScaleKey      (boneAnim, timeSec);
-    auto R = FindRotationKey   (boneAnim, timeSec);
-    auto T = FindTranslationKey(boneAnim, timeSec);
+    auto S = FindScaleKey      (track, timeSec);
+    auto R = FindRotationKey   (track, timeSec);
+    auto T = FindTranslationKey(track, timeSec);
 
     Matrix result;
     result  = Matrix::CreateScale(S);
@@ -170,10 +171,15 @@ Matrix ComputeLocalTransform(const res::BoneAnimation* boneAnim, float timeSec)
     return result;
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+// MotionClipProxy class
+///////////////////////////////////////////////////////////////////////////////
+
 //-----------------------------------------------------------------------------
 //      クリップ名を取得します.
 //-----------------------------------------------------------------------------
-const char* GetMotionClipName(const res::MotionClip* clip)
+const char* MotionClipProxy::GetName(const res::MotionClip* clip)
 {
     assert(clip != nullptr);
     return clip->Name()->c_str();
@@ -182,7 +188,7 @@ const char* GetMotionClipName(const res::MotionClip* clip)
 //-----------------------------------------------------------------------------
 //      アニメーション間隔を取得します.
 //-----------------------------------------------------------------------------
-float GetDuration(const res::MotionClip* clip)
+float MotionClipProxy::GetDuration(const res::MotionClip* clip)
 {
     assert(clip != nullptr);
     return clip->Duration();
@@ -191,37 +197,37 @@ float GetDuration(const res::MotionClip* clip)
 //-----------------------------------------------------------------------------
 //      1秒あたりの処理時間を取得します.
 //-----------------------------------------------------------------------------
-float GetTicksPerSecond(const res::MotionClip* clip)
+float MotionClipProxy::GetTicksPerSecond(const res::MotionClip* clip)
 {
     assert(clip != nullptr);
     return clip->TicksPerSecond();
 }
 
 //-----------------------------------------------------------------------------
-//      ボーンアニメーション数を取得します.
+//      モーショントラック数を取得します.
 //-----------------------------------------------------------------------------
-uint32_t GetBoneAnimationCount(const res::MotionClip* clip)
+uint32_t MotionClipProxy::GetTrackCount(const res::MotionClip* clip)
 {
     assert(clip != nullptr);
-    return clip->Bones()->size();
+    return clip->Tracks()->size();
 }
 
 //-----------------------------------------------------------------------------
-//      ボーンアニメーションを取得します.
+//      モーショントラックを取得します.
 //-----------------------------------------------------------------------------
-const res::BoneAnimation* GetBoneAnimation(const res::MotionClip* clip, uint32_t index)
+const res::MotionTrack* MotionClipProxy::GetTrack(const res::MotionClip* clip, uint32_t index)
 {
     assert(clip != nullptr);
-    return clip->Bones()->Get(index);
+    return clip->Tracks()->Get(index);
 }
 
 //-----------------------------------------------------------------------------
-//      ボーンアニメーションを検索します.
+//      モーショントラックを検索します.
 //-----------------------------------------------------------------------------
-const res::BoneAnimation* FindBoneAnimation(const res::MotionClip* clip, const char* name)
+const res::MotionTrack* MotionClipProxy::FindTrack(const res::MotionClip* clip, const char* name)
 {
     assert(clip != nullptr);
-    return clip->Bones()->LookupByKey(name);
+    return clip->Tracks()->LookupByKey(name);
 }
 
 } // namespace asdx

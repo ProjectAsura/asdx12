@@ -140,7 +140,7 @@ bool MotionConverter::Convert(const std::string& path, std::vector<uint8_t>& bin
         auto ticksPerSecond = float(srcAnim->mTicksPerSecond);
 
         // ボーンアニメーションを変換.
-        std::vector<flatbuffers::Offset<asdx::res::BoneAnimation>> bones;
+        std::vector<flatbuffers::Offset<asdx::res::MotionTrack>> bones;
         for(auto j=0u; j<srcAnim->mNumChannels; ++j)
         {
             const auto srcCh = srcAnim->mChannels[j];
@@ -175,7 +175,7 @@ bool MotionConverter::Convert(const std::string& path, std::vector<uint8_t>& bin
             }
 
             // ボーンアニメーションを生成.
-            auto bone = asdx::res::CreateBoneAnimationDirect(
+            auto bone = asdx::res::CreateMotionTrackDirect(
                 builder,
                 srcCh->mNodeName.C_Str(),
                 &positions,

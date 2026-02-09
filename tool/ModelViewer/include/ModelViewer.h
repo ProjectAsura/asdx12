@@ -15,6 +15,7 @@
 #include <gfx/asdxPipelineState.h>
 #include <gfx/asdxBuffer.h>
 #include <gfx/asdxShape.h>
+#include <gfx/asdxMotionPlayer.h>
 #include <imgui.h>
 #include <ImGuizmo.h>
 
@@ -85,6 +86,7 @@ private:
     asdx::SphereShape                   m_SphereShape;
     asdx::ShapeStates                   m_ShapeStates;
     asdx::ShapeParams                   m_ShapeParams;
+    asdx::MotionPlayer                  m_MotionPlayer;
 
     //=========================================================================
     // private methods.

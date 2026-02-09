@@ -384,6 +384,9 @@
     <ClCompile Include="..\src\edit\asdxGitHelper.cpp">
       <Filter>ソース ファイル\edit</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\gfx\asdxMotionPlayer.cpp">
+      <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\external\imgui\imconfig.h">
@@ -688,6 +691,9 @@
     </ClInclude>
     <ClInclude Include="..\include\edit\asdxGitHelper.h">
       <Filter>ヘッダー ファイル\edit</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\gfx\asdxMotionPlayer.h">
+      <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

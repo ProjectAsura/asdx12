@@ -253,6 +253,8 @@ bool ModelViewer::OnInit()
 //-----------------------------------------------------------------------------
 void ModelViewer::OnTerm()
 {
+    m_MotionPlayer.Term();
+
     m_SphereShape.Term();
     m_BoneShape  .Term();
     m_ShapeParams.Term();
@@ -280,6 +282,9 @@ void ModelViewer::OnTerm()
 void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
 {
     auto pCmd = m_GfxCmdList.Reset();
+
+    auto root = asdx::Matrix::CreateIdentity();
+    m_MotionPlayer.Update(float(args.ElapsedTimeSec), root);
 
     asdx::GuiMgr::Instance().Update(m_Width, m_Height);
 
@@ -392,21 +397,12 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
         // ボーン表示.
         if (m_DrawBones)
         {
+            auto bones  = m_MotionPlayer.GetLocalTransforms();
             auto offset = m_Model->GetMeshCount() + 1;
-            for(auto i=0u; i<m_Model->GetBoneCount(); ++i)
+            for(auto i=0u; i<bones.size(); ++i)
             {
-                auto& bone = m_Model->GetBone(i);
-                uint32_t index = uint32_t(offset + i);
-
-                auto matrix   = asdx::BoneProxy::GetBindPoseMatrix(bone);
-                auto parentId = asdx::BoneProxy::GetParentId(bone);
-                if (parentId != -1)
-                {
-                    auto& parentBone   = m_Model->GetBone(parentId);
-                    auto  parentMatrix = asdx::BoneProxy::GetBindPoseMatrix(parentBone);
-                    matrix = parentMatrix * matrix;
-                }
-
+                const auto  index  = uint32_t(offset + i);
+                const auto& matrix = bones[i];
                 m_ShapeParams.SetWorld(index, matrix);
                 m_ShapeParams.SetColor(index, asdx::Vector4(0.0f, 0.0f, 0.75f, 1.0f));
             }
@@ -637,6 +633,29 @@ void ModelViewer::OnKey(const asdx::App::KeyEventArgs& args)
             }
             break;
 
+        // ワールド行列リセット.
+        case 'Z':
+            {
+                m_ModelTranslation  = asdx::Vector3(0.0f, 0.0f, 0.0f);
+                m_ModelRotation     = asdx::Vector3(0.0f, 0.0f, 0.0f);
+                m_ModelScale        = asdx::Vector3(1.0f, 1.0f, 1.0f);
+            }
+            break;
+
+        // ワイヤーフレーム.
+        case '4':
+            {
+                m_EnableWireframe = true;
+            }
+            break;
+
+        // シェーディング
+        case '5':
+            {
+                m_EnableWireframe = false;
+            }
+            break;
+
         default:
             break;
         }
@@ -713,8 +732,9 @@ void ModelViewer::MenuFile(ID3D12GraphicsCommandList* pCmd)
     if (ImGui::MenuItem((const char*)u8"ファイルを開く"))
     {
         const char* filter = 
-            "モデルファイル(*.mdb, *.dae, *.xml, *.3ds, *.ase *.gtlf, *.fbx, *.ply, *.dxf, *.smd, *.vta, *.mdl, *.md2, *.md3, *.md5mesh, *.md5anim, *.x, *.obj, *.ms3d, *.lwo, *.lows)\0*.mdb;*.dae;*.xml;*.3ds;*.ase;*.gltf;*.fbx;*.ply;*.dxf;*.smd;*.vta;*.mdl;*.md2;*.md3;*.md5mesh;*.md5anim;*.x;*.obj;*.ter;*.ms3d;*.lxo;*.lwo;*.lws;*.pmd;*.pmx;*.vmd\0"
+            "モデルファイル(*.mdb, *.dae, *.blend, *.xml, *.3ds, *.ase *.gtlf, *.fbx, *.ply, *.dxf, *.smd, *.vta, *.mdl, *.md2, *.md3, *.md5mesh, *.md5anim, *.x, *.obj, *.ms3d, *.lwo, *.lows)\0*.mdb;*.dae;*.xml;*.blend;*.3ds;*.ase;*.gltf;*.fbx;*.ply;*.dxf;*.smd;*.vta;*.mdl;*.md2;*.md3;*.md5mesh;*.md5anim;*.x;*.obj;*.ter;*.ms3d;*.lxo;*.lwo;*.lws;*.pmd;*.pmx;*.vmd;*.usd;*.usda;*.usdc;*.usdz\0"
             "Project Asura Model Binary (*.mdb)\0*.mdb\0"
+            "Blender Format (*.blend)\0*.blend\0"
             "Collada (*.dae, *.xml)\0*.dae;*.xml\0"
             "3D Studio Max 3DS (*.3ds)\0*.3ds\0"
             "3D Studio Max ASE (*.ase)\0*.ase\0"
@@ -735,6 +755,7 @@ void ModelViewer::MenuFile(ID3D12GraphicsCommandList* pCmd)
             "LightWave Model (*.lwo)\0*.lwo\0"
             "LightWave Scene (*.lws)\0*.lws\0"
             "MikuMikuDance (*.pmd, *.pmx, *.vmd)\0*.pmd;*pmx;*.vmd\0"
+            "Universal Scene Description (*.usd, *.usda, *.usdc, *.usdz)\0*.usd;*.usda;*.usdc;*.usdz\0"
             "全てのファイル (*.*)\0*.*\0\0";
 
         asdx::fs::path path;
@@ -854,6 +875,8 @@ void ModelViewer::RecreateModel()
     }
 
     auto sphere = m_Model->GetBoundingSphere();
+
+    // カメラを初期化.
     m_Camera.Init(
         asdx::Vector3(0.0f, 0.0f, sphere.Radius * 3.0f),
         asdx::Vector3(0.0f, 0.0f, 0.0f),
@@ -861,6 +884,11 @@ void ModelViewer::RecreateModel()
         0.1f,
         10000.0f);
     m_Camera.Present();
+
+    m_MotionPlayer.Term();
+
+    // モーションプレイヤーを初期化.
+    m_MotionPlayer.Init(pModel);
 }
 
 //-----------------------------------------------------------------------------

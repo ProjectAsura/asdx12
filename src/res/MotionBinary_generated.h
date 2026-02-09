@@ -22,8 +22,8 @@ struct KeyFloat3;
 
 struct KeyQuaternion;
 
-struct BoneAnimation;
-struct BoneAnimationBuilder;
+struct MotionTrack;
+struct MotionTrackBuilder;
 
 struct MotionClip;
 struct MotionClipBuilder;
@@ -89,27 +89,27 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) KeyQuaternion FLATBUFFERS_FINAL_CLASS {
 };
 FLATBUFFERS_STRUCT_END(KeyQuaternion, 20);
 
-struct BoneAnimation FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef BoneAnimationBuilder Builder;
+struct MotionTrack FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef MotionTrackBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_BONENAME = 4,
+    VT_NAME = 4,
     VT_POSITIONS = 6,
     VT_ROTATIONS = 8,
     VT_SCALINGS = 10
   };
-  const ::flatbuffers::String *BoneName() const {
-    return GetPointer<const ::flatbuffers::String *>(VT_BONENAME);
+  const ::flatbuffers::String *Name() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_NAME);
   }
-  bool KeyCompareLessThan(const BoneAnimation * const o) const {
-    return *BoneName() < *o->BoneName();
+  bool KeyCompareLessThan(const MotionTrack * const o) const {
+    return *Name() < *o->Name();
   }
-  int KeyCompareWithValue(const char *_BoneName) const {
-    return strcmp(BoneName()->c_str(), _BoneName);
+  int KeyCompareWithValue(const char *_Name) const {
+    return strcmp(Name()->c_str(), _Name);
   }
   template<typename StringType>
-  int KeyCompareWithValue(const StringType& _BoneName) const {
-    if (BoneName()->c_str() < _BoneName) return -1;
-    if (_BoneName < BoneName()->c_str()) return 1;
+  int KeyCompareWithValue(const StringType& _Name) const {
+    if (Name()->c_str() < _Name) return -1;
+    if (_Name < Name()->c_str()) return 1;
     return 0;
   }
   const ::flatbuffers::Vector<const asdx::res::KeyFloat3 *> *Positions() const {
@@ -123,8 +123,8 @@ struct BoneAnimation FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyOffsetRequired(verifier, VT_BONENAME) &&
-           verifier.VerifyString(BoneName()) &&
+           VerifyOffsetRequired(verifier, VT_NAME) &&
+           verifier.VerifyString(Name()) &&
            VerifyOffset(verifier, VT_POSITIONS) &&
            verifier.VerifyVector(Positions()) &&
            VerifyOffset(verifier, VT_ROTATIONS) &&
@@ -135,61 +135,61 @@ struct BoneAnimation FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   }
 };
 
-struct BoneAnimationBuilder {
-  typedef BoneAnimation Table;
+struct MotionTrackBuilder {
+  typedef MotionTrack Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  void add_BoneName(::flatbuffers::Offset<::flatbuffers::String> BoneName) {
-    fbb_.AddOffset(BoneAnimation::VT_BONENAME, BoneName);
+  void add_Name(::flatbuffers::Offset<::flatbuffers::String> Name) {
+    fbb_.AddOffset(MotionTrack::VT_NAME, Name);
   }
   void add_Positions(::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::KeyFloat3 *>> Positions) {
-    fbb_.AddOffset(BoneAnimation::VT_POSITIONS, Positions);
+    fbb_.AddOffset(MotionTrack::VT_POSITIONS, Positions);
   }
   void add_Rotations(::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::KeyQuaternion *>> Rotations) {
-    fbb_.AddOffset(BoneAnimation::VT_ROTATIONS, Rotations);
+    fbb_.AddOffset(MotionTrack::VT_ROTATIONS, Rotations);
   }
   void add_Scalings(::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::KeyFloat3 *>> Scalings) {
-    fbb_.AddOffset(BoneAnimation::VT_SCALINGS, Scalings);
+    fbb_.AddOffset(MotionTrack::VT_SCALINGS, Scalings);
   }
-  explicit BoneAnimationBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+  explicit MotionTrackBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  ::flatbuffers::Offset<BoneAnimation> Finish() {
+  ::flatbuffers::Offset<MotionTrack> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<BoneAnimation>(end);
-    fbb_.Required(o, BoneAnimation::VT_BONENAME);
+    auto o = ::flatbuffers::Offset<MotionTrack>(end);
+    fbb_.Required(o, MotionTrack::VT_NAME);
     return o;
   }
 };
 
-inline ::flatbuffers::Offset<BoneAnimation> CreateBoneAnimation(
+inline ::flatbuffers::Offset<MotionTrack> CreateMotionTrack(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    ::flatbuffers::Offset<::flatbuffers::String> BoneName = 0,
+    ::flatbuffers::Offset<::flatbuffers::String> Name = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::KeyFloat3 *>> Positions = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::KeyQuaternion *>> Rotations = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::KeyFloat3 *>> Scalings = 0) {
-  BoneAnimationBuilder builder_(_fbb);
+  MotionTrackBuilder builder_(_fbb);
   builder_.add_Scalings(Scalings);
   builder_.add_Rotations(Rotations);
   builder_.add_Positions(Positions);
-  builder_.add_BoneName(BoneName);
+  builder_.add_Name(Name);
   return builder_.Finish();
 }
 
-inline ::flatbuffers::Offset<BoneAnimation> CreateBoneAnimationDirect(
+inline ::flatbuffers::Offset<MotionTrack> CreateMotionTrackDirect(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    const char *BoneName = nullptr,
+    const char *Name = nullptr,
     std::vector<asdx::res::KeyFloat3> *Positions = nullptr,
     std::vector<asdx::res::KeyQuaternion> *Rotations = nullptr,
     std::vector<asdx::res::KeyFloat3> *Scalings = nullptr) {
-  auto BoneName__ = BoneName ? _fbb.CreateString(BoneName) : 0;
+  auto Name__ = Name ? _fbb.CreateString(Name) : 0;
   auto Positions__ = Positions ? _fbb.CreateVectorOfSortedStructs<asdx::res::KeyFloat3>(Positions) : 0;
   auto Rotations__ = Rotations ? _fbb.CreateVectorOfSortedStructs<asdx::res::KeyQuaternion>(Rotations) : 0;
   auto Scalings__ = Scalings ? _fbb.CreateVectorOfSortedStructs<asdx::res::KeyFloat3>(Scalings) : 0;
-  return asdx::res::CreateBoneAnimation(
+  return asdx::res::CreateMotionTrack(
       _fbb,
-      BoneName__,
+      Name__,
       Positions__,
       Rotations__,
       Scalings__);
@@ -201,7 +201,7 @@ struct MotionClip FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
     VT_NAME = 4,
     VT_DURATION = 6,
     VT_TICKSPERSECOND = 8,
-    VT_BONES = 10
+    VT_TRACKS = 10
   };
   const ::flatbuffers::String *Name() const {
     return GetPointer<const ::flatbuffers::String *>(VT_NAME);
@@ -224,8 +224,8 @@ struct MotionClip FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   float TicksPerSecond() const {
     return GetField<float>(VT_TICKSPERSECOND, 0.0f);
   }
-  const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::BoneAnimation>> *Bones() const {
-    return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::BoneAnimation>> *>(VT_BONES);
+  const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MotionTrack>> *Tracks() const {
+    return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MotionTrack>> *>(VT_TRACKS);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -233,9 +233,9 @@ struct MotionClip FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
            verifier.VerifyString(Name()) &&
            VerifyField<float>(verifier, VT_DURATION, 4) &&
            VerifyField<float>(verifier, VT_TICKSPERSECOND, 4) &&
-           VerifyOffset(verifier, VT_BONES) &&
-           verifier.VerifyVector(Bones()) &&
-           verifier.VerifyVectorOfTables(Bones()) &&
+           VerifyOffset(verifier, VT_TRACKS) &&
+           verifier.VerifyVector(Tracks()) &&
+           verifier.VerifyVectorOfTables(Tracks()) &&
            verifier.EndTable();
   }
 };
@@ -253,8 +253,8 @@ struct MotionClipBuilder {
   void add_TicksPerSecond(float TicksPerSecond) {
     fbb_.AddElement<float>(MotionClip::VT_TICKSPERSECOND, TicksPerSecond, 0.0f);
   }
-  void add_Bones(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::BoneAnimation>>> Bones) {
-    fbb_.AddOffset(MotionClip::VT_BONES, Bones);
+  void add_Tracks(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MotionTrack>>> Tracks) {
+    fbb_.AddOffset(MotionClip::VT_TRACKS, Tracks);
   }
   explicit MotionClipBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -273,9 +273,9 @@ inline ::flatbuffers::Offset<MotionClip> CreateMotionClip(
     ::flatbuffers::Offset<::flatbuffers::String> Name = 0,
     float Duration = 0.0f,
     float TicksPerSecond = 0.0f,
-    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::BoneAnimation>>> Bones = 0) {
+    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MotionTrack>>> Tracks = 0) {
   MotionClipBuilder builder_(_fbb);
-  builder_.add_Bones(Bones);
+  builder_.add_Tracks(Tracks);
   builder_.add_TicksPerSecond(TicksPerSecond);
   builder_.add_Duration(Duration);
   builder_.add_Name(Name);
@@ -287,15 +287,15 @@ inline ::flatbuffers::Offset<MotionClip> CreateMotionClipDirect(
     const char *Name = nullptr,
     float Duration = 0.0f,
     float TicksPerSecond = 0.0f,
-    std::vector<::flatbuffers::Offset<asdx::res::BoneAnimation>> *Bones = nullptr) {
+    std::vector<::flatbuffers::Offset<asdx::res::MotionTrack>> *Tracks = nullptr) {
   auto Name__ = Name ? _fbb.CreateString(Name) : 0;
-  auto Bones__ = Bones ? _fbb.CreateVectorOfSortedTables<asdx::res::BoneAnimation>(Bones) : 0;
+  auto Tracks__ = Tracks ? _fbb.CreateVectorOfSortedTables<asdx::res::MotionTrack>(Tracks) : 0;
   return asdx::res::CreateMotionClip(
       _fbb,
       Name__,
       Duration,
       TicksPerSecond,
-      Bones__);
+      Tracks__);
 }
 
 struct MotionBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {

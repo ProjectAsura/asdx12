@@ -138,49 +138,19 @@ void ParseMesh
                 // バインドポーズ行列を求める.
                 auto& bindPose = bone->mOffsetMatrix.Inverse();
 
-                // Row-Majorなのでそのまま突っ込めばいい.
+                // バインドポーズ行列.
                 info.BindPose = asdx::Matrix(
-                    bindPose.a1,
-                    bindPose.a2,
-                    bindPose.a3,
-                    bindPose.a4,
+                    bindPose.a1, bindPose.b1, bindPose.c1, bindPose.d1,
+                    bindPose.a2, bindPose.b2, bindPose.c2, bindPose.d2,
+                    bindPose.a3, bindPose.b3, bindPose.c3, bindPose.d3,
+                    bindPose.a4, bindPose.b4, bindPose.c4, bindPose.d4);
 
-                    bindPose.b1,
-                    bindPose.b2,
-                    bindPose.b3,
-                    bindPose.b4,
-
-                    bindPose.c1,
-                    bindPose.c2,
-                    bindPose.c3,
-                    bindPose.c4,
-
-                    bindPose.d1,
-                    bindPose.d2,
-                    bindPose.d3,
-                    bindPose.d4);
-
-                // Row-Majorなのでそのまま突っ込めばいい.
+                // バインドポーズ逆行列.
                 info.InverseBindPose = asdx::Matrix(
-                    bone->mOffsetMatrix.a1,
-                    bone->mOffsetMatrix.a2,
-                    bone->mOffsetMatrix.a3,
-                    bone->mOffsetMatrix.a4,
-
-                    bone->mOffsetMatrix.b1,
-                    bone->mOffsetMatrix.b2,
-                    bone->mOffsetMatrix.b3,
-                    bone->mOffsetMatrix.b4,
-
-                    bone->mOffsetMatrix.c1,
-                    bone->mOffsetMatrix.c2,
-                    bone->mOffsetMatrix.c3,
-                    bone->mOffsetMatrix.c4,
-
-                    bone->mOffsetMatrix.d1,
-                    bone->mOffsetMatrix.d2,
-                    bone->mOffsetMatrix.d3,
-                    bone->mOffsetMatrix.d4);
+                    bone->mOffsetMatrix.a1, bone->mOffsetMatrix.b1, bone->mOffsetMatrix.c1, bone->mOffsetMatrix.d1,
+                    bone->mOffsetMatrix.a2, bone->mOffsetMatrix.b2, bone->mOffsetMatrix.c2, bone->mOffsetMatrix.d2,
+                    bone->mOffsetMatrix.a3, bone->mOffsetMatrix.b3, bone->mOffsetMatrix.c3, bone->mOffsetMatrix.d3,
+                    bone->mOffsetMatrix.a4, bone->mOffsetMatrix.b4, bone->mOffsetMatrix.c4, bone->mOffsetMatrix.d4);
 
                 boneMap[boneName] = info;
             }

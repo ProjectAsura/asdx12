@@ -14,9 +14,9 @@ struct KeyQuaternion
     Value : Float4;
 }
 
-table BoneAnimation
+table MotionTrack
 {
-    BoneName  : string (key);
+    Name      : string (key);
     Positions : [KeyFloat3];
     Rotations : [KeyQuaternion];
     Scalings  : [KeyFloat3];
@@ -27,7 +27,7 @@ table MotionClip
     Name           : string (key);
     Duration       : float;
     TicksPerSecond : float;
-    Bones          : [BoneAnimation];
+    Tracks         : [MotionTrack];
 }
 
 table MotionBinary
