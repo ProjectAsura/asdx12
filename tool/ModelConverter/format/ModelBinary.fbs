@@ -4,7 +4,7 @@ namespace asdx.res;
 
 table Bone
 {
-    Name            : string (key);
+    Name            : string;
     Parent          : int;
     BindPose        : Float4x4;
     InverseBindPose : Float4x4;

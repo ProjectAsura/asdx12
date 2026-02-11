@@ -12,7 +12,7 @@
 #include <d3d12.h>
 #include <fnd/asdxRef.h>
 #include <fnd/asdxMath.h>
-#include <D3D12MemAlloc.h>
+#include <gfx/asdxAllocationHolder.h>
 
 
 namespace asdx {
@@ -282,8 +282,8 @@ private:
     DXGI_FORMAT                 m_ColorFormat       = DXGI_FORMAT_UNKNOWN;
     DXGI_FORMAT                 m_DepthFormat       = DXGI_FORMAT_UNKNOWN;
     uint32_t                    m_Param[4]          = {};
-    RefPtr<D3D12MA::Allocation> m_AllocationVB[2];
-    RefPtr<D3D12MA::Allocation> m_AllocationIB;
+    AllocationHolder            m_AllocationVB[2];
+    AllocationHolder            m_AllocationIB;
 
     //=========================================================================
     // private methods.

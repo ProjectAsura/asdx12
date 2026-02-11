@@ -24,7 +24,7 @@ namespace asdx {
 //-----------------------------------------------------------------------------
 MotionPlayer::MotionPlayer()
 : m_pModel      (nullptr)
-, m_CurrentTime (0.0f)
+, m_TimeInTicks (0.0f)
 , m_pMotionClip (nullptr)
 { /* DO_NOTHING */ }
 
@@ -42,13 +42,14 @@ void MotionPlayer::Init(const Model* pModel)
     assert(pModel != nullptr);
     m_pModel = pModel;
 
-    m_CurrentTime = 0.0f;
+    m_TimeInTicks = 0.0f;
     m_pMotionClip = nullptr;
 
     auto count = m_pModel->GetBoneCount();
     m_LocalTransforms.resize(count);
     m_WorldTransforms.resize(count);
     m_MatrixPalettes .resize(count);
+    m_Tracks         .resize(count);
 
     auto identity = Matrix::CreateIdentity();
     for(auto i=0u; i<count; ++i)
@@ -59,6 +60,7 @@ void MotionPlayer::Init(const Model* pModel)
         m_LocalTransforms[i] = bindPose;
         m_WorldTransforms[i] = identity;
         m_MatrixPalettes [i] = identity;
+        m_Tracks         [i] = nullptr;
     }
 }
 
@@ -69,7 +71,7 @@ void MotionPlayer::Term()
 {
     m_pModel        = nullptr;
     m_pMotionClip   = nullptr;
-    m_CurrentTime   = 0.0f;
+    m_TimeInTicks   = 0.0f;
     m_LocalTransforms.clear();
     m_WorldTransforms.clear();
     m_MatrixPalettes .clear();
@@ -80,40 +82,38 @@ void MotionPlayer::Term()
 //-----------------------------------------------------------------------------
 void MotionPlayer::SetClip(const res::MotionClip* pClip)
 {
-    if (m_pModel == nullptr || pClip == nullptr)
+    if (m_pModel == nullptr)
     {
         ELOG("Error : Invalid Arguments.");
         return;
     }
 
     m_pMotionClip = pClip;
-    m_CurrentTime = 0.0f;
+    m_TimeInTicks = 0.0f;
 
     // 単位行列で初期化.
     auto count    = m_pModel->GetBoneCount();
     auto identity = Matrix::CreateIdentity();
+
     for(auto i=0u; i<count; ++i)
     {
         auto& bone     = m_pModel->GetBone(i);
         auto  bindPose = asdx::BoneProxy::GetBindPoseMatrix(bone);
+        auto  name     = asdx::BoneProxy::GetName(bone);
+
+        if (m_pMotionClip)
+        {
+            auto track = asdx::MotionClipProxy::FindTrack(m_pMotionClip, name.c_str());
+            m_Tracks[i] = track;
+        }
+        else
+        {
+            m_Tracks[i] = nullptr;
+        }
 
         m_LocalTransforms[i] = bindPose;
         m_WorldTransforms[i] = identity;
         m_MatrixPalettes [i] = identity;
-    }
-
-    auto trackCount = asdx::MotionClipProxy::GetTrackCount(m_pMotionClip);
-    m_TrackIds.resize(trackCount);
-    for(auto i=0u; i<trackCount; ++i)
-    {
-        auto track  = asdx::MotionClipProxy::GetTrack(m_pMotionClip, i);
-        auto name   = asdx::MotionTrackProxy::GetName(track);
-        auto boneId = 0u;
-
-        if (m_pModel->FindBone(name, boneId))
-            m_TrackIds[i] = boneId;
-        else
-            m_TrackIds[i] = UINT32_MAX;
     }
 }
 
@@ -123,6 +123,9 @@ void MotionPlayer::SetClip(const res::MotionClip* pClip)
 void MotionPlayer::Update(float deltaSec, const Matrix& rootTransform)
 {
     if (m_pModel == nullptr || m_pMotionClip == nullptr)
+        return;
+
+    if (m_Pause)
         return;
 
     // 骨を動かす.
@@ -143,41 +146,37 @@ void MotionPlayer::UpdateLocalTransform(float deltaSec)
     // 計測時間を取得.
     auto duration = asdx::MotionClipProxy::GetDuration(m_pMotionClip);
 
+    // 1秒あたりのtick
+    auto tps = asdx::MotionClipProxy::GetTicksPerSecond(m_pMotionClip);
+
     // 前フレームの時間を一時保存.
-    auto prevTime = m_CurrentTime;
+    auto prevTime = m_TimeInTicks;
+
+    // 加算時間.
+    auto addTime = deltaSec * tps * m_PlaySpeed;
 
     // 現在時間を更新.
-    m_CurrentTime = Wrap(m_CurrentTime + deltaSec, 0.0f, duration);
+    if (m_Loop)
+        m_TimeInTicks = Wrap(m_TimeInTicks + addTime, 0.0f, duration);
+    else
+        m_TimeInTicks = Clamp(m_TimeInTicks + addTime, 0.0f, duration);
 
-    // ループ時の処理.
-    if (m_CurrentTime < prevTime)
+    auto count = m_pModel->GetBoneCount();
+    for(auto i=0u; i<count; ++i)
     {
-        // ポーズを初期化.
-        auto count = uint32_t(m_LocalTransforms.size());
-        for(auto i=0u; i<count; ++i)
+        auto& bone = m_pModel->GetBone(i);
+        auto track = m_Tracks[i];
+
+        // アニメーションデータが無ければバインドポーズを適用.
+        if (track == nullptr)
         {
-            auto& bone     = m_pModel->GetBone(i);
-            auto  bindPose = asdx::BoneProxy::GetBindPoseMatrix(bone);
+            auto bindPose = asdx::BoneProxy::GetBindPoseMatrix(bone);
             m_LocalTransforms[i] = bindPose;
+            continue;
         }
-    }
 
-    // アニメーション処理..
-    {
-        auto count = asdx::MotionClipProxy::GetTrackCount(m_pMotionClip);
-        for(auto i=0u; i<count; ++i)
-        {
-            // ボーンIDを取得.
-            auto boneId = m_TrackIds[i];
-            if (boneId == UINT32_MAX)
-                continue;
-
-            // アニメーションデータを取得.
-            auto anim = asdx::MotionClipProxy::GetTrack(m_pMotionClip, i);
-
-            // ローカル変換行列を計算.
-            m_LocalTransforms[boneId] = asdx::MotionTrackProxy::CalcLocalTransform(anim, m_CurrentTime);
-        }
+        // ローカル変換行列を計算.
+        m_LocalTransforms[i] = asdx::MotionTrackProxy::CalcLocalTransform(track, m_TimeInTicks);
     }
 }
 
@@ -190,18 +189,18 @@ void MotionPlayer::UpdateWorldTransform(const Matrix& rootTransform)
     m_WorldTransforms[0] = m_LocalTransforms[0] * rootTransform;
 
     // 子ボーンのワールド行列を計算.
-    auto count = uint32_t(m_WorldTransforms.size());
+    auto count = m_pModel->GetBoneCount();
     for(auto i=1u; i<count; ++i)
     {
-        const auto& bone = m_pModel->GetBone(i);
-        auto parent = asdx::BoneProxy::GetParentId(bone);
+        const auto& bone   = m_pModel->GetBone(i);
+        const auto  parent = asdx::BoneProxy::GetParentId(bone);
 
-        // 親がいれば親を考慮.
-        if (parent >= 0)
-            m_WorldTransforms[i] = m_LocalTransforms[i] * m_WorldTransforms[parent];
         // 親がいなければそのまま.
-        else
+        if (parent < 0)
             m_WorldTransforms[i] = m_LocalTransforms[i];
+        // 親がいれば親を考慮.
+        else
+            m_WorldTransforms[i] = m_LocalTransforms[i] * m_WorldTransforms[parent];
     }
 }
 
@@ -210,7 +209,7 @@ void MotionPlayer::UpdateWorldTransform(const Matrix& rootTransform)
 //-----------------------------------------------------------------------------
 void MotionPlayer::UpdateMatrixPalette()
 {
-    auto count = uint32_t(m_MatrixPalettes.size());
+    auto count = m_pModel->GetBoneCount();
     for(auto i=0u; i<count; ++i)
     {
         const auto& bone = m_pModel->GetBone(i);
@@ -236,5 +235,64 @@ const std::vector<Matrix>& MotionPlayer::GetWorldTransforms() const
 //-----------------------------------------------------------------------------
 const std::vector<Matrix>& MotionPlayer::GetMatrixPalettes() const
 { return m_MatrixPalettes; }
+
+//-----------------------------------------------------------------------------
+//      現在の再生時間を取得します.
+//-----------------------------------------------------------------------------
+float MotionPlayer::GetTimeInTicks() const
+{ return m_TimeInTicks; }
+
+//-----------------------------------------------------------------------------
+//      再生所要時間を取得します.
+//-----------------------------------------------------------------------------
+float MotionPlayer::GetDuration() const
+{
+    if (m_pMotionClip == nullptr)
+        return 0.0f;
+    return asdx::MotionClipProxy::GetDuration(m_pMotionClip);
+}
+
+//-----------------------------------------------------------------------------
+//      ループ再生フラグを取得します.
+//-----------------------------------------------------------------------------
+bool MotionPlayer::IsLoop() const
+{ return m_Loop; }
+
+//-----------------------------------------------------------------------------
+//      ループ再生フラグを設定します.
+//-----------------------------------------------------------------------------
+void MotionPlayer::SetLoop(bool value)
+{ m_Loop = value; }
+
+//-----------------------------------------------------------------------------
+//      再生スピードを設定します.
+//-----------------------------------------------------------------------------
+void MotionPlayer::SetPlaySpeed(float value)
+{ m_PlaySpeed = value; }
+
+//-----------------------------------------------------------------------------
+//      再生スピードを取得します.
+//-----------------------------------------------------------------------------
+float MotionPlayer::GetPlaySpeed() const
+{ return m_PlaySpeed; }
+
+//-----------------------------------------------------------------------------
+//      一時停止フラグを取得します.
+//-----------------------------------------------------------------------------
+bool MotionPlayer::IsPause() const
+{ return m_Pause; }
+
+//-----------------------------------------------------------------------------
+//      一時停止フラグを設定します.
+//-----------------------------------------------------------------------------
+void MotionPlayer::SetPause(bool value)
+{ m_Pause = value; }
+
+//-----------------------------------------------------------------------------
+//      フレーム先頭に戻します.
+//-----------------------------------------------------------------------------
+void MotionPlayer::Cue()
+{ m_TimeInTicks = 0.0f; }
+
 
 } // namespace asdx

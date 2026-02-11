@@ -32,8 +32,9 @@ table MotionClip
 
 table MotionBinary
 {
-    Version : uint;
-    Clips   : [MotionClip];
+    Version         : uint;
+    RootTransform   : Float4x4;
+    Clips           : [MotionClip];
 }
 
 root_type MotionBinary;

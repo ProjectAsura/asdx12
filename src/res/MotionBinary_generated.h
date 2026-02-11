@@ -302,10 +302,14 @@ struct MotionBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef MotionBinaryBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_VERSION = 4,
-    VT_CLIPS = 6
+    VT_ROOTTRANSFORM = 6,
+    VT_CLIPS = 8
   };
   uint32_t Version() const {
     return GetField<uint32_t>(VT_VERSION, 0);
+  }
+  const asdx::res::Float4x4 *RootTransform() const {
+    return GetStruct<const asdx::res::Float4x4 *>(VT_ROOTTRANSFORM);
   }
   const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MotionClip>> *Clips() const {
     return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MotionClip>> *>(VT_CLIPS);
@@ -313,6 +317,7 @@ struct MotionBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_VERSION, 4) &&
+           VerifyField<asdx::res::Float4x4>(verifier, VT_ROOTTRANSFORM, 4) &&
            VerifyOffset(verifier, VT_CLIPS) &&
            verifier.VerifyVector(Clips()) &&
            verifier.VerifyVectorOfTables(Clips()) &&
@@ -326,6 +331,9 @@ struct MotionBinaryBuilder {
   ::flatbuffers::uoffset_t start_;
   void add_Version(uint32_t Version) {
     fbb_.AddElement<uint32_t>(MotionBinary::VT_VERSION, Version, 0);
+  }
+  void add_RootTransform(const asdx::res::Float4x4 *RootTransform) {
+    fbb_.AddStruct(MotionBinary::VT_ROOTTRANSFORM, RootTransform);
   }
   void add_Clips(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MotionClip>>> Clips) {
     fbb_.AddOffset(MotionBinary::VT_CLIPS, Clips);
@@ -344,9 +352,11 @@ struct MotionBinaryBuilder {
 inline ::flatbuffers::Offset<MotionBinary> CreateMotionBinary(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t Version = 0,
+    const asdx::res::Float4x4 *RootTransform = nullptr,
     ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MotionClip>>> Clips = 0) {
   MotionBinaryBuilder builder_(_fbb);
   builder_.add_Clips(Clips);
+  builder_.add_RootTransform(RootTransform);
   builder_.add_Version(Version);
   return builder_.Finish();
 }
@@ -354,11 +364,13 @@ inline ::flatbuffers::Offset<MotionBinary> CreateMotionBinary(
 inline ::flatbuffers::Offset<MotionBinary> CreateMotionBinaryDirect(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t Version = 0,
+    const asdx::res::Float4x4 *RootTransform = nullptr,
     std::vector<::flatbuffers::Offset<asdx::res::MotionClip>> *Clips = nullptr) {
   auto Clips__ = Clips ? _fbb.CreateVectorOfSortedTables<asdx::res::MotionClip>(Clips) : 0;
   return asdx::res::CreateMotionBinary(
       _fbb,
       Version,
+      RootTransform,
       Clips__);
 }
 

@@ -192,7 +192,51 @@ bool ModelBinary::FindBone(const char* name, uint32_t& index) const
 {
     assert(!m_Blob.empty());
     auto bones = res::GetModelBinary(m_Blob.data())->Bones();
-    return FindIndex(bones, name, index);
+    if (name == nullptr)
+    {
+        index = UINT32_MAX;
+        return false;
+    }
+
+#if 0
+    uint32_t lhs = 0;
+    uint32_t rhs = bones->size();
+ 
+    while(lhs < rhs)
+    {
+        uint32_t mid = lhs + (rhs - lhs) / 2;
+        auto bone = bones->Get(mid);
+        auto ret = strcmp(bone->Name()->c_str(), name);
+        if (ret == 0)
+        {
+            index = mid;
+            return true;
+        }
+        else if (ret < 0)
+        {
+            lhs = mid + 1;
+        }
+        else
+        {
+            rhs = mid;
+        }
+    }
+
+    index = UINT32_MAX;
+    return false;
+#else
+    for(auto i=0u; i<bones->size(); ++i)
+    {
+        if (strcmp(bones->Get(i)->Name()->c_str(), name) == 0)
+        {
+            index = i;
+            return true;
+        }
+    }
+
+    index = UINT32_MAX;
+    return false;
+#endif
 }
 
 //-----------------------------------------------------------------------------

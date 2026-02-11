@@ -16,6 +16,7 @@
 #include <gfx/asdxBuffer.h>
 #include <gfx/asdxShape.h>
 #include <gfx/asdxMotionPlayer.h>
+#include <gfx/asdxLine.h>
 #include <imgui.h>
 #include <ImGuizmo.h>
 
@@ -87,6 +88,10 @@ private:
     asdx::ShapeStates                   m_ShapeStates;
     asdx::ShapeParams                   m_ShapeParams;
     asdx::MotionPlayer                  m_MotionPlayer;
+    asdx::MotionBinary                  m_MotionBinary;
+    asdx::LineRenderer                  m_LineRenderer;
+    size_t                              m_ClipIndex     = 0;
+    std::vector<std::string>            m_ClipNames     = {};
 
     //=========================================================================
     // private methods.
@@ -162,5 +167,13 @@ private:
     //-------------------------------------------------------------------------
     void SaveModelBinary(const char* path);
 
-    
+    //-------------------------------------------------------------------------
+    //! @brief      モデルを読み込みます.
+    //-------------------------------------------------------------------------
+    void LoadModel();
+
+    //-------------------------------------------------------------------------
+    //! @brief      モーションを読み込みます.
+    //-------------------------------------------------------------------------
+    void LoadMotion();
 };

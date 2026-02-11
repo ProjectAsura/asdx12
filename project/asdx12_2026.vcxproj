@@ -249,6 +249,7 @@
     <ClCompile Include="..\src\gfx\asdxFade.cpp" />
     <ClCompile Include="..\src\gfx\asdxFont.cpp" />
     <ClCompile Include="..\src\gfx\asdxGfxMisc.cpp" />
+    <ClCompile Include="..\src\gfx\asdxLine.cpp" />
     <ClCompile Include="..\src\gfx\asdxMapChip.cpp" />
     <ClCompile Include="..\src\gfx\asdxMaterial.cpp" />
     <ClCompile Include="..\src\gfx\asdxModel.cpp" />
@@ -352,6 +353,7 @@
     <ClInclude Include="..\include\gfx\asdxFade.h" />
     <ClInclude Include="..\include\gfx\asdxFont.h" />
     <ClInclude Include="..\include\gfx\asdxGfxMisc.h" />
+    <ClInclude Include="..\include\gfx\asdxLine.h" />
     <ClInclude Include="..\include\gfx\asdxMapChip.h" />
     <ClInclude Include="..\include\gfx\asdxMaterial.h" />
     <ClInclude Include="..\include\gfx\asdxModel.h" />
@@ -447,6 +449,18 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMT|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMT|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMD|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMD|x64'">Vertex</ShaderType>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxLinePS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMT|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMD|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMT|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMD|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxLineVS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMT|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMD|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMT|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMD|x64'">Vertex</ShaderType>
     </FxCompile>
     <FxCompile Include="..\res\shaders\asdxShapePS.hlsl">

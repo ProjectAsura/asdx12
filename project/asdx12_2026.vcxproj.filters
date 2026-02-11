@@ -390,6 +390,9 @@
     <ClCompile Include="..\src\gfx\asdxMotionPlayer.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\gfx\asdxLine.cpp">
+      <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\edit\asdxEditParam.h">
@@ -698,6 +701,9 @@
     <ClInclude Include="..\include\gfx\asdxMotionPlayer.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\gfx\asdxLine.h">
+      <Filter>ヘッダー ファイル\gfx</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\res\shaders\asdxBRDF.hlsli">
@@ -802,6 +808,12 @@
       <Filter>リソース ファイル\shaders</Filter>
     </FxCompile>
     <FxCompile Include="..\res\shaders\asdxTaaCS.hlsl">
+      <Filter>リソース ファイル\shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxLineVS.hlsl">
+      <Filter>リソース ファイル\shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxLinePS.hlsl">
       <Filter>リソース ファイル\shaders</Filter>
     </FxCompile>
   </ItemGroup>

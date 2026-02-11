@@ -17,6 +17,7 @@
 #include <edit/asdxGuiMgr.h>
 #include <gfx/asdxPresetState.h>
 #include "ModelConverter.h"
+#include "MotionConverter.h"
 #include <assimp/Exporter.hpp>
 
 
@@ -70,6 +71,41 @@ const char* kDrawModes[] = {
     asdx::ToChar(u8"テクスチャ座標"),
     asdx::ToChar(u8"頂点カラー"),
 };
+
+//-----------------------------------------------------------------------------
+//      コンボボックスを描画します.
+//-----------------------------------------------------------------------------
+static bool ImGuiCombo(const char* caption, size_t& index, const std::vector<std::string>& items)
+{
+    if (items.empty())
+    {
+        int idx = 0;
+        ImGui::Combo(caption, &idx, "None");
+        return false;
+    }
+
+    if (!ImGui::BeginCombo(caption, items[index].c_str())) 
+        return false;
+
+    assert(index < items.size());
+    bool changed = false;
+    for (size_t n=0; n<items.size(); n++)
+    {
+        auto selected = (n == index);
+        if (ImGui::Selectable(items[n].c_str(), selected))
+        {
+            index   = n;
+            changed = true;
+        }
+        if (selected)
+        {
+            ImGui::SetItemDefaultFocus();
+        }
+    }
+    ImGui::EndCombo();
+
+    return changed;
+}
 
 } // namespace
 
@@ -225,6 +261,12 @@ bool ModelViewer::OnInit()
         return false;
     }
 
+    if (!m_LineRenderer.Init(12 * UINT16_MAX, m_SwapChainFormat, DXGI_FORMAT_UNKNOWN))
+    {
+        ELOG("Error : LineRenderer::Init() Failed.");
+        return false;
+    }
+
     // コマンドの記録を終了.
     pCmd->Close();
 
@@ -253,6 +295,7 @@ bool ModelViewer::OnInit()
 //-----------------------------------------------------------------------------
 void ModelViewer::OnTerm()
 {
+    m_LineRenderer.Term();
     m_MotionPlayer.Term();
 
     m_SphereShape.Term();
@@ -283,10 +326,12 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
 {
     auto pCmd = m_GfxCmdList.Reset();
 
-    auto root = asdx::Matrix::CreateIdentity();
+    auto root = m_MotionBinary.GetRootTransform();
     m_MotionPlayer.Update(float(args.ElapsedTimeSec), root);
 
     asdx::GuiMgr::Instance().Update(m_Width, m_Height);
+
+    m_LineRenderer.Reset();
 
     ImGuizmo::BeginFrame();
     ImGuizmo::SetImGuiContext(ImGui::GetCurrentContext());
@@ -294,7 +339,7 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
     // 情報表示.
     {
         const auto w = 200.0f;
-        const auto h = 115.0f;
+        const auto h = 175.0f;
         const auto x = 10.0f;
         const auto y = 10.0f;
 
@@ -309,12 +354,125 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
             ImGui::Text("FPS : %.2f", GetFPS());
             ImGui::Separator();
 
+            ImGui::BeginTable(asdx::ToChar(u8"モデル情報"), 2);
 
-            ImGui::Text(asdx::ToChar(u8"メッシュ数     : %zu"),  m_ModelInfo.MeshCount);
-            ImGui::Text(asdx::ToChar(u8"マテリアル数   : %zu"),  m_ModelInfo.MaterialCount);
-            ImGui::Text(asdx::ToChar(u8"ボーン数       : %zu"), m_ModelInfo.BoneCount);
-            ImGui::Text(asdx::ToChar(u8"頂点数         : %zu"),  m_ModelInfo.VertexCount);
-            ImGui::Text(asdx::ToChar(u8"インデックス数 : %zu"),  m_ModelInfo.IndexCount);
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text(asdx::ToChar(u8"メッシュ数"));
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Text(asdx::ToChar(u8"%zu"), m_ModelInfo.MeshCount);
+
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text(asdx::ToChar(u8"マテリアル数"));
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Text(asdx::ToChar(u8"%zu"), m_ModelInfo.MaterialCount);
+
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text(asdx::ToChar(u8"ボーン数"));
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Text(asdx::ToChar(u8"%zu"), m_ModelInfo.BoneCount);
+
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text(asdx::ToChar(u8"頂点数"));
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Text(asdx::ToChar(u8"%zu"), m_ModelInfo.VertexCount);
+
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text(asdx::ToChar(u8"インデックス数"));
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Text(asdx::ToChar(u8"%zu"), m_ModelInfo.IndexCount);
+
+            ImGui::EndTable();
+
+            ImGui::Separator();
+
+            ImGui::BeginTable(asdx::ToChar(u8"モーション情報"), 2);
+
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text(asdx::ToChar(u8"クリップ数"));
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Text(asdx::ToChar(u8"%u"), m_MotionBinary.GetClipCount());
+
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text(asdx::ToChar(u8"所要時間"));
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Text(asdx::ToChar(u8"%.2f"), m_MotionPlayer.GetDuration());
+
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text(asdx::ToChar(u8"再生時間"));
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Text(asdx::ToChar(u8"%.2f"), m_MotionPlayer.GetTimeInTicks());
+
+            ImGui::EndTable();
+
+            ImGui::End();
+        }
+    }
+
+    // モーション制御.
+    {
+        const auto w = 300.0f;
+        const auto h = 135.0f;
+        const auto x = 10.0f;
+        const auto y = 10.0f;
+
+        ImGui::SetNextWindowPos(ImVec2(x, m_Height - (h + y)));
+        ImGui::SetNextWindowSize(ImVec2(w, h));
+
+        auto flags = ImGuiWindowFlags_NoMove
+            | ImGuiWindowFlags_NoResize
+            | ImGuiWindowFlags_NoTitleBar;
+        if (ImGui::Begin("MotionControl", nullptr, flags))
+        {
+            if (ImGuiCombo(asdx::ToChar(u8"再生クリップ"), m_ClipIndex, m_ClipNames))
+            {
+                // クリップを差し替え.
+                m_MotionPlayer.SetClip(m_MotionBinary.GetClip(uint32_t(m_ClipIndex)));
+            }
+
+            if (ImGui::Button(asdx::ToChar(u8"再生")))
+            {
+                m_MotionPlayer.SetPause(false);
+            }
+            ImGui::SameLine();
+            if (ImGui::Button(asdx::ToChar(u8"停止")))
+            {
+                m_MotionPlayer.SetPause(true);
+            }
+            ImGui::SameLine();
+            if (ImGui::Button(asdx::ToChar(u8"コマ送り")))
+            {
+            }
+            ImGui::SameLine();
+            if (ImGui::Button(asdx::ToChar(u8"頭出し")))
+            {
+                m_MotionPlayer.Cue();
+            }
+            ImGui::SameLine();
+            if (ImGui::Button(asdx::ToChar(u8"削除")))
+            {
+                m_MotionPlayer.SetClip(nullptr);
+                m_ClipIndex = 0;
+                m_ClipNames.clear();
+            }
+
+            auto loop = m_MotionPlayer.IsLoop();
+            if (ImGui::Checkbox(asdx::ToChar(u8"ループ再生"), &loop))
+            {
+                m_MotionPlayer.SetLoop(loop);
+            }
+            auto speed = m_MotionPlayer.GetPlaySpeed();
+            if (ImGui::DragFloat(asdx::ToChar(u8"再生速度"), &speed, 0.1f))
+            {
+                m_MotionPlayer.SetPlaySpeed(speed);
+            }
 
             ImGui::End();
         }
@@ -397,21 +555,54 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
         // ボーン表示.
         if (m_DrawBones)
         {
-            auto bones  = m_MotionPlayer.GetLocalTransforms();
-            auto offset = m_Model->GetMeshCount() + 1;
-            for(auto i=0u; i<bones.size(); ++i)
+            auto count = m_Model->GetBoneCount();
+            // モーションがある場合はアニメーション後のボーンを表示
+            if (m_MotionBinary.GetClipCount() > 0)
             {
-                const auto  index  = uint32_t(offset + i);
-                const auto& matrix = bones[i];
-                m_ShapeParams.SetWorld(index, matrix);
-                m_ShapeParams.SetColor(index, asdx::Vector4(0.0f, 0.0f, 0.75f, 1.0f));
+                auto matrices = m_MotionPlayer.GetWorldTransforms();
+                for(auto i=0u; i<count; ++i)
+                {
+                    auto& bone = m_Model->GetBone(i);
+                    auto parentId = asdx::BoneProxy::GetParentId(bone);
+                    if (parentId < 0)
+                        continue;
+
+                    auto m0 = matrices[parentId];
+                    auto p0 = m0.GetPosition();
+
+                    auto m1 = matrices[i];
+                    auto p1 = m1.GetPosition();
+
+                    asdx::DrawWireBone(m_LineRenderer, p0, p1, asdx::Vector4(0.0f, 1.0f, 1.0f, 1.0f));
+                }
+            }
+            // バインドポーズ表示.
+            else
+            {
+                for(auto i=0u; i<count; ++i)
+                {
+                    auto& bone = m_Model->GetBone(i);
+
+                    auto parentId = asdx::BoneProxy::GetParentId(bone);
+                    if (parentId < 0)
+                        continue;
+
+                    auto& parentBone = m_Model->GetBone(uint32_t(parentId));
+                    auto m0 = asdx::BoneProxy::GetBindPoseMatrix(parentBone);
+                    auto p0 = m0.GetPosition();
+
+                    auto m1 = asdx::BoneProxy::GetBindPoseMatrix(bone);
+                    auto p1 = m1.GetPosition();
+
+                    asdx::DrawWireBone(m_LineRenderer, p0, p1, asdx::Vector4(0.0f, 1.0f, 1.0f, 1.0f));
+                }
+
             }
         }
     }
 
     // シェイプ用のカメラ行列を設定.
     m_ShapeStates.SetViewProj(m_Camera.GetView(), m_Proj);
-
 
     // 定数バッファを更新.
     {
@@ -525,16 +716,10 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
 
         if (m_DrawBones)
         {
-            m_ShapeStates.ApplyOpaqueState(pCmd);
-            pCmd->SetGraphicsRootShaderResourceView(asdx::ShapeStates::SRV0, addressParam);
-
-            uint32_t offset = uint32_t(m_Model->GetMeshCount() + 1);
-            for(size_t i=0; i<m_Model->GetBoneCount(); ++i)
-            {
-                uint32_t index = uint32_t(i) + offset;
-                pCmd->SetGraphicsRoot32BitConstant(asdx::ShapeStates::Constants3, index, 0);
-                m_BoneShape.Draw(pCmd);
-            }
+            auto addr = m_ShapeStates.GetBufferAddress();
+            m_LineRenderer.SetPipelineState(pCmd);
+            pCmd->SetGraphicsRootConstantBufferView(0, addr);
+            m_LineRenderer.Draw(pCmd);
         }
     }
 
@@ -729,58 +914,15 @@ void ModelViewer::OnDrop(const wchar_t** dropFiles, uint32_t fileCount)
 void ModelViewer::MenuFile(ID3D12GraphicsCommandList* pCmd)
 {
     // モデルファイルを開く.
-    if (ImGui::MenuItem((const char*)u8"ファイルを開く"))
+    if (ImGui::MenuItem(asdx::ToChar(u8"モデルファイルを開く")))
     {
-        const char* filter = 
-            "モデルファイル(*.mdb, *.dae, *.blend, *.xml, *.3ds, *.ase *.gtlf, *.fbx, *.ply, *.dxf, *.smd, *.vta, *.mdl, *.md2, *.md3, *.md5mesh, *.md5anim, *.x, *.obj, *.ms3d, *.lwo, *.lows)\0*.mdb;*.dae;*.xml;*.blend;*.3ds;*.ase;*.gltf;*.fbx;*.ply;*.dxf;*.smd;*.vta;*.mdl;*.md2;*.md3;*.md5mesh;*.md5anim;*.x;*.obj;*.ter;*.ms3d;*.lxo;*.lwo;*.lws;*.pmd;*.pmx;*.vmd;*.usd;*.usda;*.usdc;*.usdz\0"
-            "Project Asura Model Binary (*.mdb)\0*.mdb\0"
-            "Blender Format (*.blend)\0*.blend\0"
-            "Collada (*.dae, *.xml)\0*.dae;*.xml\0"
-            "3D Studio Max 3DS (*.3ds)\0*.3ds\0"
-            "3D Studio Max ASE (*.ase)\0*.ase\0"
-            "GL Transmission Format (*.gltf)\0*.gltf\0"
-            "Film Box (*.fbx)\0*.fbx\0"
-            "Standard Polygon Library (*.ply)\0*.ply\0"
-            "Autodesk DXF (*.dxf)\0*.dxf\0"
-            "Valve Model (*.smd, *.vta)\0*.smd;*.vta\0"
-            "Quake1 Model (*.mdl)\0*.mdl\0"
-            "Quake2 Model (*.md2)\0*.md2\0"
-            "Quake3 Model (*.md3, *.md4)\0*.md3, *.md4\0"
-            "Doom3 Model (*.md5mesh, *.md5anim)\0*.md5mesh;*.md5anim\0"
-            "DirectX X File (*.x)\0*.x\0"
-            "Wavefront Object (*.obj)\0*.obj\0"
-            "Terragen Terrain (*.ter)\0*.ter\0"
-            "Milkshape 3D (*.ms3d)\0*.ms3d\0"
-            "Modo Model (*.lxo)\0*.lxo\0"
-            "LightWave Model (*.lwo)\0*.lwo\0"
-            "LightWave Scene (*.lws)\0*.lws\0"
-            "MikuMikuDance (*.pmd, *.pmx, *.vmd)\0*.pmd;*pmx;*.vmd\0"
-            "Universal Scene Description (*.usd, *.usda, *.usdc, *.usdz)\0*.usd;*.usda;*.usdc;*.usdz\0"
-            "全てのファイル (*.*)\0*.*\0\0";
+        LoadModel();
+    }
 
-        asdx::fs::path path;
-        if (asdx::OpenFileDlg(filter, path))
-        {
-            auto input = path.string();
-
-            std::vector<uint8_t> modelBinary;
-            if (path.extension().string() == ".mdb")
-            {
-                if (asdx::LoadA(input.c_str(), modelBinary))
-                {
-                    m_ModelBinary = std::move(modelBinary);
-                    RecreateModel();
-                }
-            }
-            else
-            {
-                if (asdx::ModelConverter::Convert(input.c_str(), modelBinary))
-                {
-                    m_ModelBinary = std::move(modelBinary);
-                    RecreateModel();
-                }
-            }
-        }
+    // モーションファイルを開く.
+    if (ImGui::MenuItem(asdx::ToChar(u8"モーションファイルを開く")))
+    {
+        LoadMotion();
     }
 
     // 保存処理.
@@ -807,7 +949,6 @@ void ModelViewer::MenuFile(ID3D12GraphicsCommandList* pCmd)
         }
     }
 }
-
 //-----------------------------------------------------------------------------
 //      表示メニュー処理です.
 //-----------------------------------------------------------------------------
@@ -906,4 +1047,124 @@ void ModelViewer::SaveModelBinary(const char* path)
     }
 
     ILOG("Info : ModelBinary Output success. path = %s", path);
+}
+
+//-----------------------------------------------------------------------------
+//      モデルファイルを読み込みます.
+//-----------------------------------------------------------------------------
+void ModelViewer::LoadModel()
+{
+    const char* filter = 
+        "読み込み可能なモデルファイル\0*.mdb;*.dae;*.xml;*.blend;*.3ds;*.ase;*.gltf;*.fbx;*.ply;*.dxf;*.smd;*.vta;*.mdl;*.md2;*.md3;*.md5mesh;*.md5anim;*.x;*.obj;*.ter;*.ms3d;*.lxo;*.lwo;*.lws;*.pmd;*.pmx;*.vmd;*.usd;*.usda;*.usdc;*.usdz\0"
+        "Project Asura Model Binary (*.mdb)\0*.mdb\0"
+        "Blender Format (*.blend)\0*.blend\0"
+        "Collada (*.dae, *.xml)\0*.dae;*.xml\0"
+        "3D Studio Max 3DS (*.3ds)\0*.3ds\0"
+        "3D Studio Max ASE (*.ase)\0*.ase\0"
+        "GL Transmission Format (*.gltf)\0*.gltf\0"
+        "Film Box (*.fbx)\0*.fbx\0"
+        "Standard Polygon Library (*.ply)\0*.ply\0"
+        "Autodesk DXF (*.dxf)\0*.dxf\0"
+        "Valve Model (*.smd, *.vta)\0*.smd;*.vta\0"
+        "Quake1 Model (*.mdl)\0*.mdl\0"
+        "Quake2 Model (*.md2)\0*.md2\0"
+        "Quake3 Model (*.md3, *.md4)\0*.md3, *.md4\0"
+        "Doom3 Model (*.md5mesh)\0*.md5mesh;\0"
+        "DirectX X File (*.x)\0*.x\0"
+        "Wavefront Object (*.obj)\0*.obj\0"
+        "Terragen Terrain (*.ter)\0*.ter\0"
+        "Milkshape 3D (*.ms3d)\0*.ms3d\0"
+        "Modo Model (*.lxo)\0*.lxo\0"
+        "LightWave Model (*.lwo)\0*.lwo\0"
+        "LightWave Scene (*.lws)\0*.lws\0"
+        "MikuMikuDance (*.pmd, *.pmx, *.vmd)\0*.pmd;*pmx;*.vmd\0"
+        "Universal Scene Description (*.usd, *.usda, *.usdc, *.usdz)\0*.usd;*.usda;*.usdc;*.usdz\0"
+        "全てのファイル (*.*)\0*.*\0\0";
+
+    asdx::fs::path path;
+    if (asdx::OpenFileDlg(filter, path))
+    {
+        auto input = path.string();
+
+        std::vector<uint8_t> modelBinary;
+        if (path.extension().string() == ".mdb")
+        {
+            if (asdx::LoadA(input.c_str(), modelBinary))
+            {
+                m_ModelBinary = std::move(modelBinary);
+                RecreateModel();
+            }
+        }
+        else
+        {
+            if (asdx::ModelConverter::Convert(input.c_str(), modelBinary))
+            {
+                m_ModelBinary = std::move(modelBinary);
+                RecreateModel();
+            }
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+//      モーションファイルを読み込みます.
+//-----------------------------------------------------------------------------
+void ModelViewer::LoadMotion()
+{
+    const char* filter = 
+        "読み込み可能なモーションファイル\0*.mob;*.dae;*.xml;*.blend;*.3ds;*.ase;*.gltf;*.fbx;*.ply;*.dxf;*.smd;*.vta;*.mdl;*.md2;*.md3;*.md5anim;*.x;*.ms3d;*.lws;*.pmd;*.pmx;*.vmd;*.usd;*.usda;*.usdc;*.usdz\0"
+        "Project Asura Motion Binary (*.mob)\0*.mob\0"
+        "Blender Format (*.blend)\0*.blend\0"
+        "Collada (*.dae, *.xml)\0*.dae;*.xml\0"
+        "3D Studio Max 3DS (*.3ds)\0*.3ds\0"
+        "3D Studio Max ASE (*.ase)\0*.ase\0"
+        "GL Transmission Format (*.gltf)\0*.gltf\0"
+        "Film Box (*.fbx)\0*.fbx\0"
+        "Autodesk DXF (*.dxf)\0*.dxf\0"
+        "Valve Model (*.smd, *.vta)\0*.smd;*.vta\0"
+        "Quake1 Model (*.mdl)\0*.mdl\0"
+        "Quake2 Model (*.md2)\0*.md2\0"
+        "Quake3 Model (*.md3, *.md4)\0*.md3, *.md4\0"
+        "Doom3 Animation (*.md5anim)\0*.md5anim\0"
+        "DirectX X File (*.x)\0*.x\0"
+        "Milkshape 3D (*.ms3d)\0*.ms3d\0"
+        "Modo Model (*.lxo)\0*.lxo\0"
+        "LightWave Scene (*.lws)\0*.lws\0"
+        "MikuMikuDance (*.pmd, *.pmx, *.vmd)\0*.pmd;*pmx;*.vmd\0"
+        "Universal Scene Description (*.usd, *.usda, *.usdc, *.usdz)\0*.usd;*.usda;*.usdc;*.usdz\0"
+        "全てのファイル (*.*)\0*.*\0\0";
+
+    asdx::fs::path path;
+    if (asdx::OpenFileDlg(filter, path))
+    {
+        auto input = path.string();
+
+        std::vector<uint8_t> motionBinary;
+        if (path.extension().string() == ".mob")
+        {
+            if (asdx::LoadA(input.c_str(), motionBinary))
+            {
+                m_MotionBinary.Load(std::move(motionBinary));
+            }
+        }
+        else
+        {
+            if (asdx::MotionConverter::Convert(input.c_str(), motionBinary))
+            {
+                m_MotionBinary.Load(std::move(motionBinary));
+                auto count = m_MotionBinary.GetClipCount();
+                if (count > 0)
+                {
+                    m_ClipNames.resize(count);
+
+                    for(auto i=0; i<count; ++i)
+                    {
+                        m_ClipNames[i] = asdx::MotionClipProxy::GetName(m_MotionBinary.GetClip(i));
+                    }
+                    m_MotionPlayer.SetClip(m_MotionBinary.GetClip(0));
+                    m_ClipIndex = 0;
+                }
+            }
+        }
+    }
 }

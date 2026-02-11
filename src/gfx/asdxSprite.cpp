@@ -10,6 +10,7 @@
 #include <fnd/asdxLogger.h>
 #include <gfx/asdxSprite.h>
 #include <gfx/asdxDevice.h>
+#include "D3D12MemAlloc.h"
 
 
 namespace {
@@ -189,18 +190,22 @@ bool SpriteRenderer::Init
                 D3D12MA::ALLOCATION_DESC allocDesc = {};
                 allocDesc.HeapType = heapType;
 
+                D3D12MA::Allocation* allocation = nullptr;
+
                 auto hr = allocator->CreateResource(
                     &allocDesc,
                     &desc,
                     state,
                     nullptr,
-                    m_AllocationVB[i].GetAddress(),
+                    &allocation,
                     IID_PPV_ARGS(m_VB[i].GetAddress()));
                 if (FAILED(hr))
                 {
                     ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
                     return false;
                 }
+
+                m_AllocationVB[i].Attach(allocation);
             }
             else
             {
@@ -253,18 +258,22 @@ bool SpriteRenderer::Init
             D3D12MA::ALLOCATION_DESC allocDesc = {};
             allocDesc.HeapType = heapType;
 
+            D3D12MA::Allocation* allocation = nullptr;
+
             auto hr = allocator->CreateResource(
                 &allocDesc,
                 &desc,
                 state,
                 nullptr,
-                m_AllocationIB.GetAddress(),
+                &allocation,
                 IID_PPV_ARGS(m_IB.GetAddress()));
             if (FAILED(hr))
             {
                 ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
                 return false;
             }
+
+            m_AllocationIB.Attach(allocation);
         }
         else
         {

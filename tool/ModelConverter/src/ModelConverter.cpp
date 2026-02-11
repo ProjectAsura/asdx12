@@ -29,15 +29,18 @@ namespace {
 //-----------------------------------------------------------------------------
 static constexpr uint32_t CURRENT_VERSION = 1u;  //!< 現在サポートされているバージョン.
 
+
 ///////////////////////////////////////////////////////////////////////////////
 // BoneInfo structure
 ///////////////////////////////////////////////////////////////////////////////
 struct BoneInfo
 {
-    int             Index;              // Bone Index.
-    std::string     Name;               // Name of Bone.
-    asdx::Matrix    BindPose;           // Bind Pose Matrix.
-    asdx::Matrix    InverseBindPose;    // Inverse Bind Pose Matrix.
+    std::string     Name;                                               // Name of Bone.
+    std::string     ParentName;                                         // Name of Parent Bone.
+    uint32_t        Index           = 0;                                // Bone Index.
+    asdx::Matrix    BindPose        = asdx::Matrix::CreateIdentity();   // Bind Pose Matrix.
+    asdx::Matrix    InverseBindPose = asdx::Matrix::CreateIdentity();   // Inverse Bind Pose Matrix.
+    std::vector<std::string> ChildrenName;
 };
 
 //-----------------------------------------------------------------------------
@@ -65,12 +68,36 @@ asdx::res::Float4x4 ToFloat4x4(const asdx::Matrix& matrix)
 }
 
 //-----------------------------------------------------------------------------
+//      親ボーンを検索します.
+//-----------------------------------------------------------------------------
+const aiBone* FindParentBone(const aiNode* node, aiBone** const pBones, uint32_t numBones)
+{
+    if (node == nullptr)
+        return nullptr;
+
+    // 親ノードが存在しなければ終了.
+    if (node->mParent == nullptr)
+        return nullptr;
+
+    for(auto i=0u; i<numBones; ++i)
+    {
+        // 一致するものが見つかれば終了.
+        if (node->mParent->mName == pBones[i]->mName)
+            return pBones[i];
+    }
+
+    // 親を再帰的に辿っていく.
+    return FindParentBone(node->mParent, pBones, numBones);
+}
+
+//-----------------------------------------------------------------------------
 //      メッシュを解析します.
 //-----------------------------------------------------------------------------
 void ParseMesh
 (
     flatbuffers::FlatBufferBuilder&         builder,
     std::map<std::string, BoneInfo>&        boneMap,
+    const aiNode*                           rootNode,
     flatbuffers::Offset<asdx::res::Mesh>&   dstMesh,
     const aiMesh*                           srcMesh,
     asdx::BoundingSphere3&                  boundSphere
@@ -126,14 +153,32 @@ void ParseMesh
             auto bone = srcMesh->mBones[i];
             auto boneName = std::string(bone->mName.C_Str());
 
+            auto node   = rootNode->findBoneNode(bone);
+            auto parent = FindParentBone(node, srcMesh->mBones, srcMesh->mNumBones);
+
             uint32_t boneId = 0;
+
             auto itr = boneMap.find(boneName);
             if (itr == std::end(boneMap))
             {
-                boneId = uint32_t(boneMap.size());
+                boneId = int(boneMap.size());
                 BoneInfo info;
                 info.Index = boneId;
                 info.Name  = boneName;
+
+                if (parent != nullptr)
+                {
+                    info.ParentName = std::string(parent->mName.C_Str());
+                }
+
+                if (node && node->mNumChildren > 0)
+                {
+                    info.ChildrenName.resize(node->mNumChildren);
+                    for(auto i=0u; i<node->mNumChildren; ++i)
+                    {
+                        info.ChildrenName[i] = std::string(node->mChildren[i]->mName.C_Str());
+                    }
+                }
 
                 // バインドポーズ行列を求める.
                 auto& bindPose = bone->mOffsetMatrix.Inverse();
@@ -463,59 +508,45 @@ bool ModelConverter::Convert(const std::string& path, std::vector<uint8_t>& bina
         const auto srcMesh = pScene->mMeshes[i];
         auto& dstMesh = meshes[i];
 
-        ParseMesh(builder, boneMap, dstMesh, srcMesh, bounds);
+        ParseMesh(builder, boneMap, pScene->mRootNode, dstMesh, srcMesh, bounds);
     }
 
     // ボーンデータを変換.
     std::vector<flatbuffers::Offset<asdx::res::Bone>> bones;
-    bones.reserve(boneMap.size());
-    for(auto& itr : boneMap)
+    bones.resize(boneMap.size());
+    for(auto& srcBone : boneMap)
     {
-        auto bindPose    = ToFloat4x4(itr.second.BindPose);
-        auto invBindPose = ToFloat4x4(itr.second.InverseBindPose);
-        auto name        = itr.second.Name.c_str();
-
-        int32_t parentId = -1;
-        std::vector<int32_t> childrenIds;
-        auto localTransform = ToFloat4x4(Matrix::CreateIdentity());
-
-        // 対応するボーンノードを見つける.
-        auto srcNode = pScene->mRootNode->FindNode(name);
-        if (srcNode != nullptr)
+        int parentId = -1;
+        if (!srcBone.second.ParentName.empty())
         {
-            // 親がいる場合.
-            if (srcNode->mParent != nullptr)
-            {
-                // 親の番号を設定.
-                auto parent = boneMap.find(srcNode->mParent->mName.C_Str());
-                if (parent != boneMap.end())
-                {
-                    parentId = parent->second.Index;
-                }
-            }
+            auto itr = boneMap.find(srcBone.second.ParentName);
+            if (itr != boneMap.end())
+            { parentId = int(itr->second.Index); }
+        }
 
-            // 子供がいる場合.
-            for(auto i=0u; i<srcNode->mNumChildren; ++i)
+        std::vector<int> children;
+        if (!srcBone.second.ChildrenName.empty())
+        {
+            for(auto i=0u; i<srcBone.second.ChildrenName.size(); ++i)
             {
-                // 子供の番号を設定.
-                auto child = boneMap.find(srcNode->mChildren[i]->mName.C_Str());
-                if (child != boneMap.end())
-                {
-                    childrenIds.push_back(child->second.Index);
-                }
+                auto itr = boneMap.find(srcBone.second.ChildrenName[i]);
+                if (itr != boneMap.end())
+                { children.push_back(int(itr->second.Index)); }
             }
         }
 
-        auto bone = asdx::res::CreateBoneDirect(
+        auto bindPose    = ToFloat4x4(srcBone.second.BindPose);
+        auto invBindPose = ToFloat4x4(srcBone.second.InverseBindPose);
+
+        auto boneId = srcBone.second.Index;
+
+        bones[boneId] = asdx::res::CreateBoneDirect(
             builder,
-            name,
+            srcBone.second.Name.c_str(),
             parentId,
             &bindPose,
             &invBindPose,
-            &childrenIds);
-
-        // ボーンを追加.
-        bones.emplace_back(bone);
+            &children);
     }
 
     // マテリアルデータを変換.

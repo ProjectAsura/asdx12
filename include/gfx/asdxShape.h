@@ -12,7 +12,7 @@
 #include <fnd/asdxMath.h>
 #include <fnd/asdxRef.h>
 #include <fnd/asdxIndexHeap.h>
-#include <D3D12MemAlloc.h>
+#include <gfx/asdxAllocationHolder.h>
 
 
 namespace asdx {
@@ -72,6 +72,11 @@ public:
 
     //-------------------------------------------------------------------------
     //! @brief      ビュー行列と射影行列を設定します.
+    //! 
+    //! @param[in]      view        ビュー行列
+    //! @param[in]      proj        射影行列
+    //! @note       内部でダブルバッファリングのバッファ番号入れ替えが行われますので，
+    //!             1フレームに1回のみ呼び出してください.
     //-------------------------------------------------------------------------
     void SetViewProj(const asdx::Matrix& view, const asdx::Matrix& proj);
 
@@ -96,6 +101,11 @@ public:
     //-------------------------------------------------------------------------
     void ApplyWireframeState(ID3D12GraphicsCommandList* pCmd);
 
+    //-------------------------------------------------------------------------
+    //! @brief      カメラ定数バッファのGPU仮想アドレスを取得します.
+    //-------------------------------------------------------------------------
+    D3D12_GPU_VIRTUAL_ADDRESS GetBufferAddress() const;
+
 private:
     //=========================================================================
     // private variables.
@@ -105,7 +115,7 @@ private:
     asdx::RefPtr<ID3D12PipelineState>   m_TranslucentState;
     asdx::RefPtr<ID3D12PipelineState>   m_WireframeState;
     asdx::RefPtr<ID3D12Resource>        m_CameraBuffer;
-    asdx::RefPtr<D3D12MA::Allocation>   m_CameraBufferAllocation;
+    AllocationHolder                    m_CameraBufferAllocation;
     uint8_t                             m_BufferIndex = 0;
     asdx::Matrix                        m_View;
     asdx::Matrix                        m_Proj;
@@ -210,7 +220,7 @@ private:
     //=========================================================================
     asdx::RefPtr<ID3D12Resource>        m_ParamBuffer;
     std::vector<Param>                  m_Params;
-    asdx::RefPtr<D3D12MA::Allocation>   m_AllocationPB;
+    AllocationHolder                    m_AllocationPB;
     uint8_t                             m_BufferIndex;
 
     //=========================================================================
@@ -263,9 +273,8 @@ protected:
     D3D12_VERTEX_BUFFER_VIEW        m_VBV         = {}; //!< 頂点バッファビューです.
     D3D12_INDEX_BUFFER_VIEW         m_IBV         = {}; //!< インデックスバッファビューです.
     uint32_t                        m_IndexCount  = 0;  //!< インデックス数です.
-
-    asdx::RefPtr<D3D12MA::Allocation>   m_AllocationVB;
-    asdx::RefPtr<D3D12MA::Allocation>   m_AllocationIB;
+    AllocationHolder                m_AllocationVB;
+    AllocationHolder                m_AllocationIB;  
 
     //=========================================================================
     // protected methods.
@@ -735,6 +744,5 @@ public:
     //-------------------------------------------------------------------------
     void Term();
 };
-
 
 } // namespace asdx

@@ -47,6 +47,18 @@ asdx::res::KeyQuaternion ToKeyQuaternion(const aiQuatKey& value)
         asdx::res::Float4(value.mValue.x, value.mValue.y, value.mValue.z, value.mValue.w));
 }
 
+//-----------------------------------------------------------------------------
+//      Float4x4に変換します.
+//-----------------------------------------------------------------------------
+asdx::res::Float4x4 ToFloat4x4(const aiMatrix4x4& value)
+{
+    return asdx::res::Float4x4(
+        value.a1, value.b1, value.c1, value.d1,
+        value.a2, value.b2, value.c2, value.d2,
+        value.a3, value.b3, value.c3, value.d3,
+        value.a4, value.b4, value.c4, value.d4);
+}
+
 } // namespace
 
 
@@ -198,10 +210,25 @@ bool MotionConverter::Convert(const std::string& path, std::vector<uint8_t>& bin
         clips.emplace_back(clip);
     }
 
+    asdx::res::Float4x4 rootTransform;
+    if (pScene->mRootNode != nullptr)
+    {
+        rootTransform = ToFloat4x4(pScene->mRootNode->mTransformation);
+    }
+    else
+    {
+        rootTransform = asdx::res::Float4x4(
+            1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f);
+    }
+
     // バイナリ生成.
     auto bin = asdx::res::CreateMotionBinaryDirect(
         builder,
         CURRENT_VERION,
+        &rootTransform,
         &clips);
 
     // バイナリ作成完了.

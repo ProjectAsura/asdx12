@@ -14,6 +14,7 @@
 #include <gfx/asdxPresetState.h>
 #include <gfx/asdxPipelineState.h>
 #include <gfx/asdxDevice.h>
+#include "D3D12MemAlloc.h"
 
 
 namespace {
@@ -1219,18 +1220,22 @@ bool ShapeStates::Init(DXGI_FORMAT colorFormat, DXGI_FORMAT depthFormat)
             D3D12MA::ALLOCATION_DESC allocDesc = {};
             allocDesc.HeapType = heapType;
 
+            D3D12MA::Allocation* allocation = nullptr;
+
             auto hr = allocator->CreateResource(
                 &allocDesc,
                 &desc,
                 D3D12_RESOURCE_STATE_COMMON,
                 nullptr,
-                m_CameraBufferAllocation.GetAddress(),
+                &allocation,
                 IID_PPV_ARGS(m_CameraBuffer.GetAddress()));
             if (FAILED(hr))
             {
                 ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
                 return false;
             }
+
+            m_CameraBufferAllocation.Attach(allocation);
         }
         else
         {
@@ -1291,13 +1296,21 @@ void ShapeStates::SetViewProj(const asdx::Matrix& view, const asdx::Matrix& proj
 }
 
 //-----------------------------------------------------------------------------
+//      定数バッファのGPU仮想アドレスを取得します.
+//-----------------------------------------------------------------------------
+D3D12_GPU_VIRTUAL_ADDRESS ShapeStates::GetBufferAddress() const
+{
+    auto size    = asdx::RoundUp<size_t>(sizeof(CameraParam), 256);
+    auto offset  = m_BufferIndex * size;
+    return m_CameraBuffer->GetGPUVirtualAddress() + offset;
+}
+
+//-----------------------------------------------------------------------------
 //      不透明ステートを適用します.
 //-----------------------------------------------------------------------------
 void ShapeStates::ApplyOpaqueState(ID3D12GraphicsCommandList* pCmd)
 {
-    auto size    = asdx::RoundUp<size_t>(sizeof(CameraParam), 256);
-    auto offset  = m_BufferIndex * size;
-    auto address = m_CameraBuffer->GetGPUVirtualAddress() + offset;
+    auto address = GetBufferAddress();
 
     pCmd->SetGraphicsRootSignature(m_RootSignature.GetPtr());
     pCmd->SetPipelineState(m_OpaqueState.GetPtr());
@@ -1310,9 +1323,7 @@ void ShapeStates::ApplyOpaqueState(ID3D12GraphicsCommandList* pCmd)
 //-----------------------------------------------------------------------------
 void ShapeStates::ApplyTranslucentState(ID3D12GraphicsCommandList* pCmd)
 {
-    auto size    = asdx::RoundUp<size_t>(sizeof(CameraParam), 256);
-    auto offset  = m_BufferIndex * size;
-    auto address = m_CameraBuffer->GetGPUVirtualAddress() + offset;
+    auto address = GetBufferAddress();
 
     pCmd->SetGraphicsRootSignature(m_RootSignature.GetPtr());
     pCmd->SetPipelineState(m_TranslucentState.GetPtr());
@@ -1325,9 +1336,7 @@ void ShapeStates::ApplyTranslucentState(ID3D12GraphicsCommandList* pCmd)
 //-----------------------------------------------------------------------------
 void ShapeStates::ApplyWireframeState(ID3D12GraphicsCommandList* pCmd)
 {
-    auto size    = asdx::RoundUp<size_t>(sizeof(CameraParam), 256);
-    auto offset  = m_BufferIndex * size;
-    auto address = m_CameraBuffer->GetGPUVirtualAddress() + offset;
+    auto address = GetBufferAddress();
 
     pCmd->SetGraphicsRootSignature(m_RootSignature.GetPtr());
     pCmd->SetPipelineState(m_WireframeState.GetPtr());
@@ -1403,18 +1412,22 @@ bool ShapeParams::Init(uint32_t count)
             D3D12MA::ALLOCATION_DESC allocDesc = {};
             allocDesc.HeapType = heapType;
 
+            D3D12MA::Allocation* allocation = nullptr;
+
             auto hr = allocator->CreateResource(
                 &allocDesc,
                 &desc,
                 D3D12_RESOURCE_STATE_GENERIC_READ,
                 nullptr,
-                m_AllocationPB.GetAddress(),
+                &allocation,
                 IID_PPV_ARGS(m_ParamBuffer.GetAddress()));
             if (FAILED(hr))
             {
                 ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
                 return false;
             }
+
+            m_AllocationPB.Attach(allocation);
         }
         else
         {
@@ -1580,18 +1593,22 @@ bool ShapeBase::InitBuffer
             D3D12MA::ALLOCATION_DESC allocDesc = {};
             allocDesc.HeapType = heapType;
 
+            D3D12MA::Allocation* allocation = nullptr;
+
             auto hr = allocator->CreateResource(
                 &allocDesc,
                 &desc,
                 state,
                 nullptr,
-                m_AllocationVB.GetAddress(),
+                &allocation,
                 IID_PPV_ARGS(m_VB.GetAddress()));
             if (FAILED(hr))
             {
                 ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
                 return false;
             }
+
+            m_AllocationVB.Attach(allocation);
         }
         else
         {
@@ -1659,18 +1676,22 @@ bool ShapeBase::InitBuffer
             D3D12MA::ALLOCATION_DESC allocDesc = {};
             allocDesc.HeapType = heapType;
 
+            D3D12MA::Allocation* allocation = nullptr;
+
             auto hr = allocator->CreateResource(
                 &allocDesc,
                 &desc,
                 state,
                 nullptr,
-                m_AllocationIB.GetAddress(),
+                &allocation,
                 IID_PPV_ARGS(m_IB.GetAddress()));
             if (FAILED(hr))
             {
                 ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
                 return false;
             }
+
+            m_AllocationIB.Attach(allocation);
         }
         else
         {
@@ -2198,21 +2219,21 @@ bool BoneShape::Init(float length, float width)
 {
     auto s = width * 0.5f;
     asdx::Vector3 vertices[6] = {
-        asdx::Vector3(0.0f, length, 0.0f),
+        asdx::Vector3(0.0f, 0.0f, length),
 
-        asdx::Vector3(-s, length * 0.1f, -s),
-        asdx::Vector3( s, length * 0.1f, -s),
-        asdx::Vector3( s, length * 0.1f,  s),
-        asdx::Vector3(-s, length * 0.1f,  s),
+        asdx::Vector3(-s, -s, length * 0.125f),
+        asdx::Vector3( s, -s, length * 0.125f),
+        asdx::Vector3( s,  s, length * 0.125f),
+        asdx::Vector3(-s,  s, length * 0.125f),
 
         asdx::Vector3(0.0f, 0.0f, 0.0f),
     };
 
     // 基底変換行列
     auto basis = asdx::Matrix(
+        0.0f, 0.0f, 1.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
         1.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f,
         0.0f, 0.0f, 0.0f, 1.0f
     );
 

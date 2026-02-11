@@ -569,9 +569,11 @@ void GuiMgr::Term()
 void GuiMgr::Update( uint32_t width, uint32_t height )
 {
     auto time = std::chrono::system_clock::now();
-    auto elapsedMilliSec = std::chrono::duration_cast<std::chrono::microseconds>( time - m_LastTime ).count();
+    auto elapsedMilliSec = std::chrono::duration_cast<std::chrono::microseconds>(time - m_LastTime).count();
     auto elapsedSec = static_cast<float>( double(elapsedMilliSec) / (1000.0 * 1000.0) );
     assert(elapsedSec > 0.0f); // ImGuiで落とされる前にチェックする.
+    if (elapsedSec < 0.0f)
+        elapsedSec = 1e-6f; // 安全策.
 
     auto& io = ImGui::GetIO();
     io.DeltaTime     = elapsedSec;
@@ -750,8 +752,8 @@ void GuiMgr::OnMouse( int x, int y, int wheelDelta, bool isDownL, bool isDownM, 
 {
     auto& io = ImGui::GetIO();
 
-    io.MousePosPrev = io.MousePos;
-    io.MousePos = ImVec2( float( x ), float( y ) );
+    io.MousePosPrev   = io.MousePos;
+    io.MousePos       = ImVec2( float( x ), float( y ) );
     io.MouseDown[ 0 ] = isDownL;
     io.MouseDown[ 1 ] = isDownR;
     io.MouseDown[ 2 ] = isDownM;
