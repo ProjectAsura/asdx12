@@ -125,12 +125,11 @@ asdx::Vector3 CalcKeyValue(
     // 二分探索で最初に超える番号を求める.
     auto index = LowerBound(items, items->size(), timeSec);
 
-    // 最初あるいは最後なら補間せずに返す.
-    if (index == 0 || index == (items->size() - 1))
-        return ToVector3(items->Get(index)->Value());
+    auto next = index;
+    auto prev = (index == 0) ? (items->size() - 1) : index - 1;
 
     // 補間値を返す.
-    return Lerp(items->Get(index - 1), items->Get(index), timeSec);
+    return Lerp(items->Get(prev), items->Get(next), timeSec);
 }
 
 //-----------------------------------------------------------------------------
@@ -148,12 +147,11 @@ asdx::Quaternion CalcKeyValue(
     // 二分探索で最初に超える番号を求める.
     auto index = LowerBound(items, items->size(), timeSec);
 
-    // 最初あるいは最後なら補間せずに返す.
-    if (index == 0 || index == (items->size() - 1))
-        return ToQuaternion(items->Get(index)->Value());
+    auto next = index;
+    auto prev = (index == 0) ? (items->size() - 1) : index - 1;
 
     // 補間値を返す.
-    return Lerp(items->Get(index - 1), items->Get(index), timeSec);
+    return Lerp(items->Get(prev), items->Get(next), timeSec);
 }
 
 } // namespace

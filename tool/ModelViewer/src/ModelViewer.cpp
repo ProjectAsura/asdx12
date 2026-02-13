@@ -461,6 +461,7 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
                 m_MotionPlayer.SetClip(nullptr);
                 m_ClipIndex = 0;
                 m_ClipNames.clear();
+                m_MotionBinary.Term();
             }
 
             auto loop = m_MotionPlayer.IsLoop();
