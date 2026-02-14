@@ -2,61 +2,82 @@
 
 namespace asdx.res;
 
-enum TextureKind : byte
+enum BlendState : byte
 {
-    BaseColor,
-    Normal,
-    Orm,
-    Emissive,
-    Anisotropy,
-    ClearCoat,
-    ClearCoatRoughness,
-    ClearCoatNormal,
-    SheenColor,
-    SheenRoughness,
-    Transmission,
-    Thickness,
-    Iridescence,
-    IridescenceThickness,
+    Opaque,
+    AlphaBlend,
+    Additive,
+    Substract,
+    Premultiplied,
+    Multiply,
+    Screen,
+}
+
+enum DepthState : byte
+{
+    ReadWrite,
+    ReadOnly,
+    WriteOnly,
+    None,
+}
+
+enum RasterizerState : byte
+{
+    CullNone,
+    CullBack,
+    CullFront,
+    Wireframe,
+}
+
+enum SamplerState : byte
+{
+    PointWrap,
+    PointClamp,
+    PointMirror,
+    LinearWrap,
+    LinearClamp,
+    LinearMirror,
+    AnisotropicWrap,
+    AnisotropicClamp,
+    AnisotropicMirror,
+}
+
+struct RenderState
+{
+    Blend      : BlendState;
+    Depth      : DepthState;
+    Rasterizer : RasterizerState;
 }
 
 table MaterialTexture
 {
-    Path : string;
-    Kind : TextureKind (key);
+    Path    : string (key);
+    Sampler : SamplerState;
 }
 
-table Material
+table MaterialParam
 {
-    BindName            : string (key);
-    FeatureMask         : uint;
-    Textures            : [MaterialTexture];
+    Name   : string (key);
+    Offset : uint;
+    Size   : uint;
+    Data   : [ubyte];
+}
 
-    BaseColorFactor             : Float3;
-    OcclusionFactor             : float;
-    RoughnessFactor             : float;
-    MetalnessFactor             : float;
-    EmissiveFactor              : Float3;
-    AlphaThreshold              : float;
-    AnisotropyStrength          : float;
-    AnisotropyRotation          : Float2;
-    ClearCoatFactor             : float;
-    ClearCoatRoughnessFactor    : float;
-    SheenColorFactor            : Float3;
-    SheenRoughnessFactor        : float;
-    Ior                         : float;
-    Dispersion                  : float;
-    TransmissionFactor          : float;
-    IridescenceFactor           : float;
-    IridescenceIor              : float;
-    IridescenceThicknessMinimum : float;
-    iridescenceThicknessMaximum : float;
+table MaterialBuffer
+{
+    Name       : string (key);
+    Size       : uint;
+    Params     : [MaterialParam];
 }
 
 table MaterialBinary
 {
     Version     : uint;
-    Materials   : [Material];
+    Name        : string;
+    PixelShader : string;
+    States      : RenderState;
+    Textures    : [MaterialTexture];
+    Buffers     : [MaterialBuffer];
 }
 
 root_type MaterialBinary;

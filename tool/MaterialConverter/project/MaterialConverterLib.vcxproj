@@ -142,9 +142,11 @@ xcopy $(ProjectDir)..\include\MaterialBinary_generated.h $(ProjectDir)..\..\..\s
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\external\simdjson\src\simdjson.cpp" />
+    <ClCompile Include="..\src\EditMaterial.cpp" />
     <ClCompile Include="..\src\MaterialConverter.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\include\EditMaterial.h" />
     <ClInclude Include="..\include\MaterialConverter.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

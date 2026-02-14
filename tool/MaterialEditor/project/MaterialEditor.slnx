@@ -1,7 +1,0 @@
-<Solution>
-  <Configurations>
-    <Platform Name="x64" />
-    <Platform Name="x86" />
-  </Configurations>
-  <Project Path="MaterialEditor.vcxproj" Id="e015ac48-1eb9-4564-9b58-0d45e58c67ae" />
-</Solution>

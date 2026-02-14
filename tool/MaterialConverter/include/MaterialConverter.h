@@ -9,6 +9,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <string>
+#include <vector>
 
 
 namespace asdx {
@@ -29,8 +30,8 @@ public:
     ///////////////////////////////////////////////////////////////////////////
     struct Desc
     {
-        std::string InputPath;
-        std::string OutputPath;
+        std::string InputPath;      //!< 入力 json ファイル.
+        std::string OutputPath;     //!< 出力バイナリファイル.
     };
 
     //=========================================================================

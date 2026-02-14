@@ -27,9 +27,15 @@
     <ClCompile Include="..\..\..\external\simdjson\src\simdjson.cpp">
       <Filter>external\simdjson</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\EditMaterial.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\MaterialConverter.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\EditMaterial.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
