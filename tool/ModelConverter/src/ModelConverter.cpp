@@ -193,7 +193,7 @@ void ParseMesh
                 }
 
                 // バインドポーズ行列.
-                auto bindPose = bone->mOffsetMatrix;    // いったんコピー.
+                auto bindPose = bone->mOffsetMatrix;    // いったんコピーしないと書き変わってしまうため.
                 bindPose.Inverse();
                 info.BindPose = ToMatrix(bindPose);
 

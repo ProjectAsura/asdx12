@@ -125,6 +125,11 @@ float4 main(const VSOutput input) : SV_TARGET0
     case MODE_COLOR:
         { output = input.Color; }
         break;
+
+    case MODE_BLENDINDEX:
+    case MODE_BLENDWEIGHT:
+        { output.xyz = 0.0f.xxx; }
+        break;
     }
 
     return output;

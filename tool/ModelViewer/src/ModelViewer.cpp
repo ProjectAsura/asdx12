@@ -75,6 +75,8 @@ const char* kDrawModes[] = {
     asdx::ToChar(u8"従接線ベクトル"),
     asdx::ToChar(u8"テクスチャ座標"),
     asdx::ToChar(u8"頂点カラー"),
+    asdx::ToChar(u8"ボーン番号"),
+    asdx::ToChar(u8"ボーン重み"),
 };
 
 //-----------------------------------------------------------------------------
