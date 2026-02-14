@@ -785,7 +785,7 @@ ByteAddressBuffer::~ByteAddressBuffer()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool ByteAddressBuffer::Init(uint64_t size, D3D12_RESOURCE_STATES state)
+bool ByteAddressBuffer::Init(uint64_t size, D3D12_RESOURCE_STATES state, bool dynamic)
 {
     auto rest = size % 4;
     if ( rest != 0 )
@@ -802,11 +802,23 @@ bool ByteAddressBuffer::Init(uint64_t size, D3D12_RESOURCE_STATES state)
         return false;
     }
 
+    D3D12_HEAP_TYPE heapType;
+    if (dynamic)
+    {
+        heapType = IsSupportGpuUploadHeap() 
+            ? D3D12_HEAP_TYPE_GPU_UPLOAD
+            : D3D12_HEAP_TYPE_UPLOAD;
+    }
+    else
+    {
+        heapType = D3D12_HEAP_TYPE_DEFAULT;
+    }
+
     // 4 byte アライメントにする.
     auto bufferSize = RoundUp<uint64_t>(size, 4llu);
 
     D3D12_HEAP_PROPERTIES prop = {};
-    prop.Type                   = D3D12_HEAP_TYPE_DEFAULT;
+    prop.Type                   = heapType;
     prop.CPUPageProperty        = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
     prop.MemoryPoolPreference   = D3D12_MEMORY_POOL_UNKNOWN;
     prop.VisibleNodeMask        = 1;
@@ -830,7 +842,7 @@ bool ByteAddressBuffer::Init(uint64_t size, D3D12_RESOURCE_STATES state)
     if (allocator != nullptr)
     {
         D3D12MA::ALLOCATION_DESC allocDesc = {};
-        allocDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
+        allocDesc.HeapType = heapType;
 
         D3D12MA::Allocation* pAllocation = nullptr;
 
@@ -877,7 +889,8 @@ bool ByteAddressBuffer::Init
 (
     ID3D12GraphicsCommandList*  pCmdList,
     uint64_t                    size,
-    const void*                 pInitData
+    const void*                 pInitData,
+    bool                        dynamic
 )
 {
     if (IsSupportGpuUploadHeap())
@@ -978,7 +991,7 @@ bool ByteAddressBuffer::Init
         return true;
     }
 
-    if (!Init(size, D3D12_RESOURCE_STATE_COMMON))
+    if (!Init(size, D3D12_RESOURCE_STATE_COMMON, dynamic))
     { return false; }
 
     UpdateBuffer(pCmdList, m_Resource.GetPtr(), pInitData);
@@ -1006,6 +1019,36 @@ void ByteAddressBuffer::Term()
     auto resource = m_Resource.Detach();
     Dispose(resource);
     m_Holder.Reset();
+}
+
+//-----------------------------------------------------------------------------
+//      メモリマッピングを行います.
+//-----------------------------------------------------------------------------
+void* ByteAddressBuffer::Map()
+{
+    if (m_Resource.GetPtr() == nullptr)
+    { return nullptr; }
+
+    void* ptr = nullptr;
+    auto hr = m_Resource->Map(0, nullptr, &ptr);
+    if (FAILED(hr))
+    {
+        ELOG("Error : ID3D12Resource::Map() Failed. errcode = 0x%x", hr);
+        return nullptr;
+    }
+
+    return ptr;
+}
+
+//-----------------------------------------------------------------------------
+//      メモリマッピングを解除します.
+//-----------------------------------------------------------------------------
+void ByteAddressBuffer::Unmap()
+{
+    if (m_Resource.GetPtr() == nullptr)
+    { return; }
+
+    m_Resource->Unmap(0, nullptr);
 }
 
 //-----------------------------------------------------------------------------
@@ -1068,7 +1111,7 @@ StructuredBuffer::~StructuredBuffer()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool StructuredBuffer::Init(uint64_t count, uint32_t stride, D3D12_RESOURCE_STATES state)
+bool StructuredBuffer::Init(uint64_t count, uint32_t stride, D3D12_RESOURCE_STATES state, bool dynamic)
 {
     auto size = count * stride;
     auto rest = size % 4;
@@ -1086,8 +1129,20 @@ bool StructuredBuffer::Init(uint64_t count, uint32_t stride, D3D12_RESOURCE_STAT
         return false;
     }
 
+    D3D12_HEAP_TYPE heapType;
+    if (dynamic)
+    {
+        heapType = IsSupportGpuUploadHeap() 
+            ? D3D12_HEAP_TYPE_GPU_UPLOAD
+            : D3D12_HEAP_TYPE_UPLOAD;
+    }
+    else
+    {
+        heapType = D3D12_HEAP_TYPE_DEFAULT;
+    }
+
     D3D12_HEAP_PROPERTIES prop = {};
-    prop.Type                   = D3D12_HEAP_TYPE_DEFAULT;
+    prop.Type                   = heapType;
     prop.CPUPageProperty        = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
     prop.MemoryPoolPreference   = D3D12_MEMORY_POOL_UNKNOWN;
     prop.VisibleNodeMask        = 1;
@@ -1111,7 +1166,7 @@ bool StructuredBuffer::Init(uint64_t count, uint32_t stride, D3D12_RESOURCE_STAT
     if (allocator != nullptr)
     {
         D3D12MA::ALLOCATION_DESC allocDesc = {};
-        allocDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
+        allocDesc.HeapType = heapType;
 
         D3D12MA::Allocation* pAllocation = nullptr;
 
@@ -1159,7 +1214,8 @@ bool StructuredBuffer::Init
     ID3D12GraphicsCommandList*  pCmdList,
     uint64_t                    count,
     uint32_t                    stride,
-    const void*                 pInitData
+    const void*                 pInitData,
+    bool                        dynamic
 )
 {
     if (IsSupportGpuUploadHeap())
@@ -1244,7 +1300,7 @@ bool StructuredBuffer::Init
         return true;
     }
 
-    if (!Init(count, stride, D3D12_RESOURCE_STATE_COMMON))
+    if (!Init(count, stride, D3D12_RESOURCE_STATE_COMMON, dynamic))
     { return false;  }
 
     UpdateBuffer(pCmdList, m_Resource.GetPtr(), pInitData);
@@ -1272,6 +1328,36 @@ void StructuredBuffer::Term()
     auto resource = m_Resource.Detach();
     Dispose(resource);
     m_Holder.Reset();
+}
+
+//-----------------------------------------------------------------------------
+//      メモリマッピングを行います.
+//-----------------------------------------------------------------------------
+void* StructuredBuffer::Map()
+{
+    if (m_Resource.GetPtr() == nullptr)
+    { return nullptr; }
+
+    void* ptr = nullptr;
+    auto hr = m_Resource->Map(0, nullptr, &ptr);
+    if (FAILED(hr))
+    {
+        ELOG("Error : ID3D12Resource::Map() Failed. errcode = 0x%x", hr);
+        return nullptr;
+    }
+
+    return ptr;
+}
+
+//-----------------------------------------------------------------------------
+//      メモリマッピングを解除します.
+//-----------------------------------------------------------------------------
+void StructuredBuffer::Unmap()
+{
+    if (m_Resource.GetPtr() == nullptr)
+    { return; }
+
+    m_Resource->Unmap(0, nullptr);
 }
 
 //-----------------------------------------------------------------------------

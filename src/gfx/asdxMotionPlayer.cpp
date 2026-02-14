@@ -294,5 +294,20 @@ void MotionPlayer::SetPause(bool value)
 void MotionPlayer::Cue()
 { m_TimeInTicks = 0.0f; }
 
+//-----------------------------------------------------------------------------
+//      1フレーム進めます.
+//-----------------------------------------------------------------------------
+void MotionPlayer::FrameAdvance(const Matrix& rootTransform)
+{
+    if (m_pModel == nullptr || m_pMotionClip == nullptr)
+        return;
+
+    // 60 FPS として計算.
+    auto oneFrame = 1.0f / 60.0f;
+
+    m_Pause = false;
+    Update(oneFrame, rootTransform);
+    m_Pause = true;
+}
 
 } // namespace asdx

@@ -26,13 +26,16 @@ namespace {
 //-----------------------------------------------------------------------------
 // Shaders
 //-----------------------------------------------------------------------------
+#include "../res/shaders/Compiled/MeshVS.inc"
+#include "../res/shaders/Compiled/MeshPS.inc"
+
 #include "../res/shaders/Compiled/ModelVS.inc"
 #include "../res/shaders/Compiled/ModelPS.inc"
 
 enum ROOT_PARAM
 {
-    ROOT_PARAM_B0,
-    ROOT_PARAM_B1,
+    ROOT_PARAM_B0,  // SceneParam.
+    ROOT_PARAM_B1,  // mode
     ROOT_PARAM_T0,  // BaseColor
     ROOT_PARAM_T1,  // Normal
     ROOT_PARAM_T2,  // ORM
@@ -45,9 +48,11 @@ static const D3D12_INPUT_ELEMENT_DESC InputElements[] = {
     { "TANGENT"    , 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 2, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
     { "TEXCOORD"   , 0, DXGI_FORMAT_R32G32_FLOAT      , 3, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
     { "COLOR"      , 0, DXGI_FORMAT_R8G8B8A8_UNORM    , 4, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-    //{ "BLENDINDEX" , 0, DXGI_FORMAT_R32G32B32A32_UINT , 5, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-    //{ "BLENDWEIGHT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 6, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+    { "BONEINDEX"  , 0, DXGI_FORMAT_R32G32B32A32_UINT , 5, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+    { "BONEWEIGHT" , 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 6, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 };
+static const uint32_t kStaticMeshElementCount   = 5;
+static const uint32_t kSkeletalMeshElementCount = 7;
 
 struct alignas(256) ParamScene
 {
@@ -170,9 +175,10 @@ bool ModelViewer::OnInit()
 
     // ルートシグニチャの生成.
     {
-        D3D12_ROOT_PARAMETER params[2] = {};
+        D3D12_ROOT_PARAMETER params[3] = {};
         asdx::InitAsCBV(params[0], 0, D3D12_SHADER_VISIBILITY_ALL);
         asdx::InitAsConstants(params[1], 1, 4, D3D12_SHADER_VISIBILITY_ALL);
+        asdx::InitAsSRV(params[2], 0, D3D12_SHADER_VISIBILITY_ALL);
 
         D3D12_ROOT_SIGNATURE_DESC desc = {};
         desc.NumParameters      = _countof(params);
@@ -192,13 +198,13 @@ bool ModelViewer::OnInit()
     {
         D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = {};
         desc.pRootSignature                 = m_RootSignature.GetPtr();
-        desc.VS                             = { ModelVS, sizeof(ModelVS) };
-        desc.PS                             = { ModelPS, sizeof(ModelPS) };
+        desc.VS                             = { MeshVS, sizeof(MeshVS) };
+        desc.PS                             = { MeshPS, sizeof(MeshPS) };
         desc.BlendState                     = asdx::Preset::Opaque;
         desc.SampleMask                     = D3D12_DEFAULT_SAMPLE_MASK;
         desc.RasterizerState                = asdx::Preset::CullBack;
         desc.DepthStencilState              = asdx::Preset::DepthReadWrite;
-        desc.InputLayout.NumElements        = _countof(InputElements);
+        desc.InputLayout.NumElements        = kStaticMeshElementCount;
         desc.InputLayout.pInputElementDescs = InputElements;
         desc.PrimitiveTopologyType          = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
         desc.NumRenderTargets               = 1;
@@ -207,14 +213,47 @@ bool ModelViewer::OnInit()
         desc.SampleDesc.Count               = 1;
         desc.SampleDesc.Quality             = 0;
 
-        if (!m_SolidState.Init(&desc))
+        if (!m_StaticSolidState.Init(&desc))
         {
             ELOGA("Error : PipelineStateManager::Create() Failed.");
             return false;
         }
 
         desc.RasterizerState = asdx::Preset::Wireframe;
-        if (!m_WireframeState.Init(&desc))
+        if (!m_StaticWireframeState.Init(&desc))
+        {
+            ELOGA("Error : PipelineStateManager::Create() Failed.");
+            return false;
+        }
+    }
+
+    // パイプラインステートの生成,
+    {
+        D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = {};
+        desc.pRootSignature                 = m_RootSignature.GetPtr();
+        desc.VS                             = { ModelVS, sizeof(ModelVS) };
+        desc.PS                             = { ModelPS, sizeof(ModelPS) };
+        desc.BlendState                     = asdx::Preset::Opaque;
+        desc.SampleMask                     = D3D12_DEFAULT_SAMPLE_MASK;
+        desc.RasterizerState                = asdx::Preset::CullBack;
+        desc.DepthStencilState              = asdx::Preset::DepthReadWrite;
+        desc.InputLayout.NumElements        = kSkeletalMeshElementCount;
+        desc.InputLayout.pInputElementDescs = InputElements;
+        desc.PrimitiveTopologyType          = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+        desc.NumRenderTargets               = 1;
+        desc.RTVFormats[0]                  = m_SwapChainFormat;
+        desc.DSVFormat                      = m_DepthStencilFormat;
+        desc.SampleDesc.Count               = 1;
+        desc.SampleDesc.Quality             = 0;
+
+        if (!m_SkeletalSolidState.Init(&desc))
+        {
+            ELOGA("Error : PipelineStateManager::Create() Failed.");
+            return false;
+        }
+
+        desc.RasterizerState = asdx::Preset::Wireframe;
+        if (!m_SkeletalWireframeState.Init(&desc))
         {
             ELOGA("Error : PipelineStateManager::Create() Failed.");
             return false;
@@ -306,10 +345,14 @@ void ModelViewer::OnTerm()
     for(auto i=0; i<2; ++i)
     {
         m_SceneCB[i].Term();
+        m_MatrixPalletBuffer[i].Term();
     }
 
-    m_SolidState.Term();
-    m_WireframeState.Term();
+    m_StaticSolidState      .Term();
+    m_StaticWireframeState  .Term();
+
+    m_SkeletalSolidState    .Term();
+    m_SkeletalWireframeState.Term();
 
     m_RootSignature.Reset();
 
@@ -339,7 +382,7 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
     // 情報表示.
     {
         const auto w = 200.0f;
-        const auto h = 175.0f;
+        const auto h = 158.0f;
         const auto x = 10.0f;
         const auto y = 10.0f;
 
@@ -404,12 +447,6 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
             ImGui::TableSetColumnIndex(1);
             ImGui::Text(asdx::ToChar(u8"%.2f"), m_MotionPlayer.GetDuration());
 
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::Text(asdx::ToChar(u8"再生時間"));
-            ImGui::TableSetColumnIndex(1);
-            ImGui::Text(asdx::ToChar(u8"%.2f"), m_MotionPlayer.GetTimeInTicks());
-
             ImGui::EndTable();
 
             ImGui::End();
@@ -418,8 +455,8 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
 
     // モーション制御.
     {
-        const auto w = 300.0f;
-        const auto h = 135.0f;
+        const auto w = 260.0f;
+        const auto h = 100.0f;
         const auto x = 10.0f;
         const auto y = 10.0f;
 
@@ -449,6 +486,7 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
             ImGui::SameLine();
             if (ImGui::Button(asdx::ToChar(u8"コマ送り")))
             {
+                m_MotionPlayer.FrameAdvance(root);
             }
             ImGui::SameLine();
             if (ImGui::Button(asdx::ToChar(u8"頭出し")))
@@ -456,7 +494,7 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
                 m_MotionPlayer.Cue();
             }
             ImGui::SameLine();
-            if (ImGui::Button(asdx::ToChar(u8"削除")))
+            if (ImGui::Button(asdx::ToChar(u8"クリア")))
             {
                 m_MotionPlayer.SetClip(nullptr);
                 m_ClipIndex = 0;
@@ -469,6 +507,9 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
             {
                 m_MotionPlayer.SetLoop(loop);
             }
+            ImGui::SameLine();
+            ImGui::Text(asdx::ToChar(u8"再生時間 : %.2f"), m_MotionPlayer.GetTimeInTicks());
+
             auto speed = m_MotionPlayer.GetPlaySpeed();
             if (ImGui::DragFloat(asdx::ToChar(u8"再生速度"), &speed, 0.1f))
             {
@@ -631,6 +672,24 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
 
         m_SceneCB[idx].Unmap();
     }
+
+    // 行列パレットバッファ更新
+    {
+        auto isSkeletal = (m_MotionBinary.GetClipCount() > 0) && (m_Model->GetBoneCount() > 0);
+        if (isSkeletal)
+        {
+            auto idx = GetCurrentBackBufferIndex();
+
+            if (m_MatrixPalletBuffer[idx].GetResource() != nullptr)
+            {
+                auto& mtx = m_MotionPlayer.GetMatrixPalettes();
+                auto  ptr = m_MatrixPalletBuffer[idx].Map();
+                memcpy(ptr, mtx.data(), sizeof(asdx::Matrix) * mtx.size());
+                m_MatrixPalletBuffer[idx].Unmap();
+            }
+
+        }
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -667,10 +726,27 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
         auto addressParam = m_ShapeParams.Update();
 
         pCmd->SetGraphicsRootSignature(m_RootSignature.GetPtr());
-        if (m_EnableWireframe)
-        { m_WireframeState.SetState(pCmd); }
+
+        auto isSkeletal = (m_MotionBinary.GetClipCount() > 0) 
+            && (m_Model->GetBoneCount() > 0)
+            && (m_MatrixPalletBuffer[idx].GetResource() != nullptr);
+
+        if (isSkeletal)
+        {
+            if (m_EnableWireframe)
+            { m_SkeletalWireframeState.SetState(pCmd); }
+            else
+            { m_SkeletalSolidState.SetState(pCmd); }
+
+            pCmd->SetGraphicsRootShaderResourceView(ROOT_PARAM_T0, m_MatrixPalletBuffer[idx].GetGpuAddress());
+        }
         else
-        { m_SolidState.SetState(pCmd); }
+        {
+            if (m_EnableWireframe)
+            { m_StaticWireframeState.SetState(pCmd); }
+            else
+            { m_StaticSolidState.SetState(pCmd); }
+        }
 
         pCmd->SetGraphicsRootConstantBufferView(ROOT_PARAM_B0, m_SceneCB[idx].GetGpuAddress());
         pCmd->SetGraphicsRoot32BitConstants(ROOT_PARAM_B1, 1, &m_DrawMode, 0);
@@ -678,19 +754,22 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
 
         for(auto i=0u; i<m_Model->GetMeshCount(); ++i)
         {
-            auto mesh = m_Model->GetMesh(i);
+            const auto mesh = m_Model->GetMesh(i);
 
             D3D12_VERTEX_BUFFER_VIEW VBVs[] = {
-                mesh->GetPositions().GetVBV(),
-                mesh->GetNormals  ().GetVBV(),
-                mesh->GetTangents ().GetVBV(),
-                mesh->GetTexCoords().GetVBV(),
-                mesh->GetColors   ().GetVBV(),
+                mesh->GetPositions  ().GetVBV(),
+                mesh->GetNormals    ().GetVBV(),
+                mesh->GetTangents   ().GetVBV(),
+                mesh->GetTexCoords  ().GetVBV(),
+                mesh->GetColors     ().GetVBV(),
+                mesh->GetBoneIndices().GetVBV(),
+                mesh->GetBoneWeights().GetVBV(),
             };
 
             auto IBV = mesh->GetIndices().GetIBV();
+            auto countVBV = (isSkeletal) ? kSkeletalMeshElementCount : kStaticMeshElementCount;
 
-            pCmd->IASetVertexBuffers(0, _countof(VBVs), VBVs);
+            pCmd->IASetVertexBuffers(0, countVBV, VBVs);
             pCmd->IASetIndexBuffer(&IBV);
 
             pCmd->DrawIndexedInstanced(mesh->GetIndexCount(), 1, 0, 0, 0);
@@ -1031,6 +1110,16 @@ void ModelViewer::RecreateModel()
 
     // モーションプレイヤーを初期化.
     m_MotionPlayer.Init(pModel);
+
+    // 行列パレット用 SRV を生成.
+    auto boneCount = m_Model->GetBoneCount();
+    for(auto i=0; i<2; ++i)
+    {
+        m_MatrixPalletBuffer[i].Term();
+
+        if (!m_MatrixPalletBuffer[i].Init(boneCount, sizeof(asdx::Matrix), D3D12_RESOURCE_STATE_COMMON, true))
+            ELOG("Error : Matrix Pallet Buffer Init Failed. index = %u", i);
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -1153,19 +1242,20 @@ void ModelViewer::LoadMotion()
             if (asdx::MotionConverter::Convert(input.c_str(), motionBinary))
             {
                 m_MotionBinary.Load(std::move(motionBinary));
-                auto count = m_MotionBinary.GetClipCount();
-                if (count > 0)
-                {
-                    m_ClipNames.resize(count);
-
-                    for(auto i=0; i<count; ++i)
-                    {
-                        m_ClipNames[i] = asdx::MotionClipProxy::GetName(m_MotionBinary.GetClip(i));
-                    }
-                    m_MotionPlayer.SetClip(m_MotionBinary.GetClip(0));
-                    m_ClipIndex = 0;
-                }
             }
+        }
+
+        auto count = m_MotionBinary.GetClipCount();
+        if (count > 0)
+        {
+            m_ClipNames.resize(count);
+
+            for(auto i=0u; i<count; ++i)
+                m_ClipNames[i] = asdx::MotionClipProxy::GetName(m_MotionBinary.GetClip(i));
+
+            auto clip = m_MotionBinary.GetClip(0);
+            m_MotionPlayer.SetClip(clip);
+            m_ClipIndex = 0;
         }
     }
 }

@@ -1,5 +1,5 @@
 ﻿//-----------------------------------------------------------------------------
-// File : ModelPS.hlsl
+// File : MeshPS.hlsl
 // Desc : Pixel Shader For Model Drawing.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
@@ -14,8 +14,6 @@ struct VSOutput
     float4  Tangent     : TANGENT;
     float2  TexCoord    : TEXCOORD0;
     float4  Color       : COLOR0;
-    uint4   BoneIndices : BONEINDEX;
-    float4  BoneWeights : BONEWEIGHT;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -126,19 +124,6 @@ float4 main(const VSOutput input) : SV_TARGET0
 
     case MODE_COLOR:
         { output = input.Color; }
-        break;
-
-    case MODE_BLENDINDEX:
-        {
-            output.r = dot(float3(1.0f, 0.0f, 0.0f), ToSRGB(HueToRGB(input.BoneIndices.x * 1.1f)));
-            output.g = dot(float3(0.0f, 1.0f, 0.0f), ToSRGB(HueToRGB(input.BoneIndices.y * 1.1f)));
-            output.b = dot(float3(0.0f, 0.0f, 1.0f), ToSRGB(HueToRGB(input.BoneIndices.z * 1.1f)));
-            output.a = dot(float3(1.0f, 1.0f, 1.0f), ToSRGB(HueToRGB(input.BoneIndices.w * 1.1f)));
-        }
-        break;
-
-    case MODE_BLENDWEIGHT:
-        { output = input.BoneWeights; }
         break;
     }
 

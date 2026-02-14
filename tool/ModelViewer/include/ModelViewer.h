@@ -68,8 +68,10 @@ private:
     asdx::RefPtr<asdx::Model>           m_Model;
     std::string                         m_OutputPath;
     asdx::RefPtr<ID3D12RootSignature>   m_RootSignature;
-    asdx::GraphicsPipelineState         m_SolidState;
-    asdx::GraphicsPipelineState         m_WireframeState;
+    asdx::GraphicsPipelineState         m_StaticSolidState;
+    asdx::GraphicsPipelineState         m_SkeletalSolidState;
+    asdx::GraphicsPipelineState         m_StaticWireframeState;
+    asdx::GraphicsPipelineState         m_SkeletalWireframeState;
     ModelInfo                           m_ModelInfo = {};
     asdx::ConstantBuffer                m_SceneCB[2];
     asdx::AppCamera                     m_Camera;
@@ -92,6 +94,7 @@ private:
     asdx::LineRenderer                  m_LineRenderer;
     size_t                              m_ClipIndex     = 0;
     std::vector<std::string>            m_ClipNames     = {};
+    asdx::StructuredBuffer              m_MatrixPalletBuffer[2];
 
     //=========================================================================
     // private methods.

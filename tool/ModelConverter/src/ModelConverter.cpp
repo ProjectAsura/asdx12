@@ -68,6 +68,18 @@ asdx::res::Float4x4 ToFloat4x4(const asdx::Matrix& matrix)
 }
 
 //-----------------------------------------------------------------------------
+//      Matrix に変換します.
+//-----------------------------------------------------------------------------
+asdx::Matrix ToMatrix(const aiMatrix4x4& matrix)
+{
+    return asdx::Matrix(
+        matrix.a1, matrix.b1, matrix.c1, matrix.d1,
+        matrix.a2, matrix.b2, matrix.c2, matrix.d2,
+        matrix.a3, matrix.b3, matrix.c3, matrix.d3,
+        matrix.a4, matrix.b4, matrix.c4, matrix.d4);
+}
+
+//-----------------------------------------------------------------------------
 //      親ボーンを検索します.
 //-----------------------------------------------------------------------------
 const aiBone* FindParentBone(const aiNode* node, aiBone** const pBones, uint32_t numBones)
@@ -180,22 +192,13 @@ void ParseMesh
                     }
                 }
 
-                // バインドポーズ行列を求める.
-                auto& bindPose = bone->mOffsetMatrix.Inverse();
-
                 // バインドポーズ行列.
-                info.BindPose = asdx::Matrix(
-                    bindPose.a1, bindPose.b1, bindPose.c1, bindPose.d1,
-                    bindPose.a2, bindPose.b2, bindPose.c2, bindPose.d2,
-                    bindPose.a3, bindPose.b3, bindPose.c3, bindPose.d3,
-                    bindPose.a4, bindPose.b4, bindPose.c4, bindPose.d4);
+                auto bindPose = bone->mOffsetMatrix;    // いったんコピー.
+                bindPose.Inverse();
+                info.BindPose = ToMatrix(bindPose);
 
                 // バインドポーズ逆行列.
-                info.InverseBindPose = asdx::Matrix(
-                    bone->mOffsetMatrix.a1, bone->mOffsetMatrix.b1, bone->mOffsetMatrix.c1, bone->mOffsetMatrix.d1,
-                    bone->mOffsetMatrix.a2, bone->mOffsetMatrix.b2, bone->mOffsetMatrix.c2, bone->mOffsetMatrix.d2,
-                    bone->mOffsetMatrix.a3, bone->mOffsetMatrix.b3, bone->mOffsetMatrix.c3, bone->mOffsetMatrix.d3,
-                    bone->mOffsetMatrix.a4, bone->mOffsetMatrix.b4, bone->mOffsetMatrix.c4, bone->mOffsetMatrix.d4);
+                info.InverseBindPose = ToMatrix(bone->mOffsetMatrix);
 
                 boneMap[boneName] = info;
             }
@@ -209,15 +212,15 @@ void ParseMesh
                 auto vertId = bone->mWeights[j].mVertexId;
                 auto weight = bone->mWeights[j].mWeight;
 
-                auto fx = boneWeights[i].X();
-                auto fy = boneWeights[i].Y();
-                auto fz = boneWeights[i].Z();
-                auto fw = boneWeights[i].W();
+                auto fx = boneWeights[vertId].X();
+                auto fy = boneWeights[vertId].Y();
+                auto fz = boneWeights[vertId].Z();
+                auto fw = boneWeights[vertId].W();
 
-                auto ix = boneIndices[i].X();
-                auto iy = boneIndices[i].Y();
-                auto iz = boneIndices[i].Z();
-                auto iw = boneIndices[i].W();
+                auto ix = boneIndices[vertId].X();
+                auto iy = boneIndices[vertId].Y();
+                auto iz = boneIndices[vertId].Z();
+                auto iw = boneIndices[vertId].W();
 
                 // 値が埋められていない箇所を調べる.
                 auto processed = false;
