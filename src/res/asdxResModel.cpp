@@ -51,7 +51,7 @@ bool FindIndex(T& items, const char* name, uint32_t& index)
     {
         uint32_t mid = lhs + (rhs - lhs) / 2;
         auto item = items->Get(mid);
-        auto ret = item->KeyCompareWithValue(name);
+        auto ret  = item->KeyCompareWithValue(name);
         if (ret == 0)
         {
             index = mid;
@@ -198,33 +198,8 @@ bool ModelBinary::FindBone(const char* name, uint32_t& index) const
         return false;
     }
 
-#if 0
-    uint32_t lhs = 0;
-    uint32_t rhs = bones->size();
- 
-    while(lhs < rhs)
-    {
-        uint32_t mid = lhs + (rhs - lhs) / 2;
-        auto bone = bones->Get(mid);
-        auto ret = strcmp(bone->Name()->c_str(), name);
-        if (ret == 0)
-        {
-            index = mid;
-            return true;
-        }
-        else if (ret < 0)
-        {
-            lhs = mid + 1;
-        }
-        else
-        {
-            rhs = mid;
-        }
-    }
-
-    index = UINT32_MAX;
-    return false;
-#else
+    // 2分探索するために，名前順にソートしてしまうと，
+    // ボーン番号が正しい値にならず不具合を引き起こすため，線形検索を行う.
     for(auto i=0u; i<bones->size(); ++i)
     {
         if (strcmp(bones->Get(i)->Name()->c_str(), name) == 0)
@@ -236,7 +211,6 @@ bool ModelBinary::FindBone(const char* name, uint32_t& index) const
 
     index = UINT32_MAX;
     return false;
-#endif
 }
 
 //-----------------------------------------------------------------------------

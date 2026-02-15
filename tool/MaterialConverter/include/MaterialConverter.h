@@ -10,6 +10,7 @@
 //-----------------------------------------------------------------------------
 #include <string>
 #include <vector>
+#include <EditMaterial.h>
 
 
 namespace asdx {
@@ -61,6 +62,16 @@ public:
     //! @retval false   変換に失敗.
     //-------------------------------------------------------------------------
     static bool Convert(const char* inputPath, std::vector<uint8_t>& binary);
+
+    //-------------------------------------------------------------------------
+    //! @brief      変換処理を行います.
+    //! 
+    //! @param[in]      material    編集可能マテリアル.
+    //! @param[out]     binary      バイナリ格納先.
+    //! @retval true    変換に成功.
+    //! @retval false   変換に失敗.
+    //-------------------------------------------------------------------------
+    static bool Convert(const edit::Material& material, std::vector<uint8_t>& binary);
 
 private:
     //=========================================================================

@@ -29,55 +29,33 @@ enum RasterizerState : byte
     Wireframe,
 }
 
-enum SamplerState : byte
-{
-    PointWrap,
-    PointClamp,
-    PointMirror,
-    LinearWrap,
-    LinearClamp,
-    LinearMirror,
-    AnisotropicWrap,
-    AnisotropicClamp,
-    AnisotropicMirror,
-}
-
 struct RenderState
 {
     Blend      : BlendState;
     Depth      : DepthState;
     Rasterizer : RasterizerState;
+    UserFlags  : ubyte;
 }
 
 table MaterialTexture
 {
-    Path    : string (key);
-    Sampler : SamplerState;
-}
-
-table MaterialParam
-{
-    Name   : string (key);
-    Offset : uint;
-    Size   : uint;
-    Data   : [ubyte];
+    Name    : string (key);
+    Path    : string;
 }
 
 table MaterialBuffer
 {
-    Name       : string (key);
-    Size       : uint;
-    Params     : [MaterialParam];
+    Name    : string (key);
+    Data    : [ubyte];
 }
 
 table MaterialBinary
 {
     Version     : uint;
-    Name        : string;
     PixelShader : string;
     States      : RenderState;
-    Textures    : [MaterialTexture];
     Buffers     : [MaterialBuffer];
+    Textures    : [MaterialTexture];
 }
 
 root_type MaterialBinary;

@@ -269,6 +269,7 @@
     <ClCompile Include="..\src\res\asdxResFont.cpp" />
     <ClCompile Include="..\src\res\asdxResHelper.cpp" />
     <ClCompile Include="..\src\res\asdxResMapChip.cpp" />
+    <ClCompile Include="..\src\res\asdxResMaterial.cpp" />
     <ClCompile Include="..\src\res\asdxResModel.cpp" />
     <ClCompile Include="..\src\res\asdxResMotion.cpp" />
     <ClCompile Include="..\src\res\asdxResTexture.cpp" />
@@ -374,6 +375,7 @@
     <ClInclude Include="..\include\res\asdxResHelper.h" />
     <ClInclude Include="..\include\res\asdxResLight.h" />
     <ClInclude Include="..\include\res\asdxResMapChip.h" />
+    <ClInclude Include="..\include\res\asdxResMaterial.h" />
     <ClInclude Include="..\include\res\asdxResModel.h" />
     <ClInclude Include="..\include\res\asdxResMotion.h" />
     <ClInclude Include="..\include\res\asdxResTexture.h" />

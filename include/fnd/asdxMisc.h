@@ -222,23 +222,24 @@ std::string GetEnv(const char* name);
 //! @param[in]      items       検索対象の配列.
 //! @param[in]      count       配列の数.
 //! @param[in]      key         検索キー.
+//! @param[in]      comp        比較関数です.
 //! @return     検索にヒットした配列番号を返却します.
 //!             検索にヒットしない場合はSIZE_MAXを返却します.
+//! @note       検索データは事前にソートされている必要があります.
 //-----------------------------------------------------------------------------
-template<typename T>
-inline size_t BinarySearch(const T items[], size_t count, const T& key)
+template<typename T, typename Compare, typename index_t = size_t>
+inline index_t BinarySearch(const T items[], index_t count, const T& key, Compare comp)
 {
-    // Wikipedia, 二分探索 - 左端要素を探索する手続き.
-    // https://ja.wikipedia.org/wiki/%E4%BA%8C%E5%88%86%E6%8E%A2%E7%B4%A2
-    size_t lhs = 0;
-    size_t rhs = count;
+    index_t lhs = 0;
+    index_t rhs = count;
 
     while(lhs < rhs)
     {
-        size_t mid = lhs + (rhs - lhs) / 2;
-        if (items[mid] == key)
+        index_t mid = lhs + (rhs - lhs) / 2;
+        int ret = comp(items[mid], key);
+        if (ret == 0)
             return mid;
-        else if (items[mid] < key)
+        else if (ret < key)
             lhs = mid + 1;
         else
             rhs = mid;
@@ -253,29 +254,70 @@ inline size_t BinarySearch(const T items[], size_t count, const T& key)
 //! @param[in]      items       検索対象の配列.
 //! @param[in]      count       配列の数.
 //! @param[in]      key         検索キー.
-//! @param[in]      comp        比較関数です.
 //! @return     検索にヒットした配列番号を返却します.
 //!             検索にヒットしない場合はSIZE_MAXを返却します.
+//! @note       検索データは事前にソートされている必要があります.
 //-----------------------------------------------------------------------------
-template<typename T, typename Compare>
-inline size_t BinarySearch(const T items[], size_t count, const T& key, Compare comp)
+template<typename T, typename index_t = size_t>
+inline index_t BinarySearch(const T items[], index_t count, const T& key)
 {
-    size_t lhs = 0;
-    size_t rhs = count;
+    return BinarySearch(items, count, key,
+        [](const T& lhs, const T& rhs)
+        { return lhs == rhs; });
+}
+
+//-----------------------------------------------------------------------------
+//! @brief      指定された値より大きい値が現れる最初のインデックスを求めます.
+//! 
+//! @param[in]      items       検索対象の配列.
+//! @param[in]      count       配列の数.
+//! @param[in]      key         検索キー.
+//! @return     検索にヒットした配列番号を返却します.
+//! @note       検索データは事前にソートされている必要があります.
+//-----------------------------------------------------------------------------
+template<typename T, typename U, typename Compare, typename index_t = size_t>
+inline index_t LowerBound(const T items[], index_t count, const U& key, Compare comp)
+{
+    index_t lhs = 0;
+    index_t rhs = count;
 
     while(lhs < rhs)
     {
-        size_t mid = lhs + (rhs - lhs) / 2;
-        int ret = comp(items[mid], key);
-        if (ret == 0)
-            return mid;
-        else if (ret < key)
+        index_t mid = lhs + (rhs - lhs) / 2;
+        if (comp(items[mid], key))
             lhs = mid + 1;
         else
             rhs = mid;
     }
 
-    return SIZE_MAX;
+    return lhs;
+}
+
+//-----------------------------------------------------------------------------
+//! @brief      指定された値より小さい値が現れる最初のインデックスを求めます.
+//! 
+//! @param[in]      items       検索対象の配列.
+//! @param[in]      count       配列の数.
+//! @param[in]      key         検索キー.
+//! @return     検索にヒットした配列番号を返却します.
+//! @note       検索データは事前にソートされている必要があります.
+//-----------------------------------------------------------------------------
+template<typename T, typename U, typename Compare, typename index_t = size_t>
+inline index_t UpperBound(const T items[], index_t count, const U& key, Compare comp)
+{
+    index_t lhs = 0;
+    index_t rhs = count;
+
+    while(lhs < rhs)
+    {
+        index_t mid = lhs + (rhs - lhs) / 2;
+        if (comp(items[mid], key))
+            rhs = mid;
+        else
+            lhs = mid + 1;
+    }
+
+    return lhs;
 }
 
 } // namespacec asdx

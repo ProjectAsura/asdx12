@@ -8,7 +8,6 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <fnd/asdxMacro.h>
-#include <fnd/asdxLogger.h>
 #include <res/asdxResFont.h>
 #include "FontBinary_generated.h"
 

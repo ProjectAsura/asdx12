@@ -14,6 +14,12 @@
 #include <any>
 
 
+//-----------------------------------------------------------------------------
+// Linker
+//-----------------------------------------------------------------------------
+#pragma comment(lib, "dxcompiler.lib")
+
+
 namespace asdx::edit {
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -24,7 +30,7 @@ enum BlendState : uint8_t
     Opaque,         //!< 不透明.
     AlphaBlend,     //!< アルファブレンド.
     Additive,       //!< 加算.
-    Substract,      //!< 減算.
+    Subtract,       //!< 減算.
     Premultiplied,  //!< 事前乗算済みアルファ.
     Multiply,       //!< 乗算.
     Screen,         //!< スクリーン.
@@ -53,6 +59,29 @@ enum RasterizerState : uint8_t
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+// MaterialParamType enum.
+///////////////////////////////////////////////////////////////////////////////
+enum MaterialParamType : uint8_t
+{
+    Bool,       //!< bool型 (4ybteなので注意).
+    Bool2,      //!< bool2型.
+    Bool3,      //!< bool3型.
+    Bool4,      //!< bool4型.
+    Int,        //!< int型.
+    Int2,       //!< int2型.
+    Int3,       //!< int3型.
+    Int4,       //!< int4型.
+    Uint,       //!< uint型.
+    Uint2,      //!< uint2型.
+    Uint3,      //!< uint3型.
+    Uint4,      //!< uint4型.
+    Float,      //!< float型.
+    Float2,     //!< float2型.
+    Float3,     //!< float3型.
+    Float4,     //!< float4型.
+};
+
+///////////////////////////////////////////////////////////////////////////////
 // RenderState enum
 ///////////////////////////////////////////////////////////////////////////////
 struct RenderState
@@ -77,8 +106,10 @@ struct MaterialTexture
 ///////////////////////////////////////////////////////////////////////////////
 struct MaterialParam
 {
-    std::string     Name;   //!< パラメータ名.
-    std::any        Value;  //!< パラメータ値.
+    std::string             Name;       //!< パラメータ名.
+    MaterialParamType       Type;       //!< データ型.
+    uint32_t                Offset;     //!< オフセット.
+    uint32_t                ArraySize;  //!< 配列数.
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -87,8 +118,8 @@ struct MaterialParam
 struct MaterialBuffer
 {
     std::string                 Name;       //!< バッファ名.
-    uint32_t                    Size;       //!< バッファサイズ.
-    std::vector<MaterialParam>  Params;     //!< パラメータ.
+    std::vector<uint8_t>        Buffer;     //!< バッファデータ.
+    std::vector<MaterialParam>  Params;     //!< リフレクションパラメータ.
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -96,10 +127,11 @@ struct MaterialBuffer
 ///////////////////////////////////////////////////////////////////////////////
 struct Material
 {
-    std::string                     Name;       //!< マテリアル名.
-    RenderState                     State;      //!< レンダーステート.
-    std::vector<MaterialTexture>    Textures;   //!< テクスチャリスト.
-    std::vector<MaterialBuffer>     Buffers;    //!< バッファリスト.
+    std::string                     Name;           //!< マテリアル名.
+    std::string                     PixelShader;    //!< ピクセルシェーダファイルパス.
+    RenderState                     State;          //!< レンダーステート.
+    std::vector<MaterialTexture>    Textures;       //!< テクスチャリスト.
+    std::vector<MaterialBuffer>     Buffers;        //!< バッファリスト.
 };
 
 //-----------------------------------------------------------------------------
@@ -121,5 +153,26 @@ bool SaveToJson(const char* path, const Material& material);
 //! @retval false   読込に失敗.
 //-----------------------------------------------------------------------------
 bool LoadFromJson(const char* path, Material& material);
+
+//-----------------------------------------------------------------------------
+//! @brief      シェーダからマテリアルを初期化します.
+//! 
+//! @param[in]      path        コンパイル済みシェーダファイル名.
+//! @param[out]     material    マテリアルの格納先.
+//! @retval true    初期化に成功.
+//! @retval fasle   初期化に失敗.
+//-----------------------------------------------------------------------------
+bool InitFromShader(const char* path, Material& material);
+
+//-----------------------------------------------------------------------------
+//! @brief      シェーダからマテリアルを初期化します.
+//! 
+//! @param[in]      buffer      バッファデータ.
+//! @param[in]      bufferSize  バッファサイズ.
+//! @param[out]     material    マテリアルの格納先.
+//! @retval true    初期化に成功.
+//! @retval fasle   初期化に失敗.
+//-----------------------------------------------------------------------------
+bool InitFromShader(const void* buffer, size_t bufferSize, Material& material);
 
 } // namespace asdx::edit
