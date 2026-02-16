@@ -147,7 +147,12 @@ bool MotionConverter::Convert(const std::string& path, std::vector<uint8_t>& bin
     {
         const auto srcAnim = pScene->mAnimations[i];
 
-        auto name           = srcAnim->mName.C_Str();
+        std::string name = srcAnim->mName.C_Str();
+        if (name == "" || name.empty())
+        {
+            name = "Clip" + std::to_string(i);
+        }
+
         auto duration       = float(srcAnim->mDuration);
         auto ticksPerSecond = float(srcAnim->mTicksPerSecond);
 
@@ -201,7 +206,7 @@ bool MotionConverter::Convert(const std::string& path, std::vector<uint8_t>& bin
         // アニメーションクリップ生成.
         auto clip = asdx::res::CreateMotionClipDirect(
             builder,
-            name,
+            name.c_str(),
             duration,
             ticksPerSecond,
             &bones);
