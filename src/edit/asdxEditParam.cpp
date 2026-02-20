@@ -1186,7 +1186,6 @@ void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditColor4& con
     control = EditColor4(value.x, value.y, value.z, value.w);
 }
 
-#if 0
 //-----------------------------------------------------------------------------
 //      XMLエレメントを解析します.
 //-----------------------------------------------------------------------------
@@ -1199,7 +1198,6 @@ void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditTexture& co
     auto path = e->Attribute("path");
     control.SetPath(path);
 }
-#endif
 
 } // namespace asdx
 #endif//ASDX_ENABLE_TINYXML2

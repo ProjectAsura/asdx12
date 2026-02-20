@@ -396,6 +396,9 @@
     <ClCompile Include="..\src\res\asdxResMaterial.cpp">
       <Filter>ソース ファイル\res</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\fnd\asdxJsonWriter.cpp">
+      <Filter>ソース ファイル\fnd</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\edit\asdxEditParam.h">
@@ -709,6 +712,9 @@
     </ClInclude>
     <ClInclude Include="..\include\res\asdxResMaterial.h">
       <Filter>ヘッダー ファイル\res</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fnd\asdxJsonWriter.h">
+      <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

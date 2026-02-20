@@ -222,6 +222,7 @@
     <ClCompile Include="..\src\fnd\asdxHidManager.cpp" />
     <ClCompile Include="..\src\fnd\asdxIndexHeap.cpp" />
     <ClCompile Include="..\src\fnd\asdxJob.cpp" />
+    <ClCompile Include="..\src\fnd\asdxJsonWriter.cpp" />
     <ClCompile Include="..\src\fnd\asdxKeyboard.cpp" />
     <ClCompile Include="..\src\fnd\asdxLogger.cpp" />
     <ClCompile Include="..\src\fnd\asdxMessage.cpp" />
@@ -317,6 +318,7 @@
     <ClInclude Include="..\include\fnd\asdxHid.h" />
     <ClInclude Include="..\include\fnd\asdxIndexHeap.h" />
     <ClInclude Include="..\include\fnd\asdxJob.h" />
+    <ClInclude Include="..\include\fnd\asdxJsonWriter.h" />
     <ClInclude Include="..\include\fnd\asdxList.h" />
     <ClInclude Include="..\include\fnd\asdxLogger.h" />
     <ClInclude Include="..\include\fnd\asdxMacro.h" />
