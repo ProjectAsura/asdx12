@@ -248,7 +248,7 @@ bool Texture::Init(ID3D12GraphicsCommandList* pCmdList, const ResTexture& resour
     }
 
     m_DescriptorSRV = DescriptorHolder(DescriptorHolder::HEAP_RES, handleSRV);
-    pDevice->CreateShaderResourceView(m_Resource.GetPtr(), &viewDesc, GetCpuHandleSRV());
+    pDevice->CreateShaderResourceView(m_Resource.GetPtr(), &viewDesc, GetHandleCPU());
 
     // コピーコマンドを使ってアップロード.
     UpdateTexture(pCmdList, m_Resource.GetPtr(), &resource);
@@ -465,7 +465,7 @@ bool Texture::Init(const ResTexture& resource)
     }
 
     m_DescriptorSRV = DescriptorHolder(DescriptorHolder::HEAP_RES, handleSRV);
-    pDevice->CreateShaderResourceView(m_Resource.GetPtr(), &viewDesc, GetCpuHandleSRV());
+    pDevice->CreateShaderResourceView(m_Resource.GetPtr(), &viewDesc, GetHandleCPU());
 
     // 直接書き込む.
     {
@@ -507,19 +507,19 @@ void Texture::Term()
 //-----------------------------------------------------------------------------
 //      バインドレスインデックスを取得します.
 //-----------------------------------------------------------------------------
-uint32_t Texture::GetBindlessIndexSRV() const
+uint32_t Texture::GetBindlessIndex() const
 { return m_DescriptorSRV.GetIndex(); }
 
 //-----------------------------------------------------------------------------
 //      CPUディスクリプタハンドルを取得します.
 //-----------------------------------------------------------------------------
-D3D12_CPU_DESCRIPTOR_HANDLE Texture::GetCpuHandleSRV() const
+D3D12_CPU_DESCRIPTOR_HANDLE Texture::GetHandleCPU() const
 { return m_DescriptorSRV.GetHandleCPU(); }
 
 //-----------------------------------------------------------------------------
 //      GPUディスクリプタハンドルを取得します.
 //-----------------------------------------------------------------------------
-D3D12_GPU_DESCRIPTOR_HANDLE Texture::GetGpuHandleSRV() const
+D3D12_GPU_DESCRIPTOR_HANDLE Texture::GetHandleGPU() const
 { return m_DescriptorSRV.GetHandleGPU(); }
 
 //-----------------------------------------------------------------------------

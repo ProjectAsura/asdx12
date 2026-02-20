@@ -310,7 +310,7 @@ bool GuiMgr::Init
             return false;
         }
 
-        io.Fonts->SetTexID((ImTextureID)m_FontTexture->GetGpuHandleSRV().ptr);
+        io.Fonts->SetTexID((ImTextureID)m_FontTexture->GetHandleGPU().ptr);
     }
 
     auto pDevice = GetD3D12Device();
@@ -683,7 +683,7 @@ void GuiMgr::Draw(ID3D12GraphicsCommandList* pCmdList)
         pCmdList->SetGraphicsRootSignature(m_RootSig.GetPtr());
         pCmdList->SetPipelineState(m_PSO.GetPtr());
         pCmdList->SetGraphicsRootConstantBufferView(0, m_CB[m_BufferIndex].GetGpuAddress());
-        pCmdList->SetGraphicsRootDescriptorTable(1, m_FontTexture->GetGpuHandleSRV());
+        pCmdList->SetGraphicsRootDescriptorTable(1, m_FontTexture->GetHandleGPU());
         pCmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         pCmdList->IASetVertexBuffers(0, 1, &vbv);
         pCmdList->IASetIndexBuffer(&ibv);
@@ -720,7 +720,7 @@ void GuiMgr::Draw(ID3D12GraphicsCommandList* pCmdList)
                         // フォントのテクスチャに戻す.
                         if (changeTexture)
                         {
-                            D3D12_GPU_DESCRIPTOR_HANDLE handle = m_FontTexture->GetGpuHandleSRV();
+                            D3D12_GPU_DESCRIPTOR_HANDLE handle = m_FontTexture->GetHandleGPU();
                             pCmdList->SetGraphicsRootDescriptorTable(1, handle);
                             changeTexture = false;
                         }

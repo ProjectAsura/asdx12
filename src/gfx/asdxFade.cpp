@@ -248,7 +248,7 @@ void Fade::Draw(ID3D12GraphicsCommandList* pCmd, D3D12_GPU_DESCRIPTOR_HANDLE han
 //      描画処理を行います.
 //-----------------------------------------------------------------------------
 void Fade::Draw(ID3D12GraphicsCommandList* pCmd)
-{ Draw(pCmd, m_WhiteTexture->GetGpuHandleSRV()); }
+{ Draw(pCmd, m_WhiteTexture->GetHandleGPU()); }
 
 //-----------------------------------------------------------------------------
 //      カラー0を設定します.

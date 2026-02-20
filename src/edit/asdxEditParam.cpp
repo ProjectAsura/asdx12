@@ -10,6 +10,7 @@
 #include <edit/asdxEditParam.h>
 #include <edit/asdxHistory.h>
 #include <fnd/asdxMisc.h>
+#include <fnd/asdxPath.h>
 #include <res/asdxResTexture.h>
 
 
@@ -87,7 +88,6 @@ private:
     /* NOTHING */
 };
 
-#if 0
 ///////////////////////////////////////////////////////////////////////////////
 // TextureHistory class
 ///////////////////////////////////////////////////////////////////////////////
@@ -113,13 +113,13 @@ public:
     //-------------------------------------------------------------------------
     TextureHistory
     (
-        asdx::Texture*      pTexture,
-        const std::string&  nextValue,
-        const std::string&  prevValue
+        asdx::TextureHolder*    pHolder,
+        const std::string&      nextValue,
+        const std::string&      prevValue
     )
-    : m_pTexture    (pTexture)
-    , m_NextPath    (nextValue)
-    , m_PrevPath    (prevValue)
+    : m_pHolder (pHolder)
+    , m_NextPath(nextValue)
+    , m_PrevPath(prevValue)
     { /* DO_NOTHING */ }
 
     //-------------------------------------------------------------------------
@@ -127,23 +127,16 @@ public:
     //-------------------------------------------------------------------------
     void Redo() override
     {
-        if (m_pTexture == nullptr)
+        if (m_pHolder == nullptr)
         { return; }
 
         if (m_NextPath == "" || m_NextPath.empty())
         {
-            m_pTexture->Release();
+            m_pHolder->Reset();
         }
         else
         {
-            //asdx::ResTexture res;
-            //if (!res.LoadFromFileA(m_NextPath.c_str()))
-            //{ return; }
-
-            //m_pTexture->Term();
-
-            //if (!m_pTexture->Init(res))
-            //{ return; }
+            (*m_pHolder) = asdx::TextureManager::Instance().GetOrCreate(m_NextPath.c_str());
         }
     }
 
@@ -152,23 +145,16 @@ public:
     //-------------------------------------------------------------------------
     void Undo() override
     {
-        if (m_pTexture == nullptr)
+        if (m_pHolder == nullptr)
         { return; }
 
         if (m_PrevPath == "" || m_PrevPath.empty())
         {
-            m_pTexture->Term();
+            m_pHolder->Reset();
         }
         else
         {
-            asdx::ResTexture res;
-            //if (!res.LoadFromFileA(m_PrevPath.c_str()))
-            { return; }
-
-            m_pTexture->Term();
-
-            //if (!m_pTexture->Init(res))
-            //{ return; }
+            (*m_pHolder) = asdx::TextureManager::Instance().GetOrCreate(m_PrevPath.c_str());
         }
     }
 
@@ -176,16 +162,15 @@ private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    asdx::Texture*  m_pTexture  = nullptr;
-    std::string     m_NextPath;
-    std::string     m_PrevPath;
+    asdx::TextureHolder*    m_pHolder = nullptr;
+    std::string             m_NextPath;
+    std::string             m_PrevPath;
 
     //=========================================================================
     // private methods.
     //=========================================================================
     /* NOTHING */
 };
-#endif
 
 } // namespace 
 
@@ -350,11 +335,11 @@ void EditInt::DrawCombo(const char* tag, int count, const char** items)
 //-----------------------------------------------------------------------------
 //      コンボボックスを描画します.
 //-----------------------------------------------------------------------------
-void EditInt::DrawCombo(const char* tag, bool (*items_getter)(void* data, int idx, const char** out_text), int count)
+void EditInt::DrawCombo(const char* tag, ComboItemGetter itemGetter, int count)
 {
 #ifdef ASDX_ENABLE_IMGUI
     auto value = m_Value;
-    if (ImGui::Combo(tag, &value, items_getter, &value, count))
+    if (ImGui::Combo(tag, &value, itemGetter, &value, count))
     {
         HistoryMgr::Instance().Add(new ParamHistory<int>(&m_Value, value, m_Prev));
     }
@@ -856,7 +841,7 @@ void EditColor4::DrawPicker(const char* tag)
 #endif
 }
 
-#if 0
+
 ///////////////////////////////////////////////////////////////////////////////
 // EditTexture class
 ///////////////////////////////////////////////////////////////////////////////
@@ -878,7 +863,7 @@ EditTexture::~EditTexture()
 //      終了処理を行います.
 //-----------------------------------------------------------------------------
 void EditTexture::Term()
-{ m_Texture.Term(); }
+{ m_Texture.Reset(); }
 
 //-----------------------------------------------------------------------------
 //      パスを設定します.
@@ -923,31 +908,31 @@ void EditTexture::DrawControl
 #if ASDX_ENABLE_IMGUI
     ImGui::PushID(label);
     {
-        auto view = m_Texture.GetView();
-        if (view != nullptr)
+        auto handleGPU = GetHandleGPU();
+        if (handleGPU.ptr != 0)
         {
-            ImTextureID texture = (void*)view;
+            ImTextureID texture = (ImTextureID)handleGPU.ptr;
             ImGui::Image(texture, ImVec2(float(width), float(height)));
 
             if (ImGui::IsItemHovered())
             { ImGui::SetTooltip("%s", m_Path.c_str()); }
         }
         else
-        { ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), u8"NO TEXTURE"); }
+        { ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), asdx::ToChar(u8"NO TEXTURE")); }
 
-        if (ImGui::Button(u8"Setting"))
+        if (ImGui::Button(asdx::ToChar(u8"Setting")))
         {
-            std::string path;
+            asdx::fs::path path;
             if (OpenFileDlg(
-                "Texture(*.tga, *.dds)\0*.tga;*.dds\0\0",
+                "Project Asura Texture Binary(*.txb)\0*.txb\0\0",
                 path, defaultPath))
-            { SetPath(path.c_str(), true); }
+            { SetPath(path.string().c_str(), true); }
         }
 
-        if (view != nullptr)
+        if (handleGPU.ptr != 0)
         {
             ImGui::SameLine();
-            if (ImGui::Button(u8"Delete"))
+            if (ImGui::Button(asdx::ToChar(u8"Delete")))
             { SetPath("", true); }
         }
     }
@@ -963,9 +948,8 @@ void EditTexture::DrawControl
 //-----------------------------------------------------------------------------
 //      ビューを取得します.
 //-----------------------------------------------------------------------------
-IShaderResourceView* EditTexture::GetView() const
-{ return m_Texture.GetView(); }
-#endif
+D3D12_GPU_DESCRIPTOR_HANDLE EditTexture::GetHandleGPU() const
+{ return m_Texture.GetHandleGPU(); }
 
 } // namespace asdx
 
@@ -1072,7 +1056,6 @@ tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, con
     return element;
 }
 
-#if 0
 //-----------------------------------------------------------------------------
 //      XMLエレメントを生成します.
 //-----------------------------------------------------------------------------
@@ -1082,7 +1065,6 @@ tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, con
     element->SetAttribute("path", control.GetPath().c_str());
     return element;
 }
-#endif
 
 //-----------------------------------------------------------------------------
 //      XMLエレメントを解析します.

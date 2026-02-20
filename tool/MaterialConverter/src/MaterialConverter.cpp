@@ -89,27 +89,9 @@ bool MaterialConverter::Convert(const char* inputPath, std::vector<uint8_t>& bin
 //-----------------------------------------------------------------------------
 bool MaterialConverter::Convert(const edit::Material& material, std::vector<uint8_t>& binary)
 {
-    auto state = asdx::res::RenderState(
-        asdx::res::BlendState(material.State.Blend),
-        asdx::res::DepthState(material.State.Depth),
-        asdx::res::RasterizerState(material.State.Rasterizer),
-        material.State.UserFlag);
-
-    std::vector<flatbuffers::Offset<asdx::res::MaterialBuffer>>  buffers;
-    std::vector<flatbuffers::Offset<asdx::res::MaterialTexture>> textures;
-
     flatbuffers::FlatBufferBuilder builder(1024);
 
-    for(const auto& buf : material.Buffers)
-    {
-        auto dstBuf = asdx::res::CreateMaterialBufferDirect(
-            builder,
-            buf.Name.c_str(),
-            &buf.Buffer);
-
-        buffers.emplace_back(dstBuf);
-    }
-
+    std::vector<flatbuffers::Offset<asdx::res::MaterialTexture>> textures;
     for(const auto& tex : material.Textures)
     {
         auto dstTex = asdx::res::CreateMaterialTextureDirect(
@@ -120,14 +102,19 @@ bool MaterialConverter::Convert(const edit::Material& material, std::vector<uint
         textures.emplace_back(dstTex);
     }
 
-    const char* shader = material.PixelShader.empty() ? nullptr : material.PixelShader.c_str();
-
+    auto buffer = asdx::res::CreateMaterialBufferDirect(
+        builder,
+        uint32_t(material.Buffer.size()),
+        &material.Buffer);
+  
     auto bin = asdx::res::CreateMaterialBinaryDirect(
         builder,
         CURRENT_VERSION,
-        shader,
-        &state,
-        &buffers,
+        material.Kind,
+        asdx::res::MaterialBlendState(material.BlendState),
+        asdx::res::MaterialDepthState(material.DepthState),
+        asdx::res::MaterialRasterizerState(material.RasterizerState),
+        buffer,
         &textures);
 
     builder.Finish(bin);

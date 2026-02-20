@@ -276,94 +276,6 @@ bool CreateShaderReflection(const void* pData, size_t size, ID3D12ShaderReflecti
     return true;
 }
 
-asdx::edit::MaterialParamType GetMaterialParamType(const D3D12_SHADER_TYPE_DESC& desc)
-{
-    switch(desc.Type)
-    {
-    case D3D_SVT_BOOL:
-        {
-            if (desc.Class == D3D_SVC_VECTOR)
-            {
-                if (desc.Columns == 1)
-                    return asdx::edit::MaterialParamType::Bool;
-
-                else if (desc.Columns == 2)
-                    return asdx::edit::MaterialParamType::Bool2;
-
-                else if (desc.Columns == 3)
-                    return asdx::edit::MaterialParamType::Bool3;
-
-                else if (desc.Columns == 4)
-                    return asdx::edit::MaterialParamType::Bool4;
-            }
-
-            return asdx::edit::MaterialParamType::Bool;
-        }
-
-    case D3D_SVT_INT:
-        {
-            if (desc.Class == D3D_SVC_VECTOR)
-            {
-                if (desc.Columns == 1)
-                    return asdx::edit::MaterialParamType::Int;
-
-                else if (desc.Columns == 2)
-                    return asdx::edit::MaterialParamType::Int2;
-
-                else if (desc.Columns == 3)
-                    return asdx::edit::MaterialParamType::Int3;
-
-                else if (desc.Columns == 4)
-                    return asdx::edit::MaterialParamType::Int4;
-            }
-
-            return asdx::edit::MaterialParamType::Int;
-        }
-
-
-    case D3D_SVT_UINT:
-        {
-            if (desc.Class == D3D_SVC_VECTOR)
-            {
-                if (desc.Columns == 1)
-                    return asdx::edit::MaterialParamType::Uint;
-
-                else if (desc.Columns == 2)
-                    return asdx::edit::MaterialParamType::Uint2;
-
-                else if (desc.Columns == 3)
-                    return asdx::edit::MaterialParamType::Uint3;
-
-                else if (desc.Columns == 4)
-                    return asdx::edit::MaterialParamType::Uint4;
-            }
-
-            return asdx::edit::MaterialParamType::Uint;
-        }
-
-    case D3D_SVT_FLOAT:
-        {
-            if (desc.Class == D3D_SVC_VECTOR)
-            {
-                if (desc.Columns == 1)
-                    return asdx::edit::MaterialParamType::Float;
-
-                else if (desc.Columns == 2)
-                    return asdx::edit::MaterialParamType::Float2;
-
-                else if (desc.Columns == 3)
-                    return asdx::edit::MaterialParamType::Float3;
-
-                else if (desc.Columns == 4)
-                    return asdx::edit::MaterialParamType::Float4;
-            }
-
-            return asdx::edit::MaterialParamType::Float;
-        }
-    }
-
-    return asdx::edit::MaterialParamType::Float;
-}
 
 } // namespace
 
@@ -385,10 +297,9 @@ bool SaveToJson(const char* path, const Material& material)
     fprintf_s(fp, "{\n");
     fprintf_s(fp, "    \"Name\": \"%s\",\n", material.Name.c_str());
     fprintf_s(fp, "    \"State\": {\n");
-    fprintf_s(fp, "         \"Blend\": \"%s\",\n", ToString(material.State.Blend));
-    fprintf_s(fp, "         \"Depth\": \"%s\",\n", ToString(material.State.Depth));
-    fprintf_s(fp, "         \"Rasterizer\": \"%s\",\n", ToString(material.State.Rasterizer));
-    fprintf_s(fp, "         \"UserFlag\": %u,\n", material.State.UserFlag);
+    fprintf_s(fp, "         \"BlendState\": \"%s\",\n", ToString(material.BlendState));
+    fprintf_s(fp, "         \"DepthState\": \"%s\",\n", ToString(material.DepthState));
+    fprintf_s(fp, "         \"RasterizerState\": \"%s\",\n", ToString(material.RasterizerState));
     fprintf_s(fp, "     }");
     if (!material.Textures.empty())
     {
@@ -410,65 +321,26 @@ bool SaveToJson(const char* path, const Material& material)
 
         fprintf_s(fp, "     ]");
     }
-    if (!material.Buffers.empty())
+    if (!material.Buffer.empty())
     {
         fprintf_s(fp, ",\n");
-        fprintf_s(fp, "    \"Buffers\": [\n");
-        for(size_t i=0; i<material.Buffers.size(); ++i)
+        fprintf_s(fp, "    \"Buffer\": {\n");
+        fprintf_s(fp, "        \"Size\": %zu,\n", material.Buffer.size());
+        fprintf_s(fp, "        \"Data\": [\n");
+        for(size_t i=0; i<material.Buffer.size(); ++i)
         {
-            auto& buf = material.Buffers[i];
-            fprintf_s(fp, "        {\n");
-            fprintf_s(fp, "            \"Name\": \"%s\"", buf.Name.c_str());
-            if (!buf.Buffer.empty())
+            fprintf_s(fp, "        %u", material.Buffer[i]);
+            if (i != material.Buffer.size() - 1)
             {
                 fprintf_s(fp, ",\n");
-                fprintf_s(fp, "            \"Buffer\": [\n");
-                for(size_t j=0; j<buf.Buffer.size(); ++j)
-                {
-                    fprintf(fp, "                %u", buf.Buffer[j]);
-
-                    if (j != buf.Buffer.size() - 1)
-                    { fprintf_s(fp, ",\n"); }
-                    else
-                    { fprintf_s(fp, "\n"); }
-                }
-
-                fprintf_s(fp, "            ]");
             }
-
-
-            if (!buf.Params.empty())
-            {
-                fprintf_s(fp, ",\n");
-
-                fprintf_s(fp, "             \"Params\": [\n");
-                for(size_t j=0; j<buf.Params.size(); ++j)
-                {
-                    auto& param = buf.Params[j];
-                    fprintf_s(fp, "                  {\n");
-                    fprintf_s(fp, "                       \"Name\": \"%s\",\n", param.Name.c_str());
-                    fprintf_s(fp, "                       \"Type\": %u,\n", (uint8_t)param.Type);
-                    fprintf_s(fp, "                       \"Offset\": %u,\n", param.Offset);
-                    fprintf_s(fp, "                       \"ArraySize\": %u,\n", param.ArraySize);
-                    fprintf_s(fp, "                  }");
-
-                    if (j != buf.Params.size() - 1)
-                    { fprintf_s(fp, ",\n"); }
-                    else
-                    { fprintf_s(fp, "\n"); }
-                }
-                fprintf_s(fp, "             ]\n");
-            }
-
-            fprintf_s(fp, "        }");
-
-            if (i != material.Buffers.size() - 1)
-            { fprintf_s(fp, ",\n"); }
             else
-            { fprintf_s(fp, "\n"); }
+            {
+                fprintf_s(fp, "\n");
+            }
         }
-        fprintf_s(fp, "    ]");
-
+        fprintf_s(fp, "        ]\n");
+        fprintf_s(fp, "    }");
         // 次のデータ無いのでここで改行.
         fprintf_s(fp, "\n");
     }
@@ -507,41 +379,52 @@ bool LoadFromJson(const char* path, Material& material)
         material.Name = str;
     }
 
-    auto state = doc["State"];
-    if (state.error() == simdjson::SUCCESS)
+    auto blend = doc["BlendState"];
+    if (blend.error() == simdjson::SUCCESS)
     {
-        auto blend = state["Blend"];
-        if (blend.error() == simdjson::SUCCESS)
+        std::string_view str;
+        blend.get(str);
+        material.BlendState = ToBlendState(str.data());
+    }
+
+    auto depth = doc["Depth"];
+    if (depth.error() == simdjson::SUCCESS)
+    {
+        std::string_view str;
+        depth.get(str);
+        material.DepthState = ToDepthState(str.data());
+    }
+
+    auto rasterizer = doc["Rasterizer"];
+    if (rasterizer.error() == simdjson::SUCCESS)
+    {
+        std::string_view str;
+        rasterizer.get(str);
+        material.RasterizerState = ToRasterizerState(str.data());
+    }
+
+    auto buffer = doc["Buffer"];
+    if (buffer.error() == simdjson::SUCCESS)
+    {
+        auto size = buffer["Size"];
+        if (size.error() == simdjson::SUCCESS)
         {
-            std::string_view str;
-            blend.get(str);
-            material.State.Blend = ToBlendState(str.data());
+            material.Buffer.resize(size.get_uint64());
         }
 
-        auto depth = state["Depth"];
-        if (depth.error() == simdjson::SUCCESS)
+        auto data = buffer["Data"];
+        if (data.error() == simdjson::SUCCESS)
         {
-            std::string_view str;
-            depth.get(str);
-            material.State.Depth = ToDepthState(str.data());
-        }
-
-        auto rasterizer = state["Rasterizer"];
-        if (rasterizer.error() == simdjson::SUCCESS)
-        {
-            std::string_view str;
-            rasterizer.get(str);
-            material.State.Rasterizer = ToRasterizerState(str.data());
-        }
-
-        auto userFlag = state["UserFlag"];
-        if (userFlag.error() == simdjson::SUCCESS)
-        {
-            material.State.UserFlag = uint8_t(userFlag.get_uint64());
+            auto i=0u;
+            for(auto val : data.get_array())
+            {
+                material.Buffer[i] = uint8_t(val.get_uint64());
+                i++;
+            }
         }
     }
 
-    auto textures = doc["Textures"];
+        auto textures = doc["Textures"];
     if (textures.error() == simdjson::SUCCESS)
     {
         for(auto tex : textures.get_array())
@@ -568,204 +451,178 @@ bool LoadFromJson(const char* path, Material& material)
         }
     }
 
-    auto buffers = doc["Buffers"];
-    if (buffers.error() == simdjson::SUCCESS)
-    {
-        for(auto buf : buffers.get_array())
-        {
-            MaterialBuffer item = {};
-
-            auto name = buf["Name"];
-            if (name.error() == simdjson::SUCCESS)
-            {
-                std::string_view str;
-                name.get(str);
-                item.Name = str.data();
-            }
-
-            auto blob = buf["Buffer"];
-            if (blob.error() == simdjson::SUCCESS)
-            {
-                for(auto val : blob)
-                {
-                    item.Buffer.push_back(uint8_t(val.get_uint64()));
-                }
-            }
-
-            auto params = buf["Params"];
-            if (params.error() == simdjson::SUCCESS)
-            {
-                for(auto param : params.get_array())
-                {
-                    MaterialParam p = {};
-                    p.Type      = MaterialParamType::Float;
-                    p.ArraySize = 1;
-
-                    auto tag = param["Name"];
-                    if (tag.error() == simdjson::SUCCESS)
-                    {
-                        std::string_view str;
-                        tag.get(str);
-                        p.Name = str.data();
-                    }
-
-                    auto type = param["Type"];
-                    if (type.error() == simdjson::SUCCESS)
-                    {
-                        p.Type = (MaterialParamType)(uint8_t(type.get_uint64()));
-                    }
-
-                    auto offset = param["Offset"];
-                    if (offset.error() == simdjson::SUCCESS)
-                    {
-                        p.Offset = uint32_t(type.get_uint64());
-                    }
-
-                    auto arraySize = param["ArraySize"];
-                    if (arraySize.error() == simdjson::SUCCESS)
-                    {
-                        p.ArraySize = uint32_t(type.get_uint64());
-                    }
-
-                    item.Params.emplace_back(p);
-                }
-            }
-        }
-    }
 
     return true;
 }
 
 //-----------------------------------------------------------------------------
-//      シェーダからマテリアルを初期化します.
+//      マテリアルを初期化します.
 //-----------------------------------------------------------------------------
-bool InitFromShader(const char* path, Material& material)
+bool InitMaterial(MaterialKind kind, Material& material)
 {
-    // コンパイル済みファイルを前提とします.
-    FILE* fp = nullptr;
-    auto err = fopen_s(&fp, path, "rb");
-    if (err != 0)
+    auto ret = false;
+    switch(kind)
     {
-        ELOG("Error : File Open Failed. path = %s", path);
-        return false;
-    }
-
-    auto curPos = ftell(fp);
-    fseek(fp, SEEK_END, 0);
-    auto endPos = ftell(fp);
-    fseek(fp, SEEK_SET, 0);
-
-    auto size = endPos - curPos;
-    std::vector<uint8_t> blob;
-    blob.resize(size);
-
-    fread(blob.data(), size, 1, fp);
-    fclose(fp);
-
-    material.PixelShader = path;
-
-    return InitFromShader(blob.data(), blob.size(), material);
-}
-
-//-----------------------------------------------------------------------------
-//      シェーダからマテリアルを初期化します.
-//-----------------------------------------------------------------------------
-bool InitFromShader(const void* buffer, size_t bufferSize, Material& material)
-{
-    RefPtr<ID3D12ShaderReflection> pReflection;
-    if (!CreateShaderReflection(buffer, bufferSize, pReflection.GetAddressOf()))
-    {
-        ELOG("CreateShaderReflection() Failed.");
-        return false;
-    }
-
-    D3D12_SHADER_DESC desc = {};
-    auto hr = pReflection->GetDesc(&desc);
-    if (FAILED(hr))
-    {
-        ELOG("Error : ID3D12Reflection::GetDesc() Failed. errcode = 0x%x", hr);
-        return false;
-    }
-
-    // 名前に "Material" とつくものを対象とする.
-
-    // バッファデータを解析.
-    for(auto i=0u; i<desc.ConstantBuffers; ++i)
-    {
-        auto pConstantBuffer = pReflection->GetConstantBufferByIndex(i);
-        if (pConstantBuffer == nullptr)
-            continue;
-
-        D3D12_SHADER_BUFFER_DESC bufDesc = {};
-        hr = pConstantBuffer->GetDesc(&bufDesc);
-        if (FAILED(hr))
-            continue;
-
-        if (strstr(bufDesc.Name, "Material") == nullptr)
-            continue;
-
-        MaterialBuffer matBuffer = {};
-        matBuffer.Name = bufDesc.Name;
-        matBuffer.Buffer.resize(bufDesc.Size);
-
-        for(auto j=0u; j<bufDesc.Variables; ++j)
+    case MaterialKind::Lambert:
         {
-            auto pVariable = pConstantBuffer->GetVariableByIndex(j);
-            if (pVariable == nullptr)
-                continue;
+            material.Kind = uint32_t(kind);
 
-            D3D12_SHADER_VARIABLE_DESC varDesc = {};
-            hr = pVariable->GetDesc(&varDesc);
-            if (FAILED(hr))
-                continue;
+            material.BlendState      = BlendState::Opaque;
+            material.DepthState      = DepthState::ReadWrite;
+            material.RasterizerState = RasterizerState::CullBack;
 
-            MaterialParam matParam = {};
-            matParam.Name   = varDesc.Name;
-            matParam.Offset = varDesc.StartOffset;
+            ParamLambert param = {};
+            material.Buffer.resize(sizeof(param));
+            memcpy(material.Buffer.data(), &param, sizeof(param));
 
-            if (varDesc.DefaultValue != nullptr)
-            {
-                memcpy(matBuffer.Buffer.data() + varDesc.StartOffset, varDesc.DefaultValue, varDesc.Size);
-            }
-
-            auto pVarType = pVariable->GetType();
-            assert(pVarType != nullptr);
-
-            D3D12_SHADER_TYPE_DESC typeDesc = {};
-            hr = pVarType->GetDesc(&typeDesc);
-            assert(SUCCEEDED(hr));
-
-            matParam.ArraySize = typeDesc.Elements;
-            matParam.Type      = GetMaterialParamType(typeDesc);
-
-            matBuffer.Params.emplace_back(matParam);
+            material.Textures.resize(3);
+            material.Textures[0].Name = "BaseColorMap";
+            material.Textures[1].Name = "NormalMap";
+            material.Textures[2].Name = "EmissiveMap";
+            ret = true;
         }
+        break;
 
-        material.Buffers.emplace_back(matBuffer);
+    case MaterialKind::GGX:
+        {
+            material.Kind = uint32_t(kind);
+
+            material.BlendState      = BlendState::Opaque;
+            material.DepthState      = DepthState::ReadWrite;
+            material.RasterizerState = RasterizerState::CullBack;
+
+            ParamGGX param = {};
+            material.Buffer.resize(sizeof(param));
+            memcpy(material.Buffer.data(), &param, sizeof(param));
+
+            material.Textures.resize(4);
+            material.Textures[0].Name = "BaseColorMap";
+            material.Textures[1].Name = "NormalMap";
+            material.Textures[2].Name = "OrmMap";
+            material.Textures[3].Name = "EmissiveMap";
+            ret = true;
+        }
+        break;
+
+    case MaterialKind::Anisotropy:
+        {
+            material.Kind = uint32_t(kind);
+
+            material.BlendState      = BlendState::Opaque;
+            material.DepthState      = DepthState::ReadWrite;
+            material.RasterizerState = RasterizerState::CullBack;
+
+            ParamAnisotropy param = {};
+            material.Buffer.resize(sizeof(param));
+            memcpy(material.Buffer.data(), &param, sizeof(param));
+
+            material.Textures.resize(4);
+            material.Textures[0].Name = "BaseColorMap";
+            material.Textures[1].Name = "NormalMap";
+            material.Textures[2].Name = "OrmMap";
+            material.Textures[3].Name = "EmissiveMap";
+            ret = true;
+        }
+        break;
+
+    case MaterialKind::ClearCoat:
+        {
+            material.Kind = uint32_t(kind);
+
+            material.BlendState      = BlendState::Opaque;
+            material.DepthState      = DepthState::ReadWrite;
+            material.RasterizerState = RasterizerState::CullBack;
+
+            ParamClearCoat param = {};
+            material.Buffer.resize(sizeof(param));
+            memcpy(material.Buffer.data(), &param, sizeof(param));
+
+            material.Textures.resize(7);
+            material.Textures[0].Name = "BaseColorMap";
+            material.Textures[1].Name = "NormalMap";
+            material.Textures[2].Name = "OrmMap";
+            material.Textures[3].Name = "ClearCoatMap";
+            material.Textures[4].Name = "ClearCoatRoughnessMap";
+            material.Textures[5].Name = "ClearCoatNormalMap";
+            material.Textures[6].Name = "EmissiveMap";
+            ret = true;
+        }
+        break;
+
+    case MaterialKind::Sheen:
+        {
+            material.Kind = uint32_t(kind);
+
+            material.BlendState      = BlendState::Opaque;
+            material.DepthState      = DepthState::ReadWrite;
+            material.RasterizerState = RasterizerState::CullBack;
+
+            ParamSheen param = {};
+            material.Buffer.resize(sizeof(param));
+            memcpy(material.Buffer.data(), &param, sizeof(param));
+
+            material.Textures.resize(6);
+            material.Textures[0].Name = "BaseColorMap";
+            material.Textures[1].Name = "NormalMap";
+            material.Textures[2].Name = "OrmMap";
+            material.Textures[3].Name = "SheenColorMap";
+            material.Textures[4].Name = "SheenRoughnessMap";
+            material.Textures[5].Name = "EmissiveMap";
+            ret = true;
+        }
+        break;
+
+    case MaterialKind::Iridescence:
+        {
+            material.Kind = uint32_t(kind);
+
+            material.BlendState      = BlendState::Opaque;
+            material.DepthState      = DepthState::ReadWrite;
+            material.RasterizerState = RasterizerState::CullBack;
+
+            ParamIridescence param = {};
+            material.Buffer.resize(sizeof(param));
+            memcpy(material.Buffer.data(), &param, sizeof(param));
+
+            material.Textures.resize(6);
+            material.Textures[0].Name = "BaseColorMap";
+            material.Textures[1].Name = "NormalMap";
+            material.Textures[2].Name = "OrmMap";
+            material.Textures[3].Name = "IridescenceMap";
+            material.Textures[4].Name = "IridescenceThicknessMap";
+            material.Textures[5].Name = "EmissiveMap";
+            ret = true;
+        }
+        break;
+
+    case MaterialKind::Transmission:
+        {
+            material.Kind = uint32_t(kind);
+
+            material.BlendState      = BlendState::AlphaBlend;
+            material.DepthState      = DepthState::ReadOnly;
+            material.RasterizerState = RasterizerState::CullNone;
+
+            ParamIridescence param = {};
+            material.Buffer.resize(sizeof(param));
+            memcpy(material.Buffer.data(), &param, sizeof(param));
+
+            material.Textures.resize(5);
+            material.Textures[0].Name = "BaseColorMap";
+            material.Textures[1].Name = "NormalMap";
+            material.Textures[2].Name = "OrmMap";
+            material.Textures[3].Name = "TransmissionMap";
+            material.Textures[4].Name = "EmissiveMap";
+            ret = true;
+        }
+        break;
+
+    default:
+        break;
     }
 
-    // テクスチャを解析.
-    for(auto i=0u; i<desc.BoundResources; ++i)
-    {
-        D3D12_SHADER_INPUT_BIND_DESC inputDesc = {};
-        hr = pReflection->GetResourceBindingDesc(i, &inputDesc);
-        if (FAILED(hr))
-            continue;
-
-        if (strstr(inputDesc.Name, "Material") == nullptr)
-            continue;
-
-        // テクスチャ以外は無視.
-        if (inputDesc.Type != D3D_SIT_TEXTURE)
-            continue;
-
-        MaterialTexture matTex = {};
-        matTex.Name = inputDesc.Name;
-
-        material.Textures.emplace_back(matTex);
-    }
-
-    return true;
+    return ret;
 }
+
 
 } // namespace asdx::edit

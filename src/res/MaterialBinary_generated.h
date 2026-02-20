@@ -18,8 +18,6 @@ static_assert(FLATBUFFERS_VERSION_MAJOR == 25 &&
 namespace asdx {
 namespace res {
 
-struct RenderState;
-
 struct MaterialTexture;
 struct MaterialTextureBuilder;
 
@@ -29,32 +27,32 @@ struct MaterialBufferBuilder;
 struct MaterialBinary;
 struct MaterialBinaryBuilder;
 
-enum BlendState : int8_t {
-  BlendState_Opaque = 0,
-  BlendState_AlphaBlend = 1,
-  BlendState_Additive = 2,
-  BlendState_Substract = 3,
-  BlendState_Premultiplied = 4,
-  BlendState_Multiply = 5,
-  BlendState_Screen = 6,
-  BlendState_MIN = BlendState_Opaque,
-  BlendState_MAX = BlendState_Screen
+enum MaterialBlendState : uint8_t {
+  MaterialBlendState_Opaque = 0,
+  MaterialBlendState_AlphaBlend = 1,
+  MaterialBlendState_Additive = 2,
+  MaterialBlendState_Substract = 3,
+  MaterialBlendState_Premultiplied = 4,
+  MaterialBlendState_Multiply = 5,
+  MaterialBlendState_Screen = 6,
+  MaterialBlendState_MIN = MaterialBlendState_Opaque,
+  MaterialBlendState_MAX = MaterialBlendState_Screen
 };
 
-inline const BlendState (&EnumValuesBlendState())[7] {
-  static const BlendState values[] = {
-    BlendState_Opaque,
-    BlendState_AlphaBlend,
-    BlendState_Additive,
-    BlendState_Substract,
-    BlendState_Premultiplied,
-    BlendState_Multiply,
-    BlendState_Screen
+inline const MaterialBlendState (&EnumValuesMaterialBlendState())[7] {
+  static const MaterialBlendState values[] = {
+    MaterialBlendState_Opaque,
+    MaterialBlendState_AlphaBlend,
+    MaterialBlendState_Additive,
+    MaterialBlendState_Substract,
+    MaterialBlendState_Premultiplied,
+    MaterialBlendState_Multiply,
+    MaterialBlendState_Screen
   };
   return values;
 }
 
-inline const char * const *EnumNamesBlendState() {
+inline const char * const *EnumNamesMaterialBlendState() {
   static const char * const names[8] = {
     "Opaque",
     "AlphaBlend",
@@ -68,32 +66,32 @@ inline const char * const *EnumNamesBlendState() {
   return names;
 }
 
-inline const char *EnumNameBlendState(BlendState e) {
-  if (::flatbuffers::IsOutRange(e, BlendState_Opaque, BlendState_Screen)) return "";
+inline const char *EnumNameMaterialBlendState(MaterialBlendState e) {
+  if (::flatbuffers::IsOutRange(e, MaterialBlendState_Opaque, MaterialBlendState_Screen)) return "";
   const size_t index = static_cast<size_t>(e);
-  return EnumNamesBlendState()[index];
+  return EnumNamesMaterialBlendState()[index];
 }
 
-enum DepthState : int8_t {
-  DepthState_ReadWrite = 0,
-  DepthState_ReadOnly = 1,
-  DepthState_WriteOnly = 2,
-  DepthState_None = 3,
-  DepthState_MIN = DepthState_ReadWrite,
-  DepthState_MAX = DepthState_None
+enum MaterialDepthState : uint8_t {
+  MaterialDepthState_ReadWrite = 0,
+  MaterialDepthState_ReadOnly = 1,
+  MaterialDepthState_WriteOnly = 2,
+  MaterialDepthState_None = 3,
+  MaterialDepthState_MIN = MaterialDepthState_ReadWrite,
+  MaterialDepthState_MAX = MaterialDepthState_None
 };
 
-inline const DepthState (&EnumValuesDepthState())[4] {
-  static const DepthState values[] = {
-    DepthState_ReadWrite,
-    DepthState_ReadOnly,
-    DepthState_WriteOnly,
-    DepthState_None
+inline const MaterialDepthState (&EnumValuesMaterialDepthState())[4] {
+  static const MaterialDepthState values[] = {
+    MaterialDepthState_ReadWrite,
+    MaterialDepthState_ReadOnly,
+    MaterialDepthState_WriteOnly,
+    MaterialDepthState_None
   };
   return values;
 }
 
-inline const char * const *EnumNamesDepthState() {
+inline const char * const *EnumNamesMaterialDepthState() {
   static const char * const names[5] = {
     "ReadWrite",
     "ReadOnly",
@@ -104,32 +102,32 @@ inline const char * const *EnumNamesDepthState() {
   return names;
 }
 
-inline const char *EnumNameDepthState(DepthState e) {
-  if (::flatbuffers::IsOutRange(e, DepthState_ReadWrite, DepthState_None)) return "";
+inline const char *EnumNameMaterialDepthState(MaterialDepthState e) {
+  if (::flatbuffers::IsOutRange(e, MaterialDepthState_ReadWrite, MaterialDepthState_None)) return "";
   const size_t index = static_cast<size_t>(e);
-  return EnumNamesDepthState()[index];
+  return EnumNamesMaterialDepthState()[index];
 }
 
-enum RasterizerState : int8_t {
-  RasterizerState_CullNone = 0,
-  RasterizerState_CullBack = 1,
-  RasterizerState_CullFront = 2,
-  RasterizerState_Wireframe = 3,
-  RasterizerState_MIN = RasterizerState_CullNone,
-  RasterizerState_MAX = RasterizerState_Wireframe
+enum MaterialRasterizerState : uint8_t {
+  MaterialRasterizerState_CullNone = 0,
+  MaterialRasterizerState_CullBack = 1,
+  MaterialRasterizerState_CullFront = 2,
+  MaterialRasterizerState_Wireframe = 3,
+  MaterialRasterizerState_MIN = MaterialRasterizerState_CullNone,
+  MaterialRasterizerState_MAX = MaterialRasterizerState_Wireframe
 };
 
-inline const RasterizerState (&EnumValuesRasterizerState())[4] {
-  static const RasterizerState values[] = {
-    RasterizerState_CullNone,
-    RasterizerState_CullBack,
-    RasterizerState_CullFront,
-    RasterizerState_Wireframe
+inline const MaterialRasterizerState (&EnumValuesMaterialRasterizerState())[4] {
+  static const MaterialRasterizerState values[] = {
+    MaterialRasterizerState_CullNone,
+    MaterialRasterizerState_CullBack,
+    MaterialRasterizerState_CullFront,
+    MaterialRasterizerState_Wireframe
   };
   return values;
 }
 
-inline const char * const *EnumNamesRasterizerState() {
+inline const char * const *EnumNamesMaterialRasterizerState() {
   static const char * const names[5] = {
     "CullNone",
     "CullBack",
@@ -140,46 +138,11 @@ inline const char * const *EnumNamesRasterizerState() {
   return names;
 }
 
-inline const char *EnumNameRasterizerState(RasterizerState e) {
-  if (::flatbuffers::IsOutRange(e, RasterizerState_CullNone, RasterizerState_Wireframe)) return "";
+inline const char *EnumNameMaterialRasterizerState(MaterialRasterizerState e) {
+  if (::flatbuffers::IsOutRange(e, MaterialRasterizerState_CullNone, MaterialRasterizerState_Wireframe)) return "";
   const size_t index = static_cast<size_t>(e);
-  return EnumNamesRasterizerState()[index];
+  return EnumNamesMaterialRasterizerState()[index];
 }
-
-FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(1) RenderState FLATBUFFERS_FINAL_CLASS {
- private:
-  int8_t Blend_;
-  int8_t Depth_;
-  int8_t Rasterizer_;
-  uint8_t UserFlags_;
-
- public:
-  RenderState()
-      : Blend_(0),
-        Depth_(0),
-        Rasterizer_(0),
-        UserFlags_(0) {
-  }
-  RenderState(asdx::res::BlendState _Blend, asdx::res::DepthState _Depth, asdx::res::RasterizerState _Rasterizer, uint8_t _UserFlags)
-      : Blend_(::flatbuffers::EndianScalar(static_cast<int8_t>(_Blend))),
-        Depth_(::flatbuffers::EndianScalar(static_cast<int8_t>(_Depth))),
-        Rasterizer_(::flatbuffers::EndianScalar(static_cast<int8_t>(_Rasterizer))),
-        UserFlags_(::flatbuffers::EndianScalar(_UserFlags)) {
-  }
-  asdx::res::BlendState Blend() const {
-    return static_cast<asdx::res::BlendState>(::flatbuffers::EndianScalar(Blend_));
-  }
-  asdx::res::DepthState Depth() const {
-    return static_cast<asdx::res::DepthState>(::flatbuffers::EndianScalar(Depth_));
-  }
-  asdx::res::RasterizerState Rasterizer() const {
-    return static_cast<asdx::res::RasterizerState>(::flatbuffers::EndianScalar(Rasterizer_));
-  }
-  uint8_t UserFlags() const {
-    return ::flatbuffers::EndianScalar(UserFlags_);
-  }
-};
-FLATBUFFERS_STRUCT_END(RenderState, 4);
 
 struct MaterialTexture FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef MaterialTextureBuilder Builder;
@@ -190,24 +153,12 @@ struct MaterialTexture FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   const ::flatbuffers::String *Name() const {
     return GetPointer<const ::flatbuffers::String *>(VT_NAME);
   }
-  bool KeyCompareLessThan(const MaterialTexture * const o) const {
-    return *Name() < *o->Name();
-  }
-  int KeyCompareWithValue(const char *_Name) const {
-    return strcmp(Name()->c_str(), _Name);
-  }
-  template<typename StringType>
-  int KeyCompareWithValue(const StringType& _Name) const {
-    if (Name()->c_str() < _Name) return -1;
-    if (_Name < Name()->c_str()) return 1;
-    return 0;
-  }
   const ::flatbuffers::String *Path() const {
     return GetPointer<const ::flatbuffers::String *>(VT_PATH);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyOffsetRequired(verifier, VT_NAME) &&
+           VerifyOffset(verifier, VT_NAME) &&
            verifier.VerifyString(Name()) &&
            VerifyOffset(verifier, VT_PATH) &&
            verifier.VerifyString(Path()) &&
@@ -232,7 +183,6 @@ struct MaterialTextureBuilder {
   ::flatbuffers::Offset<MaterialTexture> Finish() {
     const auto end = fbb_.EndTable(start_);
     auto o = ::flatbuffers::Offset<MaterialTexture>(end);
-    fbb_.Required(o, MaterialTexture::VT_NAME);
     return o;
   }
 };
@@ -262,31 +212,18 @@ inline ::flatbuffers::Offset<MaterialTexture> CreateMaterialTextureDirect(
 struct MaterialBuffer FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef MaterialBufferBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_NAME = 4,
+    VT_SIZE = 4,
     VT_DATA = 6
   };
-  const ::flatbuffers::String *Name() const {
-    return GetPointer<const ::flatbuffers::String *>(VT_NAME);
-  }
-  bool KeyCompareLessThan(const MaterialBuffer * const o) const {
-    return *Name() < *o->Name();
-  }
-  int KeyCompareWithValue(const char *_Name) const {
-    return strcmp(Name()->c_str(), _Name);
-  }
-  template<typename StringType>
-  int KeyCompareWithValue(const StringType& _Name) const {
-    if (Name()->c_str() < _Name) return -1;
-    if (_Name < Name()->c_str()) return 1;
-    return 0;
+  uint32_t Size() const {
+    return GetField<uint32_t>(VT_SIZE, 0);
   }
   const ::flatbuffers::Vector<uint8_t> *Data() const {
     return GetPointer<const ::flatbuffers::Vector<uint8_t> *>(VT_DATA);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyOffsetRequired(verifier, VT_NAME) &&
-           verifier.VerifyString(Name()) &&
+           VerifyField<uint32_t>(verifier, VT_SIZE, 4) &&
            VerifyOffset(verifier, VT_DATA) &&
            verifier.VerifyVector(Data()) &&
            verifier.EndTable();
@@ -297,8 +234,8 @@ struct MaterialBufferBuilder {
   typedef MaterialBuffer Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  void add_Name(::flatbuffers::Offset<::flatbuffers::String> Name) {
-    fbb_.AddOffset(MaterialBuffer::VT_NAME, Name);
+  void add_Size(uint32_t Size) {
+    fbb_.AddElement<uint32_t>(MaterialBuffer::VT_SIZE, Size, 0);
   }
   void add_Data(::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> Data) {
     fbb_.AddOffset(MaterialBuffer::VT_DATA, Data);
@@ -310,30 +247,28 @@ struct MaterialBufferBuilder {
   ::flatbuffers::Offset<MaterialBuffer> Finish() {
     const auto end = fbb_.EndTable(start_);
     auto o = ::flatbuffers::Offset<MaterialBuffer>(end);
-    fbb_.Required(o, MaterialBuffer::VT_NAME);
     return o;
   }
 };
 
 inline ::flatbuffers::Offset<MaterialBuffer> CreateMaterialBuffer(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    ::flatbuffers::Offset<::flatbuffers::String> Name = 0,
+    uint32_t Size = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> Data = 0) {
   MaterialBufferBuilder builder_(_fbb);
   builder_.add_Data(Data);
-  builder_.add_Name(Name);
+  builder_.add_Size(Size);
   return builder_.Finish();
 }
 
 inline ::flatbuffers::Offset<MaterialBuffer> CreateMaterialBufferDirect(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    const char *Name = nullptr,
+    uint32_t Size = 0,
     const std::vector<uint8_t> *Data = nullptr) {
-  auto Name__ = Name ? _fbb.CreateString(Name) : 0;
   auto Data__ = Data ? _fbb.CreateVector<uint8_t>(*Data) : 0;
   return asdx::res::CreateMaterialBuffer(
       _fbb,
-      Name__,
+      Size,
       Data__);
 }
 
@@ -341,22 +276,30 @@ struct MaterialBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef MaterialBinaryBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_VERSION = 4,
-    VT_PIXELSHADER = 6,
-    VT_STATES = 8,
-    VT_BUFFERS = 10,
-    VT_TEXTURES = 12
+    VT_KIND = 6,
+    VT_BLENDSTATE = 8,
+    VT_DEPTHSTATE = 10,
+    VT_RASTERIZERSTATE = 12,
+    VT_BUFFER = 14,
+    VT_TEXTURES = 16
   };
   uint32_t Version() const {
     return GetField<uint32_t>(VT_VERSION, 0);
   }
-  const ::flatbuffers::String *PixelShader() const {
-    return GetPointer<const ::flatbuffers::String *>(VT_PIXELSHADER);
+  uint32_t Kind() const {
+    return GetField<uint32_t>(VT_KIND, 0);
   }
-  const asdx::res::RenderState *States() const {
-    return GetStruct<const asdx::res::RenderState *>(VT_STATES);
+  asdx::res::MaterialBlendState BlendState() const {
+    return static_cast<asdx::res::MaterialBlendState>(GetField<uint8_t>(VT_BLENDSTATE, 0));
   }
-  const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MaterialBuffer>> *Buffers() const {
-    return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MaterialBuffer>> *>(VT_BUFFERS);
+  asdx::res::MaterialDepthState DepthState() const {
+    return static_cast<asdx::res::MaterialDepthState>(GetField<uint8_t>(VT_DEPTHSTATE, 0));
+  }
+  asdx::res::MaterialRasterizerState RasterizerState() const {
+    return static_cast<asdx::res::MaterialRasterizerState>(GetField<uint8_t>(VT_RASTERIZERSTATE, 0));
+  }
+  const asdx::res::MaterialBuffer *Buffer() const {
+    return GetPointer<const asdx::res::MaterialBuffer *>(VT_BUFFER);
   }
   const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MaterialTexture>> *Textures() const {
     return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MaterialTexture>> *>(VT_TEXTURES);
@@ -364,12 +307,12 @@ struct MaterialBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_VERSION, 4) &&
-           VerifyOffset(verifier, VT_PIXELSHADER) &&
-           verifier.VerifyString(PixelShader()) &&
-           VerifyField<asdx::res::RenderState>(verifier, VT_STATES, 1) &&
-           VerifyOffset(verifier, VT_BUFFERS) &&
-           verifier.VerifyVector(Buffers()) &&
-           verifier.VerifyVectorOfTables(Buffers()) &&
+           VerifyField<uint32_t>(verifier, VT_KIND, 4) &&
+           VerifyField<uint8_t>(verifier, VT_BLENDSTATE, 1) &&
+           VerifyField<uint8_t>(verifier, VT_DEPTHSTATE, 1) &&
+           VerifyField<uint8_t>(verifier, VT_RASTERIZERSTATE, 1) &&
+           VerifyOffset(verifier, VT_BUFFER) &&
+           verifier.VerifyTable(Buffer()) &&
            VerifyOffset(verifier, VT_TEXTURES) &&
            verifier.VerifyVector(Textures()) &&
            verifier.VerifyVectorOfTables(Textures()) &&
@@ -384,14 +327,20 @@ struct MaterialBinaryBuilder {
   void add_Version(uint32_t Version) {
     fbb_.AddElement<uint32_t>(MaterialBinary::VT_VERSION, Version, 0);
   }
-  void add_PixelShader(::flatbuffers::Offset<::flatbuffers::String> PixelShader) {
-    fbb_.AddOffset(MaterialBinary::VT_PIXELSHADER, PixelShader);
+  void add_Kind(uint32_t Kind) {
+    fbb_.AddElement<uint32_t>(MaterialBinary::VT_KIND, Kind, 0);
   }
-  void add_States(const asdx::res::RenderState *States) {
-    fbb_.AddStruct(MaterialBinary::VT_STATES, States);
+  void add_BlendState(asdx::res::MaterialBlendState BlendState) {
+    fbb_.AddElement<uint8_t>(MaterialBinary::VT_BLENDSTATE, static_cast<uint8_t>(BlendState), 0);
   }
-  void add_Buffers(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MaterialBuffer>>> Buffers) {
-    fbb_.AddOffset(MaterialBinary::VT_BUFFERS, Buffers);
+  void add_DepthState(asdx::res::MaterialDepthState DepthState) {
+    fbb_.AddElement<uint8_t>(MaterialBinary::VT_DEPTHSTATE, static_cast<uint8_t>(DepthState), 0);
+  }
+  void add_RasterizerState(asdx::res::MaterialRasterizerState RasterizerState) {
+    fbb_.AddElement<uint8_t>(MaterialBinary::VT_RASTERIZERSTATE, static_cast<uint8_t>(RasterizerState), 0);
+  }
+  void add_Buffer(::flatbuffers::Offset<asdx::res::MaterialBuffer> Buffer) {
+    fbb_.AddOffset(MaterialBinary::VT_BUFFER, Buffer);
   }
   void add_Textures(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MaterialTexture>>> Textures) {
     fbb_.AddOffset(MaterialBinary::VT_TEXTURES, Textures);
@@ -410,35 +359,41 @@ struct MaterialBinaryBuilder {
 inline ::flatbuffers::Offset<MaterialBinary> CreateMaterialBinary(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t Version = 0,
-    ::flatbuffers::Offset<::flatbuffers::String> PixelShader = 0,
-    const asdx::res::RenderState *States = nullptr,
-    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MaterialBuffer>>> Buffers = 0,
+    uint32_t Kind = 0,
+    asdx::res::MaterialBlendState BlendState = asdx::res::MaterialBlendState_Opaque,
+    asdx::res::MaterialDepthState DepthState = asdx::res::MaterialDepthState_ReadWrite,
+    asdx::res::MaterialRasterizerState RasterizerState = asdx::res::MaterialRasterizerState_CullNone,
+    ::flatbuffers::Offset<asdx::res::MaterialBuffer> Buffer = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MaterialTexture>>> Textures = 0) {
   MaterialBinaryBuilder builder_(_fbb);
   builder_.add_Textures(Textures);
-  builder_.add_Buffers(Buffers);
-  builder_.add_States(States);
-  builder_.add_PixelShader(PixelShader);
+  builder_.add_Buffer(Buffer);
+  builder_.add_Kind(Kind);
   builder_.add_Version(Version);
+  builder_.add_RasterizerState(RasterizerState);
+  builder_.add_DepthState(DepthState);
+  builder_.add_BlendState(BlendState);
   return builder_.Finish();
 }
 
 inline ::flatbuffers::Offset<MaterialBinary> CreateMaterialBinaryDirect(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t Version = 0,
-    const char *PixelShader = nullptr,
-    const asdx::res::RenderState *States = nullptr,
-    std::vector<::flatbuffers::Offset<asdx::res::MaterialBuffer>> *Buffers = nullptr,
-    std::vector<::flatbuffers::Offset<asdx::res::MaterialTexture>> *Textures = nullptr) {
-  auto PixelShader__ = PixelShader ? _fbb.CreateString(PixelShader) : 0;
-  auto Buffers__ = Buffers ? _fbb.CreateVectorOfSortedTables<asdx::res::MaterialBuffer>(Buffers) : 0;
-  auto Textures__ = Textures ? _fbb.CreateVectorOfSortedTables<asdx::res::MaterialTexture>(Textures) : 0;
+    uint32_t Kind = 0,
+    asdx::res::MaterialBlendState BlendState = asdx::res::MaterialBlendState_Opaque,
+    asdx::res::MaterialDepthState DepthState = asdx::res::MaterialDepthState_ReadWrite,
+    asdx::res::MaterialRasterizerState RasterizerState = asdx::res::MaterialRasterizerState_CullNone,
+    ::flatbuffers::Offset<asdx::res::MaterialBuffer> Buffer = 0,
+    const std::vector<::flatbuffers::Offset<asdx::res::MaterialTexture>> *Textures = nullptr) {
+  auto Textures__ = Textures ? _fbb.CreateVector<::flatbuffers::Offset<asdx::res::MaterialTexture>>(*Textures) : 0;
   return asdx::res::CreateMaterialBinary(
       _fbb,
       Version,
-      PixelShader__,
-      States,
-      Buffers__,
+      Kind,
+      BlendState,
+      DepthState,
+      RasterizerState,
+      Buffer,
       Textures__);
 }
 

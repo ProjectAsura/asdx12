@@ -19,6 +19,50 @@
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
+// TextureHolder class
+///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      解放処理を行います.
+//-----------------------------------------------------------------------------
+void TextureHolder::Reset()
+{ TextureManager::Instance().Remove(*this); }
+
+//-----------------------------------------------------------------------------
+//      有効かどうかチェックします.
+//-----------------------------------------------------------------------------
+bool TextureHolder::IsValid() const
+{ return (m_pTexture != nullptr) && (m_Hash != 0); }
+
+//-----------------------------------------------------------------------------
+//      バインドレスインデックスを取得します.
+//-----------------------------------------------------------------------------
+uint32_t TextureHolder::GetBindlessIndex() const
+{
+    assert(m_pTexture != nullptr);
+    return m_pTexture->GetBindlessIndex();
+}
+
+//-----------------------------------------------------------------------------
+//      CPUディスクリプタハンドルを取得します.
+//-----------------------------------------------------------------------------
+D3D12_CPU_DESCRIPTOR_HANDLE TextureHolder::GetHandleCPU() const
+{
+    assert(m_pTexture != nullptr);
+    return m_pTexture->GetHandleCPU();
+}
+
+//-----------------------------------------------------------------------------
+//      GPUディスクリプタハンドルを取得します.
+//-----------------------------------------------------------------------------
+D3D12_GPU_DESCRIPTOR_HANDLE TextureHolder::GetHandleGPU() const
+{
+    assert(m_pTexture != nullptr);
+    return m_pTexture->GetHandleGPU();
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
 // TextureManager class
 ///////////////////////////////////////////////////////////////////////////////
 TextureManager TextureManager::s_Instance = {};
@@ -136,13 +180,13 @@ void TextureManager::Term()
 //-----------------------------------------------------------------------------
 //      生成または取得処理を行います.
 //-----------------------------------------------------------------------------
-const Texture* TextureManager::GetOrCreate(const char* fullPath)
+TextureHolder TextureManager::GetOrCreate(const char* fullPath)
 {
     // ファイルパスがnullかどうかチェック.
     if (fullPath == nullptr)
     {
         ELOG("Error : Invalid Argument.");
-        return nullptr;
+        return TextureHolder();
     }
 
     // ハッシュ値を計算.
@@ -152,14 +196,18 @@ const Texture* TextureManager::GetOrCreate(const char* fullPath)
     ScopedLock<SpinLock> locker(m_SpinLock);
     auto itr = m_Textures.find(hash);
     if (itr != m_Textures.end())
-        return itr->second; // 見つかった場合はポインタを返却.
+    {
+        auto pTexture = itr->second; // 見つかった場合はポインタを返却.
+        pTexture->AddRef();
+        return TextureHolder(pTexture, hash);
+    }
 
     // テクスチャバイナリをロードする.
     std::vector<uint8_t> blob;
     if (!LoadA(fullPath, blob))
     {
         ELOGA("Error : File Load Failed. path = %s", fullPath);
-        return nullptr;
+        return TextureHolder();
     }
 
     // テクスチャバイナリ取得.
@@ -172,53 +220,54 @@ const Texture* TextureManager::GetOrCreate(const char* fullPath)
     if (!Texture::Create(m_CmdList[m_BufferIndex].GetPtr(), resource, &pTexture))
     {
         ELOGA("Error : Texture Init failed. path = %s", fullPath);
-        return nullptr;
+        return TextureHolder();
     }
 
     // テクスチャ登録.
     m_Textures[hash] = pTexture;
 
     // 生成したテクスチャを返却する.
-    return pTexture;
+    return TextureHolder(pTexture, hash);
 }
 
 //-----------------------------------------------------------------------------
 //      削除処理.
 //-----------------------------------------------------------------------------
-void TextureManager::Remove(const char* fullPath)
+void TextureManager::Remove(TextureHolder& holder)
 {
-    // ファイルパスがnullかどうかチェック.
-    if (fullPath == nullptr)
+    if (!holder.IsValid())
         return;
 
-    // ハッシュ値を計算.
-    auto hash = CalcHash(fullPath);
-    Remove(hash);
-}
-
-//-----------------------------------------------------------------------------
-//      削除処理.
-//-----------------------------------------------------------------------------
-void TextureManager::Remove(uint64_t hash)
-{
-    ScopedLock<SpinLock> locker(m_SpinLock);
-
-    // 検索する.
-    auto itr = m_Textures.find(hash);
-
-    // 見つかったら削除.
-    if (itr != m_Textures.end())
+    if (holder.m_pTexture->GetRefCount() > 1)
     {
-        auto item = itr->second;
-        itr->second = nullptr;
-        m_Textures.erase(hash);
+        // 参照カウンタを下げる.
+        holder.m_pTexture->Release();
+    }
+    else
+    {
+        // 管理対象からも外す.
+        ScopedLock<SpinLock> locker(m_SpinLock);
 
-        if (item)
+        // 検索する.
+        auto itr = m_Textures.find(holder.m_Hash);
+
+        // 見つかったら削除.
+        if (itr != m_Textures.end())
         {
-            item->Release();
-            item = nullptr;
+            auto item = itr->second;
+            itr->second = nullptr;
+            m_Textures.erase(holder.m_Hash);
+
+            if (item)
+            {
+                item->Release();
+                item = nullptr;
+            }
         }
     }
+
+    holder.m_pTexture = nullptr;
+    holder.m_Hash     = 0;
 }
 
 //-----------------------------------------------------------------------------

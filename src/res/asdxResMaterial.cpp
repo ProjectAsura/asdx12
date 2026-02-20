@@ -67,12 +67,39 @@ void MaterialBinary::Term()
 }
 
 //-----------------------------------------------------------------------------
-//      バッファ数を取得します.
+//      マテリアル種別を取得します.
 //-----------------------------------------------------------------------------
-uint32_t MaterialBinary::GetBufferCount() const
+uint32_t MaterialBinary::GetKind() const
 {
     assert(!m_Blob.empty());
-    return res::GetMaterialBinary(m_Blob.data())->Buffers()->size();
+    return res::GetMaterialBinary(m_Blob.data())->Kind();
+}
+
+//-----------------------------------------------------------------------------
+//      ブレンドステートを取得します.
+//-----------------------------------------------------------------------------
+MaterialBlendState MaterialBinary::GetBlendState() const
+{
+    assert(!m_Blob.empty());
+    return MaterialBlendState(res::GetMaterialBinary(m_Blob.data())->BlendState());
+}
+
+//-----------------------------------------------------------------------------
+//      深度ステートを取得します.
+//-----------------------------------------------------------------------------
+MaterialDepthState MaterialBinary::GetDepthState() const
+{
+    assert(!m_Blob.empty());
+    return MaterialDepthState(res::GetMaterialBinary(m_Blob.data())->DepthState());
+}
+
+//-----------------------------------------------------------------------------
+//      ラスタライザーステートを取得します.
+//-----------------------------------------------------------------------------
+MaterialRasterizerState MaterialBinary::GetRasterizerState() const
+{
+    assert(!m_Blob.empty());
+    return MaterialRasterizerState(res::GetMaterialBinary(m_Blob.data())->RasterizerState());
 }
 
 //-----------------------------------------------------------------------------
@@ -83,38 +110,17 @@ uint32_t MaterialBinary::GetTextureCount() const
     assert(!m_Blob.empty());
     return res::GetMaterialBinary(m_Blob.data())->Textures()->size();
 }
-
-//-----------------------------------------------------------------------------
-//      レンダーステートを取得します.
-//-----------------------------------------------------------------------------
-MaterialRenderState MaterialBinary::GetRenderState() const
-{
-    assert(!m_Blob.empty());
-    auto state = res::GetMaterialBinary(m_Blob.data())->States();
-
-    MaterialRenderState result = {};
-    result.Blend        = MaterialBlendState(state->Blend());
-    result.Depth        = MaterialDepthState(state->Depth());
-    result.Rasterizer   = MaterialRasterizerState(state->Rasterizer());
-    result.UserFlags    = state->UserFlags();
-
-    return result;
-}
-
 //-----------------------------------------------------------------------------
 //      バッファを取得します.
 //-----------------------------------------------------------------------------
-MaterialBuffer MaterialBinary::GetBuffer(uint32_t index) const
+MaterialBuffer MaterialBinary::GetBuffer() const
 {
     assert(!m_Blob.empty());
-    auto buffers = res::GetMaterialBinary(m_Blob.data())->Buffers();
-    assert(index < buffers->size());
-    auto buf = buffers->Get(index);
+    auto buffer = res::GetMaterialBinary(m_Blob.data())->Buffer();
 
     MaterialBuffer result = {};
-    result.Name  = StringView(buf->Name()->c_str());
-    result.Size  = buf->Data()->size();
-    result.pData = buf->Data()->data();
+    result.Size  = buffer->Data()->size();
+    result.pData = buffer->Data()->data();
 
     return result;
 }
@@ -134,47 +140,6 @@ MaterialTexture MaterialBinary::GetTexture(uint32_t index) const
     result.Path = StringView(tex->Path()->c_str());
 
     return result;
-}
-
-//-----------------------------------------------------------------------------
-//      バッファを検索します.
-//-----------------------------------------------------------------------------
-bool MaterialBinary::FindBuffer(const char* name, uint32_t& index) const
-{
-    if (name == nullptr)
-    {
-        index = UINT32_MAX;
-        return false;
-    }
-
-    assert(!m_Blob.empty());
-    auto buffers = res::GetMaterialBinary(m_Blob.data())->Buffers();
-
-    uint32_t lhs = 0;
-    uint32_t rhs = buffers->size();
-
-    while(lhs < rhs)
-    {
-        uint32_t mid = lhs + (rhs - lhs) / 2u;
-        auto buf = buffers->Get(mid);
-        auto ret = strcmp(buf->Name()->c_str(), name);
-        if (ret == 0)
-        {
-            index = mid;
-            return true;
-        }
-        else if (ret < 0)
-        {
-            lhs = mid + 1;
-        }
-        else
-        {
-            rhs = mid;
-        }
-    }
-
-    index = UINT32_MAX;
-    return false;
 }
 
 //-----------------------------------------------------------------------------

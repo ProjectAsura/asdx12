@@ -2,7 +2,7 @@
 
 namespace asdx.res;
 
-enum BlendState : byte
+enum MaterialBlendState : ubyte
 {
     Opaque,
     AlphaBlend,
@@ -13,7 +13,7 @@ enum BlendState : byte
     Screen,
 }
 
-enum DepthState : byte
+enum MaterialDepthState : ubyte
 {
     ReadWrite,
     ReadOnly,
@@ -21,7 +21,7 @@ enum DepthState : byte
     None,
 }
 
-enum RasterizerState : byte
+enum MaterialRasterizerState : ubyte
 {
     CullNone,
     CullBack,
@@ -29,33 +29,27 @@ enum RasterizerState : byte
     Wireframe,
 }
 
-struct RenderState
-{
-    Blend      : BlendState;
-    Depth      : DepthState;
-    Rasterizer : RasterizerState;
-    UserFlags  : ubyte;
-}
-
 table MaterialTexture
 {
-    Name    : string (key);
+    Name    : string;
     Path    : string;
 }
 
 table MaterialBuffer
 {
-    Name    : string (key);
+    Size    : uint;
     Data    : [ubyte];
 }
 
 table MaterialBinary
 {
-    Version     : uint;
-    PixelShader : string;
-    States      : RenderState;
-    Buffers     : [MaterialBuffer];
-    Textures    : [MaterialTexture];
+    Version         : uint;
+    Kind            : uint;
+    BlendState      : MaterialBlendState;
+    DepthState      : MaterialDepthState;
+    RasterizerState : MaterialRasterizerState;
+    Buffer          : MaterialBuffer;
+    Textures        : [MaterialTexture];
 }
 
 root_type MaterialBinary;

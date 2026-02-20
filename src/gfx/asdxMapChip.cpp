@@ -125,7 +125,7 @@ const MapChipBinary& MapChip::GetBinary() const
 void MapChip::Draw(ID3D12GraphicsCommandList* pCmd, SpriteRenderer& renderer, D3D12_GPU_DESCRIPTOR_HANDLE sampler)
 {
     renderer.SetPipelineState(pCmd);
-    renderer.SetTexture(m_Textures[0]->GetGpuHandleSRV(), sampler);
+    renderer.SetTexture(m_Textures[0]->GetHandleGPU(), sampler);
 
     auto tileSet = m_Binary.GetTileSet(0);
 

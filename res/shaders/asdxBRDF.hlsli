@@ -86,13 +86,23 @@ float3 ToKd(float3 baseColor, float metallic)
 //      スペキュラー反射率を求めます.
 //-----------------------------------------------------------------------------
 float3 ToKs(float3 baseColor, float metallic)
-{ return lerp(0.03f, baseColor, metallic); }
+{
+    // n=1.5とした場合のF_0値で，n=1.5を使うのは，n=1.4~1.6に多くの材質が集中しており,
+    // その中央値として n=1.5 を使うため.
+    const float kF0 = 0.04f; 
+    return lerp(kF0, baseColor, metallic);
+}
 
 //-----------------------------------------------------------------------------
 //      非金属向け.
 //-----------------------------------------------------------------------------
 float3 ToKsDielectics(float3 baseColor, float metallic, float reflectance)
-{ return lerp(0.16f * reflectance * reflectance, baseColor, metallic); }
+{
+    // reflectance=0.5, つまり，2乗すると 0.25 になる値に対して乗算すると，
+    // 0.04となるようなパラメータ値として，0.16を採用.
+    const float kDisney = 0.16f;
+    return lerp(kDisney * reflectance * reflectance, baseColor, metallic);
+}
 
 //-----------------------------------------------------------------------------
 //      金属向け.
@@ -104,13 +114,16 @@ float3 ToKsConductors(float3 baseColor, float metallic)
 //      90度入射におけるフレネル反射率を求めます.
 //-----------------------------------------------------------------------------
 float CalcF90(in float3 f0)
-{ return saturate(50.0f * dot(f0, 0.33f)); }
+{
+    // 0.33 は 1/3の意味. 50は F_0 = 0.02~0.08の範囲を1に近づけるための調整値.
+    return saturate(50.0f * dot(f0, 0.33f));
+}
 
 //-----------------------------------------------------------------------------
 //      Schlickによるフレネル反射の近似値を求める.
 //-----------------------------------------------------------------------------
 float3 F_Schlick(in float3 f0, in float f90, in float u)
-{ return f0 + (f90 - f0) * Pow5(1.0f - u); }
+{ return f0 + (f90.xxx - f0) * Pow5(1.0f - u); }
 
 //-----------------------------------------------------------------------------
 //      Schlickによるフレネル反射の近似値を求める.
@@ -122,18 +135,22 @@ float F_Schlick(in float f0, in float f90, in float u)
 //      フレネル項を計算します.
 //-----------------------------------------------------------------------------
 float3 F_Schlick(const float3 f0, float VoH)
-{
-    float f = Pow5(1.0f - VoH);
-    return f + f0 * (1.0f - f);
-}
+{ return F_Schlick(f0, 1.0f, VoH); }
 
 //-----------------------------------------------------------------------------
 //      フレネル項を計算します.
 //-----------------------------------------------------------------------------
 float F_Schlick(const float f0, float VoH)
+{ return F_Schlick(f0, 1.0f, VoH); }
+
+//-----------------------------------------------------------------------------
+//      フレネル項を用いて
+//-----------------------------------------------------------------------------
+float3 FresnelLerp(float3 base, float3 layer, float ior, float VoH)
 {
-    float f = Pow5(1.0f - VoH);
-    return f + f0 * (1.0f - f);
+    float f0 = Pow2((1.0f - ior) / (1.0f + ior));
+    float fr = F_Schlick(f0, 1.0f, VoH);
+    return lerp(base, layer, fr);
 }
 
 //-----------------------------------------------------------------------------

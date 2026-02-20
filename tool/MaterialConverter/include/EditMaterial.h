@@ -11,7 +11,6 @@
 #include <cstdint>
 #include <string>
 #include <vector>
-#include <any>
 
 
 //-----------------------------------------------------------------------------
@@ -59,37 +58,17 @@ enum RasterizerState : uint8_t
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-// MaterialParamType enum.
+// MaterialKind enum
 ///////////////////////////////////////////////////////////////////////////////
-enum MaterialParamType : uint8_t
+enum MaterialKind : uint32_t
 {
-    Bool,       //!< bool型 (4ybteなので注意).
-    Bool2,      //!< bool2型.
-    Bool3,      //!< bool3型.
-    Bool4,      //!< bool4型.
-    Int,        //!< int型.
-    Int2,       //!< int2型.
-    Int3,       //!< int3型.
-    Int4,       //!< int4型.
-    Uint,       //!< uint型.
-    Uint2,      //!< uint2型.
-    Uint3,      //!< uint3型.
-    Uint4,      //!< uint4型.
-    Float,      //!< float型.
-    Float2,     //!< float2型.
-    Float3,     //!< float3型.
-    Float4,     //!< float4型.
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// RenderState enum
-///////////////////////////////////////////////////////////////////////////////
-struct RenderState
-{
-    BlendState      Blend;      //!< ブレンドステート.
-    DepthState      Depth;      //!< 深度ステート.
-    RasterizerState Rasterizer; //!< ラスタライザーステート.
-    uint8_t         UserFlag;   //!< ユーザーフラグ.
+    Lambert = 0,
+    GGX,
+    Anisotropy,
+    ClearCoat,
+    Sheen,
+    Iridescence,
+    Transmission,
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -102,24 +81,12 @@ struct MaterialTexture
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-// MaterialParam structure
-///////////////////////////////////////////////////////////////////////////////
-struct MaterialParam
-{
-    std::string             Name;       //!< パラメータ名.
-    MaterialParamType       Type;       //!< データ型.
-    uint32_t                Offset;     //!< オフセット.
-    uint32_t                ArraySize;  //!< 配列数.
-};
-
-///////////////////////////////////////////////////////////////////////////////
 // MaterialBuffer structure
 ///////////////////////////////////////////////////////////////////////////////
 struct MaterialBuffer
 {
-    std::string                 Name;       //!< バッファ名.
-    std::vector<uint8_t>        Buffer;     //!< バッファデータ.
-    std::vector<MaterialParam>  Params;     //!< リフレクションパラメータ.
+    uint32_t                Size;   //!< バッファサイズ.
+    std::vector<uint8_t>    Data;   //!< バッファデータ.
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -127,11 +94,112 @@ struct MaterialBuffer
 ///////////////////////////////////////////////////////////////////////////////
 struct Material
 {
-    std::string                     Name;           //!< マテリアル名.
-    std::string                     PixelShader;    //!< ピクセルシェーダファイルパス.
-    RenderState                     State;          //!< レンダーステート.
-    std::vector<MaterialTexture>    Textures;       //!< テクスチャリスト.
-    std::vector<MaterialBuffer>     Buffers;        //!< バッファリスト.
+    std::string                     Name;               //!< マテリアル名.
+    uint32_t                        Kind;               //!< マテリアル種別.
+    BlendState                      BlendState;         //!< ブレンドステート.,
+    DepthState                      DepthState;         //!< 深度ステート.
+    RasterizerState                 RasterizerState;    //!< ラスタライザーステート.
+    std::vector<uint8_t>            Buffer;             //!< 定数バッファ.
+    std::vector<MaterialTexture>    Textures;           //!< テクスチャリスト.
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// ParamLambert structure
+///////////////////////////////////////////////////////////////////////////////
+struct alignas(256) ParamLambert
+{
+    float   UvOffsetX     = 0.0f;
+    float   UvOffsetY     = 0.0f;
+    float   UvSizeX       = 1.0f;
+    float   UvSizeY       = 1.0f;
+    float   UvRotation    = 0.0f;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// ParamGGX structure
+///////////////////////////////////////////////////////////////////////////////
+struct alignas(256) ParamGGX
+{
+    float   UvOffsetX     = 0.0f;
+    float   UvOffsetY     = 0.0f;
+    float   UvSizeX       = 1.0f;
+    float   UvSizeY       = 1.0f;
+    float   UvRotation    = 0.0f;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// ParamAnisotropy structure
+///////////////////////////////////////////////////////////////////////////////
+struct alignas(256) ParamAnisotropy
+{
+    float   UvOffsetX           = 0.0f;
+    float   UvOffsetY           = 0.0f;
+    float   UvSizeX             = 1.0f;
+    float   UvSizeY             = 1.0f;
+    float   UvRotation          = 0.0f;
+    float   AnisotropyStrength  = 0.0f;
+    float   AnisotropyRotation  = 0.0f;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// ParamClearCoat structure
+///////////////////////////////////////////////////////////////////////////////
+struct alignas(256) ParamClearCoat
+{
+    float   UvOffsetX                   = 0.0f;
+    float   UvOffsetY                   = 0.0f;
+    float   UvSizeX                     = 1.0f;
+    float   UvSizeY                     = 1.0f;
+    float   UvRotation                  = 0.0f;
+    float   ClearCoatFactor             = 0.0f;
+    float   ClearCoatRoughnessFactor    = 0.0f;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// ParamSheen structure
+///////////////////////////////////////////////////////////////////////////////
+struct alignas(256) ParamSheen
+{
+    float   UvOffsetX               = 0.0f;
+    float   UvOffsetY               = 0.0f;
+    float   UvSizeX                 = 1.0f;
+    float   UvSizeY                 = 1.0f;
+    float   UvRotation              = 0.0f;
+    float   SheenColorFactorR       = 0.0f;
+    float   SheenColorFactorG       = 0.0f;
+    float   SheenColorFactorB       = 0.0f;
+    float   SheenRoughnessFactor    = 0.0f;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// ParamIridescence structure
+///////////////////////////////////////////////////////////////////////////////
+struct alignas(256) ParamIridescence
+{
+    float   UvOffsetX               = 0.0f;
+    float   UvOffsetY               = 0.0f;
+    float   UvSizeX                 = 1.0f;
+    float   UvSizeY                 = 1.0f;
+    float   UvRotation              = 0.0f;
+    float   IridescenceFactor       = 0.0f;
+    float   IridescenceIor          = 1.3f;
+    float   IridescenceThicknessMin = 100.0f;
+    float   IridescenceThicknessMax = 400.0f;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// ParamTransmission
+///////////////////////////////////////////////////////////////////////////////
+struct alignas(256) ParamTransmission
+{
+    float   UvOffsetX           = 0.0f;
+    float   UvOffsetY           = 0.0f;
+    float   UvSizeX             = 1.0f;
+    float   UvSizeY             = 1.0f;
+    float   UvRotation          = 0.0f;
+    float   Ior                 = 1.5f;
+    float   TransmissionFactor  = 0.0f;
+    float   Dispersion          = 0.0f;
 };
 
 //-----------------------------------------------------------------------------
@@ -155,24 +223,13 @@ bool SaveToJson(const char* path, const Material& material);
 bool LoadFromJson(const char* path, Material& material);
 
 //-----------------------------------------------------------------------------
-//! @brief      シェーダからマテリアルを初期化します.
+//! @brief      マテリアル種別からマテリアルを初期化します.
 //! 
-//! @param[in]      path        コンパイル済みシェーダファイル名.
+//! @param[in]      kind        マテリアル種別.
 //! @param[out]     material    マテリアルの格納先.
 //! @retval true    初期化に成功.
 //! @retval fasle   初期化に失敗.
 //-----------------------------------------------------------------------------
-bool InitFromShader(const char* path, Material& material);
-
-//-----------------------------------------------------------------------------
-//! @brief      シェーダからマテリアルを初期化します.
-//! 
-//! @param[in]      buffer      バッファデータ.
-//! @param[in]      bufferSize  バッファサイズ.
-//! @param[out]     material    マテリアルの格納先.
-//! @retval true    初期化に成功.
-//! @retval fasle   初期化に失敗.
-//-----------------------------------------------------------------------------
-bool InitFromShader(const void* buffer, size_t bufferSize, Material& material);
+bool InitMaterial(MaterialKind kind, Material& material);
 
 } // namespace asdx::edit
