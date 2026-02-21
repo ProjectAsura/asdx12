@@ -10,13 +10,7 @@
 #include "EditMaterial.h"
 #include <cstdio>
 #include <simdjson.h>
-#include <d3d12shader.h>
-#include <dxcapi.h>
-#include <wrl/client.h>
 
-
-template<typename T>
-using RefPtr = Microsoft::WRL::ComPtr<T>;
 
 #ifndef ELOG
 #define ELOG(x, ...) fprintf_s(stderr, "[File: %s, Line: %d] " x "\n", __FILE__, __LINE__, ##__VA_ARGS__ )
@@ -187,95 +181,6 @@ asdx::edit::RasterizerState ToRasterizerState(const char* state)
 
     return asdx::edit::RasterizerState::CullNone;
 }
-
-//-----------------------------------------------------------------------------
-//      シェーダリフレクションを生成します.
-//-----------------------------------------------------------------------------
-HRESULT CreateShaderReflectionOld(const void* pData, size_t size, ID3D12ShaderReflection** ppResult)
-{
-    // DirectX ShaderCompiler before March 2020.
-
-    const uint32_t kDFCC_DXIL  = DXC_FOURCC('D', 'X', 'I', 'L');
-
-    RefPtr<IDxcLibrary> pLibrary;
-    auto hr = DxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(pLibrary.GetAddressOf()));
-    if (FAILED(hr))
-    {
-        ELOG("Error : DxcCreateInstance() Failed. errcode = 0x%x", hr);
-        return hr;
-    }
-
-    RefPtr<IDxcBlobEncoding> blobEncoding;
-    hr = pLibrary->CreateBlobWithEncodingOnHeapCopy(pData, UINT32(size), CP_ACP, blobEncoding.GetAddressOf());
-    if (FAILED(hr))
-    {
-        ELOG("Error : IDxcLibrary::CreateBlobWithEncodingOnHeapCopy() Faield. errcode = 0x%x", hr);
-        return hr;
-    }
-
-    RefPtr<IDxcContainerReflection> containerReflection;
-    hr = DxcCreateInstance(CLSID_DxcContainerReflection, IID_PPV_ARGS(containerReflection.GetAddressOf()));
-    if (FAILED(hr))
-    {
-        ELOG("Error : DxcCreateInstance() Failed. errcode = 0x%x", hr);
-        return hr;
-    }
-
-    uint32_t shaderIdx = 0;
-    hr = containerReflection->Load(blobEncoding.Get());
-    if (FAILED(hr))
-    {
-        ELOG("Error : IDxcContainerReflection::Load() Failed. errcode = 0x%x", hr);
-        return hr;
-    }
-
-    hr = containerReflection->FindFirstPartKind(kDFCC_DXIL, &shaderIdx);
-    if (FAILED(hr))
-    {
-        ELOG("Error : IDxcContainerReflection::FindFirstPartKind() Failed. errcode = 0x%x", hr);
-        return hr;
-    }
-
-    return containerReflection->GetPartReflection(shaderIdx, IID_PPV_ARGS(ppResult));
-}
-
-bool CreateShaderReflection(const void* pData, size_t size, ID3D12ShaderReflection** ppReflection)
-{
-    RefPtr<IDxcUtils> pUtil;
-    auto hr = DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(pUtil.GetAddressOf()));
-    if (FAILED(hr))
-    {
-        ELOG("Error : DxcCreateInstance() Failed. errcode = 0x%x", hr);
-        return false;
-    }
-
-    DxcBuffer buf = {};
-    buf.Ptr      = pData;
-    buf.Size     = size;
-    buf.Encoding = CP_UTF8;
-
-    hr = pUtil->CreateReflection(&buf, IID_PPV_ARGS(ppReflection));
-    if (FAILED(hr))
-    {
-        if (hr == E_NOINTERFACE)
-        {
-            hr = CreateShaderReflectionOld(pData, size, ppReflection);
-            if (FAILED(hr))
-            {
-                ELOG("Error : CreateShaderReflectionOld() Failed.");
-                return false;
-            }
-        }
-        else
-        {
-            ELOG("Error : IDxcutils::CreateReflection() Failed. errcode = 0x%x", hr);
-            return false;
-        }
-    }
-
-    return true;
-}
-
 
 } // namespace
 

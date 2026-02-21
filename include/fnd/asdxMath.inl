@@ -3004,10 +3004,10 @@ inline Matrix Matrix::CreateBillboardAxisY(const Matrix& value)
 //-----------------------------------------------------------------------------
 inline Matrix Matrix::AppendTranslation(const Vector3& vec, Matrix& mat)
 {
-    auto m41 = (vec.x * mat._11 ) + (vec.y * mat._21 ) + (vec.z * mat._31 ) + mat._41;
-    auto m42 = (vec.x * mat._12 ) + (vec.y * mat._22 ) + (vec.z * mat._32 ) + mat._42;
-    auto m43 = (vec.x * mat._13 ) + (vec.y * mat._23 ) + (vec.z * mat._33 ) + mat._43;
-    auto m44 = (vec.x * mat._14 ) + (vec.y * mat._24 ) + (vec.z * mat._34 ) + mat._44;
+    auto m41 = (vec.x * mat._11) + (vec.y * mat._21) + (vec.z * mat._31) + mat._41;
+    auto m42 = (vec.x * mat._12) + (vec.y * mat._22) + (vec.z * mat._32) + mat._42;
+    auto m43 = (vec.x * mat._13) + (vec.y * mat._23) + (vec.z * mat._33) + mat._43;
+    auto m44 = (vec.x * mat._14) + (vec.y * mat._24) + (vec.z * mat._34) + mat._44;
     mat._41 = m41;
     mat._42 = m42;
     mat._43 = m43;

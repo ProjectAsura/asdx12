@@ -457,6 +457,7 @@ template<typename T> inline
 bool IsPowerOf2(T val)
 { return (val != 0) && !(val & (val - 1)); }
 
+
 ///////////////////////////////////////////////////////////////////////////////
 // Vector2 strucutre
 ///////////////////////////////////////////////////////////////////////////////
@@ -2250,7 +2251,7 @@ public:
     //! @param [in]     farClip     遠クリップ平面までの距離.
     //! @return     正射影行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix  CreateOrthographic(float width, float height, float nearClip, float farClip);
+    static Matrix CreateOrthographic(float width, float height, float nearClip, float farClip);
 
     //-------------------------------------------------------------------------
     //! @brief      カスタマイズした正射影行列を生成します.
@@ -2309,7 +2310,7 @@ public:
     //!
     //! @param[in]      vec         平行移動量.
     //! @param[in]      mat         行列.
-    //! @return     平行移動行列を←から掛けた結果を返却します.
+    //! @return     平行移動行列を左から掛けた結果を返却します.
     //-------------------------------------------------------------------------
     static Matrix AppendTranslation(const Vector3& vec, Matrix& mat);
 

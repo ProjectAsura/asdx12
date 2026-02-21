@@ -573,13 +573,20 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
             }
         }
 
+        modelWorld = asdx::Matrix::CreateTranslation(m_ModelTranslation)
+            * asdx::Matrix::CreateRotationFromYawPitchRoll(
+                asdx::ToRadian(m_ModelRotation.y),
+                asdx::ToRadian(m_ModelRotation.x),
+                asdx::ToRadian(m_ModelRotation.z))
+            * asdx::Matrix::CreateScale(m_ModelScale);
+
         // バウンディングスフィア表示.
         if (m_DrawBoundingSphere)
         {
             for(auto i=0u; i<m_Model->GetMeshCount(); ++i)
             {
                 auto& sphere = m_Model->GetMesh(i)->GetBoundingSphere();
-                auto world = asdx::Matrix::CreateScale(sphere.Radius) * asdx::Matrix::CreateTranslation(sphere.Center);
+                auto world = asdx::Matrix::CreateScale(sphere.Radius) * asdx::Matrix::CreateTranslation(sphere.Center) * modelWorld;
 
                 uint32_t index = uint32_t(i);
                 m_ShapeParams.SetWorld(index, world);
@@ -588,7 +595,7 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
 
             {
                 auto& sphere = m_Model->GetBoundingSphere();
-                auto world = asdx::Matrix::CreateScale(sphere.Radius) * asdx::Matrix::CreateTranslation(sphere.Center);
+                auto world = asdx::Matrix::CreateScale(sphere.Radius) * asdx::Matrix::CreateTranslation(sphere.Center) * modelWorld;
 
                 uint32_t index = uint32_t(m_Model->GetMeshCount());
                 m_ShapeParams.SetWorld(index, world);
@@ -611,10 +618,10 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
                     if (parentId < 0)
                         continue;
 
-                    auto m0 = matrices[parentId];
+                    auto m0 = matrices[parentId] * modelWorld;
                     auto p0 = m0.GetPosition();
 
-                    auto m1 = matrices[i];
+                    auto m1 = matrices[i] * modelWorld;
                     auto p1 = m1.GetPosition();
 
                     asdx::DrawWireBone(m_LineRenderer, p0, p1, asdx::Vector4(0.0f, 1.0f, 1.0f, 1.0f));
@@ -652,15 +659,15 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
     {
         auto idx = GetCurrentBackBufferIndex();
 
-        modelWorld = asdx::Matrix::CreateTranslation(m_ModelTranslation)
-            * asdx::Matrix::CreateRotationFromYawPitchRoll(
-                asdx::ToRadian(m_ModelRotation.y),
-                asdx::ToRadian(m_ModelRotation.x),
-                asdx::ToRadian(m_ModelRotation.z))
-            * asdx::Matrix::CreateScale(m_ModelScale);
-
         auto param = m_SceneCB[idx].MapAs<ParamScene>();
         assert(param != nullptr);
+
+        //modelWorld = asdx::Matrix::CreateTranslation(m_ModelTranslation)
+        //    * asdx::Matrix::CreateRotationFromYawPitchRoll(
+        //        asdx::ToRadian(m_ModelRotation.y),
+        //        asdx::ToRadian(m_ModelRotation.x),
+        //        asdx::ToRadian(m_ModelRotation.z))
+        //    * asdx::Matrix::CreateScale(m_ModelScale);
 
         param->World        = modelWorld;
         param->View         = m_Camera.GetView();
@@ -864,7 +871,7 @@ void ModelViewer::OnKey(const asdx::App::KeyEventArgs& args)
         // 移動ツール.
         case 'W':
             {
-                if (m_EnableGuizmo)
+                if (m_EnableGuizmo && m_GuizmoOperation == ImGuizmo::OPERATION::TRANSLATE)
                 { m_EnableGuizmo = false; }
                 else
                 {
@@ -877,7 +884,7 @@ void ModelViewer::OnKey(const asdx::App::KeyEventArgs& args)
         // 回転ツール.
         case 'E':
             {
-                if (m_EnableGuizmo)
+                if (m_EnableGuizmo && m_GuizmoOperation == ImGuizmo::OPERATION::ROTATE)
                 { m_EnableGuizmo = false; }
                 else
                 {
@@ -890,7 +897,7 @@ void ModelViewer::OnKey(const asdx::App::KeyEventArgs& args)
         // スケールツール.
         case 'R':
             {
-                if (m_EnableGuizmo)
+                if (m_EnableGuizmo && m_GuizmoOperation == ImGuizmo::OPERATION::SCALE)
                 { m_EnableGuizmo = false; }
                 else
                 {
@@ -1108,7 +1115,10 @@ void ModelViewer::RecreateModel()
         10000.0f);
     m_Camera.Present();
 
-    m_MotionPlayer.Term();
+    m_MotionPlayer.SetClip(nullptr);
+    m_ClipIndex = 0;
+    m_ClipNames.clear();
+    m_MotionBinary.Term();
 
     // モーションプレイヤーを初期化.
     m_MotionPlayer.Init(pModel);

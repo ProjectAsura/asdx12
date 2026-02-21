@@ -98,7 +98,7 @@ private:
     //! @param[in]      pTexture        テクスチャ.
     //! @param[in]      hash            ファイルパスハッシュ.
     //-------------------------------------------------------------------------
-    TextureHolder(const Texture* pTexture, uint64_t hash);
+    TextureHolder(Texture* pTexture, uint64_t hash);
 };
 
 ///////////////////////////////////////////////////////////////////////////////

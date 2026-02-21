@@ -156,6 +156,10 @@ bool MotionConverter::Convert(const std::string& path, std::vector<uint8_t>& bin
         auto duration       = float(srcAnim->mDuration);
         auto ticksPerSecond = float(srcAnim->mTicksPerSecond);
 
+        // ゼロの場合は gltf の値に合わせる.
+        if (ticksPerSecond <= 0.0f)
+        { ticksPerSecond = 1000.0f; }
+
         // ボーンアニメーションを変換.
         std::vector<flatbuffers::Offset<asdx::res::MotionTrack>> bones;
         for(auto j=0u; j<srcAnim->mNumChannels; ++j)

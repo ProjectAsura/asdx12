@@ -185,19 +185,15 @@ void MotionPlayer::UpdateLocalTransform(float deltaSec)
 //-----------------------------------------------------------------------------
 void MotionPlayer::UpdateWorldTransform(const Matrix& rootTransform)
 {
-    // ルートボーンのワールド行列を計算.
-    m_WorldTransforms[0] = m_LocalTransforms[0] * rootTransform;
-
-    // 子ボーンのワールド行列を計算.
     auto count = m_pModel->GetBoneCount();
-    for(auto i=1u; i<count; ++i)
+    for(auto i=0u; i<count; ++i)
     {
         const auto& bone   = m_pModel->GetBone(i);
         const auto  parent = asdx::BoneProxy::GetParentId(bone);
 
         // 親がいなければそのまま.
         if (parent < 0)
-            m_WorldTransforms[i] = m_LocalTransforms[i];
+            m_WorldTransforms[i] = m_LocalTransforms[i] * rootTransform;
         // 親がいれば親を考慮.
         else
             m_WorldTransforms[i] = m_LocalTransforms[i] * m_WorldTransforms[parent];

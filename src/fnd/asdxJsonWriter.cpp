@@ -155,7 +155,7 @@ void JsonWriter::WriteNextLine(bool comma)
 void JsonWriter::Write(const char* tag, bool value)
 {
     WriteIndent();
-    m_Stream << "\"" << tag << "\": " << std::to_string(value);
+    m_Stream << "\"" << tag << "\": " << (value ? "true" : "false");
 }
 
 //-----------------------------------------------------------------------------
@@ -164,7 +164,7 @@ void JsonWriter::Write(const char* tag, bool value)
 void JsonWriter::Write(const char* tag, int8_t value)
 {
     WriteIndent();
-    m_Stream << "\"" << tag << "\": " << std::to_string(value);
+    m_Stream << "\"" << tag << "\": " << value;
 }
 
 //-----------------------------------------------------------------------------
@@ -173,7 +173,7 @@ void JsonWriter::Write(const char* tag, int8_t value)
 void JsonWriter::Write(const char* tag, int16_t value)
 {
     WriteIndent();
-    m_Stream << "\"" << tag << "\": " << std::to_string(value);
+    m_Stream << "\"" << tag << "\": " << value;
 }
 
 //-----------------------------------------------------------------------------
@@ -182,7 +182,7 @@ void JsonWriter::Write(const char* tag, int16_t value)
 void JsonWriter::Write(const char* tag, int32_t value)
 {
     WriteIndent();
-    m_Stream << "\"" << tag << "\": " << std::to_string(value);
+    m_Stream << "\"" << tag << "\": " << value;
 }
 
 //-----------------------------------------------------------------------------
@@ -191,7 +191,7 @@ void JsonWriter::Write(const char* tag, int32_t value)
 void JsonWriter::Write(const char* tag, int64_t value)
 {
     WriteIndent();
-    m_Stream << "\"" << tag << "\": " << std::to_string(value);
+    m_Stream << "\"" << tag << "\": " << value;
 }
 
 //-----------------------------------------------------------------------------
@@ -200,7 +200,7 @@ void JsonWriter::Write(const char* tag, int64_t value)
 void JsonWriter::Write(const char* tag, uint8_t value)
 {
     WriteIndent();
-    m_Stream << "\"" << tag << "\": " << std::to_string(value);
+    m_Stream << "\"" << tag << "\": " << value;
 }
 
 //-----------------------------------------------------------------------------
@@ -209,7 +209,7 @@ void JsonWriter::Write(const char* tag, uint8_t value)
 void JsonWriter::Write(const char* tag, uint16_t value)
 {
     WriteIndent();
-    m_Stream << "\"" << tag << "\": " << std::to_string(value);
+    m_Stream << "\"" << tag << "\": " << value;
 }
 
 //-----------------------------------------------------------------------------
@@ -218,7 +218,7 @@ void JsonWriter::Write(const char* tag, uint16_t value)
 void JsonWriter::Write(const char* tag, uint32_t value)
 {
     WriteIndent();
-    m_Stream << "\"" << tag << "\": " << std::to_string(value);
+    m_Stream << "\"" << tag << "\": " << value;
 }
 
 //-----------------------------------------------------------------------------
@@ -227,7 +227,7 @@ void JsonWriter::Write(const char* tag, uint32_t value)
 void JsonWriter::Write(const char* tag, uint64_t value)
 {
     WriteIndent();
-    m_Stream << "\"" << tag << "\": " << std::to_string(value);
+    m_Stream << "\"" << tag << "\": " << value;
 }
 
 //-----------------------------------------------------------------------------
@@ -236,7 +236,7 @@ void JsonWriter::Write(const char* tag, uint64_t value)
 void JsonWriter::Write(const char* tag, float value)
 {
     WriteIndent();
-    m_Stream << "\"" << tag << "\": " << std::to_string(value);
+    m_Stream << "\"" << tag << "\": " << value;
 }
 
 //-----------------------------------------------------------------------------
@@ -245,7 +245,7 @@ void JsonWriter::Write(const char* tag, float value)
 void JsonWriter::Write(const char* tag, double value)
 {
     WriteIndent();
-    m_Stream << "\"" << tag << "\": " << std::to_string(value);
+    m_Stream << "\"" << tag << "\": " << value;
 }
 
 //-----------------------------------------------------------------------------
@@ -280,10 +280,8 @@ void JsonWriter::Write(const char* tag, const std::string_view& value)
 //-----------------------------------------------------------------------------
 void JsonWriter::Write(const char* tag, const Vector2& value)
 {
-    WriteBeginSection(tag); WriteNextLine(false);
-    Write("x", value.x); WriteNextLine(true);
-    Write("y", value.y); WriteNextLine(false);
-    WriteEndSection();
+    WriteIndent();
+    m_Stream << "\"" << tag << "\": { " << "\"x\": " << value.x << ", \"y\": " << value.y << " }"; 
 }
 
 //-----------------------------------------------------------------------------
@@ -291,11 +289,8 @@ void JsonWriter::Write(const char* tag, const Vector2& value)
 //-----------------------------------------------------------------------------
 void JsonWriter::Write(const char* tag, const Vector3& value)
 {
-    WriteBeginSection(tag);  WriteNextLine(false);
-    Write("x", value.x); WriteNextLine(true);
-    Write("y", value.y); WriteNextLine(true);
-    Write("z", value.z); WriteNextLine(false);
-    WriteEndSection();
+    WriteIndent();
+    m_Stream << "\"" << tag << "\": { " << "\"x\": " << value.x << ", \"y\": " << value.y << ", \"z\": " << value.z << " }"; 
 }
 
 //-----------------------------------------------------------------------------
@@ -303,12 +298,8 @@ void JsonWriter::Write(const char* tag, const Vector3& value)
 //-----------------------------------------------------------------------------
 void JsonWriter::Write(const char* tag, const Vector4& value)
 {
-    WriteBeginSection(tag); WriteNextLine(false);
-    Write("x", value.x); WriteNextLine(true);
-    Write("y", value.y); WriteNextLine(true);
-    Write("z", value.z); WriteNextLine(true);
-    Write("w", value.w); WriteNextLine(false);
-    WriteEndSection();
+    WriteIndent();
+    m_Stream << "\"" << tag << "\": { " << "\"x\": " << value.x << ", \"y\": " << value.y << ", \"z\": " << value.z << ", \"w\": " << value.w << " }"; 
 }
 
 //-----------------------------------------------------------------------------
@@ -316,12 +307,8 @@ void JsonWriter::Write(const char* tag, const Vector4& value)
 //-----------------------------------------------------------------------------
 void JsonWriter::Write(const char* tag, const Quaternion& value)
 {
-    WriteBeginSection(tag); WriteNextLine(false);
-    Write("qx", value.x); WriteNextLine(true);
-    Write("qy", value.y); WriteNextLine(true);
-    Write("qz", value.z); WriteNextLine(true);
-    Write("qw", value.w); WriteNextLine(false);
-    WriteEndSection();
+    WriteIndent();
+    m_Stream << "\"" << tag << "\": { " << "\"qx\": " << value.x << ", \"qy\": " << value.y << ", \"qz\": " << value.z << ", \"qw\": " << value.w << " }"; 
 }
 
 //-----------------------------------------------------------------------------
@@ -330,22 +317,22 @@ void JsonWriter::Write(const char* tag, const Quaternion& value)
 void JsonWriter::Write(const char* tag, const Matrix& value)
 {
     WriteBeginSection(tag); WriteNextLine(false);
-    Write("e11", value._11); WriteNextLine(true);
-    Write("e12", value._12); WriteNextLine(true);
-    Write("e13", value._13); WriteNextLine(true);
-    Write("e14", value._14); WriteNextLine(true);
-    Write("e21", value._21); WriteNextLine(true);
-    Write("e22", value._22); WriteNextLine(true);
-    Write("e23", value._23); WriteNextLine(true);
-    Write("e24", value._24); WriteNextLine(true);
-    Write("e31", value._31); WriteNextLine(true);
-    Write("e32", value._32); WriteNextLine(true);
-    Write("e33", value._33); WriteNextLine(true);
-    Write("e34", value._34); WriteNextLine(true);
-    Write("e41", value._41); WriteNextLine(true);
-    Write("e42", value._42); WriteNextLine(true);
-    Write("e43", value._43); WriteNextLine(true);
-    Write("e44", value._44); WriteNextLine(false);
+    Write("m11", value._11); WriteNextLine(true);
+    Write("m12", value._12); WriteNextLine(true);
+    Write("m13", value._13); WriteNextLine(true);
+    Write("m14", value._14); WriteNextLine(true);
+    Write("m21", value._21); WriteNextLine(true);
+    Write("m22", value._22); WriteNextLine(true);
+    Write("m23", value._23); WriteNextLine(true);
+    Write("m24", value._24); WriteNextLine(true);
+    Write("m31", value._31); WriteNextLine(true);
+    Write("m32", value._32); WriteNextLine(true);
+    Write("m33", value._33); WriteNextLine(true);
+    Write("m34", value._34); WriteNextLine(true);
+    Write("m41", value._41); WriteNextLine(true);
+    Write("m42", value._42); WriteNextLine(true);
+    Write("m43", value._43); WriteNextLine(true);
+    Write("m44", value._44); WriteNextLine(false);
     WriteEndSection();
 }
 
@@ -355,18 +342,18 @@ void JsonWriter::Write(const char* tag, const Matrix& value)
 void JsonWriter::Write(const char* tag, const Transform3x4& value)
 {
     WriteBeginSection(tag); WriteNextLine(false);
-    Write("e11", value._11); WriteNextLine(true);
-    Write("e12", value._12); WriteNextLine(true);
-    Write("e13", value._13); WriteNextLine(true);
-    Write("e14", value._14); WriteNextLine(true);
-    Write("e21", value._21); WriteNextLine(true);
-    Write("e22", value._22); WriteNextLine(true);
-    Write("e23", value._23); WriteNextLine(true);
-    Write("e24", value._24); WriteNextLine(true);
-    Write("e31", value._31); WriteNextLine(true);
-    Write("e32", value._32); WriteNextLine(true);
-    Write("e33", value._33); WriteNextLine(true);
-    Write("e34", value._34); WriteNextLine(false);
+    Write("m11", value._11); WriteNextLine(true);
+    Write("m12", value._12); WriteNextLine(true);
+    Write("m13", value._13); WriteNextLine(true);
+    Write("m14", value._14); WriteNextLine(true);
+    Write("m21", value._21); WriteNextLine(true);
+    Write("m22", value._22); WriteNextLine(true);
+    Write("m23", value._23); WriteNextLine(true);
+    Write("m24", value._24); WriteNextLine(true);
+    Write("m31", value._31); WriteNextLine(true);
+    Write("m32", value._32); WriteNextLine(true);
+    Write("m33", value._33); WriteNextLine(true);
+    Write("m34", value._34); WriteNextLine(false);
     WriteEndSection();
 }
 
@@ -379,7 +366,7 @@ void JsonWriter::Write(const char* tag, std::span<bool> values)
     for(size_t i=0; i<values.size(); ++i)
     {
         WriteIndent();
-        m_Stream << std::to_string(values[i]);
+        m_Stream << (values[i] ? "true" : "false");
         WriteNextLine(i != values.size() - 1);
     }
     WriteEndArray();
@@ -394,7 +381,7 @@ void JsonWriter::Write(const char* tag, std::span<int8_t> values)
     for(size_t i=0; i<values.size(); ++i)
     {
         WriteIndent();
-        m_Stream << std::to_string(values[i]);
+        m_Stream << values[i];
         WriteNextLine(i != values.size() - 1);
     }
     WriteEndArray();
@@ -409,7 +396,7 @@ void JsonWriter::Write(const char* tag, std::span<int16_t> values)
     for(size_t i=0; i<values.size(); ++i)
     {
         WriteIndent();
-        m_Stream << std::to_string(values[i]);
+        m_Stream << values[i];
         WriteNextLine(i != values.size() - 1);
     }
     WriteEndArray();
@@ -424,7 +411,7 @@ void JsonWriter::Write(const char* tag, std::span<int32_t> values)
     for(size_t i=0; i<values.size(); ++i)
     {
         WriteIndent();
-        m_Stream << std::to_string(values[i]);
+        m_Stream << values[i];
         WriteNextLine(i != values.size() - 1);
     }
     WriteEndArray();
@@ -439,7 +426,7 @@ void JsonWriter::Write(const char* tag, std::span<int64_t> values)
     for(size_t i=0; i<values.size(); ++i)
     {
         WriteIndent();
-        m_Stream << std::to_string(values[i]);
+        m_Stream << values[i];
         WriteNextLine(i != values.size() - 1);
     }
     WriteEndArray();
@@ -454,7 +441,7 @@ void JsonWriter::Write(const char* tag, std::span<uint8_t> values)
     for(size_t i=0; i<values.size(); ++i)
     {
         WriteIndent();
-        m_Stream << std::to_string(values[i]);
+        m_Stream << values[i];
         WriteNextLine(i != values.size() - 1);
     }
     WriteEndArray();
@@ -469,7 +456,7 @@ void JsonWriter::Write(const char* tag, std::span<uint16_t> values)
     for(size_t i=0; i<values.size(); ++i)
     {
         WriteIndent();
-        m_Stream << std::to_string(values[i]);
+        m_Stream << values[i];
         WriteNextLine(i != values.size() - 1);
     }
     WriteEndArray();
@@ -484,7 +471,7 @@ void JsonWriter::Write(const char* tag, std::span<uint32_t> values)
     for(size_t i=0; i<values.size(); ++i)
     {
         WriteIndent();
-        m_Stream << std::to_string(values[i]);
+        m_Stream << values[i];
         WriteNextLine(i != values.size() - 1);
     }
     WriteEndArray();
@@ -499,7 +486,7 @@ void JsonWriter::Write(const char* tag, std::span<uint64_t> values)
     for(size_t i=0; i<values.size(); ++i)
     {
         WriteIndent();
-        m_Stream << std::to_string(values[i]);
+        m_Stream << values[i];
         WriteNextLine(i != values.size() - 1);
     }
     WriteEndArray();
@@ -514,7 +501,7 @@ void JsonWriter::Write(const char* tag, std::span<float> values)
     for(size_t i=0; i<values.size(); ++i)
     {
         WriteIndent();
-        m_Stream << std::to_string(values[i]);
+        m_Stream << values[i];
         WriteNextLine(i != values.size() - 1);
     }
     WriteEndArray();
@@ -529,7 +516,7 @@ void JsonWriter::Write(const char* tag, std::span<double> values)
     for(size_t i=0; i<values.size(); ++i)
     {
         WriteIndent();
-        m_Stream << std::to_string(values[i]);
+        m_Stream << values[i];
         WriteNextLine(i != values.size() - 1);
     }
     WriteEndArray();
@@ -606,22 +593,22 @@ void JsonWriter::Write(const char* tag, std::span<Matrix> values)
         WriteIndent();
         m_Indent++;
         m_Stream << "{"; WriteNextLine(false);
-        WriteIndent(); m_Stream << "\"e11\": " << values[i]._11; WriteNextLine(true);
-        WriteIndent(); m_Stream << "\"e12\": " << values[i]._12; WriteNextLine(true);
-        WriteIndent(); m_Stream << "\"e13\": " << values[i]._13; WriteNextLine(true);
-        WriteIndent(); m_Stream << "\"e14\": " << values[i]._14; WriteNextLine(true);
-        WriteIndent(); m_Stream << "\"e21\": " << values[i]._21; WriteNextLine(true);
-        WriteIndent(); m_Stream << "\"e22\": " << values[i]._22; WriteNextLine(true);
-        WriteIndent(); m_Stream << "\"e23\": " << values[i]._23; WriteNextLine(true);
-        WriteIndent(); m_Stream << "\"e24\": " << values[i]._24; WriteNextLine(true);
-        WriteIndent(); m_Stream << "\"e31\": " << values[i]._31; WriteNextLine(true);
-        WriteIndent(); m_Stream << "\"e32\": " << values[i]._32; WriteNextLine(true);
-        WriteIndent(); m_Stream << "\"e33\": " << values[i]._33; WriteNextLine(true);
-        WriteIndent(); m_Stream << "\"e34\": " << values[i]._34; WriteNextLine(true);
-        WriteIndent(); m_Stream << "\"e41\": " << values[i]._41; WriteNextLine(true);
-        WriteIndent(); m_Stream << "\"e42\": " << values[i]._42; WriteNextLine(true);
-        WriteIndent(); m_Stream << "\"e43\": " << values[i]._43; WriteNextLine(true);
-        WriteIndent(); m_Stream << "\"e44\": " << values[i]._44; WriteNextLine(false);
+        WriteIndent(); m_Stream << "\"m11\": " << values[i]._11; WriteNextLine(true);
+        WriteIndent(); m_Stream << "\"m12\": " << values[i]._12; WriteNextLine(true);
+        WriteIndent(); m_Stream << "\"m13\": " << values[i]._13; WriteNextLine(true);
+        WriteIndent(); m_Stream << "\"m14\": " << values[i]._14; WriteNextLine(true);
+        WriteIndent(); m_Stream << "\"m21\": " << values[i]._21; WriteNextLine(true);
+        WriteIndent(); m_Stream << "\"m22\": " << values[i]._22; WriteNextLine(true);
+        WriteIndent(); m_Stream << "\"m23\": " << values[i]._23; WriteNextLine(true);
+        WriteIndent(); m_Stream << "\"m24\": " << values[i]._24; WriteNextLine(true);
+        WriteIndent(); m_Stream << "\"m31\": " << values[i]._31; WriteNextLine(true);
+        WriteIndent(); m_Stream << "\"m32\": " << values[i]._32; WriteNextLine(true);
+        WriteIndent(); m_Stream << "\"m33\": " << values[i]._33; WriteNextLine(true);
+        WriteIndent(); m_Stream << "\"m34\": " << values[i]._34; WriteNextLine(true);
+        WriteIndent(); m_Stream << "\"m41\": " << values[i]._41; WriteNextLine(true);
+        WriteIndent(); m_Stream << "\"m42\": " << values[i]._42; WriteNextLine(true);
+        WriteIndent(); m_Stream << "\"m43\": " << values[i]._43; WriteNextLine(true);
+        WriteIndent(); m_Stream << "\"m44\": " << values[i]._44; WriteNextLine(false);
         m_Indent--;
         WriteIndent(); m_Stream << "}";
         WriteNextLine(i != values.size() - 1);
@@ -640,18 +627,18 @@ void JsonWriter::Write(const char* tag, std::span<Transform3x4> values)
         WriteIndent();
         m_Indent++;
         m_Stream << "{"; WriteNextLine(false);
-        WriteIndent(); m_Stream << "\"e11\": " << values[i]._11; WriteNextLine(true);
-        WriteIndent(); m_Stream << "\"e12\": " << values[i]._12; WriteNextLine(true);
-        WriteIndent(); m_Stream << "\"e13\": " << values[i]._13; WriteNextLine(true);
-        WriteIndent(); m_Stream << "\"e14\": " << values[i]._14; WriteNextLine(true);
-        WriteIndent(); m_Stream << "\"e21\": " << values[i]._21; WriteNextLine(true);
-        WriteIndent(); m_Stream << "\"e22\": " << values[i]._22; WriteNextLine(true);
-        WriteIndent(); m_Stream << "\"e23\": " << values[i]._23; WriteNextLine(true);
-        WriteIndent(); m_Stream << "\"e24\": " << values[i]._24; WriteNextLine(true);
-        WriteIndent(); m_Stream << "\"e31\": " << values[i]._31; WriteNextLine(true);
-        WriteIndent(); m_Stream << "\"e32\": " << values[i]._32; WriteNextLine(true);
-        WriteIndent(); m_Stream << "\"e33\": " << values[i]._33; WriteNextLine(true);
-        WriteIndent(); m_Stream << "\"e34\": " << values[i]._34; WriteNextLine(true);
+        WriteIndent(); m_Stream << "\"m11\": " << values[i]._11; WriteNextLine(true);
+        WriteIndent(); m_Stream << "\"m12\": " << values[i]._12; WriteNextLine(true);
+        WriteIndent(); m_Stream << "\"m13\": " << values[i]._13; WriteNextLine(true);
+        WriteIndent(); m_Stream << "\"m14\": " << values[i]._14; WriteNextLine(true);
+        WriteIndent(); m_Stream << "\"m21\": " << values[i]._21; WriteNextLine(true);
+        WriteIndent(); m_Stream << "\"m22\": " << values[i]._22; WriteNextLine(true);
+        WriteIndent(); m_Stream << "\"m23\": " << values[i]._23; WriteNextLine(true);
+        WriteIndent(); m_Stream << "\"m24\": " << values[i]._24; WriteNextLine(true);
+        WriteIndent(); m_Stream << "\"m31\": " << values[i]._31; WriteNextLine(true);
+        WriteIndent(); m_Stream << "\"m32\": " << values[i]._32; WriteNextLine(true);
+        WriteIndent(); m_Stream << "\"m33\": " << values[i]._33; WriteNextLine(true);
+        WriteIndent(); m_Stream << "\"m34\": " << values[i]._34; WriteNextLine(true);
         m_Indent--;
         WriteIndent(); m_Stream << "}";
         WriteNextLine(i != values.size() - 1);
