@@ -2534,7 +2534,7 @@ inline Matrix Matrix::CreateFromQuaternion(const Quaternion& qua)
     auto xy = qua.x * qua.y; // num4
     auto zw = qua.z * qua.w; // num5
     auto zx = qua.z * qua.x; // num6
-    
+
     auto yw = qua.y * qua.w; // num7
     auto yz = qua.y * qua.z; // num8
     auto xw = qua.x * qua.w; // num9
@@ -2550,7 +2550,7 @@ inline Matrix Matrix::CreateFromQuaternion(const Quaternion& qua)
         2.0f * (yz + xw),
         0.0f,
 
-        2.0f * (zx + yw), 
+        2.0f * (zx + yw),
         2.0f * (yz - xw),
         1.0f - 2.0f * (yy + xx),
         0.0f,
@@ -2604,8 +2604,36 @@ inline Matrix Matrix::CreateFromAxisAngle(const Vector3& axis, float radian)
 //-----------------------------------------------------------------------------
 inline Matrix Matrix::CreateRotationFromYawPitchRoll(float yaw, float pitch, float roll)
 {
-    auto value = Quaternion::CreateFromYawPitchRoll(yaw, pitch, roll );
-    return Matrix::CreateFromQuaternion(value );
+    auto cp = cosf(pitch);
+    auto sp = sinf(pitch);
+
+    auto cy = cosf(yaw);
+    auto sy = sinf(yaw);
+
+    auto cr = cosf(roll);
+    auto sr = sinf(roll);
+
+    return Matrix(
+        cr * cy + sr * sp * sy,
+        sr * cp,
+        sr * sp * cy - cr * sy,
+        0.0f,
+
+        cr * sp * sy - sr * cy,
+        cr * cp,
+        sr * sy + cr * sp * cy,
+        0.0f,
+
+        cp * sy,
+        -sp,
+        cp * cy,
+        0.0f,
+
+        0.0f,
+        0.0f,
+        0.0f,
+        1.0f
+    );
 }
 
 //-----------------------------------------------------------------------------

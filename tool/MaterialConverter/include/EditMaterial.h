@@ -10,13 +10,7 @@
 //-----------------------------------------------------------------------------
 #include <cstdint>
 #include <string>
-#include <vector>
-
-
-//-----------------------------------------------------------------------------
-// Linker
-//-----------------------------------------------------------------------------
-#pragma comment(lib, "dxcompiler.lib")
+#include <map>
 
 
 namespace asdx::edit {
@@ -62,31 +56,13 @@ enum RasterizerState : uint8_t
 ///////////////////////////////////////////////////////////////////////////////
 enum MaterialKind : uint32_t
 {
-    Lambert = 0,
-    GGX,
-    Anisotropy,
-    ClearCoat,
-    Sheen,
-    Iridescence,
-    Transmission,
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// MaterialTexture structure
-///////////////////////////////////////////////////////////////////////////////
-struct MaterialTexture
-{
-    std::string     Name;       //!< バインド名.
-    std::string     Path;       //!< テクスチャファイルパス.
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// MaterialBuffer structure
-///////////////////////////////////////////////////////////////////////////////
-struct MaterialBuffer
-{
-    uint32_t                Size;   //!< バッファサイズ.
-    std::vector<uint8_t>    Data;   //!< バッファデータ.
+    Lambert = 0,    //!< ランバート.
+    GGX,            //!< GGX.
+    Anisotropy,     //!< 異方性GGX.
+    ClearCoat,      //!< クリアコート.
+    Sheen,          //!< 布用.
+    Iridescence,    //!< 玉虫色.
+    Transmission,   //!< 透過.
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -94,112 +70,14 @@ struct MaterialBuffer
 ///////////////////////////////////////////////////////////////////////////////
 struct Material
 {
-    std::string                     Name;               //!< マテリアル名.
-    uint32_t                        Kind;               //!< マテリアル種別.
-    BlendState                      BlendState;         //!< ブレンドステート.,
-    DepthState                      DepthState;         //!< 深度ステート.
-    RasterizerState                 RasterizerState;    //!< ラスタライザーステート.
-    std::vector<uint8_t>            Buffer;             //!< 定数バッファ.
-    std::vector<MaterialTexture>    Textures;           //!< テクスチャリスト.
-};
+    std::string     Name;               //!< マテリアル名.
+    uint32_t        Kind;               //!< マテリアル種別.
+    BlendState      BlendState;         //!< ブレンドステート.,
+    DepthState      DepthState;         //!< 深度ステート.
+    RasterizerState RasterizerState;    //!< ラスタライザーステート.
 
-///////////////////////////////////////////////////////////////////////////////
-// ParamLambert structure
-///////////////////////////////////////////////////////////////////////////////
-struct alignas(256) ParamLambert
-{
-    float   UvOffsetX     = 0.0f;
-    float   UvOffsetY     = 0.0f;
-    float   UvSizeX       = 1.0f;
-    float   UvSizeY       = 1.0f;
-    float   UvRotation    = 0.0f;
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// ParamGGX structure
-///////////////////////////////////////////////////////////////////////////////
-struct alignas(256) ParamGGX
-{
-    float   UvOffsetX     = 0.0f;
-    float   UvOffsetY     = 0.0f;
-    float   UvSizeX       = 1.0f;
-    float   UvSizeY       = 1.0f;
-    float   UvRotation    = 0.0f;
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// ParamAnisotropy structure
-///////////////////////////////////////////////////////////////////////////////
-struct alignas(256) ParamAnisotropy
-{
-    float   UvOffsetX           = 0.0f;
-    float   UvOffsetY           = 0.0f;
-    float   UvSizeX             = 1.0f;
-    float   UvSizeY             = 1.0f;
-    float   UvRotation          = 0.0f;
-    float   AnisotropyStrength  = 0.0f;
-    float   AnisotropyRotation  = 0.0f;
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// ParamClearCoat structure
-///////////////////////////////////////////////////////////////////////////////
-struct alignas(256) ParamClearCoat
-{
-    float   UvOffsetX                   = 0.0f;
-    float   UvOffsetY                   = 0.0f;
-    float   UvSizeX                     = 1.0f;
-    float   UvSizeY                     = 1.0f;
-    float   UvRotation                  = 0.0f;
-    float   ClearCoatFactor             = 0.0f;
-    float   ClearCoatRoughnessFactor    = 0.0f;
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// ParamSheen structure
-///////////////////////////////////////////////////////////////////////////////
-struct alignas(256) ParamSheen
-{
-    float   UvOffsetX               = 0.0f;
-    float   UvOffsetY               = 0.0f;
-    float   UvSizeX                 = 1.0f;
-    float   UvSizeY                 = 1.0f;
-    float   UvRotation              = 0.0f;
-    float   SheenColorFactorR       = 0.0f;
-    float   SheenColorFactorG       = 0.0f;
-    float   SheenColorFactorB       = 0.0f;
-    float   SheenRoughnessFactor    = 0.0f;
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// ParamIridescence structure
-///////////////////////////////////////////////////////////////////////////////
-struct alignas(256) ParamIridescence
-{
-    float   UvOffsetX               = 0.0f;
-    float   UvOffsetY               = 0.0f;
-    float   UvSizeX                 = 1.0f;
-    float   UvSizeY                 = 1.0f;
-    float   UvRotation              = 0.0f;
-    float   IridescenceFactor       = 0.0f;
-    float   IridescenceIor          = 1.3f;
-    float   IridescenceThicknessMin = 100.0f;
-    float   IridescenceThicknessMax = 400.0f;
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// ParamTransmission
-///////////////////////////////////////////////////////////////////////////////
-struct alignas(256) ParamTransmission
-{
-    float   UvOffsetX           = 0.0f;
-    float   UvOffsetY           = 0.0f;
-    float   UvSizeX             = 1.0f;
-    float   UvSizeY             = 1.0f;
-    float   UvRotation          = 0.0f;
-    float   Ior                 = 1.5f;
-    float   TransmissionFactor  = 0.0f;
-    float   Dispersion          = 0.0f;
+    std::map<std::string, float>        Params;
+    std::map<std::string, std::string>  Textures;
 };
 
 //-----------------------------------------------------------------------------
@@ -221,15 +99,5 @@ bool SaveToJson(const char* path, const Material& material);
 //! @retval false   読込に失敗.
 //-----------------------------------------------------------------------------
 bool LoadFromJson(const char* path, Material& material);
-
-//-----------------------------------------------------------------------------
-//! @brief      マテリアル種別からマテリアルを初期化します.
-//! 
-//! @param[in]      kind        マテリアル種別.
-//! @param[out]     material    マテリアルの格納先.
-//! @retval true    初期化に成功.
-//! @retval fasle   初期化に失敗.
-//-----------------------------------------------------------------------------
-bool InitMaterial(MaterialKind kind, Material& material);
 
 } // namespace asdx::edit

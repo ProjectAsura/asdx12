@@ -201,51 +201,53 @@ bool SaveToJson(const char* path, const Material& material)
 
     fprintf_s(fp, "{\n");
     fprintf_s(fp, "    \"Name\": \"%s\",\n", material.Name.c_str());
-    fprintf_s(fp, "    \"State\": {\n");
-    fprintf_s(fp, "         \"BlendState\": \"%s\",\n", ToString(material.BlendState));
-    fprintf_s(fp, "         \"DepthState\": \"%s\",\n", ToString(material.DepthState));
-    fprintf_s(fp, "         \"RasterizerState\": \"%s\",\n", ToString(material.RasterizerState));
-    fprintf_s(fp, "     }");
+    fprintf_s(fp, "    \"BlendState\": \"%s\",\n", ToString(material.BlendState));
+    fprintf_s(fp, "    \"DepthState\": \"%s\",\n", ToString(material.DepthState));
+    fprintf_s(fp, "    \"RasterizerState\": \"%s\",\n", ToString(material.RasterizerState));
     if (!material.Textures.empty())
     {
         fprintf_s(fp, ",\n");
         fprintf_s(fp, "    \"Textures\": [\n");
-        for(size_t i=0; i<material.Textures.size(); ++i)
+        auto count = material.Textures.size();
+        auto index = 0;
+        for(auto& texture : material.Textures)
         {
-            auto& tex = material.Textures[i];
             fprintf_s(fp, "        {\n");
-            fprintf_s(fp, "             \"Name\": \"%s\",\n", tex.Name.c_str());
-            fprintf_s(fp, "             \"Path\": \"%s\"\n", tex.Path.c_str());
+            fprintf_s(fp, "             \"Name\": \"%s\",\n", texture.first.c_str());
+            fprintf_s(fp, "             \"Path\": \"%s\"\n", texture.second.c_str());
             fprintf_s(fp, "        }");
 
-            if (i != material.Textures.size() - 1)
+            if (index != count - 1)
             { fprintf_s(fp, ",\n"); }
             else
             { fprintf_s(fp, "\n"); }
+
+            index++;
         }
 
         fprintf_s(fp, "     ]");
     }
-    if (!material.Buffer.empty())
+    if (!material.Params.empty())
     {
         fprintf_s(fp, ",\n");
-        fprintf_s(fp, "    \"Buffer\": {\n");
-        fprintf_s(fp, "        \"Size\": %zu,\n", material.Buffer.size());
-        fprintf_s(fp, "        \"Data\": [\n");
-        for(size_t i=0; i<material.Buffer.size(); ++i)
+        fprintf_s(fp, "    \Params\": [\n");
+        auto count = material.Params.size();
+        auto index = 0;
+        for(auto& param : material.Params)
         {
-            fprintf_s(fp, "        %u", material.Buffer[i]);
-            if (i != material.Buffer.size() - 1)
-            {
-                fprintf_s(fp, ",\n");
-            }
+            fprintf_s(fp, "        {\n");
+            fprintf_s(fp, "             \"Name\": \"%s\",\n", param.first.c_str());
+            fprintf_s(fp, "             \"Value\": %f\n", param.second);
+            fprintf_s(fp, "        }");
+
+            if (index != count - 1)
+            { fprintf_s(fp, ",\n"); }
             else
-            {
-                fprintf_s(fp, "\n");
-            }
+            { fprintf_s(fp, "\n"); }
+
+            index++;
         }
-        fprintf_s(fp, "        ]\n");
-        fprintf_s(fp, "    }");
+        fprintf_s(fp, "    ]");
         // 次のデータ無いのでここで改行.
         fprintf_s(fp, "\n");
     }
@@ -308,40 +310,46 @@ bool LoadFromJson(const char* path, Material& material)
         material.RasterizerState = ToRasterizerState(str.data());
     }
 
-    auto buffer = doc["Buffer"];
-    if (buffer.error() == simdjson::SUCCESS)
+    auto params = doc["Params"];
+    if (params.error() == simdjson::SUCCESS)
     {
-        auto size = buffer["Size"];
-        if (size.error() == simdjson::SUCCESS)
+        for(auto param : params.get_array())
         {
-            material.Buffer.resize(size.get_uint64());
-        }
+            std::string paramName;
+            float       paramValue;
 
-        auto data = buffer["Data"];
-        if (data.error() == simdjson::SUCCESS)
-        {
-            auto i=0u;
-            for(auto val : data.get_array())
+            auto name = param["Name"];
+            if (name.error() == simdjson::SUCCESS)
             {
-                material.Buffer[i] = uint8_t(val.get_uint64());
-                i++;
+                std::string_view str;
+                name.get(str);
+                paramName = str.data();
             }
+
+            auto value = param["Value"];
+            if (name.error() == simdjson::SUCCESS)
+            {
+                paramValue = float(name.get_double());
+            }
+
+            material.Params[paramName] = paramValue;
         }
     }
 
-        auto textures = doc["Textures"];
+    auto textures = doc["Textures"];
     if (textures.error() == simdjson::SUCCESS)
     {
         for(auto tex : textures.get_array())
         {
-            MaterialTexture item = {};
+            std::string texName;
+            std::string texPath;
 
             auto name = tex["Name"];
             if (name.error() == simdjson::SUCCESS)
             {
                 std::string_view str;
                 name.get(str);
-                item.Name = str.data();
+                texName = str.data();
             }
 
             auto path = tex["Path"];
@@ -349,185 +357,15 @@ bool LoadFromJson(const char* path, Material& material)
             {
                 std::string_view str;
                 path.get(str);
-                item.Path = str.data();
+                texPath = str.data();
             }
 
-            material.Textures.emplace_back(item);
+            material.Textures[texName] = texPath;
         }
     }
 
 
     return true;
 }
-
-//-----------------------------------------------------------------------------
-//      マテリアルを初期化します.
-//-----------------------------------------------------------------------------
-bool InitMaterial(MaterialKind kind, Material& material)
-{
-    auto ret = false;
-    switch(kind)
-    {
-    case MaterialKind::Lambert:
-        {
-            material.Kind = uint32_t(kind);
-
-            material.BlendState      = BlendState::Opaque;
-            material.DepthState      = DepthState::ReadWrite;
-            material.RasterizerState = RasterizerState::CullBack;
-
-            ParamLambert param = {};
-            material.Buffer.resize(sizeof(param));
-            memcpy(material.Buffer.data(), &param, sizeof(param));
-
-            material.Textures.resize(3);
-            material.Textures[0].Name = "BaseColorMap";
-            material.Textures[1].Name = "NormalMap";
-            material.Textures[2].Name = "EmissiveMap";
-            ret = true;
-        }
-        break;
-
-    case MaterialKind::GGX:
-        {
-            material.Kind = uint32_t(kind);
-
-            material.BlendState      = BlendState::Opaque;
-            material.DepthState      = DepthState::ReadWrite;
-            material.RasterizerState = RasterizerState::CullBack;
-
-            ParamGGX param = {};
-            material.Buffer.resize(sizeof(param));
-            memcpy(material.Buffer.data(), &param, sizeof(param));
-
-            material.Textures.resize(4);
-            material.Textures[0].Name = "BaseColorMap";
-            material.Textures[1].Name = "NormalMap";
-            material.Textures[2].Name = "OrmMap";
-            material.Textures[3].Name = "EmissiveMap";
-            ret = true;
-        }
-        break;
-
-    case MaterialKind::Anisotropy:
-        {
-            material.Kind = uint32_t(kind);
-
-            material.BlendState      = BlendState::Opaque;
-            material.DepthState      = DepthState::ReadWrite;
-            material.RasterizerState = RasterizerState::CullBack;
-
-            ParamAnisotropy param = {};
-            material.Buffer.resize(sizeof(param));
-            memcpy(material.Buffer.data(), &param, sizeof(param));
-
-            material.Textures.resize(4);
-            material.Textures[0].Name = "BaseColorMap";
-            material.Textures[1].Name = "NormalMap";
-            material.Textures[2].Name = "OrmMap";
-            material.Textures[3].Name = "EmissiveMap";
-            ret = true;
-        }
-        break;
-
-    case MaterialKind::ClearCoat:
-        {
-            material.Kind = uint32_t(kind);
-
-            material.BlendState      = BlendState::Opaque;
-            material.DepthState      = DepthState::ReadWrite;
-            material.RasterizerState = RasterizerState::CullBack;
-
-            ParamClearCoat param = {};
-            material.Buffer.resize(sizeof(param));
-            memcpy(material.Buffer.data(), &param, sizeof(param));
-
-            material.Textures.resize(7);
-            material.Textures[0].Name = "BaseColorMap";
-            material.Textures[1].Name = "NormalMap";
-            material.Textures[2].Name = "OrmMap";
-            material.Textures[3].Name = "ClearCoatMap";
-            material.Textures[4].Name = "ClearCoatRoughnessMap";
-            material.Textures[5].Name = "ClearCoatNormalMap";
-            material.Textures[6].Name = "EmissiveMap";
-            ret = true;
-        }
-        break;
-
-    case MaterialKind::Sheen:
-        {
-            material.Kind = uint32_t(kind);
-
-            material.BlendState      = BlendState::Opaque;
-            material.DepthState      = DepthState::ReadWrite;
-            material.RasterizerState = RasterizerState::CullBack;
-
-            ParamSheen param = {};
-            material.Buffer.resize(sizeof(param));
-            memcpy(material.Buffer.data(), &param, sizeof(param));
-
-            material.Textures.resize(6);
-            material.Textures[0].Name = "BaseColorMap";
-            material.Textures[1].Name = "NormalMap";
-            material.Textures[2].Name = "OrmMap";
-            material.Textures[3].Name = "SheenColorMap";
-            material.Textures[4].Name = "SheenRoughnessMap";
-            material.Textures[5].Name = "EmissiveMap";
-            ret = true;
-        }
-        break;
-
-    case MaterialKind::Iridescence:
-        {
-            material.Kind = uint32_t(kind);
-
-            material.BlendState      = BlendState::Opaque;
-            material.DepthState      = DepthState::ReadWrite;
-            material.RasterizerState = RasterizerState::CullBack;
-
-            ParamIridescence param = {};
-            material.Buffer.resize(sizeof(param));
-            memcpy(material.Buffer.data(), &param, sizeof(param));
-
-            material.Textures.resize(6);
-            material.Textures[0].Name = "BaseColorMap";
-            material.Textures[1].Name = "NormalMap";
-            material.Textures[2].Name = "OrmMap";
-            material.Textures[3].Name = "IridescenceMap";
-            material.Textures[4].Name = "IridescenceThicknessMap";
-            material.Textures[5].Name = "EmissiveMap";
-            ret = true;
-        }
-        break;
-
-    case MaterialKind::Transmission:
-        {
-            material.Kind = uint32_t(kind);
-
-            material.BlendState      = BlendState::AlphaBlend;
-            material.DepthState      = DepthState::ReadOnly;
-            material.RasterizerState = RasterizerState::CullNone;
-
-            ParamIridescence param = {};
-            material.Buffer.resize(sizeof(param));
-            memcpy(material.Buffer.data(), &param, sizeof(param));
-
-            material.Textures.resize(5);
-            material.Textures[0].Name = "BaseColorMap";
-            material.Textures[1].Name = "NormalMap";
-            material.Textures[2].Name = "OrmMap";
-            material.Textures[3].Name = "TransmissionMap";
-            material.Textures[4].Name = "EmissiveMap";
-            ret = true;
-        }
-        break;
-
-    default:
-        break;
-    }
-
-    return ret;
-}
-
 
 } // namespace asdx::edit

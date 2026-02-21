@@ -103,26 +103,37 @@ MaterialRasterizerState MaterialBinary::GetRasterizerState() const
 }
 
 //-----------------------------------------------------------------------------
+//      パラメータ数を取得します.
+//-----------------------------------------------------------------------------
+uint32_t MaterialBinary::GetParameterCount() const
+{
+    assert(!m_Blob.empty());
+    return res::GetMaterialBinary(m_Blob.data())->Params()->size();
+}
+
+//-----------------------------------------------------------------------------
+//      パラメータを取得します.
+//-----------------------------------------------------------------------------
+MaterialParameter MaterialBinary::GetParameter(uint32_t index) const
+{
+    assert(!m_Blob.empty());
+    auto params = res::GetMaterialBinary(m_Blob.data())->Params();
+    assert(index < params->size());
+    auto param = params->Get(index);
+
+    MaterialParameter result = {};
+    result.Name  = StringView(param->Name()->c_str());
+    result.Value = param->Value();
+    return result;
+}
+
+//-----------------------------------------------------------------------------
 //      テクスチャ数を取得します.
 //-----------------------------------------------------------------------------
 uint32_t MaterialBinary::GetTextureCount() const
 {
     assert(!m_Blob.empty());
     return res::GetMaterialBinary(m_Blob.data())->Textures()->size();
-}
-//-----------------------------------------------------------------------------
-//      バッファを取得します.
-//-----------------------------------------------------------------------------
-MaterialBuffer MaterialBinary::GetBuffer() const
-{
-    assert(!m_Blob.empty());
-    auto buffer = res::GetMaterialBinary(m_Blob.data())->Buffer();
-
-    MaterialBuffer result = {};
-    result.Size  = buffer->Data()->size();
-    result.pData = buffer->Data()->data();
-
-    return result;
 }
 
 //-----------------------------------------------------------------------------
@@ -140,6 +151,66 @@ MaterialTexture MaterialBinary::GetTexture(uint32_t index) const
     result.Path = StringView(tex->Path()->c_str());
 
     return result;
+}
+
+//-----------------------------------------------------------------------------
+//      パラメータを検索します.
+//-----------------------------------------------------------------------------
+bool MaterialBinary::FindParameter(const char* name, uint32_t& index) const
+{
+    if (name == nullptr)
+    {
+        index = UINT32_MAX;
+        return false;
+    }
+
+    assert(!m_Blob.empty());
+    auto params = res::GetMaterialBinary(m_Blob.data())->Params();
+
+    uint32_t lhs = 0;
+    uint32_t rhs = params->size();
+
+    while(lhs < rhs)
+    {
+        uint32_t mid = lhs + (rhs - lhs) / 2u;
+        auto tex = params->Get(mid);
+        auto ret = strcmp(tex->Name()->c_str(), name);
+        if (ret == 0)
+        {
+            index = mid;
+            return true;
+        }
+        else if (ret < 0)
+        {
+            lhs = mid + 1;
+        }
+        else
+        {
+            rhs = mid;
+        }
+    }
+
+    index = UINT32_MAX;
+    return false;
+}
+
+//-----------------------------------------------------------------------------
+//      パラメータを検索します.
+//-----------------------------------------------------------------------------
+bool MaterialBinary::FindParameter(const char* name, MaterialParameter& result) const
+{
+    if (name == nullptr)
+        return false;
+
+    assert(!m_Blob.empty());
+    auto params = res::GetMaterialBinary(m_Blob.data())->Params();
+    auto param = params->LookupByKey(name);
+    if (param == nullptr)
+        return false;
+
+    result.Name  = StringView(param->Name()->c_str());
+    result.Value = param->Value();
+    return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -181,6 +252,25 @@ bool MaterialBinary::FindTexture(const char* name, uint32_t& index) const
 
     index = UINT32_MAX;
     return false;
+}
+
+//-----------------------------------------------------------------------------
+//      テクスチャを検索します.
+//-----------------------------------------------------------------------------
+bool MaterialBinary::FindTexture(const char* name, MaterialTexture& result) const
+{
+    if (name == nullptr)
+        return false;
+
+    assert(!m_Blob.empty());
+    auto textures = res::GetMaterialBinary(m_Blob.data())->Textures();
+    auto texture = textures->LookupByKey(name);
+    if (texture == nullptr)
+        return false;
+
+    result.Name = StringView(texture->Name()->c_str());
+    result.Path = StringView(texture->Path()->c_str());
+    return true;
 }
 
 } // namespace asdx

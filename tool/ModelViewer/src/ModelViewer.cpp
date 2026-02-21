@@ -67,53 +67,6 @@ struct alignas(256) ParamScene
     float           TargetHeight;
 };
 
-const char* kDrawModes[] = {
-    asdx::ToChar(u8"デフォルト"),
-    asdx::ToChar(u8"スクリーン空間位置座標"),
-    asdx::ToChar(u8"法線ベクトル"),
-    asdx::ToChar(u8"接線ベクトル"),
-    asdx::ToChar(u8"従接線ベクトル"),
-    asdx::ToChar(u8"テクスチャ座標"),
-    asdx::ToChar(u8"頂点カラー"),
-    asdx::ToChar(u8"ボーン番号"),
-    asdx::ToChar(u8"ボーン重み"),
-};
-
-//-----------------------------------------------------------------------------
-//      コンボボックスを描画します.
-//-----------------------------------------------------------------------------
-static bool ImGuiCombo(const char* caption, size_t& index, const std::vector<std::string>& items)
-{
-    if (items.empty())
-    {
-        int idx = 0;
-        ImGui::Combo(caption, &idx, "None");
-        return false;
-    }
-
-    if (!ImGui::BeginCombo(caption, items[index].c_str())) 
-        return false;
-
-    assert(index < items.size());
-    bool changed = false;
-    for (size_t n=0; n<items.size(); n++)
-    {
-        auto selected = (n == index);
-        if (ImGui::Selectable(items[n].c_str(), selected))
-        {
-            index   = n;
-            changed = true;
-        }
-        if (selected)
-        {
-            ImGui::SetItemDefaultFocus();
-        }
-    }
-    ImGui::EndCombo();
-
-    return changed;
-}
-
 } // namespace
 
 
@@ -382,275 +335,28 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
     ImGuizmo::SetImGuiContext(ImGui::GetCurrentContext());
 
     // 情報表示.
-    {
-        const auto w = 200.0f;
-        const auto h = 158.0f;
-        const auto x = 10.0f;
-        const auto y = 10.0f;
+    DrawModelInfo();
+ 
+    // ギズモを描画.
+    auto modelWorld = asdx::Matrix::CreateIdentity();
+    DrawGizmo(modelWorld);
 
-        ImGui::SetNextWindowPos(ImVec2(m_Width - (w + x), m_Height - (h + y)));
-        ImGui::SetNextWindowSize(ImVec2(w, h));
+    // コンテキストメニューを描画.
+    DrawContextMenu(pCmd);
 
-        auto flags = ImGuiWindowFlags_NoMove
-            | ImGuiWindowFlags_NoResize
-            | ImGuiWindowFlags_NoTitleBar;
-        if (ImGui::Begin("Info", nullptr, flags))
-        {
-            ImGui::Text("FPS : %.2f", GetFPS());
-            ImGui::Separator();
+    // バウンディングスフィア描画.
+    DrawBoundingSphere(modelWorld);
 
-            ImGui::BeginTable(asdx::ToChar(u8"モデル情報"), 2);
+    // ボーン描画.
+    DrawBones(modelWorld);
 
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::Text(asdx::ToChar(u8"メッシュ数"));
-            ImGui::TableSetColumnIndex(1);
-            ImGui::Text(asdx::ToChar(u8"%zu"), m_ModelInfo.MeshCount);
+    // プロパティウィンドウを描画.
+    DrawPropertyWindow();
 
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::Text(asdx::ToChar(u8"マテリアル数"));
-            ImGui::TableSetColumnIndex(1);
-            ImGui::Text(asdx::ToChar(u8"%zu"), m_ModelInfo.MaterialCount);
-
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::Text(asdx::ToChar(u8"ボーン数"));
-            ImGui::TableSetColumnIndex(1);
-            ImGui::Text(asdx::ToChar(u8"%zu"), m_ModelInfo.BoneCount);
-
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::Text(asdx::ToChar(u8"頂点数"));
-            ImGui::TableSetColumnIndex(1);
-            ImGui::Text(asdx::ToChar(u8"%zu"), m_ModelInfo.VertexCount);
-
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::Text(asdx::ToChar(u8"インデックス数"));
-            ImGui::TableSetColumnIndex(1);
-            ImGui::Text(asdx::ToChar(u8"%zu"), m_ModelInfo.IndexCount);
-
-            ImGui::EndTable();
-
-            ImGui::Separator();
-
-            ImGui::BeginTable(asdx::ToChar(u8"モーション情報"), 2);
-
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::Text(asdx::ToChar(u8"クリップ数"));
-            ImGui::TableSetColumnIndex(1);
-            ImGui::Text(asdx::ToChar(u8"%u"), m_MotionBinary.GetClipCount());
-
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::Text(asdx::ToChar(u8"所要時間"));
-            ImGui::TableSetColumnIndex(1);
-            ImGui::Text(asdx::ToChar(u8"%.2f"), m_MotionPlayer.GetDuration());
-
-            ImGui::EndTable();
-
-            ImGui::End();
-        }
-    }
-
-    // モーション制御.
-    {
-        const auto w = 260.0f;
-        const auto h = 100.0f;
-        const auto x = 10.0f;
-        const auto y = 10.0f;
-
-        ImGui::SetNextWindowPos(ImVec2(x, m_Height - (h + y)));
-        ImGui::SetNextWindowSize(ImVec2(w, h));
-
-        auto flags = ImGuiWindowFlags_NoMove
-            | ImGuiWindowFlags_NoResize
-            | ImGuiWindowFlags_NoTitleBar;
-        if (ImGui::Begin("MotionControl", nullptr, flags))
-        {
-            if (ImGuiCombo(asdx::ToChar(u8"再生クリップ"), m_ClipIndex, m_ClipNames))
-            {
-                // クリップを差し替え.
-                m_MotionPlayer.SetClip(m_MotionBinary.GetClip(uint32_t(m_ClipIndex)));
-            }
-
-            if (ImGui::Button(asdx::ToChar(u8"再生")))
-            {
-                m_MotionPlayer.SetPause(false);
-            }
-            ImGui::SameLine();
-            if (ImGui::Button(asdx::ToChar(u8"停止")))
-            {
-                m_MotionPlayer.SetPause(true);
-            }
-            ImGui::SameLine();
-            if (ImGui::Button(asdx::ToChar(u8"コマ送り")))
-            {
-                m_MotionPlayer.FrameAdvance(root);
-            }
-            ImGui::SameLine();
-            if (ImGui::Button(asdx::ToChar(u8"頭出し")))
-            {
-                m_MotionPlayer.Cue();
-            }
-            ImGui::SameLine();
-            if (ImGui::Button(asdx::ToChar(u8"クリア")))
-            {
-                m_MotionPlayer.SetClip(nullptr);
-                m_ClipIndex = 0;
-                m_ClipNames.clear();
-                m_MotionBinary.Term();
-            }
-
-            auto loop = m_MotionPlayer.IsLoop();
-            if (ImGui::Checkbox(asdx::ToChar(u8"ループ再生"), &loop))
-            {
-                m_MotionPlayer.SetLoop(loop);
-            }
-            ImGui::SameLine();
-            ImGui::Text(asdx::ToChar(u8"再生時間 : %.2f"), m_MotionPlayer.GetTimeInTicks());
-
-            auto speed = m_MotionPlayer.GetPlaySpeed();
-            if (ImGui::DragFloat(asdx::ToChar(u8"再生速度"), &speed, 0.1f))
-            {
-                m_MotionPlayer.SetPlaySpeed(speed);
-            }
-
-            ImGui::End();
-        }
-    }
-
-    // コンテキストメニュー.
-    {
-        if (ImGui::IsMouseClicked(1))
-        { ImGui::OpenPopup("ContextMenu"); }
-
-        if (ImGui::BeginPopup("ContextMenu"))
-        {
-            if (ImGui::BeginMenu(asdx::ToChar(u8"ファイル")))
-            {
-                MenuFile(pCmd);
-                ImGui::EndMenu();
-            }
-            if (ImGui::BeginMenu(asdx::ToChar(u8"表示")))
-            {
-                MenuView();
-                ImGui::EndMenu();
-            }
-            if (ImGui::BeginMenu(asdx::ToChar(u8"ヘルプ")))
-            {
-                MenuHelp();
-                ImGui::EndMenu();
-            }
-            ImGui::EndPopup();
-        }
-    }
-
-    asdx::Matrix modelWorld = asdx::Matrix::CreateIdentity();
-
+    // 射影行列を計算.
     constexpr auto fov = asdx::ToRadian(37.5f);
-    auto aspect = float(m_Width) / float(m_Height);
+    const auto aspect = float(m_Width) / float(m_Height);
     m_Proj = asdx::Matrix::CreatePerspectiveFieldOfView(fov, aspect, m_Camera.GetNearClip(), m_Camera.GetFarClip());
-
-    if (m_ModelInfo.MeshCount > 0)
-    {
-        // ギズモ表示.
-        if (m_EnableGuizmo)
-        {
-            auto& view = m_Camera.GetView();
-            auto& proj = m_Proj;
-            auto& io = ImGui::GetIO();
-
-            float matrix[16] = {};
-            ImGuizmo::RecomposeMatrixFromComponents(&m_ModelTranslation.x, &m_ModelRotation.x, &m_ModelScale.x, matrix);
-            ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
-            if (ImGuizmo::Manipulate(&view._11, &proj._11, m_GuizmoOperation, ImGuizmo::MODE::LOCAL, matrix))
-            {
-                ImGuizmo::DecomposeMatrixToComponents(
-                    matrix, &m_ModelTranslation.x, &m_ModelRotation.x, &m_ModelScale.x);
-            }
-        }
-
-        modelWorld = asdx::Matrix::CreateTranslation(m_ModelTranslation)
-            * asdx::Matrix::CreateRotationFromYawPitchRoll(
-                asdx::ToRadian(m_ModelRotation.y),
-                asdx::ToRadian(m_ModelRotation.x),
-                asdx::ToRadian(m_ModelRotation.z))
-            * asdx::Matrix::CreateScale(m_ModelScale);
-
-        // バウンディングスフィア表示.
-        if (m_DrawBoundingSphere)
-        {
-            for(auto i=0u; i<m_Model->GetMeshCount(); ++i)
-            {
-                auto& sphere = m_Model->GetMesh(i)->GetBoundingSphere();
-                auto world = asdx::Matrix::CreateScale(sphere.Radius) * asdx::Matrix::CreateTranslation(sphere.Center) * modelWorld;
-
-                uint32_t index = uint32_t(i);
-                m_ShapeParams.SetWorld(index, world);
-                m_ShapeParams.SetColor(index, asdx::Vector4(0.0f, 1.0f, 0.0f, 0.1f));
-            }
-
-            {
-                auto& sphere = m_Model->GetBoundingSphere();
-                auto world = asdx::Matrix::CreateScale(sphere.Radius) * asdx::Matrix::CreateTranslation(sphere.Center) * modelWorld;
-
-                uint32_t index = uint32_t(m_Model->GetMeshCount());
-                m_ShapeParams.SetWorld(index, world);
-                m_ShapeParams.SetColor(index, asdx::Vector4(1.0f, 1.0f, 0.0f, 0.1f));
-            }
-        }
-
-        // ボーン表示.
-        if (m_DrawBones)
-        {
-            auto count = m_Model->GetBoneCount();
-            // モーションがある場合はアニメーション後のボーンを表示
-            if (m_MotionBinary.GetClipCount() > 0)
-            {
-                auto matrices = m_MotionPlayer.GetWorldTransforms();
-                for(auto i=0u; i<count; ++i)
-                {
-                    auto& bone = m_Model->GetBone(i);
-                    auto parentId = asdx::BoneProxy::GetParentId(bone);
-                    if (parentId < 0)
-                        continue;
-
-                    auto m0 = matrices[parentId] * modelWorld;
-                    auto p0 = m0.GetPosition();
-
-                    auto m1 = matrices[i] * modelWorld;
-                    auto p1 = m1.GetPosition();
-
-                    asdx::DrawWireBone(m_LineRenderer, p0, p1, asdx::Vector4(0.0f, 1.0f, 1.0f, 1.0f));
-                }
-            }
-            // バインドポーズ表示.
-            else
-            {
-                for(auto i=0u; i<count; ++i)
-                {
-                    auto& bone = m_Model->GetBone(i);
-
-                    auto parentId = asdx::BoneProxy::GetParentId(bone);
-                    if (parentId < 0)
-                        continue;
-
-                    auto& parentBone = m_Model->GetBone(uint32_t(parentId));
-                    auto m0 = asdx::BoneProxy::GetBindPoseMatrix(parentBone);
-                    auto p0 = m0.GetPosition();
-
-                    auto m1 = asdx::BoneProxy::GetBindPoseMatrix(bone);
-                    auto p1 = m1.GetPosition();
-
-                    asdx::DrawWireBone(m_LineRenderer, p0, p1, asdx::Vector4(0.0f, 1.0f, 1.0f, 1.0f));
-                }
-
-            }
-        }
-    }
 
     // シェイプ用のカメラ行列を設定.
     m_ShapeStates.SetViewProj(m_Camera.GetView(), m_Proj);
@@ -661,13 +367,6 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
 
         auto param = m_SceneCB[idx].MapAs<ParamScene>();
         assert(param != nullptr);
-
-        //modelWorld = asdx::Matrix::CreateTranslation(m_ModelTranslation)
-        //    * asdx::Matrix::CreateRotationFromYawPitchRoll(
-        //        asdx::ToRadian(m_ModelRotation.y),
-        //        asdx::ToRadian(m_ModelRotation.x),
-        //        asdx::ToRadian(m_ModelRotation.z))
-        //    * asdx::Matrix::CreateScale(m_ModelScale);
 
         param->World        = modelWorld;
         param->View         = m_Camera.GetView();
@@ -1038,19 +737,6 @@ void ModelViewer::MenuFile(ID3D12GraphicsCommandList* pCmd)
         }
     }
 }
-//-----------------------------------------------------------------------------
-//      表示メニュー処理です.
-//-----------------------------------------------------------------------------
-void ModelViewer::MenuView()
-{
-    int mode = (int)m_DrawMode;
-    ImGui::Combo(asdx::ToChar(u8"描画モード"), &mode, kDrawModes, _countof(kDrawModes));
-    m_DrawMode = mode;
-
-    ImGui::Checkbox(asdx::ToChar(u8"ワイヤーフレーム"), &m_EnableWireframe);
-    ImGui::Checkbox(asdx::ToChar(u8"バウンディングスフィア表示"), &m_DrawBoundingSphere);
-    ImGui::Checkbox(asdx::ToChar(u8"ボーン表示"), &m_DrawBones);
-}
 
 //-----------------------------------------------------------------------------
 //      ヘルプメニュー処理です.
@@ -1087,6 +773,11 @@ void ModelViewer::RecreateModel()
         return;
     }
 
+    m_MotionPlayer.SetClip(nullptr);
+    m_ClipIndex = 0;
+    m_ClipNames.clear();
+    m_MotionBinary.Term();
+
     // 成功したら差し替え.
     m_Model.Attach(pModel);
 
@@ -1115,10 +806,6 @@ void ModelViewer::RecreateModel()
         10000.0f);
     m_Camera.Present();
 
-    m_MotionPlayer.SetClip(nullptr);
-    m_ClipIndex = 0;
-    m_ClipNames.clear();
-    m_MotionBinary.Term();
 
     // モーションプレイヤーを初期化.
     m_MotionPlayer.Init(pModel);

@@ -558,7 +558,12 @@ bool ModelConverter::Convert(const std::string& path, std::vector<uint8_t>& bina
     for(auto i=0u; i<pScene->mNumMaterials; ++i)
     {
         const auto srcMat = pScene->mMaterials[i];
-        materials.push_back(builder.CreateString(srcMat->GetName().C_Str()));
+        std::string name = srcMat->GetName().C_Str();
+        if (name.empty() || name == "")
+        {
+            name = "Material" + std::to_string(i);
+        }
+        materials.push_back(builder.CreateString(name.c_str()));
     }
 
     auto sphere = asdx::res::BoundingSphere(asdx::res::Float3(bounds.Center.x, bounds.Center.y, bounds.Center.z), bounds.Radius);

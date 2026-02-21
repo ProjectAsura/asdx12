@@ -21,8 +21,8 @@ namespace res {
 struct MaterialTexture;
 struct MaterialTextureBuilder;
 
-struct MaterialBuffer;
-struct MaterialBufferBuilder;
+struct MaterialParameter;
+struct MaterialParameterBuilder;
 
 struct MaterialBinary;
 struct MaterialBinaryBuilder;
@@ -153,12 +153,24 @@ struct MaterialTexture FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   const ::flatbuffers::String *Name() const {
     return GetPointer<const ::flatbuffers::String *>(VT_NAME);
   }
+  bool KeyCompareLessThan(const MaterialTexture * const o) const {
+    return *Name() < *o->Name();
+  }
+  int KeyCompareWithValue(const char *_Name) const {
+    return strcmp(Name()->c_str(), _Name);
+  }
+  template<typename StringType>
+  int KeyCompareWithValue(const StringType& _Name) const {
+    if (Name()->c_str() < _Name) return -1;
+    if (_Name < Name()->c_str()) return 1;
+    return 0;
+  }
   const ::flatbuffers::String *Path() const {
     return GetPointer<const ::flatbuffers::String *>(VT_PATH);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyOffset(verifier, VT_NAME) &&
+           VerifyOffsetRequired(verifier, VT_NAME) &&
            verifier.VerifyString(Name()) &&
            VerifyOffset(verifier, VT_PATH) &&
            verifier.VerifyString(Path()) &&
@@ -183,6 +195,7 @@ struct MaterialTextureBuilder {
   ::flatbuffers::Offset<MaterialTexture> Finish() {
     const auto end = fbb_.EndTable(start_);
     auto o = ::flatbuffers::Offset<MaterialTexture>(end);
+    fbb_.Required(o, MaterialTexture::VT_NAME);
     return o;
   }
 };
@@ -209,67 +222,80 @@ inline ::flatbuffers::Offset<MaterialTexture> CreateMaterialTextureDirect(
       Path__);
 }
 
-struct MaterialBuffer FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef MaterialBufferBuilder Builder;
+struct MaterialParameter FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef MaterialParameterBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_SIZE = 4,
-    VT_DATA = 6
+    VT_NAME = 4,
+    VT_VALUE = 6
   };
-  uint32_t Size() const {
-    return GetField<uint32_t>(VT_SIZE, 0);
+  const ::flatbuffers::String *Name() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_NAME);
   }
-  const ::flatbuffers::Vector<uint8_t> *Data() const {
-    return GetPointer<const ::flatbuffers::Vector<uint8_t> *>(VT_DATA);
+  bool KeyCompareLessThan(const MaterialParameter * const o) const {
+    return *Name() < *o->Name();
+  }
+  int KeyCompareWithValue(const char *_Name) const {
+    return strcmp(Name()->c_str(), _Name);
+  }
+  template<typename StringType>
+  int KeyCompareWithValue(const StringType& _Name) const {
+    if (Name()->c_str() < _Name) return -1;
+    if (_Name < Name()->c_str()) return 1;
+    return 0;
+  }
+  float Value() const {
+    return GetField<float>(VT_VALUE, 0.0f);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint32_t>(verifier, VT_SIZE, 4) &&
-           VerifyOffset(verifier, VT_DATA) &&
-           verifier.VerifyVector(Data()) &&
+           VerifyOffsetRequired(verifier, VT_NAME) &&
+           verifier.VerifyString(Name()) &&
+           VerifyField<float>(verifier, VT_VALUE, 4) &&
            verifier.EndTable();
   }
 };
 
-struct MaterialBufferBuilder {
-  typedef MaterialBuffer Table;
+struct MaterialParameterBuilder {
+  typedef MaterialParameter Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  void add_Size(uint32_t Size) {
-    fbb_.AddElement<uint32_t>(MaterialBuffer::VT_SIZE, Size, 0);
+  void add_Name(::flatbuffers::Offset<::flatbuffers::String> Name) {
+    fbb_.AddOffset(MaterialParameter::VT_NAME, Name);
   }
-  void add_Data(::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> Data) {
-    fbb_.AddOffset(MaterialBuffer::VT_DATA, Data);
+  void add_Value(float Value) {
+    fbb_.AddElement<float>(MaterialParameter::VT_VALUE, Value, 0.0f);
   }
-  explicit MaterialBufferBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+  explicit MaterialParameterBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  ::flatbuffers::Offset<MaterialBuffer> Finish() {
+  ::flatbuffers::Offset<MaterialParameter> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<MaterialBuffer>(end);
+    auto o = ::flatbuffers::Offset<MaterialParameter>(end);
+    fbb_.Required(o, MaterialParameter::VT_NAME);
     return o;
   }
 };
 
-inline ::flatbuffers::Offset<MaterialBuffer> CreateMaterialBuffer(
+inline ::flatbuffers::Offset<MaterialParameter> CreateMaterialParameter(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    uint32_t Size = 0,
-    ::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> Data = 0) {
-  MaterialBufferBuilder builder_(_fbb);
-  builder_.add_Data(Data);
-  builder_.add_Size(Size);
+    ::flatbuffers::Offset<::flatbuffers::String> Name = 0,
+    float Value = 0.0f) {
+  MaterialParameterBuilder builder_(_fbb);
+  builder_.add_Value(Value);
+  builder_.add_Name(Name);
   return builder_.Finish();
 }
 
-inline ::flatbuffers::Offset<MaterialBuffer> CreateMaterialBufferDirect(
+inline ::flatbuffers::Offset<MaterialParameter> CreateMaterialParameterDirect(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    uint32_t Size = 0,
-    const std::vector<uint8_t> *Data = nullptr) {
-  auto Data__ = Data ? _fbb.CreateVector<uint8_t>(*Data) : 0;
-  return asdx::res::CreateMaterialBuffer(
+    const char *Name = nullptr,
+    float Value = 0.0f) {
+  auto Name__ = Name ? _fbb.CreateString(Name) : 0;
+  return asdx::res::CreateMaterialParameter(
       _fbb,
-      Size,
-      Data__);
+      Name__,
+      Value);
 }
 
 struct MaterialBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
@@ -280,7 +306,7 @@ struct MaterialBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
     VT_BLENDSTATE = 8,
     VT_DEPTHSTATE = 10,
     VT_RASTERIZERSTATE = 12,
-    VT_BUFFER = 14,
+    VT_PARAMS = 14,
     VT_TEXTURES = 16
   };
   uint32_t Version() const {
@@ -298,8 +324,8 @@ struct MaterialBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   asdx::res::MaterialRasterizerState RasterizerState() const {
     return static_cast<asdx::res::MaterialRasterizerState>(GetField<uint8_t>(VT_RASTERIZERSTATE, 0));
   }
-  const asdx::res::MaterialBuffer *Buffer() const {
-    return GetPointer<const asdx::res::MaterialBuffer *>(VT_BUFFER);
+  const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MaterialParameter>> *Params() const {
+    return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MaterialParameter>> *>(VT_PARAMS);
   }
   const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MaterialTexture>> *Textures() const {
     return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MaterialTexture>> *>(VT_TEXTURES);
@@ -311,8 +337,9 @@ struct MaterialBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
            VerifyField<uint8_t>(verifier, VT_BLENDSTATE, 1) &&
            VerifyField<uint8_t>(verifier, VT_DEPTHSTATE, 1) &&
            VerifyField<uint8_t>(verifier, VT_RASTERIZERSTATE, 1) &&
-           VerifyOffset(verifier, VT_BUFFER) &&
-           verifier.VerifyTable(Buffer()) &&
+           VerifyOffset(verifier, VT_PARAMS) &&
+           verifier.VerifyVector(Params()) &&
+           verifier.VerifyVectorOfTables(Params()) &&
            VerifyOffset(verifier, VT_TEXTURES) &&
            verifier.VerifyVector(Textures()) &&
            verifier.VerifyVectorOfTables(Textures()) &&
@@ -339,8 +366,8 @@ struct MaterialBinaryBuilder {
   void add_RasterizerState(asdx::res::MaterialRasterizerState RasterizerState) {
     fbb_.AddElement<uint8_t>(MaterialBinary::VT_RASTERIZERSTATE, static_cast<uint8_t>(RasterizerState), 0);
   }
-  void add_Buffer(::flatbuffers::Offset<asdx::res::MaterialBuffer> Buffer) {
-    fbb_.AddOffset(MaterialBinary::VT_BUFFER, Buffer);
+  void add_Params(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MaterialParameter>>> Params) {
+    fbb_.AddOffset(MaterialBinary::VT_PARAMS, Params);
   }
   void add_Textures(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MaterialTexture>>> Textures) {
     fbb_.AddOffset(MaterialBinary::VT_TEXTURES, Textures);
@@ -363,11 +390,11 @@ inline ::flatbuffers::Offset<MaterialBinary> CreateMaterialBinary(
     asdx::res::MaterialBlendState BlendState = asdx::res::MaterialBlendState_Opaque,
     asdx::res::MaterialDepthState DepthState = asdx::res::MaterialDepthState_ReadWrite,
     asdx::res::MaterialRasterizerState RasterizerState = asdx::res::MaterialRasterizerState_CullNone,
-    ::flatbuffers::Offset<asdx::res::MaterialBuffer> Buffer = 0,
+    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MaterialParameter>>> Params = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MaterialTexture>>> Textures = 0) {
   MaterialBinaryBuilder builder_(_fbb);
   builder_.add_Textures(Textures);
-  builder_.add_Buffer(Buffer);
+  builder_.add_Params(Params);
   builder_.add_Kind(Kind);
   builder_.add_Version(Version);
   builder_.add_RasterizerState(RasterizerState);
@@ -383,9 +410,10 @@ inline ::flatbuffers::Offset<MaterialBinary> CreateMaterialBinaryDirect(
     asdx::res::MaterialBlendState BlendState = asdx::res::MaterialBlendState_Opaque,
     asdx::res::MaterialDepthState DepthState = asdx::res::MaterialDepthState_ReadWrite,
     asdx::res::MaterialRasterizerState RasterizerState = asdx::res::MaterialRasterizerState_CullNone,
-    ::flatbuffers::Offset<asdx::res::MaterialBuffer> Buffer = 0,
-    const std::vector<::flatbuffers::Offset<asdx::res::MaterialTexture>> *Textures = nullptr) {
-  auto Textures__ = Textures ? _fbb.CreateVector<::flatbuffers::Offset<asdx::res::MaterialTexture>>(*Textures) : 0;
+    std::vector<::flatbuffers::Offset<asdx::res::MaterialParameter>> *Params = nullptr,
+    std::vector<::flatbuffers::Offset<asdx::res::MaterialTexture>> *Textures = nullptr) {
+  auto Params__ = Params ? _fbb.CreateVectorOfSortedTables<asdx::res::MaterialParameter>(Params) : 0;
+  auto Textures__ = Textures ? _fbb.CreateVectorOfSortedTables<asdx::res::MaterialTexture>(Textures) : 0;
   return asdx::res::CreateMaterialBinary(
       _fbb,
       Version,
@@ -393,7 +421,7 @@ inline ::flatbuffers::Offset<MaterialBinary> CreateMaterialBinaryDirect(
       BlendState,
       DepthState,
       RasterizerState,
-      Buffer,
+      Params__,
       Textures__);
 }
 

@@ -92,21 +92,27 @@ bool MaterialConverter::Convert(const edit::Material& material, std::vector<uint
     flatbuffers::FlatBufferBuilder builder(1024);
 
     std::vector<flatbuffers::Offset<asdx::res::MaterialTexture>> textures;
+    std::vector<flatbuffers::Offset<asdx::res::MaterialParameter>> params;
+
     for(const auto& tex : material.Textures)
     {
         auto dstTex = asdx::res::CreateMaterialTextureDirect(
             builder,
-            tex.Name.c_str(),
-            tex.Path.c_str());
+            tex.first.c_str(),
+            tex.second.c_str());
 
         textures.emplace_back(dstTex);
     }
 
-    auto buffer = asdx::res::CreateMaterialBufferDirect(
-        builder,
-        uint32_t(material.Buffer.size()),
-        &material.Buffer);
-  
+    for(const auto& param : material.Params)
+    {
+        auto dstParam = asdx::res::CreateMaterialParameterDirect(
+            builder,
+            param.first.c_str(),
+            param.second);
+
+        params.emplace_back(dstParam);
+    }
     auto bin = asdx::res::CreateMaterialBinaryDirect(
         builder,
         CURRENT_VERSION,
@@ -114,7 +120,7 @@ bool MaterialConverter::Convert(const edit::Material& material, std::vector<uint
         asdx::res::MaterialBlendState(material.BlendState),
         asdx::res::MaterialDepthState(material.DepthState),
         asdx::res::MaterialRasterizerState(material.RasterizerState),
-        buffer,
+        &params,
         &textures);
 
     builder.Finish(bin);

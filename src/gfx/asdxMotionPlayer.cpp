@@ -249,6 +249,16 @@ float MotionPlayer::GetDuration() const
 }
 
 //-----------------------------------------------------------------------------
+//      1秒あたりのTick数を取得します.
+//-----------------------------------------------------------------------------
+float MotionPlayer::GetTicksPerSecond() const
+{
+    if (m_pMotionClip == nullptr)
+        return 0.0f;
+    return asdx::MotionClipProxy::GetTicksPerSecond(m_pMotionClip);
+}
+
+//-----------------------------------------------------------------------------
 //      ループ再生フラグを取得します.
 //-----------------------------------------------------------------------------
 bool MotionPlayer::IsLoop() const

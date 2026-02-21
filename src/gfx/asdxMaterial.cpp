@@ -11,7 +11,6 @@
 #include <gfx/asdxMaterial.h>
 #include <gfx/asdxDevice.h>
 #include <gfx/asdxTextureManager.h>
-#include <fnd/asdxLogger.h>
 
 
 namespace asdx {
@@ -45,27 +44,8 @@ bool Material::Init(std::vector<uint8_t>&& binary)
     m_DepthState        = matBinary.GetDepthState();
     m_RasterizerState   = matBinary.GetRasterizerState();
 
-    auto buf = matBinary.GetBuffer();
-
-    if (buf.Size > 0)
-    {
-        if (!m_Buffer.Init(buf.Size))
-        { return false; }
-
-        auto ptr = m_Buffer.Map();
-        memcpy(ptr, buf.pData, buf.Size);
-    }
-
-    auto textureCount = matBinary.GetTextureCount();
-    if (textureCount > 0)
-    {
-        m_Textures.resize(textureCount);
-        for(auto i=0u; i<textureCount; ++i)
-        {
-            auto tex = matBinary.GetTexture(i);
-            m_Textures[i] = TextureManager::Instance().GetOrCreate(tex.Path.c_str());
-        }
-    }
+    if (!OnInit(matBinary))
+        return false;
 
     return true;
 }
@@ -193,26 +173,26 @@ uint32_t Material::GetBindlessIndex(uint32_t index) const
 }
 
 //-----------------------------------------------------------------------------
-//      生成処理を行います.
+//      初期化時の処理です.
 //-----------------------------------------------------------------------------
-bool Material::Create(std::vector<uint8_t>&& binary, Material** ppMaterial)
+bool Material::OnInit(const MaterialBinary& binary)
 {
-    auto instance = new(std::nothrow) Material();
-    if (instance == nullptr)
+    MaterialTexture texture;
+    if (!binary.FindTexture("BaseColorMap", texture))
     {
-        ELOG("Error : Out of Memory");
+        ELOG("Error : BaseColorMap is not found.");
         return false;
     }
 
-    if (!instance->Init(std::move(binary)))
+    m_Textures.resize(1);
+    m_Textures[0] = TextureManager::Instance().GetOrCreate(texture.Path.c_str());
+
+    if (!m_Textures[0].IsValid())
     {
-        ELOG("Error : Material::Init() Failed.");
-        instance->Release();
-        instance = nullptr;
+        ELOG("Error : Texture Load Failed.");
         return false;
     }
 
-    (*ppMaterial) = instance;
     return true;
 }
 

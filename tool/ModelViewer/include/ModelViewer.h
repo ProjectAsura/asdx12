@@ -72,18 +72,18 @@ private:
     asdx::GraphicsPipelineState         m_SkeletalSolidState;
     asdx::GraphicsPipelineState         m_StaticWireframeState;
     asdx::GraphicsPipelineState         m_SkeletalWireframeState;
-    ModelInfo                           m_ModelInfo = {};
-    asdx::ConstantBuffer                m_SceneCB[2];
-    asdx::AppCamera                     m_Camera;
+    ModelInfo                           m_ModelInfo          = {};
+    asdx::ConstantBuffer                m_SceneCB[2]         = {};
+    asdx::AppCamera                     m_Camera             = {};
     uint32_t                            m_DrawMode           = 0;
     bool                                m_DrawBoundingSphere = false;
     bool                                m_DrawBones          = false;
     bool                                m_EnableWireframe    = false;
-    asdx::Vector3                       m_ModelTranslation;
-    asdx::Vector3                       m_ModelRotation;
-    asdx::Vector3                       m_ModelScale;
-    bool                                m_EnableGuizmo = false;
-    ImGuizmo::OPERATION                 m_GuizmoOperation;
+    asdx::Vector3                       m_ModelTranslation   = asdx::Vector3(0.0f, 0.0f, 0.0f);
+    asdx::Vector3                       m_ModelRotation      = asdx::Vector3(0.0f, 0.0f, 0.0f);
+    asdx::Vector3                       m_ModelScale         = asdx::Vector3(1.0f, 1.0f, 1.0f);
+    bool                                m_EnableGuizmo       = false;
+    ImGuizmo::OPERATION                 m_GuizmoOperation    = {};
     asdx::Matrix                        m_Proj;
     asdx::BoneShape                     m_BoneShape;
     asdx::SphereShape                   m_SphereShape;
@@ -151,11 +151,6 @@ private:
     void MenuFile(ID3D12GraphicsCommandList* pCmd);
 
     //-------------------------------------------------------------------------
-    //! @brief      表示メニュー処理です.
-    //-------------------------------------------------------------------------
-    void MenuView();
-
-    //-------------------------------------------------------------------------
     //! @brief      ヘルプメニュー処理です.
     //-------------------------------------------------------------------------
     void MenuHelp();
@@ -179,4 +174,40 @@ private:
     //! @brief      モーションを読み込みます.
     //-------------------------------------------------------------------------
     void LoadMotion();
+
+    //-------------------------------------------------------------------------
+    //! @brief      モデル情報を描画します.
+    //-------------------------------------------------------------------------
+    void DrawModelInfo();
+
+    //-------------------------------------------------------------------------
+    //! @brief      コンテキストメニューを描画します.
+    //-------------------------------------------------------------------------
+    void DrawContextMenu(ID3D12GraphicsCommandList* pCmd);
+
+    //-------------------------------------------------------------------------
+    //! @brief      ギズモを描画します.
+    //-------------------------------------------------------------------------
+    void DrawGizmo(asdx::Matrix& modelWorld);
+
+    //-------------------------------------------------------------------------
+    //! @brief      バウンディングスフィアを描画します.
+    //-------------------------------------------------------------------------
+    void DrawBoundingSphere(const asdx::Matrix& modelWorld);
+
+    //-------------------------------------------------------------------------
+    //! @brief      ボーンを描画します.
+    //-------------------------------------------------------------------------
+    void DrawBones(const asdx::Matrix& modelWorld);
+
+    //-------------------------------------------------------------------------
+    //! @brief      プロパティウィンドウを描画します.
+    //-------------------------------------------------------------------------
+    void DrawPropertyWindow();
+
+    void DrawMaterialTab();
+
+    void DrawMotionTab();
+
+    void DrawDebugTab();
 };

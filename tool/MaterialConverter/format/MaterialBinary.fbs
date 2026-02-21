@@ -31,14 +31,14 @@ enum MaterialRasterizerState : ubyte
 
 table MaterialTexture
 {
-    Name    : string;
+    Name    : string (key);
     Path    : string;
 }
 
-table MaterialBuffer
+table MaterialParameter
 {
-    Size    : uint;
-    Data    : [ubyte];
+    Name    : string (key);
+    Value   : float;
 }
 
 table MaterialBinary
@@ -48,7 +48,7 @@ table MaterialBinary
     BlendState      : MaterialBlendState;
     DepthState      : MaterialDepthState;
     RasterizerState : MaterialRasterizerState;
-    Buffer          : MaterialBuffer;
+    Params          : [MaterialParameter];
     Textures        : [MaterialTexture];
 }
 

@@ -159,6 +159,7 @@
   <ItemGroup>
     <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="..\src\ModelViewer.cpp" />
+    <ClCompile Include="..\src\ModelViewerGui.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\ModelViewer.h" />
