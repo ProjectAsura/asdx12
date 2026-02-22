@@ -62,8 +62,6 @@ asdx::res::Float4x4 ToFloat4x4(const aiMatrix4x4& value)
 } // namespace
 
 
-namespace asdx {
-
 ///////////////////////////////////////////////////////////////////////////////
 // MotionConverter class
 ///////////////////////////////////////////////////////////////////////////////
@@ -252,5 +250,3 @@ bool MotionConverter::Convert(const std::string& path, std::vector<uint8_t>& bin
     // 正常終了.
     return true;
 }
-
-} // namespace asdx

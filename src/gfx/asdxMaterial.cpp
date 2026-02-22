@@ -1,6 +1,6 @@
 ﻿//-----------------------------------------------------------------------------
 // File : asdxMaterial.cpp
-// Desc : Material.
+// Desc : Material Object.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 
@@ -8,12 +8,106 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <cassert>
+#include <string>
+#include <map>
+#include <fnd/asdxLogger.h>
 #include <gfx/asdxMaterial.h>
 #include <gfx/asdxDevice.h>
 #include <gfx/asdxTextureManager.h>
 
 
+namespace {
+
+///////////////////////////////////////////////////////////////////////////////
+// ParamDef structure
+///////////////////////////////////////////////////////////////////////////////
+struct ParamDef
+{
+    std::string     Name;
+    uint32_t        Offset;
+    float           Default;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// TextureDef structure
+///////////////////////////////////////////////////////////////////////////////
+struct TextureDef
+{
+    std::string     Name;
+    uint32_t        Index;
+    std::string     Default;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// KindDef structure
+///////////////////////////////////////////////////////////////////////////////
+struct KindDef
+{
+    uint32_t                BufferSize;
+    std::vector<ParamDef>   Params;
+    std::vector<TextureDef> Textures;
+};
+
+//-----------------------------------------------------------------------------
+// Global Variables.
+//-----------------------------------------------------------------------------
+std::map<uint32_t, KindDef> g_KindDefs;
+
+} // namespace
+
+
 namespace asdx {
+
+///////////////////////////////////////////////////////////////////////////////
+// MaterialSchema class
+///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      初期化処理を行います.
+//-----------------------------------------------------------------------------
+bool MaterialSchema::Init(std::span<KindDesc> descs)
+{
+    if (descs.empty())
+        return false;
+
+    for(auto& desc : descs)
+    {
+        KindDef def = {};
+        def.BufferSize = desc.BufferSize;
+        def.Params.resize(desc.Params.size());
+        for(auto i=0u; i<desc.Params.size(); ++i)
+        {
+            def.Params[i].Name    = desc.Params[i].Name;
+            def.Params[i].Offset  = desc.Params[i].Offset;
+            def.Params[i].Default = desc.Params[i].Default;
+        }
+
+        def.Textures.resize(desc.Textures.size());
+        for(auto i=0u; i<desc.Textures.size(); ++i)
+        {
+            def.Textures[i].Name    = desc.Textures[i].Name;
+            def.Textures[i].Index   = desc.Textures[i].Index;
+            def.Textures[i].Default = desc.Textures[i].Default;
+        }
+
+        g_KindDefs[desc.Kind] = def;
+    }
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      終了処理を行います.
+//-----------------------------------------------------------------------------
+void MaterialSchema::Term()
+{ g_KindDefs.clear(); }
+
+//-----------------------------------------------------------------------------
+//      初期化済みかどうかチェックします.
+//-----------------------------------------------------------------------------
+bool MaterialSchema::IsInit()
+{ return !g_KindDefs.empty(); }
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Material class
@@ -34,18 +128,54 @@ Material::~Material()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool Material::Init(std::vector<uint8_t>&& binary)
+bool Material::Init(const MaterialBinary& binary)
 {
-    MaterialBinary matBinary;
-    matBinary.Load(std::move(binary));
+    m_Kind              = binary.GetKind();
+    m_BlendState        = binary.GetBlendState();
+    m_DepthState        = binary.GetDepthState();
+    m_RasterizerState   = binary.GetRasterizerState();
 
-    m_Kind              = matBinary.GetKind();
-    m_BlendState        = matBinary.GetBlendState();
-    m_DepthState        = matBinary.GetDepthState();
-    m_RasterizerState   = matBinary.GetRasterizerState();
-
-    if (!OnInit(matBinary))
+    auto itr = g_KindDefs.find(m_Kind);
+    if (itr == g_KindDefs.end())
+    {
+        ELOG("Error : Invalid Kind.");
         return false;
+    }
+
+    const auto& desc = itr->second;
+
+    if (desc.BufferSize > 0 && !desc.Params.empty())
+    {
+        if (!m_Buffer.Init(desc.BufferSize))
+        {
+            ELOG("Error : ConstantBuffer::Init() Failed.");
+            return false;
+        }
+
+        auto ptr = m_Buffer.MapAs<uint8_t>();
+        for(auto& param : desc.Params)
+        {
+            MaterialParameter info = {};
+            if (!binary.FindParameter(param.Name.c_str(), info))
+                memcpy(ptr + param.Offset, &info.Value, sizeof(float));
+            else
+                memcpy(ptr + param.Offset, &param.Default, sizeof(float));
+        }
+        m_Buffer.Unmap();
+    }
+
+    if (!desc.Textures.empty())
+    {
+        m_Textures.resize(desc.Textures.size());
+        for(auto& texture : desc.Textures)
+        {
+            MaterialTexture info = {};
+            if (!binary.FindTexture(texture.Name.c_str(), info))
+                m_Textures[texture.Index] = TextureManager::Instance().GetOrCreate(info.Path.c_str());
+            else
+                m_Textures[texture.Index] = TextureManager::Instance().GetOrCreate(texture.Default.c_str());
+        }
+    }
 
     return true;
 }
@@ -173,38 +303,38 @@ uint32_t Material::GetBindlessIndex(uint32_t index) const
 }
 
 //-----------------------------------------------------------------------------
-//      初期化時の処理です.
+//      生成処理を行います.
 //-----------------------------------------------------------------------------
-bool Material::OnInit(const MaterialBinary& binary)
+bool Material::Create(const MaterialBinary& binary, Material** ppMaterial)
 {
-    MaterialTexture texture;
-    if (!binary.FindTexture("BaseColorMap", texture))
+    if (!MaterialSchema::IsInit())
     {
-        ELOG("Error : BaseColorMap is not found.");
+        ELOG("Error : MaterialInitailizer not initialized.");
         return false;
     }
 
-    m_Textures.resize(1);
-    m_Textures[0] = TextureManager::Instance().GetOrCreate(texture.Path.c_str());
-
-    if (!m_Textures[0].IsValid())
+    // インスタンス生成.
+    auto instance = new(std::nothrow) Material();
+    if (instance == nullptr)
     {
-        ELOG("Error : Texture Load Failed.");
+        ELOG("Error : Out of Memory.");
         return false;
     }
 
+    // インスタンス初期化.
+    if (!instance->Init(binary))
+    {
+        ELOG("Error : Material::Init() Failed.");
+        instance->Release();
+        instance = nullptr;
+        return false;
+    }
+
+    // インスタンスを可能.
+    (*ppMaterial) = instance;
+
+    // 正常終了.
     return true;
-}
-
-//-----------------------------------------------------------------------------
-//      適用処理を行います.
-//-----------------------------------------------------------------------------
-void Material::Apply(ID3D12GraphicsCommandList* pCmd)
-{
-    if (pCmd == nullptr || m_Textures.empty())
-        return;
-
-    pCmd->SetGraphicsRootDescriptorTable(0, m_Textures[0].GetHandleGPU());
 }
 
 } // namespace asdx

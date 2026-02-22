@@ -16,35 +16,36 @@
 #define ELOG(x, ...) fprintf_s(stderr, "[File: %s, Line: %d] " x "\n", __FILE__, __LINE__, ##__VA_ARGS__ )
 #endif//ELOG
 
-namespace {
+
+namespace edit {
 
 //-----------------------------------------------------------------------------
 //      ブレンドステートを文字列に変換します.
 //-----------------------------------------------------------------------------
-const char* ToString(asdx::edit::BlendState state)
+const char* ToString(BlendState state)
 {
     switch(state)
     {
-    case asdx::edit::BlendState::Opaque:
+    case BlendState::Opaque:
     default:
         return "Opaque";
 
-    case asdx::edit::BlendState::AlphaBlend:
+    case BlendState::AlphaBlend:
         return "AlphaBlend";
 
-    case asdx::edit::BlendState::Additive:
+    case BlendState::Additive:
         return "Additive";
 
-    case asdx::edit::BlendState::Subtract:
+    case BlendState::Subtract:
         return "Subtract";
 
-    case asdx::edit::BlendState::Premultiplied:
+    case BlendState::Premultiplied:
         return "Premultiplied";
 
-    case asdx::edit::BlendState::Multiply:
+    case BlendState::Multiply:
         return "Multiply";
 
-    case asdx::edit::BlendState::Screen:
+    case BlendState::Screen:
         return "Screen";
     }
 }
@@ -52,57 +53,57 @@ const char* ToString(asdx::edit::BlendState state)
 //-----------------------------------------------------------------------------
 //      文字列からブレンドステートに変換します.
 //-----------------------------------------------------------------------------
-asdx::edit::BlendState ToBlendState(const char* state)
+BlendState ToBlendState(const char* state)
 {
     if (_stricmp(state, "Opaque") == 0)
     {
-        return asdx::edit::BlendState::Opaque;
+        return BlendState::Opaque;
     }
     else if (_stricmp(state, "AlphaBlend") == 0)
     {
-        return asdx::edit::BlendState::AlphaBlend;
+        return BlendState::AlphaBlend;
     }
     else if (_stricmp(state, "Additive") == 0)
     {
-        return asdx::edit::BlendState::Additive;
+        return BlendState::Additive;
     }
     else if (_stricmp(state, "Subtract") == 0)
     {
-        return asdx::edit::BlendState::Subtract;
+        return BlendState::Subtract;
     }
     else if (_stricmp(state, "Premultiplied") == 0)
     {
-        return asdx::edit::BlendState::Premultiplied;
+        return BlendState::Premultiplied;
     }
     else if (_stricmp(state, "Multiply") == 0)
     {
-        return asdx::edit::BlendState::Multiply;
+        return BlendState::Multiply;
     }
     else if (_stricmp(state, "Screen") == 0)
     {
-        return asdx::edit::BlendState::Screen;
+        return BlendState::Screen;
     }
 
-    return asdx::edit::BlendState::Opaque;
+    return BlendState::Opaque;
 }
 
 //-----------------------------------------------------------------------------
 //      深度ステートから文字列に変換します.
 //-----------------------------------------------------------------------------
-const char* ToString(asdx::edit::DepthState state)
+const char* ToString(DepthState state)
 {
     switch(state)
     {
-    case asdx::edit::DepthState::ReadWrite:
+    case DepthState::ReadWrite:
         return "ReadWrite";
 
-    case asdx::edit::DepthState::ReadOnly:
+    case DepthState::ReadOnly:
         return "ReadOnly";
 
-    case asdx::edit::DepthState::WriteOnly:
+    case DepthState::WriteOnly:
         return "WriteOnly";
 
-    case asdx::edit::DepthState::None:
+    case DepthState::None:
         return "None";
     }
 
@@ -112,45 +113,45 @@ const char* ToString(asdx::edit::DepthState state)
 //-----------------------------------------------------------------------------
 //      文字列から深度ステートに変換します.
 //-----------------------------------------------------------------------------
-asdx::edit::DepthState ToDepthState(const char* state)
+DepthState ToDepthState(const char* state)
 {
     if (_stricmp(state, "ReadWrite") == 0)
     {
-        return asdx::edit::DepthState::ReadWrite;
+        return DepthState::ReadWrite;
     }
     else if (_stricmp(state, "ReadOnly") == 0)
     {
-        return asdx::edit::DepthState::ReadOnly;
+        return DepthState::ReadOnly;
     }
     else if (_stricmp(state, "WriteOnly") == 0)
     {
-        return asdx::edit::DepthState::WriteOnly;
+        return DepthState::WriteOnly;
     }
     else if (_stricmp(state, "None") == 0)
     {
-        return asdx::edit::DepthState::None;
+        return DepthState::None;
     }
 
-    return asdx::edit::DepthState::ReadWrite;
+    return DepthState::ReadWrite;
 }
 
 //-----------------------------------------------------------------------------
 //      ラスタライザーステートを文字列に変換します.
 //-----------------------------------------------------------------------------
-const char* ToString(asdx::edit::RasterizerState state)
+const char* ToString(RasterizerState state)
 {
     switch(state)
     {
-    case asdx::edit::RasterizerState::CullNone:
+    case RasterizerState::CullNone:
         return "CullNone";
 
-    case asdx::edit::RasterizerState::CullBack:
+    case RasterizerState::CullBack:
         return "CullBack";
 
-    case asdx::edit::RasterizerState::CullFront:
+    case RasterizerState::CullFront:
         return "CullFront";
 
-    case asdx::edit::RasterizerState::Wireframe:
+    case RasterizerState::Wireframe:
         return "Wireframe";
     }
 
@@ -160,31 +161,28 @@ const char* ToString(asdx::edit::RasterizerState state)
 //-----------------------------------------------------------------------------
 //      文字列からラスタライザーステートに変換します.
 //-----------------------------------------------------------------------------
-asdx::edit::RasterizerState ToRasterizerState(const char* state)
+RasterizerState ToRasterizerState(const char* state)
 {
     if (_stricmp(state, "CullNone") == 0)
     {
-        return asdx::edit::RasterizerState::CullNone;
+        return RasterizerState::CullNone;
     }
     else if (_stricmp(state, "CullBack") == 0)
     {
-        return asdx::edit::RasterizerState::CullBack;
+        return RasterizerState::CullBack;
     }
     else if (_stricmp(state, "CullFront") == 0)
     {
-        return asdx::edit::RasterizerState::CullFront;
+        return RasterizerState::CullFront;
     }
     else if (_stricmp(state, "Wireframe") == 0)
     {
-        return asdx::edit::RasterizerState::Wireframe;
+        return RasterizerState::Wireframe;
     }
 
-    return asdx::edit::RasterizerState::CullNone;
+    return RasterizerState::CullNone;
 }
 
-} // namespace
-
-namespace asdx::edit {
 
 //-----------------------------------------------------------------------------
 //      マテリアルを json ファイルに保存します.
@@ -350,8 +348,7 @@ bool LoadFromJson(const char* path, Material& material)
         }
     }
 
-
     return true;
 }
 
-} // namespace asdx::edit
+} // namespace edit

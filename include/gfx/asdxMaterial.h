@@ -1,6 +1,6 @@
 ﻿//-----------------------------------------------------------------------------
 // File : asdxMaterial.h
-// Desc : Material.
+// Desc : Material Object.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 #pragma once
@@ -10,13 +10,74 @@
 //-----------------------------------------------------------------------------
 #include <cstdint>
 #include <vector>
+#include <span>
 #include <gfx/asdxBuffer.h>
 #include <gfx/asdxTextureManager.h>
 #include <res/asdxResMaterial.h>
-#include <fnd/asdxLogger.h>
 
 
 namespace asdx {
+
+///////////////////////////////////////////////////////////////////////////////
+// MaterialSchema class
+///////////////////////////////////////////////////////////////////////////////
+class MaterialSchema
+{
+public:
+    ///////////////////////////////////////////////////////////////////////////
+    // Param structure
+    ///////////////////////////////////////////////////////////////////////////
+    struct Param
+    {
+        const char*     Name;       //!< パラメータ名.
+        uint32_t        Offset;     //!< バッファオフセット.
+        float           Default;    //!< デフォルト値.
+    };
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Texture structure
+    ///////////////////////////////////////////////////////////////////////////
+    struct Texture
+    {
+        const char*     Name;       //!< テクスチャ名.
+        uint32_t        Index;      //!< テクスチャインデックス.
+        const char*     Default;    //!< デフォルトファイルパス.
+    };
+
+    ///////////////////////////////////////////////////////////////////////////
+    // KindDesc structure
+    ///////////////////////////////////////////////////////////////////////////
+    struct KindDesc
+    {
+        uint32_t             Kind;       //!< 種別.
+        uint32_t             BufferSize; //!< 定数バッファサイズ.
+        std::span<Param>     Params;     //!< パラメータ定義.
+        std::span<Texture>   Textures;   //!< テクスチャ定義.
+    };
+
+    //-------------------------------------------------------------------------
+    //! @brief      初期化処理を行います.
+    //! 
+    //! @param[in]      descs       マテリアル種別ごとの設定.
+    //! @retval true    初期化に成功.
+    //! @retval false   初期化に失敗.
+    //-------------------------------------------------------------------------
+    static bool Init(std::span<KindDesc> descs);
+
+    //-------------------------------------------------------------------------
+    //! @brief      終了処理を行います.
+    //-------------------------------------------------------------------------
+    static void Term();
+
+    //-------------------------------------------------------------------------
+    //! @brief      初期化済みかどうかチェックします.
+    //! 
+    //! @retval true    初期化済み.
+    //! @retval false   未初期化.
+    //-------------------------------------------------------------------------
+    static bool IsInit();
+};
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Material class
@@ -29,6 +90,7 @@ class Material : public IReference
     /* NOTHING */
 
 public:
+
     //=========================================================================
     // public variables.
     //=========================================================================
@@ -46,35 +108,7 @@ public:
     //! @retval true    生成に成功.
     //! @retval false   生成に失敗.
     //-------------------------------------------------------------------------
-    template<typename T>
-    static bool Create(std::vector<uint8_t>&& binary, T** ppMaterial)
-    {
-        // Materialから派生していることを確認.
-        static_assert(std::is_base_of<Material, T>::value, "T must derive from Material");
-
-        // インスタンス生成.
-        auto instance = new (std::nothrow) T();
-        if (instance == nullptr)
-        {
-            ELOG("Error : Out of memory");
-            return false;
-        }
-
-        // インスタンス初期化.
-        if (!instance->Init(std::move(binary)))
-        {
-            ELOG("Error : Material::Init() Failed.");
-            instance->Release();
-            instance = nullptr;
-            return false;
-        }
-
-        // インスタンスを格納.
-        (*ppMaterial) = instance;
-
-        // 正常終了.
-        return true;
-    }
+    static bool Create(const MaterialBinary& binary, Material** ppMaterial);
 
     //-------------------------------------------------------------------------
     //! @brief      参照カウントを増やします.
@@ -173,22 +207,20 @@ public:
     //-------------------------------------------------------------------------
     uint32_t GetBindlessIndex(uint32_t index) const;
 
-    //-------------------------------------------------------------------------
-    //! @brief      適用処理を行います.
-    //! 
-    //! @param[in]      pCmd        グラフィックスコマンドリスト.
-    //-------------------------------------------------------------------------
-    virtual void Apply(ID3D12GraphicsCommandList* pCmd);
-
-protected:
+private:
     //=========================================================================
-    // protected variables.
+    // private variables;
     //=========================================================================
+    std::atomic<uint32_t>       m_RefCount          = {};   //!< 参照カウントです.
+    uint32_t                    m_Kind              = 0;    //!< マテリアル種別.
+    MaterialBlendState          m_BlendState        = {};   //!< ブレンドステート.
+    MaterialDepthState          m_DepthState        = {};   //!< 深度ステート.
+    MaterialRasterizerState     m_RasterizerState   = {};   //!< ラスタライザーステート.
     ConstantBuffer              m_Buffer            = {};   //!< 定数バッファ.
     std::vector<TextureHolder>  m_Textures          = {};   //!< テクスチャリスト.
 
     //=========================================================================
-    // protected methods.
+    // private methods.
     //=========================================================================
 
     //-------------------------------------------------------------------------
@@ -208,36 +240,13 @@ protected:
     //! @retval true    初期化に成功.
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
-    bool Init(std::vector<uint8_t>&& binary);
+    bool Init(const MaterialBinary& binary);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.
     //-------------------------------------------------------------------------
     void Term();
 
-    //-------------------------------------------------------------------------
-    //! @brief      マテリアル初期化時の処理です.
-    //! 
-    //! @param[in]      binary      マテリアルバイナリ.
-    //! @retval true    初期化に成功.
-    //! @retval false   初期化に失敗.
-    //! @note       主にバッファの初期化と，テクスチャの初期化をカスタマイズする用途で使用してください.
-    //-------------------------------------------------------------------------
-    virtual bool OnInit(const MaterialBinary& binary);
-
-private:
-    //=========================================================================
-    // private variables;
-    //=========================================================================
-    std::atomic<uint32_t>       m_RefCount          = {};   //!< 参照カウントです.
-    uint32_t                    m_Kind              = 0;    //!< マテリアル種別.
-    MaterialBlendState          m_BlendState        = {};   //!< ブレンドステート.
-    MaterialDepthState          m_DepthState        = {};   //!< 深度ステート.
-    MaterialRasterizerState     m_RasterizerState   = {};   //!< ラスタライザーステート.
-
-    //=========================================================================
-    // private methods.
-    //=========================================================================
     Material             (const Material&) = delete;
     Material& operator = (const Material&) = delete;
 };

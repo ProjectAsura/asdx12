@@ -445,7 +445,6 @@ void ParseMesh
 
 } // namespace
 
-namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
 // ModelConverter class
@@ -511,7 +510,7 @@ bool ModelConverter::Convert(const std::string& path, std::vector<uint8_t>& bina
         return false;
     }
 
-    BoundingSphere3 bounds(Vector3(0.0f, 0.0f, 0.0f), 0.0f);
+    asdx::BoundingSphere3 bounds(asdx::Vector3(0.0f, 0.0f, 0.0f), 0.0f);
 
     flatbuffers::FlatBufferBuilder builder(1024);
 
@@ -796,5 +795,3 @@ bool ModelConverter::ReverseConvert(const std::vector<uint8_t>& binary, const ch
 
     return true;
 }
-
-} // namespace asdx

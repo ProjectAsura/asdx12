@@ -83,10 +83,7 @@ void MotionPlayer::Term()
 void MotionPlayer::SetClip(const res::MotionClip* pClip)
 {
     if (m_pModel == nullptr)
-    {
-        ELOG("Error : Invalid Arguments.");
         return;
-    }
 
     m_pMotionClip = pClip;
     m_TimeInTicks = 0.0f;

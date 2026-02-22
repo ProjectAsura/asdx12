@@ -18,6 +18,7 @@
 #include <gfx/asdxPresetState.h>
 #include "ModelConverter.h"
 #include "MotionConverter.h"
+#include "MaterialConverter.h"
 #include <assimp/Exporter.hpp>
 
 
@@ -352,6 +353,9 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
 
     // プロパティウィンドウを描画.
     DrawPropertyWindow();
+
+    // ライセンスポップアップを描画.
+    DrawLisence();
 
     // 射影行列を計算.
     constexpr auto fov = asdx::ToRadian(37.5f);
@@ -688,7 +692,7 @@ void ModelViewer::OnDrop(const wchar_t** dropFiles, uint32_t fileCount)
     }
     else
     {
-        if (asdx::ModelConverter::Convert(path.string().c_str(), modelBinary))
+        if (ModelConverter::Convert(path.string().c_str(), modelBinary))
         {
             m_ModelBinary = std::move(modelBinary);
             RecreateModel();
@@ -703,39 +707,65 @@ void ModelViewer::MenuFile(ID3D12GraphicsCommandList* pCmd)
 {
     // モデルファイルを開く.
     if (ImGui::MenuItem(asdx::ToChar(u8"モデルファイルを開く")))
-    {
-        LoadModel();
-    }
+    { LoadModel(); }
 
-    // モーションファイルを開く.
-    if (ImGui::MenuItem(asdx::ToChar(u8"モーションファイルを開く")))
-    {
-        LoadMotion();
-    }
-
-    // 保存処理.
     if (!m_ModelBinary.empty())
     {
-        if (ImGui::MenuItem(asdx::ToChar(u8"名前を付けて保存")))
+        if (ImGui::MenuItem(asdx::ToChar(u8"名前を付けてモデルを保存")))
         {
-            const char* filter = 
-                "Project Asura Model Binary (*.mdb)\0*.mdb\0";
+            const char* filter = "Project Asura Model Binary (*.mdb)\0*.mdb\0\0";
             std::string base;
             std::string ext = ".mdb";
 
             asdx::fs::path path;
             if (asdx::SaveFileDlg(filter, path))
             {
-                m_OutputPath = path.string();
-                SaveModelBinary(m_OutputPath.c_str());
+                m_ModelOutputPath = path.string();
+                SaveModelBinary(m_ModelOutputPath.c_str());
             }
         }
 
-        if (ImGui::MenuItem(asdx::ToChar(u8"上書き保存")))
+        if (!m_ModelOutputPath.empty())
         {
-            SaveModelBinary(m_OutputPath.c_str());
+            if (ImGui::MenuItem(asdx::ToChar(u8"モデルを上書き保存")))
+            { SaveModelBinary(m_ModelOutputPath.c_str()); }
         }
     }
+
+    ImGui::Separator();
+
+    // プレハブを開く.
+    if (ImGui::MenuItem(asdx::ToChar(u8"プレハブファイルを開く")))
+    { LoadPrefab(); }
+
+    if (!m_ModelBinary.empty())
+    {
+        if (ImGui::MenuItem(asdx::ToChar(u8"名前を付けてプレハブを保存")))
+        {
+            const char* filter = "Project Asura ModelPrefab Binary (*.mpb)\0*.mpb\0\0";
+            std::string base;
+            std::string ext = ".mpb";
+
+            asdx::fs::path path;
+            if (asdx::SaveFileDlg(filter, path))
+            {
+                m_PrefabOutputPath = path.string();
+                SavePrefabBinary(m_PrefabOutputPath.c_str());
+            }
+        }
+
+        if (!m_PrefabOutputPath.empty())
+        {
+            if (ImGui::MenuItem(asdx::ToChar(u8"プレハブを上書き保存")))
+            { SavePrefabBinary(m_PrefabOutputPath.c_str()); }
+        }
+    }
+
+    ImGui::Separator();
+
+    // モーションファイルを開く.
+    if (ImGui::MenuItem(asdx::ToChar(u8"モーションファイルを開く")))
+    { LoadMotion(); }
 }
 
 //-----------------------------------------------------------------------------
@@ -755,6 +785,7 @@ void ModelViewer::MenuHelp()
     // ライセンス情報.
     if (ImGui::MenuItem(asdx::ToChar(u8"ライセンス情報")))
     {
+        m_ShowLisence = true;
     }
 }
 
@@ -806,6 +837,90 @@ void ModelViewer::RecreateModel()
         10000.0f);
     m_Camera.Present();
 
+    // モーションプレイヤーを初期化.
+    m_MotionPlayer.Init(pModel);
+
+    // 行列パレット用 SRV を生成.
+    auto boneCount = m_Model->GetBoneCount();
+    for(auto i=0; i<2; ++i)
+    {
+        m_MatrixPalletBuffer[i].Term();
+
+        if (!m_MatrixPalletBuffer[i].Init(boneCount, sizeof(asdx::Matrix), D3D12_RESOURCE_STATE_COMMON, true))
+            ELOG("Error : Matrix Pallet Buffer Init Failed. index = %u", i);
+    }
+
+    auto materialCount = m_Model->GetMaterialCount();
+
+    // 編集可能マテリアルを初期化.
+    m_EditMaterials.clear();
+    m_EditMaterials.resize(materialCount);
+
+    // モデルプレハブのマテリアルを初期化.
+    m_Prefab.Materials.resize(materialCount);
+    for(auto i=0u; i<materialCount; ++i)
+    {
+        m_Prefab.Materials[i].Name = m_Model->GetMaterialName(i);
+        m_Prefab.Materials[i].Path.clear();
+    }
+}
+
+//-----------------------------------------------------------------------------
+//      プレハブを生成します.
+//-----------------------------------------------------------------------------
+void ModelViewer::RecreatePrefab()
+{
+    if (m_Prefab.ModelPath.empty())
+        return;
+
+    if (!asdx::LoadA(m_Prefab.ModelPath.c_str(), m_ModelBinary))
+    {
+        ELOG("Error : ModelBinary Load Failed. path = %s", m_Prefab.ModelPath.c_str());
+        return;
+    }
+
+    asdx::Model* pModel = nullptr;
+
+    // モデルを生成をします.
+    std::vector<uint8_t> copyBinary = m_ModelBinary;
+    if (!asdx::Model::Create(std::move(copyBinary), &pModel))
+    {
+        ELOGA("Error : ModelManager::CreateModel() Failed.");
+        return;
+    }
+
+    m_MotionPlayer.SetClip(nullptr);
+    m_ClipIndex = 0;
+    m_ClipNames.clear();
+    m_MotionBinary.Term();
+
+    // 成功したら差し替え.
+    m_Model.Attach(pModel);
+
+    m_ModelInfo.MeshCount     = m_Model->GetMeshCount();
+    m_ModelInfo.MaterialCount = m_Model->GetMaterialCount();
+    m_ModelInfo.BoneCount     = m_Model->GetBoneCount();
+
+    m_ModelInfo.VertexCount = 0;
+    m_ModelInfo.IndexCount  = 0;
+
+    for(auto i=0u; i<m_Model->GetMeshCount(); ++i)
+    {
+        auto mesh = m_Model->GetMesh(i);
+        m_ModelInfo.VertexCount += mesh->GetVertexCount();
+        m_ModelInfo.IndexCount  += mesh->GetIndexCount();
+    }
+
+    auto sphere = m_Model->GetBoundingSphere();
+
+    // カメラを初期化.
+    m_Camera.Init(
+        asdx::Vector3(0.0f, 0.0f, sphere.Radius * 3.0f),
+        asdx::Vector3(0.0f, 0.0f, 0.0f),
+        asdx::Vector3(0.0f, 0.0f, 1.0f),
+        0.1f,
+        10000.0f);
+    m_Camera.Present();
 
     // モーションプレイヤーを初期化.
     m_MotionPlayer.Init(pModel);
@@ -819,6 +934,29 @@ void ModelViewer::RecreateModel()
         if (!m_MatrixPalletBuffer[i].Init(boneCount, sizeof(asdx::Matrix), D3D12_RESOURCE_STATE_COMMON, true))
             ELOG("Error : Matrix Pallet Buffer Init Failed. index = %u", i);
     }
+
+    auto materialCount = m_Model->GetMaterialCount();
+
+    // 編集可能マテリアルを初期化.
+    m_EditMaterials.clear();
+    m_EditMaterials.resize(materialCount);
+
+    // マテリアルバイナリを設定.
+    for(auto i=0u; i<materialCount; ++i)
+    {
+        std::vector<uint8_t> matBin;
+        if (!MaterialConverter::Convert(m_Prefab.Materials[i].Path.c_str(), matBin))
+        {
+            ELOG("Error : MaterialConvert::Convert() Failed. materialIndex = %u", i);
+            continue;
+        }
+
+        if (!MaterialConverter::ReverseConvert(matBin, m_EditMaterials[i]))
+        {
+            ELOG("Error : MaterialConvert::ReverseConvert() Failed. materialIndex = %u", i);
+            continue;
+        }
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -831,11 +969,60 @@ void ModelViewer::SaveModelBinary(const char* path)
 
     if (!asdx::SaveA(path, m_ModelBinary))
     {
-        ELOG("Error : SaveA() Failed path = %s", path);
+        ELOG("Error : SaveA() Failed. path = %s", path);
         return;
     }
 
     ILOG("Info : ModelBinary Output success. path = %s", path);
+}
+
+//-----------------------------------------------------------------------------
+//      プレハブバイナリを保存します.
+//-----------------------------------------------------------------------------
+void ModelViewer::SavePrefabBinary(const char* path)
+{
+    if (path == nullptr)
+        return;
+
+    // Prefabバイナリに変換.
+    std::vector<uint8_t> binary;
+    if (!ModelPrefabConverter::Convert(m_Prefab, binary))
+    {
+        ELOG("Error : ModelPrefabConverter::Convert() Failed.");
+        return;
+    }
+
+    if (!asdx::SaveA(path, binary))
+    {
+        ELOG("Error : SaveA() Failed. path = %s", path);
+        return;
+    }
+
+    ILOG("Info : ModelPrefabBinary Output success. path = %s", path);
+}
+
+//-----------------------------------------------------------------------------
+//      マテリアルバイナリを保存します.
+//-----------------------------------------------------------------------------
+void ModelViewer::SaveMaterialBinary(const char* path, edit::Material& material)
+{
+    if (path == nullptr)
+        return;
+
+    std::vector<uint8_t> binary;
+    if (!MaterialConverter::Convert(material, binary))
+    {
+        ELOG("Error : MaterialConverter::Convert() Failed.");
+        return;
+    }
+
+    if (!asdx::SaveA(path, binary))
+    {
+        ELOG("Error : SaveA() Failed. path = %s", path);
+        return;
+    }
+
+    ILOG("Info : MaterialBinary Output success. path = %s", path);
 }
 
 //-----------------------------------------------------------------------------
@@ -871,27 +1058,35 @@ void ModelViewer::LoadModel()
         "全てのファイル (*.*)\0*.*\0\0";
 
     asdx::fs::path path;
-    if (asdx::OpenFileDlg(filter, path))
-    {
-        auto input = path.string();
+    if (!asdx::OpenFileDlg(filter, path))
+        return;
 
-        std::vector<uint8_t> modelBinary;
-        if (path.extension().string() == ".mdb")
+    auto input = path.string();
+
+    std::vector<uint8_t> modelBinary;
+    if (path.extension().string() == ".mdb")
+    {
+        if (!asdx::LoadA(input.c_str(), modelBinary))
         {
-            if (asdx::LoadA(input.c_str(), modelBinary))
-            {
-                m_ModelBinary = std::move(modelBinary);
-                RecreateModel();
-            }
+            ELOG("Error : asdx::LoadA() Failed. path = %s", input.c_str());
+            return;
         }
-        else
+
+        m_ModelBinary = std::move(modelBinary);
+        m_Prefab.ModelPath = input.c_str();
+        RecreateModel();
+    }
+    else
+    {
+        if (!ModelConverter::Convert(input.c_str(), modelBinary))
         {
-            if (asdx::ModelConverter::Convert(input.c_str(), modelBinary))
-            {
-                m_ModelBinary = std::move(modelBinary);
-                RecreateModel();
-            }
+            ELOG("Error : ModelConverter::Convert() Failed.");
+            return;
         }
+
+        m_ModelBinary = std::move(modelBinary);
+        m_Prefab.ModelPath = input.c_str();
+        RecreateModel();
     }
 }
 
@@ -924,37 +1119,99 @@ void ModelViewer::LoadMotion()
         "全てのファイル (*.*)\0*.*\0\0";
 
     asdx::fs::path path;
-    if (asdx::OpenFileDlg(filter, path))
+    if (!asdx::OpenFileDlg(filter, path))
+        return;
+
+    auto input = path.string();
+
+    std::vector<uint8_t> motionBinary;
+    if (path.extension().string() == ".mob")
     {
-        auto input = path.string();
-
-        std::vector<uint8_t> motionBinary;
-        if (path.extension().string() == ".mob")
+        if (!asdx::LoadA(input.c_str(), motionBinary))
         {
-            if (asdx::LoadA(input.c_str(), motionBinary))
-            {
-                m_MotionBinary.Load(std::move(motionBinary));
-            }
-        }
-        else
-        {
-            if (asdx::MotionConverter::Convert(input.c_str(), motionBinary))
-            {
-                m_MotionBinary.Load(std::move(motionBinary));
-            }
+            ELOG("Error : asdx::LoadA() Failed. path = %s", input.c_str());
+            return;
         }
 
-        auto count = m_MotionBinary.GetClipCount();
-        if (count > 0)
+        m_MotionBinary.Load(std::move(motionBinary));
+    }
+    else
+    {
+        if (!MotionConverter::Convert(input.c_str(), motionBinary))
         {
-            m_ClipNames.resize(count);
-
-            for(auto i=0u; i<count; ++i)
-                m_ClipNames[i] = asdx::MotionClipProxy::GetName(m_MotionBinary.GetClip(i));
-
-            auto clip = m_MotionBinary.GetClip(0);
-            m_MotionPlayer.SetClip(clip);
-            m_ClipIndex = 0;
+            ELOG("Error : MotionConverter::Convert() Failed.");
+            return;
         }
+
+        m_MotionBinary.Load(std::move(motionBinary));
+    }
+
+    auto count = m_MotionBinary.GetClipCount();
+    if (count == 0)
+    {
+        ELOG("Error : Clip Count is zero.");
+        return;
+    }
+
+    m_ClipNames.resize(count);
+
+    for(auto i=0u; i<count; ++i)
+        m_ClipNames[i] = asdx::MotionClipProxy::GetName(m_MotionBinary.GetClip(i));
+
+    auto clip = m_MotionBinary.GetClip(0);
+    m_MotionPlayer.SetClip(clip);
+    m_ClipIndex = 0;
+}
+
+//-----------------------------------------------------------------------------
+//      プレハブファイルを読み込みます.
+//-----------------------------------------------------------------------------
+void ModelViewer::LoadPrefab()
+{
+    const char* filter = "Project Asura ModelPrefab Binary (*.mpb)\0*.mpb\0\0";
+
+    asdx::fs::path path;
+    if (!asdx::OpenFileDlg(filter, path))
+        return;
+
+    auto input = path.string();
+
+    std::vector<uint8_t> prefabBinary;
+    if (!asdx::LoadA(input.c_str(), prefabBinary))
+    {
+        ELOG("Error : asdx::LoadA() Failed. path = %s", input.c_str());
+        return;
+    }
+
+    ModelPrefab prefab;
+    if (!ModelPrefabConverter::ReverseConvert(prefabBinary, prefab))
+    {
+        ELOG("Error : MaterialPrefabConverter::ReverseConvert() Failed.");
+        return;
+    }
+
+    // プレハブデータを差し替え.
+    m_Prefab = std::move(prefab);
+}
+
+//-----------------------------------------------------------------------------
+//      マテリアルファイルを読み込みます.
+//-----------------------------------------------------------------------------
+void ModelViewer::LoadMaterial(const char* path, edit::Material& material)
+{
+    if (path == nullptr)
+        return;
+
+    std::vector<uint8_t> binary;
+    if (!MaterialConverter::Convert(path, binary))
+    {
+        ELOG("Error : MaterialConverter::Convert() Failed.");
+        return;
+    }
+
+    if (!MaterialConverter::ReverseConvert(binary, material))
+    {
+        ELOG("Error : MaterialConverter::ReverseConvert() Failed.");
+        return;
     }
 }

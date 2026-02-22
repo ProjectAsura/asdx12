@@ -719,9 +719,6 @@
     <ClInclude Include="..\include\fnd\asdxJsonWriter.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\gfx\asdxPresetMaterial.h">
-      <Filter>ヘッダー ファイル\gfx</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\res\asdxResModelPrefab.h">
       <Filter>ヘッダー ファイル\res</Filter>
     </ClInclude>

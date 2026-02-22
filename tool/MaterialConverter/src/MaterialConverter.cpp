@@ -27,9 +27,6 @@ static constexpr uint32_t CURRENT_VERSION = 1u;  //!< 現在サポートされ�
 
 } // namespace
 
-
-namespace asdx {
-
 ///////////////////////////////////////////////////////////////////////////////
 // MaterialConverter class
 ///////////////////////////////////////////////////////////////////////////////
@@ -145,9 +142,9 @@ bool MaterialConverter::ReverseConvert(const std::vector<uint8_t>& binary, edit:
     auto matBin = asdx::res::GetMaterialBinary(binary.data());
 
     material.Kind            = matBin->Kind();
-    material.BlendState      = asdx::edit::BlendState(matBin->BlendState());
-    material.DepthState      = asdx::edit::DepthState(matBin->DepthState());
-    material.RasterizerState = asdx::edit::RasterizerState(matBin->RasterizerState());
+    material.BlendState      = edit::BlendState(matBin->BlendState());
+    material.DepthState      = edit::DepthState(matBin->DepthState());
+    material.RasterizerState = edit::RasterizerState(matBin->RasterizerState());
 
     auto params = matBin->Params();
     if (params != nullptr)
@@ -173,5 +170,3 @@ bool MaterialConverter::ReverseConvert(const std::vector<uint8_t>& binary, edit:
 
     return true;
 }
-
-} // namespace asdx

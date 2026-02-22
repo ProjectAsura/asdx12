@@ -10,6 +10,7 @@
 #include <ModelViewer.h>
 #include <fnd/asdxMisc.h>
 #include <fnd/asdxLogger.h>
+#include <fnd/asdxPath.h>
 #include <DirectXMath.h>
 
 
@@ -27,6 +28,29 @@ const char* kDrawModes[] = {
     asdx::ToChar(u8"ボーン重み"),
 };
 
+const char* kBlendStates[] = {
+    "Opaque",
+    "AlphaBlend",
+    "Additive",
+    "Subtract",
+    "Premultiplied",
+    "Multiply",
+    "Screen",
+};
+
+const char* kDepthStates[] = {
+    "ReadWrite",
+    "ReadOnly",
+    "WriteOnly",
+    "None",
+};
+
+const char* kRasterizerState[] = {
+    "CullNone",
+    "CullBack",
+    "CullFront",
+    "Wireframe",
+};
 
 //-----------------------------------------------------------------------------
 //      コンボボックスを描画します.
@@ -179,6 +203,47 @@ void ModelViewer::DrawContextMenu(ID3D12GraphicsCommandList* pCmd)
             MenuHelp();
             ImGui::EndMenu();
         }
+        ImGui::EndPopup();
+    }
+}
+
+//-----------------------------------------------------------------------------
+//      ライセンスを描画します.
+//-----------------------------------------------------------------------------
+void ModelViewer::DrawLisence()
+{
+    if (m_ShowLisence)
+    {
+        ImGui::OpenPopup("Lisence");
+        m_ShowLisence = false;
+    }
+
+    if (ImGui::BeginPopupModal("Lisence"))
+    {
+        ImGui::Text("Dear ImGui");
+        ImGui::TextLinkOpenURL("https://github.com/ocornut/imgui/blob/master/LICENSE.txt", "https://github.com/ocornut/imgui/blob/master/LICENSE.txt");
+        ImGui::NewLine();
+
+        ImGui::Text("simdjson");
+        ImGui::TextLinkOpenURL("https://github.com/simdjson/simdjson/blob/master/LICENSE", "https://github.com/simdjson/simdjson/blob/master/LICENSE");
+        ImGui::TextLinkOpenURL("https://github.com/simdjson/simdjson/blob/master/LICENSE-MIT", "https://github.com/simdjson/simdjson/blob/master/LICENSE-MIT");
+        ImGui::NewLine();
+
+        ImGui::Text("ImGuizmo");
+        ImGui::TextLinkOpenURL("https://github.com/CedricGuillemet/ImGuizmo/blob/master/LICENSE", "https://github.com/CedricGuillemet/ImGuizmo/blob/master/LICENSE");
+        ImGui::NewLine();
+
+        ImGui::Text("D3D12MemoryAllocator");
+        ImGui::TextLinkOpenURL("https://github.com/GPUOpen-LibrariesAndSDKs/D3D12MemoryAllocator/blob/master/LICENSE.txt", "https://github.com/GPUOpen-LibrariesAndSDKs/D3D12MemoryAllocator/blob/master/LICENSE.txt");
+        ImGui::NewLine();
+
+        ImGui::Text("xxHash");
+        ImGui::TextLinkOpenURL("https://github.com/Cyan4973/xxHash/blob/dev/LICENSE", "https://github.com/Cyan4973/xxHash/blob/dev/LICENSE");
+        ImGui::NewLine();
+
+        if (ImGui::Button("Close"))
+            ImGui::CloseCurrentPopup();
+
         ImGui::EndPopup();
     }
 }
@@ -338,13 +403,150 @@ void ModelViewer::DrawMaterialTab()
 
     if (!!m_Model && m_Model->GetMaterialCount() > 0)
     {
+        ImGui::Separator();
+
         auto count = m_Model->GetMaterialCount();
         for(auto i=0u; i<count; ++i)
         {
             if (!ImGui::CollapsingHeader(m_Model->GetMaterialName(i), ImGuiTreeNodeFlags_DefaultOpen))
                 continue;
 
+            ImGui::PushID(i);
 
+            // 編集用にコピー.
+            char buf[512] = {};
+            strcpy_s(buf, m_Prefab.Materials[i].Path.c_str());
+
+            // テキスト直入力.
+            ImGui::InputText(asdx::ToChar(u8"マテリアルバイナリ"), buf, 512);
+
+            if (ImGui::Button(asdx::ToChar(u8"開く")))
+            {
+                asdx::fs::path path;
+                if (asdx::OpenFileDlg("Project Asura Material Binary (*.mtb)\0*.mtb\0\0", path))
+                { LoadMaterial(path.string().c_str(), m_EditMaterials[i]); }
+            }
+            ImGui::SameLine();
+            if (ImGui::Button(asdx::ToChar(u8"クリア")))
+            {
+                m_Prefab.Materials[i].Path.clear();
+            }
+            ImGui::SameLine();
+            if (ImGui::Button(asdx::ToChar(u8"保存")))
+            {
+                if (m_Prefab.Materials[i].Path.empty())
+                {
+                    asdx::fs::path path;
+                    if (asdx::SaveFileDlg("Project Asura Material Binary (*.mtb)\0*.mtb\0\0", path))
+                    { m_Prefab.Materials[i].Path = path.string(); }
+                }
+                SaveMaterialBinary(m_Prefab.Materials[i].Path.c_str(), m_EditMaterials[i]);
+            }
+
+            auto& editMat = m_EditMaterials[i];
+
+            //-------------------------------------------------
+            //      マテリアル編集.
+            //--------------------------------------------------
+            int kind = editMat.Kind;
+            if (ImGui::InputInt(asdx::ToChar(u8"種別"), &kind))
+            {
+                editMat.Kind = uint32_t(kind);
+            }
+
+            int bs = int(m_EditMaterials[i].BlendState);
+            if (ImGui::Combo(asdx::ToChar(u8"ブレンドステート"), &bs, kBlendStates, _countof(kBlendStates)))
+            {
+                editMat.BlendState = edit::BlendState(bs);
+            }
+
+            int ds = int(m_EditMaterials[i].DepthState);
+            if (ImGui::Combo(asdx::ToChar(u8"深度ステート"), &ds, kDepthStates, _countof(kDepthStates)))
+            {
+                editMat.DepthState = edit::DepthState(ds);
+            }
+
+            int rs = int(m_EditMaterials[i].RasterizerState);
+            if (ImGui::Combo(asdx::ToChar(u8"ラスタライザーステート"), &rs, kRasterizerState, _countof(kRasterizerState)))
+            {
+                editMat.RasterizerState = edit::RasterizerState(rs);
+            }
+
+            for(auto itr = editMat.Params.begin(); itr != editMat.Params.end();)
+            {
+                ImGui::PushID(itr->first.c_str());
+                ImGui::DragFloat(itr->first.c_str(), &itr->second);
+                ImGui::SameLine();
+                if (ImGui::Button(asdx::ToChar(u8"削除")))
+                    itr = editMat.Params.erase(itr);
+                else
+                    itr++;
+                ImGui::PopID();
+            }
+            static char paramName[512] = {};
+            if (ImGui::BeginTable("AddParam", 2))
+            {
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::InputText(asdx::ToChar(u8"名前"), paramName, 512);
+
+                ImGui::TableSetColumnIndex(1);
+                if (ImGui::Button(asdx::ToChar(u8"パラメータ追加")))
+                {
+                    editMat.Params[paramName] = 0.0f;
+                    memset(paramName, '\0', 512);
+                }
+
+                ImGui::EndTable();
+            }
+
+            for(auto itr = editMat.Textures.begin(); itr != editMat.Textures.end(); )
+            {
+                ImGui::PushID(itr->first.c_str());
+                char path[512] = {};
+                strcpy_s(path, itr->second.c_str());
+                if (ImGui::InputText(itr->first.c_str(), path, 512))
+                {
+                    itr->second = path;
+                }
+                if (ImGui::Button(asdx::ToChar(u8"開く")))
+                {
+                    asdx::fs::path path;
+                    if (asdx::OpenFileDlg("Project Asura Texture Binary (*.txb)\0*.txb\0\0", path))
+                    { itr->second = path.string(); }
+                }
+                ImGui::SameLine();
+                if (ImGui::Button(asdx::ToChar(u8"クリア")))
+                {
+                    itr->second.clear();
+                }
+                ImGui::SameLine();
+                if (ImGui::Button(asdx::ToChar(u8"削除")))
+                    itr = editMat.Textures.erase(itr);
+                else
+                    itr++;
+
+                ImGui::PopID();
+            }
+
+            static char textureName[512] = {};
+            if (ImGui::BeginTable("AddTexture", 2))
+            {
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::InputText(asdx::ToChar(u8"名前"), textureName, 512);
+
+                ImGui::TableSetColumnIndex(1);
+                if (ImGui::Button(asdx::ToChar(u8"テクスチャ追加")))
+                {
+                    editMat.Textures[textureName] = "";
+                    memset(textureName, '\0', 512);
+                }
+
+                ImGui::EndTable();
+            }
+
+            ImGui::PopID();
             ImGui::Separator();
         }
     }

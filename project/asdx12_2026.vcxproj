@@ -363,7 +363,6 @@
     <ClInclude Include="..\include\gfx\asdxModel.h" />
     <ClInclude Include="..\include\gfx\asdxMotionPlayer.h" />
     <ClInclude Include="..\include\gfx\asdxPipelineState.h" />
-    <ClInclude Include="..\include\gfx\asdxPresetMaterial.h" />
     <ClInclude Include="..\include\gfx\asdxPresetState.h" />
     <ClInclude Include="..\include\gfx\asdxSampler.h" />
     <ClInclude Include="..\include\gfx\asdxShape.h" />

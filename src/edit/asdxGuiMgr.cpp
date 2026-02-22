@@ -496,7 +496,7 @@ bool GuiMgr::Init
 
 #if 1
         style.Colors[ ImGuiCol_Text ]                   = ImVec4( 1.000000f, 1.000000f, 1.000000f, 1.000000f );
-        style.Colors[ ImGuiCol_TextDisabled ]           = ImVec4( 0.400000f, 0.400000f, 0.400000f, 1.000000f );
+        style.Colors[ ImGuiCol_TextDisabled ]           = ImVec4( 0.500000f, 0.500000f, 0.500000f, 1.000000f );
         style.Colors[ ImGuiCol_WindowBg ]               = ImVec4( 0.060000f, 0.060000f, 0.060000f, 0.752000f );
         style.Colors[ ImGuiCol_PopupBg ]                = ImVec4( 0.000000f, 0.000000f, 0.000000f, 0.752000f );
         style.Colors[ ImGuiCol_Border ]                 = ImVec4( 1.000000f, 1.000000f, 1.000000f, 0.312000f );
@@ -529,6 +529,9 @@ bool GuiMgr::Init
         style.Colors[ ImGuiCol_PlotHistogram ]          = ImVec4( 0.900000f, 0.700000f, 0.000000f, 1.000000f );
         style.Colors[ ImGuiCol_PlotHistogramHovered ]   = ImVec4( 1.000000f, 0.600000f, 0.000000f, 1.000000f );
         style.Colors[ ImGuiCol_TextSelectedBg ]         = ImVec4( 0.260000f, 0.590000f, 0.980000f, 0.280000f );
+        style.Colors[ ImGuiCol_ModalWindowDimBg ]       = ImVec4( 0.260000f, 0.260000f, 0.260000f, 0.500000f );
+        style.Colors[ ImGuiCol_TextLink ]               = ImVec4( 0.000000f, 1.000000f, 1.000000f, 1.000000f );
+        style.Colors[ ImGuiCol_TreeLines ]              = style.Colors[ImGuiCol_Border];
         //style.Colors[ ImGuiCol_ModalWindowDarkening ]   = ImVec4( 0.800000f, 0.800000f, 0.800000f, 0.280000f );
 #else
         style.Colors[ImGuiCol_Text]                   = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);

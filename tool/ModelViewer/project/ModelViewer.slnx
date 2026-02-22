@@ -1,15 +1,14 @@
 <Solution>
   <Configurations>
     <Platform Name="x64" />
-    <Platform Name="x86" />
   </Configurations>
   <Project Path="../../../project/asdx12_2026.vcxproj" Id="2218c996-fe59-4e14-988f-c6a7250d5978">
     <BuildType Solution="Debug|*" Project="DebugMT" />
-    <BuildType Solution="Release|x64" Project="ReleaseMT" />
-    <BuildType Solution="Release|x86" Project="ReleaseMD" />
-    <Platform Project="x64" />
+    <BuildType Solution="Release|*" Project="ReleaseMT" />
   </Project>
-  <Project Path="../../../template/external/asdx12/tool/MotionConverter/project/MotionConverterLib.vcxproj" Id="3e002619-f36f-4199-b293-f27306180dbd" />
+  <Project Path="../../MaterialConverter/project/MaterialConverterLib.vcxproj" Id="41562745-5e3a-4c0e-9767-3acd6d35e175" />
+  <Project Path="../../ModelPrefabConverter/project/ModelPrefabConverterLib.vcxproj" Id="7a0604fd-f4e6-490c-91c6-0184f5670640" />
+  <Project Path="../../MotionConverter/project/MotionConverterLib.vcxproj" Id="3e002619-f36f-4199-b293-f27306180dbd" />
   <Project Path="../../ModelConverter/project/ModelConverterLib.vcxproj" Id="fc0db75a-4298-47de-813a-3123fdf35d4d" />
   <Project Path="ModelViewer.vcxproj" Id="fad0336c-50f3-45a0-ac72-67aff7225144" />
 </Solution>

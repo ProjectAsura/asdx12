@@ -11,10 +11,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <VCProjectVersion>17.0</VCProjectVersion>
+    <VCProjectVersion>18.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{fc0db75a-4298-47de-813a-3123fdf35d4d}</ProjectGuid>
-    <RootNamespace>ModelConverterLib</RootNamespace>
+    <ProjectGuid>{7a0604fd-f4e6-490c-91c6-0184f5670640}</ProjectGuid>
+    <RootNamespace>ModelPrefabConverterLib</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -49,8 +49,8 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\..\..\include;$(ProjectDir)..\..\..\external\flatbuffers\include;$(ProjectDir)..\..\..\external\MikkTSpace;C:\Program Files\Assimp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\..\..\external\flatbuffers\include;$(ProjectDir)..\..\..\external\simdjson\include;$(ProjectDir)..\..\..\external\simdjson\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -58,11 +58,9 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PreBuildEvent>
-      <Command>xcopy "C:\Program Files\Assimp\bin\x64\assimp-vc143-mt.dll" "$(OutDir)" /Y /Q
-$(ProjectDir)..\..\..\external\flatbuffers\bin\flatc.exe --cpp -o $(ProjectDir)..\include $(ProjectDir)..\..\..\res\format\ResTypes.fbs --no-warnings
-xcopy $(ProjectDir)..\include\ResTypes_generated.h $(ProjectDir)..\..\..\src\res /y /c
-$(ProjectDir)..\..\..\external\flatbuffers\bin\flatc.exe --cpp -o $(ProjectDir)..\include $(ProjectDir)..\format\ModelBinary.fbs --no-warnings
-xcopy $(ProjectDir)..\include\ModelBinary_generated.h $(ProjectDir)..\..\..\src\res /y /c</Command>
+      <Command>$(ProjectDir)..\..\..\external\flatbuffers\bin\flatc.exe --cpp -o $(ProjectDir)..\include $(ProjectDir)..\..\..\res\format\ResTypes.fbs --no-warnings
+$(ProjectDir)..\..\..\external\flatbuffers\bin\flatc.exe --cpp -o $(ProjectDir)..\include $(ProjectDir)..\format\ModelPrefabBinary.fbs --no-warnings
+xcopy $(ProjectDir)..\include\ModelPrefabBinary_generated.h $(ProjectDir)..\..\..\src\res /y /c</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -73,8 +71,8 @@ xcopy $(ProjectDir)..\include\ModelBinary_generated.h $(ProjectDir)..\..\..\src\
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\..\..\include;$(ProjectDir)..\..\..\external\flatbuffers\include;$(ProjectDir)..\..\..\external\MikkTSpace;C:\Program Files\Assimp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\..\..\external\flatbuffers\include;$(ProjectDir)..\..\..\external\simdjson\include;$(ProjectDir)..\..\..\external\simdjson\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -82,20 +80,17 @@ xcopy $(ProjectDir)..\include\ModelBinary_generated.h $(ProjectDir)..\..\..\src\
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PreBuildEvent>
-      <Command>xcopy "C:\Program Files\Assimp\bin\x64\assimp-vc143-mt.dll" "$(OutDir)" /Y /Q
-$(ProjectDir)..\..\..\external\flatbuffers\bin\flatc.exe --cpp -o $(ProjectDir)..\include $(ProjectDir)..\..\..\res\format\ResTypes.fbs --no-warnings
-xcopy $(ProjectDir)..\include\ResTypes_generated.h $(ProjectDir)..\..\..\src\res /y /c
-$(ProjectDir)..\..\..\external\flatbuffers\bin\flatc.exe --cpp -o $(ProjectDir)..\include $(ProjectDir)..\format\ModelBinary.fbs --no-warnings
-xcopy $(ProjectDir)..\include\ModelBinary_generated.h $(ProjectDir)..\..\..\src\res /y /c</Command>
+      <Command>$(ProjectDir)..\..\..\external\flatbuffers\bin\flatc.exe --cpp -o $(ProjectDir)..\include $(ProjectDir)..\..\..\res\format\ResTypes.fbs --no-warnings
+$(ProjectDir)..\..\..\external\flatbuffers\bin\flatc.exe --cpp -o $(ProjectDir)..\include $(ProjectDir)..\format\ModelPrefabBinary.fbs --no-warnings
+xcopy $(ProjectDir)..\include\ModelPrefabBinary_generated.h $(ProjectDir)..\..\..\src\res /y /c</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\external\MikkTSpace\mikktspace.c" />
-    <ClCompile Include="..\src\ModelConverter.cpp" />
+    <ClInclude Include="..\include\ModelPrefabConverter.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\external\MikkTSpace\mikktspace.h" />
-    <ClInclude Include="..\include\ModelConverter.h" />
+    <ClCompile Include="..\..\..\external\simdjson\src\simdjson.cpp" />
+    <ClCompile Include="..\src\ModelPrefabConverter.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
