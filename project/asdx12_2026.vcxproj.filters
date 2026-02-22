@@ -399,6 +399,9 @@
     <ClCompile Include="..\src\fnd\asdxJsonWriter.cpp">
       <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\res\asdxResModelPrefab.cpp">
+      <Filter>ソース ファイル\res</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\edit\asdxEditParam.h">
@@ -718,6 +721,9 @@
     </ClInclude>
     <ClInclude Include="..\include\gfx\asdxPresetMaterial.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\res\asdxResModelPrefab.h">
+      <Filter>ヘッダー ファイル\res</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
