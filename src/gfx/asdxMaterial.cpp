@@ -196,4 +196,15 @@ bool Material::OnInit(const MaterialBinary& binary)
     return true;
 }
 
+//-----------------------------------------------------------------------------
+//      適用処理を行います.
+//-----------------------------------------------------------------------------
+void Material::Apply(ID3D12GraphicsCommandList* pCmd)
+{
+    if (pCmd == nullptr || m_Textures.empty())
+        return;
+
+    pCmd->SetGraphicsRootDescriptorTable(0, m_Textures[0].GetHandleGPU());
+}
+
 } // namespace asdx

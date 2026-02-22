@@ -73,6 +73,16 @@ public:
     //-------------------------------------------------------------------------
     static bool Convert(const edit::Material& material, std::vector<uint8_t>& binary);
 
+    //-------------------------------------------------------------------------
+    //! @brief      逆変換処理を行います.
+    //! 
+    //! @param[in]      binary      バイナリ.
+    //! @param[out]     material    編集可能マテリアル.
+    //! @retval true    変換に成功.
+    //! @retval false   変換に失敗.
+    //-------------------------------------------------------------------------
+    static bool ReverseConvert(const std::vector<uint8_t>& binary, edit::Material& material);
+
 private:
     //=========================================================================
     // private variables.

@@ -13,6 +13,7 @@
 #include <ModelConverter.h>
 #include <mikktspace.h>
 #include <assimp/Importer.hpp>
+#include <assimp/Exporter.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <ModelBinary_generated.h>
@@ -77,6 +78,18 @@ asdx::Matrix ToMatrix(const aiMatrix4x4& matrix)
         matrix.a2, matrix.b2, matrix.c2, matrix.d2,
         matrix.a3, matrix.b3, matrix.c3, matrix.d3,
         matrix.a4, matrix.b4, matrix.c4, matrix.d4);
+}
+
+//-----------------------------------------------------------------------------
+//      aiMatrix4x4 に変換します.
+//-----------------------------------------------------------------------------
+aiMatrix4x4 ToAiMatrix(const asdx::res::Float4x4* matrix)
+{
+    return aiMatrix4x4(
+        matrix->M11(), matrix->M21(), matrix->M31(), matrix->M41(),
+        matrix->M12(), matrix->M22(), matrix->M32(), matrix->M42(),
+        matrix->M13(), matrix->M23(), matrix->M33(), matrix->M43(),
+        matrix->M14(), matrix->M24(), matrix->M34(), matrix->M44());
 }
 
 //-----------------------------------------------------------------------------
@@ -582,6 +595,204 @@ bool ModelConverter::Convert(const std::string& path, std::vector<uint8_t>& bina
     memcpy(binary.data(), builder.GetBufferPointer(), builder.GetSize());
 
     pScene = nullptr;
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      逆変換処理を行います.
+//-----------------------------------------------------------------------------
+bool ModelConverter::ReverseConvert(const std::vector<uint8_t>& binary, const char* format, const std::string& path)
+{
+    if (binary.empty() || path.empty() || path == "" || format == nullptr)
+    {
+        ELOG("Error : Invalid Argument");
+        return false;
+    }
+
+    auto modelBin = asdx::res::GetModelBinary(binary.data());
+
+    aiScene scene = {};
+
+    aiNode rootNode = {};
+    rootNode.mName           = "RootNode";
+    rootNode.mTransformation = ToAiMatrix(modelBin->RootTransform());
+    rootNode.mParent         = nullptr;
+    rootNode.mNumChildren    = 0;
+    rootNode.mChildren       = nullptr;
+    rootNode.mNumMeshes      = 0;
+    rootNode.mMeshes         = nullptr;
+    rootNode.mMetaData       = nullptr;
+
+    scene.mRootNode = &rootNode;
+
+    auto materials = modelBin->Materials();
+    {
+        auto count = materials->size();
+        scene.mNumMaterials = count;
+        scene.mMaterials    = new aiMaterial* [count];
+
+        for(auto i=0u; i<count; ++i)
+        {
+            auto srcMat = materials->Get(i);
+            auto dstMat = new aiMaterial();
+
+            aiString name(srcMat->str());
+            dstMat->AddProperty(&name, AI_MATKEY_NAME);
+
+            scene.mMaterials[i] = dstMat;
+        }
+    }
+
+    auto bones = modelBin->Bones();
+    if (bones != nullptr)
+    {
+        // TODO : Implementation.
+    }
+
+    auto meshes = modelBin->Meshes();
+    {
+        auto count = meshes->size();
+        scene.mNumMeshes = count;
+        scene.mMeshes    = new aiMesh* [count];
+
+        for(auto i=0u; i<count; ++i)
+        {
+            auto srcMesh = meshes->Get(i);
+            auto dstMesh = new aiMesh();
+
+            auto vertexCount = srcMesh->Positions()->size();
+            auto faceCount   = srcMesh->VertexIndices()->size() / 3;
+
+            dstMesh->mName           = srcMesh->Name()->c_str();
+            dstMesh->mPrimitiveTypes = aiPrimitiveType_TRIANGLE;
+            dstMesh->mNumVertices    = vertexCount;
+            dstMesh->mNumFaces       = faceCount;
+
+            dstMesh->mVertices = new aiVector3D [vertexCount];
+            for(auto j=0u; j<vertexCount; ++j)
+            {
+                auto srcPos = srcMesh->Positions()->Get(j);
+                dstMesh->mVertices[j] = aiVector3D(srcPos->X(), srcPos->Y(), srcPos->Z());
+            }
+
+            dstMesh->mNormals = new aiVector3D [vertexCount];
+            for(auto j=0u; j<vertexCount; ++j)
+            {
+                auto srcNormal = srcMesh->Normals()->Get(j);
+                dstMesh->mNormals[j] = aiVector3D(srcNormal->X(), srcNormal->Y(), srcNormal->Z());
+            }
+
+            if (srcMesh->TexCoords() != nullptr)
+            {
+                dstMesh->mNumUVComponents[0] = 2;
+                dstMesh->mTextureCoords[0] = new aiVector3D [vertexCount];
+                for(auto j=0u; j<vertexCount; ++j)
+                {
+                    auto srcUv = srcMesh->TexCoords()->Get(j);
+                    dstMesh->mTextureCoords[0][j] = aiVector3D(srcUv->X(), srcUv->Y(), 0.0f);
+                }
+            }
+
+            if (srcMesh->Tangents() != nullptr)
+            {
+                dstMesh->mTangents   = new aiVector3D [vertexCount];
+                dstMesh->mBitangents = new aiVector3D [vertexCount];
+                for(auto j=0u; j<vertexCount; ++j)
+                {
+                    auto srcTangent = srcMesh->Tangents()->Get(j);
+                    dstMesh->mTangents[j] = aiVector3D(srcTangent->X(), srcTangent->Y(), srcTangent->Z());
+
+                    auto N = asdx::Vector3(dstMesh->mNormals [j].x, dstMesh->mNormals [j].y, dstMesh->mNormals [j].z);
+                    auto T = asdx::Vector3(dstMesh->mTangents[j].x, dstMesh->mTangents[j].y, dstMesh->mTangents[j].z);
+                    auto B = asdx::Vector3::Cross(T, N).Normalize() * srcTangent->W();
+
+                    dstMesh->mBitangents[j] = aiVector3D(B.x, B.y, B.z);
+                }
+            }
+
+            if (srcMesh->Colors() != nullptr)
+            {
+                dstMesh->mColors[0] = new aiColor4D [vertexCount];
+                for(auto j=0u; j<vertexCount; ++j)
+                {
+                    auto srcColor = srcMesh->Colors()->Get(j);
+                    auto r = float(srcColor->X()) / 255.0f;
+                    auto g = float(srcColor->Y()) / 255.0f;
+                    auto b = float(srcColor->Z()) / 255.0f;
+                    auto a = float(srcColor->W()) / 255.0f;
+
+                    dstMesh->mColors[0][j] = aiColor4D(r, g, b, a);
+                }
+            }
+
+            if (srcMesh->BoneIndices() != nullptr && srcMesh->BoneWeights() != nullptr && modelBin->Bones() != nullptr)
+            {
+                // TODO : Implementation.
+            }
+
+            auto index = 0u;
+            dstMesh->mFaces = new aiFace[faceCount];
+            for(auto j=0u; j<faceCount; ++j)
+            {
+                dstMesh->mFaces[j].mNumIndices = 3;
+                dstMesh->mFaces[j].mIndices    = new unsigned int[3];
+
+                dstMesh->mFaces[j].mIndices[0] = srcMesh->VertexIndices()->Get(index++);
+                dstMesh->mFaces[j].mIndices[1] = srcMesh->VertexIndices()->Get(index++);
+                dstMesh->mFaces[j].mIndices[2] = srcMesh->VertexIndices()->Get(index++);
+            }
+
+            scene.mMeshes[i] = dstMesh;
+        }
+    }
+
+    Assimp::Exporter exporter;
+    auto ret = exporter.Export(&scene, format, path.c_str());
+
+    // メモリ解放処理.
+    {
+        if (scene.mMaterials != nullptr)
+        {
+            for(auto i=0u; i<scene.mNumMaterials; ++i)
+            {
+                if (scene.mMaterials[i] != nullptr)
+                {
+                    delete scene.mMaterials[i];
+                    scene.mMaterials[i] = nullptr;
+                }
+            }
+
+            delete[] scene.mMaterials;
+            scene.mMaterials = nullptr;
+        }
+
+        if (scene.mRootNode->mChildren != nullptr)
+        {
+            // TODO : Implementation.
+        }
+
+        if (scene.mMeshes != nullptr)
+        {
+            for(auto i=0u; i<scene.mNumMeshes; ++i)
+            {
+                if (scene.mMeshes[i] != nullptr)
+                {
+                    delete scene.mMeshes[i];
+                    scene.mMeshes[i] = nullptr;
+                }
+            }
+
+            delete[] scene.mMeshes;
+            scene.mMeshes = nullptr;
+        }
+    }
+
+    if (ret != aiReturn_SUCCESS)
+    {
+        ELOG("Error : Assimp::Exporter::Export() Failed. path = %s", path.c_str());
+        return false;
+    }
 
     return true;
 }

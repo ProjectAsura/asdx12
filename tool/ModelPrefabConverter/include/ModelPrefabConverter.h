@@ -1,6 +1,6 @@
 ﻿//-----------------------------------------------------------------------------
-// File : ModelConverter.h
-// Desc : Model Binary (*.mdb) Converter.
+// File : ModelPrefabConverter.h
+// Desc : Model Prefab Converter.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 #pragma once
@@ -12,12 +12,28 @@
 #include <vector>
 
 
-namespace asdx {
+///////////////////////////////////////////////////////////////////////////////
+// MeshMaterial structure
+///////////////////////////////////////////////////////////////////////////////
+struct MeshMaterial
+{
+    std::string Name;
+    std::string Path;
+};
 
 ///////////////////////////////////////////////////////////////////////////////
-// ModelConverter class
+// ModelPrefab structure
 ///////////////////////////////////////////////////////////////////////////////
-class ModelConverter
+struct ModelPrefab
+{
+    std::string                 ModelPath;
+    std::vector<MeshMaterial>   Materials;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// ModelPrefabConverter class
+///////////////////////////////////////////////////////////////////////////////
+class ModelPrefabConverter
 {
     //=========================================================================
     // list of friend classes and methods.
@@ -31,7 +47,7 @@ public:
     struct Desc
     {
         std::string InputPath;      //!< 入力ファイルパス.
-        std::string OutputPath;     //!< 出力ファイルパス(mdbのみ).
+        std::string OutputPath;     //!< 出力ファイルパス.
     };
 
     //=========================================================================
@@ -55,44 +71,41 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      変換処理を行います.
     //! 
-    //! @param[in]      path        入力ファイルパス.
-    //! @param[out]     binary      出力バイナリ.
+    //! @param[in]      input       モデルプレハブ.
+    //! @param[out]     binary      バイナリ.
     //! @retval true    変換に成功.
-    //! @retval fasle   変換に失敗.
-    //! @note   サポートフォーマットは次の通りです.
-    //!         usd, x, amf, 3ds, m3d, mdl, md3, ply, ase, obj, hmp, smd, mdc,
-    //!         stl, lwo, dxf, nff, raw, sib, off, ac, bvh, irr, q3d, b3d,
-    //!         collada, terragen, cms, unreal, lws, ogre, OpenGEX, ms3d,
-    //!         cob, blender, q3bsp, ndo, ifc, xgl, fbx, assbin, gltf, gltf2,
-    //!         c4d, 3mf, x3d, mmd, m3d, iqm.
+    //! @retval false   変換に失敗.
     //-------------------------------------------------------------------------
-    static bool Convert(const std::string& path, std::vector<uint8_t>& binary);
+    static bool Convert(const ModelPrefab& input, std::vector<uint8_t>& binary);
 
     //-------------------------------------------------------------------------
     //! @brief      逆変換処理を行います.
     //! 
-    //! @param[in]      binary      入力バイナリ.
-    //! @param[in]      format      出力フォーマット.
-    //! @param[in]      path        出力ファイルパス.
+    //! @param[in]      binary      バイナリ.
+    //! @param[out]     result      モデルプレハブ
     //! @retval true    変換に成功.
     //! @retval false   変換に失敗.
-    //! @note   サポートフォーマットは次の通りです.
-    //!         collada, x, stp, obj, stl, stlb, ply, plyb, 3ds, gltf2, glb2,
-    //!         gltf, glb, assbin, assxml, x3d, fbx, fbxa, m3d, m3da, 3mf,
-    //!         3mf, pbrt, assjson.
     //-------------------------------------------------------------------------
-    static bool ReverseConvert(const std::vector<uint8_t>& binary, const char* format, const std::string& path);
+    static bool ReverseConvert(const std::vector<uint8_t>& binary, ModelPrefab& result);
 
-private:
-    //=========================================================================
-    // private variables.
-    //=========================================================================
-    /* NOTHING */
+    //-------------------------------------------------------------------------
+    //! @brief      jsonファイルからモデルプレハブをロードします.
+    //! 
+    //! @param[in]      path        jsonファイルパス.
+    //! @param[out]     prefab      モデルプレハブの格納先.
+    //! @retval true    ロードに成功.
+    //! @retval false   ロードに失敗.
+    //-------------------------------------------------------------------------
+    static bool LoadFromJson(const char* path, ModelPrefab& prefab);
 
-    //=========================================================================
-    // private methods.
-    //=========================================================================
-    /* NOTHING */
+    //-------------------------------------------------------------------------
+    //! @brief      jsonファイルにモデルプレハブをセーブします.
+    //! 
+    //! @param[in]      path        jsonファイルパス.
+    //! @param[in]      prefab      モデルプレハブ.
+    //! @retval true    セーブに成功.
+    //! @retval fasle   セーブに失敗.
+    //-------------------------------------------------------------------------
+    static bool SaveToJson(const char* path, const ModelPrefab& prefab);
 };
 
-} // namespace asdx

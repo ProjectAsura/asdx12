@@ -131,4 +131,47 @@ bool MaterialConverter::Convert(const edit::Material& material, std::vector<uint
     return true;
 }
 
+//-----------------------------------------------------------------------------
+//      逆変換処理を行います.
+//-----------------------------------------------------------------------------
+bool MaterialConverter::ReverseConvert(const std::vector<uint8_t>& binary, edit::Material& material)
+{
+    if (binary.empty())
+    {
+        ELOG("Error : Invalid Argument.");
+        return false;
+    }
+
+    auto matBin = asdx::res::GetMaterialBinary(binary.data());
+
+    material.Kind            = matBin->Kind();
+    material.BlendState      = asdx::edit::BlendState(matBin->BlendState());
+    material.DepthState      = asdx::edit::DepthState(matBin->DepthState());
+    material.RasterizerState = asdx::edit::RasterizerState(matBin->RasterizerState());
+
+    auto params = matBin->Params();
+    if (params != nullptr)
+    {
+        auto count = params->size();
+        for(auto i=0u; i<count; ++i)
+        {
+            auto param = params->Get(i);
+            material.Params[param->Name()->c_str()] = param->Value();
+        }
+    }
+
+    auto textures = matBin->Textures();
+    if (textures != nullptr)
+    {
+        auto count = textures->size();
+        for(auto i=0u; i<count; ++i)
+        {
+            auto texture = textures->Get(i);
+            material.Textures[texture->Name()->c_str()] = texture->Path()->c_str();
+        }
+    }
+
+    return true;
+}
+
 } // namespace asdx

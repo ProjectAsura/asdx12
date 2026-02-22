@@ -1,0 +1,8 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="ModelPrefabConverterLib.vcxproj" Id="7a0604fd-f4e6-490c-91c6-0184f5670640" />
+  <Project Path="ModelPrefabConverter.vcxproj" Id="5536edde-38ce-4170-8336-76c7db29698c" />
+</Solution>

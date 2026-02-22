@@ -230,7 +230,7 @@ bool SaveToJson(const char* path, const Material& material)
     if (!material.Params.empty())
     {
         fprintf_s(fp, ",\n");
-        fprintf_s(fp, "    \Params\": [\n");
+        fprintf_s(fp, "    \"Params\": [\n");
         auto count = material.Params.size();
         auto index = 0;
         for(auto& param : material.Params)
@@ -281,33 +281,25 @@ bool LoadFromJson(const char* path, Material& material)
     auto name = doc["Name"];
     if (name.error() == simdjson::SUCCESS)
     {
-        std::string_view str;
-        name.get(str);
-        material.Name = str;
+        material.Name = name.get_string().value();
     }
 
     auto blend = doc["BlendState"];
     if (blend.error() == simdjson::SUCCESS)
     {
-        std::string_view str;
-        blend.get(str);
-        material.BlendState = ToBlendState(str.data());
+        material.BlendState = ToBlendState(blend.get_string().value().data());
     }
 
     auto depth = doc["Depth"];
     if (depth.error() == simdjson::SUCCESS)
     {
-        std::string_view str;
-        depth.get(str);
-        material.DepthState = ToDepthState(str.data());
+        material.DepthState = ToDepthState(depth.get_string().value().data());
     }
 
     auto rasterizer = doc["Rasterizer"];
     if (rasterizer.error() == simdjson::SUCCESS)
     {
-        std::string_view str;
-        rasterizer.get(str);
-        material.RasterizerState = ToRasterizerState(str.data());
+        material.RasterizerState = ToRasterizerState(rasterizer.get_string().value().data());
     }
 
     auto params = doc["Params"];
@@ -316,14 +308,12 @@ bool LoadFromJson(const char* path, Material& material)
         for(auto param : params.get_array())
         {
             std::string paramName;
-            float       paramValue;
+            float       paramValue = 0.0f;
 
             auto name = param["Name"];
             if (name.error() == simdjson::SUCCESS)
             {
-                std::string_view str;
-                name.get(str);
-                paramName = str.data();
+                paramName = name.get_string().value();
             }
 
             auto value = param["Value"];
@@ -347,17 +337,13 @@ bool LoadFromJson(const char* path, Material& material)
             auto name = tex["Name"];
             if (name.error() == simdjson::SUCCESS)
             {
-                std::string_view str;
-                name.get(str);
-                texName = str.data();
+                texName = name.get_string().value();
             }
 
             auto path = tex["Path"];
             if (path.error() == simdjson::SUCCESS)
             {
-                std::string_view str;
-                path.get(str);
-                texPath = str.data();
+                texPath = path.get_string().value();
             }
 
             material.Textures[texName] = texPath;

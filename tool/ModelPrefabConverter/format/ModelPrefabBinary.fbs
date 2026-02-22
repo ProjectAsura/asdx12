@@ -1,0 +1,18 @@
+include "../../../res/format/ResTypes.fbs";
+
+namespace asdx.res;
+
+table MeshMaterial
+{
+    Name : string (key);
+    Path : string;
+}
+
+table ModelPrefabBinary
+{
+    Version   : uint;
+    ModelPath : string;
+    Materials : [MeshMaterial];
+}
+
+root_type ModelPrefabBinary;
