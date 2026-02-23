@@ -51,7 +51,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>ASDX_AUTO_LINK;ASDX_ENABLE_IMGUI;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\..\ModelConverter\include;$(ProjectDir)..\..\MotionConverter\include;$(ProjectDir)..\..\ModelPrefabConverter\include;$(ProjectDir)..\..\MaterialConverter\include;$(ProjectDir)..\..\..\include;$(ProjectDir)..\..\..\external\D3D12MemoryAllocator\include;$(ProjectDir)..\..\..\external\imgui;$(ProjectDir)..\..\..\external\ImGuizmo;$(ProjectDir)..\..\..\external\implot;C:\Program Files\Assimp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\..\ModelConverter\include;$(ProjectDir)..\..\MotionConverter\include;$(ProjectDir)..\..\ModelPrefabConverter\include;$(ProjectDir)..\..\MaterialConverter\include;$(ProjectDir)..\..\..\include;$(ProjectDir)..\..\..\external\D3D12MemoryAllocator\include;$(ProjectDir)..\..\..\external\imgui;$(ProjectDir)..\..\..\external\ImGuizmo;$(ProjectDir)..\..\..\external\implot;$(ProjectDir)..\..\..\external\simdjson\include;C:\Program Files\Assimp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
@@ -81,7 +81,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>ASDX_AUTO_LINK;ASDX_ENABLE_IMGUI;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\..\ModelConverter\include;$(ProjectDir)..\..\MotionConverter\include;$(ProjectDir)..\..\ModelPrefabConverter\include;$(ProjectDir)..\..\MaterialConverter\include;$(ProjectDir)..\..\..\include;$(ProjectDir)..\..\..\external\D3D12MemoryAllocator\include;$(ProjectDir)..\..\..\external\imgui;$(ProjectDir)..\..\..\external\ImGuizmo;$(ProjectDir)..\..\..\external\implot;C:\Program Files\Assimp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\..\ModelConverter\include;$(ProjectDir)..\..\MotionConverter\include;$(ProjectDir)..\..\ModelPrefabConverter\include;$(ProjectDir)..\..\MaterialConverter\include;$(ProjectDir)..\..\..\include;$(ProjectDir)..\..\..\external\D3D12MemoryAllocator\include;$(ProjectDir)..\..\..\external\imgui;$(ProjectDir)..\..\..\external\ImGuizmo;$(ProjectDir)..\..\..\external\implot;$(ProjectDir)..\..\..\external\simdjson\include;C:\Program Files\Assimp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
@@ -105,6 +105,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\src\main.cpp" />
+    <ClCompile Include="..\src\ModelViewerSchema.cpp" />
     <ClCompile Include="..\src\ModelViewer.cpp" />
     <ClCompile Include="..\src\ModelViewerGui.cpp" />
   </ItemGroup>

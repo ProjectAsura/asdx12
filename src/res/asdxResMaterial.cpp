@@ -76,33 +76,6 @@ uint32_t MaterialBinary::GetKind() const
 }
 
 //-----------------------------------------------------------------------------
-//      ブレンドステートを取得します.
-//-----------------------------------------------------------------------------
-MaterialBlendState MaterialBinary::GetBlendState() const
-{
-    assert(!m_Blob.empty());
-    return MaterialBlendState(res::GetMaterialBinary(m_Blob.data())->BlendState());
-}
-
-//-----------------------------------------------------------------------------
-//      深度ステートを取得します.
-//-----------------------------------------------------------------------------
-MaterialDepthState MaterialBinary::GetDepthState() const
-{
-    assert(!m_Blob.empty());
-    return MaterialDepthState(res::GetMaterialBinary(m_Blob.data())->DepthState());
-}
-
-//-----------------------------------------------------------------------------
-//      ラスタライザーステートを取得します.
-//-----------------------------------------------------------------------------
-MaterialRasterizerState MaterialBinary::GetRasterizerState() const
-{
-    assert(!m_Blob.empty());
-    return MaterialRasterizerState(res::GetMaterialBinary(m_Blob.data())->RasterizerState());
-}
-
-//-----------------------------------------------------------------------------
 //      パラメータ数を取得します.
 //-----------------------------------------------------------------------------
 uint32_t MaterialBinary::GetParameterCount() const

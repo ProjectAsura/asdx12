@@ -27,123 +27,6 @@ struct MaterialParameterBuilder;
 struct MaterialBinary;
 struct MaterialBinaryBuilder;
 
-enum MaterialBlendState : uint8_t {
-  MaterialBlendState_Opaque = 0,
-  MaterialBlendState_AlphaBlend = 1,
-  MaterialBlendState_Additive = 2,
-  MaterialBlendState_Substract = 3,
-  MaterialBlendState_Premultiplied = 4,
-  MaterialBlendState_Multiply = 5,
-  MaterialBlendState_Screen = 6,
-  MaterialBlendState_MIN = MaterialBlendState_Opaque,
-  MaterialBlendState_MAX = MaterialBlendState_Screen
-};
-
-inline const MaterialBlendState (&EnumValuesMaterialBlendState())[7] {
-  static const MaterialBlendState values[] = {
-    MaterialBlendState_Opaque,
-    MaterialBlendState_AlphaBlend,
-    MaterialBlendState_Additive,
-    MaterialBlendState_Substract,
-    MaterialBlendState_Premultiplied,
-    MaterialBlendState_Multiply,
-    MaterialBlendState_Screen
-  };
-  return values;
-}
-
-inline const char * const *EnumNamesMaterialBlendState() {
-  static const char * const names[8] = {
-    "Opaque",
-    "AlphaBlend",
-    "Additive",
-    "Substract",
-    "Premultiplied",
-    "Multiply",
-    "Screen",
-    nullptr
-  };
-  return names;
-}
-
-inline const char *EnumNameMaterialBlendState(MaterialBlendState e) {
-  if (::flatbuffers::IsOutRange(e, MaterialBlendState_Opaque, MaterialBlendState_Screen)) return "";
-  const size_t index = static_cast<size_t>(e);
-  return EnumNamesMaterialBlendState()[index];
-}
-
-enum MaterialDepthState : uint8_t {
-  MaterialDepthState_ReadWrite = 0,
-  MaterialDepthState_ReadOnly = 1,
-  MaterialDepthState_WriteOnly = 2,
-  MaterialDepthState_None = 3,
-  MaterialDepthState_MIN = MaterialDepthState_ReadWrite,
-  MaterialDepthState_MAX = MaterialDepthState_None
-};
-
-inline const MaterialDepthState (&EnumValuesMaterialDepthState())[4] {
-  static const MaterialDepthState values[] = {
-    MaterialDepthState_ReadWrite,
-    MaterialDepthState_ReadOnly,
-    MaterialDepthState_WriteOnly,
-    MaterialDepthState_None
-  };
-  return values;
-}
-
-inline const char * const *EnumNamesMaterialDepthState() {
-  static const char * const names[5] = {
-    "ReadWrite",
-    "ReadOnly",
-    "WriteOnly",
-    "None",
-    nullptr
-  };
-  return names;
-}
-
-inline const char *EnumNameMaterialDepthState(MaterialDepthState e) {
-  if (::flatbuffers::IsOutRange(e, MaterialDepthState_ReadWrite, MaterialDepthState_None)) return "";
-  const size_t index = static_cast<size_t>(e);
-  return EnumNamesMaterialDepthState()[index];
-}
-
-enum MaterialRasterizerState : uint8_t {
-  MaterialRasterizerState_CullNone = 0,
-  MaterialRasterizerState_CullBack = 1,
-  MaterialRasterizerState_CullFront = 2,
-  MaterialRasterizerState_Wireframe = 3,
-  MaterialRasterizerState_MIN = MaterialRasterizerState_CullNone,
-  MaterialRasterizerState_MAX = MaterialRasterizerState_Wireframe
-};
-
-inline const MaterialRasterizerState (&EnumValuesMaterialRasterizerState())[4] {
-  static const MaterialRasterizerState values[] = {
-    MaterialRasterizerState_CullNone,
-    MaterialRasterizerState_CullBack,
-    MaterialRasterizerState_CullFront,
-    MaterialRasterizerState_Wireframe
-  };
-  return values;
-}
-
-inline const char * const *EnumNamesMaterialRasterizerState() {
-  static const char * const names[5] = {
-    "CullNone",
-    "CullBack",
-    "CullFront",
-    "Wireframe",
-    nullptr
-  };
-  return names;
-}
-
-inline const char *EnumNameMaterialRasterizerState(MaterialRasterizerState e) {
-  if (::flatbuffers::IsOutRange(e, MaterialRasterizerState_CullNone, MaterialRasterizerState_Wireframe)) return "";
-  const size_t index = static_cast<size_t>(e);
-  return EnumNamesMaterialRasterizerState()[index];
-}
-
 struct MaterialTexture FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef MaterialTextureBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
@@ -303,26 +186,14 @@ struct MaterialBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_VERSION = 4,
     VT_KIND = 6,
-    VT_BLENDSTATE = 8,
-    VT_DEPTHSTATE = 10,
-    VT_RASTERIZERSTATE = 12,
-    VT_PARAMS = 14,
-    VT_TEXTURES = 16
+    VT_PARAMS = 8,
+    VT_TEXTURES = 10
   };
   uint32_t Version() const {
     return GetField<uint32_t>(VT_VERSION, 0);
   }
   uint32_t Kind() const {
     return GetField<uint32_t>(VT_KIND, 0);
-  }
-  asdx::res::MaterialBlendState BlendState() const {
-    return static_cast<asdx::res::MaterialBlendState>(GetField<uint8_t>(VT_BLENDSTATE, 0));
-  }
-  asdx::res::MaterialDepthState DepthState() const {
-    return static_cast<asdx::res::MaterialDepthState>(GetField<uint8_t>(VT_DEPTHSTATE, 0));
-  }
-  asdx::res::MaterialRasterizerState RasterizerState() const {
-    return static_cast<asdx::res::MaterialRasterizerState>(GetField<uint8_t>(VT_RASTERIZERSTATE, 0));
   }
   const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MaterialParameter>> *Params() const {
     return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MaterialParameter>> *>(VT_PARAMS);
@@ -334,9 +205,6 @@ struct MaterialBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_VERSION, 4) &&
            VerifyField<uint32_t>(verifier, VT_KIND, 4) &&
-           VerifyField<uint8_t>(verifier, VT_BLENDSTATE, 1) &&
-           VerifyField<uint8_t>(verifier, VT_DEPTHSTATE, 1) &&
-           VerifyField<uint8_t>(verifier, VT_RASTERIZERSTATE, 1) &&
            VerifyOffset(verifier, VT_PARAMS) &&
            verifier.VerifyVector(Params()) &&
            verifier.VerifyVectorOfTables(Params()) &&
@@ -356,15 +224,6 @@ struct MaterialBinaryBuilder {
   }
   void add_Kind(uint32_t Kind) {
     fbb_.AddElement<uint32_t>(MaterialBinary::VT_KIND, Kind, 0);
-  }
-  void add_BlendState(asdx::res::MaterialBlendState BlendState) {
-    fbb_.AddElement<uint8_t>(MaterialBinary::VT_BLENDSTATE, static_cast<uint8_t>(BlendState), 0);
-  }
-  void add_DepthState(asdx::res::MaterialDepthState DepthState) {
-    fbb_.AddElement<uint8_t>(MaterialBinary::VT_DEPTHSTATE, static_cast<uint8_t>(DepthState), 0);
-  }
-  void add_RasterizerState(asdx::res::MaterialRasterizerState RasterizerState) {
-    fbb_.AddElement<uint8_t>(MaterialBinary::VT_RASTERIZERSTATE, static_cast<uint8_t>(RasterizerState), 0);
   }
   void add_Params(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MaterialParameter>>> Params) {
     fbb_.AddOffset(MaterialBinary::VT_PARAMS, Params);
@@ -387,9 +246,6 @@ inline ::flatbuffers::Offset<MaterialBinary> CreateMaterialBinary(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t Version = 0,
     uint32_t Kind = 0,
-    asdx::res::MaterialBlendState BlendState = asdx::res::MaterialBlendState_Opaque,
-    asdx::res::MaterialDepthState DepthState = asdx::res::MaterialDepthState_ReadWrite,
-    asdx::res::MaterialRasterizerState RasterizerState = asdx::res::MaterialRasterizerState_CullNone,
     ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MaterialParameter>>> Params = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MaterialTexture>>> Textures = 0) {
   MaterialBinaryBuilder builder_(_fbb);
@@ -397,9 +253,6 @@ inline ::flatbuffers::Offset<MaterialBinary> CreateMaterialBinary(
   builder_.add_Params(Params);
   builder_.add_Kind(Kind);
   builder_.add_Version(Version);
-  builder_.add_RasterizerState(RasterizerState);
-  builder_.add_DepthState(DepthState);
-  builder_.add_BlendState(BlendState);
   return builder_.Finish();
 }
 
@@ -407,9 +260,6 @@ inline ::flatbuffers::Offset<MaterialBinary> CreateMaterialBinaryDirect(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t Version = 0,
     uint32_t Kind = 0,
-    asdx::res::MaterialBlendState BlendState = asdx::res::MaterialBlendState_Opaque,
-    asdx::res::MaterialDepthState DepthState = asdx::res::MaterialDepthState_ReadWrite,
-    asdx::res::MaterialRasterizerState RasterizerState = asdx::res::MaterialRasterizerState_CullNone,
     std::vector<::flatbuffers::Offset<asdx::res::MaterialParameter>> *Params = nullptr,
     std::vector<::flatbuffers::Offset<asdx::res::MaterialTexture>> *Textures = nullptr) {
   auto Params__ = Params ? _fbb.CreateVectorOfSortedTables<asdx::res::MaterialParameter>(Params) : 0;
@@ -418,9 +268,6 @@ inline ::flatbuffers::Offset<MaterialBinary> CreateMaterialBinaryDirect(
       _fbb,
       Version,
       Kind,
-      BlendState,
-      DepthState,
-      RasterizerState,
       Params__,
       Textures__);
 }

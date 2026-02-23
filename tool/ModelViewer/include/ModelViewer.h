@@ -8,6 +8,7 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
+#include <unordered_map>
 #include <fw/asdxApp.h>
 #include <fw/asdxAppCamera.h>
 #include <gfx/asdxCommandQueue.h>
@@ -17,11 +18,43 @@
 #include <gfx/asdxShape.h>
 #include <gfx/asdxMotionPlayer.h>
 #include <gfx/asdxLine.h>
+#include <gfx/asdxMaterial.h>
 #include <ModelPrefabConverter.h>
 #include <EditMaterial.h>
 #include <imgui.h>
 #include <ImGuizmo.h>
 
+
+namespace viewer {
+
+enum MaterialBlendState : uint8_t
+{
+    Opaque,
+    AlphaBlend,
+    Additive,
+    Subtract,
+    Premultiplied,
+    Multiply,
+    Screen,
+};
+
+enum MaterialDepthState : uint8_t
+{
+    ReadWrite,
+    ReadOnly,
+    WriteOnly,
+    None,
+};
+
+enum MaterialRasterizerState : uint8_t
+{
+    CullNone,
+    CullBack,
+    CullFront,
+    Wireframe,
+};
+
+} // namespace viewer
 
 ///////////////////////////////////////////////////////////////////////////////
 // ModelViewer class
@@ -36,7 +69,7 @@ public:
     //=========================================================================
     // public variables.
     //=========================================================================
-
+    /* NOTHING */
 
     //=========================================================================
     // public mehtods.
@@ -53,13 +86,31 @@ public:
     ~ModelViewer();
 
 private:
+    ///////////////////////////////////////////////////////////////////////////
+    // ModelInfo structure
+    ///////////////////////////////////////////////////////////////////////////
     struct ModelInfo
     {
-        size_t  MeshCount;
-        size_t  MaterialCount;
-        size_t  VertexCount;
-        size_t  IndexCount;
-        size_t  BoneCount;
+        size_t  MeshCount;          //!< メッシュ数.
+        size_t  MaterialCount;      //!< マテリアル数.
+        size_t  VertexCount;        //!< 頂点数.
+        size_t  IndexCount;         //!< 頂点インデックス数.
+        size_t  BoneCount;          //!< ボーン数.
+    };
+
+    ///////////////////////////////////////////////////////////////////////////
+    // ModelPipelineState structure
+    ///////////////////////////////////////////////////////////////////////////
+    struct ModelPipelineState
+    {
+        asdx::GraphicsPipelineState     StaticModel;    //!< スタティックメッシュ用.
+        asdx::GraphicsPipelineState     SkeletalModel;  //!< スケルタルメッシュ用.
+
+        void Reset()
+        {
+            StaticModel  .Term();
+            SkeletalModel.Term();
+        }
     };
 
     //=========================================================================
@@ -71,10 +122,8 @@ private:
     std::string                         m_ModelOutputPath;
     std::string                         m_PrefabOutputPath;
     asdx::RefPtr<ID3D12RootSignature>   m_RootSignature;
-    asdx::GraphicsPipelineState         m_StaticSolidState;
-    asdx::GraphicsPipelineState         m_SkeletalSolidState;
-    asdx::GraphicsPipelineState         m_StaticWireframeState;
-    asdx::GraphicsPipelineState         m_SkeletalWireframeState;
+    ModelPipelineState                  m_DefaultState;
+    ModelPipelineState                  m_WireframeState;
     ModelInfo                           m_ModelInfo          = {};
     asdx::ConstantBuffer                m_SceneCB[2]         = {};
     asdx::AppCamera                     m_Camera             = {};
@@ -101,6 +150,10 @@ private:
     ModelPrefab                         m_Prefab;
     std::vector<edit::Material>         m_EditMaterials;
     bool                                m_ShowLisence   = false;
+
+    asdx::RefPtr<ID3D12RootSignature>                m_ModelRootSignature;
+    std::vector<ModelPipelineState>                  m_PipelineStates;
+    std::vector<asdx::MaterialSchema::KindDef>       m_Kinds;
 
     //=========================================================================
     // private methods.
@@ -207,6 +260,11 @@ private:
     void LoadMaterial(const char* path, edit::Material& material);
 
     //-------------------------------------------------------------------------
+    //! @brief      マテリアルスキーマを読み込みます.
+    //-------------------------------------------------------------------------
+    bool LoadMaterialSchema(const char* path);
+
+    //-------------------------------------------------------------------------
     //! @brief      モデル情報を描画します.
     //-------------------------------------------------------------------------
     void DrawModelInfo();
@@ -255,4 +313,14 @@ private:
     //! @brief      ライセンス情報を描画します.
     //-------------------------------------------------------------------------
     void DrawLisence();
+
+    //-------------------------------------------------------------------------
+    //! @brief      モデルパイプラインステートを生成します.
+    //-------------------------------------------------------------------------
+    bool CreateModelPipelineState(
+        D3D12_SHADER_BYTECODE           pixelShader,
+        viewer::MaterialBlendState      blendState,
+        viewer::MaterialDepthState      depthState,
+        viewer::MaterialRasterizerState rasterizerState,
+        ModelPipelineState&             result);
 };

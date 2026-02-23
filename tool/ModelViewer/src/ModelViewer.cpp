@@ -43,6 +43,29 @@ enum ROOT_PARAM
     ROOT_PARAM_T3,  // Emissive.
 };
 
+enum MODEL_ROOT_PARAM
+{
+    MODEL_ROOT_PARAM_CBV0,
+    MODEL_ROOT_PARAM_CBV1,
+    MODEL_ROOT_PARAM_CONSTANTS,
+    MODEL_ROOT_PARAM_SRV0,
+    MODEL_ROOT_PARAM_SRV1,
+    MODEL_ROOT_PARAM_SRV2,
+    MODEL_ROOT_PARAM_SRV3,
+    MODEL_ROOT_PARAM_SRV4,
+    MODEL_ROOT_PARAM_SRV5,
+    MODEL_ROOT_PARAM_SRV6,
+    MODEL_ROOT_PARAM_SRV7,
+    MODEL_ROOT_PARAM_SRV8,
+    MODEL_ROOT_PARAM_SRV9,
+    MODEL_ROOT_PARAM_SRV10,
+    MODEL_ROOT_PARAM_SRV11,
+    MODEL_ROOT_PARAM_SRV12,
+    MODEL_ROOT_PARAM_SRV13,
+    MODEL_ROOT_PARAM_SRV14,
+    MODEL_ROOT_PARAM_SRV15,
+};
+
 static const D3D12_INPUT_ELEMENT_DESC InputElements[] = {
     { "POSITION"   , 0, DXGI_FORMAT_R32G32B32_FLOAT   , 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
     { "NORMAL"     , 0, DXGI_FORMAT_R32G32B32_FLOAT   , 1, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
@@ -67,6 +90,81 @@ struct alignas(256) ParamScene
     float           TargetWidth;
     float           TargetHeight;
 };
+
+//-----------------------------------------------------------------------------
+//      ブレンドステート設定を取得します.
+//-----------------------------------------------------------------------------
+D3D12_BLEND_DESC GetBlendDesc(viewer::MaterialBlendState state)
+{
+    switch(state)
+    {
+    case viewer::MaterialBlendState::Opaque:
+    default:
+        return asdx::Preset::Opaque;
+
+    case viewer::MaterialBlendState::AlphaBlend:
+        return asdx::Preset::AlphaBlend;
+
+    case viewer::MaterialBlendState::Additive:
+        return asdx::Preset::Additive;
+
+    case viewer::MaterialBlendState::Subtract:
+        return asdx::Preset::Subtract;
+
+    case viewer::MaterialBlendState::Premultiplied:
+        return asdx::Preset::Premultiplied;
+
+    case viewer::MaterialBlendState::Multiply:
+        return asdx::Preset::Multiply;
+
+    case viewer::MaterialBlendState::Screen:
+        return asdx::Preset::Screen;
+    }
+}
+
+//-----------------------------------------------------------------------------
+//      深度ステート設定を取得します.
+//-----------------------------------------------------------------------------
+D3D12_DEPTH_STENCIL_DESC GetdepthStencilDesc(viewer::MaterialDepthState state)
+{
+    switch(state)
+    {
+    case viewer::MaterialDepthState::ReadWrite:
+    default:
+        return asdx::Preset::DepthReadWrite;
+
+    case viewer::MaterialDepthState::ReadOnly:
+        return asdx::Preset::DepthReadOnly;
+
+    case viewer::MaterialDepthState::WriteOnly:
+        return asdx::Preset::DepthWriteOnly;
+
+    case viewer::MaterialDepthState::None:
+        return asdx::Preset::DepthNone;
+    }
+}
+
+//-----------------------------------------------------------------------------
+//      ラスタライザーステート設定を取得します.
+//-----------------------------------------------------------------------------
+D3D12_RASTERIZER_DESC GetRasterizerDesc(viewer::MaterialRasterizerState state)
+{
+    switch(state)
+    {
+    case viewer::MaterialRasterizerState::CullNone:
+    default:
+        return asdx::Preset::CullNone;
+
+    case viewer::MaterialRasterizerState::CullBack:
+        return asdx::Preset::CullBack;
+
+    case viewer::MaterialRasterizerState::CullFront:
+        return asdx::Preset::CullFront;
+
+    case viewer::MaterialRasterizerState::Wireframe:
+        return asdx::Preset::Wireframe;
+    }
+}
 
 } // namespace
 
@@ -150,6 +248,43 @@ bool ModelViewer::OnInit()
         }
     }
 
+    // モデルルートシグニチャの生成.
+    {
+        D3D12_ROOT_PARAMETER params[19] = {};
+        asdx::InitAsCBV(params[MODEL_ROOT_PARAM_CBV0], 0, D3D12_SHADER_VISIBILITY_ALL);
+        asdx::InitAsCBV(params[MODEL_ROOT_PARAM_CBV1], 1, D3D12_SHADER_VISIBILITY_ALL);
+        asdx::InitAsConstants(params[MODEL_ROOT_PARAM_CONSTANTS], 2, 4, D3D12_SHADER_VISIBILITY_ALL);
+        asdx::InitAsSRV(params[MODEL_ROOT_PARAM_SRV0], 0, D3D12_SHADER_VISIBILITY_ALL);
+        asdx::InitAsSRV(params[MODEL_ROOT_PARAM_SRV1], 1, D3D12_SHADER_VISIBILITY_ALL);
+        asdx::InitAsSRV(params[MODEL_ROOT_PARAM_SRV2], 2, D3D12_SHADER_VISIBILITY_ALL);
+        asdx::InitAsSRV(params[MODEL_ROOT_PARAM_SRV3], 3, D3D12_SHADER_VISIBILITY_ALL);
+        asdx::InitAsSRV(params[MODEL_ROOT_PARAM_SRV4], 4, D3D12_SHADER_VISIBILITY_ALL);
+        asdx::InitAsSRV(params[MODEL_ROOT_PARAM_SRV5], 5, D3D12_SHADER_VISIBILITY_ALL);
+        asdx::InitAsSRV(params[MODEL_ROOT_PARAM_SRV6], 6, D3D12_SHADER_VISIBILITY_ALL);
+        asdx::InitAsSRV(params[MODEL_ROOT_PARAM_SRV7], 7, D3D12_SHADER_VISIBILITY_ALL);
+        asdx::InitAsSRV(params[MODEL_ROOT_PARAM_SRV8], 8, D3D12_SHADER_VISIBILITY_ALL);
+        asdx::InitAsSRV(params[MODEL_ROOT_PARAM_SRV9], 9, D3D12_SHADER_VISIBILITY_ALL);
+        asdx::InitAsSRV(params[MODEL_ROOT_PARAM_SRV10], 10, D3D12_SHADER_VISIBILITY_ALL);
+        asdx::InitAsSRV(params[MODEL_ROOT_PARAM_SRV11], 11, D3D12_SHADER_VISIBILITY_ALL);
+        asdx::InitAsSRV(params[MODEL_ROOT_PARAM_SRV12], 12, D3D12_SHADER_VISIBILITY_ALL);
+        asdx::InitAsSRV(params[MODEL_ROOT_PARAM_SRV13], 13, D3D12_SHADER_VISIBILITY_ALL);
+        asdx::InitAsSRV(params[MODEL_ROOT_PARAM_SRV14], 14, D3D12_SHADER_VISIBILITY_ALL);
+        asdx::InitAsSRV(params[MODEL_ROOT_PARAM_SRV15], 15, D3D12_SHADER_VISIBILITY_ALL);
+
+        D3D12_ROOT_SIGNATURE_DESC desc = {};
+        desc.NumParameters      = _countof(params);
+        desc.pParameters        = params;
+        desc.NumStaticSamplers  = _countof(asdx::Preset::StaticSamplers);
+        desc.pStaticSamplers    = asdx::Preset::StaticSamplers;
+        desc.Flags              = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+
+        if (!asdx::InitRootSignature(pDevice, &desc, m_ModelRootSignature.GetAddress()))
+        {
+            ELOGA("Error : InitRootSignature() Failed.");
+            return false;
+        }
+    }
+
     // パイプラインステートの生成,
     {
         D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = {};
@@ -169,14 +304,14 @@ bool ModelViewer::OnInit()
         desc.SampleDesc.Count               = 1;
         desc.SampleDesc.Quality             = 0;
 
-        if (!m_StaticSolidState.Init(&desc))
+        if (!m_DefaultState.StaticModel.Init(&desc))
         {
             ELOGA("Error : PipelineStateManager::Create() Failed.");
             return false;
         }
 
         desc.RasterizerState = asdx::Preset::Wireframe;
-        if (!m_StaticWireframeState.Init(&desc))
+        if (!m_WireframeState.StaticModel.Init(&desc))
         {
             ELOGA("Error : PipelineStateManager::Create() Failed.");
             return false;
@@ -202,14 +337,14 @@ bool ModelViewer::OnInit()
         desc.SampleDesc.Count               = 1;
         desc.SampleDesc.Quality             = 0;
 
-        if (!m_SkeletalSolidState.Init(&desc))
+        if (!m_DefaultState.SkeletalModel.Init(&desc))
         {
             ELOGA("Error : PipelineStateManager::Create() Failed.");
             return false;
         }
 
         desc.RasterizerState = asdx::Preset::Wireframe;
-        if (!m_SkeletalWireframeState.Init(&desc))
+        if (!m_WireframeState.SkeletalModel.Init(&desc))
         {
             ELOGA("Error : PipelineStateManager::Create() Failed.");
             return false;
@@ -304,13 +439,11 @@ void ModelViewer::OnTerm()
         m_MatrixPalletBuffer[i].Term();
     }
 
-    m_StaticSolidState      .Term();
-    m_StaticWireframeState  .Term();
-
-    m_SkeletalSolidState    .Term();
-    m_SkeletalWireframeState.Term();
+    m_DefaultState  .Reset();
+    m_WireframeState.Reset();
 
     m_RootSignature.Reset();
+    m_ModelRootSignature.Reset();
 
     m_Model.Reset();
 
@@ -446,18 +579,18 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
         if (isSkeletal)
         {
             if (m_EnableWireframe)
-            { m_SkeletalWireframeState.SetState(pCmd); }
+            { m_WireframeState.SkeletalModel.SetState(pCmd); }
             else
-            { m_SkeletalSolidState.SetState(pCmd); }
+            { m_DefaultState.SkeletalModel.SetState(pCmd); }
 
             pCmd->SetGraphicsRootShaderResourceView(ROOT_PARAM_T0, m_MatrixPalletBuffer[idx].GetGpuAddress());
         }
         else
         {
             if (m_EnableWireframe)
-            { m_StaticWireframeState.SetState(pCmd); }
+            { m_WireframeState.StaticModel.SetState(pCmd); }
             else
-            { m_StaticSolidState.SetState(pCmd); }
+            { m_DefaultState.StaticModel.SetState(pCmd); }
         }
 
         pCmd->SetGraphicsRootConstantBufferView(ROOT_PARAM_B0, m_SceneCB[idx].GetGpuAddress());
@@ -766,6 +899,16 @@ void ModelViewer::MenuFile(ID3D12GraphicsCommandList* pCmd)
     // モーションファイルを開く.
     if (ImGui::MenuItem(asdx::ToChar(u8"モーションファイルを開く")))
     { LoadMotion(); }
+
+
+#if 0
+    //if (ImGui::MenuItem(asdx::ToChar(u8"マテリアルスキーマファイルを開く")))
+    //{
+    //    asdx::fs::path path;
+    //    if (asdx::OpenFileDlg("JSONファイル (*.json)\0*.json\0\0", path))
+    //    { LoadMaterialSchema(path.string().c_str()); }
+    //}
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1214,4 +1357,73 @@ void ModelViewer::LoadMaterial(const char* path, edit::Material& material)
         ELOG("Error : MaterialConverter::ReverseConvert() Failed.");
         return;
     }
+}
+
+//-----------------------------------------------------------------------------
+//      モデルパイプラインステートを生成します.
+//-----------------------------------------------------------------------------
+bool ModelViewer::CreateModelPipelineState
+(
+    D3D12_SHADER_BYTECODE           pixelShader,
+    viewer::MaterialBlendState      blendState,
+    viewer::MaterialDepthState      depthState,
+    viewer::MaterialRasterizerState rasterizerState,
+    ModelPipelineState&             result
+)
+{
+    auto pDevice = asdx::GetD3D12Device();
+
+    // スタティック用.
+    {
+        D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = {};
+        desc.pRootSignature                 = m_ModelRootSignature.GetPtr();
+        desc.VS                             = { MeshVS, sizeof(MeshVS) };
+        desc.PS                             = pixelShader;
+        desc.BlendState                     = GetBlendDesc(blendState);
+        desc.SampleMask                     = D3D12_DEFAULT_SAMPLE_MASK;
+        desc.RasterizerState                = GetRasterizerDesc(rasterizerState);
+        desc.DepthStencilState              = GetdepthStencilDesc(depthState);
+        desc.InputLayout.NumElements        = kStaticMeshElementCount;
+        desc.InputLayout.pInputElementDescs = InputElements;
+        desc.PrimitiveTopologyType          = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+        desc.NumRenderTargets               = 1;
+        desc.RTVFormats[0]                  = m_SwapChainFormat;
+        desc.DSVFormat                      = m_DepthStencilFormat;
+        desc.SampleDesc.Count               = 1;
+        desc.SampleDesc.Quality             = 0;
+
+        if (!result.StaticModel.Init(&desc))
+        {
+            ELOG("Error : StaticModel PipelineState Init Failed.");
+            return false;
+        }
+    }
+
+    // スケルタル用.
+    {
+        D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = {};
+        desc.pRootSignature                 = m_ModelRootSignature.GetPtr();
+        desc.VS                             = { ModelVS, sizeof(ModelVS) };
+        desc.PS                             = pixelShader;
+        desc.BlendState                     = GetBlendDesc(blendState);
+        desc.SampleMask                     = D3D12_DEFAULT_SAMPLE_MASK;
+        desc.RasterizerState                = GetRasterizerDesc(rasterizerState);
+        desc.DepthStencilState              = GetdepthStencilDesc(depthState);
+        desc.InputLayout.NumElements        = kSkeletalMeshElementCount;
+        desc.InputLayout.pInputElementDescs = InputElements;
+        desc.PrimitiveTopologyType          = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+        desc.NumRenderTargets               = 1;
+        desc.RTVFormats[0]                  = m_SwapChainFormat;
+        desc.DSVFormat                      = m_DepthStencilFormat;
+        desc.SampleDesc.Count               = 1;
+        desc.SampleDesc.Quality             = 0;
+
+        if (!result.SkeletalModel.Init(&desc))
+        {
+            ELOG("Error : SkeletalModel PipelineState Init Failed.");
+            return false;
+        }
+    }
+
+    return true;
 }

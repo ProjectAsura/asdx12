@@ -2,33 +2,6 @@
 
 namespace asdx.res;
 
-enum MaterialBlendState : ubyte
-{
-    Opaque,
-    AlphaBlend,
-    Additive,
-    Substract,
-    Premultiplied,
-    Multiply,
-    Screen,
-}
-
-enum MaterialDepthState : ubyte
-{
-    ReadWrite,
-    ReadOnly,
-    WriteOnly,
-    None,
-}
-
-enum MaterialRasterizerState : ubyte
-{
-    CullNone,
-    CullBack,
-    CullFront,
-    Wireframe,
-}
-
 table MaterialTexture
 {
     Name    : string (key);
@@ -45,9 +18,6 @@ table MaterialBinary
 {
     Version         : uint;
     Kind            : uint;
-    BlendState      : MaterialBlendState;
-    DepthState      : MaterialDepthState;
-    RasterizerState : MaterialRasterizerState;
     Params          : [MaterialParameter];
     Textures        : [MaterialTexture];
 }

@@ -9,7 +9,7 @@
 //-----------------------------------------------------------------------------
 #include <cassert>
 #include <string>
-#include <map>
+#include <unordered_map>
 #include <fnd/asdxLogger.h>
 #include <gfx/asdxMaterial.h>
 #include <gfx/asdxDevice.h>
@@ -18,40 +18,10 @@
 
 namespace {
 
-///////////////////////////////////////////////////////////////////////////////
-// ParamDef structure
-///////////////////////////////////////////////////////////////////////////////
-struct ParamDef
-{
-    std::string     Name;
-    uint32_t        Offset;
-    float           Default;
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// TextureDef structure
-///////////////////////////////////////////////////////////////////////////////
-struct TextureDef
-{
-    std::string     Name;
-    uint32_t        Index;
-    std::string     Default;
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// KindDef structure
-///////////////////////////////////////////////////////////////////////////////
-struct KindDef
-{
-    uint32_t                BufferSize;
-    std::vector<ParamDef>   Params;
-    std::vector<TextureDef> Textures;
-};
-
 //-----------------------------------------------------------------------------
 // Global Variables.
 //-----------------------------------------------------------------------------
-std::map<uint32_t, KindDef> g_KindDefs;
+std::unordered_map<uint32_t, asdx::MaterialSchema::KindDef> g_KindDefs;
 
 } // namespace
 
@@ -65,33 +35,13 @@ namespace asdx {
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool MaterialSchema::Init(std::span<KindDesc> descs)
+bool MaterialSchema::Init(std::span<MaterialSchema::KindDef> kinds)
 {
-    if (descs.empty())
+    if (kinds.empty())
         return false;
 
-    for(auto& desc : descs)
-    {
-        KindDef def = {};
-        def.BufferSize = desc.BufferSize;
-        def.Params.resize(desc.Params.size());
-        for(auto i=0u; i<desc.Params.size(); ++i)
-        {
-            def.Params[i].Name    = desc.Params[i].Name;
-            def.Params[i].Offset  = desc.Params[i].Offset;
-            def.Params[i].Default = desc.Params[i].Default;
-        }
-
-        def.Textures.resize(desc.Textures.size());
-        for(auto i=0u; i<desc.Textures.size(); ++i)
-        {
-            def.Textures[i].Name    = desc.Textures[i].Name;
-            def.Textures[i].Index   = desc.Textures[i].Index;
-            def.Textures[i].Default = desc.Textures[i].Default;
-        }
-
-        g_KindDefs[desc.Kind] = def;
-    }
+    for(auto& def : kinds)
+        g_KindDefs[def.KindId] = def;
 
     return true;
 }
@@ -130,10 +80,7 @@ Material::~Material()
 //-----------------------------------------------------------------------------
 bool Material::Init(const MaterialBinary& binary)
 {
-    m_Kind              = binary.GetKind();
-    m_BlendState        = binary.GetBlendState();
-    m_DepthState        = binary.GetDepthState();
-    m_RasterizerState   = binary.GetRasterizerState();
+    m_Kind = binary.GetKind();
 
     auto itr = g_KindDefs.find(m_Kind);
     if (itr == g_KindDefs.end())
@@ -193,10 +140,7 @@ void Material::Term()
     m_Textures.clear();
     m_Textures.shrink_to_fit();
 
-    m_Kind            = 0;
-    m_BlendState      = MaterialBlendState::Opaque;
-    m_DepthState      = MaterialDepthState::ReadWrite;
-    m_RasterizerState = MaterialRasterizerState::CullNone;
+    m_Kind = 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -226,24 +170,6 @@ uint32_t Material::GetRefCount() const
 //-----------------------------------------------------------------------------
 uint32_t Material::GetKind() const
 { return m_Kind; }
-
-//-----------------------------------------------------------------------------
-//      ブレンドステートを取得します.
-//-----------------------------------------------------------------------------
-MaterialBlendState Material::GetBlendState() const
-{ return m_BlendState; }
-
-//-----------------------------------------------------------------------------
-//      深度ステートを取得します.
-//-----------------------------------------------------------------------------
-MaterialDepthState Material::GetDepthState() const
-{ return m_DepthState; }
-
-//-----------------------------------------------------------------------------
-//      ラスタライザーステートを取得します.
-//-----------------------------------------------------------------------------
-MaterialRasterizerState Material::GetRasterizerState() const
-{ return m_RasterizerState; }
 
 //-----------------------------------------------------------------------------
 //      定数バッファを取得します.

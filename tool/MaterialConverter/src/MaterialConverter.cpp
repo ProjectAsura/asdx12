@@ -114,9 +114,6 @@ bool MaterialConverter::Convert(const edit::Material& material, std::vector<uint
         builder,
         CURRENT_VERSION,
         material.Kind,
-        asdx::res::MaterialBlendState(material.BlendState),
-        asdx::res::MaterialDepthState(material.DepthState),
-        asdx::res::MaterialRasterizerState(material.RasterizerState),
         &params,
         &textures);
 
@@ -141,10 +138,7 @@ bool MaterialConverter::ReverseConvert(const std::vector<uint8_t>& binary, edit:
 
     auto matBin = asdx::res::GetMaterialBinary(binary.data());
 
-    material.Kind            = matBin->Kind();
-    material.BlendState      = edit::BlendState(matBin->BlendState());
-    material.DepthState      = edit::DepthState(matBin->DepthState());
-    material.RasterizerState = edit::RasterizerState(matBin->RasterizerState());
+    material.Kind = matBin->Kind();
 
     auto params = matBin->Params();
     if (params != nullptr)

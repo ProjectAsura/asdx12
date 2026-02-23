@@ -9,6 +9,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <cstdint>
+#include <string>
 #include <vector>
 #include <span>
 #include <gfx/asdxBuffer.h>
@@ -27,9 +28,9 @@ public:
     ///////////////////////////////////////////////////////////////////////////
     // Param structure
     ///////////////////////////////////////////////////////////////////////////
-    struct Param
+    struct ParamDef
     {
-        const char*     Name;       //!< パラメータ名.
+        std::string     Name;       //!< パラメータ名.
         uint32_t        Offset;     //!< バッファオフセット.
         float           Default;    //!< デフォルト値.
     };
@@ -37,32 +38,33 @@ public:
     ///////////////////////////////////////////////////////////////////////////
     // Texture structure
     ///////////////////////////////////////////////////////////////////////////
-    struct Texture
+    struct TextureDef
     {
-        const char*     Name;       //!< テクスチャ名.
+        std::string     Name;       //!< テクスチャ名.
         uint32_t        Index;      //!< テクスチャインデックス.
-        const char*     Default;    //!< デフォルトファイルパス.
+        std::string     Default;    //!< デフォルトファイルパス.
     };
 
     ///////////////////////////////////////////////////////////////////////////
-    // KindDesc structure
+    // KindDef structure
     ///////////////////////////////////////////////////////////////////////////
-    struct KindDesc
+    struct KindDef
     {
-        uint32_t             Kind;       //!< 種別.
-        uint32_t             BufferSize; //!< 定数バッファサイズ.
-        std::span<Param>     Params;     //!< パラメータ定義.
-        std::span<Texture>   Textures;   //!< テクスチャ定義.
+        std::string             KindName;   //!< 種別名.
+        uint32_t                KindId;     //!< 種別ID.
+        uint32_t                BufferSize; //!< 定数バッファサイズ.
+        std::vector<ParamDef>   Params;     //!< パラメータ定義.
+        std::vector<TextureDef> Textures;   //!< テクスチャ定義.
     };
 
     //-------------------------------------------------------------------------
     //! @brief      初期化処理を行います.
     //! 
-    //! @param[in]      descs       マテリアル種別ごとの設定.
+    //! @param[in]      kinds       マテリアル種別ごとの設定.
     //! @retval true    初期化に成功.
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
-    static bool Init(std::span<KindDesc> descs);
+    static bool Init(std::span<KindDef> kinds);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.
@@ -135,27 +137,6 @@ public:
     uint32_t GetKind() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      ブレンドステートを取得します.
-    //! 
-    //! @return     ブレンドステートを返却します.
-    //-------------------------------------------------------------------------
-    MaterialBlendState GetBlendState() const;
-
-    //-------------------------------------------------------------------------
-    //! @brief      深度ステートを取得します.
-    //! 
-    //! @return     深度ステートを返却します.
-    //-------------------------------------------------------------------------
-    MaterialDepthState GetDepthState() const;
-
-    //-------------------------------------------------------------------------
-    //! @brief      ラスタライザーステートを取得します.
-    //! 
-    //! @return     ラスタライザーステートを返却します.
-    //-------------------------------------------------------------------------
-    MaterialRasterizerState GetRasterizerState() const;
-
-    //-------------------------------------------------------------------------
     //! @brief      定数バッファを取得します.
     //! 
     //! @return     定数バッファを返却します.
@@ -213,9 +194,6 @@ private:
     //=========================================================================
     std::atomic<uint32_t>       m_RefCount          = {};   //!< 参照カウントです.
     uint32_t                    m_Kind              = 0;    //!< マテリアル種別.
-    MaterialBlendState          m_BlendState        = {};   //!< ブレンドステート.
-    MaterialDepthState          m_DepthState        = {};   //!< 深度ステート.
-    MaterialRasterizerState     m_RasterizerState   = {};   //!< ラスタライザーステート.
     ConstantBuffer              m_Buffer            = {};   //!< 定数バッファ.
     std::vector<TextureHolder>  m_Textures          = {};   //!< テクスチャリスト.
 

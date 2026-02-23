@@ -28,30 +28,6 @@ const char* kDrawModes[] = {
     asdx::ToChar(u8"ボーン重み"),
 };
 
-const char* kBlendStates[] = {
-    "Opaque",
-    "AlphaBlend",
-    "Additive",
-    "Subtract",
-    "Premultiplied",
-    "Multiply",
-    "Screen",
-};
-
-const char* kDepthStates[] = {
-    "ReadWrite",
-    "ReadOnly",
-    "WriteOnly",
-    "None",
-};
-
-const char* kRasterizerState[] = {
-    "CullNone",
-    "CullBack",
-    "CullFront",
-    "Wireframe",
-};
-
 //-----------------------------------------------------------------------------
 //      コンボボックスを描画します.
 //-----------------------------------------------------------------------------
@@ -452,24 +428,6 @@ void ModelViewer::DrawMaterialTab()
             if (ImGui::InputInt(asdx::ToChar(u8"種別"), &kind))
             {
                 editMat.Kind = uint32_t(kind);
-            }
-
-            int bs = int(m_EditMaterials[i].BlendState);
-            if (ImGui::Combo(asdx::ToChar(u8"ブレンドステート"), &bs, kBlendStates, _countof(kBlendStates)))
-            {
-                editMat.BlendState = edit::BlendState(bs);
-            }
-
-            int ds = int(m_EditMaterials[i].DepthState);
-            if (ImGui::Combo(asdx::ToChar(u8"深度ステート"), &ds, kDepthStates, _countof(kDepthStates)))
-            {
-                editMat.DepthState = edit::DepthState(ds);
-            }
-
-            int rs = int(m_EditMaterials[i].RasterizerState);
-            if (ImGui::Combo(asdx::ToChar(u8"ラスタライザーステート"), &rs, kRasterizerState, _countof(kRasterizerState)))
-            {
-                editMat.RasterizerState = edit::RasterizerState(rs);
             }
 
             for(auto itr = editMat.Params.begin(); itr != editMat.Params.end();)
