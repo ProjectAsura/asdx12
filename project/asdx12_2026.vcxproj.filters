@@ -393,6 +393,9 @@
     <ClCompile Include="..\src\fnd\asdxJsonWriter.cpp">
       <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\gfx\asdxBackground.cpp">
+      <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\edit\asdxEditParam.h">
@@ -704,6 +707,9 @@
     <ClInclude Include="..\include\fnd\asdxJsonWriter.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\gfx\asdxBackground.h">
+      <Filter>ヘッダー ファイル\gfx</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\res\shaders\asdxBRDF.hlsli">
@@ -789,18 +795,6 @@
     <FxCompile Include="..\res\shaders\asdxShapeVS.hlsl">
       <Filter>リソース ファイル\shaders</Filter>
     </FxCompile>
-    <FxCompile Include="..\res\shaders\asdxSkyBoxPS.hlsl">
-      <Filter>リソース ファイル\shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="..\res\shaders\asdxSkyBoxVS.hlsl">
-      <Filter>リソース ファイル\shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="..\res\shaders\asdxSkySpherePS.hlsl">
-      <Filter>リソース ファイル\shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="..\res\shaders\asdxSkySphereVS.hlsl">
-      <Filter>リソース ファイル\shaders</Filter>
-    </FxCompile>
     <FxCompile Include="..\res\shaders\asdxSpritePS.hlsl">
       <Filter>リソース ファイル\shaders</Filter>
     </FxCompile>
@@ -814,6 +808,12 @@
       <Filter>リソース ファイル\shaders</Filter>
     </FxCompile>
     <FxCompile Include="..\res\shaders\asdxLinePS.hlsl">
+      <Filter>リソース ファイル\shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxBackgroundCubeCS.hlsl">
+      <Filter>リソース ファイル\shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxBackgroundSphereCS.hlsl">
       <Filter>リソース ファイル\shaders</Filter>
     </FxCompile>
   </ItemGroup>

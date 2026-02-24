@@ -10,6 +10,7 @@
 //-----------------------------------------------------------------------------
 #include <d3d12.h>
 #include <string>
+#include <vector>
 #include <fnd/asdxRef.h>
 
 

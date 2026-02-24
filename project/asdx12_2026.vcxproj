@@ -239,6 +239,7 @@
     <ClCompile Include="..\src\fw\asdxAppCamera.cpp" />
     <ClCompile Include="..\src\fw\asdxSound.cpp" />
     <ClCompile Include="..\src\gfx\asdxAllocationHolder.cpp" />
+    <ClCompile Include="..\src\gfx\asdxBackground.cpp" />
     <ClCompile Include="..\src\gfx\asdxBuffer.cpp" />
     <ClCompile Include="..\src\gfx\asdxCamera.cpp" />
     <ClCompile Include="..\src\gfx\asdxCommandList.cpp" />
@@ -342,6 +343,7 @@
     <ClInclude Include="..\include\fw\asdxAppCamera.h" />
     <ClInclude Include="..\include\fw\asdxSound.h" />
     <ClInclude Include="..\include\gfx\asdxAllocationHolder.h" />
+    <ClInclude Include="..\include\gfx\asdxBackground.h" />
     <ClInclude Include="..\include\gfx\asdxBuffer.h" />
     <ClInclude Include="..\include\gfx\asdxCamera.h" />
     <ClInclude Include="..\include\gfx\asdxCommandList.h" />
@@ -397,6 +399,18 @@
     <None Include="..\res\shaders\asdxWaveHelper.hlsli" />
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="..\res\shaders\asdxBackgroundCubeCS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMT|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMD|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMT|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMD|x64'">Compute</ShaderType>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxBackgroundSphereCS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMT|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMD|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMT|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMD|x64'">Compute</ShaderType>
+    </FxCompile>
     <FxCompile Include="..\res\shaders\asdxColorFilterCS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMT|x64'">Compute</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMT|x64'">Compute</ShaderType>
@@ -470,30 +484,6 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMD|x64'">Pixel</ShaderType>
     </FxCompile>
     <FxCompile Include="..\res\shaders\asdxShapeVS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMT|x64'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMT|x64'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMD|x64'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMD|x64'">Vertex</ShaderType>
-    </FxCompile>
-    <FxCompile Include="..\res\shaders\asdxSkyBoxPS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMT|x64'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMT|x64'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMD|x64'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMD|x64'">Pixel</ShaderType>
-    </FxCompile>
-    <FxCompile Include="..\res\shaders\asdxSkyBoxVS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMT|x64'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMT|x64'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMD|x64'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMD|x64'">Vertex</ShaderType>
-    </FxCompile>
-    <FxCompile Include="..\res\shaders\asdxSkySpherePS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMT|x64'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMT|x64'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMD|x64'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMD|x64'">Pixel</ShaderType>
-    </FxCompile>
-    <FxCompile Include="..\res\shaders\asdxSkySphereVS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMT|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMT|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMD|x64'">Vertex</ShaderType>
