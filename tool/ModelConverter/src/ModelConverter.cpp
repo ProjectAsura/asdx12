@@ -10,6 +10,7 @@
 #include <cstdio>
 #include <map>
 #include <fnd/asdxMath.h>
+#include <fnd/asdxPath.h>
 #include <ModelConverter.h>
 #include <mikktspace.h>
 #include <assimp/Importer.hpp>
@@ -565,17 +566,160 @@ bool ModelConverter::Convert(const std::string& path, std::vector<uint8_t>& bina
     }
 
     // マテリアルデータを変換.
-    std::vector<flatbuffers::Offset<flatbuffers::String>> materials;
+    std::vector<flatbuffers::Offset<asdx::res::Material>> materials;
     materials.reserve(pScene->mNumMaterials);
     for(auto i=0u; i<pScene->mNumMaterials; ++i)
     {
         const auto srcMat = pScene->mMaterials[i];
         std::string name = srcMat->GetName().C_Str();
         if (name.empty() || name == "")
+        { name = "material__" + std::to_string(i); }
+
+        std::string baseColorMap;
+        std::string normalMap;
+        std::string ormMap;
+        std::string emissiveMap;
+
+        asdx::Vector3 baseColorFactor = asdx::Vector3(1.0f, 1.0f, 1.0f);
+        asdx::Vector3 emissiveFactor  = asdx::Vector3(0.0f, 0.0f, 0.0f);
+        float alpha                   = 1.0f;
+        float occulusionFactor        = 1.0f;
+        float roughnessFactor         = 1.0f;
+        float metalnessFactor         = 1.0f;
+        float ior                     = 1.0f;
+
+        int shadingModel = 0;
+        srcMat->Get(AI_MATKEY_SHADING_MODEL, shadingModel);
+
+        // 法線マップ.
         {
-            name = "Material" + std::to_string(i);
+            aiString mapPath;
+            if (srcMat->GetTexture(aiTextureType_NORMALS, 0, &mapPath) == aiReturn_SUCCESS)
+            {
+                asdx::fs::path p = mapPath.C_Str();
+                normalMap = "textures\\" + p.filename().replace_extension(".txb").string();
+            }
         }
-        materials.push_back(builder.CreateString(name.c_str()));
+
+        // エミッシブマップ.
+        {
+            aiString mapPath;
+            if (srcMat->GetTexture(aiTextureType_EMISSIVE, 0, &mapPath) == aiReturn_SUCCESS)
+            {
+                asdx::fs::path p = mapPath.C_Str();
+                emissiveMap = "textures\\" + p.filename().replace_extension(".txb").string();
+            }
+        }
+
+        // 不透明度.
+        {
+            float value;
+            if (srcMat->Get(AI_MATKEY_OPACITY, value) == aiReturn_SUCCESS)
+            { alpha = value; }
+        }
+
+        // 屈折率.
+        {
+            float value;
+            if (srcMat->Get(AI_MATKEY_REFRACTI, value) == aiReturn_SUCCESS)
+            { ior = value; }
+        }
+
+        // PBRモデルの場合.
+        if (shadingModel == aiShadingMode_PBR_BRDF)
+        {
+            // ベースカラーマップ.
+            {
+                aiString mapPath;
+                if (srcMat->GetTexture(aiTextureType_BASE_COLOR, 0, &mapPath) == aiReturn_SUCCESS)
+                {
+                    asdx::fs::path p = mapPath.C_Str();
+                    baseColorMap = "textures\\" + p.filename().replace_extension(".txb").string();
+                }
+            }
+
+            // Occlusion/Roughness/Metalnessマップ.
+            {
+                aiString mapPath;
+                if (srcMat->GetTexture(aiTextureType_GLTF_METALLIC_ROUGHNESS, 0, &mapPath) == aiReturn_SUCCESS)
+                {
+                    asdx::fs::path p = mapPath.C_Str();
+                    ormMap = "textures\\" + p.filename().replace_extension(".txb").string();
+                }
+            }
+
+            // ベースカラーファクター.
+            {
+                aiVector3f value;
+                if (srcMat->Get(AI_MATKEY_BASE_COLOR, value) == aiReturn_SUCCESS)
+                {
+                    baseColorFactor.x = value.x;
+                    baseColorFactor.y = value.y;
+                    baseColorFactor.z = value.z;
+                }
+            }
+
+            // ラフネスファクター.
+            {
+                float value;
+                if (srcMat->Get(AI_MATKEY_ROUGHNESS_FACTOR, value) == aiReturn_SUCCESS)
+                {
+                    roughnessFactor = value;
+                }
+            }
+
+            // メタルネスファクター
+            {
+                float value;
+                if (srcMat->Get(AI_MATKEY_METALLIC_FACTOR, value) == aiReturn_SUCCESS)
+                {
+                    metalnessFactor = value;
+                }
+            }
+        }
+        else
+        {
+            // ディフューズカラーマップ.
+            {
+                aiString mapPath;
+                if (srcMat->GetTexture(aiTextureType_DIFFUSE, 0, &mapPath) == aiReturn_SUCCESS)
+                {
+                    asdx::fs::path p = mapPath.C_Str();
+                    baseColorMap = "textures\\" + p.filename().replace_extension(".txb").string();
+                }
+            }
+
+            // ディフューズカラー.
+            {
+                aiVector3f value;
+                if (srcMat->Get(AI_MATKEY_COLOR_DIFFUSE, value) == aiReturn_SUCCESS)
+                {
+                    baseColorFactor.x = value.x;
+                    baseColorFactor.y = value.y;
+                    baseColorFactor.z = value.z;
+                }
+            }
+        }
+
+        asdx::res::Float3 bf(baseColorFactor.x, baseColorFactor.y, baseColorFactor.z);
+        asdx::res::Float3 ef(emissiveFactor.x, emissiveFactor.y, emissiveFactor.z);
+
+        auto dstMat = asdx::res::CreateMaterialDirect(
+            builder,
+            name.c_str(),
+            &bf,
+            alpha,
+            occulusionFactor,
+            roughnessFactor,
+            metalnessFactor,
+            ior,
+            &ef,
+            baseColorMap.c_str(),
+            normalMap.c_str(),
+            ormMap.c_str(),
+            emissiveMap.c_str());
+
+        materials.emplace_back(dstMat);
     }
 
     auto sphere = asdx::res::BoundingSphere(asdx::res::Float3(bounds.Center.x, bounds.Center.y, bounds.Center.z), bounds.Radius);
@@ -636,8 +780,95 @@ bool ModelConverter::ReverseConvert(const std::vector<uint8_t>& binary, const ch
             auto srcMat = materials->Get(i);
             auto dstMat = new aiMaterial();
 
-            aiString name(srcMat->str());
-            dstMat->AddProperty(&name, AI_MATKEY_NAME);
+            // マテリアル名.
+            {
+                aiString name(srcMat->Name()->c_str());
+                dstMat->AddProperty(&name, AI_MATKEY_NAME);
+            }
+
+            // シェーディングモデル.
+            {
+                int value = aiShadingMode_PBR_BRDF;
+                dstMat->AddProperty(&value, 1, AI_MATKEY_SHADING_MODEL); 
+            }
+
+            // ベースカラーファクター.
+            {
+                auto bc = srcMat->BaseColorFactor();
+                aiColor4D value(bc->X(), bc->Y(), bc->Z(), 1.0f);
+                dstMat->AddProperty(&value, 1, AI_MATKEY_BASE_COLOR);
+            }
+
+            // アルファ.
+            {
+                auto alpha = srcMat->Alpha();
+                dstMat->AddProperty(&alpha, 1, AI_MATKEY_OPACITY);
+            }
+
+            // 屈折率.
+            {
+                auto ior = srcMat->Ior();
+                dstMat->AddProperty(&ior, 1, AI_MATKEY_REFRACTI);
+            }
+
+            // ラフネスファクター.
+            {
+                auto roughness = srcMat->RoughnessFactor();
+                dstMat->AddProperty(&roughness, 1, AI_MATKEY_ROUGHNESS_FACTOR);
+            }
+
+            // メタルネスファクター.
+            {
+                auto metalness = srcMat->MetalnessFactor();
+                dstMat->AddProperty(&metalness, 1, AI_MATKEY_METALLIC_FACTOR);
+            }
+
+            // エミッシブファクター.
+            {
+                auto emissive = srcMat->EmissiveFactor();
+                aiColor3D value(emissive->X(), emissive->Y(), emissive->Z());
+                dstMat->AddProperty(&value, 1, AI_MATKEY_COLOR_EMISSIVE);
+            }
+
+            // ベースカラーマップ.
+            {
+                auto mapPath = srcMat->BaseColorMap();
+                if (mapPath != nullptr)
+                {
+                    aiString value(mapPath->c_str());
+                    dstMat->AddProperty(&value, AI_MATKEY_TEXTURE(aiTextureType_BASE_COLOR, 0));
+                }
+            }
+
+            // 法線マップ.
+            {
+                auto mapPath = srcMat->NormalMap();
+                if (mapPath != nullptr)
+                {
+                    aiString value(mapPath->c_str());
+                    dstMat->AddProperty(&value, AI_MATKEY_TEXTURE(aiTextureType_NORMALS, 0));
+                }
+            }
+
+            // Occlusion/Roughness/Metalnessマップ.
+            {
+                auto mapPath = srcMat->OrmMap();
+                if (mapPath != nullptr)
+                {
+                    aiString value(mapPath->c_str());
+                    dstMat->AddProperty(&value, AI_MATKEY_TEXTURE(aiTextureType_GLTF_METALLIC_ROUGHNESS, 0));
+                }
+            }
+
+            // エミッシブマップ.
+            {
+                auto mapPath = srcMat->EmissiveMap();
+                if (mapPath != nullptr)
+                {
+                    aiString value(mapPath->c_str());
+                    dstMat->AddProperty(&value, AI_MATKEY_TEXTURE(aiTextureType_EMISSIVE, 0));
+                }
+            }
 
             scene.mMaterials[i] = dstMat;
         }

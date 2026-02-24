@@ -43,6 +43,15 @@ bool TextureHolder::IsValid() const
 { return (m_pTexture != nullptr) && (m_Hash != 0); }
 
 //-----------------------------------------------------------------------------
+//      リソース設定を取得します.
+//-----------------------------------------------------------------------------
+D3D12_RESOURCE_DESC TextureHolder::GetDesc() const
+{
+    assert(m_pTexture != nullptr);
+    return m_pTexture->GetDesc();
+}
+
+//-----------------------------------------------------------------------------
 //      バインドレスインデックスを取得します.
 //-----------------------------------------------------------------------------
 uint32_t TextureHolder::GetBindlessIndex() const
@@ -129,7 +138,8 @@ bool TextureManager::Init()
             return false;
         }
 
-        // NOTE: コマンドはオープンしっぱなしのままでいい.
+        // いったん閉じておく.
+        m_CmdList[i]->Close();
     }
 
     // バッファ番号初期化.
@@ -137,6 +147,422 @@ bool TextureManager::Init()
 
     // 初期化済みフラグを立てる.
     m_Initialized = true;
+
+    // コマンドリストの記録を開始しておく.
+    m_CmdList[m_BufferIndex]->Reset(m_CmdAllocator[m_BufferIndex].GetPtr(), nullptr);
+
+    // Base Color Map.
+    {        
+        std::vector<uint8_t> pixels;
+        pixels.resize(32 * 32* 4);
+
+        auto idx = 0u;
+        for(auto i=0; i<32; ++i)
+        {
+            for(auto j=0; j<32; ++j)
+            {
+                // 黒
+                if ((i < 16 && j < 16) || (i >= 16 && j >= 16))
+                {
+                    pixels[idx + 0] = 64;
+                    pixels[idx + 1] = 64;
+                    pixels[idx + 2] = 64;
+                    pixels[idx + 3] = 255;
+                }
+                // 白.
+                else
+                {
+                    pixels[idx + 0] = 128;
+                    pixels[idx + 1] = 128;
+                    pixels[idx + 2] = 128;
+                    pixels[idx + 3] = 255;
+                }
+                idx += 4;
+            }
+        }
+
+        ResTexture res = {};
+        res.Dimension                   = TEXTURE_DIMENSION_2D;
+        res.Width                       = 32;
+        res.Height                      = 32;
+        res.DepthOrArraySize            = 1;
+        res.Format                      = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+        res.MipLevels                   = 1;
+        res.SubResourceCount            = 1;
+        res.SubResources[0].Width       = 32;
+        res.SubResources[0].Height      = 32;
+        res.SubResources[0].RowPitch    = 32 * 4;
+        res.SubResources[0].SlicePitch  = 32 * 32 * 4;
+        res.SubResources[0].pPixels     = pixels.data();
+
+        Texture* pTexture = nullptr;
+        bool ret = false;
+        if (asdx::IsSupportGpuUploadHeap())
+            ret = Texture::Create(res, &pTexture);
+        else
+            ret = Texture::Create(m_CmdList[m_BufferIndex].GetPtr(), res, &pTexture);
+
+        if (ret)
+        {
+            auto hash = CalcHash("default.BaseColor");
+            pTexture->SetName(L"default.BaseColor");
+
+            // テクスチャ登録.
+            m_Textures[hash] = pTexture;
+        }
+    }
+
+    // Normal Map.
+    {
+        std::vector<uint8_t> pixels;
+        pixels.resize(32 * 32* 4);
+
+        auto idx = 0u;
+        for(auto i=0; i<32; ++i)
+        {
+            for(auto j=0; j<32; ++j)
+            {
+                {
+                    pixels[idx + 0] = 128;
+                    pixels[idx + 1] = 128;
+                    pixels[idx + 2] = 255;
+                    pixels[idx + 3] = 255;
+                }
+                idx += 4;
+            }
+        }
+
+        ResTexture res = {};
+        res.Dimension                   = TEXTURE_DIMENSION_2D;
+        res.Width                       = 32;
+        res.Height                      = 32;
+        res.DepthOrArraySize            = 1;
+        res.Format                      = DXGI_FORMAT_R8G8B8A8_UNORM;
+        res.MipLevels                   = 1;
+        res.SubResourceCount            = 1;
+        res.SubResources[0].Width       = 32;
+        res.SubResources[0].Height      = 32;
+        res.SubResources[0].RowPitch    = 32 * 4;
+        res.SubResources[0].SlicePitch  = 32 * 32 * 4;
+        res.SubResources[0].pPixels     = pixels.data();
+
+        Texture* pTexture = nullptr;
+        bool ret = false;
+        if (asdx::IsSupportGpuUploadHeap())
+            ret = Texture::Create(res, &pTexture);
+        else
+            ret = Texture::Create(m_CmdList[m_BufferIndex].GetPtr(), res, &pTexture);
+
+        if (ret)
+        {
+            auto hash = CalcHash("default.Normal");
+            pTexture->SetName(L"default.Normal");
+
+            // テクスチャ登録.
+            m_Textures[hash] = pTexture;
+        }
+        assert(ret);
+    }
+
+    // Occlusion/Roughness/Metalness
+    {
+        std::vector<uint8_t> pixels;
+        pixels.resize(32 * 32* 4);
+
+        auto idx = 0;
+        for(auto i=0; i<32; ++i)
+        {
+            for(auto j=0; j<32; ++j)
+            {
+                pixels[idx + 0] = 255;     // Occlusion
+                pixels[idx + 1] = 128;     // Roughness
+                pixels[idx + 2] = 0;       // Metallic
+                pixels[idx + 3] = 255;
+                idx += 4;
+            }
+        }
+
+        ResTexture res = {};
+        res.Dimension                   = TEXTURE_DIMENSION_2D;
+        res.Width                       = 32;
+        res.Height                      = 32;
+        res.DepthOrArraySize            = 1;
+        res.Format                      = DXGI_FORMAT_R8G8B8A8_UNORM;
+        res.MipLevels                   = 1;
+        res.SubResourceCount            = 1;
+        res.SubResources[0].Width       = 32;
+        res.SubResources[0].Height      = 32;
+        res.SubResources[0].RowPitch    = 32 * 4;
+        res.SubResources[0].SlicePitch  = 32 * 32 * 4;
+        res.SubResources[0].pPixels     = pixels.data();
+
+        Texture* pTexture = nullptr;
+        bool ret = false;
+        if (asdx::IsSupportGpuUploadHeap())
+            ret = Texture::Create(res, &pTexture);
+        else
+            ret = Texture::Create(m_CmdList[m_BufferIndex].GetPtr(), res, &pTexture);
+
+        if (ret)
+        {
+            auto hash = CalcHash("default.Orm");
+            pTexture->SetName(L"default.Orm");
+
+            // テクスチャ登録.
+            m_Textures[hash] = pTexture;
+        }
+        assert(ret);
+    }
+
+    // Transparent Black.
+    {
+        std::vector<uint8_t> pixels;
+        pixels.resize(32 * 32* 4);
+
+        auto idx = 0;
+        for(auto i=0; i<32; ++i)
+        {
+            for(auto j=0; j<32; ++j)
+            {
+                pixels[idx + 0] = 0;
+                pixels[idx + 1] = 0;
+                pixels[idx + 2] = 0;
+                pixels[idx + 3] = 0;
+                idx += 4;
+            }
+        }
+
+        ResTexture res = {};
+        res.Dimension                   = TEXTURE_DIMENSION_2D;
+        res.Width                       = 32;
+        res.Height                      = 32;
+        res.DepthOrArraySize            = 1;
+        res.Format                      = DXGI_FORMAT_R8G8B8A8_UNORM;
+        res.MipLevels                   = 1;
+        res.SubResourceCount            = 1;
+        res.SubResources[0].Width       = 32;
+        res.SubResources[0].Height      = 32;
+        res.SubResources[0].RowPitch    = 32 * 4;
+        res.SubResources[0].SlicePitch  = 32 * 32 * 4;
+        res.SubResources[0].pPixels     = pixels.data();
+
+        Texture* pTexture = nullptr;
+        bool ret = false;
+        if (asdx::IsSupportGpuUploadHeap())
+            ret = Texture::Create(res, &pTexture);
+        else
+            ret = Texture::Create(m_CmdList[m_BufferIndex].GetPtr(), res, &pTexture);
+
+        if (ret)
+        {
+            auto hash = CalcHash("default.TransparentBlack");
+            pTexture->SetName(L"default.TransparentBlack");
+
+            // テクスチャ登録.
+            m_Textures[hash] = pTexture;
+        }
+        assert(ret);
+    }
+
+    // Opaque Black.
+    {
+        std::vector<uint8_t> pixels;
+        pixels.resize(32 * 32* 4);
+
+        auto idx = 0;
+        for(auto i=0; i<32; ++i)
+        {
+            for(auto j=0; j<32; ++j)
+            {
+                pixels[idx + 0] = 0;
+                pixels[idx + 1] = 0;
+                pixels[idx + 2] = 0;
+                pixels[idx + 3] = 255;
+                idx += 4;
+            }
+        }
+
+        ResTexture res = {};
+        res.Dimension                   = TEXTURE_DIMENSION_2D;
+        res.Width                       = 32;
+        res.Height                      = 32;
+        res.DepthOrArraySize            = 1;
+        res.Format                      = DXGI_FORMAT_R8G8B8A8_UNORM;
+        res.MipLevels                   = 1;
+        res.SubResourceCount            = 1;
+        res.SubResources[0].Width       = 32;
+        res.SubResources[0].Height      = 32;
+        res.SubResources[0].RowPitch    = 32 * 4;
+        res.SubResources[0].SlicePitch  = 32 * 32 * 4;
+        res.SubResources[0].pPixels     = pixels.data();
+
+        Texture* pTexture = nullptr;
+        bool ret = false;
+        if (asdx::IsSupportGpuUploadHeap())
+            ret = Texture::Create(res, &pTexture);
+        else
+            ret = Texture::Create(m_CmdList[m_BufferIndex].GetPtr(), res, &pTexture);
+
+        if (ret)
+        {
+            auto hash = CalcHash("default.OpaqueBlack");
+            pTexture->SetName(L"default.OpaqueBlack");
+
+            // テクスチャ登録.
+            m_Textures[hash] = pTexture;
+        }
+        assert(ret);
+    }
+
+    // Transparent White.
+    {
+        std::vector<uint8_t> pixels;
+        pixels.resize(32 * 32* 4);
+
+        auto idx = 0;
+        for(auto i=0; i<32; ++i)
+        {
+            for(auto j=0; j<32; ++j)
+            {
+                pixels[idx + 0] = 255;
+                pixels[idx + 1] = 255;
+                pixels[idx + 2] = 255;
+                pixels[idx + 3] = 0;
+                idx += 4;
+            }
+        }
+
+        ResTexture res = {};
+        res.Dimension                   = TEXTURE_DIMENSION_2D;
+        res.Width                       = 32;
+        res.Height                      = 32;
+        res.DepthOrArraySize            = 1;
+        res.Format                      = DXGI_FORMAT_R8G8B8A8_UNORM;
+        res.MipLevels                   = 1;
+        res.SubResourceCount            = 1;
+        res.SubResources[0].Width       = 32;
+        res.SubResources[0].Height      = 32;
+        res.SubResources[0].RowPitch    = 32 * 4;
+        res.SubResources[0].SlicePitch  = 32 * 32 * 4;
+        res.SubResources[0].pPixels     = pixels.data();
+
+        Texture* pTexture = nullptr;
+        bool ret = false;
+        if (asdx::IsSupportGpuUploadHeap())
+            ret = Texture::Create(res, &pTexture);
+        else
+            ret = Texture::Create(m_CmdList[m_BufferIndex].GetPtr(), res, &pTexture);
+
+        if (ret)
+        {
+            auto hash = CalcHash("default.TransparentWhite");
+            pTexture->SetName(L"default.TransparentWhite");
+
+            // テクスチャ登録.
+            m_Textures[hash] = pTexture;
+        }
+        assert(ret);
+    }
+
+    // Opaque White.
+    {
+        std::vector<uint8_t> pixels;
+        pixels.resize(32 * 32* 4);
+
+        auto idx = 0;
+        for(auto i=0; i<32; ++i)
+        {
+            for(auto j=0; j<32; ++j)
+            {
+                pixels[idx + 0] = 255;
+                pixels[idx + 1] = 255;
+                pixels[idx + 2] = 255;
+                pixels[idx + 3] = 255;
+                idx += 4;
+            }
+        }
+
+        ResTexture res = {};
+        res.Dimension                   = TEXTURE_DIMENSION_2D;
+        res.Width                       = 32;
+        res.Height                      = 32;
+        res.DepthOrArraySize            = 1;
+        res.Format                      = DXGI_FORMAT_R8G8B8A8_UNORM;
+        res.MipLevels                   = 1;
+        res.SubResourceCount            = 1;
+        res.SubResources[0].Width       = 32;
+        res.SubResources[0].Height      = 32;
+        res.SubResources[0].RowPitch    = 32 * 4;
+        res.SubResources[0].SlicePitch  = 32 * 32 * 4;
+        res.SubResources[0].pPixels     = pixels.data();
+
+        Texture* pTexture = nullptr;
+        bool ret = false;
+        if (asdx::IsSupportGpuUploadHeap())
+            ret = Texture::Create(res, &pTexture);
+        else
+            ret = Texture::Create(m_CmdList[m_BufferIndex].GetPtr(), res, &pTexture);
+
+        if (ret)
+        {
+            auto hash = CalcHash("default.OpaqueWhite");
+            pTexture->SetName(L"default.OpaqueWhite");
+
+            // テクスチャ登録.
+            m_Textures[hash] = pTexture;
+        }
+        assert(ret);
+    }
+
+    // Velocity Map.
+    {
+        std::vector<uint8_t> pixels;
+        pixels.resize(32 * 32* 4);
+
+        auto idx = 0;
+        for(auto i=0; i<32; ++i)
+        {
+            for(auto j=0; j<32; ++j)
+            {
+                pixels[idx + 0] = 128;
+                pixels[idx + 1] = 128;
+                pixels[idx + 2] = 0;
+                pixels[idx + 3] = 255;
+                idx += 4;
+            }
+        }
+
+        ResTexture res = {};
+        res.Dimension                   = TEXTURE_DIMENSION_2D;
+        res.Width                       = 32;
+        res.Height                      = 32;
+        res.DepthOrArraySize            = 1;
+        res.Format                      = DXGI_FORMAT_R8G8B8A8_UNORM;
+        res.MipLevels                   = 1;
+        res.SubResourceCount            = 1;
+        res.SubResources[0].Width       = 32;
+        res.SubResources[0].Height      = 32;
+        res.SubResources[0].RowPitch    = 32 * 4;
+        res.SubResources[0].SlicePitch  = 32 * 32 * 4;
+        res.SubResources[0].pPixels     = pixels.data();
+
+        Texture* pTexture = nullptr;
+        bool ret = false;
+        if (asdx::IsSupportGpuUploadHeap())
+            ret = Texture::Create(res, &pTexture);
+        else
+            ret = Texture::Create(m_CmdList[m_BufferIndex].GetPtr(), res, &pTexture);
+
+        if (ret)
+        {
+            auto hash = CalcHash("default.Velocity");
+            pTexture->SetName(L"default.Velocity");
+
+            // テクスチャ登録.
+            m_Textures[hash] = pTexture;
+        }
+        assert(ret);
+    }
 
     // 正常終了.
     return true;

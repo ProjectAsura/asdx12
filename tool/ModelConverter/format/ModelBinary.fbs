@@ -13,7 +13,7 @@ table Bone
 
 table Mesh
 {
-    Name          : string (key);
+    Name          : string;
     MaterialId    : uint;
     Positions     : [Float3];
     Normals       : [Float3];
@@ -26,11 +26,27 @@ table Mesh
     Bounds        : BoundingSphere;
 }
 
+table Material
+{
+    Name            : string;
+    BaseColorFactor : Float3;
+    Alpha           : float;
+    OcclusionFactor : float;
+    RoughnessFactor : float;
+    MetalnessFactor : float;
+    Ior             : float;
+    EmissiveFactor  : Float3;
+    BaseColorMap    : string;
+    NormalMap       : string;
+    OrmMap          : string;
+    EmissiveMap     : string;
+}
+
 table ModelBinary
 {
     Version          : uint;
     Meshes           : [Mesh];
-    Materials        : [string];
+    Materials        : [Material];
     Bones            : [Bone];
     Bounds           : BoundingSphere;
     RootTransform    : Float4x4;

@@ -1,8 +1,0 @@
-<Solution>
-  <Configurations>
-    <Platform Name="x64" />
-    <Platform Name="x86" />
-  </Configurations>
-  <Project Path="MaterialConverter.vcxproj" Id="e8e1ed03-6b41-444c-ab75-5aa7299969dc" />
-  <Project Path="MaterialConverterLib.vcxproj" Id="41562745-5e3a-4c0e-9767-3acd6d35e175" />
-</Solution>

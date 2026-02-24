@@ -13,7 +13,6 @@
 #include "asdxRandom.hlsli"
 
 
-
 //-----------------------------------------------------------------------------
 //      リニアからSRGBへの変換.
 //-----------------------------------------------------------------------------
@@ -100,8 +99,8 @@ float3 BT709_To_BT2020(float3 color)
     const float3x3 conversion =
     {
         0.627404f, 0.329283f, 0.043313f,
-          0.069097f, 0.919540f, 0.011362f,
-          0.016391f, 0.088013f, 0.895595f
+        0.069097f, 0.919540f, 0.011362f,
+        0.016391f, 0.088013f, 0.895595f
     };
     return mul(conversion, color);
 }
@@ -218,8 +217,8 @@ float3 XYZ_To_BT709(float3 color)
     const float3x3 conversion =
     {
         3.240970f, -1.537383f, -0.498611f,
-        -0.969244f, 1.875968f, 0.041555f,
-        0.055630f, -0.203977f, 1.056972f
+       -0.969244f,  1.875968f,  0.041555f,
+        0.055630f, -0.203977f,  1.056972f
     };
 
     return mul(conversion, color);
@@ -233,8 +232,8 @@ float3 XYZ_To_BT2020(float3 color)
     const float3x3 conversion =
     {
         1.716651f, -0.355671f, -0.253366f,
-        -0.666684f, 1.616481f, 0.015769f,
-         0.017640f, -0.042771f, 0.942103f
+       -0.666684f,  1.616481f,  0.015769f,
+        0.017640f, -0.042771f,  0.942103f
     };
 
     return mul(conversion, color);
@@ -248,8 +247,8 @@ float3 XYZ_To_DCI_P3(float3 color)
     const float3x3 conversion =
     {
         2.725394f, -1.018003f, -0.440163f,
-        -0.795168f, 1.689732f, 0.022647f,
-         0.041242f, -0.087639f, 1.100930f
+       -0.795168f,  1.689732f,  0.022647f,
+        0.041242f, -0.087639f,  1.100930f
     };
 
     return mul(conversion, color);
@@ -263,8 +262,8 @@ float3 XYZ_To_AdobeRGB(float3 color)
     const float3x3 conversion =
     {
         2.041588f, -0.565007f, -0.344731f,
-        -0.969244f, 1.875968f, 0.041555f,
-         0.013444f, -0.118362f, 1.015175f
+       -0.969244f,  1.875968f,  0.041555f,
+        0.013444f, -0.118362f,  1.015175f
     };
 
     return mul(conversion, color);
@@ -278,8 +277,8 @@ float3 XYZ_To_AP0(float3 color)
     const float3x3 conversion =
     {
         1.0498110175, 0.0000000000, -0.0000974845,
-        -0.4959030231, 1.3733130458, 0.0982400361,
-         0.0000000000, 0.0000000000, 0.9912520182
+       -0.4959030231, 1.3733130458,  0.0982400361,
+        0.0000000000, 0.0000000000,  0.9912520182
     };
 
     return mul(conversion, color);
@@ -293,8 +292,8 @@ float3 XYZ_To_AP1(float3 color)
     const float3x3 conversion =
     {
         1.6410233797, -0.3248032942, -0.2364246952,
-        -0.6636628587, 1.6153315917, 0.0167563477,
-         0.0117218943, -0.0082844420, 0.9883948585
+       -0.6636628587,  1.6153315917,  0.0167563477,
+        0.0117218943, -0.0082844420,  0.9883948585
     };
 
     return mul(conversion, color);
@@ -309,7 +308,7 @@ float3 XYZ_To_xyY(float3 color)
     XYZ.x = color.x * color.z / max(color.y, 1e-10);
     XYZ.y = color.z;
     XYZ.z = (1.0f - color.x - color.y) * color.z / max(color.y, 1e-10);
-    
+
     return XYZ;
 }
 
@@ -375,8 +374,8 @@ float3 AP0_To_AP1(float3 color)
     const float3x3 conversion =
     {
         1.4514393161, -0.2365107469, -0.2149285693,
-        -0.0765537734, 1.1762296998, -0.0996759264,
-         0.0083161484, -0.0060324498, 0.9977163014
+       -0.0765537734,  1.1762296998, -0.0996759264,
+        0.0083161484, -0.0060324498,  0.9977163014
     };
 
     return mul(conversion, color);
@@ -390,13 +389,12 @@ float3 AP1_To_AP0(float3 color)
     const float3x3 conversion =
     {
         0.6954522414, 0.1406786965, 0.1638690622,
-         0.0447945634, 0.8596711185, 0.0955343182,
-        -0.0055258826, 0.0040252103, 1.0015006723
+        0.0447945634, 0.8596711185, 0.0955343182,
+       -0.0055258826, 0.0040252103, 1.0015006723
     };
 
     return mul(conversion, color);
 }
-
 
 //-----------------------------------------------------------------------------
 //      RGBE形式に圧縮します.
@@ -404,10 +402,10 @@ float3 AP1_To_AP0(float3 color)
 float4 EncodeRGBE(float3 value)
 {
     value = 65536.0f;
-    float3 exponent = clamp(ceil(log2(value)), -128.0f, 127.0f);
-    float component = Max3(exponent);
-    float range = exp2(component);
-    float3 mantissa = saturate(value / range);
+    float3 exponent  = clamp(ceil(log2(value)), -128.0f, 127.0f);
+    float  component = Max3(exponent);
+    float  range     = exp2(component);
+    float3 mantissa  = saturate(value / range);
     return float4(mantissa, (component + 128.0f) / 256.0f);
 }
 
@@ -416,7 +414,7 @@ float4 EncodeRGBE(float3 value)
 //-----------------------------------------------------------------------------
 float3 DecodeRGBE(float4 value)
 {
-    float exponent = value.a * 256.0f - 128.0f;
+    float  exponent = value.a * 256.0f - 128.0f;
     float3 mantissa = value.rgb;
     return exp2(exponent) * mantissa * 65536.0f;
 }
@@ -429,8 +427,8 @@ float3 HueToRGB(float hue)
     // https://www.ronja-tutorials.com/post/041-hsv-colorspace/
     hue = frac(hue); //only use fractional part of hue, making it loop
     float r = -1.0f + abs(hue * 6.0f - 3.0f); //red
-    float g = 2.0f - abs(hue * 6.0f - 2.0f); //green
-    float b = 2.0f - abs(hue * 6.0f - 4.0f); //blue
+    float g =  2.0f - abs(hue * 6.0f - 2.0f); //green
+    float b =  2.0f - abs(hue * 6.0f - 4.0f); //blue
     return saturate(float3(r, g, b)); //clamp between 0 and 1
 }
 
@@ -450,12 +448,12 @@ float4 RGBToYCoCg(float4 value)
 //-----------------------------------------------------------------------------
 float4 YCoCgToRGB(float4 YCoCg)
 {
-    float Y = YCoCg.x;
+    float Y  = YCoCg.x;
     float Co = YCoCg.y - (0.5 * 256.0 / 255.0);
     float Cg = YCoCg.z - (0.5 * 256.0 / 255.0);
-    float R = Y + Co - Cg;
-    float G = Y + Cg;
-    float B = Y - Co - Cg;
+    float R  = Y + Co - Cg;
+    float G  = Y + Cg;
+    float B  = Y - Co - Cg;
     return float4(R, G, B, YCoCg.a);
 }
 

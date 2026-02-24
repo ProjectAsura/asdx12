@@ -86,6 +86,16 @@ public:
     bool operator > (const StringView& value) const
     { return strcmp(m_Ptr, value.m_Ptr) > 0; }
 
+    //-------------------------------------------------------------------------
+    //! @brief      nullptr または 空文字であるかチェックします.
+    //-------------------------------------------------------------------------
+    bool is_null_or_empty() const
+    {
+        if (m_Ptr == nullptr)
+            return true;
+        return strcmp(m_Ptr, "") == 0;
+    }
+
 private:
     //=========================================================================
     // private variables.

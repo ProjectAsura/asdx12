@@ -32,47 +32,7 @@ asdx::ArrayView<T> ToArrayView(const flatbuffers::Vector<U>* value)
     return asdx::ArrayView<T>(reinterpret_cast<const T*>(value->data()), value->size()); 
 }
 
-//-----------------------------------------------------------------------------
-//      名前から番号を求めます.
-//-----------------------------------------------------------------------------
-template<typename T>
-bool FindIndex(T& items, const char* name, uint32_t& index)
-{
-    if (name == nullptr)
-    {
-        index = UINT32_MAX;
-        return false;
-    }
-
-    uint32_t lhs = 0;
-    uint32_t rhs = items->size();
- 
-    while(lhs < rhs)
-    {
-        uint32_t mid = lhs + (rhs - lhs) / 2;
-        auto item = items->Get(mid);
-        auto ret  = item->KeyCompareWithValue(name);
-        if (ret == 0)
-        {
-            index = mid;
-            return true;
-        }
-        else if (ret < 0)
-        {
-            lhs = mid + 1;
-        }
-        else
-        {
-            rhs = mid;
-        }
-    }
-
-    index = UINT32_MAX;
-    return false;
-}
-
 } // namespace
-
 
 namespace asdx {
 
@@ -169,10 +129,10 @@ const res::Bone& ModelBinary::GetBone(uint32_t index) const
 //-----------------------------------------------------------------------------
 //      マテリアルを取得します.
 //-----------------------------------------------------------------------------
-const char* ModelBinary::GetMaterial(uint32_t materialIndex) const
+const res::Material& ModelBinary::GetMaterial(uint32_t materialIndex) const
 {
     assert(!m_Blob.empty());
-    return res::GetModelBinary(m_Blob.data())->Materials()->Get(materialIndex)->c_str();
+    return *(res::GetModelBinary(m_Blob.data())->Materials()->Get(materialIndex));
 }
 
 //-----------------------------------------------------------------------------
@@ -190,13 +150,14 @@ BoundingSphere3 ModelBinary::GetBoundingSphere() const
 //-----------------------------------------------------------------------------
 bool ModelBinary::FindBone(const char* name, uint32_t& index) const
 {
-    assert(!m_Blob.empty());
-    auto bones = res::GetModelBinary(m_Blob.data())->Bones();
     if (name == nullptr)
     {
         index = UINT32_MAX;
         return false;
     }
+
+    assert(!m_Blob.empty());
+    auto bones = res::GetModelBinary(m_Blob.data())->Bones();
 
     // 2分探索するために，名前順にソートしてしまうと，
     // ボーン番号が正しい値にならず不具合を引き起こすため，線形検索を行う.
@@ -218,34 +179,23 @@ bool ModelBinary::FindBone(const char* name, uint32_t& index) const
 //-----------------------------------------------------------------------------
 bool ModelBinary::FindMaterial(const char* name, uint32_t& index) const
 {
-    assert(!m_Blob.empty());
-    auto mats = res::GetModelBinary(m_Blob.data())->Materials();
     if (name == nullptr)
     {
         index = UINT32_MAX;
         return false;
     }
 
-    uint32_t lhs = 0;
-    uint32_t rhs = mats->size();
- 
-    while(lhs < rhs)
+    assert(!m_Blob.empty());
+    auto mats = res::GetModelBinary(m_Blob.data())->Materials();
+
+    // 2分探索するために，名前順にソートしてしまうと，
+    // マテリアル番号が正しい値にならず不具合を引き起こすため，線形検索を行う.
+    for(auto i=0u; i<mats->size(); ++i)
     {
-        uint32_t mid = lhs + (rhs - lhs) / 2;
-        auto mat = mats->Get(mid);
-        auto ret = strcmp(mat->c_str(), name);
-        if (ret == 0)
+        if (strcmp(mats->Get(i)->Name()->c_str(), name)  == 0)
         {
-            index = mid;
+            index = i;
             return true;
-        }
-        else if (ret < 0)
-        {
-            lhs = mid + 1;
-        }
-        else
-        {
-            rhs = mid;
         }
     }
 
@@ -258,9 +208,28 @@ bool ModelBinary::FindMaterial(const char* name, uint32_t& index) const
 //-----------------------------------------------------------------------------
 bool ModelBinary::FindMesh(const char* name, uint32_t& index) const
 {
+    if (name == nullptr)
+    {
+        index = UINT32_MAX;
+        return false;
+    }
+
     assert(!m_Blob.empty());
     auto meshes = res::GetModelBinary(m_Blob.data())->Meshes();
-    return FindIndex(meshes, name, index);
+
+    // 2分探索するために，名前順にソートしてしまうと，
+    // メッシュ番号が正しい値にならず不具合を引き起こすため，線形検索を行う.
+    for(auto i=0u; i<meshes->size(); ++i)
+    {
+        if (strcmp(meshes->Get(i)->Name()->c_str(), name)  == 0)
+        {
+            index = i;
+            return true;
+        }
+    }
+
+    index = UINT32_MAX;
+    return false;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -373,5 +342,82 @@ Matrix BoneProxy::GetInverseBindPoseMatrix(const res::Bone& bone)
 //-----------------------------------------------------------------------------
 ArrayView<int32_t> BoneProxy::GetChildren(const res::Bone& bone)
 { return ToArrayView<int32_t>(bone.Children()); }
+
+
+///////////////////////////////////////////////////////////////////////////////
+// MaterialProxy class
+///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      マテリアル名を取得します.
+//-----------------------------------------------------------------------------
+StringView MaterialProxy::GetName(const res::Material& material)
+{ return StringView(material.Name()->c_str()); }
+
+//-----------------------------------------------------------------------------
+//      ベースカラーファクターを取得します.
+//-----------------------------------------------------------------------------
+Vector3 MaterialProxy::GetBaseColorFactor(const res::Material& material)
+{ return *reinterpret_cast<const Vector3*>(material.BaseColorFactor()); }
+
+//-----------------------------------------------------------------------------
+//      アルファ値を取得します.
+//-----------------------------------------------------------------------------
+float MaterialProxy::GetAlpha(const res::Material& material)
+{ return material.Alpha(); }
+
+//-----------------------------------------------------------------------------
+//      オクルージョンファクターを取得します.
+//-----------------------------------------------------------------------------
+float MaterialProxy::GetOcclusionFactor(const res::Material& material)
+{ return material.OcclusionFactor(); }
+
+//-----------------------------------------------------------------------------
+//      ラフネスファクターを取得します.
+//-----------------------------------------------------------------------------
+float MaterialProxy::GetRoughnessFactor(const res::Material& material)
+{ return material.RoughnessFactor(); }
+
+//-----------------------------------------------------------------------------
+//      メタルネスファクターを取得します.
+//-----------------------------------------------------------------------------
+float MaterialProxy::GetMetalnessFactor(const res::Material& material)
+{ return material.MetalnessFactor(); }
+
+//-----------------------------------------------------------------------------
+//      エミッシブファクターを取得します.
+//-----------------------------------------------------------------------------
+Vector3 MaterialProxy::GetEmissiveFactor(const res::Material& material)
+{ return *reinterpret_cast<const Vector3*>(material.EmissiveFactor()); }
+
+//-----------------------------------------------------------------------------
+//      屈折率を取得します.
+//-----------------------------------------------------------------------------
+float MaterialProxy::GetIor(const res::Material& material)
+{ return material.Ior(); }
+
+//-----------------------------------------------------------------------------
+//      ベースカラーマップのファイルパスを取得します.
+//-----------------------------------------------------------------------------
+StringView MaterialProxy::GetBaseColorMap(const res::Material& material)
+{ return StringView(material.BaseColorMap()->c_str()); }
+
+//-----------------------------------------------------------------------------
+//      法線マップのファイルパスを取得します.
+//-----------------------------------------------------------------------------
+StringView MaterialProxy::GetNormalMap(const res::Material& material)
+{ return StringView(material.NormalMap()->c_str()); }
+
+//-----------------------------------------------------------------------------
+//      オクルージョン・ラフネス・メタルネスマップのファイルパスを取得します.
+//-----------------------------------------------------------------------------
+StringView MaterialProxy::GetOrmMap(const res::Material& material)
+{ return StringView(material.OrmMap()->c_str()); }
+
+//-----------------------------------------------------------------------------
+//      エミッシブマップのファイルパスを取得します.
+//-----------------------------------------------------------------------------
+StringView MaterialProxy::GetEmissiveMap(const res::Material& material)
+{ return StringView(material.EmissiveMap()->c_str()); }
 
 } // namespace asdx

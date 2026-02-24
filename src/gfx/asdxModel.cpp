@@ -292,6 +292,153 @@ void* Mesh::GetUserData() const
 
 
 ///////////////////////////////////////////////////////////////////////////////
+// Material class
+///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      コンストラクタです.
+//-----------------------------------------------------------------------------
+Material::Material()
+{ /* DO_NOTHING */ }
+
+//-----------------------------------------------------------------------------
+//      デストラクタです.
+//-----------------------------------------------------------------------------
+Material::~Material()
+{ Term(); }
+
+//-----------------------------------------------------------------------------
+//      初期化処理を行います.
+//-----------------------------------------------------------------------------
+bool Material::Init(const res::Material& material)
+{
+    struct MaterialParam
+    {
+        Vector3 BaseColor;
+        float   Alpha;
+        float   Occlusion;
+        float   Roughness;
+        float   Metalness;
+        float   Ior;
+        Vector3 Emissive;
+        float   Reserved;
+    };
+
+    auto size = RoundUp<uint64_t>(sizeof(MaterialParam), 256);
+
+    // 定数バッファ初期化.
+    if (!m_Buffer.Init(size))
+    {
+        ELOG("Error : ConstantBuffer::Init() Failed.");
+        return false;
+    }
+
+    auto ptr = m_Buffer.MapAs<MaterialParam>();
+    assert(ptr != nullptr);
+    ptr->BaseColor = MaterialProxy::GetBaseColorFactor(material);
+    ptr->Alpha     = MaterialProxy::GetAlpha(material);
+    ptr->Occlusion = MaterialProxy::GetOcclusionFactor(material);
+    ptr->Roughness = MaterialProxy::GetRoughnessFactor(material);
+    ptr->Metalness = MaterialProxy::GetMetalnessFactor(material);
+    ptr->Ior       = MaterialProxy::GetIor(material);
+    ptr->Emissive  = MaterialProxy::GetEmissiveFactor(material);
+    m_Buffer.Unmap();
+
+    // ベースカラーマップ生成.
+    {
+        auto path = MaterialProxy::GetBaseColorMap(material);
+        if (!path.is_null_or_empty())
+        { m_BaseColorMap = TextureManager::Instance().GetOrCreate(path.c_str()); }
+
+        // デフォルトを設定.
+        if (!m_BaseColorMap.IsValid())
+        { m_BaseColorMap = TextureManager::Instance().GetOrCreate("default.BaseColor"); }
+        assert(m_BaseColorMap.IsValid());
+    }
+
+    // 法線マップ生成.
+    {
+        auto path = MaterialProxy::GetNormalMap(material);
+        if (!path.is_null_or_empty())
+        { m_NormalMap = TextureManager::Instance().GetOrCreate(path.c_str()); }
+
+        // デフォルトを設定.
+        if (!m_NormalMap.IsValid())
+        { m_NormalMap = TextureManager::Instance().GetOrCreate("default.Normal"); }
+        assert(m_NormalMap.IsValid());
+   }
+
+    // ORMマップ生成.
+    {
+        auto path = MaterialProxy::GetOrmMap(material);
+        if (!path.is_null_or_empty())
+        { m_OrmMap = TextureManager::Instance().GetOrCreate(path.c_str()); }
+
+        // デフォルトを設定.
+        if (!m_OrmMap.IsValid())
+        { m_OrmMap = TextureManager::Instance().GetOrCreate("default.Orm"); }
+        assert(m_OrmMap.IsValid());
+    }
+
+    // エミッシブマップ生成.
+    {
+        auto path = MaterialProxy::GetEmissiveMap(material);
+        if (!path.is_null_or_empty())
+        { m_EmissiveMap = TextureManager::Instance().GetOrCreate(path.c_str()); }
+
+        // デフォルトを設定.
+        if (!m_EmissiveMap.IsValid())
+        { m_EmissiveMap = TextureManager::Instance().GetOrCreate("default.OpaqueBlack"); }
+        assert(m_EmissiveMap.IsValid());
+    }
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      終了処理を行います.
+//-----------------------------------------------------------------------------
+void Material::Term()
+{
+    m_Buffer      .Term();
+    m_BaseColorMap.Reset();
+    m_NormalMap   .Reset();
+    m_OrmMap      .Reset();
+    m_EmissiveMap .Reset();
+}
+
+//-----------------------------------------------------------------------------
+//      定数バッファを取得します.
+//-----------------------------------------------------------------------------
+const ConstantBuffer& Material::GetBuffer() const
+{ return m_Buffer; }
+
+//-----------------------------------------------------------------------------
+//      ベースカラーマップを取得します.
+//-----------------------------------------------------------------------------
+const TextureHolder& Material::GetBaseColorMap() const
+{ return m_BaseColorMap; }
+
+//-----------------------------------------------------------------------------
+//      法線マップを取得します.
+//-----------------------------------------------------------------------------
+const TextureHolder& Material::GetNormalMap() const
+{ return m_NormalMap; }
+
+//-----------------------------------------------------------------------------
+//      ORMマップを取得します.
+//-----------------------------------------------------------------------------
+const TextureHolder& Material::GetOrmMap() const
+{ return m_OrmMap; }
+
+//-----------------------------------------------------------------------------
+//      エミッシブマップを取得します.
+//-----------------------------------------------------------------------------
+const TextureHolder& Material::GetEmissiveMap() const
+{ return m_EmissiveMap; }
+
+
+///////////////////////////////////////////////////////////////////////////////
 // Model class
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -336,27 +483,34 @@ uint32_t Model::GetRefCount() const
 bool Model::Init(std::vector<uint8_t>&& binary)
 {
     // モデルバイナリロード.
-    m_ModelBinary.Load(std::move(binary));
+    m_Binary.Load(std::move(binary));
 
-    // マテリアルスロット確保.
-    m_MaterialSlots.resize(m_ModelBinary.GetMaterialCount());
-    for(auto i=0u; i<m_ModelBinary.GetMaterialCount(); ++i)
-    { m_MaterialSlots[i] = 0; }
+    // マテリアル生成.
+    m_Materials.resize(m_Binary.GetMaterialCount());
+    for(auto i=0u; i<m_Binary.GetMaterialCount(); ++i)
+    {
+        const auto& res = m_Binary.GetMaterial(i);
+        if (!m_Materials[i].Init(res))
+        {
+            ELOG("Error : Material Initialize Failed. index = %u", i);
+            return false;
+        }
+    }
 
     // メッシュ生成.
-    m_Meshes.resize(m_ModelBinary.GetMeshCount());
-    for(auto i=0u; i<m_ModelBinary.GetMeshCount(); ++i)
+    m_Meshes.resize(m_Binary.GetMeshCount());
+    for(auto i=0u; i<m_Binary.GetMeshCount(); ++i)
     {
-        const auto& res = m_ModelBinary.GetMesh(i);
+        const auto& res = m_Binary.GetMesh(i);
         if (!m_Meshes[i].Init(res))
         {
-            ELOG("Error : Mesh Initialize Failed. index = %zu", i);
+            ELOG("Error : Mesh Initialize Failed. index = %u", i);
             return false;
         }
     }
 
     // バウンディングスフィア設定.
-    m_BoundingSphere = m_ModelBinary.GetBoundingSphere();
+    m_BoundingSphere = m_Binary.GetBoundingSphere();
 
     return true;
 }
@@ -373,63 +527,58 @@ void Model::Term()
     }
     m_Meshes.clear();
 
-    // マテリアルスロット解放.
-    m_MaterialSlots.clear();
+    // マテリアル解放.
+    for(size_t i=0; i<m_Materials.size(); ++i)
+    {
+        m_Materials[i].Term();
+    }
+    m_Materials.clear();
 
     // バウンディングスフィア初期化.
     m_BoundingSphere = BoundingSphere3();
 
     // モデルバイナリ破棄.
-    m_ModelBinary.Term();
+    m_Binary.Term();
 }
 
 //-----------------------------------------------------------------------------
 //      マテリアル数を取得します.
 //-----------------------------------------------------------------------------
 uint32_t Model::GetMaterialCount() const
-{ return m_ModelBinary.GetMaterialCount(); }
+{ return m_Binary.GetMaterialCount(); }
 
 //-----------------------------------------------------------------------------
-//      マテリアル名を取得します.
+//      リソースマテリアルを取得します.
 //-----------------------------------------------------------------------------
-const char* Model::GetMaterialName(uint32_t index) const
-{ return m_ModelBinary.GetMaterial(index); }
+const res::Material& Model::GetResMaterial(uint32_t index) const
+{ return m_Binary.GetMaterial(index); }
 
 //-----------------------------------------------------------------------------
 //      マテリアルを取得します.
 //-----------------------------------------------------------------------------
-uintptr_t Model::GetMaterial(uint32_t index) const
+const Material* Model::GetMaterial(uint32_t index) const
 {
-    assert(index < m_MaterialSlots.size());
-    return m_MaterialSlots[index];
-}
-
-//-----------------------------------------------------------------------------
-//      マテリアルを設定します.
-//-----------------------------------------------------------------------------
-void Model::SetMaterial(uint32_t index, uintptr_t pMaterial)
-{
-    assert(index < m_MaterialSlots.size());
-    m_MaterialSlots[index] = pMaterial;
+    assert(index < m_Materials.size());
+    return &m_Materials[index];
 }
 
 //-----------------------------------------------------------------------------
 //      ボーンを持つかどうかチェックします.
 //-----------------------------------------------------------------------------
 bool Model::HasBone() const
-{ return m_ModelBinary.GetBoneCount() > 0; }
+{ return m_Binary.GetBoneCount() > 0; }
 
 //-----------------------------------------------------------------------------
 //      ボーン数を取得します.
 //-----------------------------------------------------------------------------
 uint32_t Model::GetBoneCount() const
-{ return m_ModelBinary.GetBoneCount(); }
+{ return m_Binary.GetBoneCount(); }
 
 //-----------------------------------------------------------------------------
 //      ボーン名を取得します.
 //-----------------------------------------------------------------------------
 const res::Bone& Model::GetBone(uint32_t index) const
-{ return m_ModelBinary.GetBone(index); }
+{ return m_Binary.GetBone(index); }
 
 //-----------------------------------------------------------------------------
 //      メッシュ数を取得します.
@@ -450,7 +599,7 @@ const Mesh* Model::GetMesh(uint32_t index) const
 //      リソースメッシュを取得します.
 //-----------------------------------------------------------------------------
 const res::Mesh& Model::GetResMesh(uint32_t index) const
-{ return m_ModelBinary.GetMesh(index); }
+{ return m_Binary.GetMesh(index); }
 
 //-----------------------------------------------------------------------------
 //      バウンディングスフィアを取得します.
@@ -474,19 +623,19 @@ void* Model::GetUserData() const
 //      ボーン名を検索します.
 //-----------------------------------------------------------------------------
 bool Model::FindBone(const char* name, uint32_t& index) const
-{ return m_ModelBinary.FindBone(name, index); }
+{ return m_Binary.FindBone(name, index); }
 
 //-----------------------------------------------------------------------------
 //      マテリアル名を検索します.
 //-----------------------------------------------------------------------------
 bool Model::FindMaterial(const char* name, uint32_t& index) const
-{ return m_ModelBinary.FindMaterial(name, index); }
+{ return m_Binary.FindMaterial(name, index); }
 
 //-----------------------------------------------------------------------------
 //      メッシュ名を検索します.
 //-----------------------------------------------------------------------------
 bool Model::FindMesh(const char* name, uint32_t& index) const
-{ return m_ModelBinary.FindMesh(name, index); }
+{ return m_Binary.FindMesh(name, index); }
 
 //-----------------------------------------------------------------------------
 //      モデルを生成します.

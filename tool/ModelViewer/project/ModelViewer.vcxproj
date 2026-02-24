@@ -65,7 +65,7 @@
       <EnableDpiAwareness>true</EnableDpiAwareness>
     </Manifest>
     <FxCompile>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\res\shaders;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\res\shaders;$(ProjectDir)..\res\shaders;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </FxCompile>
     <FxCompile>
       <ShaderModel>6.6</ShaderModel>
@@ -95,7 +95,7 @@
       <EnableDpiAwareness>true</EnableDpiAwareness>
     </Manifest>
     <FxCompile>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\res\shaders;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\res\shaders;$(ProjectDir)..\res\shaders;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </FxCompile>
     <FxCompile>
       <ShaderModel>6.6</ShaderModel>
@@ -105,7 +105,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\src\main.cpp" />
-    <ClCompile Include="..\src\ModelViewerSchema.cpp" />
     <ClCompile Include="..\src\ModelViewer.cpp" />
     <ClCompile Include="..\src\ModelViewerGui.cpp" />
   </ItemGroup>
@@ -115,12 +114,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\project\asdx12_2026.vcxproj">
       <Project>{ecd906d6-5deb-4b5b-b919-05c147194c1d}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\MaterialConverter\project\MaterialConverterLib.vcxproj">
-      <Project>{41562745-5e3a-4c0e-9767-3acd6d35e175}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\ModelPrefabConverter\project\ModelPrefabConverterLib.vcxproj">
-      <Project>{7a0604fd-f4e6-490c-91c6-0184f5670640}</Project>
     </ProjectReference>
     <ProjectReference Include="..\..\MotionConverter\project\MotionConverterLib.vcxproj">
       <Project>{3e002619-f36f-4199-b293-f27306180dbd}</Project>

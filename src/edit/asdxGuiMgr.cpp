@@ -25,7 +25,7 @@ namespace {
 //-----------------------------------------------------------------------------
 #include "../res/shaders/Compiled/asdxImGuiVS.inc"
 #include "../res/shaders/Compiled/asdxImGuiPS.inc"
-#include "YasashisaGothic.h"
+#include "MintMono35.h"
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -268,16 +268,16 @@ bool GuiMgr::Init
             auto utf8_path = path.string();
             io.Fonts->AddFontFromFileTTF(
                 utf8_path.c_str(),
-                12.0f,
+                14.0f,
                 nullptr,
                 io.Fonts->GetGlyphRangesJapanese());
         }
         else
         {
             io.Fonts->AddFontFromMemoryCompressedTTF(
-                YasashisaGothic_compressed_data,
-                YasashisaGothic_compressed_size,
-                12.0f,
+                MintMono35_compressed_data,
+                MintMono35_compressed_size,
+                14.0f,
                 nullptr,
                 io.Fonts->GetGlyphRangesJapanese());
         }

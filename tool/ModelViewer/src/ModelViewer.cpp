@@ -18,7 +18,6 @@
 #include <gfx/asdxPresetState.h>
 #include "ModelConverter.h"
 #include "MotionConverter.h"
-#include "MaterialConverter.h"
 #include <assimp/Exporter.hpp>
 
 
@@ -37,34 +36,16 @@ enum ROOT_PARAM
 {
     ROOT_PARAM_B0,  // SceneParam.
     ROOT_PARAM_B1,  // mode
-    ROOT_PARAM_T0,  // BaseColor
-    ROOT_PARAM_T1,  // Normal
-    ROOT_PARAM_T2,  // ORM
-    ROOT_PARAM_T3,  // Emissive.
+    ROOT_PARAM_B2,  // MaterialParam.
+    ROOT_PARAM_T0,  // MatrixPallets.
+    ROOT_PARAM_T1,  // BaseColor
+    ROOT_PARAM_T2,  // Normal
+    ROOT_PARAM_T3,  // ORM
+    ROOT_PARAM_T4,  // Emissive.
+
+    MAX_ROOT_PARAM_COUNT,
 };
 
-enum MODEL_ROOT_PARAM
-{
-    MODEL_ROOT_PARAM_CBV0,
-    MODEL_ROOT_PARAM_CBV1,
-    MODEL_ROOT_PARAM_CONSTANTS,
-    MODEL_ROOT_PARAM_SRV0,
-    MODEL_ROOT_PARAM_SRV1,
-    MODEL_ROOT_PARAM_SRV2,
-    MODEL_ROOT_PARAM_SRV3,
-    MODEL_ROOT_PARAM_SRV4,
-    MODEL_ROOT_PARAM_SRV5,
-    MODEL_ROOT_PARAM_SRV6,
-    MODEL_ROOT_PARAM_SRV7,
-    MODEL_ROOT_PARAM_SRV8,
-    MODEL_ROOT_PARAM_SRV9,
-    MODEL_ROOT_PARAM_SRV10,
-    MODEL_ROOT_PARAM_SRV11,
-    MODEL_ROOT_PARAM_SRV12,
-    MODEL_ROOT_PARAM_SRV13,
-    MODEL_ROOT_PARAM_SRV14,
-    MODEL_ROOT_PARAM_SRV15,
-};
 
 static const D3D12_INPUT_ELEMENT_DESC InputElements[] = {
     { "POSITION"   , 0, DXGI_FORMAT_R32G32B32_FLOAT   , 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
@@ -91,81 +72,6 @@ struct alignas(256) ParamScene
     float           TargetHeight;
 };
 
-//-----------------------------------------------------------------------------
-//      ブレンドステート設定を取得します.
-//-----------------------------------------------------------------------------
-D3D12_BLEND_DESC GetBlendDesc(viewer::MaterialBlendState state)
-{
-    switch(state)
-    {
-    case viewer::MaterialBlendState::Opaque:
-    default:
-        return asdx::Preset::Opaque;
-
-    case viewer::MaterialBlendState::AlphaBlend:
-        return asdx::Preset::AlphaBlend;
-
-    case viewer::MaterialBlendState::Additive:
-        return asdx::Preset::Additive;
-
-    case viewer::MaterialBlendState::Subtract:
-        return asdx::Preset::Subtract;
-
-    case viewer::MaterialBlendState::Premultiplied:
-        return asdx::Preset::Premultiplied;
-
-    case viewer::MaterialBlendState::Multiply:
-        return asdx::Preset::Multiply;
-
-    case viewer::MaterialBlendState::Screen:
-        return asdx::Preset::Screen;
-    }
-}
-
-//-----------------------------------------------------------------------------
-//      深度ステート設定を取得します.
-//-----------------------------------------------------------------------------
-D3D12_DEPTH_STENCIL_DESC GetdepthStencilDesc(viewer::MaterialDepthState state)
-{
-    switch(state)
-    {
-    case viewer::MaterialDepthState::ReadWrite:
-    default:
-        return asdx::Preset::DepthReadWrite;
-
-    case viewer::MaterialDepthState::ReadOnly:
-        return asdx::Preset::DepthReadOnly;
-
-    case viewer::MaterialDepthState::WriteOnly:
-        return asdx::Preset::DepthWriteOnly;
-
-    case viewer::MaterialDepthState::None:
-        return asdx::Preset::DepthNone;
-    }
-}
-
-//-----------------------------------------------------------------------------
-//      ラスタライザーステート設定を取得します.
-//-----------------------------------------------------------------------------
-D3D12_RASTERIZER_DESC GetRasterizerDesc(viewer::MaterialRasterizerState state)
-{
-    switch(state)
-    {
-    case viewer::MaterialRasterizerState::CullNone:
-    default:
-        return asdx::Preset::CullNone;
-
-    case viewer::MaterialRasterizerState::CullBack:
-        return asdx::Preset::CullBack;
-
-    case viewer::MaterialRasterizerState::CullFront:
-        return asdx::Preset::CullFront;
-
-    case viewer::MaterialRasterizerState::Wireframe:
-        return asdx::Preset::Wireframe;
-    }
-}
-
 } // namespace
 
 
@@ -185,9 +91,9 @@ ModelViewer::ModelViewer()
     m_SwapChainFormat    = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
     m_DepthStencilFormat = DXGI_FORMAT_D32_FLOAT;
 
-    m_ClearColor[0] = 0.2f;
-    m_ClearColor[1] = 0.2f;
-    m_ClearColor[2] = 0.2f;
+    m_ClearColor[0] = 0.1f;
+    m_ClearColor[1] = 0.1f;
+    m_ClearColor[2] = 0.1f;
     m_ClearColor[3] = 1.0f;
 
     m_DeviceDesc.MaxShaderResourceCount = 8192;
@@ -229,10 +135,21 @@ bool ModelViewer::OnInit()
 
     // ルートシグニチャの生成.
     {
-        D3D12_ROOT_PARAMETER params[3] = {};
-        asdx::InitAsCBV(params[0], 0, D3D12_SHADER_VISIBILITY_ALL);
-        asdx::InitAsConstants(params[1], 1, 4, D3D12_SHADER_VISIBILITY_ALL);
-        asdx::InitAsSRV(params[2], 0, D3D12_SHADER_VISIBILITY_ALL);
+        D3D12_DESCRIPTOR_RANGE ranges[4] = {};
+        asdx::InitRangeAsSRV(ranges[0], 1);
+        asdx::InitRangeAsSRV(ranges[1], 2);
+        asdx::InitRangeAsSRV(ranges[2], 3);
+        asdx::InitRangeAsSRV(ranges[3], 4);
+
+        D3D12_ROOT_PARAMETER params[MAX_ROOT_PARAM_COUNT] = {};
+        asdx::InitAsCBV(params[ROOT_PARAM_B0], 0, D3D12_SHADER_VISIBILITY_ALL);
+        asdx::InitAsConstants(params[ROOT_PARAM_B1], 1, 4, D3D12_SHADER_VISIBILITY_ALL);
+        asdx::InitAsCBV(params[ROOT_PARAM_B2], 2, D3D12_SHADER_VISIBILITY_ALL);
+        asdx::InitAsSRV(params[ROOT_PARAM_T0], 0, D3D12_SHADER_VISIBILITY_VERTEX);
+        asdx::InitAsTable(params[ROOT_PARAM_T1], 1, &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
+        asdx::InitAsTable(params[ROOT_PARAM_T2], 1, &ranges[1], D3D12_SHADER_VISIBILITY_PIXEL);
+        asdx::InitAsTable(params[ROOT_PARAM_T3], 1, &ranges[2], D3D12_SHADER_VISIBILITY_PIXEL);
+        asdx::InitAsTable(params[ROOT_PARAM_T4], 1, &ranges[3], D3D12_SHADER_VISIBILITY_PIXEL);
 
         D3D12_ROOT_SIGNATURE_DESC desc = {};
         desc.NumParameters      = _countof(params);
@@ -242,43 +159,6 @@ bool ModelViewer::OnInit()
         desc.Flags              = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
         if (!asdx::InitRootSignature(pDevice, &desc, m_RootSignature.GetAddress()))
-        {
-            ELOGA("Error : InitRootSignature() Failed.");
-            return false;
-        }
-    }
-
-    // モデルルートシグニチャの生成.
-    {
-        D3D12_ROOT_PARAMETER params[19] = {};
-        asdx::InitAsCBV(params[MODEL_ROOT_PARAM_CBV0], 0, D3D12_SHADER_VISIBILITY_ALL);
-        asdx::InitAsCBV(params[MODEL_ROOT_PARAM_CBV1], 1, D3D12_SHADER_VISIBILITY_ALL);
-        asdx::InitAsConstants(params[MODEL_ROOT_PARAM_CONSTANTS], 2, 4, D3D12_SHADER_VISIBILITY_ALL);
-        asdx::InitAsSRV(params[MODEL_ROOT_PARAM_SRV0], 0, D3D12_SHADER_VISIBILITY_ALL);
-        asdx::InitAsSRV(params[MODEL_ROOT_PARAM_SRV1], 1, D3D12_SHADER_VISIBILITY_ALL);
-        asdx::InitAsSRV(params[MODEL_ROOT_PARAM_SRV2], 2, D3D12_SHADER_VISIBILITY_ALL);
-        asdx::InitAsSRV(params[MODEL_ROOT_PARAM_SRV3], 3, D3D12_SHADER_VISIBILITY_ALL);
-        asdx::InitAsSRV(params[MODEL_ROOT_PARAM_SRV4], 4, D3D12_SHADER_VISIBILITY_ALL);
-        asdx::InitAsSRV(params[MODEL_ROOT_PARAM_SRV5], 5, D3D12_SHADER_VISIBILITY_ALL);
-        asdx::InitAsSRV(params[MODEL_ROOT_PARAM_SRV6], 6, D3D12_SHADER_VISIBILITY_ALL);
-        asdx::InitAsSRV(params[MODEL_ROOT_PARAM_SRV7], 7, D3D12_SHADER_VISIBILITY_ALL);
-        asdx::InitAsSRV(params[MODEL_ROOT_PARAM_SRV8], 8, D3D12_SHADER_VISIBILITY_ALL);
-        asdx::InitAsSRV(params[MODEL_ROOT_PARAM_SRV9], 9, D3D12_SHADER_VISIBILITY_ALL);
-        asdx::InitAsSRV(params[MODEL_ROOT_PARAM_SRV10], 10, D3D12_SHADER_VISIBILITY_ALL);
-        asdx::InitAsSRV(params[MODEL_ROOT_PARAM_SRV11], 11, D3D12_SHADER_VISIBILITY_ALL);
-        asdx::InitAsSRV(params[MODEL_ROOT_PARAM_SRV12], 12, D3D12_SHADER_VISIBILITY_ALL);
-        asdx::InitAsSRV(params[MODEL_ROOT_PARAM_SRV13], 13, D3D12_SHADER_VISIBILITY_ALL);
-        asdx::InitAsSRV(params[MODEL_ROOT_PARAM_SRV14], 14, D3D12_SHADER_VISIBILITY_ALL);
-        asdx::InitAsSRV(params[MODEL_ROOT_PARAM_SRV15], 15, D3D12_SHADER_VISIBILITY_ALL);
-
-        D3D12_ROOT_SIGNATURE_DESC desc = {};
-        desc.NumParameters      = _countof(params);
-        desc.pParameters        = params;
-        desc.NumStaticSamplers  = _countof(asdx::Preset::StaticSamplers);
-        desc.pStaticSamplers    = asdx::Preset::StaticSamplers;
-        desc.Flags              = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
-
-        if (!asdx::InitRootSignature(pDevice, &desc, m_ModelRootSignature.GetAddress()))
         {
             ELOGA("Error : InitRootSignature() Failed.");
             return false;
@@ -443,7 +323,6 @@ void ModelViewer::OnTerm()
     m_WireframeState.Reset();
 
     m_RootSignature.Reset();
-    m_ModelRootSignature.Reset();
 
     m_Model.Reset();
 
@@ -599,7 +478,8 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
 
         for(auto i=0u; i<m_Model->GetMeshCount(); ++i)
         {
-            const auto mesh = m_Model->GetMesh(i);
+            const auto mesh     = m_Model->GetMesh(i);
+            const auto material = m_Model->GetMaterial(mesh->GetMaterialId());
 
             D3D12_VERTEX_BUFFER_VIEW VBVs[] = {
                 mesh->GetPositions  ().GetVBV(),
@@ -613,6 +493,12 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
 
             auto IBV = mesh->GetIndices().GetIBV();
             auto countVBV = (isSkeletal) ? kSkeletalMeshElementCount : kStaticMeshElementCount;
+
+            pCmd->SetGraphicsRootConstantBufferView(ROOT_PARAM_B2, material->GetBuffer().GetGpuAddress());
+            pCmd->SetGraphicsRootDescriptorTable(ROOT_PARAM_T1, material->GetBaseColorMap().GetHandleGPU());
+            pCmd->SetGraphicsRootDescriptorTable(ROOT_PARAM_T2, material->GetNormalMap().GetHandleGPU());
+            pCmd->SetGraphicsRootDescriptorTable(ROOT_PARAM_T3, material->GetOrmMap().GetHandleGPU());
+            pCmd->SetGraphicsRootDescriptorTable(ROOT_PARAM_T4, material->GetEmissiveMap().GetHandleGPU());
 
             pCmd->IASetVertexBuffers(0, countVBV, VBVs);
             pCmd->IASetIndexBuffer(&IBV);
@@ -666,7 +552,12 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
 
     // コマンドを実行.
     {
-        ID3D12CommandList* pCmds[] = { pCmd };
+        auto pTextureCmd = asdx::TextureManager::Instance().Swap();
+
+        ID3D12CommandList* pCmds[] = {
+            pTextureCmd,
+            pCmd,
+        };
 
         auto pGraphicsQueue = asdx::GetGraphicsQueue();
 
@@ -682,6 +573,8 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
     }
 
     Present(1);
+
+    asdx::FrameSync();
 }
 
 //-----------------------------------------------------------------------------
@@ -700,6 +593,9 @@ void ModelViewer::OnKey(const asdx::App::KeyEventArgs& args)
 
     m_Camera.OnKey(args.KeyCode, args.IsKeyDown, args.IsAltDown);
 
+    // 文字入力を誤検知しないようにチェック.
+    auto itemActive = ImGui::IsAnyItemFocused() || ImGui::IsAnyItemActive();
+
     if (args.IsKeyDown)
     {
         switch(args.KeyCode)
@@ -707,12 +603,15 @@ void ModelViewer::OnKey(const asdx::App::KeyEventArgs& args)
         // 移動ツール.
         case 'W':
             {
-                if (m_EnableGuizmo && m_GuizmoOperation == ImGuizmo::OPERATION::TRANSLATE)
-                { m_EnableGuizmo = false; }
-                else
+                if (!itemActive)
                 {
-                    m_EnableGuizmo    = true;
-                    m_GuizmoOperation = ImGuizmo::OPERATION::TRANSLATE;
+                    if (m_EnableGuizmo && m_GuizmoOperation == ImGuizmo::OPERATION::TRANSLATE)
+                    { m_EnableGuizmo = false; }
+                    else
+                    {
+                        m_EnableGuizmo    = true;
+                        m_GuizmoOperation = ImGuizmo::OPERATION::TRANSLATE;
+                    }
                 }
             }
             break;
@@ -720,12 +619,15 @@ void ModelViewer::OnKey(const asdx::App::KeyEventArgs& args)
         // 回転ツール.
         case 'E':
             {
-                if (m_EnableGuizmo && m_GuizmoOperation == ImGuizmo::OPERATION::ROTATE)
-                { m_EnableGuizmo = false; }
-                else
+                if (!itemActive)
                 {
-                    m_EnableGuizmo    = true;
-                    m_GuizmoOperation = ImGuizmo::OPERATION::ROTATE;
+                    if (m_EnableGuizmo && m_GuizmoOperation == ImGuizmo::OPERATION::ROTATE)
+                    { m_EnableGuizmo = false; }
+                    else
+                    {
+                        m_EnableGuizmo    = true;
+                        m_GuizmoOperation = ImGuizmo::OPERATION::ROTATE;
+                    }
                 }
             }
             break;
@@ -733,12 +635,15 @@ void ModelViewer::OnKey(const asdx::App::KeyEventArgs& args)
         // スケールツール.
         case 'R':
             {
-                if (m_EnableGuizmo && m_GuizmoOperation == ImGuizmo::OPERATION::SCALE)
-                { m_EnableGuizmo = false; }
-                else
+                if (!itemActive)
                 {
-                    m_EnableGuizmo    = true;
-                    m_GuizmoOperation = ImGuizmo::OPERATION::SCALE;
+                    if (m_EnableGuizmo && m_GuizmoOperation == ImGuizmo::OPERATION::SCALE)
+                    { m_EnableGuizmo = false; }
+                    else
+                    {
+                        m_EnableGuizmo    = true;
+                        m_GuizmoOperation = ImGuizmo::OPERATION::SCALE;
+                    }
                 }
             }
             break;
@@ -746,9 +651,13 @@ void ModelViewer::OnKey(const asdx::App::KeyEventArgs& args)
         // ワールド行列リセット.
         case 'Z':
             {
-                m_ModelTranslation  = asdx::Vector3(0.0f, 0.0f, 0.0f);
-                m_ModelRotation     = asdx::Vector3(0.0f, 0.0f, 0.0f);
-                m_ModelScale        = asdx::Vector3(1.0f, 1.0f, 1.0f);
+                if (!itemActive)
+                {
+                    m_ModelTranslation  = asdx::Vector3(0.0f, 0.0f, 0.0f);
+                    m_ModelRotation     = asdx::Vector3(0.0f, 0.0f, 0.0f);
+                    m_ModelScale        = asdx::Vector3(1.0f, 1.0f, 1.0f);
+                    m_EnableGuizmo      = false;
+                }
             }
             break;
 
@@ -867,48 +776,18 @@ void ModelViewer::MenuFile(ID3D12GraphicsCommandList* pCmd)
 
     ImGui::Separator();
 
-    // プレハブを開く.
-    if (ImGui::MenuItem(asdx::ToChar(u8"プレハブファイルを開く")))
-    { LoadPrefab(); }
-
-    if (!m_ModelBinary.empty())
-    {
-        if (ImGui::MenuItem(asdx::ToChar(u8"名前を付けてプレハブを保存")))
-        {
-            const char* filter = "Project Asura ModelPrefab Binary (*.mpb)\0*.mpb\0\0";
-            std::string base;
-            std::string ext = ".mpb";
-
-            asdx::fs::path path;
-            if (asdx::SaveFileDlg(filter, path))
-            {
-                m_PrefabOutputPath = path.string();
-                SavePrefabBinary(m_PrefabOutputPath.c_str());
-            }
-        }
-
-        if (!m_PrefabOutputPath.empty())
-        {
-            if (ImGui::MenuItem(asdx::ToChar(u8"プレハブを上書き保存")))
-            { SavePrefabBinary(m_PrefabOutputPath.c_str()); }
-        }
-    }
-
-    ImGui::Separator();
-
     // モーションファイルを開く.
     if (ImGui::MenuItem(asdx::ToChar(u8"モーションファイルを開く")))
     { LoadMotion(); }
+}
 
-
-#if 0
-    //if (ImGui::MenuItem(asdx::ToChar(u8"マテリアルスキーマファイルを開く")))
-    //{
-    //    asdx::fs::path path;
-    //    if (asdx::OpenFileDlg("JSONファイル (*.json)\0*.json\0\0", path))
-    //    { LoadMaterialSchema(path.string().c_str()); }
-    //}
-#endif
+//-----------------------------------------------------------------------------
+//      表示メニュー処理です.
+//-----------------------------------------------------------------------------
+void ModelViewer::MenuView()
+{
+    ImGui::Checkbox(asdx::ToChar(u8"プロパティウィンドウ"), &m_ShowProperty);
+    ImGui::Checkbox(asdx::ToChar(u8"情報パネル"), &m_ShowInfo);
 }
 
 //-----------------------------------------------------------------------------
@@ -973,8 +852,8 @@ void ModelViewer::RecreateModel()
 
     // カメラを初期化.
     m_Camera.Init(
-        asdx::Vector3(0.0f, 0.0f, sphere.Radius * 3.0f),
-        asdx::Vector3(0.0f, 0.0f, 0.0f),
+        asdx::Vector3(sphere.Center.x, sphere.Center.y, sphere.Center.z + sphere.Radius * 3.0f),
+        sphere.Center,
         asdx::Vector3(0.0f, 0.0f, 1.0f),
         0.1f,
         10000.0f);
@@ -991,114 +870,6 @@ void ModelViewer::RecreateModel()
 
         if (!m_MatrixPalletBuffer[i].Init(boneCount, sizeof(asdx::Matrix), D3D12_RESOURCE_STATE_COMMON, true))
             ELOG("Error : Matrix Pallet Buffer Init Failed. index = %u", i);
-    }
-
-    auto materialCount = m_Model->GetMaterialCount();
-
-    // 編集可能マテリアルを初期化.
-    m_EditMaterials.clear();
-    m_EditMaterials.resize(materialCount);
-
-    // モデルプレハブのマテリアルを初期化.
-    m_Prefab.Materials.resize(materialCount);
-    for(auto i=0u; i<materialCount; ++i)
-    {
-        m_Prefab.Materials[i].Name = m_Model->GetMaterialName(i);
-        m_Prefab.Materials[i].Path.clear();
-    }
-}
-
-//-----------------------------------------------------------------------------
-//      プレハブを生成します.
-//-----------------------------------------------------------------------------
-void ModelViewer::RecreatePrefab()
-{
-    if (m_Prefab.ModelPath.empty())
-        return;
-
-    if (!asdx::LoadA(m_Prefab.ModelPath.c_str(), m_ModelBinary))
-    {
-        ELOG("Error : ModelBinary Load Failed. path = %s", m_Prefab.ModelPath.c_str());
-        return;
-    }
-
-    asdx::Model* pModel = nullptr;
-
-    // モデルを生成をします.
-    std::vector<uint8_t> copyBinary = m_ModelBinary;
-    if (!asdx::Model::Create(std::move(copyBinary), &pModel))
-    {
-        ELOGA("Error : ModelManager::CreateModel() Failed.");
-        return;
-    }
-
-    m_MotionPlayer.SetClip(nullptr);
-    m_ClipIndex = 0;
-    m_ClipNames.clear();
-    m_MotionBinary.Term();
-
-    // 成功したら差し替え.
-    m_Model.Attach(pModel);
-
-    m_ModelInfo.MeshCount     = m_Model->GetMeshCount();
-    m_ModelInfo.MaterialCount = m_Model->GetMaterialCount();
-    m_ModelInfo.BoneCount     = m_Model->GetBoneCount();
-
-    m_ModelInfo.VertexCount = 0;
-    m_ModelInfo.IndexCount  = 0;
-
-    for(auto i=0u; i<m_Model->GetMeshCount(); ++i)
-    {
-        auto mesh = m_Model->GetMesh(i);
-        m_ModelInfo.VertexCount += mesh->GetVertexCount();
-        m_ModelInfo.IndexCount  += mesh->GetIndexCount();
-    }
-
-    auto sphere = m_Model->GetBoundingSphere();
-
-    // カメラを初期化.
-    m_Camera.Init(
-        asdx::Vector3(0.0f, 0.0f, sphere.Radius * 3.0f),
-        asdx::Vector3(0.0f, 0.0f, 0.0f),
-        asdx::Vector3(0.0f, 0.0f, 1.0f),
-        0.1f,
-        10000.0f);
-    m_Camera.Present();
-
-    // モーションプレイヤーを初期化.
-    m_MotionPlayer.Init(pModel);
-
-    // 行列パレット用 SRV を生成.
-    auto boneCount = m_Model->GetBoneCount();
-    for(auto i=0; i<2; ++i)
-    {
-        m_MatrixPalletBuffer[i].Term();
-
-        if (!m_MatrixPalletBuffer[i].Init(boneCount, sizeof(asdx::Matrix), D3D12_RESOURCE_STATE_COMMON, true))
-            ELOG("Error : Matrix Pallet Buffer Init Failed. index = %u", i);
-    }
-
-    auto materialCount = m_Model->GetMaterialCount();
-
-    // 編集可能マテリアルを初期化.
-    m_EditMaterials.clear();
-    m_EditMaterials.resize(materialCount);
-
-    // マテリアルバイナリを設定.
-    for(auto i=0u; i<materialCount; ++i)
-    {
-        std::vector<uint8_t> matBin;
-        if (!MaterialConverter::Convert(m_Prefab.Materials[i].Path.c_str(), matBin))
-        {
-            ELOG("Error : MaterialConvert::Convert() Failed. materialIndex = %u", i);
-            continue;
-        }
-
-        if (!MaterialConverter::ReverseConvert(matBin, m_EditMaterials[i]))
-        {
-            ELOG("Error : MaterialConvert::ReverseConvert() Failed. materialIndex = %u", i);
-            continue;
-        }
     }
 }
 
@@ -1117,55 +888,6 @@ void ModelViewer::SaveModelBinary(const char* path)
     }
 
     ILOG("Info : ModelBinary Output success. path = %s", path);
-}
-
-//-----------------------------------------------------------------------------
-//      プレハブバイナリを保存します.
-//-----------------------------------------------------------------------------
-void ModelViewer::SavePrefabBinary(const char* path)
-{
-    if (path == nullptr)
-        return;
-
-    // Prefabバイナリに変換.
-    std::vector<uint8_t> binary;
-    if (!ModelPrefabConverter::Convert(m_Prefab, binary))
-    {
-        ELOG("Error : ModelPrefabConverter::Convert() Failed.");
-        return;
-    }
-
-    if (!asdx::SaveA(path, binary))
-    {
-        ELOG("Error : SaveA() Failed. path = %s", path);
-        return;
-    }
-
-    ILOG("Info : ModelPrefabBinary Output success. path = %s", path);
-}
-
-//-----------------------------------------------------------------------------
-//      マテリアルバイナリを保存します.
-//-----------------------------------------------------------------------------
-void ModelViewer::SaveMaterialBinary(const char* path, edit::Material& material)
-{
-    if (path == nullptr)
-        return;
-
-    std::vector<uint8_t> binary;
-    if (!MaterialConverter::Convert(material, binary))
-    {
-        ELOG("Error : MaterialConverter::Convert() Failed.");
-        return;
-    }
-
-    if (!asdx::SaveA(path, binary))
-    {
-        ELOG("Error : SaveA() Failed. path = %s", path);
-        return;
-    }
-
-    ILOG("Info : MaterialBinary Output success. path = %s", path);
 }
 
 //-----------------------------------------------------------------------------
@@ -1216,7 +938,6 @@ void ModelViewer::LoadModel()
         }
 
         m_ModelBinary = std::move(modelBinary);
-        m_Prefab.ModelPath = input.c_str();
         RecreateModel();
     }
     else
@@ -1228,7 +949,6 @@ void ModelViewer::LoadModel()
         }
 
         m_ModelBinary = std::move(modelBinary);
-        m_Prefab.ModelPath = input.c_str();
         RecreateModel();
     }
 }
@@ -1304,126 +1024,4 @@ void ModelViewer::LoadMotion()
     auto clip = m_MotionBinary.GetClip(0);
     m_MotionPlayer.SetClip(clip);
     m_ClipIndex = 0;
-}
-
-//-----------------------------------------------------------------------------
-//      プレハブファイルを読み込みます.
-//-----------------------------------------------------------------------------
-void ModelViewer::LoadPrefab()
-{
-    const char* filter = "Project Asura ModelPrefab Binary (*.mpb)\0*.mpb\0\0";
-
-    asdx::fs::path path;
-    if (!asdx::OpenFileDlg(filter, path))
-        return;
-
-    auto input = path.string();
-
-    std::vector<uint8_t> prefabBinary;
-    if (!asdx::LoadA(input.c_str(), prefabBinary))
-    {
-        ELOG("Error : asdx::LoadA() Failed. path = %s", input.c_str());
-        return;
-    }
-
-    ModelPrefab prefab;
-    if (!ModelPrefabConverter::ReverseConvert(prefabBinary, prefab))
-    {
-        ELOG("Error : MaterialPrefabConverter::ReverseConvert() Failed.");
-        return;
-    }
-
-    // プレハブデータを差し替え.
-    m_Prefab = std::move(prefab);
-}
-
-//-----------------------------------------------------------------------------
-//      マテリアルファイルを読み込みます.
-//-----------------------------------------------------------------------------
-void ModelViewer::LoadMaterial(const char* path, edit::Material& material)
-{
-    if (path == nullptr)
-        return;
-
-    std::vector<uint8_t> binary;
-    if (!MaterialConverter::Convert(path, binary))
-    {
-        ELOG("Error : MaterialConverter::Convert() Failed.");
-        return;
-    }
-
-    if (!MaterialConverter::ReverseConvert(binary, material))
-    {
-        ELOG("Error : MaterialConverter::ReverseConvert() Failed.");
-        return;
-    }
-}
-
-//-----------------------------------------------------------------------------
-//      モデルパイプラインステートを生成します.
-//-----------------------------------------------------------------------------
-bool ModelViewer::CreateModelPipelineState
-(
-    D3D12_SHADER_BYTECODE           pixelShader,
-    viewer::MaterialBlendState      blendState,
-    viewer::MaterialDepthState      depthState,
-    viewer::MaterialRasterizerState rasterizerState,
-    ModelPipelineState&             result
-)
-{
-    auto pDevice = asdx::GetD3D12Device();
-
-    // スタティック用.
-    {
-        D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = {};
-        desc.pRootSignature                 = m_ModelRootSignature.GetPtr();
-        desc.VS                             = { MeshVS, sizeof(MeshVS) };
-        desc.PS                             = pixelShader;
-        desc.BlendState                     = GetBlendDesc(blendState);
-        desc.SampleMask                     = D3D12_DEFAULT_SAMPLE_MASK;
-        desc.RasterizerState                = GetRasterizerDesc(rasterizerState);
-        desc.DepthStencilState              = GetdepthStencilDesc(depthState);
-        desc.InputLayout.NumElements        = kStaticMeshElementCount;
-        desc.InputLayout.pInputElementDescs = InputElements;
-        desc.PrimitiveTopologyType          = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-        desc.NumRenderTargets               = 1;
-        desc.RTVFormats[0]                  = m_SwapChainFormat;
-        desc.DSVFormat                      = m_DepthStencilFormat;
-        desc.SampleDesc.Count               = 1;
-        desc.SampleDesc.Quality             = 0;
-
-        if (!result.StaticModel.Init(&desc))
-        {
-            ELOG("Error : StaticModel PipelineState Init Failed.");
-            return false;
-        }
-    }
-
-    // スケルタル用.
-    {
-        D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = {};
-        desc.pRootSignature                 = m_ModelRootSignature.GetPtr();
-        desc.VS                             = { ModelVS, sizeof(ModelVS) };
-        desc.PS                             = pixelShader;
-        desc.BlendState                     = GetBlendDesc(blendState);
-        desc.SampleMask                     = D3D12_DEFAULT_SAMPLE_MASK;
-        desc.RasterizerState                = GetRasterizerDesc(rasterizerState);
-        desc.DepthStencilState              = GetdepthStencilDesc(depthState);
-        desc.InputLayout.NumElements        = kSkeletalMeshElementCount;
-        desc.InputLayout.pInputElementDescs = InputElements;
-        desc.PrimitiveTopologyType          = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-        desc.NumRenderTargets               = 1;
-        desc.RTVFormats[0]                  = m_SwapChainFormat;
-        desc.DSVFormat                      = m_DepthStencilFormat;
-        desc.SampleDesc.Count               = 1;
-        desc.SampleDesc.Quality             = 0;
-
-        if (!result.SkeletalModel.Init(&desc))
-        {
-            ELOG("Error : SkeletalModel PipelineState Init Failed.");
-            return false;
-        }
-    }
-
-    return true;
 }

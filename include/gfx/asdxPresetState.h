@@ -30,6 +30,10 @@ public:
     static const D3D12_DEPTH_STENCIL_DESC DepthReadOnly;    //!< 深度テストON ・書き込み無し.
     static const D3D12_DEPTH_STENCIL_DESC DepthWriteOnly;   //!< 深度テストOFF・書き込み有り.
     static const D3D12_DEPTH_STENCIL_DESC DepthNone;        //!< 深度テストOFF・書き込み無し.
+    static const D3D12_DEPTH_STENCIL_DESC ReverseDepthReadWrite;   //!< ReverseZ, 深度テストON ・書き込み有り.
+    static const D3D12_DEPTH_STENCIL_DESC ReverseDepthReadOnly;    //!< ReverseZ, 深度テストON ・書き込み無し.
+    static const D3D12_DEPTH_STENCIL_DESC ReverseDepthWriteOnly;   //!< ReverseZ, 深度テストOFF・書き込み有り.
+
 
     static const D3D12_RENDER_TARGET_BLEND_DESC RTB_Opaque;         //!< 不透明.
     static const D3D12_RENDER_TARGET_BLEND_DESC RTB_AlphaBlend;     //!< アルファブレンド.
@@ -38,6 +42,8 @@ public:
     static const D3D12_RENDER_TARGET_BLEND_DESC RTB_Premultiplied;  //!< 事前乗算済みアルファ.
     static const D3D12_RENDER_TARGET_BLEND_DESC RTB_Multiply;       //!< 乗算.
     static const D3D12_RENDER_TARGET_BLEND_DESC RTB_Screen;         //!< スクリーン.
+    static const D3D12_RENDER_TARGET_BLEND_DESC RTB_Min;            //!< 最小値ブレンド.
+    static const D3D12_RENDER_TARGET_BLEND_DESC RTB_Max;            //!< 最大値ブレンド.
 
     static const D3D12_BLEND_DESC Opaque;           //!< 不透明.
     static const D3D12_BLEND_DESC AlphaBlend;       //!< アルファブレンド.
@@ -46,6 +52,8 @@ public:
     static const D3D12_BLEND_DESC Premultiplied;    //!< 事前乗算済みアルファ.
     static const D3D12_BLEND_DESC Multiply;         //!< 乗算.
     static const D3D12_BLEND_DESC Screen;           //!< スクリーン.
+    static const D3D12_BLEND_DESC BlendMin;         //!< 最小値ブレンド.
+    static const D3D12_BLEND_DESC BlendMax;         //!< 最大値ブレンド.
 
     static const D3D12_SHADER_BYTECODE FullScreenVS;    //!< フルスクリーン用頂点シェーダ.
     static const D3D12_SHADER_BYTECODE CopyPS;          //!< コピー用ピクセルシェーダ.

@@ -18,43 +18,9 @@
 #include <gfx/asdxShape.h>
 #include <gfx/asdxMotionPlayer.h>
 #include <gfx/asdxLine.h>
-#include <gfx/asdxMaterial.h>
-#include <ModelPrefabConverter.h>
-#include <EditMaterial.h>
 #include <imgui.h>
 #include <ImGuizmo.h>
 
-
-namespace viewer {
-
-enum MaterialBlendState : uint8_t
-{
-    Opaque,
-    AlphaBlend,
-    Additive,
-    Subtract,
-    Premultiplied,
-    Multiply,
-    Screen,
-};
-
-enum MaterialDepthState : uint8_t
-{
-    ReadWrite,
-    ReadOnly,
-    WriteOnly,
-    None,
-};
-
-enum MaterialRasterizerState : uint8_t
-{
-    CullNone,
-    CullBack,
-    CullFront,
-    Wireframe,
-};
-
-} // namespace viewer
 
 ///////////////////////////////////////////////////////////////////////////////
 // ModelViewer class
@@ -147,13 +113,9 @@ private:
     size_t                              m_ClipIndex     = 0;
     std::vector<std::string>            m_ClipNames     = {};
     asdx::StructuredBuffer              m_MatrixPalletBuffer[2];
-    ModelPrefab                         m_Prefab;
-    std::vector<edit::Material>         m_EditMaterials;
     bool                                m_ShowLisence   = false;
-
-    asdx::RefPtr<ID3D12RootSignature>                m_ModelRootSignature;
-    std::vector<ModelPipelineState>                  m_PipelineStates;
-    std::vector<asdx::MaterialSchema::KindDef>       m_Kinds;
+    bool                                m_ShowProperty  = true;
+    bool                                m_ShowInfo      = true;
 
     //=========================================================================
     // private methods.
@@ -210,6 +172,11 @@ private:
     void MenuFile(ID3D12GraphicsCommandList* pCmd);
 
     //-------------------------------------------------------------------------
+    //! @brief      表示メニュー処理です.
+    //-------------------------------------------------------------------------
+    void MenuView();
+
+    //-------------------------------------------------------------------------
     //! @brief      ヘルプメニュー処理です.
     //-------------------------------------------------------------------------
     void MenuHelp();
@@ -220,24 +187,9 @@ private:
     void RecreateModel();
 
     //-------------------------------------------------------------------------
-    //! @brief      プレハブを再生します.
-    //-------------------------------------------------------------------------
-    void RecreatePrefab();
-
-    //-------------------------------------------------------------------------
     //! @brief      モデルバイナリを保存します.
     //-------------------------------------------------------------------------
     void SaveModelBinary(const char* path);
-
-    //-------------------------------------------------------------------------
-    //! @brief      マテリアルバイナリを保存します.
-    //-------------------------------------------------------------------------
-    void SaveMaterialBinary(const char* path, edit::Material& material);
-
-    //-------------------------------------------------------------------------
-    //! @brief      プレハブバイナリを保存します.
-    //-------------------------------------------------------------------------
-    void SavePrefabBinary(const char* path);
 
     //-------------------------------------------------------------------------
     //! @brief      モデルを読み込みます.
@@ -248,21 +200,6 @@ private:
     //! @brief      モーションを読み込みます.
     //-------------------------------------------------------------------------
     void LoadMotion();
-
-    //-------------------------------------------------------------------------
-    //! @brief      プレハブを読み込みます.
-    //-------------------------------------------------------------------------
-    void LoadPrefab();
-
-    //-------------------------------------------------------------------------
-    //! @brief      マテリアルを読み込みます.
-    //-------------------------------------------------------------------------
-    void LoadMaterial(const char* path, edit::Material& material);
-
-    //-------------------------------------------------------------------------
-    //! @brief      マテリアルスキーマを読み込みます.
-    //-------------------------------------------------------------------------
-    bool LoadMaterialSchema(const char* path);
 
     //-------------------------------------------------------------------------
     //! @brief      モデル情報を描画します.
@@ -295,9 +232,19 @@ private:
     void DrawPropertyWindow();
 
     //-------------------------------------------------------------------------
+    //! @brief      メッシュタブを描画します.
+    //-------------------------------------------------------------------------
+    void DrawMeshTab();
+
+    //-------------------------------------------------------------------------
     //! @brief      マテリアルタブを描画します.
     //-------------------------------------------------------------------------
     void DrawMaterialTab();
+
+    //-------------------------------------------------------------------------
+    //! @brief      ボーンタブを描画します.
+    //-------------------------------------------------------------------------
+    void DrawBoneTab();
 
     //-------------------------------------------------------------------------
     //! @brief      モーションタブを描画します.
@@ -313,14 +260,4 @@ private:
     //! @brief      ライセンス情報を描画します.
     //-------------------------------------------------------------------------
     void DrawLisence();
-
-    //-------------------------------------------------------------------------
-    //! @brief      モデルパイプラインステートを生成します.
-    //-------------------------------------------------------------------------
-    bool CreateModelPipelineState(
-        D3D12_SHADER_BYTECODE           pixelShader,
-        viewer::MaterialBlendState      blendState,
-        viewer::MaterialDepthState      depthState,
-        viewer::MaterialRasterizerState rasterizerState,
-        ModelPipelineState&             result);
 };

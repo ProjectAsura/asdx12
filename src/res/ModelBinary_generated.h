@@ -24,6 +24,9 @@ struct BoneBuilder;
 struct Mesh;
 struct MeshBuilder;
 
+struct Material;
+struct MaterialBuilder;
+
 struct ModelBinary;
 struct ModelBinaryBuilder;
 
@@ -328,6 +331,210 @@ inline ::flatbuffers::Offset<Mesh> CreateMeshDirect(
       Bounds);
 }
 
+struct Material FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef MaterialBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_NAME = 4,
+    VT_BASECOLORFACTOR = 6,
+    VT_ALPHA = 8,
+    VT_OCCLUSIONFACTOR = 10,
+    VT_ROUGHNESSFACTOR = 12,
+    VT_METALNESSFACTOR = 14,
+    VT_IOR = 16,
+    VT_EMISSIVEFACTOR = 18,
+    VT_BASECOLORMAP = 20,
+    VT_NORMALMAP = 22,
+    VT_ORMMAP = 24,
+    VT_EMISSIVEMAP = 26
+  };
+  const ::flatbuffers::String *Name() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_NAME);
+  }
+  bool KeyCompareLessThan(const Material * const o) const {
+    return *Name() < *o->Name();
+  }
+  int KeyCompareWithValue(const char *_Name) const {
+    return strcmp(Name()->c_str(), _Name);
+  }
+  template<typename StringType>
+  int KeyCompareWithValue(const StringType& _Name) const {
+    if (Name()->c_str() < _Name) return -1;
+    if (_Name < Name()->c_str()) return 1;
+    return 0;
+  }
+  const asdx::res::Float3 *BaseColorFactor() const {
+    return GetStruct<const asdx::res::Float3 *>(VT_BASECOLORFACTOR);
+  }
+  float Alpha() const {
+    return GetField<float>(VT_ALPHA, 0.0f);
+  }
+  float OcclusionFactor() const {
+    return GetField<float>(VT_OCCLUSIONFACTOR, 0.0f);
+  }
+  float RoughnessFactor() const {
+    return GetField<float>(VT_ROUGHNESSFACTOR, 0.0f);
+  }
+  float MetalnessFactor() const {
+    return GetField<float>(VT_METALNESSFACTOR, 0.0f);
+  }
+  float Ior() const {
+    return GetField<float>(VT_IOR, 0.0f);
+  }
+  const asdx::res::Float3 *EmissiveFactor() const {
+    return GetStruct<const asdx::res::Float3 *>(VT_EMISSIVEFACTOR);
+  }
+  const ::flatbuffers::String *BaseColorMap() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_BASECOLORMAP);
+  }
+  const ::flatbuffers::String *NormalMap() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_NORMALMAP);
+  }
+  const ::flatbuffers::String *OrmMap() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_ORMMAP);
+  }
+  const ::flatbuffers::String *EmissiveMap() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_EMISSIVEMAP);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffsetRequired(verifier, VT_NAME) &&
+           verifier.VerifyString(Name()) &&
+           VerifyField<asdx::res::Float3>(verifier, VT_BASECOLORFACTOR, 4) &&
+           VerifyField<float>(verifier, VT_ALPHA, 4) &&
+           VerifyField<float>(verifier, VT_OCCLUSIONFACTOR, 4) &&
+           VerifyField<float>(verifier, VT_ROUGHNESSFACTOR, 4) &&
+           VerifyField<float>(verifier, VT_METALNESSFACTOR, 4) &&
+           VerifyField<float>(verifier, VT_IOR, 4) &&
+           VerifyField<asdx::res::Float3>(verifier, VT_EMISSIVEFACTOR, 4) &&
+           VerifyOffset(verifier, VT_BASECOLORMAP) &&
+           verifier.VerifyString(BaseColorMap()) &&
+           VerifyOffset(verifier, VT_NORMALMAP) &&
+           verifier.VerifyString(NormalMap()) &&
+           VerifyOffset(verifier, VT_ORMMAP) &&
+           verifier.VerifyString(OrmMap()) &&
+           VerifyOffset(verifier, VT_EMISSIVEMAP) &&
+           verifier.VerifyString(EmissiveMap()) &&
+           verifier.EndTable();
+  }
+};
+
+struct MaterialBuilder {
+  typedef Material Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_Name(::flatbuffers::Offset<::flatbuffers::String> Name) {
+    fbb_.AddOffset(Material::VT_NAME, Name);
+  }
+  void add_BaseColorFactor(const asdx::res::Float3 *BaseColorFactor) {
+    fbb_.AddStruct(Material::VT_BASECOLORFACTOR, BaseColorFactor);
+  }
+  void add_Alpha(float Alpha) {
+    fbb_.AddElement<float>(Material::VT_ALPHA, Alpha, 0.0f);
+  }
+  void add_OcclusionFactor(float OcclusionFactor) {
+    fbb_.AddElement<float>(Material::VT_OCCLUSIONFACTOR, OcclusionFactor, 0.0f);
+  }
+  void add_RoughnessFactor(float RoughnessFactor) {
+    fbb_.AddElement<float>(Material::VT_ROUGHNESSFACTOR, RoughnessFactor, 0.0f);
+  }
+  void add_MetalnessFactor(float MetalnessFactor) {
+    fbb_.AddElement<float>(Material::VT_METALNESSFACTOR, MetalnessFactor, 0.0f);
+  }
+  void add_Ior(float Ior) {
+    fbb_.AddElement<float>(Material::VT_IOR, Ior, 0.0f);
+  }
+  void add_EmissiveFactor(const asdx::res::Float3 *EmissiveFactor) {
+    fbb_.AddStruct(Material::VT_EMISSIVEFACTOR, EmissiveFactor);
+  }
+  void add_BaseColorMap(::flatbuffers::Offset<::flatbuffers::String> BaseColorMap) {
+    fbb_.AddOffset(Material::VT_BASECOLORMAP, BaseColorMap);
+  }
+  void add_NormalMap(::flatbuffers::Offset<::flatbuffers::String> NormalMap) {
+    fbb_.AddOffset(Material::VT_NORMALMAP, NormalMap);
+  }
+  void add_OrmMap(::flatbuffers::Offset<::flatbuffers::String> OrmMap) {
+    fbb_.AddOffset(Material::VT_ORMMAP, OrmMap);
+  }
+  void add_EmissiveMap(::flatbuffers::Offset<::flatbuffers::String> EmissiveMap) {
+    fbb_.AddOffset(Material::VT_EMISSIVEMAP, EmissiveMap);
+  }
+  explicit MaterialBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<Material> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<Material>(end);
+    fbb_.Required(o, Material::VT_NAME);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<Material> CreateMaterial(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    ::flatbuffers::Offset<::flatbuffers::String> Name = 0,
+    const asdx::res::Float3 *BaseColorFactor = nullptr,
+    float Alpha = 0.0f,
+    float OcclusionFactor = 0.0f,
+    float RoughnessFactor = 0.0f,
+    float MetalnessFactor = 0.0f,
+    float Ior = 0.0f,
+    const asdx::res::Float3 *EmissiveFactor = nullptr,
+    ::flatbuffers::Offset<::flatbuffers::String> BaseColorMap = 0,
+    ::flatbuffers::Offset<::flatbuffers::String> NormalMap = 0,
+    ::flatbuffers::Offset<::flatbuffers::String> OrmMap = 0,
+    ::flatbuffers::Offset<::flatbuffers::String> EmissiveMap = 0) {
+  MaterialBuilder builder_(_fbb);
+  builder_.add_EmissiveMap(EmissiveMap);
+  builder_.add_OrmMap(OrmMap);
+  builder_.add_NormalMap(NormalMap);
+  builder_.add_BaseColorMap(BaseColorMap);
+  builder_.add_EmissiveFactor(EmissiveFactor);
+  builder_.add_Ior(Ior);
+  builder_.add_MetalnessFactor(MetalnessFactor);
+  builder_.add_RoughnessFactor(RoughnessFactor);
+  builder_.add_OcclusionFactor(OcclusionFactor);
+  builder_.add_Alpha(Alpha);
+  builder_.add_BaseColorFactor(BaseColorFactor);
+  builder_.add_Name(Name);
+  return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<Material> CreateMaterialDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    const char *Name = nullptr,
+    const asdx::res::Float3 *BaseColorFactor = nullptr,
+    float Alpha = 0.0f,
+    float OcclusionFactor = 0.0f,
+    float RoughnessFactor = 0.0f,
+    float MetalnessFactor = 0.0f,
+    float Ior = 0.0f,
+    const asdx::res::Float3 *EmissiveFactor = nullptr,
+    const char *BaseColorMap = nullptr,
+    const char *NormalMap = nullptr,
+    const char *OrmMap = nullptr,
+    const char *EmissiveMap = nullptr) {
+  auto Name__ = Name ? _fbb.CreateString(Name) : 0;
+  auto BaseColorMap__ = BaseColorMap ? _fbb.CreateString(BaseColorMap) : 0;
+  auto NormalMap__ = NormalMap ? _fbb.CreateString(NormalMap) : 0;
+  auto OrmMap__ = OrmMap ? _fbb.CreateString(OrmMap) : 0;
+  auto EmissiveMap__ = EmissiveMap ? _fbb.CreateString(EmissiveMap) : 0;
+  return asdx::res::CreateMaterial(
+      _fbb,
+      Name__,
+      BaseColorFactor,
+      Alpha,
+      OcclusionFactor,
+      RoughnessFactor,
+      MetalnessFactor,
+      Ior,
+      EmissiveFactor,
+      BaseColorMap__,
+      NormalMap__,
+      OrmMap__,
+      EmissiveMap__);
+}
+
 struct ModelBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef ModelBinaryBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
@@ -345,8 +552,8 @@ struct ModelBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::Mesh>> *Meshes() const {
     return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::Mesh>> *>(VT_MESHES);
   }
-  const ::flatbuffers::Vector<::flatbuffers::Offset<::flatbuffers::String>> *Materials() const {
-    return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<::flatbuffers::String>> *>(VT_MATERIALS);
+  const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::Material>> *Materials() const {
+    return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::Material>> *>(VT_MATERIALS);
   }
   const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::Bone>> *Bones() const {
     return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::Bone>> *>(VT_BONES);
@@ -368,7 +575,7 @@ struct ModelBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
            verifier.VerifyVectorOfTables(Meshes()) &&
            VerifyOffset(verifier, VT_MATERIALS) &&
            verifier.VerifyVector(Materials()) &&
-           verifier.VerifyVectorOfStrings(Materials()) &&
+           verifier.VerifyVectorOfTables(Materials()) &&
            VerifyOffset(verifier, VT_BONES) &&
            verifier.VerifyVector(Bones()) &&
            verifier.VerifyVectorOfTables(Bones()) &&
@@ -389,7 +596,7 @@ struct ModelBinaryBuilder {
   void add_Meshes(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::Mesh>>> Meshes) {
     fbb_.AddOffset(ModelBinary::VT_MESHES, Meshes);
   }
-  void add_Materials(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<::flatbuffers::String>>> Materials) {
+  void add_Materials(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::Material>>> Materials) {
     fbb_.AddOffset(ModelBinary::VT_MATERIALS, Materials);
   }
   void add_Bones(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::Bone>>> Bones) {
@@ -419,7 +626,7 @@ inline ::flatbuffers::Offset<ModelBinary> CreateModelBinary(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t Version = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::Mesh>>> Meshes = 0,
-    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<::flatbuffers::String>>> Materials = 0,
+    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::Material>>> Materials = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::Bone>>> Bones = 0,
     const asdx::res::BoundingSphere *Bounds = nullptr,
     const asdx::res::Float4x4 *RootTransform = nullptr,
@@ -439,13 +646,13 @@ inline ::flatbuffers::Offset<ModelBinary> CreateModelBinaryDirect(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t Version = 0,
     std::vector<::flatbuffers::Offset<asdx::res::Mesh>> *Meshes = nullptr,
-    const std::vector<::flatbuffers::Offset<::flatbuffers::String>> *Materials = nullptr,
+    std::vector<::flatbuffers::Offset<asdx::res::Material>> *Materials = nullptr,
     const std::vector<::flatbuffers::Offset<asdx::res::Bone>> *Bones = nullptr,
     const asdx::res::BoundingSphere *Bounds = nullptr,
     const asdx::res::Float4x4 *RootTransform = nullptr,
     const asdx::res::Float4x4 *InvRootTransform = nullptr) {
   auto Meshes__ = Meshes ? _fbb.CreateVectorOfSortedTables<asdx::res::Mesh>(Meshes) : 0;
-  auto Materials__ = Materials ? _fbb.CreateVector<::flatbuffers::Offset<::flatbuffers::String>>(*Materials) : 0;
+  auto Materials__ = Materials ? _fbb.CreateVectorOfSortedTables<asdx::res::Material>(Materials) : 0;
   auto Bones__ = Bones ? _fbb.CreateVector<::flatbuffers::Offset<asdx::res::Bone>>(*Bones) : 0;
   return asdx::res::CreateModelBinary(
       _fbb,

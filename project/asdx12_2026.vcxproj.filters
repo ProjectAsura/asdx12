@@ -216,9 +216,6 @@
     <ClCompile Include="..\src\gfx\asdxMapChip.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxMaterial.cpp">
-      <Filter>ソース ファイル\gfx</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\gfx\asdxModel.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
@@ -393,14 +390,8 @@
     <ClCompile Include="..\src\gfx\asdxLine.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\res\asdxResMaterial.cpp">
-      <Filter>ソース ファイル\res</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\fnd\asdxJsonWriter.cpp">
       <Filter>ソース ファイル\fnd</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\res\asdxResModelPrefab.cpp">
-      <Filter>ソース ファイル\res</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -572,9 +563,6 @@
     <ClInclude Include="..\include\gfx\asdxMapChip.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\gfx\asdxMaterial.h">
-      <Filter>ヘッダー ファイル\gfx</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\gfx\asdxModel.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
@@ -713,14 +701,8 @@
     <ClInclude Include="..\include\gfx\asdxLine.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\res\asdxResMaterial.h">
-      <Filter>ヘッダー ファイル\res</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\fnd\asdxJsonWriter.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\res\asdxResModelPrefab.h">
-      <Filter>ヘッダー ファイル\res</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

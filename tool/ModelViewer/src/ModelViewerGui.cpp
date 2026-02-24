@@ -11,11 +11,25 @@
 #include <fnd/asdxMisc.h>
 #include <fnd/asdxLogger.h>
 #include <fnd/asdxPath.h>
+#include <gfx/asdxGfxMisc.h>
 #include <DirectXMath.h>
+
+
+#ifndef TABLE2
+#define TABLE2(c0, c1)              \
+    ImGui::TableNextRow();          \
+    ImGui::TableSetColumnIndex(0);  \
+    (c0);                           \
+    ImGui::TableSetColumnIndex(1);  \
+    (c1)
+#endif//IMGUI_COLUMN2
 
 
 namespace {
 
+//-----------------------------------------------------------------------------
+// Constant Values.
+//-----------------------------------------------------------------------------
 const char* kDrawModes[] = {
     asdx::ToChar(u8"ライティング"),
     asdx::ToChar(u8"スクリーン空間位置座標"),
@@ -26,6 +40,13 @@ const char* kDrawModes[] = {
     asdx::ToChar(u8"頂点カラー"),
     asdx::ToChar(u8"ボーン番号"),
     asdx::ToChar(u8"ボーン重み"),
+    asdx::ToChar(u8"ベースカラー"),
+    asdx::ToChar(u8"オクルージョン"),
+    asdx::ToChar(u8"ラフネス"),
+    asdx::ToChar(u8"メタルネス"),
+    asdx::ToChar(u8"アルファ"),
+    asdx::ToChar(u8"IOR"),
+    asdx::ToChar(u8"エミッシブ"),
 };
 
 //-----------------------------------------------------------------------------
@@ -63,6 +84,33 @@ static bool ImGuiCombo(const char* caption, size_t& index, const std::vector<std
     return changed;
 }
 
+//-----------------------------------------------------------------------------
+//      テクスチャ情報を描画します.
+//-----------------------------------------------------------------------------
+static void DrawTextureInfo(const char* label, const char* path, const asdx::TextureHolder& holder)
+{
+    ImGui::PushID(label);
+    ImGui::Text(label);
+    ImGui::Text("Path : %s", path);
+
+    ImGui::BeginTable("##Table", 2);
+    ImGui::TableSetupColumn("##row0", ImGuiTableColumnFlags_WidthFixed);
+
+    ImGui::TableNextRow();
+    ImGui::TableSetColumnIndex(0);
+    ImGui::Image(holder.GetHandleGPU().ptr, ImVec2(64, 64));
+
+    ImGui::TableSetColumnIndex(1);
+    auto desc = holder.GetDesc();
+    ImGui::Text("Dimension : %s", asdx::ToShortString(desc.Dimension));
+    ImGui::Text("Size      : (%llu, %u, %u)", desc.Width, desc.Height, desc.DepthOrArraySize);
+    ImGui::Text("MipLevels : %u", desc.MipLevels);
+    ImGui::Text("Format    : %s", asdx::ToShortString(desc.Format));
+
+    ImGui::EndTable();
+    ImGui::PopID();
+}
+
 } // namespace
 
 
@@ -75,8 +123,11 @@ static bool ImGuiCombo(const char* caption, size_t& index, const std::vector<std
 //-----------------------------------------------------------------------------
 void ModelViewer::DrawModelInfo()
 {
+    if (!m_ShowInfo)
+        return;
+
     const auto w = 200.0f;
-    const auto h = 190.0f;
+    const auto h = 210.0f;
     const auto x = 10.0f;
     const auto y = 10.0f;
 
@@ -93,35 +144,25 @@ void ModelViewer::DrawModelInfo()
 
         ImGui::BeginTable(asdx::ToChar(u8"モデル情報"), 2);
 
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::Text(asdx::ToChar(u8"メッシュ数"));
-        ImGui::TableSetColumnIndex(1);
-        ImGui::Text(asdx::ToChar(u8"%zu"), m_ModelInfo.MeshCount);
+        TABLE2(
+            ImGui::Text(asdx::ToChar(u8"メッシュ数")),
+            ImGui::Text(asdx::ToChar(u8"%zu"), m_ModelInfo.MeshCount));
 
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::Text(asdx::ToChar(u8"マテリアル数"));
-        ImGui::TableSetColumnIndex(1);
-        ImGui::Text(asdx::ToChar(u8"%zu"), m_ModelInfo.MaterialCount);
+        TABLE2(
+            ImGui::Text(asdx::ToChar(u8"マテリアル数")),
+            ImGui::Text(asdx::ToChar(u8"%zu"), m_ModelInfo.MaterialCount));
 
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::Text(asdx::ToChar(u8"ボーン数"));
-        ImGui::TableSetColumnIndex(1);
-        ImGui::Text(asdx::ToChar(u8"%zu"), m_ModelInfo.BoneCount);
+        TABLE2(
+            ImGui::Text(asdx::ToChar(u8"ボーン数")),
+            ImGui::Text(asdx::ToChar(u8"%zu"), m_ModelInfo.BoneCount));
 
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::Text(asdx::ToChar(u8"頂点数"));
-        ImGui::TableSetColumnIndex(1);
-        ImGui::Text(asdx::ToChar(u8"%zu"), m_ModelInfo.VertexCount);
+        TABLE2(
+            ImGui::Text(asdx::ToChar(u8"頂点数")),
+            ImGui::Text(asdx::ToChar(u8"%zu"), m_ModelInfo.VertexCount));
 
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::Text(asdx::ToChar(u8"インデックス数"));
-        ImGui::TableSetColumnIndex(1);
-        ImGui::Text(asdx::ToChar(u8"%zu"), m_ModelInfo.IndexCount);
+        TABLE2(
+            ImGui::Text(asdx::ToChar(u8"インデックス数")),
+            ImGui::Text(asdx::ToChar(u8"%zu"), m_ModelInfo.IndexCount));
 
         ImGui::EndTable();
 
@@ -129,29 +170,21 @@ void ModelViewer::DrawModelInfo()
 
         ImGui::BeginTable(asdx::ToChar(u8"モーション情報"), 2);
 
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::Text(asdx::ToChar(u8"クリップ数"));
-        ImGui::TableSetColumnIndex(1);
-        ImGui::Text(asdx::ToChar(u8"%u"), m_MotionBinary.GetClipCount());
+        TABLE2(
+            ImGui::Text(asdx::ToChar(u8"クリップ数")),
+            ImGui::Text(asdx::ToChar(u8"%u"), m_MotionBinary.GetClipCount()));
 
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::Text(asdx::ToChar(u8"所要時間"));
-        ImGui::TableSetColumnIndex(1);
-        ImGui::Text(asdx::ToChar(u8"%.2f"), m_MotionPlayer.GetDuration());
+        TABLE2(
+            ImGui::Text(asdx::ToChar(u8"所要時間")),
+            ImGui::Text(asdx::ToChar(u8"%.2f"), m_MotionPlayer.GetDuration()));
 
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::Text(asdx::ToChar(u8"Tick/秒"));
-        ImGui::TableSetColumnIndex(1);
-        ImGui::Text(asdx::ToChar(u8"%.2f"), m_MotionPlayer.GetTicksPerSecond());
+        TABLE2(
+            ImGui::Text(asdx::ToChar(u8"Tick/秒")),
+            ImGui::Text(asdx::ToChar(u8"%.2f"), m_MotionPlayer.GetTicksPerSecond()));
 
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::Text(asdx::ToChar(u8"再生時間"));
-        ImGui::TableSetColumnIndex(1);
-        ImGui::Text(asdx::ToChar(u8"%.2f"), m_MotionPlayer.GetTimeInTicks());
+        TABLE2(
+            ImGui::Text(asdx::ToChar(u8"再生時間")),
+            ImGui::Text(asdx::ToChar(u8"%.2f"), m_MotionPlayer.GetTimeInTicks()));
 
         ImGui::EndTable();
 
@@ -172,6 +205,11 @@ void ModelViewer::DrawContextMenu(ID3D12GraphicsCommandList* pCmd)
         if (ImGui::BeginMenu(asdx::ToChar(u8"ファイル")))
         {
             MenuFile(pCmd);
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu(asdx::ToChar(u8"表示")))
+        {
+            MenuView();
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu(asdx::ToChar(u8"ヘルプ")))
@@ -345,10 +383,13 @@ void ModelViewer::DrawBones(const asdx::Matrix& modelWorld)
 //-----------------------------------------------------------------------------
 void ModelViewer::DrawPropertyWindow()
 {
-    ImGui::SetNextWindowPos(ImVec2(1510, 10), ImGuiCond_Once);
-    ImGui::SetNextWindowSize(ImVec2(400, 400), ImGuiCond_Once);
+    if (!m_ShowProperty)
+        return;
 
-    if (!ImGui::Begin(asdx::ToChar(u8"プロパティ")))
+    ImGui::SetNextWindowPos(ImVec2(1510, 10), ImGuiCond_Once);
+    ImGui::SetNextWindowSize(ImVec2(400, 600), ImGuiCond_Once);
+
+    if (!ImGui::Begin(asdx::ToChar(u8"プロパティ"), &m_ShowProperty))
         return;
 
     auto flags = ImGuiTabBarFlags_TabListPopupButton | ImGuiTabBarFlags_FittingPolicyScroll;
@@ -360,6 +401,12 @@ void ModelViewer::DrawPropertyWindow()
         // モーションタブを描画.
         DrawMotionTab();
 
+        // メッシュタブを描画.
+        DrawMeshTab();
+
+        // ボーンタブを描画.
+        DrawBoneTab();
+
         // デバッグタブを描画.
         DrawDebugTab();
 
@@ -367,6 +414,69 @@ void ModelViewer::DrawPropertyWindow()
     }
 
     ImGui::End();
+}
+
+//-----------------------------------------------------------------------------
+//      メッシュタブを描画します.
+//-----------------------------------------------------------------------------
+void ModelViewer::DrawMeshTab()
+{
+    if (!ImGui::BeginTabItem(asdx::ToChar(u8"メッシュ")))
+        return;
+
+    if (!!m_Model && m_Model->GetMeshCount() > 0)
+    {
+        auto count = m_Model->GetMeshCount();
+        for(auto i=0u; i<count; ++i)
+        {
+            ImGui::PushID(i);
+
+            const auto& res = m_Model->GetResMesh(i);
+            auto name = asdx::MeshProxy::GetName(res);
+            if (!ImGui::CollapsingHeader(name.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
+            {
+                ImGui::PopID();
+                continue;
+            }
+
+            ImGui::BeginTable("##MeshTable", 2);
+            ImGui::TableSetupColumn("##MeshRow0", ImGuiTableColumnFlags_WidthFixed);
+
+            auto materialId = asdx::MeshProxy::GetMaterialId(res);
+
+            TABLE2(
+                ImGui::Text(asdx::ToChar(u8"マテリアルID")),
+                ImGui::Text(asdx::ToChar(u8"%u"), materialId));
+
+            const auto& material = m_Model->GetResMaterial(materialId);
+            auto matName = asdx::MaterialProxy::GetName(material);
+            TABLE2(
+                ImGui::Text(asdx::ToChar(u8"マテリアル名")),
+                ImGui::Text(asdx::ToChar(u8"%s"), matName));
+
+            auto positions = asdx::MeshProxy::GetPositions(res);
+            TABLE2(
+                ImGui::Text(asdx::ToChar(u8"頂点数")),
+                ImGui::Text(asdx::ToChar(u8"%llu"), positions.size()));
+
+            auto indices = asdx::MeshProxy::GetVerexIndices(res);
+            TABLE2(
+                ImGui::Text(asdx::ToChar(u8"ポリゴン数")),
+                ImGui::Text(asdx::ToChar(u8"%llu"), indices.size() / 3));
+
+            ImGui::EndTable();
+
+            ImGui::PopID();
+
+            ImGui::Separator();
+        }
+    }
+    else
+    {
+        ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), asdx::ToChar(u8"メッシュがありません"));
+    }
+
+    ImGui::EndTabItem();
 }
 
 //-----------------------------------------------------------------------------
@@ -379,138 +489,153 @@ void ModelViewer::DrawMaterialTab()
 
     if (!!m_Model && m_Model->GetMaterialCount() > 0)
     {
-        ImGui::Separator();
-
         auto count = m_Model->GetMaterialCount();
         for(auto i=0u; i<count; ++i)
         {
-            if (!ImGui::CollapsingHeader(m_Model->GetMaterialName(i), ImGuiTreeNodeFlags_DefaultOpen))
+            const auto& res = m_Model->GetResMaterial(i);
+            ImGui::PushID(i);
+
+            auto name = asdx::MaterialProxy::GetName(res);
+            if (!ImGui::CollapsingHeader(name.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
+            {
+                ImGui::PopID();
                 continue;
+            }
+
+            const auto mtl = m_Model->GetMaterial(i);
+
+            ImGui::BeginTable("##ParamTable", 2);
+            ImGui::TableSetupColumn("##ParamRow0", ImGuiTableColumnFlags_WidthFixed);
+
+            auto baseColor = asdx::MaterialProxy::GetBaseColorFactor(res);
+            TABLE2(
+                ImGui::Text(asdx::ToChar(u8"ベースカラー")),
+                ImGui::Text("%f, %f, %f", baseColor.x, baseColor.y, baseColor.z));
+
+            auto alpha = asdx::MaterialProxy::GetAlpha(res);
+            TABLE2(
+                ImGui::Text(asdx::ToChar(u8"アルファ値")),
+                ImGui::Text("%f", alpha));
+
+            auto occlusion = asdx::MaterialProxy::GetOcclusionFactor(res);
+            TABLE2(
+                ImGui::Text(asdx::ToChar(u8"オクルージョン")),
+                ImGui::Text("%f", occlusion));
+
+            auto roughness = asdx::MaterialProxy::GetRoughnessFactor(res);
+            TABLE2(
+                ImGui::Text(asdx::ToChar(u8"ラフネス")),
+                ImGui::Text("%f", roughness));
+
+            auto ior = asdx::MaterialProxy::GetIor(res);
+            TABLE2(
+                ImGui::Text(asdx::ToChar(u8"屈折率")),
+                ImGui::Text("%f", ior));
+
+            auto emissive = asdx::MaterialProxy::GetEmissiveFactor(res);
+            TABLE2(
+                ImGui::Text(asdx::ToChar(u8"エミッシブ")),
+                ImGui::Text("%f, %f, %f", emissive.x, emissive.y, emissive.z));
+
+            ImGui::EndTable();
+            ImGui::Separator();
+
+            auto baseColorMap = asdx::MaterialProxy::GetBaseColorMap(res);
+            auto baseColorPath = (baseColorMap.is_null_or_empty() ? "NONE" : baseColorMap.c_str());
+            DrawTextureInfo(asdx::ToChar(u8"ベースカラーマップ"), baseColorPath, mtl->GetBaseColorMap());
+            ImGui::Separator();
+
+            auto normalMap = asdx::MaterialProxy::GetNormalMap(res);
+            auto normalPath = (normalMap.is_null_or_empty() ? "NONE" : normalMap.c_str());
+            DrawTextureInfo(asdx::ToChar(u8"法線マップ"), normalPath, mtl->GetNormalMap());
+            ImGui::Separator();
+
+            auto ormMap = asdx::MaterialProxy::GetOrmMap(res);
+            auto ormPath = (ormMap.is_null_or_empty() ? "NONE" : ormMap.c_str());
+            DrawTextureInfo(asdx::ToChar(u8"ORMマップ"), ormPath, mtl->GetOrmMap());
+            ImGui::Separator();
+
+            auto emissiveMap = asdx::MaterialProxy::GetEmissiveMap(res);
+            auto emissivePath = (emissiveMap.is_null_or_empty() ? "NONE" : emissiveMap.c_str());
+            DrawTextureInfo(asdx::ToChar(u8"エミッシブマップ"), emissivePath, mtl->GetEmissiveMap());
+            ImGui::Separator();
+
+            ImGui::PopID();
+        }
+    }
+    else
+    {
+        ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), asdx::ToChar(u8"マテリアルがありません"));
+    }
+
+    ImGui::EndTabItem();
+}
+
+//-----------------------------------------------------------------------------
+//      ボーンタブを描画します.
+//-----------------------------------------------------------------------------
+void ModelViewer::DrawBoneTab()
+{
+    if (!ImGui::BeginTabItem(asdx::ToChar(u8"ボーン")))
+        return;
+
+    if (!!m_Model && m_Model->GetBoneCount() > 0)
+    {
+        auto count = m_Model->GetBoneCount();
+        for(auto i=0u; i<count; ++i)
+        {
+            const auto& res = m_Model->GetBone(i);
 
             ImGui::PushID(i);
 
-            // 編集用にコピー.
-            char buf[512] = {};
-            strcpy_s(buf, m_Prefab.Materials[i].Path.c_str());
-
-            // テキスト直入力.
-            ImGui::InputText(asdx::ToChar(u8"マテリアルバイナリ"), buf, 512);
-
-            if (ImGui::Button(asdx::ToChar(u8"開く")))
+            auto name = asdx::BoneProxy::GetName(res);
+            if (!ImGui::CollapsingHeader(name.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
             {
-                asdx::fs::path path;
-                if (asdx::OpenFileDlg("Project Asura Material Binary (*.mtb)\0*.mtb\0\0", path))
-                { LoadMaterial(path.string().c_str(), m_EditMaterials[i]); }
-            }
-            ImGui::SameLine();
-            if (ImGui::Button(asdx::ToChar(u8"クリア")))
-            {
-                m_Prefab.Materials[i].Path.clear();
-            }
-            ImGui::SameLine();
-            if (ImGui::Button(asdx::ToChar(u8"保存")))
-            {
-                if (m_Prefab.Materials[i].Path.empty())
-                {
-                    asdx::fs::path path;
-                    if (asdx::SaveFileDlg("Project Asura Material Binary (*.mtb)\0*.mtb\0\0", path))
-                    { m_Prefab.Materials[i].Path = path.string(); }
-                }
-                SaveMaterialBinary(m_Prefab.Materials[i].Path.c_str(), m_EditMaterials[i]);
-            }
-
-            auto& editMat = m_EditMaterials[i];
-
-            //-------------------------------------------------
-            //      マテリアル編集.
-            //--------------------------------------------------
-            int kind = editMat.Kind;
-            if (ImGui::InputInt(asdx::ToChar(u8"種別"), &kind))
-            {
-                editMat.Kind = uint32_t(kind);
-            }
-
-            for(auto itr = editMat.Params.begin(); itr != editMat.Params.end();)
-            {
-                ImGui::PushID(itr->first.c_str());
-                ImGui::DragFloat(itr->first.c_str(), &itr->second);
-                ImGui::SameLine();
-                if (ImGui::Button(asdx::ToChar(u8"削除")))
-                    itr = editMat.Params.erase(itr);
-                else
-                    itr++;
                 ImGui::PopID();
+                continue;
             }
-            static char paramName[512] = {};
-            if (ImGui::BeginTable("AddParam", 2))
+
+            ImGui::BeginTable("##BoneTable", 2);
+   /*         ImGui::TableSetupColumn("##BoneRow0", ImGuiTableColumnFlags_WidthFixed);*/
+
+            auto parentId = asdx::BoneProxy::GetParentId(res);
+            const char* parentName = "NONE";
+            if (parentId >= 0)
             {
-                ImGui::TableNextRow();
-                ImGui::TableSetColumnIndex(0);
-                ImGui::InputText(asdx::ToChar(u8"名前"), paramName, 512);
-
-                ImGui::TableSetColumnIndex(1);
-                if (ImGui::Button(asdx::ToChar(u8"パラメータ追加")))
-                {
-                    editMat.Params[paramName] = 0.0f;
-                    memset(paramName, '\0', 512);
-                }
-
-                ImGui::EndTable();
+                const auto& parentBone = m_Model->GetBone(parentId);
+                parentName = asdx::BoneProxy::GetName(parentBone).c_str();
             }
 
-            for(auto itr = editMat.Textures.begin(); itr != editMat.Textures.end(); )
+            TABLE2(
+                ImGui::Text(asdx::ToChar(u8"親ボーン")),
+                ImGui::Text(asdx::ToChar(u8"%s"), parentName));
+
+            auto children = asdx::BoneProxy::GetChildren(res);
+            for(auto j=0u; j<children.size(); ++j)
             {
-                ImGui::PushID(itr->first.c_str());
-                char path[512] = {};
-                strcpy_s(path, itr->second.c_str());
-                if (ImGui::InputText(itr->first.c_str(), path, 512))
+                auto childId = children[j];
+                const char* childName = "NONE";
+                if (childId >= 0)
                 {
-                    itr->second = path;
+                    const auto& childBone = m_Model->GetBone(uint32_t(childId));
+                    childName = asdx::BoneProxy::GetName(childBone).c_str();
                 }
-                if (ImGui::Button(asdx::ToChar(u8"開く")))
-                {
-                    asdx::fs::path path;
-                    if (asdx::OpenFileDlg("Project Asura Texture Binary (*.txb)\0*.txb\0\0", path))
-                    { itr->second = path.string(); }
-                }
-                ImGui::SameLine();
-                if (ImGui::Button(asdx::ToChar(u8"クリア")))
-                {
-                    itr->second.clear();
-                }
-                ImGui::SameLine();
-                if (ImGui::Button(asdx::ToChar(u8"削除")))
-                    itr = editMat.Textures.erase(itr);
-                else
-                    itr++;
 
-                ImGui::PopID();
+                TABLE2(
+                    ImGui::Text(asdx::ToChar(u8"子ボーン[%u]"), j),
+                    ImGui::Text(asdx::ToChar(u8"%s"), childName));
             }
 
-            static char textureName[512] = {};
-            if (ImGui::BeginTable("AddTexture", 2))
-            {
-                ImGui::TableNextRow();
-                ImGui::TableSetColumnIndex(0);
-                ImGui::InputText(asdx::ToChar(u8"名前"), textureName, 512);
-
-                ImGui::TableSetColumnIndex(1);
-                if (ImGui::Button(asdx::ToChar(u8"テクスチャ追加")))
-                {
-                    editMat.Textures[textureName] = "";
-                    memset(textureName, '\0', 512);
-                }
-
-                ImGui::EndTable();
-            }
+            ImGui::EndTable();
 
             ImGui::PopID();
+
             ImGui::Separator();
         }
     }
     else
     {
-        ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "NO MATERIAL");
+        ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), asdx::ToChar(u8"ボーンがありません"));
     }
 
     ImGui::EndTabItem();
@@ -581,13 +706,17 @@ void ModelViewer::DrawDebugTab()
     if (!ImGui::BeginTabItem(asdx::ToChar(u8"デバッグ")))
         return;
 
+    ImGui::ColorEdit4(asdx::ToChar(u8"クリアカラー"), m_ClearColor, ImGuiColorEditFlags_Float);
+
     int mode = (int)m_DrawMode;
-    ImGui::Combo(asdx::ToChar(u8"描画モード"), &mode, kDrawModes, _countof(kDrawModes));
-    m_DrawMode = mode;
+    if (ImGui::Combo(asdx::ToChar(u8"描画モード"), &mode, kDrawModes, _countof(kDrawModes)))
+    { m_DrawMode = mode; }
 
     ImGui::Checkbox(asdx::ToChar(u8"ワイヤーフレーム"), &m_EnableWireframe);
     ImGui::Checkbox(asdx::ToChar(u8"バウンディングスフィア表示"), &m_DrawBoundingSphere);
     ImGui::Checkbox(asdx::ToChar(u8"ボーン表示"), &m_DrawBones);
+
+
 
     ImGui::EndTabItem();
 }

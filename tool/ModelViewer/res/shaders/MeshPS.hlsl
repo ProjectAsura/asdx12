@@ -4,6 +4,13 @@
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 
+//-----------------------------------------------------------------------------
+// Includes
+//-----------------------------------------------------------------------------
+#include "asdxBRDF.hlsli"
+#include "asdxSamplers.hlsli"
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // VSOutput structure
 ///////////////////////////////////////////////////////////////////////////////
@@ -41,7 +48,30 @@ cbuffer PixelParam : register(b1)
     uint3   Reserved;
 };
 
-#define MODE_LAMBERT        (0)
+///////////////////////////////////////////////////////////////////////////////
+// MaterialParam constant buffer.
+///////////////////////////////////////////////////////////////////////////////
+cbuffer MaterialParam : register(b2)
+{
+    float3  BaseColor;
+    float   Alpha;
+    float   Occlusion;
+    float   Roughness;
+    float   Metalness;
+    float   Ior;
+    float3  Emissive;
+    float   UnusedParam0;
+}
+
+//-----------------------------------------------------------------------------
+// Resources
+//-----------------------------------------------------------------------------
+Texture2D BaseColorMap  : register(t1);
+Texture2D NormalMap     : register(t2);
+Texture2D OrmMap        : register(t3);
+Texture2D EmissiveMap   : register(t4);
+
+#define MODE_LIGHTING       (0)
 #define MODE_POSITION       (1)
 #define MODE_NORMAL         (2)
 #define MODE_TANGENT        (3)
@@ -50,6 +80,13 @@ cbuffer PixelParam : register(b1)
 #define MODE_COLOR          (6)
 #define MODE_BLENDINDEX     (7)
 #define MODE_BLENDWEIGHT    (8)
+#define MODE_BASE_COLOR     (9)
+#define MODE_OCCLUSION      (10)
+#define MODE_ROUGHNESS      (11)
+#define MODE_METALNESS      (12)
+#define MODE_ALPHA          (13)
+#define MODE_IOR            (14)
+#define MODE_EMISSIVE       (15)
 
 //-----------------------------------------------------------------------------
 //      色相からRGB値を求めます.
@@ -90,32 +127,32 @@ float4 main(const VSOutput input) : SV_TARGET0
 
     switch (Mode)
     {
-    case MODE_LAMBERT:
+    case MODE_LIGHTING:
     default:
         {
             float3 L = normalize(View._31_32_33);
-            output.xyz = saturate(dot(N, L)).xxx * 0.5f.xxx;    // 陰影を見やすくするために白ではなく0.5にした.
+            output.rgb = saturate(dot(N, L)).xxx * 0.5f.xxx;    // 陰影を見やすくするために白ではなく0.5にした.
         }
         break;
 
     case MODE_POSITION:
         {
-            output.x = input.Position.x / TargetWidth;
-            output.y = input.Position.y / TargetHeight;
-            output.z = input.Position.z;
+            output.r = input.Position.x / TargetWidth;
+            output.g = input.Position.y / TargetHeight;
+            output.b = input.Position.z;
         }
         break;
 
     case MODE_NORMAL:
-        { output.xyz = N * 0.5f + 0.5f; }
+        { output.rgb = N * 0.5f + 0.5f; }
         break;
 
     case MODE_TANGENT:
-        { output.xyz = T * 0.5f + 0.5f; }
+        { output.rgb = T * 0.5f + 0.5f; }
         break;
 
     case MODE_BITANGENT:
-        { output.xyz = B * 0.5f + 0.5f; }
+        { output.rgb = B * 0.5f + 0.5f; }
         break;
 
     case MODE_TEXCOORD:
@@ -128,7 +165,35 @@ float4 main(const VSOutput input) : SV_TARGET0
 
     case MODE_BLENDINDEX:
     case MODE_BLENDWEIGHT:
-        { output.xyz = 0.0f.xxx; }
+        { output.rgb = 0.0f.xxx; }
+        break;
+
+    case MODE_BASE_COLOR:
+        { output.rgb = BaseColorMap.Sample(LinearClamp, input.TexCoord).rgb * BaseColor; }
+        break;
+
+    case MODE_OCCLUSION:
+        { output.rgb = OrmMap.Sample(LinearClamp, input.TexCoord).rrr * Occlusion; }
+        break;
+ 
+    case MODE_ROUGHNESS:
+        { output.rgb = OrmMap.Sample(LinearClamp, input.TexCoord).ggg * Roughness; }
+        break;
+ 
+    case MODE_METALNESS:
+        { output.rgb = OrmMap.Sample(LinearClamp, input.TexCoord).bbb * Metalness; }
+        break;
+ 
+    case MODE_ALPHA:
+        { output.rgb = Alpha.xxx; }
+        break;
+ 
+    case MODE_IOR:
+        { output.rgb = Ior.xxx; }
+        break;
+
+    case MODE_EMISSIVE:
+        { output.rgb = EmissiveMap.Sample(LinearClamp, input.TexCoord).rgb * Emissive; }
         break;
     }
 
