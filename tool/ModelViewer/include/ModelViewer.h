@@ -96,6 +96,8 @@ private:
     uint32_t                            m_DrawMode           = 0;
     bool                                m_DrawBoundingSphere = false;
     bool                                m_DrawBones          = false;
+    bool                                m_DrawAxis           = false;
+    bool                                m_DrawGrid           = false;
     bool                                m_EnableWireframe    = false;
     asdx::Vector3                       m_ModelTranslation   = asdx::Vector3(0.0f, 0.0f, 0.0f);
     asdx::Vector3                       m_ModelRotation      = asdx::Vector3(0.0f, 0.0f, 0.0f);
@@ -116,6 +118,10 @@ private:
     bool                                m_ShowLisence   = false;
     bool                                m_ShowProperty  = true;
     bool                                m_ShowInfo      = true;
+    asdx::VertexBuffer                  m_AxisVertexBuffer;
+    asdx::VertexBuffer                  m_GridVertexBuffer;
+    uint32_t                            m_AxisVertexCount = 0;
+    uint32_t                            m_GridVertexCount = 0;
 
     //=========================================================================
     // private methods.
@@ -187,6 +193,16 @@ private:
     void RecreateModel();
 
     //-------------------------------------------------------------------------
+    //! @brief      軸を生成します.
+    //-------------------------------------------------------------------------
+    bool CreateAxis(float length);
+
+    //-------------------------------------------------------------------------
+    //! @brief      グリッドを生成します.
+    //-------------------------------------------------------------------------
+    bool CreateGrid(float step, uint32_t count);
+
+    //-------------------------------------------------------------------------
     //! @brief      モデルバイナリを保存します.
     //-------------------------------------------------------------------------
     void SaveModelBinary(const char* path);
@@ -227,6 +243,16 @@ private:
     void DrawBones(const asdx::Matrix& modelWorld);
 
     //-------------------------------------------------------------------------
+    //! @brief      グリッドを描画します.
+    //-------------------------------------------------------------------------
+    void DrawGrid(ID3D12GraphicsCommandList* pCmd);
+
+    //-------------------------------------------------------------------------
+    //! @brief      軸を描画します.
+    //-------------------------------------------------------------------------
+    void DrawAxis(ID3D12GraphicsCommandList* pCmd);
+
+    //-------------------------------------------------------------------------
     //! @brief      プロパティウィンドウを描画します.
     //-------------------------------------------------------------------------
     void DrawPropertyWindow();
@@ -260,4 +286,5 @@ private:
     //! @brief      ライセンス情報を描画します.
     //-------------------------------------------------------------------------
     void DrawLisence();
+
 };

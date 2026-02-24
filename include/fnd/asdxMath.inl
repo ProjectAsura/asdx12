@@ -4794,6 +4794,14 @@ inline Unorm2::Unorm2(float nx, float ny)
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
+//      引数付きコンストラクタです.
+//-----------------------------------------------------------------------------
+inline Unorm2::Unorm2(const Vector2& value)
+: x(uint8_t(asdx::Saturate(value.x) * 255.0f))
+, y(uint8_t(asdx::Saturate(value.y) * 255.0f))
+{ /* DO_NOTHING */ }
+
+//-----------------------------------------------------------------------------
 //      Vector2型に変換します.
 //-----------------------------------------------------------------------------
 inline Vector2 Unorm2::ToVector2() const
@@ -4824,6 +4832,15 @@ inline Unorm3::Unorm3(float nx, float ny, float nz)
 : x(uint8_t(asdx::Saturate(nx) * 255.0f))
 , y(uint8_t(asdx::Saturate(ny) * 255.0f))
 , z(uint8_t(asdx::Saturate(nz) * 255.0f))
+{ /* DO_NOTHING */ }
+
+//-----------------------------------------------------------------------------
+//      引数付きコンストラクタです.
+//-----------------------------------------------------------------------------
+inline Unorm3::Unorm3(const Vector3& value)
+: x(uint8_t(asdx::Saturate(value.x) * 255.0f))
+, y(uint8_t(asdx::Saturate(value.y) * 255.0f))
+, z(uint8_t(asdx::Saturate(value.z) * 255.0f))
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
@@ -4882,6 +4899,16 @@ inline Unorm4::Unorm4(float nx, float ny, float nz, float nw)
 , y(uint8_t(asdx::Saturate(ny) * 255.0f))
 , z(uint8_t(asdx::Saturate(nz) * 255.0f))
 , w(uint8_t(asdx::Saturate(nw) * 255.0f))
+{ /* DO_NOTHING */ }
+
+//-----------------------------------------------------------------------------
+//      引数付きコンストラクタです.
+//-----------------------------------------------------------------------------
+inline Unorm4::Unorm4(const Vector4& value)
+: x(uint8_t(asdx::Saturate(value.x) * 255.0f))
+, y(uint8_t(asdx::Saturate(value.y) * 255.0f))
+, z(uint8_t(asdx::Saturate(value.z) * 255.0f))
+, w(uint8_t(asdx::Saturate(value.w) * 255.0f))
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------

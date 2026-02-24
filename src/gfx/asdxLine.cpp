@@ -58,9 +58,9 @@ const D3D12_DEPTH_STENCIL_DESC kDepthNone = {
     kStencilDefault
 };
 
-const D3D12_DEPTH_STENCIL_DESC kDepthDefault = {
+const D3D12_DEPTH_STENCIL_DESC kDepthRead = {
     TRUE,
-    D3D12_DEPTH_WRITE_MASK_ALL,
+    D3D12_DEPTH_WRITE_MASK_ZERO,
     D3D12_COMPARISON_FUNC_LESS_EQUAL,
     FALSE,
     D3D12_DEFAULT_STENCIL_READ_MASK,
@@ -244,7 +244,7 @@ bool LineRenderer::Init(uint32_t maxLineCount, DXGI_FORMAT rtvFormat, DXGI_FORMA
         desc.BlendState                     = kAlphaBlend;
         desc.SampleMask                     = D3D12_DEFAULT_SAMPLE_MASK;
         desc.RasterizerState                = kCullNone;
-        desc.DepthStencilState              = (dsvFormat == DXGI_FORMAT_UNKNOWN) ? kDepthNone : kDepthDefault;
+        desc.DepthStencilState              = (dsvFormat == DXGI_FORMAT_UNKNOWN) ? kDepthNone : kDepthRead;
         desc.InputLayout.NumElements        = _countof(kElements);
         desc.InputLayout.pInputElementDescs = kElements;
         desc.PrimitiveTopologyType          = D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;

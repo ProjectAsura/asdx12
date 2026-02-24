@@ -59,6 +59,9 @@ static const D3D12_INPUT_ELEMENT_DESC InputElements[] = {
 static const uint32_t kStaticMeshElementCount   = 5;
 static const uint32_t kSkeletalMeshElementCount = 7;
 
+///////////////////////////////////////////////////////////////////////////////
+// ParamScene structure
+///////////////////////////////////////////////////////////////////////////////
 struct alignas(256) ParamScene
 {
     asdx::Matrix    World;
@@ -70,6 +73,23 @@ struct alignas(256) ParamScene
     float           FarClip;
     float           TargetWidth;
     float           TargetHeight;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// LineVertex structure
+///////////////////////////////////////////////////////////////////////////////
+struct LineVertex
+{
+    asdx::Vector3   Position;     //!< 位置座標です.
+    asdx::Unorm4    Color;        //!< 頂点カラーです.
+
+    LineVertex()
+    { /* DO_NOTHING */ }
+
+    LineVertex(const asdx::Vector3& position, const asdx::Vector4& color)
+    : Position(position)
+    , Color   (color)
+    { /* DO_NOTHING */ }
 };
 
 } // namespace
@@ -277,6 +297,18 @@ bool ModelViewer::OnInit()
         return false;
     }
 
+    if (!CreateAxis(100.0f))
+    {
+        ELOG("Error : CreateAxis() Failed.");
+        return false;
+    }
+
+    if (!CreateGrid(1.0f, 200))
+    {
+        ELOG("Error : CreateGrid() Failed.");
+        return false;
+    }
+
     // コマンドの記録を終了.
     pCmd->Close();
 
@@ -325,6 +357,9 @@ void ModelViewer::OnTerm()
     m_RootSignature.Reset();
 
     m_Model.Reset();
+
+    m_AxisVertexBuffer.Term();
+    m_GridVertexBuffer.Term();
 
     // GUIマネージャの終了処理.
     asdx::GuiMgr::Instance().Term();
@@ -444,6 +479,12 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
     pCmd->RSSetViewports(1, &m_Viewport);
     pCmd->RSSetScissorRects(1, &m_ScissorRect);
 
+    // グリッド描画.
+    DrawGrid(pCmd);
+
+    // 軸描画.
+    DrawAxis(pCmd);
+
     // モデルを描画
     if (m_ModelInfo.MeshCount > 0)
     {
@@ -524,14 +565,14 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
                 m_SphereShape.Draw(pCmd);
             }
         }
+    }
 
-        if (m_DrawBones)
-        {
-            auto addr = m_ShapeStates.GetBufferAddress();
-            m_LineRenderer.SetPipelineState(pCmd);
-            pCmd->SetGraphicsRootConstantBufferView(0, addr);
-            m_LineRenderer.Draw(pCmd);
-        }
+    if (m_DrawBones || m_DrawAxis)
+    {
+        auto addr = m_ShapeStates.GetBufferAddress();
+        m_LineRenderer.SetPipelineState(pCmd);
+        pCmd->SetGraphicsRootConstantBufferView(0, addr);
+        m_LineRenderer.Draw(pCmd);
     }
 
     // GUIを描画.
@@ -1024,4 +1065,130 @@ void ModelViewer::LoadMotion()
     auto clip = m_MotionBinary.GetClip(0);
     m_MotionPlayer.SetClip(clip);
     m_ClipIndex = 0;
+}
+
+//-----------------------------------------------------------------------------
+//      軸を生成します.
+//-----------------------------------------------------------------------------
+bool ModelViewer::CreateAxis(float length)
+{
+    LineVertex vertices[] = {
+        // X軸.
+        LineVertex( asdx::Vector3( 0.0f,   0.0f,  0.0f ), asdx::Vector4( 1.0f, 0.0f, 0.0f, 1.0f ) ),
+        LineVertex( asdx::Vector3( length, 0.0f,  0.0f ), asdx::Vector4( 1.0f, 0.0f, 0.0f, 1.0f ) ),
+        // Y軸.
+        LineVertex( asdx::Vector3( 0.0f,   0.0f,  0.0f  ), asdx::Vector4( 0.0f, 1.0f, 0.0f, 1.0f ) ),
+        LineVertex( asdx::Vector3( 0.0f,   length, 0.0f ), asdx::Vector4( 0.0f, 1.0f, 0.0f, 1.0f ) ),
+        // Z軸.
+        LineVertex( asdx::Vector3( 0.0f,   0.0f,  0.0f  ), asdx::Vector4( 0.0f, 0.0f, 1.0f, 1.0f ) ),
+        LineVertex( asdx::Vector3( 0.0f,   0.0f, length ), asdx::Vector4( 0.0f, 0.0f, 1.0f, 1.0f ) )
+    };
+
+    if (!m_AxisVertexBuffer.Init(sizeof(LineVertex) * 6, sizeof(LineVertex)))
+    {
+        ELOG("Error : VertexBuffer::Init() Failed.");
+        return false;
+    }
+
+    auto dstPtr = m_AxisVertexBuffer.MapAs<LineVertex>();
+    memcpy(dstPtr, vertices, sizeof(vertices));
+    m_AxisVertexBuffer.Unmap();
+
+    m_AxisVertexCount = 6;
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      グリッドを生成します.
+//-----------------------------------------------------------------------------
+bool ModelViewer::CreateGrid(float step, uint32_t count)
+{
+    auto vertexCount = (count + 1) * 4;
+
+    std::vector<LineVertex> vertices;
+    vertices.resize(vertexCount);
+
+    auto w = ( count / 2.0f ) * step;
+    auto h = ( count / 2.0f ) * step;
+    auto idx = 0;
+
+    auto color      = asdx::Unorm4(0.75f, 0.75f, 0.75f, 1.0f);
+    auto thin_color = asdx::Unorm4(0.25f, 0.25f, 0.25f, 1.0f);
+
+    // 縦線.
+    for( auto i=0u; i<=count; i++ )
+    {
+        auto x = -w + ( i * step );
+
+        vertices[idx].Position = asdx::Vector3(  x, 0.0f, -h );
+        vertices[idx].Color    = ( i % 10 == 0 ) ? color : thin_color;
+        idx++;
+
+        vertices[idx].Position = asdx::Vector3(  x, 0.0f,  h ); 
+        vertices[idx].Color    = ( i % 10 == 0 ) ? color : thin_color;
+        idx++;
+    }
+
+    // 横線.
+    for( auto i=0u; i<=count; i++ )
+    {
+        auto z = -h + ( i * step );
+        vertices[idx].Position = asdx::Vector3( -w, 0.0f, z );
+        vertices[idx].Color    = ( i % 10 == 0 ) ? color : thin_color;
+        idx++;
+
+        vertices[idx].Position = asdx::Vector3(  w, 0.0f, z ); 
+        vertices[idx].Color    = ( i % 10 == 0 ) ? color : thin_color;
+        idx++;
+    }
+
+    auto ret = m_GridVertexBuffer.Init(sizeof(LineVertex) * vertexCount, sizeof(LineVertex));
+    if (!ret)
+    {
+        ELOG("Error : VertexBuffer::Init() Failed.");
+        return false;
+    }
+
+    auto dstPtr = m_GridVertexBuffer.MapAs<LineVertex>();
+    memcpy(dstPtr, vertices.data(), sizeof(LineVertex) * vertices.size());
+    m_GridVertexBuffer.Unmap();
+
+    m_GridVertexCount = vertexCount;
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      軸を描画します.
+//-----------------------------------------------------------------------------
+void ModelViewer::DrawAxis(ID3D12GraphicsCommandList* pCmd)
+{
+    if (!m_DrawAxis || pCmd == nullptr)
+        return;
+
+    auto addr = m_ShapeStates.GetBufferAddress();
+    m_LineRenderer.SetPipelineState(pCmd);
+    pCmd->SetGraphicsRootConstantBufferView(0, addr);
+    auto vbv = m_AxisVertexBuffer.GetVBV();
+    pCmd->IASetVertexBuffers(0, 1, &vbv);
+    pCmd->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
+    pCmd->DrawInstanced(m_AxisVertexCount, 1, 0, 0);
+}
+
+//-----------------------------------------------------------------------------
+//      グリッドを描画します.
+//-----------------------------------------------------------------------------
+void ModelViewer::DrawGrid(ID3D12GraphicsCommandList* pCmd)
+{
+    if (!m_DrawGrid || pCmd == nullptr)
+        return;
+
+    auto addr = m_ShapeStates.GetBufferAddress();
+    m_LineRenderer.SetPipelineState(pCmd);
+    pCmd->SetGraphicsRootConstantBufferView(0, addr);
+    auto vbv = m_GridVertexBuffer.GetVBV();
+    pCmd->IASetVertexBuffers(0, 1, &vbv);
+    pCmd->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
+    pCmd->DrawInstanced(m_GridVertexCount, 1, 0, 0);
 }

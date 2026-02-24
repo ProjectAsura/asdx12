@@ -611,6 +611,17 @@ bool ModelConverter::Convert(const std::string& path, std::vector<uint8_t>& bina
             }
         }
 
+        // エミッシブカラー.
+        {
+            aiColor4D value;
+            if (srcMat->Get(AI_MATKEY_COLOR_EMISSIVE, value) == aiReturn_SUCCESS)
+            {
+                emissiveFactor.x = value.r;
+                emissiveFactor.y = value.g;
+                emissiveFactor.z = value.b;
+            }
+        }
+
         // 不透明度.
         {
             float value;
@@ -650,12 +661,12 @@ bool ModelConverter::Convert(const std::string& path, std::vector<uint8_t>& bina
 
             // ベースカラーファクター.
             {
-                aiVector3f value;
+                aiColor4D value;
                 if (srcMat->Get(AI_MATKEY_BASE_COLOR, value) == aiReturn_SUCCESS)
                 {
-                    baseColorFactor.x = value.x;
-                    baseColorFactor.y = value.y;
-                    baseColorFactor.z = value.z;
+                    baseColorFactor.x = value.r;
+                    baseColorFactor.y = value.g;
+                    baseColorFactor.z = value.b;
                 }
             }
 
@@ -691,12 +702,12 @@ bool ModelConverter::Convert(const std::string& path, std::vector<uint8_t>& bina
 
             // ディフューズカラー.
             {
-                aiVector3f value;
+                aiColor4D value;
                 if (srcMat->Get(AI_MATKEY_COLOR_DIFFUSE, value) == aiReturn_SUCCESS)
                 {
-                    baseColorFactor.x = value.x;
-                    baseColorFactor.y = value.y;
-                    baseColorFactor.z = value.z;
+                    baseColorFactor.x = value.r;
+                    baseColorFactor.y = value.g;
+                    baseColorFactor.z = value.b;
                 }
             }
         }
@@ -757,17 +768,17 @@ bool ModelConverter::ReverseConvert(const std::vector<uint8_t>& binary, const ch
 
     aiScene scene = {};
 
-    aiNode rootNode = {};
-    rootNode.mName           = "RootNode";
-    rootNode.mTransformation = ToAiMatrix(modelBin->RootTransform());
-    rootNode.mParent         = nullptr;
-    rootNode.mNumChildren    = 0;
-    rootNode.mChildren       = nullptr;
-    rootNode.mNumMeshes      = 0;
-    rootNode.mMeshes         = nullptr;
-    rootNode.mMetaData       = nullptr;
+    auto rootNode = new aiNode();
+    rootNode->mName           = "RootNode";
+    rootNode->mTransformation = ToAiMatrix(modelBin->RootTransform());
+    rootNode->mParent         = nullptr;
+    rootNode->mNumChildren    = 0;
+    rootNode->mChildren       = nullptr;
+    rootNode->mNumMeshes      = 0;
+    rootNode->mMeshes         = nullptr;
+    rootNode->mMetaData       = nullptr;
 
-    scene.mRootNode = &rootNode;
+    scene.mRootNode = rootNode;
 
     auto materials = modelBin->Materials();
     {
@@ -789,7 +800,7 @@ bool ModelConverter::ReverseConvert(const std::vector<uint8_t>& binary, const ch
             // シェーディングモデル.
             {
                 int value = aiShadingMode_PBR_BRDF;
-                dstMat->AddProperty(&value, 1, AI_MATKEY_SHADING_MODEL); 
+                dstMat->AddProperty(&value, 1, AI_MATKEY_SHADING_MODEL);
             }
 
             // ベースカラーファクター.
@@ -875,10 +886,51 @@ bool ModelConverter::ReverseConvert(const std::vector<uint8_t>& binary, const ch
     }
 
     auto bones = modelBin->Bones();
+    aiNode* dstNodes = nullptr;
     if (bones != nullptr)
     {
-        // TODO : Implementation.
+        auto count = bones->size();
+        dstNodes = new aiNode[count];
+
+        for(auto i=0u; i<count; ++i)
+        {
+            const auto srcBone = bones->Get(i);
+            dstNodes[i].mName           = srcBone->Name()->c_str();
+            dstNodes[i].mTransformation = ToAiMatrix(srcBone->BindPose());
+            dstNodes[i].mNumMeshes      = 0;
+            dstNodes[i].mMeshes         = nullptr;
+            dstNodes[i].mMetaData       = nullptr;
+
+            auto parentId = srcBone->Parent();
+            if (parentId >= 0)
+            {
+                dstNodes[i].mParent = &dstNodes[parentId];
+            }
+            else
+            {
+                dstNodes[i].mParent = rootNode;
+            }
+
+            const auto srcChildren = srcBone->Children();
+            if (srcChildren != nullptr)
+            {
+                dstNodes[i].mNumChildren = uint32_t(srcChildren->size());
+                dstNodes[i].mChildren    = new aiNode* [srcChildren->size()];
+                for(auto j=0u; j<srcChildren->size(); ++j)
+                {
+                    const auto srcChild = srcChildren->Get(j);
+                    dstNodes[i].mChildren[j] = &dstNodes[srcChild];
+                }
+            }
+            else
+            {
+                dstNodes[i].mNumChildren = 0;
+                dstNodes[i].mChildren    = nullptr;
+            }
+        }
     }
+
+    std::map<uint32_t, std::vector<uint32_t>> boneMeshMap;
 
     auto meshes = modelBin->Meshes();
     {
@@ -956,9 +1008,75 @@ bool ModelConverter::ReverseConvert(const std::vector<uint8_t>& binary, const ch
                 }
             }
 
-            if (srcMesh->BoneIndices() != nullptr && srcMesh->BoneWeights() != nullptr && modelBin->Bones() != nullptr)
+            if (srcMesh->BoneIndices() != nullptr && srcMesh->BoneWeights() != nullptr && bones != nullptr)
             {
-                // TODO : Implementation.
+                std::map<uint32_t, std::vector<aiVertexWeight>> tmpBones;
+
+                for(auto j=0u; j<vertexCount; ++j)
+                {
+                    auto srcBoneIndex  = srcMesh->BoneIndices()->Get(j);
+                    auto srcBoneWeight = srcMesh->BoneWeights()->Get(j);
+
+                    auto w = srcBoneWeight->X();
+                    if (w > 0.0f)
+                    {
+                        aiVertexWeight tmpWeight = {};
+                        tmpWeight.mVertexId = j;
+                        tmpWeight.mWeight   = w;
+
+                        tmpBones[srcBoneIndex->X()].push_back(tmpWeight);
+                    }
+
+                    w = srcBoneWeight->Y();
+                    if (w > 0.0f)
+                    {
+                        aiVertexWeight tmpWeight = {};
+                        tmpWeight.mVertexId = j;
+                        tmpWeight.mWeight   = w;
+
+                        tmpBones[srcBoneIndex->Y()].push_back(tmpWeight);
+                    }
+
+                    w = srcBoneWeight->Z();
+                    if (w > 0.0f)
+                    {
+                        aiVertexWeight tmpWeight = {};
+                        tmpWeight.mVertexId = j;
+                        tmpWeight.mWeight   = w;
+
+                        tmpBones[srcBoneIndex->Z()].push_back(tmpWeight);
+                    }
+
+                    w = srcBoneWeight->W();
+                    if (w > 0.0f)
+                    {
+                        aiVertexWeight tmpWeight = {};
+                        tmpWeight.mVertexId = j;
+                        tmpWeight.mWeight   = w;
+
+                        tmpBones[srcBoneIndex->W()].push_back(tmpWeight);
+                    }
+                }
+
+                dstMesh->mBones = new aiBone* [tmpBones.size()];
+
+                for(auto& tmpBone : tmpBones)
+                {
+                    const auto srcBone = bones->Get(tmpBone.first);
+                    const auto weightCount = uint32_t(tmpBone.second.size());
+
+                    auto dstBone = new aiBone();
+
+                    dstBone->mName          = srcBone->Name()->c_str();
+                    dstBone->mNumWeights    = weightCount;
+                    dstBone->mWeights       = new aiVertexWeight[weightCount];
+                    dstBone->mOffsetMatrix  = ToAiMatrix(srcBone->InverseBindPose());
+                    memcpy(dstBone->mWeights, tmpBone.second.data(), sizeof(aiVertexWeight) * weightCount);
+
+                    dstMesh->mBones[tmpBone.first] = dstBone;
+
+                    boneMeshMap[tmpBone.first].push_back(i);
+                }
             }
 
             auto index = 0u;
@@ -977,45 +1095,48 @@ bool ModelConverter::ReverseConvert(const std::vector<uint8_t>& binary, const ch
         }
     }
 
+    // 最後にメッシュを関連付ける.
+    if (dstNodes != nullptr)
+    {
+        auto count = bones->size();
+        for(auto i=0u; i<count; ++i)
+        {
+            auto itr = boneMeshMap.find(i);
+            if (itr == boneMeshMap.end())
+                continue;
+
+            dstNodes[i].mNumMeshes = uint32_t(itr->second.size());
+            dstNodes[i].mMeshes    = itr->second.data();
+        }
+    }
+
     Assimp::Exporter exporter;
     auto ret = exporter.Export(&scene, format, path.c_str());
 
-    // メモリ解放処理.
+    // Assimp側で面倒くさい解放の仕方をしてクラッシュ原因になる可能性があるので...
+    // デストラクタが呼ばれる前に，先に自前で解放して，空にしておく.
+    scene.mRootNode = nullptr;
+    if (rootNode != nullptr)
     {
-        if (scene.mMaterials != nullptr)
+        delete rootNode;
+        rootNode = nullptr;
+    }
+
+    if (dstNodes != nullptr)
+    {
+        for(auto i=0u; i<bones->size(); ++i)
         {
-            for(auto i=0u; i<scene.mNumMaterials; ++i)
+            if (dstNodes[i].mChildren != nullptr)
             {
-                if (scene.mMaterials[i] != nullptr)
-                {
-                    delete scene.mMaterials[i];
-                    scene.mMaterials[i] = nullptr;
-                }
+                delete[] dstNodes[i].mChildren;
+                dstNodes[i].mChildren = nullptr;
             }
-
-            delete[] scene.mMaterials;
-            scene.mMaterials = nullptr;
+            dstNodes[i].mNumChildren = 0;
+            dstNodes[i].mNumMeshes   = 0;
+            dstNodes[i].mMeshes      = nullptr;
         }
-
-        if (scene.mRootNode->mChildren != nullptr)
-        {
-            // TODO : Implementation.
-        }
-
-        if (scene.mMeshes != nullptr)
-        {
-            for(auto i=0u; i<scene.mNumMeshes; ++i)
-            {
-                if (scene.mMeshes[i] != nullptr)
-                {
-                    delete scene.mMeshes[i];
-                    scene.mMeshes[i] = nullptr;
-                }
-            }
-
-            delete[] scene.mMeshes;
-            scene.mMeshes = nullptr;
-        }
+        delete[] dstNodes;
+        dstNodes = nullptr;
     }
 
     if (ret != aiReturn_SUCCESS)

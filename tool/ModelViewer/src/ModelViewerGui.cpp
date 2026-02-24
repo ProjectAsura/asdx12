@@ -38,6 +38,10 @@ const char* kDrawModes[] = {
     asdx::ToChar(u8"従接線ベクトル"),
     asdx::ToChar(u8"テクスチャ座標"),
     asdx::ToChar(u8"頂点カラー"),
+    asdx::ToChar(u8"頂点カラー(R)"),
+    asdx::ToChar(u8"頂点カラー(G)"),
+    asdx::ToChar(u8"頂点カラー(B)"),
+    asdx::ToChar(u8"頂点カラー(A)"),
     asdx::ToChar(u8"ボーン番号"),
     asdx::ToChar(u8"ボーン重み"),
     asdx::ToChar(u8"ベースカラー"),
@@ -45,8 +49,8 @@ const char* kDrawModes[] = {
     asdx::ToChar(u8"ラフネス"),
     asdx::ToChar(u8"メタルネス"),
     asdx::ToChar(u8"アルファ"),
-    asdx::ToChar(u8"IOR"),
-    asdx::ToChar(u8"エミッシブ"),
+    asdx::ToChar(u8"屈折率"),
+    asdx::ToChar(u8"エミッシブカラー"),
 };
 
 //-----------------------------------------------------------------------------
@@ -596,7 +600,6 @@ void ModelViewer::DrawBoneTab()
             }
 
             ImGui::BeginTable("##BoneTable", 2);
-   /*         ImGui::TableSetupColumn("##BoneRow0", ImGuiTableColumnFlags_WidthFixed);*/
 
             auto parentId = asdx::BoneProxy::GetParentId(res);
             const char* parentName = "NONE";
@@ -706,7 +709,7 @@ void ModelViewer::DrawDebugTab()
     if (!ImGui::BeginTabItem(asdx::ToChar(u8"デバッグ")))
         return;
 
-    ImGui::ColorEdit4(asdx::ToChar(u8"クリアカラー"), m_ClearColor, ImGuiColorEditFlags_Float);
+    ImGui::ColorEdit4(asdx::ToChar(u8"背景色"), m_ClearColor, ImGuiColorEditFlags_Float);
 
     int mode = (int)m_DrawMode;
     if (ImGui::Combo(asdx::ToChar(u8"描画モード"), &mode, kDrawModes, _countof(kDrawModes)))
@@ -715,8 +718,10 @@ void ModelViewer::DrawDebugTab()
     ImGui::Checkbox(asdx::ToChar(u8"ワイヤーフレーム"), &m_EnableWireframe);
     ImGui::Checkbox(asdx::ToChar(u8"バウンディングスフィア表示"), &m_DrawBoundingSphere);
     ImGui::Checkbox(asdx::ToChar(u8"ボーン表示"), &m_DrawBones);
+    ImGui::Checkbox(asdx::ToChar(u8"軸表示"), &m_DrawAxis);
+    ImGui::Checkbox(asdx::ToChar(u8"グリッド表示"), &m_DrawGrid);
 
-
+    ImGui::Separator();
 
     ImGui::EndTabItem();
 }

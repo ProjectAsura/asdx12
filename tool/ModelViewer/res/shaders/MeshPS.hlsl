@@ -8,6 +8,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include "asdxBRDF.hlsli"
+#include "asdxTangentSpace.hlsli"
 #include "asdxSamplers.hlsli"
 
 
@@ -78,15 +79,19 @@ Texture2D EmissiveMap   : register(t4);
 #define MODE_BITANGENT      (4)
 #define MODE_TEXCOORD       (5)
 #define MODE_COLOR          (6)
-#define MODE_BLENDINDEX     (7)
-#define MODE_BLENDWEIGHT    (8)
-#define MODE_BASE_COLOR     (9)
-#define MODE_OCCLUSION      (10)
-#define MODE_ROUGHNESS      (11)
-#define MODE_METALNESS      (12)
-#define MODE_ALPHA          (13)
-#define MODE_IOR            (14)
-#define MODE_EMISSIVE       (15)
+#define MODE_COLOR_R_ONLY   (7)
+#define MODE_COLOR_G_ONLY   (8)
+#define MODE_COLOR_B_ONLY   (9)
+#define MODE_COLOR_A_ONLY   (10)
+#define MODE_BLENDINDEX     (11)
+#define MODE_BLENDWEIGHT    (12)
+#define MODE_BASE_COLOR     (13)
+#define MODE_OCCLUSION      (14)
+#define MODE_ROUGHNESS      (15)
+#define MODE_METALNESS      (16)
+#define MODE_ALPHA          (17)
+#define MODE_IOR            (18)
+#define MODE_EMISSIVE       (19)
 
 //-----------------------------------------------------------------------------
 //      色相からRGB値を求めます.
@@ -119,9 +124,15 @@ float3 ToSRGB(float3 color)
 //-----------------------------------------------------------------------------
 float4 main(const VSOutput input) : SV_TARGET0
 {
-    float3 N = normalize(input.Normal);
-    float3 T = normalize(input.Tangent.xyz);
-    float3 B = normalize(cross(N, T) * input.Tangent.w);
+    float3 gN = normalize(input.Normal);
+    float3 gT = normalize(input.Tangent.xyz);
+    float3 gB = normalize(cross(gN, gT) * input.Tangent.w);
+ 
+    float3 tN = normalize(NormalMap.Sample(LinearClamp, input.TexCoord).xyz * 2.0f - 1.0f);
+
+    float3 N = FromTangentSpaceToWorld(tN, gT, gB, gN);
+    float3 T = RecalcTangent(N, gN);
+    float3 B = cross(T, N);
 
     float4 output = 1.0f.xxxx;
 
@@ -160,7 +171,23 @@ float4 main(const VSOutput input) : SV_TARGET0
         break;
 
     case MODE_COLOR:
-        { output = input.Color; }
+        { output.rgb = input.Color.rgb; }
+        break;
+ 
+    case MODE_COLOR_R_ONLY:
+        { output.rgb = input.Color.rrr; }
+        break;
+ 
+    case MODE_COLOR_G_ONLY:
+        { output.rgb = input.Color.ggg; }
+        break;
+ 
+    case MODE_COLOR_B_ONLY:
+        { output.rgb = input.Color.bbb; }
+        break;
+ 
+    case MODE_COLOR_A_ONLY:
+        { output.rgb = input.Color.aaa; }
         break;
 
     case MODE_BLENDINDEX:
@@ -171,7 +198,7 @@ float4 main(const VSOutput input) : SV_TARGET0
     case MODE_BASE_COLOR:
         { output.rgb = BaseColorMap.Sample(LinearClamp, input.TexCoord).rgb * BaseColor; }
         break;
-
+ 
     case MODE_OCCLUSION:
         { output.rgb = OrmMap.Sample(LinearClamp, input.TexCoord).rrr * Occlusion; }
         break;
@@ -185,7 +212,7 @@ float4 main(const VSOutput input) : SV_TARGET0
         break;
  
     case MODE_ALPHA:
-        { output.rgb = Alpha.xxx; }
+        { output.rgb = BaseColorMap.Sample(LinearClamp, input.TexCoord).a * Alpha.xxx; }
         break;
  
     case MODE_IOR:

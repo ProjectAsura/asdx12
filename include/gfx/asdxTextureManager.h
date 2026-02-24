@@ -196,6 +196,11 @@ private:
     //-------------------------------------------------------------------------
     ~TextureManager();
 
+    //-------------------------------------------------------------------------
+    //! @brief      デフォルトテクスチャを生成します.
+    //-------------------------------------------------------------------------
+    void CreateDefaultTextures();
+
     TextureManager              (const TextureManager&) = delete;
     TextureManager& operator =  (const TextureManager&) = delete;
 };

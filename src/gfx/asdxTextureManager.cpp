@@ -151,6 +151,177 @@ bool TextureManager::Init()
     // コマンドリストの記録を開始しておく.
     m_CmdList[m_BufferIndex]->Reset(m_CmdAllocator[m_BufferIndex].GetPtr(), nullptr);
 
+    // デフォルトテクスチャを生成.
+    CreateDefaultTextures();
+
+    // 正常終了.
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      終了処理を行います.
+//-----------------------------------------------------------------------------
+void TextureManager::Term()
+{
+    ScopedLock<SpinLock> locker(m_SpinLock);
+
+    for(auto i=0; i<2; ++i)
+    {
+        // コマンドリスト破棄.
+        {
+            auto item = m_CmdList[i].Detach();
+            if (item)
+                Dispose(item);
+        }
+
+        // コマンドアロケータ破棄.
+        {
+            auto item = m_CmdAllocator[i].Detach();
+            if (item)
+                Dispose(item);
+        }
+    }
+
+    // テクスチャ破棄.
+    for(auto& itr : m_Textures)
+    {
+        auto item = itr.second;
+        itr.second = nullptr;
+        if (item)
+        {
+            item->Release();
+            item = nullptr;
+        }
+    }
+    m_Textures.clear();
+
+    m_BufferIndex = 0;
+
+    // 初期化済みフラグを下す.
+    m_Initialized = false;
+}
+
+//-----------------------------------------------------------------------------
+//      生成または取得処理を行います.
+//-----------------------------------------------------------------------------
+TextureHolder TextureManager::GetOrCreate(const char* fullPath)
+{
+    // ファイルパスがnullかどうかチェック.
+    if (fullPath == nullptr)
+    {
+        ELOG("Error : Invalid Argument.");
+        return TextureHolder();
+    }
+
+    // ハッシュ値を計算.
+    auto hash = CalcHash(fullPath);
+
+    // 辞書の中から探し出す.
+    ScopedLock<SpinLock> locker(m_SpinLock);
+    auto itr = m_Textures.find(hash);
+    if (itr != m_Textures.end())
+    {
+        auto pTexture = itr->second; // 見つかった場合はポインタを返却.
+        pTexture->AddRef();
+        return TextureHolder(pTexture, hash);
+    }
+
+    // テクスチャバイナリをロードする.
+    std::vector<uint8_t> blob;
+    if (!LoadA(fullPath, blob))
+    {
+        ELOGA("Error : File Load Failed. path = %s", fullPath);
+        return TextureHolder();
+    }
+
+    // テクスチャバイナリ取得.
+    TextureBinary binary;
+    binary.Load(std::move(blob));
+
+    // テクスチャ初期化.
+    auto resource = binary.GetResource();
+    Texture* pTexture = nullptr;
+    if (!Texture::Create(m_CmdList[m_BufferIndex].GetPtr(), resource, &pTexture))
+    {
+        ELOGA("Error : Texture Init failed. path = %s", fullPath);
+        return TextureHolder();
+    }
+
+    // テクスチャ登録.
+    m_Textures[hash] = pTexture;
+
+    // 生成したテクスチャを返却する.
+    return TextureHolder(pTexture, hash);
+}
+
+//-----------------------------------------------------------------------------
+//      削除処理.
+//-----------------------------------------------------------------------------
+void TextureManager::Remove(TextureHolder& holder)
+{
+    if (!holder.IsValid())
+        return;
+
+    if (holder.m_pTexture->GetRefCount() > 1)
+    {
+        // 参照カウンタを下げる.
+        holder.m_pTexture->Release();
+    }
+    else
+    {
+        // 管理対象からも外す.
+        ScopedLock<SpinLock> locker(m_SpinLock);
+
+        // 検索する.
+        auto itr = m_Textures.find(holder.m_Hash);
+
+        // 見つかったら削除.
+        if (itr != m_Textures.end())
+        {
+            auto item = itr->second;
+            itr->second = nullptr;
+            m_Textures.erase(holder.m_Hash);
+
+            if (item)
+            {
+                item->Release();
+                item = nullptr;
+            }
+        }
+    }
+
+    holder.m_pTexture = nullptr;
+    holder.m_Hash     = 0;
+}
+
+//-----------------------------------------------------------------------------
+//      コマンドリストを入れ替えます.
+//-----------------------------------------------------------------------------
+ID3D12GraphicsCommandList* TextureManager::Swap()
+{
+    ScopedLock<SpinLock> locker(m_SpinLock);
+
+    // 返却するコマンドリストを取得.
+    auto pCmdList = m_CmdList[m_BufferIndex].GetPtr();
+
+    // コマンドを閉じる.
+    pCmdList->Close();
+
+    // バッファ入れ替え.
+    m_BufferIndex = (m_BufferIndex + 1) & 0x1;
+
+    // 次に使うコマンドリストをリセットしておく.
+    m_CmdList[m_BufferIndex]->Reset(m_CmdAllocator[m_BufferIndex].GetPtr(), nullptr);
+
+    // コマンドが積まれているコマンドリストを返却.
+    return pCmdList;
+}
+
+//-----------------------------------------------------------------------------
+//      デフォルトテクスチャを生成します.
+//-----------------------------------------------------------------------------
+void TextureManager::CreateDefaultTextures()
+{
     // Base Color Map.
     {        
         std::vector<uint8_t> pixels;
@@ -564,167 +735,6 @@ bool TextureManager::Init()
         assert(ret);
     }
 
-    // 正常終了.
-    return true;
-}
-
-//-----------------------------------------------------------------------------
-//      終了処理を行います.
-//-----------------------------------------------------------------------------
-void TextureManager::Term()
-{
-    ScopedLock<SpinLock> locker(m_SpinLock);
-
-    for(auto i=0; i<2; ++i)
-    {
-        // コマンドリスト破棄.
-        {
-            auto item = m_CmdList[i].Detach();
-            if (item)
-                Dispose(item);
-        }
-
-        // コマンドアロケータ破棄.
-        {
-            auto item = m_CmdAllocator[i].Detach();
-            if (item)
-                Dispose(item);
-        }
-    }
-
-    // テクスチャ破棄.
-    for(auto& itr : m_Textures)
-    {
-        auto item = itr.second;
-        itr.second = nullptr;
-        if (item)
-        {
-            item->Release();
-            item = nullptr;
-        }
-    }
-    m_Textures.clear();
-
-    m_BufferIndex = 0;
-
-    // 初期化済みフラグを下す.
-    m_Initialized = false;
-}
-
-//-----------------------------------------------------------------------------
-//      生成または取得処理を行います.
-//-----------------------------------------------------------------------------
-TextureHolder TextureManager::GetOrCreate(const char* fullPath)
-{
-    // ファイルパスがnullかどうかチェック.
-    if (fullPath == nullptr)
-    {
-        ELOG("Error : Invalid Argument.");
-        return TextureHolder();
-    }
-
-    // ハッシュ値を計算.
-    auto hash = CalcHash(fullPath);
-
-    // 辞書の中から探し出す.
-    ScopedLock<SpinLock> locker(m_SpinLock);
-    auto itr = m_Textures.find(hash);
-    if (itr != m_Textures.end())
-    {
-        auto pTexture = itr->second; // 見つかった場合はポインタを返却.
-        pTexture->AddRef();
-        return TextureHolder(pTexture, hash);
-    }
-
-    // テクスチャバイナリをロードする.
-    std::vector<uint8_t> blob;
-    if (!LoadA(fullPath, blob))
-    {
-        ELOGA("Error : File Load Failed. path = %s", fullPath);
-        return TextureHolder();
-    }
-
-    // テクスチャバイナリ取得.
-    TextureBinary binary;
-    binary.Load(std::move(blob));
-
-    // テクスチャ初期化.
-    auto resource = binary.GetResource();
-    Texture* pTexture = nullptr;
-    if (!Texture::Create(m_CmdList[m_BufferIndex].GetPtr(), resource, &pTexture))
-    {
-        ELOGA("Error : Texture Init failed. path = %s", fullPath);
-        return TextureHolder();
-    }
-
-    // テクスチャ登録.
-    m_Textures[hash] = pTexture;
-
-    // 生成したテクスチャを返却する.
-    return TextureHolder(pTexture, hash);
-}
-
-//-----------------------------------------------------------------------------
-//      削除処理.
-//-----------------------------------------------------------------------------
-void TextureManager::Remove(TextureHolder& holder)
-{
-    if (!holder.IsValid())
-        return;
-
-    if (holder.m_pTexture->GetRefCount() > 1)
-    {
-        // 参照カウンタを下げる.
-        holder.m_pTexture->Release();
-    }
-    else
-    {
-        // 管理対象からも外す.
-        ScopedLock<SpinLock> locker(m_SpinLock);
-
-        // 検索する.
-        auto itr = m_Textures.find(holder.m_Hash);
-
-        // 見つかったら削除.
-        if (itr != m_Textures.end())
-        {
-            auto item = itr->second;
-            itr->second = nullptr;
-            m_Textures.erase(holder.m_Hash);
-
-            if (item)
-            {
-                item->Release();
-                item = nullptr;
-            }
-        }
-    }
-
-    holder.m_pTexture = nullptr;
-    holder.m_Hash     = 0;
-}
-
-//-----------------------------------------------------------------------------
-//      コマンドリストを入れ替えます.
-//-----------------------------------------------------------------------------
-ID3D12GraphicsCommandList* TextureManager::Swap()
-{
-    ScopedLock<SpinLock> locker(m_SpinLock);
-
-    // 返却するコマンドリストを取得.
-    auto pCmdList = m_CmdList[m_BufferIndex].GetPtr();
-
-    // コマンドを閉じる.
-    pCmdList->Close();
-
-    // バッファ入れ替え.
-    m_BufferIndex = (m_BufferIndex + 1) & 0x1;
-
-    // 次に使うコマンドリストをリセットしておく.
-    m_CmdList[m_BufferIndex]->Reset(m_CmdAllocator[m_BufferIndex].GetPtr(), nullptr);
-
-    // コマンドが積まれているコマンドリストを返却.
-    return pCmdList;
 }
 
 } // namespace asdx

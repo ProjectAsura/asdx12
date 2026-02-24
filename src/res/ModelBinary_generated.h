@@ -149,18 +149,6 @@ struct Mesh FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   const ::flatbuffers::String *Name() const {
     return GetPointer<const ::flatbuffers::String *>(VT_NAME);
   }
-  bool KeyCompareLessThan(const Mesh * const o) const {
-    return *Name() < *o->Name();
-  }
-  int KeyCompareWithValue(const char *_Name) const {
-    return strcmp(Name()->c_str(), _Name);
-  }
-  template<typename StringType>
-  int KeyCompareWithValue(const StringType& _Name) const {
-    if (Name()->c_str() < _Name) return -1;
-    if (_Name < Name()->c_str()) return 1;
-    return 0;
-  }
   uint32_t MaterialId() const {
     return GetField<uint32_t>(VT_MATERIALID, 0);
   }
@@ -193,7 +181,7 @@ struct Mesh FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyOffsetRequired(verifier, VT_NAME) &&
+           VerifyOffset(verifier, VT_NAME) &&
            verifier.VerifyString(Name()) &&
            VerifyField<uint32_t>(verifier, VT_MATERIALID, 4) &&
            VerifyOffset(verifier, VT_POSITIONS) &&
@@ -261,7 +249,6 @@ struct MeshBuilder {
   ::flatbuffers::Offset<Mesh> Finish() {
     const auto end = fbb_.EndTable(start_);
     auto o = ::flatbuffers::Offset<Mesh>(end);
-    fbb_.Required(o, Mesh::VT_NAME);
     return o;
   }
 };
@@ -350,18 +337,6 @@ struct Material FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   const ::flatbuffers::String *Name() const {
     return GetPointer<const ::flatbuffers::String *>(VT_NAME);
   }
-  bool KeyCompareLessThan(const Material * const o) const {
-    return *Name() < *o->Name();
-  }
-  int KeyCompareWithValue(const char *_Name) const {
-    return strcmp(Name()->c_str(), _Name);
-  }
-  template<typename StringType>
-  int KeyCompareWithValue(const StringType& _Name) const {
-    if (Name()->c_str() < _Name) return -1;
-    if (_Name < Name()->c_str()) return 1;
-    return 0;
-  }
   const asdx::res::Float3 *BaseColorFactor() const {
     return GetStruct<const asdx::res::Float3 *>(VT_BASECOLORFACTOR);
   }
@@ -397,7 +372,7 @@ struct Material FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyOffsetRequired(verifier, VT_NAME) &&
+           VerifyOffset(verifier, VT_NAME) &&
            verifier.VerifyString(Name()) &&
            VerifyField<asdx::res::Float3>(verifier, VT_BASECOLORFACTOR, 4) &&
            VerifyField<float>(verifier, VT_ALPHA, 4) &&
@@ -465,7 +440,6 @@ struct MaterialBuilder {
   ::flatbuffers::Offset<Material> Finish() {
     const auto end = fbb_.EndTable(start_);
     auto o = ::flatbuffers::Offset<Material>(end);
-    fbb_.Required(o, Material::VT_NAME);
     return o;
   }
 };
@@ -645,14 +619,14 @@ inline ::flatbuffers::Offset<ModelBinary> CreateModelBinary(
 inline ::flatbuffers::Offset<ModelBinary> CreateModelBinaryDirect(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t Version = 0,
-    std::vector<::flatbuffers::Offset<asdx::res::Mesh>> *Meshes = nullptr,
-    std::vector<::flatbuffers::Offset<asdx::res::Material>> *Materials = nullptr,
+    const std::vector<::flatbuffers::Offset<asdx::res::Mesh>> *Meshes = nullptr,
+    const std::vector<::flatbuffers::Offset<asdx::res::Material>> *Materials = nullptr,
     const std::vector<::flatbuffers::Offset<asdx::res::Bone>> *Bones = nullptr,
     const asdx::res::BoundingSphere *Bounds = nullptr,
     const asdx::res::Float4x4 *RootTransform = nullptr,
     const asdx::res::Float4x4 *InvRootTransform = nullptr) {
-  auto Meshes__ = Meshes ? _fbb.CreateVectorOfSortedTables<asdx::res::Mesh>(Meshes) : 0;
-  auto Materials__ = Materials ? _fbb.CreateVectorOfSortedTables<asdx::res::Material>(Materials) : 0;
+  auto Meshes__ = Meshes ? _fbb.CreateVector<::flatbuffers::Offset<asdx::res::Mesh>>(*Meshes) : 0;
+  auto Materials__ = Materials ? _fbb.CreateVector<::flatbuffers::Offset<asdx::res::Material>>(*Materials) : 0;
   auto Bones__ = Bones ? _fbb.CreateVector<::flatbuffers::Offset<asdx::res::Bone>>(*Bones) : 0;
   return asdx::res::CreateModelBinary(
       _fbb,

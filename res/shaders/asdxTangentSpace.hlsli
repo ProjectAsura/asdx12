@@ -17,6 +17,10 @@
 //-----------------------------------------------------------------------------
 float3 FromTangentSpaceToWorld(float3 value, float3 T, float3 B, float3 N)
 {
+    // value : 法線マップからフェッチした値.
+    // T     : ジオメトリ接線ベクトル
+    // B     : ジオメトリ従接線ベクトル.
+    // N     : ジオメトリ法線ベクトル.
     return normalize(value.x * T + value.y * B + value.z * N);
 }
 
@@ -74,7 +78,7 @@ float3 MinDiff(float3 p, float3 r, float3 l)
     float3 v1 = r - p;
     float3 v2 = p - l;
 #if __HLSL_VERSION >= 2021
-    return select(dot(v1, v1) < dot(v2, v2),  v1, v2);
+    return select(dot(v1, v1) < dot(v2, v2), v1, v2);
 #else
     return (dot(v1, v1) < dot(v2, v2)) ? v1 : v2;
 #endif
@@ -98,8 +102,8 @@ float3 ToNormal(float3 p0, float3 pr, float3 pl, float3 pt, float3 pb)
 //-----------------------------------------------------------------------------
 float3 BlendNormal(float3 n1, float3 n2)
 {
-    float3 t = n1 * float3(2.0f, 2.0f, 2.0f) + float3(-1.0f, -1.0f, 0.0f);
-    float3 u = n2 * float3(-2.0f, -2.0f, 2.0f) + float3(1.0f, 1.0f, -1.0f);
+    float3 t = n1 * float3( 2.0f,  2.0f, 2.0f) + float3(-1.0f, -1.0f,  0.0f);
+    float3 u = n2 * float3(-2.0f, -2.0f, 2.0f) + float3( 1.0f,  1.0f, -1.0f);
     float3 r = t * dot(t, u) - u * t.z;
     return normalize(r);
 }
@@ -110,16 +114,15 @@ float3 BlendNormal(float3 n1, float3 n2)
 float3 BentReflection(float3 T, float3 B, float3 N, float3 V, float anisotropy)
 {
 #if __HLSL_VERSION >= 2021
-    float3 anisotropicDirection = select(anisotropy >= 0.0f,  B, T);
+    float3 anisotropicDirection = select(anisotropy >= 0.0f, B, T);
 #else
     float3 anisotropicDirection = (anisotropy >= 0.0f) ? B : T;
 #endif
     float3 anisotropicTangent = cross(anisotropicDirection, V);
-    float3 anisotropicNormal = cross(anisotropicTangent, anisotropicDirection);
+    float3 anisotropicNormal  = cross(anisotropicTangent, anisotropicDirection);
     float3 bentNormal = normalize(lerp(N, anisotropicNormal, anisotropy));
     return reflect(V, bentNormal);
 }
-
 
 //-----------------------------------------------------------------------------
 //      接線を再計算します.
@@ -148,9 +151,9 @@ void CalcONB(float3 N, out float3 T, out float3 B)
 //-----------------------------------------------------------------------------
 void UnpackTN
 (
-    in uint encodedTBN, // 圧縮している接線空間(32bit).
-    out float3 tangent, // 接線ベクトル.
-    out float3 normal // 法線ベクトル.
+    in  uint    encodedTBN, // 圧縮している接線空間(32bit).
+    out float3  tangent,    // 接線ベクトル.
+    out float3  normal      // 法線ベクトル.
 )
 {
     // Hawar Doghramachi and Jean-Normand Bucci, 
@@ -198,10 +201,10 @@ void UnpackTN
 //-----------------------------------------------------------------------------
 void UnpackTBN
 (
-    in uint encodedTBN, // 圧縮している接線空間(32bit).
-    out float3 tangent, // 接線ベクトル.
-    out float3 bitangent, // 従接線ベクトル.
-    out float3 normal // 法線ベクトル.
+    in  uint   encodedTBN,  // 圧縮している接線空間(32bit).
+    out float3 tangent,     // 接線ベクトル.
+    out float3 bitangent,   // 従接線ベクトル.
+    out float3 normal       // 法線ベクトル.
 )
 {
     // Hawar Doghramachi and Jean-Normand Bucci, 
