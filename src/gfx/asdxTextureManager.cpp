@@ -241,7 +241,7 @@ TextureHolder TextureManager::GetOrCreate(const char* fullPath)
     // テクスチャ初期化.
     auto resource = binary.GetResource();
     Texture* pTexture = nullptr;
-    if (!Texture::Create(m_CmdList[m_BufferIndex].GetPtr(), resource, &pTexture))
+    if (!CreateTexture(resource, &pTexture))
     {
         ELOGA("Error : Texture Init failed. path = %s", fullPath);
         return TextureHolder();
@@ -313,9 +313,17 @@ ID3D12GraphicsCommandList* TextureManager::Swap()
     // 次に使うコマンドリストをリセットしておく.
     m_CmdList[m_BufferIndex]->Reset(m_CmdAllocator[m_BufferIndex].GetPtr(), nullptr);
 
+    m_HasCommand = false;
+
     // コマンドが積まれているコマンドリストを返却.
     return pCmdList;
 }
+
+//-----------------------------------------------------------------------------
+//      更新コマンドを持つかどうかチェックします.
+//-----------------------------------------------------------------------------
+bool TextureManager::HasCommand() const
+{ return m_HasCommand; }
 
 //-----------------------------------------------------------------------------
 //      デフォルトテクスチャを生成します.
@@ -367,13 +375,7 @@ void TextureManager::CreateDefaultTextures()
         res.SubResources[0].pPixels     = pixels.data();
 
         Texture* pTexture = nullptr;
-        bool ret = false;
-        if (asdx::IsSupportGpuUploadHeap())
-            ret = Texture::Create(res, &pTexture);
-        else
-            ret = Texture::Create(m_CmdList[m_BufferIndex].GetPtr(), res, &pTexture);
-
-        if (ret)
+        if (CreateTexture(res, &pTexture))
         {
             auto hash = CalcHash("default.BaseColor");
             pTexture->SetName(L"default.BaseColor");
@@ -418,13 +420,7 @@ void TextureManager::CreateDefaultTextures()
         res.SubResources[0].pPixels     = pixels.data();
 
         Texture* pTexture = nullptr;
-        bool ret = false;
-        if (asdx::IsSupportGpuUploadHeap())
-            ret = Texture::Create(res, &pTexture);
-        else
-            ret = Texture::Create(m_CmdList[m_BufferIndex].GetPtr(), res, &pTexture);
-
-        if (ret)
+        if (CreateTexture(res, &pTexture))
         {
             auto hash = CalcHash("default.Normal");
             pTexture->SetName(L"default.Normal");
@@ -432,7 +428,6 @@ void TextureManager::CreateDefaultTextures()
             // テクスチャ登録.
             m_Textures[hash] = pTexture;
         }
-        assert(ret);
     }
 
     // Occlusion/Roughness/Metalness
@@ -468,13 +463,7 @@ void TextureManager::CreateDefaultTextures()
         res.SubResources[0].pPixels     = pixels.data();
 
         Texture* pTexture = nullptr;
-        bool ret = false;
-        if (asdx::IsSupportGpuUploadHeap())
-            ret = Texture::Create(res, &pTexture);
-        else
-            ret = Texture::Create(m_CmdList[m_BufferIndex].GetPtr(), res, &pTexture);
-
-        if (ret)
+        if (CreateTexture(res, &pTexture))
         {
             auto hash = CalcHash("default.Orm");
             pTexture->SetName(L"default.Orm");
@@ -482,7 +471,6 @@ void TextureManager::CreateDefaultTextures()
             // テクスチャ登録.
             m_Textures[hash] = pTexture;
         }
-        assert(ret);
     }
 
     // Transparent Black.
@@ -518,13 +506,7 @@ void TextureManager::CreateDefaultTextures()
         res.SubResources[0].pPixels     = pixels.data();
 
         Texture* pTexture = nullptr;
-        bool ret = false;
-        if (asdx::IsSupportGpuUploadHeap())
-            ret = Texture::Create(res, &pTexture);
-        else
-            ret = Texture::Create(m_CmdList[m_BufferIndex].GetPtr(), res, &pTexture);
-
-        if (ret)
+        if (CreateTexture(res, &pTexture))
         {
             auto hash = CalcHash("default.TransparentBlack");
             pTexture->SetName(L"default.TransparentBlack");
@@ -532,7 +514,6 @@ void TextureManager::CreateDefaultTextures()
             // テクスチャ登録.
             m_Textures[hash] = pTexture;
         }
-        assert(ret);
     }
 
     // Opaque Black.
@@ -568,13 +549,7 @@ void TextureManager::CreateDefaultTextures()
         res.SubResources[0].pPixels     = pixels.data();
 
         Texture* pTexture = nullptr;
-        bool ret = false;
-        if (asdx::IsSupportGpuUploadHeap())
-            ret = Texture::Create(res, &pTexture);
-        else
-            ret = Texture::Create(m_CmdList[m_BufferIndex].GetPtr(), res, &pTexture);
-
-        if (ret)
+        if (CreateTexture(res, &pTexture))
         {
             auto hash = CalcHash("default.OpaqueBlack");
             pTexture->SetName(L"default.OpaqueBlack");
@@ -582,7 +557,6 @@ void TextureManager::CreateDefaultTextures()
             // テクスチャ登録.
             m_Textures[hash] = pTexture;
         }
-        assert(ret);
     }
 
     // Transparent White.
@@ -618,13 +592,7 @@ void TextureManager::CreateDefaultTextures()
         res.SubResources[0].pPixels     = pixels.data();
 
         Texture* pTexture = nullptr;
-        bool ret = false;
-        if (asdx::IsSupportGpuUploadHeap())
-            ret = Texture::Create(res, &pTexture);
-        else
-            ret = Texture::Create(m_CmdList[m_BufferIndex].GetPtr(), res, &pTexture);
-
-        if (ret)
+        if (CreateTexture(res, &pTexture))
         {
             auto hash = CalcHash("default.TransparentWhite");
             pTexture->SetName(L"default.TransparentWhite");
@@ -632,7 +600,6 @@ void TextureManager::CreateDefaultTextures()
             // テクスチャ登録.
             m_Textures[hash] = pTexture;
         }
-        assert(ret);
     }
 
     // Opaque White.
@@ -668,13 +635,7 @@ void TextureManager::CreateDefaultTextures()
         res.SubResources[0].pPixels     = pixels.data();
 
         Texture* pTexture = nullptr;
-        bool ret = false;
-        if (asdx::IsSupportGpuUploadHeap())
-            ret = Texture::Create(res, &pTexture);
-        else
-            ret = Texture::Create(m_CmdList[m_BufferIndex].GetPtr(), res, &pTexture);
-
-        if (ret)
+        if (CreateTexture(res, &pTexture))
         {
             auto hash = CalcHash("default.OpaqueWhite");
             pTexture->SetName(L"default.OpaqueWhite");
@@ -682,7 +643,6 @@ void TextureManager::CreateDefaultTextures()
             // テクスチャ登録.
             m_Textures[hash] = pTexture;
         }
-        assert(ret);
     }
 
     // Velocity Map.
@@ -718,13 +678,7 @@ void TextureManager::CreateDefaultTextures()
         res.SubResources[0].pPixels     = pixels.data();
 
         Texture* pTexture = nullptr;
-        bool ret = false;
-        if (asdx::IsSupportGpuUploadHeap())
-            ret = Texture::Create(res, &pTexture);
-        else
-            ret = Texture::Create(m_CmdList[m_BufferIndex].GetPtr(), res, &pTexture);
-
-        if (ret)
+        if (CreateTexture(res, &pTexture))
         {
             auto hash = CalcHash("default.Velocity");
             pTexture->SetName(L"default.Velocity");
@@ -732,9 +686,22 @@ void TextureManager::CreateDefaultTextures()
             // テクスチャ登録.
             m_Textures[hash] = pTexture;
         }
-        assert(ret);
     }
+}
 
+//-----------------------------------------------------------------------------
+//      テクスチャを生成します.
+//-----------------------------------------------------------------------------
+bool TextureManager::CreateTexture(ResTexture& resource, Texture** ppTexture)
+{
+    if (asdx::IsSupportGpuUploadHeap())
+        return Texture::Create(resource, ppTexture);
+
+    auto ret = Texture::Create(m_CmdList[m_BufferIndex].GetPtr(), resource, ppTexture);
+    if (ret)
+    { m_HasCommand = true; }
+
+    return ret;
 }
 
 } // namespace asdx

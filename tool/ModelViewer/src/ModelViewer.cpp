@@ -332,13 +332,22 @@ bool ModelViewer::OnInit()
 
     // セットアップコマンド実行.
     {
-        ID3D12CommandList* pCmds[] = { pCmd };
-
         // グラフィックスキューを取得.
         auto pGraphicsQueue = asdx::GetGraphicsQueue();
 
         // コマンドを実行.
-        pGraphicsQueue->Execute(_countof(pCmds), pCmds);
+        if (asdx::TextureManager::Instance().HasCommand())
+        {
+            auto pTextureCmd = asdx::TextureManager::Instance().Swap();
+
+            ID3D12CommandList* pCmds[] = { pCmd, pTextureCmd };
+            pGraphicsQueue->Execute(_countof(pCmds), pCmds);
+        }
+        else
+        {
+            ID3D12CommandList* pCmds[] = { pCmd };
+            pGraphicsQueue->Execute(_countof(pCmds), pCmds);
+        }
 
         // 待機点を発行.
         m_FrameWaitPoint = pGraphicsQueue->Signal();
@@ -382,6 +391,12 @@ void ModelViewer::OnTerm()
     m_SkyBoxPS   .Term();
     m_SkySpherePS.Term();
     m_SkyContext .Term();
+
+    if (m_EnvMap != nullptr)
+    {
+        m_EnvMap->Release();
+        m_EnvMap = nullptr;
+    }
 
     // GUIマネージャの終了処理.
     asdx::GuiMgr::Instance().Term();
@@ -435,7 +450,8 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
     m_ShapeStates.SetViewProj(m_Camera.GetView(), m_Proj);
 
     // スカイ用カメラ行列を更新.
-    m_SkyContext.UpdateBuffer(m_Camera.GetView(), m_Proj);
+    auto skyProj = asdx::Matrix::CreatePerspectiveFieldOfView(fov, aspect, 1.0f, 10.0f);
+    m_SkyContext.UpdateBuffer(m_Camera.GetView(), skyProj);
 
     // 定数バッファを更新.
     {
@@ -621,13 +637,6 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
 
     // コマンドを実行.
     {
-        auto pTextureCmd = asdx::TextureManager::Instance().Swap();
-
-        ID3D12CommandList* pCmds[] = {
-            pTextureCmd,
-            pCmd,
-        };
-
         auto pGraphicsQueue = asdx::GetGraphicsQueue();
 
         // 前フレームの描画の完了を待機.
@@ -635,7 +644,18 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
         { pGraphicsQueue->Sync(m_FrameWaitPoint); }
 
         // コマンドを実行.
-        pGraphicsQueue->Execute(_countof(pCmds), pCmds);
+        if (asdx::TextureManager::Instance().HasCommand())
+        {
+            auto pTextureCmd = asdx::TextureManager::Instance().Swap();
+
+            ID3D12CommandList* pCmds[] = { pCmd, pTextureCmd };
+            pGraphicsQueue->Execute(_countof(pCmds), pCmds);
+        }
+        else
+        {
+            ID3D12CommandList* pCmds[] = { pCmd };
+            pGraphicsQueue->Execute(_countof(pCmds), pCmds);
+        }
 
         // 待機点を発行.
         m_FrameWaitPoint = pGraphicsQueue->Signal();
@@ -965,13 +985,13 @@ void ModelViewer::SaveModelBinary(const char* path)
 void ModelViewer::LoadModel()
 {
     const char* filter = 
-        "読み込み可能なモデルファイル\0*.mdb;*.dae;*.xml;*.blend;*.3ds;*.ase;*.gltf;*.fbx;*.ply;*.dxf;*.smd;*.vta;*.mdl;*.md2;*.md3;*.md5mesh;*.md5anim;*.x;*.obj;*.ter;*.ms3d;*.lxo;*.lwo;*.lws;*.pmd;*.pmx;*.vmd;*.usd;*.usda;*.usdc;*.usdz\0"
+        "読み込み可能なモデルファイル\0*.mdb;*.dae;*.xml;*.blend;*.3ds;*.ase;*.gltf;*.glb;*.fbx;*.ply;*.dxf;*.smd;*.vta;*.mdl;*.md2;*.md3;*.md5mesh;*.md5anim;*.x;*.obj;*.ter;*.ms3d;*.lxo;*.lwo;*.lws;*.pmd;*.pmx;*.vmd;*.usd;*.usda;*.usdc;*.usdz\0"
         "Project Asura Model Binary (*.mdb)\0*.mdb\0"
         "Blender Format (*.blend)\0*.blend\0"
         "Collada (*.dae, *.xml)\0*.dae;*.xml\0"
         "3D Studio Max 3DS (*.3ds)\0*.3ds\0"
         "3D Studio Max ASE (*.ase)\0*.ase\0"
-        "GL Transmission Format (*.gltf)\0*.gltf\0"
+        "GL Transmission Format (*.gltf, *.glb)\0*.gltf;*.glb\0"
         "Film Box (*.fbx)\0*.fbx\0"
         "Standard Polygon Library (*.ply)\0*.ply\0"
         "Autodesk DXF (*.dxf)\0*.dxf\0"
@@ -1028,13 +1048,13 @@ void ModelViewer::LoadModel()
 void ModelViewer::LoadMotion()
 {
     const char* filter = 
-        "読み込み可能なモーションファイル\0*.mob;*.dae;*.xml;*.blend;*.3ds;*.ase;*.gltf;*.fbx;*.ply;*.dxf;*.smd;*.vta;*.mdl;*.md2;*.md3;*.md5anim;*.x;*.ms3d;*.lws;*.pmd;*.pmx;*.vmd;*.usd;*.usda;*.usdc;*.usdz\0"
+        "読み込み可能なモーションファイル\0*.mob;*.dae;*.xml;*.blend;*.3ds;*.ase;*.gltf;*.glb;*.fbx;*.ply;*.dxf;*.smd;*.vta;*.mdl;*.md2;*.md3;*.md5anim;*.x;*.ms3d;*.lws;*.pmd;*.pmx;*.vmd;*.usd;*.usda;*.usdc;*.usdz\0"
         "Project Asura Motion Binary (*.mob)\0*.mob\0"
         "Blender Format (*.blend)\0*.blend\0"
         "Collada (*.dae, *.xml)\0*.dae;*.xml\0"
         "3D Studio Max 3DS (*.3ds)\0*.3ds\0"
         "3D Studio Max ASE (*.ase)\0*.ase\0"
-        "GL Transmission Format (*.gltf)\0*.gltf\0"
+        "GL Transmission Format (*.gltf, *.glb)\0*.gltf;*.glb\0"
         "Film Box (*.fbx)\0*.fbx\0"
         "Autodesk DXF (*.dxf)\0*.dxf\0"
         "Valve Model (*.smd, *.vta)\0*.smd;*.vta\0"
@@ -1229,15 +1249,15 @@ void ModelViewer::DrawSky(ID3D12GraphicsCommandList* pCmd)
     if (!m_DrawSky || pCmd == nullptr)
         return;
 
-    if (!m_EnvMap.IsValid())
+    if (!m_EnvMap)
         return;
 
-    auto desc = m_EnvMap.GetDesc();
+    auto desc = m_EnvMap->GetDesc();
     if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D)
         return;
 
     if (desc.DepthOrArraySize == 1)
-        m_SkySpherePS.Draw(pCmd, m_SkyContext, m_EnvMap.GetHandleGPU());
+        m_SkySpherePS.Draw(pCmd, m_SkyContext, m_EnvMap->GetHandleGPU());
     else
-        m_SkyBoxPS.Draw(pCmd, m_SkyContext, m_EnvMap.GetHandleGPU());
+        m_SkyBoxPS.Draw(pCmd, m_SkyContext, m_EnvMap->GetHandleGPU());
 }

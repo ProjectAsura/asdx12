@@ -41,9 +41,9 @@ TextureViewer::TextureViewer()
     m_SwapChainFormat    = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
     m_DepthStencilFormat = DXGI_FORMAT_D32_FLOAT;
 
-    m_ClearColor[0] = 0.2f;
-    m_ClearColor[1] = 0.2f;
-    m_ClearColor[2] = 0.2f;
+    m_ClearColor[0] = 0.1f;
+    m_ClearColor[1] = 0.1f;
+    m_ClearColor[2] = 0.1f;
     m_ClearColor[3] = 1.0f;
 
     m_DeviceDesc.MaxShaderResourceCount = 8192;
@@ -180,8 +180,8 @@ void TextureViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
 
     // 情報表示.
     {
-        const auto w = 350.0f;
-        const auto h = 150.0f;
+        const auto w = 250.0f;
+        const auto h = 165.0f;
         const auto x = 10.0f;
         const auto y = 10.0f;
 
@@ -199,6 +199,7 @@ void TextureViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
             const auto& meta = m_ScratchImage.GetMetadata();
 
             ImGui::BeginTable(asdx::ToChar(u8"TextureStatus"), 2);
+            ImGui::TableSetupColumn("##row0", ImGuiTableColumnFlags_WidthFixed);
 
             ImGui::TableNextRow();
             ImGui::TableSetColumnIndex(0);
@@ -240,17 +241,9 @@ void TextureViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
             ImGui::TableSetColumnIndex(0);
             ImGui::Text(asdx::ToChar(u8"Format"));
             ImGui::TableSetColumnIndex(1);
-            ImGui::Text(asdx::ToChar(u8"%s"), asdx::ToString(meta.format));
+            ImGui::Text(asdx::ToChar(u8"%s"), asdx::ToShortString(meta.format));
 
             ImGui::EndTable();
- 
-            //ImGui::Text(u8"Dimension : %s", ToString(meta.dimension));
-            //ImGui::Text(u8"Width     : %zu", meta.width);
-            //ImGui::Text(u8"Height    : %zu", meta.height);
-            //ImGui::Text(u8"Depth     : %zu", meta.depth);
-            //ImGui::Text(u8"ArraySize : %zu", meta.arraySize);
-            //ImGui::Text(u8"MipLevels : %zu", meta.mipLevels);
-            //ImGui::Text(u8"Format    : %s", asdx::ToString(meta.format));
 
             ImGui::End();
         }
@@ -285,6 +278,8 @@ void TextureViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
             ImGui::EndPopup();
         }
     }
+
+    DrawLisence();
 
     if (m_OpenConvert)
     {
@@ -490,7 +485,7 @@ void TextureViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
     pCmd->RSSetScissorRects(1, &m_ScissorRect);
 
     // テクスチャを描画.
-    if (m_Texture && m_Texture->GetGpuHandleSRV().ptr != 0)
+    if (m_Texture && m_Texture->GetHandleGPU().ptr != 0)
     {
         auto& meta = m_ScratchImage.GetMetadata();
 
@@ -498,7 +493,7 @@ void TextureViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
         auto h = (m_Height < meta.height) ? m_Height : meta.height;
 
         m_SpriteRenderer.SetPipelineState(pCmd);
-        m_SpriteRenderer.SetTexture(m_Texture->GetGpuHandleSRV(), m_PointClamp.GetGpuHandle());
+        m_SpriteRenderer.SetTexture(m_Texture->GetHandleGPU(), m_PointClamp.GetGpuHandle());
         m_SpriteRenderer.Add(0, 0, int(w), int(h));
     }
     m_SpriteRenderer.Draw(pCmd);
@@ -691,6 +686,43 @@ void TextureViewer::MenuHelp()
     }
     if (ImGui::MenuItem(asdx::ToChar(u8"ライセンス情報")))
     {
+        m_ShowLisence = true;
+    }
+}
+
+//-----------------------------------------------------------------------------
+//      ライセンス情報を描画します.
+//-----------------------------------------------------------------------------
+void TextureViewer::DrawLisence()
+{
+    if (m_ShowLisence)
+    {
+        ImGui::OpenPopup("Lisence");
+        m_ShowLisence = false;
+    }
+
+    if (ImGui::BeginPopupModal("Lisence"))
+    {
+        ImGui::Text("Dear ImGui");
+        ImGui::TextLinkOpenURL("https://github.com/ocornut/imgui/blob/master/LICENSE.txt", "https://github.com/ocornut/imgui/blob/master/LICENSE.txt");
+        ImGui::NewLine();
+
+        ImGui::Text("D3D12MemoryAllocator");
+        ImGui::TextLinkOpenURL("https://github.com/GPUOpen-LibrariesAndSDKs/D3D12MemoryAllocator/blob/master/LICENSE.txt", "https://github.com/GPUOpen-LibrariesAndSDKs/D3D12MemoryAllocator/blob/master/LICENSE.txt");
+        ImGui::NewLine();
+
+        ImGui::Text("xxHash");
+        ImGui::TextLinkOpenURL("https://github.com/Cyan4973/xxHash/blob/dev/LICENSE", "https://github.com/Cyan4973/xxHash/blob/dev/LICENSE");
+        ImGui::NewLine();
+
+        ImGui::Text("flatbuffers");
+        ImGui::TextLinkOpenURL("https://github.com/google/flatbuffers/blob/master/LICENSE", "https://github.com/google/flatbuffers/blob/master/LICENSE");
+        ImGui::NewLine();
+
+        if (ImGui::Button("Close"))
+            ImGui::CloseCurrentPopup();
+
+        ImGui::EndPopup();
     }
 }
 
@@ -702,7 +734,7 @@ void TextureViewer::RecreateTexture(ID3D12GraphicsCommandList* pCmd)
     std::vector<uint8_t> blob;
 
     // asdx形式に変換.
-    if (!asdx::TextureConverter::Convert(m_ScratchImage, blob))
+    if (!TextureConverter::Convert(m_ScratchImage, blob))
     {
         ELOG("Error : TexutreConverter::Convret() Failed.");
         return;
@@ -738,7 +770,7 @@ void TextureViewer::SaveTextureBinary(const char* path)
         return;
 
     std::vector<uint8_t> blob;
-    if (!asdx::TextureConverter::Convert(m_ScratchImage, blob))
+    if (!TextureConverter::Convert(m_ScratchImage, blob))
     {
         ELOG("Error : TextureConverter::Convert() Failed.");
         return;
@@ -772,7 +804,7 @@ bool TextureViewer::LoadScratchImage(const wchar_t* path)
             return false;
         }
 
-        if (!asdx::TextureConverter::ReverseConvert(blob, scratchImage))
+        if (!TextureConverter::ReverseConvert(blob, scratchImage))
         {
             ELOG("Error : TextureConverter::ReverseConvert() Failed. path = %ls", path);
             return false;
@@ -828,7 +860,7 @@ bool TextureViewer::SaveScratchImage(const wchar_t* path)
     if (ext == L".txb")
     {
         std::vector<uint8_t> blob;
-        if (!asdx::TextureConverter::Convert(m_ScratchImage, blob))
+        if (!TextureConverter::Convert(m_ScratchImage, blob))
         {
             ELOG("Error : TextureConverter::Convert() Failed.");
             return false;

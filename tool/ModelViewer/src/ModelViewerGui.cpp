@@ -12,7 +12,9 @@
 #include <fnd/asdxLogger.h>
 #include <fnd/asdxPath.h>
 #include <gfx/asdxGfxMisc.h>
+#include <res/asdxResTexture.h>
 #include <DirectXMath.h>
+#include <TextureConverter.h>
 
 
 #ifndef TABLE2
@@ -259,6 +261,18 @@ void ModelViewer::DrawLisence()
         ImGui::TextLinkOpenURL("https://github.com/Cyan4973/xxHash/blob/dev/LICENSE", "https://github.com/Cyan4973/xxHash/blob/dev/LICENSE");
         ImGui::NewLine();
 
+        ImGui::Text("flatbuffers");
+        ImGui::TextLinkOpenURL("https://github.com/google/flatbuffers/blob/master/LICENSE", "https://github.com/google/flatbuffers/blob/master/LICENSE");
+        ImGui::NewLine();
+
+        ImGui::Text("MikkTSpace");
+        ImGui::TextLinkOpenURL("https://github.com/mmikk/MikkTSpace/blob/master/mikktspace.c", "https://github.com/mmikk/MikkTSpace/blob/master/mikktspace.c");
+        ImGui::NewLine();
+
+        ImGui::Text("DirectXTex");
+        ImGui::TextLinkOpenURL("https://github.com/microsoft/DirectXTex/blob/main/LICENSE", "https://github.com/microsoft/DirectXTex/blob/main/LICENSE");
+        ImGui::NewLine();
+
         if (ImGui::Button("Close"))
             ImGui::CloseCurrentPopup();
 
@@ -337,44 +351,18 @@ void ModelViewer::DrawBones(const asdx::Matrix& modelWorld)
     if (!m_DrawBones)
         return;
 
-    auto count = m_Model->GetBoneCount();
-
-    // モーションがある場合はアニメーション後のボーンを表示
-    if (m_MotionBinary.GetClipCount() > 0)
+    auto count    = m_Model->GetBoneCount();
+    auto matrices = m_MotionPlayer.GetWorldTransforms();
+    for(auto i=0u; i<count; ++i)
     {
-        auto matrices = m_MotionPlayer.GetWorldTransforms();
-        for(auto i=0u; i<count; ++i)
+        auto& bone = m_Model->GetBone(i);
+        auto m0 = matrices[i] * modelWorld;
+        auto p0 = m0.GetPosition();
+
+        auto children = asdx::BoneProxy::GetChildren(bone);
+        for(auto j=0u; j<children.size(); ++j)
         {
-            auto& bone = m_Model->GetBone(i);
-            auto parentId = asdx::BoneProxy::GetParentId(bone);
-            if (parentId < 0)
-                continue;
-
-            auto m0 = matrices[parentId] * modelWorld;
-            auto p0 = m0.GetPosition();
-
-            auto m1 = matrices[i] * modelWorld;
-            auto p1 = m1.GetPosition();
-
-            asdx::DrawWireBone(m_LineRenderer, p0, p1, asdx::Vector4(0.0f, 1.0f, 1.0f, 1.0f));
-        }
-    }
-    // バインドポーズ表示.
-    else
-    {
-        for(auto i=0u; i<count; ++i)
-        {
-            auto& bone = m_Model->GetBone(i);
-
-            auto parentId = asdx::BoneProxy::GetParentId(bone);
-            if (parentId < 0)
-                continue;
-
-            auto& parentBone = m_Model->GetBone(uint32_t(parentId));
-            auto m0 = asdx::BoneProxy::GetBindPoseMatrix(parentBone) * modelWorld;
-            auto p0 = m0.GetPosition();
-
-            auto m1 = asdx::BoneProxy::GetBindPoseMatrix(bone) * modelWorld;
+            auto m1 = matrices[children[j]] * modelWorld;
             auto p1 = m1.GetPosition();
 
             asdx::DrawWireBone(m_LineRenderer, p0, p1, asdx::Vector4(0.0f, 1.0f, 1.0f, 1.0f));
@@ -727,13 +715,52 @@ void ModelViewer::DrawDebugTab()
     // Background CubeMap/SphereMap.
     if (ImGui::Button(asdx::ToChar(u8"環境マップ")))
     {
+        const char* filter =
+            "HDRIテクスチャ\0*.hdr;*.dds;*.txb;*jxr;*.hdp\0"
+            "Project Asura Texture Binary (*.txb)\0*.txb\0"
+            "Direct Draw Surface (*.dds)\0*.dds\0"
+            "Radiance HDR (*.hdr)\0*.hdr\0"
+            "HD Photo (*.hdp)\0*.hdp\0"
+            "JPEG XR (*.jxr)\0*.jxr\0"
+            "Window Media Photo (*.wdp)\0*.wpd\0";
+
+        asdx::fs::path path;
+        if (asdx::OpenFileDlg(filter, path))
+        {
+            std::vector<uint8_t> textureBinary;
+            if (TextureConverter::Convert(path.string().c_str(), textureBinary))
+            {
+                asdx::TextureBinary bin;
+                bin.Load(std::move(textureBinary));
+
+                asdx::ResTexture res = bin.GetResource();
+                if (!asdx::Texture::Create(res, &m_EnvMap))
+                {
+                    ELOG("Error : asdx::Texture::Create() Failed. path = %s", path.string().c_str());
+                }
+            }
+        }
+
     }
     ImGui::SameLine();
     ImGui::Text(asdx::ToChar(u8"Path : %s"), "NONE");
 
-    if (m_EnvMap.IsValid())
+    if (m_EnvMap != nullptr)
     {
-        ImGui::Image(m_EnvMap.GetHandleGPU().ptr, ImVec2(64, 128));
+        auto desc = m_EnvMap->GetDesc();
+
+        ImGui::BeginTable("EnvMap", 2);
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0);
+        ImGui::Image(m_EnvMap->GetHandleGPU().ptr, ImVec2(200, 100));
+
+        ImGui::TableSetColumnIndex(1);
+        ImGui::Text("%s", asdx::ToShortString(desc.Dimension));
+        ImGui::Text("%u x %u", desc.Width, desc.Height);
+        ImGui::Text("%u Mips", desc.MipLevels);
+        ImGui::Text("%s", asdx::ToShortString(desc.Format));
+
+        ImGui::EndTable();
     }
 
     ImGui::Separator();

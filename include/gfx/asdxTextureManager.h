@@ -170,6 +170,14 @@ public:
     //-------------------------------------------------------------------------
     ID3D12GraphicsCommandList* Swap();
 
+    //-------------------------------------------------------------------------
+    //! @brief      更新コマンドを持つかどうかチェックします.
+    //! 
+    //! @retval true    更新コマンドを持ちます.
+    //! @retval fasle   更新コマンドを持ちません.
+    //-------------------------------------------------------------------------
+    bool HasCommand() const;
+
 private:
     //=========================================================================
     // private variables.
@@ -181,6 +189,7 @@ private:
     RefPtr<ID3D12CommandAllocator>          m_CmdAllocator[2];
     uint8_t                                 m_BufferIndex = 0;
     bool                                    m_Initialized = false;
+    bool                                    m_HasCommand  = false;
 
     //=========================================================================
     // private methods.
@@ -200,6 +209,16 @@ private:
     //! @brief      デフォルトテクスチャを生成します.
     //-------------------------------------------------------------------------
     void CreateDefaultTextures();
+
+    //-------------------------------------------------------------------------
+    //! @brief      テクスチャを生成します.
+    //! 
+    //! @param[in]      resource        リソーステクスチャ.
+    //! @param[out]     ppTexture       テクスチャの格納先.
+    //! @retval true    生成に成功.
+    //! @retval false   生成に失敗.
+    //-------------------------------------------------------------------------
+    bool CreateTexture(ResTexture& resource, Texture** ppTexture);
 
     TextureManager              (const TextureManager&) = delete;
     TextureManager& operator =  (const TextureManager&) = delete;

@@ -26,11 +26,11 @@
 #include <vector>
 
 
+
 namespace DirectX {
 class ScratchImage;
 } // namespace DirectX
 
-namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
 // TextureConverter class
@@ -73,6 +73,16 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      変換処理を行います.
     //! 
+    //! @param[in]      path        入力ファイルパス.
+    //! @param[out]     output      出力バイナリ.
+    //! @retval true    変換に成功.
+    //! @retval false   変換に失敗.
+    //-------------------------------------------------------------------------
+    static bool Convert(const char* path, std::vector<uint8_t>& output);
+
+    //-------------------------------------------------------------------------
+    //! @brief      変換処理を行います.
+    //! 
     //! @param[in]      input       入力テクスチャ.
     //! @param[out]     output      出力バイナリ.
     //! @retval true    変換に成功.
@@ -101,5 +111,3 @@ private:
     //=========================================================================
     /* NOTHING */
 };
-
-} // namespace asdx

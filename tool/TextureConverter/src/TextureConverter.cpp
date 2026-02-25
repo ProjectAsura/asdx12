@@ -13,6 +13,7 @@
 #include <TextureConverter.h>
 #include <TextureBinary_generated.h>
 #include <DirectXTex.h>
+#include <filesystem>
 
 
 namespace {
@@ -92,8 +93,6 @@ uint32_t GetDimension(const DirectX::TexMetadata& metaData)
 } // namespace
 
 
-namespace asdx {
-
 ///////////////////////////////////////////////////////////////////////////////
 // TextureConverter class
 ///////////////////////////////////////////////////////////////////////////////
@@ -109,77 +108,14 @@ bool TextureConverter::Convert(const Desc& desc)
         return false;
     }
 
-    DirectX::TexMetadata  texMetaData = {};
-    DirectX::ScratchImage scratchImage;
-
-    // DDSしか受け付けない.
-    // (フォーマット変換をバイナリコンバートの度に実行するのは時間がかかるため).
+    std::vector<uint8_t> blob;
+    if (!Convert(desc.InputPath.c_str(), blob))
     {
-        std::wstring inputPath = ToStringW(desc.InputPath);
-
-        auto hr = DirectX::LoadFromDDSFile(
-            inputPath.c_str(),
-            DirectX::DDS_FLAGS_NONE,
-            &texMetaData,
-            scratchImage);
-        if (FAILED(hr))
-        {
-            fprintf_s(stderr, "DirectX::LoadFromDDSFile() Failed. errcode = 0x%x\n", hr);
-            return false;
-        }
-    }
-
-    if (texMetaData.format == DXGI_FORMAT_UNKNOWN)
-    {
-        fprintf_s(stderr, "Converter Error: Unsupported Resource Format. format = 0x%x\n", texMetaData.format);
         return false;
     }
 
-    if (texMetaData.mipLevels >= 15)
+    // ファイルに出力.
     {
-        fprintf_s(stderr,"Converter Error: Invalid MipLevles. mipLevels = %zu\n", texMetaData.mipLevels);
-        return false;
-    }
-
-    // 独自バイナリ形式に変換.
-    {
-        flatbuffers::FlatBufferBuilder builder(1024);
-
-        // サブリソースを準備.
-        std::vector<asdx::res::SubresourceInfo> subresources;
-        subresources.resize(scratchImage.GetImageCount());
-
-        // サブリソース構築.
-        const auto* images = scratchImage.GetImages();
-        for(size_t i=0; i<scratchImage.GetImageCount(); ++i)
-        {
-            subresources[i] = asdx::res::SubresourceInfo(
-                uint32_t(images[i].width),
-                uint32_t(images[i].height),
-                uint32_t(images[i].rowPitch),
-                uint32_t(images[i].slicePitch));
-        }
-
-        // テクスチャバイナリを作成.
-        auto resource = CreateTextureBinary(
-            builder,
-            CURRENT_VERSION,
-            GetDimension(texMetaData),
-            uint32_t(texMetaData.width),
-            uint32_t(texMetaData.height),
-            GetDepthOrArraySize(texMetaData),
-            uint16_t(texMetaData.mipLevels),
-            uint32_t(texMetaData.format),
-            builder.CreateVectorOfStructs<asdx::res::SubresourceInfo>(subresources),
-            builder.CreateVector<uint8_t>(scratchImage.GetPixels(), scratchImage.GetPixelsSize()));
-        
-        // ビルド終了.
-        builder.Finish(resource);
-
-        // バイナリ取得.
-        auto binary     = builder.GetBufferPointer();
-        auto binarySize = builder.GetSize();
-
         FILE* fp = nullptr;
         auto err = fopen_s(&fp, desc.OutputPath.c_str(), "wb");
         if (err != 0)
@@ -189,11 +125,68 @@ bool TextureConverter::Convert(const Desc& desc)
         }
 
         // バイナリ書き込み.
-        fwrite(binary, binarySize, 1, fp);
+        fwrite(blob.data(), blob.size(), 1, fp);
         fclose(fp);
     }
 
     // 正常終了.
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      変換処理を行います.
+//-----------------------------------------------------------------------------
+bool TextureConverter::Convert(const char* path, std::vector<uint8_t>& output)
+{
+    if (path == nullptr)
+    {
+        fprintf_s(stderr, "Invalid Arguments.");
+        return false;
+    }
+
+    DirectX::TexMetadata  texMetaData = {};
+    DirectX::ScratchImage scratchImage;
+
+    std::filesystem::path inputPath = path;
+    HRESULT hr = S_OK;
+    auto wpath = inputPath.wstring();
+
+    auto ext = inputPath.extension();
+    if (ext == ".dds")
+    {
+        hr = DirectX::LoadFromDDSFile(wpath.c_str(), DirectX::DDS_FLAGS_NONE, nullptr, scratchImage);
+    }
+    else if (ext == ".tga")
+    {
+        hr = DirectX::LoadFromTGAFile(wpath.c_str(), DirectX::TGA_FLAGS_NONE, nullptr, scratchImage);
+    }
+    else if (ext == ".hdr")
+    {
+        hr = DirectX::LoadFromHDRFile(wpath.c_str(), nullptr, scratchImage);
+    }
+    else if (ext == L".bmp"  || ext == L".jpg" || ext == L".jpeg" || ext == L".png" || ext == L".tif"
+          || ext == L".tiff" || ext == L".gif" || ext == L".hdp"  || ext == L".wdp" || ext == L".jxr"
+          || ext == L".heif" || ext == L".heic")
+    {
+        hr = DirectX::LoadFromWICFile(wpath.c_str(), DirectX::WIC_FLAGS_NONE, nullptr, scratchImage);
+    }
+    else
+    {
+        hr = E_FAIL;
+        fprintf_s(stderr, "Unsupported File Extension (%s)", ext.string().c_str());
+    }
+
+    if (FAILED(hr))
+    {
+        fprintf_s(stderr, "TextureConvert::Convert() Failed. path = %s, errcode = 0x%x", path, hr);
+        return false;
+    }
+
+    if (!Convert(scratchImage, output))
+    {
+        return false;
+    }
+
     return true;
 }
 
@@ -322,6 +315,3 @@ bool TextureConverter::ReverseConvert(const std::vector<uint8_t>& input, DirectX
 
     return true;
 }
-
-
-} // namespace asdx

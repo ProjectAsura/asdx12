@@ -58,10 +58,11 @@ void MotionPlayer::Init(const Model* pModel)
         auto  bindPose = asdx::BoneProxy::GetBindPoseMatrix(bone);
 
         m_LocalTransforms[i] = bindPose;
-        m_WorldTransforms[i] = identity;
-        m_MatrixPalettes [i] = identity;
         m_Tracks         [i] = nullptr;
     }
+
+    UpdateWorldTransform(identity);
+    UpdateMatrixPalette();
 }
 
 //-----------------------------------------------------------------------------
@@ -109,9 +110,10 @@ void MotionPlayer::SetClip(const res::MotionClip* pClip)
         }
 
         m_LocalTransforms[i] = bindPose;
-        m_WorldTransforms[i] = identity;
-        m_MatrixPalettes [i] = identity;
     }
+
+    UpdateWorldTransform(identity);
+    UpdateMatrixPalette();
 }
 
 //-----------------------------------------------------------------------------
@@ -161,16 +163,12 @@ void MotionPlayer::UpdateLocalTransform(float deltaSec)
     auto count = m_pModel->GetBoneCount();
     for(auto i=0u; i<count; ++i)
     {
-        auto& bone = m_pModel->GetBone(i);
-        auto track = m_Tracks[i];
+        const auto& bone = m_pModel->GetBone(i);
+        const auto track = m_Tracks[i];
 
         // アニメーションデータが無ければバインドポーズを適用.
         if (track == nullptr)
-        {
-            auto bindPose = asdx::BoneProxy::GetBindPoseMatrix(bone);
-            m_LocalTransforms[i] = bindPose;
             continue;
-        }
 
         // ローカル変換行列を計算.
         m_LocalTransforms[i] = asdx::MotionTrackProxy::CalcLocalTransform(track, m_TimeInTicks);
@@ -185,15 +183,15 @@ void MotionPlayer::UpdateWorldTransform(const Matrix& rootTransform)
     auto count = m_pModel->GetBoneCount();
     for(auto i=0u; i<count; ++i)
     {
-        const auto& bone   = m_pModel->GetBone(i);
-        const auto  parent = asdx::BoneProxy::GetParentId(bone);
+        const auto& bone = m_pModel->GetBone(i);
+        const auto parentId = asdx::BoneProxy::GetParentId(bone);
 
         // 親がいなければそのまま.
-        if (parent < 0)
+        if (parentId < 0)
             m_WorldTransforms[i] = m_LocalTransforms[i] * rootTransform;
         // 親がいれば親を考慮.
         else
-            m_WorldTransforms[i] = m_LocalTransforms[i] * m_WorldTransforms[parent];
+            m_WorldTransforms[i] = m_LocalTransforms[i] * m_WorldTransforms[parentId];
     }
 }
 

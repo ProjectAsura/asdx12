@@ -189,8 +189,9 @@ void ParseMesh
             {
                 boneId = int(boneMap.size());
                 BoneInfo info;
-                info.Index = boneId;
-                info.Name  = boneName;
+                info.Index    = boneId;
+                info.Name     = boneName;
+                info.BindPose = asdx::Matrix::CreateIdentity();
 
                 if (parent != nullptr)
                 {
@@ -207,9 +208,14 @@ void ParseMesh
                 }
 
                 // バインドポーズ行列.
-                auto bindPose = bone->mOffsetMatrix;    // いったんコピーしないと書き変わってしまうため.
-                bindPose.Inverse();
-                info.BindPose = ToMatrix(bindPose);
+                // 正しい実装は aiNode 側から取る. 
+                // aiNode 経由だと相対座標になるので，正しい挙動になるが，
+                // aiBone の mOffsetMatrix の逆行列から求めてしまうと，絶対座標になるのでおかしな挙動になる.
+                if (node != nullptr)
+                {
+                    auto bindPose = node->mTransformation;
+                    info.BindPose = ToMatrix(bindPose);
+                }
 
                 // バインドポーズ逆行列.
                 info.InverseBindPose = ToMatrix(bone->mOffsetMatrix);

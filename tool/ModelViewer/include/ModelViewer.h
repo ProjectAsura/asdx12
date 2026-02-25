@@ -127,9 +127,7 @@ private:
     asdx::SkyContext                    m_SkyContext;
     asdx::SkyBoxPS                      m_SkyBoxPS;
     asdx::SkySpherePS                   m_SkySpherePS;
-    asdx::TextureHolder                 m_DiffuseLD;
-    asdx::TextureHolder                 m_SpecularLD;
-    asdx::TextureHolder                 m_EnvMap;
+    asdx::Texture*                      m_EnvMap        = nullptr;
 
     //=========================================================================
     // private methods.

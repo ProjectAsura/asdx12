@@ -2527,32 +2527,32 @@ inline Matrix Matrix::CreateRotationZ(float radian)
 //-----------------------------------------------------------------------------
 inline Matrix Matrix::CreateFromQuaternion(const Quaternion& qua)
 {
-    auto xx = qua.x * qua.x; // num1
-    auto yy = qua.y * qua.y; // num2
-    auto zz = qua.z * qua.z; // num3
+    auto xx = qua.x * qua.x;
+    auto yy = qua.y * qua.y;
+    auto zz = qua.z * qua.z;
 
-    auto xy = qua.x * qua.y; // num4
-    auto zw = qua.z * qua.w; // num5
-    auto zx = qua.z * qua.x; // num6
+    auto xy = qua.x * qua.y;
+    auto zw = qua.z * qua.w;
+    auto xz = qua.x * qua.z;
 
-    auto yw = qua.y * qua.w; // num7
-    auto yz = qua.y * qua.z; // num8
-    auto xw = qua.x * qua.w; // num9
+    auto yw = qua.y * qua.w;
+    auto yz = qua.y * qua.z;
+    auto xw = qua.x * qua.w;
 
     return Matrix(
         1.0f - 2.0f * (yy + zz),
         2.0f * (xy + zw),
-        2.0f * (zx - yw),
+        2.0f * (xz - yw),
         0.0f,
 
         2.0f * (xy - zw),
-        1.0f - 2.0f * (zz + xx),
+        1.0f - 2.0f * (xx + zz),
         2.0f * (yz + xw),
         0.0f,
 
-        2.0f * (zx + yw),
+        2.0f * (xz + yw),
         2.0f * (yz - xw),
-        1.0f - 2.0f * (yy + xx),
+        1.0f - 2.0f * (xx + yy),
         0.0f,
 
         0.0f,
