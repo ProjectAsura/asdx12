@@ -42,6 +42,7 @@ float2 UVAnimation(float2 uv, float2 scale, float2 offset, float rotate)
 //-----------------------------------------------------------------------------
 float2 ToSphereMapCoord(float3 reflectDir)
 {
+    // NOTE : 正距円筒図のパノラマテクスチャを対象とします.
     float theta = acos(reflectDir.y);
     float phi   = atan2(reflectDir.z, reflectDir.x);
     if (reflectDir.z < 0.0f)
@@ -53,10 +54,25 @@ float2 ToSphereMapCoord(float3 reflectDir)
 }
 
 //-----------------------------------------------------------------------------
+//      アンギュラーマップのテクスチャ座標を求めます.
+//-----------------------------------------------------------------------------
+float2 ToAngularMapCoord(float3 reflectDir)
+{
+    float3 dir = normalize(reflectDir);
+    dir.z += 1.0f;
+        float m = 2.0f * length(dir);
+    float2 uv;
+    uv.x = (reflectDir.x / m) + 0.5f;
+    uv.y = (reflectDir.y / m) + 0.5f;
+    return uv;
+}
+
+//-----------------------------------------------------------------------------
 //      スフィアマップのテクスチャ座標からキューブマップサンプリング方向を求めます.
 //-----------------------------------------------------------------------------
 float3 FromSphereMapCoord(float2 uv)
 {
+    // NOTE : 正距円筒図のパノラマテクスチャを対象とします.
     float phi   = uv.x * F_2PI;
     float theta = uv.y * F_PI;
 
@@ -70,6 +86,24 @@ float3 FromSphereMapCoord(float2 uv)
         cosPhi * sinTheta,
         sinPhi * sinTheta,
         cosTheta);
+}
+
+//-----------------------------------------------------------------------------
+//      アンギュラーマップのテクスチャ座標からキューブマップサンプリング方向を求めます.
+//-----------------------------------------------------------------------------
+float3 FromAugularMapCoord(float2 uv)
+{
+    float2 p = saturate(uv) * 2.0f - 1.0f;
+    float r2 = dot(p, p);
+
+    float z = 1.0f - 2.0f * r2;
+    float scale = sqrt(1.0f - r2);
+
+    float3 dir;
+    dir.xy = p * 2.0f * scale;
+    dir.z  = z;
+
+    return normalize(dir);
 }
 
 //-----------------------------------------------------------------------------

@@ -769,11 +769,11 @@ void GuiMgr::Draw(ID3D12GraphicsCommandList* pCmdList)
                 else
                 {
                     // テクスチャが渡された場合は変更.
-                    auto textureId = pCmd->GetTexID();
-                    if (textureId != ImTextureID_Invalid)
+                    auto textureRef = pCmd->TexRef;
+                    if (textureRef.GetTexID() != ImTextureID_Invalid)
                     {
                         D3D12_GPU_DESCRIPTOR_HANDLE handle = {};
-                        handle.ptr = textureId;
+                        handle.ptr = textureRef.GetTexID();
                         pCmdList->SetGraphicsRootDescriptorTable(1, handle);
                         changeTexture = true;
                     }

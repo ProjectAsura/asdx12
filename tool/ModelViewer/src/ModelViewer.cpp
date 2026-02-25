@@ -309,6 +309,24 @@ bool ModelViewer::OnInit()
         return false;
     }
 
+    if (!m_SkyContext.Init())
+    {
+        ELOG("Error : SkyContext::Init() Failed.");
+        return false;
+    }
+
+    if (!m_SkyBoxPS.Init(m_SkyContext, m_SwapChainFormat))
+    {
+        ELOG("Error : SkyBoxPS::Init() Failed.");
+        return false;
+    }
+
+    if (!m_SkySpherePS.Init(m_SkyContext, m_SwapChainFormat))
+    {
+        ELOG("Error : SkySpherePS::Init() Failed.");
+        return false;
+    }
+
     // コマンドの記録を終了.
     pCmd->Close();
 
@@ -361,6 +379,10 @@ void ModelViewer::OnTerm()
     m_AxisVertexBuffer.Term();
     m_GridVertexBuffer.Term();
 
+    m_SkyBoxPS   .Term();
+    m_SkySpherePS.Term();
+    m_SkyContext .Term();
+
     // GUIマネージャの終了処理.
     asdx::GuiMgr::Instance().Term();
 }
@@ -411,6 +433,9 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
 
     // シェイプ用のカメラ行列を設定.
     m_ShapeStates.SetViewProj(m_Camera.GetView(), m_Proj);
+
+    // スカイ用カメラ行列を更新.
+    m_SkyContext.UpdateBuffer(m_Camera.GetView(), m_Proj);
 
     // 定数バッファを更新.
     {
@@ -478,6 +503,9 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
     pCmd->ClearDepthStencilView(handleDSV, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
     pCmd->RSSetViewports(1, &m_Viewport);
     pCmd->RSSetScissorRects(1, &m_ScissorRect);
+
+    // スカイ描画.
+    DrawSky(pCmd);
 
     // グリッド描画.
     DrawGrid(pCmd);
@@ -1191,4 +1219,25 @@ void ModelViewer::DrawGrid(ID3D12GraphicsCommandList* pCmd)
     pCmd->IASetVertexBuffers(0, 1, &vbv);
     pCmd->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
     pCmd->DrawInstanced(m_GridVertexCount, 1, 0, 0);
+}
+
+//-----------------------------------------------------------------------------
+//      スカイを描画します.
+//-----------------------------------------------------------------------------
+void ModelViewer::DrawSky(ID3D12GraphicsCommandList* pCmd)
+{
+    if (!m_DrawSky || pCmd == nullptr)
+        return;
+
+    if (!m_EnvMap.IsValid())
+        return;
+
+    auto desc = m_EnvMap.GetDesc();
+    if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D)
+        return;
+
+    if (desc.DepthOrArraySize == 1)
+        m_SkySpherePS.Draw(pCmd, m_SkyContext, m_EnvMap.GetHandleGPU());
+    else
+        m_SkyBoxPS.Draw(pCmd, m_SkyContext, m_EnvMap.GetHandleGPU());
 }

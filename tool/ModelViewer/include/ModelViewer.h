@@ -18,6 +18,7 @@
 #include <gfx/asdxShape.h>
 #include <gfx/asdxMotionPlayer.h>
 #include <gfx/asdxLine.h>
+#include <gfx/asdxSkyBox.h>
 #include <imgui.h>
 #include <ImGuizmo.h>
 
@@ -98,6 +99,7 @@ private:
     bool                                m_DrawBones          = false;
     bool                                m_DrawAxis           = false;
     bool                                m_DrawGrid           = false;
+    bool                                m_DrawSky            = false;
     bool                                m_EnableWireframe    = false;
     asdx::Vector3                       m_ModelTranslation   = asdx::Vector3(0.0f, 0.0f, 0.0f);
     asdx::Vector3                       m_ModelRotation      = asdx::Vector3(0.0f, 0.0f, 0.0f);
@@ -122,6 +124,12 @@ private:
     asdx::VertexBuffer                  m_GridVertexBuffer;
     uint32_t                            m_AxisVertexCount = 0;
     uint32_t                            m_GridVertexCount = 0;
+    asdx::SkyContext                    m_SkyContext;
+    asdx::SkyBoxPS                      m_SkyBoxPS;
+    asdx::SkySpherePS                   m_SkySpherePS;
+    asdx::TextureHolder                 m_DiffuseLD;
+    asdx::TextureHolder                 m_SpecularLD;
+    asdx::TextureHolder                 m_EnvMap;
 
     //=========================================================================
     // private methods.
@@ -251,6 +259,11 @@ private:
     //! @brief      軸を描画します.
     //-------------------------------------------------------------------------
     void DrawAxis(ID3D12GraphicsCommandList* pCmd);
+
+    //-------------------------------------------------------------------------
+    //! @brief      スカイを描画します.
+    //-------------------------------------------------------------------------
+    void DrawSky(ID3D12GraphicsCommandList* pCmd);
 
     //-------------------------------------------------------------------------
     //! @brief      プロパティウィンドウを描画します.

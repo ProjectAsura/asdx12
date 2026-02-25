@@ -720,6 +720,21 @@ void ModelViewer::DrawDebugTab()
     ImGui::Checkbox(asdx::ToChar(u8"ボーン表示"), &m_DrawBones);
     ImGui::Checkbox(asdx::ToChar(u8"軸表示"), &m_DrawAxis);
     ImGui::Checkbox(asdx::ToChar(u8"グリッド表示"), &m_DrawGrid);
+    ImGui::Checkbox(asdx::ToChar(u8"環境マップ表示"), &m_DrawSky);
+
+    ImGui::Separator();
+
+    // Background CubeMap/SphereMap.
+    if (ImGui::Button(asdx::ToChar(u8"環境マップ")))
+    {
+    }
+    ImGui::SameLine();
+    ImGui::Text(asdx::ToChar(u8"Path : %s"), "NONE");
+
+    if (m_EnvMap.IsValid())
+    {
+        ImGui::Image(m_EnvMap.GetHandleGPU().ptr, ImVec2(64, 128));
+    }
 
     ImGui::Separator();
 
