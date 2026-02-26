@@ -12,7 +12,6 @@
 #include <fnd/asdxLogger.h>
 #include <fnd/asdxMisc.h>
 #include <fnd/asdxPath.h>
-#include <fnd/asdxMisc.h>
 #include <fnd/asdxFileIO.h>
 #include <edit/asdxGuiMgr.h>
 #include <gfx/asdxPresetState.h>
@@ -44,6 +43,11 @@ enum ROOT_PARAM
     ROOT_PARAM_T2,  // Normal
     ROOT_PARAM_T3,  // ORM
     ROOT_PARAM_T4,  // Emissive.
+    ROOT_PARAM_T5,  // Reserved0.
+    ROOT_PARAM_T6,  // Reserved1.
+    ROOT_PARAM_T7,  // DFG.
+    ROOT_PARAM_T8,  // DiffuseLD.
+    ROOT_PARAM_T9,  // SpecularLD.
 
     MAX_ROOT_PARAM_COUNT,
 };
@@ -157,11 +161,16 @@ bool ModelViewer::OnInit()
 
     // ルートシグニチャの生成.
     {
-        D3D12_DESCRIPTOR_RANGE ranges[4] = {};
+        D3D12_DESCRIPTOR_RANGE ranges[9] = {};
         asdx::InitRangeAsSRV(ranges[0], 1);
         asdx::InitRangeAsSRV(ranges[1], 2);
         asdx::InitRangeAsSRV(ranges[2], 3);
         asdx::InitRangeAsSRV(ranges[3], 4);
+        asdx::InitRangeAsSRV(ranges[4], 5);
+        asdx::InitRangeAsSRV(ranges[5], 6);
+        asdx::InitRangeAsSRV(ranges[6], 7);
+        asdx::InitRangeAsSRV(ranges[7], 8);
+        asdx::InitRangeAsSRV(ranges[8], 9);
 
         D3D12_ROOT_PARAMETER params[MAX_ROOT_PARAM_COUNT] = {};
         asdx::InitAsCBV(params[ROOT_PARAM_B0], 0, D3D12_SHADER_VISIBILITY_ALL);
@@ -172,6 +181,11 @@ bool ModelViewer::OnInit()
         asdx::InitAsTable(params[ROOT_PARAM_T2], 1, &ranges[1], D3D12_SHADER_VISIBILITY_PIXEL);
         asdx::InitAsTable(params[ROOT_PARAM_T3], 1, &ranges[2], D3D12_SHADER_VISIBILITY_PIXEL);
         asdx::InitAsTable(params[ROOT_PARAM_T4], 1, &ranges[3], D3D12_SHADER_VISIBILITY_PIXEL);
+        asdx::InitAsTable(params[ROOT_PARAM_T5], 1, &ranges[4], D3D12_SHADER_VISIBILITY_PIXEL);
+        asdx::InitAsTable(params[ROOT_PARAM_T6], 1, &ranges[5], D3D12_SHADER_VISIBILITY_PIXEL);
+        asdx::InitAsTable(params[ROOT_PARAM_T7], 1, &ranges[6], D3D12_SHADER_VISIBILITY_PIXEL);
+        asdx::InitAsTable(params[ROOT_PARAM_T8], 1, &ranges[7], D3D12_SHADER_VISIBILITY_PIXEL);
+        asdx::InitAsTable(params[ROOT_PARAM_T9], 1, &ranges[8], D3D12_SHADER_VISIBILITY_PIXEL);
 
         D3D12_ROOT_SIGNATURE_DESC desc = {};
         desc.NumParameters      = _countof(params);
@@ -605,6 +619,9 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
         pCmd->SetGraphicsRootConstantBufferView(ROOT_PARAM_B0, m_SceneCB[idx].GetGpuAddress());
         pCmd->SetGraphicsRoot32BitConstants(ROOT_PARAM_B1, 1, &m_DrawMode, 0);
         pCmd->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        pCmd->SetGraphicsRootDescriptorTable(ROOT_PARAM_T5, m_DFG->GetHandleGPU());
+        pCmd->SetGraphicsRootDescriptorTable(ROOT_PARAM_T6, m_DiffuseLD->GetHandleGPU());
+        pCmd->SetGraphicsRootDescriptorTable(ROOT_PARAM_T7, m_SpecularLD->GetHandleGPU());
 
         for(auto i=0u; i<m_Model->GetMeshCount(); ++i)
         {

@@ -26,6 +26,7 @@ struct VSOutput
     float4  Tangent     : TANGENT;
     float2  TexCoord    : TEXCOORD0;
     float4  Color       : COLOR0;
+    float4  WorldPos    : WORLD_POS;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -54,15 +55,16 @@ VSOutput main(const VSInput input)
     float4 worldPos = mul(World, localPos);
     float4 viewPos  = mul(View, worldPos);
     float4 projPos  = mul(Proj, viewPos);
-    
+
     float3 worldNormal  = normalize(mul((float3x3)World, input.Normal));
     float3 worldTangent = normalize(mul((float3x3)World, input.Tangent.xyz));
-    
+
     output.Position     = projPos;
     output.Normal       = worldNormal;
     output.Tangent      = float4(worldTangent, input.Tangent.w);
     output.TexCoord     = input.TexCoord;
     output.Color        = input.Color;
+    output.WorldPos     = worldPos;
 
     return output;
 }

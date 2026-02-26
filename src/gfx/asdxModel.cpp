@@ -352,7 +352,7 @@ bool Material::Init(const res::Material& material)
 
         // デフォルトを設定.
         if (!m_BaseColorMap.IsValid())
-        { m_BaseColorMap = TextureManager::Instance().GetOrCreate("default.BaseColor"); }
+        { m_BaseColorMap = TextureManager::Instance().GetOrCreate("default.OpaqueWhite"); }
         assert(m_BaseColorMap.IsValid());
     }
 

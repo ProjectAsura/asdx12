@@ -1597,9 +1597,9 @@ bool InitRootSignature
         pDesc, D3D_ROOT_SIGNATURE_VERSION_1_0, blob.GetAddress(), errorBlob.GetAddress());
     if (FAILED(hr))
     {
-        ELOG("Error : D3D12SerializeRootSignature() Failed. errcode = 0x%x", hr);
+        ELOGA("Error : D3D12SerializeRootSignature() Failed. errcode = 0x%x", hr);
         if (errorBlob) {
-            ELOG("Error : msg = %s", reinterpret_cast<const char*>(errorBlob->GetBufferPointer()));
+            ELOGA("Error : msg = %s", reinterpret_cast<const char*>(errorBlob->GetBufferPointer()));
         }
         return false;
     }
@@ -1608,7 +1608,7 @@ bool InitRootSignature
         0, blob->GetBufferPointer(), blob->GetBufferSize(), IID_PPV_ARGS(ppRootSig));
     if (FAILED(hr))
     {
-        ELOG("Error : ID3D12Device::CreateRootSignature() Failed. errcode = 0x%x", hr);
+        ELOGA("Error : ID3D12Device::CreateRootSignature() Failed. errcode = 0x%x", hr);
         return false;
     }
 

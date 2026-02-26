@@ -30,6 +30,7 @@ struct VSOutput
     float4  Color       : COLOR0;
     uint4   BoneIndices : BONEINDEX;
     float4  BoneWeights : BONEWEIGHT;
+    float4  WorldPos    : WORLD_POS;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -85,6 +86,7 @@ VSOutput main(const VSInput input)
     output.Color        = input.Color;
     output.BoneIndices  = input.BoneIndices;
     output.BoneWeights  = input.BoneWeights;
+    output.WorldPos     = worldPos;
 
     return output;
 }

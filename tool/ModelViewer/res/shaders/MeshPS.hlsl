@@ -22,6 +22,7 @@ struct VSOutput
     float4  Tangent     : TANGENT;
     float2  TexCoord    : TEXCOORD0;
     float4  Color       : COLOR0;
+    float4  WorldPos    : WORLD_POS;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -72,6 +73,10 @@ Texture2D NormalMap     : register(t2);
 Texture2D OrmMap        : register(t3);
 Texture2D EmissiveMap   : register(t4);
 
+Texture2D   DFGMap      : register(t5);     //!< DFGマップ.
+TextureCube DiffuseLD   : register(t6);     //!< Diffuse LD.
+TextureCube SpecularLD  : register(t7);     //!< Specular LD.
+
 #define MODE_LIGHTING       (0)
 #define MODE_POSITION       (1)
 #define MODE_NORMAL         (2)
@@ -120,6 +125,59 @@ float3 ToSRGB(float3 color)
 }
 
 //-----------------------------------------------------------------------------
+//      ディフューズIBLを評価します.
+//-----------------------------------------------------------------------------
+float3 EvaluateIBLDiffuse(float3 N)
+{
+    // Lambert BRDFはDFG項は積分すると1.0となるので，LD項のみを返却すれば良い
+    return DiffuseLD.Sample(LinearWrap, N).rgb;
+}
+
+//-----------------------------------------------------------------------------
+//      線形ラフネスからミップレベルを求めます.
+//-----------------------------------------------------------------------------
+float RoughnessToMipLevel(float linearRoughness, float mipCount)
+{
+    return (mipCount - 1) * linearRoughness;
+}
+
+//-----------------------------------------------------------------------------
+//      スペキュラーIBLを評価します.
+//-----------------------------------------------------------------------------
+float3 EvaluateIBLSpecular
+(
+    float           NdotV,          // 法線ベクトルと視線ベクトルの内積.
+    float3          N,              // 法線ベクトル.
+    float3          R,              // 反射ベクトル.
+    float3          f0,             // フレネル項
+    float           roughness       // 線形ラフネス.
+)
+{
+    float  a = roughness * roughness;
+    float3 dominantR = GetSpecularDominantDir(N, R, a);
+
+    float2 mapSize;
+    float  mipLevels;
+    SpecularLD.GetDimensions(0, mapSize.x, mapSize.y, mipLevels);
+    float textureSize = max(mapSize.x, mapSize.y);
+
+    // 関数を再構築.
+    // L * D * (f0 * Gvis * (1 - Fc) + Gvis * Fc) * cosTheta / (4 * NdotL * NdotV).
+    NdotV = max(NdotV, 0.5f / textureSize); // ゼロ除算が発生しないようにする.
+    float  mipLevel = RoughnessToMipLevel(roughness, mipLevels); 
+    float3 preLD    = SpecularLD.SampleLevel(LinearWrap, dominantR, mipLevel).xyz;
+
+    // 事前積分したDFGをサンプルする.
+    // Fc = ( 1 - HdotL )^5
+    // PreIntegratedDFG.r = Gvis * (1 - Fc)
+    // PreIntegratedDFG.g = Gvis * Fc
+    float2 preDFG   = DFGMap.SampleLevel(LinearClamp, float2(NdotV, 1.0f - roughness), 0).xy;
+
+    // LD * (f0 * Gvis * (1 - Fc) + Gvis * Fc)
+    return preLD * (f0 * preDFG.x + preDFG.y);
+}
+
+//-----------------------------------------------------------------------------
 //      メインエントリーポイントです.
 //-----------------------------------------------------------------------------
 float4 main(const VSOutput input) : SV_TARGET0
@@ -141,8 +199,29 @@ float4 main(const VSOutput input) : SV_TARGET0
     case MODE_LIGHTING:
     default:
         {
-            float3 L = normalize(View._31_32_33);
-            output.rgb = saturate(dot(N, L)).xxx * 0.5f.xxx;    // 陰影を見やすくするために白ではなく0.5にした.
+            float3 V = normalize(input.WorldPos.xyz - GetPosition(View));
+            float3 R = normalize(reflect(V, N));
+ 
+            float NoV = saturate(dot(N, V));
+
+            float4 bc  = BaseColorMap.Sample(LinearWrap, input.TexCoord);
+            bc.rgb *= BaseColor;
+            bc.a   *= Alpha;
+            
+            float3 orm = OrmMap.Sample(LinearWrap, input.TexCoord).rgb;
+            orm.x *= Occlusion;
+            orm.y *= Roughness;
+            orm.z *= Metalness;
+
+            float3 Kd = ToKd(bc.rgb, orm.z);
+            float3 Ks = ToKs(bc.rgb, orm.z);
+ 
+            float3 lit = 0;
+            lit += EvaluateIBLDiffuse(N) * Kd * orm.x;
+            lit += EvaluateIBLSpecular(NoV, N, R, Ks, orm.y) * orm.x;
+            lit += EmissiveMap.Sample(LinearWrap, input.TexCoord).xyz * Emissive;
+            output.rgb = lit;
+            output.a   = bc.a;
         }
         break;
 
@@ -216,7 +295,7 @@ float4 main(const VSOutput input) : SV_TARGET0
         break;
  
     case MODE_IOR:
-        { output.rgb = Ior.xxx; }
+        { output.rgb = max(Ior - 1.0f, 0.0f).xxx; }
         break;
 
     case MODE_EMISSIVE:
