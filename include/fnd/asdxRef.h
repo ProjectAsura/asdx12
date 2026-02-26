@@ -9,7 +9,6 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <cstdint>
-#include <atomic>
 
 
 namespace asdx {
@@ -41,214 +40,6 @@ struct IReference
     //! @return     参照カウントを返却します.
     //-------------------------------------------------------------------------
     virtual uint32_t GetRefCount() const = 0;
-};
-
-
-///////////////////////////////////////////////////////////////////////////////
-// IWeakReference interface
-///////////////////////////////////////////////////////////////////////////////
-struct IWeakReference : public IReference
-{
-    //-------------------------------------------------------------------------
-    //! @brief      デストラクタです.
-    //-------------------------------------------------------------------------
-    virtual ~IWeakReference()
-    { /* DO_NOTHING */ }
-
-    //-------------------------------------------------------------------------
-    //! @brief      強参照インタフェースを取得します.
-    //! 
-    //! @param[out]     ppOutReference
-    //! @retval true    取得に成功.
-    //! @retval false   取得に失敗.
-    //-------------------------------------------------------------------------
-    virtual bool Resolve(IReference** ppOutReference) = 0;
-};
-
-
-///////////////////////////////////////////////////////////////////////////////
-// IWeakReferenceSource interface
-///////////////////////////////////////////////////////////////////////////////
-struct IWeakReferenceSource
-{
-    //-------------------------------------------------------------------------
-    //! @brief      デストラクタです.
-    //-------------------------------------------------------------------------
-    virtual ~IWeakReferenceSource()
-    { /* DO_NOTHING */ }
-
-    //-------------------------------------------------------------------------
-    //! @brief      弱参照インタフェースを取得します.
-    //!
-    //! @param[out]     ppOutWeakRef        弱参照インタフェースの格納先.
-    //-------------------------------------------------------------------------
-    virtual void GetWeakReference(IWeakReference** ppOutWeakRef) = 0;
-};
-
-
-///////////////////////////////////////////////////////////////////////////////
-// RefBase class
-///////////////////////////////////////////////////////////////////////////////
-class RefBase : public IReference
-{
-    //=========================================================================
-    // list of friend classes and methods.
-    //=========================================================================
-    /* NOTHING */
-
-public:
-    //=========================================================================
-    // public variables.
-    //=========================================================================
-    /* NOTHING */
-
-    //=========================================================================
-    // public methods.
-    //=========================================================================
-
-    //-------------------------------------------------------------------------
-    //! @brief      コンストラクタです.
-    //-------------------------------------------------------------------------
-    RefBase();
-
-    //-------------------------------------------------------------------------
-    //! @brief      デストラクタです.
-    //-------------------------------------------------------------------------
-    virtual ~RefBase();
-
-    //-------------------------------------------------------------------------
-    //! @brief      参照カウントを増やします.
-    //-------------------------------------------------------------------------
-    void AddRef() override;
-
-    //-------------------------------------------------------------------------
-    //! @brief      解放処理を行います.
-    //-------------------------------------------------------------------------
-    void Release() override;
-
-    //-------------------------------------------------------------------------
-    //! @brief      参照カウントを取得します.
-    //! 
-    //! @return     参照カウントを返却します.
-    //-------------------------------------------------------------------------
-    uint32_t GetRefCount() const override;
-
-protected:
-    //=========================================================================
-    // protected variables.
-    //=========================================================================
-    /* NOTHING */
-
-    //=========================================================================
-    // protected methods.
-    //=========================================================================
-
-    //-------------------------------------------------------------------------
-    //! @brief      解放時の処理です.
-    //! 
-    //! @note       継承先のクラスで実装してください.
-    //-------------------------------------------------------------------------
-    virtual void OnRelease()
-    { /* DO_NOTHING */ }
-
-private:
-    //=========================================================================
-    // private variables.
-    //=========================================================================
-    std::atomic<uint32_t>   m_RefCount;
-
-    //=========================================================================
-    // private methods.
-    //=========================================================================
-    /* NOTHING */
-};
-
-
-///////////////////////////////////////////////////////////////////////////////
-// WeakRef class
-///////////////////////////////////////////////////////////////////////////////
-class WeakRef : public IWeakReference
-{
-    //=========================================================================
-    // list of friend classes and methods.
-    //=========================================================================
-    /* NOTHING */
-
-public:
-    //=========================================================================
-    // public variables.
-    //=========================================================================
-    /* NOTHING */
-
-    //=========================================================================
-    // public methods.
-    //=========================================================================
-
-    //-------------------------------------------------------------------------
-    //! @brief      引数付きコンストラクタです.
-    //-------------------------------------------------------------------------
-    WeakRef(IReference* pStrong);
-
-    //-------------------------------------------------------------------------
-    //! @brief      デストラクタです.
-    //-------------------------------------------------------------------------
-    ~WeakRef() override;
-
-    //-------------------------------------------------------------------------
-    //! @brief      参照カウントを上げます
-    //-------------------------------------------------------------------------
-    void AddRef() override;
-
-    //-------------------------------------------------------------------------
-    //! @brief      参照カウントを下げます.
-    //-------------------------------------------------------------------------
-    void Release() override;
-
-    //-------------------------------------------------------------------------
-    //! @brief      参照カウントを取得します.
-    //! 
-    //! @return     参照カウントを返却します.
-    //-------------------------------------------------------------------------
-    uint32_t GetRefCount() const override;
-
-    //-------------------------------------------------------------------------
-    //! @brief      参照インタフェースを取得します.
-    //! 
-    //! @param[out]     ppOutRef        参照インターフェイスの格納先.
-    //! @retval true    取得に成功.
-    //! @retval false   取得に失敗.
-    //-------------------------------------------------------------------------
-    bool Resolve(IReference** ppOutRef) override;
-
-private:
-    //=========================================================================
-    // private variables.
-    //=========================================================================
-    std::atomic<uint32_t>   m_RefCount;
-    IReference*             m_pStrongRef;
-
-    //=========================================================================
-    // private methods.
-    //=========================================================================
-    /* NOTHING */
-};
-
-class WeakRefSrcBase : public RefBase, public IWeakReferenceSource
-{
-public:
-    WeakRefSrcBase();
-
-    virtual ~WeakRefSrcBase();
-
-    void GetWeakReference(IWeakReference** ppOutWeakRef);
-
-protected:
-    virtual void OnRelease() override;
-
-private:
-    WeakRef* m_pWeakRef;
-
-    void ReleaseWeakRef();
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -490,7 +281,7 @@ protected:
     //=========================================================================
     // protected variables.
     //=========================================================================
-    T*  m_pPtr;     //!< 参照カウントインタフェースを実装するオブジェクトのポインタです.
+    T*  m_pPtr = nullptr;     //!< 参照カウントインタフェースを実装するオブジェクトのポインタです.
 
     //=========================================================================
     // protected methods.
@@ -531,240 +322,66 @@ private:
 };
 
 template<typename T> inline
-bool operator == ( const RefPtr<T>& value, const T* ptr )
-{ return ( value.GetPtr() == ptr ); }
+bool operator == (const RefPtr<T>& value, const T* ptr)
+{ return value.GetPtr() == ptr; }
 
 template<typename T> inline
-bool operator == ( const T* ptr, const RefPtr<T>& value )
-{ return ( value.GetPtr() == ptr ); }
+bool operator == (const T* ptr, const RefPtr<T>& value)
+{ return value.GetPtr() == ptr; }
 
 template<typename T> inline
-bool operator == ( const RefPtr<T>& a, const RefPtr<T>& b )
+bool operator == (const RefPtr<T>& a, const RefPtr<T>& b)
 { return a.GetPtr() == b.GetPtr(); }
 
 template<typename T, typename U> inline
-bool operator == ( const RefPtr<T>& a, const RefPtr<U>& b )
+bool operator == (const RefPtr<T>& a, const RefPtr<U>& b)
 { return a.GetPtr() == b.GetPtr(); }
 
 template<typename T> inline
-bool operator != ( const RefPtr<T>& value, const T* ptr )
-{ return ( value.GetPtr() != ptr ); }
+bool operator != (const RefPtr<T>& value, const T* ptr)
+{ return value.GetPtr() != ptr; }
 
 template<typename T> inline
-bool operator != ( const T* ptr, const RefPtr<T>& value )
-{ return ( value.GetPtr() != ptr ); }
+bool operator != (const T* ptr, const RefPtr<T>& value)
+{ return value.GetPtr() != ptr; }
 
 template<typename T> inline
-bool operator != ( const RefPtr<T>& a, const RefPtr<T>& b )
+bool operator != (const RefPtr<T>& a, const RefPtr<T>& b)
 { return a.GetPtr() != b.GetPtr(); }
 
 template<typename T, typename U> inline
-bool operator != ( const RefPtr<T>& a, const RefPtr<U>& b )
+bool operator != (const RefPtr<T>& a, const RefPtr<U>& b)
 { return a.GetPtr() != b.GetPtr(); }
 
 template<typename T> inline
-bool operator == ( const RefPtr<T>& value, std::nullptr_t )
-{ return ( value.GetPtr() == nullptr ); }
+bool operator == (const RefPtr<T>& value, std::nullptr_t)
+{ return value.GetPtr() == nullptr; }
 
 template<typename T> inline
-bool operator == ( std::nullptr_t, const RefPtr<T>& value )
-{ return ( value.GetPtr() == nullptr ); }
+bool operator == (std::nullptr_t, const RefPtr<T>& value)
+{ return value.GetPtr() == nullptr; }
 
 template<typename T> inline
-bool operator != ( const RefPtr<T>& value, std::nullptr_t )
-{ return ( value.GetPtr() != nullptr ); }
+bool operator != (const RefPtr<T>& value, std::nullptr_t)
+{ return value.GetPtr() != nullptr; }
 
 template<typename T> inline
-bool operator != ( std::nullptr_t, const RefPtr<T>& value )
-{ return ( value.GetPtr() != nullptr ); }
-
-
-///////////////////////////////////////////////////////////////////////////////
-// WeakRefPtr class
-///////////////////////////////////////////////////////////////////////////////
-template<typename T>
-class WeakRefPtr
-{
-    //=========================================================================
-    // list of friend classes and methods.
-    //=========================================================================
-
-public:
-    //=========================================================================
-    // public variables.
-    //=========================================================================
-    /* NOTHING */
-
-    //=========================================================================
-    // public methods.
-    //=========================================================================
-
-    //-------------------------------------------------------------------------
-    //! @brief      コンストラクタです.
-    //-------------------------------------------------------------------------
-    WeakRefPtr() noexcept
-    : m_pWeak(nullptr)
-    { /* DO_NOTHING */ }
-
-    //-------------------------------------------------------------------------
-    //! @brief      引数付きコンストラクタです.
-    //-------------------------------------------------------------------------
-    explicit WeakRefPtr(IWeakReference* pWeak) noexcept
-    : m_pWeak(pWeak)
-    { AddRef(); }
-
-    //-------------------------------------------------------------------------
-    //! @brief      コピーコンストラクタです.
-    //-------------------------------------------------------------------------
-    WeakRefPtr(const WeakRefPtr& value) noexcept
-    : m_pWeak(value.m_pWeak)
-    { AddRef(); }
-
-    //-------------------------------------------------------------------------
-    //! @brief      ムーブコンストラクタです.
-    //-------------------------------------------------------------------------
-    WeakRefPtr(WeakRefPtr&& value) noexcept
-    : m_pWeak(nullptr)
-    { Swap(value); }
-
-    //-------------------------------------------------------------------------
-    //! @brief      デストラクタです.
-    //-------------------------------------------------------------------------
-    ~WeakRefPtr() noexcept
-    { Release(); }
-
-    //-------------------------------------------------------------------------
-    //! @brief      代入演算子です.
-    //-------------------------------------------------------------------------
-    WeakRefPtr& operator = (const WeakRefPtr& value) noexcept
-    {
-        if (this != &value)
-        {
-            WeakRefPtr tmp(value);
-            Swap(tmp);
-        }
-        return *this;
-    }
-
-    //-------------------------------------------------------------------------
-    //! @brief      ムーブ代入演算子です.
-    //-------------------------------------------------------------------------
-    WeakRefPtr& operator = (WeakRefPtr&& value) noexcept
-    {
-        if (this != &value)
-        {
-            Release();
-            Swap(value);
-        }
-        return *this;
-    }
-
-    //-------------------------------------------------------------------------
-    //! @brief      監視対象の RefPtr オブジェクトを取得します.
-    //-------------------------------------------------------------------------
-    bool Resolve(RefPtr<T>& out) const noexcept
-    {
-        if (!m_pWeak)
-            return false;
-
-        IReference* pRef = nullptr;
-        if (!m_pWeak->Resolve(&pRef))
-            return false;
-
-        out = RefPtr<T>(static_cast<T*>(pRef));
-        return true;
-    }
-
-    //-------------------------------------------------------------------------
-    //! @brief      値を入れ替えます.
-    //-------------------------------------------------------------------------
-    void Swap(WeakRefPtr& other) noexcept
-    {
-        IWeakReference* tmp = m_pWeak;
-        m_pWeak = other.m_pWeak;
-        other.m_pWeak = tmp;
-    }
-
-    //-------------------------------------------------------------------------
-    //! @brief      値を入れ替えます.
-    //-------------------------------------------------------------------------
-    void Swap(WeakRefPtr&& other) noexcept
-    {
-        IWeakReference* tmp = m_pWeak;
-        m_pWeak = other.m_pWeak;
-        other.m_pWeak = tmp;
-    }
-
-    //-------------------------------------------------------------------------
-    //! @brief      参照カウントを上げます.
-    //-------------------------------------------------------------------------
-    void AddRef()
-    {
-        if (m_pWeak)
-            m_pWeak->AddRef();
-    }
-
-    //-------------------------------------------------------------------------
-    //! @brief      解放処理を行います.
-    //-------------------------------------------------------------------------
-    void Release()
-    {
-        if (m_pWeak)
-        {
-            IWeakReference* tmp = m_pWeak;
-            m_pWeak = nullptr;
-            tmp->Release();
-        }
-    }
-
-    //-------------------------------------------------------------------------
-    //! @brief      リセット処理を行います.
-    //-------------------------------------------------------------------------
-    void Reset()
-    { Release(); }
-
-    //-------------------------------------------------------------------------
-    //! @brief      監視している RefPtr オブジェクトを取得します.
-    //-------------------------------------------------------------------------
-    RefPtr<T> Lock() const noexcept
-    {
-        if (!m_pWeak)
-            return nullptr;
-
-        IReference* pStrong = nullptr;
-        if (m_pWeak->Resolve(&pStrong))
-            return RefPtr<T>(static_cast<T*>(pStrong));
-
-        return nullptr;
-    }
-
-private:
-    //=========================================================================
-    // private variables.
-    //=========================================================================
-    IWeakReference* m_pWeak;    //!< 弱参照カウンタ.
-
-    //=========================================================================
-    // private methods.
-    //=========================================================================
-    /* NOTHING */
-};
+bool operator != (std::nullptr_t, const RefPtr<T>& value)
+{ return value.GetPtr() != nullptr; }
 
 //-----------------------------------------------------------------------------
-//! @brief      弱参照ポインタを取得します.
+//! @brief      nullptr を考慮して解放処理を行います.
+//! 
+//! @param[in,out]      ptr     解放処理を行う参照カウンタオブジェクト.
 //-----------------------------------------------------------------------------
-template<typename T>
-inline WeakRefPtr<T> GetWeakPtr(T* ptr)
+template<typename T> inline
+void SafeRelease(T*& ptr)
 {
-    WeakRefPtr<T> result;
-    if (ptr == nullptr)
-        return result;
-
-    IWeakReference* weakRef = nullptr;
-    ptr->GetWeakReference(&weakRef);
-    result = WeakRefPtr<T>(weakRef);
-    weakRef->AddRef();  // resultがAddRef()しているので解放する.
-    return result;
+    if (ptr != nullptr)
+    {
+        ptr->Release();
+        ptr = nullptr;
+    }
 }
 
 } // namespace asdx

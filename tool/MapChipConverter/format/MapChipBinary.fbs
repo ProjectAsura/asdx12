@@ -1,13 +1,21 @@
 ﻿namespace asdx.res;
 
-table MapChip
+struct MapChipSubResource
 {
     Width       : uint;
     Height      : uint;
-    Format      : uint;
-    RowPitch    : uint;
-    SlicePitch  : uint;
-    Pixels      : [ubyte];
+    RowPitch    : ulong;
+    SlicePitch  : ulong;
+    PixelOffset : ulong;
+}
+
+table MapChip
+{
+    Width           : uint;
+    Height          : uint;
+    Format          : uint;
+    SubResources    : [MapChipSubResource];
+    Pixels          : [ubyte];
 }
 
 table Layer

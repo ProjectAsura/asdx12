@@ -214,18 +214,22 @@ bool TextureConverter::Convert(const DirectX::ScratchImage& scratchImage, std::v
         flatbuffers::FlatBufferBuilder builder(1024);
 
         // サブリソースを準備.
-        std::vector<asdx::res::SubresourceInfo> subresources;
+        std::vector<asdx::res::SubResource> subresources;
         subresources.resize(scratchImage.GetImageCount());
 
         // サブリソース構築.
         const auto* images = scratchImage.GetImages();
+        uint64_t pixelOffset = 0;
         for(size_t i=0; i<scratchImage.GetImageCount(); ++i)
         {
-            subresources[i] = asdx::res::SubresourceInfo(
+            subresources[i] = asdx::res::SubResource(
                 uint32_t(images[i].width),
                 uint32_t(images[i].height),
-                uint32_t(images[i].rowPitch),
-                uint32_t(images[i].slicePitch));
+                images[i].rowPitch,
+                images[i].slicePitch,
+                pixelOffset);
+
+            pixelOffset += images[i].slicePitch;
         }
 
         // テクスチャバイナリを作成.
@@ -238,9 +242,9 @@ bool TextureConverter::Convert(const DirectX::ScratchImage& scratchImage, std::v
             GetDepthOrArraySize(texMetaData),
             uint16_t(texMetaData.mipLevels),
             uint32_t(texMetaData.format),
-            builder.CreateVectorOfStructs<asdx::res::SubresourceInfo>(subresources),
+            builder.CreateVectorOfStructs<asdx::res::SubResource>(subresources),
             builder.CreateVector<uint8_t>(scratchImage.GetPixels(), scratchImage.GetPixelsSize()));
-        
+
         // ビルド終了.
         builder.Finish(resource);
 
@@ -270,9 +274,9 @@ bool TextureConverter::ReverseConvert(const std::vector<uint8_t>& input, DirectX
     auto pixels = const_cast<uint8_t*>(bin->Texels()->data());
     uint64_t offset = 0;
 
-    for(auto i=0u; i<bin->Subresources()->size(); ++i)
+    for(auto i=0u; i<bin->SubResources()->size(); ++i)
     {
-        auto subres = bin->Subresources()->Get(i);
+        auto subres = bin->SubResources()->Get(i);
         images[i].width         = subres->Width();
         images[i].height        = subres->Height();
         images[i].format        = DXGI_FORMAT(bin->Format());

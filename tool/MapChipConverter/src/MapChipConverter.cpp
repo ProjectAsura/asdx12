@@ -144,13 +144,21 @@ bool MapChipConverter::Convert(const Desc& desc)
 
                 auto images = scratchImage.GetImages();
 
+                std::vector<asdx::res::MapChipSubResource> subResources;
+                subResources.push_back(asdx::res::MapChipSubResource(
+                    uint32_t(images[0].width),
+                    uint32_t(images[0].height),
+                    images[0].rowPitch,
+                    images[0].slicePitch,
+                    0
+                ));
+
                 mapChip = asdx::res::CreateMapChipDirect(
                     builder,
                     imageWidth,
                     imageHeight,
                     uint32_t(metaData.format),
-                    uint32_t(images[0].rowPitch),
-                    uint32_t(images[0].slicePitch),
+                    &subResources,
                     &pixels);
 
                 scratchImage.Release();

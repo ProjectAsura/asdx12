@@ -10,15 +10,10 @@
 //-----------------------------------------------------------------------------
 #include <cstdint>
 #include <vector>
+#include <fnd/asdxArrayView.h>
 
 
 namespace asdx {
-
-//-----------------------------------------------------------------------------
-// Constant Values.
-//-----------------------------------------------------------------------------
-static const uint32_t kMaxMipLevels = 15;       //!< 最大ミップレベル数(16Kまで).
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // TEXTURE_DIMENSION enum
@@ -41,7 +36,7 @@ struct ResSubResource
     uint32_t        Height      = 0;            //!< 縦幅.
     uint64_t        RowPitch    = 0;            //!< 1行あたりのデータサイズ.
     uint64_t        SlicePitch  = 0;            //!< 1スライスあたりのデータサイズ.
-    const uint8_t*  pPixels     = nullptr;      //!< ピクセルデータ.
+    uint64_t        PixelOffset = 0;            //!< ピクセルオフセット.
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -49,15 +44,16 @@ struct ResSubResource
 ///////////////////////////////////////////////////////////////////////////////
 struct ResTexture
 {
-    TEXTURE_DIMENSION   Dimension;                      //!< 次元です.
-    uint32_t            Width;                          //!< 横幅.
-    uint32_t            Height;                         //!< 縦幅
-    uint16_t            DepthOrArraySize;               //!< 奥行 または 配列数.
-    uint32_t            Format;                         //!< フォーマット.
-    uint16_t            MipLevels;                      //!< ミップレベル数.
-    uint32_t            SubResourceCount;               //!< サブリソース数.
-    ResSubResource      SubResources[kMaxMipLevels];    //!< サブリソース.
+    TEXTURE_DIMENSION           Dimension;          //!< 次元です.
+    uint32_t                    Width;              //!< 横幅.
+    uint32_t                    Height;             //!< 縦幅
+    uint16_t                    DepthOrArraySize;   //!< 奥行 または 配列数.
+    uint32_t                    Format;             //!< フォーマット.
+    uint16_t                    MipLevels;          //!< ミップレベル数.
+    ArrayView<ResSubResource>   SubResources;       //!< サブリソース.
+    ArrayView<uint8_t>          Pixels;             //!< ピクセルデータ.
 };
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // TextureBinary structure

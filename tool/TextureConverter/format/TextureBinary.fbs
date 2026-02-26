@@ -1,11 +1,12 @@
 ﻿namespace asdx.res;
 
-struct SubresourceInfo
+struct SubResource
 {
-    Width      : uint;
-    Height     : uint;
-    RowPitch   : ulong;
-    SlicePitch : ulong;
+    Width       : uint;
+    Height      : uint;
+    RowPitch    : ulong;
+    SlicePitch  : ulong;
+    PixelOffset : ulong;
 }
 
 table TextureBinary
@@ -17,7 +18,7 @@ table TextureBinary
     DepthOrArraySize : ushort;
     MipLevels        : ushort;
     Format           : uint;
-    Subresources     : [SubresourceInfo];
+    SubResources     : [SubResource];
     Texels           : [ubyte];
 }
 

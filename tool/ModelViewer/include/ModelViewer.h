@@ -128,6 +128,12 @@ private:
     asdx::SkyBoxPS                      m_SkyBoxPS;
     asdx::SkySpherePS                   m_SkySpherePS;
     asdx::Texture*                      m_EnvMap        = nullptr;
+    asdx::Texture*                      m_DFG           = nullptr;
+    asdx::Texture*                      m_DiffuseLD     = nullptr;
+    asdx::Texture*                      m_SpecularLD    = nullptr;
+    std::string                         m_PathEnvMap;
+    std::string                         m_PathDiffuseLD;
+    std::string                         m_PathSpecularLD;
 
     //=========================================================================
     // private methods.
@@ -298,4 +304,8 @@ private:
     //-------------------------------------------------------------------------
     void DrawLisence();
 
+    //-------------------------------------------------------------------------
+    //! @brief      テクスチャを生成します.
+    //-------------------------------------------------------------------------
+    void CreateTexture(const char* path, asdx::Texture** pTexture);
 };

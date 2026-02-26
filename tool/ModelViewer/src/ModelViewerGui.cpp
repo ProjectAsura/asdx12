@@ -712,56 +712,61 @@ void ModelViewer::DrawDebugTab()
 
     ImGui::Separator();
 
-    // Background CubeMap/SphereMap.
+    const char* filter =
+        "HDRIテクスチャ\0*.hdr;*.dds;*.txb;*jxr;*.hdp\0"
+        "Project Asura Texture Binary (*.txb)\0*.txb\0"
+        "Direct Draw Surface (*.dds)\0*.dds\0"
+        "Radiance HDR (*.hdr)\0*.hdr\0"
+        "HD Photo (*.hdp)\0*.hdp\0"
+        "JPEG XR (*.jxr)\0*.jxr\0"
+        "Window Media Photo (*.wdp)\0*.wpd\0";
+
+    ImGui::BeginTable("##Maps", 2);
+    ImGui::TableSetupColumn("##MapRow0", ImGuiTableColumnFlags_WidthFixed);
+
+    ImGui::TableNextRow();
+    ImGui::TableSetColumnIndex(0);
     if (ImGui::Button(asdx::ToChar(u8"環境マップ")))
     {
-        const char* filter =
-            "HDRIテクスチャ\0*.hdr;*.dds;*.txb;*jxr;*.hdp\0"
-            "Project Asura Texture Binary (*.txb)\0*.txb\0"
-            "Direct Draw Surface (*.dds)\0*.dds\0"
-            "Radiance HDR (*.hdr)\0*.hdr\0"
-            "HD Photo (*.hdp)\0*.hdp\0"
-            "JPEG XR (*.jxr)\0*.jxr\0"
-            "Window Media Photo (*.wdp)\0*.wpd\0";
-
         asdx::fs::path path;
         if (asdx::OpenFileDlg(filter, path))
         {
-            std::vector<uint8_t> textureBinary;
-            if (TextureConverter::Convert(path.string().c_str(), textureBinary))
-            {
-                asdx::TextureBinary bin;
-                bin.Load(std::move(textureBinary));
-
-                asdx::ResTexture res = bin.GetResource();
-                if (!asdx::Texture::Create(res, &m_EnvMap))
-                {
-                    ELOG("Error : asdx::Texture::Create() Failed. path = %s", path.string().c_str());
-                }
-            }
+            CreateTexture(path.string().c_str(), &m_EnvMap);
+            m_PathEnvMap = path.filename().string();
         }
-
     }
-    ImGui::SameLine();
-    ImGui::Text(asdx::ToChar(u8"Path : %s"), "NONE");
+    ImGui::TableSetColumnIndex(1);
+    ImGui::Text(asdx::ToChar(u8"Path : %s"), m_PathEnvMap.empty() ? "NONE" : m_PathEnvMap.c_str());
 
-    if (m_EnvMap != nullptr)
+    ImGui::TableNextRow();
+    ImGui::TableSetColumnIndex(0);
+    if (ImGui::Button(asdx::ToChar(u8"DiffuseLD")))
     {
-        auto desc = m_EnvMap->GetDesc();
-
-        ImGui::BeginTable("EnvMap", 2);
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::Image(m_EnvMap->GetHandleGPU().ptr, ImVec2(200, 100));
-
-        ImGui::TableSetColumnIndex(1);
-        ImGui::Text("%s", asdx::ToShortString(desc.Dimension));
-        ImGui::Text("%u x %u", desc.Width, desc.Height);
-        ImGui::Text("%u Mips", desc.MipLevels);
-        ImGui::Text("%s", asdx::ToShortString(desc.Format));
-
-        ImGui::EndTable();
+        asdx::fs::path path;
+        if (asdx::OpenFileDlg(filter, path))
+        {
+            CreateTexture(path.string().c_str(), &m_DiffuseLD);
+            m_PathDiffuseLD = path.filename().string();
+        }
     }
+    ImGui::TableSetColumnIndex(1);
+    ImGui::Text(asdx::ToChar(u8"Path : %s"), m_PathDiffuseLD.empty() ? "NONE" : m_PathDiffuseLD.c_str());
+
+    ImGui::TableNextRow();
+    ImGui::TableSetColumnIndex(0);
+    if (ImGui::Button(asdx::ToChar(u8"SpecularLD")))
+    {
+        asdx::fs::path path;
+        if (asdx::OpenFileDlg(filter, path))
+        {
+            CreateTexture(path.string().c_str(), &m_SpecularLD);
+            m_PathSpecularLD = path.filename().string();
+        }
+    }
+    ImGui::TableSetColumnIndex(1);
+    ImGui::Text(asdx::ToChar(u8"Path : %s"), m_PathSpecularLD.empty() ? "NONE" : m_PathSpecularLD.c_str());
+
+    ImGui::EndTable();
 
     ImGui::Separator();
 

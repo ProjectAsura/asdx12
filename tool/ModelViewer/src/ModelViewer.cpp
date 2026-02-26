@@ -16,8 +16,10 @@
 #include <fnd/asdxFileIO.h>
 #include <edit/asdxGuiMgr.h>
 #include <gfx/asdxPresetState.h>
+#include <res/asdxResTexture.h>
 #include "ModelConverter.h"
 #include "MotionConverter.h"
+#include "TextureConverter.h"
 #include <assimp/Exporter.hpp>
 
 
@@ -327,6 +329,57 @@ bool ModelViewer::OnInit()
         return false;
     }
 
+    // DFGテクスチャのロード.
+    {
+        asdx::fs::path path;
+        if (!asdx::SearchFilePath("../../../res/textures/env_brdf.tga", path))
+        {
+            ELOG("Error : File Not Found.");
+            return false;
+        }
+
+        CreateTexture(path.string().c_str(), &m_DFG);
+    }
+
+    // EnvMapのロード.
+    {
+        asdx::fs::path path;
+        if (!asdx::SearchFilePath("../res/textures/treasure_island.env.dds", path))
+        {
+            ELOG("Error : File Not Found.");
+            return false;
+        }
+
+        m_PathEnvMap = path.filename().string();
+        CreateTexture(path.string().c_str(),&m_EnvMap);
+    }
+
+    // DiffuseLDテクスチャのロード.
+    {
+        asdx::fs::path path;
+        if (!asdx::SearchFilePath("../res/textures/treasure_island.d.dds", path))
+        {
+            ELOG("Error : File Not Found.");
+            return false;
+        }
+
+        m_PathDiffuseLD = path.filename().string();
+        CreateTexture(path.string().c_str(), &m_DiffuseLD);
+    }
+
+    // SpecularLDテクスチャのロード.
+    {
+        asdx::fs::path path;
+        if (!asdx::SearchFilePath("../res/textures/treasure_island.s.dds", path))
+        {
+            ELOG("Error : File Not Found.");
+            return false;
+        }
+
+        m_PathSpecularLD = path.filename().string();
+        CreateTexture(path.string().c_str(), &m_SpecularLD);
+    }
+
     // コマンドの記録を終了.
     pCmd->Close();
 
@@ -392,11 +445,10 @@ void ModelViewer::OnTerm()
     m_SkySpherePS.Term();
     m_SkyContext .Term();
 
-    if (m_EnvMap != nullptr)
-    {
-        m_EnvMap->Release();
-        m_EnvMap = nullptr;
-    }
+    asdx::SafeRelease(m_EnvMap);
+    asdx::SafeRelease(m_DiffuseLD);
+    asdx::SafeRelease(m_SpecularLD);
+    asdx::SafeRelease(m_DFG);
 
     // GUIマネージャの終了処理.
     asdx::GuiMgr::Instance().Term();
@@ -502,14 +554,7 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
     auto pCmd = m_GfxCmdList.GetD3D12CommandList();
 
     // 書き込み状態に遷移.
-    {
-        D3D12_RESOURCE_BARRIER barrier = {};
-        barrier.Type                    = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-        barrier.Transition.pResource    = m_ColorTarget[idx].GetResource();
-        barrier.Transition.StateBefore  = D3D12_RESOURCE_STATE_PRESENT;
-        barrier.Transition.StateAfter   = D3D12_RESOURCE_STATE_RENDER_TARGET;
-        pCmd->ResourceBarrier(1, &barrier);
-    }
+    m_ColorTarget[idx].ChangeState(pCmd, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
     // レンダーターゲット設定.
     auto handleRTV = m_ColorTarget[idx].GetCpuHandleRTV();
@@ -579,11 +624,11 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
             auto IBV = mesh->GetIndices().GetIBV();
             auto countVBV = (isSkeletal) ? kSkeletalMeshElementCount : kStaticMeshElementCount;
 
-            pCmd->SetGraphicsRootConstantBufferView(ROOT_PARAM_B2, material->GetBuffer().GetGpuAddress());
-            pCmd->SetGraphicsRootDescriptorTable(ROOT_PARAM_T1, material->GetBaseColorMap().GetHandleGPU());
-            pCmd->SetGraphicsRootDescriptorTable(ROOT_PARAM_T2, material->GetNormalMap().GetHandleGPU());
-            pCmd->SetGraphicsRootDescriptorTable(ROOT_PARAM_T3, material->GetOrmMap().GetHandleGPU());
-            pCmd->SetGraphicsRootDescriptorTable(ROOT_PARAM_T4, material->GetEmissiveMap().GetHandleGPU());
+            pCmd->SetGraphicsRootConstantBufferView(ROOT_PARAM_B2, material->GetBuffer      ().GetGpuAddress());
+            pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T1, material->GetBaseColorMap().GetHandleGPU());
+            pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T2, material->GetNormalMap   ().GetHandleGPU());
+            pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T3, material->GetOrmMap      ().GetHandleGPU());
+            pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T4, material->GetEmissiveMap ().GetHandleGPU());
 
             pCmd->IASetVertexBuffers(0, countVBV, VBVs);
             pCmd->IASetIndexBuffer(&IBV);
@@ -623,14 +668,7 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
     asdx::GuiMgr::Instance().Draw(pCmd);
 
     // 表示状態に遷移.
-    {
-        D3D12_RESOURCE_BARRIER barrier = {};
-        barrier.Type                    = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-        barrier.Transition.pResource    = m_ColorTarget[idx].GetResource();
-        barrier.Transition.StateBefore  = D3D12_RESOURCE_STATE_RENDER_TARGET;
-        barrier.Transition.StateAfter   = D3D12_RESOURCE_STATE_PRESENT;
-        pCmd->ResourceBarrier(1, &barrier);
-    }
+    m_ColorTarget[idx].ChangeState(pCmd, D3D12_RESOURCE_STATE_PRESENT);
 
     // コマンド記録終了.
     pCmd->Close();
@@ -1260,4 +1298,46 @@ void ModelViewer::DrawSky(ID3D12GraphicsCommandList* pCmd)
         m_SkySpherePS.Draw(pCmd, m_SkyContext, m_EnvMap->GetHandleGPU());
     else
         m_SkyBoxPS.Draw(pCmd, m_SkyContext, m_EnvMap->GetHandleGPU());
+}
+
+//-----------------------------------------------------------------------------
+//      テクスチャを生成します.
+//-----------------------------------------------------------------------------
+void ModelViewer::CreateTexture(const char* path, asdx::Texture** ppTexture)
+{
+    if (path == nullptr || ppTexture == nullptr)
+    {
+        ELOG("Error : Invalid Argument.");
+        return;
+    }
+
+    std::vector<uint8_t> binary;
+    if (!TextureConverter::Convert(path, binary))
+    {
+        ELOG("Error : TextureConvert::Convert() Failed. path = %s", path);
+        return;
+    }
+
+    asdx::TextureBinary texBin;
+    texBin.Load(std::move(binary));
+
+    asdx::ResTexture res = texBin.GetResource();
+    asdx::Texture* pTempTexture = nullptr;
+    if (!asdx::Texture::Create(res, &pTempTexture))
+    {
+        ELOG("Error : asdx::Texture::Create() Failed. path = %s", path);
+    }
+    else
+    {
+        // 既に作成されている奴がいたら解放.
+        if ((*ppTexture) != nullptr)
+        {
+            (*ppTexture)->Release();
+            (*ppTexture) = nullptr;
+        }
+
+        // 差し替え.
+        (*ppTexture) = pTempTexture;
+        pTempTexture = nullptr;
+    }
 }

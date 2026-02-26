@@ -279,8 +279,8 @@ bool Texture::Init(const ResTexture& resource)
 
     auto dimension  = D3D12_RESOURCE_DIMENSION_UNKNOWN;
     auto isCube     = false;
-    auto depth      = 1;
     auto format     = DXGI_FORMAT(resource.Format);
+    auto depth      = 1u;
 
 #if ASDX_IS_SCARLETT
     auto mostDetailedMip = resourc.MipMapCount - 1;
@@ -381,16 +381,16 @@ bool Texture::Init(const ResTexture& resource)
     case TEXTURE_DIMENSION_CUBE:
         {
             dimension   = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-            depth       = resource.DepthOrArraySize;
+            depth       = resource.DepthOrArraySize / 6;
 
-            if (resource.DepthOrArraySize > 1)
+            if (depth > 1)
             {
                 viewDesc.ViewDimension                           = D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
                 viewDesc.Format                                  = format;
                 viewDesc.TextureCubeArray.First2DArrayFace       = 0;
                 viewDesc.TextureCubeArray.MipLevels              = resource.MipLevels;
                 viewDesc.TextureCubeArray.MostDetailedMip        = 0;
-                viewDesc.TextureCubeArray.NumCubes               = resource.DepthOrArraySize;
+                viewDesc.TextureCubeArray.NumCubes               = depth;
                 viewDesc.TextureCubeArray.ResourceMinLODClamp    = 0.0f;
             }
             else
@@ -469,11 +469,11 @@ bool Texture::Init(const ResTexture& resource)
 
     // íºê⁄èëÇ´çûÇﬁ.
     {
-        auto count = resource.SubResourceCount;
+        auto count = resource.SubResources.size();
         for(auto i=0u; i<count; ++i)
         {
             const auto& inRes = resource.SubResources[i];
-            auto srcPtr        = inRes.pPixels;
+            auto srcPtr        = resource.Pixels.data() + inRes.PixelOffset;
             auto srcRowPitch   = inRes.RowPitch;
             auto srcDepthPitch = inRes.SlicePitch;
 
@@ -483,7 +483,7 @@ bool Texture::Init(const ResTexture& resource)
             dstBox.top      = 0;
             dstBox.bottom   = inRes.Height;
             dstBox.front    = 0;
-            dstBox.back     = resource.DepthOrArraySize;
+            dstBox.back     = depth;
 
             m_Resource->WriteToSubresource(i, &dstBox, srcPtr, UINT(srcRowPitch), UINT(srcDepthPitch));
         }

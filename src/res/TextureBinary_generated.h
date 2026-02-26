@@ -16,30 +16,33 @@ static_assert(FLATBUFFERS_VERSION_MAJOR == 25 &&
 namespace asdx {
 namespace res {
 
-struct SubresourceInfo;
+struct SubResource;
 
 struct TextureBinary;
 struct TextureBinaryBuilder;
 
-FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(8) SubresourceInfo FLATBUFFERS_FINAL_CLASS {
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(8) SubResource FLATBUFFERS_FINAL_CLASS {
  private:
   uint32_t Width_;
   uint32_t Height_;
   uint64_t RowPitch_;
   uint64_t SlicePitch_;
+  uint64_t PixelOffset_;
 
  public:
-  SubresourceInfo()
+  SubResource()
       : Width_(0),
         Height_(0),
         RowPitch_(0),
-        SlicePitch_(0) {
+        SlicePitch_(0),
+        PixelOffset_(0) {
   }
-  SubresourceInfo(uint32_t _Width, uint32_t _Height, uint64_t _RowPitch, uint64_t _SlicePitch)
+  SubResource(uint32_t _Width, uint32_t _Height, uint64_t _RowPitch, uint64_t _SlicePitch, uint64_t _PixelOffset)
       : Width_(::flatbuffers::EndianScalar(_Width)),
         Height_(::flatbuffers::EndianScalar(_Height)),
         RowPitch_(::flatbuffers::EndianScalar(_RowPitch)),
-        SlicePitch_(::flatbuffers::EndianScalar(_SlicePitch)) {
+        SlicePitch_(::flatbuffers::EndianScalar(_SlicePitch)),
+        PixelOffset_(::flatbuffers::EndianScalar(_PixelOffset)) {
   }
   uint32_t Width() const {
     return ::flatbuffers::EndianScalar(Width_);
@@ -53,8 +56,11 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(8) SubresourceInfo FLATBUFFERS_FINAL_CLASS {
   uint64_t SlicePitch() const {
     return ::flatbuffers::EndianScalar(SlicePitch_);
   }
+  uint64_t PixelOffset() const {
+    return ::flatbuffers::EndianScalar(PixelOffset_);
+  }
 };
-FLATBUFFERS_STRUCT_END(SubresourceInfo, 24);
+FLATBUFFERS_STRUCT_END(SubResource, 32);
 
 struct TextureBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef TextureBinaryBuilder Builder;
@@ -90,8 +96,8 @@ struct TextureBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   uint32_t Format() const {
     return GetField<uint32_t>(VT_FORMAT, 0);
   }
-  const ::flatbuffers::Vector<const asdx::res::SubresourceInfo *> *Subresources() const {
-    return GetPointer<const ::flatbuffers::Vector<const asdx::res::SubresourceInfo *> *>(VT_SUBRESOURCES);
+  const ::flatbuffers::Vector<const asdx::res::SubResource *> *SubResources() const {
+    return GetPointer<const ::flatbuffers::Vector<const asdx::res::SubResource *> *>(VT_SUBRESOURCES);
   }
   const ::flatbuffers::Vector<uint8_t> *Texels() const {
     return GetPointer<const ::flatbuffers::Vector<uint8_t> *>(VT_TEXELS);
@@ -106,7 +112,7 @@ struct TextureBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
            VerifyField<uint16_t>(verifier, VT_MIPLEVELS, 2) &&
            VerifyField<uint32_t>(verifier, VT_FORMAT, 4) &&
            VerifyOffset(verifier, VT_SUBRESOURCES) &&
-           verifier.VerifyVector(Subresources()) &&
+           verifier.VerifyVector(SubResources()) &&
            VerifyOffset(verifier, VT_TEXELS) &&
            verifier.VerifyVector(Texels()) &&
            verifier.EndTable();
@@ -138,8 +144,8 @@ struct TextureBinaryBuilder {
   void add_Format(uint32_t Format) {
     fbb_.AddElement<uint32_t>(TextureBinary::VT_FORMAT, Format, 0);
   }
-  void add_Subresources(::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::SubresourceInfo *>> Subresources) {
-    fbb_.AddOffset(TextureBinary::VT_SUBRESOURCES, Subresources);
+  void add_SubResources(::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::SubResource *>> SubResources) {
+    fbb_.AddOffset(TextureBinary::VT_SUBRESOURCES, SubResources);
   }
   void add_Texels(::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> Texels) {
     fbb_.AddOffset(TextureBinary::VT_TEXELS, Texels);
@@ -164,11 +170,11 @@ inline ::flatbuffers::Offset<TextureBinary> CreateTextureBinary(
     uint16_t DepthOrArraySize = 0,
     uint16_t MipLevels = 0,
     uint32_t Format = 0,
-    ::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::SubresourceInfo *>> Subresources = 0,
+    ::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::SubResource *>> SubResources = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> Texels = 0) {
   TextureBinaryBuilder builder_(_fbb);
   builder_.add_Texels(Texels);
-  builder_.add_Subresources(Subresources);
+  builder_.add_SubResources(SubResources);
   builder_.add_Format(Format);
   builder_.add_Height(Height);
   builder_.add_Width(Width);
@@ -188,9 +194,9 @@ inline ::flatbuffers::Offset<TextureBinary> CreateTextureBinaryDirect(
     uint16_t DepthOrArraySize = 0,
     uint16_t MipLevels = 0,
     uint32_t Format = 0,
-    const std::vector<asdx::res::SubresourceInfo> *Subresources = nullptr,
+    const std::vector<asdx::res::SubResource> *SubResources = nullptr,
     const std::vector<uint8_t> *Texels = nullptr) {
-  auto Subresources__ = Subresources ? _fbb.CreateVectorOfStructs<asdx::res::SubresourceInfo>(*Subresources) : 0;
+  auto SubResources__ = SubResources ? _fbb.CreateVectorOfStructs<asdx::res::SubResource>(*SubResources) : 0;
   auto Texels__ = Texels ? _fbb.CreateVector<uint8_t>(*Texels) : 0;
   return asdx::res::CreateTextureBinary(
       _fbb,
@@ -201,7 +207,7 @@ inline ::flatbuffers::Offset<TextureBinary> CreateTextureBinaryDirect(
       DepthOrArraySize,
       MipLevels,
       Format,
-      Subresources__,
+      SubResources__,
       Texels__);
 }
 

@@ -79,12 +79,16 @@ bool Fade::Init(ID3D12GraphicsCommandList* pCmd, DXGI_FORMAT rtvFormat)
         res.DepthOrArraySize            = 1;
         res.Format                      = DXGI_FORMAT_R8G8B8A8_UNORM;
         res.MipLevels                   = 1;
-        res.SubResourceCount            = 1;
-        res.SubResources[0].Width       = 16;
-        res.SubResources[0].Height      = 16;
-        res.SubResources[0].RowPitch    = 16 * 4;
-        res.SubResources[0].SlicePitch  = 16 * 16 * 4;
-        res.SubResources[0].pPixels     = pixels.data();
+        res.Pixels                      = ArrayView(pixels.data(), pixels.size());
+
+        ResSubResource subRes = {};
+        subRes.Width       = 16;
+        subRes.Height      = 16;
+        subRes.RowPitch    = 16 * 4;
+        subRes.SlicePitch  = 16 * 16 * 4;
+        subRes.PixelOffset =0;
+
+        res.SubResources = ArrayView(&subRes, 1);
 
         if (!Texture::Create(pCmd, res, &m_WhiteTexture))
         {

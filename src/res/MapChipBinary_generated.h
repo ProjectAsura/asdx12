@@ -16,6 +16,8 @@ static_assert(FLATBUFFERS_VERSION_MAJOR == 25 &&
 namespace asdx {
 namespace res {
 
+struct MapChipSubResource;
+
 struct MapChip;
 struct MapChipBuilder;
 
@@ -29,6 +31,47 @@ struct TileSetBuilder;
 
 struct MapChipBinary;
 struct MapChipBinaryBuilder;
+
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(8) MapChipSubResource FLATBUFFERS_FINAL_CLASS {
+ private:
+  uint32_t Width_;
+  uint32_t Height_;
+  uint64_t RowPitch_;
+  uint64_t SlicePitch_;
+  uint64_t PixelOffset_;
+
+ public:
+  MapChipSubResource()
+      : Width_(0),
+        Height_(0),
+        RowPitch_(0),
+        SlicePitch_(0),
+        PixelOffset_(0) {
+  }
+  MapChipSubResource(uint32_t _Width, uint32_t _Height, uint64_t _RowPitch, uint64_t _SlicePitch, uint64_t _PixelOffset)
+      : Width_(::flatbuffers::EndianScalar(_Width)),
+        Height_(::flatbuffers::EndianScalar(_Height)),
+        RowPitch_(::flatbuffers::EndianScalar(_RowPitch)),
+        SlicePitch_(::flatbuffers::EndianScalar(_SlicePitch)),
+        PixelOffset_(::flatbuffers::EndianScalar(_PixelOffset)) {
+  }
+  uint32_t Width() const {
+    return ::flatbuffers::EndianScalar(Width_);
+  }
+  uint32_t Height() const {
+    return ::flatbuffers::EndianScalar(Height_);
+  }
+  uint64_t RowPitch() const {
+    return ::flatbuffers::EndianScalar(RowPitch_);
+  }
+  uint64_t SlicePitch() const {
+    return ::flatbuffers::EndianScalar(SlicePitch_);
+  }
+  uint64_t PixelOffset() const {
+    return ::flatbuffers::EndianScalar(PixelOffset_);
+  }
+};
+FLATBUFFERS_STRUCT_END(MapChipSubResource, 32);
 
 FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Tile FLATBUFFERS_FINAL_CLASS {
  private:
@@ -76,9 +119,8 @@ struct MapChip FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
     VT_WIDTH = 4,
     VT_HEIGHT = 6,
     VT_FORMAT = 8,
-    VT_ROWPITCH = 10,
-    VT_SLICEPITCH = 12,
-    VT_PIXELS = 14
+    VT_SUBRESOURCES = 10,
+    VT_PIXELS = 12
   };
   uint32_t Width() const {
     return GetField<uint32_t>(VT_WIDTH, 0);
@@ -89,11 +131,8 @@ struct MapChip FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   uint32_t Format() const {
     return GetField<uint32_t>(VT_FORMAT, 0);
   }
-  uint32_t RowPitch() const {
-    return GetField<uint32_t>(VT_ROWPITCH, 0);
-  }
-  uint32_t SlicePitch() const {
-    return GetField<uint32_t>(VT_SLICEPITCH, 0);
+  const ::flatbuffers::Vector<const asdx::res::MapChipSubResource *> *SubResources() const {
+    return GetPointer<const ::flatbuffers::Vector<const asdx::res::MapChipSubResource *> *>(VT_SUBRESOURCES);
   }
   const ::flatbuffers::Vector<uint8_t> *Pixels() const {
     return GetPointer<const ::flatbuffers::Vector<uint8_t> *>(VT_PIXELS);
@@ -103,8 +142,8 @@ struct MapChip FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
            VerifyField<uint32_t>(verifier, VT_WIDTH, 4) &&
            VerifyField<uint32_t>(verifier, VT_HEIGHT, 4) &&
            VerifyField<uint32_t>(verifier, VT_FORMAT, 4) &&
-           VerifyField<uint32_t>(verifier, VT_ROWPITCH, 4) &&
-           VerifyField<uint32_t>(verifier, VT_SLICEPITCH, 4) &&
+           VerifyOffset(verifier, VT_SUBRESOURCES) &&
+           verifier.VerifyVector(SubResources()) &&
            VerifyOffset(verifier, VT_PIXELS) &&
            verifier.VerifyVector(Pixels()) &&
            verifier.EndTable();
@@ -124,11 +163,8 @@ struct MapChipBuilder {
   void add_Format(uint32_t Format) {
     fbb_.AddElement<uint32_t>(MapChip::VT_FORMAT, Format, 0);
   }
-  void add_RowPitch(uint32_t RowPitch) {
-    fbb_.AddElement<uint32_t>(MapChip::VT_ROWPITCH, RowPitch, 0);
-  }
-  void add_SlicePitch(uint32_t SlicePitch) {
-    fbb_.AddElement<uint32_t>(MapChip::VT_SLICEPITCH, SlicePitch, 0);
+  void add_SubResources(::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::MapChipSubResource *>> SubResources) {
+    fbb_.AddOffset(MapChip::VT_SUBRESOURCES, SubResources);
   }
   void add_Pixels(::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> Pixels) {
     fbb_.AddOffset(MapChip::VT_PIXELS, Pixels);
@@ -149,13 +185,11 @@ inline ::flatbuffers::Offset<MapChip> CreateMapChip(
     uint32_t Width = 0,
     uint32_t Height = 0,
     uint32_t Format = 0,
-    uint32_t RowPitch = 0,
-    uint32_t SlicePitch = 0,
+    ::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::MapChipSubResource *>> SubResources = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> Pixels = 0) {
   MapChipBuilder builder_(_fbb);
   builder_.add_Pixels(Pixels);
-  builder_.add_SlicePitch(SlicePitch);
-  builder_.add_RowPitch(RowPitch);
+  builder_.add_SubResources(SubResources);
   builder_.add_Format(Format);
   builder_.add_Height(Height);
   builder_.add_Width(Width);
@@ -167,17 +201,16 @@ inline ::flatbuffers::Offset<MapChip> CreateMapChipDirect(
     uint32_t Width = 0,
     uint32_t Height = 0,
     uint32_t Format = 0,
-    uint32_t RowPitch = 0,
-    uint32_t SlicePitch = 0,
+    const std::vector<asdx::res::MapChipSubResource> *SubResources = nullptr,
     const std::vector<uint8_t> *Pixels = nullptr) {
+  auto SubResources__ = SubResources ? _fbb.CreateVectorOfStructs<asdx::res::MapChipSubResource>(*SubResources) : 0;
   auto Pixels__ = Pixels ? _fbb.CreateVector<uint8_t>(*Pixels) : 0;
   return asdx::res::CreateMapChip(
       _fbb,
       Width,
       Height,
       Format,
-      RowPitch,
-      SlicePitch,
+      SubResources__,
       Pixels__);
 }
 

@@ -12,6 +12,13 @@
 #include "MapChipBinary_generated.h"
 
 
+namespace {
+
+static_assert(sizeof (asdx::ResSubResource) == sizeof (asdx::res::MapChipSubResource));
+static_assert(alignof(asdx::ResSubResource) == alignof(asdx::res::MapChipSubResource));
+
+} // namespace
+
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -128,19 +135,17 @@ ResTexture MapChipBinary::GetTexture(uint32_t tileSetIndex) const
     assert(!m_Blob.empty());
     auto tileSet = res::GetMapChipBinary(m_Blob.data())->TileSets()->Get(tileSetIndex);
 
+    auto image = tileSet->Image();
+
     ResTexture result = {};
-    result.Dimension                    = TEXTURE_DIMENSION_2D;
-    result.Width                        = tileSet->Image()->Width();
-    result.Height                       = tileSet->Image()->Height();
-    result.DepthOrArraySize             = 1;
-    result.Format                       = tileSet->Image()->Format();
-    result.MipLevels                    = 1;
-    result.SubResourceCount             = 1;
-    result.SubResources[0].Width        = tileSet->Image()->Width();
-    result.SubResources[0].Height       = tileSet->Image()->Height();
-    result.SubResources[0].RowPitch     = tileSet->Image()->RowPitch();
-    result.SubResources[0].SlicePitch   = tileSet->Image()->SlicePitch();
-    result.SubResources[0].pPixels      = tileSet->Image()->Pixels()->data();
+    result.Dimension        = TEXTURE_DIMENSION_2D;
+    result.Width            = image->Width();
+    result.Height           = image->Height();
+    result.DepthOrArraySize = 1;
+    result.Format           = image->Format();
+    result.MipLevels        = 1;
+    result.SubResources     = ArrayView(reinterpret_cast<const ResSubResource*>(*image->SubResources()->data()), image->SubResources()->size());
+    result.Pixels           = ArrayView(image->Pixels()->data(), image->Pixels()->size());
 
     return result;
 }

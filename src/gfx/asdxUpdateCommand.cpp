@@ -229,7 +229,7 @@ void UpdateTexture
     auto device = GetD3D12Device();
     auto dstDesc = pDstResource->GetDesc();
 
-    auto count = pResTexture->SubResourceCount;
+    auto count = uint32_t(pResTexture->SubResources.size());
 
     D3D12_RESOURCE_DESC uploadDesc = {
         D3D12_RESOURCE_DIMENSION_BUFFER,
@@ -294,7 +294,7 @@ void UpdateTexture
             const auto& inRes = pResTexture->SubResources[i];
 
             D3D12_SUBRESOURCE_DATA srcData = {};
-            srcData.pData       = inRes.pPixels;
+            srcData.pData       = pResTexture->Pixels.data() + inRes.PixelOffset;
             srcData.RowPitch    = inRes.RowPitch;
             srcData.SlicePitch  = inRes.SlicePitch;
 

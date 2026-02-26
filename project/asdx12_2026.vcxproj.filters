@@ -153,9 +153,6 @@
     <ClCompile Include="..\src\fnd\asdxPath.cpp">
       <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\fnd\asdxRef.cpp">
-      <Filter>ソース ファイル\fnd</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\fnd\asdxStateMachine.cpp">
       <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>

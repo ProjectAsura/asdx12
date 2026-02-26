@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------------
+﻿//----------------------------------------------------------------------------
 // File : asdxTextureManager.cpp
 // Desc : Texture Manager.
 // Copyright(c) Project Asura. All right reserved.
@@ -360,19 +360,22 @@ void TextureManager::CreateDefaultTextures()
             }
         }
 
+        ResSubResource subRes = {};
+        subRes.Width       = 32;
+        subRes.Height      = 32;
+        subRes.RowPitch    = 32 * 4;
+        subRes.SlicePitch  = 32 * 32 * 4;
+        subRes.PixelOffset = 0;
+
         ResTexture res = {};
-        res.Dimension                   = TEXTURE_DIMENSION_2D;
-        res.Width                       = 32;
-        res.Height                      = 32;
-        res.DepthOrArraySize            = 1;
-        res.Format                      = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
-        res.MipLevels                   = 1;
-        res.SubResourceCount            = 1;
-        res.SubResources[0].Width       = 32;
-        res.SubResources[0].Height      = 32;
-        res.SubResources[0].RowPitch    = 32 * 4;
-        res.SubResources[0].SlicePitch  = 32 * 32 * 4;
-        res.SubResources[0].pPixels     = pixels.data();
+        res.Dimension           = TEXTURE_DIMENSION_2D;
+        res.Width               = 32;
+        res.Height              = 32;
+        res.DepthOrArraySize    = 1;
+        res.Format              = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+        res.MipLevels           = 1;
+        res.SubResources        = ArrayView(&subRes, 1);
+        res.Pixels              = ArrayView(pixels.data(), pixels.size());
 
         Texture* pTexture = nullptr;
         if (CreateTexture(res, &pTexture))
@@ -405,19 +408,22 @@ void TextureManager::CreateDefaultTextures()
             }
         }
 
+        ResSubResource subRes = {};
+        subRes.Width        = 32;
+        subRes.Height       = 32;
+        subRes.RowPitch     = 32 * 4;
+        subRes.SlicePitch   = 32 * 32 * 4;
+        subRes.PixelOffset  = 0;
+
         ResTexture res = {};
-        res.Dimension                   = TEXTURE_DIMENSION_2D;
-        res.Width                       = 32;
-        res.Height                      = 32;
-        res.DepthOrArraySize            = 1;
-        res.Format                      = DXGI_FORMAT_R8G8B8A8_UNORM;
-        res.MipLevels                   = 1;
-        res.SubResourceCount            = 1;
-        res.SubResources[0].Width       = 32;
-        res.SubResources[0].Height      = 32;
-        res.SubResources[0].RowPitch    = 32 * 4;
-        res.SubResources[0].SlicePitch  = 32 * 32 * 4;
-        res.SubResources[0].pPixels     = pixels.data();
+        res.Dimension           = TEXTURE_DIMENSION_2D;
+        res.Width               = 32;
+        res.Height              = 32;
+        res.DepthOrArraySize    = 1;
+        res.Format              = DXGI_FORMAT_R8G8B8A8_UNORM;
+        res.MipLevels           = 1;
+        res.SubResources        = ArrayView(&subRes, 1);
+        res.Pixels              = ArrayView(pixels.data(), pixels.size());
 
         Texture* pTexture = nullptr;
         if (CreateTexture(res, &pTexture))
@@ -448,19 +454,22 @@ void TextureManager::CreateDefaultTextures()
             }
         }
 
+        ResSubResource subRes = {};
+        subRes.Width        = 32;
+        subRes.Height       = 32;
+        subRes.RowPitch     = 32 * 4;
+        subRes.SlicePitch   = 32 * 32 * 4;
+        subRes.PixelOffset  = 0;
+
         ResTexture res = {};
-        res.Dimension                   = TEXTURE_DIMENSION_2D;
-        res.Width                       = 32;
-        res.Height                      = 32;
-        res.DepthOrArraySize            = 1;
-        res.Format                      = DXGI_FORMAT_R8G8B8A8_UNORM;
-        res.MipLevels                   = 1;
-        res.SubResourceCount            = 1;
-        res.SubResources[0].Width       = 32;
-        res.SubResources[0].Height      = 32;
-        res.SubResources[0].RowPitch    = 32 * 4;
-        res.SubResources[0].SlicePitch  = 32 * 32 * 4;
-        res.SubResources[0].pPixels     = pixels.data();
+        res.Dimension           = TEXTURE_DIMENSION_2D;
+        res.Width               = 32;
+        res.Height              = 32;
+        res.DepthOrArraySize    = 1;
+        res.Format              = DXGI_FORMAT_R8G8B8A8_UNORM;
+        res.MipLevels           = 1;
+        res.SubResources        = ArrayView(&subRes, 1);
+        res.Pixels              = ArrayView(pixels.data(), pixels.size());
 
         Texture* pTexture = nullptr;
         if (CreateTexture(res, &pTexture))
@@ -491,19 +500,22 @@ void TextureManager::CreateDefaultTextures()
             }
         }
 
+        ResSubResource subRes = {};
+        subRes.Width        = 32;
+        subRes.Height       = 32;
+        subRes.RowPitch     = 32 * 4;
+        subRes.SlicePitch   = 32 * 32 * 4;
+        subRes.PixelOffset  = 0;
+
         ResTexture res = {};
-        res.Dimension                   = TEXTURE_DIMENSION_2D;
-        res.Width                       = 32;
-        res.Height                      = 32;
-        res.DepthOrArraySize            = 1;
-        res.Format                      = DXGI_FORMAT_R8G8B8A8_UNORM;
-        res.MipLevels                   = 1;
-        res.SubResourceCount            = 1;
-        res.SubResources[0].Width       = 32;
-        res.SubResources[0].Height      = 32;
-        res.SubResources[0].RowPitch    = 32 * 4;
-        res.SubResources[0].SlicePitch  = 32 * 32 * 4;
-        res.SubResources[0].pPixels     = pixels.data();
+        res.Dimension           = TEXTURE_DIMENSION_2D;
+        res.Width               = 32;
+        res.Height              = 32;
+        res.DepthOrArraySize    = 1;
+        res.Format              = DXGI_FORMAT_R8G8B8A8_UNORM;
+        res.MipLevels           = 1;
+        res.SubResources        = ArrayView(&subRes, 1);
+        res.Pixels              = ArrayView(pixels.data(), pixels.size());
 
         Texture* pTexture = nullptr;
         if (CreateTexture(res, &pTexture))
@@ -534,19 +546,22 @@ void TextureManager::CreateDefaultTextures()
             }
         }
 
+        ResSubResource subRes = {};
+        subRes.Width        = 32;
+        subRes.Height       = 32;
+        subRes.RowPitch     = 32 * 4;
+        subRes.SlicePitch   = 32 * 32 * 4;
+        subRes.PixelOffset  = 0;
+
         ResTexture res = {};
-        res.Dimension                   = TEXTURE_DIMENSION_2D;
-        res.Width                       = 32;
-        res.Height                      = 32;
-        res.DepthOrArraySize            = 1;
-        res.Format                      = DXGI_FORMAT_R8G8B8A8_UNORM;
-        res.MipLevels                   = 1;
-        res.SubResourceCount            = 1;
-        res.SubResources[0].Width       = 32;
-        res.SubResources[0].Height      = 32;
-        res.SubResources[0].RowPitch    = 32 * 4;
-        res.SubResources[0].SlicePitch  = 32 * 32 * 4;
-        res.SubResources[0].pPixels     = pixels.data();
+        res.Dimension           = TEXTURE_DIMENSION_2D;
+        res.Width               = 32;
+        res.Height              = 32;
+        res.DepthOrArraySize    = 1;
+        res.Format              = DXGI_FORMAT_R8G8B8A8_UNORM;
+        res.MipLevels           = 1;
+        res.SubResources        = ArrayView(&subRes, 1);
+        res.Pixels              = ArrayView(pixels.data(), pixels.size());
 
         Texture* pTexture = nullptr;
         if (CreateTexture(res, &pTexture))
@@ -577,19 +592,22 @@ void TextureManager::CreateDefaultTextures()
             }
         }
 
+        ResSubResource subRes = {};
+        subRes.Width        = 32;
+        subRes.Height       = 32;
+        subRes.RowPitch     = 32 * 4;
+        subRes.SlicePitch   = 32 * 32 * 4;
+        subRes.PixelOffset  = 0;
+
         ResTexture res = {};
-        res.Dimension                   = TEXTURE_DIMENSION_2D;
-        res.Width                       = 32;
-        res.Height                      = 32;
-        res.DepthOrArraySize            = 1;
-        res.Format                      = DXGI_FORMAT_R8G8B8A8_UNORM;
-        res.MipLevels                   = 1;
-        res.SubResourceCount            = 1;
-        res.SubResources[0].Width       = 32;
-        res.SubResources[0].Height      = 32;
-        res.SubResources[0].RowPitch    = 32 * 4;
-        res.SubResources[0].SlicePitch  = 32 * 32 * 4;
-        res.SubResources[0].pPixels     = pixels.data();
+        res.Dimension           = TEXTURE_DIMENSION_2D;
+        res.Width               = 32;
+        res.Height              = 32;
+        res.DepthOrArraySize    = 1;
+        res.Format              = DXGI_FORMAT_R8G8B8A8_UNORM;
+        res.MipLevels           = 1;
+        res.SubResources        = ArrayView(&subRes, 1);
+        res.Pixels              = ArrayView(pixels.data(), pixels.size());
 
         Texture* pTexture = nullptr;
         if (CreateTexture(res, &pTexture))
@@ -620,19 +638,22 @@ void TextureManager::CreateDefaultTextures()
             }
         }
 
+        ResSubResource subRes = {};
+        subRes.Width        = 32;
+        subRes.Height       = 32;
+        subRes.RowPitch     = 32 * 4;
+        subRes.SlicePitch   = 32 * 32 * 4;
+        subRes.PixelOffset  = 0;
+
         ResTexture res = {};
-        res.Dimension                   = TEXTURE_DIMENSION_2D;
-        res.Width                       = 32;
-        res.Height                      = 32;
-        res.DepthOrArraySize            = 1;
-        res.Format                      = DXGI_FORMAT_R8G8B8A8_UNORM;
-        res.MipLevels                   = 1;
-        res.SubResourceCount            = 1;
-        res.SubResources[0].Width       = 32;
-        res.SubResources[0].Height      = 32;
-        res.SubResources[0].RowPitch    = 32 * 4;
-        res.SubResources[0].SlicePitch  = 32 * 32 * 4;
-        res.SubResources[0].pPixels     = pixels.data();
+        res.Dimension           = TEXTURE_DIMENSION_2D;
+        res.Width               = 32;
+        res.Height              = 32;
+        res.DepthOrArraySize    = 1;
+        res.Format              = DXGI_FORMAT_R8G8B8A8_UNORM;
+        res.MipLevels           = 1;
+        res.SubResources        = ArrayView(&subRes, 1);
+        res.Pixels              = ArrayView(pixels.data(), pixels.size());
 
         Texture* pTexture = nullptr;
         if (CreateTexture(res, &pTexture))
@@ -663,19 +684,22 @@ void TextureManager::CreateDefaultTextures()
             }
         }
 
+        ResSubResource subRes = {};
+        subRes.Width        = 32;
+        subRes.Height       = 32;
+        subRes.RowPitch     = 32 * 4;
+        subRes.SlicePitch   = 32 * 32 * 4;
+        subRes.PixelOffset  = 0;
+
         ResTexture res = {};
-        res.Dimension                   = TEXTURE_DIMENSION_2D;
-        res.Width                       = 32;
-        res.Height                      = 32;
-        res.DepthOrArraySize            = 1;
-        res.Format                      = DXGI_FORMAT_R8G8B8A8_UNORM;
-        res.MipLevels                   = 1;
-        res.SubResourceCount            = 1;
-        res.SubResources[0].Width       = 32;
-        res.SubResources[0].Height      = 32;
-        res.SubResources[0].RowPitch    = 32 * 4;
-        res.SubResources[0].SlicePitch  = 32 * 32 * 4;
-        res.SubResources[0].pPixels     = pixels.data();
+        res.Dimension           = TEXTURE_DIMENSION_2D;
+        res.Width               = 32;
+        res.Height              = 32;
+        res.DepthOrArraySize    = 1;
+        res.Format              = DXGI_FORMAT_R8G8B8A8_UNORM;
+        res.MipLevels           = 1;
+        res.SubResources        = ArrayView(&subRes, 1);
+        res.Pixels              = ArrayView(pixels.data(), pixels.size());
 
         Texture* pTexture = nullptr;
         if (CreateTexture(res, &pTexture))
