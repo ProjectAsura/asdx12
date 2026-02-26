@@ -49,9 +49,8 @@ void main(uint3 dispatchId : SV_DispatchThreadID, uint groupIndex : SV_GroupInde
     if (any(pixelId >= Size))
         return;
  
-    // [-1, 1] に変換. y方向はDirectXなので反転させる.
-    float2 pixel = (float2(pixelId) * InvSize);
-    pixel.y = 1.0f - pixel.y;
+    // [-1, 1] に変換.
+    float2 pixel = (float2(pixelId + 0.5f) * InvSize);
     pixel = pixel * 2.0f - 1.0f;
 
     // カメラからスクリーンへのレイを求める.

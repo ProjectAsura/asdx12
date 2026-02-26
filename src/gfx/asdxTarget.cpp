@@ -130,123 +130,174 @@ bool ColorTarget::Init(const TargetDesc* pDesc)
     auto mostDetailedMip = 0u;
 #endif
 
-    D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc = {};
-    D3D12_RENDER_TARGET_VIEW_DESC   rtv_desc = {};
-    rtv_desc.Format = pDesc->Format;
-    srv_desc.Format = pDesc->Format; 
-    srv_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    std::vector<D3D12_RENDER_TARGET_VIEW_DESC> rtv_descs = {};
 
+    if (!!(pDesc->Flags & TARGET_FLAG_CREATE_MIP_RTV) && pDesc->MipLevels > 1)
+        rtv_descs.resize(pDesc->MipLevels);
+    else
+        rtv_descs.resize(1);
 
-    if (pDesc->Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D)
+    for(size_t i=0; i<rtv_descs.size(); ++i)
     {
-        rtv_desc.ViewDimension          = D3D12_RTV_DIMENSION_TEXTURE3D;
-        rtv_desc.Texture3D.FirstWSlice  = 0;
-        rtv_desc.Texture3D.MipSlice     = 0;
-        rtv_desc.Texture3D.WSize        = pDesc->DepthOrArraySize;
+        auto& rtv_desc = rtv_descs[i];
+        rtv_desc.Format = pDesc->Format;
 
-        srv_desc.ViewDimension                  = D3D12_SRV_DIMENSION_TEXTURE3D;
-        srv_desc.Texture3D.MipLevels            = pDesc->MipLevels;
-        srv_desc.Texture3D.MostDetailedMip      = mostDetailedMip;
-        srv_desc.Texture3D.ResourceMinLODClamp  = 0;
-    }
-    else if(pDesc->Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE2D)
-    {
-        if ( pDesc->DepthOrArraySize > 1 )
+        if (pDesc->Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D)
         {
-            if ( pDesc->SampleDesc.Count > 1 )
+            rtv_desc.ViewDimension          = D3D12_RTV_DIMENSION_TEXTURE3D;
+            rtv_desc.Texture3D.FirstWSlice  = 0;
+            rtv_desc.Texture3D.MipSlice     = UINT(i);
+            rtv_desc.Texture3D.WSize        = pDesc->DepthOrArraySize;
+        }
+        else if(pDesc->Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE2D)
+        {
+            if ( pDesc->DepthOrArraySize > 1 )
             {
-                rtv_desc.ViewDimension                    = D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY;
-                rtv_desc.Texture2DMSArray.ArraySize       = pDesc->DepthOrArraySize;
-                rtv_desc.Texture2DMSArray.FirstArraySlice = 0;
-
-                srv_desc.ViewDimension                    = D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY;
-                srv_desc.Texture2DMSArray.ArraySize       = pDesc->DepthOrArraySize;
-                srv_desc.Texture2DMSArray.FirstArraySlice = 0;
+                if ( pDesc->SampleDesc.Count > 1 )
+                {
+                    rtv_desc.ViewDimension                    = D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY;
+                    rtv_desc.Texture2DMSArray.ArraySize       = pDesc->DepthOrArraySize;
+                    rtv_desc.Texture2DMSArray.FirstArraySlice = 0;
+                }
+                else
+                {
+                    rtv_desc.ViewDimension                   = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
+                    rtv_desc.Texture2DArray.ArraySize        = pDesc->DepthOrArraySize;
+                    rtv_desc.Texture2DArray.FirstArraySlice  = 0;
+                    rtv_desc.Texture2DArray.MipSlice         = UINT(i);
+                    rtv_desc.Texture2DArray.PlaneSlice       = 0;
+                }
             }
             else
             {
-                rtv_desc.ViewDimension                   = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
-                rtv_desc.Texture2DArray.ArraySize        = pDesc->DepthOrArraySize;
-                rtv_desc.Texture2DArray.FirstArraySlice  = 0;
-                rtv_desc.Texture2DArray.MipSlice         = 0;
-                rtv_desc.Texture2DArray.PlaneSlice       = 0;
-
-                srv_desc.ViewDimension                      = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
-                srv_desc.Texture2DArray.ArraySize           = pDesc->DepthOrArraySize;
-                srv_desc.Texture2DArray.FirstArraySlice     = 0;
-                srv_desc.Texture2DArray.MipLevels           = 0;
-                srv_desc.Texture2DArray.PlaneSlice          = 0;
-                srv_desc.Texture2DArray.ResourceMinLODClamp = 0.0f;
-                srv_desc.Texture2DArray.MostDetailedMip     = mostDetailedMip;
+                if ( pDesc->SampleDesc.Count > 1 )
+                {
+                    rtv_desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DMS;
+                }
+                else
+                {
+                    rtv_desc.ViewDimension      = D3D12_RTV_DIMENSION_TEXTURE2D;
+                    rtv_desc.Texture2D.MipSlice = UINT(i);
+                }
             }
         }
-        else
+        else if (pDesc->Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE1D)
         {
-            if ( pDesc->SampleDesc.Count > 1 )
+            if (pDesc->DepthOrArraySize > 1)
             {
-                rtv_desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DMS;
-                srv_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DMS;
-            }
-            else
-            {
-                rtv_desc.ViewDimension      = D3D12_RTV_DIMENSION_TEXTURE2D;
-                rtv_desc.Texture2D.MipSlice = 0;
-
-                srv_desc.Texture2D.MipLevels            = pDesc->MipLevels;
-                srv_desc.Texture2D.MostDetailedMip      = mostDetailedMip;
-                srv_desc.Texture2D.PlaneSlice           = 0;
-                srv_desc.Texture2D.ResourceMinLODClamp  = 0.0f;
-                srv_desc.ViewDimension                  = D3D12_SRV_DIMENSION_TEXTURE2D;
+                rtv_desc.ViewDimension                  = D3D12_RTV_DIMENSION_TEXTURE1DARRAY;
+                rtv_desc.Texture1DArray.ArraySize       = pDesc->DepthOrArraySize;
+                rtv_desc.Texture1DArray.FirstArraySlice = 0;
+                rtv_desc.Texture1DArray.MipSlice        = UINT(i);
             }
         }
-    }
-    else if (pDesc->Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE1D)
-    {
-        if (pDesc->DepthOrArraySize > 1)
+        else if (pDesc->Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
         {
-            rtv_desc.ViewDimension                  = D3D12_RTV_DIMENSION_TEXTURE1DARRAY;
-            rtv_desc.Texture1DArray.ArraySize       = pDesc->DepthOrArraySize;
-            rtv_desc.Texture1DArray.FirstArraySlice = 0;
-            rtv_desc.Texture1DArray.MipSlice        = 0;
-
-            srv_desc.ViewDimension                      = D3D12_SRV_DIMENSION_TEXTURE1DARRAY;
-            srv_desc.Texture1DArray.ArraySize           = pDesc->DepthOrArraySize;
-            srv_desc.Texture1DArray.FirstArraySlice     = 0;
-            srv_desc.Texture1DArray.MipLevels           = pDesc->MipLevels;
-            srv_desc.Texture1DArray.MostDetailedMip     = mostDetailedMip;
-            srv_desc.Texture1DArray.ResourceMinLODClamp = 0;
+            // Not Support Buffer.
+            assert(false);
+            ELOGA("Error : Not Support Buffer Type.");
+            return false;
         }
-    }
-    else if (pDesc->Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
-    {
-        // Not Support Buffer.
-        assert(false);
-        ELOGA("Error : Not Support Buffer Type.");
-        return false;
     }
 
     auto pDevice = GetD3D12Device();
     assert(pDevice != nullptr);
 
-    auto handleRTV = GetRtvDescriptorHeap()->Alloc(1);
-    if (!handleRTV.IsValid())
+    m_HolderRTV.resize(rtv_descs.size());
+    for(size_t i=0; i<m_HolderRTV.size(); ++i)
     {
-        ELOG("Error : DescriptorHeap::Alloc() Failed.");
-        return false;
+        auto handleRTV = GetRtvDescriptorHeap()->Alloc(1);
+        if (!handleRTV.IsValid())
+        {
+            ELOG("Error : DescriptorHeap::Alloc() Failed.");
+            return false;
+        }
+
+        m_HolderRTV[i] = DescriptorHolder(DescriptorHolder::HEAP_RTV, handleRTV);
+        pDevice->CreateRenderTargetView(m_pResource.GetPtr(), &rtv_descs[i], GetCpuHandleRTV());
     }
 
-    m_HolderRTV = DescriptorHolder(DescriptorHolder::HEAP_RTV, handleRTV);
-    pDevice->CreateRenderTargetView(m_pResource.GetPtr(), &rtv_desc, GetCpuHandleRTV());
-
-    auto handleSRV = GetResourceDescriptorHeap()->Alloc(1);
-    if (!handleSRV.IsValid())
+    if (!(pDesc->Flags & TARGET_FLAG_NO_SRV))
     {
-        ELOG("Error : DescriptorHeap::Alloc() Failed.");
-        return false;
-    }
+        D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc = {};
 
-    m_HolderSRV = DescriptorHolder(DescriptorHolder::HEAP_RES, handleSRV);
-    pDevice->CreateShaderResourceView(m_pResource.GetPtr(), &srv_desc, GetCpuHandleSRV());
+        srv_desc.Format = pDesc->Format; 
+        srv_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+
+        if (pDesc->Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D)
+        {
+            srv_desc.ViewDimension                  = D3D12_SRV_DIMENSION_TEXTURE3D;
+            srv_desc.Texture3D.MipLevels            = pDesc->MipLevels;
+            srv_desc.Texture3D.MostDetailedMip      = mostDetailedMip;
+            srv_desc.Texture3D.ResourceMinLODClamp  = 0;
+        }
+        else if(pDesc->Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE2D)
+        {
+            if ( pDesc->DepthOrArraySize > 1 )
+            {
+                if ( pDesc->SampleDesc.Count > 1 )
+                {
+                    srv_desc.ViewDimension                    = D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY;
+                    srv_desc.Texture2DMSArray.ArraySize       = pDesc->DepthOrArraySize;
+                    srv_desc.Texture2DMSArray.FirstArraySlice = 0;
+                }
+                else
+                {
+                    srv_desc.ViewDimension                      = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
+                    srv_desc.Texture2DArray.ArraySize           = pDesc->DepthOrArraySize;
+                    srv_desc.Texture2DArray.FirstArraySlice     = 0;
+                    srv_desc.Texture2DArray.MipLevels           = 0;
+                    srv_desc.Texture2DArray.PlaneSlice          = 0;
+                    srv_desc.Texture2DArray.ResourceMinLODClamp = 0.0f;
+                    srv_desc.Texture2DArray.MostDetailedMip     = mostDetailedMip;
+                }
+            }
+            else
+            {
+                if ( pDesc->SampleDesc.Count > 1 )
+                {
+                    srv_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DMS;
+                }
+                else
+                {
+                    srv_desc.Texture2D.MipLevels            = pDesc->MipLevels;
+                    srv_desc.Texture2D.MostDetailedMip      = mostDetailedMip;
+                    srv_desc.Texture2D.PlaneSlice           = 0;
+                    srv_desc.Texture2D.ResourceMinLODClamp  = 0.0f;
+                    srv_desc.ViewDimension                  = D3D12_SRV_DIMENSION_TEXTURE2D;
+                }
+            }
+        }
+        else if (pDesc->Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE1D)
+        {
+            if (pDesc->DepthOrArraySize > 1)
+            {
+                srv_desc.ViewDimension                      = D3D12_SRV_DIMENSION_TEXTURE1DARRAY;
+                srv_desc.Texture1DArray.ArraySize           = pDesc->DepthOrArraySize;
+                srv_desc.Texture1DArray.FirstArraySlice     = 0;
+                srv_desc.Texture1DArray.MipLevels           = pDesc->MipLevels;
+                srv_desc.Texture1DArray.MostDetailedMip     = mostDetailedMip;
+                srv_desc.Texture1DArray.ResourceMinLODClamp = 0;
+            }
+        }
+        else if (pDesc->Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
+        {
+            // Not Support Buffer.
+            assert(false);
+            ELOGA("Error : Not Support Buffer Type.");
+            return false;
+        }
+
+        auto handleSRV = GetResourceDescriptorHeap()->Alloc(1);
+        if (!handleSRV.IsValid())
+        {
+            ELOG("Error : DescriptorHeap::Alloc() Failed.");
+            return false;
+        }
+
+        m_HolderSRV = DescriptorHolder(DescriptorHolder::HEAP_RES, handleSRV);
+        pDevice->CreateShaderResourceView(m_pResource.GetPtr(), &srv_desc, GetCpuHandleSRV());
+    }
 
     memcpy(&m_Desc, pDesc, sizeof(m_Desc));
 
@@ -355,7 +406,8 @@ bool ColorTarget::Init
         ELOG("Error : DescriptorHeap::Alloc() Failed.");
         return false;
     }
-    m_HolderRTV = DescriptorHolder(DescriptorHolder::HEAP_RTV, handleRTV);
+    m_HolderRTV.resize(1);
+    m_HolderRTV[0] = DescriptorHolder(DescriptorHolder::HEAP_RTV, handleRTV);
     pDevice->CreateRenderTargetView(m_pResource.GetPtr(), &rtv_desc, GetCpuHandleRTV());
 
     auto handleSRV = GetResourceDescriptorHeap()->Alloc(1);
@@ -378,8 +430,15 @@ bool ColorTarget::Init
 void ColorTarget::Term()
 {
     m_HolderAlloc.Reset();
-    m_HolderRTV  .Reset();
-    m_HolderSRV  .Reset();
+
+    for(size_t i=0; i<m_HolderRTV.size(); ++i)
+    {
+        m_HolderRTV[i].Reset();
+    }
+    m_HolderRTV.clear();
+    m_HolderRTV.shrink_to_fit();
+
+    m_HolderSRV.Reset();
 
     auto resource = m_pResource.Detach();
     Dispose(resource);
@@ -409,8 +468,11 @@ ID3D12Resource* ColorTarget::GetResource() const
 //-----------------------------------------------------------------------------
 //      レンダーターゲットビュー用CPUディスクリプタハンドルを取得します.
 //-----------------------------------------------------------------------------
-D3D12_CPU_DESCRIPTOR_HANDLE ColorTarget::GetCpuHandleRTV() const
-{ return m_HolderRTV.GetHandleCPU(); }
+D3D12_CPU_DESCRIPTOR_HANDLE ColorTarget::GetCpuHandleRTV(uint32_t index) const
+{
+    assert(index < m_HolderRTV.size());
+    return m_HolderRTV[index].GetHandleCPU();
+}
 
 //-----------------------------------------------------------------------------
 //      シェーダリソースビュー用バインドレスインデックスを取得します.
@@ -562,118 +624,169 @@ bool DepthTarget::Init(const TargetDesc* pDesc)
         auto mostDetailedMip = 0u;
     #endif
 
-    D3D12_DEPTH_STENCIL_VIEW_DESC   dsv_desc = {};
-    D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc = {};
-    dsv_desc.Format = pDesc->Format;
-    srv_desc.Format = format;
-    srv_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    std::vector<D3D12_DEPTH_STENCIL_VIEW_DESC> dsv_descs = {};
+    if (!!(pDesc->Flags & TARGET_FLAG_CREATE_MIP_DSV) && pDesc->MipLevels > 1)
+        dsv_descs.resize(pDesc->MipLevels);
+    else
+        dsv_descs.resize(1);
 
-    if (pDesc->Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE2D)
+    for(size_t i=0; i<dsv_descs.size(); ++i)
     {
-        if (pDesc->DepthOrArraySize > 1)
-        {
-            if (pDesc->SampleDesc.Count > 1)
-            {
-                dsv_desc.ViewDimension                      = D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY;
-                dsv_desc.Texture2DMSArray.ArraySize         = pDesc->DepthOrArraySize;
-                dsv_desc.Texture2DMSArray.FirstArraySlice   = 0;
+        auto& dsv_desc = dsv_descs[i];
+        dsv_desc.Format = pDesc->Format;
 
-                srv_desc.ViewDimension                      = D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY;
-                srv_desc.Texture2DMSArray.ArraySize         = pDesc->DepthOrArraySize;
-                srv_desc.Texture2DMSArray.FirstArraySlice   = 0;
+        if (pDesc->Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE2D)
+        {
+            if (pDesc->DepthOrArraySize > 1)
+            {
+                if (pDesc->SampleDesc.Count > 1)
+                {
+                    dsv_desc.ViewDimension                      = D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY;
+                    dsv_desc.Texture2DMSArray.ArraySize         = pDesc->DepthOrArraySize;
+                    dsv_desc.Texture2DMSArray.FirstArraySlice   = 0;
+                }
+                else
+                {
+                    dsv_desc.ViewDimension                  = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
+                    dsv_desc.Texture2DArray.ArraySize       = pDesc->DepthOrArraySize;
+                    dsv_desc.Texture2DArray.FirstArraySlice = 0;
+                    dsv_desc.Texture2DArray.MipSlice        = UINT(i);
+                }
             }
             else
             {
-                dsv_desc.ViewDimension                  = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
-                dsv_desc.Texture2DArray.ArraySize       = pDesc->DepthOrArraySize;
-                dsv_desc.Texture2DArray.FirstArraySlice = 0;
-                dsv_desc.Texture2DArray.MipSlice        = 0;
-
-                srv_desc.ViewDimension                      = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
-                srv_desc.Texture2DArray.ArraySize           = pDesc->DepthOrArraySize;
-                srv_desc.Texture2DArray.FirstArraySlice     = 0;
-                srv_desc.Texture2DArray.MipLevels           = pDesc->MipLevels;
-                srv_desc.Texture2DArray.MostDetailedMip     = mostDetailedMip;
-                srv_desc.Texture2DArray.PlaneSlice          = 0;
-                srv_desc.Texture2DArray.ResourceMinLODClamp = 0;
+                if (pDesc->SampleDesc.Count > 1)
+                {
+                    dsv_desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DMS;
+                }
+                else
+                {
+                    dsv_desc.ViewDimension      = D3D12_DSV_DIMENSION_TEXTURE2D;
+                    dsv_desc.Texture2D.MipSlice = UINT(i);
+                }
             }
+
         }
-        else
+        else if (pDesc->Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE1D)
         {
-            if (pDesc->SampleDesc.Count > 1)
+            if (pDesc->DepthOrArraySize > 1)
             {
-                dsv_desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DMS;
-                srv_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DMS;
+                dsv_desc.ViewDimension                  = D3D12_DSV_DIMENSION_TEXTURE1DARRAY;
+                dsv_desc.Texture1DArray.ArraySize       = pDesc->DepthOrArraySize;
+                dsv_desc.Texture1DArray.FirstArraySlice = 0;
+                dsv_desc.Texture1DArray.MipSlice        = UINT(i);
             }
             else
             {
-                dsv_desc.ViewDimension      = D3D12_DSV_DIMENSION_TEXTURE2D;
-                dsv_desc.Texture2D.MipSlice = 0;
-
-                srv_desc.ViewDimension                  = D3D12_SRV_DIMENSION_TEXTURE2D;
-                srv_desc.Texture2D.MipLevels            = pDesc->MipLevels;
-                srv_desc.Texture2D.MostDetailedMip      = mostDetailedMip;
-                srv_desc.Texture2D.PlaneSlice           = 0;
-                srv_desc.Texture2D.ResourceMinLODClamp  = 0;
+                dsv_desc.ViewDimension      = D3D12_DSV_DIMENSION_TEXTURE1D;
+                dsv_desc.Texture1D.MipSlice = UINT(i);
             }
         }
-
-    }
-    else if (pDesc->Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE1D)
-    {
-        if (pDesc->DepthOrArraySize > 1)
+        else if (pDesc->Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
         {
-            dsv_desc.ViewDimension                  = D3D12_DSV_DIMENSION_TEXTURE1DARRAY;
-            dsv_desc.Texture1DArray.ArraySize       = pDesc->DepthOrArraySize;
-            dsv_desc.Texture1DArray.FirstArraySlice = 0;
-            dsv_desc.Texture1DArray.MipSlice        = 0;
-
-            srv_desc.ViewDimension                      = D3D12_SRV_DIMENSION_TEXTURE1DARRAY;
-            srv_desc.Texture1DArray.ArraySize           = pDesc->DepthOrArraySize;
-            srv_desc.Texture1DArray.FirstArraySlice     = 0;
-            srv_desc.Texture1DArray.MipLevels           = pDesc->MipLevels;
-            srv_desc.Texture1DArray.MostDetailedMip     = mostDetailedMip;
-            srv_desc.Texture1DArray.ResourceMinLODClamp = 0;
+            // Not Support Buffer.
+            assert(false);
+            ELOGA("Error : Not Support Buffer Type.");
+            return false;
         }
-        else
-        {
-            dsv_desc.ViewDimension      = D3D12_DSV_DIMENSION_TEXTURE1D;
-            dsv_desc.Texture1D.MipSlice = 0;
-
-            srv_desc.ViewDimension                  = D3D12_SRV_DIMENSION_TEXTURE1D;
-            srv_desc.Texture1D.MipLevels            = pDesc->MipLevels;
-            srv_desc.Texture1D.MostDetailedMip      = mostDetailedMip;
-            srv_desc.Texture1D.ResourceMinLODClamp  = 0;
-        }
-    }
-    else if (pDesc->Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
-    {
-        // Not Support Buffer.
-        assert(false);
-        ELOGA("Error : Not Support Buffer Type.");
-        return false;
     }
 
     auto pDevice = GetD3D12Device();
     assert(pDevice != nullptr);
 
-    auto handleDSV = GetDsvDescriptorHeap()->Alloc(1);
-    if (!handleDSV.IsValid())
+    m_HolderDSV.resize(dsv_descs.size());
+    for(size_t i=0; i<m_HolderDSV.size(); ++i)
     {
-        ELOG("Error : DescriptorHeap::Alloc() Failed.");
-        return false;
+        auto handleDSV = GetDsvDescriptorHeap()->Alloc(1);
+        if (!handleDSV.IsValid())
+        {
+            ELOG("Error : DescriptorHeap::Alloc() Failed.");
+            return false;
+        }
+        m_HolderDSV[i] = DescriptorHolder(DescriptorHolder::HEAP_DSV, handleDSV);
+        pDevice->CreateDepthStencilView(m_pResource.GetPtr(), &dsv_descs[i], GetCpuHandleDSV());
     }
-    m_HolderDSV = DescriptorHolder(DescriptorHolder::HEAP_DSV, handleDSV);
-    pDevice->CreateDepthStencilView(m_pResource.GetPtr(), &dsv_desc, GetCpuHandleDSV());
 
-    auto handleSRV = GetResourceDescriptorHeap()->Alloc(1);
-    if (!handleSRV.IsValid())
+    if (!(pDesc->Flags & TARGET_FLAG_NO_SRV))
     {
-        ELOG("Error : DescriptorHeap::Alloc() Failed.");
-        return false;
+        D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc = {};
+        srv_desc.Format = format;
+        srv_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+
+        if (pDesc->Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE2D)
+        {
+            if (pDesc->DepthOrArraySize > 1)
+            {
+                if (pDesc->SampleDesc.Count > 1)
+                {
+                    srv_desc.ViewDimension                      = D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY;
+                    srv_desc.Texture2DMSArray.ArraySize         = pDesc->DepthOrArraySize;
+                    srv_desc.Texture2DMSArray.FirstArraySlice   = 0;
+                }
+                else
+                {
+                    srv_desc.ViewDimension                      = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
+                    srv_desc.Texture2DArray.ArraySize           = pDesc->DepthOrArraySize;
+                    srv_desc.Texture2DArray.FirstArraySlice     = 0;
+                    srv_desc.Texture2DArray.MipLevels           = pDesc->MipLevels;
+                    srv_desc.Texture2DArray.MostDetailedMip     = mostDetailedMip;
+                    srv_desc.Texture2DArray.PlaneSlice          = 0;
+                    srv_desc.Texture2DArray.ResourceMinLODClamp = 0;
+                }
+            }
+            else
+            {
+                if (pDesc->SampleDesc.Count > 1)
+                {
+                    srv_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DMS;
+                }
+                else
+                {
+                    srv_desc.ViewDimension                  = D3D12_SRV_DIMENSION_TEXTURE2D;
+                    srv_desc.Texture2D.MipLevels            = pDesc->MipLevels;
+                    srv_desc.Texture2D.MostDetailedMip      = mostDetailedMip;
+                    srv_desc.Texture2D.PlaneSlice           = 0;
+                    srv_desc.Texture2D.ResourceMinLODClamp  = 0;
+                }
+            }
+
+        }
+        else if (pDesc->Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE1D)
+        {
+            if (pDesc->DepthOrArraySize > 1)
+            {
+                srv_desc.ViewDimension                      = D3D12_SRV_DIMENSION_TEXTURE1DARRAY;
+                srv_desc.Texture1DArray.ArraySize           = pDesc->DepthOrArraySize;
+                srv_desc.Texture1DArray.FirstArraySlice     = 0;
+                srv_desc.Texture1DArray.MipLevels           = pDesc->MipLevels;
+                srv_desc.Texture1DArray.MostDetailedMip     = mostDetailedMip;
+                srv_desc.Texture1DArray.ResourceMinLODClamp = 0;
+            }
+            else
+            {
+                srv_desc.ViewDimension                  = D3D12_SRV_DIMENSION_TEXTURE1D;
+                srv_desc.Texture1D.MipLevels            = pDesc->MipLevels;
+                srv_desc.Texture1D.MostDetailedMip      = mostDetailedMip;
+                srv_desc.Texture1D.ResourceMinLODClamp  = 0;
+            }
+        }
+        else if (pDesc->Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
+        {
+            // Not Support Buffer.
+            assert(false);
+            ELOGA("Error : Not Support Buffer Type.");
+            return false;
+        }
+
+        auto handleSRV = GetResourceDescriptorHeap()->Alloc(1);
+        if (!handleSRV.IsValid())
+        {
+            ELOG("Error : DescriptorHeap::Alloc() Failed.");
+            return false;
+        }
+        m_HolderSRV = DescriptorHolder(DescriptorHolder::HEAP_RES, handleSRV);
+        pDevice->CreateShaderResourceView(m_pResource.GetPtr(), &srv_desc, GetCpuHandleSRV());
     }
-    m_HolderSRV = DescriptorHolder(DescriptorHolder::HEAP_RES, handleSRV);
-    pDevice->CreateShaderResourceView(m_pResource.GetPtr(), &srv_desc, GetCpuHandleSRV());
 
     memcpy(&m_Desc, pDesc, sizeof(m_Desc));
 
@@ -688,8 +801,15 @@ bool DepthTarget::Init(const TargetDesc* pDesc)
 void DepthTarget::Term()
 {
     m_HolderAlloc.Reset();
-    m_HolderDSV  .Reset();
-    m_HolderSRV  .Reset();
+
+    for(size_t i=0; i<m_HolderDSV.size(); ++i)
+    {
+        m_HolderDSV[i].Reset();
+    }
+    m_HolderDSV.clear();
+    m_HolderDSV.shrink_to_fit();
+
+    m_HolderSRV.Reset();
 
     auto resource = m_pResource.Detach();
     Dispose(resource);
@@ -719,8 +839,11 @@ ID3D12Resource* DepthTarget::GetResource() const
 //-----------------------------------------------------------------------------
 //      深度ステンシルビュー用CPUディスクリプタハンドルを取得します.
 //-----------------------------------------------------------------------------
-D3D12_CPU_DESCRIPTOR_HANDLE DepthTarget::GetCpuHandleDSV() const
-{ return m_HolderDSV.GetHandleCPU(); }
+D3D12_CPU_DESCRIPTOR_HANDLE DepthTarget::GetCpuHandleDSV(uint32_t index) const
+{
+    assert(index < m_HolderDSV.size());
+    return m_HolderDSV[index].GetHandleCPU();
+}
 
 //-----------------------------------------------------------------------------
 //      シェーダリソースビュー用バインドレスインデックスを取得します.
@@ -863,122 +986,160 @@ bool ComputeTarget::Init(const TargetDesc* pDesc, uint32_t stride)
     auto mostDetailedMip = 0u;
 #endif
 
-    D3D12_SHADER_RESOURCE_VIEW_DESC     srv_desc = {};
-    D3D12_UNORDERED_ACCESS_VIEW_DESC    uav_desc = {};
-    uav_desc.Format = pDesc->Format;
-    srv_desc.Format = pDesc->Format; 
-    srv_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    std::vector<D3D12_UNORDERED_ACCESS_VIEW_DESC> uav_descs = {};
+    if (!!(pDesc->Flags & TARGET_FLAG_CREATE_MIP_UAV) && pDesc->MipLevels > 1)
+        uav_descs.resize(pDesc->MipLevels);
+    else
+        uav_descs.resize(1);
 
-    if (pDesc->Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D)
+    for(size_t i=0; i<uav_descs.size(); ++i)
     {
-        uav_desc.ViewDimension          = D3D12_UAV_DIMENSION_TEXTURE3D;
-        uav_desc.Texture3D.FirstWSlice  = 0;
-        uav_desc.Texture3D.MipSlice     = 0;
-        uav_desc.Texture3D.WSize        = pDesc->DepthOrArraySize;
+        auto& uav_desc = uav_descs[i];
+        uav_desc.Format = pDesc->Format;
 
-        srv_desc.ViewDimension                  = D3D12_SRV_DIMENSION_TEXTURE3D;
-        srv_desc.Texture3D.MipLevels            = pDesc->MipLevels;
-        srv_desc.Texture3D.MostDetailedMip      = mostDetailedMip;
-        srv_desc.Texture3D.ResourceMinLODClamp  = 0;
-    }
-    else if (pDesc->Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE2D)
-    {
-        if (pDesc->DepthOrArraySize > 1)
+        if (pDesc->Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D)
         {
-            uav_desc.ViewDimension                      = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
-            uav_desc.Texture2DArray.ArraySize           = pDesc->DepthOrArraySize;
-            uav_desc.Texture2DArray.FirstArraySlice     = 0;
-            uav_desc.Texture2DArray.MipSlice            = 0;
-            uav_desc.Texture2DArray.PlaneSlice          = 0;
-
-            srv_desc.Texture2DArray.ArraySize           = pDesc->DepthOrArraySize;
-            srv_desc.Texture2DArray.FirstArraySlice     = 0;
-            srv_desc.Texture2DArray.MipLevels           = 0;
-            srv_desc.Texture2DArray.PlaneSlice          = 0;
-            srv_desc.Texture2DArray.ResourceMinLODClamp = 0.0f;
-            srv_desc.Texture2DArray.MostDetailedMip     = mostDetailedMip;
-            srv_desc.ViewDimension                      = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
+            uav_desc.ViewDimension          = D3D12_UAV_DIMENSION_TEXTURE3D;
+            uav_desc.Texture3D.FirstWSlice  = 0;
+            uav_desc.Texture3D.MipSlice     = UINT(i);
+            uav_desc.Texture3D.WSize        = pDesc->DepthOrArraySize;
         }
-
-        else
+        else if (pDesc->Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE2D)
         {
-            uav_desc.ViewDimension          = D3D12_UAV_DIMENSION_TEXTURE2D;
-            uav_desc.Texture2D.MipSlice     = 0;
-            uav_desc.Texture2D.PlaneSlice   = 0;
+            if (pDesc->DepthOrArraySize > 1)
+            {
+                uav_desc.ViewDimension                      = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
+                uav_desc.Texture2DArray.ArraySize           = pDesc->DepthOrArraySize;
+                uav_desc.Texture2DArray.FirstArraySlice     = 0;
+                uav_desc.Texture2DArray.MipSlice            = UINT(i);
+                uav_desc.Texture2DArray.PlaneSlice          = 0;
+            }
 
-            srv_desc.Texture2D.MipLevels            = pDesc->MipLevels;
-            srv_desc.Texture2D.MostDetailedMip      = mostDetailedMip;
-            srv_desc.Texture2D.PlaneSlice           = 0;
-            srv_desc.Texture2D.ResourceMinLODClamp  = 0.0f;
-            srv_desc.ViewDimension                  = D3D12_SRV_DIMENSION_TEXTURE2D;
-
+            else
+            {
+                uav_desc.ViewDimension          = D3D12_UAV_DIMENSION_TEXTURE2D;
+                uav_desc.Texture2D.MipSlice     = UINT(i);
+                uav_desc.Texture2D.PlaneSlice   = 0;
+            }
         }
-    }
-    else if (pDesc->Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE1D)
-    {
-        if (pDesc->DepthOrArraySize > 1)
+        else if (pDesc->Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE1D)
         {
-            uav_desc.ViewDimension                  = D3D12_UAV_DIMENSION_TEXTURE1DARRAY;
-            uav_desc.Texture1DArray.ArraySize       = pDesc->DepthOrArraySize;
-            uav_desc.Texture1DArray.FirstArraySlice = 0;
-            uav_desc.Texture1DArray.MipSlice        = 0;
-
-            srv_desc.ViewDimension                      = D3D12_SRV_DIMENSION_TEXTURE1DARRAY;
-            srv_desc.Texture1DArray.ArraySize           = pDesc->DepthOrArraySize;
-            srv_desc.Texture1DArray.FirstArraySlice     = 0;
-            srv_desc.Texture1DArray.MipLevels           = pDesc->MipLevels;
-            srv_desc.Texture1DArray.MostDetailedMip     = mostDetailedMip;
-            srv_desc.Texture1DArray.ResourceMinLODClamp = 0;
+            if (pDesc->DepthOrArraySize > 1)
+            {
+                uav_desc.ViewDimension                  = D3D12_UAV_DIMENSION_TEXTURE1DARRAY;
+                uav_desc.Texture1DArray.ArraySize       = pDesc->DepthOrArraySize;
+                uav_desc.Texture1DArray.FirstArraySlice = 0;
+                uav_desc.Texture1DArray.MipSlice        = UINT(i);
+            }
+            else
+            {
+                uav_desc.ViewDimension      = D3D12_UAV_DIMENSION_TEXTURE1D;
+                uav_desc.Texture1D.MipSlice = UINT(i);
+            }
         }
-        else
+        else if (pDesc->Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
         {
-            uav_desc.ViewDimension      = D3D12_UAV_DIMENSION_TEXTURE1D;
-            uav_desc.Texture1D.MipSlice = 0;
+            auto elements = (stride == 0) ? pDesc->Width : pDesc->Width / stride;
 
-            srv_desc.ViewDimension                  = D3D12_SRV_DIMENSION_TEXTURE1D;
-            srv_desc.Texture1D.MipLevels            = pDesc->MipLevels;
-            srv_desc.Texture1D.MostDetailedMip      = mostDetailedMip;
-            srv_desc.Texture1D.ResourceMinLODClamp  = 0;
+            uav_desc.ViewDimension                  = D3D12_UAV_DIMENSION_BUFFER;
+            uav_desc.Buffer.CounterOffsetInBytes    = 0;
+            uav_desc.Buffer.FirstElement            = 0;
+            uav_desc.Buffer.NumElements             = UINT(elements);
+            uav_desc.Buffer.StructureByteStride     = stride;
+            uav_desc.Buffer.Flags                   = (stride == 0) ? D3D12_BUFFER_UAV_FLAG_RAW : D3D12_BUFFER_UAV_FLAG_NONE;
         }
-    }
-    else if (pDesc->Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
-    {
-        auto elements = (stride == 0) ? pDesc->Width : pDesc->Width / stride;
-
-        uav_desc.ViewDimension                  = D3D12_UAV_DIMENSION_BUFFER;
-        uav_desc.Buffer.CounterOffsetInBytes    = 0;
-        uav_desc.Buffer.FirstElement            = 0;
-        uav_desc.Buffer.NumElements             = UINT(elements);
-        uav_desc.Buffer.StructureByteStride     = stride;
-        uav_desc.Buffer.Flags                   = (stride == 0) ? D3D12_BUFFER_UAV_FLAG_RAW : D3D12_BUFFER_UAV_FLAG_NONE;
-
-        srv_desc.ViewDimension              = D3D12_SRV_DIMENSION_BUFFER;
-        srv_desc.Buffer.FirstElement        = 0;
-        srv_desc.Buffer.NumElements         = UINT(elements);
-        srv_desc.Buffer.StructureByteStride = stride;
-        srv_desc.Buffer.Flags               = (stride == 0) ? D3D12_BUFFER_SRV_FLAG_RAW : D3D12_BUFFER_SRV_FLAG_NONE;
     }
 
     auto pDevice = GetD3D12Device();
     assert(pDevice != nullptr);
 
-    auto handleUAV = GetResourceDescriptorHeap()->Alloc(1);
-    if (!handleUAV.IsValid())
+    m_HolderUAV.resize(uav_descs.size());
+    for(size_t i=0; i<m_HolderUAV.size(); ++i)
     {
-        ELOG("Error : DescriptorHeap::Alloc() Failed.");
-        return false;
+        auto handleUAV = GetResourceDescriptorHeap()->Alloc(1);
+        if (!handleUAV.IsValid())
+        {
+            ELOG("Error : DescriptorHeap::Alloc() Failed.");
+            return false;
+        }
+        m_HolderUAV[i] = DescriptorHolder(DescriptorHolder::HEAP_RES, handleUAV);
+        pDevice->CreateUnorderedAccessView(m_pResource.GetPtr(), nullptr, &uav_descs[i], GetCpuHandleUAV());
     }
-    m_HolderUAV = DescriptorHolder(DescriptorHolder::HEAP_RES, handleUAV);
-    pDevice->CreateUnorderedAccessView(m_pResource.GetPtr(), nullptr, &uav_desc, GetCpuHandleUAV());
 
-    auto handleSRV = GetResourceDescriptorHeap()->Alloc(1);
-    if (!handleSRV.IsValid())
+    if (!(pDesc->Flags & TARGET_FLAG_NO_SRV))
     {
-        ELOG("Error : DescriptorHeap::Alloc() Failed.");
-        return false;
+        D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc = {};
+        srv_desc.Format = pDesc->Format; 
+        srv_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+
+        if (pDesc->Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D)
+        {
+            srv_desc.ViewDimension                  = D3D12_SRV_DIMENSION_TEXTURE3D;
+            srv_desc.Texture3D.MipLevels            = pDesc->MipLevels;
+            srv_desc.Texture3D.MostDetailedMip      = mostDetailedMip;
+            srv_desc.Texture3D.ResourceMinLODClamp  = 0;
+        }
+        else if (pDesc->Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE2D)
+        {
+            if (pDesc->DepthOrArraySize > 1)
+            {
+                srv_desc.Texture2DArray.ArraySize           = pDesc->DepthOrArraySize;
+                srv_desc.Texture2DArray.FirstArraySlice     = 0;
+                srv_desc.Texture2DArray.MipLevels           = 0;
+                srv_desc.Texture2DArray.PlaneSlice          = 0;
+                srv_desc.Texture2DArray.ResourceMinLODClamp = 0.0f;
+                srv_desc.Texture2DArray.MostDetailedMip     = mostDetailedMip;
+                srv_desc.ViewDimension                      = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
+            }
+
+            else
+            {
+                srv_desc.Texture2D.MipLevels            = pDesc->MipLevels;
+                srv_desc.Texture2D.MostDetailedMip      = mostDetailedMip;
+                srv_desc.Texture2D.PlaneSlice           = 0;
+                srv_desc.Texture2D.ResourceMinLODClamp  = 0.0f;
+                srv_desc.ViewDimension                  = D3D12_SRV_DIMENSION_TEXTURE2D;
+
+            }
+        }
+        else if (pDesc->Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE1D)
+        {
+            if (pDesc->DepthOrArraySize > 1)
+            {
+                srv_desc.ViewDimension                      = D3D12_SRV_DIMENSION_TEXTURE1DARRAY;
+                srv_desc.Texture1DArray.ArraySize           = pDesc->DepthOrArraySize;
+                srv_desc.Texture1DArray.FirstArraySlice     = 0;
+                srv_desc.Texture1DArray.MipLevels           = pDesc->MipLevels;
+                srv_desc.Texture1DArray.MostDetailedMip     = mostDetailedMip;
+                srv_desc.Texture1DArray.ResourceMinLODClamp = 0;
+            }
+            else
+            {
+                srv_desc.ViewDimension                  = D3D12_SRV_DIMENSION_TEXTURE1D;
+                srv_desc.Texture1D.MipLevels            = pDesc->MipLevels;
+                srv_desc.Texture1D.MostDetailedMip      = mostDetailedMip;
+                srv_desc.Texture1D.ResourceMinLODClamp  = 0;
+            }
+        }
+        else if (pDesc->Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
+        {
+            auto elements = (stride == 0) ? pDesc->Width : pDesc->Width / stride;
+            srv_desc.ViewDimension              = D3D12_SRV_DIMENSION_BUFFER;
+            srv_desc.Buffer.FirstElement        = 0;
+            srv_desc.Buffer.NumElements         = UINT(elements);
+            srv_desc.Buffer.StructureByteStride = stride;
+            srv_desc.Buffer.Flags               = (stride == 0) ? D3D12_BUFFER_SRV_FLAG_RAW : D3D12_BUFFER_SRV_FLAG_NONE;
+        }
+
+        auto handleSRV = GetResourceDescriptorHeap()->Alloc(1);
+        if (!handleSRV.IsValid())
+        {
+            ELOG("Error : DescriptorHeap::Alloc() Failed.");
+            return false;
+        }
+        m_HolderSRV = DescriptorHolder(DescriptorHolder::HEAP_RES, handleSRV);
+        pDevice->CreateShaderResourceView(m_pResource.GetPtr(), &srv_desc, GetCpuHandleSRV());
     }
-    m_HolderSRV = DescriptorHolder(DescriptorHolder::HEAP_RES, handleSRV);
-    pDevice->CreateShaderResourceView(m_pResource.GetPtr(), &srv_desc, GetCpuHandleSRV());
 
     memcpy(&m_Desc, pDesc, sizeof(m_Desc));
 
@@ -991,115 +1152,156 @@ bool ComputeTarget::Init(const TargetDesc* pDesc, uint32_t stride)
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool ComputeTarget::Init(ColorTarget& target)
+bool ComputeTarget::Init(ColorTarget& target, uint32_t flags)
 {
     m_pResource = target.GetResource();
 
     auto desc = target.GetDesc();
 
-    D3D12_UNORDERED_ACCESS_VIEW_DESC uav_desc = {};
-    D3D12_SHADER_RESOURCE_VIEW_DESC  srv_desc = {};
-    uav_desc.Format = desc.Format;
-    srv_desc.Format = desc.Format;
+    std::vector<D3D12_UNORDERED_ACCESS_VIEW_DESC> uav_descs = {};
+    if (!!(flags & TARGET_FLAG_CREATE_MIP_UAV) && desc.MipLevels > 1)
+        uav_descs.resize(desc.MipLevels);
+    else
+        uav_descs.resize(1);
 
-    if (desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D)
+    for(size_t i=0; i<uav_descs.size(); ++i)
     {
-        uav_desc.ViewDimension          = D3D12_UAV_DIMENSION_TEXTURE3D;
-        uav_desc.Texture3D.FirstWSlice  = 0;
-        uav_desc.Texture3D.MipSlice     = 0;
-        uav_desc.Texture3D.WSize        = desc.DepthOrArraySize;
+        auto uav_desc = uav_descs[i];
+        uav_desc.Format = desc.Format;
 
-        srv_desc.ViewDimension                  = D3D12_SRV_DIMENSION_BUFFER;
-        srv_desc.Texture3D.MostDetailedMip      = 0;
-        srv_desc.Texture3D.MipLevels            = desc.MipLevels;
-        srv_desc.Texture3D.ResourceMinLODClamp  = 0.0f;
-    }
-    else if (desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE2D)
-    {
-        if (desc.DepthOrArraySize > 1)
+        if (desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D)
         {
-            uav_desc.ViewDimension                      = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
-            uav_desc.Texture2DArray.ArraySize           = desc.DepthOrArraySize;
-            uav_desc.Texture2DArray.FirstArraySlice     = 0;
-            uav_desc.Texture2DArray.MipSlice            = 0;
-            uav_desc.Texture2DArray.PlaneSlice          = 0;
-
-            srv_desc.ViewDimension                      = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
-            srv_desc.Texture2DArray.MostDetailedMip     = 0;
-            srv_desc.Texture2DArray.MipLevels           = desc.MipLevels;
-            srv_desc.Texture2DArray.FirstArraySlice     = 0;
-            srv_desc.Texture2DArray.ArraySize           = desc.DepthOrArraySize;
-            srv_desc.Texture2DArray.PlaneSlice          = 0;
-            srv_desc.Texture2DArray.ResourceMinLODClamp = 0.0f;
+            uav_desc.ViewDimension          = D3D12_UAV_DIMENSION_TEXTURE3D;
+            uav_desc.Texture3D.FirstWSlice  = 0;
+            uav_desc.Texture3D.MipSlice     = UINT(i);
+            uav_desc.Texture3D.WSize        = desc.DepthOrArraySize;
         }
-        else
+        else if (desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE2D)
         {
-            uav_desc.ViewDimension          = D3D12_UAV_DIMENSION_TEXTURE2D;
-            uav_desc.Texture2D.MipSlice     = 0;
-            uav_desc.Texture2D.PlaneSlice   = 0;
-
-            srv_desc.ViewDimension                  = D3D12_SRV_DIMENSION_TEXTURE2D;
-            srv_desc.Texture2D.MostDetailedMip      = 0;
-            srv_desc.Texture2D.MipLevels            = desc.MipLevels;
-            srv_desc.Texture2D.PlaneSlice           = 0;
-            srv_desc.Texture2D.ResourceMinLODClamp  = 0.0f;
+            if (desc.DepthOrArraySize > 1)
+            {
+                uav_desc.ViewDimension                      = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
+                uav_desc.Texture2DArray.ArraySize           = desc.DepthOrArraySize;
+                uav_desc.Texture2DArray.FirstArraySlice     = 0;
+                uav_desc.Texture2DArray.MipSlice            = UINT(i);
+                uav_desc.Texture2DArray.PlaneSlice          = 0;
+            }
+            else
+            {
+                uav_desc.ViewDimension          = D3D12_UAV_DIMENSION_TEXTURE2D;
+                uav_desc.Texture2D.MipSlice     = UINT(i);
+                uav_desc.Texture2D.PlaneSlice   = 0;
+            }
         }
-    }
-    else if (desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE1D)
-    {
-        if (desc.DepthOrArraySize > 1)
+        else if (desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE1D)
         {
-            uav_desc.ViewDimension                  = D3D12_UAV_DIMENSION_TEXTURE1DARRAY;
-            uav_desc.Texture1DArray.ArraySize       = desc.DepthOrArraySize;
-            uav_desc.Texture1DArray.FirstArraySlice = 0;
-            uav_desc.Texture1DArray.MipSlice        = 0;
-
-            srv_desc.ViewDimension                      = D3D12_SRV_DIMENSION_TEXTURE1DARRAY;
-            srv_desc.Texture1DArray.MostDetailedMip     = 0;
-            srv_desc.Texture1DArray.MipLevels           = desc.MipLevels;
-            srv_desc.Texture1DArray.FirstArraySlice     = 0;
-            srv_desc.Texture1DArray.ArraySize           = desc.DepthOrArraySize;
-            srv_desc.Texture1DArray.ResourceMinLODClamp = 0.0f;
+            if (desc.DepthOrArraySize > 1)
+            {
+                uav_desc.ViewDimension                  = D3D12_UAV_DIMENSION_TEXTURE1DARRAY;
+                uav_desc.Texture1DArray.ArraySize       = desc.DepthOrArraySize;
+                uav_desc.Texture1DArray.FirstArraySlice = 0;
+                uav_desc.Texture1DArray.MipSlice        = UINT(i);
+            }
+            else
+            {
+                uav_desc.ViewDimension      = D3D12_UAV_DIMENSION_TEXTURE1D;
+                uav_desc.Texture1D.MipSlice = UINT(i);
+            }
         }
-        else
+        else if (desc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
         {
-            uav_desc.ViewDimension      = D3D12_UAV_DIMENSION_TEXTURE1D;
-            uav_desc.Texture1D.MipSlice = 0;
-
-            srv_desc.ViewDimension                  = D3D12_SRV_DIMENSION_TEXTURE1D;
-            srv_desc.Texture1D.MostDetailedMip      = 0;
-            srv_desc.Texture1D.MipLevels            = desc.MipLevels;
-            srv_desc.Texture1D.ResourceMinLODClamp  = 0.0f;
+            // Not Support Buffer.
+            assert(false);
+            ELOGA("Error : Not Support Buffer Type.");
+            return false;
         }
-    }
-    else if (desc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
-    {
-        // Not Support Buffer.
-        assert(false);
-        ELOGA("Error : Not Support Buffer Type.");
-        return false;
     }
 
     auto pDevice = GetD3D12Device();
     assert(pDevice != nullptr);
 
-    auto handleUAV = GetResourceDescriptorHeap()->Alloc(1);
-    if (!handleUAV.IsValid())
+    m_HolderUAV.resize(uav_descs.size());
+    for(size_t i=0; i<m_HolderUAV.size(); ++i)
     {
-        ELOG("Error : DescriptorHeap::Alloc() Failed.");
-        return false;
+        auto handleUAV = GetResourceDescriptorHeap()->Alloc(1);
+        if (!handleUAV.IsValid())
+        {
+            ELOG("Error : DescriptorHeap::Alloc() Failed.");
+            return false;
+        }
+        m_HolderUAV[i] = DescriptorHolder(DescriptorHolder::HEAP_RES, handleUAV);
+        pDevice->CreateUnorderedAccessView(m_pResource.GetPtr(), nullptr, &uav_descs[i], GetCpuHandleUAV());
     }
-    m_HolderUAV = DescriptorHolder(DescriptorHolder::HEAP_RES, handleUAV);
-    pDevice->CreateUnorderedAccessView(m_pResource.GetPtr(), nullptr, &uav_desc, GetCpuHandleUAV());
 
-    auto handleSRV = GetResourceDescriptorHeap()->Alloc(1);
-    if (!handleSRV.IsValid())
+    if (!(flags & TARGET_FLAG_NO_SRV))
     {
-        ELOG("Error : DescriptorHeap::Alloc() Failed.");
-        return false;
+        D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc = {};
+        srv_desc.Format = desc.Format;
+
+        if (desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D)
+        {
+            srv_desc.ViewDimension                  = D3D12_SRV_DIMENSION_BUFFER;
+            srv_desc.Texture3D.MostDetailedMip      = 0;
+            srv_desc.Texture3D.MipLevels            = desc.MipLevels;
+            srv_desc.Texture3D.ResourceMinLODClamp  = 0.0f;
+        }
+        else if (desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE2D)
+        {
+            if (desc.DepthOrArraySize > 1)
+            {
+                srv_desc.ViewDimension                      = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
+                srv_desc.Texture2DArray.MostDetailedMip     = 0;
+                srv_desc.Texture2DArray.MipLevels           = desc.MipLevels;
+                srv_desc.Texture2DArray.FirstArraySlice     = 0;
+                srv_desc.Texture2DArray.ArraySize           = desc.DepthOrArraySize;
+                srv_desc.Texture2DArray.PlaneSlice          = 0;
+                srv_desc.Texture2DArray.ResourceMinLODClamp = 0.0f;
+            }
+            else
+            {
+                srv_desc.ViewDimension                  = D3D12_SRV_DIMENSION_TEXTURE2D;
+                srv_desc.Texture2D.MostDetailedMip      = 0;
+                srv_desc.Texture2D.MipLevels            = desc.MipLevels;
+                srv_desc.Texture2D.PlaneSlice           = 0;
+                srv_desc.Texture2D.ResourceMinLODClamp  = 0.0f;
+            }
+        }
+        else if (desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE1D)
+        {
+            if (desc.DepthOrArraySize > 1)
+            {
+                srv_desc.ViewDimension                      = D3D12_SRV_DIMENSION_TEXTURE1DARRAY;
+                srv_desc.Texture1DArray.MostDetailedMip     = 0;
+                srv_desc.Texture1DArray.MipLevels           = desc.MipLevels;
+                srv_desc.Texture1DArray.FirstArraySlice     = 0;
+                srv_desc.Texture1DArray.ArraySize           = desc.DepthOrArraySize;
+                srv_desc.Texture1DArray.ResourceMinLODClamp = 0.0f;
+            }
+            else
+            {
+                srv_desc.ViewDimension                  = D3D12_SRV_DIMENSION_TEXTURE1D;
+                srv_desc.Texture1D.MostDetailedMip      = 0;
+                srv_desc.Texture1D.MipLevels            = desc.MipLevels;
+                srv_desc.Texture1D.ResourceMinLODClamp  = 0.0f;
+            }
+        }
+        else if (desc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
+        {
+            // Not Support Buffer.
+            assert(false);
+            ELOGA("Error : Not Support Buffer Type.");
+            return false;
+        }
+
+        auto handleSRV = GetResourceDescriptorHeap()->Alloc(1);
+        if (!handleSRV.IsValid())
+        {
+            ELOG("Error : DescriptorHeap::Alloc() Failed.");
+            return false;
+        }
+        m_HolderSRV = DescriptorHolder(DescriptorHolder::HEAP_RES, handleSRV);
+        pDevice->CreateShaderResourceView(m_pResource.GetPtr(), &srv_desc, GetCpuHandleSRV());
     }
-    m_HolderSRV = DescriptorHolder(DescriptorHolder::HEAP_RES, handleSRV);
-    pDevice->CreateShaderResourceView(m_pResource.GetPtr(), &srv_desc, GetCpuHandleSRV());
 
     memcpy(&m_Desc, &desc, sizeof(m_Desc));
 
@@ -1114,8 +1316,14 @@ bool ComputeTarget::Init(ColorTarget& target)
 void ComputeTarget::Term()
 {
     m_HolderAlloc.Reset();
-    m_HolderUAV  .Reset();
-    m_HolderSRV  .Reset();
+    for(size_t i=0; i<m_HolderUAV.size(); ++i)
+    {
+        m_HolderUAV[i].Reset();
+    }
+    m_HolderUAV.clear();
+    m_HolderUAV.shrink_to_fit();
+
+    m_HolderSRV.Reset();
 
     auto resource = m_pResource.Detach();
     Dispose(resource);
@@ -1148,20 +1356,29 @@ ID3D12Resource* ComputeTarget::GetResource() const
 //-----------------------------------------------------------------------------
 //      アンオーダードアクセスビュー用オフセットハンドルを取得します.
 //-----------------------------------------------------------------------------
-uint32_t ComputeTarget::GetBindlessIndexUAV() const
-{ return m_HolderUAV.GetIndex(); }
+uint32_t ComputeTarget::GetBindlessIndexUAV(uint32_t index) const
+{
+    assert(index < m_HolderUAV.size());
+    return m_HolderUAV[index].GetIndex();
+}
 
 //-----------------------------------------------------------------------------
 //      アンオーダードアクセスビュー用CPUディスクリプタハンドルを取得します.
 //-----------------------------------------------------------------------------
-D3D12_CPU_DESCRIPTOR_HANDLE ComputeTarget::GetCpuHandleUAV() const
-{ return m_HolderUAV.GetHandleCPU(); }
+D3D12_CPU_DESCRIPTOR_HANDLE ComputeTarget::GetCpuHandleUAV(uint32_t index) const
+{
+    assert(index < m_HolderUAV.size());
+    return m_HolderUAV[index].GetHandleCPU();
+}
 
 //-----------------------------------------------------------------------------
 //      アンオーダードアクセスビュー用GPUディスクリプタハンドルを取得します.
 //-----------------------------------------------------------------------------
-D3D12_GPU_DESCRIPTOR_HANDLE ComputeTarget::GetGpuHandleUAV() const
-{ return m_HolderUAV.GetHandleGPU(); }
+D3D12_GPU_DESCRIPTOR_HANDLE ComputeTarget::GetGpuHandleUAV(uint32_t index) const
+{
+    assert(index < m_HolderUAV.size());
+    return m_HolderUAV[index].GetHandleGPU();
+}
 
 //-----------------------------------------------------------------------------
 //      シェーダリソースビュー用バインドレスインデックスを取得します.

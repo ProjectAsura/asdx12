@@ -10,6 +10,7 @@
 //-----------------------------------------------------------------------------
 #include <d3d12.h>
 #include <dxgi1_6.h>
+#include <vector>
 #include <fnd/asdxOffsetAllocator.h>
 #include <fnd/asdxRef.h>
 #include <gfx/asdxAllocationHolder.h>
@@ -17,6 +18,18 @@
 
 
 namespace asdx {
+
+///////////////////////////////////////////////////////////////////////////////
+// TARGET_FLAGS enum
+///////////////////////////////////////////////////////////////////////////////
+enum TARGET_FLAGS
+{
+    TARGET_FLAG_NONE           = 0,             //!< フラグ設定なし.
+    TARGET_FLAG_CREATE_MIP_RTV = 0x1 << 0,      //!< RTVに対して各ミップごとのディスクリプタを生成する.
+    TARGET_FLAG_CREATE_MIP_DSV = 0x1 << 1,      //!< DSVに対して各ミップごとのディスクリプタを生成する.
+    TARGET_FLAG_CREATE_MIP_UAV = 0x1 << 3,      //!< UAVに対して各ミップごとのディスクリプタを生成する.
+    TARGET_FLAG_NO_SRV         = 0x1 << 4,      //!< SRVを作成しない.
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 // TargetDesc2D structure
@@ -35,6 +48,7 @@ struct TargetDesc
     float                       ClearColor[4]       = { 1.0f, 1.0f, 1.0f, 1.0f };           //!< クリアカラー値です.
     float                       ClearDepth          = 1.0f;                                 //!< クリア深度値です.
     uint8_t                     ClearStencil        = 0;                                    //!< クリアステンシル値です.
+    uint32_t                    Flags               = TARGET_FLAG_NONE;                     //!< ターゲットフラグです.
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -114,7 +128,7 @@ public:
     //! 
     //! @return     CPUディスクリプタハンドルを返却します(RTV用).
     //-------------------------------------------------------------------------
-    D3D12_CPU_DESCRIPTOR_HANDLE GetCpuHandleRTV() const;
+    D3D12_CPU_DESCRIPTOR_HANDLE GetCpuHandleRTV(uint32_t index = 0) const;
 
     //-------------------------------------------------------------------------
     //! @brief      バインドレスインデックスを取得します(SRV用).
@@ -194,12 +208,12 @@ private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    RefPtr<ID3D12Resource>      m_pResource;
-    AllocationHolder            m_HolderAlloc;
-    DescriptorHolder            m_HolderRTV;
-    DescriptorHolder            m_HolderSRV;
-    TargetDesc                  m_Desc;
-    D3D12_RESOURCE_STATES       m_PrevState = D3D12_RESOURCE_STATE_COMMON;
+    RefPtr<ID3D12Resource>          m_pResource;
+    AllocationHolder                m_HolderAlloc;
+    std::vector<DescriptorHolder>   m_HolderRTV;
+    DescriptorHolder                m_HolderSRV;
+    TargetDesc                      m_Desc;
+    D3D12_RESOURCE_STATES           m_PrevState = D3D12_RESOURCE_STATE_COMMON;
 
     //=========================================================================
     // private methods.
@@ -275,7 +289,7 @@ public:
     //! 
     //! @return     CPUディスクリプタハンドルを返却します(DSV用).
     //-------------------------------------------------------------------------
-    D3D12_CPU_DESCRIPTOR_HANDLE GetCpuHandleDSV() const;
+    D3D12_CPU_DESCRIPTOR_HANDLE GetCpuHandleDSV(uint32_t index = 0) const;
 
     //-------------------------------------------------------------------------
     //! @brief      バインドレスインデックスを取得します(SRV用).
@@ -348,12 +362,12 @@ private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    RefPtr<ID3D12Resource>      m_pResource;
-    AllocationHolder            m_HolderAlloc;
-    DescriptorHolder            m_HolderDSV;
-    DescriptorHolder            m_HolderSRV;
-    TargetDesc                  m_Desc;
-    D3D12_RESOURCE_STATES       m_PrevState = D3D12_RESOURCE_STATE_COMMON;
+    RefPtr<ID3D12Resource>          m_pResource;
+    AllocationHolder                m_HolderAlloc;
+    std::vector<DescriptorHolder>   m_HolderDSV;
+    DescriptorHolder                m_HolderSRV;
+    TargetDesc                      m_Desc;
+    D3D12_RESOURCE_STATES           m_PrevState = D3D12_RESOURCE_STATE_COMMON;
 
     //=========================================================================
     // private methods.
@@ -410,7 +424,7 @@ public:
     //! @retval true    初期化に成功.
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
-    bool Init(ColorTarget& target);
+    bool Init(ColorTarget& target, uint32_t flags);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.
@@ -440,21 +454,21 @@ public:
     //!
     //! @return     バインドレスインデックスを返却します(UAV用).
     //-------------------------------------------------------------------------
-    uint32_t GetBindlessIndexUAV() const;
+    uint32_t GetBindlessIndexUAV(uint32_t index = 0) const;
 
     //-------------------------------------------------------------------------
     //! @brief      CPUディスクリプタハンドルを取得します(UAV用).
     //! 
     //! @return     CPUディスクリプタハンドルを返却します(UAV用).
     //-------------------------------------------------------------------------
-    D3D12_CPU_DESCRIPTOR_HANDLE GetCpuHandleUAV() const;
+    D3D12_CPU_DESCRIPTOR_HANDLE GetCpuHandleUAV(uint32_t index = 0) const;
 
     //-------------------------------------------------------------------------
     //! @brief      GPUディスクリプタハンドルを取得します(UAV用).
     //! 
     //! @return     GPUディスクリプタハンドルを返却します(UAV用).
     //-------------------------------------------------------------------------
-    D3D12_GPU_DESCRIPTOR_HANDLE GetGpuHandleUAV() const;
+    D3D12_GPU_DESCRIPTOR_HANDLE GetGpuHandleUAV(uint32_t index = 0) const;
 
     //-------------------------------------------------------------------------
     //! @brief      バインドレスインデックスを取得します(SRV用).
@@ -543,11 +557,11 @@ private:
     //=========================================================================
     RefPtr<ID3D12Resource>          m_pResource;
     AllocationHolder                m_HolderAlloc;
-    DescriptorHolder                m_HolderUAV;
+    std::vector<DescriptorHolder>   m_HolderUAV;
     DescriptorHolder                m_HolderSRV;
     TargetDesc                      m_Desc;
-    D3D12_RESOURCE_STATES           m_PrevState = D3D12_RESOURCE_STATE_COMMON;
     uint32_t                        m_Stride    = 0;
+    D3D12_RESOURCE_STATES           m_PrevState = D3D12_RESOURCE_STATE_COMMON;
 
     //=========================================================================
     // private methods.

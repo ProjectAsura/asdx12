@@ -21,19 +21,7 @@ float3 FromTangentSpaceToWorld(float3 value, float3 T, float3 B, float3 N)
     // T     : ジオメトリ接線ベクトル
     // B     : ジオメトリ従接線ベクトル.
     // N     : ジオメトリ法線ベクトル.
-    return normalize(value.x * T + value.y * B + value.z * N);
-}
-
-//-----------------------------------------------------------------------------
-//      八面体ラップ処理を行います.
-//-----------------------------------------------------------------------------
-float2 OctWrap(float2 v)
-{
-#if __HLSL_VERSION >= 2021
-    return (1.0f - abs(v.yx)) * select(v.xy >= 0.0f, 1.0f, -1.0f);
-#else
-    return (1.0f - abs(v.yx)) * (v.xy >= 0.0f ? 1.0f : -1.0f);
-#endif
+    return normalize(T * value.x + B * value.y + N * value.z);
 }
 
 //-----------------------------------------------------------------------------
@@ -139,11 +127,15 @@ float3 RecalcTangent(float3 normalMappedN, float3 T)
 //-----------------------------------------------------------------------------
 void CalcONB(float3 N, out float3 T, out float3 B)
 {
-    float sig = sign(N.z);
-    float a = -1.0f / (sig + N.z);
+    // Tom Duff, James Burgess, Per Christensen, Christophe Hery, Andrew Kensler, Max Liani, and Ryusuke Villemin
+    // "Building an Orthonormal Bais, Revisited",
+    // Journal of Computer Graphics Techniques Vol.6, No.1, 2017.
+    // Listing 3.参照.
+    float s = (N.z >= 0.0f) ? 1.0f : -1.0f;
+    float a = -1.0f / (s + N.z);
     float b = N.x * N.y * a;
-    T = float3(1.0f + sig * N.x * N.x * a, sig * b, -sig * N.x);
-    B = float3(b, sig + N.y * N.y * a, -N.y);
+    T = float3(1.0f + s * N.x * N.x * a, s * b, -s * N.x);
+    B = float3(b, s + N.y * N.y * a, -N.y);
 }
 
 //-----------------------------------------------------------------------------

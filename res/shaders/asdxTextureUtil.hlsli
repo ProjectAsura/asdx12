@@ -40,12 +40,12 @@ float2 UVAnimation(float2 uv, float2 scale, float2 offset, float rotate)
 //-----------------------------------------------------------------------------
 //      スフィアマップのテクスチャ座標を求めます.
 //-----------------------------------------------------------------------------
-float2 ToSphereMapCoord(float3 reflectDir)
+float2 ToSphereMapCoord(float3 dir)
 {
     // NOTE : 正距円筒図のパノラマテクスチャを対象とします.
-    float theta = acos(reflectDir.y);
-    float phi   = atan2(reflectDir.z, reflectDir.x);
-    if (reflectDir.z < 0.0f)
+    float theta = acos(dir.y);
+    float phi   = atan2(dir.z, dir.x);
+    if (dir.z < 0.0f)
     {
         phi += F_2PI;
     }
@@ -56,15 +56,29 @@ float2 ToSphereMapCoord(float3 reflectDir)
 //-----------------------------------------------------------------------------
 //      アンギュラーマップのテクスチャ座標を求めます.
 //-----------------------------------------------------------------------------
-float2 ToAngularMapCoord(float3 reflectDir)
+float2 ToAngularMapCoord(float3 dir)
 {
-    float3 dir = normalize(reflectDir);
-    dir.z += 1.0f;
-        float m = 2.0f * length(dir);
+    float3 d = normalize(dir);
+    d.z += 1.0f;
+        float m = 2.0f * length(d);
     float2 uv;
-    uv.x = (reflectDir.x / m) + 0.5f;
-    uv.y = (reflectDir.y / m) + 0.5f;
+    uv.x = (dir.x / m) + 0.5f;
+    uv.y = (dir.y / m) + 0.5f;
     return uv;
+}
+
+//-----------------------------------------------------------------------------
+//      八面体マップのテクスチャ座標を求めます.
+//-----------------------------------------------------------------------------
+float2 ToOctahedralMapCoord(float3 dir)
+{
+    float3 n = dir / (abs(dir.x) + abs(dir.y) + abs(dir.z));
+#if __HLSL_VERSION >= 2021
+    n.xy = select(n.z >= 0.0f, n.xy, OctWrap(n.xy));
+#else
+    n.xy = (n.z >= 0.0f) ? n.xy : OctWrap(n.xy);
+#endif
+    return (n.xy * 0.5f) + 0.5f;
 }
 
 //-----------------------------------------------------------------------------
@@ -103,6 +117,22 @@ float3 FromAugularMapCoord(float2 uv)
     dir.xy = p * 2.0f * scale;
     dir.z  = z;
 
+    return normalize(dir);
+}
+
+//-----------------------------------------------------------------------------
+//      八面体マップのテクスチャ座標からキューブマップサンプリング方向を求めます.
+//-----------------------------------------------------------------------------
+float3 FromOctahedralMapCoord(float2 uv)
+{
+    float2 st = uv * 2.0f - 1.0f;
+    float3 dir = float3(st.x, st.y, 1.0f - abs(st.x) - abs(st.y));
+    float t = saturate(-dir.z);
+#if __HLSL_VERSION >= 2021
+    dir.xy += select(dir.xy >= 0.0f, -t, t);
+#else
+    dir.xy += (dir.xy >= 0.0f) ? -t : t;
+#endif
     return normalize(dir);
 }
 

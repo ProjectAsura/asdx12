@@ -845,4 +845,16 @@ uint4 DecodeR10G10B10A2(uint packed)
         (packed >> 30) & 0x2);
 }
 
+//-----------------------------------------------------------------------------
+//      八面体ラップ処理を行います.
+//-----------------------------------------------------------------------------
+float2 OctWrap(float2 v)
+{
+#if __HLSL_VERSION >= 2021
+    return (1.0f - abs(v.yx)) * select(v.xy >= 0.0f, 1.0f, -1.0f);
+#else
+    return (1.0f - abs(v.yx)) * (v.xy >= 0.0f ? 1.0f : -1.0f);
+#endif
+}
+
 #endif//ASDX_MATH_HLSLI
