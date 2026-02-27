@@ -32,12 +32,12 @@ int main(int argc, char** argv)
     parser.parse_check(argc, argv);
 
     // 変換設定.
-    asdx::MotionConverter::Desc desc = {};
+    MotionConverter::Desc desc = {};
     desc.InputPath  = parser.get<std::string>("input");
     desc.OutputPath = parser.get<std::string>("output");
 
     // 変換処理実行.
-    auto ret = asdx::MotionConverter::Convert(desc);
+    auto ret = MotionConverter::Convert(desc);
 
     // 正常終了.
     if (ret)

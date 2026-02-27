@@ -3,7 +3,8 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="../../../external/DirectXTex/DirectXTex/DirectXTex_Desktop_2022.vcxproj" Id="371b9fa9-4c90-4ac6-a123-aced756d6c77" />
+  <Project Path="../../asdxAsset/project/asdxAsset.vcxproj" Id="b9d43f50-8879-4195-81ab-e3b1ea58f566">
+    <Platform Project="x64" />
+  </Project>
   <Project Path="TextureConverter.vcxproj" Id="84a70e4c-a245-4ce7-9a2e-520fc513e9fc" />
-  <Project Path="TextureConverterLib.vcxproj" Id="e549eb2f-2172-47b4-b323-f74909a9acf6" />
 </Solution>

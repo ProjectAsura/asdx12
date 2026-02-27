@@ -1,0 +1,155 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="ソース ファイル">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="ヘッダー ファイル">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="リソース ファイル">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="external">
+      <UniqueIdentifier>{be4e80af-9319-40d3-8f35-f25c9b508db2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="external\simdjson">
+      <UniqueIdentifier>{85176a71-5d9a-43f6-9d98-db3cfd5eb5a5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="external\tinyxml">
+      <UniqueIdentifier>{717e43ca-df3e-4164-887b-4a907f72de5d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="external\DirectXTex">
+      <UniqueIdentifier>{d351abb5-5ce8-4d88-961f-5e7cdc3e560c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="external\MikkTSpace">
+      <UniqueIdentifier>{100f51ab-ab6b-406c-aa4a-2d3069920f66}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\FontConverter.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\MapChipConverter.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ModelConverter.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\MotionConverter.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\TextureConverter.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\external\simdjson\src\simdjson.cpp">
+      <Filter>external\simdjson</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\external\tinyxml2\tinyxml2.cpp">
+      <Filter>external\tinyxml</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\external\DirectXTex\DirectXTex\BC.cpp">
+      <Filter>external\DirectXTex</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\external\DirectXTex\DirectXTex\BC4BC5.cpp">
+      <Filter>external\DirectXTex</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\external\DirectXTex\DirectXTex\BC6HBC7.cpp">
+      <Filter>external\DirectXTex</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\external\DirectXTex\DirectXTex\BCDirectCompute.cpp">
+      <Filter>external\DirectXTex</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\external\DirectXTex\DirectXTex\DirectXTexCompress.cpp">
+      <Filter>external\DirectXTex</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\external\DirectXTex\DirectXTex\DirectXTexCompressGPU.cpp">
+      <Filter>external\DirectXTex</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\external\DirectXTex\DirectXTex\DirectXTexConvert.cpp">
+      <Filter>external\DirectXTex</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\external\DirectXTex\DirectXTex\DirectXTexDDS.cpp">
+      <Filter>external\DirectXTex</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\external\DirectXTex\DirectXTex\DirectXTexFlipRotate.cpp">
+      <Filter>external\DirectXTex</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\external\DirectXTex\DirectXTex\DirectXTexHDR.cpp">
+      <Filter>external\DirectXTex</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\external\DirectXTex\DirectXTex\DirectXTexImage.cpp">
+      <Filter>external\DirectXTex</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\external\DirectXTex\DirectXTex\DirectXTexMipmaps.cpp">
+      <Filter>external\DirectXTex</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\external\DirectXTex\DirectXTex\DirectXTexMisc.cpp">
+      <Filter>external\DirectXTex</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\external\DirectXTex\DirectXTex\DirectXTexNormalMaps.cpp">
+      <Filter>external\DirectXTex</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\external\DirectXTex\DirectXTex\DirectXTexPMAlpha.cpp">
+      <Filter>external\DirectXTex</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\external\DirectXTex\DirectXTex\DirectXTexResize.cpp">
+      <Filter>external\DirectXTex</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\external\DirectXTex\DirectXTex\DirectXTexTGA.cpp">
+      <Filter>external\DirectXTex</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\external\DirectXTex\DirectXTex\DirectXTexUtil.cpp">
+      <Filter>external\DirectXTex</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\external\DirectXTex\DirectXTex\DirectXTexWIC.cpp">
+      <Filter>external\DirectXTex</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\external\DirectXTex\DirectXTex\DirectXTexD3D11.cpp">
+      <Filter>external\DirectXTex</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\external\DirectXTex\DirectXTex\DirectXTexD3D12.cpp">
+      <Filter>external\DirectXTex</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\external\MikkTSpace\mikktspace.c">
+      <Filter>external\MikkTSpace</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\include\FontConverter.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\MapChipConverter.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\ModelConverter.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\MotionConverter.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\TextureConverter.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\format\FontBinary.fbs">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="..\format\MapChipBinary.fbs">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="..\format\ModelBinary.fbs">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="..\format\MotionBinary.fbs">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="..\format\TextureBinary.fbs">
+      <Filter>リソース ファイル</Filter>
+    </None>
+  </ItemGroup>
+</Project>

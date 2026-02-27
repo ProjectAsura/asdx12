@@ -713,13 +713,11 @@ void ModelViewer::DrawDebugTab()
     ImGui::Separator();
 
     const char* filter =
-        "HDRIテクスチャ\0*.hdr;*.dds;*.txb;*jxr;*.hdp\0"
+        "読込可能なテクスチャ形式\0*.hdr;*.dds;*.txb;*jxr\0"
         "Project Asura Texture Binary (*.txb)\0*.txb\0"
         "Direct Draw Surface (*.dds)\0*.dds\0"
         "Radiance HDR (*.hdr)\0*.hdr\0"
-        "HD Photo (*.hdp)\0*.hdp\0"
-        "JPEG XR (*.jxr)\0*.jxr\0"
-        "Window Media Photo (*.wdp)\0*.wpd\0";
+        "JPEG XR (*.jxr)\0*.jxr\0\0";
 
     ImGui::BeginTable("##Maps", 2);
     ImGui::TableSetupColumn("##MapRow0", ImGuiTableColumnFlags_WidthFixed);

@@ -1,4 +1,6 @@
-﻿namespace asdx.res;
+﻿include "TextureBinary.fbs";
+
+namespace asdx.res;
 
 struct Bounds
 {
@@ -21,16 +23,11 @@ table FontBinary
     Version       : uint;
     DistanceRange : float;
     FontSize      : uint;
-    Width         : uint;
-    Height        : uint;
-    RowPitch      : uint;
-    SlicePitch    : uint;
-    TextureFormat : uint;
     LineHeight    : float;
     Ascender      : float;
     Descender     : float;
     Glyphs        : [Glyph];
-    Texels        : [ubyte];
+    Texture       : TextureBinary;
 }
 
 root_type FontBinary;

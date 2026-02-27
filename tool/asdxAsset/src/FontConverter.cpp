@@ -12,6 +12,7 @@
 #include <cstdio>
 #include <Windows.h>
 #include <FontConverter.h>
+#include <TextureConverter.h>
 #include <simdjson.h>
 #include <DirectXTex.h>
 #include <FontBinary_generated.h>
@@ -49,6 +50,12 @@ namespace asdx {
 ///////////////////////////////////////////////////////////////////////////////
 // FontConvert class
 ///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      現在のバイナリバージョンを取得します.
+//-----------------------------------------------------------------------------
+uint32_t FontConverter::GetCurrentVersion()
+{ return CURRENT_VERSION; }
 
 //-----------------------------------------------------------------------------
 //      変換処理を行います.
@@ -127,13 +134,13 @@ bool FontConverter::Convert(const Desc& desc)
         auto ascender       = float(metrics["ascender"]  .get_double().value());
         auto descender      = float(metrics["descender"] .get_double().value());
 
-        DXGI_FORMAT format     = DXGI_FORMAT_UNKNOWN;
-        uint32_t    rowPitch   = 0;
-        uint32_t    slicePitch = 0;
-        std::vector<uint8_t> texels;
+        flatbuffers::FlatBufferBuilder builder(1024);
+        flatbuffers::Offset<asdx::res::TextureBinary> texture;
+        std::vector<asdx::res::SubResource> subResources;
+        DirectX::ScratchImage scratchImage = {};
+
         {
             DirectX::TexMetadata  texMetaData  = {};
-            DirectX::ScratchImage scratchImage = {};
 
             std::wstring inputPath = ToStringW(desc.DdsPath);
             auto hr = DirectX::LoadFromDDSFile(
@@ -178,33 +185,38 @@ bool FontConverter::Convert(const Desc& desc)
             }
 
             auto images = scratchImage.GetImages();
-            format      = texMetaData.format;
-            rowPitch    = uint32_t(images[0].rowPitch);
-            slicePitch  = uint32_t(images[0].slicePitch);
+            auto subRes = asdx::res::SubResource(
+                uint32_t(images[0].width),
+                uint32_t(images[0].height),
+                images[0].rowPitch,
+                images[0].slicePitch,
+                0);
+            subResources.push_back(subRes);
 
-            texels.resize(scratchImage.GetPixelsSize());
-            memcpy(texels.data(), scratchImage.GetPixels(), texels.size());
+            texture = asdx::res::CreateTextureBinary(
+                builder,
+                TextureConverter::GetCurrentVersion(),
+                TextureConverter::GetDimension(texMetaData),
+                uint32_t(texMetaData.width),
+                uint32_t(texMetaData.height),
+                TextureConverter::GetDepthOrArraySize(texMetaData),
+                uint16_t(texMetaData.mipLevels),
+                uint32_t(texMetaData.format),
+                builder.CreateVectorOfStructs<asdx::res::SubResource>(subResources),
+                builder.CreateVector<uint8_t>(scratchImage.GetPixels(), scratchImage.GetPixelsSize()));
 
-            scratchImage.Release();
         }
-
-        flatbuffers::FlatBufferBuilder builder(1024);
 
         auto bin = asdx::res::CreateFontBinaryDirect(
             builder,
             CURRENT_VERSION,
             distanceRange,
             fontSize,
-            texWidth,
-            texHeight,
-            rowPitch,
-            slicePitch,
-            (uint32_t)format,
             lineHeight,
             ascender,
             descender,
             &srcGlyph,
-            &texels);
+            texture);
 
         builder.Finish(bin);
 
@@ -215,7 +227,7 @@ bool FontConverter::Convert(const Desc& desc)
         auto err = fopen_s(&fp, desc.OutputPath.c_str(), "wb");
         if (err != 0)
         {
-            fprintf_s(stderr, "Output File Open Failed. path = %s\n", desc.OutputPath.c_str());
+            fprintf_s(stderr, "Output File Open Failed. path = %s, errcode = 0x%x\n", desc.OutputPath.c_str(), err);
             return false;
         }
 

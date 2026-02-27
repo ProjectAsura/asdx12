@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug_MT|x64">
+      <Configuration>Debug_MT</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_MT|x64">
+      <Configuration>Release_MT</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>18.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{b9d43f50-8879-4195-81ab-e3b1ea58f566}</ProjectGuid>
+    <RootNamespace>asdxAsset</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_MT|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_MT|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug_MT|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release_MT|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_MT|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\external\DirectXTex\DirectXTex;$(ProjectDir)..\..\..\external\DirectXTex\DirectXTex\Shaders\Compiled;$(ProjectDir)..\..\..\external\DirectXTex\Common;$(ProjectDir)..\..\..\external\simdjson\include;$(ProjectDir)..\..\..\external\simdjson\src;$(ProjectDir)..\..\..\external\MikkTSpace;$(ProjectDir)..\..\..\external\tinyxml2;$(ProjectDir)..\..\..\external\meshoptimizer;$(ProjectDir)..\..\..\external\flatbuffers\include;C:\Program Files\Assimp\include;$(ProjectDir)..\include;$(ProjectDir)..\..\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <PreBuildEvent>
+      <Command>call $(ProjectDir)gen_format.bat</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\external\DirectXTex\DirectXTex;$(ProjectDir)..\..\..\external\DirectXTex\DirectXTex\Shaders\Compiled;$(ProjectDir)..\..\..\external\DirectXTex\Common;$(ProjectDir)..\..\..\external\simdjson\include;$(ProjectDir)..\..\..\external\simdjson\src;$(ProjectDir)..\..\..\external\MikkTSpace;$(ProjectDir)..\..\..\external\tinyxml2;$(ProjectDir)..\..\..\external\meshoptimizer;$(ProjectDir)..\..\..\external\flatbuffers\include;C:\Program Files\Assimp\include;$(ProjectDir)..\include;$(ProjectDir)..\..\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <PreBuildEvent>
+      <Command>call $(ProjectDir)gen_format.bat</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_MT|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\external\DirectXTex\DirectXTex;$(ProjectDir)..\..\..\external\DirectXTex\DirectXTex\Shaders\Compiled;$(ProjectDir)..\..\..\external\DirectXTex\Common;$(ProjectDir)..\..\..\external\simdjson\include;$(ProjectDir)..\..\..\external\simdjson\src;$(ProjectDir)..\..\..\external\MikkTSpace;$(ProjectDir)..\..\..\external\tinyxml2;$(ProjectDir)..\..\..\external\meshoptimizer;$(ProjectDir)..\..\..\external\flatbuffers\include;C:\Program Files\Assimp\include;$(ProjectDir)..\include;$(ProjectDir)..\..\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <PreBuildEvent>
+      <Command>call $(ProjectDir)gen_format.bat</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\external\DirectXTex\DirectXTex;$(ProjectDir)..\..\..\external\DirectXTex\DirectXTex\Shaders\Compiled;$(ProjectDir)..\..\..\external\DirectXTex\Common;$(ProjectDir)..\..\..\external\simdjson\include;$(ProjectDir)..\..\..\external\simdjson\src;$(ProjectDir)..\..\..\external\MikkTSpace;$(ProjectDir)..\..\..\external\tinyxml2;$(ProjectDir)..\..\..\external\meshoptimizer;$(ProjectDir)..\..\..\external\flatbuffers\include;C:\Program Files\Assimp\include;$(ProjectDir)..\include;$(ProjectDir)..\..\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <PreBuildEvent>
+      <Command>call $(ProjectDir)gen_format.bat</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\external\DirectXTex\DirectXTex\BC.cpp" />
+    <ClCompile Include="..\..\..\external\DirectXTex\DirectXTex\BC4BC5.cpp" />
+    <ClCompile Include="..\..\..\external\DirectXTex\DirectXTex\BC6HBC7.cpp" />
+    <ClCompile Include="..\..\..\external\DirectXTex\DirectXTex\BCDirectCompute.cpp" />
+    <ClCompile Include="..\..\..\external\DirectXTex\DirectXTex\DirectXTexCompress.cpp" />
+    <ClCompile Include="..\..\..\external\DirectXTex\DirectXTex\DirectXTexCompressGPU.cpp" />
+    <ClCompile Include="..\..\..\external\DirectXTex\DirectXTex\DirectXTexConvert.cpp" />
+    <ClCompile Include="..\..\..\external\DirectXTex\DirectXTex\DirectXTexD3D11.cpp" />
+    <ClCompile Include="..\..\..\external\DirectXTex\DirectXTex\DirectXTexD3D12.cpp" />
+    <ClCompile Include="..\..\..\external\DirectXTex\DirectXTex\DirectXTexDDS.cpp" />
+    <ClCompile Include="..\..\..\external\DirectXTex\DirectXTex\DirectXTexFlipRotate.cpp" />
+    <ClCompile Include="..\..\..\external\DirectXTex\DirectXTex\DirectXTexHDR.cpp" />
+    <ClCompile Include="..\..\..\external\DirectXTex\DirectXTex\DirectXTexImage.cpp" />
+    <ClCompile Include="..\..\..\external\DirectXTex\DirectXTex\DirectXTexMipmaps.cpp" />
+    <ClCompile Include="..\..\..\external\DirectXTex\DirectXTex\DirectXTexMisc.cpp" />
+    <ClCompile Include="..\..\..\external\DirectXTex\DirectXTex\DirectXTexNormalMaps.cpp" />
+    <ClCompile Include="..\..\..\external\DirectXTex\DirectXTex\DirectXTexPMAlpha.cpp" />
+    <ClCompile Include="..\..\..\external\DirectXTex\DirectXTex\DirectXTexResize.cpp" />
+    <ClCompile Include="..\..\..\external\DirectXTex\DirectXTex\DirectXTexTGA.cpp" />
+    <ClCompile Include="..\..\..\external\DirectXTex\DirectXTex\DirectXTexUtil.cpp" />
+    <ClCompile Include="..\..\..\external\DirectXTex\DirectXTex\DirectXTexWIC.cpp" />
+    <ClCompile Include="..\..\..\external\MikkTSpace\mikktspace.c" />
+    <ClCompile Include="..\..\..\external\simdjson\src\simdjson.cpp" />
+    <ClCompile Include="..\..\..\external\tinyxml2\tinyxml2.cpp" />
+    <ClCompile Include="..\src\FontConverter.cpp" />
+    <ClCompile Include="..\src\MapChipConverter.cpp" />
+    <ClCompile Include="..\src\ModelConverter.cpp" />
+    <ClCompile Include="..\src\MotionConverter.cpp" />
+    <ClCompile Include="..\src\TextureConverter.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\include\FontConverter.h" />
+    <ClInclude Include="..\include\MapChipConverter.h" />
+    <ClInclude Include="..\include\ModelConverter.h" />
+    <ClInclude Include="..\include\MotionConverter.h" />
+    <ClInclude Include="..\include\TextureConverter.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\format\FontBinary.fbs" />
+    <None Include="..\format\MapChipBinary.fbs" />
+    <None Include="..\format\ModelBinary.fbs" />
+    <None Include="..\format\MotionBinary.fbs" />
+    <None Include="..\format\TextureBinary.fbs" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

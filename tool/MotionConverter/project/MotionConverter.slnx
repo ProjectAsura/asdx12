@@ -3,6 +3,8 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
+  <Project Path="../../asdxAsset/project/asdxAsset.vcxproj" Id="b9d43f50-8879-4195-81ab-e3b1ea58f566">
+    <Platform Project="x64" />
+  </Project>
   <Project Path="MotionConverter.vcxproj" Id="30acb3fd-8fc1-42fc-a161-074415a3fdc2" />
-  <Project Path="MotionConverterLib.vcxproj" Id="3e002619-f36f-4199-b293-f27306180dbd" />
 </Solution>

@@ -12,13 +12,6 @@
 #include "MapChipBinary_generated.h"
 
 
-namespace {
-
-static_assert(sizeof (asdx::ResSubResource) == sizeof (asdx::res::MapChipSubResource));
-static_assert(alignof(asdx::ResSubResource) == alignof(asdx::res::MapChipSubResource));
-
-} // namespace
-
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -134,18 +127,17 @@ ResTexture MapChipBinary::GetTexture(uint32_t tileSetIndex) const
 {
     assert(!m_Blob.empty());
     auto tileSet = res::GetMapChipBinary(m_Blob.data())->TileSets()->Get(tileSetIndex);
-
-    auto image = tileSet->Image();
+    auto texture = tileSet->Texture();
 
     ResTexture result = {};
-    result.Dimension        = TEXTURE_DIMENSION_2D;
-    result.Width            = image->Width();
-    result.Height           = image->Height();
-    result.DepthOrArraySize = 1;
-    result.Format           = image->Format();
-    result.MipLevels        = 1;
-    result.SubResources     = ArrayView(reinterpret_cast<const ResSubResource*>(*image->SubResources()->data()), image->SubResources()->size());
-    result.Pixels           = ArrayView(image->Pixels()->data(), image->Pixels()->size());
+    result.Dimension        = TEXTURE_DIMENSION(texture->Dimension());
+    result.Width            = texture->Width();
+    result.Height           = texture->Height();
+    result.DepthOrArraySize = texture->DepthOrArraySize();
+    result.Format           = texture->Format();
+    result.MipLevels        = texture->MipLevels();
+    result.SubResources     = ArrayView(reinterpret_cast<const ResSubResource*>(texture->SubResources()->data()), texture->SubResources()->size());
+    result.Pixels           = ArrayView(texture->Texels()->data(), texture->Texels()->size());
 
     return result;
 }
@@ -186,8 +178,8 @@ ResTileCoord MapChipBinary::GetCoord(uint32_t tileSetIndex, uint32_t tileId) con
     auto x = tileId % tileSet->Columns();
     auto y = tileId / tileSet->Columns();
 
-    auto u = float(tileSet->TileWidth ()) / float(tileSet->Image()->Width ());
-    auto v = float(tileSet->TileHeight()) / float(tileSet->Image()->Height());
+    auto u = float(tileSet->TileWidth ()) / float(tileSet->Texture()->Width ());
+    auto v = float(tileSet->TileHeight()) / float(tileSet->Texture()->Height());
 
     ResTileCoord result;
     result.Uv0.x = u * x;

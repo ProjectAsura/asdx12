@@ -878,7 +878,7 @@ void ModelViewer::OnDrop(const wchar_t** dropFiles, uint32_t fileCount)
     }
     else
     {
-        if (ModelConverter::Convert(path.string().c_str(), modelBinary))
+        if (ModelConverter::Convert(path.string().c_str(), true, path.parent_path().string(), modelBinary))
         {
             m_ModelBinary = std::move(modelBinary);
             RecreateModel();
@@ -1086,7 +1086,7 @@ void ModelViewer::LoadModel()
     }
     else
     {
-        if (!ModelConverter::Convert(input.c_str(), modelBinary))
+        if (!ModelConverter::Convert(input.c_str(), true, path.parent_path().string(), modelBinary))
         {
             ELOG("Error : ModelConverter::Convert() Failed.");
             return;

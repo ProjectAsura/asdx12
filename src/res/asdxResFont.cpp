@@ -118,7 +118,7 @@ float FontBinary::GetDescender() const
 uint32_t FontBinary::GetWidth() const
 {
     assert(!m_Blob.empty());
-    return res::GetFontBinary(m_Blob.data())->Width();
+    return res::GetFontBinary(m_Blob.data())->Texture()->Width();
 }
 
 //-----------------------------------------------------------------------------
@@ -127,43 +127,28 @@ uint32_t FontBinary::GetWidth() const
 uint32_t FontBinary::GetHeight() const
 {
     assert(!m_Blob.empty());
-    return res::GetFontBinary(m_Blob.data())->Height();
+    return res::GetFontBinary(m_Blob.data())->Texture()->Height();
 }
 
 //-----------------------------------------------------------------------------
-//      テクスチャの1行あたりのサイズを取得します.
+//      テクスチャを取得します.
 //-----------------------------------------------------------------------------
-uint32_t FontBinary::GetRowPitch() const
+ResTexture FontBinary::GetTexture() const
 {
     assert(!m_Blob.empty());
-    return res::GetFontBinary(m_Blob.data())->RowPitch();
-}
+    auto texture = res::GetFontBinary(m_Blob.data())->Texture();
 
-//-----------------------------------------------------------------------------
-//      テクスチャのスライスサイズを取得します.
-//-----------------------------------------------------------------------------
-uint32_t FontBinary::GetSlicePitch() const
-{
-    assert(!m_Blob.empty());
-    return res::GetFontBinary(m_Blob.data())->SlicePitch();
-}
+    ResTexture result = {};
+    result.Dimension        = TEXTURE_DIMENSION(texture->Dimension());
+    result.Width            = texture->Width();
+    result.Height           = texture->Height();
+    result.DepthOrArraySize = texture->DepthOrArraySize();
+    result.Format           = texture->Format();
+    result.MipLevels        = texture->MipLevels();
+    result.SubResources     = ArrayView(reinterpret_cast<const ResSubResource*>(texture->SubResources()->data()), texture->SubResources()->size());
+    result.Pixels           = ArrayView(texture->Texels()->data(), texture->Texels()->size());
 
-//-----------------------------------------------------------------------------
-//      テクスチャフォーマットを取得します.
-//-----------------------------------------------------------------------------
-DXGI_FORMAT FontBinary::GetFormat() const
-{
-    assert(!m_Blob.empty());
-    return DXGI_FORMAT(res::GetFontBinary(m_Blob.data())->TextureFormat());
-}
-
-//-----------------------------------------------------------------------------
-//      テクセルデータを取得します.
-//-----------------------------------------------------------------------------
-const uint8_t* FontBinary::GetTexels() const
-{
-    assert(!m_Blob.empty());
-    return res::GetFontBinary(m_Blob.data())->Texels()->data();
+    return result;
 }
 
 //-----------------------------------------------------------------------------

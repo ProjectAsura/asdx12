@@ -16,13 +16,16 @@
 #include <filesystem>
 
 
+#ifndef ELOG
+#define ELOG(x, ...) fprintf_s(stderr, "[File:%s, Line:%d] " x "\n", __FILE__, __LINE__, ##__VA_ARGS__)
+#endif//ELOG
+
 namespace {
 
 //-----------------------------------------------------------------------------
 // Constant Values.
 //-----------------------------------------------------------------------------
 static constexpr uint32_t CURRENT_VERSION = 1u; //!< 現在のバイナリバージョン.
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // TEXTURE_DIMENSION enum
@@ -52,10 +55,23 @@ std::wstring ToStringW( const std::string& value )
     return result;
 }
 
+} // namespace
+
+
+///////////////////////////////////////////////////////////////////////////////
+// TextureConverter class
+///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      現在のテクスチャバイナリバージョンを取得します.
+//-----------------------------------------------------------------------------
+uint32_t TextureConverter::GetCurrentVersion()
+{ return CURRENT_VERSION; }
+
 //-----------------------------------------------------------------------------
 //      奥行または配列数を取得します.
 //-----------------------------------------------------------------------------
-uint16_t GetDepthOrArraySize(const DirectX::TexMetadata& metaData)
+uint16_t TextureConverter::GetDepthOrArraySize(const DirectX::TexMetadata& metaData)
 {
     if (metaData.dimension == DirectX::TEX_DIMENSION_TEXTURE3D)
         return uint16_t(metaData.depth);
@@ -66,7 +82,7 @@ uint16_t GetDepthOrArraySize(const DirectX::TexMetadata& metaData)
 //-----------------------------------------------------------------------------
 //      テクスチャの次元を取得します.
 //-----------------------------------------------------------------------------
-uint32_t GetDimension(const DirectX::TexMetadata& metaData)
+uint32_t TextureConverter::GetDimension(const DirectX::TexMetadata& metaData)
 {
     switch(metaData.dimension)
     {
@@ -90,13 +106,6 @@ uint32_t GetDimension(const DirectX::TexMetadata& metaData)
     return TEXTURE_DIMENSION_UNKNOWN;
 }
 
-} // namespace
-
-
-///////////////////////////////////////////////////////////////////////////////
-// TextureConverter class
-///////////////////////////////////////////////////////////////////////////////
-
 //-----------------------------------------------------------------------------
 //      変換処理を行います.
 //-----------------------------------------------------------------------------
@@ -104,13 +113,14 @@ bool TextureConverter::Convert(const Desc& desc)
 {
     if (desc.InputPath.empty() || desc.OutputPath.empty())
     {
-        fprintf_s(stderr, "Invalid Arguments.");
+        ELOG("Error : Invalid Arguments.");
         return false;
     }
 
     std::vector<uint8_t> blob;
     if (!Convert(desc.InputPath.c_str(), blob))
     {
+        ELOG("Error : Binary Convert Failed.");
         return false;
     }
 
@@ -120,7 +130,7 @@ bool TextureConverter::Convert(const Desc& desc)
         auto err = fopen_s(&fp, desc.OutputPath.c_str(), "wb");
         if (err != 0)
         {
-            fprintf_s(stderr, "Output File Open Failed. path = %s\n", desc.OutputPath.c_str());
+            ELOG("Error : Output File Open Failed. path = %s, errcode = 0x%x\n", desc.OutputPath.c_str(), err);
             return false;
         }
 
@@ -140,7 +150,7 @@ bool TextureConverter::Convert(const char* path, std::vector<uint8_t>& output)
 {
     if (path == nullptr)
     {
-        fprintf_s(stderr, "Invalid Arguments.");
+        ELOG("Error : Invalid Arguments.");
         return false;
     }
 
@@ -173,17 +183,18 @@ bool TextureConverter::Convert(const char* path, std::vector<uint8_t>& output)
     else
     {
         hr = E_FAIL;
-        fprintf_s(stderr, "Unsupported File Extension (%s)", ext.string().c_str());
+        ELOG("Error : Unsupported File Extension (%s)", ext.string().c_str());
     }
 
     if (FAILED(hr))
     {
-        fprintf_s(stderr, "TextureConvert::Convert() Failed. path = %s, errcode = 0x%x", path, hr);
+        ELOG("Error : TextureConvert::Convert() Failed. path = %s, errcode = 0x%x", path, hr);
         return false;
     }
 
     if (!Convert(scratchImage, output))
     {
+        ELOG("Error : Output Binary Create Failed.");
         return false;
     }
 
@@ -199,13 +210,7 @@ bool TextureConverter::Convert(const DirectX::ScratchImage& scratchImage, std::v
 
     if (texMetaData.format == DXGI_FORMAT_UNKNOWN)
     {
-        fprintf_s(stderr, "Converter Error: Unsupported Resource Format. format = 0x%x\n", texMetaData.format);
-        return false;
-    }
-
-    if (texMetaData.mipLevels >= 15)
-    {
-        fprintf_s(stderr,"Converter Error: Invalid MipLevles. mipLevels = %zu\n", texMetaData.mipLevels);
+        ELOG("Error : Unsupported Resource Format. format = 0x%x\n", texMetaData.format);
         return false;
     }
 
@@ -236,10 +241,10 @@ bool TextureConverter::Convert(const DirectX::ScratchImage& scratchImage, std::v
         auto resource = CreateTextureBinary(
             builder,
             CURRENT_VERSION,
-            GetDimension(texMetaData),
+            TextureConverter::GetDimension(texMetaData),
             uint32_t(texMetaData.width),
             uint32_t(texMetaData.height),
-            GetDepthOrArraySize(texMetaData),
+            TextureConverter::GetDepthOrArraySize(texMetaData),
             uint16_t(texMetaData.mipLevels),
             uint32_t(texMetaData.format),
             builder.CreateVectorOfStructs<asdx::res::SubResource>(subresources),
@@ -262,7 +267,7 @@ bool TextureConverter::ReverseConvert(const std::vector<uint8_t>& input, DirectX
 {
     if (input.empty())
     {
-        fprintf_s(stderr, "Converter Error : Invalid Argument.\n");
+        ELOG("Error : Invalid Argument.\n");
         return false;
     }
 
@@ -313,7 +318,7 @@ bool TextureConverter::ReverseConvert(const std::vector<uint8_t>& input, DirectX
 
     if (FAILED(hr))
     {
-        fprintf_s(stderr, "ReverseConvert Failed. errcode = 0x%x", hr);
+        ELOG("Error : ReverseConvert Failed. errcode = 0x%x", hr);
         return false;
     }
 

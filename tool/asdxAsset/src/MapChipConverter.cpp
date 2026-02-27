@@ -13,6 +13,7 @@
 #include <vector>
 #include <sstream>
 #include <MapChipConverter.h>
+#include <TextureConverter.h>
 #include <DirectXTex.h>
 #include <tinyxml2.h>
 #include "MapChipBinary_generated.h"
@@ -73,6 +74,12 @@ namespace asdx {
 ///////////////////////////////////////////////////////////////////////////////
 
 //-----------------------------------------------------------------------------
+//      現在のバイナリバージョンを取得します.
+//-----------------------------------------------------------------------------
+uint32_t MapChipConverter::GetCurrentVersion()
+{ return CURRENT_VERSION; }
+
+//-----------------------------------------------------------------------------
 //      変換処理を行います.
 //-----------------------------------------------------------------------------
 bool MapChipConverter::Convert(const Desc& desc)
@@ -107,27 +114,25 @@ bool MapChipConverter::Convert(const Desc& desc)
 
     std::vector<flatbuffers::Offset<asdx::res::TileSet>> tilesets;
     std::vector<flatbuffers::Offset<asdx::res::Layer>>   layers;
+    DirectX::ScratchImage scratchImage = {};
 
     // tileset
     {
         for(auto tileset = map->FirstChildElement("tileset"); tileset != nullptr; tileset = tileset->NextSiblingElement("tileset"))
         {
             auto image = tileset->FirstChildElement("image");
-            uint32_t imageWidth  = 0;
-            uint32_t imageHeight = 0;
-            flatbuffers::Offset<asdx::res::MapChip> mapChip;
+            flatbuffers::Offset<asdx::res::TextureBinary> texture;
             if (image != nullptr)
             {
-                imageWidth  = image->UnsignedAttribute("width");
-                imageHeight = image->UnsignedAttribute("height");
+                auto imageWidth  = image->UnsignedAttribute("width");
+                auto imageHeight = image->UnsignedAttribute("height");
 
                 std::vector<uint8_t> pixels;
 
                 auto path = image->Attribute("source");
 
                 // テクスチャロード.
-                DirectX::TexMetadata  metaData     = {};
-                DirectX::ScratchImage scratchImage = {};
+                DirectX::TexMetadata metaData = {};
 
                 std::wstring inputPath = ToStringW(path);
                 auto hr = DirectX::LoadFromWICFile(
@@ -139,29 +144,28 @@ bool MapChipConverter::Convert(const Desc& desc)
                 assert(imageWidth  == metaData.width);
                 assert(imageHeight == metaData.height);
 
-                pixels.resize(scratchImage.GetPixelsSize());
-                memcpy(pixels.data(), scratchImage.GetPixels(), pixels.size());
-
                 auto images = scratchImage.GetImages();
 
-                std::vector<asdx::res::MapChipSubResource> subResources;
-                subResources.push_back(asdx::res::MapChipSubResource(
-                    uint32_t(images[0].width),
-                    uint32_t(images[0].height),
-                    images[0].rowPitch,
-                    images[0].slicePitch,
-                    0
-                ));
+                std::vector<asdx::res::SubResource> subResources;
+                subResources.push_back(
+                    asdx::res::SubResource(
+                        uint32_t(images[0].width),
+                        uint32_t(images[0].height),
+                        images[0].rowPitch,
+                        images[0].slicePitch,
+                        0));
 
-                mapChip = asdx::res::CreateMapChipDirect(
+                texture = asdx::res::CreateTextureBinary(
                     builder,
-                    imageWidth,
-                    imageHeight,
+                    TextureConverter::GetCurrentVersion(),
+                    TextureConverter::GetDimension(metaData),
+                    uint32_t(metaData.width),
+                    uint32_t(metaData.height),
+                    TextureConverter::GetDepthOrArraySize(metaData),
+                    uint16_t(metaData.mipLevels),
                     uint32_t(metaData.format),
-                    &subResources,
-                    &pixels);
-
-                scratchImage.Release();
+                    builder.CreateVectorOfStructs<asdx::res::SubResource>(subResources),
+                    builder.CreateVector<uint8_t>(scratchImage.GetPixels(), scratchImage.GetPixelsSize()));
             }
 
             auto firstChipId    = tileset->UnsignedAttribute("firstgid", 1);
@@ -208,7 +212,7 @@ bool MapChipConverter::Convert(const Desc& desc)
                     tileCount,
                     tileW,
                     tileH,
-                    mapChip,
+                    texture,
                     &tiles));
         }
     }
@@ -266,7 +270,7 @@ bool MapChipConverter::Convert(const Desc& desc)
         auto err = fopen_s(&fp, desc.OutputPath.c_str(), "wb");
         if (err != 0)
         {
-            ELOG("Error : Output File Open Failed. path = %s", desc.OutputPath.c_str());
+            ELOG("Error : Output File Open Failed. path = %s, errcode = 0x%x", desc.OutputPath.c_str(), err);
             return false;
         }
 

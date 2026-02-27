@@ -3,7 +3,8 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="../../../external/DirectXTex/DirectXTex/DirectXTex_Desktop_2022.vcxproj" Id="371b9fa9-4c90-4ac6-a123-aced756d6c77" />
+  <Project Path="../../asdxAsset/project/asdxAsset.vcxproj" Id="b9d43f50-8879-4195-81ab-e3b1ea58f566">
+    <Platform Project="x64" />
+  </Project>
   <Project Path="MapChipConverter.vcxproj" Id="c0bc7624-9537-4239-a061-39fb23102cc4" />
-  <Project Path="MapChipConverterLib.vcxproj" Id="5f0d6793-095a-4d79-bfd9-15e18a0ffe72" />
 </Solution>

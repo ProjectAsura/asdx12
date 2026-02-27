@@ -12,6 +12,7 @@
 #include <fnd/asdxMath.h>
 #include <fnd/asdxPath.h>
 #include <ModelConverter.h>
+#include <TextureConverter.h>
 #include <mikktspace.h>
 #include <assimp/Importer.hpp>
 #include <assimp/Exporter.hpp>
@@ -458,6 +459,12 @@ void ParseMesh
 ///////////////////////////////////////////////////////////////////////////////
 
 //-----------------------------------------------------------------------------
+//      現在のバイナリバージョンを取得します.
+//-----------------------------------------------------------------------------
+uint32_t ModelConverter::GetCurrentVersion()
+{ return CURRENT_VERSION; }
+
+//-----------------------------------------------------------------------------
 //      変換処理を行います.
 //-----------------------------------------------------------------------------
 bool ModelConverter::Convert(const Desc& desc)
@@ -468,8 +475,11 @@ bool ModelConverter::Convert(const Desc& desc)
         return false;
     }
 
+    std::filesystem::path txbOutPath = desc.OutputPath;
+    txbOutPath = txbOutPath.parent_path();
+
     std::vector<uint8_t> binary;
-    if (!Convert(desc.InputPath.c_str(), binary))
+    if (!Convert(desc.InputPath.c_str(), desc.TextureConvert, txbOutPath.string(), binary))
     {
         ELOG("Error : Convert Failed.");
         return false;
@@ -495,12 +505,33 @@ bool ModelConverter::Convert(const Desc& desc)
 //-----------------------------------------------------------------------------
 //      変換処理を行います.
 //-----------------------------------------------------------------------------
-bool ModelConverter::Convert(const std::string& path, std::vector<uint8_t>& binary)
+bool ModelConverter::Convert
+(
+    const std::string&      path,
+    bool                    txbConvert,
+    const std::string&      txbOutPath,
+    std::vector<uint8_t>&   binary
+)
 {
     if (path.empty())
     {
         ELOG("Error : Invalid Argument.");
         return false;
+    }
+
+    std::string inputDir;
+    if (txbConvert)
+    {
+        asdx::fs::path p = path;
+        inputDir = p.parent_path().string();
+
+        // 出力ディレクトリが存在しなければ作成する.
+        auto texDir = txbOutPath + "\\textures";
+        if (!asdx::fs::exists(texDir))
+        {
+            if (!asdx::fs::create_directories(texDir))
+            { ELOG("Error : create_directories() Failed. path = %s", texDir.c_str()); }
+        }
     }
 
     int flag = 0;
@@ -604,6 +635,16 @@ bool ModelConverter::Convert(const std::string& path, std::vector<uint8_t>& bina
             {
                 asdx::fs::path p = mapPath.C_Str();
                 normalMap = "textures\\" + p.filename().replace_extension(".txb").string();
+                if (txbConvert)
+                {
+                    TextureConverter::Desc convertDesc = {};
+                    convertDesc.InputPath  = inputDir + "\\" + mapPath.C_Str();
+                    convertDesc.OutputPath = txbOutPath + "\\" + normalMap;
+
+                    // テクスチャ変換はエラーログは出すが，失敗扱いにしない.
+                    if (!TextureConverter::Convert(convertDesc))
+                    { ELOG("Error : TextureConverter::Convert() Failed. path = %s", mapPath.C_Str()); }
+                }
             }
         }
 
@@ -614,6 +655,16 @@ bool ModelConverter::Convert(const std::string& path, std::vector<uint8_t>& bina
             {
                 asdx::fs::path p = mapPath.C_Str();
                 emissiveMap = "textures\\" + p.filename().replace_extension(".txb").string();
+                if (txbConvert)
+                {
+                    TextureConverter::Desc convertDesc = {};
+                    convertDesc.InputPath  = inputDir + "\\" + mapPath.C_Str();
+                    convertDesc.OutputPath = txbOutPath + "\\" + emissiveMap;
+
+                    // テクスチャ変換はエラーログは出すが，失敗扱いにしない.
+                    if (!TextureConverter::Convert(convertDesc))
+                    { ELOG("Error : TextureConverter::Convert() Failed. path = %s", mapPath.C_Str()); }
+                }
             }
         }
 
@@ -652,6 +703,16 @@ bool ModelConverter::Convert(const std::string& path, std::vector<uint8_t>& bina
                 {
                     asdx::fs::path p = mapPath.C_Str();
                     baseColorMap = "textures\\" + p.filename().replace_extension(".txb").string();
+                    if (txbConvert)
+                    {
+                        TextureConverter::Desc convertDesc = {};
+                        convertDesc.InputPath  = inputDir + "\\" + mapPath.C_Str();
+                        convertDesc.OutputPath = txbOutPath + "\\" + baseColorMap;
+
+                        // テクスチャ変換はエラーログは出すが，失敗扱いにしない.
+                        if (!TextureConverter::Convert(convertDesc))
+                        { ELOG("Error : TextureConverter::Convert() Failed. path = %s", convertDesc.InputPath.c_str()); }
+                    }
                 }
             }
 
@@ -662,6 +723,16 @@ bool ModelConverter::Convert(const std::string& path, std::vector<uint8_t>& bina
                 {
                     asdx::fs::path p = mapPath.C_Str();
                     ormMap = "textures\\" + p.filename().replace_extension(".txb").string();
+                    if (txbConvert)
+                    {
+                        TextureConverter::Desc convertDesc = {};
+                        convertDesc.InputPath  = inputDir + "\\" + mapPath.C_Str();
+                        convertDesc.OutputPath = txbOutPath + "\\" + ormMap;
+
+                        // テクスチャ変換はエラーログは出すが，失敗扱いにしない.
+                        if (!TextureConverter::Convert(convertDesc))
+                        { ELOG("Error : TextureConverter::Convert() Failed. path = %s", convertDesc.InputPath.c_str()); }
+                    }
                 }
             }
 
@@ -703,6 +774,16 @@ bool ModelConverter::Convert(const std::string& path, std::vector<uint8_t>& bina
                 {
                     asdx::fs::path p = mapPath.C_Str();
                     baseColorMap = "textures\\" + p.filename().replace_extension(".txb").string();
+                    if (txbConvert)
+                    {
+                        TextureConverter::Desc convertDesc = {};
+                        convertDesc.InputPath  = inputDir + "\\" + mapPath.C_Str();
+                        convertDesc.OutputPath = txbOutPath + "\\" + baseColorMap;
+
+                        // テクスチャ変換はエラーログは出すが，失敗扱いにしない.
+                        if (!TextureConverter::Convert(convertDesc))
+                        { ELOG("Error : TextureConverter::Convert() Failed. path = %s", convertDesc.InputPath.c_str()); }
+                    }
                 }
             }
 

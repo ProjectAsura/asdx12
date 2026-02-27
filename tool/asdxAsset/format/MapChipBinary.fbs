@@ -1,22 +1,6 @@
-﻿namespace asdx.res;
+﻿include "TextureBinary.fbs";
 
-struct MapChipSubResource
-{
-    Width       : uint;
-    Height      : uint;
-    RowPitch    : ulong;
-    SlicePitch  : ulong;
-    PixelOffset : ulong;
-}
-
-table MapChip
-{
-    Width           : uint;
-    Height          : uint;
-    Format          : uint;
-    SubResources    : [MapChipSubResource];
-    Pixels          : [ubyte];
-}
+namespace asdx.res;
 
 table Layer
 {
@@ -42,7 +26,7 @@ table TileSet
     TileCount       : uint;
     TileWidth       : uint;
     TileHeight      : uint;
-    Image           : MapChip;
+    Texture         : TextureBinary;
     Tiles           : [Tile];
 }
 

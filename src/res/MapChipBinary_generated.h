@@ -13,13 +13,10 @@ static_assert(FLATBUFFERS_VERSION_MAJOR == 25 &&
               FLATBUFFERS_VERSION_REVISION == 10,
              "Non-compatible flatbuffers version included");
 
+#include "TextureBinary_generated.h"
+
 namespace asdx {
 namespace res {
-
-struct MapChipSubResource;
-
-struct MapChip;
-struct MapChipBuilder;
 
 struct Layer;
 struct LayerBuilder;
@@ -31,47 +28,6 @@ struct TileSetBuilder;
 
 struct MapChipBinary;
 struct MapChipBinaryBuilder;
-
-FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(8) MapChipSubResource FLATBUFFERS_FINAL_CLASS {
- private:
-  uint32_t Width_;
-  uint32_t Height_;
-  uint64_t RowPitch_;
-  uint64_t SlicePitch_;
-  uint64_t PixelOffset_;
-
- public:
-  MapChipSubResource()
-      : Width_(0),
-        Height_(0),
-        RowPitch_(0),
-        SlicePitch_(0),
-        PixelOffset_(0) {
-  }
-  MapChipSubResource(uint32_t _Width, uint32_t _Height, uint64_t _RowPitch, uint64_t _SlicePitch, uint64_t _PixelOffset)
-      : Width_(::flatbuffers::EndianScalar(_Width)),
-        Height_(::flatbuffers::EndianScalar(_Height)),
-        RowPitch_(::flatbuffers::EndianScalar(_RowPitch)),
-        SlicePitch_(::flatbuffers::EndianScalar(_SlicePitch)),
-        PixelOffset_(::flatbuffers::EndianScalar(_PixelOffset)) {
-  }
-  uint32_t Width() const {
-    return ::flatbuffers::EndianScalar(Width_);
-  }
-  uint32_t Height() const {
-    return ::flatbuffers::EndianScalar(Height_);
-  }
-  uint64_t RowPitch() const {
-    return ::flatbuffers::EndianScalar(RowPitch_);
-  }
-  uint64_t SlicePitch() const {
-    return ::flatbuffers::EndianScalar(SlicePitch_);
-  }
-  uint64_t PixelOffset() const {
-    return ::flatbuffers::EndianScalar(PixelOffset_);
-  }
-};
-FLATBUFFERS_STRUCT_END(MapChipSubResource, 32);
 
 FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Tile FLATBUFFERS_FINAL_CLASS {
  private:
@@ -112,107 +68,6 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Tile FLATBUFFERS_FINAL_CLASS {
   }
 };
 FLATBUFFERS_STRUCT_END(Tile, 8);
-
-struct MapChip FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef MapChipBuilder Builder;
-  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_WIDTH = 4,
-    VT_HEIGHT = 6,
-    VT_FORMAT = 8,
-    VT_SUBRESOURCES = 10,
-    VT_PIXELS = 12
-  };
-  uint32_t Width() const {
-    return GetField<uint32_t>(VT_WIDTH, 0);
-  }
-  uint32_t Height() const {
-    return GetField<uint32_t>(VT_HEIGHT, 0);
-  }
-  uint32_t Format() const {
-    return GetField<uint32_t>(VT_FORMAT, 0);
-  }
-  const ::flatbuffers::Vector<const asdx::res::MapChipSubResource *> *SubResources() const {
-    return GetPointer<const ::flatbuffers::Vector<const asdx::res::MapChipSubResource *> *>(VT_SUBRESOURCES);
-  }
-  const ::flatbuffers::Vector<uint8_t> *Pixels() const {
-    return GetPointer<const ::flatbuffers::Vector<uint8_t> *>(VT_PIXELS);
-  }
-  bool Verify(::flatbuffers::Verifier &verifier) const {
-    return VerifyTableStart(verifier) &&
-           VerifyField<uint32_t>(verifier, VT_WIDTH, 4) &&
-           VerifyField<uint32_t>(verifier, VT_HEIGHT, 4) &&
-           VerifyField<uint32_t>(verifier, VT_FORMAT, 4) &&
-           VerifyOffset(verifier, VT_SUBRESOURCES) &&
-           verifier.VerifyVector(SubResources()) &&
-           VerifyOffset(verifier, VT_PIXELS) &&
-           verifier.VerifyVector(Pixels()) &&
-           verifier.EndTable();
-  }
-};
-
-struct MapChipBuilder {
-  typedef MapChip Table;
-  ::flatbuffers::FlatBufferBuilder &fbb_;
-  ::flatbuffers::uoffset_t start_;
-  void add_Width(uint32_t Width) {
-    fbb_.AddElement<uint32_t>(MapChip::VT_WIDTH, Width, 0);
-  }
-  void add_Height(uint32_t Height) {
-    fbb_.AddElement<uint32_t>(MapChip::VT_HEIGHT, Height, 0);
-  }
-  void add_Format(uint32_t Format) {
-    fbb_.AddElement<uint32_t>(MapChip::VT_FORMAT, Format, 0);
-  }
-  void add_SubResources(::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::MapChipSubResource *>> SubResources) {
-    fbb_.AddOffset(MapChip::VT_SUBRESOURCES, SubResources);
-  }
-  void add_Pixels(::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> Pixels) {
-    fbb_.AddOffset(MapChip::VT_PIXELS, Pixels);
-  }
-  explicit MapChipBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
-        : fbb_(_fbb) {
-    start_ = fbb_.StartTable();
-  }
-  ::flatbuffers::Offset<MapChip> Finish() {
-    const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<MapChip>(end);
-    return o;
-  }
-};
-
-inline ::flatbuffers::Offset<MapChip> CreateMapChip(
-    ::flatbuffers::FlatBufferBuilder &_fbb,
-    uint32_t Width = 0,
-    uint32_t Height = 0,
-    uint32_t Format = 0,
-    ::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::MapChipSubResource *>> SubResources = 0,
-    ::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> Pixels = 0) {
-  MapChipBuilder builder_(_fbb);
-  builder_.add_Pixels(Pixels);
-  builder_.add_SubResources(SubResources);
-  builder_.add_Format(Format);
-  builder_.add_Height(Height);
-  builder_.add_Width(Width);
-  return builder_.Finish();
-}
-
-inline ::flatbuffers::Offset<MapChip> CreateMapChipDirect(
-    ::flatbuffers::FlatBufferBuilder &_fbb,
-    uint32_t Width = 0,
-    uint32_t Height = 0,
-    uint32_t Format = 0,
-    const std::vector<asdx::res::MapChipSubResource> *SubResources = nullptr,
-    const std::vector<uint8_t> *Pixels = nullptr) {
-  auto SubResources__ = SubResources ? _fbb.CreateVectorOfStructs<asdx::res::MapChipSubResource>(*SubResources) : 0;
-  auto Pixels__ = Pixels ? _fbb.CreateVector<uint8_t>(*Pixels) : 0;
-  return asdx::res::CreateMapChip(
-      _fbb,
-      Width,
-      Height,
-      Format,
-      SubResources__,
-      Pixels__);
-}
 
 struct Layer FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef LayerBuilder Builder;
@@ -324,7 +179,7 @@ struct TileSet FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
     VT_TILECOUNT = 10,
     VT_TILEWIDTH = 12,
     VT_TILEHEIGHT = 14,
-    VT_IMAGE = 16,
+    VT_TEXTURE = 16,
     VT_TILES = 18
   };
   const ::flatbuffers::String *Name() const {
@@ -345,8 +200,8 @@ struct TileSet FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   uint32_t TileHeight() const {
     return GetField<uint32_t>(VT_TILEHEIGHT, 0);
   }
-  const asdx::res::MapChip *Image() const {
-    return GetPointer<const asdx::res::MapChip *>(VT_IMAGE);
+  const asdx::res::TextureBinary *Texture() const {
+    return GetPointer<const asdx::res::TextureBinary *>(VT_TEXTURE);
   }
   const ::flatbuffers::Vector<const asdx::res::Tile *> *Tiles() const {
     return GetPointer<const ::flatbuffers::Vector<const asdx::res::Tile *> *>(VT_TILES);
@@ -360,8 +215,8 @@ struct TileSet FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
            VerifyField<uint32_t>(verifier, VT_TILECOUNT, 4) &&
            VerifyField<uint32_t>(verifier, VT_TILEWIDTH, 4) &&
            VerifyField<uint32_t>(verifier, VT_TILEHEIGHT, 4) &&
-           VerifyOffset(verifier, VT_IMAGE) &&
-           verifier.VerifyTable(Image()) &&
+           VerifyOffset(verifier, VT_TEXTURE) &&
+           verifier.VerifyTable(Texture()) &&
            VerifyOffset(verifier, VT_TILES) &&
            verifier.VerifyVector(Tiles()) &&
            verifier.EndTable();
@@ -390,8 +245,8 @@ struct TileSetBuilder {
   void add_TileHeight(uint32_t TileHeight) {
     fbb_.AddElement<uint32_t>(TileSet::VT_TILEHEIGHT, TileHeight, 0);
   }
-  void add_Image(::flatbuffers::Offset<asdx::res::MapChip> Image) {
-    fbb_.AddOffset(TileSet::VT_IMAGE, Image);
+  void add_Texture(::flatbuffers::Offset<asdx::res::TextureBinary> Texture) {
+    fbb_.AddOffset(TileSet::VT_TEXTURE, Texture);
   }
   void add_Tiles(::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::Tile *>> Tiles) {
     fbb_.AddOffset(TileSet::VT_TILES, Tiles);
@@ -415,11 +270,11 @@ inline ::flatbuffers::Offset<TileSet> CreateTileSet(
     uint32_t TileCount = 0,
     uint32_t TileWidth = 0,
     uint32_t TileHeight = 0,
-    ::flatbuffers::Offset<asdx::res::MapChip> Image = 0,
+    ::flatbuffers::Offset<asdx::res::TextureBinary> Texture = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::Tile *>> Tiles = 0) {
   TileSetBuilder builder_(_fbb);
   builder_.add_Tiles(Tiles);
-  builder_.add_Image(Image);
+  builder_.add_Texture(Texture);
   builder_.add_TileHeight(TileHeight);
   builder_.add_TileWidth(TileWidth);
   builder_.add_TileCount(TileCount);
@@ -437,7 +292,7 @@ inline ::flatbuffers::Offset<TileSet> CreateTileSetDirect(
     uint32_t TileCount = 0,
     uint32_t TileWidth = 0,
     uint32_t TileHeight = 0,
-    ::flatbuffers::Offset<asdx::res::MapChip> Image = 0,
+    ::flatbuffers::Offset<asdx::res::TextureBinary> Texture = 0,
     std::vector<asdx::res::Tile> *Tiles = nullptr) {
   auto Name__ = Name ? _fbb.CreateString(Name) : 0;
   auto Tiles__ = Tiles ? _fbb.CreateVectorOfSortedStructs<asdx::res::Tile>(Tiles) : 0;
@@ -449,7 +304,7 @@ inline ::flatbuffers::Offset<TileSet> CreateTileSetDirect(
       TileCount,
       TileWidth,
       TileHeight,
-      Image,
+      Texture,
       Tiles__);
 }
 

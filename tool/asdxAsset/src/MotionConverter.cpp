@@ -67,6 +67,12 @@ asdx::res::Float4x4 ToFloat4x4(const aiMatrix4x4& value)
 ///////////////////////////////////////////////////////////////////////////////
 
 //-----------------------------------------------------------------------------
+//      現在のバイナリバージョンを取得します.
+//-----------------------------------------------------------------------------
+uint32_t MotionConverter::GetCurrentVersion()
+{ return CURRENT_VERION; }
+
+//-----------------------------------------------------------------------------
 //      変換処理を行います.
 //-----------------------------------------------------------------------------
 bool MotionConverter::Convert(const Desc& desc)
@@ -92,7 +98,7 @@ bool MotionConverter::Convert(const Desc& desc)
         auto err = fopen_s(&fp, desc.OutputPath.c_str(), "wb");
         if (err != 0)
         {
-            ELOG("Error : File Open Failed. path = %s", desc.OutputPath.c_str());
+            ELOG("Error : File Open Failed. path = %s, errcode = 0x%x", desc.OutputPath.c_str(), err);
             return false;
         }
 

@@ -1,23 +1,23 @@
 ﻿//-----------------------------------------------------------------------------
-// File : TextureConverter.h
-// Desc : Texture Converter.
+// File : ModelConverter.h
+// Desc : Model Binary (*.mdb) Converter.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 #pragma once
 
-// MEMO : 入力サポート形式は次の通りです.
-// * Direct Draw Surface (*.dds)
-// * Truevision Graphics Adapter (*.tga)
-// * Radiance HDR (*.hdr)
-// * Window Bitmap (*.bmp)
-// * Join Photographic Experts Group (*.jpg, *.jpeg)
-// * Portable Network Graphic (*.png)
-// * Tagged Image File Format (*.tif, *.tiff)
-// * Graphics Interchanged Format (*.gif)
-// * HD Photo (*.hdp)
-// * Window Media Photo (*.wdp)
-// * JPEG XR (*.jxr)
-// * High Efficiency Image File (*.heif, *.heic)
+// MEMO: 
+// * 入力サポートフォーマットは次の通りです.
+//　  usd, x, amf, 3ds, m3d, mdl, md3, ply, ase, obj, hmp, smd, mdc,
+//    stl, lwo, dxf, nff, raw, sib, off, ac, bvh, irr, q3d, b3d,
+//    collada, terragen, cms, unreal, lws, ogre, OpenGEX, ms3d,
+//    cob, blender, q3bsp, ndo, ifc, xgl, fbx, assbin, gltf, gltf2,
+//    c4d, 3mf, x3d, mmd, m3d, iqm.
+//
+// * 出力サポートフォーマットは次の通りです.
+//    collada, x, stp, obj, stl, stlb, ply, plyb, 3ds, gltf2, glb2,
+//    gltf, glb, assbin, assxml, x3d, fbx, fbxa, m3d, m3da, 3mf,
+//    3mf, pbrt, assjson.
+
 
 //-----------------------------------------------------------------------------
 // Includes
@@ -26,16 +26,10 @@
 #include <vector>
 
 
-
-namespace DirectX {
-class ScratchImage;
-} // namespace DirectX
-
-
 ///////////////////////////////////////////////////////////////////////////////
-// TextureConverter class
+// ModelConverter class
 ///////////////////////////////////////////////////////////////////////////////
-class TextureConverter
+class ModelConverter
 {
     //=========================================================================
     // list of friend classes and methods.
@@ -48,8 +42,9 @@ public:
     ///////////////////////////////////////////////////////////////////////////
     struct Desc
     {
-        std::string     InputPath;      //!< 入力ファイルパス.
-        std::string     OutputPath;     //!< 出力ファイルパス.
+        std::string InputPath;      //!< 入力ファイルパス.
+        std::string OutputPath;     //!< 出力ファイルパス(mdbのみ).
+        bool        TextureConvert; //!< テクスチャコンバートも行う場合は true.
     };
 
     //=========================================================================
@@ -62,9 +57,16 @@ public:
     //=========================================================================
 
     //-------------------------------------------------------------------------
+    //! @brief      現在のバイナリバージョンを取得します.
+    //! 
+    //! @return     現在のバイナリバージョンを返却します.
+    //-------------------------------------------------------------------------
+    static uint32_t GetCurrentVersion();
+
+    //-------------------------------------------------------------------------
     //! @brief      変換処理を行います.
     //! 
-    //! @param[in]      desc        変換設定です.
+    //! @param[in]      desc        変換設定.
     //! @retval true    変換に成功.
     //! @retval false   変換に失敗.
     //-------------------------------------------------------------------------
@@ -73,32 +75,29 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      変換処理を行います.
     //! 
-    //! @param[in]      path        入力ファイルパス.
-    //! @param[out]     output      出力バイナリ.
+    //! @param[in]      path            入力ファイルパス.
+    //! @param[in]      txbConvert      テクスチャコンバートを行う場合は true.
+    //! @param[in]      txbOutPath      テクスチャ出力パス.
+    //! @param[out]     binary          出力バイナリ.
     //! @retval true    変換に成功.
-    //! @retval false   変換に失敗.
+    //! @retval fasle   変換に失敗.
     //-------------------------------------------------------------------------
-    static bool Convert(const char* path, std::vector<uint8_t>& output);
-
-    //-------------------------------------------------------------------------
-    //! @brief      変換処理を行います.
-    //! 
-    //! @param[in]      input       入力テクスチャ.
-    //! @param[out]     output      出力バイナリ.
-    //! @retval true    変換に成功.
-    //! @retval false   変換に失敗.
-    //-------------------------------------------------------------------------
-    static bool Convert(const DirectX::ScratchImage& input, std::vector<uint8_t>& output);
+    static bool Convert(
+        const std::string&      path,
+        bool                    txbConvert,
+        const std::string&      txbOutPath,
+        std::vector<uint8_t>&   binary);
 
     //-------------------------------------------------------------------------
     //! @brief      逆変換処理を行います.
     //! 
-    //! @param[in]      input       入力バイナリ.
-    //! @param[out]     output      出力テクスチャ.
-    //! @retval true    逆変換に成功.
-    //! @retval fasle   逆変換に失敗.
+    //! @param[in]      binary      入力バイナリ.
+    //! @param[in]      format      出力フォーマット.
+    //! @param[in]      path        出力ファイルパス.
+    //! @retval true    変換に成功.
+    //! @retval false   変換に失敗.
     //-------------------------------------------------------------------------
-    static bool ReverseConvert(const std::vector<uint8_t>& input, DirectX::ScratchImage& output);
+    static bool ReverseConvert(const std::vector<uint8_t>& binary, const char* format, const std::string& path);
 
 private:
     //=========================================================================

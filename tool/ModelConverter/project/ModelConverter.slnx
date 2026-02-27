@@ -3,6 +3,8 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
+  <Project Path="../../asdxAsset/project/asdxAsset.vcxproj" Id="b9d43f50-8879-4195-81ab-e3b1ea58f566">
+    <Platform Project="x64" />
+  </Project>
   <Project Path="ModelConverter.vcxproj" Id="f05ad1cf-edf9-4eb4-bc8f-df7aacf07a94" />
-  <Project Path="ModelConverterLib.vcxproj" Id="fc0db75a-4298-47de-813a-3123fdf35d4d" />
 </Solution>

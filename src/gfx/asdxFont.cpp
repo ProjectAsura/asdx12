@@ -124,25 +124,7 @@ bool Font::Init(ID3D12GraphicsCommandList* pCmd, std::vector<uint8_t>&& blob)
     }
 
     m_Binary.Load(std::move(blob));
-
-
-    ResTexture res = {};
-    res.Dimension           = TEXTURE_DIMENSION_2D;
-    res.Width               = m_Binary.GetWidth();
-    res.Height              = m_Binary.GetHeight();
-    res.DepthOrArraySize    = 1;
-    res.MipLevels           = 1;
-    res.Format              = m_Binary.GetFormat();
-    res.Pixels              = ArrayView(m_Binary.GetTexels(), m_Binary.GetSlicePitch());
-
-    ResSubResource subRes = {};
-    subRes.Width        = res.Width;
-    subRes.Height       = res.Height;
-    subRes.RowPitch     = m_Binary.GetRowPitch();
-    subRes.SlicePitch   = m_Binary.GetSlicePitch();
-    subRes.PixelOffset  = 0;
-
-    res.SubResources = ArrayView(&subRes, 1);
+    ResTexture res = m_Binary.GetTexture();
 
     if (!Texture::Create(pCmd, res, &m_Texture))
     {
