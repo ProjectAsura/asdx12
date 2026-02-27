@@ -21,6 +21,14 @@ struct Float4
     W : float;
 }
 
+struct Quaternion
+{
+    X : float;
+    Y : float;
+    Z : float;
+    W : float;
+}
+
 struct Int2
 {
     X : int;
@@ -135,6 +143,13 @@ struct BoundingSphere
 {
     Center : Float3;
     Radius : float;
+}
+
+struct Transform
+{
+    Scale       : Float3;
+    Rotation    : Quaternion;
+    Translation : Float3;
 }
 
 struct Range

@@ -22,6 +22,8 @@ struct Float3;
 
 struct Float4;
 
+struct Quaternion;
+
 struct Int2;
 
 struct Int3;
@@ -47,6 +49,8 @@ struct Float4x4;
 struct BoundingBox;
 
 struct BoundingSphere;
+
+struct Transform;
 
 struct Range;
 
@@ -136,6 +140,41 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Float4 FLATBUFFERS_FINAL_CLASS {
   }
 };
 FLATBUFFERS_STRUCT_END(Float4, 16);
+
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Quaternion FLATBUFFERS_FINAL_CLASS {
+ private:
+  float X_;
+  float Y_;
+  float Z_;
+  float W_;
+
+ public:
+  Quaternion()
+      : X_(0),
+        Y_(0),
+        Z_(0),
+        W_(0) {
+  }
+  Quaternion(float _X, float _Y, float _Z, float _W)
+      : X_(::flatbuffers::EndianScalar(_X)),
+        Y_(::flatbuffers::EndianScalar(_Y)),
+        Z_(::flatbuffers::EndianScalar(_Z)),
+        W_(::flatbuffers::EndianScalar(_W)) {
+  }
+  float X() const {
+    return ::flatbuffers::EndianScalar(X_);
+  }
+  float Y() const {
+    return ::flatbuffers::EndianScalar(Y_);
+  }
+  float Z() const {
+    return ::flatbuffers::EndianScalar(Z_);
+  }
+  float W() const {
+    return ::flatbuffers::EndianScalar(W_);
+  }
+};
+FLATBUFFERS_STRUCT_END(Quaternion, 16);
 
 FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Int2 FLATBUFFERS_FINAL_CLASS {
  private:
@@ -633,6 +672,35 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) BoundingSphere FLATBUFFERS_FINAL_CLASS {
   }
 };
 FLATBUFFERS_STRUCT_END(BoundingSphere, 16);
+
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Transform FLATBUFFERS_FINAL_CLASS {
+ private:
+  asdx::res::Float3 Scale_;
+  asdx::res::Quaternion Rotation_;
+  asdx::res::Float3 Translation_;
+
+ public:
+  Transform()
+      : Scale_(),
+        Rotation_(),
+        Translation_() {
+  }
+  Transform(const asdx::res::Float3 &_Scale, const asdx::res::Quaternion &_Rotation, const asdx::res::Float3 &_Translation)
+      : Scale_(_Scale),
+        Rotation_(_Rotation),
+        Translation_(_Translation) {
+  }
+  const asdx::res::Float3 &Scale() const {
+    return Scale_;
+  }
+  const asdx::res::Quaternion &Rotation() const {
+    return Rotation_;
+  }
+  const asdx::res::Float3 &Translation() const {
+    return Translation_;
+  }
+};
+FLATBUFFERS_STRUCT_END(Transform, 40);
 
 FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Range FLATBUFFERS_FINAL_CLASS {
  private:

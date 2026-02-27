@@ -24,7 +24,7 @@ inline asdx::Vector3 ToVector3(const asdx::res::Float3& res)
 //-----------------------------------------------------------------------------
 //      Quaternion型に変換します.
 //-----------------------------------------------------------------------------
-inline asdx::Quaternion ToQuaternion(const asdx::res::Float4& res)
+inline asdx::Quaternion ToQuaternion(const asdx::res::Quaternion& res)
 { return asdx::Quaternion(res.X(), res.Y(), res.Z(), res.W()); }
 
 //-----------------------------------------------------------------------------

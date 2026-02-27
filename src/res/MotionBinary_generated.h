@@ -63,14 +63,14 @@ FLATBUFFERS_STRUCT_END(KeyFloat3, 16);
 FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) KeyQuaternion FLATBUFFERS_FINAL_CLASS {
  private:
   float Time_;
-  asdx::res::Float4 Value_;
+  asdx::res::Quaternion Value_;
 
  public:
   KeyQuaternion()
       : Time_(0),
         Value_() {
   }
-  KeyQuaternion(float _Time, const asdx::res::Float4 &_Value)
+  KeyQuaternion(float _Time, const asdx::res::Quaternion &_Value)
       : Time_(::flatbuffers::EndianScalar(_Time)),
         Value_(_Value) {
   }
@@ -83,7 +83,7 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) KeyQuaternion FLATBUFFERS_FINAL_CLASS {
   int KeyCompareWithValue(float _Time) const {
     return static_cast<int>(Time() > _Time) - static_cast<int>(Time() < _Time);
   }
-  const asdx::res::Float4 &Value() const {
+  const asdx::res::Quaternion &Value() const {
     return Value_;
   }
 };
