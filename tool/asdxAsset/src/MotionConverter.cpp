@@ -44,7 +44,7 @@ asdx::res::KeyQuaternion ToKeyQuaternion(const aiQuatKey& value)
 {
     return asdx::res::KeyQuaternion(
         float(value.mTime),
-        asdx::res::Float4(value.mValue.x, value.mValue.y, value.mValue.z, value.mValue.w));
+        asdx::res::Quaternion(value.mValue.x, value.mValue.y, value.mValue.z, value.mValue.w));
 }
 
 //-----------------------------------------------------------------------------

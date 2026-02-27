@@ -1,0 +1,66 @@
+﻿include "../../../res/format/ResTypes.fbs";
+
+namespace asdx.res;
+
+table ModelInstance
+{
+    Path        : string;
+    Position    : Float3;
+    Scale       : Float3;
+    Rotation    : Quaternion;
+}
+
+table PointLight
+{
+    Position  : Float3;
+    Color     : Float3;
+    Intensity : float;
+    Radius    : float;
+}
+
+table SpotLight
+{
+    Position    : Float3;
+    Direction   : Float3;
+    Color       : Float3;
+    Intensity   : float;
+    Radius      : float;
+    InnerAngle  : float;
+    OuterAngle  : float;
+}
+
+table DirectionalLight
+{
+    Direction : Float3;
+    Color     : Float3;
+    Intensity : float;
+}
+
+table ImageBasedLight
+{
+    Path      : string;
+    Intensity : float;
+}
+
+union Light
+{
+    PointLight,
+    SpotLight,
+    DirectionalLight,
+    ImageBasedLight,
+}
+
+table Pin
+{
+    Tag      : string;
+    Position : Float3;
+}
+
+table LevelBinary
+{
+    Models : [ModelInstance];
+    Lights : [Light];
+    Pins   : [Pin];
+}
+
+root_type LevelBinary;

@@ -170,6 +170,7 @@
     <ClCompile Include="..\..\..\external\simdjson\src\simdjson.cpp" />
     <ClCompile Include="..\..\..\external\tinyxml2\tinyxml2.cpp" />
     <ClCompile Include="..\src\FontConverter.cpp" />
+    <ClCompile Include="..\src\LevelConverter.cpp" />
     <ClCompile Include="..\src\MapChipConverter.cpp" />
     <ClCompile Include="..\src\ModelConverter.cpp" />
     <ClCompile Include="..\src\MotionConverter.cpp" />
@@ -177,6 +178,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\FontConverter.h" />
+    <ClInclude Include="..\include\LevelConverter.h" />
     <ClInclude Include="..\include\MapChipConverter.h" />
     <ClInclude Include="..\include\ModelConverter.h" />
     <ClInclude Include="..\include\MotionConverter.h" />
@@ -184,10 +186,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\format\FontBinary.fbs" />
+    <None Include="..\format\LevelBinary.fbs" />
     <None Include="..\format\MapChipBinary.fbs" />
     <None Include="..\format\ModelBinary.fbs" />
     <None Include="..\format\MotionBinary.fbs" />
     <None Include="..\format\TextureBinary.fbs" />
+    <None Include="gen_format.bat" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

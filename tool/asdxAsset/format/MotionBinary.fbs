@@ -11,7 +11,7 @@ struct KeyFloat3
 struct KeyQuaternion
 {
     Time  : float (key);
-    Value : Float4;
+    Value : Quaternion;
 }
 
 table MotionTrack
