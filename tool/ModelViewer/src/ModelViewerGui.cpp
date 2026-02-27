@@ -431,6 +431,12 @@ void ModelViewer::DrawMeshTab()
                 continue;
             }
 
+            auto drawMesh = m_Model->GetMesh(i);
+            auto visible = drawMesh->IsVisible();
+
+            if (ImGui::Checkbox(asdx::ToChar(u8"表示"), &visible))
+            { drawMesh->SetVisibility(visible); }
+
             ImGui::BeginTable("##MeshTable", 2);
             ImGui::TableSetupColumn("##MeshRow0", ImGuiTableColumnFlags_WidthFixed);
 

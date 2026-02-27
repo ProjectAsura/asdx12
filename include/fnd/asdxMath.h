@@ -3277,6 +3277,25 @@ public:
     static BoundingSphere3 Transform(const BoundingSphere3& sphere, const Matrix& matrix);
 
     //------------------------------------------------------------------------
+    //! @brief      2点の外接球を求めます.
+    //! 
+    //! @param[in]      a       点a.
+    //! @param[in]      b       点b.
+    //! @return     外接球を返却します.
+    //------------------------------------------------------------------------
+    static BoundingSphere3 Create(const Vector3& a, const Vector3& b);
+
+    //------------------------------------------------------------------------
+    //! @brief      3点の外接球を求めます.
+    //! 
+    //! @param[in]      a       点a.
+    //! @param[in]      b       点b.
+    //! @param[in]      c       点c.
+    //! @return     外接球を返却します.
+    //------------------------------------------------------------------------
+    static BoundingSphere3 Create(const Vector3& a, const Vector3& b, const Vector3& c);
+
+    //------------------------------------------------------------------------
     //! @brief      頂点データからバウンディングスフィアを求めます.
     //! 
     //! @param[in]      vertices        頂点座標データ.

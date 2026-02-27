@@ -625,8 +625,9 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
 
         for(auto i=0u; i<m_Model->GetMeshCount(); ++i)
         {
-            const auto mesh     = m_Model->GetMesh(i);
-            const auto material = m_Model->GetMaterial(mesh->GetMaterialId());
+            const auto mesh = m_Model->GetMesh(i);
+            if (!mesh->IsVisible())
+                continue;
 
             D3D12_VERTEX_BUFFER_VIEW VBVs[] = {
                 mesh->GetPositions  ().GetVBV(),
@@ -641,6 +642,7 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
             auto IBV = mesh->GetIndices().GetIBV();
             auto countVBV = (isSkeletal) ? kSkeletalMeshElementCount : kStaticMeshElementCount;
 
+            const auto material = m_Model->GetMaterial(mesh->GetMaterialId());
             pCmd->SetGraphicsRootConstantBufferView(ROOT_PARAM_B2, material->GetBuffer      ().GetGpuAddress());
             pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T1, material->GetBaseColorMap().GetHandleGPU());
             pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T2, material->GetNormalMap   ().GetHandleGPU());
