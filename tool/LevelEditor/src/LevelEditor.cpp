@@ -72,6 +72,37 @@ bool LevelEditor::OnInit()
         }
     }
 
+    m_Camera.Init(
+        asdx::Vector3(0.0f, 0.0f, 5.0f),
+        asdx::Vector3(0.0f, 0.0f, 0.0f),
+        asdx::Vector3(0.0f, 1.0f, 0.0f),
+        0.1f,
+        10000.0f);
+
+    if (!m_ShapeStates.Init(m_SwapChainFormat, m_DepthStencilFormat))
+    {
+        ELOG("Error : ShapeStates::Init() Failed.");
+        return false;
+    }
+
+    if (!m_ShapeParams.Init(UINT16_MAX))
+    {
+        ELOG("Error : ShapeParams::Init() Failed.");
+        return false;
+    }
+
+    if (!m_SphereShape.Init(1.0f, 20))
+    {
+        ELOG("Error : SphereShape::Init() Failed.");
+        return false;
+    }
+
+    // ラインレンダラーの初期化.
+    if (!m_LineRenderer.Init(12 * UINT16_MAX, m_SwapChainFormat, DXGI_FORMAT_UNKNOWN))
+    {
+        ELOG("Error : LineRenderer::Init() Failed.");
+        return false;
+    }
 
     // コマンドの記録を終了.
     pCmd->Close();
@@ -121,6 +152,14 @@ void LevelEditor::OnTerm()
 void LevelEditor::OnFrameMove(const base::FrameEventArgs& args)
 {
     auto pCmd = m_GfxCmdList.Reset();
+
+    // ImGui関連.
+    asdx::GuiMgr::Instance().Update(m_Width, m_Height);
+    ImGuizmo::BeginFrame();
+    ImGuizmo::SetImGuiContext(ImGui::GetCurrentContext());
+
+
+
 }
 
 //-----------------------------------------------------------------------------
@@ -144,7 +183,7 @@ void LevelEditor::OnFrameRender(const base::FrameEventArgs& args)
     pCmd->RSSetViewports(1, &m_Viewport);
     pCmd->RSSetScissorRects(1, &m_ScissorRect);
 
-
+    // 描画処理.
     {
 
 

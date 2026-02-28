@@ -14,7 +14,10 @@
 #include <gfx/asdxBuffer.h>
 #include <gfx/asdxPipelineState.h>
 #include <gfx/asdxLine.h>
+#include <gfx/asdxShape.h>
 #include <LevelConverter.h>
+#include <imgui.h>
+#include <ImGuizmo.h>
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -68,6 +71,15 @@ private:
     EditLevel                           m_Level;
     asdx::RefPtr<ID3D12RootSignature>   m_RootSignature;
     asdx::GraphicsPipelineState         m_PipelineState;
+    bool                                m_EnableWireframe = false;
+    asdx::ShapeStates                   m_ShapeStates;
+    asdx::ShapeParams                   m_ShapeParams;
+    asdx::BoxShape                      m_BoxShape;
+    asdx::SphereShape                   m_SphereShape;
+    asdx::ConeShape                     m_ConeShape;
+    asdx::CylinderShape                 m_CylinderShape;
+    asdx::PlaneShape                    m_PlaneShape;
+    asdx::CapsuleShape                  m_CapsuleShape;
 
     //=========================================================================
     // private methods.

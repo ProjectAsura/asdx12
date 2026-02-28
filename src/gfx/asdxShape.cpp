@@ -416,6 +416,148 @@ void CreateCylinderShape
 }
 
 //-----------------------------------------------------------------------------
+//      テーパー円柱形状を生成します.
+//-----------------------------------------------------------------------------
+void CreateTaperedCylinderShape
+(
+    float       radius0,    // 下側.
+    float       radius1,    // 上側.
+    float       height,
+    uint32_t    sliceCount,
+    std::vector<asdx::Vector3>& outPositions,
+    std::vector<uint32_t>&      outIndices,
+    std::vector<asdx::Vector3>* outNormals      = nullptr,
+    std::vector<asdx::Vector2>* outTexcoords    = nullptr
+)
+{
+    outPositions.clear();
+    outIndices  .clear();
+
+    if (outNormals != nullptr)
+        outNormals->clear();
+    if (outTexcoords != nullptr)
+        outTexcoords->clear();
+
+    float halfHeight = height * 0.5f;
+    float dTheta = asdx::F_2PI / sliceCount;
+
+    // 側面
+    for (uint32_t i = 0; i <= sliceCount; ++i)
+    {
+        float theta = i * dTheta;
+        auto x0 = radius0 * cosf(theta);
+        auto z0 = radius0 * sinf(theta);
+        auto n0 = asdx::Vector3::Normalize(asdx::Vector3(x0, 0.0f, z0));
+
+        float u = 1.0f - (float)i / sliceCount;
+
+        auto x1 = radius1 * cosf(theta);
+        auto z1 = radius1 * sinf(theta);
+        auto n1 = asdx::Vector3::Normalize(asdx::Vector3(x1, 0.0f, z1));
+
+        // 下部頂点
+        outPositions.emplace_back(x0, -halfHeight, z0);
+        if (outNormals != nullptr)
+            outNormals->emplace_back(n0);
+        if (outTexcoords != nullptr)
+            outTexcoords->emplace_back(u, 1.0f);
+
+        // 上部頂点
+        outPositions.emplace_back(x1, +halfHeight, z1);
+        if (outNormals != nullptr)
+            outNormals->emplace_back(n1);
+        if (outTexcoords != nullptr)
+            outTexcoords->emplace_back(u, 0.0f);
+    }
+
+    // インデックス（側面）
+    uint32_t sideVertexCount = uint32_t(outPositions.size());
+    for (auto i = 0u; i < sliceCount; ++i)
+    {
+        uint32_t base = i * 2;
+        outIndices.push_back(base);
+        outIndices.push_back(base + 1);
+        outIndices.push_back(base + 3);
+
+        outIndices.push_back(base);
+        outIndices.push_back(base + 3);
+        outIndices.push_back(base + 2);
+    }
+
+    // 上面
+    uint32_t topCenterIndex = uint32_t(outPositions.size());
+    outPositions.emplace_back(0.0f, +halfHeight, 0.0f);
+    if (outNormals != nullptr)
+        outNormals->emplace_back(0.0f, 1.0f, 0.0f);
+    if (outTexcoords != nullptr)
+        outTexcoords->emplace_back(0.5f, 0.5f);
+
+    for (auto i = 0u; i <= sliceCount; ++i)
+    {
+        float theta = i * dTheta;
+        float x = radius1 * cosf(theta);
+        float z = radius1 * sinf(theta);
+
+        outPositions.emplace_back(x, +halfHeight, z);
+        if (outNormals != nullptr)
+            outNormals->emplace_back(0.0f, 1.0f, 0.0f);
+        if (outTexcoords != nullptr)
+        {
+            float u =  x / radius1 / 2.0f + 0.5f;
+            float v = -z / radius1 / 2.0f + 0.5f;
+            outTexcoords->emplace_back(u, v);
+        }
+    }
+
+    for (auto i = 0u; i < sliceCount; ++i)
+    {
+        outIndices.push_back(topCenterIndex);
+        outIndices.push_back(topCenterIndex + i + 1);
+        outIndices.push_back(topCenterIndex + i + 2);
+    }
+
+    // 底面
+    uint32_t bottomCenterIndex = uint32_t(outPositions.size());
+    outPositions.emplace_back(0.0f, -halfHeight, 0.0f);
+    if (outNormals != nullptr)
+        outNormals->emplace_back(0.0f, -1.0f, 0.0f);
+    if (outTexcoords != nullptr)
+        outTexcoords->emplace_back(0.5f, 0.5f);
+
+    for (auto i = 0u; i <= sliceCount; ++i)
+    {
+        float theta = i * dTheta;
+        float x = radius0 * cosf(theta);
+        float z = radius0 * sinf(theta);
+
+        outPositions.emplace_back(x, -halfHeight, z);
+        if (outNormals != nullptr)
+            outNormals->emplace_back(0.0f, -1.0f, 0.0f);
+        if (outTexcoords != nullptr)
+        {
+            float u = x / radius0 / 2.0f + 0.5f;
+            float v = z / radius0 / 2.0f + 0.5f;
+            outTexcoords->emplace_back(u, v);
+        }
+    }
+
+    for (auto i = 0u; i < sliceCount; ++i) 
+    {
+        outIndices.push_back(bottomCenterIndex);
+        outIndices.push_back(bottomCenterIndex + i + 2);
+        outIndices.push_back(bottomCenterIndex + i + 1);
+    }
+
+    outPositions.shrink_to_fit();
+    outIndices  .shrink_to_fit();
+
+    if (outNormals != nullptr)
+        outNormals->shrink_to_fit();
+    if (outTexcoords != nullptr)
+        outTexcoords->shrink_to_fit();
+}
+
+//-----------------------------------------------------------------------------
 //      円錐形状を生成します.
 //-----------------------------------------------------------------------------
 void CreateConeShape
@@ -1027,6 +1169,179 @@ void CreateCapsuleShape
     if (outTexcoords != nullptr)
         outTexcoords->shrink_to_fit();
 }
+
+//-----------------------------------------------------------------------------
+//      テーパーカプセル形状を生成します.
+//-----------------------------------------------------------------------------
+void CreateTaperedCapsuleShape
+(
+    float       radius0,    // 下側.
+    float       radius1,    // 上側.
+    float       height,
+    uint32_t    sliceCount,
+    uint32_t    stackCount,
+    std::vector<asdx::Vector3>& outPositions,
+    std::vector<uint32_t>&      outIndices,
+    std::vector<asdx::Vector3>* outNormals   = nullptr,
+    std::vector<asdx::Vector2>* outTexcoords = nullptr
+)
+{
+    outPositions.clear();
+    outIndices  .clear();
+    if (outNormals != nullptr)
+        outNormals->clear();
+    if (outTexcoords != nullptr)
+        outTexcoords->clear();
+
+    const float halfH = height * 0.5f;
+
+    const uint32_t hemiStacks = stackCount / 3;
+    const uint32_t midStacks  = stackCount - hemiStacks * 2;
+
+    // 総リング数（UV用）
+    const uint32_t totalRows =
+        (hemiStacks + 1) +
+        (midStacks - 1) +
+        (hemiStacks);
+
+    uint32_t row = 0;
+
+    // 下半球
+    for (uint32_t i = 0; i <= hemiStacks; ++i)
+    {
+        float t = (float)i / hemiStacks;
+        float phi = asdx::F_PIDIV2 * t;
+
+        for (uint32_t j = 0; j <= sliceCount; ++j)
+        {
+            float u = (float)j / sliceCount;
+            float theta = asdx::F_2PI * u;
+
+            float x = radius0 * sinf(phi) * cosf(theta);
+            float y = radius0 * sinf(phi) * sinf(theta);
+            float z = -halfH - radius0 * cosf(phi);
+
+            outPositions.emplace_back(x, y, z);
+
+            if (outNormals)
+            {
+                auto n = asdx::Vector3::Normalize(asdx::Vector3(x, y, z + halfH));
+                outNormals->push_back(n);
+            }
+
+            if (outTexcoords)
+            {
+                float v = (float)row / totalRows;
+                outTexcoords->emplace_back(u, v);
+            }
+        }
+        row++;
+    }
+
+    // Hermite（シンプル版：接線0）
+    auto Hermite = [](float t, float r0, float r1)
+    {
+        float t2 = t * t;
+        float t3 = t2 * t;
+        return (2*t3 - 3*t2 + 1) * r0 + (-2*t3 + 3*t2) * r1;
+    };
+
+    // テーパー（Hermite）
+    for (uint32_t i = 1; i < midStacks; ++i)
+    {
+        float t = (float)i / midStacks;
+        float z = asdx::Lerp(-halfH, +halfH, t);
+        float r = Hermite(t, radius0, radius1);
+
+        for (uint32_t j = 0; j <= sliceCount; ++j)
+        {
+            float u = (float)j / sliceCount;
+            float theta = asdx::F_2PI * u;
+
+            float x = r * cosf(theta);
+            float y = r * sinf(theta);
+
+            outPositions.emplace_back(x, y, z);
+
+            if (outNormals)
+            {
+                // 簡易法線.
+                auto n = asdx::Vector3::Normalize(asdx::Vector3(x, y, 0.0f));
+                outNormals->push_back(n);
+            }
+
+            if (outTexcoords)
+            {
+                float v = (float)row / totalRows;
+                outTexcoords->emplace_back(u, v);
+            }
+        }
+        row++;
+    }
+
+    // 上半球
+    for (uint32_t i = 0; i <= hemiStacks; ++i)
+    {
+        float t = (float)i / hemiStacks;
+        float phi = asdx::F_PIDIV2 * (1.0f - t);
+
+        for (uint32_t j = 0; j <= sliceCount; ++j)
+        {
+            float u = (float)j / sliceCount;
+            float theta = asdx::F_2PI * u;
+
+            float x = radius1 * sinf(phi) * cosf(theta);
+            float y = radius1 * sinf(phi) * sinf(theta);
+            float z = +halfH + radius1 * cosf(phi);
+
+            outPositions.emplace_back(x, y, z);
+
+            if (outNormals)
+            {
+                auto n = asdx::Vector3::Normalize(asdx::Vector3(x, y, z - halfH));
+                outNormals->push_back(n);
+            }
+
+            if (outTexcoords)
+            {
+                float v = (float)row / totalRows;
+                outTexcoords->emplace_back(u, v);
+            }
+        }
+        row++;
+    }
+
+    // インデックス
+    uint32_t ring = sliceCount + 1;
+    uint32_t rows = (uint32_t)(outPositions.size() / ring);
+
+    for (uint32_t i = 0; i < rows - 1; ++i)
+    {
+        for (uint32_t j = 0; j < sliceCount; ++j)
+        {
+            uint32_t i0 = i * ring + j;
+            uint32_t i1 = i0 + 1;
+            uint32_t i2 = i0 + ring;
+            uint32_t i3 = i2 + 1;
+
+            outIndices.push_back(i0);
+            outIndices.push_back(i2);
+            outIndices.push_back(i1);
+
+            outIndices.push_back(i1);
+            outIndices.push_back(i2);
+            outIndices.push_back(i3);
+        }
+    }
+
+    outPositions.shrink_to_fit();
+    outIndices  .shrink_to_fit();
+    if (outNormals != nullptr)
+        outNormals->shrink_to_fit();
+    if (outTexcoords != nullptr)
+        outTexcoords->shrink_to_fit();
+}
+
 
 } // namespace
 
@@ -2020,6 +2335,50 @@ void CylinderShape::Term()
 
 
 ///////////////////////////////////////////////////////////////////////////////
+// TaperedCylinderShape class
+///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      コンストラクタです.
+//-----------------------------------------------------------------------------
+TaperedCylinderShape::TaperedCylinderShape()
+: ShapeBase()
+{ /* DO_NOTHING */ }
+
+//-----------------------------------------------------------------------------
+//      デストラクタです.
+//-----------------------------------------------------------------------------
+TaperedCylinderShape::~TaperedCylinderShape()
+{ Term(); }
+
+//-----------------------------------------------------------------------------
+//      初期化処理を行います.
+//-----------------------------------------------------------------------------
+bool TaperedCylinderShape::Init(float radius0, float radius1, float height, uint32_t sliceCount)
+{
+    std::vector<asdx::Vector3> positions;
+    std::vector<uint32_t>      indices;
+
+    CreateTaperedCylinderShape(radius0, radius1, height, sliceCount, positions, indices);
+
+    if (!InitBuffer(
+        positions.data(), positions.size(),
+        indices  .data(), indices  .size()))
+    {
+        return false;
+    }
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      終了処理を行います.
+//-----------------------------------------------------------------------------
+void TaperedCylinderShape::Term()
+{ Reset(); }
+
+
+///////////////////////////////////////////////////////////////////////////////
 // PlaneShape class
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -2104,6 +2463,50 @@ bool CapsuleShape::Init(float length, float radius, uint32_t sliceCount)
 //      終了処理を行います.
 //-----------------------------------------------------------------------------
 void CapsuleShape::Term()
+{ Reset(); }
+
+
+///////////////////////////////////////////////////////////////////////////////
+// TaperedCapsuleShape class
+///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      コンストラクタです.
+//-----------------------------------------------------------------------------
+TaperedCapsuleShape::TaperedCapsuleShape()
+: ShapeBase()
+{ /* DO_NOTHING */ }
+
+//-----------------------------------------------------------------------------
+//      デストラクタです.
+//-----------------------------------------------------------------------------
+TaperedCapsuleShape::~TaperedCapsuleShape()
+{ Term(); }
+
+//-----------------------------------------------------------------------------
+//      初期化処理を行います.
+//-----------------------------------------------------------------------------
+bool TaperedCapsuleShape::Init(float length, float radius0, float radius1, uint32_t sliceCount)
+{
+    std::vector<asdx::Vector3> positions;
+    std::vector<uint32_t>      indices;
+
+    CreateTaperedCapsuleShape(radius0, radius1, length, sliceCount, sliceCount, positions, indices);
+
+    if (!InitBuffer(
+        positions.data(), positions.size(),
+        indices  .data(), indices  .size()))
+    {
+        return false;
+    }
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      終了処理を行います.
+//-----------------------------------------------------------------------------
+void TaperedCapsuleShape::Term()
 { Reset(); }
 
 
