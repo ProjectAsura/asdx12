@@ -42,12 +42,17 @@ table ImageBasedLight
     Intensity : float;
 }
 
-union Light
+union LightUnion
 {
     PointLight,
     SpotLight,
     DirectionalLight,
     ImageBasedLight,
+}
+
+table Light
+{
+    data : LightUnion;
 }
 
 table Pin

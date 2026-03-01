@@ -713,6 +713,9 @@
     <ClInclude Include="..\include\gfx\asdxIBLBaker.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\edit\asdxGridSnap.h">
+      <Filter>ヘッダー ファイル\edit</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\res\shaders\asdxBRDF.hlsli">

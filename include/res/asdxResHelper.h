@@ -23,6 +23,7 @@ namespace asdx {
 res::Float2 ToFloat2(const Vector2& value);
 res::Float3 ToFloat3(const Vector3& value);
 res::Float4 ToFloat4(const Vector4& value);
+res::Quaternion ToQuaternion(const Quaternion& value);
 
 res::Uint2 ToUint2(const Uint2& value);
 res::Uint3 ToUint3(const Uint3& value);
@@ -41,6 +42,7 @@ res::BoundingSphere ToSphere(const BoundingSphere3& value);
 Vector2 FromFloat2(const res::Float2& value);
 Vector3 FromFloat3(const res::Float3& value);
 Vector4 FromFloat4(const res::Float4& value);
+Quaternion FromQuaternion(const res::Quaternion& value);
 
 Uint2 FromUint2(const res::Uint2& value);
 Uint3 FromUint3(const res::Uint3& value);

@@ -22,6 +22,9 @@ res::Float3 ToFloat3(const Vector3& value)
 res::Float4 ToFloat4(const Vector4& value)
 { return res::Float4(value.x, value.y, value.z, value.w); }
 
+res::Quaternion ToQuaternion(const Quaternion& value)
+{ return res::Quaternion(value.x, value.y, value.z, value.w); }
+
 res::Uint2 ToUint2(const Uint2& value)
 { return res::Uint2(value.x, value.y); }
 
@@ -79,6 +82,9 @@ Vector3 FromFloat3(const res::Float3& value)
 
 Vector4 FromFloat4(const res::Float4& value)
 { return Vector4(value.X(), value.Y(), value.Z(), value.W()); }
+
+Quaternion FromQuaternion(const res::Quaternion& value)
+{ return Quaternion(value.X(), value.Y(), value.Z(), value.W()); }
 
 Uint2 FromUint2(const res::Uint2& value)
 { return Uint2(value.X(), value.Y()); }

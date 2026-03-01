@@ -195,7 +195,7 @@ void DrawWireCone(LineRenderer& renderer, const Vector3& apex, const Vector3& ba
 //! @param[in]      baseRadius      底面半径.
 //! @param[in]      color           カラー.
 //! -----------------------------------------------------------------------------
-void DrawWritePyramid(LineRenderer& renderer, const Vector3& apex, const Vector3& baseCenter, float baseRadius, const Vector4& color);
+void DrawWirePyramid(LineRenderer& renderer, const Vector3& apex, const Vector3& baseCenter, float baseRadius, const Vector4& color);
 
 //-----------------------------------------------------------------------------
 //! @brief      ワイヤーフレーム円柱を描画します.
@@ -266,5 +266,35 @@ void DrawWireFan(LineRenderer& renderer, const Vector3& center, const Vector3& n
 //! @param[in]      color           カラー.
 //-----------------------------------------------------------------------------
 void DrawWireBone(LineRenderer& renderer, const Vector3& start, const Vector3& end, const Vector4& color);
+
+//-----------------------------------------------------------------------------
+//! @brief      六角形を描画します.
+//! 
+//! @param[in]      renderer        線分レンダラー.
+//! @param[in]      center          中心座標.
+//! @param[in]      length          長さ(半径相当).
+//! @param[in]      color           カラー.
+//-----------------------------------------------------------------------------
+void DrawWireHexagon(LineRenderer& renderer, const Vector3& center, float length, const Vector4& color);
+
+//-----------------------------------------------------------------------------
+//! @brief      四角形グリッドを描画します.
+//! 
+//! @param[in]      renderer        線分レンダラー.
+//! @param[in]      halfRange       片側範囲.
+//! @param[in]      size            サイズ.
+//! @param[in]      color           カラー.
+//-----------------------------------------------------------------------------
+void DrawSquareGrid(LineRenderer& renderer, int halfRange, float size, const Vector4& color);
+
+//-----------------------------------------------------------------------------
+//! @brief      六角形グリッドを描画します.
+//! 
+//! @param[in]      renderer        線分レンダラー.
+//! @param[in]      halfRange       片側範囲.
+//! @param[in]      size            サイズ.
+//! @param[in]      color           カラー.
+//-----------------------------------------------------------------------------
+void DrawHexGrid(LineRenderer& renderer, int halfRange, float size, const Vector4& color);
 
 } // namespace asdx

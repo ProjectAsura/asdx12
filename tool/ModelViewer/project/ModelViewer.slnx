@@ -7,8 +7,8 @@
     <BuildType Solution="Release|*" Project="ReleaseMT" />
   </Project>
   <Project Path="../../asdxAsset/project/asdxAsset.vcxproj" Id="b9d43f50-8879-4195-81ab-e3b1ea58f566">
-    <BuildType Solution="Debug|*" Project="Debug_MT" />
-    <BuildType Solution="Release|*" Project="Release_MT" />
+    <BuildType Solution="Debug|*" Project="DebugMT" />
+    <BuildType Solution="Release|*" Project="ReleaseMT" />
   </Project>
   <Project Path="ModelViewer.vcxproj" Id="fad0336c-50f3-45a0-ac72-67aff7225144" />
 </Solution>

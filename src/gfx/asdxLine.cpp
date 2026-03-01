@@ -88,6 +88,34 @@ const D3D12_BLEND_DESC kAlphaBlend = {
     { kRTB_AlphaBlend, kRTB_AlphaBlend, kRTB_AlphaBlend, kRTB_AlphaBlend, kRTB_AlphaBlend, kRTB_AlphaBlend, kRTB_AlphaBlend, kRTB_AlphaBlend }
 };
 
+struct Hex
+{
+    float   q;  // 列.
+    float   r;  // 行.
+};
+
+Hex WorldToHex(const asdx::Vector3& p, float size)
+{
+    float q = (sqrtf(3.0f) / 3.0f * p.x - 1.0f / 3.0f * p.z) / size;
+    float r = (2.0f / 3.0f * p.z) / size;
+    return { q, r };
+}
+
+asdx::Vector3 HexToWorld(const Hex& hex, float size)
+{
+    auto x = size * sqrtf(3.0f) * (hex.q + hex.r / 2.0f);
+    auto z = size * 3.0f / 2.0f * hex.r;
+    return asdx::Vector3(x, 0.0f, z);
+}
+
+asdx::Vector3 HexToWorld(float q, float r, float size)
+{
+    auto x = size * sqrtf(3.0f) * (q + r / 2.0f);
+    auto z = size * 3.0f / 2.0f * r;
+    return asdx::Vector3(x, 0.0f, z);
+}
+
+
 } // namespace
 
 namespace asdx {
@@ -639,6 +667,71 @@ void DrawWireBone(LineRenderer& renderer, const Vector3& start, const Vector3& e
     renderer.Add(end, p1, color);
     renderer.Add(end, p2, color);
     renderer.Add(end, p3, color);
+}
+
+//-----------------------------------------------------------------------------
+//      六角形を描画します.
+//-----------------------------------------------------------------------------
+void DrawWireHexagon(LineRenderer& renderer, const Vector3& center, float length, const Vector4& color)
+{
+    if (length <= 1e-6f)
+        return;
+
+    for(auto i=0; i<6; ++i)
+    {
+        auto a0 = F_PIDIV3 * (i + 0);
+        auto a1 = F_PIDIV3 * (i + 1);
+
+        auto p0 = center + Vector3(cos(a0), 0.0f, sin(a0)) * length;
+        auto p1 = center + Vector3(cos(a1), 0.0f, sin(a1)) * length;
+
+        renderer.Add(p0, p1, color);
+    }
+}
+
+//-----------------------------------------------------------------------------
+//      四角形グリッドを描画します.
+//-----------------------------------------------------------------------------
+void DrawSquareGrid(LineRenderer& renderer, int halfRange, float size, const Vector4& color)
+{
+    for(auto x = -halfRange; x <= halfRange; x++)
+    {
+        renderer.Add(
+            Vector3(x * size, 0.0f, -halfRange * size),
+            Vector3(x * size, 0.0f,  halfRange * size),
+            color);
+    }
+
+    for(auto z = -halfRange; z <= halfRange; z++)
+    {
+        renderer.Add(
+            Vector3(-halfRange * size, 0.0f, z * size),
+            Vector3( halfRange * size, 0.0f, z * size),
+            color);
+    }
+}
+
+//-----------------------------------------------------------------------------
+//      六角形グリッドを描画します.
+//-----------------------------------------------------------------------------
+void DrawHexGrid(LineRenderer& renderer, int halfRange, float size, const Vector4& color)
+{
+    auto center = WorldToHex(Vector3(0.0f, 0.0f, 0.0f), size);
+
+    auto cq = (int)round(center.q);
+    auto cr = (int)round(center.r);
+
+    for(auto dq = -halfRange; dq <= halfRange; dq++)
+    {
+        for(auto dr = -halfRange; dr <= halfRange; dr++)
+        {
+            auto q = cq + dq;
+            auto r = cr + dr;
+
+            auto pos = HexToWorld(q, r, size);
+            DrawWireHexagon(renderer, pos, size, color);
+        }
+    }
 }
 
 } // namespace asdx
