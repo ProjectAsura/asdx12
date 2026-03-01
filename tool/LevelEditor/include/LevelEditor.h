@@ -64,22 +64,20 @@ private:
     ImGuizmo::OPERATION                 m_GuizmoOperation    = {};
     asdx::LineRenderer                  m_LineRenderer;
     asdx::VertexBuffer                  m_AxisVertexBuffer;
-    asdx::VertexBuffer                  m_GridVertexBuffer;
     uint32_t                            m_AxisVertexCount = 0;
-    uint32_t                            m_GridVertexCount = 0;
     asdx::Matrix                        m_Proj;
     EditLevel                           m_Level;
     asdx::RefPtr<ID3D12RootSignature>   m_RootSignature;
     asdx::GraphicsPipelineState         m_PipelineState;
-    bool                                m_EnableWireframe = false;
     asdx::ShapeStates                   m_ShapeStates;
-    asdx::ShapeParams                   m_ShapeParams;
-    asdx::BoxShape                      m_BoxShape;
-    asdx::SphereShape                   m_SphereShape;
-    asdx::ConeShape                     m_ConeShape;
-    asdx::CylinderShape                 m_CylinderShape;
-    asdx::PlaneShape                    m_PlaneShape;
-    asdx::CapsuleShape                  m_CapsuleShape;
+    bool                                m_EnableWireframe   = false;
+    float                               m_GridSize          = 1.0f;
+    int                                 m_GridHalfRange     = 10;
+    uint8_t                             m_GridMode          = 0;
+    asdx::Vector4                       m_GridColor         = asdx::Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+    bool                                m_ShowInfo          = true;
+    bool                                m_ShowProperty      = true;
+    bool                                m_ShowLisence       = false;
 
     //=========================================================================
     // private methods.
@@ -129,4 +127,59 @@ private:
     //! @brief      ファイルドラッグアンドドロップ時の処理です.
     //-------------------------------------------------------------------------
     void OnDrop(const wchar_t** dropFiles, uint32_t fileCount);
+
+    //-------------------------------------------------------------------------
+    //! @brief      ファイルメニュー処理です.
+    //-------------------------------------------------------------------------
+    void MenuFile();
+
+    //-------------------------------------------------------------------------
+    //! @brief      表示メニュー処理です.
+    //-------------------------------------------------------------------------
+    void MenuView();
+
+    //-------------------------------------------------------------------------
+    //! @brief      ヘルプメニュー処理です.
+    //-------------------------------------------------------------------------
+    void MenuHelp();
+
+    //-------------------------------------------------------------------------
+    //! @brief      レベル情報を描画します.
+    //-------------------------------------------------------------------------
+    void DrawLevelInfo();
+
+    //-------------------------------------------------------------------------
+    //! @brief      コンテキストメニューを描画.
+    //-------------------------------------------------------------------------
+    void DrawContextMenu();
+
+    //-------------------------------------------------------------------------
+    //! @brief      プロパティウィンドウを描画.
+    //-------------------------------------------------------------------------
+    void DrawPropertyWindow();
+
+    //-------------------------------------------------------------------------
+    //! @brief      モデルタブを描画します.
+    //-------------------------------------------------------------------------
+    void DrawModelTab();
+
+    //-------------------------------------------------------------------------
+    //! @brief      ライトタブを描画します.
+    //-------------------------------------------------------------------------
+    void DrawLightTab();
+
+    //-------------------------------------------------------------------------
+    //! @brief      ピンタブを描画します.
+    //-------------------------------------------------------------------------
+    void DrawPinTab();
+
+    //-------------------------------------------------------------------------
+    //! @brief      デバッグタブを描画します.
+    //-------------------------------------------------------------------------
+    void DrawDebugTab();
+
+    //-------------------------------------------------------------------------
+    //! @brief      ギズモを描画します.
+    //-------------------------------------------------------------------------
+    void DrawGizmo(asdx::Vector3& position, asdx::Vector3& scale, asdx::Quaternion& rotation);
 };

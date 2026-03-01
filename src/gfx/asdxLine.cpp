@@ -96,24 +96,22 @@ struct Hex
 
 Hex WorldToHex(const asdx::Vector3& p, float size)
 {
-    float q = (sqrtf(3.0f) / 3.0f * p.x - 1.0f / 3.0f * p.z) / size;
+    const auto kSqrt3 = 1.7320508075f;
+    float q = (kSqrt3 / 3.0f * p.x - 1.0f / 3.0f * p.z) / size;
     float r = (2.0f / 3.0f * p.z) / size;
     return { q, r };
 }
 
-asdx::Vector3 HexToWorld(const Hex& hex, float size)
+asdx::Vector3 HexToWorld(float q, float r, float size)
 {
-    auto x = size * sqrtf(3.0f) * (hex.q + hex.r / 2.0f);
-    auto z = size * 3.0f / 2.0f * hex.r;
+    const auto kSqrt3 = 1.7320508075f;
+    auto x = size * kSqrt3 * (q + r * 0.5f);
+    auto z = size * 1.5f * r;
     return asdx::Vector3(x, 0.0f, z);
 }
 
-asdx::Vector3 HexToWorld(float q, float r, float size)
-{
-    auto x = size * sqrtf(3.0f) * (q + r / 2.0f);
-    auto z = size * 3.0f / 2.0f * r;
-    return asdx::Vector3(x, 0.0f, z);
-}
+asdx::Vector3 HexToWorld(const Hex& hex, float size)
+{ return HexToWorld(hex.q, hex.r, size); }
 
 
 } // namespace
@@ -682,8 +680,8 @@ void DrawWireHexagon(LineRenderer& renderer, const Vector3& center, float length
         auto a0 = F_PIDIV3 * (i + 0);
         auto a1 = F_PIDIV3 * (i + 1);
 
-        auto p0 = center + Vector3(cos(a0), 0.0f, sin(a0)) * length;
-        auto p1 = center + Vector3(cos(a1), 0.0f, sin(a1)) * length;
+        auto p0 = center + Vector3(sin(a0), 0.0f, cos(a0)) * length;
+        auto p1 = center + Vector3(sin(a1), 0.0f, cos(a1)) * length;
 
         renderer.Add(p0, p1, color);
     }
@@ -716,6 +714,7 @@ void DrawSquareGrid(LineRenderer& renderer, int halfRange, float size, const Vec
 //-----------------------------------------------------------------------------
 void DrawHexGrid(LineRenderer& renderer, int halfRange, float size, const Vector4& color)
 {
+#if 0
     auto center = WorldToHex(Vector3(0.0f, 0.0f, 0.0f), size);
 
     auto cq = (int)round(center.q);
@@ -725,13 +724,33 @@ void DrawHexGrid(LineRenderer& renderer, int halfRange, float size, const Vector
     {
         for(auto dr = -halfRange; dr <= halfRange; dr++)
         {
-            auto q = cq + dq;
-            auto r = cr + dr;
+            auto q = float(cq + dq);
+            auto r = float(cr + dr);
 
             auto pos = HexToWorld(q, r, size);
             DrawWireHexagon(renderer, pos, size, color);
         }
     }
+#else
+    const auto kSqrt3 = 1.7320508075f;
+    const auto w      = kSqrt3 * size;
+    const auto h      = 1.5f * size;
+    const auto halfW  = w * 0.5f;
+
+    for (int z = -halfRange; z <= halfRange; z++)
+    {
+        for (int x = -halfRange; x <= halfRange; x++)
+        {
+            float offset = (z % 2 == 0) ? halfW : 0.0f;
+
+            float px = x * w + offset;
+            float pz = z * h;
+
+            DrawWireHexagon(renderer, Vector3(px, 0, pz), size, color);
+        }
+    }
+
+#endif
 }
 
 } // namespace asdx

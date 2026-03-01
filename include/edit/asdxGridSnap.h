@@ -53,21 +53,21 @@ HexCoord CubeToAxial(const CubeCoord& c)
 { return { c.x, c.z }; }
 
 inline
-Vector3 HexToWorld(const HexCoord& h, float gridSize)
-{
-    const auto kSqrt3 = 1.73205080757f;
-    auto x = gridSize * kSqrt3 * (h.q + h.r * 0.5f);
-    auto z = gridSize * 1.5f * h.r;
-    return Vector3(x, 0.0f, z);
-}
-
-inline
 HexCoord WorldToHex(const Vector3& p, float gridSize)
 {
     const auto kSqrt3 = 1.7320508075f;
     auto q = (kSqrt3 / 3.0f * p.x - 1.0f / 3.0f * p.z) / gridSize;
     auto r = (2.0f / 3.0f * p.z) / gridSize;
     return { q, r };
+}
+
+inline
+Vector3 HexToWorld(const HexCoord& h, float gridSize)
+{
+    const auto kSqrt3 = 1.73205080757f;
+    auto x = gridSize * kSqrt3 * (h.q + h.r * 0.5f);
+    auto z = gridSize * 1.5f * h.r;
+    return Vector3(x, 0.0f, z);
 }
 
 inline

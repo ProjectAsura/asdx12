@@ -72,6 +72,12 @@ bool LevelEditor::OnInit()
         }
     }
 
+    if (!m_ShapeStates.Init(m_SwapChainFormat, m_DepthStencilFormat))
+    {
+        ELOG("Error : ShapeStates Init Failed.");
+        return false;
+    }
+
     m_Camera.Init(
         asdx::Vector3(0.0f, 0.0f, 5.0f),
         asdx::Vector3(0.0f, 0.0f, 0.0f),
@@ -79,26 +85,8 @@ bool LevelEditor::OnInit()
         0.1f,
         10000.0f);
 
-    if (!m_ShapeStates.Init(m_SwapChainFormat, m_DepthStencilFormat))
-    {
-        ELOG("Error : ShapeStates::Init() Failed.");
-        return false;
-    }
-
-    if (!m_ShapeParams.Init(UINT16_MAX))
-    {
-        ELOG("Error : ShapeParams::Init() Failed.");
-        return false;
-    }
-
-    if (!m_SphereShape.Init(1.0f, 20))
-    {
-        ELOG("Error : SphereShape::Init() Failed.");
-        return false;
-    }
-
     // ラインレンダラーの初期化.
-    if (!m_LineRenderer.Init(12 * UINT16_MAX, m_SwapChainFormat, DXGI_FORMAT_UNKNOWN))
+    if (!m_LineRenderer.Init(100 * UINT16_MAX, m_SwapChainFormat, DXGI_FORMAT_UNKNOWN))
     {
         ELOG("Error : LineRenderer::Init() Failed.");
         return false;
@@ -141,6 +129,17 @@ bool LevelEditor::OnInit()
 //-----------------------------------------------------------------------------
 void LevelEditor::OnTerm()
 {
+    m_SceneCB.Term();
+
+    m_AxisVertexBuffer.Term();
+
+    m_LineRenderer.Term();
+
+    m_RootSignature.Reset();
+
+    m_PipelineState.Term();
+
+    m_ShapeStates.Term();
 
     // GUIマネージャの終了処理.
     asdx::GuiMgr::Instance().Term();
@@ -153,13 +152,33 @@ void LevelEditor::OnFrameMove(const base::FrameEventArgs& args)
 {
     auto pCmd = m_GfxCmdList.Reset();
 
+    m_LineRenderer.Reset();
+
     // ImGui関連.
     asdx::GuiMgr::Instance().Update(m_Width, m_Height);
+
     ImGuizmo::BeginFrame();
     ImGuizmo::SetImGuiContext(ImGui::GetCurrentContext());
 
+    // レベル情報を描画.
+    DrawLevelInfo();
 
+    // コンテキストメニューを描画.
+    DrawContextMenu();
 
+    // プロパティウィンドウを描画.
+    DrawPropertyWindow();
+
+    auto aspect = float(m_Width) / float(m_Height);
+    auto view = m_Camera.GetView();
+    m_Proj = asdx::Matrix::CreatePerspectiveFieldOfView(asdx::ToRadian(37.5f), aspect, 0.1f, 1000.0f);
+    m_ShapeStates.SetViewProj(view, m_Proj);
+
+    // グリッド描画.
+    if (m_GridMode == 0)
+        asdx::DrawSquareGrid(m_LineRenderer, m_GridHalfRange, m_GridSize, m_GridColor);
+    else
+        asdx::DrawHexGrid(m_LineRenderer, m_GridHalfRange, m_GridSize, m_GridColor);
 }
 
 //-----------------------------------------------------------------------------
@@ -186,7 +205,10 @@ void LevelEditor::OnFrameRender(const base::FrameEventArgs& args)
     // 描画処理.
     {
 
-
+        auto addr = m_ShapeStates.GetBufferAddress();
+        m_LineRenderer.SetPipelineState(pCmd);
+        pCmd->SetGraphicsRootConstantBufferView(0, addr);
+        m_LineRenderer.Draw(pCmd);
     }
 
     // GUIを描画.
@@ -361,3 +383,4 @@ void LevelEditor::OnDrop(const wchar_t** dropFiles, uint32_t fileCount)
 {
 
 }
+

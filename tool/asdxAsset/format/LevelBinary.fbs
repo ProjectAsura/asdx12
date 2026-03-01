@@ -4,6 +4,7 @@ namespace asdx.res;
 
 table ModelInstance
 {
+    Tag         : string (key);
     Path        : string;
     Position    : Float3;
     Scale       : Float3;
@@ -52,12 +53,13 @@ union LightUnion
 
 table Light
 {
+    Tag  : string (key);
     data : LightUnion;
 }
 
 table Pin
 {
-    Tag      : string;
+    Tag      : string (key);
     Position : Float3;
 }
 

@@ -29,6 +29,7 @@ enum EditLightType : uint8_t
 ///////////////////////////////////////////////////////////////////////////////
 struct EditModelInstance
 {
+    std::string         Tag;        //!< 名前.
     std::string         Path;       //!< mdb ファイルパス.
     asdx::Vector3       Position;   //!< 位置座標.
     asdx::Quaternion    Rotation;   //!< 回転量.
@@ -84,6 +85,7 @@ struct EditImageBasedLight
 ///////////////////////////////////////////////////////////////////////////////
 struct EditLight
 {
+    std::string     Tag;        //!< 名前.
     EditLightType   Type;       //!< ライトタイプ.
     union
     {
@@ -119,6 +121,7 @@ struct EditLight
     EditLight(const EditLight& other)
     {
         Type = other.Type;
+        Tag  = other.Tag;
         switch(Type)
         {
             case EditLightType::Directional: { Directional = other.Directional; } break;
@@ -134,6 +137,7 @@ struct EditLight
     EditLight(EditLight&& other) noexcept
     {
         Type = other.Type;
+        Tag  = std::move(other.Tag);
         switch(Type)
         {
             case EditLightType::Directional: { Directional  = std::move(other.Directional); } break;

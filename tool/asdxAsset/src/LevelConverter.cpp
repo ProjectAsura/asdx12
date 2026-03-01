@@ -157,6 +157,7 @@ bool LevelConverter::Convert(const EditLevel& level, std::vector<uint8_t>& outpu
 
         auto instance = asdx::res::CreateModelInstanceDirect(
             builder,
+            srcModel.Tag.c_str(),
             srcModel.Path.c_str(),
             &pos,
             &scale,
@@ -182,8 +183,9 @@ bool LevelConverter::Convert(const EditLevel& level, std::vector<uint8_t>& outpu
                     srcLight.Point.Intensity,
                     srcLight.Point.Radius);
 
-                auto item = asdx::res::CreateLight(
+                auto item = asdx::res::CreateLightDirect(
                     builder,
+                    srcLight.Tag.c_str(),
                     asdx::res::LightUnion_PointLight,
                     instance.Union());
 
@@ -207,8 +209,9 @@ bool LevelConverter::Convert(const EditLevel& level, std::vector<uint8_t>& outpu
                     srcLight.Spot.InnerAngle,
                     srcLight.Spot.OuterAngle);
 
-                auto item = asdx::res::CreateLight(
+                auto item = asdx::res::CreateLightDirect(
                     builder,
+                    srcLight.Tag.c_str(),
                     asdx::res::LightUnion_SpotLight,
                     instance.Union());
 
@@ -227,8 +230,9 @@ bool LevelConverter::Convert(const EditLevel& level, std::vector<uint8_t>& outpu
                     &col,
                     srcLight.Directional.Intensity);
 
-                auto item = asdx::res::CreateLight(
+                auto item = asdx::res::CreateLightDirect(
                     builder,
+                    srcLight.Tag.c_str(),
                     asdx::res::LightUnion_DirectionalLight,
                     instance.Union());
 
@@ -243,8 +247,9 @@ bool LevelConverter::Convert(const EditLevel& level, std::vector<uint8_t>& outpu
                     srcLight.ImageBased.Path.c_str(),
                     srcLight.ImageBased.Intensity);
 
-                auto item = asdx::res::CreateLight(
+                auto item = asdx::res::CreateLightDirect(
                     builder,
+                    srcLight.Tag.c_str(),
                     asdx::res::LightUnion_ImageBasedLight,
                     instance.Union());
 
@@ -306,6 +311,7 @@ bool LevelConverter::ReverseConvert(const std::vector<uint8_t>& input, EditLevel
             auto srcModel = models->Get(i);
 
             EditModelInstance instance = {};
+            instance.Tag        = srcModel->Tag()->c_str();
             instance.Path       = srcModel->Path()->c_str();
             instance.Position   = asdx::FromFloat3(*srcModel->Position());
             instance.Scale      = asdx::FromFloat3(*srcModel->Scale());
@@ -330,6 +336,7 @@ bool LevelConverter::ReverseConvert(const std::vector<uint8_t>& input, EditLevel
                 {
                     auto lightData = srcLight->data_as_PointLight();
 
+                    instance.Tag                = srcLight->Tag()->c_str();
                     instance.Type               = EditLightType::Point;
                     instance.Point.Position     = asdx::FromFloat3(*lightData->Position());
                     instance.Point.Color        = asdx::FromFloat3(*lightData->Color());
@@ -344,6 +351,7 @@ bool LevelConverter::ReverseConvert(const std::vector<uint8_t>& input, EditLevel
                 {
                     auto lightData = srcLight->data_as_SpotLight();
 
+                    instance.Tag                = srcLight->Tag()->c_str();
                     instance.Type               = EditLightType::Spot;
                     instance.Spot.Position      = asdx::FromFloat3(*lightData->Position());
                     instance.Spot.Direction     = asdx::FromFloat3(*lightData->Direction());
@@ -361,6 +369,7 @@ bool LevelConverter::ReverseConvert(const std::vector<uint8_t>& input, EditLevel
                 {
                     auto lightData = srcLight->data_as_DirectionalLight();
 
+                    instance.Tag                    = srcLight->Tag()->c_str();
                     instance.Type                   = EditLightType::Directional;
                     instance.Directional.Direction  = asdx::FromFloat3(*lightData->Direction());
                     instance.Directional.Color      = asdx::FromFloat3(*lightData->Color());
@@ -374,6 +383,7 @@ bool LevelConverter::ReverseConvert(const std::vector<uint8_t>& input, EditLevel
                 {
                     auto lightData = srcLight->data_as_ImageBasedLight();
 
+                    instance.Tag                    = srcLight->Tag()->c_str();
                     instance.Type                   = EditLightType::ImageBased;
                     instance.ImageBased.Path        = lightData->Path()->c_str();
                     instance.ImageBased.Intensity   = lightData->Intensity();
@@ -448,6 +458,7 @@ bool LevelConverter::Save(const std::string& path, const EditLevel& level)
             const auto& m = level.Models[i];
 
             fprintf_s(fp, "    {\n");
+            fprintf_s(fp, "      \"Tag\": \"%s\",\n", m.Tag.c_str());
             fprintf_s(fp, "      \"Path\": \"%s\",\n", m.Path.c_str());
 
             fprintf_s(fp, "      \"Position\": ");
@@ -480,6 +491,7 @@ bool LevelConverter::Save(const std::string& path, const EditLevel& level)
             const auto& l = level.Lights[i];
 
             fprintf_s(fp, "    {\n");
+            fprintf_s(fp, "      \"Tag\": \"%s\",\n", l.Tag.c_str());
 
             if (l.Type == Point)
             {
@@ -599,6 +611,7 @@ bool LevelConverter::Load(const std::string& path, EditLevel& level)
         {
             auto obj = model.get_object();
 
+            auto tag  = std::string(std::string_view(obj["Tag"]));
             auto path = std::string(std::string_view(obj["Path"]));
 
             auto s = ReadVector3   (obj["Scale"]   .get_object());
@@ -606,6 +619,7 @@ bool LevelConverter::Load(const std::string& path, EditLevel& level)
             auto t = ReadVector3   (obj["Position"].get_object());
 
             EditModelInstance instance = {};
+            instance.Tag        = tag;
             instance.Path       = path;
             instance.Scale      = s;
             instance.Rotation   = r;
@@ -623,7 +637,9 @@ bool LevelConverter::Load(const std::string& path, EditLevel& level)
             auto obj = light.get_object();
 
             EditLight instance = {};
+            auto tag  = std::string(std::string_view(obj["Tag"]));
             auto type = std::string(std::string_view(obj["Type"]));
+            instance.Tag = tag;
 
             if (type == "Point")
             {
