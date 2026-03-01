@@ -175,10 +175,13 @@ void LevelEditor::OnFrameMove(const base::FrameEventArgs& args)
     m_ShapeStates.SetViewProj(view, m_Proj);
 
     // グリッド描画.
-    if (m_GridMode == 0)
-        asdx::DrawSquareGrid(m_LineRenderer, m_GridHalfRange, m_GridSize, m_GridColor);
-    else
-        asdx::DrawHexGrid(m_LineRenderer, m_GridHalfRange, m_GridSize, m_GridColor);
+    if (m_DrawGrid)
+    {
+        if (m_GridMode == 0)
+            asdx::DrawSquareGrid(m_LineRenderer, m_GridHalfRange, m_GridSize, m_GridColor);
+        else
+            asdx::DrawHexGrid(m_LineRenderer, m_GridHalfRange, m_GridSize, m_GridColor);
+    }
 }
 
 //-----------------------------------------------------------------------------

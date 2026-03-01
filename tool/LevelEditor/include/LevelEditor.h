@@ -60,7 +60,7 @@ private:
     asdx::DoubledConstantBuffer         m_SceneCB            = {};
     bool                                m_EnableGuizmo       = false;
     bool                                m_DrawAxis           = false;
-    bool                                m_DrawGrid           = false;
+    bool                                m_DrawGrid           = true;
     ImGuizmo::OPERATION                 m_GuizmoOperation    = {};
     asdx::LineRenderer                  m_LineRenderer;
     asdx::VertexBuffer                  m_AxisVertexBuffer;
@@ -73,7 +73,7 @@ private:
     bool                                m_EnableWireframe   = false;
     float                               m_GridSize          = 1.0f;
     int                                 m_GridHalfRange     = 10;
-    uint8_t                             m_GridMode          = 0;
+    int                                 m_GridMode          = 0;
     asdx::Vector4                       m_GridColor         = asdx::Vector4(1.0f, 1.0f, 1.0f, 1.0f);
     bool                                m_ShowInfo          = true;
     bool                                m_ShowProperty      = true;

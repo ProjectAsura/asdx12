@@ -23,6 +23,16 @@
 #endif//IMGUI_COLUMN2
 
 
+namespace {
+
+const char* kGridModes[] = {
+    asdx::ToChar(u8"格子状"),
+    asdx::ToChar(u8"六角形"),
+};
+
+} // namespace
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // LevelEditor class
 ///////////////////////////////////////////////////////////////////////////////
@@ -245,6 +255,11 @@ void LevelEditor::DrawDebugTab()
     if (!ImGui::BeginTabItem(asdx::ToChar(u8"デバッグ")))
         return;
 
+    ImGui::Checkbox(asdx::ToChar(u8"グリッド表示"), &m_DrawGrid);
+    ImGui::ColorEdit4(asdx::ToChar(u8"グリッドカラー"), &m_GridColor.x, ImGuiColorEditFlags_Float);
+    ImGui::Combo(asdx::ToChar(u8"グリッドモード"), &m_GridMode, kGridModes, (int)_countof(kGridModes));
+    ImGui::DragFloat(asdx::ToChar(u8"グリッドサイズ"), &m_GridSize, 0.1f, 0.0f, 1000000.0f);
+    ImGui::DragInt(asdx::ToChar(u8"グリッド範囲"), &m_GridHalfRange);
 
     ImGui::EndTabItem();
 }
