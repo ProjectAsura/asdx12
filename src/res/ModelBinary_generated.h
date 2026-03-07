@@ -30,6 +30,39 @@ struct MaterialBuilder;
 struct ModelBinary;
 struct ModelBinaryBuilder;
 
+enum AlphaType : uint8_t {
+  AlphaType_Opaque = 0,
+  AlphaType_Mask = 1,
+  AlphaType_Blend = 2,
+  AlphaType_MIN = AlphaType_Opaque,
+  AlphaType_MAX = AlphaType_Blend
+};
+
+inline const AlphaType (&EnumValuesAlphaType())[3] {
+  static const AlphaType values[] = {
+    AlphaType_Opaque,
+    AlphaType_Mask,
+    AlphaType_Blend
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesAlphaType() {
+  static const char * const names[4] = {
+    "Opaque",
+    "Mask",
+    "Blend",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNameAlphaType(AlphaType e) {
+  if (::flatbuffers::IsOutRange(e, AlphaType_Opaque, AlphaType_Blend)) return "";
+  const size_t index = static_cast<size_t>(e);
+  return EnumNamesAlphaType()[index];
+}
+
 struct Bone FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef BoneBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
@@ -332,7 +365,9 @@ struct Material FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
     VT_BASECOLORMAP = 20,
     VT_NORMALMAP = 22,
     VT_ORMMAP = 24,
-    VT_EMISSIVEMAP = 26
+    VT_EMISSIVEMAP = 26,
+    VT_ALPHAMODE = 28,
+    VT_ALPHACUTOFF = 30
   };
   const ::flatbuffers::String *Name() const {
     return GetPointer<const ::flatbuffers::String *>(VT_NAME);
@@ -370,6 +405,12 @@ struct Material FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   const ::flatbuffers::String *EmissiveMap() const {
     return GetPointer<const ::flatbuffers::String *>(VT_EMISSIVEMAP);
   }
+  asdx::res::AlphaType AlphaMode() const {
+    return static_cast<asdx::res::AlphaType>(GetField<uint8_t>(VT_ALPHAMODE, 0));
+  }
+  float AlphaCutOff() const {
+    return GetField<float>(VT_ALPHACUTOFF, 0.0f);
+  }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_NAME) &&
@@ -389,6 +430,8 @@ struct Material FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
            verifier.VerifyString(OrmMap()) &&
            VerifyOffset(verifier, VT_EMISSIVEMAP) &&
            verifier.VerifyString(EmissiveMap()) &&
+           VerifyField<uint8_t>(verifier, VT_ALPHAMODE, 1) &&
+           VerifyField<float>(verifier, VT_ALPHACUTOFF, 4) &&
            verifier.EndTable();
   }
 };
@@ -433,6 +476,12 @@ struct MaterialBuilder {
   void add_EmissiveMap(::flatbuffers::Offset<::flatbuffers::String> EmissiveMap) {
     fbb_.AddOffset(Material::VT_EMISSIVEMAP, EmissiveMap);
   }
+  void add_AlphaMode(asdx::res::AlphaType AlphaMode) {
+    fbb_.AddElement<uint8_t>(Material::VT_ALPHAMODE, static_cast<uint8_t>(AlphaMode), 0);
+  }
+  void add_AlphaCutOff(float AlphaCutOff) {
+    fbb_.AddElement<float>(Material::VT_ALPHACUTOFF, AlphaCutOff, 0.0f);
+  }
   explicit MaterialBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -457,8 +506,11 @@ inline ::flatbuffers::Offset<Material> CreateMaterial(
     ::flatbuffers::Offset<::flatbuffers::String> BaseColorMap = 0,
     ::flatbuffers::Offset<::flatbuffers::String> NormalMap = 0,
     ::flatbuffers::Offset<::flatbuffers::String> OrmMap = 0,
-    ::flatbuffers::Offset<::flatbuffers::String> EmissiveMap = 0) {
+    ::flatbuffers::Offset<::flatbuffers::String> EmissiveMap = 0,
+    asdx::res::AlphaType AlphaMode = asdx::res::AlphaType_Opaque,
+    float AlphaCutOff = 0.0f) {
   MaterialBuilder builder_(_fbb);
+  builder_.add_AlphaCutOff(AlphaCutOff);
   builder_.add_EmissiveMap(EmissiveMap);
   builder_.add_OrmMap(OrmMap);
   builder_.add_NormalMap(NormalMap);
@@ -471,6 +523,7 @@ inline ::flatbuffers::Offset<Material> CreateMaterial(
   builder_.add_Alpha(Alpha);
   builder_.add_BaseColorFactor(BaseColorFactor);
   builder_.add_Name(Name);
+  builder_.add_AlphaMode(AlphaMode);
   return builder_.Finish();
 }
 
@@ -487,7 +540,9 @@ inline ::flatbuffers::Offset<Material> CreateMaterialDirect(
     const char *BaseColorMap = nullptr,
     const char *NormalMap = nullptr,
     const char *OrmMap = nullptr,
-    const char *EmissiveMap = nullptr) {
+    const char *EmissiveMap = nullptr,
+    asdx::res::AlphaType AlphaMode = asdx::res::AlphaType_Opaque,
+    float AlphaCutOff = 0.0f) {
   auto Name__ = Name ? _fbb.CreateString(Name) : 0;
   auto BaseColorMap__ = BaseColorMap ? _fbb.CreateString(BaseColorMap) : 0;
   auto NormalMap__ = NormalMap ? _fbb.CreateString(NormalMap) : 0;
@@ -506,7 +561,9 @@ inline ::flatbuffers::Offset<Material> CreateMaterialDirect(
       BaseColorMap__,
       NormalMap__,
       OrmMap__,
-      EmissiveMap__);
+      EmissiveMap__,
+      AlphaMode,
+      AlphaCutOff);
 }
 
 struct ModelBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {

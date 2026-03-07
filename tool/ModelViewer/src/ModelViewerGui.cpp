@@ -540,22 +540,22 @@ void ModelViewer::DrawMaterialTab()
 
             auto baseColorMap = asdx::MaterialProxy::GetBaseColorMap(res);
             auto baseColorPath = (baseColorMap.is_null_or_empty() ? "NONE" : baseColorMap.c_str());
-            DrawTextureInfo(asdx::ToChar(u8"ベースカラーマップ"), baseColorPath, mtl->GetBaseColorMap());
+            DrawTextureInfo(asdx::ToChar(u8"ベースカラーマップ"), baseColorPath, mtl->GetTexture(asdx::Material::TEXTURE_BASE_COLOR));
             ImGui::Separator();
 
             auto normalMap = asdx::MaterialProxy::GetNormalMap(res);
             auto normalPath = (normalMap.is_null_or_empty() ? "NONE" : normalMap.c_str());
-            DrawTextureInfo(asdx::ToChar(u8"法線マップ"), normalPath, mtl->GetNormalMap());
+            DrawTextureInfo(asdx::ToChar(u8"法線マップ"), normalPath, mtl->GetTexture(asdx::Material::TEXTURE_NORMAL));
             ImGui::Separator();
 
             auto ormMap = asdx::MaterialProxy::GetOrmMap(res);
             auto ormPath = (ormMap.is_null_or_empty() ? "NONE" : ormMap.c_str());
-            DrawTextureInfo(asdx::ToChar(u8"ORMマップ"), ormPath, mtl->GetOrmMap());
+            DrawTextureInfo(asdx::ToChar(u8"ORMマップ"), ormPath, mtl->GetTexture(asdx::Material::TEXTURE_ORM));
             ImGui::Separator();
 
             auto emissiveMap = asdx::MaterialProxy::GetEmissiveMap(res);
             auto emissivePath = (emissiveMap.is_null_or_empty() ? "NONE" : emissiveMap.c_str());
-            DrawTextureInfo(asdx::ToChar(u8"エミッシブマップ"), emissivePath, mtl->GetEmissiveMap());
+            DrawTextureInfo(asdx::ToChar(u8"エミッシブマップ"), emissivePath, mtl->GetTexture(asdx::Material::TEXTURE_EMISSIVE));
             ImGui::Separator();
 
             ImGui::PopID();

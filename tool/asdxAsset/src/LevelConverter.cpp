@@ -144,12 +144,16 @@ bool LevelConverter::Convert(const EditLevel& level, std::vector<uint8_t>& outpu
 {
     flatbuffers::FlatBufferBuilder builder(1024);
 
-    std::vector<flatbuffers::Offset<asdx::res::ModelInstance>> dstModels;
-    std::vector<flatbuffers::Offset<asdx::res::Light>> dstLights;
-    std::vector<flatbuffers::Offset<asdx::res::Pin>> dstPins;
+    std::vector<flatbuffers::Offset<asdx::res::ModelInstance>>      dstModels;
+    std::vector<flatbuffers::Offset<asdx::res::PointLight>>         dstPointLights;
+    std::vector<flatbuffers::Offset<asdx::res::SpotLight>>          dstSpotLights;
+    std::vector<flatbuffers::Offset<asdx::res::DirectionalLight>>   dstDirLights;
+    std::vector<flatbuffers::Offset<asdx::res::ImageBasedLight>>    dstIblLights;
+    std::vector<flatbuffers::Offset<asdx::res::Pin>>                dstPins;
+    std::vector<flatbuffers::Offset<asdx::res::Volume>>             dstVolumes;
 
     // モデルデータ変換.
-    for(auto& srcModel : level.Models)
+    for(auto& srcModel : level.ModelInstances)
     {
         auto pos      = asdx::ToFloat3(srcModel.Position);
         auto scale    = asdx::ToFloat3(srcModel.Scale);
@@ -161,102 +165,76 @@ bool LevelConverter::Convert(const EditLevel& level, std::vector<uint8_t>& outpu
             srcModel.Path.c_str(),
             &pos,
             &scale,
-            &rotation);
+            &rotation,
+            srcModel.UserId);
 
         dstModels.emplace_back(instance);
     }
 
-    // ライトデータ変換.
-    for(auto& srcLight : level.Lights)
+    // ポイントライトデータ変換.
+    for(auto& srcLight : level.PointLights)
     {
-        switch(srcLight.Type)
-        {
-        case EditLightType::Point:
-            {
-                auto pos = asdx::ToFloat3(srcLight.Point.Position);
-                auto col = asdx::ToFloat3(srcLight.Point.Color);
+        auto pos = asdx::ToFloat3(srcLight.Position);
+        auto col = asdx::ToFloat3(srcLight.Color);
 
-                auto instance = asdx::res::CreatePointLight(
-                    builder, 
-                    &pos,
-                    &col,
-                    srcLight.Point.Intensity,
-                    srcLight.Point.Radius);
+        auto item = asdx::res::CreatePointLightDirect(
+            builder,
+            srcLight.Tag.c_str(),
+            &pos,
+            &col,
+            srcLight.Intensity,
+            srcLight.Radius);
 
-                auto item = asdx::res::CreateLightDirect(
-                    builder,
-                    srcLight.Tag.c_str(),
-                    asdx::res::LightUnion_PointLight,
-                    instance.Union());
+        dstPointLights.emplace_back(item);
+    }
 
-                dstLights.emplace_back(item);
-            }
-            break;
+    // スポットライトデータ変換.
+    for(auto& srcLight : level.SpotLights)
+    {
+        auto pos = asdx::ToFloat3(srcLight.Position);
+        auto dir = asdx::ToFloat3(srcLight.Direction);
+        auto col = asdx::ToFloat3(srcLight.Color);
 
-        case EditLightType::Spot:
-            {
-                auto pos = asdx::ToFloat3(srcLight.Spot.Position);
-                auto dir = asdx::ToFloat3(srcLight.Spot.Direction);
-                auto col = asdx::ToFloat3(srcLight.Spot.Color);
+        auto item = asdx::res::CreateSpotLightDirect(
+            builder,
+            srcLight.Tag.c_str(),
+            &pos,
+            &dir,
+            &col,
+            srcLight.Intensity,
+            srcLight.Radius,
+            srcLight.InnerAngle,
+            srcLight.OuterAngle);
 
-                auto instance = asdx::res::CreateSpotLight(
-                    builder,
-                    &pos,
-                    &dir,
-                    &col,
-                    srcLight.Spot.Intensity,
-                    srcLight.Spot.Radius,
-                    srcLight.Spot.InnerAngle,
-                    srcLight.Spot.OuterAngle);
+        dstSpotLights.emplace_back(item);
+    }
 
-                auto item = asdx::res::CreateLightDirect(
-                    builder,
-                    srcLight.Tag.c_str(),
-                    asdx::res::LightUnion_SpotLight,
-                    instance.Union());
+    // ディレクショナルライトデータ変換.
+    for(auto& srcLight : level.DirLights)
+    {
+        auto dir = asdx::ToFloat3(srcLight.Direction);
+        auto col = asdx::ToFloat3(srcLight.Color);
 
-                dstLights.emplace_back(item);
-            }
-            break;
+        auto item = asdx::res::CreateDirectionalLightDirect(
+            builder,
+            srcLight.Tag.c_str(),
+            &dir,
+            &col,
+            srcLight.Intensity);
 
-        case EditLightType::Directional:
-            {
-                auto dir = asdx::ToFloat3(srcLight.Directional.Direction);
-                auto col = asdx::ToFloat3(srcLight.Directional.Color);
+        dstDirLights.emplace_back(item);
+    }
 
-                auto instance = asdx::res::CreateDirectionalLight(
-                    builder,
-                    &dir,
-                    &col,
-                    srcLight.Directional.Intensity);
+    // IBLライトデータ変換.
+    for(auto& srcLight : level.IblLights)
+    {
+        auto item = asdx::res::CreateImageBasedLightDirect(
+            builder,
+            srcLight.Tag.c_str(),
+            srcLight.Path.c_str(),
+            srcLight.Intensity);
 
-                auto item = asdx::res::CreateLightDirect(
-                    builder,
-                    srcLight.Tag.c_str(),
-                    asdx::res::LightUnion_DirectionalLight,
-                    instance.Union());
-
-                dstLights.emplace_back(item);
-            }
-            break;
-
-        case EditLightType::ImageBased:
-            {
-                auto instance = asdx::res::CreateImageBasedLightDirect(
-                    builder,
-                    srcLight.ImageBased.Path.c_str(),
-                    srcLight.ImageBased.Intensity);
-
-                auto item = asdx::res::CreateLightDirect(
-                    builder,
-                    srcLight.Tag.c_str(),
-                    asdx::res::LightUnion_ImageBasedLight,
-                    instance.Union());
-
-                dstLights.emplace_back(item);
-            }
-            break;
-        }
+        dstIblLights.emplace_back(item);
     }
 
     // ピンデータ変換.
@@ -264,20 +242,43 @@ bool LevelConverter::Convert(const EditLevel& level, std::vector<uint8_t>& outpu
     {
         auto pos = asdx::ToFloat3(srcPin.Position);
 
-        auto instance = asdx::res::CreatePinDirect(
+        auto item = asdx::res::CreatePinDirect(
             builder,
             srcPin.Tag.c_str(),
-            &pos);
+            &pos,
+            srcPin.UserId);
 
-        dstPins.emplace_back(instance);
+        dstPins.emplace_back(item);
+    }
+
+    // ボリュームデータ変換.
+    for(auto& srcVolume : level.Volumes)
+    {
+        auto pos      = asdx::ToFloat3(srcVolume.Position);
+        auto scale    = asdx::ToFloat3(srcVolume.Scale);
+        auto rotation = asdx::ToQuaternion(srcVolume.Rotation);
+
+        auto item = asdx::res::CreateVolumeDirect(
+            builder,
+            srcVolume.Tag.c_str(),
+            &pos,
+            &scale,
+            &rotation,
+            srcVolume.UserId);
+
+        dstVolumes.emplace_back(item);
     }
 
     // バイナリ作成.
     auto resource = asdx::res::CreateLevelBinaryDirect(
         builder,
         &dstModels,
-        &dstLights,
-        &dstPins);
+        &dstPointLights,
+        &dstSpotLights,
+        &dstDirLights,
+        &dstIblLights,
+        &dstPins,
+        &dstVolumes);
     builder.Finish(resource);
 
     // バイナリを出力.
@@ -303,7 +304,7 @@ bool LevelConverter::ReverseConvert(const std::vector<uint8_t>& input, EditLevel
     auto bin = asdx::res::GetLevelBinary(input.data());
 
     // モデルデータ逆変換.
-    auto models = bin->Models();
+    auto models = bin->ModelInstances();
     if (models != nullptr)
     {
         for(auto i=0u; i<models->size(); ++i)
@@ -317,81 +318,79 @@ bool LevelConverter::ReverseConvert(const std::vector<uint8_t>& input, EditLevel
             instance.Scale      = asdx::FromFloat3(*srcModel->Scale());
             instance.Rotation   = asdx::FromQuaternion(*srcModel->Rotation());
 
-            output.Models.emplace_back(instance);
+            output.ModelInstances.emplace_back(instance);
         }
     }
 
-    // ライトデータ逆変換.
-    auto lights = bin->Lights();
-    if (lights != nullptr)
+    auto pointLights = bin->PointLights();
+    if (pointLights != nullptr)
     {
-        for(auto i=0u; i<lights->size(); ++i)
+        for(auto i=0u; i<pointLights->size(); ++i)
         {
-            auto srcLight = lights->Get(i);
-            EditLight instance = {};
+            auto srcLight = pointLights->Get(i);
 
-            switch(srcLight->data_type())
-            {
-            case asdx::res::LightUnion_PointLight:
-                {
-                    auto lightData = srcLight->data_as_PointLight();
+            EditPointLight instance = {};
+            instance.Tag        = srcLight->Tag()->c_str();
+            instance.Position   = asdx::FromFloat3(*srcLight->Position());
+            instance.Color      = asdx::FromFloat3(*srcLight->Color());
+            instance.Intensity  = srcLight->Intensity();
+            instance.Radius     = srcLight->Radius();
 
-                    instance.Tag                = srcLight->Tag()->c_str();
-                    instance.Type               = EditLightType::Point;
-                    instance.Point.Position     = asdx::FromFloat3(*lightData->Position());
-                    instance.Point.Color        = asdx::FromFloat3(*lightData->Color());
-                    instance.Point.Intensity    = lightData->Intensity();
-                    instance.Point.Radius       = lightData->Radius();
+            output.PointLights.emplace_back(instance);
+        }
+    }
 
-                    output.Lights.emplace_back(instance);
-                }
-                break;
+    auto spotLights = bin->SpotLights();
+    if (spotLights != nullptr)
+    {
+        for(auto i=0u; i<spotLights->size(); ++i)
+        {
+            auto srcLight = spotLights->Get(i);
 
-            case asdx::res::LightUnion_SpotLight:
-                {
-                    auto lightData = srcLight->data_as_SpotLight();
+            EditSpotLight instance = {};
+            instance.Tag        = srcLight->Tag()->c_str();
+            instance.Position   = asdx::FromFloat3(*srcLight->Position());
+            instance.Direction  = asdx::FromFloat3(*srcLight->Direction());
+            instance.Color      = asdx::FromFloat3(*srcLight->Color());
+            instance.Intensity  = srcLight->Intensity();
+            instance.InnerAngle = srcLight->InnerAngle();
+            instance.OuterAngle = srcLight->OuterAngle();
+            instance.Radius     = srcLight->Radius();
 
-                    instance.Tag                = srcLight->Tag()->c_str();
-                    instance.Type               = EditLightType::Spot;
-                    instance.Spot.Position      = asdx::FromFloat3(*lightData->Position());
-                    instance.Spot.Direction     = asdx::FromFloat3(*lightData->Direction());
-                    instance.Spot.Color         = asdx::FromFloat3(*lightData->Color());
-                    instance.Spot.Intensity     = lightData->Intensity();
-                    instance.Spot.Radius        = lightData->Radius();
-                    instance.Spot.InnerAngle    = lightData->InnerAngle();
-                    instance.Spot.OuterAngle    = lightData->OuterAngle();
+            output.SpotLights.emplace_back(instance);
+        }
+    }
 
-                    output.Lights.emplace_back(instance);
-                }
-                break;
+    auto dirLights = bin->DirLights();
+    if (dirLights != nullptr)
+    {
+        for(auto i=0u; i<dirLights->size(); ++i)
+        {
+            auto srcLight = dirLights->Get(i);
 
-            case asdx::res::LightUnion_DirectionalLight:
-                {
-                    auto lightData = srcLight->data_as_DirectionalLight();
+            EditDirectionalLight instance = {};
+            instance.Tag        = srcLight->Tag()->c_str();
+            instance.Direction  = asdx::FromFloat3(*srcLight->Direction());
+            instance.Color      = asdx::FromFloat3(*srcLight->Color());
+            instance.Intensity  = srcLight->Intensity();
 
-                    instance.Tag                    = srcLight->Tag()->c_str();
-                    instance.Type                   = EditLightType::Directional;
-                    instance.Directional.Direction  = asdx::FromFloat3(*lightData->Direction());
-                    instance.Directional.Color      = asdx::FromFloat3(*lightData->Color());
-                    instance.Directional.Intensity  = lightData->Intensity();
+            output.DirLights.emplace_back(instance);
+        }
+    }
 
-                    output.Lights.emplace_back(instance);
-                }
-                break;
+    auto iblLights = bin->IblLights();
+    if (iblLights != nullptr)
+    {
+        for(auto i=0u; i<iblLights->size(); ++i)
+        {
+            auto srcLight = iblLights->Get(i);
 
-            case asdx::res::LightUnion_ImageBasedLight:
-                {
-                    auto lightData = srcLight->data_as_ImageBasedLight();
+            EditImageBasedLight instance = {};
+            instance.Tag        = srcLight->Tag()->c_str();
+            instance.Path       = srcLight->Path()->c_str();
+            instance.Intensity  = srcLight->Intensity();
 
-                    instance.Tag                    = srcLight->Tag()->c_str();
-                    instance.Type                   = EditLightType::ImageBased;
-                    instance.ImageBased.Path        = lightData->Path()->c_str();
-                    instance.ImageBased.Intensity   = lightData->Intensity();
-
-                    output.Lights.emplace_back(instance);
-                }
-                break;
-            }
+            output.IblLights.emplace_back(instance);
         }
     }
 
@@ -408,6 +407,25 @@ bool LevelConverter::ReverseConvert(const std::vector<uint8_t>& input, EditLevel
             instance.Position   = asdx::FromFloat3(*srcPin->Position());
 
             output.Pins.emplace_back(instance);
+        }
+    }
+
+    // ボリュームデータ逆変換.
+    auto volumes = bin->Volumes();
+    if (volumes != nullptr)
+    {
+        for(auto i=0u; i<volumes->size(); ++i)
+        {
+            auto srcVolume = volumes->Get(i);
+
+            EditVolume instance = {};
+            instance.Tag        = srcVolume->Tab()->c_str();
+            instance.Position   = asdx::FromFloat3(*srcVolume->Position());
+            instance.Scale      = asdx::FromFloat3(*srcVolume->Scale());
+            instance.Rotation   = asdx::FromQuaternion(*srcVolume->Rotation());
+            instance.UserId     = srcVolume->UserId();
+
+            output.Volumes.emplace_back(instance);
         }
     }
 
@@ -450,12 +468,12 @@ bool LevelConverter::Save(const std::string& path, const EditLevel& level)
     bool hasPrev = false;
 
     // モデルデータ書き込み.
-    if (!level.Models.empty())
+    if (!level.ModelInstances.empty())
     {
         fprintf_s(fp, "  \"Models\": [\n");
-        for (size_t i = 0; i < level.Models.size(); ++i)
+        for (size_t i = 0; i < level.ModelInstances.size(); ++i)
         {
-            const auto& m = level.Models[i];
+            const auto& m = level.ModelInstances[i];
 
             fprintf_s(fp, "    {\n");
             fprintf_s(fp, "      \"Tag\": \"%s\",\n", m.Tag.c_str());
@@ -472,87 +490,113 @@ bool LevelConverter::Save(const std::string& path, const EditLevel& level)
             fprintf_s(fp, "      \"Scale\": ");
             WriteVector3(fp, m.Scale);
             fprintf_s(fp, "\n");
+            fprintf_s(fp, "      \"UserId\": %llu\n", m.UserId);
 
-            fprintf_s(fp, "    }%s\n", (i + 1 < level.Models.size()) ? "," : "");
+            fprintf_s(fp, "    }%s\n", (i + 1 < level.ModelInstances.size()) ? "," : "");
         }
         fprintf_s(fp, "  ]");
         hasPrev = true;
     }
 
-    // ライトデータ書き込み.
-    if (!level.Lights.empty())
+    if (!level.PointLights.empty())
     {
         if (hasPrev)
         { fprintf_s(fp, ",\n"); }
 
-        fprintf_s(fp, "  \"Lights\": [\n");
-        for (size_t i = 0; i < level.Lights.size(); ++i)
+        fprintf_s(fp, "  \"PointLights\": [\n");
+        for (size_t i = 0; i < level.PointLights.size(); ++i)
         {
-            const auto& l = level.Lights[i];
+            const auto& l = level.PointLights[i];
 
             fprintf_s(fp, "    {\n");
             fprintf_s(fp, "      \"Tag\": \"%s\",\n", l.Tag.c_str());
-
-            if (l.Type == Point)
-            {
-                fprintf_s(fp, "      \"Type\": \"Point\",\n");
-
-                fprintf_s(fp, "      \"Position\": ");
-                WriteVector3(fp, l.Point.Position);
-                fprintf_s(fp, ",\n");
-
-                fprintf_s(fp, "      \"Color\": ");
-                WriteVector3(fp, l.Point.Color);
-                fprintf_s(fp, ",\n");
-
-                fprintf_s(fp, "      \"Intensity\": %.6f,\n", l.Point.Intensity);
-                fprintf_s(fp, "      \"Radius\": %.6f\n", l.Point.Radius);
-            }
-            else if (l.Type == Spot)
-            {
-                fprintf_s(fp, "      \"Type\": \"Spot\",\n");
-
-                fprintf_s(fp, "      \"Position\": ");
-                WriteVector3(fp, l.Spot.Position);
-                fprintf_s(fp, ",\n");
-
-                fprintf_s(fp, "      \"Direction\": ");
-                WriteVector3(fp, l.Spot.Direction);
-                fprintf_s(fp, ",\n");
-
-                fprintf_s(fp, "      \"Color\": ");
-                WriteVector3(fp, l.Spot.Color);
-                fprintf_s(fp, ",\n");
-
-                fprintf_s(fp, "      \"Intensity\": %.6f,\n", l.Spot.Intensity);
-                fprintf_s(fp, "      \"Radius\": %.6f,\n", l.Spot.Radius);
-                fprintf_s(fp, "      \"InnerAngle\": %.6f,\n", l.Spot.InnerAngle);
-                fprintf_s(fp, "      \"OuterAngle\": %.6f\n", l.Spot.OuterAngle);
-            }
-            else if (l.Type == Directional)
-            {
-                fprintf_s(fp, "      \"Type\": \"Directional\",\n");
-
-                fprintf_s(fp, "      \"Direction\": ");
-                WriteVector3(fp, l.Directional.Direction);
-                fprintf_s(fp, ",\n");
-
-                fprintf_s(fp, "      \"Color\": ");
-                WriteVector3(fp, l.Directional.Color);
-                fprintf_s(fp, ",\n");
-
-                fprintf_s(fp, "      \"Intensity\": %.6f\n", l.Directional.Intensity);
-            }
-            else if (l.Type == ImageBased)
-            {
-                fprintf_s(fp, "      \"Type\": \"ImageBased\",\n");
-                fprintf_s(fp, "      \"Path\": \"%s\",\n", l.ImageBased.Path.c_str());
-                fprintf_s(fp, "      \"Intensity\": %.6f\n", l.ImageBased.Intensity);
-            }
-
-            fprintf_s(fp, "    }%s\n", (i + 1 < level.Lights.size()) ? "," : "");
+            fprintf_s(fp, "      \"Position\": ");
+            WriteVector3(fp, l.Position);
+            fprintf_s(fp, ",\n");
+            fprintf_s(fp, "      \"Color\": ");
+            WriteVector3(fp, l.Color);
+            fprintf_s(fp, ",\n");
+            fprintf_s(fp, "      \"Intensity\": %.6f,\n", l.Intensity);
+            fprintf_s(fp, "      \"Radius\": %.6f\n", l.Radius);
+            fprintf_s(fp, "    }%s\n", (i + 1 < level.PointLights.size()) ? "," : "");
         }
 
+        fprintf_s(fp, "  ]");
+        hasPrev = true;
+    }
+
+    if (!level.SpotLights.empty())
+    {
+        if (hasPrev)
+        { fprintf_s(fp, ",\n"); }
+
+        fprintf_s(fp, "  \"SpotLights\": [\n");
+        for (size_t i = 0; i < level.SpotLights.size(); ++i)
+        {
+            const auto& l = level.SpotLights[i];
+
+            fprintf_s(fp, "    {\n");
+            fprintf_s(fp, "      \"Tag\": \"%s\",\n", l.Tag.c_str());
+            fprintf_s(fp, "      \"Position\": ");
+            WriteVector3(fp, l.Position);
+            fprintf_s(fp, ",\n");
+            fprintf_s(fp, "      \"Direction\": ");
+            WriteVector3(fp, l.Direction);
+            fprintf_s(fp, ",\n");
+            fprintf_s(fp, "      \"Color\": ");
+            WriteVector3(fp, l.Color);
+            fprintf_s(fp, ",\n");
+            fprintf_s(fp, "      \"Intensity\": %.6f,\n", l.Intensity);
+            fprintf_s(fp, "      \"Radius\": %.6f,\n", l.Radius);
+            fprintf_s(fp, "      \"InnerAngle\": %.6f,\n", l.InnerAngle);
+            fprintf_s(fp, "      \"OuterAngle\": %.6f\n", l.OuterAngle);
+            fprintf_s(fp, "    }%s\n", (i + 1 < level.SpotLights.size()) ? "," : "");
+        }
+
+        fprintf_s(fp, "  ]");
+        hasPrev = true;
+    }
+
+    if (!level.DirLights.empty())
+    {
+        if (hasPrev)
+        { fprintf_s(fp, ",\n"); }
+
+        fprintf_s(fp, "  \"DirLights\": [\n");
+        for (size_t i = 0; i < level.DirLights.size(); ++i)
+        {
+            const auto& l = level.DirLights[i];
+
+            fprintf_s(fp, "    {\n");
+            fprintf_s(fp, "      \"Tag\": \"%s\",\n", l.Tag.c_str());
+            WriteVector3(fp, l.Direction);
+            fprintf_s(fp, ",\n");
+            fprintf_s(fp, "      \"Color\": ");
+            WriteVector3(fp, l.Color);
+            fprintf_s(fp, ",\n");
+            fprintf_s(fp, "      \"Intensity\": %.6f\n", l.Intensity);
+            fprintf_s(fp, "    }%s\n", (i + 1 < level.DirLights.size()) ? "," : "");
+        }
+        fprintf_s(fp, "  ]");
+        hasPrev = true;
+    }
+
+    if (!level.IblLights.empty())
+    {
+        if (hasPrev)
+        { fprintf_s(fp, ",\n"); }
+
+        fprintf_s(fp, "  \"IblLights\": [\n");
+        for (size_t i = 0; i < level.DirLights.size(); ++i)
+        {
+            const auto& l = level.IblLights[i];
+
+            fprintf_s(fp, "    {\n");
+            fprintf_s(fp, "      \"Tag\": \"%s\",\n", l.Tag.c_str());
+            fprintf_s(fp, "      \"Path\": \"%s\",\n", l.Path.c_str());
+            fprintf_s(fp, "      \"Intensity\": %.6f\n", l.Intensity);
+            fprintf_s(fp, "    }%s\n", (i + 1 < level.IblLights.size()) ? "," : "");
+        }
         fprintf_s(fp, "  ]");
         hasPrev = true;
     }
@@ -571,9 +615,39 @@ bool LevelConverter::Save(const std::string& path, const EditLevel& level)
             fprintf_s(fp, "      \"Tag\": \"%s\",\n", p.Tag.c_str());
             fprintf_s(fp, "      \"Position\": ");
             WriteVector3(fp, p.Position);
+            fprintf_s(fp, "      \"UserId\": %llu\n", p.UserId);
             fprintf_s(fp, "    }%s\n", (i + 1 < level.Pins.size()) ? "," : "");
         }
 
+        fprintf_s(fp, "  ]");
+        hasPrev = true;
+    }
+
+    if (!level.Volumes.empty())
+    {
+        fprintf_s(fp, "  \"Volumes\": [\n");
+        for (size_t i = 0; i < level.Volumes.size(); ++i)
+        {
+            const auto& v = level.Volumes[i];
+
+            fprintf_s(fp, "    {\n");
+            fprintf_s(fp, "      \"Tag\": \"%s\",\n", v.Tag.c_str());
+
+            fprintf_s(fp, "      \"Position\": ");
+            WriteVector3(fp, v.Position);
+            fprintf_s(fp, ",\n");
+
+            fprintf_s(fp, "      \"Rotation\": ");
+            WriteQuaternion(fp, v.Rotation);
+            fprintf_s(fp, ",\n");
+
+            fprintf_s(fp, "      \"Scale\": ");
+            WriteVector3(fp, v.Scale);
+            fprintf_s(fp, "\n");
+            fprintf_s(fp, "      \"UserId\": %llu\n", v.UserId);
+
+            fprintf_s(fp, "    }%s\n", (i + 1 < level.ModelInstances.size()) ? "," : "");
+        }
         fprintf_s(fp, "  ]");
         hasPrev = true;
     }
@@ -618,89 +692,113 @@ bool LevelConverter::Load(const std::string& path, EditLevel& level)
             auto r = ReadQuaternion(obj["Rotation"].get_object());
             auto t = ReadVector3   (obj["Position"].get_object());
 
+            auto userId = obj["UserId"].get_uint64().value();
+
             EditModelInstance instance = {};
             instance.Tag        = tag;
             instance.Path       = path;
             instance.Scale      = s;
             instance.Rotation   = r;
             instance.Position   = t;
-            level.Models.emplace_back(instance);
+            instance.UserId     = userId;
+            level.ModelInstances.emplace_back(instance);
         }
     }
 
     // ライトデータ読み込み.
-    auto lights = doc["Lights"];
-    if (lights.error() == simdjson::SUCCESS)
+    auto pointLights = doc["PointLights"];
+    if (pointLights.error() == simdjson::SUCCESS)
     {
-        for (auto light : lights.get_array())
+        for (auto light : pointLights.get_array())
         {
             auto obj = light.get_object();
 
-            EditLight instance = {};
-            auto tag  = std::string(std::string_view(obj["Tag"]));
-            auto type = std::string(std::string_view(obj["Type"]));
-            instance.Tag = tag;
+            EditPointLight instance = {};
+            auto tag        = std::string(std::string_view(obj["Tag"]));
+            auto pos        = ReadVector3(obj["Position"].get_object());
+            auto color      = ReadVector3(obj["Color"].get_object());
+            auto intensity  = float(double(obj["Intensity"]));
+            auto radius     = float(double(obj["Radius"]));
 
-            if (type == "Point")
-            {
-                auto pos        = ReadVector3(obj["Position"].get_object());
-                auto color      = ReadVector3(obj["Color"].get_object());
-                auto intensity  = float(double(obj["Intensity"]));
-                auto radius     = float(double(obj["Radius"]));
+            instance.Tag       = tag;
+            instance.Position  = pos;
+            instance.Color     = color;
+            instance.Intensity = intensity;
+            instance.Radius    = radius;
 
-                instance.Type            = EditLightType::Point;
-                instance.Point.Position  = pos;
-                instance.Point.Color     = color;
-                instance.Point.Intensity = intensity;
-                instance.Point.Radius    = radius;
+            level.PointLights.emplace_back(instance);
+        }
+    }
 
-                level.Lights.emplace_back(instance);
-            }
-            else if (type == "Spot")
-            {
-                auto pos        = ReadVector3(obj["Position"].get_object());
-                auto dir        = ReadVector3(obj["Direction"].get_object());
-                auto color      = ReadVector3(obj["Color"].get_object());
-                auto intensity  = float(double(obj["Intensity"]));
-                auto radius     = float(double(obj["Radius"]));
-                auto inner      = float(double(obj["InnerAngle"]));
-                auto outer      = float(double(obj["OuterAngle"]));
+    auto spotLights = doc["SpotLights"];
+    if (spotLights.error() == simdjson::SUCCESS)
+    {
+        for(auto light : spotLights.get_array())
+        {
+            auto obj = light.get_object();
 
-                instance.Type               = EditLightType::Spot;
-                instance.Spot.Position      = pos;
-                instance.Spot.Direction     = dir;
-                instance.Spot.Color         = color;
-                instance.Spot.Intensity     = intensity;
-                instance.Spot.Radius        = radius;
-                instance.Spot.InnerAngle    = inner;
-                instance.Spot.OuterAngle    = outer;
+            EditSpotLight instance = {};
+            auto tag        = std::string(std::string_view(obj["Tag"]));
+            auto pos        = ReadVector3(obj["Position"].get_object());
+            auto dir        = ReadVector3(obj["Direction"].get_object());
+            auto color      = ReadVector3(obj["Color"].get_object());
+            auto intensity  = float(double(obj["Intensity"]));
+            auto radius     = float(double(obj["Radius"]));
+            auto inner      = float(double(obj["InnerAngle"]));
+            auto outer      = float(double(obj["OuterAngle"]));
 
-                level.Lights.emplace_back(instance);
-            }
-            else if (type == "Directional")
-            {
-                auto dir        = ReadVector3(obj["Direction"].get_object());
-                auto color      = ReadVector3(obj["Color"].get_object());
-                auto intensity  = float(double(obj["Intensity"]));
+            instance.Tag           = tag;
+            instance.Position      = pos;
+            instance.Direction     = dir;
+            instance.Color         = color;
+            instance.Intensity     = intensity;
+            instance.Radius        = radius;
+            instance.InnerAngle    = inner;
+            instance.OuterAngle    = outer;
 
-                instance.Type                   = EditLightType::Directional;
-                instance.Directional.Direction  = dir;
-                instance.Directional.Color      = color;
-                instance.Directional.Intensity  = intensity;
+            level.SpotLights.emplace_back(instance);
+        }
+    }
+            
+    auto dirLights = doc["DirLights"];
+    if (dirLights.error() == simdjson::SUCCESS)
+    {
+        for(auto light : dirLights.get_array())
+        {
+            auto obj = light.get_object();
 
-                level.Lights.emplace_back(instance);
-            }
-            else if (type == "ImageBased")
-            {
-                auto path       = std::string(std::string_view(obj["Path"]));
-                auto intensity  = float(double(obj["Intensity"]));
+            EditDirectionalLight instance = {};
+            auto tag        = std::string(std::string_view(obj["Tag"]));
+            auto dir        = ReadVector3(obj["Direction"].get_object());
+            auto color      = ReadVector3(obj["Color"].get_object());
+            auto intensity  = float(double(obj["Intensity"]));
 
-                instance.Type                   = EditLightType::ImageBased;
-                instance.ImageBased.Path        = path;
-                instance.ImageBased.Intensity   = intensity;
+            instance.Tag        = tag;
+            instance.Direction  = dir;
+            instance.Color      = color;
+            instance.Intensity  = intensity;
 
-                level.Lights.emplace_back(instance);
-            }
+            level.DirLights.emplace_back(instance);
+        }
+    }
+
+    auto iblLights = doc["IblLights"];
+    if (iblLights.error() == simdjson::SUCCESS)
+    {
+        for(auto light : iblLights.get_array())
+        {
+            auto obj = light.get_object();
+
+            EditImageBasedLight instance = {};
+            auto tag        = std::string(std::string_view(obj["Tag"]));
+            auto path       = std::string(std::string_view(obj["Path"]));
+            auto intensity  = float(double(obj["Intensity"]));
+
+            instance.Tag        = tag;
+            instance.Path       = path;
+            instance.Intensity  = intensity;
+
+            level.IblLights.emplace_back(instance);
         }
     }
 
@@ -717,8 +815,34 @@ bool LevelConverter::Load(const std::string& path, EditLevel& level)
             EditPin instance = {};
             instance.Tag        = tag;
             instance.Position   = pos;
+            instance.UserId     = obj["UserId"].get_uint64().value();
 
             level.Pins.emplace_back(instance);
+        }
+    }
+
+    auto volumes = doc["Volumes"];
+    if (volumes.error() == simdjson::SUCCESS)
+    {
+        for(auto volume : volumes.get_array())
+        {
+            auto obj  = volume.get_object();
+            auto tag  = std::string(std::string_view(obj["Tag"]));
+            auto path = std::string(std::string_view(obj["Path"]));
+
+            auto s = ReadVector3   (obj["Scale"]   .get_object());
+            auto r = ReadQuaternion(obj["Rotation"].get_object());
+            auto t = ReadVector3   (obj["Position"].get_object());
+
+            EditVolume instance = {};
+            instance.Tag        = tag;
+            instance.Position   = t;
+            instance.Scale      = s;
+            instance.Rotation   = r;
+            instance.UserId     = obj["UserId"].get_uint64().value();
+
+            level.Volumes.emplace_back(instance);
+
         }
     }
 

@@ -396,6 +396,9 @@
     <ClCompile Include="..\src\gfx\asdxIBLBaker.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\gfx\asdxModelManager.cpp">
+      <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\edit\asdxEditParam.h">
@@ -716,6 +719,9 @@
     <ClInclude Include="..\include\edit\asdxGridSnap.h">
       <Filter>ヘッダー ファイル\edit</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\gfx\asdxModelManager.h">
+      <Filter>ヘッダー ファイル\gfx</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\res\shaders\asdxBRDF.hlsli">
@@ -827,9 +833,6 @@
       <Filter>リソース ファイル\shaders</Filter>
     </FxCompile>
     <FxCompile Include="..\res\shaders\asdxSkySpherePS.hlsl">
-      <Filter>リソース ファイル\shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="..\res\shaders\asdxForwardGGX_PS.hlsl">
       <Filter>リソース ファイル\shaders</Filter>
     </FxCompile>
     <FxCompile Include="..\res\shaders\asdxIBLBakeDiffuseCS.hlsl">

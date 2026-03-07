@@ -15,6 +15,10 @@
 
 namespace {
 
+static_assert((uint8_t)asdx::res::AlphaType_Opaque == (uint8_t)asdx::AlphaMode::Opaque);
+static_assert((uint8_t)asdx::res::AlphaType_Mask   == (uint8_t)asdx::AlphaMode::Mask);
+static_assert((uint8_t)asdx::res::AlphaType_Blend  == (uint8_t)asdx::AlphaMode::Blend);
+
 //-----------------------------------------------------------------------------
 // Constant Values.
 //-----------------------------------------------------------------------------
@@ -419,5 +423,17 @@ StringView MaterialProxy::GetOrmMap(const res::Material& material)
 //-----------------------------------------------------------------------------
 StringView MaterialProxy::GetEmissiveMap(const res::Material& material)
 { return StringView(material.EmissiveMap()->c_str()); }
+
+//-----------------------------------------------------------------------------
+//      アルファモードを取得します.
+//-----------------------------------------------------------------------------
+AlphaMode MaterialProxy::GetAlphaMode(const res::Material& material)
+{ return AlphaMode(material.AlphaMode()); }
+
+//-----------------------------------------------------------------------------
+//      アルファテスト値を取得します.
+//-----------------------------------------------------------------------------
+float MaterialProxy::GetAlphaCutOff(const res::Material& material)
+{ return material.AlphaCutOff(); }
 
 } // namespace asdx

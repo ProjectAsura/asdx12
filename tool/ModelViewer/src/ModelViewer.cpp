@@ -643,11 +643,11 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
             auto countVBV = (isSkeletal) ? kSkeletalMeshElementCount : kStaticMeshElementCount;
 
             const auto material = m_Model->GetMaterial(mesh->GetMaterialId());
-            pCmd->SetGraphicsRootConstantBufferView(ROOT_PARAM_B2, material->GetBuffer      ().GetGpuAddress());
-            pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T1, material->GetBaseColorMap().GetHandleGPU());
-            pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T2, material->GetNormalMap   ().GetHandleGPU());
-            pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T3, material->GetOrmMap      ().GetHandleGPU());
-            pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T4, material->GetEmissiveMap ().GetHandleGPU());
+            pCmd->SetGraphicsRootConstantBufferView(ROOT_PARAM_B2, material->GetBuffer().GetGpuAddress());
+            pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T1, material->GetTexture(asdx::Material::TEXTURE_BASE_COLOR).GetHandleGPU());
+            pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T2, material->GetTexture(asdx::Material::TEXTURE_NORMAL)    .GetHandleGPU());
+            pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T3, material->GetTexture(asdx::Material::TEXTURE_ORM)       .GetHandleGPU());
+            pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T4, material->GetTexture(asdx::Material::TEXTURE_EMISSIVE)  .GetHandleGPU());
 
             pCmd->IASetVertexBuffers(0, countVBV, VBVs);
             pCmd->IASetIndexBuffer(&IBV);

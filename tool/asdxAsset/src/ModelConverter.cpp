@@ -624,6 +624,10 @@ bool ModelConverter::Convert
         float roughnessFactor         = 1.0f;
         float metalnessFactor         = 1.0f;
         float ior                     = 1.0f;
+        bool  isOpaque                = true;
+        float alphaCutOff             = 0.5f;
+
+        auto alphaMode = asdx::res::AlphaType_Opaque;
 
         int shadingModel = 0;
         srcMat->Get(AI_MATKEY_SHADING_MODEL, shadingModel);
@@ -631,7 +635,7 @@ bool ModelConverter::Convert
         // 法線マップ.
         {
             aiString mapPath;
-            if (srcMat->GetTexture(aiTextureType_NORMALS, 0, &mapPath) == aiReturn_SUCCESS)
+            if (srcMat->GetTexture(aiTextureType_NORMALS, 0, &mapPath) == AI_SUCCESS)
             {
                 asdx::fs::path p = mapPath.C_Str();
                 normalMap = "textures\\" + p.filename().replace_extension(".txb").string();
@@ -651,7 +655,7 @@ bool ModelConverter::Convert
         // エミッシブマップ.
         {
             aiString mapPath;
-            if (srcMat->GetTexture(aiTextureType_EMISSIVE, 0, &mapPath) == aiReturn_SUCCESS)
+            if (srcMat->GetTexture(aiTextureType_EMISSIVE, 0, &mapPath) == AI_SUCCESS)
             {
                 asdx::fs::path p = mapPath.C_Str();
                 emissiveMap = "textures\\" + p.filename().replace_extension(".txb").string();
@@ -671,7 +675,7 @@ bool ModelConverter::Convert
         // エミッシブカラー.
         {
             aiColor4D value;
-            if (srcMat->Get(AI_MATKEY_COLOR_EMISSIVE, value) == aiReturn_SUCCESS)
+            if (srcMat->Get(AI_MATKEY_COLOR_EMISSIVE, value) == AI_SUCCESS)
             {
                 emissiveFactor.x = value.r;
                 emissiveFactor.y = value.g;
@@ -682,14 +686,18 @@ bool ModelConverter::Convert
         // 不透明度.
         {
             float value;
-            if (srcMat->Get(AI_MATKEY_OPACITY, value) == aiReturn_SUCCESS)
-            { alpha = value; }
+            if (srcMat->Get(AI_MATKEY_OPACITY, value) == AI_SUCCESS)
+            {
+                alpha = value;
+                if (alpha < 1.0f)
+                { isOpaque = false; }
+            }
         }
 
         // 屈折率.
         {
             float value;
-            if (srcMat->Get(AI_MATKEY_REFRACTI, value) == aiReturn_SUCCESS)
+            if (srcMat->Get(AI_MATKEY_REFRACTI, value) == AI_SUCCESS)
             { ior = value; }
         }
 
@@ -699,7 +707,7 @@ bool ModelConverter::Convert
             // ベースカラーマップ.
             {
                 aiString mapPath;
-                if (srcMat->GetTexture(aiTextureType_BASE_COLOR, 0, &mapPath) == aiReturn_SUCCESS)
+                if (srcMat->GetTexture(aiTextureType_BASE_COLOR, 0, &mapPath) == AI_SUCCESS)
                 {
                     asdx::fs::path p = mapPath.C_Str();
                     baseColorMap = "textures\\" + p.filename().replace_extension(".txb").string();
@@ -719,7 +727,7 @@ bool ModelConverter::Convert
             // Occlusion/Roughness/Metalnessマップ.
             {
                 aiString mapPath;
-                if (srcMat->GetTexture(aiTextureType_GLTF_METALLIC_ROUGHNESS, 0, &mapPath) == aiReturn_SUCCESS)
+                if (srcMat->GetTexture(aiTextureType_GLTF_METALLIC_ROUGHNESS, 0, &mapPath) == AI_SUCCESS)
                 {
                     asdx::fs::path p = mapPath.C_Str();
                     ormMap = "textures\\" + p.filename().replace_extension(".txb").string();
@@ -739,7 +747,7 @@ bool ModelConverter::Convert
             // ベースカラーファクター.
             {
                 aiColor4D value;
-                if (srcMat->Get(AI_MATKEY_BASE_COLOR, value) == aiReturn_SUCCESS)
+                if (srcMat->Get(AI_MATKEY_BASE_COLOR, value) == AI_SUCCESS)
                 {
                     baseColorFactor.x = value.r;
                     baseColorFactor.y = value.g;
@@ -750,7 +758,7 @@ bool ModelConverter::Convert
             // ラフネスファクター.
             {
                 float value;
-                if (srcMat->Get(AI_MATKEY_ROUGHNESS_FACTOR, value) == aiReturn_SUCCESS)
+                if (srcMat->Get(AI_MATKEY_ROUGHNESS_FACTOR, value) == AI_SUCCESS)
                 {
                     roughnessFactor = value;
                 }
@@ -759,9 +767,31 @@ bool ModelConverter::Convert
             // メタルネスファクター
             {
                 float value;
-                if (srcMat->Get(AI_MATKEY_METALLIC_FACTOR, value) == aiReturn_SUCCESS)
+                if (srcMat->Get(AI_MATKEY_METALLIC_FACTOR, value) == AI_SUCCESS)
                 {
                     metalnessFactor = value;
+                }
+            }
+
+            // アルファモード.
+            {
+                aiString alphaModeStr;
+                if (srcMat->Get("$mat.gltf.alphaMode", 0, 0, alphaModeStr) == AI_SUCCESS)
+                {
+                    if (strcmp(alphaModeStr.C_Str(), "OPQAUE") == 0)
+                    {
+                        alphaMode = asdx::res::AlphaType_Opaque;
+                    }
+                    else if (strcmp(alphaModeStr.C_Str(), "MASK") == 0)
+                    {
+                        alphaMode = asdx::res::AlphaType_Mask;
+                        alphaCutOff = 0.5f;
+                        srcMat->Get("$mat.gltf.alphaCutoff", 0, 0, alphaCutOff);
+                    }
+                    else if (strcmp(alphaModeStr.C_Str(), "BLEND") == 0)
+                    {
+                        alphaMode = asdx::res::AlphaType_Blend;
+                    }
                 }
             }
         }
@@ -770,7 +800,7 @@ bool ModelConverter::Convert
             // ディフューズカラーマップ.
             {
                 aiString mapPath;
-                if (srcMat->GetTexture(aiTextureType_DIFFUSE, 0, &mapPath) == aiReturn_SUCCESS)
+                if (srcMat->GetTexture(aiTextureType_DIFFUSE, 0, &mapPath) == AI_SUCCESS)
                 {
                     asdx::fs::path p = mapPath.C_Str();
                     baseColorMap = "textures\\" + p.filename().replace_extension(".txb").string();
@@ -790,7 +820,7 @@ bool ModelConverter::Convert
             // ディフューズカラー.
             {
                 aiColor4D value;
-                if (srcMat->Get(AI_MATKEY_COLOR_DIFFUSE, value) == aiReturn_SUCCESS)
+                if (srcMat->Get(AI_MATKEY_COLOR_DIFFUSE, value) == AI_SUCCESS)
                 {
                     baseColorFactor.x = value.r;
                     baseColorFactor.y = value.g;
@@ -815,7 +845,9 @@ bool ModelConverter::Convert
             baseColorMap.c_str(),
             normalMap.c_str(),
             ormMap.c_str(),
-            emissiveMap.c_str());
+            emissiveMap.c_str(),
+            alphaMode,
+            alphaCutOff);
 
         materials.emplace_back(dstMat);
     }

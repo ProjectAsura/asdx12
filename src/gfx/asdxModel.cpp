@@ -333,7 +333,7 @@ bool Material::Init(const res::Material& material)
         float   Metalness;
         float   Ior;
         Vector3 Emissive;
-        float   Reserved;
+        float   AlphaCutOff;
     };
 
     auto size = RoundUp<uint64_t>(sizeof(MaterialParam), 256);
@@ -347,61 +347,65 @@ bool Material::Init(const res::Material& material)
 
     auto ptr = m_Buffer.MapAs<MaterialParam>();
     assert(ptr != nullptr);
-    ptr->BaseColor = MaterialProxy::GetBaseColorFactor(material);
-    ptr->Alpha     = MaterialProxy::GetAlpha(material);
-    ptr->Occlusion = MaterialProxy::GetOcclusionFactor(material);
-    ptr->Roughness = MaterialProxy::GetRoughnessFactor(material);
-    ptr->Metalness = MaterialProxy::GetMetalnessFactor(material);
-    ptr->Ior       = MaterialProxy::GetIor(material);
-    ptr->Emissive  = MaterialProxy::GetEmissiveFactor(material);
+    ptr->BaseColor      = MaterialProxy::GetBaseColorFactor(material);
+    ptr->Alpha          = MaterialProxy::GetAlpha(material);
+    ptr->Occlusion      = MaterialProxy::GetOcclusionFactor(material);
+    ptr->Roughness      = MaterialProxy::GetRoughnessFactor(material);
+    ptr->Metalness      = MaterialProxy::GetMetalnessFactor(material);
+    ptr->Ior            = MaterialProxy::GetIor(material);
+    ptr->Emissive       = MaterialProxy::GetEmissiveFactor(material);
+    ptr->AlphaCutOff    = MaterialProxy::GetAlphaCutOff(material);
     m_Buffer.Unmap();
+
+    // アルファモード.
+    m_AlphaMode = MaterialProxy::GetAlphaMode(material);
 
     // ベースカラーマップ生成.
     {
         auto path = MaterialProxy::GetBaseColorMap(material);
         if (!path.is_null_or_empty())
-        { m_BaseColorMap = TextureManager::Instance().GetOrCreate(path.c_str()); }
+        { m_Textures[TEXTURE_BASE_COLOR] = TextureManager::Instance().GetOrCreate(path.c_str()); }
 
         // デフォルトを設定.
-        if (!m_BaseColorMap.IsValid())
-        { m_BaseColorMap = TextureManager::Instance().GetOrCreate("default.OpaqueWhite"); }
-        assert(m_BaseColorMap.IsValid());
+        if (!m_Textures[TEXTURE_BASE_COLOR].IsValid())
+        { m_Textures[TEXTURE_BASE_COLOR] = TextureManager::Instance().GetOrCreate("default.OpaqueWhite"); }
+        assert(m_Textures[TEXTURE_BASE_COLOR].IsValid());
     }
 
     // 法線マップ生成.
     {
         auto path = MaterialProxy::GetNormalMap(material);
         if (!path.is_null_or_empty())
-        { m_NormalMap = TextureManager::Instance().GetOrCreate(path.c_str()); }
+        { m_Textures[TEXTURE_NORMAL] = TextureManager::Instance().GetOrCreate(path.c_str()); }
 
         // デフォルトを設定.
-        if (!m_NormalMap.IsValid())
-        { m_NormalMap = TextureManager::Instance().GetOrCreate("default.Normal"); }
-        assert(m_NormalMap.IsValid());
+        if (!m_Textures[TEXTURE_NORMAL].IsValid())
+        { m_Textures[TEXTURE_NORMAL] = TextureManager::Instance().GetOrCreate("default.Normal"); }
+        assert(m_Textures[TEXTURE_NORMAL].IsValid());
    }
 
     // ORMマップ生成.
     {
         auto path = MaterialProxy::GetOrmMap(material);
         if (!path.is_null_or_empty())
-        { m_OrmMap = TextureManager::Instance().GetOrCreate(path.c_str()); }
+        { m_Textures[TEXTURE_ORM] = TextureManager::Instance().GetOrCreate(path.c_str()); }
 
         // デフォルトを設定.
-        if (!m_OrmMap.IsValid())
-        { m_OrmMap = TextureManager::Instance().GetOrCreate("default.Orm"); }
-        assert(m_OrmMap.IsValid());
+        if (!m_Textures[TEXTURE_ORM].IsValid())
+        { m_Textures[TEXTURE_ORM] = TextureManager::Instance().GetOrCreate("default.Orm"); }
+        assert(m_Textures[TEXTURE_ORM].IsValid());
     }
 
     // エミッシブマップ生成.
     {
         auto path = MaterialProxy::GetEmissiveMap(material);
         if (!path.is_null_or_empty())
-        { m_EmissiveMap = TextureManager::Instance().GetOrCreate(path.c_str()); }
+        { m_Textures[TEXTURE_EMISSIVE] = TextureManager::Instance().GetOrCreate(path.c_str()); }
 
         // デフォルトを設定.
-        if (!m_EmissiveMap.IsValid())
-        { m_EmissiveMap = TextureManager::Instance().GetOrCreate("default.OpaqueBlack"); }
-        assert(m_EmissiveMap.IsValid());
+        if (!m_Textures[TEXTURE_EMISSIVE].IsValid())
+        { m_Textures[TEXTURE_EMISSIVE] = TextureManager::Instance().GetOrCreate("default.OpaqueBlack"); }
+        assert(m_Textures[TEXTURE_EMISSIVE].IsValid());
     }
 
     return true;
@@ -412,11 +416,9 @@ bool Material::Init(const res::Material& material)
 //-----------------------------------------------------------------------------
 void Material::Term()
 {
-    m_Buffer      .Term();
-    m_BaseColorMap.Reset();
-    m_NormalMap   .Reset();
-    m_OrmMap      .Reset();
-    m_EmissiveMap .Reset();
+    m_Buffer.Term();
+    for(size_t i=0; i<m_Textures.size(); ++i)
+    { m_Textures[i].Reset(); }
 }
 
 //-----------------------------------------------------------------------------
@@ -426,28 +428,16 @@ const ConstantBuffer& Material::GetBuffer() const
 { return m_Buffer; }
 
 //-----------------------------------------------------------------------------
-//      ベースカラーマップを取得します.
+//      テクスチャを取得します.
 //-----------------------------------------------------------------------------
-const TextureHolder& Material::GetBaseColorMap() const
-{ return m_BaseColorMap; }
+const TextureHolder& Material::GetTexture(TEXTURE_KIND kind) const
+{ return m_Textures[kind]; }
 
 //-----------------------------------------------------------------------------
-//      法線マップを取得します.
+//      アルファモードを取得します.
 //-----------------------------------------------------------------------------
-const TextureHolder& Material::GetNormalMap() const
-{ return m_NormalMap; }
-
-//-----------------------------------------------------------------------------
-//      ORMマップを取得します.
-//-----------------------------------------------------------------------------
-const TextureHolder& Material::GetOrmMap() const
-{ return m_OrmMap; }
-
-//-----------------------------------------------------------------------------
-//      エミッシブマップを取得します.
-//-----------------------------------------------------------------------------
-const TextureHolder& Material::GetEmissiveMap() const
-{ return m_EmissiveMap; }
+AlphaMode Material::GetAlphaMode() const
+{ return m_AlphaMode; }
 
 
 ///////////////////////////////////////////////////////////////////////////////

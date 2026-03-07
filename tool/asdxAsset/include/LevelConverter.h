@@ -14,17 +14,6 @@
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// EditLightType enum
-///////////////////////////////////////////////////////////////////////////////
-enum EditLightType : uint8_t
-{
-    Directional,        //!< 指向性ライト.
-    Point,              //!< 点光源.
-    Spot,               //!< スポットライト.
-    ImageBased,         //!< イメージベースドライト.
-};
-
-///////////////////////////////////////////////////////////////////////////////
 // EditModelInstance structure
 ///////////////////////////////////////////////////////////////////////////////
 struct EditModelInstance
@@ -34,6 +23,7 @@ struct EditModelInstance
     asdx::Vector3       Position;   //!< 位置座標.
     asdx::Quaternion    Rotation;   //!< 回転量.
     asdx::Vector3       Scale;      //!< 拡大・縮小値.
+    uint64_t            UserId;     //!< ユーザーデータ.
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -41,6 +31,7 @@ struct EditModelInstance
 ///////////////////////////////////////////////////////////////////////////////
 struct EditPointLight
 {
+    std::string         Tag;        //!< 名前.
     asdx::Vector3       Position;   //!< 位置座標.
     asdx::Vector3       Color;      //!< 色.
     float               Intensity;  //!< 強度.
@@ -52,6 +43,7 @@ struct EditPointLight
 ///////////////////////////////////////////////////////////////////////////////
 struct EditSpotLight
 {
+    std::string         Tag;        //!< 名前.
     asdx::Vector3       Position;   //!< 位置座標.
     asdx::Vector3       Direction;  //!< 照射方向.
     asdx::Vector3       Color;      //!< 色.
@@ -66,6 +58,7 @@ struct EditSpotLight
 ///////////////////////////////////////////////////////////////////////////////
 struct EditDirectionalLight
 {
+    std::string         Tag;        //!< 名前.
     asdx::Vector3       Direction;  //!< 照射方向.
     asdx::Vector3       Color;      //!< 色.
     float               Intensity;  //!< 強度.
@@ -76,76 +69,9 @@ struct EditDirectionalLight
 ///////////////////////////////////////////////////////////////////////////////
 struct EditImageBasedLight
 {
+    std::string         Tag;        //!< 名前.
     std::string         Path;       //!< txb ファイルパス.
     float               Intensity;  //!< 強度.
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// EditLight structure
-///////////////////////////////////////////////////////////////////////////////
-struct EditLight
-{
-    std::string     Tag;        //!< 名前.
-    EditLightType   Type;       //!< ライトタイプ.
-    union
-    {
-        EditDirectionalLight    Directional;    //!< 指向性ライト.
-        EditPointLight          Point;          //!< 点光源.
-        EditSpotLight           Spot;           //!< スポットライト.
-        EditImageBasedLight     ImageBased;     //!< イメージベースドライト.
-    };
-
-    //-------------------------------------------------------------------------
-    //! @brief      コンストラクタです.
-    //-------------------------------------------------------------------------
-    EditLight()
-    : Type(EditLightType::Directional)
-    {
-        Directional.Direction = asdx::Vector3(0.0f, -1.0f, 0.0f);
-        Directional.Color     = asdx::Vector3(1.0f, 1.0f, 1.0f);
-        Directional.Intensity = 1.0f;
-    }
-
-    //-------------------------------------------------------------------------
-    //! @brief      デストラクタです.
-    //-------------------------------------------------------------------------
-    ~EditLight()
-    {
-        if (Type == EditLightType::ImageBased)
-        { ImageBased.Path.~basic_string(); }
-    }
-
-    //-------------------------------------------------------------------------
-    //! @brief      コピーコンストラクタです.
-    //-------------------------------------------------------------------------
-    EditLight(const EditLight& other)
-    {
-        Type = other.Type;
-        Tag  = other.Tag;
-        switch(Type)
-        {
-            case EditLightType::Directional: { Directional = other.Directional; } break;
-            case EditLightType::Point:       { Point       = other.Point;       } break;
-            case EditLightType::Spot:        { Spot        = other.Spot;        } break;
-            case EditLightType::ImageBased:  { ImageBased  = other.ImageBased;  } break;
-        }
-    }
-
-    //-------------------------------------------------------------------------
-    //! @brief      ムーブコンストラクタです.
-    //-------------------------------------------------------------------------
-    EditLight(EditLight&& other) noexcept
-    {
-        Type = other.Type;
-        Tag  = std::move(other.Tag);
-        switch(Type)
-        {
-            case EditLightType::Directional: { Directional  = std::move(other.Directional); } break;
-            case EditLightType::Point:       { Point        = std::move(other.Point);       } break;
-            case EditLightType::Spot:        { Spot         = std::move(other.Spot);        } break;
-            case EditLightType::ImageBased:  { ImageBased   = std::move(other.ImageBased);  } break;
-        }
-    }
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -153,8 +79,21 @@ struct EditLight
 ///////////////////////////////////////////////////////////////////////////////
 struct EditPin
 {
-    std::string     Tag;        //!< タグ.
+    std::string     Tag;        //!< 名前.
     asdx::Vector3   Position;   //!< 位置座標.
+    uint64_t        UserId;     //!< ユーザーデータ.
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// EditVolume structure
+///////////////////////////////////////////////////////////////////////////////
+struct EditVolume
+{
+    std::string         Tag;        //!< 名前.
+    asdx::Vector3       Position;   //!< 位置座標.
+    asdx::Quaternion    Rotation;   //!< 回転量.
+    asdx::Vector3       Scale;      //!< 拡大・縮小値.
+    uint64_t            UserId;     //!< ユーザーデータ.
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -162,9 +101,13 @@ struct EditPin
 ///////////////////////////////////////////////////////////////////////////////
 struct EditLevel
 {
-    std::vector<EditModelInstance>  Models;     //!< モデルインスタンス.
-    std::vector<EditLight>          Lights;     //!< ライト.
-    std::vector<EditPin>            Pins;       //!< ピン
+    std::vector<EditModelInstance>      ModelInstances;     //!< モデルインスタンス.
+    std::vector<EditPointLight>         PointLights;        //!< ポイントライト.
+    std::vector<EditSpotLight>          SpotLights;         //!< スポットライト.
+    std::vector<EditDirectionalLight>   DirLights;          //!< ディレクショナルライト.
+    std::vector<EditImageBasedLight>    IblLights;          //!< IBLライト.
+    std::vector<EditPin>                Pins;               //!< 汎用ピン
+    std::vector<EditVolume>             Volumes;            //!< 汎用ボリューム.
 };
 
 ///////////////////////////////////////////////////////////////////////////////

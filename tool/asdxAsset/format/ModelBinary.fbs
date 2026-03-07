@@ -2,6 +2,13 @@
 
 namespace asdx.res;
 
+enum AlphaType : ubyte
+{
+    Opaque,
+    Mask,
+    Blend,
+}
+
 table Bone
 {
     Name            : string;
@@ -40,6 +47,8 @@ table Material
     NormalMap       : string;
     OrmMap          : string;
     EmissiveMap     : string;
+    AlphaMode       : AlphaType;
+    AlphaCutOff     : float;
 }
 
 table ModelBinary

@@ -12,6 +12,7 @@
 #include <fnd/asdxLogger.h>
 #include <fnd/asdxFileIO.h>
 #include <res/asdxResTexture.h>
+#include <gfx/asdxTexture.h>
 #include <gfx/asdxTextureManager.h>
 #include <gfx/asdxDevice.h>
 
@@ -107,11 +108,11 @@ TextureManager::~TextureManager()
 //-----------------------------------------------------------------------------
 bool TextureManager::Init()
 {
-    ScopedLock<SpinLock> locker(m_SpinLock);
-
     // 初期化済み.
     if (m_Initialized)
         return true;
+
+    ScopedLock<SpinLock> locker(m_SpinLock);
 
     // デバイスを取得します.
     auto pDevice = GetD3D12Device();
@@ -163,6 +164,9 @@ bool TextureManager::Init()
 //-----------------------------------------------------------------------------
 void TextureManager::Term()
 {
+    if (!m_Initialized)
+        return;
+
     ScopedLock<SpinLock> locker(m_SpinLock);
 
     for(auto i=0; i<2; ++i)
@@ -187,11 +191,7 @@ void TextureManager::Term()
     {
         auto item = itr.second;
         itr.second = nullptr;
-        if (item)
-        {
-            item->Release();
-            item = nullptr;
-        }
+        SafeRelease(item);
     }
     m_Textures.clear();
 
@@ -222,7 +222,7 @@ TextureHolder TextureManager::GetOrCreate(const char* fullPath)
     if (itr != m_Textures.end())
     {
         auto pTexture = itr->second; // 見つかった場合はポインタを返却.
-        pTexture->AddRef();
+        pTexture->AddRef(); // 参照カウントを上げる.
         return TextureHolder(pTexture, hash);
     }
 
@@ -259,6 +259,7 @@ TextureHolder TextureManager::GetOrCreate(const char* fullPath)
 //-----------------------------------------------------------------------------
 void TextureManager::Remove(TextureHolder& holder)
 {
+    // 無効なら即終了.
     if (!holder.IsValid())
         return;
 
@@ -272,24 +273,18 @@ void TextureManager::Remove(TextureHolder& holder)
         // 管理対象からも外す.
         ScopedLock<SpinLock> locker(m_SpinLock);
 
-        // 検索する.
+        // 削除処理.
         auto itr = m_Textures.find(holder.m_Hash);
-
-        // 見つかったら削除.
         if (itr != m_Textures.end())
         {
             auto item = itr->second;
             itr->second = nullptr;
             m_Textures.erase(holder.m_Hash);
-
-            if (item)
-            {
-                item->Release();
-                item = nullptr;
-            }
+            SafeRelease(item);
         }
     }
 
+    // クリア処理.
     holder.m_pTexture = nullptr;
     holder.m_Hash     = 0;
 }

@@ -9,18 +9,21 @@ table ModelInstance
     Position    : Float3;
     Scale       : Float3;
     Rotation    : Quaternion;
+    UserId      : ulong;
 }
 
 table PointLight
 {
-    Position  : Float3;
-    Color     : Float3;
-    Intensity : float;
-    Radius    : float;
+    Tag         : string (key);
+    Position    : Float3;
+    Color       : Float3;
+    Intensity   : float;
+    Radius      : float;
 }
 
 table SpotLight
 {
+    Tag         : string (key);
     Position    : Float3;
     Direction   : Float3;
     Color       : Float3;
@@ -32,42 +35,44 @@ table SpotLight
 
 table DirectionalLight
 {
-    Direction : Float3;
-    Color     : Float3;
-    Intensity : float;
+    Tag         : string (key);
+    Direction   : Float3;
+    Color       : Float3;
+    Intensity   : float;
 }
 
 table ImageBasedLight
 {
+    Tag       : string (key);
     Path      : string;
     Intensity : float;
-}
-
-union LightUnion
-{
-    PointLight,
-    SpotLight,
-    DirectionalLight,
-    ImageBasedLight,
-}
-
-table Light
-{
-    Tag  : string (key);
-    data : LightUnion;
 }
 
 table Pin
 {
     Tag      : string (key);
     Position : Float3;
+    UserId   : ulong;
+}
+
+table Volume
+{
+    Tab         : string (key);
+    Position    : Float3;
+    Scale       : Float3;
+    Rotation    : Quaternion;
+    UserId      : ulong;
 }
 
 table LevelBinary
 {
-    Models : [ModelInstance];
-    Lights : [Light];
-    Pins   : [Pin];
+    ModelInstances  : [ModelInstance];
+    PointLights     : [PointLight];
+    SpotLights      : [SpotLight];
+    DirLights       : [DirectionalLight];
+    IblLights       : [ImageBasedLight];
+    Pins            : [Pin];
+    Volumes         : [Volume];
 }
 
 root_type LevelBinary;
