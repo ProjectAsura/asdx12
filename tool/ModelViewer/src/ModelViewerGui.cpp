@@ -117,6 +117,27 @@ static void DrawTextureInfo(const char* label, const char* path, const asdx::Tex
     ImGui::PopID();
 }
 
+//-----------------------------------------------------------------------------
+//      アルファモードを文字列にします.
+//-----------------------------------------------------------------------------
+static const char* ToString(asdx::AlphaMode mode)
+{
+    switch(mode)
+    {
+    case asdx::AlphaMode::Opaque:
+        return "Opaque";
+
+    case asdx::AlphaMode::Mask:
+        return "Mask";
+
+    case asdx::AlphaMode::Blend:
+       return "Blend";
+
+    default:
+        return "Unknown";
+    }
+}
+
 } // namespace
 
 
@@ -534,6 +555,16 @@ void ModelViewer::DrawMaterialTab()
             TABLE2(
                 ImGui::Text(asdx::ToChar(u8"エミッシブ")),
                 ImGui::Text("%f, %f, %f", emissive.x, emissive.y, emissive.z));
+
+            auto alphaCutOff = asdx::MaterialProxy::GetAlphaCutOff(res);
+            TABLE2(
+                ImGui::Text(asdx::ToChar(u8"アルファカットオフ")),
+                ImGui::Text("%f", alphaCutOff));
+
+            auto alphaMode = asdx::MaterialProxy::GetAlphaMode(res);
+            TABLE2(
+                ImGui::Text(asdx::ToChar(u8"アルファモード")),
+                ImGui::Text("%s", ToString(alphaMode)));
 
             ImGui::EndTable();
             ImGui::Separator();

@@ -625,7 +625,7 @@ bool ModelConverter::Convert
         float metalnessFactor         = 1.0f;
         float ior                     = 1.0f;
         bool  isOpaque                = true;
-        float alphaCutOff             = 0.5f;
+        float alphaCutOff             = 0.0f;
 
         auto alphaMode = asdx::res::AlphaType_Opaque;
 

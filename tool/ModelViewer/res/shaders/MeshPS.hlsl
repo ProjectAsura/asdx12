@@ -62,7 +62,7 @@ cbuffer MaterialParam : register(b2)
     float   Metalness;
     float   Ior;
     float3  Emissive;
-    float   UnusedParam0;
+    float   AlphaCutOff;
 }
 
 //-----------------------------------------------------------------------------
@@ -222,6 +222,9 @@ float4 main(const VSOutput input) : SV_TARGET0
             lit += EmissiveMap.Sample(LinearWrap, input.TexCoord).xyz * Emissive;
             output.rgb = lit;
             output.a   = bc.a;
+
+            if (output.a < AlphaCutOff)
+            { discard; }
         }
         break;
 

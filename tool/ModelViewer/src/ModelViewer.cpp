@@ -220,13 +220,23 @@ bool ModelViewer::OnInit()
         desc.SampleDesc.Count               = 1;
         desc.SampleDesc.Quality             = 0;
 
-        if (!m_DefaultState.StaticModel.Init(&desc))
+        if (!m_OpaqueState.StaticModel.Init(&desc))
         {
             ELOGA("Error : PipelineStateManager::Create() Failed.");
             return false;
         }
 
-        desc.RasterizerState = asdx::Preset::Wireframe;
+        desc.BlendState         = asdx::Preset::AlphaBlend;
+        desc.DepthStencilState  = asdx::Preset::DepthReadOnly;
+        if (!m_AlphaBlendState.StaticModel.Init(&desc))
+        {
+            ELOGA("Error : PipelineStateManager::Create() Failed.");
+            return false;
+        }
+
+        desc.BlendState         = asdx::Preset::Opaque;
+        desc.RasterizerState    = asdx::Preset::Wireframe;
+        desc.DepthStencilState  = asdx::Preset::DepthReadWrite;
         if (!m_WireframeState.StaticModel.Init(&desc))
         {
             ELOGA("Error : PipelineStateManager::Create() Failed.");
@@ -253,13 +263,23 @@ bool ModelViewer::OnInit()
         desc.SampleDesc.Count               = 1;
         desc.SampleDesc.Quality             = 0;
 
-        if (!m_DefaultState.SkeletalModel.Init(&desc))
+        if (!m_OpaqueState.SkeletalModel.Init(&desc))
         {
             ELOGA("Error : PipelineStateManager::Create() Failed.");
             return false;
         }
 
-        desc.RasterizerState = asdx::Preset::Wireframe;
+        desc.BlendState         = asdx::Preset::AlphaBlend;
+        desc.DepthStencilState  = asdx::Preset::DepthReadOnly;
+        if (!m_AlphaBlendState.SkeletalModel.Init(&desc))
+        {
+            ELOGA("Error : PipelineStateManager::Create() Failed.");
+            return false;
+        }
+
+        desc.BlendState         = asdx::Preset::Opaque;
+        desc.RasterizerState    = asdx::Preset::Wireframe;
+        desc.DepthStencilState  = asdx::Preset::DepthReadWrite;
         if (!m_WireframeState.SkeletalModel.Init(&desc))
         {
             ELOGA("Error : PipelineStateManager::Create() Failed.");
@@ -445,7 +465,9 @@ void ModelViewer::OnTerm()
         m_MatrixPalletBuffer[i].Term();
     }
 
-    m_DefaultState  .Reset();
+    m_OpaqueState    .Reset();
+    m_AlphaBlendState.Reset();
+
     m_WireframeState.Reset();
 
     m_RootSignature.Reset();
@@ -599,23 +621,6 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
             && (m_Model->GetBoneCount() > 0)
             && (m_MatrixPalletBuffer[idx].GetResource() != nullptr);
 
-        if (isSkeletal)
-        {
-            if (m_EnableWireframe)
-            { m_WireframeState.SkeletalModel.SetState(pCmd); }
-            else
-            { m_DefaultState.SkeletalModel.SetState(pCmd); }
-
-            pCmd->SetGraphicsRootShaderResourceView(ROOT_PARAM_T0, m_MatrixPalletBuffer[idx].GetGpuAddress());
-        }
-        else
-        {
-            if (m_EnableWireframe)
-            { m_WireframeState.StaticModel.SetState(pCmd); }
-            else
-            { m_DefaultState.StaticModel.SetState(pCmd); }
-        }
-
         pCmd->SetGraphicsRootConstantBufferView(ROOT_PARAM_B0, m_SceneCB[idx].GetGpuAddress());
         pCmd->SetGraphicsRoot32BitConstants(ROOT_PARAM_B1, 1, &m_DrawMode, 0);
         pCmd->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -623,11 +628,36 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
         pCmd->SetGraphicsRootDescriptorTable(ROOT_PARAM_T6, m_DiffuseLD->GetHandleGPU());
         pCmd->SetGraphicsRootDescriptorTable(ROOT_PARAM_T7, m_SpecularLD->GetHandleGPU());
 
+        if (isSkeletal)
+        { pCmd->SetGraphicsRootShaderResourceView(ROOT_PARAM_T0, m_MatrixPalletBuffer[idx].GetGpuAddress()); }
+
         for(auto i=0u; i<m_Model->GetMeshCount(); ++i)
         {
             const auto mesh = m_Model->GetMesh(i);
             if (!mesh->IsVisible())
                 continue;
+
+            const auto material = m_Model->GetMaterial(mesh->GetMaterialId());
+            const auto alphaMode = material->GetAlphaMode();
+
+            if (isSkeletal)
+            {
+                if (m_EnableWireframe)
+                { m_WireframeState.SkeletalModel.SetState(pCmd); }
+                else if (alphaMode == asdx::AlphaMode::Opaque || alphaMode == asdx::AlphaMode::Mask)
+                { m_OpaqueState.SkeletalModel.SetState(pCmd); }
+                else if (alphaMode == asdx::AlphaMode::Blend)
+                { m_AlphaBlendState.SkeletalModel.SetState(pCmd); }
+            }
+            else
+            {
+                if (m_EnableWireframe)
+                { m_WireframeState.StaticModel.SetState(pCmd); }
+                else if (alphaMode == asdx::AlphaMode::Opaque || alphaMode == asdx::AlphaMode::Mask)
+                { m_OpaqueState.StaticModel.SetState(pCmd); }
+                else if (alphaMode == asdx::AlphaMode::Blend)
+                { m_AlphaBlendState.StaticModel.SetState(pCmd); }
+            }
 
             D3D12_VERTEX_BUFFER_VIEW VBVs[] = {
                 mesh->GetPositions  ().GetVBV(),
@@ -642,7 +672,6 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
             auto IBV = mesh->GetIndices().GetIBV();
             auto countVBV = (isSkeletal) ? kSkeletalMeshElementCount : kStaticMeshElementCount;
 
-            const auto material = m_Model->GetMaterial(mesh->GetMaterialId());
             pCmd->SetGraphicsRootConstantBufferView(ROOT_PARAM_B2, material->GetBuffer().GetGpuAddress());
             pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T1, material->GetTexture(asdx::Material::TEXTURE_BASE_COLOR).GetHandleGPU());
             pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T2, material->GetTexture(asdx::Material::TEXTURE_NORMAL)    .GetHandleGPU());
@@ -874,16 +903,38 @@ void ModelViewer::OnDrop(const wchar_t** dropFiles, uint32_t fileCount)
     {
         if (asdx::LoadA(path.string().c_str(), modelBinary))
         {
+            // カレントディレクトリ取得.
+            char tempDir[512] = {};
+            GetCurrentDirectoryA(512, tempDir);
+
+            // モデルパスをカレントディレクトリに変更に.
+            auto dir = path.parent_path().string();
+            SetCurrentDirectoryA(dir.c_str());
+
             m_ModelBinary = std::move(modelBinary);
             RecreateModel();
+
+            // ディレクトリを元に戻す.
+            SetCurrentDirectoryA(tempDir);
         }
     }
     else
     {
         if (ModelConverter::Convert(path.string().c_str(), true, path.parent_path().string(), modelBinary))
         {
+            // カレントディレクトリ取得.
+            char tempDir[512] = {};
+            GetCurrentDirectoryA(512, tempDir);
+
+            // モデルパスをカレントディレクトリに変更に.
+            auto dir = path.parent_path().string();
+            SetCurrentDirectoryA(dir.c_str());
+
             m_ModelBinary = std::move(modelBinary);
             RecreateModel();
+
+            // ディレクトリを元に戻す.
+            SetCurrentDirectoryA(tempDir);
         }
     }
 }

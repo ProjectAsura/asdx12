@@ -89,7 +89,8 @@ private:
     std::string                         m_ModelOutputPath;
     std::string                         m_PrefabOutputPath;
     asdx::RefPtr<ID3D12RootSignature>   m_RootSignature;
-    ModelPipelineState                  m_DefaultState;
+    ModelPipelineState                  m_OpaqueState;
+    ModelPipelineState                  m_AlphaBlendState;
     ModelPipelineState                  m_WireframeState;
     ModelInfo                           m_ModelInfo          = {};
     asdx::ConstantBuffer                m_SceneCB[2]         = {};
