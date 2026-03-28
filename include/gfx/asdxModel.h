@@ -264,10 +264,11 @@ public:
     //! @brief      初期化処理を行います.
     //! 
     //! @param[in]      material        リソースマテリアル.
+    //! @param[in]      baseDir         ベースディレクトリ.
     //! @retval true    初期化に成功.
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
-    bool Init(const res::Material& material);
+    bool Init(const res::Material& material, const std::string& baseDir);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.
@@ -335,11 +336,22 @@ public:
     //! @brief      モデルを生成します.
     //! 
     //! @param[in]      binary      モデルバイナリ.
+    //! @param[in]      baseDir     ベースディレクトリパス.
     //! @param[out]     ppModel     モデルの格納先.
     //! @retval true    生成に成功.
     //! @retval false   生成に失敗.
     //-------------------------------------------------------------------------
-    static bool Create(std::vector<uint8_t>&& binary, Model** ppModel);
+    static bool Create(std::vector<uint8_t>&& binary, const char* baseDir, Model** ppModel);
+
+    //-------------------------------------------------------------------------
+    //! @brief      モデルを生成します.
+    //! 
+    //! @param[in]      path        ファイルパスです.
+    //! @param[out]     ppModel     モデルの格納先.
+    //! @retval true    生成に成功.
+    //! @retval false   生成に失敗.
+    //-------------------------------------------------------------------------
+    static bool Create(const char* path, Model** ppModel);
 
     //-------------------------------------------------------------------------
     //! @brief      参照カウンタを増やします.
@@ -512,6 +524,7 @@ private:
     BoundingSphere3             m_BoundingSphere;               //!< バウンディングスフィアです.
     bool                        m_Visibility    = true;         //!< 可視フラグです.
     void*                       m_pUserData     = nullptr;      //!< ユーザーデータです.
+    std::string                 m_BaseDir;                      //!< ベースディレクトリ.
 
     //=========================================================================
     // private methods.
@@ -534,7 +547,7 @@ private:
     //! @retval true    初期化に成功.
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
-    bool Init(std::vector<uint8_t>&& binary);
+    bool Init(std::vector<uint8_t>&& binary, const std::string& baseDir);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.

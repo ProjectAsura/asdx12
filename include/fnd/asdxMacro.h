@@ -17,9 +17,9 @@
 
 #ifndef ASDX_DEBUG_CODE
     #ifdef ASDX_DEBUG
-        #define ASDX_DEBUG_CODE(x)  x
+        #define ASDX_DEBUG_CODE(...)  __VA_ARGS__
     #else
-        #define ASDX_DEBUG_CODE(x)
+        #define ASDX_DEBUG_CODE(...)
     #endif
 #endif
 

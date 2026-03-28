@@ -10,6 +10,8 @@
 #include <cassert>
 #include <res/asdxResModel.h>
 #include <fnd/asdxLogger.h>
+#include <fnd/asdxFileIO.h>
+#include <fnd/asdxPath.h>
 #include <gfx/asdxModel.h>
 
 
@@ -54,6 +56,26 @@ bool InitIB(asdx::IndexBuffer& dst, const asdx::ArrayView<uint32_t>& src)
     dst.Unmap();
 
     return true;
+}
+
+//-----------------------------------------------------------------------------
+//      ファイルパスがnullか空かどうかをチェックします.
+//-----------------------------------------------------------------------------
+bool IsNullOrEmpty(const std::string& value)
+{ return value.empty() || value == ""; }
+
+//-----------------------------------------------------------------------------
+//      ファイルパスを求めます.
+//-----------------------------------------------------------------------------
+std::string CalcFilePath(const std::string& baseDir, const asdx::StringView& view)
+{
+    if (view.is_null_or_empty())
+        return std::string();
+
+    if (IsNullOrEmpty(baseDir))
+        return view.c_str();
+
+    return baseDir + "\\" + view.c_str();
 }
 
 } // namespace
@@ -322,7 +344,7 @@ Material::~Material()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool Material::Init(const res::Material& material)
+bool Material::Init(const res::Material& material, const std::string& baseDir)
 {
     struct MaterialParam
     {
@@ -360,10 +382,11 @@ bool Material::Init(const res::Material& material)
     // アルファモード.
     m_AlphaMode = MaterialProxy::GetAlphaMode(material);
 
+
     // ベースカラーマップ生成.
     {
-        auto path = MaterialProxy::GetBaseColorMap(material);
-        if (!path.is_null_or_empty())
+        auto path = CalcFilePath(baseDir, MaterialProxy::GetBaseColorMap(material));
+        if (IsNullOrEmpty(path))
         { m_Textures[TEXTURE_BASE_COLOR] = TextureManager::Instance().GetOrCreate(path.c_str()); }
 
         // デフォルトを設定.
@@ -374,8 +397,8 @@ bool Material::Init(const res::Material& material)
 
     // 法線マップ生成.
     {
-        auto path = MaterialProxy::GetNormalMap(material);
-        if (!path.is_null_or_empty())
+        auto path = CalcFilePath(baseDir, MaterialProxy::GetNormalMap(material));
+        if (IsNullOrEmpty(path))
         { m_Textures[TEXTURE_NORMAL] = TextureManager::Instance().GetOrCreate(path.c_str()); }
 
         // デフォルトを設定.
@@ -386,8 +409,8 @@ bool Material::Init(const res::Material& material)
 
     // ORMマップ生成.
     {
-        auto path = MaterialProxy::GetOrmMap(material);
-        if (!path.is_null_or_empty())
+        auto path = CalcFilePath(baseDir, MaterialProxy::GetOrmMap(material));
+        if (IsNullOrEmpty(path))
         { m_Textures[TEXTURE_ORM] = TextureManager::Instance().GetOrCreate(path.c_str()); }
 
         // デフォルトを設定.
@@ -398,8 +421,8 @@ bool Material::Init(const res::Material& material)
 
     // エミッシブマップ生成.
     {
-        auto path = MaterialProxy::GetEmissiveMap(material);
-        if (!path.is_null_or_empty())
+        auto path = CalcFilePath(baseDir, MaterialProxy::GetEmissiveMap(material));
+        if (IsNullOrEmpty(path))
         { m_Textures[TEXTURE_EMISSIVE] = TextureManager::Instance().GetOrCreate(path.c_str()); }
 
         // デフォルトを設定.
@@ -482,8 +505,10 @@ uint32_t Model::GetRefCount() const
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool Model::Init(std::vector<uint8_t>&& binary)
+bool Model::Init(std::vector<uint8_t>&& binary, const std::string& baseDir)
 {
+    m_BaseDir = baseDir;
+
     // モデルバイナリロード.
     m_Binary.Load(std::move(binary));
 
@@ -492,7 +517,7 @@ bool Model::Init(std::vector<uint8_t>&& binary)
     for(auto i=0u; i<m_Binary.GetMaterialCount(); ++i)
     {
         const auto& res = m_Binary.GetMaterial(i);
-        if (!m_Materials[i].Init(res))
+        if (!m_Materials[i].Init(res, baseDir))
         {
             ELOG("Error : Material Initialize Failed. index = %u", i);
             return false;
@@ -663,7 +688,7 @@ bool Model::FindMesh(const char* name, uint32_t& index) const
 //-----------------------------------------------------------------------------
 //      モデルを生成します.
 //-----------------------------------------------------------------------------
-bool Model::Create(std::vector<uint8_t>&& binary, Model** ppModel)
+bool Model::Create(std::vector<uint8_t>&& binary, const char* baseDir, Model** ppModel)
 {
     auto instance = new(std::nothrow) Model();
     if (instance == nullptr)
@@ -672,7 +697,38 @@ bool Model::Create(std::vector<uint8_t>&& binary, Model** ppModel)
         return false;
     }
 
-    if (!instance->Init(std::move(binary)))
+    if (!instance->Init(std::move(binary), baseDir))
+    {
+        ELOG("Error : Model::Init() Failed.");
+        instance->Release();
+        return false;
+    }
+
+    (*ppModel) = instance;
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      モデルを生成します.
+//-----------------------------------------------------------------------------
+bool Model::Create(const char* path, Model** ppModel)
+{
+    std::vector<uint8_t> binary;
+    if (!LoadA(path, binary))
+    {
+        ELOG("Error : File Load Failed. path = %s", path);
+        return false;
+    }
+
+    auto instance = new(std::nothrow) Model();
+    if (instance == nullptr)
+    {
+        ELOG("Error : Out of Memory.");
+        return false;
+    }
+
+    auto baseDir = asdx::fs::path(path).parent_path().string();
+    if (!instance->Init(std::move(binary), baseDir))
     {
         ELOG("Error : Model::Init() Failed.");
         instance->Release();

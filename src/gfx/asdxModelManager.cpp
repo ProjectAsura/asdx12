@@ -10,6 +10,7 @@
 #include <fnd/asdxHash.h>
 #include <fnd/asdxLogger.h>
 #include <fnd/asdxFileIO.h>
+#include <fnd/asdxPath.h>
 #include <gfx/asdxModelManager.h>
 
 
@@ -305,17 +306,9 @@ ModelHolder ModelManager::GetOrCreate(const char* fullPath)
         return ModelHolder(pModel, hash);
     }
 
-    // モデルバイナリをロード.
-    std::vector<uint8_t> blob;
-    if (!LoadA(fullPath, blob))
-    {
-        ELOGA("Error : File Load Failed. path = %s", fullPath);
-        return ModelHolder();
-    }
-
     // モデル生成.
     Model* pModel = nullptr;
-    if (!Model::Create(std::move(blob), &pModel))
+    if (!Model::Create(fullPath, &pModel))
     {
         ELOG("Error : Model Create Failed. path = %s", fullPath);
         return ModelHolder();
