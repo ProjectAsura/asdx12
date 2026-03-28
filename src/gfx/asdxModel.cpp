@@ -386,7 +386,7 @@ bool Material::Init(const res::Material& material, const std::string& baseDir)
     // ベースカラーマップ生成.
     {
         auto path = CalcFilePath(baseDir, MaterialProxy::GetBaseColorMap(material));
-        if (IsNullOrEmpty(path))
+        if (!IsNullOrEmpty(path))
         { m_Textures[TEXTURE_BASE_COLOR] = TextureManager::Instance().GetOrCreate(path.c_str()); }
 
         // デフォルトを設定.
@@ -398,7 +398,7 @@ bool Material::Init(const res::Material& material, const std::string& baseDir)
     // 法線マップ生成.
     {
         auto path = CalcFilePath(baseDir, MaterialProxy::GetNormalMap(material));
-        if (IsNullOrEmpty(path))
+        if (!IsNullOrEmpty(path))
         { m_Textures[TEXTURE_NORMAL] = TextureManager::Instance().GetOrCreate(path.c_str()); }
 
         // デフォルトを設定.
@@ -410,7 +410,7 @@ bool Material::Init(const res::Material& material, const std::string& baseDir)
     // ORMマップ生成.
     {
         auto path = CalcFilePath(baseDir, MaterialProxy::GetOrmMap(material));
-        if (IsNullOrEmpty(path))
+        if (!IsNullOrEmpty(path))
         { m_Textures[TEXTURE_ORM] = TextureManager::Instance().GetOrCreate(path.c_str()); }
 
         // デフォルトを設定.
@@ -422,7 +422,7 @@ bool Material::Init(const res::Material& material, const std::string& baseDir)
     // エミッシブマップ生成.
     {
         auto path = CalcFilePath(baseDir, MaterialProxy::GetEmissiveMap(material));
-        if (IsNullOrEmpty(path))
+        if (!IsNullOrEmpty(path))
         { m_Textures[TEXTURE_EMISSIVE] = TextureManager::Instance().GetOrCreate(path.c_str()); }
 
         // デフォルトを設定.

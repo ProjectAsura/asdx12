@@ -86,6 +86,7 @@ private:
     asdx::WaitPoint                     m_FrameWaitPoint;
     std::vector<uint8_t>                m_ModelBinary;
     asdx::RefPtr<asdx::Model>           m_Model;
+    std::string                         m_ModelBaseDir;
     std::string                         m_ModelOutputPath;
     std::string                         m_PrefabOutputPath;
     asdx::RefPtr<ID3D12RootSignature>   m_RootSignature;

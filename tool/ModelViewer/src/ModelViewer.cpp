@@ -909,7 +909,7 @@ void ModelViewer::OnDrop(const wchar_t** dropFiles, uint32_t fileCount)
 
             // モデルパスをカレントディレクトリに変更に.
             auto dir = path.parent_path().string();
-            SetCurrentDirectoryA(dir.c_str());
+            m_ModelBaseDir = dir;
 
             m_ModelBinary = std::move(modelBinary);
             RecreateModel();
@@ -928,7 +928,7 @@ void ModelViewer::OnDrop(const wchar_t** dropFiles, uint32_t fileCount)
 
             // モデルパスをカレントディレクトリに変更に.
             auto dir = path.parent_path().string();
-            SetCurrentDirectoryA(dir.c_str());
+            m_ModelBaseDir = dir;
 
             m_ModelBinary = std::move(modelBinary);
             RecreateModel();
@@ -1017,7 +1017,7 @@ void ModelViewer::RecreateModel()
 
     // モデルを生成をします.
     std::vector<uint8_t> copyBinary = m_ModelBinary;
-    if (!asdx::Model::Create(std::move(copyBinary), &pModel))
+    if (!asdx::Model::Create(std::move(copyBinary), m_ModelBaseDir.c_str(), &pModel))
     {
         ELOGA("Error : ModelManager::CreateModel() Failed.");
         return;
@@ -1134,12 +1134,16 @@ void ModelViewer::LoadModel()
             return;
         }
 
+        m_ModelBaseDir = path.parent_path().string();
+
         m_ModelBinary = std::move(modelBinary);
         RecreateModel();
     }
     else
     {
-        if (!ModelConverter::Convert(input.c_str(), true, path.parent_path().string(), modelBinary))
+        m_ModelBaseDir = path.parent_path().string();
+
+        if (!ModelConverter::Convert(input.c_str(), true, m_ModelBaseDir, modelBinary))
         {
             ELOG("Error : ModelConverter::Convert() Failed.");
             return;
