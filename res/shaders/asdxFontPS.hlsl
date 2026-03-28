@@ -4,6 +4,10 @@
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 
+#ifndef SINGLE_CHANNEL
+#define SINGLE_CHANNEL  (1)
+#endif//SINGLE_CHANNEL
+
 ///////////////////////////////////////////////////////////////////////////////
 // VSOutput structure
 ///////////////////////////////////////////////////////////////////////////////
@@ -55,6 +59,16 @@ bool EnableOffset()
 { return !!((Flags >> 1) & 0x1); }
 
 //-----------------------------------------------------------------------------
+//      中間値を取得します.
+//-----------------------------------------------------------------------------
+float Median(float3 value)
+{
+    return max(
+        min(value.r, value.g),
+        min(value.b, max(value.r, value.g)));
+}
+
+//-----------------------------------------------------------------------------
 //      メインエントリーポイントです.
 //-----------------------------------------------------------------------------
 float4 main(const VSOutput input) : SV_TARGET
@@ -65,7 +79,11 @@ float4 main(const VSOutput input) : SV_TARGET
     const float kOuterBlurRadius = 0.01f;
 
     // 符号付き距離を取得.
+#if SINGLE_CHANNEL
     float dist = SdfFontTexture.Sample(LinearClamp, input.TexCoord).r;
+#else
+    float dist = Median(SdfFontTexture.Sample(LinearClamp, input.TexCoord).rgb);
+#endif
 
     float4 color = input.Color;
     float  alpha = saturate(smoothstep(
@@ -87,7 +105,11 @@ float4 main(const VSOutput input) : SV_TARGET
             SdfFontTexture.GetDimensions(invSize.x, invSize.y);
             invSize.x = 1.0f / invSize.x;
             invSize.y = 1.0f / invSize.y;
+        #if SINGLE_CHANNEL
+            dist2 = Median(SdfFontTexture.Sample(LinearClamp, input.TexCoord + Offset * invSize).rgb);
+        #else
             dist2 = SdfFontTexture.Sample(LinearClamp, input.TexCoord + Offset * invSize).r;
+        #endif
         }
 
         float4 outer = ToColor(OuterColor);

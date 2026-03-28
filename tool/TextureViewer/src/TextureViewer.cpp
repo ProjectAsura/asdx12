@@ -484,6 +484,8 @@ void TextureViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
     pCmd->RSSetViewports(1, &m_Viewport);
     pCmd->RSSetScissorRects(1, &m_ScissorRect);
 
+    // TODO : CubeMap, 3D Texture 対応.
+
     // テクスチャを描画.
     if (m_Texture && m_Texture->GetHandleGPU().ptr != 0)
     {

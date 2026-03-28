@@ -434,6 +434,140 @@ float Min3(float3 value)
 float Min4(float4 value)
 { return min(value.x, min(value.y, min(value.z, value.w))); }
 
+#if __HLSL_VERSION >= 2021
+//-----------------------------------------------------------------------------
+//      2つの値をソートします.
+//-----------------------------------------------------------------------------
+template<typename T>
+void Sort2(inout T a, inout T b)
+{
+    T mini = min(a, b);
+    T maxi = max(a, b);
+    a = mini;
+    b = maxi;
+}
+
+//-----------------------------------------------------------------------------
+//      3つの値の中間値を求めます.
+//-----------------------------------------------------------------------------
+template<typename T>
+T Med3(T a, T b, T c)
+{ return max(min(a, b), min(max(a, b), c)); }
+
+//-----------------------------------------------------------------------------
+//      5つの値の中間値を求めます.
+//-----------------------------------------------------------------------------
+template<typename T>
+T Med5(T a, T b, T c, T d, T e)
+{
+    Sort2(a, b);
+    Sort2(d, e);
+    Sort2(a, c);
+    Sort2(b, c);
+    Sort2(a, d);
+    Sort2(c, d);
+    Sort2(b, e);
+    Sort2(b, c);
+    return c;
+}
+#else
+//-----------------------------------------------------------------------------
+//      2つの値をソートします.
+//-----------------------------------------------------------------------------
+void Sort2(inout float a, inout float b)
+{
+    float mini = min(a, b);
+    float maxi = max(a, b);
+    a = mini;
+    b = maxi;
+}
+void Sort2(inout float2 a, inout float2 b)
+{
+    float2 mini = min(a, b);
+    float2 maxi = max(a, b);
+    a = mini;
+    b = maxi;
+}
+void Sort2(inout float3 a, inout float3 b)
+{
+    float3 mini = min(a, b);
+    float3 maxi = max(a, b);
+    a = mini;
+    b = maxi;
+}
+void Sort2(inout float4 a, inout float4 b)
+{
+    float4 mini = min(a, b);
+    float4 maxi = max(a, b);
+    a = mini;
+    b = maxi;
+}
+
+//-----------------------------------------------------------------------------
+//      3つの値の中間値を求めます.
+//-----------------------------------------------------------------------------
+float Med3(float a, float b, float c)
+{ return max(min(a, b), min(max(a, b), c)); }
+float2 Med3(float2 a, float2 b, float2 c)
+{ return max(min(a, b), min(max(a, b), c)); }
+float3 Med3(float3 a, float3 b, float3 c)
+{ return max(min(a, b), min(max(a, b), c)); }
+float4 Med3(float4 a, float4 b, float4 c)
+{ return max(min(a, b), min(max(a, b), c)); }
+
+//-----------------------------------------------------------------------------
+//      5つの値の中間値を求めます.
+//-----------------------------------------------------------------------------
+float Med5(float a, float b, float c, float d, float e)
+{
+    Sort2(a, b);
+    Sort2(d, e);
+    Sort2(a, c);
+    Sort2(b, c);
+    Sort2(a, d);
+    Sort2(c, d);
+    Sort2(b, e);
+    Sort2(b, c);
+    return c;
+}
+float2 Med5(float2 a, float2 b, float2 c, float2 d, float2 e)
+{
+    Sort2(a, b);
+    Sort2(d, e);
+    Sort2(a, c);
+    Sort2(b, c);
+    Sort2(a, d);
+    Sort2(c, d);
+    Sort2(b, e);
+    Sort2(b, c);
+    return c;
+}
+float3 Med5(float3 a, float3 b, float3 c, float3 d, float3 e)
+{
+    Sort2(a, b);
+    Sort2(d, e);
+    Sort2(a, c);
+    Sort2(b, c);
+    Sort2(a, d);
+    Sort2(c, d);
+    Sort2(b, e);
+    Sort2(b, c);
+    return c;
+}
+float4 Med5(float4 a, float4 b, float4 c, float4 d, float4 e)
+{
+    Sort2(a, b);
+    Sort2(d, e);
+    Sort2(a, c);
+    Sort2(b, c);
+    Sort2(a, d);
+    Sort2(c, d);
+    Sort2(b, e);
+    Sort2(b, c);
+    return c;
+}
+#endif
+
 //-----------------------------------------------------------------------------
 //      平方根を近似計算します.
 //-----------------------------------------------------------------------------

@@ -1,18 +1,14 @@
 <Solution>
   <Configurations>
     <Platform Name="x64" />
-    <Platform Name="x86" />
   </Configurations>
   <Project Path="../../../project/asdx12_2026.vcxproj" Id="2218c996-fe59-4e14-988f-c6a7250d5978">
-    <BuildType Solution="Debug|x64" Project="DebugMT" />
-    <BuildType Solution="Debug|x86" Project="DebugMD" />
+    <BuildType Solution="Debug|*" Project="DebugMT" />
     <BuildType Solution="Release|*" Project="ReleaseMT" />
-    <Platform Project="x64" />
   </Project>
   <Project Path="../../asdxAsset/project/asdxAsset.vcxproj" Id="b9d43f50-8879-4195-81ab-e3b1ea58f566">
-    <BuildType Solution="Debug|x64" Project="Debug_MT" />
-    <BuildType Solution="Release|x64" Project="Release_MT" />
-    <Platform Project="x64" />
+    <BuildType Solution="Debug|*" Project="DebugMT" />
+    <BuildType Solution="Release|*" Project="ReleaseMT" />
   </Project>
   <Project Path="TextureViewer.vcxproj" Id="998ffd51-597d-4a1f-9753-130ef47c22a1" />
 </Solution>
