@@ -17,7 +17,11 @@
 //----------------------------------------------------------------------------
 // Linker
 //----------------------------------------------------------------------------
-#pragma comment(lib, "../external/WinPixEventRuntime.1.0.240308001/bin/x64/WinPixEventRuntime.lib")
+#if defined(DEBUG) || defined(_DEBUG)
+    #pragma comment(lib, "../external/PixEvents/output/Debug/x64/WinPixEventRuntime.lib")
+#else
+    #pragma comment(lib, "../external/PixEvents/output/Release/x64/WinPixEventRuntime.lib")
+#endif
 #endif//ASDX_AUTO_LINK
 
 

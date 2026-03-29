@@ -772,7 +772,6 @@
     <None Include="..\res\shaders\asdxSH.hlsli">
       <Filter>リソース ファイル\shaders</Filter>
     </None>
-    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\res\shaders\asdxColorFilterCS.hlsl">

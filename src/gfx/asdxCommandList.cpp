@@ -12,7 +12,7 @@
 #include <gfx/asdxCommandList.h>
 #include <gfx/asdxDevice.h>
 #include <fnd/asdxLogger.h>
-#include "../external/WinPixEventRuntime.1.0.240308001/Include/WinPixEventRuntime/pix3.h"
+#include "../external/PixEvents/include/pix3.h"
 
 
 namespace asdx {
