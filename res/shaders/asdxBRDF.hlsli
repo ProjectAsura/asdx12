@@ -264,12 +264,13 @@ float PhongSpecular(float3 N, float3 V, float3 L, float shininess)
 //-----------------------------------------------------------------------------
 //      Smith‚É‚æ‚éG2€‚ğ‹‚ß‚Ü‚·.
 //-----------------------------------------------------------------------------
-float G2_Smith(float a, float NoL, float NoV)
+float G2_Smith(float a2, float NoL, float NoV)
 {
+    // a2 = linearRoughness * linearRoughnss ‚ğ“n‚µ‚Ä‚­‚¾‚³‚¢.
+ 
     // [Lagarde 2014] Sebastien Lagarde, Charles de Rousier,
     // "Moving Frostbite to Physically Based Rendering 3.0",
     // p.12, Listing 2.
-    float a2 = a * a;
     float GGXV = NoV * sqrt(a2 + NoL * (NoL - a2 * NoL));
     float GGXL = NoL * sqrt(a2 + NoV * (NoV - a2 * NoV));
 
@@ -281,9 +282,10 @@ float G2_Smith(float a, float NoL, float NoV)
 //-----------------------------------------------------------------------------
 //      GGX‚ÌD€‚ğ‹‚ß‚Ü‚·.
 //-----------------------------------------------------------------------------
-float D_GGX(float NoH, float a)
+float D_GGX(float NoH, float a2)
 {
-    float a2 = Pow2(a);
+    // a2 = linearRoughness * linearRoughnss ‚ğ“n‚µ‚Ä‚­‚¾‚³‚¢.
+
     float d = (NoH * a2 - NoH) * NoH + 1.0f;
     return a2 / (F_PI * Pow2(d));
 }
