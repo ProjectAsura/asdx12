@@ -366,6 +366,7 @@
     <ClInclude Include="..\include\gfx\asdxPipelineState.h" />
     <ClInclude Include="..\include\gfx\asdxPresetState.h" />
     <ClInclude Include="..\include\gfx\asdxSampler.h" />
+    <ClInclude Include="..\include\gfx\asdxScopedMarker.h" />
     <ClInclude Include="..\include\gfx\asdxShape.h" />
     <ClInclude Include="..\include\gfx\asdxScreenCpature.h" />
     <ClInclude Include="..\include\gfx\asdxShaderCompiler.h" />
