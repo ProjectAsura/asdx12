@@ -11,6 +11,7 @@
 #include <d3d12.h>
 #include <dxgi1_6.h>
 #include <vector>
+#include <string>
 
 
 namespace D3D12MA {
@@ -25,6 +26,16 @@ namespace asdx {
 class CommandQueue;
 class DescriptorHeap;
 class OffsetHandle;
+
+
+//-----------------------------------------------------------------------------
+// Constant Values
+//-----------------------------------------------------------------------------
+static constexpr uint32_t kVendorAMD       = 0x1002;    //!< AMDのベンダーID.
+static constexpr uint32_t kVendorNVIDIA    = 0x10DE;    //!< NVIDIAのベンダーID.
+static constexpr uint32_t kVendorMicrosoft = 0x1414;    //!< MicrosoftのベンダーID.
+static constexpr uint32_t kVendorQualcomm  = 0x5143;    //!< QualcommのベンダーID.
+static constexpr uint32_t kVendorIntel     = 0x8086;    //!< IntelのベンダーID.
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -189,5 +200,26 @@ bool IsSupportGpuUploadHeap();
 //! @retval false   非UMAです.
 //-----------------------------------------------------------------------------
 bool IsUMA();
+
+//-----------------------------------------------------------------------------
+//! @brief      GPUベンダーIDを取得します.
+//! 
+//! @return     GPUベンダーIDを返却します.
+//-----------------------------------------------------------------------------
+uint32_t GetGpuVendorId();
+
+//-----------------------------------------------------------------------------
+//! @brief      GPUデバイスIDを取得します.
+//!
+//! @return     GPUデバイスIDを返却します.
+//-----------------------------------------------------------------------------
+uint32_t GetGpuDeviceId();
+
+//-----------------------------------------------------------------------------
+//! @brief      GPUアダプタの説明を取得します.
+//! 
+//! @return     GPUアダプタの説明を返却します.
+//-----------------------------------------------------------------------------
+const std::string& GetAdapterDescription();
 
 } // namespace asdx

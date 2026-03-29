@@ -17,6 +17,7 @@
 #include <fnd/asdxSpinLock.h>
 #include <fnd/asdxRef.h>
 #include <fnd/asdxLogger.h>
+#include <fnd/asdxMisc.h>
 #include <cassert>
 #include <strsafe.h>
 #include <vector>
@@ -284,6 +285,21 @@ public:
     //-------------------------------------------------------------------------
     bool IsUMA() const { return m_SupportUMA; }
 
+    //-------------------------------------------------------------------------
+    //! @brief      ベンダーIDを取得します.
+    //-------------------------------------------------------------------------
+    uint32_t GetVendorId() const { return m_VendorId; }
+
+    //-------------------------------------------------------------------------
+    //! @brief      デバイスIDを取得します.
+    //-------------------------------------------------------------------------
+    uint32_t GetDeviceId() const { return m_DeviceId; }
+
+    //-------------------------------------------------------------------------
+    //! @brief      アダプターの説明を取得します.
+    //-------------------------------------------------------------------------
+    const std::string& GetAdapterDescription( ) const { return m_AdapterDescription; }
+
 private:
     //=========================================================================
     // private variables.
@@ -307,11 +323,13 @@ private:
     SpinLock                        m_SpinLock;                 //!< スピンロックです.
     VertexBuffer                    m_QuadVB;                   //!< フルスクリーン描画用三角形.
     RefPtr<D3D12MA::Allocator>      m_pAllocator;               //!< D3D12メモリアロケータ.
-
     D3D12_RAYTRACING_TIER           m_DxrTier               = D3D12_RAYTRACING_TIER_NOT_SUPPORTED;
     bool                            m_SupportDXR            = false;    //!< DXRに対応しているかどうか.
     bool                            m_SupportGpuUploadHeap  = false;    //!< GPUアップロードヒープに対応しているかどうか.
     bool                            m_SupportUMA            = false;    //!< Unified Memory Architectureかどうか.
+    uint32_t                        m_VendorId              = 0;        //!< ベンダーID.
+    uint32_t                        m_DeviceId              = 0;        //!< デバイスID.
+    std::string                     m_AdapterDescription;               //!< GPU名.
 
     //=========================================================================
     // private methods
@@ -430,7 +448,12 @@ bool GraphicsSystem::Init(const DeviceDesc& deviceDesc)
             {
                 // 最初に見つかったものをD3D12デバイス生成として利用する.
                 if (m_pAdapter.GetPtr() == nullptr)
-                { m_pAdapter = pAdapter.GetPtr(); }
+                {
+                    m_pAdapter           = pAdapter.GetPtr();
+                    m_VendorId           = desc.VendorId;
+                    m_DeviceId           = desc.DeviceId;
+                    m_AdapterDescription = asdx::ToStringA(desc.Description);
+                }
 
                 // 下記の処理は，ノートPCでRTX 3050 Laptopなどの場合に必ず失敗するので要注意!!
                 // ノートPCのGPUは基本的には，IDXGIOutputが取れないことがほとんど.
@@ -926,5 +949,23 @@ bool IsSupportGpuUploadHeap()
 //-----------------------------------------------------------------------------
 bool IsUMA()
 { return GraphicsSystem::Instance().IsUMA(); }
+
+//-----------------------------------------------------------------------------
+//      ベンダーIDを取得します.
+//-----------------------------------------------------------------------------
+uint32_t GetGpuVendorId()
+{ return GraphicsSystem::Instance().GetVendorId(); }
+
+//-----------------------------------------------------------------------------
+//      デバイスIDを取得します.
+//-----------------------------------------------------------------------------
+uint32_t GetGpuDeviceId()
+{ return GraphicsSystem::Instance().GetDeviceId(); }
+
+//-----------------------------------------------------------------------------
+//      アダプターの説明を取得します.
+//-----------------------------------------------------------------------------
+const std::string& GetAdapterDescription()
+{ return GraphicsSystem::Instance().GetAdapterDescription(); }
 
 } // namespace asdx
