@@ -12,6 +12,7 @@
 #include <gfx/asdxCommandList.h>
 #include <gfx/asdxDevice.h>
 #include <fnd/asdxLogger.h>
+#include "../external/WinPixEventRuntime.1.0.240308001/Include/WinPixEventRuntime/pix3.h"
 
 
 namespace asdx {
@@ -137,5 +138,130 @@ uint8_t CommandList::GetIndex() const
 //-----------------------------------------------------------------------------
 void CommandList::SetName(LPCWSTR name)
 { m_CmdList->SetName(name); }
+
+
+///////////////////////////////////////////////////////////////////////////////
+// ScopedMarker class
+///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      コンストラクタです.
+//-----------------------------------------------------------------------------
+ScopedMarker::ScopedMarker(ID3D12GraphicsCommandList* pCmd, const char* text)
+: m_pCmd(pCmd)
+{
+    assert(pCmd != nullptr);
+    assert(text != nullptr);
+#ifdef _PIX3_H_
+    PIXBeginEvent(m_pCmd, PIX_COLOR_DEFAULT, text);
+#else
+    static const UINT PIX_EVENT_ANSI_VERSION = 1;
+    auto size = UINT((strlen(text) + 1) * sizeof(char));
+    m_pCmd->BeginEvent(PIX_EVENT_ANSI_VERSION, text, size);
+#endif
+}
+
+//-----------------------------------------------------------------------------
+//      デストラクタです.
+//-----------------------------------------------------------------------------
+ScopedMarker::~ScopedMarker()
+{
+#ifdef _PIX3_H_
+    PIXEndEvent(m_pCmd);
+#else
+    m_pCmd->EndEvent();
+#endif
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Functions.
+///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      UAVバリアを設定します.
+//-----------------------------------------------------------------------------
+void SetUAVBarrier(D3D12_RESOURCE_BARRIER& barrier, ID3D12Resource* pResource)
+{
+    barrier.Type          = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+    barrier.Flags         = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+    barrier.UAV.pResource = pResource;
+}
+
+//-----------------------------------------------------------------------------
+//      UAVバリアを発行します.
+//-----------------------------------------------------------------------------
+void UAVBarrier(ID3D12GraphicsCommandList* pCmd, ID3D12Resource* pResource)
+{
+    D3D12_RESOURCE_BARRIER barrier = {};
+    SetUAVBarrier(barrier, pResource);
+    pCmd->ResourceBarrier(1, &barrier);
+}
+
+//-----------------------------------------------------------------------------
+//      遷移バリアを設定します.
+//-----------------------------------------------------------------------------
+void SetTransitionBarrier
+(
+    D3D12_RESOURCE_BARRIER& barrier,
+    ID3D12Resource*         pResource,
+    D3D12_RESOURCE_STATES   before,
+    D3D12_RESOURCE_STATES   after
+)
+{
+    barrier.Type                   = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+    barrier.Flags                  = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+    barrier.Transition.pResource   = pResource;
+    barrier.Transition.StateBefore = before;
+    barrier.Transition.StateAfter  = after;
+    barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+}
+
+//-----------------------------------------------------------------------------
+//      遷移バリアを発行します.
+//-----------------------------------------------------------------------------
+void TransitionBarrier
+(
+    ID3D12GraphicsCommandList*  pCmd,
+    ID3D12Resource*             pResource,
+    D3D12_RESOURCE_STATES       before,
+    D3D12_RESOURCE_STATES       after
+)
+{
+    D3D12_RESOURCE_BARRIER barrier = {};
+    SetTransitionBarrier(barrier, pResource, before, after);
+    pCmd->ResourceBarrier(1, &barrier);
+}
+
+//-----------------------------------------------------------------------------
+//      エイリアシングを設定します.
+//-----------------------------------------------------------------------------
+void SetAliasingBarrier
+(
+    D3D12_RESOURCE_BARRIER& barrier,
+    ID3D12Resource*         pBefore,
+    ID3D12Resource*         pAfter
+)
+{
+    barrier.Type                     = D3D12_RESOURCE_BARRIER_TYPE_ALIASING;
+    barrier.Flags                    = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+    barrier.Aliasing.pResourceBefore = pBefore;
+    barrier.Aliasing.pResourceAfter  = pAfter;
+}
+
+//-----------------------------------------------------------------------------
+//      エイリアシングバリアを発行します.
+//-----------------------------------------------------------------------------
+void AliasingBarrier
+(
+    ID3D12GraphicsCommandList*  pCmd,
+    ID3D12Resource*             pBefore,
+    ID3D12Resource*             pAfter
+)
+{
+    D3D12_RESOURCE_BARRIER barrier = {};
+    SetAliasingBarrier(barrier, pBefore, pAfter);
+    pCmd->ResourceBarrier(1, &barrier);
+}
 
 } // namespace asdx

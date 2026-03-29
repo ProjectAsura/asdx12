@@ -13,6 +13,14 @@
 #include <fnd/asdxRef.h>
 
 
+#if ASDX_AUTO_LINK
+//----------------------------------------------------------------------------
+// Linker
+//----------------------------------------------------------------------------
+#pragma comment(lib, "../external/WinPixEventRuntime.1.0.240308001/bin/x64/WinPixEventRuntime.lib")
+#endif//ASDX_AUTO_LINK
+
+
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -104,7 +112,6 @@ private:
     /* NOTHING */
 };
 
-
 ///////////////////////////////////////////////////////////////////////////////
 // ScopedMarker class
 ///////////////////////////////////////////////////////////////////////////////
@@ -128,36 +135,18 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      コンストラクタです.
     //-------------------------------------------------------------------------
-    ScopedMarker(ID3D12GraphicsCommandList* pCmd, const char* text)
-    {
-        assert(pCmd != nullptr);
-        assert(text != nullptr);
-    #if _PIX3_H_
-        PIXBeginEvent(m_pCmd, PIX_COLOR_DEFAULT, text);
-    #else
-        static const UINT PIX_EVENT_ANSI_VERSION = 1;
-        auto size = UINT((strlen(text) + 1) * sizeof(char));
-        m_pCmd->BeginEvent(PIX_EVENT_ANSI_VERSION, text, size);
-    #endif
-    }
+    ScopedMarker(ID3D12GraphicsCommandList* pCmd, const char* text);
 
     //-------------------------------------------------------------------------
     //! @brief      デストラクタです.
     //-------------------------------------------------------------------------
-    ~ScopedMarker()
-    {
-    #if _PIX3_H_
-        PIXEndEvent(m_pCmd)
-    #else
-        m_pCmd->EndEvent();
-    #endif
-    }
+    ~ScopedMarker();
 
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    ID3D12GraphicsCommandList*  m_pCmd = nullptr;
+    ID3D12GraphicsCommandList* m_pCmd = nullptr;
 
     //=========================================================================
     // private methods.
@@ -166,16 +155,71 @@ private:
 };
 
 //-----------------------------------------------------------------------------
-//      UAVバリアを発行します.
+//! @brief      UAVバリアを設定します.
+//! 
+//! @param[in]      barrier     バリアです
+//! @param[in]      pResource   リソースです.
 //-----------------------------------------------------------------------------
-inline void UAVBarrier(ID3D12GraphicsCommandList* pCmd, ID3D12Resource* pResource)
-{
-    D3D12_RESOURCE_BARRIER barrier = {};
-    barrier.Type          = D3D12_RESOURCE_BARRIER_TYPE_UAV;
-    barrier.Flags         = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-    barrier.UAV.pResource = pResource;
+void SetUAVBarrier(D3D12_RESOURCE_BARRIER& barrier, ID3D12Resource* pResource);
 
-    pCmd->ResourceBarrier(1, &barrier);
-}
+//-----------------------------------------------------------------------------
+//! @brief      UAVバリアを発行します.
+//! 
+//! @param[in]      pCmd        コマンドリストです.
+//! @param[in]      pResource   リソースです.
+//-----------------------------------------------------------------------------
+void UAVBarrier(ID3D12GraphicsCommandList* pCmd, ID3D12Resource* pResource);
+
+//-----------------------------------------------------------------------------
+//! @brief      遷移バリアを設定します.
+//!
+//! @param[in]      barrier     バリアです.
+//! @param[in]      pResource   リソースです.
+//! @param[in]      before      遷移前のリソースステートです.
+//! @param[in]      after       遷移後のリソースステートです.
+//-----------------------------------------------------------------------------
+void SetTransitionBarrier(
+    D3D12_RESOURCE_BARRIER& barrier,
+    ID3D12Resource*         pResource,
+    D3D12_RESOURCE_STATES   before,
+    D3D12_RESOURCE_STATES   after);
+
+//-----------------------------------------------------------------------------
+//! @brief      遷移バリアを発行します.
+//! 
+//! @param[in]      pCmd        コマンドリストです.
+//! @param[in]      pResource   リソースです.
+//! @param[in]      before      遷移前のリソースステートです.
+//! @param[in]      after       遷移後のリソースステートです.
+//-----------------------------------------------------------------------------
+void TransitionBarrier(
+    ID3D12GraphicsCommandList*  pCmd,
+    ID3D12Resource*             pResource,
+    D3D12_RESOURCE_STATES       before,
+    D3D12_RESOURCE_STATES       after);
+
+//-----------------------------------------------------------------------------
+//! @brief      エイリアシングバリアを設定します.
+//! 
+//! @param[in]      barrier     バリアです.
+//! @param[in]      pBefore     遷移前のリソースです.
+//! @param[in]      pAfter      遷移後のリソースです.
+//-----------------------------------------------------------------------------
+void SetAliasBarrier(
+    D3D12_RESOURCE_BARRIER& barrier,
+    ID3D12Resource*         pBefore,
+    ID3D12Resource*         pAfter);
+
+//-----------------------------------------------------------------------------
+//! @brief      エイリアシングバリアを設定します.
+//! 
+//! @param[in]      pCmd        コマンドリストです.
+//! @param[in]      pBefore     遷移前のリソースです.
+//! @param[in]      pAfter      遷移後のリソースです.
+//-----------------------------------------------------------------------------
+void AliasBarrier(
+    ID3D12GraphicsCommandList*  pCmd,
+    ID3D12Resource*             pBefore,
+    ID3D12Resource*             pAfter);
 
 } // namespace asdx
