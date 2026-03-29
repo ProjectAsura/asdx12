@@ -13,18 +13,6 @@
 #include <fnd/asdxRef.h>
 
 
-#if ASDX_AUTO_LINK
-//----------------------------------------------------------------------------
-// Linker
-//----------------------------------------------------------------------------
-#if defined(DEBUG) || defined(_DEBUG)
-    #pragma comment(lib, "../external/PixEvents/output/Debug/x64/WinPixEventRuntime.lib")
-#else
-    #pragma comment(lib, "../external/PixEvents/output/Release/x64/WinPixEventRuntime.lib")
-#endif
-#endif//ASDX_AUTO_LINK
-
-
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -139,12 +127,33 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      コンストラクタです.
     //-------------------------------------------------------------------------
-    ScopedMarker(ID3D12GraphicsCommandList* pCmd, const char* text);
+    ScopedMarker(ID3D12GraphicsCommandList* pCmd, const char* text)
+    : m_pCmd(pCmd)
+    {
+        assert(m_pCmd != nullptr);
+        assert(text != nullptr);
+    #ifdef _PIX3_H_
+        PIXBeginEvent(m_pCmd, PIX_COLOR_DEFAULT, text);
+    #else
+        static const UINT PIX_EVENT_ANSI_VERSION = 1;
+        auto size = UINT((strlen(text) + 1) * sizeof(char));
+        m_pCmd->BeginEvent(PIX_EVENT_ANSI_VERSION, text, size);
+    #endif
+    }
 
     //-------------------------------------------------------------------------
     //! @brief      デストラクタです.
     //-------------------------------------------------------------------------
-    ~ScopedMarker();
+    ~ScopedMarker()
+    {
+        assert(m_pCmd != nullptr);
+    #ifdef _PIX3_H_
+        PIXEndEvent(m_pCmd);
+    #else
+        m_pCmd->EndEvent();
+    #endif
+        m_pCmd = nullptr;
+    }
 
 private:
     //=========================================================================
@@ -209,7 +218,7 @@ void TransitionBarrier(
 //! @param[in]      pBefore     遷移前のリソースです.
 //! @param[in]      pAfter      遷移後のリソースです.
 //-----------------------------------------------------------------------------
-void SetAliasBarrier(
+void SetAliasingBarrier(
     D3D12_RESOURCE_BARRIER& barrier,
     ID3D12Resource*         pBefore,
     ID3D12Resource*         pAfter);
@@ -221,7 +230,7 @@ void SetAliasBarrier(
 //! @param[in]      pBefore     遷移前のリソースです.
 //! @param[in]      pAfter      遷移後のリソースです.
 //-----------------------------------------------------------------------------
-void AliasBarrier(
+void AliasingBarrier(
     ID3D12GraphicsCommandList*  pCmd,
     ID3D12Resource*             pBefore,
     ID3D12Resource*             pAfter);

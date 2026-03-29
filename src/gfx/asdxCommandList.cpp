@@ -12,7 +12,6 @@
 #include <gfx/asdxCommandList.h>
 #include <gfx/asdxDevice.h>
 #include <fnd/asdxLogger.h>
-#include "../external/PixEvents/include/pix3.h"
 
 
 namespace asdx {
@@ -138,40 +137,6 @@ uint8_t CommandList::GetIndex() const
 //-----------------------------------------------------------------------------
 void CommandList::SetName(LPCWSTR name)
 { m_CmdList->SetName(name); }
-
-
-///////////////////////////////////////////////////////////////////////////////
-// ScopedMarker class
-///////////////////////////////////////////////////////////////////////////////
-
-//-----------------------------------------------------------------------------
-//      コンストラクタです.
-//-----------------------------------------------------------------------------
-ScopedMarker::ScopedMarker(ID3D12GraphicsCommandList* pCmd, const char* text)
-: m_pCmd(pCmd)
-{
-    assert(pCmd != nullptr);
-    assert(text != nullptr);
-#ifdef _PIX3_H_
-    PIXBeginEvent(m_pCmd, PIX_COLOR_DEFAULT, text);
-#else
-    static const UINT PIX_EVENT_ANSI_VERSION = 1;
-    auto size = UINT((strlen(text) + 1) * sizeof(char));
-    m_pCmd->BeginEvent(PIX_EVENT_ANSI_VERSION, text, size);
-#endif
-}
-
-//-----------------------------------------------------------------------------
-//      デストラクタです.
-//-----------------------------------------------------------------------------
-ScopedMarker::~ScopedMarker()
-{
-#ifdef _PIX3_H_
-    PIXEndEvent(m_pCmd);
-#else
-    m_pCmd->EndEvent();
-#endif
-}
 
 
 ///////////////////////////////////////////////////////////////////////////////
