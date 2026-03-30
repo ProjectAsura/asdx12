@@ -3984,17 +3984,18 @@ inline BoundingBox2 BoundingBox2::Merge(const BoundingBox2& lhs, const Vector2& 
 //-----------------------------------------------------------------------------
 inline BoundingBox2 BoundingBox2::Create(const float* pVertices, size_t vertexCount, size_t vertexStride)
 {
+    auto stride = vertexStride / sizeof(float);
     auto vertex = pVertices;
     BoundingBox2 result;
     result.Mini = Vector2(vertex[0], vertex[1]);
     result.Maxi = Vector2(vertex[0], vertex[1]);
-    vertex += vertexStride;
+    vertex += stride;
 
     for(size_t i=1; i<vertexCount; ++i)
     {
         auto pos = Vector2(vertex[0], vertex[1]);
         result = Merge(result, pos);
-        vertex += vertexStride;
+        vertex += stride;
     }
 
     return result;
@@ -4086,10 +4087,9 @@ inline BoundingBox3& BoundingBox3::operator = (const BoundingBox3& value)
 //-----------------------------------------------------------------------------
 inline BoundingBox3 BoundingBox3::Merge(const BoundingBox3& lhs, const BoundingBox3& rhs)
 {
-    BoundingBox3 result;
-    result.Mini = Vector3::Min(lhs.Mini, rhs.Mini);
-    result.Maxi = Vector3::Max(lhs.Maxi, rhs.Maxi);
-    return result;
+    return BoundingBox3(
+        Vector3::Min(lhs.Mini, rhs.Mini),
+        Vector3::Max(lhs.Maxi, rhs.Maxi));
 }
 
 //-----------------------------------------------------------------------------
@@ -4097,10 +4097,9 @@ inline BoundingBox3 BoundingBox3::Merge(const BoundingBox3& lhs, const BoundingB
 //-----------------------------------------------------------------------------
 inline BoundingBox3 BoundingBox3::Merge(const BoundingBox3& lhs, const Vector3& rhs)
 {
-    BoundingBox3 result;
-    result.Mini = Vector3::Min(lhs.Mini, rhs);
-    result.Maxi = Vector3::Max(lhs.Maxi, rhs);
-    return result;
+    return BoundingBox3(
+        Vector3::Min(lhs.Mini, rhs),
+        Vector3::Max(lhs.Maxi, rhs));
 }
 
 //-----------------------------------------------------------------------------
@@ -4136,17 +4135,18 @@ inline BoundingBox3 BoundingBox3::Transform(const BoundingBox3& box, const Matri
 //-----------------------------------------------------------------------------
 inline BoundingBox3 BoundingBox3::Create(const float* pVertices, size_t vertexCount, size_t vertexStride)
 {
+    auto stride = vertexStride / sizeof(float);
     auto vertex = pVertices;
     BoundingBox3 result;
     result.Mini = Vector3(vertex[0], vertex[1], vertex[2]);
     result.Maxi = Vector3(vertex[0], vertex[1], vertex[2]);
-    vertex += vertexStride;
+    vertex += stride;
 
     for(size_t i=1; i<vertexCount; ++i)
     {
         auto pos = Vector3(vertex[0], vertex[1], vertex[2]);
         result = Merge(result, pos);
-        vertex += vertexStride;
+        vertex += stride;
     }
 
     return result;
