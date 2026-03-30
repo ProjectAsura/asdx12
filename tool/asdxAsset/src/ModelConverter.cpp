@@ -30,7 +30,7 @@ namespace {
 //-----------------------------------------------------------------------------
 // Constant Values.
 //-----------------------------------------------------------------------------
-static constexpr uint32_t CURRENT_VERSION = 1u;  //!< 現在サポートされているバージョン.
+static constexpr uint32_t CURRENT_VERSION = 2u;  //!< 現在サポートされているバージョン.
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -127,7 +127,8 @@ void ParseMesh
     const aiNode*                           rootNode,
     flatbuffers::Offset<asdx::res::Mesh>&   dstMesh,
     const aiMesh*                           srcMesh,
-    asdx::BoundingSphere3&                  boundSphere
+    asdx::BoundingSphere3&                  boundSphere,
+    asdx::BoundingBox3&                     boundBox
 )
 {
     std::vector<asdx::res::Float3> positions;
@@ -145,6 +146,8 @@ void ParseMesh
     const aiVector3D kZero(0.0f, 0.0f, 0.0f);
     const aiColor4D  kWhite(1.0f, 1.0f, 1.0f, 1.0f);
 
+    asdx::BoundingBox3 box;
+
     for(auto i=0u; i<srcMesh->mNumVertices; ++i)
     {
         auto pos = srcMesh->mVertices[i];
@@ -156,6 +159,9 @@ void ParseMesh
         normals  [i] = asdx::res::Float3(nrm.x, nrm.y, nrm.z);
         texcoords[i] = asdx::res::Float2(tex.x, tex.y);
         colors   [i] = ToUnorm4(col);
+
+        box.Mini = asdx::Min(boundBox.Mini, asdx::Vector3(pos.x, pos.y, pos.z));
+        box.Maxi = asdx::Max(boundBox.Maxi, asdx::Vector3(pos.x, pos.y, pos.z));
     }
 
     std::vector<uint32_t> vertexIndices;
@@ -433,8 +439,12 @@ void ParseMesh
 
     auto sphere = asdx::BoundingSphere3::Create(&srcMesh->mVertices[0].x, srcMesh->mNumVertices, sizeof(aiVector3D));
     boundSphere = asdx::BoundingSphere3::Merge(boundSphere, sphere);
+    boundBox    = asdx::BoundingBox3::Merge(boundBox, box);
 
-    auto bounds = asdx::res::BoundingSphere(asdx::res::Float3(sphere.Center.x, sphere.Center.y, sphere.Center.z), sphere.Radius);
+    auto bSphere = asdx::res::BoundingSphere(asdx::res::Float3(sphere.Center.x, sphere.Center.y, sphere.Center.z), sphere.Radius);
+    auto bBox    = asdx::res::BoundingBox(
+                    asdx::res::Float3(box.Mini.x, box.Mini.y, box.Mini.z),
+                    asdx::res::Float3(box.Maxi.x, box.Maxi.y, box.Maxi.z));
 
     dstMesh = asdx::res::CreateMeshDirect(
         builder,
@@ -448,7 +458,8 @@ void ParseMesh
         &boneWeights,
         &boneIndices,
         &vertexIndices,
-        &bounds);
+        &bSphere,
+        &bBox);
 }
 
 } // namespace
@@ -548,7 +559,8 @@ bool ModelConverter::Convert
         return false;
     }
 
-    asdx::BoundingSphere3 bounds(asdx::Vector3(0.0f, 0.0f, 0.0f), 0.0f);
+    asdx::BoundingSphere3 sphere(asdx::Vector3(0.0f, 0.0f, 0.0f), 0.0f);
+    asdx::BoundingBox3    box;
 
     flatbuffers::FlatBufferBuilder builder(1024);
 
@@ -561,7 +573,7 @@ bool ModelConverter::Convert
         const auto srcMesh = pScene->mMeshes[i];
         auto& dstMesh = meshes[i];
 
-        ParseMesh(builder, boneMap, pScene->mRootNode, dstMesh, srcMesh, bounds);
+        ParseMesh(builder, boneMap, pScene->mRootNode, dstMesh, srcMesh, sphere, box);
     }
 
     // ボーンデータを変換.
@@ -852,7 +864,14 @@ bool ModelConverter::Convert
         materials.emplace_back(dstMat);
     }
 
-    auto sphere = asdx::res::BoundingSphere(asdx::res::Float3(bounds.Center.x, bounds.Center.y, bounds.Center.z), bounds.Radius);
+    auto bSphere = asdx::res::BoundingSphere(
+                    asdx::res::Float3(sphere.Center.x, sphere.Center.y, sphere.Center.z),
+                    sphere.Radius);
+    auto bBox = asdx::res::BoundingBox(
+                    asdx::res::Float3(box.Mini.x, box.Mini.y, box.Mini.z),
+                    asdx::res::Float3(box.Maxi.x, box.Maxi.y, box.Maxi.z));
+
+    auto rootTransform = ToFloat4x4(ToMatrix(pScene->mRootNode->mTransformation));
 
     auto bin = asdx::res::CreateModelBinaryDirect(
         builder,
@@ -860,7 +879,9 @@ bool ModelConverter::Convert
         &meshes,
         &materials,
         &bones,
-        &sphere);
+        &bSphere,
+        &bBox,
+        &rootTransform);
 
     builder.Finish(bin);
 

@@ -22,7 +22,7 @@ static_assert((uint8_t)asdx::res::AlphaType_Blend  == (uint8_t)asdx::AlphaMode::
 //-----------------------------------------------------------------------------
 // Constant Values.
 //-----------------------------------------------------------------------------
-static constexpr uint32_t CURRENT_VERSION = 1u; //!< 現在ランタイムでサポートされているバージョン.
+static constexpr uint32_t CURRENT_VERSION = 2u; //!< 現在ランタイムでサポートされているバージョン.
 
 //-----------------------------------------------------------------------------
 //      配列ビューに変換します.
@@ -142,11 +142,23 @@ const res::Material& ModelBinary::GetMaterial(uint32_t materialIndex) const
 //-----------------------------------------------------------------------------
 //      バウンディングスフィアを取得します.
 //-----------------------------------------------------------------------------
-BoundingSphere3 ModelBinary::GetBoundingSphere() const
+BoundingSphere3 ModelBinary::GetSphere() const
 {
     assert(!m_Blob.empty());
-    auto val = res::GetModelBinary(m_Blob.data())->Bounds();
+    auto val = res::GetModelBinary(m_Blob.data())->BoundSphere();
     return BoundingSphere3(val->Center().X(), val->Center().Y(), val->Center().Z(), val->Radius());
+}
+
+//-----------------------------------------------------------------------------
+//      バウンディングボックスを取得します.
+//-----------------------------------------------------------------------------
+BoundingBox3 ModelBinary::GetBox() const
+{
+    assert(!m_Blob.empty());
+    auto val = res::GetModelBinary(m_Blob.data())->BoundBox();
+    return BoundingBox3(
+        asdx::Vector3(val->Min().X(), val->Min().Y(), val->Min().Z()),
+        asdx::Vector3(val->Max().X(), val->Max().Y(), val->Max().Z()));
 }
 
 //-----------------------------------------------------------------------------
@@ -303,14 +315,25 @@ ArrayView<uint32_t> MeshProxy::GetVerexIndices(const res::Mesh& mesh)
 //-----------------------------------------------------------------------------
 //      バウンディングスフィアを取得します.
 //-----------------------------------------------------------------------------
-BoundingSphere3 MeshProxy::GetBounds(const res::Mesh& mesh)
+BoundingSphere3 MeshProxy::GetSphere(const res::Mesh& mesh)
 {
-    auto val = mesh.Bounds();
+    auto val = mesh.BoundSphere();
     return BoundingSphere3(
         val->Center().X(),
         val->Center().Y(),
         val->Center().Z(),
         val->Radius());
+}
+
+//-----------------------------------------------------------------------------
+//      バウンディングスフィアを取得します.
+//-----------------------------------------------------------------------------
+BoundingBox3 MeshProxy::GetBox(const res::Mesh& mesh)
+{
+    auto val = mesh.BoundBox();
+    return BoundingBox3(
+        asdx::Vector3(val->Min().X(), val->Min().Y(), val->Min().Z()),
+        asdx::Vector3(val->Max().X(), val->Max().Y(), val->Max().Z()));
 }
 
 ///////////////////////////////////////////////////////////////////////////////

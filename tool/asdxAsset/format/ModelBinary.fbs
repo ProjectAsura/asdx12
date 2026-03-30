@@ -30,7 +30,8 @@ table Mesh
     BoneWeights   : [Float4];
     BoneIndices   : [Uint4];
     VertexIndices : [uint];
-    Bounds        : BoundingSphere;
+    BoundSphere   : BoundingSphere;
+    BoundBox      : BoundingBox;
 }
 
 table Material
@@ -57,7 +58,8 @@ table ModelBinary
     Meshes           : [Mesh];
     Materials        : [Material];
     Bones            : [Bone];
-    Bounds           : BoundingSphere;
+    BoundSphere      : BoundingSphere;
+    BoundBox         : BoundingBox;
     RootTransform    : Float4x4;
     InvRootTransform : Float4x4;
 }

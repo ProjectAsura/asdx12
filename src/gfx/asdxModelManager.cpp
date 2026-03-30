@@ -133,10 +133,19 @@ const res::Mesh& ModelHolder::GetResMesh(uint32_t index) const
 //-----------------------------------------------------------------------------
 //      バウンディングスフィアを取得します.
 //-----------------------------------------------------------------------------
-const BoundingSphere3& ModelHolder::GetBoundingSphere() const
+const BoundingSphere3& ModelHolder::GetSphere() const
 {
     assert(m_pModel != nullptr);
-    return m_pModel->GetBoundingSphere();
+    return m_pModel->GetSphere();
+}
+
+//-----------------------------------------------------------------------------
+//      バウンディングボックスを取得します.
+//-----------------------------------------------------------------------------
+const BoundingBox3& ModelHolder::GetBox() const
+{
+    assert(m_pModel != nullptr);
+    return m_pModel->GetBox();
 }
 
 //-----------------------------------------------------------------------------

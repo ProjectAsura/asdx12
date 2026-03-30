@@ -153,7 +153,14 @@ public:
     //! 
     //! @return     バウンディングスフィアを返却します.
     //-------------------------------------------------------------------------
-    const BoundingSphere3& GetBoundingSphere() const;
+    const BoundingSphere3& GetSphere() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      バウンディングボックスを取得します.
+    //! 
+    //! @return     バウンディングボックスを返却します.
+    //-------------------------------------------------------------------------
+    const BoundingBox3& GetBox() const;
 
     //-------------------------------------------------------------------------
     //! @brief      レイトレーシングジオメトリトライアングル設定を取得します.
@@ -208,6 +215,7 @@ private:
     VertexBuffer    m_BoneWeights;                  //!< ボーンウェイトバッファ.
     IndexBuffer     m_VertexIndices;                //!< 頂点インデックスバッファ.
     BoundingSphere3 m_BoundingSphere;               //!< バウンディングスフィア.
+    BoundingBox3    m_BoundingBox;                  //!< バウンディングボックス.
     bool            m_Visiblity     = true;         //!< 可視フラグ.
     void*           m_pUserData     = nullptr;      //!< ユーザーデータです.
 
@@ -452,7 +460,14 @@ public:
     //! 
     //! @return     バウンディングスフィアを返却します.
     //-------------------------------------------------------------------------
-    const BoundingSphere3& GetBoundingSphere() const;
+    const BoundingSphere3& GetSphere() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      バウンディングボックスを取得します.
+    //! 
+    //! @return     バウンディングボックスを返却します.
+    //!------------------------------------------------------------------------
+    const BoundingBox3& GetBox() const;
 
     //-------------------------------------------------------------------------
     //! @brief      可視フラグを設定します.
@@ -522,6 +537,7 @@ private:
     std::vector<Mesh>           m_Meshes;                       //!< メッシュです.
     std::vector<Material>       m_Materials;                    //!< マテリアルです.
     BoundingSphere3             m_BoundingSphere;               //!< バウンディングスフィアです.
+    BoundingBox3                m_BoundingBox;                  //!< バウンディングボックスです.
     bool                        m_Visibility    = true;         //!< 可視フラグです.
     void*                       m_pUserData     = nullptr;      //!< ユーザーデータです.
     std::string                 m_BaseDir;                      //!< ベースディレクトリ.

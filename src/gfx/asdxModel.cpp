@@ -179,8 +179,9 @@ bool Mesh::Init(const res::Mesh& mesh)
     // 頂点インデックス数を設定.
     m_IndexCount = uint32_t(vertIds.size());
 
-    // バウンディングスフィアを設定.
-    m_BoundingSphere = MeshProxy::GetBounds(mesh);
+    // バウンディングを設定.
+    m_BoundingSphere = MeshProxy::GetSphere(mesh);
+    m_BoundingBox    = MeshProxy::GetBox(mesh);
 
     // 正常終了.
     return true;
@@ -281,8 +282,14 @@ uint32_t Mesh::GetIndexCount() const
 //-----------------------------------------------------------------------------
 //      バウンディングスフィアを取得します.
 //-----------------------------------------------------------------------------
-const BoundingSphere3& Mesh::GetBoundingSphere() const
+const BoundingSphere3& Mesh::GetSphere() const
 { return m_BoundingSphere; }
+
+//-----------------------------------------------------------------------------
+//      バウンディングボックスを取得します.
+//-----------------------------------------------------------------------------
+const BoundingBox3& Mesh::GetBox() const
+{ return m_BoundingBox; }
 
 //-----------------------------------------------------------------------------
 //      レイトレーシングジオメトリトライアングル設定を取得します.
@@ -536,8 +543,9 @@ bool Model::Init(std::vector<uint8_t>&& binary, const std::string& baseDir)
         }
     }
 
-    // バウンディングスフィア設定.
-    m_BoundingSphere = m_Binary.GetBoundingSphere();
+    // バウンディング設定.
+    m_BoundingSphere = m_Binary.GetSphere();
+    m_BoundingBox    = m_Binary.GetBox();
 
     return true;
 }
@@ -640,8 +648,14 @@ const res::Mesh& Model::GetResMesh(uint32_t index) const
 //-----------------------------------------------------------------------------
 //      バウンディングスフィアを取得します.
 //-----------------------------------------------------------------------------
-const BoundingSphere3& Model::GetBoundingSphere() const
+const BoundingSphere3& Model::GetSphere() const
 { return m_BoundingSphere; }
+
+//-----------------------------------------------------------------------------
+//      バウンディングボックスを取得します.
+//-----------------------------------------------------------------------------
+const BoundingBox3& Model::GetBox() const
+{ return m_BoundingBox; }
 
 //-----------------------------------------------------------------------------
 //      可視フラグを設定します.
