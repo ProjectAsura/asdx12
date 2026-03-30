@@ -668,6 +668,65 @@ void DrawWireBone(LineRenderer& renderer, const Vector3& start, const Vector3& e
 }
 
 //-----------------------------------------------------------------------------
+//      ワイヤーフレーム錐台を描画します.
+//-----------------------------------------------------------------------------
+void DrawWireFrustum(LineRenderer& renderer, const Matrix& invViewProj, const Vector4& color)
+{
+    Vector3 corners[8] = {
+        Vector3(-1.0f, -1.0f, 0.0f),
+        Vector3( 1.0f, -1.0f, 0.0f),
+        Vector3( 1.0f,  1.0f, 0.0f),
+        Vector3(-1.0f,  1.0f, 0.0f),
+
+        Vector3(-1.0f, -1.0f, 1.0f),
+        Vector3( 1.0f, -1.0f, 1.0f),
+        Vector3( 1.0f,  1.0f, 1.0f),
+        Vector3(-1.0f,  1.0f, 1.0f),
+    };
+
+    for(auto i=0; i<8; ++i)
+        corners[i] = Vector3::TransformCoord(corners[i], invViewProj);
+
+    renderer.Add(corners[0], corners[1], color);
+    renderer.Add(corners[1], corners[2], color);
+    renderer.Add(corners[2], corners[3], color);
+    renderer.Add(corners[3], corners[0], color);
+
+    renderer.Add(corners[4], corners[5], color);
+    renderer.Add(corners[5], corners[6], color);
+    renderer.Add(corners[6], corners[7], color);
+    renderer.Add(corners[7], corners[4], color);
+
+    renderer.Add(corners[0], corners[4], color);
+    renderer.Add(corners[1], corners[5], color);
+    renderer.Add(corners[2], corners[6], color);
+    renderer.Add(corners[3], corners[7], color);
+}
+
+//-----------------------------------------------------------------------------
+//      ワイヤーフレーム軸を描画します.
+//-----------------------------------------------------------------------------
+void DrawWireAxis
+(
+    LineRenderer&   renderer,
+    const Matrix&   world,
+    float           length,
+    const Vector4&  colorX,
+    const Vector4&  colorY,
+    const Vector4&  colorZ
+)
+{
+    auto origin = world.GetPosition();
+    auto headX  = world.GetBasisX() * length + origin;
+    auto headY  = world.GetBasisY() * length + origin;
+    auto headZ  = world.GetBasisZ() * length + origin;
+
+    renderer.Add(origin, headX, colorX);
+    renderer.Add(origin, headY, colorY);
+    renderer.Add(origin, headZ, colorZ);
+}
+
+//-----------------------------------------------------------------------------
 //      六角形を描画します.
 //-----------------------------------------------------------------------------
 void DrawWireHexagon(LineRenderer& renderer, const Vector3& center, float length, const Vector4& color)

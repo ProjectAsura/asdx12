@@ -50,7 +50,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      初期化処理を行います.
     //! 
-    //! @param[in]      maxLineCount        最大ライン数. 
+    //! @param[in]      maxLineCount        最大ライン数.
     //! @retval true    初期化に成功.
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
@@ -149,7 +149,11 @@ private:
 //! @param[in]      maxi            最大座標.
 //! @param[in]      color           カラー.
 //-----------------------------------------------------------------------------
-void DrawWireBox(LineRenderer& renderer, const Vector3& mini, const Vector3& maxi, const Vector4& color);
+void DrawWireBox(
+    LineRenderer&   renderer,
+    const Vector3&  mini,
+    const Vector3&  maxi,
+    const Vector4&  color);
 
 //-----------------------------------------------------------------------------
 //! @brief      ワイヤーフレームスフィアを描画します.
@@ -160,7 +164,12 @@ void DrawWireBox(LineRenderer& renderer, const Vector3& mini, const Vector3& max
 //! @param[in]      color           カラー.
 //! @param[in]      segment         分割数.
 //-----------------------------------------------------------------------------
-void DrawWireSphere(LineRenderer& renderer, const Vector3& center, float radius, const Vector4& color, uint32_t segment = 16);
+void DrawWireSphere(
+    LineRenderer&   renderer,
+    const Vector3&  center,
+    float           radius,
+    const Vector4&  color,
+    uint32_t        segment = 16);
 
 //-----------------------------------------------------------------------------
 //! @brief      ワイヤーフレーム半球を描画します.
@@ -172,30 +181,47 @@ void DrawWireSphere(LineRenderer& renderer, const Vector3& center, float radius,
 //! @param[in]      color           カラー.
 //! @param[in]      segment         分割数.
 //-----------------------------------------------------------------------------
-void DrawWireHemisphere(LineRenderer& renderer, const Vector3& center, float radius, const Vector3& up, const Vector4& color, uint32_t segment = 16);
+void DrawWireHemisphere(
+    LineRenderer&   renderer,
+    const Vector3&  center,
+    float           radius,
+    const Vector3&  up,
+    const Vector4&  color,
+    uint32_t        segment = 16);
 
 //-----------------------------------------------------------------------------
 //! @brief      ワイヤーフレーム円錐を描画します.
 //! 
 //! @param[in]      renderer        線分レンダラー.
-//! @param[in]      apex            頂点座標.
+//! @param[in]      apex            天頂座標.
 //! @param[in]      baseCenter      底面中心座標.
 //! @param[in]      baseRadius      底面半径.
 //! @param[in]      color           カラー.
 //! @param[in]      segment         分割数.
 //-----------------------------------------------------------------------------
-void DrawWireCone(LineRenderer& renderer, const Vector3& apex, const Vector3& baseCenter, float baseRadius, const Vector4& color, uint32_t segment = 16);
+void DrawWireCone(
+    LineRenderer&   renderer,
+    const Vector3&  apex,
+    const Vector3&  baseCenter,
+    float           baseRadius,
+    const Vector4&  color,
+    uint32_t        segment = 16);
 
 //-----------------------------------------------------------------------------
 //! @brief      ワイヤーフレーム四角錐を描画します.
 //! 
 //! @param[in]      renderer        線分レンダラー.
-//! @param[in]      apex            頂点座標.
+//! @param[in]      apex            天頂座標.
 //! @param[in]      baseCenter      底面中心座標.
 //! @param[in]      baseRadius      底面半径.
 //! @param[in]      color           カラー.
 //! -----------------------------------------------------------------------------
-void DrawWirePyramid(LineRenderer& renderer, const Vector3& apex, const Vector3& baseCenter, float baseRadius, const Vector4& color);
+void DrawWirePyramid(
+    LineRenderer&   renderer,
+    const Vector3&  apex,
+    const Vector3&  baseCenter,
+    float           baseRadius,
+    const Vector4&  color);
 
 //-----------------------------------------------------------------------------
 //! @brief      ワイヤーフレーム円柱を描画します.
@@ -207,7 +233,13 @@ void DrawWirePyramid(LineRenderer& renderer, const Vector3& apex, const Vector3&
 //! @param[in]      color           カラー.
 //! @param[in]      segment         分割数.
 //-----------------------------------------------------------------------------
-void DrawWireCylinder(LineRenderer& renderer, const Vector3& baseCenter, const Vector3& topCenter, float radius, const Vector4& color, uint32_t segment = 16);
+void DrawWireCylinder(
+    LineRenderer&   renderer,
+    const Vector3&  baseCenter,
+    const Vector3&  topCenter,
+    float           radius,
+    const Vector4&  color,
+    uint32_t        segment = 16);
 
 //-----------------------------------------------------------------------------
 //! @brief      ワイヤーフレーム平面を描画します.
@@ -218,7 +250,12 @@ void DrawWireCylinder(LineRenderer& renderer, const Vector3& baseCenter, const V
 //! @param[in]      size            サイズ.
 //! @param[in]      color           カラー.
 //-----------------------------------------------------------------------------
-void DrawWirePlane(LineRenderer& renderer, const Vector3& center, const Vector3& normal, float size, const Vector4& color);
+void DrawWirePlane(
+    LineRenderer&   renderer,
+    const Vector3&  center,
+    const Vector3&  normal,
+    float           size,
+    const Vector4&  color);
 
 //-----------------------------------------------------------------------------
 //! @brief      ワイヤーフレームカプセルを描画します.
@@ -230,7 +267,13 @@ void DrawWirePlane(LineRenderer& renderer, const Vector3& center, const Vector3&
 //! @param[in]      color           カラー.
 //! @param[in]      segment         分割数.
 //-----------------------------------------------------------------------------
-void DrawWireCapsule(LineRenderer& renderer, const Vector3& baseCenter, const Vector3& topCenter, float radius, const Vector4& color, uint32_t segment = 16);
+void DrawWireCapsule(
+    LineRenderer&   renderer,
+    const Vector3&  baseCenter,
+    const Vector3&  topCenter,
+    float           radius,
+    const Vector4&  color,
+    uint32_t        segment = 16);
 
 //-----------------------------------------------------------------------------
 //! @brief      ワイヤーフレーム円盤を描画します.
@@ -242,7 +285,13 @@ void DrawWireCapsule(LineRenderer& renderer, const Vector3& baseCenter, const Ve
 //! @param[in]      color           カラー.
 //! @param[in]      segment         分割数.
 //-----------------------------------------------------------------------------
-void DrawWireDisk(LineRenderer& renderer, const Vector3& center, const Vector3& normal, float radius, const Vector4& color, uint32_t segment = 16);
+void DrawWireDisk(
+    LineRenderer&   renderer,
+    const Vector3&  center,
+    const Vector3&  normal,
+    float           radius,
+    const Vector4&  color,
+    uint32_t        segment = 16);
 
 //-----------------------------------------------------------------------------
 //! @brief      ワイヤーフレーム扇形を描画します.
@@ -255,7 +304,14 @@ void DrawWireDisk(LineRenderer& renderer, const Vector3& center, const Vector3& 
 //! @param[in]      color           カラー.
 //! @param[in]      segment         分割数.
 //-----------------------------------------------------------------------------
-void DrawWireFan(LineRenderer& renderer, const Vector3& center, const Vector3& normal, float radius, float angleDegree, const Vector4& color, uint32_t segment = 16);
+void DrawWireFan(
+    LineRenderer&   renderer,
+    const Vector3&  center,
+    const Vector3&  normal,
+    float           radius,
+    float           angleDegree,
+    const Vector4&  color,
+    uint32_t        segment = 16);
 
 //-----------------------------------------------------------------------------
 //! @brief      ワイヤーフレームボーンを描画します.
@@ -265,7 +321,41 @@ void DrawWireFan(LineRenderer& renderer, const Vector3& center, const Vector3& n
 //! @param[in]      end             終了座標.
 //! @param[in]      color           カラー.
 //-----------------------------------------------------------------------------
-void DrawWireBone(LineRenderer& renderer, const Vector3& start, const Vector3& end, const Vector4& color);
+void DrawWireBone(
+    LineRenderer&   renderer,
+    const Vector3&  start,
+    const Vector3&  end,
+    const Vector4&  color);
+
+//-----------------------------------------------------------------------------
+//! @brief      ワイヤーフレーム錐台を描画します.
+//! 
+//! @param[in]      renderer        線分レンダラー.
+//! @param[in]      invViewProj     ビュー射影行列の逆行列.
+//! @param[in]      color           カラー.
+//-----------------------------------------------------------------------------
+void DrawWireFrustum(
+    LineRenderer&   renderer,
+    const Matrix&   invViewProj,
+    const Vector4&  color);
+
+//-----------------------------------------------------------------------------
+//! @brief      ワイヤーフレーム軸を描画します.
+//! 
+//! @param[in]      renderer        線分レンダラー.
+//! @param[in]      world           ワールド行列.
+//! @param[in]      length          軸の長さ.
+//! @param[in]      colorX          X軸のカラー.
+//! @param[in]      colorY          Y軸のカラー.
+//! @param[in]      colorZ          Z軸のカラー.
+//-----------------------------------------------------------------------------
+void DrawWireAxis(
+    LineRenderer&   renderer,
+    const Matrix&   world,
+    float           length,
+    const Vector4&  colorX,
+    const Vector4&  colorY,
+    const Vector4&  colorZ);
 
 //-----------------------------------------------------------------------------
 //! @brief      六角形を描画します.
@@ -275,7 +365,11 @@ void DrawWireBone(LineRenderer& renderer, const Vector3& start, const Vector3& e
 //! @param[in]      length          長さ(半径相当).
 //! @param[in]      color           カラー.
 //-----------------------------------------------------------------------------
-void DrawWireHexagon(LineRenderer& renderer, const Vector3& center, float length, const Vector4& color);
+void DrawWireHexagon(
+    LineRenderer&   renderer,
+    const Vector3&  center,
+    float           length,
+    const Vector4&  color);
 
 //-----------------------------------------------------------------------------
 //! @brief      四角形グリッドを描画します.
@@ -285,7 +379,11 @@ void DrawWireHexagon(LineRenderer& renderer, const Vector3& center, float length
 //! @param[in]      size            サイズ.
 //! @param[in]      color           カラー.
 //-----------------------------------------------------------------------------
-void DrawSquareGrid(LineRenderer& renderer, int halfRange, float size, const Vector4& color);
+void DrawSquareGrid(
+    LineRenderer&   renderer,
+    int             halfRange,
+    float           size,
+    const Vector4&  color);
 
 //-----------------------------------------------------------------------------
 //! @brief      六角形グリッドを描画します.
@@ -295,6 +393,10 @@ void DrawSquareGrid(LineRenderer& renderer, int halfRange, float size, const Vec
 //! @param[in]      size            サイズ.
 //! @param[in]      color           カラー.
 //-----------------------------------------------------------------------------
-void DrawHexGrid(LineRenderer& renderer, int halfRange, float size, const Vector4& color);
+void DrawHexGrid(
+    LineRenderer&   renderer,
+    int             halfRange,
+    float           size,
+    const Vector4&  color);
 
 } // namespace asdx
