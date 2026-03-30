@@ -3934,6 +3934,20 @@ inline bool BoundingBox2::Contains(const BoundingBox2& value) const
 }
 
 //-----------------------------------------------------------------------------
+//      バウンディングボックスの4頂点を取得します.
+//-----------------------------------------------------------------------------
+inline std::array<Vector2, 4> BoundingBox2::GetCorners() const
+{
+    return std::array<Vector2, 4>
+    {
+        Vector2(Mini.x, Mini.y),
+        Vector2(Maxi.x, Mini.y),
+        Vector2(Mini.x, Maxi.y),
+        Vector2(Maxi.x, Maxi.y),
+    };
+}
+
+//-----------------------------------------------------------------------------
 //      代入演算子です.
 //-----------------------------------------------------------------------------
 inline BoundingBox2& BoundingBox2::operator = (const BoundingBox2& value)
@@ -4037,6 +4051,24 @@ inline bool BoundingBox3::Contains(const BoundingBox3& value) const
     return (value.Mini.x >= Mini.x && value.Maxi.x <= Maxi.x
          && value.Mini.y >= Mini.y && value.Maxi.y <= Maxi.y
          && value.Mini.z >= Mini.z && value.Maxi.z <= Maxi.z);
+}
+
+//-----------------------------------------------------------------------------
+//      バウンディングボックスの8頂点を取得します.
+//-----------------------------------------------------------------------------
+inline std::array<Vector3, 8> BoundingBox3::GetCorners() const
+{
+    return std::array<Vector3, 8>
+    {
+        Vector3(Mini.x, Mini.y, Mini.z),
+        Vector3(Maxi.x, Mini.y, Mini.z),
+        Vector3(Mini.x, Maxi.y, Mini.z),
+        Vector3(Maxi.x, Maxi.y, Mini.z),
+        Vector3(Mini.x, Mini.y, Maxi.z),
+        Vector3(Maxi.x, Mini.y, Maxi.z),
+        Vector3(Mini.x, Maxi.y, Maxi.z),
+        Vector3(Maxi.x, Maxi.y, Maxi.z),
+    };
 }
 
 //-----------------------------------------------------------------------------
