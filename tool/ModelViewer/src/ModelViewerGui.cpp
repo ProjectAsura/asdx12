@@ -342,7 +342,7 @@ void ModelViewer::DrawBoundingSphere(const asdx::Matrix& modelWorld)
     // メッシュのバウンディングスフィア.
     for(auto i=0u; i<m_Model->GetMeshCount(); ++i)
     {
-        auto& sphere = m_Model->GetMesh(i)->GetBoundingSphere();
+        auto& sphere = m_Model->GetMesh(i)->GetSphere();
         auto world = asdx::Matrix::CreateScale(sphere.Radius) * asdx::Matrix::CreateTranslation(sphere.Center) * modelWorld;
 
         uint32_t index = uint32_t(i);
@@ -352,7 +352,7 @@ void ModelViewer::DrawBoundingSphere(const asdx::Matrix& modelWorld)
 
     // モデルのバウンディングスフィア.
     {
-        auto& sphere = m_Model->GetBoundingSphere();
+        auto& sphere = m_Model->GetSphere();
         auto world = asdx::Matrix::CreateScale(sphere.Radius) * asdx::Matrix::CreateTranslation(sphere.Center) * modelWorld;
 
         uint32_t index = uint32_t(m_Model->GetMeshCount());

@@ -154,7 +154,7 @@ bool ModelViewer::OnInit()
     {
         if (!asdx::GuiMgr::Instance().Init(pCmd, m_hWnd, m_Width, m_Height, m_SwapChainFormat, nullptr))
         {
-            ELOG("Error : GuiMgr::Init() Failed.");
+            ELOGA("Error : GuiMgr::Init() Failed.");
             return false;
         }
     }
@@ -291,7 +291,7 @@ bool ModelViewer::OnInit()
     {
         if (!m_SceneCB[i].Init(sizeof(ParamScene)))
         {
-            ELOG("Error : ConstantBuffer::Init() Failed.");
+            ELOGA("Error : ConstantBuffer::Init() Failed.");
             return false;
         }
     }
@@ -305,61 +305,61 @@ bool ModelViewer::OnInit()
 
     if (!m_ShapeStates.Init(m_SwapChainFormat, m_DepthStencilFormat))
     {
-        ELOG("Error : ShapeStates::Init() Failed.");
+        ELOGA("Error : ShapeStates::Init() Failed.");
         return false;
     }
 
     if (!m_ShapeParams.Init(UINT16_MAX))
     {
-        ELOG("Error : ShapeParams::Init() Failed.");
+        ELOGA("Error : ShapeParams::Init() Failed.");
         return false;
     }
 
     if (!m_BoneShape.Init(1.0f, 0.25f))
     {
-        ELOG("Error : BoneShape::Init() Failed.");
+        ELOGA("Error : BoneShape::Init() Failed.");
         return false;
     }
 
     if (!m_SphereShape.Init(1.0f, 20))
     {
-        ELOG("Error : SphereShape::Init() Failed.");
+        ELOGA("Error : SphereShape::Init() Failed.");
         return false;
     }
 
     if (!m_LineRenderer.Init(12 * UINT16_MAX, m_SwapChainFormat, DXGI_FORMAT_UNKNOWN))
     {
-        ELOG("Error : LineRenderer::Init() Failed.");
+        ELOGA("Error : LineRenderer::Init() Failed.");
         return false;
     }
 
     if (!CreateAxis(100.0f))
     {
-        ELOG("Error : CreateAxis() Failed.");
+        ELOGA("Error : CreateAxis() Failed.");
         return false;
     }
 
     if (!CreateGrid(1.0f, 200))
     {
-        ELOG("Error : CreateGrid() Failed.");
+        ELOGA("Error : CreateGrid() Failed.");
         return false;
     }
 
     if (!m_SkyContext.Init())
     {
-        ELOG("Error : SkyContext::Init() Failed.");
+        ELOGA("Error : SkyContext::Init() Failed.");
         return false;
     }
 
     if (!m_SkyBoxPS.Init(m_SkyContext, m_SwapChainFormat))
     {
-        ELOG("Error : SkyBoxPS::Init() Failed.");
+        ELOGA("Error : SkyBoxPS::Init() Failed.");
         return false;
     }
 
     if (!m_SkySpherePS.Init(m_SkyContext, m_SwapChainFormat))
     {
-        ELOG("Error : SkySpherePS::Init() Failed.");
+        ELOGA("Error : SkySpherePS::Init() Failed.");
         return false;
     }
 
@@ -368,7 +368,7 @@ bool ModelViewer::OnInit()
         asdx::fs::path path;
         if (!asdx::SearchFilePath("../../../res/textures/env_brdf.tga", path))
         {
-            ELOG("Error : File Not Found.");
+            ELOGA("Error : File Not Found.");
             return false;
         }
 
@@ -380,7 +380,7 @@ bool ModelViewer::OnInit()
         asdx::fs::path path;
         if (!asdx::SearchFilePath("../res/textures/treasure_island.env.dds", path))
         {
-            ELOG("Error : File Not Found.");
+            ELOGA("Error : File Not Found.");
             return false;
         }
 
@@ -393,7 +393,7 @@ bool ModelViewer::OnInit()
         asdx::fs::path path;
         if (!asdx::SearchFilePath("../res/textures/treasure_island.d.dds", path))
         {
-            ELOG("Error : File Not Found.");
+            ELOGA("Error : File Not Found.");
             return false;
         }
 
@@ -406,7 +406,7 @@ bool ModelViewer::OnInit()
         asdx::fs::path path;
         if (!asdx::SearchFilePath("../res/textures/treasure_island.s.dds", path))
         {
-            ELOG("Error : File Not Found.");
+            ELOGA("Error : File Not Found.");
             return false;
         }
 
@@ -1045,7 +1045,7 @@ void ModelViewer::RecreateModel()
         m_ModelInfo.IndexCount  += mesh->GetIndexCount();
     }
 
-    auto sphere = m_Model->GetBoundingSphere();
+    auto sphere = m_Model->GetSphere();
 
     // カメラを初期化.
     m_Camera.Init(
@@ -1066,7 +1066,7 @@ void ModelViewer::RecreateModel()
         m_MatrixPalletBuffer[i].Term();
 
         if (!m_MatrixPalletBuffer[i].Init(boneCount, sizeof(asdx::Matrix), D3D12_RESOURCE_STATE_COMMON, true))
-            ELOG("Error : Matrix Pallet Buffer Init Failed. index = %u", i);
+            ELOGA("Error : Matrix Pallet Buffer Init Failed. index = %u", i);
     }
 }
 
@@ -1080,11 +1080,11 @@ void ModelViewer::SaveModelBinary(const char* path)
 
     if (!asdx::SaveA(path, m_ModelBinary))
     {
-        ELOG("Error : SaveA() Failed. path = %s", path);
+        ELOGA("Error : SaveA() Failed. path = %s", path);
         return;
     }
 
-    ILOG("Info : ModelBinary Output success. path = %s", path);
+    ILOGA("Info : ModelBinary Output success. path = %s", path);
 }
 
 //-----------------------------------------------------------------------------
@@ -1130,7 +1130,7 @@ void ModelViewer::LoadModel()
     {
         if (!asdx::LoadA(input.c_str(), modelBinary))
         {
-            ELOG("Error : asdx::LoadA() Failed. path = %s", input.c_str());
+            ELOGA("Error : asdx::LoadA() Failed. path = %s", input.c_str());
             return;
         }
 
@@ -1145,7 +1145,7 @@ void ModelViewer::LoadModel()
 
         if (!ModelConverter::Convert(input.c_str(), true, m_ModelBaseDir, modelBinary))
         {
-            ELOG("Error : ModelConverter::Convert() Failed.");
+            ELOGA("Error : ModelConverter::Convert() Failed.");
             return;
         }
 
@@ -1193,7 +1193,7 @@ void ModelViewer::LoadMotion()
     {
         if (!asdx::LoadA(input.c_str(), motionBinary))
         {
-            ELOG("Error : asdx::LoadA() Failed. path = %s", input.c_str());
+            ELOGA("Error : asdx::LoadA() Failed. path = %s", input.c_str());
             return;
         }
 
@@ -1203,7 +1203,7 @@ void ModelViewer::LoadMotion()
     {
         if (!MotionConverter::Convert(input.c_str(), motionBinary))
         {
-            ELOG("Error : MotionConverter::Convert() Failed.");
+            ELOGA("Error : MotionConverter::Convert() Failed.");
             return;
         }
 
@@ -1213,7 +1213,7 @@ void ModelViewer::LoadMotion()
     auto count = m_MotionBinary.GetClipCount();
     if (count == 0)
     {
-        ELOG("Error : Clip Count is zero.");
+        ELOGA("Error : Clip Count is zero.");
         return;
     }
 
@@ -1246,7 +1246,7 @@ bool ModelViewer::CreateAxis(float length)
 
     if (!m_AxisVertexBuffer.Init(sizeof(LineVertex) * 6, sizeof(LineVertex)))
     {
-        ELOG("Error : VertexBuffer::Init() Failed.");
+        ELOGA("Error : VertexBuffer::Init() Failed.");
         return false;
     }
 
@@ -1306,7 +1306,7 @@ bool ModelViewer::CreateGrid(float step, uint32_t count)
     auto ret = m_GridVertexBuffer.Init(sizeof(LineVertex) * vertexCount, sizeof(LineVertex));
     if (!ret)
     {
-        ELOG("Error : VertexBuffer::Init() Failed.");
+        ELOGA("Error : VertexBuffer::Init() Failed.");
         return false;
     }
 
@@ -1381,14 +1381,14 @@ void ModelViewer::CreateTexture(const char* path, asdx::Texture** ppTexture)
 {
     if (path == nullptr || ppTexture == nullptr)
     {
-        ELOG("Error : Invalid Argument.");
+        ELOGA("Error : Invalid Argument.");
         return;
     }
 
     std::vector<uint8_t> binary;
     if (!TextureConverter::Convert(path, binary))
     {
-        ELOG("Error : TextureConvert::Convert() Failed. path = %s", path);
+        ELOGA("Error : TextureConvert::Convert() Failed. path = %s", path);
         return;
     }
 
@@ -1399,7 +1399,7 @@ void ModelViewer::CreateTexture(const char* path, asdx::Texture** ppTexture)
     asdx::Texture* pTempTexture = nullptr;
     if (!asdx::Texture::Create(res, &pTempTexture))
     {
-        ELOG("Error : asdx::Texture::Create() Failed. path = %s", path);
+        ELOGA("Error : asdx::Texture::Create() Failed. path = %s", path);
     }
     else
     {

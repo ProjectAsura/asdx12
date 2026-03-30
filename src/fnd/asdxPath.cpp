@@ -294,7 +294,7 @@ bool SaveFileDlg(const char* fileFilter, fs::path& result, const fs::path& defau
             ext = std::string(tag);
         }
 
-        result = fs::path((base + ext).c_str());
+        result = fs::path((base + "." + ext).c_str());
         return true;
     }
 
