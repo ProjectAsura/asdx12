@@ -160,15 +160,9 @@ void ParseMesh
         texcoords[i] = asdx::res::Float2(tex.x, tex.y);
         colors   [i] = ToUnorm4(col);
 
-        if (i == 0)
-        {
-            box.Mini = box.Maxi = asdx::Vector3(pos.x, pos.y, pos.z);
-        }
-        else
-        {
-            box.Mini = asdx::Min(box.Mini, asdx::Vector3(pos.x, pos.y, pos.z));
-            box.Maxi = asdx::Max(box.Maxi, asdx::Vector3(pos.x, pos.y, pos.z));
-        }
+        auto p   = asdx::Vector3(pos.x, pos.y, pos.z);
+        box.Mini = asdx::Vector3::Min(box.Mini, p);
+        box.Maxi = asdx::Vector3::Max(box.Maxi, p);
     }
 
     std::vector<uint32_t> vertexIndices;
