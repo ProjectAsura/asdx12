@@ -178,20 +178,44 @@ float3 EvaluateIBLSpecular
 }
 
 //-----------------------------------------------------------------------------
+//      直接光を評価します.
+//-----------------------------------------------------------------------------
+float3 EvaluateDirectLight(float3 N, float3 V, float3 L, float3 Kd, float3 Ks, float roughness)
+{
+    float3 H     = normalize(V + L);
+    float  NdotV = abs(dot(N, V));
+    float  LdotH = saturate(dot(L, H));
+    float  NdotH = saturate(dot(N, H));
+    float  NdotL = saturate(dot(N, L));
+    float  VdotH = saturate(dot(V, H));
+    float  a2    = max(roughness * roughness, 0.01);
+    float  f90   = saturate(50.0f * dot(Ks, 0.33f));
+
+    float3 diffuse = Kd / F_PI;
+    float  D = D_GGX(NdotH, a2);
+    float  G = G2_Smith(a2, NdotL, NdotV);
+    float3 F = F_Schlick(Ks, f90, LdotH);
+    float3 specular = (D * G * F) / F_PI;
+
+    return (diffuse + specular) * NdotL;
+}
+
+//-----------------------------------------------------------------------------
 //      メインエントリーポイントです.
 //-----------------------------------------------------------------------------
 float4 main(const VSOutput input) : SV_TARGET0
 {
     float3 gN = normalize(input.Normal);
     float3 gT = normalize(input.Tangent.xyz);
-    float3 gB = normalize(cross(gN, gT) * input.Tangent.w);
- 
+    float3 gB = cross(gN, gT) * input.Tangent.w;
+
     float3 tN = normalize(NormalMap.Sample(LinearClamp, input.TexCoord).xyz * 2.0f - 1.0f);
 
     float3 N = FromTangentSpaceToWorld(tN, gT, gB, gN);
     float3 T = RecalcTangent(N, gN);
-    float3 B = cross(T, N);
+    float3 B = normalize(cross(N, T));
 
+ 
     float4 output = 1.0f.xxxx;
 
     switch (Mode)
@@ -199,10 +223,10 @@ float4 main(const VSOutput input) : SV_TARGET0
     case MODE_LIGHTING:
     default:
         {
-            float3 V = normalize(input.WorldPos.xyz - GetPosition(View));
-            float3 R = normalize(reflect(V, N));
+            float3 V = normalize(GetPosition(View) - input.WorldPos.xyz);
+            float3 R = normalize(reflect(-V, N));
  
-            float NoV = saturate(dot(N, V));
+            float NoV = abs(dot(N, V));
 
             float4 bc  = BaseColorMap.Sample(LinearWrap, input.TexCoord);
             bc.rgb *= BaseColor;
@@ -217,6 +241,7 @@ float4 main(const VSOutput input) : SV_TARGET0
             float3 Ks = ToKs(bc.rgb, orm.z);
  
             float3 lit = 0;
+            lit += EvaluateDirectLight(N, V, V, Kd, Ks, orm.y);
             lit += EvaluateIBLDiffuse(N) * Kd * orm.x;
             lit += EvaluateIBLSpecular(NoV, N, R, Ks, orm.y) * orm.x;
             lit += EmissiveMap.Sample(LinearWrap, input.TexCoord).xyz * Emissive;

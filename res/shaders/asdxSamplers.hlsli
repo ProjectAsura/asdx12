@@ -15,7 +15,7 @@ SamplerState            LinearMirror        : register(s5);
 SamplerState            AnisotropicWrap     : register(s6); // MaxAnisotropy = 16.
 SamplerState            AnisotropicClamp    : register(s7); // MaxAnisotorpy = 16.
 SamplerState            AnisotropicMirror   : register(s8); // MaxAnisotropy = 16.
-SamplerComparisonState  LessEqualSampler    : register(s9); // LinearBorder Color(0, 0, 0, 1).
-SamplerComparisonState  GreaterSampler      : register(s10);// LinearBorder Color(0, 0, 0, 1).
+SamplerComparisonState  LessEqualSampler    : register(s9); // LinearBorder Color(1, 1, 1, 1).
+SamplerComparisonState  GreaterEqualSampler : register(s10);// LinearBorder Color(1, 1, 1, 1).
 
 #endif//SAMPLERS_HLSLI

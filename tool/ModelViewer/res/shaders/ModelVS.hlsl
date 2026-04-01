@@ -78,10 +78,22 @@ VSOutput main(const VSInput input)
 
     float3 worldNormal  = normalize(mul((float3x3)World, skinnedNormal.xyz));
     float3 worldTangent = normalize(mul((float3x3)World, skinnedTangent.xyz));
+
+    // 従接線をチェック.
+    float sign = input.Tangent.w;
+    float3 B = cross(worldNormal, worldTangent) * input.Tangent.w;
+
+    // 長さがゼロになる場合は、フォールバック.
+    if (dot(B, B) < 1e-6f)
+    {
+        float3 axis = abs(worldNormal.z) < 0.999f ? float3(0, 0, 1) : float3(0, 1, 0);
+        worldTangent = normalize(cross(axis, worldNormal));
+        sign = 1.0f;
+    }
  
     output.Position     = projPos;
     output.Normal       = worldNormal;
-    output.Tangent      = float4(worldTangent, input.Tangent.w);
+    output.Tangent      = float4(worldTangent, sign);
     output.TexCoord     = input.TexCoord;
     output.Color        = input.Color;
     output.BoneIndices  = input.BoneIndices;
