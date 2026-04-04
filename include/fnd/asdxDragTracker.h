@@ -62,7 +62,10 @@ public:
 
         // ドラッグ中のみカレントを更新.
         if (drag)
+        {
+            m_Prev = m_Curr;
             m_Curr = asdx::Vector2(float(x), float(y));
+        }
 
         // ボタンが離されたらリセット.
         if (m_IsDown && !isDown)
