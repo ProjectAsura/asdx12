@@ -351,6 +351,16 @@ inline Vector2& Vector2::operator -= (const Vector2& v)
 //-----------------------------------------------------------------------------
 //      乗算代入演算子です.
 //-----------------------------------------------------------------------------
+inline Vector2& Vector2::operator *= (const Vector2& v)
+{
+    x *= v.x;
+    y *= v.y;
+    return (*this);
+}
+
+//-----------------------------------------------------------------------------
+//      乗算代入演算子です.
+//-----------------------------------------------------------------------------
 inline Vector2& Vector2::operator *= (float f)
 {
     x *= f;
@@ -402,6 +412,12 @@ inline Vector2 Vector2::operator + (const Vector2& v) const
 //-----------------------------------------------------------------------------
 inline Vector2 Vector2::operator - (const Vector2& v) const
 { return Vector2(x - v.x, y - v.y); }
+
+//-----------------------------------------------------------------------------
+//      乗算演算子です.
+//-----------------------------------------------------------------------------
+inline Vector2 Vector2::operator * (const Vector2& v) const
+{ return Vector2(x * v.x, y * v.y); }
 
 //-----------------------------------------------------------------------------
 //      乗算演算子です.
@@ -507,6 +523,16 @@ inline Vector2 Vector2::Clamp(const Vector2& v, const Vector2& mini, const Vecto
     return Vector2(
         asdx::Clamp(v.x, mini.x, maxi.x),
         asdx::Clamp(v.y, mini.y, maxi.y) );
+}
+
+//-----------------------------------------------------------------------------
+//      指定範囲内で繰り返します.
+//-----------------------------------------------------------------------------
+inline Vector2 Vector2::Wrap(const Vector2& v, const Vector2& mini, const Vector2& maxi)
+{
+    return Vector2(
+        asdx::Wrap(v.x, mini.x, maxi.x),
+        asdx::Wrap(v.y, mini.y, maxi.y));
 }
 
 //-----------------------------------------------------------------------------
@@ -844,6 +870,17 @@ inline Vector3& Vector3::operator -= (const Vector3& v)
 //-----------------------------------------------------------------------------
 //      乗算代入演算子です.
 //-----------------------------------------------------------------------------
+inline Vector3& Vector3::operator *= (const Vector3& v)
+{
+    x *= v.x;
+    y *= v.y;
+    z *= v.z;
+    return (*this);
+}
+
+//-----------------------------------------------------------------------------
+//      乗算代入演算子です.
+//-----------------------------------------------------------------------------
 inline Vector3& Vector3::operator *= (float f)
 {
     x *= f;
@@ -898,6 +935,12 @@ inline Vector3 Vector3::operator + (const Vector3& v) const
 //-----------------------------------------------------------------------------
 inline Vector3 Vector3::operator - (const Vector3& v) const
 { return Vector3(x - v.x, y - v.y, z - v.z); }
+
+//-----------------------------------------------------------------------------
+//      乗算演算子です.
+//-----------------------------------------------------------------------------
+inline Vector3 Vector3::operator * (const Vector3& v) const
+{ return Vector3(x * v.x, y * v.y, z * v.z); }
 
 //-----------------------------------------------------------------------------
 //      乗算演算子です.
@@ -1010,6 +1053,17 @@ inline Vector3 Vector3::Clamp(const Vector3& value, const Vector3& mini, const V
         asdx::Clamp(value.x, mini.x, maxi.x),
         asdx::Clamp(value.y, mini.y, maxi.y),
         asdx::Clamp(value.z, mini.z, maxi.z) );
+}
+
+//-----------------------------------------------------------------------------
+//      指定範囲内で繰り返します.
+//-----------------------------------------------------------------------------
+inline Vector3 Vector3::Wrap(const Vector3& value, const Vector3& mini, const Vector3& maxi)
+{
+    return Vector3(
+        asdx::Wrap(value.x, mini.x, maxi.x),
+        asdx::Wrap(value.y, mini.y, maxi.y),
+        asdx::Wrap(value.z, mini.z, maxi.z));
 }
 
 //-----------------------------------------------------------------------------
@@ -1390,6 +1444,17 @@ inline Vector3 Vector3::InverseRotate(const Vector3& value, const Quaternion& ro
     return Vector3(r.x, r.y, r.z);
 }
 
+//-----------------------------------------------------------------------------
+//      RGBの値から生成します.
+//-----------------------------------------------------------------------------
+inline Vector3 Vector3::FromRGB(uint8_t r, uint8_t g, uint8_t b)
+{
+    return Vector3(
+        asdx::Saturate(float(r) / 255.0f),
+        asdx::Saturate(float(g) / 255.0f),
+        asdx::Saturate(float(b) / 255.0f));
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Vector4 structure
@@ -1486,6 +1551,18 @@ inline Vector4& Vector4::operator -= (const Vector4& v)
 //-----------------------------------------------------------------------------
 //      乗算代入演算子です.
 //-----------------------------------------------------------------------------
+inline Vector4& Vector4::operator *= (const Vector4& v)
+{
+    x *= v.x;
+    y *= v.y;
+    z *= v.z;
+    w *= v.w;
+    return (*this);
+}
+
+//-----------------------------------------------------------------------------
+//      乗算代入演算子です.
+//-----------------------------------------------------------------------------
 inline Vector4& Vector4::operator *= (float f)
 {
     x *= f;
@@ -1543,6 +1620,12 @@ inline Vector4 Vector4::operator + (const Vector4& v) const
 //-----------------------------------------------------------------------------
 inline Vector4 Vector4::operator - (const Vector4& v) const
 { return Vector4(x - v.x, y - v.y, z - v.z, w - v.w); }
+
+//-----------------------------------------------------------------------------
+//      乗算演算子です.
+//-----------------------------------------------------------------------------
+inline Vector4 Vector4::operator * (const Vector4& v) const
+{ return Vector4(x * v.x, y * v.y, z * v.z, w * v.w); }
 
 //-----------------------------------------------------------------------------
 //      乗算演算子です.
@@ -1657,13 +1740,25 @@ inline Vector4 Vector4::Abs(const Vector4& value)
 //-----------------------------------------------------------------------------
 //      値を指定された範囲内に制限します.
 //-----------------------------------------------------------------------------
-inline Vector4 Vector4::Clamp(const Vector4& value, const Vector4& a, const Vector4& b)
+inline Vector4 Vector4::Clamp(const Vector4& value, const Vector4& mini, const Vector4& maxi)
 {
     return Vector4(
-        asdx::Clamp(value.x, a.x, b.x),
-        asdx::Clamp(value.y, a.y, b.y),
-        asdx::Clamp(value.z, a.z, b.z),
-        asdx::Clamp(value.w, a.w, b.w) );
+        asdx::Clamp(value.x, mini.x, maxi.x),
+        asdx::Clamp(value.y, mini.y, maxi.y),
+        asdx::Clamp(value.z, mini.z, maxi.z),
+        asdx::Clamp(value.w, mini.w, maxi.w) );
+}
+
+//-----------------------------------------------------------------------------
+//      指定範囲内で繰り返します.
+//-----------------------------------------------------------------------------
+inline Vector4 Vector4::Wrap(const Vector4& value, const Vector4& mini, const Vector4& maxi)
+{
+    return Vector4(
+        asdx::Wrap(value.x, mini.x, maxi.x),
+        asdx::Wrap(value.y, mini.y, maxi.y),
+        asdx::Wrap(value.z, mini.z, maxi.z),
+        asdx::Wrap(value.w, mini.w, maxi.w) );
 }
 
 //-----------------------------------------------------------------------------
@@ -1911,6 +2006,18 @@ inline Vector4 Vector4::NormalizePlane(const Vector4& value)
     return Vector4(value.x / mag, value.y / mag, value.z / mag, value.w / mag);
 }
 
+//-----------------------------------------------------------------------------
+//      RGBAの値から生成します.
+//-----------------------------------------------------------------------------
+inline Vector4 Vector4::FromRGBA(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+{
+    return Vector4(
+        asdx::Saturate(float(r) / 255.0f),
+        asdx::Saturate(float(g) / 255.0f),
+        asdx::Saturate(float(b) / 255.0f),
+        asdx::Saturate(float(a) / 255.0f));
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Matrix structure (row-major)
@@ -1920,6 +2027,10 @@ inline Vector4 Vector4::NormalizePlane(const Vector4& value)
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
 inline Matrix::Matrix()
+: _11(1.0f), _12(0.0f), _13(0.0f), _14(0.0f)
+, _21(0.0f), _22(1.0f), _23(0.0f), _24(0.0f)
+, _31(0.0f), _32(0.0f), _33(1.0f), _34(0.0f)
+, _41(0.0f), _42(0.0f), _43(0.0f), _44(1.0f)
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------

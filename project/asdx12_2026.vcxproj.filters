@@ -772,11 +772,11 @@
     <None Include="..\res\shaders\asdxWaveHelper.hlsli">
       <Filter>リソース ファイル\shaders</Filter>
     </None>
-    <None Include="..\include\fnd\asdxMath.inl">
-      <Filter>ヘッダー ファイル</Filter>
-    </None>
     <None Include="..\res\shaders\asdxSH.hlsli">
       <Filter>リソース ファイル\shaders</Filter>
+    </None>
+    <None Include="..\include\fnd\asdxMath.inl">
+      <Filter>ヘッダー ファイル\fnd</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
