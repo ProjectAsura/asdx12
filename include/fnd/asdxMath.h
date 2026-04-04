@@ -3847,79 +3847,133 @@ struct Unorm4
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-// Uint2 structure.
+// Element2 class
 ///////////////////////////////////////////////////////////////////////////////
-struct Uint2
+template<typename T>
+class Element2
 {
-    uint32_t    x;
-    uint32_t    y;
+public:
+    T x;
+    T y;
 
-    //-------------------------------------------------------------------------
-    //! @brief      引数付きコンストラクタです.
-    //-------------------------------------------------------------------------
-    Uint2(uint32_t nx, uint32_t ny);
+    Element2(T value)
+    : x(value), y(value)
+    { /* DO_NOTHING */ }
 
-    //-------------------------------------------------------------------------
-    //! @brief      加算演算子です.
-    //-------------------------------------------------------------------------
-    Uint2 operator + (const Uint2& value) const;
+    Element2(T nx, T ny)
+    : x(nx), y(ny)
+    { /* DO_NOTHING */ }
 
-    //-------------------------------------------------------------------------
-    //! @brief      減算演算子です.
-    //-------------------------------------------------------------------------
-    Uint2 operator - (const Uint2& value) const;
+    Element2 operator + (const Element2& value) const
+    { return Element2(x + value.x, y + value.y); }
+
+    Element2 operator - (const Element2& value) const
+    { return Element2(x - value.x, y - value.y); }
+
+    Element2 operator * (const Element2& value) const
+    { return Element2(x * value.x, y * value.z); }
+
+    Element2 operator / (const Element2& value) const
+    { return Element2(x / value.x, y / value.z); }
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-// Uint3 structure.
+// Element3 class
 ///////////////////////////////////////////////////////////////////////////////
-struct Uint3
+template<typename T>
+class Element3
 {
-    uint32_t    x;
-    uint32_t    y;
-    uint32_t    z;
+public:
+    T x;
+    T y;
+    T z;
 
-    //-------------------------------------------------------------------------
-    //! @brief      引数付きコンストラクタです.
-    //-------------------------------------------------------------------------
-    Uint3(uint32_t nx, uint32_t ny, uint32_t nz);
+    Element3(T value)
+    : x(value), y(value), z(value)
+    { /* DO_NOTHING */ }
 
-    //-------------------------------------------------------------------------
-    //! @brief      加算演算子です.
-    //-------------------------------------------------------------------------
-    Uint3 operator + (const Uint3& value) const;
+    Element3(T nx, T ny, T nz)
+    : x(nx), y(ny), z(nz)
+    { /* DO_NOTHING */ }
 
-    //-------------------------------------------------------------------------
-    //! @brief      減算演算子です.
-    //-------------------------------------------------------------------------
-    Uint3 operator - (const Uint3& value) const;
+    Element3 operator + (const Element3& value) const
+    { return Element3(x + value.x, y + value.y, z + value.z); }
+
+    Element3 operator - (const Element3& value) const
+    { return Element3(x - value.x, y - value.y, z - value.z); }
+
+    Element3 operator * (const Element3& value) const
+    { return Element3(x * value.x, y * value.z, z * value.z); }
+
+    Element3 operator / (const Element3& value) const
+    { return Element3(x / value.x, y / value.z, z / value.z); }
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-// Uint4 structure.
+// Element4 class
 ///////////////////////////////////////////////////////////////////////////////
-struct Uint4
+template<typename T>
+class Element4
 {
-    uint32_t    x;
-    uint32_t    y;
-    uint32_t    z;
-    uint32_t    w;
+public:
+    T x;
+    T y;
+    T z;
+    T w;
 
-    //-------------------------------------------------------------------------
-    //! @brief      引数付きコンストラクタです.
-    //-------------------------------------------------------------------------
-    Uint4(uint32_t nx, uint32_t ny, uint32_t nz, uint32_t nw);
+    Element4(T value)
+    : x(value), y(value), z(value), w(value)
+    { /* DO_NOTHING */ }
 
-    //-------------------------------------------------------------------------
-    //! @brief      加算演算子です.
-    //-------------------------------------------------------------------------
-    Uint4 operator + (const Uint4& value) const;
+    Element4(T nx, T ny, T nz, T nw)
+    : x(nx), y(ny), z(nz), w(nw)
+    { /* DO_NOTHING */ }
 
-    //-------------------------------------------------------------------------
-    //! @brief      減算演算子です.
-    //-------------------------------------------------------------------------
-    Uint4 operator - (const Uint4& value) const;
+    Element4 operator + (const Element4& value) const
+    { return Element4(x + value.x, y + value.y, z + value.z, w + value.w); }
+
+    Element4 operator - (const Element4& value) const
+    { return Element4(x - value.x, y - value.y, z - value.z, w - value.w); }
+
+    Element4 operator * (const Element4& value) const
+    { return Element4(x * value.x, y * value.z, z * value.z, w * value.z); }
+
+    Element4 operator / (const Element4& value) const
+    { return Element4(x / value.x, y / value.z, z / value.z, w / value.w); }
 };
+
+using Byte2   = Element2<int8_t>;
+using Byte3   = Element3<int8_t>;
+using Byte4   = Element4<int8_t>;
+
+using Ubyte2  = Element2<uint8_t>;
+using Ubyte3  = Element3<uint8_t>;
+using Ubyte4  = Element4<uint8_t>;
+
+using Short2  = Element2<int16_t>;
+using Short3  = Element2<int16_t>;
+using Short4  = Element2<int16_t>;
+
+using Ushort2 = Element2<uint16_t>;
+using Ushort3 = Element3<uint16_t>;
+using Ushort4 = Element4<uint16_t>;
+
+using Int2    = Element2<int32_t>;
+using Int3    = Element3<int32_t>;
+using Int4    = Element4<int32_t>;
+
+using Uint2   = Element2<uint32_t>;
+using Uint3   = Element3<uint32_t>;
+using Uint4   = Element4<uint32_t>;
+
+using Float2  = Element2<float>;
+using Float3  = Element3<float>;
+using Float4  = Element4<float>;
+
+using Double2 = Element2<double>;
+using Double3 = Element3<double>;
+using Double4 = Element4<double>;
+
 
 } // namespace asdx
 

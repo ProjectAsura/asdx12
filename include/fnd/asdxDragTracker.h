@@ -56,8 +56,8 @@ public:
     {
         bool drag = m_IsDown && isDown;
 
-        // ボタン押下開始時に記録.
-        if (!m_IsDown && isDown)
+        // 開始・終了時は同じ値を設定.
+        if (m_IsDown != isDown)
             m_Curr = m_Prev = asdx::Vector2(float(x), float(y));
 
         // ドラッグ中のみカレントを更新.
@@ -66,10 +66,6 @@ public:
             m_Prev = m_Curr;
             m_Curr = asdx::Vector2(float(x), float(y));
         }
-
-        // ボタンが離されたらリセット.
-        if (m_IsDown && !isDown)
-            m_Curr = m_Prev = asdx::Vector2(0.0f, 0.0f);
 
         // ステート更新.
         m_IsDown = isDown;
@@ -84,6 +80,22 @@ public:
     //-------------------------------------------------------------------------
     inline Vector2 GetDiff() const
     { return m_Curr - m_Prev; }
+
+    //-------------------------------------------------------------------------
+    //! @brief      現在フレームのカーソル位置を取得します.
+    //! 
+    //! @return     現在フレームのカーソル位置を返却します.
+    //-------------------------------------------------------------------------
+    inline const Vector2& GetCurrPos() const 
+    { return m_Curr; }
+
+    //-------------------------------------------------------------------------
+    //! @brief      前フレームのカーソル位置を取得します.
+    //! 
+    //! @return     前フレームのカーロス位置を返却します.
+    //-------------------------------------------------------------------------
+    inline const Vector2& GetPrevPos() const
+    { return m_Prev; }
 
 private:
     //=========================================================================
