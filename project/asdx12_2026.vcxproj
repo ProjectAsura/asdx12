@@ -312,6 +312,7 @@
     <ClInclude Include="..\include\fnd\asdxBlackboard.h" />
     <ClInclude Include="..\include\fnd\asdxBlob.h" />
     <ClInclude Include="..\include\fnd\asdxChunkAllocator.h" />
+    <ClInclude Include="..\include\fnd\asdxDragTracker.h" />
     <ClInclude Include="..\include\fnd\asdxFileIO.h" />
     <ClInclude Include="..\include\fnd\asdxFrameHeap.h" />
     <ClInclude Include="..\include\fnd\asdxFunction.h" />

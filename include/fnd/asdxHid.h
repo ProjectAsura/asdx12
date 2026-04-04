@@ -15,7 +15,6 @@
 // Linker
 //-------------------------------------------------------------------------
 #pragma comment( lib, "xinput.lib" )
-
 #endif//ASDX_AUTO_LINK
 
 namespace asdx {
@@ -35,12 +34,41 @@ enum PAD_BUTTON
     PAD_THUMB_R     = 0x00080L,     //!< 右サムスティックボタン.
     PAD_SHOULDER_L  = 0x00100L,     //!< LBボタン.
     PAD_SHOULDER_R  = 0x00200L,     //!< RBボタン.
-    PAD_A           = 0x01000L,     //!< Aボタン.
-    PAD_B           = 0x02000L,     //!< Bボタン.
-    PAD_X           = 0x04000L,     //!< Xボタン.
-    PAD_Y           = 0x08000L,     //!< Yボタン.
+    PAD_A           = 0x01000L,     //!< Aボタン(Xbox)
+    PAD_B           = 0x02000L,     //!< Bボタン(Xbox)
+    PAD_X           = 0x04000L,     //!< Xボタン(Xbox)
+    PAD_Y           = 0x08000L,     //!< Yボタン(Xbox)
     PAD_TRIGGER_L   = 0x10000L,     //!< 左トリガー.
     PAD_TRIGGER_R   = 0x20000L,     //!< 右トリガー.
+
+#if 0
+    // PlayStation Dual Shock/Sense.
+    PAD_PS_CHECK        = PAD_A,            // ×ボタン.
+    PAD_PS_CIRCLE       = PAD_B,            // 〇ボタン.
+    PAD_PS_SQUARE       = PAD_X,            // □ボタン.
+    PAD_PS_TRIANGLE     = PAD_Y,            // △ボタン.
+    PAD_PS_L1           = PAD_SHOULDER_L,   // L1ボタン.
+    PAD_PS_L2           = PAD_TRIGGER_L,    // L2ボタン.
+    PAD_PS_L3           = PAD_THUMB_L,      // L3ボタン.
+    PAD_PS_R1           = PAD_SHOULDER_R,   // R1ボタン.
+    PAD_PS_R2           = PAD_TRIGGER_R,    // R2ボタン.
+    PAD_PS_R3           = PAD_THUMB_R,      // R3ボタン.
+    PAD_PS_OPTION       = PAD_START,        // オプションボタン.
+
+    // Nintendo Switch1/2
+    PAD_NX_A        = PAD_B,            // Aボタン.
+    PAD_NX_B        = PAD_A,            // Bボタン.
+    PAD_NX_X        = PAD_Y,            // Xボタン.
+    PAD_NX_Y        = PAD_X,            // Yボタン.
+    PAD_NX_L        = PAD_SHOULDER_L,   // Lボタン.
+    PAD_NX_R        = PAD_SHOULDER_R,   // Rボタン.
+    PAD_NX_ZL       = PAD_TRIGGER_L,    // ZLボタン.
+    PAD_NX_ZR       = PAD_TRIGGER_R,    // ZRボタン.
+    PAD_NX_L_STICK  = PAD_THUMB_L,      // Lスティックボタン.
+    PAD_NX_R_STICK  = PAD_THUMB_R,      // Rスティックボタン.
+    PAD_NX_PLUS     = PAD_START,        // +ボタン.
+    PAD_NX_MINUS    = PAD_BACK,         // -ボタン.
+#endif
 
     // 任意のボタン.
     PAD_ANY         = PAD_UP
@@ -121,7 +149,6 @@ enum MOUSE_BUTTON
     MOUSE_BUTTON_X2,            //!< サイドボタン2です.
     NUM_MOUSE_BUTTON,
 };
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // GamePad class

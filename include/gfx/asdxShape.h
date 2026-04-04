@@ -39,12 +39,12 @@ public:
     //=========================================================================
     // public variables.
     //=========================================================================
-    static const uint32_t CBV0         = 0;
-    static const uint32_t CBV1         = 1;
-    static const uint32_t CBV2         = 2;
-    static const uint32_t Constants3   = 3;
-    static const uint32_t SRV0         = 4;
-    static const uint32_t SRV1         = 5;
+    static const uint32_t CBV0 = 0;     // ビュー行列・射影行列設定用.
+    static const uint32_t CBV1 = 1;     // 汎用.
+    static const uint32_t CBV2 = 2;     // 汎用.
+    static const uint32_t CBV3 = 3;     // パラメータ番号設定用.
+    static const uint32_t SRV0 = 4;     // StructuedBuffer用(ワールド行列・カラー行列用).
+    static const uint32_t SRV1 = 5;     // 汎用.
 
     //=========================================================================
     // public methods.
@@ -75,10 +75,9 @@ public:
     //! 
     //! @param[in]      view        ビュー行列
     //! @param[in]      proj        射影行列
-    //! @note       内部でダブルバッファリングのバッファ番号入れ替えが行われますので，
-    //!             1フレームに1回のみ呼び出してください.
+    //! @note       内部処理でダブルバッファ更新が行われます.
     //-------------------------------------------------------------------------
-    void SetViewProj(const asdx::Matrix& view, const asdx::Matrix& proj);
+    void SetViewProj(const Matrix& view, const Matrix& proj);
 
     //-------------------------------------------------------------------------
     //! @brief      不透明ステートを適用します.
@@ -106,19 +105,33 @@ public:
     //-------------------------------------------------------------------------
     D3D12_GPU_VIRTUAL_ADDRESS GetBufferAddress() const;
 
+    //-------------------------------------------------------------------------
+    //! @brief      ビュー行列を取得します.
+    //! 
+    //! @return     ビュー行列を返却します.
+    //-------------------------------------------------------------------------
+    const Matrix& GetView() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      射影行列を取得します.
+    //! 
+    //! @return     射影行列を返却します.
+    //-------------------------------------------------------------------------
+    const Matrix& GetProj() const;
+
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    asdx::RefPtr<ID3D12RootSignature>   m_RootSignature;
-    asdx::RefPtr<ID3D12PipelineState>   m_OpaqueState;
-    asdx::RefPtr<ID3D12PipelineState>   m_TranslucentState;
-    asdx::RefPtr<ID3D12PipelineState>   m_WireframeState;
-    asdx::RefPtr<ID3D12Resource>        m_CameraBuffer;
-    AllocationHolder                    m_CameraBufferAllocation;
-    uint8_t                             m_BufferIndex = 0;
-    asdx::Matrix                        m_View;
-    asdx::Matrix                        m_Proj;
+    RefPtr<ID3D12RootSignature> m_RootSignature;
+    RefPtr<ID3D12PipelineState> m_OpaqueState;
+    RefPtr<ID3D12PipelineState> m_TranslucentState;
+    RefPtr<ID3D12PipelineState> m_WireframeState;
+    RefPtr<ID3D12Resource>      m_CameraBuffer;
+    AllocationHolder            m_CameraBufferAllocation;
+    uint8_t                     m_BufferIndex = 0;
+    Matrix                      m_View;
+    Matrix                      m_Proj;
 
     //=========================================================================
     // private methods.
@@ -172,7 +185,7 @@ public:
     //! @param[in]      index       番号.
     //! @param[in]      value       設定する値.
     //-------------------------------------------------------------------------
-    void SetWorld(uint32_t index, const asdx::Matrix& value);
+    void SetWorld(uint32_t index, const Matrix& value);
 
     //-------------------------------------------------------------------------
     //! @brief      カラーを設定します.
@@ -180,7 +193,7 @@ public:
     //! @param[in]      index       番号.
     //! @param[in]      value       設定する値.
     //-------------------------------------------------------------------------
-    void SetColor(uint32_t index, const asdx::Vector4& value);
+    void SetColor(uint32_t index, const Vector4& value);
 
     //-------------------------------------------------------------------------
     //! @brief      ワールド行列を取得します.
@@ -188,7 +201,7 @@ public:
     //! @param[in]      index       番号.
     //! @return     ワールド行列を返却します.
     //-------------------------------------------------------------------------
-    const asdx::Matrix& GetWorld(uint32_t index) const;
+    const Matrix& GetWorld(uint32_t index) const;
 
     //-------------------------------------------------------------------------
     //! @brief      カラーを取得します.
@@ -196,12 +209,13 @@ public:
     //! @param[in]      index       番号.
     //! @return     カラーを返却します.
     //-------------------------------------------------------------------------
-    const asdx::Vector4& GetColor(uint32_t index) const;
+    const Vector4& GetColor(uint32_t index) const;
 
     //-------------------------------------------------------------------------
     //! @brief      更新処理を行います.
     //! 
     //! @return     コマンドリストに設定するためのGPU仮想アドレスを返却します.
+    //! @note       内部処理でダブルバッファ更新が実行されます.
     //-------------------------------------------------------------------------
     D3D12_GPU_VIRTUAL_ADDRESS Update();
 
@@ -218,10 +232,10 @@ private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    asdx::RefPtr<ID3D12Resource>        m_ParamBuffer;
-    std::vector<Param>                  m_Params;
-    AllocationHolder                    m_AllocationPB;
-    uint8_t                             m_BufferIndex;
+    RefPtr<ID3D12Resource>  m_ParamBuffer;
+    std::vector<Param>      m_Params;
+    AllocationHolder        m_AllocationPB;
+    uint8_t                 m_BufferIndex;
 
     //=========================================================================
     // private methods.
@@ -268,13 +282,13 @@ protected:
     //=========================================================================
     // protected variables.
     //=========================================================================
-    asdx::RefPtr<ID3D12Resource>    m_VB;               //!< 頂点バッファです.
-    asdx::RefPtr<ID3D12Resource>    m_IB;               //!< インデックスバッファです.
-    D3D12_VERTEX_BUFFER_VIEW        m_VBV         = {}; //!< 頂点バッファビューです.
-    D3D12_INDEX_BUFFER_VIEW         m_IBV         = {}; //!< インデックスバッファビューです.
-    uint32_t                        m_IndexCount  = 0;  //!< インデックス数です.
-    AllocationHolder                m_AllocationVB;
-    AllocationHolder                m_AllocationIB;
+    RefPtr<ID3D12Resource>      m_VB;               //!< 頂点バッファです.
+    RefPtr<ID3D12Resource>      m_IB;               //!< インデックスバッファです.
+    D3D12_VERTEX_BUFFER_VIEW    m_VBV         = {}; //!< 頂点バッファビューです.
+    D3D12_INDEX_BUFFER_VIEW     m_IBV         = {}; //!< インデックスバッファビューです.
+    uint32_t                    m_IndexCount  = 0;  //!< インデックス数です.
+    AllocationHolder            m_AllocationVB;
+    AllocationHolder            m_AllocationIB;
 
     //=========================================================================
     // protected methods.
