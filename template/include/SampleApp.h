@@ -6,7 +6,7 @@
 #pragma once
 
 // サウンドを有効かする場合は 1 に.
-#define ASDX_ENABLE_SOUND (1)
+#define ASDX_ENABLE_SOUND (0)
 
 //-----------------------------------------------------------------------------
 // Includes
