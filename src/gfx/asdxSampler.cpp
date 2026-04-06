@@ -167,7 +167,7 @@ bool Sampler::Init(const D3D12_SAMPLER_DESC* pDesc)
         return false;
     }
 
-    pDevice->CreateSampler(pDesc, GetCpuHandle());
+    pDevice->CreateSampler(pDesc, GetHandleCPU());
     return true;
 }
 
@@ -189,7 +189,7 @@ const OffsetHandle& Sampler::GetOffsetHandle() const
 //-----------------------------------------------------------------------------
 //      CPUディスクリプタハンドルを取得します.
 //-----------------------------------------------------------------------------
-D3D12_CPU_DESCRIPTOR_HANDLE Sampler::GetCpuHandle() const
+D3D12_CPU_DESCRIPTOR_HANDLE Sampler::GetHandleCPU() const
 {
     D3D12_CPU_DESCRIPTOR_HANDLE result = {};
     if (m_HandleSampler.IsValid())
@@ -200,7 +200,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE Sampler::GetCpuHandle() const
 //-----------------------------------------------------------------------------
 //      GPUディスクリプタハンドルを取得します.
 //-----------------------------------------------------------------------------
-D3D12_GPU_DESCRIPTOR_HANDLE Sampler::GetGpuHandle() const
+D3D12_GPU_DESCRIPTOR_HANDLE Sampler::GetHandleGPU() const
 {
     D3D12_GPU_DESCRIPTOR_HANDLE result = {};
     if (m_HandleSampler.IsValid())

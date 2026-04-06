@@ -78,14 +78,14 @@ public:
     //! 
     //! @return     CPUディスクリプタハンドルを返却します.
     //-------------------------------------------------------------------------
-    D3D12_CPU_DESCRIPTOR_HANDLE GetCpuHandle() const;
+    D3D12_CPU_DESCRIPTOR_HANDLE GetHandleCPU() const;
 
     //-------------------------------------------------------------------------
     //! @brief      GPUディスクリプタハンドルを取得します.
     //! 
     //! @return     GPUディスクリプタハンドルを返却します.
     //-------------------------------------------------------------------------
-    D3D12_GPU_DESCRIPTOR_HANDLE GetGpuHandle() const;
+    D3D12_GPU_DESCRIPTOR_HANDLE GetHandleGPU() const;
 
 private:
     //=========================================================================

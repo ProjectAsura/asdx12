@@ -355,7 +355,7 @@ void FontRenderer::SetState
 )
 {
     renderer.SetPipelineState(pCmdList, m_PipelineState.GetPtr());
-    renderer.SetTexture(font.GetTexture()->GetHandleGPU(), m_LinearClamp.GetGpuHandle());
+    renderer.SetTexture(font.GetTexture()->GetHandleGPU(), m_LinearClamp.GetHandleGPU());
     renderer.SetParam(4, GetParam(), 0);
 }
 
