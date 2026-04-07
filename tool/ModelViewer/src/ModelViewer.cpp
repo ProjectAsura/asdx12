@@ -692,13 +692,13 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
             for(size_t i=0; i<m_Model->GetMeshCount(); ++i)
             {
                 uint32_t index = uint32_t(i);
-                pCmd->SetGraphicsRoot32BitConstant(asdx::ShapeStates::Constants3, index, 0);
+                pCmd->SetGraphicsRoot32BitConstant(asdx::ShapeStates::CBV3, index, 0);
                 m_SphereShape.Draw(pCmd);
             }
 
             {
                 uint32_t index = uint32_t(m_Model->GetMeshCount());
-                pCmd->SetGraphicsRoot32BitConstant(asdx::ShapeStates::Constants3, index, 0);
+                pCmd->SetGraphicsRoot32BitConstant(asdx::ShapeStates::CBV3, index, 0);
                 m_SphereShape.Draw(pCmd);
             }
         }
