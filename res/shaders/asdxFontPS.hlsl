@@ -74,9 +74,9 @@ float Median(float3 value)
 float4 main(const VSOutput input) : SV_TARGET
 {
     const float kThreshold       = 0.5f;     // 変更禁止.
-    const float kBlurRadius      = 0.02f;    // 適宜調整.
-    const float kOuterThreshold  = 0.45f;
-    const float kOuterBlurRadius = 0.01f;
+    const float kBlurRadius      = 0.1f;     // 適宜調整.
+    const float kOuterThreshold  = 0.4f;
+    const float kOuterBlurRadius = 0.1f;
 
     // 符号付き距離を取得.
 #if SINGLE_CHANNEL
