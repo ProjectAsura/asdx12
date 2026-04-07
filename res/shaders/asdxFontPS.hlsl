@@ -106,9 +106,9 @@ float4 main(const VSOutput input) : SV_TARGET
             invSize.x = 1.0f / invSize.x;
             invSize.y = 1.0f / invSize.y;
         #if SINGLE_CHANNEL
-            dist2 = Median(SdfFontTexture.Sample(LinearClamp, input.TexCoord + Offset * invSize).rgb);
-        #else
             dist2 = SdfFontTexture.Sample(LinearClamp, input.TexCoord + Offset * invSize).r;
+        #else
+            dist2 = Median(SdfFontTexture.Sample(LinearClamp, input.TexCoord + Offset * invSize).rgb);
         #endif
         }
 
