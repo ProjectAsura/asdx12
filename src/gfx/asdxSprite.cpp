@@ -533,6 +533,10 @@ void SpriteRenderer::Add(int x, int y, int w, int h, int layer, const Vector2& u
     if (m_BatchCount == 0 || m_pVertices == nullptr)
     { return; }
 
+    // 画面外ならカリング.
+    if (((x + w) < 0 || x > m_ScreenSize.x || (y + h) < 0 || y > m_ScreenSize.y))
+    { return; }
+ 
     auto& batch = m_Batches[m_BatchCount - 1];
     batch.IndexCount += kIndexCountPerSprite;
 
