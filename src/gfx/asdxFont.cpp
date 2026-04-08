@@ -190,6 +190,41 @@ bool Font::Find(uint32_t unicode, DrawInfo& info) const
     return true;
 }
 
+//-----------------------------------------------------------------------------
+//      文字列の幅を計算します.
+//-----------------------------------------------------------------------------
+int Font::CalcWidth(const char* text, float scale) const
+{
+    const char* p = text;   // UTF-8.
+    int posX = 0;
+    int maxX = 0;
+    while(*p)
+    {
+        uint32_t unicode = 0;
+        if (!ToUTF32(p, unicode))
+            continue;
+
+        if (unicode == '\n')
+        {
+            maxX = Max(posX, maxX);
+            posX = 0;
+            continue;
+        }
+
+        Font::DrawInfo info;
+        if (!Find(unicode, info))
+        {
+            // フォールバックでリトライする.
+            if (!Find(0xFFFD, info))
+                continue;
+        }
+
+        posX += int(info.advance * scale);
+    }
+
+    return Max(posX, maxX);
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // FontRenderer class
@@ -456,5 +491,11 @@ uint32_t FontRenderer::GetOuterColor() const
 //-----------------------------------------------------------------------------
 const void* FontRenderer::GetParam() const
 { return &m_Param; }
+
+//-----------------------------------------------------------------------------
+//      LinearClampサンプラーを取得します.
+//-----------------------------------------------------------------------------
+const Sampler& FontRenderer::GetSampler() const
+{ return m_LinearClamp; }
 
 } // namespace asdx
