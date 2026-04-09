@@ -382,16 +382,10 @@ void FontRenderer::AddFormat(SpriteRenderer& renderer, const Font& font, int x, 
 //-----------------------------------------------------------------------------
 //      パイプラインステートを設定します.
 //-----------------------------------------------------------------------------
-void FontRenderer::SetState
-(
-    ID3D12GraphicsCommandList*  pCmdList,
-    SpriteRenderer&             renderer,
-    const Font&                 font
-)
+void FontRenderer::SetState(SpriteRenderer& renderer, const Font& font)
 {
-    renderer.SetPipelineState(pCmdList, m_PipelineState.GetPtr());
-    renderer.SetTexture(font.GetTexture()->GetHandleGPU(), m_LinearClamp.GetHandleGPU());
     renderer.SetParam(4, GetParam(), 0);
+    renderer.ChangeBatch(m_PipelineState.GetPtr(), font.GetTexture()->GetHandleGPU(), m_LinearClamp.GetHandleGPU());
 }
 
 //-----------------------------------------------------------------------------

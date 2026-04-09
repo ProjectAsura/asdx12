@@ -79,14 +79,10 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      描画処理を行います.
     //! 
-    //! @param[in]      pCmd        グラフィックスコマンドリスト.
     //! @param[in]      renderer    スプライトレンダラー.
     //! @param[in]      sampler     サンプラー.
     //-------------------------------------------------------------------------
-    void Draw(
-        ID3D12GraphicsCommandList*  pCmd,
-        SpriteRenderer&             renderer,
-        D3D12_GPU_DESCRIPTOR_HANDLE sampler);
+    void Draw(SpriteRenderer& renderer, D3D12_GPU_DESCRIPTOR_HANDLE sampler);
 
     //-------------------------------------------------------------------------
     //! @brief      タイルオフセットを設定します.

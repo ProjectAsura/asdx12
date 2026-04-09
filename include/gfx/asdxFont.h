@@ -250,10 +250,10 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      パイプラインステートを設定します.
     //! 
-    //! @param[in]      pCmdList    グラフィックスコマンドリストです.
     //! @param[in]      renderer    スプライトレンダラーです.
+    //! @param[in]      font        フォントです.
     //-------------------------------------------------------------------------
-    void SetState(ID3D12GraphicsCommandList* pCmdList, SpriteRenderer& renderer, const Font& font);
+    void SetState(SpriteRenderer& renderer, const Font& font);
 
     //-------------------------------------------------------------------------
     //! @brief      スケールを設定します.

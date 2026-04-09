@@ -386,8 +386,10 @@ bool SpriteRenderer::Init
         m_DepthFormat = dsvFormat;
 
         D3D12_SHADER_BYTECODE ps = { asdxSpritePS, sizeof(asdxSpritePS) };
-        if (!CreateSpriteState(pDevice, ps, false, m_PSO.GetAddress()))
+        if (!CreateSpriteState(pDevice, ps, false, m_DefaultState.GetAddress()))
         { return false; }
+
+        m_pCurrentState = m_DefaultState.GetPtr();
     }
 
     // バッチメモリ確保.
@@ -425,7 +427,7 @@ void SpriteRenderer::Term()
     m_AllocationIB.Reset();
 
     m_RootSig.Reset();
-    m_PSO.Reset();
+    m_DefaultState.Reset();
 
     m_Batches.clear();
     m_Batches.shrink_to_fit();
@@ -454,25 +456,40 @@ void SpriteRenderer::Reset()
         m_Batches[0].IndexOffset = 0;
         m_Batches[0].SRV         = {};
         m_Batches[0].Sampler     = {};
+        m_Batches[0].pState      = m_DefaultState.GetPtr();
+        memset(m_Batches[0].Param, 0, sizeof(m_Batches[0].Param));
     }
 
     m_HandleSRV     = {};
     m_HandleSampler = {};
     m_Color         = { 255, 255, 255, 255 };
+    m_pCurrentState = m_DefaultState.GetPtr();
+    memset(m_Param, 0, sizeof(m_Param));
 
     m_BufferIndex = (m_BufferIndex + 1) & 0x1;
 }
 
 //-----------------------------------------------------------------------------
-//      テクスチャを設定します.
+//      バッチを変更します.
 //-----------------------------------------------------------------------------
-void SpriteRenderer::SetTexture(D3D12_GPU_DESCRIPTOR_HANDLE handleSRV, D3D12_GPU_DESCRIPTOR_HANDLE handleSampler)
+void SpriteRenderer::ChangeBatch
+(
+    ID3D12PipelineState*        pPipelineState,
+    D3D12_GPU_DESCRIPTOR_HANDLE handleSRV,
+    D3D12_GPU_DESCRIPTOR_HANDLE handleSampler
+)
 {
-    if (m_HandleSRV.ptr == handleSRV.ptr && m_HandleSampler.ptr == handleSampler.ptr)
+    // 無効な引数なら設定しない.
+    if (handleSRV.ptr == 0 || handleSampler.ptr == 0 || pPipelineState == nullptr)
     { return; }
 
+    // 同じ状態ならバッチは変えない.
+    if (m_HandleSRV.ptr == handleSRV.ptr && m_HandleSampler.ptr == handleSampler.ptr && m_pCurrentState == pPipelineState)
+    { return; }
+ 
     m_HandleSRV     = handleSRV;
     m_HandleSampler = handleSampler;
+    m_pCurrentState = pPipelineState;
 
     auto index = m_BatchCount;
     m_BatchCount++;
@@ -480,6 +497,27 @@ void SpriteRenderer::SetTexture(D3D12_GPU_DESCRIPTOR_HANDLE handleSRV, D3D12_GPU
     m_Batches[index].IndexOffset = m_SpriteCount * kIndexCountPerSprite;
     m_Batches[index].SRV         = m_HandleSRV;
     m_Batches[index].Sampler     = m_HandleSampler;
+    m_Batches[index].pState      = pPipelineState;
+    memcpy(m_Batches[index].Param, &m_Param, sizeof(m_Param));
+}
+
+//-----------------------------------------------------------------------------
+//      パイプラインステートを変更します.
+//-----------------------------------------------------------------------------
+void SpriteRenderer::SetPipelineState(ID3D12PipelineState* pPipelineState)
+{
+    assert(m_HandleSRV    .ptr != 0);
+    assert(m_HandleSampler.ptr != 0);
+    ChangeBatch(pPipelineState, m_HandleSRV, m_HandleSampler);
+}
+
+//-----------------------------------------------------------------------------
+//      テクスチャを設定します.
+//-----------------------------------------------------------------------------
+void SpriteRenderer::SetTexture(D3D12_GPU_DESCRIPTOR_HANDLE handleSRV, D3D12_GPU_DESCRIPTOR_HANDLE handleSampler)
+{
+    assert(m_pCurrentState != nullptr);
+    ChangeBatch(m_pCurrentState, handleSRV, handleSampler);
 }
 
 //-----------------------------------------------------------------------------
@@ -594,16 +632,6 @@ void SpriteRenderer::Add(int x, int y, int w, int h, int layer, const Vector2& u
 }
 
 //-----------------------------------------------------------------------------
-//      パイプラインステートを設定します.
-//-----------------------------------------------------------------------------
-void SpriteRenderer::SetPipelineState(ID3D12GraphicsCommandList* pCmdList, ID3D12PipelineState* pPipelineState)
-{
-    auto pso = (pPipelineState == nullptr) ? m_PSO.GetPtr() : pPipelineState;
-    pCmdList->SetGraphicsRootSignature(m_RootSig.GetPtr());
-    pCmdList->SetPipelineState(pso);
-}
-
-//-----------------------------------------------------------------------------
 //      描画処理を行います.
 //-----------------------------------------------------------------------------
 void SpriteRenderer::Draw(ID3D12GraphicsCommandList* pCmdList)
@@ -621,17 +649,19 @@ void SpriteRenderer::Draw(ID3D12GraphicsCommandList* pCmdList)
     ibv.SizeInBytes    = UINT(m_IB->GetDesc().Width);
     ibv.Format         = DXGI_FORMAT_R32_UINT;
 
+    pCmdList->SetGraphicsRootSignature(m_RootSig.GetPtr());
     pCmdList->IASetVertexBuffers(0, 1, &vbv);
     pCmdList->IASetIndexBuffer(&ibv);
     pCmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     pCmdList->SetGraphicsRoot32BitConstants(0, 16, &m_Transform, 0);
-    pCmdList->SetGraphicsRoot32BitConstants(3, 4, m_Param, 0);
 
     for(auto i=m_SubmitCount; i<m_BatchCount; ++i)
     {
         auto& batch = m_Batches[i];
+        pCmdList->SetPipelineState(batch.pState);
         pCmdList->SetGraphicsRootDescriptorTable(1, batch.SRV);
         pCmdList->SetGraphicsRootDescriptorTable(2, batch.Sampler);
+        pCmdList->SetGraphicsRoot32BitConstants(3, 4, batch.Param, 0);
         pCmdList->DrawIndexedInstanced(batch.IndexCount, 1, batch.IndexOffset, 0, 0);
     }
     m_SubmitCount += m_BatchCount;
@@ -709,5 +739,29 @@ void SpriteRenderer::SetParam(uint32_t count, const void* param, uint32_t destOf
     assert(count <= 4);
     memcpy(m_Param + destOffset, param, sizeof(uint32_t) * count);
 }
+
+//-----------------------------------------------------------------------------
+//      デフォルトのパイプラインステートを取得します.
+//-----------------------------------------------------------------------------
+ID3D12PipelineState* SpriteRenderer::GetDefaultState() const
+{ return m_DefaultState.GetPtr(); }
+
+//-----------------------------------------------------------------------------
+//      現在のパイプラインステートを取得します.
+//-----------------------------------------------------------------------------
+ID3D12PipelineState* SpriteRenderer::GetCurrentState() const
+{ return m_pCurrentState; }
+
+//-----------------------------------------------------------------------------
+//      シェーダリソースビューハンドルを取得します.
+//-----------------------------------------------------------------------------
+D3D12_GPU_DESCRIPTOR_HANDLE SpriteRenderer::GetHandleSRV() const
+{ return m_HandleSRV; }
+
+//-----------------------------------------------------------------------------
+//      サンプラーハンドルを取得します.
+//-----------------------------------------------------------------------------
+D3D12_GPU_DESCRIPTOR_HANDLE SpriteRenderer::GetHandleSampler() const
+{ return m_HandleSampler; }
 
 } // namespace asdx

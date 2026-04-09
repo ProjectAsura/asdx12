@@ -80,11 +80,28 @@ public:
     void Reset();
 
     //-------------------------------------------------------------------------
-    //! @brief      テクスチャを設定します.
+    //! @brief      バッチを変更します.
+    //! 
+    //! @param[in]      pPipelineState      パイプラインステートです.
+    //! @param[in]      handleSRV           シェーダリソースビューハンドルです.
+    //! @param[in]      handleSampler       サンプラーハンドルです.
+    //-------------------------------------------------------------------------
+    void ChangeBatch(ID3D12PipelineState* pPipelineState, D3D12_GPU_DESCRIPTOR_HANDLE handleSRV, D3D12_GPU_DESCRIPTOR_HANDLE handleSampler);
+
+    //-------------------------------------------------------------------------
+    //! @brief      パイプラインステートを変更します.
+    //! 
+    //! @param[in]      pPipelineState      パイプラインステートです.
+    //! @note       内部で ChangeBatch() をコールします.
+    //-------------------------------------------------------------------------
+    void SetPipelineState(ID3D12PipelineState* pPipelineState);
+
+    //-------------------------------------------------------------------------
+    //! @brief      テクスチャを変更します.
     //! 
     //! @param[in]      handleSRV       シェーダリソースビューハンドル.
     //! @param[in]      handleSampler   サンプラーハンドル.
-    //! @note       バッチの切り替えが発生します.
+    //! @note       内部で ChangeBatch() をコールします.
     //-------------------------------------------------------------------------
     void SetTexture(D3D12_GPU_DESCRIPTOR_HANDLE handleSRV, D3D12_GPU_DESCRIPTOR_HANDLE handleSampler);
 
@@ -165,22 +182,6 @@ public:
     { Add(x, y, w, h, 0, uv0, uv1); }
 
     //-------------------------------------------------------------------------
-    //! @brief      パイプラインステートを設定します.
-    //! 
-    //! @param[in]      pCmdList        グラフィックスコマンドリストです.
-    //! @param[in]      pPipelineState  パイプラインステートです(nullptrの場合はデフォルトのパイプラインステートが設定されます).
-    //-------------------------------------------------------------------------
-    void SetPipelineState(ID3D12GraphicsCommandList* pCmdList, ID3D12PipelineState* pPipelineState);
-
-    //-------------------------------------------------------------------------
-    //! @brief      パイプラインステートを設定します.
-    //! 
-    //! @param[in]      pCmdList        グラフィックスコマンドリストです.
-    //-------------------------------------------------------------------------
-    void SetPipelineState(ID3D12GraphicsCommandList* pCmdList)
-    { SetPipelineState(pCmdList, nullptr); }
-
-    //-------------------------------------------------------------------------
     //! @brief      描画処理を行います.
     //! 
     //! @param[in]      pCmdList        グラフィックスコマンドリストです.
@@ -223,8 +224,37 @@ public:
     //! @param[in]      count       32bitパラメータの数.
     //! @param[in]      param       32bitパラメータ.
     //! @param[in]      destOffset  書き込みオフセット.
+    //! @note      ChangeBatch() コール時に反映されるため，ChangeBatch() よりも先に呼び出してください.
     //-------------------------------------------------------------------------
     void SetParam(uint32_t count, const void* param, uint32_t destOffset);
+
+    //-------------------------------------------------------------------------
+    //! @brief      デフォルトのパイプラインステートを取得します.
+    //!
+    //! @return     デフォルトのパイプラインステートを返却します.
+    //-------------------------------------------------------------------------
+    ID3D12PipelineState* GetDefaultState() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      現在のパイプラインステートを取得します.
+    //! 
+    //! @return     現在のパイプラインステートを返却します.
+    //-------------------------------------------------------------------------
+    ID3D12PipelineState* GetCurrentState() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      シェーダリソースビューハンドルを取得します.
+    //! 
+    //! @return     シェーダリソースビューハンドルを返却します.
+    //-------------------------------------------------------------------------
+    D3D12_GPU_DESCRIPTOR_HANDLE GetHandleSRV() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      サンプラーハンドルを取得します.
+    //! 
+    //! @return     サンプラーハンドルを返却します.
+    //-------------------------------------------------------------------------
+    D3D12_GPU_DESCRIPTOR_HANDLE GetHandleSampler() const;
 
 private:
     ///////////////////////////////////////////////////////////////////////////
@@ -257,6 +287,8 @@ private:
         uint32_t                    IndexOffset;    //!< インデックスオフセット.
         D3D12_GPU_DESCRIPTOR_HANDLE SRV;            //!< シェーダリソースビュー.
         D3D12_GPU_DESCRIPTOR_HANDLE Sampler;        //!< サンプラーステート.
+        ID3D12PipelineState*        pState;         //!< パイプラインステート.
+        uint32_t                    Param[4];       //!< ユーザーパラメータ.
     };
 
     //=========================================================================
@@ -265,7 +297,7 @@ private:
     RefPtr<ID3D12Resource>      m_VB[2];                                            //!< 頂点バッファ.
     RefPtr<ID3D12Resource>      m_IB;                                               //!< インデックスバッファ.
     RefPtr<ID3D12RootSignature> m_RootSig;                                          //!< ルートシグニチャ.
-    RefPtr<ID3D12PipelineState> m_PSO;                                              //!< パイプラインステート.
+    RefPtr<ID3D12PipelineState> m_DefaultState;                                     //!< パイプラインステート.
     std::vector<Batch>          m_Batches;                                          //!< バッチ.
     Vertex*                     m_pVertices[2]      = {};                           //!< マップ済みメモリ.
     uint32_t                    m_SpriteCount       = 0;                            //!< 描画スプライト数.
@@ -284,6 +316,7 @@ private:
     uint32_t                    m_Param[4]          = {};
     AllocationHolder            m_AllocationVB[2];
     AllocationHolder            m_AllocationIB;
+    ID3D12PipelineState*        m_pCurrentState     = nullptr;
 
     //=========================================================================
     // private methods.
