@@ -255,6 +255,7 @@
     <ClCompile Include="..\src\gfx\asdxModel.cpp" />
     <ClCompile Include="..\src\gfx\asdxModelManager.cpp" />
     <ClCompile Include="..\src\gfx\asdxMotionPlayer.cpp" />
+    <ClCompile Include="..\src\gfx\asdxMovie.cpp" />
     <ClCompile Include="..\src\gfx\asdxPipelineState.cpp" />
     <ClCompile Include="..\src\gfx\asdxPresetState.cpp" />
     <ClCompile Include="..\src\gfx\asdxSampler.cpp" />
@@ -378,6 +379,7 @@
     <ClInclude Include="..\include\gfx\asdxTexture.h" />
     <ClInclude Include="..\include\gfx\asdxTextureManager.h" />
     <ClInclude Include="..\include\gfx\asdxUpdateCommand.h" />
+    <ClInclude Include="..\include\gfx\asdxMovie.h" />
     <ClInclude Include="..\include\res\asdxResFont.h" />
     <ClInclude Include="..\include\res\asdxResHelper.h" />
     <ClInclude Include="..\include\res\asdxResLight.h" />

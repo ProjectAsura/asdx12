@@ -399,6 +399,9 @@
     <ClCompile Include="..\src\gfx\asdxModelManager.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\gfx\asdxMovie.cpp">
+      <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\edit\asdxEditParam.h">
@@ -727,6 +730,9 @@
     </ClInclude>
     <ClInclude Include="..\include\fnd\asdxDragTracker.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\gfx\asdxMovie.h">
+      <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
