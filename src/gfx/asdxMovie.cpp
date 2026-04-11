@@ -152,10 +152,13 @@ public:
             return false;
         }
 
-        m_Finished    = false;
-        m_FrameIndex  = 0;
-        m_Format      = DXGI_FORMAT_NV12;
-        m_PlayTimeSec = 0.0;
+        m_Finished      = false;
+        m_FrameIndex    = 0;
+        m_Format        = DXGI_FORMAT_NV12;
+        m_PlayTimeSec   = 0.0;
+        m_LastTimeStamp = 0;
+
+        Seek(0);
 
         // 正常終了.
         return true;
@@ -166,6 +169,9 @@ public:
     //-------------------------------------------------------------------------
     void Close() override
     {
+        for(auto i=0; i<2; ++i)
+        { m_Sample[i].Reset(); }
+
         m_Reader.Reset();
 
         m_Width             = 0;
@@ -193,8 +199,6 @@ public:
         if (m_Reader.GetPtr() == nullptr)
             return false;
 
-        // TODO : シーク時間の設定値が合っているかどうかチェック.
-
         PROPVARIANT pos = {};
         InitPropVariantFromInt64(time, &pos);
 
@@ -211,6 +215,18 @@ public:
 
         // 再生時刻を設定.
         m_PlayTimeSec = time / 10000000.0;
+
+        // サンプルを破棄.
+        for(auto i=0; i<2; ++i)
+        { m_Sample[i].Reset(); }
+
+        DWORD    flags     = 0;
+        LONGLONG timeStamp = m_LastTimeStamp;
+
+        // サンプルを読み込み.
+        hr = m_Reader->ReadSample(MF_SOURCE_READER_FIRST_VIDEO_STREAM, 0, nullptr, &flags, &timeStamp, m_Sample[m_BufferIndex].GetAddress());
+        if (SUCCEEDED(hr))
+        { m_LastTimeStamp = timeStamp; }
 
         return true;
     }
@@ -240,10 +256,12 @@ public:
         LONGLONG timeStamp = m_LastTimeStamp;
         HRESULT  hr        = S_OK;
 
+        auto nextId = (m_BufferIndex + 1) & 0x1;
+
         // サンプルを読み込み.
-        if (m_Sample.GetPtr() == nullptr)
+        if (m_Sample[nextId].GetPtr() == nullptr)
         {
-            hr = m_Reader->ReadSample(MF_SOURCE_READER_FIRST_VIDEO_STREAM, 0, nullptr, &flags, &timeStamp, m_Sample.GetAddress());
+            hr = m_Reader->ReadSample(MF_SOURCE_READER_FIRST_VIDEO_STREAM, 0, nullptr, &flags, &timeStamp, m_Sample[nextId].GetAddress());
             if (FAILED(hr))
             {
                 WLOGA("Warning : IMFSourceReader::ReadSample() failed. errcode = 0x%x", hr);
@@ -258,9 +276,16 @@ public:
         auto timeSec = double(timeStamp) / 10000000.0;
         auto isShow  = (m_PlayTimeSec >= timeSec);
 
-        // フレーム情報を更新.
-        m_LastTimeStamp = timeStamp;
-        m_FrameIndex    = uint64_t(m_FrameRate * timeStamp);
+        LONGLONG prevTimeStamp = 0;
+        hr = m_Sample[m_BufferIndex]->GetSampleTime(&prevTimeStamp);
+        if (FAILED(hr))
+        {
+            WLOGA("Warning : IMFSample::GetSampleTime() Failed. errcode = 0x%x", hr);
+            return false;
+        }
+
+        m_LastTimeStamp = prevTimeStamp;
+        m_FrameIndex    = uint64_t(m_FrameRate * prevTimeStamp);
 
         // 表示タイミングでなければ終了.
         if (!isShow)
@@ -287,7 +312,7 @@ public:
 
         // バッファ取得.
         RefPtr<IMFMediaBuffer> buffer;
-        hr = m_Sample->GetBufferByIndex(0, buffer.GetAddress());
+        hr = m_Sample[m_BufferIndex]->GetBufferByIndex(0, buffer.GetAddress());
         if (FAILED(hr))
         {
             WLOGA("Warning : IMFSample::GetBufferByIndex() failed. errcode = 0x%x", hr);
@@ -383,7 +408,9 @@ public:
         }
 
         // 不要になったサンプルを解放.
-        m_Sample.Reset();
+        m_Sample[m_BufferIndex].Reset();
+
+        m_BufferIndex = nextId;
 
         // 正常終了.
         return true;
@@ -479,7 +506,7 @@ private:
     //=========================================================================
     std::atomic<uint32_t>   m_RefCount          = {};                   //!< 参照カウント.
     RefPtr<IMFSourceReader> m_Reader            = {};                   //!< ソースリーダー.
-    RefPtr<IMFSample>       m_Sample            = {};                   //!< サンプル.
+    RefPtr<IMFSample>       m_Sample[2]         = {};                   //!< サンプル.
     uint32_t                m_Width             = 0;                    //!< 横幅.
     uint32_t                m_Height            = 0;                    //!< 縦幅.
     DXGI_FORMAT             m_Format            = DXGI_FORMAT_UNKNOWN;  //!< フォーマット.
@@ -493,6 +520,7 @@ private:
     bool                    m_Finished          = false;                //!< 再生完了フラグ.
     bool                    m_CalcFrameCount    = false;                //!< フレーム数を計算フラグ.
     double                  m_PlayTimeSec       = 0.0;                  //!< 再生時間.
+    uint8_t                 m_BufferIndex       = 0;
 
     //=========================================================================
     // private variables.
