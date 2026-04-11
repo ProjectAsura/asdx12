@@ -244,6 +244,14 @@ int Font::CalcWidth(const char* text, float scale) const
     return Max(posX, maxX);
 }
 
+#if _HAS_CXX20
+//-----------------------------------------------------------------------------
+//      文字列の幅を計算します.
+//-----------------------------------------------------------------------------
+int Font::CalcWidth(const char8_t* text, float scale) const
+{ return CalcWidth(reinterpret_cast<const char*>(text), scale); }
+#endif
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // FontRenderer class

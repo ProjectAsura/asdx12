@@ -736,11 +736,11 @@ bool MovieTexture::Update(double elapsedTimeSec)
 {
     auto decoded = false;
     auto nextId  = (m_CurrIndex + 1) & 0x1;
+    m_PrevIndex  = m_CurrIndex;
     if (m_Stream->Read(m_Texture[nextId].GetPtr(), elapsedTimeSec))
     {
-        m_PrevIndex = m_CurrIndex;
         m_CurrIndex = nextId;
-        decoded = true;
+        decoded     = true;
     }
 
     return decoded;
