@@ -675,7 +675,7 @@ void SpriteRenderer::Draw(ID3D12GraphicsCommandList* pCmdList)
         pCmdList->SetGraphicsRoot32BitConstants(CBV1, 4, batch.Param, 0);
         pCmdList->DrawIndexedInstanced(batch.IndexCount, 1, batch.IndexOffset, 0, 0);
     }
-    m_SubmitCount += m_BatchCount;
+    m_SubmitCount = m_BatchCount;
 }
 
 //-----------------------------------------------------------------------------
