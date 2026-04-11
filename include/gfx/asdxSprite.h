@@ -31,7 +31,11 @@ public:
     //=========================================================================
     // public variables.
     //=========================================================================
-    /* NOTHING */
+    static const uint32_t CBV0      = 0;
+    static const uint32_t SRV0      = 1;
+    static const uint32_t Sampler0  = 2;
+    static const uint32_t CBV1      = 3;
+    static const uint32_t SRV1      = 4;
 
     //=========================================================================
     // public methods.
@@ -212,7 +216,7 @@ public:
     //! @retval true    生成に成功.
     //! @retval false   生成に失敗.
     //-------------------------------------------------------------------------
-    bool CreateSpriteState(
+    bool CreatePipelineState(
         ID3D12Device*                   pDevice,
         const D3D12_SHADER_BYTECODE&    pixelShader,
         bool                            preMultipliedAlpha,
@@ -255,6 +259,13 @@ public:
     //! @return     サンプラーハンドルを返却します.
     //-------------------------------------------------------------------------
     D3D12_GPU_DESCRIPTOR_HANDLE GetHandleSampler() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      ルートシグニチャを取得します.
+    //! 
+    //! @return     ルートシグニチャを返却します.
+    //-------------------------------------------------------------------------
+    ID3D12RootSignature* GetRootSignature() const;
 
 private:
     ///////////////////////////////////////////////////////////////////////////

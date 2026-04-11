@@ -313,7 +313,7 @@ bool SpriteRenderer::Init
 
     // ルートシグニチャの生成.
     {
-        D3D12_DESCRIPTOR_RANGE range[2] = {};
+        D3D12_DESCRIPTOR_RANGE range[3] = {};
         range[0].RangeType                          = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
         range[0].NumDescriptors                     = 1;
         range[0].BaseShaderRegister                 = 0;
@@ -326,7 +326,13 @@ bool SpriteRenderer::Init
         range[1].RegisterSpace                      = 0;
         range[1].OffsetInDescriptorsFromTableStart  = 0;
 
-        D3D12_ROOT_PARAMETER param[4] = {};
+        range[2].RangeType                          = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+        range[2].NumDescriptors                     = 1;
+        range[2].BaseShaderRegister                 = 1;
+        range[2].RegisterSpace                      = 0;
+        range[2].OffsetInDescriptorsFromTableStart  = 0;
+
+        D3D12_ROOT_PARAMETER param[5] = {};
         param[0].ParameterType              = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
         param[0].Constants.Num32BitValues   = 16;
         param[0].Constants.ShaderRegister   = 0;
@@ -348,6 +354,12 @@ bool SpriteRenderer::Init
         param[3].Constants.ShaderRegister   = 1;
         param[3].Constants.RegisterSpace    = 0;
         param[3].ShaderVisibility           = D3D12_SHADER_VISIBILITY_PIXEL;
+
+        // テクスチャ.
+        param[4].ParameterType                          = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+        param[4].DescriptorTable.NumDescriptorRanges    = 1;
+        param[4].DescriptorTable.pDescriptorRanges      = &range[2];
+        param[4].ShaderVisibility                       = D3D12_SHADER_VISIBILITY_PIXEL;
 
         D3D12_ROOT_SIGNATURE_DESC desc = {};
         desc.NumParameters      = _countof(param);
@@ -386,7 +398,7 @@ bool SpriteRenderer::Init
         m_DepthFormat = dsvFormat;
 
         D3D12_SHADER_BYTECODE ps = { asdxSpritePS, sizeof(asdxSpritePS) };
-        if (!CreateSpriteState(pDevice, ps, false, m_DefaultState.GetAddress()))
+        if (!CreatePipelineState(pDevice, ps, false, m_DefaultState.GetAddress()))
         { return false; }
 
         m_pCurrentState = m_DefaultState.GetPtr();
@@ -649,19 +661,18 @@ void SpriteRenderer::Draw(ID3D12GraphicsCommandList* pCmdList)
     ibv.SizeInBytes    = UINT(m_IB->GetDesc().Width);
     ibv.Format         = DXGI_FORMAT_R32_UINT;
 
-    pCmdList->SetGraphicsRootSignature(m_RootSig.GetPtr());
     pCmdList->IASetVertexBuffers(0, 1, &vbv);
     pCmdList->IASetIndexBuffer(&ibv);
     pCmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    pCmdList->SetGraphicsRoot32BitConstants(0, 16, &m_Transform, 0);
+    pCmdList->SetGraphicsRoot32BitConstants(CBV0, 16, &m_Transform, 0);
 
     for(auto i=m_SubmitCount; i<m_BatchCount; ++i)
     {
         auto& batch = m_Batches[i];
         pCmdList->SetPipelineState(batch.pState);
-        pCmdList->SetGraphicsRootDescriptorTable(1, batch.SRV);
-        pCmdList->SetGraphicsRootDescriptorTable(2, batch.Sampler);
-        pCmdList->SetGraphicsRoot32BitConstants(3, 4, batch.Param, 0);
+        pCmdList->SetGraphicsRootDescriptorTable(SRV0, batch.SRV);
+        pCmdList->SetGraphicsRootDescriptorTable(Sampler0, batch.Sampler);
+        pCmdList->SetGraphicsRoot32BitConstants(CBV1, 4, batch.Param, 0);
         pCmdList->DrawIndexedInstanced(batch.IndexCount, 1, batch.IndexOffset, 0, 0);
     }
     m_SubmitCount += m_BatchCount;
@@ -689,7 +700,7 @@ Vector4 SpriteRenderer::GetColor() const
 //-----------------------------------------------------------------------------
 //      スプライト描画用パイプラインステートを生成します.
 //-----------------------------------------------------------------------------
-bool SpriteRenderer::CreateSpriteState
+bool SpriteRenderer::CreatePipelineState
 (
     ID3D12Device*                   pDevice,
     const D3D12_SHADER_BYTECODE&    pixelShader,
@@ -763,5 +774,11 @@ D3D12_GPU_DESCRIPTOR_HANDLE SpriteRenderer::GetHandleSRV() const
 //-----------------------------------------------------------------------------
 D3D12_GPU_DESCRIPTOR_HANDLE SpriteRenderer::GetHandleSampler() const
 { return m_HandleSampler; }
+
+//-----------------------------------------------------------------------------
+//      ルートシグニチャを取得します.
+//-----------------------------------------------------------------------------
+ID3D12RootSignature* SpriteRenderer::GetRootSignature() const
+{ return m_RootSig.GetPtr(); }
 
 } // namespace asdx

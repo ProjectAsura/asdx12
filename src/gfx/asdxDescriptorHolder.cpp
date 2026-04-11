@@ -61,17 +61,17 @@ void DescriptorHolder::Reset()
 //-----------------------------------------------------------------------------
 //      CPUディスクリプタハンドルを取得します.
 //-----------------------------------------------------------------------------
-D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHolder::GetHandleCPU() const
+D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHolder::GetHandleCPU(uint32_t offset) const
 {
     D3D12_CPU_DESCRIPTOR_HANDLE result = {};
     if (m_Handle.IsValid())
     {
         switch(m_HeapType)
         {
-            case HEAP_RTV: { result = GetRtvDescriptorHeap()->GetHandleCPU(m_Handle); } break;
-            case HEAP_DSV: { result = GetDsvDescriptorHeap()->GetHandleCPU(m_Handle); } break;
-            case HEAP_RES: { result = GetResourceDescriptorHeap()->GetHandleCPU(m_Handle); } break;
-            case HEAP_SMP: { result = GetSamplerDescriptorHeap ()->GetHandleCPU(m_Handle); } break;
+            case HEAP_RTV: { result = GetRtvDescriptorHeap()->GetHandleCPU(m_Handle, offset); } break;
+            case HEAP_DSV: { result = GetDsvDescriptorHeap()->GetHandleCPU(m_Handle, offset); } break;
+            case HEAP_RES: { result = GetResourceDescriptorHeap()->GetHandleCPU(m_Handle, offset); } break;
+            case HEAP_SMP: { result = GetSamplerDescriptorHeap ()->GetHandleCPU(m_Handle, offset); } break;
             default: break;
         }
     }
@@ -81,15 +81,15 @@ D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHolder::GetHandleCPU() const
 //-----------------------------------------------------------------------------
 //      GPUディスクリプタハンドルを取得します.
 //-----------------------------------------------------------------------------
-D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHolder::GetHandleGPU() const
+D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHolder::GetHandleGPU(uint32_t offset) const
 {
     D3D12_GPU_DESCRIPTOR_HANDLE result = {};
     if (m_Handle.IsValid())
     {
         switch(m_HeapType)
         {
-            case HEAP_RES: { result = GetResourceDescriptorHeap()->GetHandleGPU(m_Handle); } break;
-            case HEAP_SMP: { result = GetSamplerDescriptorHeap ()->GetHandleGPU(m_Handle); } break;
+            case HEAP_RES: { result = GetResourceDescriptorHeap()->GetHandleGPU(m_Handle, offset); } break;
+            case HEAP_SMP: { result = GetSamplerDescriptorHeap ()->GetHandleGPU(m_Handle, offset); } break;
             default: break;
         }
     }
@@ -99,8 +99,8 @@ D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHolder::GetHandleGPU() const
 //-----------------------------------------------------------------------------
 //      バインドレス用インデックスを取得します.
 //-----------------------------------------------------------------------------
-uint32_t DescriptorHolder::GetIndex() const
-{ return m_Handle.GetOffset(); }
+uint32_t DescriptorHolder::GetIndex(uint32_t offset) const
+{ return m_Handle.GetOffset() + offset; }
 
 //-----------------------------------------------------------------------------
 //      有効かどうか判定します.

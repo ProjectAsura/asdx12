@@ -16,21 +16,28 @@
 #include <res/asdxResTexture.h>
 
 
-#define ASDX_FONT_FORMATTING \
+#define ASDX_FONT_FORMATTING            \
     assert(format != nullptr);          \
     char buffer[1024] = {};             \
     va_list arg;                        \
     va_start(arg, format);              \
     vsprintf_s(buffer, format, arg);    \
-    va_end(arg);                        \
+    va_end(arg);
 
-namespace { 
+#define ASDX_FONT_FORMATTING8                               \
+    assert(format != nullptr);                              \
+    char8_t buffer[1024] = {};                              \
+    va_list arg;                                            \
+    va_start(arg, reinterpret_cast<const char*>(format));   \
+    vsprintf_u8(buffer, sizeof(buffer), format, arg);       \
+    va_end(arg);
+
+namespace {
 
 //----------------------------------------------------------------------------
 // Constant Values.
 //----------------------------------------------------------------------------
 #include "../res/shaders/Compiled/asdxFontPS.inc"
-
 
 //----------------------------------------------------------------------------
 //      UTF-8からUTF-32に変換します.
@@ -89,6 +96,18 @@ bool ToUTF32(const char* &p, uint32_t &out)
     p  += len;
     out = cp;
     return true;
+}
+
+//-----------------------------------------------------------------------------
+//      char8_t 型用 vsprintf_s
+//-----------------------------------------------------------------------------
+int vsprintf_u8(char8_t* buffer, size_t size, const char8_t* format, va_list args)
+{
+    return vsprintf_s(
+        reinterpret_cast<char*>(buffer),
+        size,
+        reinterpret_cast<const char*>(format),
+        args);
 }
 
 } // namespace
@@ -260,7 +279,7 @@ bool FontRenderer::Init(SpriteRenderer& renderer)
     // パイプラインステートを生成します.
     {
         D3D12_SHADER_BYTECODE ps = { asdxFontPS, sizeof(asdxFontPS) };
-        if (!renderer.CreateSpriteState(pDevice, ps, true, m_PipelineState.GetAddress()))
+        if (!renderer.CreatePipelineState(pDevice, ps, true, m_PipelineState.GetAddress()))
         {
             ELOG("Error : PipelineState Init Failed.");
             return false;
@@ -378,6 +397,51 @@ void FontRenderer::AddFormat(SpriteRenderer& renderer, const Font& font, int x, 
     ASDX_FONT_FORMATTING
     Add(renderer, font, x, y, buffer);
 }
+
+#if _HAS_CXX20
+//-----------------------------------------------------------------------------
+//      スプライトフォントを追加します.
+//-----------------------------------------------------------------------------
+void FontRenderer::Add
+(
+    SpriteRenderer& renderer,
+    const Font&     font,
+    int             x,
+    int             y,
+    int             layer,
+    int*            outX,
+    int*            outY,
+    const char8_t*  text
+)
+{ return Add(renderer, font, x, y, layer, outX, outY, reinterpret_cast<const char*>(text)); }
+
+//-----------------------------------------------------------------------------
+//      フォーマットを指定してスプライトフォントを追加します.
+//-----------------------------------------------------------------------------
+void FontRenderer::AddFormat(SpriteRenderer& renderer, const Font& font, int x, int y, int layer, int* outX, int* outY, const char8_t* format, ...)
+{
+    ASDX_FONT_FORMATTING8
+    Add(renderer, font, x, y, layer, outX, outY, buffer);
+}
+
+//-----------------------------------------------------------------------------
+//      フォーマットを指定してスプライトフォントを追加します.
+//-----------------------------------------------------------------------------
+void FontRenderer::AddFormat(SpriteRenderer& renderer, const Font& font, int x, int y, int layer, const char8_t* format, ...)
+{
+    ASDX_FONT_FORMATTING8
+    Add(renderer, font, x, y, layer, buffer);
+}
+
+//-----------------------------------------------------------------------------
+//      フォーマットを指定してスプライトフォントを追加します.
+//-----------------------------------------------------------------------------
+void FontRenderer::AddFormat(SpriteRenderer& renderer, const Font& font, int x, int y, const char8_t* format, ...)
+{
+    ASDX_FONT_FORMATTING8
+    Add(renderer, font, x, y, buffer);
+}
+#endif
 
 //-----------------------------------------------------------------------------
 //      パイプラインステートを設定します.

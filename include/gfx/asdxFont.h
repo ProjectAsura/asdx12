@@ -247,6 +247,84 @@ public:
     //-------------------------------------------------------------------------
     void AddFormat(SpriteRenderer& renderer, const Font& font, int x, int y, const char* format, ...);
 
+#if _HAS_CXX20
+    //-------------------------------------------------------------------------
+    //! @brief      フォントスプライトを追加します.
+    //! 
+    //! @param[in]      renderer        スプライトレンダラー.
+    //! @param[in]      font            フォント.
+    //! @param[in]      x               描画位置のX成分.
+    //! @param[in]      y               描画位置のY成分.
+    //! @param[in]      layer           奥行方向.
+    //! @param[out]     outX            文字描画後のX成分
+    //! @param[out]     outY            文字描画後のY成分.
+    //! @param[in]      text            文字列.
+    //-------------------------------------------------------------------------
+    void Add(SpriteRenderer& renderer, const Font& font, int x, int y, int layer, int* outX, int* outY, const char8_t* text);
+
+    //-------------------------------------------------------------------------
+    //! @brief      フォントスプライトを追加します.
+    //! 
+    //! @param[in]      renderer        スプライトレンダラー.
+    //! @param[in]      font            フォント.
+    //! @param[in]      x               描画位置のX成分.
+    //! @param[in]      y               描画位置のY成分.
+    //! @param[in]      layer           奥行方向.
+    //! @param[in]      text            文字列.
+    //-------------------------------------------------------------------------
+    void Add(SpriteRenderer& renderer, const Font& font, int x, int y, int layer, const char8_t* text)
+    { Add(renderer, font, x, y, layer, nullptr, nullptr, text); }
+
+    //-------------------------------------------------------------------------
+    //! @brief      フォントスプライトを追加します.
+    //! 
+    //! @param[in]      renderer        スプライトレンダラー.
+    //! @param[in]      font            フォント.
+    //! @param[in]      x               描画位置のX成分.
+    //! @param[in]      y               描画位置のY成分.
+    //! @param[in]      text            文字列.
+    //-------------------------------------------------------------------------
+    void Add(SpriteRenderer& renderer, const Font& font, int x, int y, const char8_t* text)
+    { Add(renderer, font, x, y, 0, nullptr, nullptr, text); }
+
+    //-------------------------------------------------------------------------
+    //! @brief      フォーマットを指定してフォントスプライトを追加します.
+    //! 
+    //! @param[in]      renderer        スプライトレンダラー.
+    //! @param[in]      font            フォント.
+    //! @param[in]      x               描画位置のX成分.
+    //! @param[in]      y               描画位置のY成分.
+    //! @param[in]      layer           奥行方向.
+    //! @param[out]     outX            文字描画後のX成分
+    //! @param[out]     outY            文字描画後のY成分.
+    //! @param[in]      format          書式指定子.
+    //-------------------------------------------------------------------------
+    void AddFormat(SpriteRenderer& renderer, const Font& font, int x, int y, int layer, int* outX, int* outY, const char8_t* format, ...);
+
+    //-------------------------------------------------------------------------
+    //! @brief      フォーマットを指定してフォントスプライトを追加します.
+    //! 
+    //! @param[in]      renderer        スプライトレンダラー.
+    //! @param[in]      font            フォント.
+    //! @param[in]      x               描画位置のX成分.
+    //! @param[in]      y               描画位置のY成分.
+    //! @param[in]      layer           奥行方向.
+    //! @param[in]      format          書式指定子.
+    //-------------------------------------------------------------------------
+    void AddFormat(SpriteRenderer& renderer, const Font& font, int x, int y, int layer, const char8_t* format, ...);
+
+    //-------------------------------------------------------------------------
+    //! @brief      フォーマットを指定してフォントスプライトを追加します.
+    //! 
+    //! @param[in]      renderer        スプライトレンダラー.
+    //! @param[in]      font            フォント.
+    //! @param[in]      x               描画位置のX成分.
+    //! @param[in]      y               描画位置のY成分.
+    //! @param[in]      format          書式指定子.
+    //-------------------------------------------------------------------------
+    void AddFormat(SpriteRenderer& renderer, const Font& font, int x, int y, const char8_t* format, ...);
+#endif
+
     //-------------------------------------------------------------------------
     //! @brief      パイプラインステートを設定します.
     //! 
