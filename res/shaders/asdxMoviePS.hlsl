@@ -61,7 +61,9 @@ float4 main(const VSOutput iput) : SV_TARGET
  
     float4 result = 0.0f.xxxx;
     result.rgb = YPbPrToRGB(float3(y, uv));
+#if 0
     result.rgb = SRGB_To_Linear(result.rgb);
+#endif
     result.a = 1.0f;
 
     return result;
