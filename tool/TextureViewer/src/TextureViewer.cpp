@@ -494,7 +494,7 @@ void TextureViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
         auto w = (m_Width  < meta.width)  ? m_Width  : meta.width;
         auto h = (m_Height < meta.height) ? m_Height : meta.height;
 
-        m_SpriteRenderer.SetPipelineState(pCmd);
+        pCmd->SetGraphicsRootSignature(m_SpriteRenderer.GetRootSignature());
         m_SpriteRenderer.SetTexture(m_Texture->GetHandleGPU(), m_PointClamp.GetHandleGPU());
         m_SpriteRenderer.Add(0, 0, int(w), int(h));
     }
