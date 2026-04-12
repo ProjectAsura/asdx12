@@ -240,6 +240,7 @@
     <ClCompile Include="..\src\gfx\asdxAllocationHolder.cpp" />
     <ClCompile Include="..\src\gfx\asdxBuffer.cpp" />
     <ClCompile Include="..\src\gfx\asdxCamera.cpp" />
+    <ClCompile Include="..\src\gfx\asdxColorFilter.cpp" />
     <ClCompile Include="..\src\gfx\asdxCommandList.cpp" />
     <ClCompile Include="..\src\gfx\asdxCommandQueue.cpp" />
     <ClCompile Include="..\src\gfx\asdxDescriptorHeap.cpp" />
@@ -349,6 +350,7 @@
     <ClInclude Include="..\include\gfx\asdxAllocationHolder.h" />
     <ClInclude Include="..\include\gfx\asdxBuffer.h" />
     <ClInclude Include="..\include\gfx\asdxCamera.h" />
+    <ClInclude Include="..\include\gfx\asdxColorFilter.h" />
     <ClInclude Include="..\include\gfx\asdxCommandList.h" />
     <ClInclude Include="..\include\gfx\asdxCommandQueue.h" />
     <ClInclude Include="..\include\gfx\asdxDescriptorHeap.h" />
@@ -412,6 +414,12 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMT|x64'">Compute</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMD|x64'">Compute</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMD|x64'">Compute</ShaderType>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxColorFilterPS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMT|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMT|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMD|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMD|x64'">Pixel</ShaderType>
     </FxCompile>
     <FxCompile Include="..\res\shaders\asdxCopyPS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMT|x64'">Pixel</ShaderType>
