@@ -1,6 +1,6 @@
 ﻿//-----------------------------------------------------------------------------
-// File : asdxColorFilter.cpp
-// Desc : Color Filter.
+// File : asdxColorCorrectionEffect.cpp
+// Desc : Color Correction Effect.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 
@@ -8,7 +8,7 @@
 // Includes.
 //-----------------------------------------------------------------------------
 #include <fnd/asdxLogger.h>
-#include <gfx/asdxColorFilter.h>
+#include <gfx/asdxColorCorrectionEffect.h>
 #include <gfx/asdxDevice.h>
 #include <gfx/asdxPresetState.h>
 
@@ -23,14 +23,13 @@ namespace {
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// Param structure
+// Param1 structure
 ///////////////////////////////////////////////////////////////////////////////
-struct alignas(256) Param
+struct Param1
 {
     uint32_t        Width;
     uint32_t        Height;
     asdx::Vector2   InvSize;
-    asdx::Matrix    ColorMatrix;
 };
 
 } // namespace
@@ -38,25 +37,25 @@ struct alignas(256) Param
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
-// ColorFilter class
+// ColorCorrectionEffect class
 ///////////////////////////////////////////////////////////////////////////////
 
 //-----------------------------------------------------------------------------
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
-ColorFilter::ColorFilter()
+ColorCorrectionEffect::ColorCorrectionEffect()
 { ResetValues(); }
 
 //-----------------------------------------------------------------------------
 //      デストラクタです.
 //-----------------------------------------------------------------------------
-ColorFilter::~ColorFilter()
+ColorCorrectionEffect::~ColorCorrectionEffect()
 { Term(); }
 
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool ColorFilter::Init(DXGI_FORMAT rtvFormat)
+bool ColorCorrectionEffect::Init(DXGI_FORMAT rtvFormat)
 {
     auto pDevice = asdx::GetD3D12Device();
 
@@ -75,21 +74,28 @@ bool ColorFilter::Init(DXGI_FORMAT rtvFormat)
         range[1].RegisterSpace                      = 0;
         range[1].OffsetInDescriptorsFromTableStart  = 0;
 
-        D3D12_ROOT_PARAMETER param[3] = {};
-        param[0].ParameterType              = D3D12_ROOT_PARAMETER_TYPE_CBV;
-        param[0].Descriptor.ShaderRegister  = 0;
-        param[0].Descriptor.RegisterSpace   = 0;
+        D3D12_ROOT_PARAMETER param[4] = {};
+        param[0].ParameterType              = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+        param[0].Constants.Num32BitValues   = 16;
+        param[0].Constants.ShaderRegister   = 0;
+        param[0].Constants.RegisterSpace    = 0;
         param[0].ShaderVisibility           = D3D12_SHADER_VISIBILITY_ALL;
 
-        param[1].ParameterType                          = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-        param[1].DescriptorTable.NumDescriptorRanges    = 1;
-        param[1].DescriptorTable.pDescriptorRanges      = &range[0];
-        param[1].ShaderVisibility                       = D3D12_SHADER_VISIBILITY_ALL;
+        param[1].ParameterType              = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+        param[1].Constants.Num32BitValues   = 4;
+        param[1].Constants.ShaderRegister   = 1;
+        param[1].Constants.RegisterSpace    = 0;
+        param[1].ShaderVisibility           = D3D12_SHADER_VISIBILITY_ALL;
 
         param[2].ParameterType                          = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
         param[2].DescriptorTable.NumDescriptorRanges    = 1;
-        param[2].DescriptorTable.pDescriptorRanges      = &range[1];
+        param[2].DescriptorTable.pDescriptorRanges      = &range[0];
         param[2].ShaderVisibility                       = D3D12_SHADER_VISIBILITY_ALL;
+
+        param[3].ParameterType                          = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+        param[3].DescriptorTable.NumDescriptorRanges    = 1;
+        param[3].DescriptorTable.pDescriptorRanges      = &range[1];
+        param[3].ShaderVisibility                       = D3D12_SHADER_VISIBILITY_ALL;
 
         D3D12_ROOT_SIGNATURE_DESC desc = {};
         desc.NumParameters      = _countof(param);
@@ -163,16 +169,6 @@ bool ColorFilter::Init(DXGI_FORMAT rtvFormat)
         }
     }
 
-    // 定数バッファ初期化.
-    {
-        auto size = sizeof(Param);
-        if (!m_Buffer.Init(size))
-        {
-            ELOGA("Error : DoubledConstantBuffer::Init() Failed.");
-            return false;
-        }
-    }
-
     // 正常終了.
     return true;
 }
@@ -180,37 +176,34 @@ bool ColorFilter::Init(DXGI_FORMAT rtvFormat)
 //-----------------------------------------------------------------------------
 //      終了処理を行います.
 //-----------------------------------------------------------------------------
-void ColorFilter::Term()
+void ColorCorrectionEffect::Term()
 {
     m_GraphicsPSO  .Reset();
     m_ComputePSO   .Reset();
     m_RootSignature.Reset();
-    m_Buffer       .Term();
 }
 
 //-----------------------------------------------------------------------------
 //      描画処理を行います.
 //-----------------------------------------------------------------------------
-void ColorFilter::Draw(ID3D12GraphicsCommandList* pCmd, D3D12_GPU_DESCRIPTOR_HANDLE handleSRV)
+void ColorCorrectionEffect::Draw(ID3D12GraphicsCommandList* pCmd, D3D12_GPU_DESCRIPTOR_HANDLE handleSRV)
 {
     if (pCmd == nullptr || handleSRV.ptr == 0)
         return;
 
-    Param param = {};
-    param.ColorMatrix = CalcColorMatrix();
-    m_Buffer.Update(&param, sizeof(param));
+    auto matrix = CalcColorMatrix();
 
     pCmd->SetGraphicsRootSignature(m_RootSignature.GetPtr());
     pCmd->SetPipelineState(m_GraphicsPSO.GetPtr());
-    pCmd->SetGraphicsRootConstantBufferView(0, m_Buffer.GetGpuAddress());
-    pCmd->SetGraphicsRootDescriptorTable(1, handleSRV);
+    pCmd->SetGraphicsRoot32BitConstants(0, 16, &matrix._11, 0);
+    pCmd->SetGraphicsRootDescriptorTable(2, handleSRV);
     DrawQuad(pCmd);
 }
 
 //-----------------------------------------------------------------------------
 //      コンピュートシェーダを起動します.
 //-----------------------------------------------------------------------------
-void ColorFilter::Dispatch
+void ColorCorrectionEffect::Dispatch
 (
     ID3D12GraphicsCommandList*  pCmd,
     uint32_t                    width,
@@ -222,19 +215,20 @@ void ColorFilter::Dispatch
     if (pCmd == nullptr || width == 0 || height == 0 || handleUAV.ptr == 0 || handleSRV.ptr == 0)
         return;
 
-    Param param = {};
+    auto matrix = CalcColorMatrix();
+
+    Param1 param = {};
     param.Width         = width;
     param.Height        = height;
     param.InvSize.x     = 1.0f / float(width);
     param.InvSize.y     = 1.0f / float(height);
-    param.ColorMatrix   = CalcColorMatrix();
-    m_Buffer.Update(&param, sizeof(param));
 
     pCmd->SetComputeRootSignature(m_RootSignature.GetPtr());
     pCmd->SetPipelineState(m_ComputePSO.GetPtr());
-    pCmd->SetComputeRootConstantBufferView(0, m_Buffer.GetGpuAddress());
-    pCmd->SetComputeRootDescriptorTable(1, handleSRV);
-    pCmd->SetComputeRootDescriptorTable(2, handleUAV);
+    pCmd->SetComputeRoot32BitConstants(0, 16, &matrix._11, 0);
+    pCmd->SetComputeRoot32BitConstants(1, 4, &param, 0);
+    pCmd->SetComputeRootDescriptorTable(2, handleSRV);
+    pCmd->SetComputeRootDescriptorTable(3, handleUAV);
 
     auto threadX = (width  + 7) / 8;
     auto threadY = (height + 7) / 8;
@@ -244,13 +238,13 @@ void ColorFilter::Dispatch
 //-----------------------------------------------------------------------------
 //      明度調整値を設定します.
 //-----------------------------------------------------------------------------
-void ColorFilter::SetBrightness(float value)
+void ColorCorrectionEffect::SetBrightness(float value)
 { m_Brightness = value; }
 
 //-----------------------------------------------------------------------------
 //      彩度調整値を設定します.
 //-----------------------------------------------------------------------------
-void ColorFilter::SetSaturation(float value)
+void ColorCorrectionEffect::SetSaturation(float value)
 {
     m_Saturation.x = value;
     m_Saturation.y = value;
@@ -260,85 +254,85 @@ void ColorFilter::SetSaturation(float value)
 //-----------------------------------------------------------------------------
 //      彩度調整値を設定します.
 //-----------------------------------------------------------------------------
-void ColorFilter::SetSaturation(const Vector3& value)
+void ColorCorrectionEffect::SetSaturation(const Vector3& value)
 { m_Saturation = value; }
 
 //-----------------------------------------------------------------------------
 //      コントラスト調整値を設定します.
 //-----------------------------------------------------------------------------
-void ColorFilter::SetContrast(float value)
+void ColorCorrectionEffect::SetContrast(float value)
 { m_Contrast = value; }
 
 //-----------------------------------------------------------------------------
 //      色相調整値を設定します.
 //-----------------------------------------------------------------------------
-void ColorFilter::SetHueDegree(float value)
+void ColorCorrectionEffect::SetHueDegree(float value)
 { m_HueDegree = value; }
 
 //-----------------------------------------------------------------------------
 //      セピアトーン調整値を設定します.
 //-----------------------------------------------------------------------------
-void ColorFilter::SetSepiaTone(float value)
+void ColorCorrectionEffect::SetSepiaTone(float value)
 { m_SepiaTone = asdx::Saturate(value); }
 
 //-----------------------------------------------------------------------------
 //      グレースケール調整値を設定します.
 //-----------------------------------------------------------------------------
-void ColorFilter::SetGrayScale(float value)
+void ColorCorrectionEffect::SetGrayScale(float value)
 { m_GrayScale = asdx::Saturate(value); }
 
 //-----------------------------------------------------------------------------
 //      色反転フラグを設定します.
 //-----------------------------------------------------------------------------
-void ColorFilter::SetReverse(bool value)
+void ColorCorrectionEffect::SetReverse(bool value)
 { m_Reverse = value; }
 
 //-----------------------------------------------------------------------------
 //      明度調整値を取得します.
 //-----------------------------------------------------------------------------
-float ColorFilter::GetBrightness() const
+float ColorCorrectionEffect::GetBrightness() const
 { return m_Brightness; }
 
 //-----------------------------------------------------------------------------
 //      彩度調整値を取得します.
 //-----------------------------------------------------------------------------
-const Vector3& ColorFilter::GetSaturation() const
+const Vector3& ColorCorrectionEffect::GetSaturation() const
 { return m_Saturation; }
 
 //-----------------------------------------------------------------------------
 //      コントラスト調整値を取得します.
 //-----------------------------------------------------------------------------
-float ColorFilter::GetContrast() const
+float ColorCorrectionEffect::GetContrast() const
 { return m_Contrast; }
 
 //-----------------------------------------------------------------------------
 //      色相調整値を取得します.
 //-----------------------------------------------------------------------------
-float ColorFilter::GetHueDegree() const
+float ColorCorrectionEffect::GetHueDegree() const
 { return m_HueDegree; }
 
 //-----------------------------------------------------------------------------
 //      セピアトーン調整値を取得します.
 //-----------------------------------------------------------------------------
-float ColorFilter::GetSepiaTone() const
+float ColorCorrectionEffect::GetSepiaTone() const
 { return m_SepiaTone; }
 
 //-----------------------------------------------------------------------------
 //      グレースケール調整値を取得します.
 //-----------------------------------------------------------------------------
-float ColorFilter::GetGrayScale() const
+float ColorCorrectionEffect::GetGrayScale() const
 { return m_GrayScale; }
 
 //-----------------------------------------------------------------------------
 //      色反転フラグを取得します.
 //-----------------------------------------------------------------------------
-bool ColorFilter::IsReverse() const
+bool ColorCorrectionEffect::IsReverse() const
 { return m_Reverse; }
 
 //-----------------------------------------------------------------------------
 //      調整値をリセットします.
 //-----------------------------------------------------------------------------
-void ColorFilter::ResetValues()
+void ColorCorrectionEffect::ResetValues()
 {
     m_Saturation = Vector3(1.0f, 1.0f, 1.0f);
     m_AddColor   = Vector3(0.0f, 0.0f, 0.0f);
@@ -354,7 +348,7 @@ void ColorFilter::ResetValues()
 //-----------------------------------------------------------------------------
 //      カラー行列を計算します.
 //-----------------------------------------------------------------------------
-Matrix ColorFilter::CalcColorMatrix() const
+Matrix ColorCorrectionEffect::CalcColorMatrix() const
 {
     Matrix result = Matrix::CreateIdentity();
 

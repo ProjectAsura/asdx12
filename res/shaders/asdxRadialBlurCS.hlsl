@@ -1,6 +1,6 @@
-//-----------------------------------------------------------------------------
-// File : asdxColorFilterCS.hlsl
-// Desc : Compute Shader for Color Filter.
+﻿//-----------------------------------------------------------------------------
+// File : asdxRadialBlurCS.hlsl
+// Desc : Compute Shader for Radial Blur.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 
@@ -8,23 +8,27 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include "asdxComputeUtil.hlsli"
+#include "asdxRandom.hlsli"
+#include "asdxSamplers.hlsli"
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// CbParam0 constant buffer.
+// CbParam constant buffers.
 ///////////////////////////////////////////////////////////////////////////////
 cbuffer CbParam0 : register(b0)
 {
-    float4x4    ColorMatrix;
+    float2 Center;
+    float  Strength;
+    uint   SampleCount;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-// CbParam1 constant buffer.
+// CbParam1 constant buffers.
 ///////////////////////////////////////////////////////////////////////////////
 cbuffer CbParam1 : register(b1)
 {
-    uint2       TargetSize;
-    float2      InvTargetSize;
+    uint2   InputSize;
+    uint2   OutputSize;
 };
 
 //-----------------------------------------------------------------------------
@@ -34,7 +38,7 @@ Texture2D<float4>   Input   : register(t0);
 RWTexture2D<float4> Output  : register(u0);
 
 //-----------------------------------------------------------------------------
-//      ���C���G���g���[�|�C���g�ł�.
+//      メインエントリーポイントです.
 //-----------------------------------------------------------------------------
 [numthreads(8, 8, 1)]
 void main
@@ -44,8 +48,30 @@ void main
 )
 {
     uint2 remappedId = RemapLane8x8(dispatchId.xy, groupIndex);
-    if (any(remappedId >= TargetSize)) 
+    if (any(remappedId >= OutputSize)) 
     { return; }
+ 
+    float2 inputTexCoord = remappedId / float2(OutputSize);
 
-    Output[remappedId] = mul(ColorMatrix, Input[remappedId]);
+    float4 output = float4(0.0f, 0.0f, 0.0f, 0.0f);
+    const float2 center = float2(Center.x, 1.0f - Center.y);
+
+    // サンプルオフセットを計算.
+    float2 uvOffset = (center - inputTexCoord) * (Strength / float2(InputSize));
+    uvOffset.x *= (float(InputSize.x) / float(InputSize.y)); // アスペクト比を考慮.
+ 
+    // サンプル重み.
+    const float kWeight = 1.0f / SampleCount;
+ 
+    // Stochastic Sampling
+    const float kNoise  = InterleavedGradientNoise(float2(remappedId));
+
+    [loop]
+    for(uint i=0; i<SampleCount; ++i)
+    {
+        float2 uv = inputTexCoord + uvOffset * i * (1.0f + kNoise);
+        output += Input.SampleLevel(LinearClamp, uv, 0.0f) * kWeight;
+    }
+
+    Output[remappedId] = output;
 }

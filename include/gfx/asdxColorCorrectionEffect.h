@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------------
+﻿//----------------------------------------------------------------------------
 // File : asdxColorFilter.h
 // Desc : Color Filter.
 // Copyright(c) Project Asura. All right reserved.
@@ -11,15 +11,14 @@
 #include <d3d12.h>
 #include <fnd/asdxRef.h>
 #include <fnd/asdxMath.h>
-#include <gfx/asdxBuffer.h>
 
 
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
-// ColorFilter class
+// ColorCorrectionEffect class
 ///////////////////////////////////////////////////////////////////////////////
-class ColorFilter
+class ColorCorrectionEffect
 {
     //=========================================================================
     // list of friend classes and methods.
@@ -39,17 +38,17 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      コンストラクタです.
     //-------------------------------------------------------------------------
-    ColorFilter();
+    ColorCorrectionEffect();
 
     //-------------------------------------------------------------------------
     //! @brief      デストラクタです.
     //-------------------------------------------------------------------------
-    ~ColorFilter();
+    ~ColorCorrectionEffect();
 
     //-------------------------------------------------------------------------
     //! @brief      初期化処理を行います.
     //! 
-    //! @param[in]      rtvFormat       レンダーターゲットビューフォーマット.
+    //! @param[in]      rtvFormat       レンダーターゲットビューのフォーマット.
     //! @retval true    初期化に成功.
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
@@ -171,7 +170,6 @@ private:
     RefPtr<ID3D12RootSignature> m_RootSignature;
     RefPtr<ID3D12PipelineState> m_GraphicsPSO;
     RefPtr<ID3D12PipelineState> m_ComputePSO;
-    DoubledConstantBuffer       m_Buffer;
     Vector3                     m_Saturation    = Vector3(1.0f, 1.0f, 1.0f);
     Vector3                     m_AddColor      = Vector3(0.0f, 0.0f, 0.0f);
     Vector3                     m_MulColor      = Vector3(1.0f, 1.0f, 1.0f);

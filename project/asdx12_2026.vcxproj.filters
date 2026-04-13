@@ -402,7 +402,10 @@
     <ClCompile Include="..\src\gfx\asdxMovie.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxColorFilter.cpp">
+    <ClCompile Include="..\src\gfx\asdxColorCorrectionEffect.cpp">
+      <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gfx\asdxRadialBlurEffect.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
   </ItemGroup>
@@ -737,8 +740,11 @@
     <ClInclude Include="..\include\gfx\asdxMovie.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\gfx\asdxColorFilter.h">
+    <ClInclude Include="..\include\gfx\asdxColorCorrectionEffect.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\gfx\asdxRadialBlurEffect.h">
+      <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -865,6 +871,12 @@
       <Filter>リソース ファイル\shaders</Filter>
     </FxCompile>
     <FxCompile Include="..\res\shaders\asdxColorFilterPS.hlsl">
+      <Filter>リソース ファイル\shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxRadialBlurCS.hlsl">
+      <Filter>リソース ファイル\shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxRadialBlurPS.hlsl">
       <Filter>リソース ファイル\shaders</Filter>
     </FxCompile>
   </ItemGroup>
