@@ -74,3 +74,18 @@ struct Padding<0> {};
 #ifndef ASDX_PADDING
 #define ASDX_PADDING(size)     asdx::Padding<size> ASDX_UNIQUE_NAME(padding_)
 #endif//ASDX_PADDING
+
+#if ASDX_DEBUG
+constexpr bool kDebugCodeBlock = true;
+#else
+constexpr bool kDebugCodeBlock = false;
+#endif
+
+#ifndef ASDX_DEBUG_BLOCK
+#define ASDX_DEBUG_BLOCK    if constexpr (kDebugCodeBlock)
+#endif//ASDX_DEBUG_BLOCK
+
+#ifndef ASDX_RELEASE_BLOCK
+#define ASDX_RELEASE_BLOCK  if constexpr (!kDebugCodeBlock)
+#endif//ASDX_RELEASE_BLOCK
+
