@@ -1,6 +1,6 @@
 ﻿//-----------------------------------------------------------------------------
-// File : asdxColorCorrectionEffect.cpp
-// Desc : Color Correction Effect.
+// File : asdxColorEffect.cpp
+// Desc : Color Effect.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 
@@ -8,7 +8,7 @@
 // Includes.
 //-----------------------------------------------------------------------------
 #include <fnd/asdxLogger.h>
-#include <gfx/asdxColorCorrectionEffect.h>
+#include <gfx/asdxColorEffect.h>
 #include <gfx/asdxDevice.h>
 #include <gfx/asdxPresetState.h>
 
@@ -37,25 +37,45 @@ struct Param1
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
-// ColorCorrectionEffect class
+// ColorEffect::Param structure
+///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      パラメータをリセットします.
+//-----------------------------------------------------------------------------
+void ColorEffect::Param::Reset()
+{
+    Saturation = Vector3(1.0f, 1.0f, 1.0f);
+    AddColor   = Vector3(0.0f, 0.0f, 0.0f);
+    MulColor   = Vector3(1.0f, 1.0f, 1.0f);
+    Brightness = 1.0f;
+    Contrast   = 1.0f;
+    HueDegree  = 0.0f;
+    SepiaTone  = 0.0f;
+    GrayScale  = 0.0f;
+    Reverse    = false;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// ColorEffect class
 ///////////////////////////////////////////////////////////////////////////////
 
 //-----------------------------------------------------------------------------
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
-ColorCorrectionEffect::ColorCorrectionEffect()
-{ ResetValues(); }
+ColorEffect::ColorEffect()
+{ /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      デストラクタです.
 //-----------------------------------------------------------------------------
-ColorCorrectionEffect::~ColorCorrectionEffect()
+ColorEffect::~ColorEffect()
 { Term(); }
 
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool ColorCorrectionEffect::Init(DXGI_FORMAT rtvFormat)
+bool ColorEffect::Init(DXGI_FORMAT rtvFormat)
 {
     auto pDevice = asdx::GetD3D12Device();
 
@@ -169,6 +189,8 @@ bool ColorCorrectionEffect::Init(DXGI_FORMAT rtvFormat)
         }
     }
 
+    m_Param.Reset();
+
     // 正常終了.
     return true;
 }
@@ -176,7 +198,7 @@ bool ColorCorrectionEffect::Init(DXGI_FORMAT rtvFormat)
 //-----------------------------------------------------------------------------
 //      終了処理を行います.
 //-----------------------------------------------------------------------------
-void ColorCorrectionEffect::Term()
+void ColorEffect::Term()
 {
     m_GraphicsPSO  .Reset();
     m_ComputePSO   .Reset();
@@ -186,7 +208,7 @@ void ColorCorrectionEffect::Term()
 //-----------------------------------------------------------------------------
 //      描画処理を行います.
 //-----------------------------------------------------------------------------
-void ColorCorrectionEffect::Draw(ID3D12GraphicsCommandList* pCmd, D3D12_GPU_DESCRIPTOR_HANDLE handleSRV)
+void ColorEffect::Draw(ID3D12GraphicsCommandList* pCmd, D3D12_GPU_DESCRIPTOR_HANDLE handleSRV)
 {
     if (pCmd == nullptr || handleSRV.ptr == 0)
         return;
@@ -203,7 +225,7 @@ void ColorCorrectionEffect::Draw(ID3D12GraphicsCommandList* pCmd, D3D12_GPU_DESC
 //-----------------------------------------------------------------------------
 //      コンピュートシェーダを起動します.
 //-----------------------------------------------------------------------------
-void ColorCorrectionEffect::Dispatch
+void ColorEffect::Dispatch
 (
     ID3D12GraphicsCommandList*  pCmd,
     uint32_t                    width,
@@ -236,130 +258,32 @@ void ColorCorrectionEffect::Dispatch
 }
 
 //-----------------------------------------------------------------------------
-//      明度調整値を設定します.
+//      制御パラメータを設定します.
 //-----------------------------------------------------------------------------
-void ColorCorrectionEffect::SetBrightness(float value)
-{ m_Brightness = value; }
+void ColorEffect::SetParam(const ColorEffect::Param& value)
+{ m_Param = value; }
 
 //-----------------------------------------------------------------------------
-//      彩度調整値を設定します.
+//      制御パラメータを取得します.
 //-----------------------------------------------------------------------------
-void ColorCorrectionEffect::SetSaturation(float value)
-{
-    m_Saturation.x = value;
-    m_Saturation.y = value;
-    m_Saturation.z = value;
-}
-
-//-----------------------------------------------------------------------------
-//      彩度調整値を設定します.
-//-----------------------------------------------------------------------------
-void ColorCorrectionEffect::SetSaturation(const Vector3& value)
-{ m_Saturation = value; }
-
-//-----------------------------------------------------------------------------
-//      コントラスト調整値を設定します.
-//-----------------------------------------------------------------------------
-void ColorCorrectionEffect::SetContrast(float value)
-{ m_Contrast = value; }
-
-//-----------------------------------------------------------------------------
-//      色相調整値を設定します.
-//-----------------------------------------------------------------------------
-void ColorCorrectionEffect::SetHueDegree(float value)
-{ m_HueDegree = value; }
-
-//-----------------------------------------------------------------------------
-//      セピアトーン調整値を設定します.
-//-----------------------------------------------------------------------------
-void ColorCorrectionEffect::SetSepiaTone(float value)
-{ m_SepiaTone = asdx::Saturate(value); }
-
-//-----------------------------------------------------------------------------
-//      グレースケール調整値を設定します.
-//-----------------------------------------------------------------------------
-void ColorCorrectionEffect::SetGrayScale(float value)
-{ m_GrayScale = asdx::Saturate(value); }
-
-//-----------------------------------------------------------------------------
-//      色反転フラグを設定します.
-//-----------------------------------------------------------------------------
-void ColorCorrectionEffect::SetReverse(bool value)
-{ m_Reverse = value; }
-
-//-----------------------------------------------------------------------------
-//      明度調整値を取得します.
-//-----------------------------------------------------------------------------
-float ColorCorrectionEffect::GetBrightness() const
-{ return m_Brightness; }
-
-//-----------------------------------------------------------------------------
-//      彩度調整値を取得します.
-//-----------------------------------------------------------------------------
-const Vector3& ColorCorrectionEffect::GetSaturation() const
-{ return m_Saturation; }
-
-//-----------------------------------------------------------------------------
-//      コントラスト調整値を取得します.
-//-----------------------------------------------------------------------------
-float ColorCorrectionEffect::GetContrast() const
-{ return m_Contrast; }
-
-//-----------------------------------------------------------------------------
-//      色相調整値を取得します.
-//-----------------------------------------------------------------------------
-float ColorCorrectionEffect::GetHueDegree() const
-{ return m_HueDegree; }
-
-//-----------------------------------------------------------------------------
-//      セピアトーン調整値を取得します.
-//-----------------------------------------------------------------------------
-float ColorCorrectionEffect::GetSepiaTone() const
-{ return m_SepiaTone; }
-
-//-----------------------------------------------------------------------------
-//      グレースケール調整値を取得します.
-//-----------------------------------------------------------------------------
-float ColorCorrectionEffect::GetGrayScale() const
-{ return m_GrayScale; }
-
-//-----------------------------------------------------------------------------
-//      色反転フラグを取得します.
-//-----------------------------------------------------------------------------
-bool ColorCorrectionEffect::IsReverse() const
-{ return m_Reverse; }
-
-//-----------------------------------------------------------------------------
-//      調整値をリセットします.
-//-----------------------------------------------------------------------------
-void ColorCorrectionEffect::ResetValues()
-{
-    m_Saturation = Vector3(1.0f, 1.0f, 1.0f);
-    m_AddColor   = Vector3(0.0f, 0.0f, 0.0f);
-    m_MulColor   = Vector3(1.0f, 1.0f, 1.0f);
-    m_Brightness = 1.0f;
-    m_Contrast   = 1.0f;
-    m_HueDegree  = 0.0f;
-    m_SepiaTone  = 0.0f;
-    m_GrayScale  = 0.0f;
-    m_Reverse    = false;
-}
+const ColorEffect::Param& ColorEffect::GetParam() const
+{ return m_Param; }
 
 //-----------------------------------------------------------------------------
 //      カラー行列を計算します.
 //-----------------------------------------------------------------------------
-Matrix ColorCorrectionEffect::CalcColorMatrix() const
+Matrix ColorEffect::CalcColorMatrix() const
 {
     Matrix result = Matrix::CreateIdentity();
 
-    auto mtxHue         = Matrix::CreateHueMatrix(m_HueDegree);
-    auto mtxSaturation  = Matrix::CreateSaturationMatrix(m_Saturation.x, m_Saturation.y, m_Saturation.z);
-    auto mtxBrightness  = Matrix::CreateBrightnessMatrix(m_Brightness);
-    auto mtxContrast    = Matrix::CreateContrastMatrix(m_Contrast);
-    auto mtxGrayScale   = Matrix::CreateGrayScaleMatrix(m_GrayScale);
-    auto mtxSepiaTone   = Matrix::CreateSepiaMatrix(m_SepiaTone);
-    auto mtxScale       = Matrix::CreateScale(m_MulColor);
-    auto mtxAdd         = Matrix::CreateTranslation(m_AddColor);
+    auto mtxHue         = Matrix::CreateHueMatrix(m_Param.HueDegree);
+    auto mtxSaturation  = Matrix::CreateSaturationMatrix(m_Param.Saturation.x, m_Param.Saturation.y, m_Param.Saturation.z);
+    auto mtxBrightness  = Matrix::CreateBrightnessMatrix(m_Param.Brightness);
+    auto mtxContrast    = Matrix::CreateContrastMatrix(m_Param.Contrast);
+    auto mtxGrayScale   = Matrix::CreateGrayScaleMatrix(m_Param.GrayScale);
+    auto mtxSepiaTone   = Matrix::CreateSepiaMatrix(m_Param.SepiaTone);
+    auto mtxScale       = Matrix::CreateScale(m_Param.MulColor);
+    auto mtxAdd         = Matrix::CreateTranslation(m_Param.AddColor);
 
     result = Matrix::Multiply(mtxHue,        result);
     result = Matrix::Multiply(mtxSaturation, result);
@@ -368,7 +292,7 @@ Matrix ColorCorrectionEffect::CalcColorMatrix() const
     result = Matrix::Multiply(mtxGrayScale,  result);
     result = Matrix::Multiply(mtxSepiaTone,  result);
 
-    if (m_Reverse)
+    if (m_Param.Reverse)
     {
         auto mtxReverse = Matrix::CreateReverseColorMatrix();
         result = Matrix::Multiply(mtxReverse, result);

@@ -240,7 +240,7 @@
     <ClCompile Include="..\src\gfx\asdxAllocationHolder.cpp" />
     <ClCompile Include="..\src\gfx\asdxBuffer.cpp" />
     <ClCompile Include="..\src\gfx\asdxCamera.cpp" />
-    <ClCompile Include="..\src\gfx\asdxColorCorrectionEffect.cpp" />
+    <ClCompile Include="..\src\gfx\asdxColorEffect.cpp" />
     <ClCompile Include="..\src\gfx\asdxCommandList.cpp" />
     <ClCompile Include="..\src\gfx\asdxCommandQueue.cpp" />
     <ClCompile Include="..\src\gfx\asdxDescriptorHeap.cpp" />
@@ -351,7 +351,7 @@
     <ClInclude Include="..\include\gfx\asdxAllocationHolder.h" />
     <ClInclude Include="..\include\gfx\asdxBuffer.h" />
     <ClInclude Include="..\include\gfx\asdxCamera.h" />
-    <ClInclude Include="..\include\gfx\asdxColorCorrectionEffect.h" />
+    <ClInclude Include="..\include\gfx\asdxColorEffect.h" />
     <ClInclude Include="..\include\gfx\asdxCommandList.h" />
     <ClInclude Include="..\include\gfx\asdxCommandQueue.h" />
     <ClInclude Include="..\include\gfx\asdxDescriptorHeap.h" />

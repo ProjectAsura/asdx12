@@ -402,10 +402,10 @@
     <ClCompile Include="..\src\gfx\asdxMovie.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxColorCorrectionEffect.cpp">
+    <ClCompile Include="..\src\gfx\asdxRadialBlurEffect.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxRadialBlurEffect.cpp">
+    <ClCompile Include="..\src\gfx\asdxColorEffect.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
   </ItemGroup>
@@ -740,11 +740,11 @@
     <ClInclude Include="..\include\gfx\asdxMovie.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\gfx\asdxColorCorrectionEffect.h">
-      <Filter>ヘッダー ファイル\gfx</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\gfx\asdxRadialBlurEffect.h">
       <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\gfx\asdxColorEffect.h">
+      <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
