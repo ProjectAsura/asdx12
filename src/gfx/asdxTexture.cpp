@@ -12,8 +12,10 @@
 #include <gfx/asdxDevice.h>
 #include <gfx/asdxUpdateCommand.h>
 #include <gfx/asdxDescriptorHeap.h>
+#include <gfx/asdxGfxMisc.h>
 #include <res/asdxResTexture.h>
 #include <fnd/asdxLogger.h>
+#include <fnd/asdxMath.h>
 #include <D3D12MemAlloc.h>
 
 
@@ -469,19 +471,31 @@ bool Texture::Init(const ResTexture& resource)
 
     // 直接書き込む.
     {
+        // 圧縮フォーマットかどうかチェックしておく.
+        auto isCompressed = IsCompressed(DXGI_FORMAT(resource.Format));
+
         auto count = resource.SubResources.size();
         for(auto i=0u; i<count; ++i)
         {
-            const auto& inRes = resource.SubResources[i];
-            auto srcPtr        = resource.Pixels.data() + inRes.PixelOffset;
-            auto srcRowPitch   = inRes.RowPitch;
-            auto srcDepthPitch = inRes.SlicePitch;
+            const auto& inRes   = resource.SubResources[i];
+            auto srcPtr         = resource.Pixels.data() + inRes.PixelOffset;
+            auto srcRowPitch    = inRes.RowPitch;
+            auto srcDepthPitch  = inRes.SlicePitch;
+            auto srcW           = inRes.Width;
+            auto srcH           = inRes.Height;
+
+            // 圧縮フォーマットの場合は 4x4 ピクセルにアライメントを揃える必要がある.
+            if (isCompressed)
+            {
+                srcW = RoundUp(srcW, 4u);
+                srcH = RoundUp(srcH, 4u);
+            }
 
             D3D12_BOX dstBox = {};
             dstBox.left     = 0;
-            dstBox.right    = inRes.Width;
+            dstBox.right    = srcW;
             dstBox.top      = 0;
-            dstBox.bottom   = inRes.Height;
+            dstBox.bottom   = srcH;
             dstBox.front    = 0;
             dstBox.back     = depth;
 

@@ -326,7 +326,7 @@ bool TextureManager::HasCommand() const
 void TextureManager::CreateDefaultTextures()
 {
     // Base Color Map.
-    {        
+    {
         std::vector<uint8_t> pixels;
         pixels.resize(32 * 32* 4);
 
