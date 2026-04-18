@@ -208,7 +208,7 @@ bool OpenFileDlg(const char* fileFilter, fs::path& result, const fs::path& defau
     CHAR inputFileTitle[ MAX_PATH ] = { 0 };
     CHAR initDir       [ MAX_PATH ] = { 0 };
 
-    // パスが設定されていれば初期ディレク処理を設定.
+    // パスが設定されていれば初期ディレクトリを設定.
     if (!defaultPath.empty() && defaultPath != "")
     {
         auto path = defaultPath.string();
@@ -217,6 +217,12 @@ bool OpenFileDlg(const char* fileFilter, fs::path& result, const fs::path& defau
         { path = path.substr(0, idx); }
         strcpy_s(initDir, path.c_str());
     }
+
+    if (defaultPath.empty() && !result.empty())
+    { strcpy_s(initDir, result.stem().string().c_str()); }
+
+    if (!result.empty())
+    { strcpy_s(inputFile, result.string().c_str()); }
 
     ofn.lStructSize     = sizeof(OPENFILENAMEA);
     ofn.hwndOwner       = nullptr;
@@ -259,6 +265,12 @@ bool SaveFileDlg(const char* fileFilter, fs::path& result, const fs::path& defau
         strcpy_s(initDir, path.c_str());
     }
 
+    if (defaultPath.empty() && !result.empty())
+    { strcpy_s(initDir, result.parent_path().string().c_str()); }
+
+    if (!result.empty())
+    { strcpy_s(inputFile, result.string().c_str()); }
+
     ofn.lStructSize     = sizeof(OPENFILENAMEA);
     ofn.hwndOwner       = nullptr;
     ofn.lpstrFilter     = fileFilter;
@@ -279,7 +291,7 @@ bool SaveFileDlg(const char* fileFilter, fs::path& result, const fs::path& defau
         base = std::string( inputFile ).substr( 0, ofn.nFileExtension - 1 );
         if ( ofn.nFileExtension != 0 )
         {
-            ext = std::string( inputFile ).substr( ofn.nFileExtension );
+            ext = std::string( inputFile ).substr( ofn.nFileExtension - 1 );
         }
         else
         {
@@ -294,7 +306,7 @@ bool SaveFileDlg(const char* fileFilter, fs::path& result, const fs::path& defau
             ext = std::string(tag);
         }
 
-        result = fs::path((base + "." + ext).c_str());
+        result = fs::path((base + ext).c_str());
         return true;
     }
 

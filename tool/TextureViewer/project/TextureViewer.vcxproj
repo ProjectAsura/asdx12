@@ -73,6 +73,7 @@
       <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\..\..\include;$(ProjectDir)..\..\..\external\D3D12MemoryAllocator\include;$(ProjectDir)..\..\..\external\imgui;$(ProjectDir)..\..\..\external\DirectXTex\DirectXTex;$(ProjectDir)..\..\..\external\flatbuffers\include;$(ProjectDir)..\..\asdxAsset\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -93,6 +94,7 @@
       <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\..\..\include;$(ProjectDir)..\..\..\external\D3D12MemoryAllocator\include;$(ProjectDir)..\..\..\external\imgui;$(ProjectDir)..\..\..\external\DirectXTex\DirectXTex;$(ProjectDir)..\..\..\external\flatbuffers\include;$(ProjectDir)..\..\asdxAsset\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

@@ -79,6 +79,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\external\DirectXTex\DirectXTex;$(ProjectDir)..\..\..\external\DirectXTex\DirectXTex\Shaders\Compiled;$(ProjectDir)..\..\..\external\DirectXTex\Common;$(ProjectDir)..\..\..\external\simdjson\include;$(ProjectDir)..\..\..\external\simdjson\src;$(ProjectDir)..\..\..\external\MikkTSpace;$(ProjectDir)..\..\..\external\tinyxml2;$(ProjectDir)..\..\..\external\meshoptimizer;$(ProjectDir)..\..\..\external\flatbuffers\include;C:\Program Files\Assimp\include;$(ProjectDir)..\include;$(ProjectDir)..\..\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -96,6 +97,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\external\DirectXTex\DirectXTex;$(ProjectDir)..\..\..\external\DirectXTex\DirectXTex\Shaders\Compiled;$(ProjectDir)..\..\..\external\DirectXTex\Common;$(ProjectDir)..\..\..\external\simdjson\include;$(ProjectDir)..\..\..\external\simdjson\src;$(ProjectDir)..\..\..\external\MikkTSpace;$(ProjectDir)..\..\..\external\tinyxml2;$(ProjectDir)..\..\..\external\meshoptimizer;$(ProjectDir)..\..\..\external\flatbuffers\include;C:\Program Files\Assimp\include;$(ProjectDir)..\include;$(ProjectDir)..\..\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -116,6 +118,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\external\DirectXTex\DirectXTex;$(ProjectDir)..\..\..\external\DirectXTex\DirectXTex\Shaders\Compiled;$(ProjectDir)..\..\..\external\DirectXTex\Common;$(ProjectDir)..\..\..\external\simdjson\include;$(ProjectDir)..\..\..\external\simdjson\src;$(ProjectDir)..\..\..\external\MikkTSpace;$(ProjectDir)..\..\..\external\tinyxml2;$(ProjectDir)..\..\..\external\meshoptimizer;$(ProjectDir)..\..\..\external\flatbuffers\include;C:\Program Files\Assimp\include;$(ProjectDir)..\include;$(ProjectDir)..\..\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -135,6 +138,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\external\DirectXTex\DirectXTex;$(ProjectDir)..\..\..\external\DirectXTex\DirectXTex\Shaders\Compiled;$(ProjectDir)..\..\..\external\DirectXTex\Common;$(ProjectDir)..\..\..\external\simdjson\include;$(ProjectDir)..\..\..\external\simdjson\src;$(ProjectDir)..\..\..\external\MikkTSpace;$(ProjectDir)..\..\..\external\tinyxml2;$(ProjectDir)..\..\..\external\meshoptimizer;$(ProjectDir)..\..\..\external\flatbuffers\include;C:\Program Files\Assimp\include;$(ProjectDir)..\include;$(ProjectDir)..\..\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

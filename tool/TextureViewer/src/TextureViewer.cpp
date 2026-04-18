@@ -425,6 +425,14 @@ void TextureViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
                 scratchImage);
         }
 
+        if (FAILED(hr))
+        {
+            char msg[2048];
+            sprintf_s(msg, "フォーマット変換に失敗しました.\nエラーコード(0x%x)", hr);
+            asdx::ErrorDlg("Format Convert Failed.", msg);
+            ELOGA("Error : %s", msg);
+        }
+
         if (SUCCEEDED(hr))
         {
             m_ScratchImage = std::move(scratchImage);
@@ -603,7 +611,7 @@ void TextureViewer::MenuFile(ID3D12GraphicsCommandList* pCmd)
             "High Efficiency Image File (*.heif, *.heic)\0*.heif;*.heic\0"
             "全てのファイル (*.*)\0*.*\0\0";
 
-        asdx::fs::path path;
+        asdx::fs::path path = m_InputPath;
         if (asdx::OpenFileDlg(filter, path))
         {
             auto wpath = path.wstring();
@@ -625,10 +633,8 @@ void TextureViewer::MenuFile(ID3D12GraphicsCommandList* pCmd)
             "JPEG XR (*.jxr)\0*.jxr\0"
             "Window Media Photo (*.wdp)\0*.wpd\0"
             "High Efficiency Image File (*.heif)\0*.heif\0\0";
-        std::string base;
-        std::string ext = ".txb";
 
-        asdx::fs::path path;
+        asdx::fs::path path = m_OutputPath;
         if (asdx::SaveFileDlg(filter, path))
         {
             m_OutputPath = path.string();
@@ -843,6 +849,11 @@ bool TextureViewer::LoadScratchImage(const wchar_t* path)
         m_ScratchImage  = std::move(scratchImage);
         m_ResizedWidth  = m_ScratchImage.GetMetadata().width;
         m_ResizedHeight = m_ScratchImage.GetMetadata().height;
+
+        auto fullPath = asdx::ToFullPath(path);
+        m_InputPath     = fullPath.string();
+        m_OutputPath    = fullPath.replace_extension(".txb").string();
+
         return true;
     }
 
