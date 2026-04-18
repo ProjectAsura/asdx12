@@ -363,7 +363,7 @@ public:
         }
         else if (resDesc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE2D)
         {
-            auto srcY  = pSrcPtr;
+            auto srcY = pSrcPtr;
             hr = pDstResource->WriteToSubresource(
                 0,
                 nullptr,
@@ -377,9 +377,7 @@ public:
                 return false;
             }
 
-            // アライメントさせる.
-            auto alignH = (m_Height + 15) & ~15;
-            auto srcUV  = pSrcPtr + srcPitch * alignH;
+            auto srcUV  = pSrcPtr + srcPitch * m_Height;
             hr = pDstResource->WriteToSubresource(
                 1,
                 nullptr,
@@ -909,14 +907,11 @@ void CopyNV12
     uint32_t    height
 )
 {
-    // アライメントを取る.
-    auto alignH = (height + 15) & ~15;
-
     auto dstY  = reinterpret_cast<uint8_t*>(dstPtr);
-    auto dstUV = dstY + dstPitch * alignH;
+    auto dstUV = dstY + dstPitch * height;
 
     auto srcY  = reinterpret_cast<const uint8_t*>(srcPtr);
-    auto srcUV = srcY + srcPitch * alignH;
+    auto srcUV = srcY + srcPitch * height;
 
     // Y Plane.
     for (uint32_t y = 0; y < height; ++y)

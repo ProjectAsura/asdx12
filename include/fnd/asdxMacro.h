@@ -19,9 +19,17 @@
     #ifdef ASDX_DEBUG
         #define ASDX_DEBUG_CODE(...)  __VA_ARGS__
     #else
-        #define ASDX_DEBUG_CODE(...)
+        #define ASDX_DEBUG_CODE(...)  /* DO_NOTHING */
     #endif
-#endif
+#endif//ASDX_DEBUG_CODE
+
+#ifndef ASDX_RELEASE_CODE
+    #ifdef ASDX_DEBUG
+        #define ASDX_RELEASE_CODE(...) /* DO_NOTHING */
+    #else
+        #define ASDX_RELEASE_CODE(...) __VA_ARGS__
+    #endif
+#endif//ASDX_RELEASE_CODE
 
 #ifndef ASDX_COUNT_OF
 #define ASDX_COUNT_OF(arr) (sizeof(arr) / sizeof(arr[0]))
@@ -59,7 +67,7 @@
 
 namespace asdx {
 template<size_t Size>
-struct Padding
+struct PaddingData
 {
 private:
     static_assert(Size > 0, "Padding size must be > 0");
@@ -67,25 +75,11 @@ private:
 };
 
 template <>
-struct Padding<0> {};
-
+struct PaddingData<0> {};
 } // namespace asdx
 
 #ifndef ASDX_PADDING
-#define ASDX_PADDING(size)     asdx::Padding<size> ASDX_UNIQUE_NAME(padding_)
+#define ASDX_PADDING(size)     asdx::PaddingData<size> ASDX_UNIQUE_NAME(padding_)
 #endif//ASDX_PADDING
 
-#if ASDX_DEBUG
-constexpr bool kDebugCodeBlock = true;
-#else
-constexpr bool kDebugCodeBlock = false;
-#endif
-
-#ifndef ASDX_DEBUG_BLOCK
-#define ASDX_DEBUG_BLOCK    if constexpr (kDebugCodeBlock)
-#endif//ASDX_DEBUG_BLOCK
-
-#ifndef ASDX_RELEASE_BLOCK
-#define ASDX_RELEASE_BLOCK  if constexpr (!kDebugCodeBlock)
-#endif//ASDX_RELEASE_BLOCK
 
