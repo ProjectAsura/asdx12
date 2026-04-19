@@ -3955,6 +3955,8 @@ public:
     T x;
     T y;
 
+    Element2() = default;
+
     Element2(T value)
     : x(value), y(value)
     { /* DO_NOTHING */ }
@@ -3986,6 +3988,8 @@ public:
     T x;
     T y;
     T z;
+
+    Element3() = default;
 
     Element3(T value)
     : x(value), y(value), z(value)
@@ -4019,6 +4023,8 @@ public:
     T y;
     T z;
     T w;
+
+    Element4() = default;
 
     Element4(T value)
     : x(value), y(value), z(value), w(value)
