@@ -110,6 +110,17 @@ const D3D12_BLEND_DESC kPremultiplied = {
     FALSE,
     { kRTB_Premultiplied, kRTB_Premultiplied, kRTB_Premultiplied, kRTB_Premultiplied, kRTB_Premultiplied, kRTB_Premultiplied, kRTB_Premultiplied, kRTB_Premultiplied }
 };
+
+//-----------------------------------------------------------------------------
+//      回転と平行移動を適用します.
+//-----------------------------------------------------------------------------
+asdx::Vector2 TransformPos(const asdx::Vector2& p, float s, float c, float tx, float ty)
+{
+    return asdx::Vector2(
+        (p.x * c - p.y * s) + tx,
+        (p.x * s + p.y * c) + ty);
+}
+
 } // namespace
 
 
@@ -675,7 +686,6 @@ void SpriteRenderer::Add(int x, int y, int w, int h, int layer, float rad, const
     float hw = w * 0.5f;
     float hh = h * 0.5f;
 
-    // 位置座標.
     float x0 = float(-hw);
     float x1 = float( hw);
     float y0 = float(-hh);
@@ -684,43 +694,48 @@ void SpriteRenderer::Add(int x, int y, int w, int h, int layer, float rad, const
     float s = sinf(rad);
     float c = cosf(rad);
 
-    // 回転中心.
-    float cx = x + w * 0.5f;
-    float cy = y + h * 0.5f;
+    asdx::Vector2 p0(x0, y0);
+    asdx::Vector2 p1(x1, y0);
+    asdx::Vector2 p2(x0, y1);
+    asdx::Vector2 p3(x1, y1);
 
-    // 回転を適用.
-    float rx0 = (x0 * c - y0 * s) + cx;
-    float rx1 = (x1 * c - y1 * s) + cx;
-    float ry0 = (x0 * s + y0 * c) + cy;
-    float ry1 = (x1 * s + y1 * c) + cy;
+    // 回転中心.
+    float cx = x + hw;
+    float cy = y + hh;
+
+    // 変換を適用.
+    p0 = TransformPos(p0, s, c, cx, cy);
+    p1 = TransformPos(p1, s, c, cx, cy);
+    p2 = TransformPos(p2, s, c, cx, cy);
+    p3 = TransformPos(p3, s, c, cx, cy);
 
     // Vertex : 0
-    pVertices[ 0 ].Position.x = rx0;
-    pVertices[ 0 ].Position.y = ry0;
+    pVertices[ 0 ].Position.x = p0.x;
+    pVertices[ 0 ].Position.y = p0.y;
     pVertices[ 0 ].Position.z = d;
     pVertices[ 0 ].Color      = m_Color;
     pVertices[ 0 ].TexCoord.x = u0;
     pVertices[ 0 ].TexCoord.y = v1;
 
     // Vertex : 1
-    pVertices[ 1 ].Position.x = rx1;
-    pVertices[ 1 ].Position.y = ry0;
+    pVertices[ 1 ].Position.x = p1.x;
+    pVertices[ 1 ].Position.y = p1.y;
     pVertices[ 1 ].Position.z = d;
     pVertices[ 1 ].Color      = m_Color;
     pVertices[ 1 ].TexCoord.x = u1;
     pVertices[ 1 ].TexCoord.y = v1;
 
     // Vertex : 2
-    pVertices[ 2 ].Position.x = rx0;
-    pVertices[ 2 ].Position.y = ry1;
+    pVertices[ 2 ].Position.x = p2.x;
+    pVertices[ 2 ].Position.y = p2.y;
     pVertices[ 2 ].Position.z = d;
     pVertices[ 2 ].Color      = m_Color;
     pVertices[ 2 ].TexCoord.x = u0;
     pVertices[ 2 ].TexCoord.y = v0;
 
     // Vertex : 3
-    pVertices[ 3 ].Position.x = rx1;
-    pVertices[ 3 ].Position.y = ry1;
+    pVertices[ 3 ].Position.x = p3.x;
+    pVertices[ 3 ].Position.y = p3.y;
     pVertices[ 3 ].Position.z = d;
     pVertices[ 3 ].Color      = m_Color;
     pVertices[ 3 ].TexCoord.x = u1;
