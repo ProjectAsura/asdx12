@@ -54,15 +54,15 @@ void main
     float2 uv = remappedId / float2(Size);
     
     float4 output = 0.0f.xxxx;
-    output += BlurSample(uv, Offset * 1.0f, Weights0.x);
-    output += BlurSample(uv, Offset * 3.0f, Weights0.y);
-    output += BlurSample(uv, Offset * 5.0f, Weights0.z);
-    output += BlurSample(uv, Offset * 7.0f, Weights0.w);
+    output += BlurSample(uv, Offset * 0.5f, Weights0.x);
+    output += BlurSample(uv, Offset * 2.5f, Weights0.y);
+    output += BlurSample(uv, Offset * 4.5f, Weights0.z);
+    output += BlurSample(uv, Offset * 6.5f, Weights0.w);
 
-    output += BlurSample(uv, Offset *  9.0f, Weights1.x);
-    output += BlurSample(uv, Offset * 11.0f, Weights1.y);
-    output += BlurSample(uv, Offset * 13.0f, Weights1.z);
-    output += BlurSample(uv, Offset * 15.0f, Weights1.w);
+    output += BlurSample(uv, Offset *  8.5f, Weights1.x);
+    output += BlurSample(uv, Offset * 10.5f, Weights1.y);
+    output += BlurSample(uv, Offset * 12.5f, Weights1.z);
+    output += BlurSample(uv, Offset * 14.5f, Weights1.w);
 
     OutputMap[remappedId] = output;
 }

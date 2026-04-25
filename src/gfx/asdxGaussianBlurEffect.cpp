@@ -246,13 +246,17 @@ void GaussianBlurEffectPS::Draw
     barriers[0].Transition.Subresource  = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
     pCmd->ResourceBarrier(1, barriers);
 
+    auto handleRTV = m_ColorTarget[0].GetCpuHandleRTV();
+
     // ルートシグニチャとパイプラインステートを設定.
     pCmd->SetGraphicsRootSignature(m_RootSignature.GetPtr());
     pCmd->SetPipelineState(m_PipelineState.GetPtr());
 
+    // 最初の1回だけクリア.
+    if (m_State == D3D12_RESOURCE_STATE_COMMON)
+    { pCmd->ClearRenderTargetView(handleRTV, clearColor, 0, nullptr); }
+
     // 水平方向ブラー.
-    auto handleRTV = m_ColorTarget[0].GetCpuHandleRTV();
-    pCmd->ClearRenderTargetView(handleRTV, clearColor, 0, nullptr);
     pCmd->OMSetRenderTargets(1, &handleRTV, FALSE, nullptr);
     pCmd->RSSetViewports(1, &viewport);
     pCmd->RSSetScissorRects(1, &rect);
@@ -279,8 +283,11 @@ void GaussianBlurEffectPS::Draw
     handleSRV = m_ColorTarget[0].GetGpuHandleSRV();
     handleRTV = m_ColorTarget[1].GetCpuHandleRTV();
 
+    // 最初の1回だけクリア.
+    if (m_State == D3D12_RESOURCE_STATE_COMMON)
+    { pCmd->ClearRenderTargetView(handleRTV, clearColor, 0, nullptr); }
+
     // 垂直方向ブラー.
-    pCmd->ClearRenderTargetView(handleRTV, clearColor, 0, nullptr);
     pCmd->OMSetRenderTargets(1, &handleRTV, FALSE, nullptr);
     pCmd->RSSetViewports(1, &viewport);
     pCmd->RSSetScissorRects(1, &rect);
@@ -321,6 +328,8 @@ bool GaussianBlurEffectPS::Resize(uint32_t width, uint32_t height)
         if (!m_ColorTarget[i].Resize(width, height))
         { return false; }
     }
+
+    m_State = D3D12_RESOURCE_STATE_COMMON;
 
     return true;
 }
@@ -496,11 +505,24 @@ void GaussianBlurEffectCS::Dispatch(ID3D12GraphicsCommandList* pCmd, float dispe
     barriers[0].Transition.Subresource  = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
     pCmd->ResourceBarrier(1, barriers);
 
+    float clearColor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+
     auto threadX = (uint32_t(desc.Width)  + 7) / 8;
     auto threadY = (desc.Height + 7) / 8;
 
     auto handleUAV = m_ComputeTarget[0].GetGpuHandleUAV();
 
+    // 最初の1回だけクリア.
+    if (m_State == D3D12_RESOURCE_STATE_COMMON)
+    {
+        pCmd->ClearUnorderedAccessViewFloat(
+            m_ComputeTarget[0].GetGpuHandleUAV(),
+            m_ComputeTarget[0].GetCpuHandleUAV(),
+            m_ComputeTarget[0].GetResource(),
+            clearColor,
+            0, 
+            nullptr);
+    }
     pCmd->SetComputeRoot32BitConstants(0, 12, &param, 0);
     pCmd->SetComputeRootDescriptorTable(1, handleSRV);
     pCmd->SetComputeRootDescriptorTable(2, handleUAV);
@@ -525,6 +547,18 @@ void GaussianBlurEffectCS::Dispatch(ID3D12GraphicsCommandList* pCmd, float dispe
     barriers[2].Transition.Subresource  = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 
     pCmd->ResourceBarrier(3, barriers);
+
+    // 最初の1回だけクリア.
+    if (m_State == D3D12_RESOURCE_STATE_COMMON)
+    {
+        pCmd->ClearUnorderedAccessViewFloat(
+            m_ComputeTarget[1].GetGpuHandleUAV(),
+            m_ComputeTarget[1].GetCpuHandleUAV(),
+            m_ComputeTarget[1].GetResource(),
+            clearColor,
+            0, 
+            nullptr);
+    }
 
     param.OffsetX = 0.0f;
     param.OffsetY = 1.0f / float(desc.Height);
@@ -569,6 +603,8 @@ bool GaussianBlurEffectCS::Resize(uint32_t width, uint32_t height)
         if (!m_ComputeTarget->Resize(width, height))
         { return false; }
     }
+
+    m_State = D3D12_RESOURCE_STATE_COMMON;
 
     return true;
 }
