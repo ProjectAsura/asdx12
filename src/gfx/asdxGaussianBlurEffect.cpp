@@ -512,17 +512,6 @@ void GaussianBlurEffectCS::Dispatch(ID3D12GraphicsCommandList* pCmd, float dispe
 
     auto handleUAV = m_ComputeTarget[0].GetGpuHandleUAV();
 
-    // 最初の1回だけクリア.
-    if (m_State == D3D12_RESOURCE_STATE_COMMON)
-    {
-        pCmd->ClearUnorderedAccessViewFloat(
-            m_ComputeTarget[0].GetGpuHandleUAV(),
-            m_ComputeTarget[0].GetCpuHandleUAV(),
-            m_ComputeTarget[0].GetResource(),
-            clearColor,
-            0, 
-            nullptr);
-    }
     pCmd->SetComputeRoot32BitConstants(0, 12, &param, 0);
     pCmd->SetComputeRootDescriptorTable(1, handleSRV);
     pCmd->SetComputeRootDescriptorTable(2, handleUAV);
@@ -547,18 +536,6 @@ void GaussianBlurEffectCS::Dispatch(ID3D12GraphicsCommandList* pCmd, float dispe
     barriers[2].Transition.Subresource  = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 
     pCmd->ResourceBarrier(3, barriers);
-
-    // 最初の1回だけクリア.
-    if (m_State == D3D12_RESOURCE_STATE_COMMON)
-    {
-        pCmd->ClearUnorderedAccessViewFloat(
-            m_ComputeTarget[1].GetGpuHandleUAV(),
-            m_ComputeTarget[1].GetCpuHandleUAV(),
-            m_ComputeTarget[1].GetResource(),
-            clearColor,
-            0, 
-            nullptr);
-    }
 
     param.OffsetX = 0.0f;
     param.OffsetY = 1.0f / float(desc.Height);
