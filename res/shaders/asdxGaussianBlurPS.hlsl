@@ -50,15 +50,15 @@ float4 main(const VSOutput input) : SV_TARGET0
 {
     float4 output = 0.0f.xxxx;
 
-    output += BlurSample(input.TexCoord, Offset * 1.0f, Weights0.x);
-    output += BlurSample(input.TexCoord, Offset * 3.0f, Weights0.y);
-    output += BlurSample(input.TexCoord, Offset * 5.0f, Weights0.z);
-    output += BlurSample(input.TexCoord, Offset * 7.0f, Weights0.w);
+    output += BlurSample(input.TexCoord, Offset * 0.5f, Weights0.x);
+    output += BlurSample(input.TexCoord, Offset * 2.5f, Weights0.y);
+    output += BlurSample(input.TexCoord, Offset * 4.5f, Weights0.z);
+    output += BlurSample(input.TexCoord, Offset * 6.5f, Weights0.w);
 
-    output += BlurSample(input.TexCoord, Offset *  9.0f, Weights1.x);
-    output += BlurSample(input.TexCoord, Offset * 11.0f, Weights1.y);
-    output += BlurSample(input.TexCoord, Offset * 13.0f, Weights1.z);
-    output += BlurSample(input.TexCoord, Offset * 15.0f, Weights1.w);
+    output += BlurSample(input.TexCoord, Offset *  8.5f, Weights1.x);
+    output += BlurSample(input.TexCoord, Offset * 10.5f, Weights1.y);
+    output += BlurSample(input.TexCoord, Offset * 12.5f, Weights1.z);
+    output += BlurSample(input.TexCoord, Offset * 14.5f, Weights1.w);
 
     return output;
 }

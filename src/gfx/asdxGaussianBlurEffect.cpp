@@ -42,7 +42,7 @@ void ComputeGaussWeights(float dispersion, Param& param)
     float total = 0.0f;
     for(auto i=0; i<8; ++i)
     {
-        auto pos = 1.0f + 2.0f * i;
+        auto pos = 0.5f + 2.0f * i;
         param.Weights[i] = expf(-0.5f * (pos * pos) / dispersion);
         total += 2.0f * param.Weights[i];
     }
@@ -307,6 +307,20 @@ D3D12_GPU_DESCRIPTOR_HANDLE GaussianBlurEffectPS::GetHandleGPU() const
 TargetDesc GaussianBlurEffectPS::GetDesc() const
 { return m_ColorTarget[0].GetDesc(); }
 
+//-----------------------------------------------------------------------------
+//      ターゲットをリサイズします.
+//-----------------------------------------------------------------------------
+bool GaussianBlurEffectPS::Resize(uint32_t width, uint32_t height)
+{
+    for(auto i=0; i<2; ++i)
+    {
+        if (!m_ColorTarget[i].Resize(width, height))
+        { return false; }
+    }
+
+    return true;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // GaussianBlurEffectCS class
@@ -540,5 +554,19 @@ TargetDesc GaussianBlurEffectCS::GetDesc() const
 //-----------------------------------------------------------------------------
 D3D12_GPU_DESCRIPTOR_HANDLE GaussianBlurEffectCS::GetHandleGPU() const
 { return m_ComputeTarget[1].GetGpuHandleSRV(); }
+
+//-----------------------------------------------------------------------------
+//      ターゲットをリサイズします.
+//-----------------------------------------------------------------------------
+bool GaussianBlurEffectCS::Resize(uint32_t width, uint32_t height)
+{
+    for(auto i=0; i<2; ++i)
+    {
+        if (!m_ComputeTarget->Resize(width, height))
+        { return false; }
+    }
+
+    return true;
+}
 
 } // namespace asdx
