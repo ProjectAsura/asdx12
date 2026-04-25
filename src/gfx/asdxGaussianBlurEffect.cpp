@@ -236,6 +236,8 @@ void GaussianBlurEffectPS::Draw
     rect.top    = 0;
     rect.bottom = LONG(desc.Height);
 
+    float clearColor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+
     D3D12_RESOURCE_BARRIER barriers[2] = {};
     barriers[0].Type                    = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
     barriers[0].Transition.pResource    = m_ColorTarget[0].GetResource();
@@ -250,6 +252,7 @@ void GaussianBlurEffectPS::Draw
 
     // 水平方向ブラー.
     auto handleRTV = m_ColorTarget[0].GetCpuHandleRTV();
+    pCmd->ClearRenderTargetView(handleRTV, clearColor, 0, nullptr);
     pCmd->OMSetRenderTargets(1, &handleRTV, FALSE, nullptr);
     pCmd->RSSetViewports(1, &viewport);
     pCmd->RSSetScissorRects(1, &rect);
@@ -277,6 +280,7 @@ void GaussianBlurEffectPS::Draw
     handleRTV = m_ColorTarget[1].GetCpuHandleRTV();
 
     // 垂直方向ブラー.
+    pCmd->ClearRenderTargetView(handleRTV, clearColor, 0, nullptr);
     pCmd->OMSetRenderTargets(1, &handleRTV, FALSE, nullptr);
     pCmd->RSSetViewports(1, &viewport);
     pCmd->RSSetScissorRects(1, &rect);

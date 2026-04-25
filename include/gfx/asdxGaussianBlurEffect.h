@@ -102,7 +102,7 @@ private:
     RefPtr<ID3D12RootSignature> m_RootSignature;
     RefPtr<ID3D12PipelineState> m_PipelineState;
     ColorTarget                 m_ColorTarget[2];
-    D3D12_RESOURCE_STATES       m_State;
+    D3D12_RESOURCE_STATES       m_State = D3D12_RESOURCE_STATE_COMMON;
 
     //=========================================================================
     // private methods.
@@ -196,7 +196,7 @@ private:
     RefPtr<ID3D12RootSignature> m_RootSignature;
     RefPtr<ID3D12PipelineState> m_PipelineState;
     ComputeTarget               m_ComputeTarget[2];
-    D3D12_RESOURCE_STATES       m_State;
+    D3D12_RESOURCE_STATES       m_State = D3D12_RESOURCE_STATE_COMMON;
 
     //=========================================================================
     // private methods.
