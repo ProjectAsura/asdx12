@@ -644,6 +644,93 @@ void SpriteRenderer::Add(int x, int y, int w, int h, int layer, const Vector2& u
 }
 
 //-----------------------------------------------------------------------------
+//      スプライトを追加します.
+//-----------------------------------------------------------------------------
+void SpriteRenderer::Add(int x, int y, int w, int h, int layer, float rad, const Vector2& uv0, const Vector2& uv1)
+{
+    if (m_SpriteCount + 1 > m_MaxSpriteCount)
+    { return; }
+
+    if (m_BatchCount == 0 || m_pVertices == nullptr)
+    { return; }
+
+    // 画面外ならカリング.
+    if (((x + w) < 0 || x > m_ScreenSize.x || (y + h) < 0 || y > m_ScreenSize.y))
+    { return; }
+ 
+    auto& batch = m_Batches[m_BatchCount - 1];
+    batch.IndexCount += kIndexCountPerSprite;
+
+    auto pHead     = m_pVertices[m_BufferIndex];
+    auto pVertices = &pHead[m_SpriteCount * kVertexCountPerSprite];
+
+    // テクスチャ座標
+    float u0 = uv0.x;
+    float u1 = uv1.x;
+    float v0 = uv0.y;
+    float v1 = uv1.y;
+
+    float d = float(layer);
+
+    float hw = w * 0.5f;
+    float hh = h * 0.5f;
+
+    // 位置座標.
+    float x0 = float(-hw);
+    float x1 = float( hw);
+    float y0 = float(-hh);
+    float y1 = float( hh);
+
+    float s = sinf(rad);
+    float c = cosf(rad);
+
+    // 回転中心.
+    float cx = x + w * 0.5f;
+    float cy = y + h * 0.5f;
+
+    // 回転を適用.
+    float rx0 = (x0 * c - y0 * s) + cx;
+    float rx1 = (x1 * c - y1 * s) + cx;
+    float ry0 = (x0 * s + y0 * c) + cy;
+    float ry1 = (x1 * s + y1 * c) + cy;
+
+    // Vertex : 0
+    pVertices[ 0 ].Position.x = rx0;
+    pVertices[ 0 ].Position.y = ry0;
+    pVertices[ 0 ].Position.z = d;
+    pVertices[ 0 ].Color      = m_Color;
+    pVertices[ 0 ].TexCoord.x = u0;
+    pVertices[ 0 ].TexCoord.y = v1;
+
+    // Vertex : 1
+    pVertices[ 1 ].Position.x = rx1;
+    pVertices[ 1 ].Position.y = ry0;
+    pVertices[ 1 ].Position.z = d;
+    pVertices[ 1 ].Color      = m_Color;
+    pVertices[ 1 ].TexCoord.x = u1;
+    pVertices[ 1 ].TexCoord.y = v1;
+
+    // Vertex : 2
+    pVertices[ 2 ].Position.x = rx0;
+    pVertices[ 2 ].Position.y = ry1;
+    pVertices[ 2 ].Position.z = d;
+    pVertices[ 2 ].Color      = m_Color;
+    pVertices[ 2 ].TexCoord.x = u0;
+    pVertices[ 2 ].TexCoord.y = v0;
+
+    // Vertex : 3
+    pVertices[ 3 ].Position.x = rx1;
+    pVertices[ 3 ].Position.y = ry1;
+    pVertices[ 3 ].Position.z = d;
+    pVertices[ 3 ].Color      = m_Color;
+    pVertices[ 3 ].TexCoord.x = u1;
+    pVertices[ 3 ].TexCoord.y = v0;
+
+    // スプライト数をカウントアップします.
+    m_SpriteCount++;
+}
+
+//-----------------------------------------------------------------------------
 //      描画処理を行います.
 //-----------------------------------------------------------------------------
 void SpriteRenderer::Draw(ID3D12GraphicsCommandList* pCmdList)

@@ -249,6 +249,7 @@
     <ClCompile Include="..\src\gfx\asdxDred.cpp" />
     <ClCompile Include="..\src\gfx\asdxFade.cpp" />
     <ClCompile Include="..\src\gfx\asdxFont.cpp" />
+    <ClCompile Include="..\src\gfx\asdxGaussianBlurEffect.cpp" />
     <ClCompile Include="..\src\gfx\asdxGfxMisc.cpp" />
     <ClCompile Include="..\src\gfx\asdxIBLBaker.cpp" />
     <ClCompile Include="..\src\gfx\asdxLine.cpp" />
@@ -361,6 +362,7 @@
     <ClInclude Include="..\include\gfx\asdxDred.h" />
     <ClInclude Include="..\include\gfx\asdxFade.h" />
     <ClInclude Include="..\include\gfx\asdxFont.h" />
+    <ClInclude Include="..\include\gfx\asdxGaussianBlurEffect.h" />
     <ClInclude Include="..\include\gfx\asdxGfxMisc.h" />
     <ClInclude Include="..\include\gfx\asdxIBLBaker.h" />
     <ClInclude Include="..\include\gfx\asdxLine.h" />
@@ -458,6 +460,18 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMT|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMD|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMD|x64'">Vertex</ShaderType>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxGaussianBlurCS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMD|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMT|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMT|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMD|x64'">Compute</ShaderType>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxGaussianBlurPS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMD|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMT|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMT|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMD|x64'">Pixel</ShaderType>
     </FxCompile>
     <FxCompile Include="..\res\shaders\asdxIBLBakeDiffuseCS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMT|x64'">Compute</ShaderType>
