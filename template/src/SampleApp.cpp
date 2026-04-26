@@ -11,11 +11,65 @@
 #include <fnd/asdxPath.h>
 #include <fnd/asdxLogger.h>
 #include <fnd/asdxFileIO.h>
+#include <fnd/asdxMisc.h>
+#include <gfx/asdxTextureManager.h>
+#include <gfx/asdxFont.h>
 #include <edit/asdxGuiMgr.h>
 
 
 namespace {
 
+//-----------------------------------------------------------------------------
+//      テクスチャをロードします.
+//-----------------------------------------------------------------------------
+bool LoadTexture(const char* path, asdx::TextureHolder& holder)
+{
+    asdx::fs::path input = path;
+    asdx::fs::path findPath;
+    if (!asdx::SearchFilePath(input, findPath))
+    {
+        ELOGA("Error : SearchFilePath() Failed. path = %s", path);
+        return false;
+    }
+
+    holder = asdx::TextureManager::Instance().GetOrCreate(findPath.string().c_str());
+    if (!holder.IsValid())
+    {
+        ELOGA("Error : Texture Load Faild. path = %s", findPath.string().c_str());
+        return false;
+    }
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      フォントをロードします.
+//-----------------------------------------------------------------------------
+bool LoadFont(ID3D12GraphicsCommandList* pCmd, const char* path, asdx::Font& font)
+{
+    asdx::fs::path input = path;
+    asdx::fs::path findPath;
+    if (!asdx::SearchFilePath(input, findPath))
+    {
+        ELOGA("Error : SearchFilePath() Failed. path = %s", path);
+        return false;
+    }
+
+    std::vector<uint8_t> bin;
+    if (!asdx::LoadA(findPath.string().c_str(), bin))
+    {
+        ELOGA("Error : File Load Failed. path = %s", findPath.string().c_str());
+        return false;
+    }
+
+    if (!font.Init(pCmd, std::move(bin)))
+    {
+        ELOGA("Error : Font::Init() Failed. path = %s", path);
+        return false;
+    }
+
+    return true;
+}
 
 } // namespace
 
@@ -79,6 +133,13 @@ bool SampleApp::OnInit()
     }
     #endif
 
+    // テクスチャマネージャ初期化.
+    if (!asdx::TextureManager::Instance().Init())
+    {
+        ELOGA("Error : TextureManager::Init() Failed.");
+        return false;
+    }
+
     // コマンドの記録を終了.
     pCmd->Close();
 
@@ -110,6 +171,9 @@ void SampleApp::OnTerm()
     // TODO : Implementation.
     {
     }
+
+    // テクスチャマネージャ終了処理.
+    asdx::TextureManager::Instance().Term();
 
     #if ASDX_ENABLE_IMGUI
     {
