@@ -8,6 +8,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include "asdxComputeUtil.hlsli"
+#include "asdxSamplers.hlsli"
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -47,5 +48,8 @@ void main
     if (any(remappedId >= TargetSize)) 
     { return; }
 
-    Output[remappedId] = mul(ColorMatrix, Input[remappedId]);
+    float2 uv = remappedId * InvTargetSize;
+    float4 texel = Input.SampleLevel(LinearClamp, uv, 0.0f);
+    Output[remappedId] = mul(ColorMatrix, texel);
 }
+
