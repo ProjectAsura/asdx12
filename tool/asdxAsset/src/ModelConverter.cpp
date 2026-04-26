@@ -589,6 +589,9 @@ bool ModelConverter::Convert
         ParseMesh(builder, srcBones, boneMap, pScene->mRootNode, dstMesh, srcMesh, sphere, box);
     }
 
+    // 不要になったのでクリア.
+    srcBones.clear();
+
     // ボーンデータを変換.
     std::vector<flatbuffers::Offset<asdx::res::Bone>> bones;
     bones.resize(boneMap.size());
@@ -626,6 +629,9 @@ bool ModelConverter::Convert
             &invBindPose,
             &children);
     }
+
+    // 不要になったのでクリア.
+    boneMap.clear();
 
     // マテリアルデータを変換.
     std::vector<flatbuffers::Offset<asdx::res::Material>> materials;
