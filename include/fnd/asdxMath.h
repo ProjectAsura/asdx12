@@ -357,7 +357,7 @@ constexpr T Clamp(const T& value, const T& mini, const T& maxi) noexcept
 template<typename T> inline
 T Wrap(T value, T mini, T maxi)
 {
-    assert(mini < maxi);
+    assert(mini <= maxi);
     const T n = (value - mini) % (maxi - mini);
     return (n >= 0) ? (n + mini) : (n + maxi);
 }
@@ -373,7 +373,7 @@ T Wrap(T value, T mini, T maxi)
 template<> inline
 float Wrap<float>(float value, float mini, float maxi)
 {
-    assert(mini < maxi);
+    assert(mini <= maxi);
     const float n = fmodf(value - mini, maxi - mini);
     return (n >= 0.0f) ? (n + mini) : (n + maxi);
 }
@@ -389,7 +389,7 @@ float Wrap<float>(float value, float mini, float maxi)
 template<> inline
 double Wrap<double>(double value, double mini, double maxi)
 {
-    assert(mini < maxi);
+    assert(mini <= maxi);
     const double n = fmod(value - mini, maxi - mini);
     return (n >= 0.0) ? (n + mini) : (n + maxi);
 }

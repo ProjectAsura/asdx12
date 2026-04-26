@@ -97,7 +97,7 @@ aiMatrix4x4 ToAiMatrix(const asdx::res::Float4x4* matrix)
 //-----------------------------------------------------------------------------
 //      親ボーンを検索します.
 //-----------------------------------------------------------------------------
-const aiBone* FindParentBone(const aiNode* node, aiBone** const pBones, uint32_t numBones)
+const aiBone* FindParentBone(const aiNode* node, const std::unordered_map<std::string, aiBone*>& bones)
 {
     if (node == nullptr)
         return nullptr;
@@ -106,15 +106,11 @@ const aiBone* FindParentBone(const aiNode* node, aiBone** const pBones, uint32_t
     if (node->mParent == nullptr)
         return nullptr;
 
-    for(auto i=0u; i<numBones; ++i)
-    {
-        // 一致するものが見つかれば終了.
-        if (node->mParent->mName == pBones[i]->mName)
-            return pBones[i];
-    }
+    auto itr = bones.find(node->mParent->mName.C_Str());
+    if (itr == bones.end())
+        return nullptr;
 
-    // 親を再帰的に辿っていく.
-    return FindParentBone(node->mParent, pBones, numBones);
+    return itr->second;
 }
 
 //-----------------------------------------------------------------------------
@@ -122,13 +118,14 @@ const aiBone* FindParentBone(const aiNode* node, aiBone** const pBones, uint32_t
 //-----------------------------------------------------------------------------
 void ParseMesh
 (
-    flatbuffers::FlatBufferBuilder&         builder,
-    std::map<std::string, BoneInfo>&        boneMap,
-    const aiNode*                           rootNode,
-    flatbuffers::Offset<asdx::res::Mesh>&   dstMesh,
-    const aiMesh*                           srcMesh,
-    asdx::BoundingSphere3&                  boundSphere,
-    asdx::BoundingBox3&                     boundBox
+    flatbuffers::FlatBufferBuilder&                 builder,
+    const std::unordered_map<std::string, aiBone*>& srcBones,
+    std::map<std::string, BoneInfo>&                boneMap,
+    const aiNode*                                   rootNode,
+    flatbuffers::Offset<asdx::res::Mesh>&           dstMesh,
+    const aiMesh*                                   srcMesh,
+    asdx::BoundingSphere3&                          boundSphere,
+    asdx::BoundingBox3&                             boundBox
 )
 {
     std::vector<asdx::res::Float3> positions;
@@ -153,7 +150,7 @@ void ParseMesh
         auto pos = srcMesh->mVertices[i];
         auto nrm = srcMesh->mNormals[i];
         auto tex = srcMesh->HasTextureCoords(0) ? srcMesh->mTextureCoords[0][i] : kZero;
-        auto col = srcMesh->HasVertexColors(0) ? srcMesh->mColors[0][i] : kWhite;
+        auto col = srcMesh->HasVertexColors (0) ? srcMesh->mColors[0][i] : kWhite;
 
         positions[i] = asdx::res::Float3(pos.x, pos.y, pos.z);
         normals  [i] = asdx::res::Float3(nrm.x, nrm.y, nrm.z);
@@ -188,7 +185,7 @@ void ParseMesh
             auto boneName = std::string(bone->mName.C_Str());
 
             auto node   = rootNode->findBoneNode(bone);
-            auto parent = FindParentBone(node, srcMesh->mBones, srcMesh->mNumBones);
+            auto parent = FindParentBone(node, srcBones);
 
             uint32_t boneId = 0;
 
@@ -565,6 +562,21 @@ bool ModelConverter::Convert
 
     flatbuffers::FlatBufferBuilder builder(1024);
 
+    // ボーン検索用辞書を先に構築.
+    std::unordered_map<std::string, aiBone*> srcBones;
+    for(auto i=0u; i<pScene->mNumMeshes; ++i)
+    {
+        const auto srcMesh = pScene->mMeshes[i];
+        if (!srcMesh->HasBones())
+            continue;
+
+        for(auto j=0u; j<srcMesh->mNumBones; ++j)
+        {
+            auto bone = srcMesh->mBones[j];
+            srcBones[bone->mName.C_Str()] = bone;
+        }
+    }
+
     // メッシュデータを変換.
     std::vector<flatbuffers::Offset<asdx::res::Mesh>> meshes;
     std::map<std::string, BoneInfo> boneMap;
@@ -574,7 +586,7 @@ bool ModelConverter::Convert
         const auto srcMesh = pScene->mMeshes[i];
         auto& dstMesh = meshes[i];
 
-        ParseMesh(builder, boneMap, pScene->mRootNode, dstMesh, srcMesh, sphere, box);
+        ParseMesh(builder, srcBones, boneMap, pScene->mRootNode, dstMesh, srcMesh, sphere, box);
     }
 
     // ボーンデータを変換.
