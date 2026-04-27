@@ -58,6 +58,8 @@ void MotionPlayer::Init(const Model* pModel)
         auto  bindPose = asdx::BoneProxy::GetBindPoseMatrix(bone);
 
         m_LocalTransforms[i] = bindPose;
+        m_WorldTransforms[i] = identity;
+        m_MatrixPalettes [i] = identity;
         m_Tracks         [i] = nullptr;
     }
 
@@ -110,6 +112,8 @@ void MotionPlayer::SetClip(const res::MotionClip* pClip)
         }
 
         m_LocalTransforms[i] = bindPose;
+        m_WorldTransforms[i] = identity;
+        m_MatrixPalettes [i] = identity;
     }
 
     UpdateWorldTransform(identity);
@@ -186,12 +190,16 @@ void MotionPlayer::UpdateWorldTransform(const Matrix& rootTransform)
         const auto& bone = m_pModel->GetBone(i);
         const auto parentId = asdx::BoneProxy::GetParentId(bone);
 
-        // 親がいなければそのまま.
-        if (parentId < 0)
-            m_WorldTransforms[i] = m_LocalTransforms[i] * rootTransform;
-        // 親がいれば親を考慮.
-        else
+        if (parentId >= 0)
+        {
+            // 親がいれば親を考慮.
             m_WorldTransforms[i] = m_LocalTransforms[i] * m_WorldTransforms[parentId];
+        }
+        else
+        {
+            // 親がいなければそのまま.
+            m_WorldTransforms[i] = m_LocalTransforms[i] * rootTransform;
+        }
     }
 }
 

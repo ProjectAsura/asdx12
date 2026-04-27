@@ -521,7 +521,7 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
     DrawBoundingSphere(modelWorld);
 
     // ボーン描画.
-    DrawBones(modelWorld);
+    DrawBones(modelWorld * root);
 
     // プロパティウィンドウを描画.
     DrawPropertyWindow();

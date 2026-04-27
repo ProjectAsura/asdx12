@@ -377,20 +377,17 @@ void ModelViewer::DrawBones(const asdx::Matrix& modelWorld)
     for(auto i=0u; i<count; ++i)
     {
         auto& bone = m_Model->GetBone(i);
-        auto m0 = matrices[i] * modelWorld;
+        auto parentId = asdx::BoneProxy::GetParentId(bone);
+        if (parentId < 0)
+            continue;
+
+        auto m0 = matrices[parentId] * modelWorld;
         auto p0 = m0.GetPosition();
 
-        auto children = asdx::BoneProxy::GetChildren(bone);
-        for(auto j=0u; j<children.size(); ++j)
-        {
-            auto idx = children[j];
-            assert(idx != -1);
+        auto m1 = matrices[i] * modelWorld;
+        auto p1 = m1.GetPosition();
 
-            auto m1 = matrices[idx] * modelWorld;
-            auto p1 = m1.GetPosition();
-
-            asdx::DrawWireBone(m_LineRenderer, p0, p1, asdx::Vector4(0.0f, 1.0f, 1.0f, 1.0f));
-        }
+        asdx::DrawWireBone(m_LineRenderer, p0, p1, asdx::Vector4(0.0f, 1.0f, 1.0f, 1.0f));
     }
 }
 
