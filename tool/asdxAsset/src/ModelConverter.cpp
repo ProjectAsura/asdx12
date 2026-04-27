@@ -107,22 +107,86 @@ aiMatrix4x4 ToAiMatrix(const asdx::res::Float4x4* matrix)
 }
 
 //-----------------------------------------------------------------------------
-//      親ボーンを検索します.
+//      指定名に合致するノードを検索します.
 //-----------------------------------------------------------------------------
-const aiBone* FindParentBone(const aiNode* node, const std::unordered_map<std::string, aiBone*>& bones)
+const aiNode* FindNode(aiNode* node, const char* name)
+{
+    if (node == nullptr || name == nullptr)
+        return nullptr;
+
+    if (strcmp(node->mName.C_Str(), name) == 0)
+        return node;
+
+    for(auto i=0u; i<node->mNumChildren; ++i)
+    {
+        auto child = node->mChildren[i];
+        if (child == nullptr)
+            continue;
+
+        auto foundNode = FindNode(child, name);
+        if (foundNode)
+            return foundNode;
+    }
+
+    return nullptr;
+}
+
+//-----------------------------------------------------------------------------
+//      指定名に合致するボーンを検索します.
+//-----------------------------------------------------------------------------
+const aiBone* FindBone(const aiScene* scene, const char* name)
+{
+    if (scene == nullptr || name == nullptr)
+        return nullptr;
+
+    for(auto i=0u; i<scene->mNumMeshes; ++i)
+    {
+        auto mesh = scene->mMeshes[i];
+        if (!mesh->HasBones())
+            continue;
+
+        for(auto j=0u; j<mesh->mNumBones; ++j)
+        {
+            auto bone = mesh->mBones[j];
+            if (strcmp(name, bone->mName.C_Str()) == 0)
+                return bone;
+        }
+    }
+
+    return nullptr;
+}
+
+//-----------------------------------------------------------------------------
+//      再帰的にノードを辞書に登録します.
+//-----------------------------------------------------------------------------
+void RegisterDic(const aiNode* node, std::unordered_map<std::string, int>& dic)
 {
     if (node == nullptr)
-        return nullptr;
+        return;
 
-    // 親ノードが存在しなければ終了.
-    if (node->mParent == nullptr)
-        return nullptr;
+    if (node->mParent != nullptr)
+    {
+        auto parentName = std::string(node->mParent->mName.C_Str());
+        auto itr = dic.find(parentName);
+        if (itr == dic.end())
+        {
+            auto id = int(dic.size());
+            dic[parentName] = id;
+        }
+    }
 
-    auto itr = bones.find(node->mParent->mName.C_Str());
-    if (itr == bones.end())
-        return nullptr;
+    auto name = std::string(node->mName.C_Str());
+    auto itr = dic.find(name);
+    if (itr == dic.end())
+    {
+        auto id = int(dic.size());
+        dic[name] = id;
+    }
 
-    return itr->second;
+    for(auto j=0u; j<node->mNumChildren; ++j)
+    {
+        RegisterDic(node->mChildren[j], dic);
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -136,8 +200,8 @@ void ParseBone
     std::vector<flatbuffers::Offset<asdx::res::Bone>>&  dstBones
 )
 {
-    // 検索用辞書を構築.
-    std::unordered_map<std::string, aiBone*> dic;
+    // 親 -> 子 の順番を守って登録する.
+    // この順番を守らないと，スキニング行列が 親 -> 子 の順番にならず不具合を引き起こすため.
     for(auto i=0u; i<pScene->mNumMeshes; ++i)
     {
         const auto srcMesh = pScene->mMeshes[i];
@@ -147,39 +211,27 @@ void ParseBone
         for(auto j=0u; j<srcMesh->mNumBones; ++j)
         {
             auto bone = srcMesh->mBones[j];
-            auto name = std::string(bone->mName.C_Str());
-
-            auto itr = boneMap.find(name);
-            if (itr == std::end(boneMap))
-            {
-                dic[name] = bone;
-                auto boneId = int(boneMap.size());
-                boneMap[name] = boneId;
-            }
+            auto node = FindNode(pScene->mRootNode, bone->mName.C_Str());
+            RegisterDic(node, boneMap);
         }
     }
 
     // ボーンデータを変換.
     dstBones.resize(boneMap.size());
-    for(auto& item : dic)
+    for(auto& item : boneMap)
     {
-        auto  bone     = item.second;
         auto& boneName = item.first;
+        auto bone = FindBone(pScene, boneName.c_str());;
+        auto node = FindNode(pScene->mRootNode, boneName.c_str());
 
-        auto node   = pScene->mRootNode->findBoneNode(bone);
-        auto parent = FindParentBone(node, dic);
-
-        auto boneId = 0u;
-        {
-            auto itr = boneMap.find(boneName);
-            assert(itr != boneMap.end());
-            boneId = itr->second;
-        }
+        auto itr = boneMap.find(boneName);
+        assert(itr != boneMap.end());
+        auto boneId = itr->second;
 
         int parentId = -1;
-        if (parent != nullptr)
+        if (node != nullptr && node->mParent != nullptr)
         {
-            auto itr = boneMap.find(parent->mName.C_Str());
+            auto itr = boneMap.find(node->mParent->mName.C_Str());
             if (itr != boneMap.end())
             { parentId = itr->second; }
         }
@@ -203,10 +255,17 @@ void ParseBone
             0.0f, 0.0f, 1.0f, 0.0f,
             0.0f, 0.0f, 0.0f, 1.0f);
 
+        asdx::res::Float4x4 invBindPose(
+            1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f);
+
         if (node != nullptr)
             bindPose = ToFloat4x4(node->mTransformation);
 
-        asdx::res::Float4x4 invBindPose = ToFloat4x4(bone->mOffsetMatrix);
+        if (bone != nullptr)
+            invBindPose = ToFloat4x4(bone->mOffsetMatrix);
 
         dstBones[boneId] = asdx::res::CreateBoneDirect(
             builder,
