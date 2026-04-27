@@ -562,6 +562,7 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
     }
 
     // 行列パレットバッファ更新
+    if (!!m_Model)
     {
         auto isSkeletal = (m_MotionBinary.GetClipCount() > 0) && (m_Model->GetBoneCount() > 0);
         if (isSkeletal)
@@ -575,7 +576,6 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
                 memcpy(ptr, mtx.data(), sizeof(asdx::Matrix) * mtx.size());
                 m_MatrixPalletBuffer[idx].Unmap();
             }
-
         }
     }
 }

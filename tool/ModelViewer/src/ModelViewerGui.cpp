@@ -383,7 +383,10 @@ void ModelViewer::DrawBones(const asdx::Matrix& modelWorld)
         auto children = asdx::BoneProxy::GetChildren(bone);
         for(auto j=0u; j<children.size(); ++j)
         {
-            auto m1 = matrices[children[j]] * modelWorld;
+            auto idx = children[j];
+            assert(idx != -1);
+
+            auto m1 = matrices[idx] * modelWorld;
             auto p1 = m1.GetPosition();
 
             asdx::DrawWireBone(m_LineRenderer, p0, p1, asdx::Vector4(0.0f, 1.0f, 1.0f, 1.0f));

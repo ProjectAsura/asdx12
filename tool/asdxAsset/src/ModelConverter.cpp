@@ -71,6 +71,18 @@ asdx::res::Float4x4 ToFloat4x4(const asdx::Matrix& matrix)
 }
 
 //-----------------------------------------------------------------------------
+//      Float4x4 に変換します.
+//-----------------------------------------------------------------------------
+asdx::res::Float4x4 ToFloat4x4(const aiMatrix4x4& matrix)
+{
+    return asdx::res::Float4x4(
+        matrix.a1, matrix.b1, matrix.c1, matrix.d1,
+        matrix.a2, matrix.b2, matrix.c2, matrix.d2,
+        matrix.a3, matrix.b3, matrix.c3, matrix.d3,
+        matrix.a4, matrix.b4, matrix.c4, matrix.d4);
+}
+
+//-----------------------------------------------------------------------------
 //      Matrix に変換します.
 //-----------------------------------------------------------------------------
 asdx::Matrix ToMatrix(const aiMatrix4x4& matrix)
@@ -114,13 +126,105 @@ const aiBone* FindParentBone(const aiNode* node, const std::unordered_map<std::s
 }
 
 //-----------------------------------------------------------------------------
+//      ボーンを解析します.
+//-----------------------------------------------------------------------------
+void ParseBone
+(
+    flatbuffers::FlatBufferBuilder&                     builder,
+    const aiScene*                                      pScene,
+    std::unordered_map<std::string, int>&               boneMap,
+    std::vector<flatbuffers::Offset<asdx::res::Bone>>&  dstBones
+)
+{
+    // 検索用辞書を構築.
+    std::unordered_map<std::string, aiBone*> dic;
+    for(auto i=0u; i<pScene->mNumMeshes; ++i)
+    {
+        const auto srcMesh = pScene->mMeshes[i];
+        if (!srcMesh->HasBones())
+            continue;
+
+        for(auto j=0u; j<srcMesh->mNumBones; ++j)
+        {
+            auto bone = srcMesh->mBones[j];
+            auto name = std::string(bone->mName.C_Str());
+
+            auto itr = boneMap.find(name);
+            if (itr == std::end(boneMap))
+            {
+                dic[name] = bone;
+                auto boneId = int(boneMap.size());
+                boneMap[name] = boneId;
+            }
+        }
+    }
+
+    // ボーンデータを変換.
+    dstBones.resize(boneMap.size());
+    for(auto& item : dic)
+    {
+        auto  bone     = item.second;
+        auto& boneName = item.first;
+
+        auto node   = pScene->mRootNode->findBoneNode(bone);
+        auto parent = FindParentBone(node, dic);
+
+        auto boneId = 0u;
+        {
+            auto itr = boneMap.find(boneName);
+            assert(itr != boneMap.end());
+            boneId = itr->second;
+        }
+
+        int parentId = -1;
+        if (parent != nullptr)
+        {
+            auto itr = boneMap.find(parent->mName.C_Str());
+            if (itr != boneMap.end())
+            { parentId = itr->second; }
+        }
+
+        std::vector<int> children;
+        if (!!node && node->mNumChildren > 0)
+        {
+            children.reserve(node->mNumChildren);
+            for(auto i=0u; i<node->mNumChildren; ++i)
+            {
+                auto itr = boneMap.find(node->mChildren[i]->mName.C_Str());
+                if (itr != boneMap.end())
+                { children.push_back(itr->second); }
+            }
+            children.shrink_to_fit();
+        }
+
+        asdx::res::Float4x4 bindPose(
+            1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f);
+
+        if (node != nullptr)
+            bindPose = ToFloat4x4(node->mTransformation);
+
+        asdx::res::Float4x4 invBindPose = ToFloat4x4(bone->mOffsetMatrix);
+
+        dstBones[boneId] = asdx::res::CreateBoneDirect(
+            builder,
+            boneName.c_str(),
+            parentId,
+            &bindPose,
+            &invBindPose,
+            &children);
+    }
+}
+
+//-----------------------------------------------------------------------------
 //      メッシュを解析します.
 //-----------------------------------------------------------------------------
 void ParseMesh
 (
     flatbuffers::FlatBufferBuilder&                 builder,
-    const std::unordered_map<std::string, aiBone*>& srcBones,
-    std::map<std::string, BoneInfo>&                boneMap,
+    const std::unordered_map<std::string, int>&     boneMap,
     const aiNode*                                   rootNode,
     flatbuffers::Offset<asdx::res::Mesh>&           dstMesh,
     const aiMesh*                                   srcMesh,
@@ -182,55 +286,9 @@ void ParseMesh
         for(auto i=0u; i<srcMesh->mNumBones; ++i)
         {
             auto bone = srcMesh->mBones[i];
-            auto boneName = std::string(bone->mName.C_Str());
-
-            auto node   = rootNode->findBoneNode(bone);
-            auto parent = FindParentBone(node, srcBones);
-
-            uint32_t boneId = 0;
-
-            auto itr = boneMap.find(boneName);
-            if (itr == std::end(boneMap))
-            {
-                boneId = int(boneMap.size());
-                BoneInfo info;
-                info.Index    = boneId;
-                info.Name     = boneName;
-                info.BindPose = asdx::Matrix::CreateIdentity();
-
-                if (parent != nullptr)
-                {
-                    info.ParentName = std::string(parent->mName.C_Str());
-                }
-
-                if (node && node->mNumChildren > 0)
-                {
-                    info.ChildrenName.resize(node->mNumChildren);
-                    for(auto i=0u; i<node->mNumChildren; ++i)
-                    {
-                        info.ChildrenName[i] = std::string(node->mChildren[i]->mName.C_Str());
-                    }
-                }
-
-                // バインドポーズ行列.
-                // 正しい実装は aiNode 側から取る. 
-                // aiNode 経由だと相対座標になるので，正しい挙動になるが，
-                // aiBone の mOffsetMatrix の逆行列から求めてしまうと，絶対座標になるのでおかしな挙動になる.
-                if (node != nullptr)
-                {
-                    auto bindPose = node->mTransformation;
-                    info.BindPose = ToMatrix(bindPose);
-                }
-
-                // バインドポーズ逆行列.
-                info.InverseBindPose = ToMatrix(bone->mOffsetMatrix);
-
-                boneMap[boneName] = info;
-            }
-            else
-            {
-                boneId = itr->second.Index;
-            }
+            auto itr = boneMap.find(bone->mName.C_Str());
+            assert(itr != boneMap.end());
+            auto boneId = itr->second;
 
             for(auto j=0u; j<bone->mNumWeights; ++j)
             {
@@ -460,6 +518,274 @@ void ParseMesh
         &bBox);
 }
 
+//-----------------------------------------------------------------------------
+//      ファイルパスを連結します.
+//-----------------------------------------------------------------------------
+std::string PathCombine(const std::string& lhs, const std::string& rhs)
+{
+    if (rhs.empty())
+        return std::string();
+    if (lhs.empty())
+        return rhs;
+
+    return lhs + "\\" + rhs;
+}
+
+//-----------------------------------------------------------------------------
+//      テクスチャコンバートを行います.
+//-----------------------------------------------------------------------------
+void ConvertTXB(const std::string& input, const std::string& output)
+{
+    TextureConverter::Desc desc = {};
+    desc.InputPath  = input;
+    desc.OutputPath = output;
+
+    if (!TextureConverter::Convert(desc))
+    { ELOG("Error : TextureConverter::Convert() Failed. path = %s", input.c_str()); }
+}
+
+//-----------------------------------------------------------------------------
+//      マテリアルを解析します.
+//-----------------------------------------------------------------------------
+void ParseMaterial
+(
+    flatbuffers::FlatBufferBuilder& builder,
+    const aiScene*                  pScene,
+    const std::string&              inputDir,
+    const std::string&              txbOutPath,
+    bool                            txbConvert,
+    std::vector<flatbuffers::Offset<asdx::res::Material>>& materials
+)
+{
+    materials.reserve(pScene->mNumMaterials);
+    for(auto i=0u; i<pScene->mNumMaterials; ++i)
+    {
+        const auto srcMat = pScene->mMaterials[i];
+        std::string name = srcMat->GetName().C_Str();
+        if (name.empty() || name == "")
+        { name = "material__" + std::to_string(i); }
+
+        std::string baseColorMap;
+        std::string normalMap;
+        std::string ormMap;
+        std::string emissiveMap;
+
+        asdx::Vector3 baseColorFactor = asdx::Vector3(1.0f, 1.0f, 1.0f);
+        asdx::Vector3 emissiveFactor  = asdx::Vector3(0.0f, 0.0f, 0.0f);
+        float alpha                   = 1.0f;
+        float occulusionFactor        = 1.0f;
+        float roughnessFactor         = 1.0f;
+        float metalnessFactor         = 1.0f;
+        float ior                     = 1.0f;
+        bool  isOpaque                = true;
+        float alphaCutOff             = 0.0f;
+
+        auto alphaMode = asdx::res::AlphaType_Opaque;
+
+        int shadingModel = 0;
+        srcMat->Get(AI_MATKEY_SHADING_MODEL, shadingModel);
+
+        // 法線マップ.
+        {
+            aiString mapPath;
+            if (srcMat->GetTexture(aiTextureType_NORMALS, 0, &mapPath) == AI_SUCCESS)
+            {
+                asdx::fs::path p = mapPath.C_Str();
+                normalMap = "textures\\" + p.filename().replace_extension(".txb").string();
+                if (txbConvert)
+                {
+                    ConvertTXB(
+                        PathCombine(inputDir, mapPath.C_Str()),
+                        PathCombine(txbOutPath, normalMap));
+                }
+            }
+        }
+
+        // エミッシブマップ.
+        {
+            aiString mapPath;
+            if (srcMat->GetTexture(aiTextureType_EMISSIVE, 0, &mapPath) == AI_SUCCESS)
+            {
+                asdx::fs::path p = mapPath.C_Str();
+                emissiveMap = "textures\\" + p.filename().replace_extension(".txb").string();
+                if (txbConvert)
+                {
+                    ConvertTXB(
+                        PathCombine(inputDir, mapPath.C_Str()),
+                        PathCombine(txbOutPath, emissiveMap));
+                }
+            }
+        }
+
+        // エミッシブカラー.
+        {
+            aiColor4D value;
+            if (srcMat->Get(AI_MATKEY_COLOR_EMISSIVE, value) == AI_SUCCESS)
+            {
+                emissiveFactor.x = value.r;
+                emissiveFactor.y = value.g;
+                emissiveFactor.z = value.b;
+            }
+        }
+
+        // 不透明度.
+        {
+            float value;
+            if (srcMat->Get(AI_MATKEY_OPACITY, value) == AI_SUCCESS)
+            {
+                alpha = value;
+                if (alpha < 1.0f)
+                { isOpaque = false; }
+            }
+        }
+
+        // 屈折率.
+        {
+            float value;
+            if (srcMat->Get(AI_MATKEY_REFRACTI, value) == AI_SUCCESS)
+            { ior = value; }
+        }
+
+        // PBRモデルの場合.
+        if (shadingModel == aiShadingMode_PBR_BRDF)
+        {
+            // ベースカラーマップ.
+            {
+                aiString mapPath;
+                if (srcMat->GetTexture(aiTextureType_BASE_COLOR, 0, &mapPath) == AI_SUCCESS)
+                {
+                    asdx::fs::path p = mapPath.C_Str();
+                    baseColorMap = "textures\\" + p.filename().replace_extension(".txb").string();
+                    if (txbConvert)
+                    {
+                        ConvertTXB(
+                            PathCombine(inputDir, mapPath.C_Str()),
+                            PathCombine(txbOutPath, baseColorMap));
+                    }
+                }
+            }
+
+            // Occlusion/Roughness/Metalnessマップ.
+            {
+                aiString mapPath;
+                if (srcMat->GetTexture(aiTextureType_GLTF_METALLIC_ROUGHNESS, 0, &mapPath) == AI_SUCCESS)
+                {
+                    asdx::fs::path p = mapPath.C_Str();
+                    ormMap = "textures\\" + p.filename().replace_extension(".txb").string();
+                    if (txbConvert)
+                    {
+                        ConvertTXB(
+                            PathCombine(inputDir, mapPath.C_Str()),
+                            PathCombine(txbOutPath, ormMap));
+                    }
+                }
+            }
+
+            // ベースカラーファクター.
+            {
+                aiColor4D value;
+                if (srcMat->Get(AI_MATKEY_BASE_COLOR, value) == AI_SUCCESS)
+                {
+                    baseColorFactor.x = value.r;
+                    baseColorFactor.y = value.g;
+                    baseColorFactor.z = value.b;
+                }
+            }
+
+            // ラフネスファクター.
+            {
+                float value;
+                if (srcMat->Get(AI_MATKEY_ROUGHNESS_FACTOR, value) == AI_SUCCESS)
+                {
+                    roughnessFactor = value;
+                }
+            }
+
+            // メタルネスファクター
+            {
+                float value;
+                if (srcMat->Get(AI_MATKEY_METALLIC_FACTOR, value) == AI_SUCCESS)
+                {
+                    metalnessFactor = value;
+                }
+            }
+
+            // アルファモード.
+            {
+                aiString alphaModeStr;
+                if (srcMat->Get("$mat.gltf.alphaMode", 0, 0, alphaModeStr) == AI_SUCCESS)
+                {
+                    if (strcmp(alphaModeStr.C_Str(), "OPQAUE") == 0)
+                    {
+                        alphaMode = asdx::res::AlphaType_Opaque;
+                    }
+                    else if (strcmp(alphaModeStr.C_Str(), "MASK") == 0)
+                    {
+                        alphaMode   = asdx::res::AlphaType_Mask;
+                        alphaCutOff = 0.5f;
+                        srcMat->Get("$mat.gltf.alphaCutoff", 0, 0, alphaCutOff);
+                    }
+                    else if (strcmp(alphaModeStr.C_Str(), "BLEND") == 0)
+                    {
+                        alphaMode = asdx::res::AlphaType_Blend;
+                    }
+                }
+            }
+        }
+        else
+        {
+            // ディフューズカラーマップ.
+            {
+                aiString mapPath;
+                if (srcMat->GetTexture(aiTextureType_DIFFUSE, 0, &mapPath) == AI_SUCCESS)
+                {
+                    asdx::fs::path p = mapPath.C_Str();
+                    baseColorMap = "textures\\" + p.filename().replace_extension(".txb").string();
+                    if (txbConvert)
+                    {
+                        ConvertTXB(
+                            PathCombine(inputDir, mapPath.C_Str()),
+                            PathCombine(txbOutPath, baseColorMap));
+                    }
+                }
+            }
+
+            // ディフューズカラー.
+            {
+                aiColor4D value;
+                if (srcMat->Get(AI_MATKEY_COLOR_DIFFUSE, value) == AI_SUCCESS)
+                {
+                    baseColorFactor.x = value.r;
+                    baseColorFactor.y = value.g;
+                    baseColorFactor.z = value.b;
+                }
+            }
+        }
+
+        asdx::res::Float3 bf(baseColorFactor.x, baseColorFactor.y, baseColorFactor.z);
+        asdx::res::Float3 ef(emissiveFactor.x, emissiveFactor.y, emissiveFactor.z);
+
+        auto dstMat = asdx::res::CreateMaterialDirect(
+            builder,
+            name.c_str(),
+            &bf,
+            alpha,
+            occulusionFactor,
+            roughnessFactor,
+            metalnessFactor,
+            ior,
+            &ef,
+            baseColorMap.c_str(),
+            normalMap.c_str(),
+            ormMap.c_str(),
+            emissiveMap.c_str(),
+            alphaMode,
+            alphaCutOff);
+
+        materials.emplace_back(dstMat);
+    }
+}
+
 } // namespace
 
 
@@ -562,326 +888,27 @@ bool ModelConverter::Convert
 
     flatbuffers::FlatBufferBuilder builder(1024);
 
-    // ボーン検索用辞書を先に構築.
-    std::unordered_map<std::string, aiBone*> srcBones;
-    for(auto i=0u; i<pScene->mNumMeshes; ++i)
-    {
-        const auto srcMesh = pScene->mMeshes[i];
-        if (!srcMesh->HasBones())
-            continue;
-
-        for(auto j=0u; j<srcMesh->mNumBones; ++j)
-        {
-            auto bone = srcMesh->mBones[j];
-            srcBones[bone->mName.C_Str()] = bone;
-        }
-    }
+    // ボーンデータを変換.
+    std::unordered_map<std::string, int> boneMap;
+    std::vector<flatbuffers::Offset<asdx::res::Bone>> bones;
+    ParseBone(builder, pScene, boneMap, bones);
 
     // メッシュデータを変換.
     std::vector<flatbuffers::Offset<asdx::res::Mesh>> meshes;
-    std::map<std::string, BoneInfo> boneMap;
     meshes.resize(pScene->mNumMeshes);
     for(auto i=0u; i<pScene->mNumMeshes; ++i)
     {
         const auto srcMesh = pScene->mMeshes[i];
         auto& dstMesh = meshes[i];
 
-        ParseMesh(builder, srcBones, boneMap, pScene->mRootNode, dstMesh, srcMesh, sphere, box);
+        ParseMesh(builder, boneMap, pScene->mRootNode, dstMesh, srcMesh, sphere, box);
     }
-
-    // 不要になったのでクリア.
-    srcBones.clear();
-
-    // ボーンデータを変換.
-    std::vector<flatbuffers::Offset<asdx::res::Bone>> bones;
-    bones.resize(boneMap.size());
-    for(auto& srcBone : boneMap)
-    {
-        int parentId = -1;
-        if (!srcBone.second.ParentName.empty())
-        {
-            auto itr = boneMap.find(srcBone.second.ParentName);
-            if (itr != boneMap.end())
-            { parentId = int(itr->second.Index); }
-        }
-
-        std::vector<int> children;
-        if (!srcBone.second.ChildrenName.empty())
-        {
-            for(auto i=0u; i<srcBone.second.ChildrenName.size(); ++i)
-            {
-                auto itr = boneMap.find(srcBone.second.ChildrenName[i]);
-                if (itr != boneMap.end())
-                { children.push_back(int(itr->second.Index)); }
-            }
-        }
-
-        auto bindPose    = ToFloat4x4(srcBone.second.BindPose);
-        auto invBindPose = ToFloat4x4(srcBone.second.InverseBindPose);
-
-        auto boneId = srcBone.second.Index;
-
-        bones[boneId] = asdx::res::CreateBoneDirect(
-            builder,
-            srcBone.second.Name.c_str(),
-            parentId,
-            &bindPose,
-            &invBindPose,
-            &children);
-    }
-
     // 不要になったのでクリア.
     boneMap.clear();
 
     // マテリアルデータを変換.
     std::vector<flatbuffers::Offset<asdx::res::Material>> materials;
-    materials.reserve(pScene->mNumMaterials);
-    for(auto i=0u; i<pScene->mNumMaterials; ++i)
-    {
-        const auto srcMat = pScene->mMaterials[i];
-        std::string name = srcMat->GetName().C_Str();
-        if (name.empty() || name == "")
-        { name = "material__" + std::to_string(i); }
-
-        std::string baseColorMap;
-        std::string normalMap;
-        std::string ormMap;
-        std::string emissiveMap;
-
-        asdx::Vector3 baseColorFactor = asdx::Vector3(1.0f, 1.0f, 1.0f);
-        asdx::Vector3 emissiveFactor  = asdx::Vector3(0.0f, 0.0f, 0.0f);
-        float alpha                   = 1.0f;
-        float occulusionFactor        = 1.0f;
-        float roughnessFactor         = 1.0f;
-        float metalnessFactor         = 1.0f;
-        float ior                     = 1.0f;
-        bool  isOpaque                = true;
-        float alphaCutOff             = 0.0f;
-
-        auto alphaMode = asdx::res::AlphaType_Opaque;
-
-        int shadingModel = 0;
-        srcMat->Get(AI_MATKEY_SHADING_MODEL, shadingModel);
-
-        // 法線マップ.
-        {
-            aiString mapPath;
-            if (srcMat->GetTexture(aiTextureType_NORMALS, 0, &mapPath) == AI_SUCCESS)
-            {
-                asdx::fs::path p = mapPath.C_Str();
-                normalMap = "textures\\" + p.filename().replace_extension(".txb").string();
-                if (txbConvert)
-                {
-                    TextureConverter::Desc convertDesc = {};
-                    convertDesc.InputPath  = inputDir + "\\" + mapPath.C_Str();
-                    convertDesc.OutputPath = txbOutPath + "\\" + normalMap;
-
-                    // テクスチャ変換はエラーログは出すが，失敗扱いにしない.
-                    if (!TextureConverter::Convert(convertDesc))
-                    { ELOG("Error : TextureConverter::Convert() Failed. path = %s", mapPath.C_Str()); }
-                }
-            }
-        }
-
-        // エミッシブマップ.
-        {
-            aiString mapPath;
-            if (srcMat->GetTexture(aiTextureType_EMISSIVE, 0, &mapPath) == AI_SUCCESS)
-            {
-                asdx::fs::path p = mapPath.C_Str();
-                emissiveMap = "textures\\" + p.filename().replace_extension(".txb").string();
-                if (txbConvert)
-                {
-                    TextureConverter::Desc convertDesc = {};
-                    convertDesc.InputPath  = inputDir + "\\" + mapPath.C_Str();
-                    convertDesc.OutputPath = txbOutPath + "\\" + emissiveMap;
-
-                    // テクスチャ変換はエラーログは出すが，失敗扱いにしない.
-                    if (!TextureConverter::Convert(convertDesc))
-                    { ELOG("Error : TextureConverter::Convert() Failed. path = %s", mapPath.C_Str()); }
-                }
-            }
-        }
-
-        // エミッシブカラー.
-        {
-            aiColor4D value;
-            if (srcMat->Get(AI_MATKEY_COLOR_EMISSIVE, value) == AI_SUCCESS)
-            {
-                emissiveFactor.x = value.r;
-                emissiveFactor.y = value.g;
-                emissiveFactor.z = value.b;
-            }
-        }
-
-        // 不透明度.
-        {
-            float value;
-            if (srcMat->Get(AI_MATKEY_OPACITY, value) == AI_SUCCESS)
-            {
-                alpha = value;
-                if (alpha < 1.0f)
-                { isOpaque = false; }
-            }
-        }
-
-        // 屈折率.
-        {
-            float value;
-            if (srcMat->Get(AI_MATKEY_REFRACTI, value) == AI_SUCCESS)
-            { ior = value; }
-        }
-
-        // PBRモデルの場合.
-        if (shadingModel == aiShadingMode_PBR_BRDF)
-        {
-            // ベースカラーマップ.
-            {
-                aiString mapPath;
-                if (srcMat->GetTexture(aiTextureType_BASE_COLOR, 0, &mapPath) == AI_SUCCESS)
-                {
-                    asdx::fs::path p = mapPath.C_Str();
-                    baseColorMap = "textures\\" + p.filename().replace_extension(".txb").string();
-                    if (txbConvert)
-                    {
-                        TextureConverter::Desc convertDesc = {};
-                        convertDesc.InputPath  = inputDir + "\\" + mapPath.C_Str();
-                        convertDesc.OutputPath = txbOutPath + "\\" + baseColorMap;
-
-                        // テクスチャ変換はエラーログは出すが，失敗扱いにしない.
-                        if (!TextureConverter::Convert(convertDesc))
-                        { ELOG("Error : TextureConverter::Convert() Failed. path = %s", convertDesc.InputPath.c_str()); }
-                    }
-                }
-            }
-
-            // Occlusion/Roughness/Metalnessマップ.
-            {
-                aiString mapPath;
-                if (srcMat->GetTexture(aiTextureType_GLTF_METALLIC_ROUGHNESS, 0, &mapPath) == AI_SUCCESS)
-                {
-                    asdx::fs::path p = mapPath.C_Str();
-                    ormMap = "textures\\" + p.filename().replace_extension(".txb").string();
-                    if (txbConvert)
-                    {
-                        TextureConverter::Desc convertDesc = {};
-                        convertDesc.InputPath  = inputDir + "\\" + mapPath.C_Str();
-                        convertDesc.OutputPath = txbOutPath + "\\" + ormMap;
-
-                        // テクスチャ変換はエラーログは出すが，失敗扱いにしない.
-                        if (!TextureConverter::Convert(convertDesc))
-                        { ELOG("Error : TextureConverter::Convert() Failed. path = %s", convertDesc.InputPath.c_str()); }
-                    }
-                }
-            }
-
-            // ベースカラーファクター.
-            {
-                aiColor4D value;
-                if (srcMat->Get(AI_MATKEY_BASE_COLOR, value) == AI_SUCCESS)
-                {
-                    baseColorFactor.x = value.r;
-                    baseColorFactor.y = value.g;
-                    baseColorFactor.z = value.b;
-                }
-            }
-
-            // ラフネスファクター.
-            {
-                float value;
-                if (srcMat->Get(AI_MATKEY_ROUGHNESS_FACTOR, value) == AI_SUCCESS)
-                {
-                    roughnessFactor = value;
-                }
-            }
-
-            // メタルネスファクター
-            {
-                float value;
-                if (srcMat->Get(AI_MATKEY_METALLIC_FACTOR, value) == AI_SUCCESS)
-                {
-                    metalnessFactor = value;
-                }
-            }
-
-            // アルファモード.
-            {
-                aiString alphaModeStr;
-                if (srcMat->Get("$mat.gltf.alphaMode", 0, 0, alphaModeStr) == AI_SUCCESS)
-                {
-                    if (strcmp(alphaModeStr.C_Str(), "OPQAUE") == 0)
-                    {
-                        alphaMode = asdx::res::AlphaType_Opaque;
-                    }
-                    else if (strcmp(alphaModeStr.C_Str(), "MASK") == 0)
-                    {
-                        alphaMode = asdx::res::AlphaType_Mask;
-                        alphaCutOff = 0.5f;
-                        srcMat->Get("$mat.gltf.alphaCutoff", 0, 0, alphaCutOff);
-                    }
-                    else if (strcmp(alphaModeStr.C_Str(), "BLEND") == 0)
-                    {
-                        alphaMode = asdx::res::AlphaType_Blend;
-                    }
-                }
-            }
-        }
-        else
-        {
-            // ディフューズカラーマップ.
-            {
-                aiString mapPath;
-                if (srcMat->GetTexture(aiTextureType_DIFFUSE, 0, &mapPath) == AI_SUCCESS)
-                {
-                    asdx::fs::path p = mapPath.C_Str();
-                    baseColorMap = "textures\\" + p.filename().replace_extension(".txb").string();
-                    if (txbConvert)
-                    {
-                        TextureConverter::Desc convertDesc = {};
-                        convertDesc.InputPath  = inputDir + "\\" + mapPath.C_Str();
-                        convertDesc.OutputPath = txbOutPath + "\\" + baseColorMap;
-
-                        // テクスチャ変換はエラーログは出すが，失敗扱いにしない.
-                        if (!TextureConverter::Convert(convertDesc))
-                        { ELOG("Error : TextureConverter::Convert() Failed. path = %s", convertDesc.InputPath.c_str()); }
-                    }
-                }
-            }
-
-            // ディフューズカラー.
-            {
-                aiColor4D value;
-                if (srcMat->Get(AI_MATKEY_COLOR_DIFFUSE, value) == AI_SUCCESS)
-                {
-                    baseColorFactor.x = value.r;
-                    baseColorFactor.y = value.g;
-                    baseColorFactor.z = value.b;
-                }
-            }
-        }
-
-        asdx::res::Float3 bf(baseColorFactor.x, baseColorFactor.y, baseColorFactor.z);
-        asdx::res::Float3 ef(emissiveFactor.x, emissiveFactor.y, emissiveFactor.z);
-
-        auto dstMat = asdx::res::CreateMaterialDirect(
-            builder,
-            name.c_str(),
-            &bf,
-            alpha,
-            occulusionFactor,
-            roughnessFactor,
-            metalnessFactor,
-            ior,
-            &ef,
-            baseColorMap.c_str(),
-            normalMap.c_str(),
-            ormMap.c_str(),
-            emissiveMap.c_str(),
-            alphaMode,
-            alphaCutOff);
-
-        materials.emplace_back(dstMat);
-    }
+    ParseMaterial(builder, pScene, inputDir, txbOutPath, txbConvert, materials);
 
     auto bSphere = asdx::res::BoundingSphere(
                     asdx::res::Float3(sphere.Center.x, sphere.Center.y, sphere.Center.z),
