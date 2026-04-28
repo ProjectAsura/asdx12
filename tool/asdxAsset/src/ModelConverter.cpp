@@ -604,6 +604,47 @@ void ConvertTXB(const std::string& input, const std::string& output)
 }
 
 //-----------------------------------------------------------------------------
+//      テクスチャファイルパスを取得します.
+//-----------------------------------------------------------------------------
+std::string GetTexturePath
+(
+    const aiScene*      pScene,
+    const aiMaterial*   mat,
+    aiTextureType       type,
+    const std::string&  inputDir,
+    const std::string&  outputDir,
+    bool                convert
+)
+{
+    std::string result;
+    aiString    mapPath;
+    if (mat->GetTexture(type, 0, &mapPath) == AI_SUCCESS)
+    {
+        if (mapPath.data[0] == '*')
+        {
+            // ascii
+            auto index = std::stoi(&mapPath.data[1]);
+            asdx::fs::path p = pScene->mTextures[index]->mFilename.C_Str();
+            result = "textures\\" + p.filename().replace_extension(".txb").string();
+        }
+        else
+        {
+            asdx::fs::path p = mapPath.C_Str();
+            result = "textures\\" + p.filename().replace_extension(".txb").string();
+        }
+
+        if (convert)
+        {
+            ConvertTXB(
+                PathCombine(inputDir, mapPath.C_Str()),
+                PathCombine(outputDir, result));
+        }
+    }
+
+    return result;
+}
+
+//-----------------------------------------------------------------------------
 //      マテリアルを解析します.
 //-----------------------------------------------------------------------------
 void ParseMaterial
@@ -645,36 +686,10 @@ void ParseMaterial
         srcMat->Get(AI_MATKEY_SHADING_MODEL, shadingModel);
 
         // 法線マップ.
-        {
-            aiString mapPath;
-            if (srcMat->GetTexture(aiTextureType_NORMALS, 0, &mapPath) == AI_SUCCESS)
-            {
-                asdx::fs::path p = mapPath.C_Str();
-                normalMap = "textures\\" + p.filename().replace_extension(".txb").string();
-                if (txbConvert)
-                {
-                    ConvertTXB(
-                        PathCombine(inputDir, mapPath.C_Str()),
-                        PathCombine(txbOutPath, normalMap));
-                }
-            }
-        }
+        normalMap = GetTexturePath(pScene, srcMat, aiTextureType_NORMALS, inputDir, txbOutPath, txbConvert);
 
         // エミッシブマップ.
-        {
-            aiString mapPath;
-            if (srcMat->GetTexture(aiTextureType_EMISSIVE, 0, &mapPath) == AI_SUCCESS)
-            {
-                asdx::fs::path p = mapPath.C_Str();
-                emissiveMap = "textures\\" + p.filename().replace_extension(".txb").string();
-                if (txbConvert)
-                {
-                    ConvertTXB(
-                        PathCombine(inputDir, mapPath.C_Str()),
-                        PathCombine(txbOutPath, emissiveMap));
-                }
-            }
-        }
+        emissiveMap = GetTexturePath(pScene, srcMat, aiTextureType_EMISSIVE, inputDir, txbOutPath, txbConvert);
 
         // エミッシブカラー.
         {
@@ -709,36 +724,10 @@ void ParseMaterial
         if (shadingModel == aiShadingMode_PBR_BRDF)
         {
             // ベースカラーマップ.
-            {
-                aiString mapPath;
-                if (srcMat->GetTexture(aiTextureType_BASE_COLOR, 0, &mapPath) == AI_SUCCESS)
-                {
-                    asdx::fs::path p = mapPath.C_Str();
-                    baseColorMap = "textures\\" + p.filename().replace_extension(".txb").string();
-                    if (txbConvert)
-                    {
-                        ConvertTXB(
-                            PathCombine(inputDir, mapPath.C_Str()),
-                            PathCombine(txbOutPath, baseColorMap));
-                    }
-                }
-            }
+            baseColorMap = GetTexturePath(pScene, srcMat, aiTextureType_BASE_COLOR, inputDir, txbOutPath, txbConvert);
 
             // Occlusion/Roughness/Metalnessマップ.
-            {
-                aiString mapPath;
-                if (srcMat->GetTexture(aiTextureType_GLTF_METALLIC_ROUGHNESS, 0, &mapPath) == AI_SUCCESS)
-                {
-                    asdx::fs::path p = mapPath.C_Str();
-                    ormMap = "textures\\" + p.filename().replace_extension(".txb").string();
-                    if (txbConvert)
-                    {
-                        ConvertTXB(
-                            PathCombine(inputDir, mapPath.C_Str()),
-                            PathCombine(txbOutPath, ormMap));
-                    }
-                }
-            }
+            ormMap = GetTexturePath(pScene, srcMat, aiTextureType_GLTF_METALLIC_ROUGHNESS, inputDir, txbOutPath, txbConvert);
 
             // ベースカラーファクター.
             {
@@ -794,20 +783,7 @@ void ParseMaterial
         else
         {
             // ディフューズカラーマップ.
-            {
-                aiString mapPath;
-                if (srcMat->GetTexture(aiTextureType_DIFFUSE, 0, &mapPath) == AI_SUCCESS)
-                {
-                    asdx::fs::path p = mapPath.C_Str();
-                    baseColorMap = "textures\\" + p.filename().replace_extension(".txb").string();
-                    if (txbConvert)
-                    {
-                        ConvertTXB(
-                            PathCombine(inputDir, mapPath.C_Str()),
-                            PathCombine(txbOutPath, baseColorMap));
-                    }
-                }
-            }
+            baseColorMap = GetTexturePath(pScene, srcMat, aiTextureType_DIFFUSE, inputDir, txbOutPath, txbConvert);
 
             // ディフューズカラー.
             {
@@ -822,7 +798,7 @@ void ParseMaterial
         }
 
         asdx::res::Float3 bf(baseColorFactor.x, baseColorFactor.y, baseColorFactor.z);
-        asdx::res::Float3 ef(emissiveFactor.x, emissiveFactor.y, emissiveFactor.z);
+        asdx::res::Float3 ef(emissiveFactor .x,  emissiveFactor.y, emissiveFactor .z);
 
         auto dstMat = asdx::res::CreateMaterialDirect(
             builder,
