@@ -752,9 +752,6 @@
     <ClInclude Include="..\include\gfx\asdxRadialBlurEffect.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\gfx\asdxMultiMotionPlayer.h">
-      <Filter>ヘッダー ファイル\gfx</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\res\shaders\asdxBRDF.hlsli">

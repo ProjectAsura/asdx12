@@ -252,6 +252,15 @@ int Font::CalcWidth(const char8_t* text, float scale) const
 { return CalcWidth(reinterpret_cast<const char*>(text), scale); }
 #endif
 
+//-----------------------------------------------------------------------------
+//      1行分の縦幅を取得します.
+//-----------------------------------------------------------------------------
+int Font::CalcLineHeight(float scale) const
+{
+    const auto& bin = GetBinary();
+    return int(bin.GetLineHeight() * bin.GetFontSize() * scale);
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // FontRenderer class
