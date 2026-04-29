@@ -153,22 +153,41 @@ public:
     static Vector3 FindScaleKey(const res::MotionTrack* track, float timeSec);
 
     //-------------------------------------------------------------------------
-    //! @brief      ローカル変換行列を計算します.
+    //! @brief      ローカル変換行列を求めます.
     //! 
     //! @param[in]      track       モーショントラック.
-    //! @param[in]      timeSec     アニメーション時間[秒]:
+    //! @param[in]      timeSec     アニメーション時間[秒]
     //! @return     ローカル変換行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix CalcLocalTransform(const res::MotionTrack* track, float timeSec);
+    static Matrix FindLocalTransform(const res::MotionTrack* track, float timeSec);
 
     //-------------------------------------------------------------------------
-    //! @brief      ローカル変換行列をスケール無しで計算します.
+    //! @brief      スケール値なしのローカル変換行列を求めます.
     //! 
     //! @param[in]      track       モーショントラック.
-    //! @param[in]      timeSec     アニメーション時間[秒]:
-    //! @return     ローカル変換行列を返却します.
+    //! @param[in]      timeSec     アニメーション時間[秒]
+    //! @return     スケール値なしのローカル変換行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix CalcLocalTransformNoScale(const res::MotionTrack* track, float timeSec);
+    static Matrix FindLocalTransformNoScale(const res::MotionTrack* track, float timeSec);
+
+    //-------------------------------------------------------------------------
+    //! @brief      変換行列を計算します.
+    //!
+    //! @param[in]      scale           スケール値.
+    //! @param[in]      rotation        回転値.
+    //! @param[in]      translation     平行移動量.
+    //! @return     変換行列を返却します.
+    //-------------------------------------------------------------------------
+    static Matrix CalcTransform(const Vector3& scale, const Quaternion& rotation, const Vector3& translation);
+
+    //-------------------------------------------------------------------------
+    //! @brief      変換行列をスケール無しで計算します.
+    //! 
+    //! @param[in]      rotation        回転値.
+    //! @param[in]      translation     平行移動量.
+    //! @return     変換行列を返却します.
+    //-------------------------------------------------------------------------
+    static Matrix CalcTransformNoScale(const Quaternion& rotation, const Vector3& translation);
 };
 
 ///////////////////////////////////////////////////////////////////////////////

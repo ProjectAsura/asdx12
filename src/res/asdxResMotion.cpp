@@ -307,34 +307,46 @@ Vector3 MotionTrackProxy::FindScaleKey(const res::MotionTrack* track, float time
 //-----------------------------------------------------------------------------
 //      ローカル変換行列を求めます.
 //-----------------------------------------------------------------------------
-Matrix MotionTrackProxy::CalcLocalTransform(const res::MotionTrack* track, float timeSec)
+Matrix MotionTrackProxy::FindLocalTransform(const res::MotionTrack* track, float timeSec)
 {
     assert(track != nullptr);
-
-    auto S = FindScaleKey      (track, timeSec);
-    auto R = FindRotationKey   (track, timeSec);
+    auto S = FindScaleKey(track, timeSec);
+    auto R = FindRotationKey(track, timeSec);
     auto T = FindTranslationKey(track, timeSec);
+    return CalcTransform(S, R, T);
+}
 
+//-----------------------------------------------------------------------------
+//      スケールなしのローカル変換行列を求めます.
+//-----------------------------------------------------------------------------
+Matrix MotionTrackProxy::FindLocalTransformNoScale(const res::MotionTrack* track, float timeSec)
+{
+    assert(track != nullptr);
+    auto R = FindRotationKey(track, timeSec);
+    auto T = FindTranslationKey(track, timeSec);
+    return CalcTransformNoScale(R, T);
+}
+
+//-----------------------------------------------------------------------------
+//      変換行列を求めます.
+//-----------------------------------------------------------------------------
+Matrix MotionTrackProxy::CalcTransform(const Vector3& scale, const Quaternion& rotation, const Vector3& translation)
+{
     Matrix result;
-    result  = Matrix::CreateScale(S);
-    result *= Matrix::CreateFromQuaternion(R);
-    result  = Matrix::AppendTranslation(result, T);
+    result  = Matrix::CreateScale(scale);
+    result *= Matrix::CreateFromQuaternion(rotation);
+    result  = Matrix::AppendTranslation(result, translation);
     return result;
 }
 
 //-----------------------------------------------------------------------------
-//      ローカル変換行列をスケールなしで求めます.
+//      変換行列をスケールなしで求めます.
 //-----------------------------------------------------------------------------
-Matrix MotionTrackProxy::CalcLocalTransformNoScale(const res::MotionTrack* track, float timeSec)
+Matrix MotionTrackProxy::CalcTransformNoScale(const Quaternion& rotation, const Vector3& translation)
 {
-    assert(track != nullptr);
-
-    auto R = FindRotationKey   (track, timeSec);
-    auto T = FindTranslationKey(track, timeSec);
-
     Matrix result;
-    result = Matrix::CreateFromQuaternion(R);
-    result = Matrix::AppendTranslation(result, T);
+    result = Matrix::CreateFromQuaternion(rotation);
+    result = Matrix::AppendTranslation(result, translation);
     return result;
 }
 

@@ -370,6 +370,7 @@
     <ClInclude Include="..\include\gfx\asdxModel.h" />
     <ClInclude Include="..\include\gfx\asdxModelManager.h" />
     <ClInclude Include="..\include\gfx\asdxMotionPlayer.h" />
+    <ClInclude Include="..\include\gfx\asdxMultiMotionPlayer.h" />
     <ClInclude Include="..\include\gfx\asdxPipelineState.h" />
     <ClInclude Include="..\include\gfx\asdxPresetState.h" />
     <ClInclude Include="..\include\gfx\asdxRadialBlurEffect.h" />

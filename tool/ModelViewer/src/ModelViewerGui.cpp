@@ -679,8 +679,10 @@ void ModelViewer::DrawMotionTab()
 
     if (ImGuiCombo(asdx::ToChar(u8"再生クリップ"), m_ClipIndex, m_ClipNames))
     {
+        bool loop = m_MotionPlayer.IsLoop();
+
         // クリップを差し替え.
-        m_MotionPlayer.SetClip(m_MotionBinary.GetClip(uint32_t(m_ClipIndex)));
+        m_MotionPlayer.NextClip(m_MotionBinary.GetClip(uint32_t(m_ClipIndex)), loop, 0.5f);
     }
 
     if (ImGui::Button(asdx::ToChar(u8"再生")))
