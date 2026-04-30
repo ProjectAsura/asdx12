@@ -119,6 +119,7 @@ private:
     size_t                              m_ClipIndex     = 0;
     std::vector<std::string>            m_ClipNames     = {};
     asdx::StructuredBuffer              m_MatrixPalletBuffer[2];
+    asdx::StructuredBuffer              m_WorldMatrixBuffer[2];
     bool                                m_ShowLisence   = false;
     bool                                m_ShowProperty  = true;
     bool                                m_ShowInfo      = true;

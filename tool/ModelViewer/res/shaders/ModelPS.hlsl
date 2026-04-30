@@ -32,7 +32,6 @@ struct VSOutput
 ///////////////////////////////////////////////////////////////////////////////
 cbuffer SceneParam : register(b0)
 {
-    float4x4    World;
     float4x4    View;
     float4x4    Proj;
     float3      CameraPos;
@@ -44,12 +43,13 @@ cbuffer SceneParam : register(b0)
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-// PixelParam constant buffer.
+// ModelParam constant buffers.
 ///////////////////////////////////////////////////////////////////////////////
-cbuffer PixelParam : register(b1)
+cbuffer ModelParam : register(b1)
 {
+    uint    MatrixId;
     uint    Mode;
-    uint3   Reserved;
+    uint2   Reserved;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -70,14 +70,15 @@ cbuffer MaterialParam : register(b2)
 //-----------------------------------------------------------------------------
 // Resources
 //-----------------------------------------------------------------------------
-Texture2D BaseColorMap  : register(t1);
-Texture2D NormalMap     : register(t2);
-Texture2D OrmMap        : register(t3);
-Texture2D EmissiveMap   : register(t4);
-
 Texture2D   DFGMap      : register(t5);     //!< DFGマップ.
 TextureCube DiffuseLD   : register(t6);     //!< Diffuse LD.
 TextureCube SpecularLD  : register(t7);     //!< Specular LD.
+
+Texture2D BaseColorMap  : register(t10);
+Texture2D NormalMap     : register(t11);
+Texture2D OrmMap        : register(t12);
+Texture2D EmissiveMap   : register(t13);
+
 
 #define MODE_LIGHTING       (0)
 #define MODE_POSITION       (1)

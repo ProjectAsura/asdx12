@@ -22,7 +22,7 @@ static_assert((uint8_t)asdx::res::AlphaType_Blend  == (uint8_t)asdx::AlphaMode::
 //-----------------------------------------------------------------------------
 // Constant Values.
 //-----------------------------------------------------------------------------
-static constexpr uint32_t CURRENT_VERSION = 2u; //!< 現在ランタイムでサポートされているバージョン.
+static constexpr uint32_t CURRENT_VERSION = 3u; //!< 現在ランタイムでサポートされているバージョン.
 
 //-----------------------------------------------------------------------------
 //      配列ビューに変換します.
@@ -111,6 +111,24 @@ uint32_t ModelBinary::GetMaterialCount() const
 }
 
 //-----------------------------------------------------------------------------
+//      バッチ数を取得します.
+//-----------------------------------------------------------------------------
+uint32_t ModelBinary::GetBatchCount() const
+{
+    assert(!m_Blob.empty());
+    return res::GetModelBinary(m_Blob.data())->Batches()->size();
+}
+
+//-----------------------------------------------------------------------------
+//      総インスタンス数を取得します.
+//-----------------------------------------------------------------------------
+uint64_t ModelBinary::GetTotalInstanceCount() const
+{
+    assert(!m_Blob.empty());
+    return res::GetModelBinary(m_Blob.data())->TotalInstanceCount();
+}
+
+//-----------------------------------------------------------------------------
 //      メッシュを取得します.
 //-----------------------------------------------------------------------------
 const res::Mesh& ModelBinary::GetMesh(uint32_t index) const
@@ -133,10 +151,19 @@ const res::Bone& ModelBinary::GetBone(uint32_t index) const
 //-----------------------------------------------------------------------------
 //      マテリアルを取得します.
 //-----------------------------------------------------------------------------
-const res::Material& ModelBinary::GetMaterial(uint32_t materialIndex) const
+const res::Material& ModelBinary::GetMaterial(uint32_t index) const
 {
     assert(!m_Blob.empty());
-    return *(res::GetModelBinary(m_Blob.data())->Materials()->Get(materialIndex));
+    return *(res::GetModelBinary(m_Blob.data())->Materials()->Get(index));
+}
+
+//-----------------------------------------------------------------------------
+//      バッチを取得します.
+//-----------------------------------------------------------------------------
+const res::ModelBatch& ModelBinary::GetBatch(uint32_t index) const
+{
+    assert(!m_Blob.empty());
+    return *(res::GetModelBinary(m_Blob.data())->Batches()->Get(index));
 }
 
 //-----------------------------------------------------------------------------
@@ -247,6 +274,42 @@ bool ModelBinary::FindMesh(const char* name, uint32_t& index) const
     index = UINT32_MAX;
     return false;
 }
+
+//-----------------------------------------------------------------------------
+//      モデルインスタンスを検索します.
+//-----------------------------------------------------------------------------
+bool ModelBinary::FindInstance(const char* name, uint32_t& batchIndex, uint32_t& instanceIndex) const
+{
+    if (name == nullptr)
+    {
+        batchIndex    = UINT32_MAX;
+        instanceIndex = UINT32_MAX;
+        return false;
+    }
+
+    assert(!m_Blob.empty());
+    auto batches = res::GetModelBinary(m_Blob.data())->Batches();
+
+    for(auto i=0u; i<batches->size(); ++i)
+    {
+        auto names = batches->Get(i)->Names();
+        for(auto j=0u; j<names->size(); ++j)
+        {
+            if (strcmp(names->Get(j)->c_str(), name) == 0)
+            {
+                batchIndex    = i;
+                instanceIndex = j;
+                return true;
+            }
+        }
+    }
+
+    batchIndex    = UINT32_MAX;
+    instanceIndex = UINT32_MAX;
+    return false;
+}
+
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // MeshProxy class
@@ -464,5 +527,71 @@ float MaterialProxy::GetAlphaCutOff(const res::Material& material)
 //-----------------------------------------------------------------------------
 bool MaterialProxy::GetTwoSided(const res::Material& material)
 { return material.TwoSided(); }
+
+
+///////////////////////////////////////////////////////////////////////////////
+// ModelBatchProxy class
+///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      インスタンス数を取得します.
+//-----------------------------------------------------------------------------
+uint32_t ModelBatchProxy::GetInstanceCount(const res::ModelBatch& batch)
+{
+    assert(batch.Transforms()->size() == batch.Names()->size());
+    return batch.Transforms()->size();
+}
+
+//-----------------------------------------------------------------------------
+//      インスタンス名を取得します.
+//-----------------------------------------------------------------------------
+StringView ModelBatchProxy::GetName(const res::ModelBatch& batch, uint32_t index)
+{
+    assert(index < batch.Names()->size());
+    return StringView(batch.Names()->Get(index)->c_str());
+}
+
+//-----------------------------------------------------------------------------
+//      変換行列を取得します.
+//-----------------------------------------------------------------------------
+ArrayView<Matrix> ModelBatchProxy::GetTransforms(const res::ModelBatch& batch)
+{
+    return asdx::ArrayView<Matrix>(
+        reinterpret_cast<const Matrix*>(batch.Transforms()->data()),
+        batch.Transforms()->size());
+}
+
+//-----------------------------------------------------------------------------
+//      メッシュ番号の配列を取得します.
+//-----------------------------------------------------------------------------
+ArrayView<uint32_t> ModelBatchProxy::GetMeshIds(const res::ModelBatch& batch)
+{ return ToArrayView<uint32_t>(batch.Meshes()); }
+
+//-----------------------------------------------------------------------------
+//      ローカル空間でのバウンディングスフィアを取得します.
+//-----------------------------------------------------------------------------
+BoundingSphere3 ModelBatchProxy::GetSphere(const res::ModelBatch& batch)
+{
+    return BoundingSphere3(
+        batch.BoundSphere()->Center().X(),
+        batch.BoundSphere()->Center().Y(),
+        batch.BoundSphere()->Center().Z(),
+        batch.BoundSphere()->Radius());
+}
+
+//-----------------------------------------------------------------------------
+//      ローカル空間でのバウンディングボックスを取得します.
+//-----------------------------------------------------------------------------
+BoundingBox3 ModelBatchProxy::GetBox(const res::ModelBatch& batch)
+{
+    return BoundingBox3(
+        Vector3(batch.BoundBox()->Min().X(),
+                batch.BoundBox()->Min().Y(),
+                batch.BoundBox()->Min().Z()),
+        Vector3(batch.BoundBox()->Max().X(),
+                batch.BoundBox()->Max().Y(),
+                batch.BoundBox()->Max().Z()));
+}
+
 
 } // namespace asdx

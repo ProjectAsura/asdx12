@@ -752,8 +752,8 @@
     <ClInclude Include="..\include\gfx\asdxRadialBlurEffect.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\fnd\asdxValueTrigger.h">
-      <Filter>ソース ファイル\fnd</Filter>
+    <ClInclude Include="..\include\fnd\asdxTriggerTime.h">
+      <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -131,6 +131,33 @@ const res::Mesh& ModelHolder::GetResMesh(uint32_t index) const
 }
 
 //-----------------------------------------------------------------------------
+//      バッチ数を取得します.
+//-----------------------------------------------------------------------------
+uint32_t ModelHolder::GetBatchCount() const
+{
+    assert(m_pModel != nullptr);
+    return m_pModel->GetBatchCount();
+}
+
+//-----------------------------------------------------------------------------
+//      バッチを取得します.
+//-----------------------------------------------------------------------------
+const res::ModelBatch& ModelHolder::GetBatch(uint32_t index) const
+{
+    assert(m_pModel != nullptr);
+    return m_pModel->GetBatch(index);
+}
+
+//-----------------------------------------------------------------------------
+//      総インスタンス数を取得します.
+//-----------------------------------------------------------------------------
+uint64_t ModelHolder::GetTotalInstanceCount() const
+{
+    assert(m_pModel != nullptr);
+    return m_pModel->GetTotalInstanceCount();
+}
+
+//-----------------------------------------------------------------------------
 //      バウンディングスフィアを取得します.
 //-----------------------------------------------------------------------------
 const BoundingSphere3& ModelHolder::GetSphere() const

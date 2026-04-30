@@ -53,16 +53,27 @@ table Material
     TwoSided        : bool;
 }
 
+table ModelBatch
+{
+    Names       : [string];
+    Transforms  : [Float4x4];
+    Meshes      : [uint];
+    BoundSphere : BoundingSphere;
+    BoundBox    : BoundingBox;
+}
+
 table ModelBinary
 {
-    Version          : uint;
-    Meshes           : [Mesh];
-    Materials        : [Material];
-    Bones            : [Bone];
-    BoundSphere      : BoundingSphere;
-    BoundBox         : BoundingBox;
-    RootTransform    : Float4x4;
-    InvRootTransform : Float4x4;
+    Version             : uint;
+    Meshes              : [Mesh];
+    Materials           : [Material];
+    Bones               : [Bone];
+    Batches             : [ModelBatch];
+    BoundSphere         : BoundingSphere;
+    BoundBox            : BoundingBox;
+    TotalInstanceCount  : ulong;
+    RootTransform       : Float4x4;
+    InvRootTransform    : Float4x4;
 }
 
 root_type ModelBinary;

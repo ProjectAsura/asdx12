@@ -34,7 +34,6 @@ struct VSOutput
 ///////////////////////////////////////////////////////////////////////////////
 cbuffer SceneParam : register(b0)
 {
-    float4x4    World;
     float4x4    View;
     float4x4    Proj;
     float3      CameraPos;
@@ -45,19 +44,35 @@ cbuffer SceneParam : register(b0)
     float       TargetHeight;
 };
 
+///////////////////////////////////////////////////////////////////////////////
+// ModelParam constant buffers.
+///////////////////////////////////////////////////////////////////////////////
+cbuffer ModelParam : register(b1)
+{
+    uint    MatrixId;
+    uint    Mode;
+    uint2   Reserved;
+};
+
+
+StructuredBuffer<float4x4>  WorldMatrices : register(t0);
+
 //-----------------------------------------------------------------------------
 //      メインエントリーポイントです.
 //-----------------------------------------------------------------------------
-VSOutput main(const VSInput input)
+VSOutput main(const VSInput input, uint instanceId : SV_InstanceID)
 {
     VSOutput output = (VSOutput)0;
+
+    float4x4 world = WorldMatrices[MatrixId + instanceId];
+
     float4 localPos = float4(input.Position, 1.0f);
-    float4 worldPos = mul(World, localPos);
+    float4 worldPos = mul(world, localPos);
     float4 viewPos  = mul(View, worldPos);
     float4 projPos  = mul(Proj, viewPos);
 
-    float3 worldNormal  = normalize(mul((float3x3)World, input.Normal));
-    float3 worldTangent = normalize(mul((float3x3)World, input.Tangent.xyz));
+    float3 worldNormal  = normalize(mul((float3x3)world, input.Normal));
+    float3 worldTangent = normalize(mul((float3x3)world, input.Tangent.xyz));
  
     // 従接線をチェック.
     float sign = input.Tangent.w;

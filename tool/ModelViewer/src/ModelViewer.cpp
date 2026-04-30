@@ -36,18 +36,22 @@ namespace {
 enum ROOT_PARAM
 {
     ROOT_PARAM_B0,  // SceneParam.
-    ROOT_PARAM_B1,  // mode
+    ROOT_PARAM_B1,  // ModelParam.
     ROOT_PARAM_B2,  // MaterialParam.
-    ROOT_PARAM_T0,  // MatrixPallets.
-    ROOT_PARAM_T1,  // BaseColor
-    ROOT_PARAM_T2,  // Normal
-    ROOT_PARAM_T3,  // ORM
-    ROOT_PARAM_T4,  // Emissive.
-    ROOT_PARAM_T5,  // Reserved0.
-    ROOT_PARAM_T6,  // Reserved1.
-    ROOT_PARAM_T7,  // DFG.
-    ROOT_PARAM_T8,  // DiffuseLD.
-    ROOT_PARAM_T9,  // SpecularLD.
+
+    ROOT_PARAM_T0,  // WorldMatrix
+    ROOT_PARAM_T1,  // MatrixPallets.
+
+    ROOT_PARAM_T5,  // DFG.
+    ROOT_PARAM_T6,  // DiffuseLD.
+    ROOT_PARAM_T7,  // SpecularLD.
+
+    ROOT_PARAM_T10,  // BaseColor
+    ROOT_PARAM_T11,  // Normal
+    ROOT_PARAM_T12,  // ORM
+    ROOT_PARAM_T13,  // Emissive.
+    ROOT_PARAM_T14,  // Reserved0.
+    ROOT_PARAM_T15,  // Reserved1.
 
     MAX_ROOT_PARAM_COUNT,
 };
@@ -70,7 +74,6 @@ static const uint32_t kSkeletalMeshElementCount = 7;
 ///////////////////////////////////////////////////////////////////////////////
 struct alignas(256) ParamScene
 {
-    asdx::Matrix    World;
     asdx::Matrix    View;
     asdx::Matrix    Proj;
     asdx::Vector3   CameraPos;
@@ -162,30 +165,34 @@ bool ModelViewer::OnInit()
     // ルートシグニチャの生成.
     {
         D3D12_DESCRIPTOR_RANGE ranges[9] = {};
-        asdx::InitRangeAsSRV(ranges[0], 1);
-        asdx::InitRangeAsSRV(ranges[1], 2);
-        asdx::InitRangeAsSRV(ranges[2], 3);
-        asdx::InitRangeAsSRV(ranges[3], 4);
-        asdx::InitRangeAsSRV(ranges[4], 5);
-        asdx::InitRangeAsSRV(ranges[5], 6);
-        asdx::InitRangeAsSRV(ranges[6], 7);
-        asdx::InitRangeAsSRV(ranges[7], 8);
-        asdx::InitRangeAsSRV(ranges[8], 9);
+        asdx::InitRangeAsSRV(ranges[0], 5);
+        asdx::InitRangeAsSRV(ranges[1], 6);
+        asdx::InitRangeAsSRV(ranges[2], 7);
+
+        asdx::InitRangeAsSRV(ranges[3], 10);
+        asdx::InitRangeAsSRV(ranges[4], 11);
+        asdx::InitRangeAsSRV(ranges[5], 12);
+        asdx::InitRangeAsSRV(ranges[6], 13);
+        asdx::InitRangeAsSRV(ranges[7], 14);
+        asdx::InitRangeAsSRV(ranges[8], 15);
 
         D3D12_ROOT_PARAMETER params[MAX_ROOT_PARAM_COUNT] = {};
         asdx::InitAsCBV(params[ROOT_PARAM_B0], 0, D3D12_SHADER_VISIBILITY_ALL);
         asdx::InitAsConstants(params[ROOT_PARAM_B1], 1, 4, D3D12_SHADER_VISIBILITY_ALL);
         asdx::InitAsCBV(params[ROOT_PARAM_B2], 2, D3D12_SHADER_VISIBILITY_ALL);
-        asdx::InitAsSRV(params[ROOT_PARAM_T0], 0, D3D12_SHADER_VISIBILITY_VERTEX);
-        asdx::InitAsTable(params[ROOT_PARAM_T1], 1, &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
-        asdx::InitAsTable(params[ROOT_PARAM_T2], 1, &ranges[1], D3D12_SHADER_VISIBILITY_PIXEL);
-        asdx::InitAsTable(params[ROOT_PARAM_T3], 1, &ranges[2], D3D12_SHADER_VISIBILITY_PIXEL);
-        asdx::InitAsTable(params[ROOT_PARAM_T4], 1, &ranges[3], D3D12_SHADER_VISIBILITY_PIXEL);
-        asdx::InitAsTable(params[ROOT_PARAM_T5], 1, &ranges[4], D3D12_SHADER_VISIBILITY_PIXEL);
-        asdx::InitAsTable(params[ROOT_PARAM_T6], 1, &ranges[5], D3D12_SHADER_VISIBILITY_PIXEL);
-        asdx::InitAsTable(params[ROOT_PARAM_T7], 1, &ranges[6], D3D12_SHADER_VISIBILITY_PIXEL);
-        asdx::InitAsTable(params[ROOT_PARAM_T8], 1, &ranges[7], D3D12_SHADER_VISIBILITY_PIXEL);
-        asdx::InitAsTable(params[ROOT_PARAM_T9], 1, &ranges[8], D3D12_SHADER_VISIBILITY_PIXEL);
+        asdx::InitAsSRV(params[ROOT_PARAM_T0], 0, D3D12_SHADER_VISIBILITY_ALL);
+        asdx::InitAsSRV(params[ROOT_PARAM_T1], 1, D3D12_SHADER_VISIBILITY_VERTEX);
+
+        asdx::InitAsTable(params[ROOT_PARAM_T5], 1, &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
+        asdx::InitAsTable(params[ROOT_PARAM_T6], 1, &ranges[1], D3D12_SHADER_VISIBILITY_PIXEL);
+        asdx::InitAsTable(params[ROOT_PARAM_T7], 1, &ranges[2], D3D12_SHADER_VISIBILITY_PIXEL);
+
+        asdx::InitAsTable(params[ROOT_PARAM_T10], 1, &ranges[3], D3D12_SHADER_VISIBILITY_PIXEL);
+        asdx::InitAsTable(params[ROOT_PARAM_T11], 1, &ranges[4], D3D12_SHADER_VISIBILITY_PIXEL);
+        asdx::InitAsTable(params[ROOT_PARAM_T12], 1, &ranges[5], D3D12_SHADER_VISIBILITY_PIXEL);
+        asdx::InitAsTable(params[ROOT_PARAM_T13], 1, &ranges[6], D3D12_SHADER_VISIBILITY_PIXEL);
+        asdx::InitAsTable(params[ROOT_PARAM_T14], 1, &ranges[7], D3D12_SHADER_VISIBILITY_PIXEL);
+        asdx::InitAsTable(params[ROOT_PARAM_T15], 1, &ranges[8], D3D12_SHADER_VISIBILITY_PIXEL);
 
         D3D12_ROOT_SIGNATURE_DESC desc = {};
         desc.NumParameters      = _countof(params);
@@ -462,6 +469,7 @@ void ModelViewer::OnTerm()
     for(auto i=0; i<2; ++i)
     {
         m_SceneCB[i].Term();
+        m_WorldMatrixBuffer[i].Term();
         m_MatrixPalletBuffer[i].Term();
     }
 
@@ -548,7 +556,6 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
         auto param = m_SceneCB[idx].MapAs<ParamScene>();
         assert(param != nullptr);
 
-        param->World        = modelWorld;
         param->View         = m_Camera.GetView();
         param->Proj         = m_Proj;
         param->CameraPos    = m_Camera.GetPosition();
@@ -622,66 +629,82 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
             && (m_MatrixPalletBuffer[idx].GetResource() != nullptr);
 
         pCmd->SetGraphicsRootConstantBufferView(ROOT_PARAM_B0, m_SceneCB[idx].GetGpuAddress());
-        pCmd->SetGraphicsRoot32BitConstants(ROOT_PARAM_B1, 1, &m_DrawMode, 0);
+        pCmd->SetGraphicsRootShaderResourceView(ROOT_PARAM_T0, m_WorldMatrixBuffer[idx].GetGpuAddress());
+        pCmd->SetGraphicsRoot32BitConstants(ROOT_PARAM_B1, 1, &m_DrawMode, 1);
         pCmd->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         pCmd->SetGraphicsRootDescriptorTable(ROOT_PARAM_T5, m_DFG->GetHandleGPU());
         pCmd->SetGraphicsRootDescriptorTable(ROOT_PARAM_T6, m_DiffuseLD->GetHandleGPU());
         pCmd->SetGraphicsRootDescriptorTable(ROOT_PARAM_T7, m_SpecularLD->GetHandleGPU());
 
         if (isSkeletal)
-        { pCmd->SetGraphicsRootShaderResourceView(ROOT_PARAM_T0, m_MatrixPalletBuffer[idx].GetGpuAddress()); }
+        { pCmd->SetGraphicsRootShaderResourceView(ROOT_PARAM_T1, m_MatrixPalletBuffer[idx].GetGpuAddress()); }
 
-        for(auto i=0u; i<m_Model->GetMeshCount(); ++i)
+        auto batchCount = m_Model->GetBatchCount();
+        auto offset = 0u;
+        for(auto i=0u; i<batchCount; ++i)
         {
-            const auto mesh = m_Model->GetMesh(i);
-            if (!mesh->IsVisible())
-                continue;
+            const auto& batch = m_Model->GetBatch(i);
+            auto meshIds = asdx::ModelBatchProxy::GetMeshIds(batch);
 
-            const auto material = m_Model->GetMaterial(mesh->GetMaterialId());
-            const auto alphaMode = material->GetAlphaMode();
+            uint32_t matrixId = offset;
 
-            if (isSkeletal)
+            pCmd->SetGraphicsRoot32BitConstants(ROOT_PARAM_B1, 1, &matrixId, 0);
+            auto instanceCount = asdx::ModelBatchProxy::GetInstanceCount(batch);
+
+            for(auto j=0u; j<meshIds.size(); ++j)
             {
-                if (m_EnableWireframe)
-                { m_WireframeState.SkeletalModel.SetState(pCmd); }
-                else if (alphaMode == asdx::AlphaMode::Opaque || alphaMode == asdx::AlphaMode::Mask)
-                { m_OpaqueState.SkeletalModel.SetState(pCmd); }
-                else if (alphaMode == asdx::AlphaMode::Blend)
-                { m_AlphaBlendState.SkeletalModel.SetState(pCmd); }
+                const auto mesh = m_Model->GetMesh(meshIds[j]);
+                if (!mesh->IsVisible())
+                    continue;
+
+                const auto material  = m_Model->GetMaterial(mesh->GetMaterialId());
+                const auto alphaMode = material->GetAlphaMode();
+
+                if (isSkeletal)
+                {
+                    if (m_EnableWireframe)
+                    { m_WireframeState.SkeletalModel.SetState(pCmd); }
+                    else if (alphaMode == asdx::AlphaMode::Opaque || alphaMode == asdx::AlphaMode::Mask)
+                    { m_OpaqueState.SkeletalModel.SetState(pCmd); }
+                    else if (alphaMode == asdx::AlphaMode::Blend)
+                    { m_AlphaBlendState.SkeletalModel.SetState(pCmd); }
+                }
+                else
+                {
+                    if (m_EnableWireframe)
+                    { m_WireframeState.StaticModel.SetState(pCmd); }
+                    else if (alphaMode == asdx::AlphaMode::Opaque || alphaMode == asdx::AlphaMode::Mask)
+                    { m_OpaqueState.StaticModel.SetState(pCmd); }
+                    else if (alphaMode == asdx::AlphaMode::Blend)
+                    { m_AlphaBlendState.StaticModel.SetState(pCmd); }
+                }
+
+                D3D12_VERTEX_BUFFER_VIEW VBVs[] = {
+                    mesh->GetPositions  ().GetVBV(),
+                    mesh->GetNormals    ().GetVBV(),
+                    mesh->GetTangents   ().GetVBV(),
+                    mesh->GetTexCoords  ().GetVBV(),
+                    mesh->GetColors     ().GetVBV(),
+                    mesh->GetBoneIndices().GetVBV(),
+                    mesh->GetBoneWeights().GetVBV(),
+                };
+
+                auto IBV = mesh->GetIndices().GetIBV();
+                auto countVBV = (isSkeletal) ? kSkeletalMeshElementCount : kStaticMeshElementCount;
+
+                pCmd->SetGraphicsRootConstantBufferView(ROOT_PARAM_B2,  material->GetBuffer().GetGpuAddress());
+                pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T10, material->GetTexture(asdx::Material::TEXTURE_BASE_COLOR).GetHandleGPU());
+                pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T11, material->GetTexture(asdx::Material::TEXTURE_NORMAL)    .GetHandleGPU());
+                pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T12, material->GetTexture(asdx::Material::TEXTURE_ORM)       .GetHandleGPU());
+                pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T13, material->GetTexture(asdx::Material::TEXTURE_EMISSIVE)  .GetHandleGPU());
+
+                pCmd->IASetVertexBuffers(0, countVBV, VBVs);
+                pCmd->IASetIndexBuffer(&IBV);
+
+                pCmd->DrawIndexedInstanced(mesh->GetIndexCount(), instanceCount, 0, 0, 0);
             }
-            else
-            {
-                if (m_EnableWireframe)
-                { m_WireframeState.StaticModel.SetState(pCmd); }
-                else if (alphaMode == asdx::AlphaMode::Opaque || alphaMode == asdx::AlphaMode::Mask)
-                { m_OpaqueState.StaticModel.SetState(pCmd); }
-                else if (alphaMode == asdx::AlphaMode::Blend)
-                { m_AlphaBlendState.StaticModel.SetState(pCmd); }
-            }
 
-            D3D12_VERTEX_BUFFER_VIEW VBVs[] = {
-                mesh->GetPositions  ().GetVBV(),
-                mesh->GetNormals    ().GetVBV(),
-                mesh->GetTangents   ().GetVBV(),
-                mesh->GetTexCoords  ().GetVBV(),
-                mesh->GetColors     ().GetVBV(),
-                mesh->GetBoneIndices().GetVBV(),
-                mesh->GetBoneWeights().GetVBV(),
-            };
-
-            auto IBV = mesh->GetIndices().GetIBV();
-            auto countVBV = (isSkeletal) ? kSkeletalMeshElementCount : kStaticMeshElementCount;
-
-            pCmd->SetGraphicsRootConstantBufferView(ROOT_PARAM_B2, material->GetBuffer().GetGpuAddress());
-            pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T1, material->GetTexture(asdx::Material::TEXTURE_BASE_COLOR).GetHandleGPU());
-            pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T2, material->GetTexture(asdx::Material::TEXTURE_NORMAL)    .GetHandleGPU());
-            pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T3, material->GetTexture(asdx::Material::TEXTURE_ORM)       .GetHandleGPU());
-            pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T4, material->GetTexture(asdx::Material::TEXTURE_EMISSIVE)  .GetHandleGPU());
-
-            pCmd->IASetVertexBuffers(0, countVBV, VBVs);
-            pCmd->IASetIndexBuffer(&IBV);
-
-            pCmd->DrawIndexedInstanced(mesh->GetIndexCount(), 1, 0, 0, 0);
+            offset += instanceCount;
         }
 
         if (m_DrawBoundingSphere)
@@ -1061,13 +1084,51 @@ void ModelViewer::RecreateModel()
 
     // 行列パレット用 SRV を生成.
     auto boneCount = m_Model->GetBoneCount();
+    if (boneCount > 0)
+    {
+        for(auto i=0; i<2; ++i)
+        {
+            m_MatrixPalletBuffer[i].Term();
+
+            if (!m_MatrixPalletBuffer[i].Init(boneCount, sizeof(asdx::Matrix), D3D12_RESOURCE_STATE_COMMON, true))
+            {
+                ELOGA("Error : Matrix Pallet Buffer Init Failed. index = %u", i);
+            }
+        }
+    }
+
+    auto instanceCount = m_Model->GetTotalInstanceCount();
+    auto batchCount    = m_Model->GetBatchCount();
+
     for(auto i=0; i<2; ++i)
     {
-        m_MatrixPalletBuffer[i].Term();
+        m_WorldMatrixBuffer[i].Term();
 
-        if (!m_MatrixPalletBuffer[i].Init(boneCount, sizeof(asdx::Matrix), D3D12_RESOURCE_STATE_COMMON, true))
-            ELOGA("Error : Matrix Pallet Buffer Init Failed. index = %u", i);
+        if (!m_WorldMatrixBuffer[i].Init(instanceCount, sizeof(asdx::Matrix), D3D12_RESOURCE_STATE_COMMON, true))
+        {
+            ELOGA("Error : WorldMatrix Buffer Init Failed. index = %u", i);
+        }
     }
+
+    auto ptr0 = m_WorldMatrixBuffer[0].MapAs<asdx::Matrix>();
+    auto ptr1 = m_WorldMatrixBuffer[1].MapAs<asdx::Matrix>();
+
+    size_t offset = 0;
+    for(auto i=0u; i<batchCount; ++i)
+    {
+        const auto& batch = m_Model->GetBatch(i);
+        auto mtx = asdx::ModelBatchProxy::GetTransforms(batch);
+
+        if (ptr0 != nullptr)
+            memcpy(&ptr0[offset], mtx.data(), sizeof(asdx::Matrix) * mtx.size());
+        if (ptr1 != nullptr)
+            memcpy(&ptr1[offset], mtx.data(), sizeof(asdx::Matrix) * mtx.size());
+
+        offset += mtx.size();
+    }
+
+    m_WorldMatrixBuffer[0].Unmap();
+    m_WorldMatrixBuffer[1].Unmap();
 }
 
 //-----------------------------------------------------------------------------

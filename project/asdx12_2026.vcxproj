@@ -346,7 +346,7 @@
     <ClInclude Include="..\include\fnd\asdxTablet.h" />
     <ClInclude Include="..\include\fnd\asdxThreadPool.h" />
     <ClInclude Include="..\include\fnd\asdxTokenizer.h" />
-    <ClInclude Include="..\include\fnd\asdxValueTrigger.h" />
+    <ClInclude Include="..\include\fnd\asdxTriggerTime.h" />
     <ClInclude Include="..\include\fw\asdxApp.h" />
     <ClInclude Include="..\include\fw\asdxAppCamera.h" />
     <ClInclude Include="..\include\fw\asdxSound.h" />

@@ -654,6 +654,24 @@ const res::Mesh& Model::GetResMesh(uint32_t index) const
 { return m_Binary.GetMesh(index); }
 
 //-----------------------------------------------------------------------------
+//      バッチ数を取得します.
+//-----------------------------------------------------------------------------
+uint32_t Model::GetBatchCount() const
+{ return m_Binary.GetBatchCount(); }
+
+//-----------------------------------------------------------------------------
+//      バッチを取得します.
+//-----------------------------------------------------------------------------
+const res::ModelBatch& Model::GetBatch(uint32_t index) const
+{ return m_Binary.GetBatch(index); }
+
+//-----------------------------------------------------------------------------
+//      総インスタンス数を取得します.
+//-----------------------------------------------------------------------------
+uint64_t Model::GetTotalInstanceCount() const
+{ return m_Binary.GetTotalInstanceCount(); }
+
+//-----------------------------------------------------------------------------
 //      バウンディングスフィアを取得します.
 //-----------------------------------------------------------------------------
 const BoundingSphere3& Model::GetSphere() const
@@ -706,6 +724,12 @@ bool Model::FindMaterial(const char* name, uint32_t& index) const
 //-----------------------------------------------------------------------------
 bool Model::FindMesh(const char* name, uint32_t& index) const
 { return m_Binary.FindMesh(name, index); }
+
+//-----------------------------------------------------------------------------
+//      インスタンス名を検索します.
+//-----------------------------------------------------------------------------
+bool Model::FindInstance(const char* name, uint32_t& batchIndex, uint32_t& instanceIndex) const
+{ return m_Binary.FindInstance(name, batchIndex, instanceIndex); }
 
 //-----------------------------------------------------------------------------
 //      モデルを生成します.
