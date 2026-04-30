@@ -250,7 +250,7 @@ void MotionPlayer::Init(const Model* pModel)
     m_WorldTransforms.resize(count);
     m_MatrixPalettes .resize(count);
 
-    auto identity = Matrix::CreateIdentity();
+    auto identity = Transform3x4::CreateIdentity();
     for(auto i=0u; i<count; ++i)
     {
         auto& bone     = m_pModel->GetBone(i);
@@ -300,7 +300,7 @@ void MotionPlayer::SetClip(const res::MotionClip* pClip)
 
     // 単位行列で初期化.
     auto count    = m_pModel->GetBoneCount();
-    auto identity = Matrix::CreateIdentity();
+    auto identity = Transform3x4::CreateIdentity();
 
     for(auto i=0u; i<count; ++i)
     {
@@ -361,7 +361,7 @@ void MotionPlayer::NextClip
 //-----------------------------------------------------------------------------
 //      更新処理を行います.
 //-----------------------------------------------------------------------------
-void MotionPlayer::Update(float deltaSec, const Matrix& rootTransform)
+void MotionPlayer::Update(float deltaSec, const Transform3x4& rootTransform)
 {
     if (m_pModel == nullptr)
         return;
@@ -493,7 +493,7 @@ void MotionPlayer::UpdateLocalTransform(bool blend)
 //-----------------------------------------------------------------------------
 //      ワールド行列を更新します.
 //-----------------------------------------------------------------------------
-void MotionPlayer::UpdateWorldTransform(const Matrix& rootTransform)
+void MotionPlayer::UpdateWorldTransform(const Transform3x4& rootTransform)
 {
     auto count = m_pModel->GetBoneCount();
     for(auto i=0u; i<count; ++i)
@@ -504,12 +504,12 @@ void MotionPlayer::UpdateWorldTransform(const Matrix& rootTransform)
         if (parentId >= 0)
         {
             // 親がいれば親を考慮.
-            m_WorldTransforms[i] = m_LocalTransforms[i] * m_WorldTransforms[parentId];
+            m_WorldTransforms[i] = m_WorldTransforms[parentId] * m_LocalTransforms[i];
         }
         else
         {
             // 親がいなければそのまま.
-            m_WorldTransforms[i] = m_LocalTransforms[i] * rootTransform;
+            m_WorldTransforms[i] = rootTransform * m_LocalTransforms[i];
         }
     }
 }
@@ -524,26 +524,26 @@ void MotionPlayer::UpdateMatrixPalette()
     {
         const auto& bone = m_pModel->GetBone(i);
         const auto invBindPose = asdx::BoneProxy::GetInverseBindPoseMatrix(bone);
-        m_MatrixPalettes[i] = invBindPose * m_WorldTransforms[i];
+        m_MatrixPalettes[i] = m_WorldTransforms[i] * invBindPose;
     }
 }
 
 //-----------------------------------------------------------------------------
 //      ローカル変換行列を取得します.
 //-----------------------------------------------------------------------------
-const std::vector<Matrix>& MotionPlayer::GetLocalTransforms() const
+const std::vector<Transform3x4>& MotionPlayer::GetLocalTransforms() const
 { return m_LocalTransforms; }
 
 //-----------------------------------------------------------------------------
 //      ワールド変換行列を取得します.
 //-----------------------------------------------------------------------------
-const std::vector<Matrix>& MotionPlayer::GetWorldTransforms() const
+const std::vector<Transform3x4>& MotionPlayer::GetWorldTransforms() const
 { return m_WorldTransforms; }
 
 //-----------------------------------------------------------------------------
 //      行列パレットを取得します.
 //-----------------------------------------------------------------------------
-const std::vector<Matrix>& MotionPlayer::GetMatrixPalettes() const
+const std::vector<Transform3x4>& MotionPlayer::GetMatrixPalettes() const
 { return m_MatrixPalettes; }
 
 //-----------------------------------------------------------------------------
@@ -609,7 +609,7 @@ void MotionPlayer::Cue()
 //-----------------------------------------------------------------------------
 //      1フレーム進めます.
 //-----------------------------------------------------------------------------
-void MotionPlayer::FrameAdvance(const Matrix& rootTransform)
+void MotionPlayer::FrameAdvance(const Transform3x4& rootTransform)
 {
     if (m_pModel == nullptr)
         return;

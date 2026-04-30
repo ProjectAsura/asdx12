@@ -59,6 +59,18 @@ asdx::res::Float4x4 ToFloat4x4(const aiMatrix4x4& value)
         value.a4, value.b4, value.c4, value.d4);
 }
 
+//-----------------------------------------------------------------------------
+//      Float3x4 に変換します.
+//-----------------------------------------------------------------------------
+asdx::res::Float3x4 ToFloat3x4(const aiMatrix4x4& matrix)
+{
+    // 通常が転置するのを、さらに転置するので，4行目だけ削ればいい.
+    return asdx::res::Float3x4(
+        matrix.a1, matrix.a2, matrix.a3, matrix.a4,
+        matrix.b1, matrix.b2, matrix.b3, matrix.b4,
+        matrix.c1, matrix.c2, matrix.c3, matrix.c4);
+}
+
 } // namespace
 
 
@@ -223,18 +235,17 @@ bool MotionConverter::Convert(const std::string& path, std::vector<uint8_t>& bin
         clips.emplace_back(clip);
     }
 
-    asdx::res::Float4x4 rootTransform;
+    asdx::res::Float3x4 rootTransform;
     if (pScene->mRootNode != nullptr)
     {
-        rootTransform = ToFloat4x4(pScene->mRootNode->mTransformation);
+        rootTransform = ToFloat3x4(pScene->mRootNode->mTransformation);
     }
     else
     {
-        rootTransform = asdx::res::Float4x4(
+        rootTransform = asdx::res::Float3x4(
             1.0f, 0.0f, 0.0f, 0.0f,
             0.0f, 1.0f, 0.0f, 0.0f,
-            0.0f, 0.0f, 1.0f, 0.0f,
-            0.0f, 0.0f, 0.0f, 1.0f);
+            0.0f, 0.0f, 1.0f, 0.0f);
     }
 
     // バイナリ生成.

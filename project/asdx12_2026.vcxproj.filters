@@ -805,6 +805,9 @@
     <None Include="..\include\fnd\asdxMath.inl">
       <Filter>ヘッダー ファイル\fnd</Filter>
     </None>
+    <None Include="..\res\shaders\asdxTransform.hlsli">
+      <Filter>リソース ファイル\shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\res\shaders\asdxColorFilterCS.hlsl">

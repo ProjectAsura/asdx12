@@ -304,7 +304,7 @@ void ModelViewer::DrawLisence()
 //-----------------------------------------------------------------------------
 //      ギズモを描画します.
 //-----------------------------------------------------------------------------
-void ModelViewer::DrawGizmo(asdx::Matrix& modelWorld)
+void ModelViewer::DrawGizmo(asdx::Transform3x4& modelWorld)
 {
     if (m_ModelInfo.MeshCount == 0)
         return;
@@ -325,13 +325,13 @@ void ModelViewer::DrawGizmo(asdx::Matrix& modelWorld)
             matrix, &m_ModelTranslation.x, &m_ModelRotation.x, &m_ModelScale.x);
     }
 
-    modelWorld = asdx::Matrix(matrix);
+    modelWorld = asdx::Transform3x4::FromMatrix(asdx::Matrix(matrix));
 }
 
 //-----------------------------------------------------------------------------
 //      バウンディングスフィアを描画します.
 //-----------------------------------------------------------------------------
-void ModelViewer::DrawBoundingSphere(const asdx::Matrix& modelWorld)
+void ModelViewer::DrawBoundingSphere(const asdx::Transform3x4& modelWorld)
 {
     if (!m_Model)
         return;
@@ -343,7 +343,7 @@ void ModelViewer::DrawBoundingSphere(const asdx::Matrix& modelWorld)
     for(auto i=0u; i<m_Model->GetMeshCount(); ++i)
     {
         auto& sphere = m_Model->GetMesh(i)->GetSphere();
-        auto world = asdx::Matrix::CreateScale(sphere.Radius) * asdx::Matrix::CreateTranslation(sphere.Center) * modelWorld;
+        auto world = asdx::Matrix::CreateScale(sphere.Radius) * asdx::Matrix::CreateTranslation(sphere.Center) * asdx::Transform3x4::ToMatrix(modelWorld);
 
         uint32_t index = uint32_t(i);
         m_ShapeParams.SetWorld(index, world);
@@ -353,7 +353,7 @@ void ModelViewer::DrawBoundingSphere(const asdx::Matrix& modelWorld)
     // モデルのバウンディングスフィア.
     {
         auto& sphere = m_Model->GetSphere();
-        auto world = asdx::Matrix::CreateScale(sphere.Radius) * asdx::Matrix::CreateTranslation(sphere.Center) * modelWorld;
+        auto world = asdx::Matrix::CreateScale(sphere.Radius) * asdx::Matrix::CreateTranslation(sphere.Center) * asdx::Transform3x4::ToMatrix(modelWorld);
 
         uint32_t index = uint32_t(m_Model->GetMeshCount());
         m_ShapeParams.SetWorld(index, world);
@@ -364,7 +364,7 @@ void ModelViewer::DrawBoundingSphere(const asdx::Matrix& modelWorld)
 //-----------------------------------------------------------------------------
 //      ボーンを描画します.
 //-----------------------------------------------------------------------------
-void ModelViewer::DrawBones(const asdx::Matrix& modelWorld)
+void ModelViewer::DrawBones(const asdx::Transform3x4& modelWorld)
 {
     if (!m_Model)
         return;

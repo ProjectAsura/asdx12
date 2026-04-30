@@ -50,7 +50,7 @@ struct BoundingInfo
 struct BatchInfo
 {
     std::vector<flatbuffers::Offset<flatbuffers::String>> Names;
-    std::vector<asdx::res::Float4x4>    Transforms;
+    std::vector<asdx::res::Float3x4>    Transforms;
     std::vector<uint32_t>               Meshes;
     BoundingInfo                        Bounds;
 };
@@ -80,15 +80,40 @@ asdx::res::Float4x4 ToFloat4x4(const asdx::Matrix& matrix)
 }
 
 //-----------------------------------------------------------------------------
+//      Float3x4 に変換します.
+//-----------------------------------------------------------------------------
+asdx::res::Float3x4 ToFloat3x4(const asdx::Matrix& matrix)
+{
+    // 転置して格納.
+    return asdx::res::Float3x4(
+        matrix._11, matrix._21, matrix._31, matrix._41,
+        matrix._12, matrix._22, matrix._32, matrix._42,
+        matrix._13, matrix._23, matrix._33, matrix._43);
+}
+
+//-----------------------------------------------------------------------------
 //      Float4x4 に変換します.
 //-----------------------------------------------------------------------------
 asdx::res::Float4x4 ToFloat4x4(const aiMatrix4x4& matrix)
 {
+    // 転置.
     return asdx::res::Float4x4(
         matrix.a1, matrix.b1, matrix.c1, matrix.d1,
         matrix.a2, matrix.b2, matrix.c2, matrix.d2,
         matrix.a3, matrix.b3, matrix.c3, matrix.d3,
         matrix.a4, matrix.b4, matrix.c4, matrix.d4);
+}
+
+//-----------------------------------------------------------------------------
+//      Float3x4 に変換します.
+//-----------------------------------------------------------------------------
+asdx::res::Float3x4 ToFloat3x4(const aiMatrix4x4& matrix)
+{
+    // 通常が転置するのを、さらに転置するので，4行目だけ削ればいい.
+    return asdx::res::Float3x4(
+        matrix.a1, matrix.a2, matrix.a3, matrix.a4,
+        matrix.b1, matrix.b2, matrix.b3, matrix.b4,
+        matrix.c1, matrix.c2, matrix.c3, matrix.c4);
 }
 
 //-----------------------------------------------------------------------------
@@ -108,11 +133,24 @@ asdx::Matrix ToMatrix(const aiMatrix4x4& matrix)
 //-----------------------------------------------------------------------------
 aiMatrix4x4 ToAiMatrix(const asdx::res::Float4x4* matrix)
 {
+    // 転置する.
     return aiMatrix4x4(
         matrix->M11(), matrix->M21(), matrix->M31(), matrix->M41(),
         matrix->M12(), matrix->M22(), matrix->M32(), matrix->M42(),
         matrix->M13(), matrix->M23(), matrix->M33(), matrix->M43(),
         matrix->M14(), matrix->M24(), matrix->M34(), matrix->M44());
+}
+
+//-----------------------------------------------------------------------------
+//      aiMatrix4x4 に変換します.
+//-----------------------------------------------------------------------------
+aiMatrix4x4 ToAiMatrix(const asdx::res::Float3x4* matrix)
+{
+    return aiMatrix4x4(
+        matrix->M11(), matrix->M12(), matrix->M13(), matrix->M14(),
+        matrix->M21(), matrix->M22(), matrix->M23(), matrix->M24(),
+        matrix->M31(), matrix->M32(), matrix->M33(), matrix->M34(),
+        0.0f, 0.0f, 0.0f, 1.0f);
 }
 
 //-----------------------------------------------------------------------------
@@ -304,23 +342,21 @@ void ParseBone
             children.shrink_to_fit();
         }
 
-        asdx::res::Float4x4 bindPose(
+        asdx::res::Float3x4 bindPose(
             1.0f, 0.0f, 0.0f, 0.0f,
             0.0f, 1.0f, 0.0f, 0.0f,
-            0.0f, 0.0f, 1.0f, 0.0f,
-            0.0f, 0.0f, 0.0f, 1.0f);
+            0.0f, 0.0f, 1.0f, 0.0f);
 
-        asdx::res::Float4x4 invBindPose(
+        asdx::res::Float3x4 invBindPose(
             1.0f, 0.0f, 0.0f, 0.0f,
             0.0f, 1.0f, 0.0f, 0.0f,
-            0.0f, 0.0f, 1.0f, 0.0f,
-            0.0f, 0.0f, 0.0f, 1.0f);
+            0.0f, 0.0f, 1.0f, 0.0f);
 
         if (node != nullptr)
-            bindPose = ToFloat4x4(node->mTransformation);
+            bindPose = ToFloat3x4(node->mTransformation);
 
         if (bone != nullptr)
-            invBindPose = ToFloat4x4(bone->mOffsetMatrix);
+            invBindPose = ToFloat3x4(bone->mOffsetMatrix);
 
         dstBones[boneId] = asdx::res::CreateBoneDirect(
             builder,
@@ -1068,7 +1104,7 @@ void ParseModelInstance
     const std::unordered_map<std::string, int>& boneMap,
     const std::vector<BoundingInfo>&            bounds,
     std::unordered_map<uint64_t, BatchInfo>&    batches,
-    BoundingInfo& mergedInfo
+    BoundingInfo&                               mergedInfo
 )
 {
     if (pNode == nullptr)
@@ -1115,7 +1151,7 @@ void ParseModelInstance
             item.Bounds.Sphere = sphere;
 
             item.Names.push_back(builder.CreateString(name.c_str()));
-            item.Transforms.push_back(ToFloat4x4(mtx));
+            item.Transforms.push_back(ToFloat3x4(mtx));
 
             // バッチに登録.
             batches[hash] = item;
@@ -1126,11 +1162,11 @@ void ParseModelInstance
             sphere = itr->second.Bounds.Sphere;
 
             itr->second.Names.push_back(builder.CreateString(name.c_str()));
-            itr->second.Transforms.push_back(ToFloat4x4(mtx));
+            itr->second.Transforms.push_back(ToFloat3x4(mtx));
         }
 
         // 変換行列でバウンディングを変換.
-        auto transform = ToMatrix(mtx);
+        auto transform   = ToMatrix(mtx);
         auto transBox    = asdx::BoundingBox3::Transform(box, transform);
         auto transSphere = asdx::BoundingSphere3::Transform(sphere, transform);
 
@@ -1300,8 +1336,8 @@ bool ModelConverter::Convert
 
     auto rootMtx          = ToMatrix(pScene->mRootNode->mTransformation);
     auto invRootMtx       = asdx::Matrix::Invert(rootMtx);
-    auto rootTransform    = ToFloat4x4(rootMtx);
-    auto invRootTransform = ToFloat4x4(invRootMtx);
+    auto rootTransform    = ToFloat3x4(rootMtx);
+    auto invRootTransform = ToFloat3x4(invRootMtx);
 
     auto bin = asdx::res::CreateModelBinaryDirect(
         builder,

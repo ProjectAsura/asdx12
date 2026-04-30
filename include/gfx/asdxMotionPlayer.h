@@ -284,28 +284,28 @@ public:
     //! @param[in]      deltaSec            経過時間(秒).
     //! @param[in]      rootTransform       ルート変換行列.
     //-------------------------------------------------------------------------
-    void Update(float deltaSec, const Matrix& rootTransform);
+    void Update(float deltaSec, const Transform3x4& rootTransform);
 
     //-------------------------------------------------------------------------
     //! @brief      ローカル変換行列を取得します.
     //! 
     //! @return     ローカル変換行列を返却します.
     //--------------------------------------------------------------------------
-    const std::vector<Matrix>& GetLocalTransforms() const;
+    const std::vector<Transform3x4>& GetLocalTransforms() const;
 
     //-------------------------------------------------------------------------
     //! @brief      ワールド変換行列を取得します.
     //!
     //! @return     ワールド変換行列を返却します.
     //-------------------------------------------------------------------------
-    const std::vector<Matrix>& GetWorldTransforms() const;
+    const std::vector<Transform3x4>& GetWorldTransforms() const;
 
     //-------------------------------------------------------------------------
     //! @brief      行列パレットを取得します.
     //! 
     //! @return     行列パレットを返却します.
     //-------------------------------------------------------------------------
-    const std::vector<Matrix>& GetMatrixPalettes() const;
+    const std::vector<Transform3x4>& GetMatrixPalettes() const;
 
     //-------------------------------------------------------------------------
     //! @brief      現在の再生時間を取得します.
@@ -380,7 +380,7 @@ public:
     //! 
     //! @param[in]      rootTransform       ルート変換行列.
     //-------------------------------------------------------------------------
-    void FrameAdvance(const Matrix& rootTransform);
+    void FrameAdvance(const Transform3x4& rootTransform);
 
     //-------------------------------------------------------------------------
     //! @brief      再生完了イベントリスナーを登録します.
@@ -400,16 +400,16 @@ private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    const Model*            m_pModel            = nullptr;
-    std::vector<Matrix>     m_LocalTransforms   = {};
-    std::vector<Matrix>     m_WorldTransforms   = {};
-    std::vector<Matrix>     m_MatrixPalettes    = {};
-    MotionUpdater           m_Updater[2]        = {};
-    uint8_t                 m_CurrIndex         = 0;
-    uint8_t                 m_NextIndex         = 1;
-    float                   m_BlendDuration     = 0.0f;
-    float                   m_BlendDelta        = 0.0f;
-    bool                    m_Finish            = false;
+    const Model*                m_pModel            = nullptr;
+    std::vector<Transform3x4>   m_LocalTransforms   = {};
+    std::vector<Transform3x4>   m_WorldTransforms   = {};
+    std::vector<Transform3x4>   m_MatrixPalettes    = {};
+    MotionUpdater               m_Updater[2]        = {};
+    uint8_t                     m_CurrIndex         = 0;
+    uint8_t                     m_NextIndex         = 1;
+    float                       m_BlendDuration     = 0.0f;
+    float                       m_BlendDelta        = 0.0f;
+    bool                        m_Finish            = false;
 
     std::list<IMotionEventListener*> m_FinishListener = {};
 
@@ -427,7 +427,7 @@ private:
     //! 
     //! @param[in]      rootTransform       ルート変換行列.
     //-------------------------------------------------------------------------
-    void UpdateWorldTransform(const Matrix& rootTransform);
+    void UpdateWorldTransform(const Transform3x4& rootTransform);
 
     //-------------------------------------------------------------------------
     //! @brief      行列パレットを更新します.

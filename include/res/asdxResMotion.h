@@ -84,7 +84,7 @@ public:
     //! 
     //! @return     ルート変換行列を返却します.
     //-------------------------------------------------------------------------
-    Matrix GetRootTransform() const;
+    Transform3x4 GetRootTransform() const;
 
     //-------------------------------------------------------------------------
     //! @brief      クリップを検索します.
@@ -159,7 +159,7 @@ public:
     //! @param[in]      timeSec     アニメーション時間[秒]
     //! @return     ローカル変換行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix FindLocalTransform(const res::MotionTrack* track, float timeSec);
+    static Transform3x4 FindLocalTransform(const res::MotionTrack* track, float timeSec);
 
     //-------------------------------------------------------------------------
     //! @brief      スケール値なしのローカル変換行列を求めます.
@@ -168,7 +168,7 @@ public:
     //! @param[in]      timeSec     アニメーション時間[秒]
     //! @return     スケール値なしのローカル変換行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix FindLocalTransformNoScale(const res::MotionTrack* track, float timeSec);
+    static Transform3x4 FindLocalTransformNoScale(const res::MotionTrack* track, float timeSec);
 
     //-------------------------------------------------------------------------
     //! @brief      変換行列を計算します.
@@ -178,7 +178,7 @@ public:
     //! @param[in]      translation     平行移動量.
     //! @return     変換行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix CalcTransform(const Vector3& scale, const Quaternion& rotation, const Vector3& translation);
+    static Transform3x4 CalcTransform(const Vector3& scale, const Quaternion& rotation, const Vector3& translation);
 
     //-------------------------------------------------------------------------
     //! @brief      変換行列をスケール無しで計算します.
@@ -187,7 +187,7 @@ public:
     //! @param[in]      translation     平行移動量.
     //! @return     変換行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix CalcTransformNoScale(const Quaternion& rotation, const Vector3& translation);
+    static Transform3x4 CalcTransformNoScale(const Quaternion& rotation, const Vector3& translation);
 };
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -4,6 +4,11 @@
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 
+//-----------------------------------------------------------------------------
+// Includes
+//-----------------------------------------------------------------------------
+#include "asdxTransform.hlsli"
+
 ///////////////////////////////////////////////////////////////////////////////
 // VSInput structure
 ///////////////////////////////////////////////////////////////////////////////
@@ -58,8 +63,8 @@ cbuffer ModelParam : register(b1)
     uint2   Reserved;
 };
 
-StructuredBuffer<float4x4> WorldMatrice  : register(t0);
-StructuredBuffer<float4x4> MatrixPallets : register(t1);
+StructuredBuffer<Transform3x4> WorldMatrice  : register(t0);
+StructuredBuffer<Transform3x4> MatrixPallets : register(t1);
 
 //-----------------------------------------------------------------------------
 //      メインエントリーポイントです.
@@ -77,19 +82,19 @@ VSOutput main(const VSInput input, uint instanceId : SV_InstanceID)
 
     for (int i=0; i<4; ++i)
     {
-        skinnedPos     += mul(MatrixPallets[input.BoneIndices[i]], localPos    ) * input.BoneWeights[i];
-        skinnedNormal  += mul(MatrixPallets[input.BoneIndices[i]], localNormal ) * input.BoneWeights[i];
-        skinnedTangent += mul(MatrixPallets[input.BoneIndices[i]], localTangent) * input.BoneWeights[i];
+        skinnedPos     += Transform(MatrixPallets[input.BoneIndices[i]], localPos    ) * input.BoneWeights[i];
+        skinnedNormal  += Transform(MatrixPallets[input.BoneIndices[i]], localNormal ) * input.BoneWeights[i];
+        skinnedTangent += Transform(MatrixPallets[input.BoneIndices[i]], localTangent) * input.BoneWeights[i];
     }
 
-    float4x4 world = WorldMatrice[MatrixId + instanceId];
+    Transform3x4 world = WorldMatrice[MatrixId + instanceId];
 
-    float4 worldPos = mul(world, skinnedPos);
-    float4 viewPos  = mul(View,  worldPos);
-    float4 projPos  = mul(Proj,  viewPos);
+    float4 worldPos = Transform(world, skinnedPos);
+    float4 viewPos  = Transform(View,  worldPos);
+    float4 projPos  = Transform(Proj,  viewPos);
 
-    float3 worldNormal  = normalize(mul((float3x3)world, skinnedNormal.xyz));
-    float3 worldTangent = normalize(mul((float3x3)world, skinnedTangent.xyz));
+    float3 worldNormal  = normalize(TransformNormal(world, skinnedNormal));
+    float3 worldTangent = normalize(TransformNormal(world, skinnedTangent));
 
     // 従接線をチェック.
     float sign = input.Tangent.w;

@@ -519,7 +519,7 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
     DrawModelInfo();
  
     // ギズモを描画.
-    auto modelWorld = asdx::Matrix::CreateIdentity();
+    auto modelWorld = asdx::Transform3x4::CreateIdentity();
     DrawGizmo(modelWorld);
 
     // コンテキストメニューを描画.
@@ -529,7 +529,7 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
     DrawBoundingSphere(modelWorld);
 
     // ボーン描画.
-    DrawBones(modelWorld * root);
+    DrawBones(modelWorld);
 
     // プロパティウィンドウを描画.
     DrawPropertyWindow();
@@ -580,7 +580,7 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
             {
                 auto& mtx = m_MotionPlayer.GetMatrixPalettes();
                 auto  ptr = m_MatrixPalletBuffer[idx].Map();
-                memcpy(ptr, mtx.data(), sizeof(asdx::Matrix) * mtx.size());
+                memcpy(ptr, mtx.data(), sizeof(asdx::Transform3x4) * mtx.size());
                 m_MatrixPalletBuffer[idx].Unmap();
             }
         }
@@ -1090,7 +1090,7 @@ void ModelViewer::RecreateModel()
         {
             m_MatrixPalletBuffer[i].Term();
 
-            if (!m_MatrixPalletBuffer[i].Init(boneCount, sizeof(asdx::Matrix), D3D12_RESOURCE_STATE_COMMON, true))
+            if (!m_MatrixPalletBuffer[i].Init(boneCount, sizeof(asdx::Transform3x4), D3D12_RESOURCE_STATE_COMMON, true))
             {
                 ELOGA("Error : Matrix Pallet Buffer Init Failed. index = %u", i);
             }
@@ -1104,14 +1104,14 @@ void ModelViewer::RecreateModel()
     {
         m_WorldMatrixBuffer[i].Term();
 
-        if (!m_WorldMatrixBuffer[i].Init(instanceCount, sizeof(asdx::Matrix), D3D12_RESOURCE_STATE_COMMON, true))
+        if (!m_WorldMatrixBuffer[i].Init(instanceCount, sizeof(asdx::Transform3x4), D3D12_RESOURCE_STATE_COMMON, true))
         {
             ELOGA("Error : WorldMatrix Buffer Init Failed. index = %u", i);
         }
     }
 
-    auto ptr0 = m_WorldMatrixBuffer[0].MapAs<asdx::Matrix>();
-    auto ptr1 = m_WorldMatrixBuffer[1].MapAs<asdx::Matrix>();
+    auto ptr0 = m_WorldMatrixBuffer[0].MapAs<asdx::Transform3x4>();
+    auto ptr1 = m_WorldMatrixBuffer[1].MapAs<asdx::Transform3x4>();
 
     size_t offset = 0;
     for(auto i=0u; i<batchCount; ++i)
@@ -1120,9 +1120,9 @@ void ModelViewer::RecreateModel()
         auto mtx = asdx::ModelBatchProxy::GetTransforms(batch);
 
         if (ptr0 != nullptr)
-            memcpy(&ptr0[offset], mtx.data(), sizeof(asdx::Matrix) * mtx.size());
+            memcpy(&ptr0[offset], mtx.data(), sizeof(asdx::Transform3x4) * mtx.size());
         if (ptr1 != nullptr)
-            memcpy(&ptr1[offset], mtx.data(), sizeof(asdx::Matrix) * mtx.size());
+            memcpy(&ptr1[offset], mtx.data(), sizeof(asdx::Transform3x4) * mtx.size());
 
         offset += mtx.size();
     }

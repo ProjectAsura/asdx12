@@ -3933,6 +3933,21 @@ inline Transform3x4& Transform3x4::operator = (const Transform3x4& value)
 }
 
 //-----------------------------------------------------------------------------
+//      乗算代入演算子です.
+//-----------------------------------------------------------------------------
+inline Transform3x4& Transform3x4::operator *= (const Transform3x4& value)
+{
+    *this = Multiply(*this, value);
+    return *this;
+}
+
+//-----------------------------------------------------------------------------
+//      乗算演算子です.
+//-----------------------------------------------------------------------------
+inline Transform3x4 Transform3x4::operator * (const Transform3x4& value) const
+{ return Multiply(*this, value); }
+
+//-----------------------------------------------------------------------------
 //      正符号演算子です.
 //-----------------------------------------------------------------------------
 inline Transform3x4 Transform3x4::operator + () const
@@ -3970,6 +3985,41 @@ inline bool Transform3x4::operator != (const Transform3x4& value) const
 }
 
 //-----------------------------------------------------------------------------
+//      基底Xベクトルを取得します.
+//-----------------------------------------------------------------------------
+inline Vector3 Transform3x4::GetBasisX() const
+{ return Vector3(_11, _12, _13); }
+
+//-----------------------------------------------------------------------------
+//      基底Yベクトルを取得します.
+//-----------------------------------------------------------------------------
+inline Vector3 Transform3x4::GetBasisY() const
+{ return Vector3(_21, _22, _23); }
+
+//-----------------------------------------------------------------------------
+//      基底Zベクトルを取得します.
+//-----------------------------------------------------------------------------
+inline Vector3 Transform3x4::GetBasisZ() const
+{ return Vector3(_31, _32, _33); }
+
+//-----------------------------------------------------------------------------
+//      スケール成分を求めます.
+//-----------------------------------------------------------------------------
+inline Vector3 Transform3x4::CalcScale() const
+{
+    auto x = GetBasisX().Length();
+    auto y = GetBasisY().Length();
+    auto z = GetBasisZ().Length();
+    return Vector3(x, y, z);
+}
+
+//-----------------------------------------------------------------------------
+//      平行移動成分を取得します.
+//-----------------------------------------------------------------------------
+inline Vector3 Transform3x4::GetPosition() const
+{ return Vector3(_14, _24, _34); }
+
+//-----------------------------------------------------------------------------
 //      Matrix から Transform3x4 へ変換します.
 //-----------------------------------------------------------------------------
 inline Transform3x4 Transform3x4::FromMatrix(const Matrix& value)
@@ -3993,6 +4043,310 @@ inline Matrix Transform3x4::ToMatrix(const Transform3x4& value)
         value._13, value._23, value._33, 0.0f,
         value._14, value._24, value._34, 1.0f );
 }
+
+//-----------------------------------------------------------------------------
+//      単位行列を生成します.
+//-----------------------------------------------------------------------------
+inline Transform3x4 Transform3x4::CreateIdentity()
+{
+    return Transform3x4(
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f);
+}
+
+//-----------------------------------------------------------------------------
+//      行列同士を乗算します.
+//-----------------------------------------------------------------------------
+inline Transform3x4 Transform3x4::Multiply(const Transform3x4& lhs, const Transform3x4& rhs)
+{
+    return Transform3x4(
+        (lhs._11 * rhs._11) + (lhs._12 * rhs._21) + (lhs._13 * rhs._31),
+        (lhs._11 * rhs._12) + (lhs._12 * rhs._22) + (lhs._13 * rhs._32),
+        (lhs._11 * rhs._13) + (lhs._12 * rhs._23) + (lhs._13 * rhs._33),
+        (lhs._11 * rhs._14) + (lhs._12 * rhs._24) + (lhs._13 * rhs._34) + lhs._14,
+
+        (lhs._21 * rhs._11) + (lhs._22 * rhs._21) + (lhs._23 * rhs._31),
+        (lhs._21 * rhs._12) + (lhs._22 * rhs._22) + (lhs._23 * rhs._32),
+        (lhs._21 * rhs._13) + (lhs._22 * rhs._23) + (lhs._23 * rhs._33),
+        (lhs._21 * rhs._14) + (lhs._22 * rhs._24) + (lhs._23 * rhs._34) + lhs._24,
+
+        (lhs._31 * rhs._11) + (lhs._32 * rhs._21) + (lhs._33 * rhs._31),
+        (lhs._31 * rhs._12) + (lhs._32 * rhs._22) + (lhs._33 * rhs._32),
+        (lhs._31 * rhs._13) + (lhs._32 * rhs._23) + (lhs._33 * rhs._33),
+        (lhs._31 * rhs._14) + (lhs._32 * rhs._24) + (lhs._33 * rhs._34) + lhs._34);
+}
+
+//-----------------------------------------------------------------------------
+//      逆行列を求めます.
+//-----------------------------------------------------------------------------
+inline Transform3x4 Transform3x4::Invert(const Transform3x4& value)
+{
+    // 3x3 の逆行列を求めて，平行移動成分を打ち消すように計算する.
+    auto det = value._11 * value._22 * value._33
+             + value._12 * value._23 * value._31
+             + value._13 * value._21 * value._32
+             - value._13 * value._22 * value._31
+             - value._11 * value._23 * value._32
+             - value._12 * value._21 * value._33;
+
+    // ゼロ除算できないので、チェック.
+    assert(!IsZero(det));
+
+    auto tx = value._14;
+    auto ty = value._24;
+    auto tz = value._34;
+
+    auto invDet = 1.0f / det;
+
+    return Transform3x4(
+        (value._22 * value._33 - value._32 * value._23) * invDet,
+        (value._32 * value._13 - value._12 * value._33) * invDet,
+        (value._12 * value._23 - value._22 * value._13) * invDet,
+       -(value._11 * tx + value._12 * ty + value._13 * tz),
+
+        (value._23 * value._31 - value._33 * value._21) * invDet,
+        (value._33 * value._11 - value._13 * value._31) * invDet,
+        (value._13 * value._21 - value._23 * value._11) * invDet,
+       -(value._21 * tx + value._22 * ty + value._23 * tz),
+
+        (value._21 * value._32 - value._31 * value._22) * invDet,
+        (value._31 * value._12 - value._11 * value._32) * invDet,
+        (value._11 * value._22 - value._21 * value._12) * invDet,
+       -(value._31 * tx + value._32 * ty + value._33 * tz));
+}
+
+//-----------------------------------------------------------------------------
+//      拡大縮小行列を生成します.
+//-----------------------------------------------------------------------------
+inline Transform3x4 Transform3x4::CreateScale(float scale)
+{ return CreateScale(scale, scale, scale); }
+
+//-----------------------------------------------------------------------------
+//      拡大縮小行列を生成します.
+//-----------------------------------------------------------------------------
+inline Transform3x4 Transform3x4::CreateScale(float sx, float sy, float sz)
+{
+    return Transform3x4(
+        sx,     0.0f,   0.0f,   0.0f,
+        0.0f,   sy,     0.0f,   0.0f,
+        0.0f,   0.0f,   sz,     0.0f);
+}
+
+//-----------------------------------------------------------------------------
+//      拡大縮小行列を生成します.
+//-----------------------------------------------------------------------------
+inline Transform3x4 Transform3x4::CreateScale(const Vector3& value)
+{ return CreateScale(value.x, value.y, value.z); }
+
+//-----------------------------------------------------------------------------
+//      平行移動行列を生成します.
+//-----------------------------------------------------------------------------
+inline Transform3x4 Transform3x4::CreateTranslation(float tx, float ty, float tz)
+{
+    return Transform3x4(
+        0.0f, 0.0f, 0.0f, tx,
+        0.0f, 0.0f, 0.0f, ty,
+        0.0f, 0.0f, 0.0f, tz);
+}
+
+//-----------------------------------------------------------------------------
+//      平行移動行列を生成します.
+//-----------------------------------------------------------------------------
+inline Transform3x4 Transform3x4::CreateTranslation(const Vector3& value)
+{ return CreateTranslation(value.x, value.y, value.z); }
+
+//-----------------------------------------------------------------------------
+//      X軸周りの回転行列を生成します.
+//-----------------------------------------------------------------------------
+inline Transform3x4 Transform3x4::CreateRotationX(float radian)
+{
+    auto cosRad = cosf(radian);
+    auto sinRad = sinf(radian);
+
+    return Transform3x4(
+        1.0f, 0.0f,    0.0f,   0.0f,
+        0.0f, cosRad, -sinRad, 0.0f,
+        0.0f, sinRad,  cosRad, 0.0f);
+}
+
+//-----------------------------------------------------------------------------
+//      Y軸周りの回転行列を生成します.
+//-----------------------------------------------------------------------------
+inline Transform3x4 Transform3x4::CreateRotationY(float radian)
+{
+    auto cosRad = cosf(radian);
+    auto sinRad = sinf(radian);
+
+    return Transform3x4(
+        cosRad, 0.0f, sinRad, 0.0f,
+        0.0f,   1.0f, 0.0f,   0.0f,
+       -sinRad, 0.0f, cosRad, 0.0f);
+}
+
+//-----------------------------------------------------------------------------
+//      Z軸周りの回転行列を生成します.
+//-----------------------------------------------------------------------------
+inline Transform3x4 Transform3x4::CreateRotationZ(float radian)
+{
+    auto cosRad = cosf(radian);
+    auto sinRad = sinf(radian);
+
+    return Transform3x4(
+        cosRad, -sinRad, 0.0f, 0.0f,
+        sinRad,  cosRad, 0.0f, 0.0f,
+        0.0f,    0.0f,   1.0f, 0.0f);
+}
+
+//-----------------------------------------------------------------------------
+//      四元数から回転行列を生成します.
+//-----------------------------------------------------------------------------
+inline Transform3x4 Transform3x4::CreateFromQuaternion(const Quaternion& value)
+{
+    auto xx = value.x * value.x;
+    auto yy = value.y * value.y;
+    auto zz = value.z * value.z;
+
+    auto xy = value.x * value.y;
+    auto zw = value.z * value.w;
+    auto xz = value.x * value.z;
+
+    auto yw = value.y * value.w;
+    auto yz = value.y * value.z;
+    auto xw = value.x * value.w;
+
+    return Transform3x4(
+        1.0f - 2.0f * (yy + zz),
+        2.0f * (xy - zw),
+        2.0f * (xz + yw),
+        0.0f,
+
+        2.0f * (xy + zw),
+        1.0f - 2.0f * (xx + zz),
+        2.0f * (yz - xw),
+        0.0f,
+
+        2.0f * (xz - yw),
+        2.0f * (yz + xw),
+        1.0f - 2.0f * (xx + yy),
+        0.0f);
+}
+
+//-----------------------------------------------------------------------------
+//      指定された軸と角度から回転行列を生成します.
+//-----------------------------------------------------------------------------
+inline Transform3x4 Transform3x4::CreateFromAxisAngle(const Vector3& axis, float radian)
+{
+    auto sinRad = sinf(radian);
+    auto cosRad = cosf(radian);
+    auto a = 1.0f -cosRad;
+    
+    auto ab = axis.x * axis.y * a;
+    auto bc = axis.y * axis.z * a;
+    auto ca = axis.z * axis.x * a;
+    auto tx = axis.x * axis.x;
+    auto ty = axis.y * axis.y;
+    auto tz = axis.z * axis.z;
+
+    return Transform3x4(
+        tx + cosRad + (1.0f - tx),
+        ab - axis.z * sinRad,
+        ca - axis.y * sinRad,
+        0.0f,
+
+        ab + axis.z * sinRad,
+        ty + cosRad * (1.0f - ty),
+        bc - axis.y * sinRad,
+        0.0f,
+
+        ca - axis.y * sinRad,
+        bc + axis.x * sinRad,
+        tz + cosRad * (1.0f - tz),
+        0.0f);
+}
+
+//-----------------------------------------------------------------------------
+//      ヨー・ピッチ・ロール角から回転行列を生成します.
+//-----------------------------------------------------------------------------
+inline Transform3x4 Transform3x4::CreateRotationFromYawPitchRoll(float yaw, float pitch, float roll)
+{
+    auto cp = cosf(pitch);
+    auto sp = sinf(pitch);
+
+    auto cy = cosf(yaw);
+    auto sy = sinf(yaw);
+
+    auto cr = cosf(roll);
+    auto sr = sinf(roll);
+
+    return Transform3x4(
+        cr * cy + sr * sp * sy,
+        cr * sp * sy - sr * cy,
+        cp * sy,
+        0.0f,
+
+        sr * cp,
+        cr * cp,
+       -sp,
+        0.0f,
+
+        sr * sp * cy - cr * sy,
+        sr * sy + cr * sp * cy,
+        cp * cy,
+        0.0f);
+}
+
+//-----------------------------------------------------------------------------
+//      ビュー行列を生成します.
+//-----------------------------------------------------------------------------
+inline Transform3x4 Transform3x4::CreateLookAt(const Vector3& position, const Vector3& target, const Vector3& upward)
+{
+    auto zaxis = position - target;
+    zaxis.Normalize();
+
+    auto xaxis = Vector3::Cross(upward, zaxis);
+    xaxis.Normalize();
+
+    auto yaxis = Vector3::Cross(zaxis, xaxis);
+    yaxis.Normalize();
+
+    return Transform3x4(
+        xaxis.x, xaxis.y, xaxis.z, -Vector3::Dot(xaxis, position),
+        yaxis.x, yaxis.y, yaxis.z, -Vector3::Dot(yaxis, position),
+        zaxis.x, zaxis.y, zaxis.z, -Vector3::Dot(zaxis, position));
+}
+
+//-----------------------------------------------------------------------------
+//      ビュー行列を生成します.
+//-----------------------------------------------------------------------------
+inline Transform3x4 Transform3x4::CreateLookTo(const Vector3& position, const Vector3& viewDir, const Vector3& upward)
+{
+    auto zaxis = -viewDir;
+    zaxis.Normalize();
+
+    auto xaxis = Vector3::Cross(upward, zaxis);
+    xaxis.Normalize();
+
+    auto yaxis = Vector3::Cross(zaxis, xaxis);
+    yaxis.Normalize();
+
+    return Transform3x4(
+        xaxis.x, xaxis.y, xaxis.z, -Vector3::Dot(xaxis, position),
+        yaxis.x, yaxis.y, yaxis.z, -Vector3::Dot(yaxis, position),
+        zaxis.x, zaxis.y, zaxis.z, -Vector3::Dot(zaxis, position));
+}
+
+//-----------------------------------------------------------------------------
+//      平行移動成分を右から掛けます.
+//-----------------------------------------------------------------------------
+inline Transform3x4 Transform3x4::AppendTranslation(Transform3x4& lhs, const Vector3& rhs)
+{
+    lhs._14 += rhs.x;
+    lhs._24 += rhs.y;
+    lhs._34 += rhs.z;
+    return lhs;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // BoundingBox2 structure
@@ -4638,6 +4992,18 @@ inline uint32_t XorShift::GetValue()
     m_Z = m_W;
     m_W = (m_W ^ (m_W >> 19)) ^ (t ^ (t >> 8));
     return m_W;
+}
+
+//-----------------------------------------------------------------------------
+//      代入演算子です.
+//-----------------------------------------------------------------------------
+inline XorShift& XorShift::operator=(const XorShift& value)
+{
+    m_X = value.m_X;
+    m_Y = value.m_Y;
+    m_Z = value.m_Z;
+    m_W = value.m_W;
+    return *this;
 }
 
 //-----------------------------------------------------------------------------

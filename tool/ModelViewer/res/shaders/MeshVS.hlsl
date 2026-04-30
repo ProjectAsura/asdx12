@@ -4,6 +4,12 @@
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 
+//-----------------------------------------------------------------------------
+// Includes
+//-----------------------------------------------------------------------------
+#include "asdxTransform.hlsli"
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // VSInput structure
 ///////////////////////////////////////////////////////////////////////////////
@@ -54,8 +60,7 @@ cbuffer ModelParam : register(b1)
     uint2   Reserved;
 };
 
-
-StructuredBuffer<float4x4>  WorldMatrices : register(t0);
+StructuredBuffer<Transform3x4>  WorldMatrices : register(t0);
 
 //-----------------------------------------------------------------------------
 //      メインエントリーポイントです.
@@ -64,15 +69,15 @@ VSOutput main(const VSInput input, uint instanceId : SV_InstanceID)
 {
     VSOutput output = (VSOutput)0;
 
-    float4x4 world = WorldMatrices[MatrixId + instanceId];
+    Transform3x4 world = WorldMatrices[MatrixId + instanceId];
 
     float4 localPos = float4(input.Position, 1.0f);
-    float4 worldPos = mul(world, localPos);
-    float4 viewPos  = mul(View, worldPos);
-    float4 projPos  = mul(Proj, viewPos);
+    float4 worldPos = Transform(world, localPos);
+    float4 viewPos  = Transform(View, worldPos);
+    float4 projPos  = Transform(Proj, viewPos);
 
-    float3 worldNormal  = normalize(mul((float3x3)world, input.Normal));
-    float3 worldTangent = normalize(mul((float3x3)world, input.Tangent.xyz));
+    float3 worldNormal  = normalize(TransformNormal(world, input.Normal));
+    float3 worldTangent = normalize(TransformNormal(world, input.Tangent.xyz));
  
     // 従接線をチェック.
     float sign = input.Tangent.w;

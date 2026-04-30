@@ -13,8 +13,8 @@ table Bone
 {
     Name            : string;
     Parent          : int;
-    BindPose        : Float4x4;
-    InverseBindPose : Float4x4;
+    BindPose        : Float3x4;
+    InverseBindPose : Float3x4;
     Children        : [int];
 }
 
@@ -56,7 +56,7 @@ table Material
 table ModelBatch
 {
     Names       : [string];
-    Transforms  : [Float4x4];
+    Transforms  : [Float3x4];
     Meshes      : [uint];
     BoundSphere : BoundingSphere;
     BoundBox    : BoundingBox;
@@ -72,8 +72,8 @@ table ModelBinary
     BoundSphere         : BoundingSphere;
     BoundBox            : BoundingBox;
     TotalInstanceCount  : ulong;
-    RootTransform       : Float4x4;
-    InvRootTransform    : Float4x4;
+    RootTransform       : Float3x4;
+    InvRootTransform    : Float3x4;
 }
 
 root_type ModelBinary;

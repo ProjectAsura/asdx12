@@ -411,6 +411,7 @@
     <None Include="..\res\shaders\asdxShadow.hlsli" />
     <None Include="..\res\shaders\asdxTangentSpace.hlsli" />
     <None Include="..\res\shaders\asdxTextureUtil.hlsli" />
+    <None Include="..\res\shaders\asdxTransform.hlsli" />
     <None Include="..\res\shaders\asdxWaveHelper.hlsli" />
   </ItemGroup>
   <ItemGroup>
