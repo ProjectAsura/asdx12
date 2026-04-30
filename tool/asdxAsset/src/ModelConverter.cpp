@@ -19,6 +19,7 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <ModelBinary_generated.h>
+#include <DirectXTex.h>
 
 
 #ifndef ELOG
@@ -105,6 +106,33 @@ aiMatrix4x4 ToAiMatrix(const asdx::res::Float4x4* matrix)
         matrix->M13(), matrix->M23(), matrix->M33(), matrix->M43(),
         matrix->M14(), matrix->M24(), matrix->M34(), matrix->M44());
 }
+
+//-----------------------------------------------------------------------------
+//      ワイド文字列に変換します.
+//-----------------------------------------------------------------------------
+std::wstring ToStringW(const std::string& value)
+{
+    auto length = MultiByteToWideChar(CP_ACP, 0, value.c_str(), int(value.size() + 1), nullptr, 0 );
+    auto buffer = new wchar_t[length];
+
+    MultiByteToWideChar(CP_ACP, 0, value.c_str(), int(value.size() + 1),  buffer, length );
+
+    std::wstring result(buffer);
+    delete[] buffer;
+
+    return result;
+}
+
+//-----------------------------------------------------------------------------
+//      小文字に変換します.
+//-----------------------------------------------------------------------------
+std::string ToLowerA(const std::string& value)
+{
+    std::string result = value;
+    std::transform(result.begin(), result.end(), result.begin(), tolower);
+    return result;
+}
+
 
 //-----------------------------------------------------------------------------
 //      指定名に合致するノードを検索します.
@@ -604,6 +632,151 @@ void ConvertTXB(const std::string& input, const std::string& output)
 }
 
 //-----------------------------------------------------------------------------
+//      Assimpのテクスチャをファイルに保存します.
+//-----------------------------------------------------------------------------
+bool SaveAssimpTexture(const aiTexture* pTexture, const std::string& outputDir)
+{
+    auto path = ToLowerA(pTexture->mFilename.C_Str());
+
+    if (pTexture->mHeight == 0)
+    {
+        // 拡張子がなければ付ける.
+        if (strstr(path.c_str(), ".") == nullptr)
+        {
+            path += "." + std::string(pTexture->achFormatHint);
+        }
+
+        FILE* fp = nullptr;
+        auto err = fopen_s(&fp, path.c_str(), "wb");
+        if (err != 0)
+        {
+            ELOG("File Open Failed. path = %s", path.c_str());
+            return false;
+        }
+
+        fwrite(reinterpret_cast<const char*>(pTexture->pcData), pTexture->mWidth, 1, fp);
+        fclose(fp);
+        return true;
+    }
+
+    DirectX::Image image = {};
+    image.width         = pTexture->mWidth;
+    image.height        = pTexture->mHeight;
+    image.format        = DXGI_FORMAT_B8G8R8A8_UNORM;
+    image.rowPitch      = image.width * 4;
+    image.slicePitch    = image.rowPitch * image.height;
+
+    std::vector<uint8_t> pixels(image.slicePitch);
+
+    const auto src = pTexture->pcData;
+    auto dst = pixels.data();
+
+    for(auto i=0llu; i<image.width * image.height; ++i)
+    {
+        dst[i * 4 + 0] = src[i].b;
+        dst[i * 4 + 1] = src[i].g;
+        dst[i * 4 + 2] = src[i].r;
+        dst[i * 4 + 3] = src[i].a;
+    }
+
+    image.pixels = pixels.data();
+
+    DirectX::ScratchImage scratch;
+    auto hr = scratch.InitializeFromImage(image);
+    if (FAILED(hr))
+    {
+        ELOG("Error : DirectX::ScratchImage::InitializeFromImage() Failed. errcode = 0x%x", hr);
+        return false;
+    }
+
+    auto wpath = ToStringW(path);
+    DirectX::WICCodecs codec = {};
+    bool isTGA = false;
+    bool isDDS = false;
+    bool isHDR = false;
+
+    if (strstr(path.c_str(), ".png") != nullptr)
+    {
+        codec = DirectX::WIC_CODEC_PNG;
+    }
+    else if (strstr(path.c_str(), ".jpg") != nullptr || strstr(path.c_str(), ".jpeg") != nullptr)
+    {
+        codec = DirectX::WIC_CODEC_JPEG;
+    }
+    else if (strstr(path.c_str(), ".bmp") != nullptr)
+    {
+        codec = DirectX::WIC_CODEC_BMP;
+    }
+    else if (strstr(path.c_str(), ".gif") != nullptr)
+    {
+        codec = DirectX::WIC_CODEC_GIF;
+    }
+    else if (strstr(path.c_str(), ".tga") != nullptr)
+    {
+        isTGA = true;
+    }
+    else if (strstr(path.c_str(), ".dds") != nullptr)
+    {
+        isDDS = true;
+    }
+    else if (strstr(path.c_str(), ".hdr") != nullptr)
+    {
+        isHDR = true;
+    }
+
+    if (isTGA)
+    {
+        hr = DirectX::SaveToTGAFile(
+            image,
+            wpath.c_str());
+        if (FAILED(hr))
+        {
+            ELOG("Error : DirectX::SaveToTGAFile() Failed. errcode = 0x%x", hr);
+            return false;
+        }
+    }
+    else if (isDDS)
+    {
+        hr = DirectX::SaveToDDSFile(
+            image,
+            DirectX::DDS_FLAGS_NONE,
+            wpath.c_str());
+        if (FAILED(hr))
+        {
+            ELOG("Error : DirectX::SaveToDDSFile() Failed. errcode = 0x%x", hr);
+            return false;
+        }
+    }
+    else if (isHDR)
+    {
+        hr = DirectX::SaveToHDRFile(
+            image,
+            wpath.c_str());
+        if (FAILED(hr))
+        {
+            ELOG("Error : DirectX::SaveToHDRFile() Failed. errcode = 0x%x", hr);
+            return false;
+        }
+    }
+    else
+    {
+        hr = DirectX::SaveToWICFile(
+            *scratch.GetImage(0, 0, 0),
+            DirectX::WIC_FLAGS_NONE,
+            DirectX::GetWICCodec(codec),
+            wpath.c_str());
+ 
+        if (FAILED(hr))
+        {
+            ELOG("Error : DirectX::SaveToWICFile() Failed. errcode = 0x%x", hr);
+            return false;
+        }
+    }
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
 //      テクスチャファイルパスを取得します.
 //-----------------------------------------------------------------------------
 std::string GetTexturePath
@@ -626,6 +799,14 @@ std::string GetTexturePath
             auto index = std::stoi(&mapPath.data[1]);
             asdx::fs::path p = pScene->mTextures[index]->mFilename.C_Str();
             result = "textures\\" + p.filename().replace_extension(".txb").string();
+
+            // 拡張子が無ければ付ける.
+            if (strstr(p.string().c_str(), ".") == nullptr)
+                p += "." + std::string(pScene->mTextures[index]->achFormatHint);
+            mapPath = p.string();
+
+            // 先に出力しておく.
+            SaveAssimpTexture(pScene->mTextures[index], outputDir);
         }
         else
         {
@@ -679,6 +860,7 @@ void ParseMaterial
         float ior                     = 1.0f;
         bool  isOpaque                = true;
         float alphaCutOff             = 0.0f;
+        bool  twoSided                = false;
 
         auto alphaMode = asdx::res::AlphaType_Opaque;
 
@@ -718,6 +900,13 @@ void ParseMaterial
             float value;
             if (srcMat->Get(AI_MATKEY_REFRACTI, value) == AI_SUCCESS)
             { ior = value; }
+        }
+
+        // 両面描画.
+        {
+            bool value;
+            if (srcMat->Get(AI_MATKEY_TWOSIDED, value) == AI_SUCCESS)
+            { twoSided = value; }
         }
 
         // PBRモデルの場合.
@@ -815,7 +1004,8 @@ void ParseMaterial
             ormMap.c_str(),
             emissiveMap.c_str(),
             alphaMode,
-            alphaCutOff);
+            alphaCutOff,
+            twoSided);
 
         materials.emplace_back(dstMat);
     }

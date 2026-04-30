@@ -209,7 +209,7 @@ bool ModelViewer::OnInit()
         desc.PS                             = { MeshPS, sizeof(MeshPS) };
         desc.BlendState                     = asdx::Preset::Opaque;
         desc.SampleMask                     = D3D12_DEFAULT_SAMPLE_MASK;
-        desc.RasterizerState                = asdx::Preset::CullBack;
+        desc.RasterizerState                = asdx::Preset::CullNone;
         desc.DepthStencilState              = asdx::Preset::DepthReadWrite;
         desc.InputLayout.NumElements        = kStaticMeshElementCount;
         desc.InputLayout.pInputElementDescs = InputElements;
@@ -252,7 +252,7 @@ bool ModelViewer::OnInit()
         desc.PS                             = { ModelPS, sizeof(ModelPS) };
         desc.BlendState                     = asdx::Preset::Opaque;
         desc.SampleMask                     = D3D12_DEFAULT_SAMPLE_MASK;
-        desc.RasterizerState                = asdx::Preset::CullBack;
+        desc.RasterizerState                = asdx::Preset::CullNone;
         desc.DepthStencilState              = asdx::Preset::DepthReadWrite;
         desc.InputLayout.NumElements        = kSkeletalMeshElementCount;
         desc.InputLayout.pInputElementDescs = InputElements;

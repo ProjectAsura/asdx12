@@ -389,6 +389,8 @@ bool Material::Init(const res::Material& material, const std::string& baseDir)
     // アルファモード.
     m_AlphaMode = MaterialProxy::GetAlphaMode(material);
 
+    // 両面描画フラグ.
+    m_TwoSided = MaterialProxy::GetTwoSided(material);
 
     // ベースカラーマップ生成.
     {
@@ -468,6 +470,12 @@ const TextureHolder& Material::GetTexture(TEXTURE_KIND kind) const
 //-----------------------------------------------------------------------------
 AlphaMode Material::GetAlphaMode() const
 { return m_AlphaMode; }
+
+//-----------------------------------------------------------------------------
+//      両面描画フラグを取得します.
+//-----------------------------------------------------------------------------
+bool Material::IsTwoSided() const
+{ return m_TwoSided; }
 
 
 ///////////////////////////////////////////////////////////////////////////////

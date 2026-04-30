@@ -50,6 +50,7 @@ table Material
     EmissiveMap     : string;
     AlphaMode       : AlphaType;
     AlphaCutOff     : float;
+    TwoSided        : bool;
 }
 
 table ModelBinary

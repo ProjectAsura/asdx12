@@ -459,4 +459,10 @@ AlphaMode MaterialProxy::GetAlphaMode(const res::Material& material)
 float MaterialProxy::GetAlphaCutOff(const res::Material& material)
 { return material.AlphaCutOff(); }
 
+//-----------------------------------------------------------------------------
+//      両面描画フラグを取得します.
+//-----------------------------------------------------------------------------
+bool MaterialProxy::GetTwoSided(const res::Material& material)
+{ return material.TwoSided(); }
+
 } // namespace asdx

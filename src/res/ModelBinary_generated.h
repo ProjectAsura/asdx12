@@ -379,7 +379,8 @@ struct Material FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
     VT_ORMMAP = 24,
     VT_EMISSIVEMAP = 26,
     VT_ALPHAMODE = 28,
-    VT_ALPHACUTOFF = 30
+    VT_ALPHACUTOFF = 30,
+    VT_TWOSIDED = 32
   };
   const ::flatbuffers::String *Name() const {
     return GetPointer<const ::flatbuffers::String *>(VT_NAME);
@@ -423,6 +424,9 @@ struct Material FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   float AlphaCutOff() const {
     return GetField<float>(VT_ALPHACUTOFF, 0.0f);
   }
+  bool TwoSided() const {
+    return GetField<uint8_t>(VT_TWOSIDED, 0) != 0;
+  }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_NAME) &&
@@ -444,6 +448,7 @@ struct Material FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
            verifier.VerifyString(EmissiveMap()) &&
            VerifyField<uint8_t>(verifier, VT_ALPHAMODE, 1) &&
            VerifyField<float>(verifier, VT_ALPHACUTOFF, 4) &&
+           VerifyField<uint8_t>(verifier, VT_TWOSIDED, 1) &&
            verifier.EndTable();
   }
 };
@@ -494,6 +499,9 @@ struct MaterialBuilder {
   void add_AlphaCutOff(float AlphaCutOff) {
     fbb_.AddElement<float>(Material::VT_ALPHACUTOFF, AlphaCutOff, 0.0f);
   }
+  void add_TwoSided(bool TwoSided) {
+    fbb_.AddElement<uint8_t>(Material::VT_TWOSIDED, static_cast<uint8_t>(TwoSided), 0);
+  }
   explicit MaterialBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -520,7 +528,8 @@ inline ::flatbuffers::Offset<Material> CreateMaterial(
     ::flatbuffers::Offset<::flatbuffers::String> OrmMap = 0,
     ::flatbuffers::Offset<::flatbuffers::String> EmissiveMap = 0,
     asdx::res::AlphaType AlphaMode = asdx::res::AlphaType_Opaque,
-    float AlphaCutOff = 0.0f) {
+    float AlphaCutOff = 0.0f,
+    bool TwoSided = false) {
   MaterialBuilder builder_(_fbb);
   builder_.add_AlphaCutOff(AlphaCutOff);
   builder_.add_EmissiveMap(EmissiveMap);
@@ -535,6 +544,7 @@ inline ::flatbuffers::Offset<Material> CreateMaterial(
   builder_.add_Alpha(Alpha);
   builder_.add_BaseColorFactor(BaseColorFactor);
   builder_.add_Name(Name);
+  builder_.add_TwoSided(TwoSided);
   builder_.add_AlphaMode(AlphaMode);
   return builder_.Finish();
 }
@@ -554,7 +564,8 @@ inline ::flatbuffers::Offset<Material> CreateMaterialDirect(
     const char *OrmMap = nullptr,
     const char *EmissiveMap = nullptr,
     asdx::res::AlphaType AlphaMode = asdx::res::AlphaType_Opaque,
-    float AlphaCutOff = 0.0f) {
+    float AlphaCutOff = 0.0f,
+    bool TwoSided = false) {
   auto Name__ = Name ? _fbb.CreateString(Name) : 0;
   auto BaseColorMap__ = BaseColorMap ? _fbb.CreateString(BaseColorMap) : 0;
   auto NormalMap__ = NormalMap ? _fbb.CreateString(NormalMap) : 0;
@@ -575,7 +586,8 @@ inline ::flatbuffers::Offset<Material> CreateMaterialDirect(
       OrmMap__,
       EmissiveMap__,
       AlphaMode,
-      AlphaCutOff);
+      AlphaCutOff,
+      TwoSided);
 }
 
 struct ModelBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
