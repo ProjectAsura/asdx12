@@ -411,6 +411,15 @@
     <ClCompile Include="..\src\gfx\asdxGaussianBlurEffect.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
+    <ClCompile Include="..\external\meshoptimizer\meshletcodec.cpp">
+      <Filter>ソース ファイル\external\meshoptimizer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\meshoptimizer\meshletutils.cpp">
+      <Filter>ソース ファイル\external\meshoptimizer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\meshoptimizer\opacitymap.cpp">
+      <Filter>ソース ファイル\external\meshoptimizer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\edit\asdxEditParam.h">

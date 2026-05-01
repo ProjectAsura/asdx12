@@ -1,4 +1,4 @@
-// This file is part of meshoptimizer library; see meshoptimizer.h for version/license details
+﻿// This file is part of meshoptimizer library; see meshoptimizer.h for version/license details
 #include "meshoptimizer.h"
 
 #ifdef MESHOPTIMIZER_ALLOC_EXPORT

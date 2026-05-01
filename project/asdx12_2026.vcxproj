@@ -191,6 +191,9 @@
     <ClCompile Include="..\external\meshoptimizer\indexanalyzer.cpp" />
     <ClCompile Include="..\external\meshoptimizer\indexcodec.cpp" />
     <ClCompile Include="..\external\meshoptimizer\indexgenerator.cpp" />
+    <ClCompile Include="..\external\meshoptimizer\meshletcodec.cpp" />
+    <ClCompile Include="..\external\meshoptimizer\meshletutils.cpp" />
+    <ClCompile Include="..\external\meshoptimizer\opacitymap.cpp" />
     <ClCompile Include="..\external\meshoptimizer\overdrawoptimizer.cpp" />
     <ClCompile Include="..\external\meshoptimizer\partition.cpp" />
     <ClCompile Include="..\external\meshoptimizer\quantization.cpp" />
