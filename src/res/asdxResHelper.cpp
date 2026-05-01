@@ -43,12 +43,12 @@ res::Unorm3 ToUnorm3(const Unorm3& value)
 res::Unorm4 ToUnorm4(const Unorm4& value)
 { return res::Unorm4(value.x, value.y, value.z, value.w); }
 
-res::Float3x4 ToFloat3x4(const Transform3x4& value)
+res::Float3x4 ToFloat3x4(const Transform4x3& value)
 {
     return res::Float3x4(
-        value._11, value._12, value._13, value._14,
-        value._21, value._22, value._23, value._24,
-        value._31, value._32, value._33, value._34);
+        value._11, value._21, value._31, value._41,
+        value._12, value._22, value._32, value._42,
+        value._13, value._23, value._33, value._43);
 }
 
 res::Float4x4 ToFloat4x4(const Matrix& value)
@@ -95,12 +95,14 @@ Uint3 FromUint3(const res::Uint3& value)
 Uint4 FromUint4(const res::Uint4& value)
 { return Uint4(value.X(), value.Y(), value.Z(), value.W()); }
 
-Transform3x4 FromFloat3x4(const res::Float3x4& value)
+Transform4x3 FromFloat3x4(const res::Float3x4& value)
 {
-    return Transform3x4(
-        value.M11(), value.M12(), value.M13(), value.M14(),
-        value.M21(), value.M22(), value.M23(), value.M24(),
-        value.M31(), value.M32(), value.M33(), value.M34());
+    // コンストラクタには転置状態で渡す必要あり.
+    return Transform4x3(
+        value.M11(), value.M21(), value.M31(),
+        value.M12(), value.M22(), value.M32(),
+        value.M13(), value.M23(), value.M33(),
+        value.M14(), value.M24(), value.M34());
 }
 
 Matrix FromFloat4x4(const res::Float4x4& value)

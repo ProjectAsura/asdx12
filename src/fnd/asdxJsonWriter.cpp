@@ -339,21 +339,21 @@ void JsonWriter::Write(const char* tag, const Matrix& value)
 //-----------------------------------------------------------------------------
 //      Transform3x4型を書き込みます.
 //-----------------------------------------------------------------------------
-void JsonWriter::Write(const char* tag, const Transform3x4& value)
+void JsonWriter::Write(const char* tag, const Transform4x3& value)
 {
     WriteBeginSection(tag); WriteNextLine(false);
     Write("m11", value._11); WriteNextLine(true);
     Write("m12", value._12); WriteNextLine(true);
     Write("m13", value._13); WriteNextLine(true);
-    Write("m14", value._14); WriteNextLine(true);
     Write("m21", value._21); WriteNextLine(true);
     Write("m22", value._22); WriteNextLine(true);
     Write("m23", value._23); WriteNextLine(true);
-    Write("m24", value._24); WriteNextLine(true);
     Write("m31", value._31); WriteNextLine(true);
     Write("m32", value._32); WriteNextLine(true);
     Write("m33", value._33); WriteNextLine(true);
-    Write("m34", value._34); WriteNextLine(false);
+    Write("m41", value._41); WriteNextLine(true);
+    Write("m42", value._42); WriteNextLine(true);
+    Write("m43", value._43); WriteNextLine(true);
     WriteEndSection();
 }
 
@@ -619,7 +619,7 @@ void JsonWriter::Write(const char* tag, std::span<Matrix> values)
 //-----------------------------------------------------------------------------
 //      Transform3x4型配列を書き込みます.
 //-----------------------------------------------------------------------------
-void JsonWriter::Write(const char* tag, std::span<Transform3x4> values)
+void JsonWriter::Write(const char* tag, std::span<Transform4x3> values)
 {
     WriteBeginArray(tag); WriteNextLine(false);
     for(size_t i=0; i<values.size(); ++i)
@@ -630,15 +630,15 @@ void JsonWriter::Write(const char* tag, std::span<Transform3x4> values)
         WriteIndent(); m_Stream << "\"m11\": " << values[i]._11; WriteNextLine(true);
         WriteIndent(); m_Stream << "\"m12\": " << values[i]._12; WriteNextLine(true);
         WriteIndent(); m_Stream << "\"m13\": " << values[i]._13; WriteNextLine(true);
-        WriteIndent(); m_Stream << "\"m14\": " << values[i]._14; WriteNextLine(true);
         WriteIndent(); m_Stream << "\"m21\": " << values[i]._21; WriteNextLine(true);
         WriteIndent(); m_Stream << "\"m22\": " << values[i]._22; WriteNextLine(true);
         WriteIndent(); m_Stream << "\"m23\": " << values[i]._23; WriteNextLine(true);
-        WriteIndent(); m_Stream << "\"m24\": " << values[i]._24; WriteNextLine(true);
         WriteIndent(); m_Stream << "\"m31\": " << values[i]._31; WriteNextLine(true);
         WriteIndent(); m_Stream << "\"m32\": " << values[i]._32; WriteNextLine(true);
         WriteIndent(); m_Stream << "\"m33\": " << values[i]._33; WriteNextLine(true);
-        WriteIndent(); m_Stream << "\"m34\": " << values[i]._34; WriteNextLine(true);
+        WriteIndent(); m_Stream << "\"m41\": " << values[i]._41; WriteNextLine(true);
+        WriteIndent(); m_Stream << "\"m42\": " << values[i]._42; WriteNextLine(true);
+        WriteIndent(); m_Stream << "\"m43\": " << values[i]._43; WriteNextLine(true);
         m_Indent--;
         WriteIndent(); m_Stream << "}";
         WriteNextLine(i != values.size() - 1);

@@ -3882,60 +3882,75 @@ inline Quaternion Quaternion::Squad
     return Quaternion::Slerp(d, e, 2.0f * amount * (1.0f - amount));
 }
 
+
 ///////////////////////////////////////////////////////////////////////////////
-// Transform3x4 structure
+// Transform4x3 structure
 ///////////////////////////////////////////////////////////////////////////////
 
 //-----------------------------------------------------------------------------
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
-inline Transform3x4::Transform3x4()
-: _11(1.0f), _12(0.0f), _13(0.0f), _14(0.0f)
-, _21(0.0f), _22(1.0f), _23(0.0f), _24(0.0f)
-, _31(0.0f), _32(0.0f), _33(1.0f), _34(0.0f)
+inline Transform4x3::Transform4x3()
+: _11(1.0f), _21(0.0f), _31(0.0f), _41(0.0f)
+, _12(0.0f), _22(1.0f), _32(0.0f), _42(0.0f)
+, _13(0.0f), _23(0.0f), _33(1.0f), _43(0.0f)
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-inline Transform3x4::Transform3x4
+inline Transform4x3::Transform4x3
 (
-    float m11, float m12, float m13, float m14,
-    float m21, float m22, float m23, float m24,
-    float m31, float m32, float m33, float m34
+    float m11, float m12, float m13,
+    float m21, float m22, float m23,
+    float m31, float m32, float m33,
+    float m41, float m42, float m43
 )
-: _11(m11), _12(m12), _13(m13), _14(m14)
-, _21(m21), _22(m22), _23(m23), _24(m24)
-, _31(m31), _32(m32), _33(m33), _34(m34)
+: _11(m11), _21(m21), _31(m31), _41(m41)
+, _12(m12), _22(m22), _32(m32), _42(m42)
+, _13(m13), _23(m23), _33(m33), _43(m43)
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      float* 型へのキャストです.
 //-----------------------------------------------------------------------------
-inline Transform3x4::operator float* ()
+inline Transform4x3::operator float* ()
 { return &_11; }
 
 //-----------------------------------------------------------------------------
 //      const float* 型へのキャストです.
 //-----------------------------------------------------------------------------
-inline Transform3x4::operator const float* () const
+inline Transform4x3::operator const float* () const
 { return &_11; }
 
 //-----------------------------------------------------------------------------
 //      代入演算子です.
 //-----------------------------------------------------------------------------
-inline Transform3x4& Transform3x4::operator = (const Transform3x4& value)
+inline Transform4x3& Transform4x3::operator = (const Transform4x3& value)
 {
-    _11 = value._11; _12 = value._12; _13 = value._13; _14 = value._14;
-    _21 = value._21; _22 = value._22; _23 = value._23; _24 = value._24;
-    _31 = value._31; _32 = value._32; _33 = value._33; _34 = value._34;
+    _11 = value._11;
+    _12 = value._12;
+    _13 = value._13;
+
+    _21 = value._21;
+    _22 = value._22;
+    _23 = value._23;
+
+    _31 = value._31;
+    _32 = value._32;
+    _33 = value._33;
+
+    _41 = value._41;
+    _42 = value._42;
+    _43 = value._43;
+
     return *this;
 }
 
 //-----------------------------------------------------------------------------
 //      乗算代入演算子です.
 //-----------------------------------------------------------------------------
-inline Transform3x4& Transform3x4::operator *= (const Transform3x4& value)
+inline Transform4x3& Transform4x3::operator *= (const Transform4x3& value)
 {
     *this = Multiply(*this, value);
     return *this;
@@ -3944,68 +3959,69 @@ inline Transform3x4& Transform3x4::operator *= (const Transform3x4& value)
 //-----------------------------------------------------------------------------
 //      乗算演算子です.
 //-----------------------------------------------------------------------------
-inline Transform3x4 Transform3x4::operator * (const Transform3x4& value) const
+inline Transform4x3 Transform4x3::operator * (const Transform4x3& value) const
 { return Multiply(*this, value); }
 
 //-----------------------------------------------------------------------------
 //      正符号演算子です.
 //-----------------------------------------------------------------------------
-inline Transform3x4 Transform3x4::operator + () const
+inline Transform4x3 Transform4x3::operator + () const
 { return *this; }
 
 //-----------------------------------------------------------------------------
 //      負符号演算子です.
 //-----------------------------------------------------------------------------
-inline Transform3x4 Transform3x4::operator - () const
+inline Transform4x3 Transform4x3::operator - () const
 {
-    return Transform3x4(
-        -_11, -_12, -_13, -_14,
-        -_21, -_22, -_23, -_24,
-        -_31, -_32, -_33, -_34 );
+    return Transform4x3(
+        -_11, -_12, -_13,
+        -_21, -_22, -_23,
+        -_31, -_32, -_33,
+        -_41, -_42, -_43);
 }
 
 //-----------------------------------------------------------------------------
 //      等価比較演算子です.
 //-----------------------------------------------------------------------------
-inline bool Transform3x4::operator == (const Transform3x4& value) const
+inline bool Transform4x3::operator == (const Transform4x3& value) const
 {
-    return IsEqual(_11, value._11) && IsEqual(_12, value._12) && IsEqual(_13, value._13) && IsEqual(_14, value._14)
-        && IsEqual(_21, value._21) && IsEqual(_22, value._22) && IsEqual(_23, value._23) && IsEqual(_24, value._24)
-        && IsEqual(_31, value._31) && IsEqual(_32, value._32) && IsEqual(_33, value._33) && IsEqual(_34, value._34);
+    return IsEqual(_11, value._11) && IsEqual(_21, value._21) && IsEqual(_31, value._31) && IsEqual(_41, value._41)
+        && IsEqual(_12, value._12) && IsEqual(_22, value._22) && IsEqual(_32, value._32) && IsEqual(_42, value._42)
+        && IsEqual(_13, value._13) && IsEqual(_23, value._23) && IsEqual(_33, value._33) && IsEqual(_43, value._43);
 }
 
 //-----------------------------------------------------------------------------
 //      非等価比較演算子です.
 //-----------------------------------------------------------------------------
-inline bool Transform3x4::operator != (const Transform3x4& value) const
+inline bool Transform4x3::operator != (const Transform4x3& value) const
 {
-    return !IsEqual(_11, value._11) || !IsEqual(_12, value._12) || !IsEqual(_13, value._13) || !IsEqual(_14, value._14)
-        || !IsEqual(_21, value._21) || !IsEqual(_22, value._22) || !IsEqual(_23, value._23) || !IsEqual(_24, value._24)
-        || !IsEqual(_31, value._31) || !IsEqual(_32, value._32) || !IsEqual(_33, value._33) || !IsEqual(_34, value._34);
+    return !IsEqual(_11, value._11) || !IsEqual(_21, value._21) || !IsEqual(_31, value._31) || !IsEqual(_41, value._41)
+        || !IsEqual(_12, value._12) || !IsEqual(_22, value._22) || !IsEqual(_32, value._32) || !IsEqual(_42, value._42)
+        || !IsEqual(_13, value._13) || !IsEqual(_23, value._23) || !IsEqual(_33, value._33) || !IsEqual(_43, value._43);
 }
 
 //-----------------------------------------------------------------------------
 //      基底Xベクトルを取得します.
 //-----------------------------------------------------------------------------
-inline Vector3 Transform3x4::GetBasisX() const
-{ return Vector3(_11, _12, _13); }
+inline Vector3 Transform4x3::GetBasisX() const
+{ return Vector3(_11, _21, _31); }
 
 //-----------------------------------------------------------------------------
 //      基底Yベクトルを取得します.
 //-----------------------------------------------------------------------------
-inline Vector3 Transform3x4::GetBasisY() const
-{ return Vector3(_21, _22, _23); }
+inline Vector3 Transform4x3::GetBasisY() const
+{ return Vector3(_12, _22, _32); }
 
 //-----------------------------------------------------------------------------
 //      基底Zベクトルを取得します.
 //-----------------------------------------------------------------------------
-inline Vector3 Transform3x4::GetBasisZ() const
-{ return Vector3(_31, _32, _33); }
+inline Vector3 Transform4x3::GetBasisZ() const
+{ return Vector3(_13, _23, _33); }
 
 //-----------------------------------------------------------------------------
 //      スケール成分を求めます.
 //-----------------------------------------------------------------------------
-inline Vector3 Transform3x4::CalcScale() const
+inline Vector3 Transform4x3::CalcScale() const
 {
     auto x = GetBasisX().Length();
     auto y = GetBasisY().Length();
@@ -4016,71 +4032,72 @@ inline Vector3 Transform3x4::CalcScale() const
 //-----------------------------------------------------------------------------
 //      平行移動成分を取得します.
 //-----------------------------------------------------------------------------
-inline Vector3 Transform3x4::GetPosition() const
-{ return Vector3(_14, _24, _34); }
+inline Vector3 Transform4x3::GetPosition() const
+{ return Vector3(_41, _42, _43); }
 
 //-----------------------------------------------------------------------------
 //      Matrix から Transform3x4 へ変換します.
 //-----------------------------------------------------------------------------
-inline Transform3x4 Transform3x4::FromMatrix(const Matrix& value)
+inline Transform4x3 Transform4x3::FromMatrix(const Matrix& value)
 {
-    // 転置しながら格納.
-    return Transform3x4(
-        value.m[0][0], value.m[1][0], value.m[2][0], value.m[3][0],
-        value.m[0][1], value.m[1][1], value.m[2][1], value.m[3][1],
-        value.m[0][2], value.m[1][2], value.m[2][2], value.m[3][2]);
+    return Transform4x3(
+        value.m[0][0], value.m[0][1], value.m[0][2],
+        value.m[1][0], value.m[1][1], value.m[1][2],
+        value.m[2][0], value.m[2][1], value.m[2][2],
+        value.m[3][0], value.m[3][1], value.m[3][2]);
 }
 
 //-----------------------------------------------------------------------------
 //      Transform3x4 から Matrix へ変換します.
 //-----------------------------------------------------------------------------
-inline Matrix Transform3x4::ToMatrix(const Transform3x4& value)
+inline Matrix Transform4x3::ToMatrix(const Transform4x3& value)
 {
-    // 転置しながら格納.
     return Matrix(
-        value._11, value._21, value._31, 0.0f,
-        value._12, value._22, value._32, 0.0f,
-        value._13, value._23, value._33, 0.0f,
-        value._14, value._24, value._34, 1.0f );
+        value._11, value._12, value._13, 0.0f,
+        value._21, value._22, value._23, 0.0f,
+        value._31, value._32, value._33, 0.0f,
+        value._41, value._42, value._43, 1.0f );
 }
 
 //-----------------------------------------------------------------------------
 //      単位行列を生成します.
 //-----------------------------------------------------------------------------
-inline Transform3x4 Transform3x4::CreateIdentity()
+inline Transform4x3 Transform4x3::CreateIdentity()
 {
-    return Transform3x4(
-        1.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f);
+    return Transform4x3(
+        1.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 0.0f);
 }
 
 //-----------------------------------------------------------------------------
 //      行列同士を乗算します.
 //-----------------------------------------------------------------------------
-inline Transform3x4 Transform3x4::Multiply(const Transform3x4& lhs, const Transform3x4& rhs)
+inline Transform4x3 Transform4x3::Multiply(const Transform4x3& lhs, const Transform4x3& rhs)
 {
-    return Transform3x4(
+    return Transform4x3(
         (lhs._11 * rhs._11) + (lhs._12 * rhs._21) + (lhs._13 * rhs._31),
         (lhs._11 * rhs._12) + (lhs._12 * rhs._22) + (lhs._13 * rhs._32),
         (lhs._11 * rhs._13) + (lhs._12 * rhs._23) + (lhs._13 * rhs._33),
-        (lhs._11 * rhs._14) + (lhs._12 * rhs._24) + (lhs._13 * rhs._34) + lhs._14,
 
         (lhs._21 * rhs._11) + (lhs._22 * rhs._21) + (lhs._23 * rhs._31),
         (lhs._21 * rhs._12) + (lhs._22 * rhs._22) + (lhs._23 * rhs._32),
         (lhs._21 * rhs._13) + (lhs._22 * rhs._23) + (lhs._23 * rhs._33),
-        (lhs._21 * rhs._14) + (lhs._22 * rhs._24) + (lhs._23 * rhs._34) + lhs._24,
 
         (lhs._31 * rhs._11) + (lhs._32 * rhs._21) + (lhs._33 * rhs._31),
         (lhs._31 * rhs._12) + (lhs._32 * rhs._22) + (lhs._33 * rhs._32),
         (lhs._31 * rhs._13) + (lhs._32 * rhs._23) + (lhs._33 * rhs._33),
-        (lhs._31 * rhs._14) + (lhs._32 * rhs._24) + (lhs._33 * rhs._34) + lhs._34);
+
+        (lhs._41 * rhs._11) + (lhs._42 * rhs._21) + (lhs._43 * rhs._31) + rhs._41,
+        (lhs._41 * rhs._12) + (lhs._42 * rhs._22) + (lhs._43 * rhs._32) + rhs._42,
+        (lhs._41 * rhs._13) + (lhs._42 * rhs._23) + (lhs._43 * rhs._33) + rhs._43 );
 }
 
 //-----------------------------------------------------------------------------
 //      逆行列を求めます.
 //-----------------------------------------------------------------------------
-inline Transform3x4 Transform3x4::Invert(const Transform3x4& value)
+inline Transform4x3 Transform4x3::Invert(const Transform4x3& value)
 {
     // 3x3 の逆行列を求めて，平行移動成分を打ち消すように計算する.
     auto det = value._11 * value._22 * value._33
@@ -4093,115 +4110,121 @@ inline Transform3x4 Transform3x4::Invert(const Transform3x4& value)
     // ゼロ除算できないので、チェック.
     assert(!IsZero(det));
 
-    auto tx = value._14;
-    auto ty = value._24;
-    auto tz = value._34;
+    auto tx = value._41;
+    auto ty = value._42;
+    auto tz = value._43;
 
     auto invDet = 1.0f / det;
 
-    return Transform3x4(
+    return Transform4x3(
         (value._22 * value._33 - value._32 * value._23) * invDet,
         (value._32 * value._13 - value._12 * value._33) * invDet,
         (value._12 * value._23 - value._22 * value._13) * invDet,
-       -(value._11 * tx + value._12 * ty + value._13 * tz),
 
         (value._23 * value._31 - value._33 * value._21) * invDet,
         (value._33 * value._11 - value._13 * value._31) * invDet,
         (value._13 * value._21 - value._23 * value._11) * invDet,
-       -(value._21 * tx + value._22 * ty + value._23 * tz),
 
         (value._21 * value._32 - value._31 * value._22) * invDet,
         (value._31 * value._12 - value._11 * value._32) * invDet,
         (value._11 * value._22 - value._21 * value._12) * invDet,
+
+       -(value._11 * tx + value._12 * ty + value._13 * tz),
+       -(value._21 * tx + value._22 * ty + value._23 * tz),
        -(value._31 * tx + value._32 * ty + value._33 * tz));
 }
 
 //-----------------------------------------------------------------------------
 //      拡大縮小行列を生成します.
 //-----------------------------------------------------------------------------
-inline Transform3x4 Transform3x4::CreateScale(float scale)
+inline Transform4x3 Transform4x3::CreateScale(float scale)
 { return CreateScale(scale, scale, scale); }
 
 //-----------------------------------------------------------------------------
 //      拡大縮小行列を生成します.
 //-----------------------------------------------------------------------------
-inline Transform3x4 Transform3x4::CreateScale(float sx, float sy, float sz)
+inline Transform4x3 Transform4x3::CreateScale(float sx, float sy, float sz)
 {
-    return Transform3x4(
-        sx,     0.0f,   0.0f,   0.0f,
-        0.0f,   sy,     0.0f,   0.0f,
-        0.0f,   0.0f,   sz,     0.0f);
+    return Transform4x3(
+        sx,     0.0f,   0.0f,
+        0.0f,   sy,     0.0f,
+        0.0f,   0.0f,   sz,
+        0.0f,   0.0f,   0.0f);
 }
 
 //-----------------------------------------------------------------------------
 //      拡大縮小行列を生成します.
 //-----------------------------------------------------------------------------
-inline Transform3x4 Transform3x4::CreateScale(const Vector3& value)
+inline Transform4x3 Transform4x3::CreateScale(const Vector3& value)
 { return CreateScale(value.x, value.y, value.z); }
 
 //-----------------------------------------------------------------------------
 //      平行移動行列を生成します.
 //-----------------------------------------------------------------------------
-inline Transform3x4 Transform3x4::CreateTranslation(float tx, float ty, float tz)
+inline Transform4x3 Transform4x3::CreateTranslation(float tx, float ty, float tz)
 {
-    return Transform3x4(
-        0.0f, 0.0f, 0.0f, tx,
-        0.0f, 0.0f, 0.0f, ty,
-        0.0f, 0.0f, 0.0f, tz);
+    return Transform4x3(
+        0.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.0f,
+        tx,   ty,   tz);
 }
 
 //-----------------------------------------------------------------------------
 //      平行移動行列を生成します.
 //-----------------------------------------------------------------------------
-inline Transform3x4 Transform3x4::CreateTranslation(const Vector3& value)
+inline Transform4x3 Transform4x3::CreateTranslation(const Vector3& value)
 { return CreateTranslation(value.x, value.y, value.z); }
 
 //-----------------------------------------------------------------------------
 //      X軸周りの回転行列を生成します.
 //-----------------------------------------------------------------------------
-inline Transform3x4 Transform3x4::CreateRotationX(float radian)
+inline Transform4x3 Transform4x3::CreateRotationX(float radian)
 {
     auto cosRad = cosf(radian);
     auto sinRad = sinf(radian);
 
-    return Transform3x4(
-        1.0f, 0.0f,    0.0f,   0.0f,
-        0.0f, cosRad, -sinRad, 0.0f,
-        0.0f, sinRad,  cosRad, 0.0f);
+    return Transform4x3(
+        1.0f,   0.0f,   0.0f,
+        0.0f,   cosRad, sinRad,
+        0.0f,  -sinRad, cosRad,
+        0.0f,   0.0f,   0.0f);
 }
 
 //-----------------------------------------------------------------------------
 //      Y軸周りの回転行列を生成します.
 //-----------------------------------------------------------------------------
-inline Transform3x4 Transform3x4::CreateRotationY(float radian)
+inline Transform4x3 Transform4x3::CreateRotationY(float radian)
 {
     auto cosRad = cosf(radian);
     auto sinRad = sinf(radian);
 
-    return Transform3x4(
-        cosRad, 0.0f, sinRad, 0.0f,
-        0.0f,   1.0f, 0.0f,   0.0f,
-       -sinRad, 0.0f, cosRad, 0.0f);
+    return Transform4x3(
+        cosRad, 0.0f,  -sinRad,
+        0.0f,   1.0f,   0.0f,
+        sinRad, 0.0f,   cosRad,
+        0.0f,   0.0f,   0.0f);
 }
 
 //-----------------------------------------------------------------------------
 //      Z軸周りの回転行列を生成します.
 //-----------------------------------------------------------------------------
-inline Transform3x4 Transform3x4::CreateRotationZ(float radian)
+inline Transform4x3 Transform4x3::CreateRotationZ(float radian)
 {
     auto cosRad = cosf(radian);
     auto sinRad = sinf(radian);
 
-    return Transform3x4(
-        cosRad, -sinRad, 0.0f, 0.0f,
-        sinRad,  cosRad, 0.0f, 0.0f,
-        0.0f,    0.0f,   1.0f, 0.0f);
+    return Transform4x3(
+        cosRad, sinRad, 0.0f,
+       -sinRad, cosRad, 0.0f,
+        0.0f,   0.0f,   1.0f,
+        0.0f,   0.0f,   0.0f);
 }
 
 //-----------------------------------------------------------------------------
 //      四元数から回転行列を生成します.
 //-----------------------------------------------------------------------------
-inline Transform3x4 Transform3x4::CreateFromQuaternion(const Quaternion& value)
+inline Transform4x3 Transform4x3::CreateFromQuaternion(const Quaternion& value)
 {
     auto xx = value.x * value.x;
     auto yy = value.y * value.y;
@@ -4215,31 +4238,32 @@ inline Transform3x4 Transform3x4::CreateFromQuaternion(const Quaternion& value)
     auto yz = value.y * value.z;
     auto xw = value.x * value.w;
 
-    return Transform3x4(
+    return Transform4x3(
         1.0f - 2.0f * (yy + zz),
-        2.0f * (xy - zw),
-        2.0f * (xz + yw),
-        0.0f,
-
         2.0f * (xy + zw),
-        1.0f - 2.0f * (xx + zz),
-        2.0f * (yz - xw),
-        0.0f,
-
         2.0f * (xz - yw),
+
+        2.0f * (xy - zw),
+        1.0f - 2.0f * (xx + zz),
         2.0f * (yz + xw),
+
+        2.0f * (xz + yw),
+        2.0f * (yz - xw),
         1.0f - 2.0f * (xx + yy),
+
+        0.0f,
+        0.0f,
         0.0f);
 }
 
 //-----------------------------------------------------------------------------
 //      指定された軸と角度から回転行列を生成します.
 //-----------------------------------------------------------------------------
-inline Transform3x4 Transform3x4::CreateFromAxisAngle(const Vector3& axis, float radian)
+inline Transform4x3 Transform4x3::CreateFromAxisAngle(const Vector3& axis, float radian)
 {
     auto sinRad = sinf(radian);
     auto cosRad = cosf(radian);
-    auto a = 1.0f -cosRad;
+    auto a = 1.0f - cosRad;
     
     auto ab = axis.x * axis.y * a;
     auto bc = axis.y * axis.z * a;
@@ -4248,27 +4272,28 @@ inline Transform3x4 Transform3x4::CreateFromAxisAngle(const Vector3& axis, float
     auto ty = axis.y * axis.y;
     auto tz = axis.z * axis.z;
 
-    return Transform3x4(
-        tx + cosRad + (1.0f - tx),
-        ab - axis.z * sinRad,
-        ca - axis.y * sinRad,
-        0.0f,
-
+    return Transform4x3(
+        tx + cosRad * (1.0f - tx),
         ab + axis.z * sinRad,
-        ty + cosRad * (1.0f - ty),
-        bc - axis.y * sinRad,
-        0.0f,
-
         ca - axis.y * sinRad,
+
+        ab - axis.z * sinRad,
+        ty + cosRad * (1.0f - ty),
         bc + axis.x * sinRad,
+
+        ca + axis.y * sinRad,
+        bc - axis.x * sinRad,
         tz + cosRad * (1.0f - tz),
+
+        0.0f,
+        0.0f,
         0.0f);
 }
 
 //-----------------------------------------------------------------------------
 //      ヨー・ピッチ・ロール角から回転行列を生成します.
 //-----------------------------------------------------------------------------
-inline Transform3x4 Transform3x4::CreateRotationFromYawPitchRoll(float yaw, float pitch, float roll)
+inline Transform4x3 Transform4x3::CreateRotationFromYawPitchRoll(float yaw, float pitch, float roll)
 {
     auto cp = cosf(pitch);
     auto sp = sinf(pitch);
@@ -4279,27 +4304,28 @@ inline Transform3x4 Transform3x4::CreateRotationFromYawPitchRoll(float yaw, floa
     auto cr = cosf(roll);
     auto sr = sinf(roll);
 
-    return Transform3x4(
+    return Transform4x3(
         cr * cy + sr * sp * sy,
-        cr * sp * sy - sr * cy,
-        cp * sy,
-        0.0f,
-
         sr * cp,
-        cr * cp,
-       -sp,
-        0.0f,
-
         sr * sp * cy - cr * sy,
+
+        cr * sp * sy - sr * cy,
+        cr * cp,
         sr * sy + cr * sp * cy,
+
+        cp * sy,
+       -sp,
         cp * cy,
+
+        0.0f,
+        0.0f,
         0.0f);
 }
 
 //-----------------------------------------------------------------------------
 //      ビュー行列を生成します.
 //-----------------------------------------------------------------------------
-inline Transform3x4 Transform3x4::CreateLookAt(const Vector3& position, const Vector3& target, const Vector3& upward)
+inline Transform4x3 Transform4x3::CreateLookAt(const Vector3& position, const Vector3& target, const Vector3& upward)
 {
     auto zaxis = position - target;
     zaxis.Normalize();
@@ -4310,16 +4336,19 @@ inline Transform3x4 Transform3x4::CreateLookAt(const Vector3& position, const Ve
     auto yaxis = Vector3::Cross(zaxis, xaxis);
     yaxis.Normalize();
 
-    return Transform3x4(
-        xaxis.x, xaxis.y, xaxis.z, -Vector3::Dot(xaxis, position),
-        yaxis.x, yaxis.y, yaxis.z, -Vector3::Dot(yaxis, position),
-        zaxis.x, zaxis.y, zaxis.z, -Vector3::Dot(zaxis, position));
+    return Transform4x3(
+        xaxis.x, yaxis.x, zaxis.x,
+        xaxis.y, yaxis.y, zaxis.y,
+        xaxis.z, yaxis.z, zaxis.z,
+        -Vector3::Dot(xaxis, position),
+        -Vector3::Dot(yaxis, position),
+        -Vector3::Dot(zaxis, position));
 }
 
 //-----------------------------------------------------------------------------
 //      ビュー行列を生成します.
 //-----------------------------------------------------------------------------
-inline Transform3x4 Transform3x4::CreateLookTo(const Vector3& position, const Vector3& viewDir, const Vector3& upward)
+inline Transform4x3 Transform4x3::CreateLookTo(const Vector3& position, const Vector3& viewDir, const Vector3& upward)
 {
     auto zaxis = -viewDir;
     zaxis.Normalize();
@@ -4330,23 +4359,49 @@ inline Transform3x4 Transform3x4::CreateLookTo(const Vector3& position, const Ve
     auto yaxis = Vector3::Cross(zaxis, xaxis);
     yaxis.Normalize();
 
-    return Transform3x4(
-        xaxis.x, xaxis.y, xaxis.z, -Vector3::Dot(xaxis, position),
-        yaxis.x, yaxis.y, yaxis.z, -Vector3::Dot(yaxis, position),
-        zaxis.x, zaxis.y, zaxis.z, -Vector3::Dot(zaxis, position));
+    return Transform4x3(
+        xaxis.x, yaxis.x, zaxis.x,
+        xaxis.y, yaxis.y, zaxis.y,
+        xaxis.z, yaxis.z, zaxis.z,
+        -Vector3::Dot(xaxis, position),
+        -Vector3::Dot(yaxis, position),
+        -Vector3::Dot(zaxis, position));
 }
 
 //-----------------------------------------------------------------------------
 //      平行移動成分を右から掛けます.
 //-----------------------------------------------------------------------------
-inline Transform3x4 Transform3x4::AppendTranslation(Transform3x4& lhs, const Vector3& rhs)
+inline Transform4x3 Transform4x3::AppendTranslation(Transform4x3& lhs, const Vector3& rhs)
 {
-    lhs._14 += rhs.x;
-    lhs._24 += rhs.y;
-    lhs._34 += rhs.z;
+    lhs._41 += rhs.x;
+    lhs._42 += rhs.y;
+    lhs._43 += rhs.z;
     return lhs;
 }
 
+//-----------------------------------------------------------------------------
+//      スケール行列を右から掛けます.
+//-----------------------------------------------------------------------------
+inline Transform4x3 Transform4x3::AppendScale(Transform4x3& mat, const Vector3& vec)
+{
+    mat._11 *= vec.x;
+    mat._12 *= vec.y;
+    mat._13 *= vec.z;
+
+    mat._21 *= vec.x;
+    mat._22 *= vec.y;
+    mat._23 *= vec.z;
+
+    mat._31 *= vec.x;
+    mat._32 *= vec.y;
+    mat._33 *= vec.z;
+
+    mat._41 *= vec.x;
+    mat._42 *= vec.y;
+    mat._43 *= vec.z;
+
+    return mat;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // BoundingBox2 structure

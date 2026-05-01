@@ -418,14 +418,14 @@ int32_t BoneProxy::GetParentId(const res::Bone& bone)
 //-----------------------------------------------------------------------------
 //      バインドポーズ行列を取得します.
 //-----------------------------------------------------------------------------
-Transform3x4 BoneProxy::GetBindPoseMatrix(const res::Bone& bone)
-{ return *reinterpret_cast<const Transform3x4*>(bone.BindPose()); }
+Transform4x3 BoneProxy::GetBindPoseMatrix(const res::Bone& bone)
+{ return *reinterpret_cast<const Transform4x3*>(bone.BindPose()); }
 
 //-----------------------------------------------------------------------------
 //      バインドポーズ逆行列を取得します.
 //-----------------------------------------------------------------------------
-Transform3x4 BoneProxy::GetInverseBindPoseMatrix(const res::Bone& bone)
-{ return *reinterpret_cast<const Transform3x4*>(bone.InverseBindPose()); }
+Transform4x3 BoneProxy::GetInverseBindPoseMatrix(const res::Bone& bone)
+{ return *reinterpret_cast<const Transform4x3*>(bone.InverseBindPose()); }
 
 //-----------------------------------------------------------------------------
 //      子ボーンID配列を取得します.
@@ -554,10 +554,10 @@ StringView ModelBatchProxy::GetName(const res::ModelBatch& batch, uint32_t index
 //-----------------------------------------------------------------------------
 //      変換行列を取得します.
 //-----------------------------------------------------------------------------
-ArrayView<Transform3x4> ModelBatchProxy::GetTransforms(const res::ModelBatch& batch)
+ArrayView<Transform4x3> ModelBatchProxy::GetTransforms(const res::ModelBatch& batch)
 {
-    return asdx::ArrayView<Transform3x4>(
-        reinterpret_cast<const Transform3x4*>(batch.Transforms()->data()),
+    return asdx::ArrayView<Transform4x3>(
+        reinterpret_cast<const Transform4x3*>(batch.Transforms()->data()),
         batch.Transforms()->size());
 }
 

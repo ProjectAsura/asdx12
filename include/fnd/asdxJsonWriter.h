@@ -211,9 +211,9 @@ public:
     void Write(const char* tag, const Matrix& value);
 
     //-------------------------------------------------------------------------
-    //! @brief      Transform3x4型を書き込みます.
+    //! @brief      Transform4x3型を書き込みます.
     //-------------------------------------------------------------------------
-    void Write(const char* tag, const Transform3x4& value);
+    void Write(const char* tag, const Transform4x3& value);
 
     //-------------------------------------------------------------------------
     //! @brief      bool型配列を書き込みます.
@@ -296,9 +296,9 @@ public:
     void Write(const char* tag, std::span<Matrix> values);
 
     //-------------------------------------------------------------------------
-    //! @brief      Transform3x4型配列を書き込みます.
+    //! @brief      Transform4x3型配列を書き込みます.
     //-------------------------------------------------------------------------
-    void Write(const char* tag, std::span<Transform3x4> values);
+    void Write(const char* tag, std::span<Transform4x3> values);
 
     //-------------------------------------------------------------------------
     //! @brief      文字列型配列を書き込みます.

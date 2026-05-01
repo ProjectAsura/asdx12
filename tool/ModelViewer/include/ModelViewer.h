@@ -245,17 +245,17 @@ private:
     //-------------------------------------------------------------------------
     //! @brief      ギズモを描画します.
     //-------------------------------------------------------------------------
-    void DrawGizmo(asdx::Transform3x4& modelWorld);
+    void DrawGizmo(asdx::Transform4x3& modelWorld);
 
     //-------------------------------------------------------------------------
     //! @brief      バウンディングスフィアを描画します.
     //-------------------------------------------------------------------------
-    void DrawBoundingSphere(const asdx::Transform3x4& modelWorld);
+    void DrawBoundingSphere(const asdx::Transform4x3& modelWorld);
 
     //-------------------------------------------------------------------------
     //! @brief      ボーンを描画します.
     //-------------------------------------------------------------------------
-    void DrawBones(const asdx::Transform3x4& modelWorld);
+    void DrawBones(const asdx::Transform4x3& modelWorld);
 
     //-------------------------------------------------------------------------
     //! @brief      グリッドを描画します.

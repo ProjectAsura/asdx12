@@ -29,7 +29,7 @@ struct Vector3;
 struct Vector4;
 struct Matrix;
 struct Quaternion;
-struct Transform3x4;
+struct Transform4x3;
 
 //-----------------------------------------------------------------------------
 // Type defines.
@@ -2849,11 +2849,15 @@ public:
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-// Transform3x4 structure 
-// 変換行列クラス (column-majaor matrix:列優先行列)
+// Transform4x3 structure 
 ///////////////////////////////////////////////////////////////////////////////
-struct Transform3x4
+struct Transform4x3
 {
+    // MEMO : メモリレイアウトは列優先となっていますが,
+    //        計算は Matrix クラスと同様にするために，行優先として計算します.
+    //        メモリレイアウトがこのような仕様になっているのは，
+    //        DirectX API が FLOAT[3][4] を使用するためです.
+
     //=========================================================================
     // list of friend classes and methods.
     //=========================================================================
@@ -2867,9 +2871,9 @@ public:
     {
         struct
         {
-            float _11, _12, _13, _14;
-            float _21, _22, _23, _24;
-            float _31, _32, _33, _34;
+            float _11, _21, _31, _41;
+            float _12, _22, _32, _42;
+            float _13, _23, _33, _43;
         };
         float m[3][4];
         Vector4 col[3];
@@ -2882,15 +2886,16 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      コンストラクタです.
     //--------------------------------------------------------------------------
-    Transform3x4();
+    Transform4x3();
 
     //-------------------------------------------------------------------------
     //! @brief      引数付きコンストラクタです.
     //--------------------------------------------------------------------------
-    Transform3x4(
-        float m11, float m12, float m13, float m14,
-        float m21, float m22, float m23, float m24,
-        float m31, float m32, float m33, float m34);
+    Transform4x3(
+        float m11, float m12, float m13,
+        float m21, float m22, float m23,
+        float m31, float m32, float m33,
+        float m41, float m42, float m43);
 
     //-------------------------------------------------------------------------
     //! @brief      float*型への演算子です.
@@ -2912,21 +2917,21 @@ public:
     //! @param [in]     value       代入する値.
     //! @return     代入結果を返却します.
     //-------------------------------------------------------------------------
-    Transform3x4& operator = (const Transform3x4& value);
+    Transform4x3& operator = (const Transform4x3& value);
 
     //-------------------------------------------------------------------------
     //! @brief      正符号演算子です.
     //!
     //! @return     自分自身を値を返却します.
     //-------------------------------------------------------------------------
-    Transform3x4 operator + () const;
+    Transform4x3 operator + () const;
 
     //-------------------------------------------------------------------------
     //! @brief      負符号演算子です.
     //
     //! @return     各成分にマイナスを付けた値を返却します.
     //-------------------------------------------------------------------------
-    Transform3x4 operator - () const;
+    Transform4x3 operator - () const;
 
     //-------------------------------------------------------------------------
     //! @brief      乗算代入演算子です.
@@ -2934,7 +2939,7 @@ public:
     //! @param [in]     value       乗算する行列.
     //! @return     乗算結果を返却します.
     //-------------------------------------------------------------------------
-    Transform3x4& operator *= (const Transform3x4& value);
+    Transform4x3& operator *= (const Transform4x3& value);
 
     //-------------------------------------------------------------------------
     //! @brief      乗算演算子です.
@@ -2942,7 +2947,7 @@ public:
     //! @param [in]     value       乗算する値.
     //! @return     乗算結果を返却します.
     //-------------------------------------------------------------------------
-    Transform3x4 operator * (const Transform3x4& value) const;
+    Transform4x3 operator * (const Transform4x3& value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      等価比較演算子です.
@@ -2951,7 +2956,7 @@ public:
     //! @retval true    値が等価です.
     //! @retval false   値が非等価です.
     //-------------------------------------------------------------------------
-    bool operator == (const Transform3x4& value) const;
+    bool operator == (const Transform4x3& value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      非等価比較演算子です.
@@ -2960,7 +2965,7 @@ public:
     //! @retval true    値が非等価です.
     //! @retval false   値が等価です.
     //-------------------------------------------------------------------------
-    bool operator != (const Transform3x4& value) const;
+    bool operator != (const Transform4x3& value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      基底Xベクトルを取得します.
@@ -3003,7 +3008,7 @@ public:
     //! @param[in]      value       変換元のMatrix型の値.
     //! @return     変換結果を返却します.
     //--------------------------------------------------------------------------
-    static Transform3x4 FromMatrix(const Matrix& value);
+    static Transform4x3 FromMatrix(const Matrix& value);
 
     //-------------------------------------------------------------------------
     //! @brief      Transform3x4型からMatrix型へ変換します.
@@ -3011,14 +3016,14 @@ public:
     //! @param[in]      value       変換元のTransform3x4型の値.
     //! @return     変換結果を返却します.
     //-------------------------------------------------------------------------
-    static Matrix ToMatrix(const Transform3x4& value);
+    static Matrix ToMatrix(const Transform4x3& value);
 
     //-------------------------------------------------------------------------
     //! @brief      単位行列を生成します.
     //!
     //! @return     単位行列を返却します.
     //-------------------------------------------------------------------------
-    static Transform3x4 CreateIdentity();
+    static Transform4x3 CreateIdentity();
 
     //-------------------------------------------------------------------------
     //! @brief      行列同士を乗算します.
@@ -3027,14 +3032,14 @@ public:
     //! @param [in]     rhs           入力行列.
     //! @return     乗算結果を返却します.
     //-------------------------------------------------------------------------
-    static Transform3x4 Multiply(const Transform3x4& lhs, const Transform3x4& rhs);
+    static Transform4x3 Multiply(const Transform4x3& lhs, const Transform4x3& rhs);
 
     //-------------------------------------------------------------------------
     //! @brief      逆行列を求めます.
     //!
     //! @param [in]     value       逆行列を求める値.
     //-------------------------------------------------------------------------
-    static Transform3x4 Invert(const Transform3x4& value);
+    static Transform4x3 Invert(const Transform4x3& value);
 
     //-------------------------------------------------------------------------
     //! @brief      拡大縮小行列を生成します.
@@ -3042,7 +3047,7 @@ public:
     //! @param [in]     scale      拡大縮小値.
     //! @return     拡大縮小行列を返却します.
     //-------------------------------------------------------------------------
-    static Transform3x4 CreateScale(float scale);
+    static Transform4x3 CreateScale(float scale);
 
     //-------------------------------------------------------------------------
     //! @brief      拡大縮小行列を生成します.
@@ -3052,7 +3057,7 @@ public:
     //! @param [in]     sz          Z成分の拡大縮小値.
     //! @return     拡大縮小行列を返却します.
     //-------------------------------------------------------------------------
-    static Transform3x4 CreateScale(float sx, float sy, float sz);
+    static Transform4x3 CreateScale(float sx, float sy, float sz);
 
     //-------------------------------------------------------------------------
     //! @brief      拡大縮小行列を生成します.
@@ -3060,7 +3065,7 @@ public:
     //! @param [in]     value       拡大縮小値.
     //! @return     拡大縮小行列を返却します.
     //-------------------------------------------------------------------------
-    static Transform3x4 CreateScale(const Vector3& value);
+    static Transform4x3 CreateScale(const Vector3& value);
 
     //-------------------------------------------------------------------------
     //! @brief      平行移動行列を生成します.
@@ -3070,7 +3075,7 @@ public:
     //! @param [in]     tz          Z成分の平行移動値.
     //! @return     平行移動行列を返却します.
     //-------------------------------------------------------------------------
-    static Transform3x4 CreateTranslation(float tx, float ty, float tz);
+    static Transform4x3 CreateTranslation(float tx, float ty, float tz);
 
     //-------------------------------------------------------------------------
     //! @brief      平行移動行列を生成します.
@@ -3078,7 +3083,7 @@ public:
     //! @param [in]     translate   平行移動値.
     //! @return     平行移動行列を返却します.
     //-------------------------------------------------------------------------
-    static Transform3x4 CreateTranslation(const Vector3& value);
+    static Transform4x3 CreateTranslation(const Vector3& value);
 
     //-------------------------------------------------------------------------
     //! @brief      X軸回りの回転行列を生成します.
@@ -3086,7 +3091,7 @@ public:
     //! @param [in]     radian         角度(ラジアン).
     //! @return     X軸回りの回転行列を返却します.
     //-------------------------------------------------------------------------
-    static Transform3x4 CreateRotationX(float radian);
+    static Transform4x3 CreateRotationX(float radian);
 
     //-------------------------------------------------------------------------
     //! @brief      Y軸回りの回転行列を生成します.
@@ -3094,7 +3099,7 @@ public:
     //! @param [in]     radian         角度(ラジアン).
     //! @return     Y軸回りの回転行列を返却します.
     //-------------------------------------------------------------------------
-    static Transform3x4 CreateRotationY(float radian);
+    static Transform4x3 CreateRotationY(float radian);
 
     //-------------------------------------------------------------------------
     //! @brief      Z軸回りの回転行列を生成します.
@@ -3102,7 +3107,7 @@ public:
     //! @param [in]     radian         角度(ラジアン).
     //! @return     Z軸回りの回転行列を返却します.
     //-------------------------------------------------------------------------
-    static Transform3x4 CreateRotationZ(float radian);
+    static Transform4x3 CreateRotationZ(float radian);
 
     //-------------------------------------------------------------------------
     //! @brief      四元数から行列を生成します.
@@ -3110,7 +3115,7 @@ public:
     //! @param [in]     value       四元数.
     //! @return     四元数から生成された行列を返却します.
     //-------------------------------------------------------------------------
-    static Transform3x4 CreateFromQuaternion(const Quaternion& value);
+    static Transform4x3 CreateFromQuaternion(const Quaternion& value);
 
     //-------------------------------------------------------------------------
     //! @brief      指定された軸と角度から回転行列を生成します.
@@ -3119,7 +3124,7 @@ public:
     //! @param [in]     radian      回転角(ラジアン).
     //! @return     回転行列を返却します.
     //-------------------------------------------------------------------------
-    static Transform3x4 CreateFromAxisAngle(const Vector3& axis, float radian);
+    static Transform4x3 CreateFromAxisAngle(const Vector3& axis, float radian);
 
     //-------------------------------------------------------------------------
     //! @brief      ヨー・ピッチ・ロール角から回転行列を生成します.
@@ -3129,7 +3134,7 @@ public:
     //! @param [in]     roll        ロール角(ラジアン).
     //! @return     回転行列を返却します.
     //-------------------------------------------------------------------------
-    static Transform3x4 CreateRotationFromYawPitchRoll(float yaw, float pitch, float roll);
+    static Transform4x3 CreateRotationFromYawPitchRoll(float yaw, float pitch, float roll);
 
     //-------------------------------------------------------------------------
     //! @brief      ビュー行列を生成します.
@@ -3139,7 +3144,7 @@ public:
     //! @param [in]     upward      上向きベクトル.
     //! @return     ビュー行列を返却します.
     //-------------------------------------------------------------------------
-    static Transform3x4 CreateLookAt(const Vector3& position, const Vector3& target, const Vector3& upward);
+    static Transform4x3 CreateLookAt(const Vector3& position, const Vector3& target, const Vector3& upward);
 
     //-------------------------------------------------------------------------
     //! @brief      ビュー行列を生成します.
@@ -3149,7 +3154,7 @@ public:
     //! @param [in]     upward      上向きベクトル.
     //! @return     ビュー行列を返却します.
     //-------------------------------------------------------------------------
-    static Transform3x4 CreateLookTo(const Vector3& position, const Vector3& viewDir, const Vector3& upward);
+    static Transform4x3 CreateLookTo(const Vector3& position, const Vector3& viewDir, const Vector3& upward);
 
     //-------------------------------------------------------------------------
     //! @brief      平行移動行列を右から掛けます.
@@ -3158,7 +3163,16 @@ public:
     //! @param[in]         rhs         平行移動量.
     //! @return     平行移動行列を右から掛けた結果を返却します.
     //-------------------------------------------------------------------------
-    static Transform3x4 AppendTranslation(Transform3x4& lhs, const Vector3& rhs);
+    static Transform4x3 AppendTranslation(Transform4x3& lhs, const Vector3& rhs);
+
+    //-------------------------------------------------------------------------
+    //! @brief      スケール行列を右から掛けます.
+    //!
+    //! @param[in]      lhs         行列.
+    //! @param[in]      rhs         スケール値.
+    //! @return     右からスケール行列を掛けた結果を返却します.
+    //-------------------------------------------------------------------------
+    static Transform4x3 AppendScale(Transform4x3& lhs, const Vector3& rhs);
 };
 
 

@@ -385,7 +385,7 @@ bool ModelViewer::OnInit()
     // EnvMapのロード.
     {
         asdx::fs::path path;
-        if (!asdx::SearchFilePath("../res/textures/treasure_island.env.dds", path))
+        if (!asdx::SearchFilePath("../res/textures/TrueHDRI_YamagataField_20200617_1841_L1000_Clipped_sRGB.env.dds", path))
         {
             ELOGA("Error : File Not Found.");
             return false;
@@ -398,7 +398,7 @@ bool ModelViewer::OnInit()
     // DiffuseLDテクスチャのロード.
     {
         asdx::fs::path path;
-        if (!asdx::SearchFilePath("../res/textures/treasure_island.d.dds", path))
+        if (!asdx::SearchFilePath("../res/textures/TrueHDRI_YamagataField_20200617_1841_L1000_Clipped_sRGB.d.dds", path))
         {
             ELOGA("Error : File Not Found.");
             return false;
@@ -411,7 +411,7 @@ bool ModelViewer::OnInit()
     // SpecularLDテクスチャのロード.
     {
         asdx::fs::path path;
-        if (!asdx::SearchFilePath("../res/textures/treasure_island.s.dds", path))
+        if (!asdx::SearchFilePath("../res/textures/TrueHDRI_YamagataField_20200617_1841_L1000_Clipped_sRGB.s.dds", path))
         {
             ELOGA("Error : File Not Found.");
             return false;
@@ -519,7 +519,7 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
     DrawModelInfo();
  
     // ギズモを描画.
-    auto modelWorld = asdx::Transform3x4::CreateIdentity();
+    auto modelWorld = asdx::Transform4x3::CreateIdentity();
     DrawGizmo(modelWorld);
 
     // コンテキストメニューを描画.
@@ -580,7 +580,7 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
             {
                 auto& mtx = m_MotionPlayer.GetMatrixPalettes();
                 auto  ptr = m_MatrixPalletBuffer[idx].Map();
-                memcpy(ptr, mtx.data(), sizeof(asdx::Transform3x4) * mtx.size());
+                memcpy(ptr, mtx.data(), sizeof(asdx::Transform4x3) * mtx.size());
                 m_MatrixPalletBuffer[idx].Unmap();
             }
         }
@@ -1090,7 +1090,7 @@ void ModelViewer::RecreateModel()
         {
             m_MatrixPalletBuffer[i].Term();
 
-            if (!m_MatrixPalletBuffer[i].Init(boneCount, sizeof(asdx::Transform3x4), D3D12_RESOURCE_STATE_COMMON, true))
+            if (!m_MatrixPalletBuffer[i].Init(boneCount, sizeof(asdx::Transform4x3), D3D12_RESOURCE_STATE_COMMON, true))
             {
                 ELOGA("Error : Matrix Pallet Buffer Init Failed. index = %u", i);
             }
@@ -1104,14 +1104,14 @@ void ModelViewer::RecreateModel()
     {
         m_WorldMatrixBuffer[i].Term();
 
-        if (!m_WorldMatrixBuffer[i].Init(instanceCount, sizeof(asdx::Transform3x4), D3D12_RESOURCE_STATE_COMMON, true))
+        if (!m_WorldMatrixBuffer[i].Init(instanceCount, sizeof(asdx::Transform4x3), D3D12_RESOURCE_STATE_COMMON, true))
         {
             ELOGA("Error : WorldMatrix Buffer Init Failed. index = %u", i);
         }
     }
 
-    auto ptr0 = m_WorldMatrixBuffer[0].MapAs<asdx::Transform3x4>();
-    auto ptr1 = m_WorldMatrixBuffer[1].MapAs<asdx::Transform3x4>();
+    auto ptr0 = m_WorldMatrixBuffer[0].MapAs<asdx::Transform4x3>();
+    auto ptr1 = m_WorldMatrixBuffer[1].MapAs<asdx::Transform4x3>();
 
     size_t offset = 0;
     for(auto i=0u; i<batchCount; ++i)
@@ -1120,9 +1120,9 @@ void ModelViewer::RecreateModel()
         auto mtx = asdx::ModelBatchProxy::GetTransforms(batch);
 
         if (ptr0 != nullptr)
-            memcpy(&ptr0[offset], mtx.data(), sizeof(asdx::Transform3x4) * mtx.size());
+            memcpy(&ptr0[offset], mtx.data(), sizeof(asdx::Transform4x3) * mtx.size());
         if (ptr1 != nullptr)
-            memcpy(&ptr1[offset], mtx.data(), sizeof(asdx::Transform3x4) * mtx.size());
+            memcpy(&ptr1[offset], mtx.data(), sizeof(asdx::Transform4x3) * mtx.size());
 
         offset += mtx.size();
     }

@@ -8,22 +8,22 @@
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// Transform3x4 structure
+// Transform4x3 structure
 ///////////////////////////////////////////////////////////////////////////////
-struct Transform3x4
+struct Transform4x3
 {
-    float4 Col[3];  // 列優先行列.
+    float4 Col[3];  // メモリレイアウトは列優先です.
 };
 
 //-----------------------------------------------------------------------------
 //      指定行列で変換します.
 //-----------------------------------------------------------------------------
-float4 Transform(Transform3x4 m, float4 v)
+float4 Transform(Transform4x3 m, float4 v)
 {
     return float4(
-        dot(v, m.Col[0]),
-        dot(v, m.Col[1]),
-        dot(v, m.Col[2]),
+        dot(m.Col[0], v),
+        dot(m.Col[1], v),
+        dot(m.Col[2], v),
         1.0f);
 }
 
@@ -39,7 +39,7 @@ float4 Transform(float4x4 m, float4 v)
 //-----------------------------------------------------------------------------
 //      平行移動成分を除いた指定行列で変換します.
 //-----------------------------------------------------------------------------
-float3 TransformNormal(Transform3x4 m, float3 v)
+float3 TransformNormal(Transform4x3 m, float3 v)
 {
     return float3(
         dot(v, m.Col[0].xyz),
@@ -50,7 +50,7 @@ float3 TransformNormal(Transform3x4 m, float3 v)
 //-----------------------------------------------------------------------------
 //      平行移動成分を除いた指定行列で変換します.
 //-----------------------------------------------------------------------------
-float3 TransformNormal(Transform3x4 m, float4 v)
+float3 TransformNormal(Transform4x3 m, float4 v)
 {
     return float3(
         dot(v.xyz, m.Col[0].xyz),
@@ -80,7 +80,7 @@ float4 TransformCoord(float4x4 m, float4 v)
 //-----------------------------------------------------------------------------
 //      float4x4 に変換します.
 //-----------------------------------------------------------------------------
-float4x4 ToFloat4x4(Transform3x4 m)
+float4x4 ToFloat4x4(Transform4x3 m)
 {
     return float4x4(
         m.Col[0].x, m.Col[1].x, m.Col[2].x, 0.0f,
@@ -92,10 +92,10 @@ float4x4 ToFloat4x4(Transform3x4 m)
 //-----------------------------------------------------------------------------
 //      Transform3x4 に変換します.
 //-----------------------------------------------------------------------------
-Transform3x4 ToTransform3x4(float4x4 m)
+Transform4x3 ToTransform3x4(float4x4 m)
 {
     // m は行優先行列とします.
-    Transform3x4 result;
+    Transform4x3 result;
     result.Col[0] = m._11_21_31_41;
     result.Col[1] = m._12_22_32_42;
     result.Col[2] = m._13_23_33_43;
@@ -105,25 +105,25 @@ Transform3x4 ToTransform3x4(float4x4 m)
 //-----------------------------------------------------------------------------
 //      X軸を取得します.
 //-----------------------------------------------------------------------------
-float3 GetAxisX(Transform3x4 value)
+float3 GetAxisX(Transform4x3 value)
 { return value.Col[0].xyz; }
 
 //-----------------------------------------------------------------------------
 //      Y軸を取得します.
 //-----------------------------------------------------------------------------
-float3 GetAxisY(Transform3x4 value)
+float3 GetAxisY(Transform4x3 value)
 { return value.Col[1].xyz; }
 
 //-----------------------------------------------------------------------------
 //      Z軸を取得します.
 //-----------------------------------------------------------------------------
-float3 GetAxisZ(Transform3x4 value)
+float3 GetAxisZ(Transform4x3 value)
 { return value.Col[2].xyz; }
 
 //-----------------------------------------------------------------------------
 //      位置を取得します.
 //-----------------------------------------------------------------------------
-float3 GetPosition(Transform3x4 value)
+float3 GetPosition(Transform4x3 value)
 { return float3(value.Col[0].w, value.Col[1].w, value.Col[2].w); }
 
 // float4x4 の GetAxisX(), GetAxisY(), GetAxisZ(), GetPosition() は
