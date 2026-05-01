@@ -25,9 +25,6 @@
 [submodule "external/D3D12MemoryAllocator"]
 	path = external/D3D12MemoryAllocator
 	url = https://github.com/GPUOpen-LibrariesAndSDKs/D3D12MemoryAllocator.git
-[submodule "external/OpenXLSX"]
-	path = external/OpenXLSX
-	url = https://github.com/troldal/OpenXLSX.git
 [submodule "external/xxHash"]
 	path = external/xxHash
 	url = https://github.com/Cyan4973/xxHash.git
@@ -40,6 +37,3 @@
 [submodule "external/ImRing"]
 	path = external/ImRing
 	url = https://github.com/ProjectAsura/ImRing
-[submodule "external/angelscript"]
-	path = external/angelscript
-	url = https://github.com/anjo76/angelscript
