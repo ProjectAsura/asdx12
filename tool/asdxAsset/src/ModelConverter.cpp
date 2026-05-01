@@ -1291,12 +1291,16 @@ bool ModelConverter::Convert
     std::vector<BoundingInfo> bounds;
     meshes.resize(pScene->mNumMeshes);
     bounds.resize(pScene->mNumMeshes);
+    BoundingInfo mergedInfo = {};
     for(auto i=0u; i<pScene->mNumMeshes; ++i)
     {
         const auto srcMesh = pScene->mMeshes[i];
         auto& dstMesh = meshes[i];
 
         ParseMesh(builder, boneMap, bounds[i], pScene->mRootNode, dstMesh, srcMesh);
+
+        mergedInfo.Box    = asdx::BoundingBox3::Merge(mergedInfo.Box, bounds[i].Box);
+        mergedInfo.Sphere = asdx::BoundingSphere3::Merge(mergedInfo.Sphere, bounds[i].Sphere);
     }
 
     // マテリアルデータを変換.
@@ -1304,7 +1308,6 @@ bool ModelConverter::Convert
     ParseMaterial(builder, pScene, inputDir, txbOutPath, txbConvert, materials);
 
     // モデルインスタンスを変換.
-    BoundingInfo mergedInfo = {};
     std::unordered_map<uint64_t, BatchInfo> batches;
     ParseModelInstance(builder, pScene->mRootNode, boneMap, bounds, batches, mergedInfo);
 

@@ -243,7 +243,7 @@ float4 main(const VSOutput input) : SV_TARGET0
             float3 Ks = ToKs(bc.rgb, orm.z);
  
             float3 lit = 0;
-            lit += EvaluateDirectLight(N, V, V, Kd, Ks, orm.y);            
+            lit += EvaluateDirectLight(N, V, V, Kd, Ks, orm.y);
             lit += EvaluateIBLDiffuse(N) * Kd * orm.x;
             lit += EvaluateIBLSpecular(NoV, N, R, Ks, orm.y) * orm.x;
             lit += EmissiveMap.Sample(LinearWrap, input.TexCoord).xyz * Emissive;
@@ -282,19 +282,19 @@ float4 main(const VSOutput input) : SV_TARGET0
     case MODE_COLOR:
         { output = input.Color; }
         break;
- 
+
     case MODE_COLOR_R_ONLY:
         { output.rgb = input.Color.rrr; }
         break;
- 
+
     case MODE_COLOR_G_ONLY:
         { output.rgb = input.Color.ggg; }
         break;
- 
+
     case MODE_COLOR_B_ONLY:
         { output.rgb = input.Color.bbb; }
         break;
- 
+
     case MODE_COLOR_A_ONLY:
         { output.rgb = input.Color.aaa; }
         break;
@@ -323,19 +323,19 @@ float4 main(const VSOutput input) : SV_TARGET0
     case MODE_ROUGHNESS:
         { output.rgb = OrmMap.Sample(LinearClamp, input.TexCoord).ggg * Roughness; }
         break;
- 
+
     case MODE_METALNESS:
         { output.rgb = OrmMap.Sample(LinearClamp, input.TexCoord).bbb * Metalness; }
         break;
- 
+
     case MODE_ALPHA:
         { output.rgb = BaseColorMap.Sample(LinearClamp, input.TexCoord).aaa * Alpha; }
         break;
- 
+
     case MODE_IOR:
         { output.rgb = max(Ior - 1.0f, 0.0f).xxx; }
         break;
- 
+
     case MODE_EMISSIVE:
         { output.rgb = EmissiveMap.Sample(LinearClamp, input.TexCoord).rgb * Emissive; }
         break;

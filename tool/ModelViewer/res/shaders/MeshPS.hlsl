@@ -30,7 +30,6 @@ struct VSOutput
 ///////////////////////////////////////////////////////////////////////////////
 cbuffer SceneParam : register(b0)
 {
-    float4x4    World;
     float4x4    View;
     float4x4    Proj;
     float3      CameraPos;
@@ -77,6 +76,7 @@ Texture2D BaseColorMap  : register(t10);
 Texture2D NormalMap     : register(t11);
 Texture2D OrmMap        : register(t12);
 Texture2D EmissiveMap   : register(t13);
+
 
 #define MODE_LIGHTING       (0)
 #define MODE_POSITION       (1)
@@ -208,7 +208,7 @@ float4 main(const VSOutput input) : SV_TARGET0
 {
     float3 gN = normalize(input.Normal);
     float3 gT = normalize(input.Tangent.xyz);
-    float3 gB = cross(gN, gT) * input.Tangent.w;
+    float3 gB = normalize(cross(gN, gT) * input.Tangent.w);
 
     float3 tN = normalize(NormalMap.Sample(LinearClamp, input.TexCoord).xyz * 2.0f - 1.0f);
 
@@ -216,7 +216,6 @@ float4 main(const VSOutput input) : SV_TARGET0
     float3 T = RecalcTangent(N, gN);
     float3 B = normalize(cross(N, T));
 
- 
     float4 output = 1.0f.xxxx;
 
     switch (Mode)
@@ -232,7 +231,7 @@ float4 main(const VSOutput input) : SV_TARGET0
             float4 bc  = BaseColorMap.Sample(LinearWrap, input.TexCoord);
             bc.rgb *= BaseColor;
             bc.a   *= Alpha;
-            
+
             float3 orm = OrmMap.Sample(LinearWrap, input.TexCoord).rgb;
             orm.x *= Occlusion;
             orm.y *= Roughness;
@@ -279,17 +278,17 @@ float4 main(const VSOutput input) : SV_TARGET0
         break;
 
     case MODE_COLOR:
-        { output.rgb = input.Color.rgb; }
+        { output = input.Color; }
         break;
- 
+
     case MODE_COLOR_R_ONLY:
         { output.rgb = input.Color.rrr; }
         break;
- 
+
     case MODE_COLOR_G_ONLY:
         { output.rgb = input.Color.ggg; }
         break;
- 
+
     case MODE_COLOR_B_ONLY:
         { output.rgb = input.Color.bbb; }
         break;
@@ -306,23 +305,23 @@ float4 main(const VSOutput input) : SV_TARGET0
     case MODE_BASE_COLOR:
         { output.rgb = BaseColorMap.Sample(LinearClamp, input.TexCoord).rgb * BaseColor; }
         break;
- 
+
     case MODE_OCCLUSION:
         { output.rgb = OrmMap.Sample(LinearClamp, input.TexCoord).rrr * Occlusion; }
         break;
- 
+
     case MODE_ROUGHNESS:
         { output.rgb = OrmMap.Sample(LinearClamp, input.TexCoord).ggg * Roughness; }
         break;
- 
+
     case MODE_METALNESS:
         { output.rgb = OrmMap.Sample(LinearClamp, input.TexCoord).bbb * Metalness; }
         break;
- 
+
     case MODE_ALPHA:
-        { output.rgb = BaseColorMap.Sample(LinearClamp, input.TexCoord).a * Alpha.xxx; }
+        { output.rgb = BaseColorMap.Sample(LinearClamp, input.TexCoord).aaa * Alpha; }
         break;
- 
+
     case MODE_IOR:
         { output.rgb = max(Ior - 1.0f, 0.0f).xxx; }
         break;
