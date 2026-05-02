@@ -529,7 +529,7 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
     DrawBoundingSphere(modelWorld);
 
     // ボーン描画.
-    DrawBones(modelWorld);
+    DrawBones(modelWorld * root);
 
     // プロパティウィンドウを描画.
     DrawPropertyWindow();
@@ -568,14 +568,14 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
         m_SceneCB[idx].Unmap();
     }
 
-    // 行列パレットバッファ更新
     if (!!m_Model)
     {
+        auto idx = GetCurrentBackBufferIndex();
+
         auto isSkeletal = (m_MotionBinary.GetClipCount() > 0) && (m_Model->GetBoneCount() > 0);
+        // 行列パレットバッファ更新
         if (isSkeletal)
         {
-            auto idx = GetCurrentBackBufferIndex();
-
             if (m_MatrixPalletBuffer[idx].GetResource() != nullptr)
             {
                 auto& mtx = m_MotionPlayer.GetMatrixPalettes();
@@ -583,6 +583,27 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
                 memcpy(ptr, mtx.data(), sizeof(asdx::Transform4x3) * mtx.size());
                 m_MatrixPalletBuffer[idx].Unmap();
             }
+        }
+
+        // ワールド行列バッファ更新.
+        {
+            auto worlds = m_WorldMatrixBuffer[idx].MapAs<asdx::Transform4x3>();
+
+            auto batchCount = m_Model->GetBatchCount();
+            size_t offset = 0;
+            for(auto i=0u; i<batchCount; ++i)
+            {
+                const auto& batch = m_Model->GetBatch(i);
+                auto transform     = asdx::ModelBatchProxy::GetTransforms(batch);
+                auto instanceCount = asdx::ModelBatchProxy::GetInstanceCount(batch);
+
+                for(auto j=0u; j<instanceCount; ++j)
+                    worlds[offset + j] = modelWorld * transform[j];
+
+                offset += instanceCount;
+            }
+
+            m_WorldMatrixBuffer[idx].Unmap();
         }
     }
 }
