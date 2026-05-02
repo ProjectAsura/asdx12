@@ -22,8 +22,39 @@
 
 namespace {
 
+//-----------------------------------------------------------------------------
+// Constants
+//-----------------------------------------------------------------------------
 static const uint32_t kMaxSpriteCount = 4096;
 static const uint32_t kMaxBatchCount  = 16;
+
+//-----------------------------------------------------------------------------
+// Shaders
+//-----------------------------------------------------------------------------
+#include "../res/shaders/Compiled/Sprite1dPS.inc"
+#include "../res/shaders/Compiled/Sprite1dArrayPS.inc"
+#include "../res/shaders/Compiled/Sprite2dPS.inc"
+#include "../res/shaders/Compiled/Sprite2dArrayPS.inc"
+#include "../res/shaders/Compiled/SpriteCubePS.inc"
+#include "../res/shaders/Compiled/SpriteCubeArrayPS.inc"
+#include "../res/shaders/Compiled/Sprite3dPS.inc"
+
+const char* kCubeFace[] = {
+    ASDX_U8("PositiveX (X+)"),
+    ASDX_U8("NegativeX (X-)"),
+    ASDX_U8("PositiveY (Y+)"),
+    ASDX_U8("NegativeY (Y-)"),
+    ASDX_U8("PositionZ (Z+)"),
+    ASDX_U8("NegativeZ (Z-)"),
+};
+
+const char* kNormalMapChannel[] = {
+    ASDX_U8("赤成分"),
+    ASDX_U8("緑成分"),
+    ASDX_U8("青成分"),
+    ASDX_U8("アルファ"),
+    ASDX_U8("輝度"),
+};
 
 } // namespace
 
@@ -116,6 +147,70 @@ bool TextureViewer::OnInit()
         }
     }
 
+    {
+        D3D12_SHADER_BYTECODE ps = { Sprite1dPS, sizeof(Sprite1dPS) };
+        if (!m_SpriteRenderer.CreatePipelineState(pDevice, ps, true, m_Pso1d.GetAddress()))
+        {
+            ELOG("Error : SpriteRenderer::CreatePipelineState() Failed.");
+            return false;
+        }
+    }
+
+    {
+        D3D12_SHADER_BYTECODE ps = { Sprite1dArrayPS, sizeof(Sprite1dArrayPS) };
+        if (!m_SpriteRenderer.CreatePipelineState(pDevice, ps, true, m_Pso1dArray.GetAddress()))
+        {
+            ELOG("Error : SpriteRenderer::CreatePipelineState() Failed.");
+            return false;
+        }
+    }
+
+    {
+        D3D12_SHADER_BYTECODE ps = { Sprite2dPS, sizeof(Sprite2dPS) };
+        if (!m_SpriteRenderer.CreatePipelineState(pDevice, ps, true, m_Pso2d.GetAddress()))
+        {
+            ELOG("Error : SpriteRenderer::CreatePipelineState() Failed.");
+            return false;
+        }
+    }
+
+    {
+        D3D12_SHADER_BYTECODE ps = { Sprite2dArrayPS, sizeof(Sprite2dArrayPS) };
+        if (!m_SpriteRenderer.CreatePipelineState(pDevice, ps, true, m_Pso2dArray.GetAddress()))
+        {
+            ELOG("Error : SpriteRenderer::CreatePipelineState() Failed.");
+            return false;
+        }
+    }
+
+    {
+        D3D12_SHADER_BYTECODE ps = { SpriteCubePS, sizeof(SpriteCubePS) };
+        if (!m_SpriteRenderer.CreatePipelineState(pDevice, ps, true, m_PsoCube.GetAddress()))
+        {
+            ELOG("Error : SpriteRenderer::CreatePipelineState() Failed.");
+            return false;
+        }
+    }
+
+    {
+        D3D12_SHADER_BYTECODE ps = { SpriteCubeArrayPS, sizeof(SpriteCubeArrayPS) };
+        if (!m_SpriteRenderer.CreatePipelineState(pDevice, ps, true, m_PsoCubeArray.GetAddress()))
+        {
+            ELOG("Error : SpriteRenderer::CreatePipelineState() Failed.");
+            return false;
+        }
+    }
+
+    {
+        D3D12_SHADER_BYTECODE ps = { Sprite3dPS, sizeof(Sprite3dPS) };
+        if (!m_SpriteRenderer.CreatePipelineState(pDevice, ps, true, m_Pso3d.GetAddress()))
+        {
+            ELOG("Error : SpriteRenderer::CreatePipelineState() Failed.");
+            return false;
+        }
+    }
+
+
     // コマンドの記録を終了.
     pCmd->Close();
 
@@ -144,8 +239,16 @@ bool TextureViewer::OnInit()
 //-----------------------------------------------------------------------------
 void TextureViewer::OnTerm()
 {
-    m_PointClamp.Term();
-    m_LinearClamp.Term();
+    m_Pso1d         .Reset();
+    m_Pso1dArray    .Reset();
+    m_Pso2d         .Reset();
+    m_Pso2dArray    .Reset();
+    m_PsoCube       .Reset();
+    m_PsoCubeArray  .Reset();
+    m_Pso3d         .Reset();
+
+    m_PointClamp    .Term();
+    m_LinearClamp   .Term();
     m_SpriteRenderer.Term();
     if (m_Texture)
     {
@@ -191,57 +294,57 @@ void TextureViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
         auto flags = ImGuiWindowFlags_NoMove
             | ImGuiWindowFlags_NoResize
             | ImGuiWindowFlags_NoTitleBar;
-        if (ImGui::Begin(asdx::ToChar(u8"Info"), nullptr, flags))
+        if (ImGui::Begin(ASDX_U8("Info"), nullptr, flags))
         {
-            ImGui::Text(asdx::ToChar(u8"FPS : %.2f"), GetFPS());
+            ImGui::Text(ASDX_U8("FPS : %.2f"), GetFPS());
             ImGui::Separator();
 
             const auto& meta = m_ScratchImage.GetMetadata();
 
-            ImGui::BeginTable(asdx::ToChar(u8"TextureStatus"), 2);
+            ImGui::BeginTable(ASDX_U8("TextureStatus"), 2);
             ImGui::TableSetupColumn("##row0", ImGuiTableColumnFlags_WidthFixed);
 
             ImGui::TableNextRow();
             ImGui::TableSetColumnIndex(0);
-            ImGui::Text(asdx::ToChar(u8"Dimension"));
+            ImGui::Text(ASDX_U8("Dimension"));
             ImGui::TableSetColumnIndex(1);
-            ImGui::Text(asdx::ToChar(u8"%s"), ToString(meta.dimension));
+            ImGui::Text(ASDX_U8("%s"), ToString(meta.dimension));
 
             ImGui::TableNextRow();
             ImGui::TableSetColumnIndex(0);
-            ImGui::Text(asdx::ToChar(u8"Width"));
+            ImGui::Text(ASDX_U8("Width"));
             ImGui::TableSetColumnIndex(1);
-            ImGui::Text(asdx::ToChar(u8"%zu"), meta.width);
+            ImGui::Text(ASDX_U8("%zu"), meta.width);
 
             ImGui::TableNextRow();
             ImGui::TableSetColumnIndex(0);
-            ImGui::Text(asdx::ToChar(u8"Height"));
+            ImGui::Text(ASDX_U8("Height"));
             ImGui::TableSetColumnIndex(1);
-            ImGui::Text(asdx::ToChar(u8"%zu"), meta.height);
+            ImGui::Text(ASDX_U8("%zu"), meta.height);
 
             ImGui::TableNextRow();
             ImGui::TableSetColumnIndex(0);
-            ImGui::Text(asdx::ToChar(u8"Depth"));
+            ImGui::Text(ASDX_U8("Depth"));
             ImGui::TableSetColumnIndex(1);
-            ImGui::Text(asdx::ToChar(u8"%zu"), meta.depth);
+            ImGui::Text(ASDX_U8("%zu"), meta.depth);
 
             ImGui::TableNextRow();
             ImGui::TableSetColumnIndex(0);
-            ImGui::Text(asdx::ToChar(u8"ArraySize"));
+            ImGui::Text(ASDX_U8("ArraySize"));
             ImGui::TableSetColumnIndex(1);
-            ImGui::Text(asdx::ToChar(u8"%zu"), meta.arraySize);
+            ImGui::Text(ASDX_U8("%zu"), meta.arraySize);
 
             ImGui::TableNextRow();
             ImGui::TableSetColumnIndex(0);
-            ImGui::Text(asdx::ToChar(u8"MipLevels"));
+            ImGui::Text(ASDX_U8("MipLevels"));
             ImGui::TableSetColumnIndex(1);
-            ImGui::Text(asdx::ToChar(u8"%zu"), meta.mipLevels);
+            ImGui::Text(ASDX_U8("%zu"), meta.mipLevels);
 
             ImGui::TableNextRow();
             ImGui::TableSetColumnIndex(0);
-            ImGui::Text(asdx::ToChar(u8"Format"));
+            ImGui::Text(ASDX_U8("Format"));
             ImGui::TableSetColumnIndex(1);
-            ImGui::Text(asdx::ToChar(u8"%s"), asdx::ToShortString(meta.format));
+            ImGui::Text(ASDX_U8("%s"), asdx::ToShortString(meta.format));
 
             ImGui::EndTable();
 
@@ -252,11 +355,11 @@ void TextureViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
     // コンテキストメニュー.
     {
         if (ImGui::IsMouseClicked(1))
-        { ImGui::OpenPopup(asdx::ToChar(u8"ContextMenu")); }
+        { ImGui::OpenPopup(ASDX_U8("ContextMenu")); }
 
-        if (ImGui::BeginPopup(asdx::ToChar(u8"ContextMenu")))
+        if (ImGui::BeginPopup(ASDX_U8("ContextMenu")))
         {
-            if (ImGui::BeginMenu(asdx::ToChar(u8"ファイル")))
+            if (ImGui::BeginMenu(ASDX_U8("ファイル")))
             {
                 MenuFile(pCmd);
                 ImGui::EndMenu();
@@ -264,13 +367,19 @@ void TextureViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
             // テクスチャが読み込まれているときのみ.
             if (m_ScratchImage.GetImageCount() > 0)
             {
-                if (ImGui::BeginMenu(asdx::ToChar(u8"フォーマット")))
+                if (ImGui::BeginMenu(ASDX_U8("フォーマット")))
                 {
                     MenuFormat(pCmd);
                     ImGui::EndMenu();
                 }
+
+                if (ImGui::BeginMenu(ASDX_U8("表示")))
+                {
+                    MenuView();
+                    ImGui::EndMenu();
+                }
             }
-            if (ImGui::BeginMenu(asdx::ToChar(u8"ヘルプ")))
+            if (ImGui::BeginMenu(ASDX_U8("ヘルプ")))
             {
                 MenuHelp();
                 ImGui::EndMenu();
@@ -283,31 +392,45 @@ void TextureViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
 
     if (m_OpenConvert)
     {
-        ImGui::OpenPopup(asdx::ToChar(u8"FormatConversion"));
+        ImGui::OpenPopup(ASDX_U8("FormatConversion"));
         m_OpenConvert = false;
     }
 
     if (m_OpenResize)
     { 
-        ImGui::OpenPopup(asdx::ToChar(u8"Resize"));
+        ImGui::OpenPopup(ASDX_U8("Resize"));
         m_OpenResize = false;
     }
 
-    auto doConvert = false;
-    auto doResize  = false;
-
-    if (ImGui::BeginPopupModal(asdx::ToChar(u8"FormatConversion")))
+    if (m_OpenNormalMap)
     {
-        ImGui::Text(asdx::ToChar(u8"変換前フォーマット : %s"), asdx::ToString(m_ScratchImage.GetMetadata().format));
-        ImGui::Combo(asdx::ToChar(u8"変換後フォーマット"), &m_FormatIndex, EnumrateFormat, nullptr, GetFormatCount());
+        ImGui::OpenPopup(ASDX_U8("NormalMap"));
+        m_OpenNormalMap = false;
+    }
+
+    if (m_OpenPremultipliedAlpha)
+    {
+        ImGui::OpenPopup(ASDX_U8("PremultipliedAlpha"));
+        m_OpenPremultipliedAlpha = false;
+    }
+
+    auto doConvert              = false;
+    auto doResize               = false;
+    auto doPremultipliedAlpha   = false;
+    auto doNormalMap            = false;
+
+    if (ImGui::BeginPopupModal(ASDX_U8("FormatConversion")))
+    {
+        ImGui::Text(ASDX_U8("変換前フォーマット : %s"), asdx::ToString(m_ScratchImage.GetMetadata().format));
+        ImGui::Combo(ASDX_U8("変換後フォーマット"), &m_FormatIndex, EnumrateFormat, nullptr, GetFormatCount());
 
         auto close = false;
-        if (ImGui::Button(asdx::ToChar(u8"キャンセル")))
+        if (ImGui::Button(ASDX_U8("キャンセル")))
         {
             close = true;
         }
         ImGui::SameLine();
-        if (ImGui::Button(asdx::ToChar(u8"OK")))
+        if (ImGui::Button(ASDX_U8("OK")))
         {
             doConvert = true;
             close = true;
@@ -319,29 +442,109 @@ void TextureViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
         ImGui::EndPopup();
     }
 
-    if (ImGui::BeginPopupModal(asdx::ToChar(u8"Resize")))
+    if (ImGui::BeginPopupModal(ASDX_U8("Resize")))
     {
         int w = int(m_ResizedWidth);
         int h = int(m_ResizedHeight);
 
-        if (ImGui::InputInt(asdx::ToChar(u8"横幅"), &w))
+        if (ImGui::InputInt(ASDX_U8("横幅"), &w))
         { m_ResizedWidth = size_t(w); }
 
-        if (ImGui::InputInt(asdx::ToChar(u8"高さ"), &h))
+        if (ImGui::InputInt(ASDX_U8("高さ"), &h))
         { m_ResizedHeight = size_t(h); }
 
         auto close = false;
-        if (ImGui::Button(asdx::ToChar(u8"キャンセル")))
+        if (ImGui::Button(ASDX_U8("キャンセル")))
         {
             close = true;
         }
         ImGui::SameLine();
-        if (ImGui::Button(asdx::ToChar(u8"OK")))
+        if (ImGui::Button(ASDX_U8("OK")))
         {
             doResize = true;
             close = true;
         }
 
+        if (close)
+        { ImGui::CloseCurrentPopup(); }
+
+        ImGui::EndPopup();
+    }
+
+    // 法線マップ変換設定ダイアログ.
+    if (ImGui::BeginPopupModal(ASDX_U8("NormalMap")))
+    {
+        int channel = m_NormalMapFlags & 0xF;
+        ImGui::Combo(ASDX_U8("チャンネル"), &channel, kNormalMapChannel, int(_countof(kNormalMapChannel)));
+
+        bool mirrorU = !!(m_NormalMapFlags & DirectX::CNMAP_MIRROR_U);
+        bool mirrorV = !!(m_NormalMapFlags & DirectX::CNMAP_MIRROR_V);
+        bool invertSign = !!(m_NormalMapFlags & DirectX::CNMAP_INVERT_SIGN);
+
+        int format = m_NormalMapFormat;
+        ImGui::Checkbox(ASDX_U8("ミラーU"), &mirrorU);
+        ImGui::Checkbox(ASDX_U8("ミラーV"), &mirrorV);
+        ImGui::Checkbox(ASDX_U8("符号を反転"), &invertSign);
+        ImGui::DragFloat(ASDX_U8("強さ"), &m_NormalMapAmplitude, 0.1f, 0.0f, 100.0f);
+        ImGui::Combo(ASDX_U8("フォーマット"), &format, EnumrateFormat, nullptr, GetFormatCount());
+        m_NormalMapFormat = DXGI_FORMAT(format);
+
+        uint32_t flags = 0;
+        flags = uint32_t(channel);
+        if (mirrorU)
+            flags |= DirectX::CNMAP_MIRROR_U;
+        if (mirrorV)
+            flags |= DirectX::CNMAP_MIRROR_V;
+        if (invertSign)
+            flags |= DirectX::CNMAP_INVERT_SIGN;
+
+        m_NormalMapFlags = flags;
+
+        auto close = false;
+        if (ImGui::Button(ASDX_U8("キャンセル")))
+        {
+            close = true;
+        }
+        ImGui::SameLine();
+        if (ImGui::Button(ASDX_U8("OK")))
+        {
+            close = true;
+            doNormalMap = true;
+        }
+        if (close)
+        { ImGui::CloseCurrentPopup(); }
+
+        ImGui::EndPopup();
+    }
+
+    // 事前乗算済みアルファ設定ダイアログ.
+    if (ImGui::BeginPopupModal(ASDX_U8("PremultipliedAlpha")))
+    {
+        auto ignoreSRGB = !!(m_PremultipliedAlphaFlags & DirectX::TEX_PMALPHA_IGNORE_SRGB);
+        auto reverse    = !!(m_PremultipliedAlphaFlags & DirectX::TEX_PMALPHA_REVERSE);
+      
+        ImGui::Checkbox(ASDX_U8("sRGB変換を無視"), &ignoreSRGB);
+        ImGui::Checkbox(ASDX_U8("逆変換"), &reverse);
+
+        uint32_t flags = 0;
+        if (ignoreSRGB)
+            flags |= DirectX::TEX_PMALPHA_IGNORE_SRGB;
+        if (reverse)
+            flags |= DirectX::TEX_PMALPHA_REVERSE;
+
+        m_PremultipliedAlphaFlags = flags;
+
+        auto close = false;
+        if (ImGui::Button(ASDX_U8("キャンセル")))
+        {
+            close = true;
+        }
+        ImGui::SameLine();
+        if (ImGui::Button(ASDX_U8("OK")))
+        {
+            close = true;
+            doPremultipliedAlpha = true;
+        }
         if (close)
         { ImGui::CloseCurrentPopup(); }
 
@@ -461,6 +664,54 @@ void TextureViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
             m_ScratchImage = std::move(scratchImage);
             RecreateTexture(pCmd);
         }
+        else
+        {
+            ELOGA("Error : DirectX::Resize() Failed. errcode = 0x%x", hr);
+        }
+    }
+
+    // 事前乗算済みアルファ処理.
+    if (doPremultipliedAlpha)
+    {
+        DirectX::ScratchImage scratchImage;
+        auto hr = DirectX::PremultiplyAlpha(
+            m_ScratchImage.GetImages(),
+            m_ScratchImage.GetImageCount(),
+            m_ScratchImage.GetMetadata(),
+            DirectX::TEX_PMALPHA_FLAGS(m_PremultipliedAlphaFlags),
+            scratchImage);
+        if (SUCCEEDED(hr))
+        {
+            m_ScratchImage = std::move(scratchImage);
+            RecreateTexture(pCmd);
+        }
+        else
+        {
+            ELOGA("Error : DirectX::PremultiplyAlpha() Failed. errcode = 0x%x", hr);
+        }
+    }
+
+    // 法線マップ計算処理.
+    if (doNormalMap)
+    {
+        DirectX::ScratchImage scratchImage;
+        auto hr = DirectX::ComputeNormalMap(
+            m_ScratchImage.GetImages(),
+            m_ScratchImage.GetImageCount(),
+            m_ScratchImage.GetMetadata(),
+            DirectX::CNMAP_FLAGS(m_NormalMapFlags),
+            m_NormalMapAmplitude,
+            m_NormalMapFormat,
+            scratchImage);
+        if (SUCCEEDED(hr))
+        {
+            m_ScratchImage = std::move(scratchImage);
+            RecreateTexture(pCmd);
+        }
+        else
+        {
+            ELOGA("Error : DirectX::ComputeNormalMap() Failed. errcode = 0x%x", hr);
+        }
     }
 }
 
@@ -503,7 +754,47 @@ void TextureViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
         auto h = (m_Height < meta.height) ? m_Height : meta.height;
 
         pCmd->SetGraphicsRootSignature(m_SpriteRenderer.GetRootSignature());
-        m_SpriteRenderer.SetTexture(m_Texture->GetHandleGPU(), m_PointClamp.GetHandleGPU());
+
+        ID3D12PipelineState* pPSO = nullptr;
+
+        if (meta.dimension == DirectX::TEX_DIMENSION_TEXTURE1D)
+        {
+            if (meta.arraySize > 1)
+            { pPSO = m_Pso1dArray.GetPtr(); }
+            else
+            { pPSO = m_Pso1d.GetPtr(); }
+        }
+        else if (meta.dimension == DirectX::TEX_DIMENSION_TEXTURE2D)
+        {
+            if (!!(meta.miscFlags & DirectX::TEX_MISC_TEXTURECUBE))
+            {
+                if (meta.arraySize > 1)
+                { pPSO = m_PsoCubeArray.GetPtr(); }
+                else 
+                { pPSO = m_PsoCube.GetPtr(); }
+            }
+            else if (meta.arraySize > 1)
+            { pPSO = m_Pso2dArray.GetPtr(); }
+            else
+            { pPSO = m_Pso2d.GetPtr(); }
+        }
+        else if (meta.dimension == DirectX::TEX_DIMENSION_TEXTURE3D)
+        { pPSO = m_Pso3d.GetPtr(); }
+        assert(pPSO != nullptr);
+
+        struct Param
+        {
+            float   MipLevel   = 0.0f;
+            float   ArrayIndex = 0.0f;
+            float   FaceIndex  = 0.0f;
+        };
+        Param param = {};
+        param.MipLevel   = float(m_MipLevel);
+        param.ArrayIndex = float(m_ArrayIndex);
+        param.FaceIndex  = float(m_FaceIndex);
+
+        m_SpriteRenderer.SetParam(3, &param, 0);
+        m_SpriteRenderer.ChangeBatch(pPSO, m_Texture->GetHandleGPU(), m_PointClamp.GetHandleGPU());
         m_SpriteRenderer.Add(0, 0, int(w), int(h));
     }
     m_SpriteRenderer.Draw(pCmd);
@@ -592,7 +883,7 @@ void TextureViewer::OnDrop(const wchar_t** dropFiles, uint32_t fileCount)
 //-----------------------------------------------------------------------------
 void TextureViewer::MenuFile(ID3D12GraphicsCommandList* pCmd)
 {
-    if (ImGui::MenuItem(asdx::ToChar(u8"ファイルを開く")))
+    if (ImGui::MenuItem(ASDX_U8("ファイルを開く")))
     {
         const char* filter = 
             "テクスチャファイル(*.txb, *.dds, *.tga, *.hdr, *.bmp, *.jpg, *.jpeg, *.png, *.tif, *.tiff, *.gif, *.hdp)\0*.txb;*.dds;*.tga;*.hdr;*.bmp;*.jpg;*.jpeg;*.png;*.tif;*.tiff;*.gif;*.hdp;*.jxr;*.wdp;*.heif;*.heic\0"
@@ -619,7 +910,7 @@ void TextureViewer::MenuFile(ID3D12GraphicsCommandList* pCmd)
             { RecreateTexture(pCmd); }
         }
     }
-    if (ImGui::MenuItem(asdx::ToChar(u8"名前を付けて保存")))
+    if (ImGui::MenuItem(ASDX_U8("名前を付けて保存")))
     {
         const char* filter = 
             "Project Asura Texture Binary(*.txb)\0*.txb\0"
@@ -642,7 +933,7 @@ void TextureViewer::MenuFile(ID3D12GraphicsCommandList* pCmd)
             SaveScratchImage(wpath.c_str());
         }
     }
-    if (ImGui::MenuItem(asdx::ToChar(u8"上書き保存")))
+    if (ImGui::MenuItem(ASDX_U8("上書き保存")))
     {
         auto wpath = asdx::ToStringW(m_OutputPath);
         SaveScratchImage(wpath.c_str());
@@ -656,27 +947,132 @@ void TextureViewer::MenuFormat(ID3D12GraphicsCommandList* pCmd)
 {
     assert(m_ScratchImage.GetImageCount() > 0);
 
-    if (ImGui::MenuItem(asdx::ToChar(u8"ミップマップ生成")))
-    {
-        DirectX::ScratchImage scratchImage;
+    const auto& meta = m_ScratchImage.GetMetadata();
 
-        auto hr = DirectX::GenerateMipMaps(
-            m_ScratchImage.GetImages(), m_ScratchImage.GetImageCount(), m_ScratchImage.GetMetadata(),
-            DirectX::TEX_FILTER_CUBIC, 0, scratchImage);
-        if (SUCCEEDED(hr))
+    if (meta.mipLevels <= 1)
+    {
+        if (ImGui::MenuItem(ASDX_U8("ミップマップ生成")))
         {
-            m_ScratchImage = std::move(scratchImage);
-            RecreateTexture(pCmd);
+            DirectX::ScratchImage scratchImage;
+
+            HRESULT hr = S_OK;
+            if (meta.dimension == DirectX::TEX_DIMENSION_TEXTURE3D)
+            {
+                hr = DirectX::GenerateMipMaps3D(
+                    m_ScratchImage.GetImages(), m_ScratchImage.GetImageCount(), meta,
+                    DirectX::TEX_FILTER_CUBIC, 0, scratchImage);
+
+            }
+            else
+            {
+                hr = DirectX::GenerateMipMaps(
+                    m_ScratchImage.GetImages(), m_ScratchImage.GetImageCount(), meta,
+                    DirectX::TEX_FILTER_CUBIC, 0, scratchImage);
+            }
+
+            if (SUCCEEDED(hr))
+            {
+                m_ScratchImage = std::move(scratchImage);
+                RecreateTexture(pCmd);
+            }
         }
     }
-    if (ImGui::MenuItem(asdx::ToChar(u8"フォーマット変換")))
+    if (ImGui::MenuItem(ASDX_U8("フォーマット変換")))
     {
         m_OpenConvert = true;
         m_FormatIndex = GetFormatIndex(m_ScratchImage.GetMetadata().format);
     }
-    if (ImGui::MenuItem(asdx::ToChar(u8"テクスチャをリサイズ")))
+    if (ImGui::MenuItem(ASDX_U8("テクスチャをリサイズ")))
     {
         m_OpenResize = true;
+    }
+    if (ImGui::MenuItem(ASDX_U8("事前乗算済みアルファ生成")))
+    {
+        m_OpenPremultipliedAlpha = true;
+    }
+    if (ImGui::MenuItem(ASDX_U8("法線マップ生成")))
+    {
+        m_OpenNormalMap = true;
+    }
+    if (ImGui::BeginMenu(ASDX_U8("回転/フリップ")))
+    {
+        auto flags = DirectX::TEX_FR_ROTATE0;
+
+        if (ImGui::MenuItem(ASDX_U8("90度回転")))
+            flags = DirectX::TEX_FR_ROTATE90;
+        else if (ImGui::MenuItem(ASDX_U8("180度回転")))
+            flags = DirectX::TEX_FR_ROTATE180;
+        else if (ImGui::MenuItem(ASDX_U8("270度回転")))
+            flags = DirectX::TEX_FR_ROTATE270;
+        if (ImGui::MenuItem(ASDX_U8("水平方向に反転")))
+            flags = DirectX::TEX_FR_FLIP_HORIZONTAL;
+        else if (ImGui::MenuItem(ASDX_U8("垂直方向に反転")))
+            flags = DirectX::TEX_FR_FLIP_VERTICAL;
+
+        if (flags != DirectX::TEX_FR_ROTATE0)
+        {
+            DirectX::ScratchImage scratchImage;
+
+            auto hr = DirectX::FlipRotate(
+                m_ScratchImage.GetImages(), m_ScratchImage.GetImageCount(), meta,
+                flags, scratchImage);
+            if (SUCCEEDED(hr))
+            {
+                m_ScratchImage = std::move(scratchImage);
+                RecreateTexture(pCmd);
+            }
+        }
+
+        ImGui::EndMenu();
+    }
+}
+
+//-----------------------------------------------------------------------------
+//      表示メニューの処理.
+//-----------------------------------------------------------------------------
+void TextureViewer::MenuView()
+{
+    assert(m_ScratchImage.GetImageCount() > 0);
+    const auto& meta = m_ScratchImage.GetMetadata();
+
+    if (meta.mipLevels > 1)
+    {
+        if (ImGui::BeginMenu(ASDX_U8("ミップレベル")))
+        {
+            ImGui::DragInt(ASDX_U8("表示ミップ番号"), &m_MipLevel, 1, 0, int(meta.mipLevels - 1));
+            ImGui::EndMenu();
+        }
+    }
+
+    if (meta.dimension == DirectX::TEX_DIMENSION_TEXTURE2D 
+      && !!(meta.miscFlags & DirectX::TEX_MISC_TEXTURECUBE))
+    {
+        if (ImGui::BeginMenu(ASDX_U8("キューブマップ")))
+        {
+            ImGui::Combo(ASDX_U8("表示面"), &m_FaceIndex, kCubeFace, int(_countof(kCubeFace)));
+            ImGui::EndMenu();
+        }
+
+        auto arraySize = meta.arraySize / 6;
+        if (arraySize > 1)
+        {
+            if (ImGui::BeginMenu(ASDX_U8("テクスチャ配列")))
+            {
+                ImGui::DragInt(ASDX_U8("表示配列番号"), &m_ArrayIndex, 1, 0, int(arraySize - 1));
+                ImGui::EndMenu();
+            }
+        }
+    }
+    else
+    {
+        if (meta.arraySize > 1)
+        {
+            if (ImGui::BeginMenu(ASDX_U8("テクスチャ配列")))
+            {
+                ImGui::DragInt(ASDX_U8("表示配列番号"), &m_ArrayIndex, 1, 0, int(meta.arraySize - 1));
+                ImGui::EndMenu();
+            }
+        }
     }
 }
 
@@ -685,14 +1081,14 @@ void TextureViewer::MenuFormat(ID3D12GraphicsCommandList* pCmd)
 //-----------------------------------------------------------------------------
 void TextureViewer::MenuHelp()
 {
-    if (ImGui::MenuItem(asdx::ToChar(u8"バージョン情報")))
+    if (ImGui::MenuItem(ASDX_U8("バージョン情報")))
     {
         asdx::InfoDlg("Version Info",
             "TextureViewer ver 0.1\n"
             "Build 0.1\n"
             "Copyright(c) Project Asura.");
     }
-    if (ImGui::MenuItem(asdx::ToChar(u8"ライセンス情報")))
+    if (ImGui::MenuItem(ASDX_U8("ライセンス情報")))
     {
         m_ShowLisence = true;
     }

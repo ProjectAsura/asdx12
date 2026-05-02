@@ -358,6 +358,7 @@ bool SpriteRenderer::Init
         param[2].ParameterType                          = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
         param[2].DescriptorTable.NumDescriptorRanges    = 1;
         param[2].DescriptorTable.pDescriptorRanges      = &range[1];
+        param[2].ShaderVisibility                       = D3D12_SHADER_VISIBILITY_PIXEL;
 
         // フォント用定数.
         param[3].ParameterType              = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;

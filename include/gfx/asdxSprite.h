@@ -31,11 +31,11 @@ public:
     //=========================================================================
     // public variables.
     //=========================================================================
-    static const uint32_t CBV0      = 0;
-    static const uint32_t SRV0      = 1;
-    static const uint32_t Sampler0  = 2;
-    static const uint32_t CBV1      = 3;
-    static const uint32_t SRV1      = 4;
+    static const uint32_t CBV0      = 0;    // Constants 16, VS
+    static const uint32_t SRV0      = 1;    // DescriptorTable, PS
+    static const uint32_t Sampler0  = 2;    // DescriptorTable, PS.
+    static const uint32_t CBV1      = 3;    // Constants 4, PS
+    static const uint32_t SRV1      = 4;    // DescriptorTable, PS.
 
     //=========================================================================
     // public methods.

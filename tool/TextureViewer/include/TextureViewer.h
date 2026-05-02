@@ -60,13 +60,31 @@ private:
     DirectX::ScratchImage   m_ScratchImage;
     std::string             m_InputPath;
     std::string             m_OutputPath;
-    size_t                  m_ResizedWidth  = 0;
-    size_t                  m_ResizedHeight = 0;
-    bool                    m_OpenConvert   = false;
-    bool                    m_OpenResize    = false;
-    int                     m_FormatIndex   = 0;
-    bool                    m_DirtyScratchImage = false;
-    bool                    m_ShowLisence       = false;
+    size_t                  m_ResizedWidth              = 0;
+    size_t                  m_ResizedHeight             = 0;
+    bool                    m_OpenConvert               = false;
+    bool                    m_OpenResize                = false;
+    bool                    m_OpenNormalMap             = false;
+    bool                    m_OpenPremultipliedAlpha    = false;
+    int                     m_FormatIndex               = 0;
+    bool                    m_DirtyScratchImage         = false;
+    bool                    m_ShowLisence               = false;
+    int                     m_MipLevel                  = 0;
+    int                     m_ArrayIndex                = 0;
+    int                     m_FaceIndex                 = 0;
+    float                   m_NormalMapAmplitude        = 1.0f;
+
+    uint32_t    m_PremultipliedAlphaFlags = 0;
+    uint32_t    m_NormalMapFlags          = 0;
+    DXGI_FORMAT m_NormalMapFormat         = DXGI_FORMAT_UNKNOWN;
+
+    asdx::RefPtr<ID3D12PipelineState> m_Pso1d;
+    asdx::RefPtr<ID3D12PipelineState> m_Pso1dArray;
+    asdx::RefPtr<ID3D12PipelineState> m_Pso2d;
+    asdx::RefPtr<ID3D12PipelineState> m_Pso2dArray;
+    asdx::RefPtr<ID3D12PipelineState> m_PsoCube;
+    asdx::RefPtr<ID3D12PipelineState> m_PsoCubeArray;
+    asdx::RefPtr<ID3D12PipelineState> m_Pso3d;
 
     //=========================================================================
     // private methods.
@@ -126,6 +144,11 @@ private:
     //! @brief      フォーマットメニューの処理です.
     //-------------------------------------------------------------------------
     void MenuFormat(ID3D12GraphicsCommandList* pCmd);
+
+    //-------------------------------------------------------------------------
+    //! @brief      表示メニューの処理です.
+    //-------------------------------------------------------------------------
+    void MenuView();
 
     //-------------------------------------------------------------------------
     //! @brief      ヘルプメニューの処理です.
