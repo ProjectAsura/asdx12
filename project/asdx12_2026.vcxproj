@@ -281,6 +281,9 @@
     <ClCompile Include="..\src\res\asdxResModel.cpp" />
     <ClCompile Include="..\src\res\asdxResMotion.cpp" />
     <ClCompile Include="..\src\res\asdxResTexture.cpp" />
+    <ClCompile Include="..\src\snd\asdxSoundData.cpp" />
+    <ClCompile Include="..\src\snd\asdxSoundEngine.cpp" />
+    <ClCompile Include="..\src\snd\asdxSoundResource.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\external\D3D12MemoryAllocator\include\D3D12MemAlloc.h" />
@@ -397,6 +400,8 @@
     <ClInclude Include="..\include\res\asdxResModel.h" />
     <ClInclude Include="..\include\res\asdxResMotion.h" />
     <ClInclude Include="..\include\res\asdxResTexture.h" />
+    <ClInclude Include="..\include\snd\asdxSoundEngine.h" />
+    <ClInclude Include="..\include\snd\asdxSoundResource.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\include\fnd\asdxMath.inl" />

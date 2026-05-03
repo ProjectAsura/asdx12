@@ -82,6 +82,12 @@
     <Filter Include="ソース ファイル\external\ImRing">
       <UniqueIdentifier>{c4846cfa-c31f-41dd-99c2-73cad051a9fd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ソース ファイル\snd">
+      <UniqueIdentifier>{e6befb71-0f4e-47e3-b109-0874f1226e9d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\snd">
+      <UniqueIdentifier>{ba1760f9-2c78-42e0-b65f-cc0a146b6a19}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\edit\asdxEditParam.cpp">
@@ -419,6 +425,15 @@
     </ClCompile>
     <ClCompile Include="..\external\meshoptimizer\opacitymap.cpp">
       <Filter>ソース ファイル\external\meshoptimizer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\snd\asdxSoundEngine.cpp">
+      <Filter>ソース ファイル\snd</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\snd\asdxSoundResource.cpp">
+      <Filter>ソース ファイル\snd</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\snd\asdxSoundData.cpp">
+      <Filter>ソース ファイル\snd</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -763,6 +778,12 @@
     </ClInclude>
     <ClInclude Include="..\include\fnd\asdxTriggerTime.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\snd\asdxSoundEngine.h">
+      <Filter>ヘッダー ファイル\snd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\snd\asdxSoundResource.h">
+      <Filter>ヘッダー ファイル\snd</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
