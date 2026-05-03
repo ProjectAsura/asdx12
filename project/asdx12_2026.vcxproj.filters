@@ -177,9 +177,6 @@
     <ClCompile Include="..\src\fw\asdxAppCamera.cpp">
       <Filter>ソース ファイル\fw</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\fw\asdxSound.cpp">
-      <Filter>ソース ファイル\fw</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\gfx\asdxAllocationHolder.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
@@ -558,9 +555,6 @@
       <Filter>ヘッダー ファイル\fw</Filter>
     </ClInclude>
     <ClInclude Include="..\include\fw\asdxAppCamera.h">
-      <Filter>ヘッダー ファイル\fw</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\fw\asdxSound.h">
       <Filter>ヘッダー ファイル\fw</Filter>
     </ClInclude>
     <ClInclude Include="..\include\gfx\asdxAllocationHolder.h">

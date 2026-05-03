@@ -239,7 +239,6 @@
     <ClCompile Include="..\src\fnd\asdxTokenizer.cpp" />
     <ClCompile Include="..\src\fw\asdxApp.cpp" />
     <ClCompile Include="..\src\fw\asdxAppCamera.cpp" />
-    <ClCompile Include="..\src\fw\asdxSound.cpp" />
     <ClCompile Include="..\src\gfx\asdxAllocationHolder.cpp" />
     <ClCompile Include="..\src\gfx\asdxBuffer.cpp" />
     <ClCompile Include="..\src\gfx\asdxCamera.cpp" />
@@ -355,7 +354,6 @@
     <ClInclude Include="..\include\fnd\asdxTriggerTime.h" />
     <ClInclude Include="..\include\fw\asdxApp.h" />
     <ClInclude Include="..\include\fw\asdxAppCamera.h" />
-    <ClInclude Include="..\include\fw\asdxSound.h" />
     <ClInclude Include="..\include\gfx\asdxAllocationHolder.h" />
     <ClInclude Include="..\include\gfx\asdxBuffer.h" />
     <ClInclude Include="..\include\gfx\asdxCamera.h" />
