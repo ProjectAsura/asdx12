@@ -17,8 +17,8 @@
 #include <gfx/asdxCommandQueue.h>
 
 #if ASDX_ENABLE_SOUND
-#include <fw/asdxSound.h>
-#endif
+#include <snd/asdxSoundResource.h>
+#endif//ASDX_ENABLE_SOUND
 
 
 ///////////////////////////////////////////////////////////////////////////////

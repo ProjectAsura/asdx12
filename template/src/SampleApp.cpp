@@ -16,6 +16,9 @@
 #include <gfx/asdxFont.h>
 #include <edit/asdxGuiMgr.h>
 
+#if ASDX_ENABLE_SOUND
+#include <snd/asdxSoundEngine.h>
+#endif//ASDX_ENABLE_SOUND
 
 namespace {
 
@@ -71,6 +74,71 @@ bool LoadFont(ID3D12GraphicsCommandList* pCmd, const char* path, asdx::Font& fon
     return true;
 }
 
+#if ASDX_ENABLE_SOUND
+//-----------------------------------------------------------------------------
+//      WAVファイルをロードします.
+//-----------------------------------------------------------------------------
+bool LoadWav(const char* path, asdx::SoundResource& resource, bool loop = false)
+{
+    asdx::fs::path input = path;
+    asdx::fs::path findPath;
+    if (!asdx::SearchFilePath(input, findPath))
+    {
+        ELOGA("Error : SearchFilePath() Failed. path = %s", path);
+        return false;
+    }
+
+    asdx::SoundData data;
+    if (!asdx::LoadFromWav(findPath.string().c_str(), data))
+    {
+        ELOGA("Error : File Load Failed. path = %s", findPath.string().c_str());
+        return false;
+    }
+
+    data.Loop = loop;
+
+    if (!resource.Init(data))
+    {
+        ELOGA("Error : SoundResource::Init() Failed.");
+        return false;
+    }
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      Ogg Vorbis をロードします.
+//-----------------------------------------------------------------------------
+bool LoadOgg(const char* path, asdx::SoundResource& resource, bool loop = false)
+{
+    asdx::fs::path input = path;
+    asdx::fs::path findPath;
+    if (!asdx::SearchFilePath(input, findPath))
+    {
+        ELOGA("Error : SearchFilePath() Failed. path = %s", path);
+        return false;
+    }
+
+    asdx::SoundData data;
+    if (!asdx::LoadFromWav(findPath.string().c_str(), data))
+    {
+        ELOGA("Error : File Load Failed. path = %s", findPath.string().c_str());
+        return false;
+    }
+
+    data.Loop = loop;
+
+    if (!resource.Init(data))
+    {
+        ELOGA("Error : SoundResource::Init() Failed.");
+        return false;
+    }
+
+    return true;
+}
+
+#endif
+
 } // namespace
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -113,8 +181,12 @@ bool SampleApp::OnInit()
 
     #if ASDX_ENABLE_SOUND
     {
-        // サウンドマネージャの初期化.
-        asdx::InitSoundMgr(reinterpret_cast<uintptr_t>(m_hWnd));
+        // サウンドエンジンの初期化.
+        if (!asdx::InitSound())
+        {
+            ELOGA("Error : InitSound() Failed.");
+            return false;
+        }
     }
     #endif
 
@@ -184,8 +256,8 @@ void SampleApp::OnTerm()
 
     #if ASDX_ENABLE_SOUND
     {
-        // サウンドマネージャの終了処理.
-        asdx::TermSoundMgr();
+        // サウンドエンジンの終了処理.
+        asdx::TermSound();
     }
     #endif
 }
@@ -360,21 +432,11 @@ void SampleApp::OnTyping(uint32_t keyCode)
 void SampleApp::OnMsgProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     ASDX_UNUSED(hWnd);
+    ASDX_UNUSED(msg);
     ASDX_UNUSED(wp);
     ASDX_UNUSED(lp);
 
-    switch(msg)
+    // TODO : Implementation.
     {
-    case MM_MCINOTIFY:
-        {
-        #if ASDX_ENABLE_SOUND
-            // サウンドマネージャのコールバック.
-            asdx::OnSoundMsg(uint32_t(lp), uint32_t(wp));
-        #endif//ASDX_ENABLE_SOUND
-        }
-        break;
-
-    default:
-        break;
     }
 }

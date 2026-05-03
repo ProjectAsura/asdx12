@@ -24,9 +24,9 @@ namespace asdx {
 ///////////////////////////////////////////////////////////////////////////////
 struct SoundData
 {
-    std::vector<uint8_t>    FormatData;
-    std::vector<uint8_t>    AudioData;
-    bool                    Loop;
+    std::vector<uint8_t>    FormatData  = {};
+    std::vector<uint8_t>    AudioData   = {};
+    bool                    Loop        = false;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
