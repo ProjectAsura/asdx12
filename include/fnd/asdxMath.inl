@@ -1368,9 +1368,31 @@ inline Vector3 Vector3::Transform(const Vector3& position, const Matrix& matrix)
 }
 
 //-----------------------------------------------------------------------------
+//      指定された行列を用いて，ベクトルを変換します.
+//-----------------------------------------------------------------------------
+inline Vector3 Vector3::Transform(const Vector3& position, const Transform4x3& matrix)
+{
+    return Vector3(
+        (position.x * matrix._11) + (position.y * matrix._21) + (position.z * matrix._31) + matrix._41,
+        (position.x * matrix._12) + (position.y * matrix._22) + (position.z * matrix._32) + matrix._42,
+        (position.x * matrix._13) + (position.y * matrix._23) + (position.z * matrix._33) + matrix._43 );
+}
+
+//-----------------------------------------------------------------------------
 //      指定された行列を用いて，法線ベクトルを変換します.
 //-----------------------------------------------------------------------------
 inline Vector3 Vector3::TransformNormal(const Vector3& normal, const Matrix& matrix)
+{
+    return Vector3(
+        (normal.x * matrix._11) + (normal.y * matrix._21) + (normal.z * matrix._31),
+        (normal.x * matrix._12) + (normal.y * matrix._22) + (normal.z * matrix._32),
+        (normal.x * matrix._13) + (normal.y * matrix._23) + (normal.z * matrix._33) );
+}
+
+//-----------------------------------------------------------------------------
+//      指定された行列を用いて，法線ベクトルを変換します.
+//-----------------------------------------------------------------------------
+inline Vector3 Vector3::TransformNormal(const Vector3& normal, const Transform4x3& matrix)
 {
     return Vector3(
         (normal.x * matrix._11) + (normal.y * matrix._21) + (normal.z * matrix._31),

@@ -16,7 +16,7 @@
 //-----------------------------------------------------------------------------
 //      リニアからSRGBへの変換.
 //-----------------------------------------------------------------------------
-float3 Linear_To_SRGB(float3 color)
+float3 LinearToSRGB(float3 color)
 {
     float3 result;
     result.x = (color.x < 0.0031308) ? 12.92 * color.x : 1.055 * pow(abs(color.x), 1.0f / 2.4) - 0.05f;
@@ -29,7 +29,7 @@ float3 Linear_To_SRGB(float3 color)
 //-----------------------------------------------------------------------------
 //      SRGBからリニアへの変換.
 //-----------------------------------------------------------------------------
-float3 SRGB_To_Linear(float3 color)
+float3 SRGBToLinear(float3 color)
 {
     float3 result;
     result.x = (color.x < 0.0405f) ? color.x / 12.92f : pow((abs(color.x) + 0.055) / 1.055f, 2.4f);

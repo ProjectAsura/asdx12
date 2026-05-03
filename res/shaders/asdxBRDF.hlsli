@@ -834,4 +834,84 @@ float TokuyoshiRoughness(float3 normal, float roughness, float sigma2, float kap
     return sqrt(saturate(roughness * roughness + kernelRoughness2));
 }
 
+//-----------------------------------------------------------------------------
+//      線形ラフネスからミップレベルを求めます.
+//-----------------------------------------------------------------------------
+float RoughnessToMipLevel(float linearRoughness, float mipCount)
+{
+    return (mipCount - 1) * linearRoughness;
+}
+
+//-----------------------------------------------------------------------------
+//      ディフューズIBLを評価します.
+//-----------------------------------------------------------------------------
+float3 EvaluateIBLDiffuse(TextureCube DiffuseLD, SamplerState RepeatSampler, float3 N)
+{
+    // Lambert BRDFはDFG項は積分すると1.0となるので，LD項のみを返却すれば良い
+    return DiffuseLD.Sample(RepeatSampler, N).rgb;
+}
+
+//-----------------------------------------------------------------------------
+//      スペキュラーIBLを評価します.
+//-----------------------------------------------------------------------------
+float3 EvaluateIBLSpecular
+(
+    TextureCube     SpecularLD,
+    SamplerState    RepeatSampler,
+    Texture2D       DFGMap,
+    SamplerState    ClampSampler,
+    float           NdotV,          // 法線ベクトルと視線ベクトルの内積.
+    float3          N,              // 法線ベクトル.
+    float3          R,              // 反射ベクトル.
+    float3          f0,             // フレネル項
+    float           roughness       // 線形ラフネス.
+)
+{
+    float  a = roughness * roughness;
+    float3 dominantR = GetSpecularDominantDir(N, R, a);
+
+    float2 mapSize;
+    float  mipLevels;
+    SpecularLD.GetDimensions(0, mapSize.x, mapSize.y, mipLevels);
+    float textureSize = max(mapSize.x, mapSize.y);
+
+    // 関数を再構築.
+    // L * D * (f0 * Gvis * (1 - Fc) + Gvis * Fc) * cosTheta / (4 * NdotL * NdotV).
+    NdotV = max(NdotV, 0.5f / textureSize); // ゼロ除算が発生しないようにする.
+    float  mipLevel = RoughnessToMipLevel(roughness, mipLevels); 
+    float3 preLD    = SpecularLD.SampleLevel(RepeatSampler, dominantR, mipLevel).xyz;
+
+    // 事前積分したDFGをサンプルする.
+    // Fc = ( 1 - HdotL )^5
+    // PreIntegratedDFG.r = Gvis * (1 - Fc)
+    // PreIntegratedDFG.g = Gvis * Fc
+    float2 preDFG   = DFGMap.SampleLevel(ClampSampler, float2(NdotV, 1.0f - roughness), 0).xy;
+
+    // LD * (f0 * Gvis * (1 - Fc) + Gvis * Fc)
+    return preLD * (f0 * preDFG.x + preDFG.y);
+}
+
+//-----------------------------------------------------------------------------
+//      直接光を評価します.
+//-----------------------------------------------------------------------------
+float3 EvaluateDirectLight(float3 N, float3 V, float3 L, float3 Kd, float3 Ks, float roughness)
+{
+    float3 H     = normalize(V + L);
+    float  NdotV = abs(dot(N, V));
+    float  LdotH = saturate(dot(L, H));
+    float  NdotH = saturate(dot(N, H));
+    float  NdotL = saturate(dot(N, L));
+    float  VdotH = saturate(dot(V, H));
+    float  a2    = max(roughness * roughness, 0.01);
+    float  f90   = saturate(50.0f * dot(Ks, 0.33f));
+
+    float3 diffuse = Kd / F_PI;
+    float  D = D_GGX(NdotH, a2);
+    float  G = G2_Smith(a2, NdotL, NdotV);
+    float3 F = F_Schlick(Ks, f90, LdotH);
+    float3 specular = (D * G * F) / F_PI;
+
+    return (diffuse + specular) * NdotL;
+}
+
 #endif//ADX_BRDF_HLSLI

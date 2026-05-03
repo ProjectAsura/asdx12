@@ -10,6 +10,7 @@
 #include "asdxBRDF.hlsli"
 #include "asdxTangentSpace.hlsli"
 #include "asdxSamplers.hlsli"
+#include "asdxColor.hlsli"
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -102,108 +103,6 @@ Texture2D EmissiveMap   : register(t13);
 #define MODE_EMISSIVE       (19)
 
 //-----------------------------------------------------------------------------
-//      色相からRGB値を求めます.
-//-----------------------------------------------------------------------------
-float3 HueToRGB(float hue)
-{
-    // https://www.ronja-tutorials.com/post/041-hsv-colorspace/
-    hue = frac(hue); //only use fractional part of hue, making it loop
-    float r = -1.0f + abs(hue * 6.0f - 3.0f); //red
-    float g =  2.0f - abs(hue * 6.0f - 2.0f); //green
-    float b =  2.0f - abs(hue * 6.0f - 4.0f); //blue
-    return saturate(float3(r, g, b)); //clamp between 0 and 1
-}
-
-//-----------------------------------------------------------------------------
-//      リニアからSRGBへの変換.
-//-----------------------------------------------------------------------------
-float3 ToSRGB(float3 color)
-{
-    float3 result;
-    result.x = (color.x < 0.0031308f) ? 12.92f * color.x : 1.055f * pow(abs(color.x), 1.0f / 2.4f) - 0.05f;
-    result.y = (color.y < 0.0031308f) ? 12.92f * color.y : 1.055f * pow(abs(color.y), 1.0f / 2.4f) - 0.05f;
-    result.z = (color.z < 0.0031308f) ? 12.92f * color.z : 1.055f * pow(abs(color.z), 1.0f / 2.4f) - 0.05f;
-
-    return result;
-}
-
-//-----------------------------------------------------------------------------
-//      ディフューズIBLを評価します.
-//-----------------------------------------------------------------------------
-float3 EvaluateIBLDiffuse(float3 N)
-{
-    // Lambert BRDFはDFG項は積分すると1.0となるので，LD項のみを返却すれば良い
-    return DiffuseLD.Sample(LinearWrap, N).rgb;
-}
-
-//-----------------------------------------------------------------------------
-//      線形ラフネスからミップレベルを求めます.
-//-----------------------------------------------------------------------------
-float RoughnessToMipLevel(float linearRoughness, float mipCount)
-{
-    return (mipCount - 1) * linearRoughness;
-}
-
-//-----------------------------------------------------------------------------
-//      スペキュラーIBLを評価します.
-//-----------------------------------------------------------------------------
-float3 EvaluateIBLSpecular
-(
-    float           NdotV,          // 法線ベクトルと視線ベクトルの内積.
-    float3          N,              // 法線ベクトル.
-    float3          R,              // 反射ベクトル.
-    float3          f0,             // フレネル項
-    float           roughness       // 線形ラフネス.
-)
-{
-    float  a = roughness * roughness;
-    float3 dominantR = GetSpecularDominantDir(N, R, a);
-
-    float2 mapSize;
-    float  mipLevels;
-    SpecularLD.GetDimensions(0, mapSize.x, mapSize.y, mipLevels);
-    float textureSize = max(mapSize.x, mapSize.y);
-
-    // 関数を再構築.
-    // L * D * (f0 * Gvis * (1 - Fc) + Gvis * Fc) * cosTheta / (4 * NdotL * NdotV).
-    NdotV = max(NdotV, 0.5f / textureSize); // ゼロ除算が発生しないようにする.
-    float  mipLevel = RoughnessToMipLevel(roughness, mipLevels); 
-    float3 preLD    = SpecularLD.SampleLevel(LinearWrap, dominantR, mipLevel).xyz;
-
-    // 事前積分したDFGをサンプルする.
-    // Fc = ( 1 - HdotL )^5
-    // PreIntegratedDFG.r = Gvis * (1 - Fc)
-    // PreIntegratedDFG.g = Gvis * Fc
-    float2 preDFG   = DFGMap.SampleLevel(LinearClamp, float2(NdotV, 1.0f - roughness), 0).xy;
-
-    // LD * (f0 * Gvis * (1 - Fc) + Gvis * Fc)
-    return preLD * (f0 * preDFG.x + preDFG.y);
-}
-
-//-----------------------------------------------------------------------------
-//      直接光を評価します.
-//-----------------------------------------------------------------------------
-float3 EvaluateDirectLight(float3 N, float3 V, float3 L, float3 Kd, float3 Ks, float roughness)
-{
-    float3 H     = normalize(V + L);
-    float  NdotV = abs(dot(N, V));
-    float  LdotH = saturate(dot(L, H));
-    float  NdotH = saturate(dot(N, H));
-    float  NdotL = saturate(dot(N, L));
-    float  VdotH = saturate(dot(V, H));
-    float  a2    = max(roughness * roughness, 0.01);
-    float  f90   = saturate(50.0f * dot(Ks, 0.33f));
-
-    float3 diffuse = Kd / F_PI;
-    float  D = D_GGX(NdotH, a2);
-    float  G = G2_Smith(a2, NdotL, NdotV);
-    float3 F = F_Schlick(Ks, f90, LdotH);
-    float3 specular = (D * G * F) / F_PI;
-
-    return (diffuse + specular) * NdotL;
-}
-
-//-----------------------------------------------------------------------------
 //      メインエントリーポイントです.
 //-----------------------------------------------------------------------------
 float4 main(const VSOutput input) : SV_TARGET0
@@ -225,7 +124,7 @@ float4 main(const VSOutput input) : SV_TARGET0
     case MODE_LIGHTING:
     default:
         {
-            float3 V = normalize(GetPosition(View) - input.WorldPos.xyz);
+            float3 V = normalize(GetCameraPosition(View) - input.WorldPos.xyz);
             float3 R = normalize(reflect(-V, N));
  
             float NoV = abs(dot(N, V));
@@ -244,8 +143,8 @@ float4 main(const VSOutput input) : SV_TARGET0
  
             float3 lit = 0;
             lit += EvaluateDirectLight(N, V, V, Kd, Ks, orm.y);
-            lit += EvaluateIBLDiffuse(N) * Kd * orm.x;
-            lit += EvaluateIBLSpecular(NoV, N, R, Ks, orm.y) * orm.x;
+            lit += EvaluateIBLDiffuse(DiffuseLD, LinearWrap, N) * Kd * orm.x;
+            lit += EvaluateIBLSpecular(SpecularLD, LinearWrap, DFGMap, LinearClamp, NoV, N, R, Ks, orm.y) * orm.x;
             lit += EmissiveMap.Sample(LinearWrap, input.TexCoord).xyz * Emissive;
             output.rgb = lit;
             output.a   = bc.a;
@@ -301,10 +200,10 @@ float4 main(const VSOutput input) : SV_TARGET0
 
     case MODE_BLENDINDEX:
         {
-            output.r = dot(float3(1.0f, 0.0f, 0.0f), ToSRGB(HueToRGB(input.BoneIndices.x * 1.1f)));
-            output.g = dot(float3(0.0f, 1.0f, 0.0f), ToSRGB(HueToRGB(input.BoneIndices.y * 1.1f)));
-            output.b = dot(float3(0.0f, 0.0f, 1.0f), ToSRGB(HueToRGB(input.BoneIndices.z * 1.1f)));
-            output.a = dot(float3(1.0f, 1.0f, 1.0f), ToSRGB(HueToRGB(input.BoneIndices.w * 1.1f)));
+            output.r = dot(float3(1.0f, 0.0f, 0.0f), LinearToSRGB(HueToRGB(input.BoneIndices.x * 1.1f)));
+            output.g = dot(float3(0.0f, 1.0f, 0.0f), LinearToSRGB(HueToRGB(input.BoneIndices.y * 1.1f)));
+            output.b = dot(float3(0.0f, 0.0f, 1.0f), LinearToSRGB(HueToRGB(input.BoneIndices.z * 1.1f)));
+            output.a = dot(float3(1.0f, 1.0f, 1.0f), LinearToSRGB(HueToRGB(input.BoneIndices.w * 1.1f)));
         }
         break;
 

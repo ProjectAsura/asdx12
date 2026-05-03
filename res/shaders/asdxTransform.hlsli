@@ -18,13 +18,13 @@ struct Transform4x3
 //-----------------------------------------------------------------------------
 //      指定行列で変換します.
 //-----------------------------------------------------------------------------
-float4 Transform(Transform4x3 m, float4 v)
+float3 Transform(Transform4x3 m, float3 v)
 {
-    return float4(
-        dot(m.Col[0], v),
-        dot(m.Col[1], v),
-        dot(m.Col[2], v),
-        1.0f);
+    float4 val = float4(v, 1.0f);
+    return float3(
+        dot(m.Col[0], val),
+        dot(m.Col[1], val),
+        dot(m.Col[2], val));
 }
 
 //-----------------------------------------------------------------------------
@@ -42,9 +42,9 @@ float4 Transform(float4x4 m, float4 v)
 float3 TransformNormal(Transform4x3 m, float3 v)
 {
     return float3(
-        dot(v, m.Col[0].xyz),
-        dot(v, m.Col[1].xyz),
-        dot(v, m.Col[2].xyz));
+        dot(m.Col[0].xyz, v),
+        dot(m.Col[1].xyz, v),
+        dot(m.Col[2].xyz, v));
 }
 
 //-----------------------------------------------------------------------------
@@ -53,9 +53,9 @@ float3 TransformNormal(Transform4x3 m, float3 v)
 float3 TransformNormal(Transform4x3 m, float4 v)
 {
     return float3(
-        dot(v.xyz, m.Col[0].xyz),
-        dot(v.xyz, m.Col[1].xyz),
-        dot(v.xyz, m.Col[2].xyz));
+        dot(m.Col[0].xyz, v.xyz),
+        dot(m.Col[1].xyz, v.xyz),
+        dot(m.Col[2].xyz, v.xyz));
 }
 
 //-----------------------------------------------------------------------------
@@ -105,25 +105,35 @@ Transform4x3 ToTransform3x4(float4x4 m)
 //-----------------------------------------------------------------------------
 //      X軸を取得します.
 //-----------------------------------------------------------------------------
-float3 GetAxisX(Transform4x3 value)
-{ return value.Col[0].xyz; }
+float3 GetAxisX(Transform4x3 view)
+{ return view.Col[0].xyz; }
 
 //-----------------------------------------------------------------------------
 //      Y軸を取得します.
 //-----------------------------------------------------------------------------
-float3 GetAxisY(Transform4x3 value)
-{ return value.Col[1].xyz; }
+float3 GetAxisY(Transform4x3 view)
+{ return view.Col[1].xyz; }
 
 //-----------------------------------------------------------------------------
 //      Z軸を取得します.
 //-----------------------------------------------------------------------------
-float3 GetAxisZ(Transform4x3 value)
-{ return value.Col[2].xyz; }
+float3 GetAxisZ(Transform4x3 view)
+{ return view.Col[2].xyz; }
 
 //-----------------------------------------------------------------------------
-//      位置を取得します.
+//      カメラ位置を取得します.
 //-----------------------------------------------------------------------------
-float3 GetPosition(Transform4x3 value)
+float3 GetCameraPosition(Transform4x3 view)
+{
+    return -view.Col[0].xyz * view.Col[0].w
+           -view.Col[1].xyz * view.Col[1].w
+           -view.Col[2].xyz * view.Col[2].w;
+}
+
+//-----------------------------------------------------------------------------
+//      平行移動成分を取得します.
+//-----------------------------------------------------------------------------
+float3 GetTranslation(Transform4x3 value)
 { return float3(value.Col[0].w, value.Col[1].w, value.Col[2].w); }
 
 // float4x4 の GetAxisX(), GetAxisY(), GetAxisZ(), GetPosition() は

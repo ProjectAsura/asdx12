@@ -72,24 +72,21 @@ StructuredBuffer<Transform4x3> MatrixPallets : register(t1);
 VSOutput main(const VSInput input, uint instanceId : SV_InstanceID)
 {
     VSOutput output = (VSOutput)0;
-    float4 localPos     = float4(input.Position,    1.0f);
-    float4 localNormal  = float4(input.Normal,      0.0f);
-    float4 localTangent = float4(input.Tangent.xyz, 0.0f);
 
-    float4 skinnedPos     = (float4)0;
-    float4 skinnedNormal  = (float4)0;
-    float4 skinnedTangent = (float4)0;
+    float3 skinnedPos     = (float3)0;
+    float3 skinnedNormal  = (float3)0;
+    float3 skinnedTangent = (float3)0;
 
     for (int i=0; i<4; ++i)
     {
-        skinnedPos     += Transform(MatrixPallets[input.BoneIndices[i]], localPos    ) * input.BoneWeights[i];
-        skinnedNormal  += Transform(MatrixPallets[input.BoneIndices[i]], localNormal ) * input.BoneWeights[i];
-        skinnedTangent += Transform(MatrixPallets[input.BoneIndices[i]], localTangent) * input.BoneWeights[i];
+        skinnedPos     += Transform(MatrixPallets[input.BoneIndices[i]], input.Position) * input.BoneWeights[i];
+        skinnedNormal  += TransformNormal(MatrixPallets[input.BoneIndices[i]], input.Normal) * input.BoneWeights[i];
+        skinnedTangent += TransformNormal(MatrixPallets[input.BoneIndices[i]], input.Tangent) * input.BoneWeights[i];
     }
 
     Transform4x3 world = WorldMatrice[MatrixId + instanceId];
 
-    float4 worldPos = Transform(world, skinnedPos);
+    float4 worldPos = float4(Transform(world, skinnedPos), 1.0f);
     float4 viewPos  = Transform(View,  worldPos);
     float4 projPos  = Transform(Proj,  viewPos);
 
