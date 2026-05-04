@@ -76,38 +76,10 @@ float ToRoughness(float specularPower)
 }
 
 //-----------------------------------------------------------------------------
-//      ディフューズ反射率を求めます.
+//      f0 を計算します.
 //-----------------------------------------------------------------------------
-float3 ToKd(float3 baseColor, float metallic)
-{ return (1.0f - metallic) * baseColor; }
-
-//-----------------------------------------------------------------------------
-//      スペキュラー反射率を求めます.
-//-----------------------------------------------------------------------------
-float3 ToKs(float3 baseColor, float metallic)
-{
-    // n=1.5とした場合のF_0値で，n=1.5を使うのは，n=1.4~1.6に多くの材質が集中しており,
-    // その中央値として n=1.5 を使うため.
-    const float kF0 = 0.04f; 
-    return lerp(kF0, baseColor, metallic);
-}
-
-//-----------------------------------------------------------------------------
-//      非金属向け.
-//-----------------------------------------------------------------------------
-float3 ToKsDielectics(float3 baseColor, float metallic, float reflectance)
-{
-    // reflectance=0.5, つまり，2乗すると 0.25 になる値に対して乗算すると，
-    // 0.04となるようなパラメータ値として，0.16を採用.
-    const float kDisney = 0.16f;
-    return lerp(kDisney * reflectance * reflectance, baseColor, metallic);
-}
-
-//-----------------------------------------------------------------------------
-//      金属向け.
-//-----------------------------------------------------------------------------
-float3 ToKsConductors(float3 baseColor, float metallic)
-{ return baseColor * metallic; }
+float CalcF0(float ior)
+{ return Pow2((1.0f - ior) / (1.0f + ior)); }
 
 //-----------------------------------------------------------------------------
 //      90度入射におけるフレネル反射率を求めます.
@@ -121,7 +93,7 @@ float CalcF90(in float3 f0)
 //-----------------------------------------------------------------------------
 //      Schlickによるフレネル反射の近似値を求める.
 //-----------------------------------------------------------------------------
-float3 F_Schlick(in float3 f0, in float f90, in float u)
+float3 F_Schlick(in float3 f0, in float3 f90, in float u)
 { return f0 + (f90.xxx - f0) * Pow5(1.0f - u); }
 
 //-----------------------------------------------------------------------------
@@ -145,11 +117,33 @@ float F_Schlick(const float f0, float VoH)
 //-----------------------------------------------------------------------------
 //      フレネル項を用いて
 //-----------------------------------------------------------------------------
-float3 FresnelLerp(float3 base, float3 layer, float ior, float VoH)
+float3 FresnelLerp(float3 base, float3 layer, float f0, float VoH)
 {
-    float f0 = Pow2((1.0f - ior) / (1.0f + ior));
     float fr = F_Schlick(f0, 1.0f, VoH);
     return lerp(base, layer, fr);
+}
+
+//-----------------------------------------------------------------------------
+//      導体フレネルを計算します.
+//-----------------------------------------------------------------------------
+float3 ConductorFresnel(float3 f0, float3 bsdf, float VoH)
+{ return bsdf * F_Schlick(f0, 1.0f.xxx, abs(VoH)); }
+
+//-----------------------------------------------------------------------------
+//      拡散反射率を求めます.
+//-----------------------------------------------------------------------------
+float3 ToKd(float3 baseColor, float metalness, float f0)
+{
+    return baseColor * (1.0f - f0) * (1.0f - metalness);
+}
+
+//-----------------------------------------------------------------------------
+//      鏡面反射率を求めます.
+//-----------------------------------------------------------------------------
+float3 ToKs(float3 baseColor, float metalness, float ior)
+{
+    float f0 = Pow2((1.0f - ior) / (1.0f + ior)); // ior = 1.5 で 0.04 となる.
+    return lerp(f0, baseColor, metalness);
 }
 
 //-----------------------------------------------------------------------------
@@ -224,44 +218,6 @@ float ApplyMicroShadow(float ao, float NoL, float shadow)
 }
 
 //-----------------------------------------------------------------------------
-//      Lambert Diffuseを求めます.
-//-----------------------------------------------------------------------------
-float LambertDiffuse(float NoL)
-{ return NoL / F_PI; }
-
-//-----------------------------------------------------------------------------
-//      Half-Lambert Diffuseを求めます.
-//-----------------------------------------------------------------------------
-float HalfLambertDiffuse(float NoL)
-{
-    float  v = NoL * 0.5f + 0.5f;
-    return (v * v) * (3.0f / (4.0f * F_PI));
-}
-
-//-----------------------------------------------------------------------------
-//      Disney Diffuseを求めます.
-//-----------------------------------------------------------------------------
-float DisneyDiffuse(float NdotV, float NdotL, float LdotH, float roughness)
-{
-    float  energyBias   = lerp(0.0f, 0.5f, roughness);
-    float  energyFactor = lerp(1.0f, 1.0f / 1.51f, roughness);
-    float  fd90 = energyBias + 2.0f * LdotH * LdotH * roughness;
-    float  lightScatter = F_Schlick(1.0f, fd90, NdotL).r;
-    float  viewScatter  = F_Schlick(1.0f, fd90, NdotV).r;
-
-    return lightScatter * viewScatter * energyFactor;
-}
-
-//-----------------------------------------------------------------------------
-//      Phong Specularを求めます.
-//-----------------------------------------------------------------------------
-float PhongSpecular(float3 N, float3 V, float3 L, float shininess)
-{
-    float3 R = -V + (2.0f * dot(N, V) * N);
-    return pow(max(dot(L, R), 0.0f), shininess) * ((shininess + 2.0f) / (2.0 * F_PI));
-}
-
-//-----------------------------------------------------------------------------
 //      SmithによるG2項を求めます.
 //-----------------------------------------------------------------------------
 float G2_Smith(float a2, float NoL, float NoV)
@@ -293,27 +249,48 @@ float D_GGX(float NoH, float a2)
 //-----------------------------------------------------------------------------
 //      D項を計算します.
 //-----------------------------------------------------------------------------
-float D_Ashikhmin(float linearRoughness, float NoH)
+float D_Charlie(float sheenRoughness2, float NoH)
 {
-    // Ashkhmin 2007, "Distribution-based BRDFs".
-    float a2 = linearRoughness * linearRoughness;
+    // Estevez and Kulla 2017, "Production Friendly Microfacet Sheen BRDF".
+    float invAlpha = 1.0f / sheenRoughness2;
     float cos2h = NoH * NoH;
-    float sin2h = max(1.0f - cos2h, 0.0078125); // 2^(-14/2), so sin2h^2 0 in fp16
-    float sin4h = sin2h * sin2h;
-    float cot2 = -cos2h / (a2 * sin2h);
-    return 1.0f / (F_PI * (4.0f * a2 + 1.0f) * sin4h) * (4.0f * exp(cot2) + sin4h);
+    float sin2h = max(1.0f - cos2h, 0.0078125f); // 2^(-14/2), so sin2h^2 0 in fp16
+    return (2.0f + invAlpha) * pow(sin2h, invAlpha * 0.5f) / F_2PI;
 }
 
 //-----------------------------------------------------------------------------
-//      D項を計算します.
+//      charlie BRDF の l項を計算します.
 //-----------------------------------------------------------------------------
-float D_Charlie(float linearRoughness, float NoH)
+float TermL(float x, float alpha_g)
 {
-    // Estevez and Kulla 2017, "Production Friendly Microfacet Sheen BRDF".
-    float invAlpha = 1.0f / linearRoughness;
-    float cos2h = NoH * NoH;
-    float sin2h = max(1.0f - cos2h, 0.0078125f); // 2^(-14/2), so sin2h^2 0 in fp16
-    return (2.0f + invAlpha) * pow(sin2h, invAlpha * 0.5f) / (2.0f * F_PI);
+    float one_minus_alpha_sq = (1.0f - alpha_g) * (1.0f - alpha_g);
+    float a = lerp( 21.5473f,  25.3245f, one_minus_alpha_sq);
+    float b = lerp( 3.82987f,  3.32435f, one_minus_alpha_sq);
+    float c = lerp( 0.19823f,  0.16801f, one_minus_alpha_sq);
+    float d = lerp(-1.97760f, -1.27393f, one_minus_alpha_sq);
+    float e = lerp(-4.32054f, -4.85967f, one_minus_alpha_sq);
+    return a / (1.0f + b * pow(x, c)) + d * x + e;
+}
+
+//-----------------------------------------------------------------------------
+//      sheen の λ 項を計算します.
+//-----------------------------------------------------------------------------
+float LambdaSheen(float cos_theta, float alpha_g)
+{
+    return (abs(cos_theta) < 0.5f)
+        ? exp(TermL(cos_theta, alpha_g)) 
+        : exp(2.0f * TermL(0.5, alpha_g) - TermL(1.0f - cos_theta, alpha_g));
+}
+
+//-----------------------------------------------------------------------------
+//      V項を計算します.
+//-----------------------------------------------------------------------------
+float V_Charlie(float alpha_g, float NoV, float NoL)
+{
+    // alpha_g = sheenRoughness * sheenRoughness とします.
+    float lambdaV = LambdaSheen(NoV, alpha_g);
+    float lambdaL = LambdaSheen(NoL, alpha_g);
+    return 1.0f / ((1.0f + lambdaV + lambdaL) * (4.0f * NoV * NoL));
 }
 
 //-----------------------------------------------------------------------------
@@ -326,33 +303,119 @@ float V_Neubelt(float NoV, float NoL)
 }
 
 //-----------------------------------------------------------------------------
-//      布用ディフューズ項を評価します.
+//      光沢BRDFを計算します.
 //-----------------------------------------------------------------------------
-float3 EvaluateClothDiffuse(float3 diffuseColor, float sheen, float3 subsurfaceColor, float NoL)
-{ 
-    float diffuse = 1.0f / F_PI;
-    diffuse *= saturate((NoL + 0.5f) / 2.25f);
-    float3 result = diffuseColor * diffuse;
-    result *= saturate(subsurfaceColor + NoL);
-    return result;
+float3 SheenBRDF(Texture2D sheenLUT, SamplerState clampSampler, float3 material, float3 sheenColor, float sheenRoughness, float NoL, float NoV, float NoH)
+{
+    float alpha_g = sheenRoughness * sheenRoughness;
+    float D = D_Charlie(alpha_g, NoH);
+    float V = V_Charlie(alpha_g, NoV, NoL);
+    float3 sheenBRDF = sheenColor * V * D;
+
+    float E_NoV = sheenLUT.SampleLevel(clampSampler, float2(NoV, sheenRoughness), 0.0f).r;
+    float E_NoL = sheenLUT.SampleLevel(clampSampler, float2(NoL, sheenRoughness), 0.0f).r;
+ 
+    float  maxColor = Max3(sheenColor);
+    float3 sheen_albedo_scaling = min(1.0f - maxColor * E_NoV, 1.0f - maxColor * E_NoL);
+    return sheenBRDF + material * sheen_albedo_scaling;
 }
 
 //-----------------------------------------------------------------------------
-//      布用スペキュラー項を評価します.
+//      異方性GGXのD項を計算します.
 //-----------------------------------------------------------------------------
-float3 EvaluateClothSpecular
+float D_GGX_Anisotropic(float NoH, float ToH, float BoH, float at, float ab)
+{
+    // NoV = dot(N, H)
+    // ToH = dot(T, H)  ... T: Tangent.
+    // BoH = dot(B, H)  ... B: Bitangent.
+    // at = lerp(roughness, 1.0f, anisotropy * anisotropy)
+    // ab = roughness.
+    
+    // [KhronosGroup 2024], KHR_materials_anisotropy,
+    // https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_materials_anisotropy
+    float  a2 = at * ab;
+    float3 f  = float3(ab * ToH, at * BoH, a2 * NoH);
+    float  w2 = SaturateFloat(a2 / dot(f, f));
+    return a2 * w2 * w2 / F_PI;
+}
+
+//-----------------------------------------------------------------------------
+//      異方性GGXのV項を計算します.
+//-----------------------------------------------------------------------------
+float V_GGX_Anisotropic(float NoL, float NoV, float BoV, float ToV, float ToL, float BoL, float at, float ab)
+{
+    // [KhronosGroup 2024], KHR_materials_anisotropy,
+    // https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_materials_anisotropy    
+    float GGXV = NoL * length(float3(at * ToV, ab * BoV, NoV));
+    float GGXL = NoV * length(float3(at * ToL, ab * BoL, NoL));
+    float v = 0.5f / (GGXV + GGXL);
+    return saturate(v);
+}
+
+//-----------------------------------------------------------------------------
+//      異方性GGXのV項とD項を計算します.
+//-----------------------------------------------------------------------------
+float3 VD_GGXAnisotropic
 (
-    float   sheen,
-    float   clothness,
-    float   NoH,
+    float   linearRoughness,
+    float   anisotropy,
+    float   NoV,
     float   NoL,
-    float   NoV
+    float   NoH,
+    float   ToV,
+    float   ToL,
+    float   ToH,
+    float   BoV,
+    float   BoL,
+    float   BoH
 )
 {
-    float  D = D_Charlie(clothness, NoH);
-    float  V = V_Neubelt(NoV, NoL);
-    float3 F = float3(sheen, sheen, sheen);
-    return (D * V * F) * NoL;
+    //float a = linearRoughness * linearRoughness;
+    //float at = lerp(a, 1.0f, anisotropy * anisotropy);
+    //float ab = a;
+    float at = max(linearRoughness * (1.0f + anisotropy), 0.001f);
+    float ab = max(linearRoughness * (1.0f - anisotropy), 0.001f);
+
+    float  V = V_GGX_Anisotropic(NoL, NoV, BoV, ToV, ToL, BoL, at, ab);
+    float  D = D_GGX_Anisotropic(NoH, ToH, BoH, at, ab);
+
+    return V * D;
+}
+
+//-----------------------------------------------------------------------------
+//      クリアコートBRDFを計算します.
+//-----------------------------------------------------------------------------
+float3 ClearCoatBRDF(float3 material, float clearCoat, float clearCoatRoughness, float NcoL, float NcoV, float NcoH, float ior = 1.5f)
+{
+    // 引数は，下記を渡してください.
+    // NcoL = dot(clearCoatNormal, L);
+    // NcoV = dot(clearCoatNormal, V);
+    // NcoH = dot(clearCoatNormal, H);
+
+    float f0 = Pow2((1.0f - ior) / (1.0f + ior));
+
+    // [KhronosGroup 2024] KHR_materials_clearcoat
+    // https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_materials_clearcoat.
+    float  clearcoat_fresnel = f0 + (1.0f - f0) * Pow5(1.0f - abs(NcoV));
+    float  clearcoat_alpha   = clearCoatRoughness * clearCoatRoughness;
+    float3 clearcoat_brdf    = D_GGX(abs(NcoH), clearcoat_alpha) * G2_Smith(clearcoat_alpha, NcoL, NcoV) /(4.0f * abs(NcoV) * abs(NcoL));
+
+    return lerp(material, clearcoat_brdf, clearCoat * clearcoat_fresnel);
+}
+
+//-----------------------------------------------------------------------------
+//      クリアコートエミッシブを計算します.
+//-----------------------------------------------------------------------------
+float3 ClearCoatEmissive(float3 emissive, float clearCoat, float NcoV, float ior = 1.5f)
+{
+    // クリアコート層によってエミッシブが暗くなるので、それを計算する.
+    // NcoV = dot(clearCoatNormal, V);
+    float f0 = Pow2((1.0f - ior) / (1.0f + ior));
+
+    // [KhronosGroup 2024] KHR_materials_clearcoat
+    // https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_materials_clearcoat.
+    float clearcoat_fresnel = F_Schlick(f0, 1.0f, abs(NcoV));
+    return emissive * (1.0f - clearCoat * clearcoat_fresnel);
 }
 
 //-----------------------------------------------------------------------------
@@ -474,77 +537,6 @@ float3 EvaluateKajiyaKay
 }
 
 //-----------------------------------------------------------------------------
-//      V項を計算します.
-//-----------------------------------------------------------------------------
-float V_Kelemen(float LoH)
-{ return 0.25f / (LoH * LoH); }
-
-//-----------------------------------------------------------------------------
-//      クリアコートのラフネスを求めます.
-//-----------------------------------------------------------------------------
-float GetClearCoatRoughness(float clearCoatRoughness)
-{ return lerp(0.089f, 0.6f, clearCoatRoughness); }
-
-//-----------------------------------------------------------------------------
-//      クリアコートのフレネル項を求めます.
-//-----------------------------------------------------------------------------
-float GetClearCoatFresnel(float LoH, float clearCoat)
-{ return F_Schlick(0.04f, 1.0f, LoH) * clearCoat; }
-
-//-----------------------------------------------------------------------------
-//      異方性GGXのD項を求めます.
-//-----------------------------------------------------------------------------
-float D_GGXAnisotropic
-(
-    float  at,
-    float  ab,
-    float  NoH,
-    float3 H,
-    float3 T,
-    float3 B
-)
-{
-    //float  at  = max(linearRoughness * (1.0f + anisotropy), 0.001f);
-    //float  ab  = max(linearRoughness * (1.0f - anisotropy), 0.001f);
-    float  ToH = dot(T, H);
-    float  BoH = dot(B, H);
-    float  a2  = at * ab;
-    float3 v   = float3(ab * ToH, at * BoH, a2 * NoH);
-    float  v2  = dot(v, v);
-    float  w2  = a2 / v2;
-
-    return a2 * w2 * w2;
-}
-
-//-----------------------------------------------------------------------------
-//      異方性GGXのV項を求めます.
-//-----------------------------------------------------------------------------
-float V_SmithGGXHeightCorrelatedAnisotropic
-(
-    float at,
-    float ab,
-    float3 V,
-    float3 L,
-    float3 T,
-    float3 B,
-    float NoV,
-    float NoL
-)
-{
-    //float  at  = max(linearRoughness * (1.0f + anisotropy), 0.001f);
-    //float  ab  = max(linearRoughness * (1.0f - anisotropy), 0.001f);
-    float ToV = dot(T, V);
-    float BoV = dot(B, V);
-    float ToL = dot(T, L);
-    float BoL = dot(B, L);
-
-    float lambdaV = NoL * length(float3(at * ToV, ab * BoV, NoV));
-    float lambdaL = NoV * length(float3(at * ToL, ab * BoL, NoL));
-    float v = 0.5f / (lambdaV + lambdaL);
-    return SaturateHalf(v);
-}
-
-//-----------------------------------------------------------------------------
 //      計算により眼球用の高さを求めます.
 //-----------------------------------------------------------------------------
 float ProcedualHeightForEye(float radius, float anteriorChamberDepth)
@@ -623,97 +615,6 @@ float2 PhysicallyBasedRefraction
     float2 offsetL = mul(offsetW, world).xy;
 
     return texcoord + float2(mask, -mask) * offsetL;
-}
-
-//-----------------------------------------------------------------------------
-//      薄ガラスを評価します.
-//-----------------------------------------------------------------------------
-void EvaluateThinGlass
-(
-    in  float   eta,                // 屈折率.
-    in  float   NoV,                // 法線と視線ベクトルの内積.
-    in  float3  baseColor,          // ベースカラー.
-    out float3  transmittance,      // トランスミッタンス.
-    out float3  reflectance,        // リフレクタンス.
-    out float3  absorptionRatio     // 吸収率.
-)
-{
-    float sinTheta2 = 1.0f - NoV * NoV;
-
-    const float sinRefractedTheta2 = sinTheta2 / (eta * eta);
-    const float cosRefractedTheta  = sqrt(1 - sinRefractedTheta2);
-
-    const float q0 = mad(eta, cosRefractedTheta, -NoV);
-    const float q1 = mad(eta, cosRefractedTheta,  NoV);
-    const float q2 = mad(eta, NoV, -cosRefractedTheta);
-    const float q3 = mad(eta, NoV,  cosRefractedTheta);
-
-    const float r0 = q0 / q1;
-    const float r1 = q2 / q3;
-
-    // 入射面におけるフレネルリフレクタンス.
-    const float R0 = 0.5 * saturate(r0 * r0 + r1 * r1);
-    // 入射面におけるフレネルトランスミッタンス.
-    const float T0 = 1 - R0;
-
-    const float3 R = float3(R0, R0, R0);
-    const float3 T = float3(T0, T0, T0);
-    const float3 C = float3(cosRefractedTheta, cosRefractedTheta, cosRefractedTheta);
-
-    // 吸収を考慮するための係数.
-    const float3 K = pow(max(baseColor, 0.001), 1 / C);
-    const float3 RK = R * K;
-
-    transmittance   = saturate(T * T * K / (1 - RK * RK));
-    reflectance     = saturate(RK  * transmittance + R);
-    absorptionRatio = saturate(-(1 + RK) * transmittance + T);
-
-    // reflectanceを出力カラーに乗算.
-    // transmittanceは合成する背景色を下記式を用いて変更.
-    // backGround = lerp(1.0, transmittance, alpha);
-    // これを使ってアルファブレンディングする.
-}
-
-//-----------------------------------------------------------------------------
-//      クリアコートの直接光を評価します.
-//-----------------------------------------------------------------------------
-float3 EvaluateDirectLightClearCoat
-(
-    float3  N,
-    float3  L,
-    float3  V,
-    float3  Kd,
-    float3  Ks,
-    float   roughness,
-    float   clearCoatStrength,
-    float   clearCoatRoughness
-)
-{
-    float NoV = abs(dot(N, V));
-    float3 H  = normalize(V + L);
-    float LoH = saturate(dot(L, H));
-    float NoL = saturate(dot(N, L));
-    float NoH = saturate(dot(N, H));
-    float HoV = saturate(dot(H, V));
-    float a2  = max(roughness * roughness, 0.01f);
-    float f90 = saturate(50.0f * dot(Ks, 0.33f));
-
-    float3 Fd = (Kd / F_PI);
-    float  D = D_GGX(NoH, a2);
-    float  G = G2_Smith(a2, NoL, NoV);
-    float3 F = F_Schlick(Ks, f90, LoH);
-    float3 Fr = (D * G * F) / (4.0f * NoV * NoL);
-
-    float coatingPerceptualRoughness = GetClearCoatRoughness(clearCoatRoughness);
-    float coatingRoughness = coatingPerceptualRoughness * coatingPerceptualRoughness;
-
-    float  Dc  = D_GGX(NoH, coatingRoughness);
-    float  Gc  = V_Kelemen(LoH);
-    float  Fc  = GetClearCoatFresnel(LoH, clearCoatStrength);
-    float  Frc = (Dc * Gc * Fc) / (4.0f * NoV * NoL); 
-    float  t   = max(1.0f - Fc, 0.0f);
-
-    return ((Fd + Fr * (1.0f - Fc)) * (1.0f - Fc) + Frc) * NoL;
 }
 
 //-----------------------------------------------------------------------------
@@ -840,78 +741,6 @@ float TokuyoshiRoughness(float3 normal, float roughness, float sigma2, float kap
 float RoughnessToMipLevel(float linearRoughness, float mipCount)
 {
     return (mipCount - 1) * linearRoughness;
-}
-
-//-----------------------------------------------------------------------------
-//      ディフューズIBLを評価します.
-//-----------------------------------------------------------------------------
-float3 EvaluateIBLDiffuse(TextureCube DiffuseLD, SamplerState RepeatSampler, float3 N)
-{
-    // Lambert BRDFはDFG項は積分すると1.0となるので，LD項のみを返却すれば良い
-    return DiffuseLD.Sample(RepeatSampler, N).rgb;
-}
-
-//-----------------------------------------------------------------------------
-//      スペキュラーIBLを評価します.
-//-----------------------------------------------------------------------------
-float3 EvaluateIBLSpecular
-(
-    TextureCube     SpecularLD,
-    SamplerState    RepeatSampler,
-    Texture2D       DFGMap,
-    SamplerState    ClampSampler,
-    float           NdotV,          // 法線ベクトルと視線ベクトルの内積.
-    float3          N,              // 法線ベクトル.
-    float3          R,              // 反射ベクトル.
-    float3          f0,             // フレネル項
-    float           roughness       // 線形ラフネス.
-)
-{
-    float  a = roughness * roughness;
-    float3 dominantR = GetSpecularDominantDir(N, R, a);
-
-    float2 mapSize;
-    float  mipLevels;
-    SpecularLD.GetDimensions(0, mapSize.x, mapSize.y, mipLevels);
-    float textureSize = max(mapSize.x, mapSize.y);
-
-    // 関数を再構築.
-    // L * D * (f0 * Gvis * (1 - Fc) + Gvis * Fc) * cosTheta / (4 * NdotL * NdotV).
-    NdotV = max(NdotV, 0.5f / textureSize); // ゼロ除算が発生しないようにする.
-    float  mipLevel = RoughnessToMipLevel(roughness, mipLevels); 
-    float3 preLD    = SpecularLD.SampleLevel(RepeatSampler, dominantR, mipLevel).xyz;
-
-    // 事前積分したDFGをサンプルする.
-    // Fc = ( 1 - HdotL )^5
-    // PreIntegratedDFG.r = Gvis * (1 - Fc)
-    // PreIntegratedDFG.g = Gvis * Fc
-    float2 preDFG   = DFGMap.SampleLevel(ClampSampler, float2(NdotV, 1.0f - roughness), 0).xy;
-
-    // LD * (f0 * Gvis * (1 - Fc) + Gvis * Fc)
-    return preLD * (f0 * preDFG.x + preDFG.y);
-}
-
-//-----------------------------------------------------------------------------
-//      直接光を評価します.
-//-----------------------------------------------------------------------------
-float3 EvaluateDirectLight(float3 N, float3 V, float3 L, float3 Kd, float3 Ks, float roughness)
-{
-    float3 H     = normalize(V + L);
-    float  NdotV = abs(dot(N, V));
-    float  LdotH = saturate(dot(L, H));
-    float  NdotH = saturate(dot(N, H));
-    float  NdotL = saturate(dot(N, L));
-    float  VdotH = saturate(dot(V, H));
-    float  a2    = max(roughness * roughness, 0.01);
-    float  f90   = saturate(50.0f * dot(Ks, 0.33f));
-
-    float3 diffuse = Kd / F_PI;
-    float  D = D_GGX(NdotH, a2);
-    float  G = G2_Smith(a2, NdotL, NdotV);
-    float3 F = F_Schlick(Ks, f90, LdotH);
-    float3 specular = (D * G * F) / F_PI;
-
-    return (diffuse + specular) * NdotL;
 }
 
 #endif//ADX_BRDF_HLSLI

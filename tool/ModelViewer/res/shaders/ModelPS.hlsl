@@ -7,9 +7,9 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include "asdxBRDF.hlsli"
 #include "asdxTangentSpace.hlsli"
 #include "asdxSamplers.hlsli"
+#include "asdxMaterial.hlsli"
 #include "asdxColor.hlsli"
 
 
@@ -125,27 +125,31 @@ float4 main(const VSOutput input) : SV_TARGET0
     default:
         {
             float3 V = normalize(GetCameraPosition(View) - input.WorldPos.xyz);
-            float3 R = normalize(reflect(-V, N));
- 
-            float NoV = abs(dot(N, V));
 
             float4 bc  = BaseColorMap.Sample(LinearWrap, input.TexCoord);
             bc.rgb *= BaseColor;
             bc.a   *= Alpha;
- 
+
             float3 orm = OrmMap.Sample(LinearWrap, input.TexCoord).rgb;
             orm.x *= Occlusion;
             orm.y *= Roughness;
             orm.z *= Metalness;
+            
+            Material material;
+            material.BaseColor          = bc.rgb;
+            material.LinearRoughness    = orm.y;
+            material.Metalness          = orm.z;
+            material.Ior                = 1.5f;
 
-            float3 Kd = ToKd(bc.rgb, orm.z);
-            float3 Ks = ToKs(bc.rgb, orm.z);
- 
+            float3 L = V;
+            LightingDots dots = CalcDots(T, B, N, V, L, N);
+
+            float3 emission = EmissiveMap.Sample(LinearWrap, input.TexCoord).xyz * Emissive;
+
             float3 lit = 0;
-            lit += EvaluateDirectLight(N, V, V, Kd, Ks, orm.y);
-            lit += EvaluateIBLDiffuse(DiffuseLD, LinearWrap, N) * Kd * orm.x;
-            lit += EvaluateIBLSpecular(SpecularLD, LinearWrap, DFGMap, LinearClamp, NoV, N, R, Ks, orm.y) * orm.x;
-            lit += EmissiveMap.Sample(LinearWrap, input.TexCoord).xyz * Emissive;
+            lit += EvaluateDirectLight(material, dots/*, SheenLUT, LinearClamp*/);
+            lit += EvaluateIBL(DiffuseLD, SpecularLD, DFGMap, LinearWrap, LinearClamp, material, N, V);
+            lit += emission;
             output.rgb = lit;
             output.a   = bc.a;
 

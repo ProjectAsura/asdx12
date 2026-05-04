@@ -408,6 +408,7 @@
     <None Include="..\res\shaders\asdxComputeUtil.hlsli" />
     <None Include="..\res\shaders\asdxCulling.hlsli" />
     <None Include="..\res\shaders\asdxDebugPrint.hlsli" />
+    <None Include="..\res\shaders\asdxMaterial.hlsli" />
     <None Include="..\res\shaders\asdxMath.hlsli" />
     <None Include="..\res\shaders\asdxRandom.hlsli" />
     <None Include="..\res\shaders\asdxReservior.hlsli" />

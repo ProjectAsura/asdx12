@@ -832,6 +832,9 @@
     <None Include="..\res\shaders\asdxTransform.hlsli">
       <Filter>リソース ファイル\shaders</Filter>
     </None>
+    <None Include="..\res\shaders\asdxMaterial.hlsli">
+      <Filter>リソース ファイル\shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\res\shaders\asdxColorFilterCS.hlsl">
