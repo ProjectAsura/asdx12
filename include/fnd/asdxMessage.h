@@ -82,13 +82,57 @@ public:
     const T* GetAs() const
     { return reinterpret_cast<const T*>(m_pBuffer); }
 
-private:
+protected:
     //=========================================================================
-    // private variables.
+    // protected variables.
     //=========================================================================
     uint32_t    m_Type      = 0;
     uint64_t    m_Size      = 0;
     const void* m_pBuffer   = nullptr;
+
+    //=========================================================================
+    // protected methods.
+    //=========================================================================
+    /* NOTHING */
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// TypedMessage class
+///////////////////////////////////////////////////////////////////////////////
+template<typename T>
+class TypedMessage : public Message
+{
+    //=========================================================================
+    // list of friend classes and methods.
+    //=========================================================================
+    /* NOTHING */
+
+public:
+    //=========================================================================
+    // public variables.
+    //=========================================================================
+    /* NOTHING */
+
+    //=========================================================================
+    // public methods.
+    //=========================================================================
+
+    //-------------------------------------------------------------------------
+    //! @brief      引数付きコンストラクタです.
+    //-------------------------------------------------------------------------
+    TypedMessage(uint32_t type, const T& data)
+    : m_Data(data)
+    {
+        m_Type    = type;
+        m_Size    = sizeof(T);
+        m_pBuffer = &m_Data;
+    }
+
+private:
+    //=========================================================================
+    // private variables.
+    //=========================================================================
+    T m_Data = {};
 
     //=========================================================================
     // private methods.
@@ -114,9 +158,9 @@ struct IMessageListener
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-// MessageMgr class
+// MessageManager class
 ///////////////////////////////////////////////////////////////////////////////
-class MessageMgr
+class MessageManager
 {
     //=========================================================================
     // list of friend classes and methods.
@@ -138,7 +182,7 @@ public:
     //! 
     //! @return     シングルトンインスタンスを返却します.
     //-------------------------------------------------------------------------
-    static MessageMgr& Instance();
+    static MessageManager& Instance();
 
     //-------------------------------------------------------------------------
     //! @brief      初期化処理を行います.
@@ -176,7 +220,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      メッセージを追加します.
     //-------------------------------------------------------------------------
-    void PushMessage(const Message& msg);
+    void PostMessage(const Message& msg);
 
     //-------------------------------------------------------------------------
     //! @brief      メッセージをブロードキャストします.
@@ -187,7 +231,7 @@ private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    static MessageMgr               s_Instance;
+    static MessageManager           s_Instance;
     std::list<IMessageListener*>    m_Listeners;
     asdx::FrameHeap                 m_Heap;
     asdx::Queue<Message>            m_Queue;
@@ -198,14 +242,23 @@ private:
     /* NOTHING */
 };
 
-inline void AddMessageListener(IMessageListener* instance)
-{ asdx::MessageMgr::Instance().Add(instance); }
+//-----------------------------------------------------------------------------
+//! @brief      メッセージリスナーを追加します.
+//-----------------------------------------------------------------------------
+inline void AddMsgListener(IMessageListener* instance)
+{ asdx::MessageManager::Instance().Add(instance); }
 
-inline void RemoveMessageListener(IMessageListener* instance)
-{ asdx::MessageMgr::Instance().Remove(instance); }
+//-----------------------------------------------------------------------------
+//! @brief      メッセージリスナーを削除します.
+//-----------------------------------------------------------------------------
+inline void RemoveMsgListener(IMessageListener* instance)
+{ asdx::MessageManager::Instance().Remove(instance); }
 
+//-----------------------------------------------------------------------------
+//! @brief      メッセージを送ります.
+//-----------------------------------------------------------------------------
 inline void SendMsg(const Message& msg)
-{ asdx::MessageMgr::Instance().PushMessage(msg); }
+{ asdx::MessageManager::Instance().PostMessage(msg); }
 
 } // namespace asdx
 

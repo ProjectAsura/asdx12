@@ -13,26 +13,26 @@
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
-// MessageMgr class
+// MessageManager class
 ///////////////////////////////////////////////////////////////////////////////
-MessageMgr MessageMgr::s_Instance;
+MessageManager MessageManager::s_Instance;
 
 //-----------------------------------------------------------------------------
 //      シングルトンインスタンスを取得します.
 //-----------------------------------------------------------------------------
-MessageMgr& MessageMgr::Instance()
+MessageManager& MessageManager::Instance()
 { return s_Instance; }
 
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool MessageMgr::Init(size_t size)
+bool MessageManager::Init(size_t size)
 { return m_Heap.Init(size); }
 
 //-----------------------------------------------------------------------------
 //      解放処理を行います.
 //-----------------------------------------------------------------------------
-void MessageMgr::Term()
+void MessageManager::Term()
 {
     m_Listeners.clear();
     m_Queue.clear();
@@ -42,25 +42,25 @@ void MessageMgr::Term()
 //-----------------------------------------------------------------------------
 //      メッセージリスナーを追加します.
 //-----------------------------------------------------------------------------
-void MessageMgr::Add(IMessageListener* instance)
+void MessageManager::Add(IMessageListener* instance)
 { m_Listeners.push_back(instance); }
 
 //-----------------------------------------------------------------------------
 //      メッセージリスナーを削除します.
 //-----------------------------------------------------------------------------
-void MessageMgr::Remove(IMessageListener* instance)
+void MessageManager::Remove(IMessageListener* instance)
 { m_Listeners.remove(instance); }
 
 //-----------------------------------------------------------------------------
 //      全メッセージリスナーを破棄します.
 //-----------------------------------------------------------------------------
-void MessageMgr::Clear()
+void MessageManager::Clear()
 { m_Listeners.clear(); }
 
 //-----------------------------------------------------------------------------
 //      メッセージを追加します.
 //-----------------------------------------------------------------------------
-void MessageMgr::PushMessage(const Message& msg)
+void MessageManager::PostMessage(const Message& msg)
 {
     auto buf = m_Heap.Alloc(sizeof(Message));
     assert(buf != nullptr);
@@ -83,7 +83,7 @@ void MessageMgr::PushMessage(const Message& msg)
 //-----------------------------------------------------------------------------
 //      メッセージをブロードキャストします.
 //-----------------------------------------------------------------------------
-void MessageMgr::BroadCast()
+void MessageManager::BroadCast()
 {
     while(!m_Queue.empty())
     {
