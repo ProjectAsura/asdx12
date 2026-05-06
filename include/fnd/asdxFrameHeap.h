@@ -102,11 +102,11 @@ public:
     //! @return     確保したメモリへのポインタを返却します.
     //!             メモリ確保に失敗した場合は nullptr が返却されます.
     //-------------------------------------------------------------------------
-    template<typename T>
-    T* Alloc()
+    template<typename T, class... Args>
+    T* New(Args... args)
     {
         const auto buf = Alloc(sizeof(T), alignof(T));
-        return new(buf) T();
+        return new(buf) T(args...);
     }
 
 private:
