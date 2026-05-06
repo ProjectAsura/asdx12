@@ -23,12 +23,12 @@ namespace asdx {
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
 Mouse::Mouse()
-: m_CursorX    ( -1 )
-, m_CursorY    ( -1 )
-, m_PrevCursorX( -1 )
-, m_PrevCursorY( -1 )
-, m_Index      ( 0 )
-{ memset( m_Button, false, sizeof(bool) * NUM_MOUSE_BUTTON * 2 ); }
+: m_CursorX    (-1)
+, m_CursorY    (-1)
+, m_PrevCursorX(-1)
+, m_PrevCursorY(-1)
+, m_Index      (0)
+{ memset(m_Button, false, sizeof(bool) * NUM_MOUSE_BUTTON * 2); }
 
 //-----------------------------------------------------------------------------
 //      デストラクタです.
@@ -54,29 +54,26 @@ void Mouse::UpdateState(void* pHandle)
         hWnd = (HWND)pHandle;
         ScreenToClient( hWnd, &pt );
     }
-    //auto hWnd = FindWindowW( L"asdxWindowClass", nullptr );
-    //if ( hWnd != nullptr )
-    //{ ScreenToClient( hWnd, &pt ); }
 
-    m_CursorX = int( pt.x );
-    m_CursorY = int( pt.y );
+    m_CursorX = int(pt.x);
+    m_CursorY = int(pt.y);
 
     // フォーカスがある場合のみ，ボタンステートを更新.
     if ( GetActiveWindow() == hWnd )
     {
-        m_Button[ m_Index ][ MOUSE_BUTTON_L ]  = ( GetAsyncKeyState( VK_LBUTTON )  & 0x8000 ) ? true : false;
-        m_Button[ m_Index ][ MOUSE_BUTTON_R ]  = ( GetAsyncKeyState( VK_RBUTTON )  & 0x8000 ) ? true : false;
-        m_Button[ m_Index ][ MOUSE_BUTTON_M ]  = ( GetAsyncKeyState( VK_MBUTTON )  & 0x8000 ) ? true : false;
-        m_Button[ m_Index ][ MOUSE_BUTTON_X1 ] = ( GetAsyncKeyState( VK_XBUTTON1 ) & 0x8000 ) ? true : false;
-        m_Button[ m_Index ][ MOUSE_BUTTON_X2 ] = ( GetAsyncKeyState( VK_XBUTTON2 ) & 0x8000 ) ? true : false;
+        m_Button[m_Index][MOUSE_BUTTON_L ] = !!(GetAsyncKeyState( VK_LBUTTON )  & 0x8000);
+        m_Button[m_Index][MOUSE_BUTTON_R ] = !!(GetAsyncKeyState( VK_RBUTTON )  & 0x8000);
+        m_Button[m_Index][MOUSE_BUTTON_M ] = !!(GetAsyncKeyState( VK_MBUTTON )  & 0x8000);
+        m_Button[m_Index][MOUSE_BUTTON_X1] = !!(GetAsyncKeyState( VK_XBUTTON1 ) & 0x8000);
+        m_Button[m_Index][MOUSE_BUTTON_X2] = !!(GetAsyncKeyState( VK_XBUTTON2 ) & 0x8000);
     }
     else
     {
-        m_Button[ m_Index ][ MOUSE_BUTTON_L ]  = false;
-        m_Button[ m_Index ][ MOUSE_BUTTON_R ]  = false;
-        m_Button[ m_Index ][ MOUSE_BUTTON_M ]  = false;
-        m_Button[ m_Index ][ MOUSE_BUTTON_X1 ] = false;
-        m_Button[ m_Index ][ MOUSE_BUTTON_X2 ] = false;
+        m_Button[m_Index][MOUSE_BUTTON_L ] = false;
+        m_Button[m_Index][MOUSE_BUTTON_R ] = false;
+        m_Button[m_Index][MOUSE_BUTTON_M ] = false;
+        m_Button[m_Index][MOUSE_BUTTON_X1] = false;
+        m_Button[m_Index][MOUSE_BUTTON_X2] = false;
     }
 }
 
@@ -89,7 +86,7 @@ void Mouse::ResetState()
     m_CursorY     = -1;
     m_PrevCursorX = -1;
     m_PrevCursorY = -1;
-    memset( m_Button, false, sizeof(bool) * NUM_MOUSE_BUTTON * 2 );
+    memset(m_Button, false, sizeof(bool) * NUM_MOUSE_BUTTON * 2);
 }
 
 //-----------------------------------------------------------------------------
@@ -133,8 +130,8 @@ int Mouse::GetCursorDiffY() const
 //-----------------------------------------------------------------------------
 bool Mouse::IsHold(uint32_t button) const
 {
-    assert( button < NUM_MOUSE_BUTTON );
-    return m_Button[ m_Index ][ button ];
+    assert(button < NUM_MOUSE_BUTTON);
+    return m_Button[m_Index][button];
 }
 
 //-----------------------------------------------------------------------------
@@ -142,8 +139,8 @@ bool Mouse::IsHold(uint32_t button) const
 //-----------------------------------------------------------------------------
 bool Mouse::IsDown(uint32_t button) const
 {
-    assert( button < NUM_MOUSE_BUTTON );
-    return m_Button[ m_Index ][ button ] && ( !m_Button[ 1 - m_Index ][ button ] );
+    assert(button < NUM_MOUSE_BUTTON);
+    return m_Button[m_Index][button] && (!m_Button[1 - m_Index][button]);
 }
 
 //-----------------------------------------------------------------------------
@@ -151,8 +148,8 @@ bool Mouse::IsDown(uint32_t button) const
 //-----------------------------------------------------------------------------
 bool Mouse::IsDrag(uint32_t button) const
 {
-    assert( button < NUM_MOUSE_BUTTON );
-    return m_Button[ m_Index ][ button ] && m_Button[ 1 - m_Index ][ button ];
+    assert(button < NUM_MOUSE_BUTTON);
+    return m_Button[m_Index][button] && m_Button[1 - m_Index][button];
 }
 
 } // namespace asdx
