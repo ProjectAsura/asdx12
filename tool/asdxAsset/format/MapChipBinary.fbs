@@ -1,6 +1,4 @@
-﻿include "TextureBinary.fbs";
-
-namespace asdx.res;
+﻿namespace asdx.res;
 
 table Layer
 {
@@ -26,7 +24,9 @@ table TileSet
     TileCount       : uint;
     TileWidth       : uint;
     TileHeight      : uint;
-    Texture         : TextureBinary;
+    TextureWidth    : uint;
+    TextureHeight   : uint;
+    TexturePath     : string;
     Tiles           : [Tile];
 }
 

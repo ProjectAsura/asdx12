@@ -9,11 +9,12 @@
 //-----------------------------------------------------------------------------
 #include <cassert>
 #include <cstdarg>
+#include <fnd/asdxLogger.h>
+#include <res/asdxResTexture.h>
 #include <gfx/asdxDevice.h>
 #include <gfx/asdxFont.h>
 #include <gfx/asdxSprite.h>
-#include <fnd/asdxLogger.h>
-#include <res/asdxResTexture.h>
+#include <gfx/asdxTextureManager.h>
 
 
 #define ASDX_FONT_FORMATTING            \
@@ -134,9 +135,9 @@ Font::~Font()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool Font::Init(ID3D12GraphicsCommandList* pCmd, std::vector<uint8_t>&& blob)
+bool Font::Init(std::vector<uint8_t>&& blob)
 {
-    if (pCmd == nullptr || blob.empty())
+    if (blob.empty())
     {
         ELOG("Error : Invalid Argument.");
         return false;
@@ -145,7 +146,7 @@ bool Font::Init(ID3D12GraphicsCommandList* pCmd, std::vector<uint8_t>&& blob)
     m_Binary.Load(std::move(blob));
     ResTexture res = m_Binary.GetTexture();
 
-    if (!Texture::Create(pCmd, res, &m_Texture))
+    if (!TextureManager::Instance().CreateTexture(res, &m_Texture))
     {
         ELOG("Error : Font Texture Init Failed.");
         return false;

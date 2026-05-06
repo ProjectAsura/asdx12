@@ -186,6 +186,16 @@ public:
     //-------------------------------------------------------------------------
     bool HasCommand() const;
 
+    //-------------------------------------------------------------------------
+    //! @brief      テクスチャを生成します.
+    //! 
+    //! @param[in]      resource        リソーステクスチャ.
+    //! @param[out]     ppTexture       テクスチャの格納先.
+    //! @retval true    生成に成功.
+    //! @retval false   生成に失敗.
+    //-------------------------------------------------------------------------
+    bool CreateTexture(ResTexture& resource, Texture** ppTexture);
+
 private:
     //=========================================================================
     // private variables.
@@ -217,16 +227,6 @@ private:
     //! @brief      デフォルトテクスチャを生成します.
     //-------------------------------------------------------------------------
     void CreateDefaultTextures();
-
-    //-------------------------------------------------------------------------
-    //! @brief      テクスチャを生成します.
-    //! 
-    //! @param[in]      resource        リソーステクスチャ.
-    //! @param[out]     ppTexture       テクスチャの格納先.
-    //! @retval true    生成に成功.
-    //! @retval false   生成に失敗.
-    //-------------------------------------------------------------------------
-    bool CreateTexture(ResTexture& resource, Texture** ppTexture);
 
     TextureManager              (const TextureManager&) = delete;
     TextureManager& operator =  (const TextureManager&) = delete;

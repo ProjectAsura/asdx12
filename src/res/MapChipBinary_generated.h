@@ -13,8 +13,6 @@ static_assert(FLATBUFFERS_VERSION_MAJOR == 25 &&
               FLATBUFFERS_VERSION_REVISION == 10,
              "Non-compatible flatbuffers version included");
 
-#include "TextureBinary_generated.h"
-
 namespace asdx {
 namespace res {
 
@@ -179,8 +177,10 @@ struct TileSet FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
     VT_TILECOUNT = 10,
     VT_TILEWIDTH = 12,
     VT_TILEHEIGHT = 14,
-    VT_TEXTURE = 16,
-    VT_TILES = 18
+    VT_TEXTUREWIDTH = 16,
+    VT_TEXTUREHEIGHT = 18,
+    VT_TEXTUREPATH = 20,
+    VT_TILES = 22
   };
   const ::flatbuffers::String *Name() const {
     return GetPointer<const ::flatbuffers::String *>(VT_NAME);
@@ -200,8 +200,14 @@ struct TileSet FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   uint32_t TileHeight() const {
     return GetField<uint32_t>(VT_TILEHEIGHT, 0);
   }
-  const asdx::res::TextureBinary *Texture() const {
-    return GetPointer<const asdx::res::TextureBinary *>(VT_TEXTURE);
+  uint32_t TextureWidth() const {
+    return GetField<uint32_t>(VT_TEXTUREWIDTH, 0);
+  }
+  uint32_t TextureHeight() const {
+    return GetField<uint32_t>(VT_TEXTUREHEIGHT, 0);
+  }
+  const ::flatbuffers::String *TexturePath() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_TEXTUREPATH);
   }
   const ::flatbuffers::Vector<const asdx::res::Tile *> *Tiles() const {
     return GetPointer<const ::flatbuffers::Vector<const asdx::res::Tile *> *>(VT_TILES);
@@ -215,8 +221,10 @@ struct TileSet FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
            VerifyField<uint32_t>(verifier, VT_TILECOUNT, 4) &&
            VerifyField<uint32_t>(verifier, VT_TILEWIDTH, 4) &&
            VerifyField<uint32_t>(verifier, VT_TILEHEIGHT, 4) &&
-           VerifyOffset(verifier, VT_TEXTURE) &&
-           verifier.VerifyTable(Texture()) &&
+           VerifyField<uint32_t>(verifier, VT_TEXTUREWIDTH, 4) &&
+           VerifyField<uint32_t>(verifier, VT_TEXTUREHEIGHT, 4) &&
+           VerifyOffset(verifier, VT_TEXTUREPATH) &&
+           verifier.VerifyString(TexturePath()) &&
            VerifyOffset(verifier, VT_TILES) &&
            verifier.VerifyVector(Tiles()) &&
            verifier.EndTable();
@@ -245,8 +253,14 @@ struct TileSetBuilder {
   void add_TileHeight(uint32_t TileHeight) {
     fbb_.AddElement<uint32_t>(TileSet::VT_TILEHEIGHT, TileHeight, 0);
   }
-  void add_Texture(::flatbuffers::Offset<asdx::res::TextureBinary> Texture) {
-    fbb_.AddOffset(TileSet::VT_TEXTURE, Texture);
+  void add_TextureWidth(uint32_t TextureWidth) {
+    fbb_.AddElement<uint32_t>(TileSet::VT_TEXTUREWIDTH, TextureWidth, 0);
+  }
+  void add_TextureHeight(uint32_t TextureHeight) {
+    fbb_.AddElement<uint32_t>(TileSet::VT_TEXTUREHEIGHT, TextureHeight, 0);
+  }
+  void add_TexturePath(::flatbuffers::Offset<::flatbuffers::String> TexturePath) {
+    fbb_.AddOffset(TileSet::VT_TEXTUREPATH, TexturePath);
   }
   void add_Tiles(::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::Tile *>> Tiles) {
     fbb_.AddOffset(TileSet::VT_TILES, Tiles);
@@ -270,11 +284,15 @@ inline ::flatbuffers::Offset<TileSet> CreateTileSet(
     uint32_t TileCount = 0,
     uint32_t TileWidth = 0,
     uint32_t TileHeight = 0,
-    ::flatbuffers::Offset<asdx::res::TextureBinary> Texture = 0,
+    uint32_t TextureWidth = 0,
+    uint32_t TextureHeight = 0,
+    ::flatbuffers::Offset<::flatbuffers::String> TexturePath = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::Tile *>> Tiles = 0) {
   TileSetBuilder builder_(_fbb);
   builder_.add_Tiles(Tiles);
-  builder_.add_Texture(Texture);
+  builder_.add_TexturePath(TexturePath);
+  builder_.add_TextureHeight(TextureHeight);
+  builder_.add_TextureWidth(TextureWidth);
   builder_.add_TileHeight(TileHeight);
   builder_.add_TileWidth(TileWidth);
   builder_.add_TileCount(TileCount);
@@ -292,9 +310,12 @@ inline ::flatbuffers::Offset<TileSet> CreateTileSetDirect(
     uint32_t TileCount = 0,
     uint32_t TileWidth = 0,
     uint32_t TileHeight = 0,
-    ::flatbuffers::Offset<asdx::res::TextureBinary> Texture = 0,
+    uint32_t TextureWidth = 0,
+    uint32_t TextureHeight = 0,
+    const char *TexturePath = nullptr,
     std::vector<asdx::res::Tile> *Tiles = nullptr) {
   auto Name__ = Name ? _fbb.CreateString(Name) : 0;
+  auto TexturePath__ = TexturePath ? _fbb.CreateString(TexturePath) : 0;
   auto Tiles__ = Tiles ? _fbb.CreateVectorOfSortedStructs<asdx::res::Tile>(Tiles) : 0;
   return asdx::res::CreateTileSet(
       _fbb,
@@ -304,7 +325,9 @@ inline ::flatbuffers::Offset<TileSet> CreateTileSetDirect(
       TileCount,
       TileWidth,
       TileHeight,
-      Texture,
+      TextureWidth,
+      TextureHeight,
+      TexturePath__,
       Tiles__);
 }
 

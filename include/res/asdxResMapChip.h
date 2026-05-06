@@ -11,7 +11,7 @@
 #include <vector>
 #include <fnd/asdxArrayView.h>
 #include <fnd/asdxMath.h>
-#include <res/asdxResTexture.h>
+#include <fnd/asdxStringView.h>
 
 
 namespace asdx {
@@ -31,12 +31,15 @@ struct ResChipProperty
 ///////////////////////////////////////////////////////////////////////////////
 struct ResTileSet
 {
-    const char* Name;           //!< 名前.
+    StringView  Name;           //!< 名前.
     uint32_t    FirstChipId;    //!< 最初のチップ番号.
     uint32_t    Columns;        //!< 列数(X方向の数).
     uint32_t    TileCount;      //!< タイル数.
     uint32_t    TileWidth;      //!< タイルの横幅.
     uint32_t    TileHeight;     //!< タイルの縦幅.
+    uint32_t    TextureWidth;   //!< テクスチャの横幅.
+    uint32_t    TextureHeight;  //!< テクスチャの縦幅.
+    StringView  TexturePath;    //!< テクスチャファイルパス.
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -44,7 +47,7 @@ struct ResTileSet
 ///////////////////////////////////////////////////////////////////////////////
 struct ResTileMapLayer
 {
-    const char*         Name;       //!< 名前.
+    StringView          Name;       //!< 名前.
     uint32_t            Id;         //!< ID.
     uint32_t            Columns;    //!< 列数(X方向の数).
     uint32_t            Rows;       //!< 行数(Y方向の数).
@@ -144,14 +147,6 @@ public:
     //! @return     指定されたタイルセットを返却します.
     //-------------------------------------------------------------------------
     ResTileSet GetTileSet(uint32_t tileSetIndex) const;
-
-    //-------------------------------------------------------------------------
-    //! @brief      テクスチャを取得します.
-    //! 
-    //! @param[in]      tileSetIndex        タイルセット番号.
-    //! @return     指定されたテクスチャを返却します.
-    //-------------------------------------------------------------------------
-    ResTexture GetTexture(uint32_t tileSetIndex) const;
 
     //-------------------------------------------------------------------------
     //! @brief      レイヤー数を取得します.

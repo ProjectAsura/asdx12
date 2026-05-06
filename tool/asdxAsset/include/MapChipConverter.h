@@ -29,8 +29,9 @@ public:
     ///////////////////////////////////////////////////////////////////////////
     struct Desc
     {
-        std::string     InputPath;      // Input Txm Path.
-        std::string     OutputPath;     // Output Binary Path.
+        std::string     InputPath;              // Input Txm Path.
+        std::string     OutputPath;             // Output Binary Path.
+        bool            TextureConvert = false;
     };
 
     //=========================================================================
@@ -48,7 +49,6 @@ public:
     //! @return     現在のバイナリバージョンを返却します.
     //-------------------------------------------------------------------------
     static uint32_t GetCurrentVersion();
-
 
     //-------------------------------------------------------------------------
     //! @brief      変換処理を実行します.

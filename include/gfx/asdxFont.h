@@ -77,7 +77,7 @@ public:
     //! @retval true    初期化に成功.
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
-    bool Init(ID3D12GraphicsCommandList* pCmd, std::vector<uint8_t>&& blob);
+    bool Init(std::vector<uint8_t>&& blob);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.

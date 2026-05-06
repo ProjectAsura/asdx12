@@ -111,34 +111,15 @@ ResTileSet MapChipBinary::GetTileSet(uint32_t tileSetIndex) const
     auto tileSet = res::GetMapChipBinary(m_Blob.data())->TileSets()->Get(tileSetIndex);
 
     ResTileSet result = {};
-    result.Name         = tileSet->Name()->c_str();
-    result.FirstChipId  = tileSet->FirstChipId();
-    result.Columns      = tileSet->Columns();
-    result.TileCount    = tileSet->TileCount();
-    result.TileWidth    = tileSet->TileWidth();
-    result.TileHeight   = tileSet->TileHeight();
-    return result;
-}
-
-//-----------------------------------------------------------------------------
-//      テクスチャを取得します.
-//-----------------------------------------------------------------------------
-ResTexture MapChipBinary::GetTexture(uint32_t tileSetIndex) const
-{
-    assert(!m_Blob.empty());
-    auto tileSet = res::GetMapChipBinary(m_Blob.data())->TileSets()->Get(tileSetIndex);
-    auto texture = tileSet->Texture();
-
-    ResTexture result = {};
-    result.Dimension        = TEXTURE_DIMENSION(texture->Dimension());
-    result.Width            = texture->Width();
-    result.Height           = texture->Height();
-    result.DepthOrArraySize = texture->DepthOrArraySize();
-    result.Format           = texture->Format();
-    result.MipLevels        = texture->MipLevels();
-    result.SubResources     = ArrayView(reinterpret_cast<const ResSubResource*>(texture->SubResources()->data()), texture->SubResources()->size());
-    result.Pixels           = ArrayView(texture->Texels()->data(), texture->Texels()->size());
-
+    result.Name          = StringView(tileSet->Name()->c_str());
+    result.FirstChipId   = tileSet->FirstChipId();
+    result.Columns       = tileSet->Columns();
+    result.TileCount     = tileSet->TileCount();
+    result.TileWidth     = tileSet->TileWidth();
+    result.TileHeight    = tileSet->TileHeight();
+    result.TextureWidth  = tileSet->TextureWidth();
+    result.TextureHeight = tileSet->TextureHeight();
+    result.TexturePath   = StringView(tileSet->TexturePath()->c_str());
     return result;
 }
 
@@ -160,7 +141,7 @@ ResTileMapLayer MapChipBinary::GetLayer(uint32_t layerIndex) const
     auto layer = res::GetMapChipBinary(m_Blob.data())->Layers()->Get(layerIndex);
 
     ResTileMapLayer result = {};
-    result.Name     = layer->Name()->c_str();
+    result.Name     = StringView(layer->Name()->c_str());
     result.Id       = layer->Id();
     result.Rows     = layer->Rows();
     result.Columns  = layer->Columns();
@@ -178,8 +159,8 @@ ResTileCoord MapChipBinary::GetCoord(uint32_t tileSetIndex, uint32_t tileId) con
     auto x = tileId % tileSet->Columns();
     auto y = tileId / tileSet->Columns();
 
-    auto u = float(tileSet->TileWidth ()) / float(tileSet->Texture()->Width ());
-    auto v = float(tileSet->TileHeight()) / float(tileSet->Texture()->Height());
+    auto u = float(tileSet->TileWidth ()) / float(tileSet->TextureWidth());
+    auto v = float(tileSet->TileHeight()) / float(tileSet->TextureHeight());
 
     ResTileCoord result;
     result.Uv0.x = u * x;

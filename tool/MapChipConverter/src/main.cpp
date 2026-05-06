@@ -34,13 +34,15 @@ int main(int argc, char** argv)
     // 引数指定を設定.
     parser.add<std::string>("input",  'i', "Input Txm File Path.", true, "");
     parser.add<std::string>("output", 'o', "Output MapChip Binary Path", true, "");
+    parser.add<bool>("texconv", 'c', "Texture Binary Convert", false, false);
 
     // 解析実行.
     parser.parse_check(argc, argv);
 
     asdx::MapChipConverter::Desc desc = {};
-    desc.InputPath  = parser.get<std::string>("input");
-    desc.OutputPath = parser.get<std::string>("output");
+    desc.InputPath      = parser.get<std::string>("input");
+    desc.OutputPath     = parser.get<std::string>("output");
+    desc.TextureConvert = parser.get<bool>("texconv");
 
     auto ret = asdx::MapChipConverter::Convert(desc);
 

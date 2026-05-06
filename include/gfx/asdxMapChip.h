@@ -10,7 +10,7 @@
 //-----------------------------------------------------------------------------
 #include <res/asdxResMapChip.h>
 #include <gfx/asdxSprite.h>
-#include <gfx/asdxTexture.h>
+#include <gfx/asdxTextureManager.h>
 
 
 namespace asdx {
@@ -57,7 +57,6 @@ public:
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
     bool Init(
-        ID3D12GraphicsCommandList*  pCmd,
         std::vector<uint8_t>&       blob,
         uint32_t                    screenWidth,
         uint32_t                    screenHeight,
@@ -223,7 +222,7 @@ private:
     int             m_DrawCols      = 0;
     bool            m_Clamp         = false;
 
-    std::vector<Texture*> m_Textures = {};
+    std::vector<TextureHolder> m_Textures = {};
 
     //=========================================================================
     // private methods.

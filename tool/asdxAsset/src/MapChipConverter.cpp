@@ -14,9 +14,9 @@
 #include <sstream>
 #include <MapChipConverter.h>
 #include <TextureConverter.h>
-#include <DirectXTex.h>
 #include <tinyxml2.h>
 #include "MapChipBinary_generated.h"
+#include <filesystem>
 
 
 #ifndef ELOG
@@ -29,24 +29,8 @@ namespace {
 //-----------------------------------------------------------------------------
 // Constant Values.
 //-----------------------------------------------------------------------------
-static constexpr uint32_t CURRENT_VERSION = 1u;     //!< 現在のバイナリバージョン.
+static constexpr uint32_t CURRENT_VERSION = 2u;     //!< 現在のバイナリバージョン.
 
-
-//-----------------------------------------------------------------------------
-//      ワイド文字列に変換します.
-//-----------------------------------------------------------------------------
-std::wstring ToStringW( const std::string& value )
-{
-    auto length = MultiByteToWideChar(CP_ACP, 0, value.c_str(), int(value.size() + 1), nullptr, 0 );
-    auto buffer = new wchar_t[length];
-
-    MultiByteToWideChar(CP_ACP, 0, value.c_str(), int(value.size() + 1),  buffer, length );
-
-    std::wstring result( buffer );
-    delete[] buffer;
-
-    return result;
-}
 
 //-----------------------------------------------------------------------------
 //      カンマ区切りを配列に変換します.
@@ -63,6 +47,32 @@ std::vector<uint16_t> ParseCsv(const char* csv)
         result.push_back(u);
     }
     return result;
+}
+
+//-----------------------------------------------------------------------------
+//      ファイルパスを連結します.
+//-----------------------------------------------------------------------------
+std::string PathCombine(const std::string& lhs, const std::string& rhs)
+{
+    if (rhs.empty())
+        return std::string();
+    if (lhs.empty())
+        return rhs;
+
+    return lhs + "\\" + rhs;
+}
+
+//-----------------------------------------------------------------------------
+//      テクスチャコンバートを行います.
+//-----------------------------------------------------------------------------
+void ConvertTXB(const std::string& input, const std::string& output)
+{
+    TextureConverter::Desc desc = {};
+    desc.InputPath  = input;
+    desc.OutputPath = output;
+
+    if (!TextureConverter::Convert(desc))
+    { ELOG("Error : TextureConverter::Convert() Failed. path = %s", input.c_str()); }
 }
 
 } // namespace
@@ -114,58 +124,33 @@ bool MapChipConverter::Convert(const Desc& desc)
 
     std::vector<flatbuffers::Offset<asdx::res::TileSet>> tilesets;
     std::vector<flatbuffers::Offset<asdx::res::Layer>>   layers;
-    DirectX::ScratchImage scratchImage = {};
+
+    std::filesystem::path txbOutPath = desc.OutputPath;
+    auto txbOutDir = txbOutPath.parent_path().string();
 
     // tileset
     {
         for(auto tileset = map->FirstChildElement("tileset"); tileset != nullptr; tileset = tileset->NextSiblingElement("tileset"))
         {
             auto image = tileset->FirstChildElement("image");
-            flatbuffers::Offset<asdx::res::TextureBinary> texture;
+            uint32_t texW = 0;
+            uint32_t texH = 0;
+            std::string texPath;
             if (image != nullptr)
             {
-                auto imageWidth  = image->UnsignedAttribute("width");
-                auto imageHeight = image->UnsignedAttribute("height");
+                texW    = image->UnsignedAttribute("width");
+                texH    = image->UnsignedAttribute("height");
 
-                std::vector<uint8_t> pixels;
+                // 名前を差し替え.
+                std::filesystem::path p = image->Attribute("source");
+                texPath = "textures\\" + p.filename().replace_extension(".txb").string();
 
-                auto path = image->Attribute("source");
-
-                // テクスチャロード.
-                DirectX::TexMetadata metaData = {};
-
-                std::wstring inputPath = ToStringW(path);
-                auto hr = DirectX::LoadFromWICFile(
-                    inputPath.c_str(),
-                    DirectX::WIC_FLAGS_NONE,
-                    &metaData,
-                    scratchImage);
-
-                assert(imageWidth  == metaData.width);
-                assert(imageHeight == metaData.height);
-
-                auto images = scratchImage.GetImages();
-
-                std::vector<asdx::res::SubResource> subResources;
-                subResources.push_back(
-                    asdx::res::SubResource(
-                        uint32_t(images[0].width),
-                        uint32_t(images[0].height),
-                        images[0].rowPitch,
-                        images[0].slicePitch,
-                        0));
-
-                texture = asdx::res::CreateTextureBinary(
-                    builder,
-                    TextureConverter::GetCurrentVersion(),
-                    TextureConverter::GetDimension(metaData),
-                    uint32_t(metaData.width),
-                    uint32_t(metaData.height),
-                    TextureConverter::GetDepthOrArraySize(metaData),
-                    uint16_t(metaData.mipLevels),
-                    uint32_t(metaData.format),
-                    builder.CreateVectorOfStructs<asdx::res::SubResource>(subResources),
-                    builder.CreateVector<uint8_t>(scratchImage.GetPixels(), scratchImage.GetPixelsSize()));
+                if (desc.TextureConvert)
+                {
+                    ConvertTXB(
+                        image->Attribute("source"),
+                        PathCombine(txbOutDir, texPath));
+                }
             }
 
             auto firstChipId    = tileset->UnsignedAttribute("firstgid", 1);
@@ -212,7 +197,9 @@ bool MapChipConverter::Convert(const Desc& desc)
                     tileCount,
                     tileW,
                     tileH,
-                    texture,
+                    texW,
+                    texH,
+                    texPath.c_str(),
                     &tiles));
         }
     }

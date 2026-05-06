@@ -46,7 +46,6 @@ MapChip::~MapChip()
 //-----------------------------------------------------------------------------
 bool MapChip::Init
 (
-    ID3D12GraphicsCommandList*  pCmd,
     std::vector<uint8_t>&       blob,
     uint32_t                    screenWidth,
     uint32_t                    screenHeight,
@@ -60,8 +59,9 @@ bool MapChip::Init
 
     for(auto i=0u; i<m_Binary.GetTileSetCount(); ++i)
     {
-        auto res = m_Binary.GetTexture(i);
-        if (!Texture::Create(pCmd, res, &m_Textures[i]))
+        auto tileSet = m_Binary.GetTileSet(i);
+        m_Textures[i] = TextureManager::Instance().GetOrCreate(tileSet.TexturePath.c_str());
+        if (!m_Textures[i].IsValid())
         {
             ELOG("Error : Texture Init Failed. index = %u", i);
             return false;
@@ -105,8 +105,7 @@ void MapChip::Term()
 
     for(size_t i=0; i<m_Textures.size(); ++i)
     { 
-        m_Textures[i]->Release(); 
-        m_Textures[i] = nullptr;
+        m_Textures[i].Reset();
     }
 
     m_Textures.clear();
@@ -124,7 +123,7 @@ const MapChipBinary& MapChip::GetBinary() const
 //-----------------------------------------------------------------------------
 void MapChip::Draw(SpriteRenderer& renderer, D3D12_GPU_DESCRIPTOR_HANDLE sampler)
 {
-    renderer.ChangeBatch(renderer.GetDefaultState(), m_Textures[0]->GetHandleGPU(), sampler);
+    renderer.ChangeBatch(renderer.GetDefaultState(), m_Textures[0].GetHandleGPU(), sampler);
 
     auto tileSet = m_Binary.GetTileSet(0);
 
