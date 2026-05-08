@@ -1,6 +1,6 @@
 ﻿//-----------------------------------------------------------------------------
 // File : MapChipConverter.h
-// Desc : Map Chip Converter.
+// Desc : Map Chip Converter (*.mcb)
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 #pragma once

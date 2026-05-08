@@ -14,6 +14,9 @@
 
 namespace asdx {
 
+static_assert(sizeof (ResChipFrame) == sizeof (res::MapTileFrame), "ResChipFrame size not matched.");
+static_assert(alignof(ResChipFrame) == alignof(res::MapTileFrame), "ResChipFrame align not matched.");
+
 ///////////////////////////////////////////////////////////////////////////////
 // MapChipBinary class
 ///////////////////////////////////////////////////////////////////////////////
@@ -186,13 +189,15 @@ bool MapChipBinary::FindChipProperty(uint32_t tileSetIndex, uint16_t chipId, Res
     {
         result.Id        = chipId;
         result.Collision = false;
-        result.Event     = 0;
+        result.Frames    = ArrayView<ResChipFrame>(nullptr, 0);
         return false;
     }
 
     result.Id        = chip->Id();
     result.Collision = chip->Collision();
-    result.Event     = chip->Event();
+    result.Frames    = ArrayView<ResChipFrame>(
+                        reinterpret_cast<const ResChipFrame*>(chip->Frames()->data()),
+                        chip->Frames()->size());
     return true;
 }
 

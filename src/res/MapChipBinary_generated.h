@@ -16,59 +16,53 @@ static_assert(FLATBUFFERS_VERSION_MAJOR == 25 &&
 namespace asdx {
 namespace res {
 
-struct Layer;
-struct LayerBuilder;
+struct MapLayer;
+struct MapLayerBuilder;
 
-struct Tile;
+struct MapTileFrame;
 
-struct TileSet;
-struct TileSetBuilder;
+struct MapTile;
+struct MapTileBuilder;
+
+struct MapObject;
+struct MapObjectBuilder;
+
+struct MapTileSet;
+struct MapTileSetBuilder;
 
 struct MapChipBinary;
 struct MapChipBinaryBuilder;
 
-FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Tile FLATBUFFERS_FINAL_CLASS {
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) MapTileFrame FLATBUFFERS_FINAL_CLASS {
  private:
-  uint16_t Id_;
-  uint8_t Collision_;
-  int8_t padding0__;
-  uint32_t Event_;
+  uint16_t TileId_;
+  int16_t padding0__;
+  float Duration_;
 
  public:
-  Tile()
-      : Id_(0),
-        Collision_(0),
+  MapTileFrame()
+      : TileId_(0),
         padding0__(0),
-        Event_(0) {
+        Duration_(0) {
     (void)padding0__;
   }
-  Tile(uint16_t _Id, bool _Collision, uint32_t _Event)
-      : Id_(::flatbuffers::EndianScalar(_Id)),
-        Collision_(::flatbuffers::EndianScalar(static_cast<uint8_t>(_Collision))),
+  MapTileFrame(uint16_t _TileId, float _Duration)
+      : TileId_(::flatbuffers::EndianScalar(_TileId)),
         padding0__(0),
-        Event_(::flatbuffers::EndianScalar(_Event)) {
+        Duration_(::flatbuffers::EndianScalar(_Duration)) {
     (void)padding0__;
   }
-  uint16_t Id() const {
-    return ::flatbuffers::EndianScalar(Id_);
+  uint16_t TileId() const {
+    return ::flatbuffers::EndianScalar(TileId_);
   }
-  bool KeyCompareLessThan(const Tile * const o) const {
-    return Id() < o->Id();
-  }
-  int KeyCompareWithValue(uint16_t _Id) const {
-    return static_cast<int>(Id() > _Id) - static_cast<int>(Id() < _Id);
-  }
-  bool Collision() const {
-    return ::flatbuffers::EndianScalar(Collision_) != 0;
-  }
-  uint32_t Event() const {
-    return ::flatbuffers::EndianScalar(Event_);
+  float Duration() const {
+    return ::flatbuffers::EndianScalar(Duration_);
   }
 };
-FLATBUFFERS_STRUCT_END(Tile, 8);
+FLATBUFFERS_STRUCT_END(MapTileFrame, 8);
 
-struct Layer FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef LayerBuilder Builder;
+struct MapLayer FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef MapLayerBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_NAME = 4,
     VT_ID = 6,
@@ -104,44 +98,44 @@ struct Layer FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   }
 };
 
-struct LayerBuilder {
-  typedef Layer Table;
+struct MapLayerBuilder {
+  typedef MapLayer Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
   void add_Name(::flatbuffers::Offset<::flatbuffers::String> Name) {
-    fbb_.AddOffset(Layer::VT_NAME, Name);
+    fbb_.AddOffset(MapLayer::VT_NAME, Name);
   }
   void add_Id(uint32_t Id) {
-    fbb_.AddElement<uint32_t>(Layer::VT_ID, Id, 0);
+    fbb_.AddElement<uint32_t>(MapLayer::VT_ID, Id, 0);
   }
   void add_Rows(uint32_t Rows) {
-    fbb_.AddElement<uint32_t>(Layer::VT_ROWS, Rows, 0);
+    fbb_.AddElement<uint32_t>(MapLayer::VT_ROWS, Rows, 0);
   }
   void add_Columns(uint32_t Columns) {
-    fbb_.AddElement<uint32_t>(Layer::VT_COLUMNS, Columns, 0);
+    fbb_.AddElement<uint32_t>(MapLayer::VT_COLUMNS, Columns, 0);
   }
   void add_Data(::flatbuffers::Offset<::flatbuffers::Vector<uint16_t>> Data) {
-    fbb_.AddOffset(Layer::VT_DATA, Data);
+    fbb_.AddOffset(MapLayer::VT_DATA, Data);
   }
-  explicit LayerBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+  explicit MapLayerBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  ::flatbuffers::Offset<Layer> Finish() {
+  ::flatbuffers::Offset<MapLayer> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<Layer>(end);
+    auto o = ::flatbuffers::Offset<MapLayer>(end);
     return o;
   }
 };
 
-inline ::flatbuffers::Offset<Layer> CreateLayer(
+inline ::flatbuffers::Offset<MapLayer> CreateMapLayer(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     ::flatbuffers::Offset<::flatbuffers::String> Name = 0,
     uint32_t Id = 0,
     uint32_t Rows = 0,
     uint32_t Columns = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<uint16_t>> Data = 0) {
-  LayerBuilder builder_(_fbb);
+  MapLayerBuilder builder_(_fbb);
   builder_.add_Data(Data);
   builder_.add_Columns(Columns);
   builder_.add_Rows(Rows);
@@ -150,7 +144,7 @@ inline ::flatbuffers::Offset<Layer> CreateLayer(
   return builder_.Finish();
 }
 
-inline ::flatbuffers::Offset<Layer> CreateLayerDirect(
+inline ::flatbuffers::Offset<MapLayer> CreateMapLayerDirect(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     const char *Name = nullptr,
     uint32_t Id = 0,
@@ -159,7 +153,7 @@ inline ::flatbuffers::Offset<Layer> CreateLayerDirect(
     const std::vector<uint16_t> *Data = nullptr) {
   auto Name__ = Name ? _fbb.CreateString(Name) : 0;
   auto Data__ = Data ? _fbb.CreateVector<uint16_t>(*Data) : 0;
-  return asdx::res::CreateLayer(
+  return asdx::res::CreateMapLayer(
       _fbb,
       Name__,
       Id,
@@ -168,8 +162,212 @@ inline ::flatbuffers::Offset<Layer> CreateLayerDirect(
       Data__);
 }
 
-struct TileSet FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef TileSetBuilder Builder;
+struct MapTile FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef MapTileBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_ID = 4,
+    VT_COLLISION = 6,
+    VT_FLAGS = 8,
+    VT_FRAMES = 10
+  };
+  uint16_t Id() const {
+    return GetField<uint16_t>(VT_ID, 0);
+  }
+  bool KeyCompareLessThan(const MapTile * const o) const {
+    return Id() < o->Id();
+  }
+  int KeyCompareWithValue(uint16_t _Id) const {
+    return static_cast<int>(Id() > _Id) - static_cast<int>(Id() < _Id);
+  }
+  bool Collision() const {
+    return GetField<uint8_t>(VT_COLLISION, 0) != 0;
+  }
+  uint8_t Flags() const {
+    return GetField<uint8_t>(VT_FLAGS, 0);
+  }
+  const ::flatbuffers::Vector<const asdx::res::MapTileFrame *> *Frames() const {
+    return GetPointer<const ::flatbuffers::Vector<const asdx::res::MapTileFrame *> *>(VT_FRAMES);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint16_t>(verifier, VT_ID, 2) &&
+           VerifyField<uint8_t>(verifier, VT_COLLISION, 1) &&
+           VerifyField<uint8_t>(verifier, VT_FLAGS, 1) &&
+           VerifyOffset(verifier, VT_FRAMES) &&
+           verifier.VerifyVector(Frames()) &&
+           verifier.EndTable();
+  }
+};
+
+struct MapTileBuilder {
+  typedef MapTile Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_Id(uint16_t Id) {
+    fbb_.AddElement<uint16_t>(MapTile::VT_ID, Id, 0);
+  }
+  void add_Collision(bool Collision) {
+    fbb_.AddElement<uint8_t>(MapTile::VT_COLLISION, static_cast<uint8_t>(Collision), 0);
+  }
+  void add_Flags(uint8_t Flags) {
+    fbb_.AddElement<uint8_t>(MapTile::VT_FLAGS, Flags, 0);
+  }
+  void add_Frames(::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::MapTileFrame *>> Frames) {
+    fbb_.AddOffset(MapTile::VT_FRAMES, Frames);
+  }
+  explicit MapTileBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<MapTile> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<MapTile>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<MapTile> CreateMapTile(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint16_t Id = 0,
+    bool Collision = false,
+    uint8_t Flags = 0,
+    ::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::MapTileFrame *>> Frames = 0) {
+  MapTileBuilder builder_(_fbb);
+  builder_.add_Frames(Frames);
+  builder_.add_Id(Id);
+  builder_.add_Flags(Flags);
+  builder_.add_Collision(Collision);
+  return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<MapTile> CreateMapTileDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint16_t Id = 0,
+    bool Collision = false,
+    uint8_t Flags = 0,
+    const std::vector<asdx::res::MapTileFrame> *Frames = nullptr) {
+  auto Frames__ = Frames ? _fbb.CreateVectorOfStructs<asdx::res::MapTileFrame>(*Frames) : 0;
+  return asdx::res::CreateMapTile(
+      _fbb,
+      Id,
+      Collision,
+      Flags,
+      Frames__);
+}
+
+struct MapObject FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef MapObjectBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_NAME = 4,
+    VT_POSX = 6,
+    VT_POSY = 8,
+    VT_WIDTH = 10,
+    VT_HEIGHT = 12,
+    VT_EVENT = 14
+  };
+  const ::flatbuffers::String *Name() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_NAME);
+  }
+  int32_t PosX() const {
+    return GetField<int32_t>(VT_POSX, 0);
+  }
+  int32_t PosY() const {
+    return GetField<int32_t>(VT_POSY, 0);
+  }
+  int32_t Width() const {
+    return GetField<int32_t>(VT_WIDTH, 0);
+  }
+  int32_t Height() const {
+    return GetField<int32_t>(VT_HEIGHT, 0);
+  }
+  int32_t Event() const {
+    return GetField<int32_t>(VT_EVENT, 0);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_NAME) &&
+           verifier.VerifyString(Name()) &&
+           VerifyField<int32_t>(verifier, VT_POSX, 4) &&
+           VerifyField<int32_t>(verifier, VT_POSY, 4) &&
+           VerifyField<int32_t>(verifier, VT_WIDTH, 4) &&
+           VerifyField<int32_t>(verifier, VT_HEIGHT, 4) &&
+           VerifyField<int32_t>(verifier, VT_EVENT, 4) &&
+           verifier.EndTable();
+  }
+};
+
+struct MapObjectBuilder {
+  typedef MapObject Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_Name(::flatbuffers::Offset<::flatbuffers::String> Name) {
+    fbb_.AddOffset(MapObject::VT_NAME, Name);
+  }
+  void add_PosX(int32_t PosX) {
+    fbb_.AddElement<int32_t>(MapObject::VT_POSX, PosX, 0);
+  }
+  void add_PosY(int32_t PosY) {
+    fbb_.AddElement<int32_t>(MapObject::VT_POSY, PosY, 0);
+  }
+  void add_Width(int32_t Width) {
+    fbb_.AddElement<int32_t>(MapObject::VT_WIDTH, Width, 0);
+  }
+  void add_Height(int32_t Height) {
+    fbb_.AddElement<int32_t>(MapObject::VT_HEIGHT, Height, 0);
+  }
+  void add_Event(int32_t Event) {
+    fbb_.AddElement<int32_t>(MapObject::VT_EVENT, Event, 0);
+  }
+  explicit MapObjectBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<MapObject> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<MapObject>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<MapObject> CreateMapObject(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    ::flatbuffers::Offset<::flatbuffers::String> Name = 0,
+    int32_t PosX = 0,
+    int32_t PosY = 0,
+    int32_t Width = 0,
+    int32_t Height = 0,
+    int32_t Event = 0) {
+  MapObjectBuilder builder_(_fbb);
+  builder_.add_Event(Event);
+  builder_.add_Height(Height);
+  builder_.add_Width(Width);
+  builder_.add_PosY(PosY);
+  builder_.add_PosX(PosX);
+  builder_.add_Name(Name);
+  return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<MapObject> CreateMapObjectDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    const char *Name = nullptr,
+    int32_t PosX = 0,
+    int32_t PosY = 0,
+    int32_t Width = 0,
+    int32_t Height = 0,
+    int32_t Event = 0) {
+  auto Name__ = Name ? _fbb.CreateString(Name) : 0;
+  return asdx::res::CreateMapObject(
+      _fbb,
+      Name__,
+      PosX,
+      PosY,
+      Width,
+      Height,
+      Event);
+}
+
+struct MapTileSet FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef MapTileSetBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_NAME = 4,
     VT_FIRSTCHIPID = 6,
@@ -209,8 +407,8 @@ struct TileSet FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   const ::flatbuffers::String *TexturePath() const {
     return GetPointer<const ::flatbuffers::String *>(VT_TEXTUREPATH);
   }
-  const ::flatbuffers::Vector<const asdx::res::Tile *> *Tiles() const {
-    return GetPointer<const ::flatbuffers::Vector<const asdx::res::Tile *> *>(VT_TILES);
+  const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MapTile>> *Tiles() const {
+    return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MapTile>> *>(VT_TILES);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -227,56 +425,57 @@ struct TileSet FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
            verifier.VerifyString(TexturePath()) &&
            VerifyOffset(verifier, VT_TILES) &&
            verifier.VerifyVector(Tiles()) &&
+           verifier.VerifyVectorOfTables(Tiles()) &&
            verifier.EndTable();
   }
 };
 
-struct TileSetBuilder {
-  typedef TileSet Table;
+struct MapTileSetBuilder {
+  typedef MapTileSet Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
   void add_Name(::flatbuffers::Offset<::flatbuffers::String> Name) {
-    fbb_.AddOffset(TileSet::VT_NAME, Name);
+    fbb_.AddOffset(MapTileSet::VT_NAME, Name);
   }
   void add_FirstChipId(uint16_t FirstChipId) {
-    fbb_.AddElement<uint16_t>(TileSet::VT_FIRSTCHIPID, FirstChipId, 0);
+    fbb_.AddElement<uint16_t>(MapTileSet::VT_FIRSTCHIPID, FirstChipId, 0);
   }
   void add_Columns(uint32_t Columns) {
-    fbb_.AddElement<uint32_t>(TileSet::VT_COLUMNS, Columns, 0);
+    fbb_.AddElement<uint32_t>(MapTileSet::VT_COLUMNS, Columns, 0);
   }
   void add_TileCount(uint32_t TileCount) {
-    fbb_.AddElement<uint32_t>(TileSet::VT_TILECOUNT, TileCount, 0);
+    fbb_.AddElement<uint32_t>(MapTileSet::VT_TILECOUNT, TileCount, 0);
   }
   void add_TileWidth(uint32_t TileWidth) {
-    fbb_.AddElement<uint32_t>(TileSet::VT_TILEWIDTH, TileWidth, 0);
+    fbb_.AddElement<uint32_t>(MapTileSet::VT_TILEWIDTH, TileWidth, 0);
   }
   void add_TileHeight(uint32_t TileHeight) {
-    fbb_.AddElement<uint32_t>(TileSet::VT_TILEHEIGHT, TileHeight, 0);
+    fbb_.AddElement<uint32_t>(MapTileSet::VT_TILEHEIGHT, TileHeight, 0);
   }
   void add_TextureWidth(uint32_t TextureWidth) {
-    fbb_.AddElement<uint32_t>(TileSet::VT_TEXTUREWIDTH, TextureWidth, 0);
+    fbb_.AddElement<uint32_t>(MapTileSet::VT_TEXTUREWIDTH, TextureWidth, 0);
   }
   void add_TextureHeight(uint32_t TextureHeight) {
-    fbb_.AddElement<uint32_t>(TileSet::VT_TEXTUREHEIGHT, TextureHeight, 0);
+    fbb_.AddElement<uint32_t>(MapTileSet::VT_TEXTUREHEIGHT, TextureHeight, 0);
   }
   void add_TexturePath(::flatbuffers::Offset<::flatbuffers::String> TexturePath) {
-    fbb_.AddOffset(TileSet::VT_TEXTUREPATH, TexturePath);
+    fbb_.AddOffset(MapTileSet::VT_TEXTUREPATH, TexturePath);
   }
-  void add_Tiles(::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::Tile *>> Tiles) {
-    fbb_.AddOffset(TileSet::VT_TILES, Tiles);
+  void add_Tiles(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MapTile>>> Tiles) {
+    fbb_.AddOffset(MapTileSet::VT_TILES, Tiles);
   }
-  explicit TileSetBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+  explicit MapTileSetBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  ::flatbuffers::Offset<TileSet> Finish() {
+  ::flatbuffers::Offset<MapTileSet> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<TileSet>(end);
+    auto o = ::flatbuffers::Offset<MapTileSet>(end);
     return o;
   }
 };
 
-inline ::flatbuffers::Offset<TileSet> CreateTileSet(
+inline ::flatbuffers::Offset<MapTileSet> CreateMapTileSet(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     ::flatbuffers::Offset<::flatbuffers::String> Name = 0,
     uint16_t FirstChipId = 0,
@@ -287,8 +486,8 @@ inline ::flatbuffers::Offset<TileSet> CreateTileSet(
     uint32_t TextureWidth = 0,
     uint32_t TextureHeight = 0,
     ::flatbuffers::Offset<::flatbuffers::String> TexturePath = 0,
-    ::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::Tile *>> Tiles = 0) {
-  TileSetBuilder builder_(_fbb);
+    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MapTile>>> Tiles = 0) {
+  MapTileSetBuilder builder_(_fbb);
   builder_.add_Tiles(Tiles);
   builder_.add_TexturePath(TexturePath);
   builder_.add_TextureHeight(TextureHeight);
@@ -302,7 +501,7 @@ inline ::flatbuffers::Offset<TileSet> CreateTileSet(
   return builder_.Finish();
 }
 
-inline ::flatbuffers::Offset<TileSet> CreateTileSetDirect(
+inline ::flatbuffers::Offset<MapTileSet> CreateMapTileSetDirect(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     const char *Name = nullptr,
     uint16_t FirstChipId = 0,
@@ -313,11 +512,11 @@ inline ::flatbuffers::Offset<TileSet> CreateTileSetDirect(
     uint32_t TextureWidth = 0,
     uint32_t TextureHeight = 0,
     const char *TexturePath = nullptr,
-    std::vector<asdx::res::Tile> *Tiles = nullptr) {
+    std::vector<::flatbuffers::Offset<asdx::res::MapTile>> *Tiles = nullptr) {
   auto Name__ = Name ? _fbb.CreateString(Name) : 0;
   auto TexturePath__ = TexturePath ? _fbb.CreateString(TexturePath) : 0;
-  auto Tiles__ = Tiles ? _fbb.CreateVectorOfSortedStructs<asdx::res::Tile>(Tiles) : 0;
-  return asdx::res::CreateTileSet(
+  auto Tiles__ = Tiles ? _fbb.CreateVectorOfSortedTables<asdx::res::MapTile>(Tiles) : 0;
+  return asdx::res::CreateMapTileSet(
       _fbb,
       Name__,
       FirstChipId,
@@ -340,7 +539,8 @@ struct MapChipBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
     VT_TILEWIDTH = 10,
     VT_TILEHEIGHT = 12,
     VT_TILESETS = 14,
-    VT_LAYERS = 16
+    VT_LAYERS = 16,
+    VT_OBJECTS = 18
   };
   uint32_t Version() const {
     return GetField<uint32_t>(VT_VERSION, 0);
@@ -357,11 +557,14 @@ struct MapChipBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   uint32_t TileHeight() const {
     return GetField<uint32_t>(VT_TILEHEIGHT, 0);
   }
-  const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::TileSet>> *TileSets() const {
-    return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::TileSet>> *>(VT_TILESETS);
+  const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MapTileSet>> *TileSets() const {
+    return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MapTileSet>> *>(VT_TILESETS);
   }
-  const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::Layer>> *Layers() const {
-    return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::Layer>> *>(VT_LAYERS);
+  const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MapLayer>> *Layers() const {
+    return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MapLayer>> *>(VT_LAYERS);
+  }
+  const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MapObject>> *Objects() const {
+    return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MapObject>> *>(VT_OBJECTS);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -376,6 +579,9 @@ struct MapChipBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
            VerifyOffset(verifier, VT_LAYERS) &&
            verifier.VerifyVector(Layers()) &&
            verifier.VerifyVectorOfTables(Layers()) &&
+           VerifyOffset(verifier, VT_OBJECTS) &&
+           verifier.VerifyVector(Objects()) &&
+           verifier.VerifyVectorOfTables(Objects()) &&
            verifier.EndTable();
   }
 };
@@ -399,11 +605,14 @@ struct MapChipBinaryBuilder {
   void add_TileHeight(uint32_t TileHeight) {
     fbb_.AddElement<uint32_t>(MapChipBinary::VT_TILEHEIGHT, TileHeight, 0);
   }
-  void add_TileSets(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::TileSet>>> TileSets) {
+  void add_TileSets(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MapTileSet>>> TileSets) {
     fbb_.AddOffset(MapChipBinary::VT_TILESETS, TileSets);
   }
-  void add_Layers(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::Layer>>> Layers) {
+  void add_Layers(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MapLayer>>> Layers) {
     fbb_.AddOffset(MapChipBinary::VT_LAYERS, Layers);
+  }
+  void add_Objects(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MapObject>>> Objects) {
+    fbb_.AddOffset(MapChipBinary::VT_OBJECTS, Objects);
   }
   explicit MapChipBinaryBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -423,9 +632,11 @@ inline ::flatbuffers::Offset<MapChipBinary> CreateMapChipBinary(
     uint32_t Columns = 0,
     uint32_t TileWidth = 0,
     uint32_t TileHeight = 0,
-    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::TileSet>>> TileSets = 0,
-    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::Layer>>> Layers = 0) {
+    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MapTileSet>>> TileSets = 0,
+    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MapLayer>>> Layers = 0,
+    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MapObject>>> Objects = 0) {
   MapChipBinaryBuilder builder_(_fbb);
+  builder_.add_Objects(Objects);
   builder_.add_Layers(Layers);
   builder_.add_TileSets(TileSets);
   builder_.add_TileHeight(TileHeight);
@@ -443,10 +654,12 @@ inline ::flatbuffers::Offset<MapChipBinary> CreateMapChipBinaryDirect(
     uint32_t Columns = 0,
     uint32_t TileWidth = 0,
     uint32_t TileHeight = 0,
-    const std::vector<::flatbuffers::Offset<asdx::res::TileSet>> *TileSets = nullptr,
-    const std::vector<::flatbuffers::Offset<asdx::res::Layer>> *Layers = nullptr) {
-  auto TileSets__ = TileSets ? _fbb.CreateVector<::flatbuffers::Offset<asdx::res::TileSet>>(*TileSets) : 0;
-  auto Layers__ = Layers ? _fbb.CreateVector<::flatbuffers::Offset<asdx::res::Layer>>(*Layers) : 0;
+    const std::vector<::flatbuffers::Offset<asdx::res::MapTileSet>> *TileSets = nullptr,
+    const std::vector<::flatbuffers::Offset<asdx::res::MapLayer>> *Layers = nullptr,
+    const std::vector<::flatbuffers::Offset<asdx::res::MapObject>> *Objects = nullptr) {
+  auto TileSets__ = TileSets ? _fbb.CreateVector<::flatbuffers::Offset<asdx::res::MapTileSet>>(*TileSets) : 0;
+  auto Layers__ = Layers ? _fbb.CreateVector<::flatbuffers::Offset<asdx::res::MapLayer>>(*Layers) : 0;
+  auto Objects__ = Objects ? _fbb.CreateVector<::flatbuffers::Offset<asdx::res::MapObject>>(*Objects) : 0;
   return asdx::res::CreateMapChipBinary(
       _fbb,
       Version,
@@ -455,7 +668,8 @@ inline ::flatbuffers::Offset<MapChipBinary> CreateMapChipBinaryDirect(
       TileWidth,
       TileHeight,
       TileSets__,
-      Layers__);
+      Layers__,
+      Objects__);
 }
 
 inline const asdx::res::MapChipBinary *GetMapChipBinary(const void *buf) {

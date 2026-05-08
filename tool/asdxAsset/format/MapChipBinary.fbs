@@ -1,6 +1,6 @@
 ﻿namespace asdx.res;
 
-table Layer
+table MapLayer
 {
     Name        : string;
     Id          : uint;
@@ -9,14 +9,31 @@ table Layer
     Data        : [ushort];
 }
 
-struct Tile
+struct MapTileFrame
+{
+    TileId   : ushort;
+    Duration : float;
+}
+
+table MapTile
 {
     Id        : ushort (key);
     Collision : bool;
-    Event     : uint;
+    Flags     : ubyte;
+    Frames    : [MapTileFrame];
 }
 
-table TileSet
+table MapObject
+{
+    Name   : string;
+    PosX   : int;
+    PosY   : int;
+    Width  : int;
+    Height : int;
+    Event  : int;
+}
+
+table MapTileSet
 {
     Name            : string;
     FirstChipId     : ushort;
@@ -27,7 +44,7 @@ table TileSet
     TextureWidth    : uint;
     TextureHeight   : uint;
     TexturePath     : string;
-    Tiles           : [Tile];
+    Tiles           : [MapTile];
 }
 
 table MapChipBinary
@@ -37,8 +54,9 @@ table MapChipBinary
     Columns     : uint;
     TileWidth   : uint;
     TileHeight  : uint;
-    TileSets    : [TileSet];
-    Layers      : [Layer];
+    TileSets    : [MapTileSet];
+    Layers      : [MapLayer];
+    Objects     : [MapObject];
 }
 
 root_type MapChipBinary;

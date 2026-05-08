@@ -122,8 +122,9 @@ bool MapChipConverter::Convert(const Desc& desc)
 
     flatbuffers::FlatBufferBuilder builder(1024);
 
-    std::vector<flatbuffers::Offset<asdx::res::TileSet>> tilesets;
-    std::vector<flatbuffers::Offset<asdx::res::Layer>>   layers;
+    std::vector<flatbuffers::Offset<asdx::res::MapTileSet>> tilesets;
+    std::vector<flatbuffers::Offset<asdx::res::MapLayer>>   layers;
+    std::vector<flatbuffers::Offset<asdx::res::MapObject>>  objects;
 
     std::filesystem::path txbOutPath = desc.OutputPath;
     auto txbOutDir = txbOutPath.parent_path().string();
@@ -160,13 +161,27 @@ bool MapChipConverter::Convert(const Desc& desc)
             auto tileCount      = tileset->UnsignedAttribute("tilecount");
             auto columnCount    = tileset->UnsignedAttribute("columns");
 
-            std::vector<asdx::res::Tile> tiles;
+            std::vector<flatbuffers::Offset<asdx::res::MapTile>> tiles;
             for(auto tile = tileset->FirstChildElement("tile"); tile != nullptr; tile = tile->NextSiblingElement("tile"))
             {
                 uint16_t id = uint16_t(tile->UnsignedAttribute("id"));
 
-                bool     collision = false;
-                uint32_t eventId   = 0;
+                bool collision = false;
+                uint8_t flags = 0;
+
+                std::vector<asdx::res::MapTileFrame> frames;
+
+                auto anims = tile->FirstChildElement("animation");
+                if (anims != nullptr)
+                {
+                    for(auto frame = anims->FirstChildElement("frame"); frame != nullptr; frame = frame->NextSiblingElement("frame"))
+                    {
+                        auto tileId   = uint16_t(frame->UnsignedAttribute("tileid"));
+                        auto duration = frame->FloatAttribute("duration");
+
+                        frames.emplace_back(asdx::res::MapTileFrame(tileId, duration));
+                    }
+                }
 
                 auto props = tile->FirstChildElement("properties");
                 if (props != nullptr)
@@ -178,18 +193,24 @@ bool MapChipConverter::Convert(const Desc& desc)
                         {
                             collision = prop->BoolAttribute("value");
                         }
-                        else if (_stricmp(name, "event") == 0)
+                        if (_stricmp(name, "flags") == 0)
                         {
-                            eventId = prop->UnsignedAttribute("value");
+                            flags = uint8_t(prop->UnsignedAttribute("value"));
                         }
                     }
                 }
 
-                tiles.emplace_back(id, collision, eventId);
+                tiles.emplace_back(
+                    asdx::res::CreateMapTileDirect(
+                        builder,
+                        id,
+                        collision,
+                        flags,
+                        &frames));
             }
 
             tilesets.emplace_back(
-                asdx::res::CreateTileSetDirect(
+                asdx::res::CreateMapTileSetDirect(
                     builder,
                     name,
                     firstChipId,
@@ -226,13 +247,50 @@ bool MapChipConverter::Convert(const Desc& desc)
             auto datas = ParseCsv(data->GetText());
 
             layers.emplace_back(
-                asdx::res::CreateLayerDirect(
+                asdx::res::CreateMapLayerDirect(
                     builder,
                     name,
                     id,
                     rowCount,
                     colCount,
                     &datas));
+        }
+    }
+
+    // object
+    {
+        for(auto object = map->FirstChildElement("object"); object != nullptr; object = object->NextSiblingElement("object"))
+        {
+            auto name = object->Attribute("name");
+            auto x = object->IntAttribute("x");
+            auto y = object->IntAttribute("y");
+            auto w = object->IntAttribute("width");
+            auto h = object->IntAttribute("height");
+
+            int eventId = 0;
+
+            auto props = object->FirstChildElement("properties");
+            if (props != nullptr)
+            {
+                for(auto prop = props->FirstChildElement("property"); prop != nullptr; prop = prop->NextSiblingElement("property"))
+                {
+                    auto name = prop->Attribute("name");
+                    if (_stricmp(name, "event") == 0)
+                    {
+                        eventId = prop->IntAttribute("value");
+                    }
+                }
+            }
+
+            objects.emplace_back(
+                asdx::res::CreateMapObjectDirect(
+                    builder,
+                    name,
+                    x,
+                    y,
+                    w,
+                    h,
+                    eventId));
         }
     }
 
@@ -246,7 +304,8 @@ bool MapChipConverter::Convert(const Desc& desc)
             tileWidth,
             tileHeight,
             &tilesets,
-            &layers);
+            &layers,
+            &objects);
 
         builder.Finish(bin);
 
