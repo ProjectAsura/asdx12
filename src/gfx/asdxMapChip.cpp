@@ -146,8 +146,10 @@ void MapChip::Draw(SpriteRenderer& renderer, D3D12_GPU_DESCRIPTOR_HANDLE sampler
                 }
 
                 auto id = idX + (idY * columns);
-                auto tileId = layer.Tiles[id] - firstId;
+                if (layer.Tiles[id] < firstId)
+                    continue;
 
+                auto tileId = layer.Tiles[id] - firstId;
                 auto coord = m_Binary.GetCoord(tileId);
                 renderer.Add(
                     x * m_DrawTileW + m_ScrollX,

@@ -178,7 +178,7 @@ ResTileCoord MapChipBinary::GetCoord(uint32_t tileId) const
     assert(!m_Blob.empty());
     auto bin = res::GetMapChipBinary(m_Blob.data());
     auto x = tileId % bin->ChipCount()->X();
-    auto y = tileId / bin->ChipCount()->Y();
+    auto y = tileId / bin->ChipCount()->X();
 
     auto u = float(bin->ChipSize()->X()) / float(bin->TextureSize()->X());
     auto v = float(bin->ChipSize()->Y()) / float(bin->TextureSize()->Y());

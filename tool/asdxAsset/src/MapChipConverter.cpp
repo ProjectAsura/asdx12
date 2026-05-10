@@ -226,7 +226,6 @@ bool LoadMapData(const char* path, MapData& outData)
     outData.NextObjectId = map->UnsignedAttribute("nextobjectid");
 
     // tileset
-    //for(auto tileSet = map->FirstChildElement("tileset"); tileSet != nullptr; tileSet = tileSet->NextSiblingElement("tileset"))
     auto tileSet = map->FirstChildElement("tileset");
     if (tileSet != nullptr)
     {
@@ -537,7 +536,9 @@ bool MapChipConverter::Convert(const Desc& desc)
     asdx::res::Uint2 chipSize    = {chipWidth, chipHeight};
     asdx::res::Uint2 textureSize = {tileSet.Image.Width, tileSet.Image.Height};
 
-    auto texturePath = tileSet.Image.Source.c_str();
+    std::filesystem::path p = tileSet.Image.Source.c_str();
+    std::string texturePath = "textures\\" + p.filename().replace_extension(".txb").string();
+
     auto firstChipId = tileSet.FirstChipId;
 
     // Binary出力.
@@ -549,7 +550,7 @@ bool MapChipConverter::Convert(const Desc& desc)
             &chipCount,
             &chipSize,
             &textureSize,
-            texturePath,
+            texturePath.c_str(),
             firstChipId,
             &dstLayers,
             &dstProps,
