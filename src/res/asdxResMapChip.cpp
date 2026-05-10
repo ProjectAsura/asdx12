@@ -178,7 +178,7 @@ ResTileCoord MapChipBinary::GetCoord(uint32_t tileId) const
     assert(!m_Blob.empty());
     auto bin = res::GetMapChipBinary(m_Blob.data());
     auto x = tileId % bin->ChipCount()->X();
-    auto y = tileId / bin->ChipCount()->X();
+    auto y = (tileId / bin->ChipCount()->X()) % bin->ChipCount()->Y();
 
     auto u = float(bin->ChipSize()->X()) / float(bin->TextureSize()->X());
     auto v = float(bin->ChipSize()->Y()) / float(bin->TextureSize()->Y());
@@ -204,6 +204,18 @@ ResTileProp MapChipBinary::GetTileProp(uint32_t index) const
     result.Flags   = prop->Flags();
     result.EventId = prop->EventId();
     return result;
+}
+
+//-----------------------------------------------------------------------------
+//      タイル番号を求めます.
+//-----------------------------------------------------------------------------
+uint32_t MapChipBinary::CalcTileIndex(uint32_t x, uint32_t y)
+{
+    auto bin = res::GetMapChipBinary(m_Blob.data());
+    auto tx = x % bin->ChipCount()->X();
+    auto ty = (y / bin->ChipCount()->X()) % bin->ChipCount()->Y();
+
+    return ty * bin->ChipCount()->X() + tx;
 }
 
 } // namespace asdx
