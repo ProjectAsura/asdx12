@@ -14,9 +14,6 @@
 
 namespace asdx {
 
-static_assert(sizeof (ResChipFrame) == sizeof (res::MapTileFrame), "ResChipFrame size not matched.");
-static_assert(alignof(ResChipFrame) == alignof(res::MapTileFrame), "ResChipFrame align not matched.");
-
 ///////////////////////////////////////////////////////////////////////////////
 // MapChipBinary class
 ///////////////////////////////////////////////////////////////////////////////
@@ -63,67 +60,91 @@ void MapChipBinary::Term()
 //-----------------------------------------------------------------------------
 //      行数を取得します.
 //-----------------------------------------------------------------------------
-uint32_t MapChipBinary::GetRows() const
+uint32_t MapChipBinary::GetMapRows() const
 {
     assert(!m_Blob.empty());
-    return res::GetMapChipBinary(m_Blob.data())->Rows();
+    return res::GetMapChipBinary(m_Blob.data())->MapCount()->Y();
 }
 
 //-----------------------------------------------------------------------------
 //      列数を取得します.
 //-----------------------------------------------------------------------------
-uint32_t MapChipBinary::GetColumns() const
+uint32_t MapChipBinary::GetMapColumns() const
 {
     assert(!m_Blob.empty());
-    return res::GetMapChipBinary(m_Blob.data())->Columns();
+    return res::GetMapChipBinary(m_Blob.data())->MapCount()->X();
+}
+
+//-----------------------------------------------------------------------------
+//      マップチップの行数を取得します.
+//-----------------------------------------------------------------------------
+uint32_t MapChipBinary::GetChipRows() const
+{
+    assert(!m_Blob.empty());
+    return res::GetMapChipBinary(m_Blob.data())->ChipCount()->Y();
+}
+
+//-----------------------------------------------------------------------------
+//      マップチップの列数を取得します.
+//-----------------------------------------------------------------------------
+uint32_t MapChipBinary::GetChipColumns() const
+{
+    assert(!m_Blob.empty());
+    return res::GetMapChipBinary(m_Blob.data( ))->ChipCount()->X();
 }
 
 //-----------------------------------------------------------------------------
 //      タイルの横幅を取得します.
 //-----------------------------------------------------------------------------
-uint32_t MapChipBinary::GetTileWidth() const
+uint32_t MapChipBinary::GetChipWidth() const
 {
     assert(!m_Blob.empty());
-    return res::GetMapChipBinary(m_Blob.data())->TileWidth();
+    return res::GetMapChipBinary(m_Blob.data())->ChipSize()->X();
 }
 
 //-----------------------------------------------------------------------------
 //      タイルの縦幅を取得します.
 //-----------------------------------------------------------------------------
-uint32_t MapChipBinary::GetTileHeight() const
+uint32_t MapChipBinary::GetChipHeight() const
 {
     assert(!m_Blob.empty());
-    return res::GetMapChipBinary(m_Blob.data())->TileHeight();
+    return res::GetMapChipBinary(m_Blob.data())->ChipSize()->Y();
 }
 
 //-----------------------------------------------------------------------------
-//      タイルセット数を取得します.
+//      テクスチャの横幅を取得します.
 //-----------------------------------------------------------------------------
-uint32_t MapChipBinary::GetTileSetCount() const
+uint32_t MapChipBinary::GetTextureWidth() const
 {
     assert(!m_Blob.empty());
-    return res::GetMapChipBinary(m_Blob.data())->TileSets()->size();
+    return res::GetMapChipBinary(m_Blob.data())->TextureSize()->X();
 }
 
 //-----------------------------------------------------------------------------
-//      タイルセットを取得します.
+//      テクスチャの縦幅を取得します.
 //-----------------------------------------------------------------------------
-ResTileSet MapChipBinary::GetTileSet(uint32_t tileSetIndex) const
+uint32_t MapChipBinary::GetTextureHeight() const
 {
     assert(!m_Blob.empty());
-    auto tileSet = res::GetMapChipBinary(m_Blob.data())->TileSets()->Get(tileSetIndex);
+    return res::GetMapChipBinary(m_Blob.data())->TextureSize()->Y();
+}
 
-    ResTileSet result = {};
-    result.Name          = StringView(tileSet->Name()->c_str());
-    result.FirstChipId   = tileSet->FirstChipId();
-    result.Columns       = tileSet->Columns();
-    result.TileCount     = tileSet->TileCount();
-    result.TileWidth     = tileSet->TileWidth();
-    result.TileHeight    = tileSet->TileHeight();
-    result.TextureWidth  = tileSet->TextureWidth();
-    result.TextureHeight = tileSet->TextureHeight();
-    result.TexturePath   = StringView(tileSet->TexturePath()->c_str());
-    return result;
+//-----------------------------------------------------------------------------
+//      テクスチャのファイルパスを取得します.
+//-----------------------------------------------------------------------------
+StringView MapChipBinary::GetTexturePath() const
+{
+    assert(!m_Blob.empty());
+    return StringView(res::GetMapChipBinary(m_Blob.data())->TexturePath()->c_str());
+}
+
+//-----------------------------------------------------------------------------
+//      最初のチップIDを取得します.
+//-----------------------------------------------------------------------------
+uint32_t MapChipBinary::GetFirstChipId() const
+{
+    assert(!m_Blob.empty());
+    return res::GetMapChipBinary(m_Blob.data())->FirstChipId();
 }
 
 //-----------------------------------------------------------------------------
@@ -138,32 +159,29 @@ uint32_t MapChipBinary::GetLayerCount() const
 //-----------------------------------------------------------------------------
 //      レイヤーを取得します.
 //-----------------------------------------------------------------------------
-ResTileMapLayer MapChipBinary::GetLayer(uint32_t layerIndex) const
+ResMapLayer MapChipBinary::GetLayer(uint32_t index) const
 {
     assert(!m_Blob.empty());
-    auto layer = res::GetMapChipBinary(m_Blob.data())->Layers()->Get(layerIndex);
+    auto layer = res::GetMapChipBinary(m_Blob.data())->Layers()->Get(index);
 
-    ResTileMapLayer result = {};
-    result.Name     = StringView(layer->Name()->c_str());
-    result.Id       = layer->Id();
-    result.Rows     = layer->Rows();
-    result.Columns  = layer->Columns();
-    result.Data     = ArrayView<uint16_t>(layer->Data()->data(), layer->Data()->size());
+    ResMapLayer result = {};
+    result.Name  = StringView(layer->Name()->c_str());
+    result.Tiles = ArrayView<uint16_t>(layer->Chips()->data(), layer->Chips()->size());
     return result;
 }
 
 //-----------------------------------------------------------------------------
 //      指定タイルのテクスチャ座標を取得します.
 //-----------------------------------------------------------------------------
-ResTileCoord MapChipBinary::GetCoord(uint32_t tileSetIndex, uint32_t tileId) const
+ResTileCoord MapChipBinary::GetCoord(uint32_t tileId) const
 {
     assert(!m_Blob.empty());
-    auto tileSet = res::GetMapChipBinary(m_Blob.data())->TileSets()->Get(tileSetIndex);
-    auto x = tileId % tileSet->Columns();
-    auto y = tileId / tileSet->Columns();
+    auto bin = res::GetMapChipBinary(m_Blob.data());
+    auto x = tileId % bin->ChipCount()->X();
+    auto y = tileId / bin->ChipCount()->Y();
 
-    auto u = float(tileSet->TileWidth ()) / float(tileSet->TextureWidth());
-    auto v = float(tileSet->TileHeight()) / float(tileSet->TextureHeight());
+    auto u = float(bin->ChipSize()->X()) / float(bin->TextureSize()->X());
+    auto v = float(bin->ChipSize()->Y()) / float(bin->TextureSize()->Y());
 
     ResTileCoord result;
     result.Uv0.x = u * x;
@@ -175,30 +193,17 @@ ResTileCoord MapChipBinary::GetCoord(uint32_t tileSetIndex, uint32_t tileId) con
 }
 
 //-----------------------------------------------------------------------------
-//      チッププロパティを検索します.
+//      指定タイルのプロパティを取得します
 //-----------------------------------------------------------------------------
-bool MapChipBinary::FindChipProperty(uint32_t tileSetIndex, uint16_t chipId, ResChipProperty& result) const
+ResTileProp MapChipBinary::GetTileProp(uint32_t index) const
 {
     assert(!m_Blob.empty());
-    auto chip = res::GetMapChipBinary(m_Blob.data())
-                ->TileSets()
-                ->Get(tileSetIndex)
-                ->Tiles()
-                ->LookupByKey(chipId);
-    if (chip == nullptr)
-    {
-        result.Id        = chipId;
-        result.Collision = false;
-        result.Frames    = ArrayView<ResChipFrame>(nullptr, 0);
-        return false;
-    }
+    auto prop = res::GetMapChipBinary(m_Blob.data())->TileProps()->Get(index);
 
-    result.Id        = chip->Id();
-    result.Collision = chip->Collision();
-    result.Frames    = ArrayView<ResChipFrame>(
-                        reinterpret_cast<const ResChipFrame*>(chip->Frames()->data()),
-                        chip->Frames()->size());
-    return true;
+    ResTileProp result = {};
+    result.Flags   = prop->Flags();
+    result.EventId = prop->EventId();
+    return result;
 }
 
 } // namespace asdx

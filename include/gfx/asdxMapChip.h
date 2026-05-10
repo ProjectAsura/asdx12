@@ -58,6 +58,7 @@ public:
     //-------------------------------------------------------------------------
     bool Init(
         std::vector<uint8_t>&       blob,
+        const char*                 baseDir,
         uint32_t                    screenWidth,
         uint32_t                    screenHeight,
         int                         drawTileWidth,
@@ -127,7 +128,7 @@ public:
     //! 
     //! @return     Y方向のタイルオフセットを返却します.
     //-------------------------------------------------------------------------
-    uint32_t getTileOffsetY() const;
+    uint32_t GetTileOffsetY() const;
 
     //-------------------------------------------------------------------------
     //! @brief      X方向の描画スクロール値を取得します.
@@ -172,23 +173,13 @@ public:
     uint32_t GetScreenHeight() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      チップIDを取得します.
-    //! 
+    //! @brief      指定タイルのプロパティを取得します.
+    //!
     //! @param[in]      x           X方向のタイル番号.
     //! @param[in]      y           Y方向のタイル番号.
-    //! @return     タイルIDを返却します.
+    //! @return     タイルのプロパティを返却します.
     //-------------------------------------------------------------------------
-    uint16_t GetChipId(uint32_t x, uint32_t y) const;
-
-    //-------------------------------------------------------------------------
-    //! @brief      プロパティを持つかチェックします.
-    //! 
-    //! @param[in]      x       X方向のタイル番号.
-    //! @param[in]      y       Y方向のタイル番号.
-    //! @retval true    プロパティを持ちます.
-    //! @retval false   プロパティを持ちません.
-    //-------------------------------------------------------------------------
-    bool HasProperty(uint32_t x, uint32_t y, ResChipProperty& prop) const;
+    ResTileProp GetTileProp(uint32_t x, uint32_t y) const;
 
     //-------------------------------------------------------------------------
     //! @brief      クランプフラグを設定します.
@@ -221,8 +212,7 @@ private:
     int             m_DrawRows      = 0;
     int             m_DrawCols      = 0;
     bool            m_Clamp         = false;
-
-    std::vector<TextureHolder> m_Textures = {};
+    TextureHolder   m_Texture       = {};
 
     //=========================================================================
     // private methods.

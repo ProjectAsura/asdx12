@@ -1,62 +1,43 @@
-﻿namespace asdx.res;
+﻿include "../../../res/format/ResTypes.fbs";
 
-table MapLayer
+namespace asdx.res;
+
+struct MapTileProp
 {
-    Name        : string;
-    Id          : uint;
-    Rows        : uint;
-    Columns     : uint;
-    Data        : [ushort];
+    Flags   : ushort;
+    EventId : ushort;
 }
 
-struct MapTileFrame
+struct MapChipFrame
 {
-    TileId   : ushort;
+    Id       : uint;
     Duration : float;
 }
 
-table MapTile
+table MapChip
 {
-    Id        : ushort (key);
-    Collision : bool;
-    Flags     : ubyte;
-    Frames    : [MapTileFrame];
+    Id      : ushort;
+    Frames  : [MapChipFrame];
 }
 
-table MapObject
+table MapLayer
 {
-    Name   : string;
-    PosX   : int;
-    PosY   : int;
-    Width  : int;
-    Height : int;
-    Event  : int;
-}
-
-table MapTileSet
-{
-    Name            : string;
-    FirstChipId     : ushort;
-    Columns         : uint;
-    TileCount       : uint;
-    TileWidth       : uint;
-    TileHeight      : uint;
-    TextureWidth    : uint;
-    TextureHeight   : uint;
-    TexturePath     : string;
-    Tiles           : [MapTile];
+    Name    : string;
+    Chips   : [ushort];
 }
 
 table MapChipBinary
 {
-    Version     : uint;
-    Rows        : uint;
-    Columns     : uint;
-    TileWidth   : uint;
-    TileHeight  : uint;
-    TileSets    : [MapTileSet];
-    Layers      : [MapLayer];
-    Objects     : [MapObject];
+    Version         : uint;
+    MapCount        : Uint2;
+    ChipCount       : Uint2;
+    ChipSize        : Uint2;
+    TextureSize     : Uint2;
+    TexturePath     : string;
+    FirstChipId     : ushort;
+    Layers          : [MapLayer];
+    TileProps       : [MapTileProp];
+    Chips           : [MapChip];
 }
 
 root_type MapChipBinary;

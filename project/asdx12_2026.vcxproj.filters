@@ -770,9 +770,6 @@
     <ClInclude Include="..\include\gfx\asdxRadialBlurEffect.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\fnd\asdxTriggerTime.h">
-      <Filter>ヘッダー ファイル\fnd</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\snd\asdxSoundEngine.h">
       <Filter>ヘッダー ファイル\snd</Filter>
     </ClInclude>

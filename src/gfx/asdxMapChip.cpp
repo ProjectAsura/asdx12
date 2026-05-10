@@ -10,6 +10,7 @@
 #include <gfx/asdxMapChip.h>
 #include <fnd/asdxLogger.h>
 #include <utility>
+#include <string>
 
 
 namespace asdx {
@@ -47,6 +48,7 @@ MapChip::~MapChip()
 bool MapChip::Init
 (
     std::vector<uint8_t>&       blob,
+    const char*                 baseDir,
     uint32_t                    screenWidth,
     uint32_t                    screenHeight,
     int                         drawTileWidth,
@@ -55,17 +57,13 @@ bool MapChip::Init
 {
     m_Binary.Load(std::move(blob));
 
-    m_Textures.resize(m_Binary.GetTileSetCount());
+    auto path = std::string(baseDir) + "\\" + std::string(m_Binary.GetTexturePath().c_str());
 
-    for(auto i=0u; i<m_Binary.GetTileSetCount(); ++i)
+    m_Texture = TextureManager::Instance().GetOrCreate(path.c_str());
+    if (!m_Texture.IsValid())
     {
-        auto tileSet = m_Binary.GetTileSet(i);
-        m_Textures[i] = TextureManager::Instance().GetOrCreate(tileSet.TexturePath.c_str());
-        if (!m_Textures[i].IsValid())
-        {
-            ELOG("Error : Texture Init Failed. index = %u", i);
-            return false;
-        }
+        ELOGA("Error : Texture Init Failed. path = %s", path.c_str());
+        return false;
     }
 
     m_ScrollX = 0;
@@ -103,13 +101,7 @@ void MapChip::Term()
 
     m_Clamp = false;
 
-    for(size_t i=0; i<m_Textures.size(); ++i)
-    { 
-        m_Textures[i].Reset();
-    }
-
-    m_Textures.clear();
-    m_Textures.shrink_to_fit();
+    m_Texture.Reset();
 }
 
 //-----------------------------------------------------------------------------
@@ -123,9 +115,11 @@ const MapChipBinary& MapChip::GetBinary() const
 //-----------------------------------------------------------------------------
 void MapChip::Draw(SpriteRenderer& renderer, D3D12_GPU_DESCRIPTOR_HANDLE sampler)
 {
-    renderer.ChangeBatch(renderer.GetDefaultState(), m_Textures[0].GetHandleGPU(), sampler);
+    renderer.ChangeBatch(renderer.GetDefaultState(), m_Texture.GetHandleGPU(), sampler);
 
-    auto tileSet = m_Binary.GetTileSet(0);
+    auto columns = m_Binary.GetMapColumns();
+    auto rows    = m_Binary.GetMapRows();
+    auto firstId = m_Binary.GetFirstChipId();
 
     // レイヤーごとに描画.
     for(auto l=0u; l<m_Binary.GetLayerCount(); ++l)
@@ -136,25 +130,25 @@ void MapChip::Draw(SpriteRenderer& renderer, D3D12_GPU_DESCRIPTOR_HANDLE sampler
         {
             for(int x=-1; x<=m_DrawCols; ++x) // 前後1タイル分の余白を考慮.
             {
-                auto tx = (x >= 0) ? x : layer.Columns - 1;
-                auto ty = (y >= 0) ? y : layer.Rows - 1;
+                auto tx = (x >= 0) ? x : columns - 1;
+                auto ty = (y >= 0) ? y : rows - 1;
 
                 uint32_t idX, idY;
                 if (m_Clamp)
                 {
-                    idX = asdx::Clamp(tx + m_TileOffsetX, 0u, layer.Columns);
-                    idY = asdx::Clamp(ty + m_TileOffsetY, 0u, layer.Rows);
+                    idX = asdx::Clamp(tx + m_TileOffsetX, 0u, columns);
+                    idY = asdx::Clamp(ty + m_TileOffsetY, 0u, rows);
                 }
                 else
                 {
-                    idX = (tx + m_TileOffsetX) % layer.Columns;
-                    idY = (ty + m_TileOffsetY) % layer.Rows;
+                    idX = (tx + m_TileOffsetX) % columns;
+                    idY = (ty + m_TileOffsetY) % rows;
                 }
 
-                auto id = idX + (idY * layer.Columns);
-                auto tileId = layer.Data[id] - tileSet.FirstChipId;
+                auto id = idX + (idY * columns);
+                auto tileId = layer.Tiles[id] - firstId;
 
-                auto coord = m_Binary.GetCoord(0, tileId);
+                auto coord = m_Binary.GetCoord(tileId);
                 renderer.Add(
                     x * m_DrawTileW + m_ScrollX,
                     y * m_DrawTileH + m_ScrollY,
@@ -221,7 +215,7 @@ uint32_t MapChip::GetTileOffsetX() const
 //-----------------------------------------------------------------------------
 //      Y方向のタイルオフセットを取得します.
 //-----------------------------------------------------------------------------
-uint32_t MapChip::getTileOffsetY() const
+uint32_t MapChip::GetTileOffsetY() const
 { return m_TileOffsetY; }
 
 //-----------------------------------------------------------------------------
@@ -261,21 +255,6 @@ uint32_t MapChip::GetScreenHeight() const
 { return m_ScreenHeight; }
 
 //-----------------------------------------------------------------------------
-//      チップIDを取得します.
-//-----------------------------------------------------------------------------
-uint16_t MapChip::GetChipId(uint32_t x, uint32_t y) const
-{ return GetChipId(0, x, y); }
-
-//-----------------------------------------------------------------------------
-//      プロパティを持つかどうかチェックします.
-//-----------------------------------------------------------------------------
-bool MapChip::HasProperty(uint32_t x, uint32_t y, ResChipProperty& prop) const
-{
-    auto chipId = GetChipId(x, y);
-    return m_Binary.FindChipProperty(0, chipId, prop);
-}
-
-//-----------------------------------------------------------------------------
 //      クランプフラグを設定します.
 //-----------------------------------------------------------------------------
 void MapChip::SetClamp(bool value)
@@ -290,15 +269,25 @@ bool MapChip::IsClamp() const
 //-----------------------------------------------------------------------------
 //      チップIDを取得します.
 //-----------------------------------------------------------------------------
-uint16_t MapChip::GetChipId(uint32_t layerId, uint32_t x, uint32_t y) const
+uint16_t MapChip::GetChipId(uint32_t layerIndex, uint32_t x, uint32_t y) const
 {
-    auto layer = m_Binary.GetLayer(layerId);
+    auto idX = x % m_Binary.GetMapColumns();
+    auto idY = y % m_Binary.GetMapRows();
 
-    auto idX = x % layer.Columns;
-    auto idY = y % layer.Rows;
+    auto id = idX + (idY * m_Binary.GetMapColumns());
+    return m_Binary.GetLayer(layerIndex).Tiles[id];
+}
 
-    auto id = idX + (idY * layer.Columns);
-    return layer.Data[id];
+//-----------------------------------------------------------------------------
+//      タイルプロパティを取得します.
+//-----------------------------------------------------------------------------
+ResTileProp MapChip::GetTileProp(uint32_t x, uint32_t y) const
+{
+    auto idX = x % m_Binary.GetMapColumns();
+    auto idY = y % m_Binary.GetMapRows();
+
+    auto id = idX + (idY * m_Binary.GetMapColumns());
+    return m_Binary.GetTileProp(id);
 }
 
 //-----------------------------------------------------------------------------
@@ -315,7 +304,8 @@ void MapChip::UpdateDrawCount()
 //-----------------------------------------------------------------------------
 void MapChip::UpdateTileOffset()
 {
-    auto layer0 = m_Binary.GetLayer(0);
+    auto columns = m_Binary.GetMapColumns();
+    auto rows    = m_Binary.GetMapRows();
 
     // X方向のスクロール値と，オフセットを更新.
     if (m_Clamp)
@@ -335,7 +325,7 @@ void MapChip::UpdateTileOffset()
         }
         else if (m_ScrollX <= -m_DrawTileW)
         {
-            if (m_TileOffsetX + 1 < layer0.Columns)
+            if (m_TileOffsetX + 1 < columns)
             {
                 m_ScrollX = 0;
                 m_TileOffsetX++;
@@ -343,7 +333,7 @@ void MapChip::UpdateTileOffset()
             else
             {
                 m_ScrollX = -m_DrawTileW;
-                m_TileOffsetX = layer0.Columns - 1;
+                m_TileOffsetX = columns - 1;
             }
         }
     }
@@ -353,14 +343,14 @@ void MapChip::UpdateTileOffset()
         {
             m_ScrollX = 0;
             if (int(m_TileOffsetX) - 1 < 0)
-            { m_TileOffsetX = layer0.Columns - 1; }
+            { m_TileOffsetX = columns - 1; }
             else
             { m_TileOffsetX--; }
         }
         else if (m_ScrollX <= -m_DrawTileW)
         {
             m_ScrollX = 0;
-            m_TileOffsetX = (m_TileOffsetX + 1) % layer0.Columns;
+            m_TileOffsetX = (m_TileOffsetX + 1) % columns;
         }
     }
 
@@ -382,7 +372,7 @@ void MapChip::UpdateTileOffset()
         }
         else if (m_ScrollY <= -m_DrawTileH)
         {
-            if (m_TileOffsetY + 1 < layer0.Rows)
+            if (m_TileOffsetY + 1 < rows)
             {
                 m_ScrollY = 0;
                 m_TileOffsetY++;
@@ -390,7 +380,7 @@ void MapChip::UpdateTileOffset()
             else 
             {
                 m_ScrollY = -m_DrawTileH;
-                m_TileOffsetY = layer0.Rows - 1;
+                m_TileOffsetY = rows - 1;
             }
         }
     }
@@ -400,14 +390,14 @@ void MapChip::UpdateTileOffset()
         {
             m_ScrollY = 0;
             if (int(m_TileOffsetY) - 1 < 0)
-            { m_TileOffsetY = layer0.Rows - 1; }
+            { m_TileOffsetY = rows - 1; }
             else
             { m_TileOffsetY--; }
         }
         else if (m_ScrollY <= -m_DrawTileH)
         {
             m_ScrollY = 0;
-            m_TileOffsetY = (m_TileOffsetY + 1) % layer0.Rows;
+            m_TileOffsetY = (m_TileOffsetY + 1) % rows;
         }
     }
 }

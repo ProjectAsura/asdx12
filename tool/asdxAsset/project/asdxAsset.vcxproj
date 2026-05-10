@@ -189,6 +189,7 @@
     <ClInclude Include="..\include\TextureConverter.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\..\res\format\ResTypes.fbs" />
     <None Include="..\format\FontBinary.fbs" />
     <None Include="..\format\LevelBinary.fbs" />
     <None Include="..\format\MapChipBinary.fbs" />
