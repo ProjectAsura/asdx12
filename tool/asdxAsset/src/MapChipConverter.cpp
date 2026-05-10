@@ -24,6 +24,7 @@
 #define ELOG(x, ...) fprintf_s(stderr, "[File:%s, Line:%d] " x "\n", __FILE__, __LINE__, ##__VA_ARGS__)
 #endif//ELOG
 
+#define DEBUG_OUTPUT    (0)
 
 namespace {
 
@@ -361,6 +362,83 @@ bool LoadMapData(const char* path, MapData& outData)
         outData.ObjectGroups.emplace_back(og);
     }
 
+#if DEBUG_OUTPUT
+    printf_s("width        : %u\n", outData.Width);
+    printf_s("height       : %u\n", outData.Height);
+    printf_s("tileWidth    : %u\n", outData.TileWidth);
+    printf_s("tileHeight   : %u\n", outData.TileHeight);
+    printf_s("infinite     : %d\n", outData.Infinite);
+    printf_s("nextLayerId  : %u\n", outData.NextLayerId);
+    printf_s("nextObjectId : %u\n", outData.NextObjectId);
+
+    for(size_t i=0; i<outData.TileSets.size(); ++i)
+    {
+        printf_s("TileSet[%zu]\n", i);
+        printf_s("  name        : %s\n", outData.TileSets[i].Name.c_str());
+        printf_s("  firstChipId : %u\n", outData.TileSets[i].FirstChipId);
+        printf_s("  columnCount : %u\n", outData.TileSets[i].ColumnCount);
+        printf_s("  tileWidth   : %u\n", outData.TileSets[i].TileWidth);
+        printf_s("  tileHeight  : %u\n", outData.TileSets[i].TileHeight);
+        printf_s("  tileCount   : %u\n", outData.TileSets[i].TileCount);
+        printf_s("  imageWidth  : %u\n", outData.TileSets[i].Image.Width);
+        printf_s("  imageHeight : %u\n", outData.TileSets[i].Image.Height);
+        printf_s("  imageSource : %s\n", outData.TileSets[i].Image.Source.c_str());
+
+        for(size_t j=0; j<outData.TileSets[i].Tiles.size(); ++j)
+        {
+            printf_s("  tiles[%zu]\n", j);
+            printf_s("    id           : %u\n", outData.TileSets[i].Tiles[j].Id);
+            printf_s("    hasCollision : %d\n", outData.TileSets[i].Tiles[j].Prop.HasCollision);
+            printf_s("    hasEvent     : %d\n", outData.TileSets[i].Tiles[j].Prop.HasEvent);
+            printf_s("    hasDamage    : %d\n", outData.TileSets[i].Tiles[j].Prop.HasDamage);
+            printf_s("    enableToL    : %d\n", outData.TileSets[i].Tiles[j].Prop.EnableTOL);
+
+            for(size_t k=0; k<outData.TileSets[i].Tiles[j].Frames.size(); ++k)
+            {
+                printf_s("    frames[%zu]\n", k);
+                printf_s("      id       : %u\n", outData.TileSets[i].Tiles[j].Frames[k].Id);
+                printf_s("      duration : %f\n", outData.TileSets[i].Tiles[j].Frames[k].Duration);
+            }
+        }
+    }
+
+    for(size_t i=0; i<outData.Layers.size(); ++i)
+    {
+        printf_s("Layers[%zu]\n", i);
+        printf_s("  name   : %s\n", outData.Layers[i].Name.c_str());
+        printf_s("  id     : %u\n", outData.Layers[i].Id);
+        printf_s("  width  : %u\n", outData.Layers[i].Width);
+        printf_s("  height : %u\n", outData.Layers[i].Height);
+        printf_s("  data   :\n");
+        for(size_t j=0; j<outData.Layers[i].Data.size(); ++j)
+        {
+            printf_s("%u,", outData.Layers[i].Data[j]);
+            if (j % outData.Width == 0)
+            { printf_s("\n"); }
+        }
+    }
+
+    for(size_t i=0; i<outData.ObjectGroups.size(); ++i)
+    {
+        printf_s("ObjectGroup[%zu]\n", i);
+        printf_s("  id      : %u\n", outData.ObjectGroups[i].Id);
+        printf_s("  name    : %s\n", outData.ObjectGroups[i].Name.c_str());
+        printf_s("  locked  : %d\n", outData.ObjectGroups[i].Locked);
+        printf_s("  objects :\n");
+        for(size_t j=0; j<outData.ObjectGroups[i].Objects.size(); ++j)
+        {
+            printf_s("  Objects[%zu]\n", j);
+            printf_s("    name    : %s\n", outData.ObjectGroups[i].Objects[j].Name.c_str());
+            printf_s("    id      : %u\n", outData.ObjectGroups[i].Objects[j].Id);
+            printf_s("    eventId : %u\n", outData.ObjectGroups[i].Objects[j].EventId);
+            printf_s("    x       : %u\n", outData.ObjectGroups[i].Objects[j].X);
+            printf_s("    y       : %u\n", outData.ObjectGroups[i].Objects[j].Y);
+            printf_s("    width   : %u\n", outData.ObjectGroups[i].Objects[j].Width);
+            printf_s("    height  : %u\n", outData.ObjectGroups[i].Objects[j].Height);
+        }
+    }
+#endif
+
     return true;
 }
 
@@ -424,8 +502,10 @@ bool MapChipConverter::Convert(const Desc& desc)
         uint16_t    EventId = 0;
     };
 
+    auto tileCount = mapData.Width * mapData.Height;
+
     std::vector<ConvTileProp> convProps;
-    convProps.resize(tileSet.TileCount);
+    convProps.resize(tileCount);
     for(auto i=0; i<convProps.size(); ++i)
     {
         convProps[i].Flags   = 0;
@@ -435,7 +515,7 @@ bool MapChipConverter::Convert(const Desc& desc)
     std::vector<flatbuffers::Offset<asdx::res::MapLayer>> dstLayers;
     for(auto i=0; i<mapData.Layers.size(); ++i)
     {
-        for(auto j=0u; j<tileSet.TileCount; ++j)
+        for(auto j=0u; j<tileCount; ++j)
         {
             auto id = mapData.Layers[i].Data[j];
             if (id < tileSet.FirstChipId)
@@ -455,10 +535,13 @@ bool MapChipConverter::Convert(const Desc& desc)
             uint16_t flags = 0;
             if (tile.Prop.HasCollision)
                 flags |= TILE_FLAG_COLLISION;
+
             if (tile.Prop.HasEvent)
                 flags |= TILE_FLAG_EVENT;
+
             if (tile.Prop.HasDamage)
                 flags |= TILE_FLAG_DAMAGE;
+
             if (tile.Prop.EnableTOL)
                 flags |= TILE_FLAG_TOL;
 
@@ -523,6 +606,8 @@ bool MapChipConverter::Convert(const Desc& desc)
     auto tileCols   = tileSet.ColumnCount;
     auto chipWidth  = mapData.TileWidth;
     auto chipHeight = mapData.TileHeight;
+    assert(mapData.TileSets[0].Image.Width  / mapData.TileWidth  == tileCols);
+    assert(mapData.TileSets[0].Image.Height / mapData.TileHeight == tileRows);
 
     asdx::res::Uint2 mapCount    = {mapData.Width, mapData.Height};
     asdx::res::Uint2 chipCount   = {tileCols, tileRows};
@@ -533,6 +618,26 @@ bool MapChipConverter::Convert(const Desc& desc)
     std::string texturePath = "textures\\" + p.filename().replace_extension(".txb").string();
 
     auto firstChipId = tileSet.FirstChipId;
+
+#if DEBUG_OUTPUT
+    for(size_t i=0; i<convProps.size(); ++i)
+    {
+        printf_s("convProps[%zu] (", i);
+        for(size_t j=0; j<mapData.Layers.size(); ++j)
+        {
+            printf_s("%u", mapData.Layers[j].Data[i]);
+            if (j != mapData.Layers.size() - 1)
+            { printf_s(", "); }
+        }
+        printf_s(")\n");
+
+        printf_s("  flags   : 0x%x\n", convProps[i].Flags);
+        printf_s("  eventId : %u\n", convProps[i].EventId);
+    }
+
+    printf_s("tileRows : %u\n", tileRows);
+    printf_s("tileCols : %u\n", tileCols);
+#endif
 
     // Binary出力.
     {
