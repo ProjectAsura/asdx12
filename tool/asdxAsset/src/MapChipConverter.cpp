@@ -49,10 +49,10 @@ enum TILE_FLAG
 ///////////////////////////////////////////////////////////////////////////////
 struct TileProp
 {
-    bool    HasCollision;
-    bool    HasEvent;
-    bool    HasDamage;
-    bool    EnableTOL;
+    bool    HasCollision    = false;
+    bool    HasEvent        = false;
+    bool    HasDamage       = false;
+    bool    EnableTOL       = false;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -60,8 +60,8 @@ struct TileProp
 ////////////////////////////////////////////////////////////////////////////////
 struct Frame
 {
-    uint32_t    Id;
-    float       Duration;
+    uint32_t    Id          = 0;
+    float       Duration    = 0.0f;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -69,9 +69,9 @@ struct Frame
 ///////////////////////////////////////////////////////////////////////////////
 struct Tile
 {
-    uint16_t                Id;
-    TileProp                Prop;
-    std::vector<Frame>      Frames;
+    uint16_t                Id      = 0;
+    TileProp                Prop    = {};
+    std::vector<Frame>      Frames  = {};
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -79,9 +79,9 @@ struct Tile
 ///////////////////////////////////////////////////////////////////////////////
 struct Image
 {
-    uint32_t    Width;
-    uint32_t    Height;
-    std::string Source;
+    uint32_t    Width   = 0;
+    uint32_t    Height  = 0;
+    std::string Source  = {};
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -89,14 +89,14 @@ struct Image
 ///////////////////////////////////////////////////////////////////////////////
 struct TileSet
 {
-    std::string         Name;
-    uint16_t            FirstChipId;
-    uint32_t            ColumnCount;
-    uint32_t            TileWidth;
-    uint32_t            TileHeight;
-    uint32_t            TileCount;
-    Image               Image;
-    std::vector<Tile>   Tiles;
+    std::string         Name        = {};
+    uint16_t            FirstChipId = 0;
+    uint32_t            ColumnCount = 0;
+    uint32_t            TileWidth   = 0;
+    uint32_t            TileHeight  = 0;
+    uint32_t            TileCount   = 0;
+    Image               Image       = {};
+    std::vector<Tile>   Tiles       = {};
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -104,11 +104,11 @@ struct TileSet
 ///////////////////////////////////////////////////////////////////////////////
 struct Layer
 {
-    std::string             Name;
-    uint32_t                Id;
-    uint32_t                Width;
-    uint32_t                Height;
-    std::vector<uint16_t>   Data;
+    std::string             Name    = {};
+    uint32_t                Id      = 0;
+    uint32_t                Width   = 0;
+    uint32_t                Height  = 0;
+    std::vector<uint16_t>   Data    = {};
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -257,19 +257,19 @@ bool LoadMapData(const char* path, MapData& outData)
                 {
                     TileProp tp = {};
                     auto name = prop->Attribute("name");
-                    if (strcmp(name, "collision") == 0)
+                    if (_stricmp(name, "collision") == 0)
                     {
                         tp.HasCollision = prop->BoolAttribute("value");
                     }
-                    else if (strcmp(name, "event") == 0)
+                    else if (_stricmp(name, "event") == 0)
                     {
                         tp.HasEvent = prop->BoolAttribute("value");
                     }
-                    else if (strcmp(name, "damage") == 0)
+                    else if (_stricmp(name, "damage") == 0)
                     {
                         tp.HasDamage = prop->BoolAttribute("value");
                     }
-                    else if (strcmp(name, "tol") == 0)
+                    else if (_stricmp(name, "tol") == 0)
                     {
                         tp.EnableTOL = prop->BoolAttribute("value");
                     }
@@ -441,32 +441,26 @@ bool MapChipConverter::Convert(const Desc& desc)
             if (id < tileSet.FirstChipId)
                 continue;
 
-            auto itr = std::find_if(tileSet.Tiles.begin(), tileSet.Tiles.end(), [id](const Tile& val)
-            {
-                return id  == val.Id;
-            });
+            auto idx = id - tileSet.FirstChipId;
+            auto itr = std::find_if(
+                tileSet.Tiles.begin(),
+                tileSet.Tiles.end(),
+                [idx](const Tile& val){ return idx == val.Id; });
 
             if (itr == tileSet.Tiles.end())
                 continue;
 
             const auto& tile = (*itr);
+
             uint16_t flags = 0;
             if (tile.Prop.HasCollision)
-            {
                 flags |= TILE_FLAG_COLLISION;
-            }
             if (tile.Prop.HasEvent)
-            {
                 flags |= TILE_FLAG_EVENT;
-            }
             if (tile.Prop.HasDamage)
-            {
                 flags |= TILE_FLAG_DAMAGE;
-            }
             if (tile.Prop.EnableTOL)
-            {
                 flags |= TILE_FLAG_TOL;
-            }
 
             convProps[j].Flags |= flags;
         }
@@ -493,8 +487,8 @@ bool MapChipConverter::Convert(const Desc& desc)
             auto x0 = obj.X / mapData.TileWidth;
             auto y0 = obj.Y / mapData.TileHeight;
 
-            auto x1 = (obj.X + obj.Width  + 0.5f) / mapData.TileWidth;
-            auto y1 = (obj.Y + obj.Height + 0.5f) / mapData.TileHeight;
+            auto x1 = uint32_t((float(obj.X + obj.Width)  / float(mapData.TileWidth) ) + 0.5f);
+            auto y1 = uint32_t((float(obj.Y + obj.Height) / float(mapData.TileHeight)) + 0.5f);
 
             for(auto y=y0; y<y1; ++y)
             {
@@ -518,7 +512,6 @@ bool MapChipConverter::Convert(const Desc& desc)
     std::vector<asdx::res::MapTileProp> dstProps;
     for(auto i=0; i<convProps.size(); ++i)
     {
-
         dstProps.emplace_back(
             asdx::res::MapTileProp(
                 convProps[i].Flags,
