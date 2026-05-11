@@ -285,10 +285,7 @@ uint16_t MapChip::GetChipId(uint32_t layerIndex, uint32_t x, uint32_t y) const
 //-----------------------------------------------------------------------------
 ResTileProp MapChip::GetTileProp(uint32_t x, uint32_t y) const
 {
-    auto idX = x % m_Binary.GetMapColumns();
-    auto idY = y % m_Binary.GetMapRows();
-
-    auto id = idX + (idY * m_Binary.GetMapColumns());
+    auto id = m_Binary.CalcTileIndex(x, y);
     return m_Binary.GetTileProp(id);
 }
 

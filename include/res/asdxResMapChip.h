@@ -21,6 +21,7 @@ namespace asdx {
 ///////////////////////////////////////////////////////////////////////////////
 enum TILE_FLAGS : uint8_t
 {
+    TILE_FLAG_NONE      = 0x0,        //!< フラグ指定なし.
     TILE_FLAG_COLLISION = 0x1 << 0,   //!< 衝突判定あり.
     TILE_FLAG_EVENT     = 0x1 << 1,   //!< イベントあり.
     TILE_FLAG_DAMAGE    = 0x1 << 2,   //!< ダメージあり.
@@ -211,9 +212,10 @@ public:
     //! 
     //! @param[in]      x       タイルX.
     //! @param[in]      y       タイルY.
+    //! @param[in]      repeat  繰り返しする場合は true.
     //! @return     タイル番号を返却します.
     //-------------------------------------------------------------------------
-    uint32_t CalcTileIndex(uint32_t x, uint32_t y);
+    uint32_t CalcTileIndex(uint32_t x, uint32_t y, bool repeat = true) const;
 
 private:
     //=========================================================================

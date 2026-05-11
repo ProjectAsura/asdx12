@@ -209,11 +209,21 @@ ResTileProp MapChipBinary::GetTileProp(uint32_t index) const
 //-----------------------------------------------------------------------------
 //      タイル番号を求めます.
 //-----------------------------------------------------------------------------
-uint32_t MapChipBinary::CalcTileIndex(uint32_t x, uint32_t y)
+uint32_t MapChipBinary::CalcTileIndex(uint32_t x, uint32_t y, bool repeat) const
 {
     auto bin = res::GetMapChipBinary(m_Blob.data());
-    auto tx = x % bin->ChipCount()->X();
-    auto ty = (y / bin->ChipCount()->X()) % bin->ChipCount()->Y();
+    auto tx  = 0u;
+    auto ty  = 0u;
+    if (repeat)
+    {
+        tx = x % bin->ChipCount()->X();
+        ty = (y / bin->ChipCount()->X()) % bin->ChipCount()->Y();
+    }
+    else
+    {
+        tx = Clamp(x, 0u, bin->ChipCount()->X() - 1u);
+        ty = Clamp(y, 0u, bin->ChipCount()->Y() - 1u);
+    }
 
     return ty * bin->ChipCount()->X() + tx;
 }
