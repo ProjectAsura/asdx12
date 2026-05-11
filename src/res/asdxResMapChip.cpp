@@ -216,15 +216,25 @@ uint32_t MapChipBinary::CalcTileIndex(uint32_t x, uint32_t y, bool repeat) const
     auto ty  = 0u;
     if (repeat)
     {
-        tx = x % bin->ChipCount()->X();
-        ty = (y / bin->ChipCount()->X()) % bin->ChipCount()->Y();
+        tx = x % bin->MapCount()->X();
+        ty = y % bin->MapCount()->Y();
     }
     else
     {
-        tx = Clamp(x, 0u, bin->ChipCount()->X() - 1u);
-        ty = Clamp(y, 0u, bin->ChipCount()->Y() - 1u);
+        tx = Clamp(x, 0u, bin->MapCount()->X() - 1u);
+        ty = Clamp(y, 0u, bin->MapCount()->Y() - 1u);
     }
+    return ty * bin->MapCount()->X() + tx;
+}
 
+//-----------------------------------------------------------------------------
+//      チップ番号を求めます.
+//-----------------------------------------------------------------------------
+uint32_t MapChipBinary::CalcChipIndex(uint32_t x, uint32_t y) const
+{
+    auto bin = res::GetMapChipBinary(m_Blob.data());
+    auto tx = Clamp(x, 0u, bin->ChipCount()->X() - 1u);
+    auto ty = Clamp(y, 0u, bin->ChipCount()->Y() - 1u);
     return ty * bin->ChipCount()->X() + tx;
 }
 

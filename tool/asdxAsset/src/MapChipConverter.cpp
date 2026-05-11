@@ -622,7 +622,10 @@ bool MapChipConverter::Convert(const Desc& desc)
 #if DEBUG_OUTPUT
     for(size_t i=0; i<convProps.size(); ++i)
     {
-        printf_s("convProps[%zu] (", i);
+        auto x = i % mapData.Width;
+        auto y = i / mapData.Width;
+
+        printf_s("convProps[%zu]<%u, %u> (", i, x, y);
         for(size_t j=0; j<mapData.Layers.size(); ++j)
         {
             printf_s("%u", mapData.Layers[j].Data[i]);
