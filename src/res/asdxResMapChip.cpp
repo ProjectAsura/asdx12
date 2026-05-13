@@ -239,6 +239,7 @@ uint32_t MapChipBinary::CalcTileIndex(uint32_t x, uint32_t y, bool repeat) const
 //-----------------------------------------------------------------------------
 uint32_t MapChipBinary::CalcChipIndex(uint32_t x, uint32_t y) const
 {
+    assert(!m_Blob.empty());
     auto bin = res::GetMapChipBinary(m_Blob.data());
     auto tx = Clamp(x, 0u, bin->ChipCount()->X() - 1u);
     auto ty = Clamp(y, 0u, bin->ChipCount()->Y() - 1u);
