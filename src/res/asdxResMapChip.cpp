@@ -58,6 +58,12 @@ void MapChipBinary::Term()
 }
 
 //-----------------------------------------------------------------------------
+//      有効かどうかチェックします.
+//-----------------------------------------------------------------------------
+bool MapChipBinary::IsValid( ) const
+{ return !m_Blob.empty(); }
+
+//-----------------------------------------------------------------------------
 //      行数を取得します.
 //-----------------------------------------------------------------------------
 uint32_t MapChipBinary::GetMapRows() const
@@ -211,6 +217,7 @@ ResTileProp MapChipBinary::GetTileProp(uint32_t index) const
 //-----------------------------------------------------------------------------
 uint32_t MapChipBinary::CalcTileIndex(uint32_t x, uint32_t y, bool repeat) const
 {
+    assert(!m_Blob.empty());
     auto bin = res::GetMapChipBinary(m_Blob.data());
     auto tx  = 0u;
     auto ty  = 0u;

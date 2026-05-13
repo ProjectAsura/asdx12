@@ -121,9 +121,9 @@ public:
     //! @brief      引数付きコンストラクタです.
     //-------------------------------------------------------------------------
     TypedMessage(uint32_t type, const T& data)
-    : m_Data(data)
+    : Message(type)
+    , m_Data(data)
     {
-        m_Type    = type;
         m_Size    = sizeof(T);
         m_pBuffer = &m_Data;
     }
@@ -203,14 +203,14 @@ public:
     //! 
     //! @param[in]      instance        登録するメッセージリスナー.
     //-------------------------------------------------------------------------
-    void Add(IMessageListener* instance);
+    void AddListener(IMessageListener* instance);
 
     //-------------------------------------------------------------------------
     //! @brief      メッセージリスナーの登録を解除します.
     //! 
     //! @param[in]      instance        登録解除するメッセージリスナー.
     //-------------------------------------------------------------------------
-    void Remove(IMessageListener* instance);
+    void RemoveListener(IMessageListener* instance);
 
     //-------------------------------------------------------------------------
     //! @brief      全メッセージリスナーの登録を解除します.
@@ -220,12 +220,12 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      メッセージを追加します.
     //-------------------------------------------------------------------------
-    void PostMessage(const Message& msg);
+    void EnqueueMessage(const Message& msg);
 
     //-------------------------------------------------------------------------
     //! @brief      メッセージをブロードキャストします.
     //-------------------------------------------------------------------------
-    void BroadCast();
+    void Broadcast();
 
 private:
     //=========================================================================
@@ -246,19 +246,19 @@ private:
 //! @brief      メッセージリスナーを追加します.
 //-----------------------------------------------------------------------------
 inline void AddMsgListener(IMessageListener* instance)
-{ asdx::MessageManager::Instance().Add(instance); }
+{ asdx::MessageManager::Instance().AddListener(instance); }
 
 //-----------------------------------------------------------------------------
 //! @brief      メッセージリスナーを削除します.
 //-----------------------------------------------------------------------------
 inline void RemoveMsgListener(IMessageListener* instance)
-{ asdx::MessageManager::Instance().Remove(instance); }
+{ asdx::MessageManager::Instance().RemoveListener(instance); }
 
 //-----------------------------------------------------------------------------
 //! @brief      メッセージを送ります.
 //-----------------------------------------------------------------------------
 inline void SendMsg(const Message& msg)
-{ asdx::MessageManager::Instance().PostMessage(msg); }
+{ asdx::MessageManager::Instance().EnqueueMessage(msg); }
 
 } // namespace asdx
 

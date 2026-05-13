@@ -42,13 +42,13 @@ void MessageManager::Term()
 //-----------------------------------------------------------------------------
 //      メッセージリスナーを追加します.
 //-----------------------------------------------------------------------------
-void MessageManager::Add(IMessageListener* instance)
+void MessageManager::AddListener(IMessageListener* instance)
 { m_Listeners.push_back(instance); }
 
 //-----------------------------------------------------------------------------
 //      メッセージリスナーを削除します.
 //-----------------------------------------------------------------------------
-void MessageManager::Remove(IMessageListener* instance)
+void MessageManager::RemoveListener(IMessageListener* instance)
 { m_Listeners.remove(instance); }
 
 //-----------------------------------------------------------------------------
@@ -60,7 +60,7 @@ void MessageManager::Clear()
 //-----------------------------------------------------------------------------
 //      メッセージを追加します.
 //-----------------------------------------------------------------------------
-void MessageManager::PostMessage(const Message& msg)
+void MessageManager::EnqueueMessage(const Message& msg)
 {
     auto buf = m_Heap.Alloc(sizeof(Message));
     assert(buf != nullptr);
@@ -83,7 +83,7 @@ void MessageManager::PostMessage(const Message& msg)
 //-----------------------------------------------------------------------------
 //      メッセージをブロードキャストします.
 //-----------------------------------------------------------------------------
-void MessageManager::BroadCast()
+void MessageManager::Broadcast()
 {
     while(!m_Queue.empty())
     {
