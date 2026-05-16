@@ -208,6 +208,7 @@ ResTileProp MapChipBinary::GetTileProp(uint32_t index) const
 
     ResTileProp result = {};
     result.Flags   = prop->Flags();
+    result.Prob    = prop->Prob();
     result.EventId = prop->EventId();
     return result;
 }
