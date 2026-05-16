@@ -50,10 +50,12 @@ enum TILE_FLAG
 ///////////////////////////////////////////////////////////////////////////////
 struct TileProp
 {
-    bool    HasCollision    = false;
-    bool    HasEvent        = false;
-    bool    HasDamage       = false;
-    bool    EnableTOL       = false;
+    uint8_t HasCollision : 1 = 0;
+    uint8_t HasEvent     : 1 = 0;
+    uint8_t HasDamage    : 1 = 0;
+    uint8_t EnableTOL    : 1 = 0;
+    uint8_t Reserved     : 4 = 0;
+    uint8_t Prob             = 0;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -260,19 +262,23 @@ bool LoadMapData(const char* path, MapData& outData)
                     auto name = prop->Attribute("name");
                     if (_stricmp(name, "collision") == 0)
                     {
-                        tp.HasCollision = prop->BoolAttribute("value");
+                        tp.HasCollision = prop->BoolAttribute("value") ? 1 : 0;
                     }
                     else if (_stricmp(name, "event") == 0)
                     {
-                        tp.HasEvent = prop->BoolAttribute("value");
+                        tp.HasEvent = prop->BoolAttribute("value") ? 1 : 0;
                     }
                     else if (_stricmp(name, "damage") == 0)
                     {
-                        tp.HasDamage = prop->BoolAttribute("value");
+                        tp.HasDamage = prop->BoolAttribute("value") ? 1 : 0;
                     }
                     else if (_stricmp(name, "tol") == 0)
                     {
-                        tp.EnableTOL = prop->BoolAttribute("value");
+                        tp.EnableTOL = prop->BoolAttribute("value") ? 1 : 0;
+                    }
+                    else if (_stricmp(name, "prob") == 0)
+                    {
+                        tp.Prob = prop->IntAttribute("value");
                     }
 
                     t.Prop = tp;
@@ -498,8 +504,9 @@ bool MapChipConverter::Convert(const Desc& desc)
 
     struct ConvTileProp
     {
-        uint16_t    Flags   = 0;
-        uint16_t    EventId = 0;
+        uint8_t    Flags   = 0;
+        uint8_t    Prob    = 0;
+        uint16_t   EventId = 0;
     };
 
     auto tileCount = mapData.Width * mapData.Height;
@@ -509,6 +516,7 @@ bool MapChipConverter::Convert(const Desc& desc)
     for(auto i=0; i<convProps.size(); ++i)
     {
         convProps[i].Flags   = 0;
+        convProps[i].Prob    = 0;
         convProps[i].EventId = UINT16_MAX;
     }
 
@@ -532,7 +540,7 @@ bool MapChipConverter::Convert(const Desc& desc)
 
             const auto& tile = (*itr);
 
-            uint16_t flags = 0;
+            uint8_t flags = 0;
             if (tile.Prop.HasCollision)
                 flags |= TILE_FLAG_COLLISION;
 
@@ -546,6 +554,7 @@ bool MapChipConverter::Convert(const Desc& desc)
                 flags |= TILE_FLAG_TOL;
 
             convProps[j].Flags |= flags;
+            convProps[j].Prob = tile.Prop.Prob;
         }
 
         dstLayers.emplace_back(
@@ -598,6 +607,7 @@ bool MapChipConverter::Convert(const Desc& desc)
         dstProps.emplace_back(
             asdx::res::MapTileProp(
                 convProps[i].Flags,
+                convProps[i].Prob,
                 convProps[i].EventId)
         );
     }

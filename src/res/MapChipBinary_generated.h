@@ -33,20 +33,26 @@ struct MapChipBinaryBuilder;
 
 FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(2) MapTileProp FLATBUFFERS_FINAL_CLASS {
  private:
-  uint16_t Flags_;
+  uint8_t Flags_;
+  uint8_t Prob_;
   uint16_t EventId_;
 
  public:
   MapTileProp()
       : Flags_(0),
+        Prob_(0),
         EventId_(0) {
   }
-  MapTileProp(uint16_t _Flags, uint16_t _EventId)
+  MapTileProp(uint8_t _Flags, uint8_t _Prob, uint16_t _EventId)
       : Flags_(::flatbuffers::EndianScalar(_Flags)),
+        Prob_(::flatbuffers::EndianScalar(_Prob)),
         EventId_(::flatbuffers::EndianScalar(_EventId)) {
   }
-  uint16_t Flags() const {
+  uint8_t Flags() const {
     return ::flatbuffers::EndianScalar(Flags_);
+  }
+  uint8_t Prob() const {
+    return ::flatbuffers::EndianScalar(Prob_);
   }
   uint16_t EventId() const {
     return ::flatbuffers::EndianScalar(EventId_);
