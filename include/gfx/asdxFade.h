@@ -81,71 +81,51 @@ public:
     void Draw(ID3D12GraphicsCommandList* pCmd);
 
     //-------------------------------------------------------------------------
-    //! @brief      カラー0を設定します.
+    //! @brief      フェード処理を設定します.
     //! 
-    //! @param[in]      value       設定するカラーです.
+    //! @param[in]      color           目標カラー.
+    //! @param[in]      alpha           目標アルファ値.
+    //! @param[in]      durationSec     遷移完了までの時間(単位：秒).
     //-------------------------------------------------------------------------
-    void SetColor0(const asdx::Vector4& value);
+    void FadeTo(const asdx::Vector3& color, float alpha, float durationSec);
 
     //-------------------------------------------------------------------------
-    //! @brief      カラー0を設定します.
+    //! @brief      フェードインします.
     //! 
-    //! @param[in]      r           R成分です.
-    //! @param[in]      g           G成分です.
-    //! @param[in]      b           B成分です.
-    //! @param[in]      A           A成分です.
+    //! @param[in]      durationSec     遷移完了までの時間(単位:秒).
     //-------------------------------------------------------------------------
-    void SetColor0(float r, float g, float b, float a);
+    void FadeIn(float durationSec);
 
     //-------------------------------------------------------------------------
-    //! @brief      カラー1を設定します.
+    //! @brief      フェードアウトします.
     //! 
-    //! @param[in]      r           R成分です.
-    //! @param[in]      g           G成分です.
-    //! @param[in]      b           B成分です.
-    //! @param[in]      A           A成分です.
+    //! @param[in]      durationSec     遷移完了までの時間(単位:秒).
     //-------------------------------------------------------------------------
-    void SetColor1(const asdx::Vector4& value);
+    void FadeOut(float duerationSec);
 
     //-------------------------------------------------------------------------
-    //! @brief      カラー1を設定します.
+    //! @brief      フェードインします.
     //! 
-    //! @param[in]      value       設定するカラーです.
+    //! @param[in]      color           目標カラー.
+    //! @param[in]      durationSec     遷移完了までの時間(単位:秒).
     //-------------------------------------------------------------------------
-    void SetColor1(float r, float g, float b, float a);
+    void FadeIn(const asdx::Vector3& color, float durationSec);
 
     //-------------------------------------------------------------------------
-    //! @brief      切り替え時間を設定します.
+    //! @brief      フェードアウトします.
     //! 
-    //! @param[in]      value       切り替え時間(秒)
+    //! @param[in]      color           目標カラー.
+    //! @param[in]      durationSec     遷移完了までの時間(単位:秒).
     //-------------------------------------------------------------------------
-    void SetChangeSec(float value);
+    void FadeOut(const asdx::Vector3& color, float durationSec);
 
     //-------------------------------------------------------------------------
-    //! @brief      カラー0を取得します.
+    //! @brief      画面を明滅させます.
     //! 
-    //! @return     カラー0を返却します.
+    //! @param[in]      color           目標カラー.
+    //! @param[in]      durationSec     明滅完了までの時間(単位:秒).
     //-------------------------------------------------------------------------
-    const asdx::Vector4& GetColor0() const;
-
-    //-------------------------------------------------------------------------
-    //! @brief      カラー1を取得します.
-    //! 
-    //! @return     カラー1を返却します.
-    //-------------------------------------------------------------------------
-    const asdx::Vector4& GetColor1() const;
-
-    //-------------------------------------------------------------------------
-    //! @brief      切り替え時間を取得します.
-    //! 
-    //! @return     切り替え時間を返却します.
-    //-------------------------------------------------------------------------
-    float GetChangeSec() const;
-
-    //-------------------------------------------------------------------------
-    //! @brief      ステートをリセットします.
-    //-------------------------------------------------------------------------
-    void ResetState();
+    void Flash(const asdx::Vector3& color, float durationSec);
 
     //-------------------------------------------------------------------------
     //! @brief      完了済みかどうかチェックします.
@@ -155,35 +135,6 @@ public:
     //-------------------------------------------------------------------------
     bool IsComplete() const;
 
-    //-------------------------------------------------------------------------
-    //! @brief      点滅を有効化します.
-    //! 
-    //! @param[in]      value       点滅を有効化する場合は true, 無効化する場合は false.
-    //-------------------------------------------------------------------------
-    void SetEnablePulse(bool value);
-
-    //-------------------------------------------------------------------------
-    //! @brief      点滅が有効化チェックします.
-    //! 
-    //! @retval true    点滅が有効です.
-    //! @retval false   点滅が無効です.
-    //-------------------------------------------------------------------------
-    bool IsEnablePulse() const;
-
-    //-------------------------------------------------------------------------
-    //! @brief      点滅速度を設定します.
-    //! 
-    //! @param[in]      value       設定する点滅速度.
-    //-------------------------------------------------------------------------
-    void SetPulseSpeed(float value);
-
-    //-------------------------------------------------------------------------
-    //! @brief      点滅速度を取得します.
-    //! 
-    //! @return     点滅速度を返却します.
-    //-------------------------------------------------------------------------
-    float GetPulseSpeed() const;
-
 private:
     //=========================================================================
     // private variables.
@@ -192,13 +143,16 @@ private:
     RefPtr<ID3D12RootSignature> m_RootSig;          //!< ルートシグニチャです.
     RefPtr<ID3D12PipelineState> m_PipelineState;    //!< パイプラインステートです.
     Texture*                    m_WhiteTexture;     //!< テクスチャ.
-    asdx::Vector4               m_Color0;           //!< カラー0です.
-    asdx::Vector4               m_Color1;           //!< カラー1です.
-    float                       m_ChangeSec;        //!< 切り替え時間(秒)です.
-    float                       m_ElapsedSec;       //!< 経過時間(秒)です.
-    bool                        m_Complete;         //!< 完了フラグ.
-    bool                        m_EnablePulse;      //!< 点滅フラグ.
-    float                       m_PulseSpeed;       //!< 点滅速度.
+
+    asdx::Vector3   m_StartColor   = asdx::Vector3(0.0f, 0.0f, 0.0f);
+    asdx::Vector3   m_TargetColor  = asdx::Vector3(0.0f, 0.0f, 0.0f);
+    asdx::Vector3   m_CurrentColor = asdx::Vector3(0.0f, 0.0f, 0.0f);
+    float           m_StartAlpha   = 0.0f;
+    float           m_TargetAlpha  = 0.0f;
+    float           m_CurrentAlpha = 0.0f;
+    float           m_ElapsedSec   = 0.0f;
+    float           m_DurationSec  = 1.0f;
+    bool            m_Complete     = false;
 
     //========================================================================
     // private methods.

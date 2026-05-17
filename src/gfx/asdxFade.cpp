@@ -35,14 +35,17 @@ Fade Fade::s_Instance = {};
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
 Fade::Fade()
-: m_WhiteTexture(nullptr)
-, m_Color0      (0.0f, 0.0f, 0.0f, 0.0f)
-, m_Color1      (1.0f, 1.0f, 1.0f, 1.0f)
-, m_ChangeSec   (1.0f)
-, m_ElapsedSec  (0.0f)
-, m_Complete    (false)
-, m_EnablePulse (false)
-, m_PulseSpeed  (1.0f)
+: m_RootSig         (nullptr)
+, m_PipelineState   (nullptr)
+, m_WhiteTexture    (nullptr)
+, m_StartColor      (0.0f, 0.0f, 0.0f)
+, m_TargetColor     (0.0f, 0.0f, 0.0f)
+, m_CurrentColor    (0.0f, 0.0f, 0.0f)
+, m_StartAlpha      (0.0f)
+, m_TargetAlpha     (0.0f)
+, m_CurrentAlpha    (0.0f)
+, m_ElapsedSec      (0.0f)
+, m_Complete        (false)
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
@@ -193,8 +196,16 @@ void Fade::Term()
     m_RootSig      .Reset();
 
     m_Complete   = false;
-    m_ChangeSec  = 0.0f;
     m_ElapsedSec = 0.0f;
+
+    m_CurrentColor = asdx::Vector3(0.0f, 0.0f, 0.0f);
+    m_CurrentAlpha = 0.0f;
+
+    m_StartColor  = asdx::Vector3(0.0f, 0.0f, 0.0f);
+    m_TargetColor = asdx::Vector3(0.0f, 0.0f, 0.0f);
+
+    m_StartAlpha  = 0.0f;
+    m_TargetAlpha = 0.0f;
 }
 
 //-----------------------------------------------------------------------------
@@ -206,10 +217,16 @@ void Fade::Update(float deltaSec)
         return;
 
     m_ElapsedSec += deltaSec;
-    if (m_ElapsedSec > m_ChangeSec)
+
+    float t = Saturate(m_ElapsedSec / m_DurationSec);
+    m_CurrentColor = Vector3::Lerp(m_StartColor, m_TargetColor, t);
+    m_CurrentAlpha = Lerp(m_StartAlpha, m_TargetAlpha, t);
+
+    if (t >= 1.0f)
     {
-        m_Complete   = true;
-        m_ElapsedSec = m_ChangeSec;
+        m_Complete     = true;
+        m_CurrentColor = m_TargetColor;
+        m_CurrentAlpha = m_TargetAlpha;
     }
 }
 
@@ -218,31 +235,19 @@ void Fade::Update(float deltaSec)
 //-----------------------------------------------------------------------------
 void Fade::Draw(ID3D12GraphicsCommandList* pCmd, D3D12_GPU_DESCRIPTOR_HANDLE handleSRV)
 {
-    auto amount = asdx::Saturate(m_ElapsedSec / m_ChangeSec);
-    Vector4 color;
-    // フェード.
-    if (!m_EnablePulse)
-    { color  = Vector4::Lerp(m_Color0, m_Color1, amount); }
-    // 点滅エフェクト.
-    else
-    {
-        if (amount < 1.0f)
-        {
-            float phase = 1.0f + sinf(m_ElapsedSec * m_ChangeSec * m_PulseSpeed);
-            color.x = (1.0f - phase) * m_Color1.x;
-            color.y = (1.0f - phase) * m_Color1.y;
-            color.z = (1.0f - phase) * m_Color1.z;
-            color.w = (1.0f - phase) * m_Color1.w;
-        }
-        else
-        {
-            color = m_Color1;
-        }
-    }
+    if (m_CurrentAlpha <= 0.0f)
+        return;
+
+    float color[] = {
+        m_CurrentColor.x,
+        m_CurrentColor.y,
+        m_CurrentColor.z,
+        m_CurrentAlpha
+    };
 
     pCmd->SetGraphicsRootSignature(m_RootSig.GetPtr());
     pCmd->SetPipelineState(m_PipelineState.GetPtr());
-    pCmd->SetGraphicsRoot32BitConstants(0, 4, &color.x, 0);
+    pCmd->SetGraphicsRoot32BitConstants(0, 4, color, 0);
     pCmd->SetGraphicsRootDescriptorTable(1, handleSRV);
 
     DrawQuad(pCmd);
@@ -255,70 +260,53 @@ void Fade::Draw(ID3D12GraphicsCommandList* pCmd)
 { Draw(pCmd, m_WhiteTexture->GetHandleGPU()); }
 
 //-----------------------------------------------------------------------------
-//      カラー0を設定します.
+//      フェード処理を設定します.
 //-----------------------------------------------------------------------------
-void Fade::SetColor0(const asdx::Vector4& value)
-{ m_Color0 = value; }
-
-//-----------------------------------------------------------------------------
-//      カラー0を設定します.
-//-----------------------------------------------------------------------------
-void Fade::SetColor0(float r, float g, float b, float a)
+void Fade::FadeTo(const asdx::Vector3& color, float alpha, float durationSec)
 {
-    m_Color0.x = r;
-    m_Color0.y = g;
-    m_Color0.z = b;
-    m_Color0.w = a;
+    m_StartColor  = m_CurrentColor;
+    m_TargetColor = color;
+
+    m_StartAlpha  = m_CurrentAlpha;
+    m_TargetAlpha = alpha;
+
+    m_DurationSec = durationSec;
+    m_ElapsedSec  = 0.0f;
+    m_Complete    = false;
 }
 
 //-----------------------------------------------------------------------------
-//      カラー1を設定します.
+//      フェードインします.
 //-----------------------------------------------------------------------------
-void Fade::SetColor1(const asdx::Vector4& value)
-{ m_Color1 = value; }
+void Fade::FadeIn(float durationSec)
+{ FadeTo(m_CurrentColor, 0.0f, durationSec); }
 
 //-----------------------------------------------------------------------------
-//      カラー1を設定します.
+//      フェードアウトします.
 //-----------------------------------------------------------------------------
-void Fade::SetColor1(float r, float g, float b, float a)
+void Fade::FadeOut(float durationSec)
+{ FadeTo(m_CurrentColor, 1.0f, durationSec); }
+
+//-----------------------------------------------------------------------------
+//      フェードインします.
+//-----------------------------------------------------------------------------
+void Fade::FadeIn(const asdx::Vector3& color, float durationSec)
+{ FadeTo(color, 0.0f, durationSec); }
+
+//-----------------------------------------------------------------------------
+//      フェードアウトします.
+//-----------------------------------------------------------------------------
+void Fade::FadeOut(const asdx::Vector3& color, float durationSec)
+{ FadeTo(color, 1.0f, durationSec); }
+
+//-----------------------------------------------------------------------------
+//      明滅させます.
+//-----------------------------------------------------------------------------
+void Fade::Flash(const asdx::Vector3& color, float duration)
 {
-    m_Color1.x = r;
-    m_Color1.y = g;
-    m_Color1.z = b;
-    m_Color1.w = a;
-}
-
-//-----------------------------------------------------------------------------
-//      切り替え時間を設定します.
-//-----------------------------------------------------------------------------
-void Fade::SetChangeSec(float value)
-{ m_ChangeSec = value; }
-
-//-----------------------------------------------------------------------------
-//      カラー0を取得します.
-//-----------------------------------------------------------------------------
-const asdx::Vector4& Fade::GetColor0() const
-{ return m_Color0; }
-
-//-----------------------------------------------------------------------------
-//      カラー1を取得します.
-//-----------------------------------------------------------------------------
-const asdx::Vector4& Fade::GetColor1() const
-{ return m_Color1; }
-
-//-----------------------------------------------------------------------------
-//      切り替え時間を取得します.
-//-----------------------------------------------------------------------------
-float Fade::GetChangeSec() const
-{ return m_ChangeSec; }
-
-//-----------------------------------------------------------------------------
-//      ステートをリセットします.
-//-----------------------------------------------------------------------------
-void Fade::ResetState()
-{
-    m_Complete   = false;
-    m_ElapsedSec = 0.0f;
+    m_CurrentColor = color;
+    m_CurrentAlpha = 1.0f;
+    FadeTo(color, 0.0f, duration);
 }
 
 //-----------------------------------------------------------------------------
@@ -326,29 +314,5 @@ void Fade::ResetState()
 //-----------------------------------------------------------------------------
 bool Fade::IsComplete() const
 { return m_Complete; }
-
-//-----------------------------------------------------------------------------
-//      点滅フラグを設定します.
-//-----------------------------------------------------------------------------
-void Fade::SetEnablePulse(bool value)
-{ m_EnablePulse = value; }
-
-//-----------------------------------------------------------------------------
-//      点滅フラグを取得します.
-//-----------------------------------------------------------------------------
-bool Fade::IsEnablePulse() const
-{ return m_EnablePulse; }
-
-//-----------------------------------------------------------------------------
-//      点滅速度を設定します.
-//-----------------------------------------------------------------------------
-void Fade::SetPulseSpeed(float value)
-{ m_PulseSpeed = value; }
-
-//-----------------------------------------------------------------------------
-//      点滅速度を取得します.
-//-----------------------------------------------------------------------------
-float Fade::GetPulseSpeed() const
-{ return m_PulseSpeed; }
 
 } // namespace asdx
