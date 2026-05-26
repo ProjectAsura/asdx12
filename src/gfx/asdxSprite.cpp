@@ -884,4 +884,109 @@ D3D12_GPU_DESCRIPTOR_HANDLE SpriteRenderer::GetHandleSampler() const
 ID3D12RootSignature* SpriteRenderer::GetRootSignature() const
 { return m_RootSig.GetPtr(); }
 
+//-----------------------------------------------------------------------------
+//      9 slices を描画します.
+//-----------------------------------------------------------------------------
+void Draw9Slices
+(
+    SpriteRenderer& renderer,
+    int x,
+    int y,
+    int w,
+    int h,
+    int l,
+    int r,
+    int t,
+    int b,
+    int texW,
+    int texH,
+    int texL,
+    int texR,
+    int texT,
+    int texB
+)
+{
+    float u0 = 0.0f;
+    float u1 = float(texL) / float(texW);
+    float u2 = float(texR) / float(texW);
+    float u3 = 1.0f;
+
+    float v0 = 0.0f;
+    float v1 = float(texT) / float(texH);
+    float v2 = float(texB) / float(texH);
+    float v3 = 1.0f;
+
+    int x0 = x;
+    int x1 = x + l;
+    int x2 = x + r;
+
+    int y0 = y;
+    int y1 = y + t;
+    int y2 = y + b;
+
+    int w0 = l;
+    int w1 = (r - l);
+    int w2 = (w - r);
+
+    int h0 = t;
+    int h1 = (b - t);
+    int h2 = (h - b);
+
+    renderer.Add(x0, y0, w0, h0, asdx::Vector2(u0, v1), asdx::Vector2(u1, v0));
+    renderer.Add(x1, y0, w1, h0, asdx::Vector2(u1, v1), asdx::Vector2(u2, v0));
+    renderer.Add(x2, y0, w2, h0, asdx::Vector2(u2, v1), asdx::Vector2(u3, v0));
+
+    renderer.Add(x0, y1, w0, h1, asdx::Vector2(u0, v2), asdx::Vector2(u1, v1));
+    renderer.Add(x1, y1, w1, h1, asdx::Vector2(u1, v2), asdx::Vector2(u2, v1));
+    renderer.Add(x2, y1, w2, h1, asdx::Vector2(u2, v2), asdx::Vector2(u3, v1));
+
+    renderer.Add(x0, y2, w0, h2, asdx::Vector2(u0, v3), asdx::Vector2(u1, v2));
+    renderer.Add(x1, y2, w1, h2, asdx::Vector2(u1, v3), asdx::Vector2(u2, v2));
+    renderer.Add(x2, y2, w2, h2, asdx::Vector2(u2, v3), asdx::Vector2(u3, v2));
+}
+
+//------------------------------------------------------------------------------
+//      9 slices を描画します.
+//------------------------------------------------------------------------------
+void Draw9Slices(
+    SpriteRenderer& renderer,
+    int x,
+    int y,
+    int w,
+    int h,
+    int texW,
+    int texH,
+    int texSX,
+    int texSY)
+{
+    Draw9Slices(
+        renderer,
+        x, y, w, h,
+        texSX, w - texSX,
+        texSY, h - texSY,
+        texW, texH,
+        texSX, texW - texSX,
+        texSY, texH - texSY);
+}
+
+//-----------------------------------------------------------------------------
+//      9 slices を描画します.
+//-----------------------------------------------------------------------------
+void Draw9Slices
+(
+    SpriteRenderer& renderer,
+    int x,
+    int y,
+    int w,
+    int h,
+    int texW,
+    int texH
+)
+{
+    int gridW = texW / 3;
+    int gridH = texH / 3;
+
+    Draw9Slices(renderer, x, y, w, h, texW, texH, gridW, gridH);
+}
+
 } // namespace asdx

@@ -374,5 +374,65 @@ private:
     /* NOTHING */
 };
 
+//-----------------------------------------------------------------------------
+//! @brief      9 slices を描画します.
+//! 
+//! @param[in]      renderer    スプライトレンダラー.
+//! @param[in]      x           左上のX座標.
+//! @param[in]      y           左上のY座標.
+//! @param[in]      w           描画する横幅.
+//! @param[in]      h           描画する縦幅.
+//! @param[in]      l           左フレーム枠終了位置へのオフセット.
+//! @param[in]      r           右フレーム枠開始位置へのオフセット.
+//! @param[in]      t           上フレーム枠終了位置へのオフセット.
+//! @param[in]      b           下フレーム枠開始位置へのオフセット.
+//! @param[in]      texW        テクスチャの横幅.
+//! @param[in]      texH        テクスチャの縦幅.
+//! @param[in]      texL        テクスチャ内の左フレーム枠終了位置へのオフセット.
+//! @param[in]      texR        テクスチャ内の右フレーム枠開始位置へのオフセット.
+//! @param[in]      texT        テクスチャ内の上フレーム枠終了位置へのオフセット.
+//! @param[in]      texB        テクスチャ内の下フレーム枠終了位置へのオフセット.
+//-----------------------------------------------------------------------------
+void Draw9Slices(
+    SpriteRenderer& renderer,
+    int x, int y, int w, int h,
+    int l, int r, int t, int b,
+    int texW, int texH,
+    int texL, int texR, int texT, int texB);
+
+//-----------------------------------------------------------------------------
+//! @brief      9 slices を描画します.
+//! 
+//! @param[in]      renderer    スプライトレンダラー.
+//! @param[in]      x           左上のX座標.
+//! @param[in]      y           左上のY座標.
+//! @param[in]      w           描画する横幅.
+//! @param[in]      h           描画する縦幅.
+//! @param[in]      texW        テクスチャの横幅.
+//! @param[in]      texH        テクスチャの縦幅.
+//! @param[in]      texSX       フレーム枠のテクスチャ上でのX方向のピクセルサイズ.
+//! @param[in]      texSY       フレーム枠のテクスチャ上でのY方向のピクセルサイズ.
+//-----------------------------------------------------------------------------
+void Draw9Slices(
+    SpriteRenderer& renderer,
+    int x, int y, int w, int h,
+    int texW, int texH, int texSX, int texSY);
+
+//-----------------------------------------------------------------------------
+//! @brief      9 slices を描画します.
+//! 
+//! @param[in]      renderer    スプライトレンダラー.
+//! @param[in]      x           左上のX座標.
+//! @param[in]      y           左上のY座標.
+//! @param[in]      w           描画する横幅.
+//! @param[in]      h           描画する縦幅.
+//! @param[in]      texW        テクスチャの横幅.
+//! @param[in]      texH        テクスチャの縦幅.
+//! @note       テクスチャが均等に分割されていることを前提として描画を行います.
+//-----------------------------------------------------------------------------
+void Draw9Slices(
+    SpriteRenderer& renderer,
+    int x, int y, int w, int h, int texW, int texH);
+
 } // namespace asdx
 
