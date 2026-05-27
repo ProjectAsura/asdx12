@@ -14,92 +14,144 @@
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
-// SpriteAnimation class
+// SpriteAnimationPlayer class
 ///////////////////////////////////////////////////////////////////////////////
 
 //-----------------------------------------------------------------------------
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
-SpriteAnimation::SpriteAnimation()
-: m_SpriteW   (0)
-, m_SpriteH   (0)
-, m_FrameIndex(0)
+SpriteAnimationPlayer::SpriteAnimationPlayer()
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      デストラクタです.
 //-----------------------------------------------------------------------------
-SpriteAnimation::~SpriteAnimation()
-{ Term(); }
+SpriteAnimationPlayer::~SpriteAnimationPlayer()
+{ Reset(); }
 
 //-----------------------------------------------------------------------------
-//      初期化処理を行います.
+//      リセット処理を行います.
 //-----------------------------------------------------------------------------
-void SpriteAnimation::Init(int w, int h, const std::vector<Frame>& frames)
+void SpriteAnimationPlayer::Reset()
 {
-    m_SpriteW    = w;
-    m_SpriteH    = h;
+    m_TimeSec       = 0.0f;
+    m_FrameIndex    = 0;
+    m_Loop          = false;
+    m_Pause         = false;
+    m_PlaySpeed     = 1.0f;
+    m_pTrack        = nullptr;
+}
+
+//-----------------------------------------------------------------------------
+//      トラックを設定します.
+//-----------------------------------------------------------------------------
+void SpriteAnimationPlayer::SetTrack(const SpriteAnimationTrack* pTrack)
+{ m_pTrack = pTrack; }
+
+//-----------------------------------------------------------------------------
+//      トラックを取得します.
+//-----------------------------------------------------------------------------
+const SpriteAnimationTrack* SpriteAnimationPlayer::GetTrack() const
+{ return m_pTrack; }
+
+//-----------------------------------------------------------------------------
+//      ループフラグを設定します.
+//-----------------------------------------------------------------------------
+void SpriteAnimationPlayer::SetLoop(bool value)
+{ m_Loop = value; }
+
+//-----------------------------------------------------------------------------
+//      ループフラグを取得します.
+//-----------------------------------------------------------------------------
+bool SpriteAnimationPlayer::IsLoop() const
+{ return m_Loop; }
+
+//-----------------------------------------------------------------------------
+//      再生速度を設定します.
+//-----------------------------------------------------------------------------
+void SpriteAnimationPlayer::SetPlaySpeed(float value)
+{ m_PlaySpeed = value; }
+
+//-----------------------------------------------------------------------------
+//      再生速度を取得します.
+//-----------------------------------------------------------------------------
+float SpriteAnimationPlayer::GetPlaySpeed() const
+{ return m_PlaySpeed; }
+
+//-----------------------------------------------------------------------------
+//      一時停止フラグを設定します.
+//-----------------------------------------------------------------------------
+void SpriteAnimationPlayer::SetPause(bool value)
+{ m_Pause = value; }
+
+//-----------------------------------------------------------------------------
+//      一時停止フラグを取得します.
+//-----------------------------------------------------------------------------
+bool SpriteAnimationPlayer::IsPause() const
+{ return m_Pause; }
+
+//-----------------------------------------------------------------------------
+//      再生完了したかどうかチェックします.
+//-----------------------------------------------------------------------------
+bool SpriteAnimationPlayer::IsFinished() const
+{
+    if (!m_pTrack)
+        return false;
+
+    if (m_Loop)
+        return false;
+
+    return (m_TimeSec >= m_pTrack->Duration);
+}
+
+//-----------------------------------------------------------------------------
+//      フレーム先頭に戻します.
+//-----------------------------------------------------------------------------
+void SpriteAnimationPlayer::Cue()
+{
+    m_TimeSec    = 0.0f;
     m_FrameIndex = 0;
-
-    m_Frames = frames;
-    m_Frames.shrink_to_fit();
-    assert(m_Frames.size() <= UINT32_MAX);
 }
 
 //-----------------------------------------------------------------------------
-//      終了処理を行います.
+//      更新処理を行います.
 //-----------------------------------------------------------------------------
-void SpriteAnimation::Term()
+void SpriteAnimationPlayer::Update(float deltaSec)
 {
-    m_Frames.clear();
-    m_Frames.shrink_to_fit();
+    if (!m_pTrack)
+        return;
 
-    m_SpriteW    = 0;
-    m_SpriteH    = 0;
-    m_FrameIndex = 0;
-}
+    if (m_Pause)
+        return;
 
-//-----------------------------------------------------------------------------
-//      次のフレームへ進めます.
-//-----------------------------------------------------------------------------
-void SpriteAnimation::NextFrame()
-{
-    auto size = uint32_t(m_Frames.size());
-    m_FrameIndex = (m_FrameIndex + 1) % size;
-}
+    // 時間を更新.
+    m_TimeSec += deltaSec * m_PlaySpeed;
 
-//-----------------------------------------------------------------------------
-//      次のフレームがあるかチェックします.
-//-----------------------------------------------------------------------------
-bool SpriteAnimation::HasNextFrame() const
-{ return (m_FrameIndex + 1) != uint32_t(m_Frames.size()); }
-
-//-----------------------------------------------------------------------------
-//      時間に応じて次のフレームへ進めます.
-//-----------------------------------------------------------------------------
-void SpriteAnimation::NextFrameByTime(float changeSec, float deltaSec, float& elapedSec)
-{
-    auto time = elapedSec + deltaSec;
-    if (time >= changeSec)
+    // ループ設定の場合.
+    if (m_Loop)
     {
-        NextFrame();
-        elapedSec = 0.0f;
+        // 終了時刻を超えていたらフレーム番号をリセット.
+        if (m_TimeSec >= m_pTrack->Duration)
+        {
+            m_FrameIndex = 0;
+            m_TimeSec = Wrap(m_TimeSec, 0.0f, m_pTrack->Duration);
+        }
     }
-    else
-    {
-        elapedSec = time;
-    }
+
+    // 最も近いフレームを検索し，フレーム番号を決定.
+    m_FrameIndex = FindFrame(m_TimeSec);
 }
 
 //-----------------------------------------------------------------------------
-//      スプライトを追加します.
+//      描画処理を行います.
 //-----------------------------------------------------------------------------
-void SpriteAnimation::Add(SpriteRenderer& renderer, int x, int y, int layer, uint8_t flag)
+void SpriteAnimationPlayer::Draw(SpriteRenderer& renderer, int x, int y, int w, int h, uint8_t flag)
 {
-    assert(!m_Frames.empty());
-    assert(m_FrameIndex <= m_Frames.size() - 1);
-    auto uv0 = m_Frames[m_FrameIndex].uv0;
-    auto uv1 = m_Frames[m_FrameIndex].uv1;
+    if (m_pTrack == nullptr)
+        return;
+
+    auto uv0 = m_pTrack->Frames[m_FrameIndex].TexCoord0;
+    auto uv1 = m_pTrack->Frames[m_FrameIndex].TexCoord1;
 
     // 水平方向に反転.
     if (!!(flag & Flag::FLIP_X))
@@ -117,60 +169,34 @@ void SpriteAnimation::Add(SpriteRenderer& renderer, int x, int y, int layer, uin
         uv1.y = v;
     }
 
-    renderer.Add(x, y, m_SpriteW, m_SpriteH, layer, uv0, uv1);
+    renderer.Add(x, y, w, h, uv0, uv1);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-// TimerSpriteAnimation class
-///////////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------------------------
+//      フレーム番号を取得します.
+//-----------------------------------------------------------------------------
+uint32_t SpriteAnimationPlayer::GetFrameIndex() const
+{ return m_FrameIndex; }
 
 //-----------------------------------------------------------------------------
-//      コンストラクタです.
+//      再生時間を取得します.
 //-----------------------------------------------------------------------------
-TimerSpriteAnimation::TimerSpriteAnimation()
-: m_Animation   ()
-, m_ChangeSec   (0.0f)
-, m_ElapsedSec  (0.0f)
-{ /* DO_NOTHING */ }
+float SpriteAnimationPlayer::GetTimeSec() const
+{ return m_TimeSec; }
 
 //-----------------------------------------------------------------------------
-//      デストラクタです.
+//      最も近いフレームを検索します.
 //-----------------------------------------------------------------------------
-TimerSpriteAnimation::~TimerSpriteAnimation()
-{ Term(); }
-
-//-----------------------------------------------------------------------------
-//      初期化処理を行います.
-//-----------------------------------------------------------------------------
-void TimerSpriteAnimation::Init(int w, int h, float changeSec, const std::vector<Frame>& frames)
+uint32_t SpriteAnimationPlayer::FindFrame(float timeSec)
 {
-    m_Animation.Init(w, h, frames);
+    assert(m_pTrack != nullptr);
+    for(auto i=0u; i<m_pTrack->Frames.size(); ++i)
+    {
+        if (timeSec >= m_pTrack->Frames[i].Time)
+            return i;
+    }
 
-    m_ChangeSec  = changeSec;
-    m_ElapsedSec = 0.0f;
+    return 0u;
 }
-
-//-----------------------------------------------------------------------------
-//      終了処理を行います.
-//-----------------------------------------------------------------------------
-void TimerSpriteAnimation::Term()
-{
-    m_Animation.Term();
-
-    m_ChangeSec  = 0.0f;
-    m_ElapsedSec = 0.0f;
-}
-
-//-----------------------------------------------------------------------------
-//      更新処理です.
-//-----------------------------------------------------------------------------
-void TimerSpriteAnimation::Update(float deltaSec)
-{ m_Animation.NextFrameByTime(m_ChangeSec, deltaSec, m_ElapsedSec); }
-
-//-----------------------------------------------------------------------------
-//      スプライトを追加します.
-//-----------------------------------------------------------------------------
-void TimerSpriteAnimation::Add(SpriteRenderer& renderer, int x, int y, int layer, uint8_t flags)
-{ m_Animation.Add(renderer, x, y, layer, flags); }
 
 } // namespace asdx
