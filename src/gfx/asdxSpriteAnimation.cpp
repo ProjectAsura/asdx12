@@ -150,8 +150,8 @@ void SpriteAnimationPlayer::Draw(SpriteRenderer& renderer, int x, int y, int w, 
     if (m_pTrack == nullptr)
         return;
 
-    auto uv0 = m_pTrack->Frames[m_FrameIndex].TexCoord0;
-    auto uv1 = m_pTrack->Frames[m_FrameIndex].TexCoord1;
+    auto uv0 = m_pTrack->Frames[m_FrameIndex].uv0;
+    auto uv1 = m_pTrack->Frames[m_FrameIndex].uv1;
 
     // 水平方向に反転.
     if (!!(flag & Flag::FLIP_X))
@@ -192,7 +192,7 @@ uint32_t SpriteAnimationPlayer::FindFrame(float timeSec)
     assert(m_pTrack != nullptr);
     for(auto i=0u; i<m_pTrack->Frames.size(); ++i)
     {
-        if (timeSec >= m_pTrack->Frames[i].Time)
+        if (timeSec >= m_pTrack->Frames[i].time)
             return i;
     }
 

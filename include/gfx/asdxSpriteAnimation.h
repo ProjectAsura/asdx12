@@ -9,7 +9,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <cstdint>
-#include <vector>
+#include <span>
 #include <fnd/asdxMath.h>
 
 
@@ -26,9 +26,9 @@ class SpriteRenderer;
 ///////////////////////////////////////////////////////////////////////////////
 struct SpriteAnimaionKey
 {
-    float           Time;           //!< 時刻.
-    asdx::Vector2   TexCoord0;      //!< 左上のテクスチャ座標.
-    asdx::Vector2   TexCoord1;      //!< 右下のテクスチャ座標.
+    float   time;   //!< 時刻.
+    Vector2 uv0;    //!< 左上のテクスチャ座標.
+    Vector2 uv1;    //!< 右下のテクスチャ座標.
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -37,7 +37,7 @@ struct SpriteAnimaionKey
 struct SpriteAnimationTrack
 {
     float                          Duration;    //!< 再生所要時間.
-    std::vector<SpriteAnimaionKey> Frames;      //!< キーフレームデータ.
+    std::span<SpriteAnimaionKey>   Frames;      //!< キーフレームデータ.
 };
 
 ///////////////////////////////////////////////////////////////////////////////
