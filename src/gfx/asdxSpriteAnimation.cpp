@@ -101,16 +101,7 @@ bool SpriteAnimationPlayer::IsFinished() const
     if (m_Loop)
         return false;
 
-    return (m_TimeSec >= m_pTrack->Duration);
-}
-
-//-----------------------------------------------------------------------------
-//      フレーム先頭に戻します.
-//-----------------------------------------------------------------------------
-void SpriteAnimationPlayer::Cue()
-{
-    m_TimeSec    = 0.0f;
-    m_FrameIndex = 0;
+    return (m_TimeSec >= m_pTrack->DurationSec);
 }
 
 //-----------------------------------------------------------------------------
@@ -131,10 +122,10 @@ void SpriteAnimationPlayer::Update(float deltaSec)
     if (m_Loop)
     {
         // 終了時刻を超えていたらフレーム番号をリセット.
-        if (m_TimeSec >= m_pTrack->Duration)
+        if (m_TimeSec >= m_pTrack->DurationSec)
         {
             m_FrameIndex = 0;
-            m_TimeSec = Wrap(m_TimeSec, 0.0f, m_pTrack->Duration);
+            m_TimeSec = Wrap(m_TimeSec, 0.0f, m_pTrack->DurationSec);
         }
     }
 
@@ -185,6 +176,29 @@ float SpriteAnimationPlayer::GetTimeSec() const
 { return m_TimeSec; }
 
 //-----------------------------------------------------------------------------
+//      フレーム先頭に戻します.
+//-----------------------------------------------------------------------------
+void SpriteAnimationPlayer::Cue()
+{
+    m_TimeSec    = 0.0f;
+    m_FrameIndex = 0;
+}
+
+//-----------------------------------------------------------------------------
+//      1フレーム進めます.
+//-----------------------------------------------------------------------------
+void SpriteAnimationPlayer::FrameAdvance()
+{
+    if (!m_pTrack)
+        return;
+
+    if (m_FrameIndex + 1 < m_pTrack->Frames.size())
+        m_FrameIndex++;
+    else if (m_Loop)
+        m_FrameIndex = (m_FrameIndex + 1) % m_pTrack->Frames.size();
+}
+
+//-----------------------------------------------------------------------------
 //      最も近いフレームを検索します.
 //-----------------------------------------------------------------------------
 uint32_t SpriteAnimationPlayer::FindFrame(float timeSec)
@@ -192,7 +206,7 @@ uint32_t SpriteAnimationPlayer::FindFrame(float timeSec)
     assert(m_pTrack != nullptr);
     for(auto i=0u; i<m_pTrack->Frames.size(); ++i)
     {
-        if (timeSec >= m_pTrack->Frames[i].time)
+        if (timeSec <= m_pTrack->Frames[i].time)
             return i;
     }
 
