@@ -204,10 +204,14 @@ void SpriteAnimationPlayer::FrameAdvance()
 uint32_t SpriteAnimationPlayer::FindFrame(float timeSec)
 {
     assert(m_pTrack != nullptr);
+    float prevTime = 0.0f;
     for(auto i=0u; i<m_pTrack->Frames.size(); ++i)
     {
-        if (timeSec <= m_pTrack->Frames[i].time)
+        auto currTime = m_pTrack->Frames[i].time;
+        if (prevTime <= timeSec && timeSec < currTime)
             return i;
+
+        prevTime = currTime;
     }
 
     return 0u;
@@ -294,5 +298,16 @@ void SpriteMover::SetPlaySpeed(float value)
 //-----------------------------------------------------------------------------
 float SpriteMover::GetPlaySpeed() const
 { return m_PlaySpeed; }
+
+//-----------------------------------------------------------------------------
+//      移動が完了したかどうかチェックします.
+//-----------------------------------------------------------------------------
+bool SpriteMover::IsComplete() const
+{
+    if (!m_pData)
+        return false;
+
+    return m_TimeSec >= m_pData->TimeSec;
+}
 
 } // namespace asdx
