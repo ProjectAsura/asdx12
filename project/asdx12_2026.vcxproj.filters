@@ -776,6 +776,9 @@
     <ClInclude Include="..\include\snd\asdxSoundResource.h">
       <Filter>ヘッダー ファイル\snd</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\fnd\asdxTimeTracker.h">
+      <Filter>ヘッダー ファイル\fnd</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\res\shaders\asdxBRDF.hlsli">
