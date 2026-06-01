@@ -118,7 +118,12 @@ public:
     //! @retval false   未完了.
     //-------------------------------------------------------------------------
     bool IsComplete() const
-    { return m_ElapsedSec >= m_DurationSec; }
+    {
+        if (m_DurationSec <= 0.0f)
+            return false;
+
+        return m_ElapsedSec >= m_DurationSec;
+    }
 
     //-------------------------------------------------------------------------
     //! @brief      相対値を取得します.
