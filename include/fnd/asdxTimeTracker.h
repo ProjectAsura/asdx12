@@ -103,6 +103,9 @@ public:
     //--------------------------------------------------------------------------
     void Update(float deltaSec)
     {
+        if (m_DurationSec <= 0.0f)
+            return;
+
         m_ElapsedSec += deltaSec * m_Speed;
         if (m_ElapsedSec > m_DurationSec)
             m_ElapsedSec = m_DurationSec;
@@ -123,7 +126,12 @@ public:
     //! @return     相対値を[0, 1]で返却します.
     //-------------------------------------------------------------------------
     float GetValue() const
-    { return Saturate(m_ElapsedSec / m_DurationSec); }
+    {
+        if (m_DurationSec <= 0.0f)
+            return 0.0f;
+
+        return Saturate(m_ElapsedSec / m_DurationSec);
+    }
 
     //-------------------------------------------------------------------------
     //! @brief      経過時間をリセットします.
