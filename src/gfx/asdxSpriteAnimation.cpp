@@ -46,7 +46,10 @@ void SpriteAnimationPlayer::Reset()
 //      トラックを設定します.
 //-----------------------------------------------------------------------------
 void SpriteAnimationPlayer::SetTrack(const SpriteAnimationTrack* pTrack)
-{ m_pTrack = pTrack; }
+{
+    m_FrameIndex = 0;
+    m_pTrack     = pTrack;
+}
 
 //-----------------------------------------------------------------------------
 //      トラックを取得します.
