@@ -54,6 +54,73 @@ inline const char* ToChar(const char8_t* value) noexcept
 #endif
 
 //-----------------------------------------------------------------------------
+//! @brief      文字数を数えます.
+//-----------------------------------------------------------------------------
+inline size_t u8len(const char8_t* value)
+{
+    if (value == nullptr)
+        return 0;
+
+    size_t length = 0;
+    const char8_t* src = value;
+    while(src != 0x0)
+    {
+        length++;
+        src++;
+    }
+    return length;
+}
+
+//-----------------------------------------------------------------------------
+//! @brief      文字列をコピーします.
+//-----------------------------------------------------------------------------
+inline void u8cpy(char8_t* dst, const char8_t* src, size_t len)
+{
+    if (dst == nullptr || src == nullptr)
+        return;
+
+    for(size_t i=0; i<len; ++i)
+    {
+        dst[i] = src[i];
+        if (src[i] == 0x0)
+            break;
+    }
+    dst[len - 1] = 0x0;
+}
+
+//-----------------------------------------------------------------------------
+//! @brief      文字列をコピーします.
+//-----------------------------------------------------------------------------
+template<size_t Size>
+inline void u8cpy(char8_t (&dst)[Size], const char8_t* src)
+{ u8cpy(dst, src, Size); }
+
+//-----------------------------------------------------------------------------
+//! @brief      文字列を比較します.
+//-----------------------------------------------------------------------------
+inline int u8cmp(const char8_t* lhs, const char8_t* rhs)
+{
+    if (lhs == rhs)
+        return 0;
+
+    const uint8_t* s1 = reinterpret_cast<const uint8_t*>(lhs);
+    const uint8_t* s2 = reinterpret_cast<const uint8_t*>(rhs);
+    uint8_t c1 = 0x0;
+    uint8_t c2 = 0x0;
+
+    do
+    {
+        c1 = uint8_t(*s1++);
+        c2 = uint8_t(*s2++);
+        if (c1 == 0x0 || c2 == 0x0)
+            return c1 - c2;
+    }
+    while(c1 == c2);
+
+    return c1 - c2;
+}
+
+//-----------------------------------------------------------------------------
 //! @brief      ワイド文字列に変換します.
 //!
 //! @param[in]      value       変換するマルチバイト文字列.
