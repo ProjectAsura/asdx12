@@ -1159,9 +1159,15 @@ void TextureViewer::RecreateTexture(ID3D12GraphicsCommandList* pCmd)
     asdx::ResTexture res = bin.GetResource();
 
     // テクスチャ初期化.
-    if (!asdx::Texture::Create(res, &m_Texture))
+    if (!asdx::IsUMA() && !asdx::IsSupportGpuUploadHeap())
     {
-        ELOG("Error : Texture::Init() Failed.");
+        if (!asdx::Texture::Create(pCmd, res, &m_Texture))
+            ELOG("Error : Texture::Init() Faield.");
+    }
+    else
+    {
+        if (!asdx::Texture::Create(res, &m_Texture))
+            ELOG("Error : Texture::Init() Failed.");
     }
 }
 

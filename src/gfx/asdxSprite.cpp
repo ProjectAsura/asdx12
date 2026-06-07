@@ -193,7 +193,7 @@ bool SpriteRenderer::Init
             desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
             desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
 
-            auto state = D3D12_RESOURCE_STATE_COMMON;
+            auto state = D3D12_RESOURCE_STATE_GENERIC_READ;
             auto flags = D3D12_HEAP_FLAG_NONE;
 
             if (allocator != nullptr)
@@ -261,7 +261,7 @@ bool SpriteRenderer::Init
         desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
         desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
 
-        auto state = D3D12_RESOURCE_STATE_COMMON;
+        auto state = D3D12_RESOURCE_STATE_GENERIC_READ;
         auto flags = D3D12_HEAP_FLAG_NONE;
 
         if (allocator != nullptr)
