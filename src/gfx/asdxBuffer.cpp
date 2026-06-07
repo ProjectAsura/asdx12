@@ -168,7 +168,7 @@ bool VertexBuffer::Init(uint64_t size, uint32_t stride)
     desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
     desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
 
-    auto state = D3D12_RESOURCE_STATE_COMMON;
+    auto state = D3D12_RESOURCE_STATE_GENERIC_READ;
     auto flags = D3D12_HEAP_FLAG_NONE;
 
     auto pAllocator = GetD3D12MA();
@@ -343,7 +343,7 @@ bool IndexBuffer::Init(uint64_t size, bool isShortFormat)
     desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
     desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
 
-    auto state = D3D12_RESOURCE_STATE_COMMON;
+    auto state = D3D12_RESOURCE_STATE_GENERIC_READ;
     auto flags = D3D12_HEAP_FLAG_NONE;
 
     auto pAllocator = GetD3D12MA();
@@ -538,7 +538,7 @@ bool ConstantBuffer::Init(uint64_t size)
         auto hr = allocator->CreateResource(
             &allocDesc,
             &desc,
-            D3D12_RESOURCE_STATE_COMMON,
+            D3D12_RESOURCE_STATE_GENERIC_READ,
             nullptr,
             &pAllocation,
             IID_PPV_ARGS(m_Resource.GetAddress()));
@@ -556,7 +556,7 @@ bool ConstantBuffer::Init(uint64_t size)
             &props,
             D3D12_HEAP_FLAG_NONE,
             &desc,
-            D3D12_RESOURCE_STATE_COMMON,
+            D3D12_RESOURCE_STATE_GENERIC_READ,
             nullptr,
             IID_PPV_ARGS(m_Resource.GetAddress()));
         if (FAILED(hr))
