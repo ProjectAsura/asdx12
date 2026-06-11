@@ -432,6 +432,15 @@
     <ClCompile Include="..\src\snd\asdxSoundData.cpp">
       <Filter>ソース ファイル\snd</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\fw\asdxTask.cpp">
+      <Filter>ソース ファイル\fw</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\fw\asdxBlockTask.cpp">
+      <Filter>ソース ファイル\fw</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\fw\asdxFrameTask.cpp">
+      <Filter>ソース ファイル\fw</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\edit\asdxEditParam.h">
@@ -778,6 +787,15 @@
     </ClInclude>
     <ClInclude Include="..\include\fnd\asdxTimeTracker.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fw\asdxTask.h">
+      <Filter>ヘッダー ファイル\fw</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fw\asdxBlockTask.h">
+      <Filter>ヘッダー ファイル\fw</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fw\asdxFrameTask.h">
+      <Filter>ヘッダー ファイル\fw</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
