@@ -103,15 +103,24 @@ void IndexHeap::Free(uint32_t value)
 //-----------------------------------------------------------------------------
 void IndexHeap::Reset()
 {
+    if (m_pNodes == nullptr)
+        return;
+
     m_FreeList.clear();
     auto count = m_Capacity;
 
+    // 強制再初期化する.
     for(auto i=0u; i<count; ++i)
     {
+        m_pNodes[i].reset();
         m_pNodes[i].Offset = 32u * i;
         m_pNodes[i].Flags  = 0;
-        m_FreeList.push_back(&m_pNodes[i]);
     }
+
+    // フリーリストを登録し直す.
+    for(auto i=0u; i<count; ++i)
+        m_FreeList.push_back(&m_pNodes[i]);
+
     m_FreeCount = count;
 }
 
