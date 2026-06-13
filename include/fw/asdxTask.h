@@ -94,7 +94,7 @@ public:
     T* CreateTask(Args&&... args)
     {
         auto buf = Alloc(sizeof(T));
-        if (buf == nullptr)
+        if (!buf)
             return nullptr;
 
         auto pTask = new (buf) T(std::forward<Args>(args)...);

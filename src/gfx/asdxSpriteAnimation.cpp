@@ -139,7 +139,7 @@ void SpriteAnimationPlayer::Update(float deltaSec)
 //-----------------------------------------------------------------------------
 //      描画処理を行います.
 //-----------------------------------------------------------------------------
-void SpriteAnimationPlayer::Draw(SpriteRenderer& renderer, int x, int y, int w, int h, uint8_t flag)
+void SpriteAnimationPlayer::Draw(SpriteRenderer& renderer, int x, int y, uint8_t flag)
 {
     if (m_pTrack == nullptr)
         return;
@@ -163,7 +163,8 @@ void SpriteAnimationPlayer::Draw(SpriteRenderer& renderer, int x, int y, int w, 
         uv1.y = v;
     }
 
-    renderer.Add(x, y, w, h, uv0, uv1);
+    const auto& size = m_pTrack->Size;
+    renderer.Add(x, y, size.x, size.y, uv0, uv1);
 }
 
 //-----------------------------------------------------------------------------

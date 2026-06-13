@@ -37,6 +37,7 @@ struct SpriteKeyFrame
 struct SpriteAnimationTrack
 {
     float                     DurationSec;  //!< 再生所要時間(単位：秒).
+    Int2                      Size;         //!< スプライトサイズ.
     ArrayView<SpriteKeyFrame> Frames;       //!< キーフレームデータ.
 };
 
@@ -174,7 +175,7 @@ public:
     //! @param[in]      h       縦幅.
     //! @param[in]      flag    描画フラグ.
     //-------------------------------------------------------------------------
-    void Draw(SpriteRenderer& renderer, int x, int y, int w, int h, uint8_t flags = Flag::NONE);
+    void Draw(SpriteRenderer& renderer, int x, int y, uint8_t flags = Flag::NONE);
 
     //-------------------------------------------------------------------------
     //! @brief      フレーム番号を取得します.
