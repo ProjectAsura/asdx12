@@ -229,21 +229,24 @@ uint32_t SpriteAnimationPlayer::FindFrame(float timeSec)
 //-----------------------------------------------------------------------------
 //      移動データを設定します.
 //-----------------------------------------------------------------------------
-void SpriteMover::SetData(const SpriteMoveData* pMove)
-{ m_pData = pMove; }
+void SpriteMover::SetData(const SpriteMoveData& value)
+{
+    m_TimeSec = 0.0f;
+    m_Data    = value;
+}
 
 //-----------------------------------------------------------------------------
 //      移動データを取得します.
 //-----------------------------------------------------------------------------
-const SpriteMoveData* SpriteMover::GetData() const
-{ return m_pData; }
+const SpriteMoveData& SpriteMover::GetData() const
+{ return m_Data; }
 
 //-----------------------------------------------------------------------------
 //      リセット処理を行います.
 //-----------------------------------------------------------------------------
 void SpriteMover::Reset()
 {
-    m_pData   = nullptr;
+    m_Data    = {};
     m_TimeSec = 0.0f;
 }
 
@@ -252,12 +255,9 @@ void SpriteMover::Reset()
 //-----------------------------------------------------------------------------
 void SpriteMover::Update(float deltaSec)
 {
-    if (!m_pData)
-        return;
-
     m_TimeSec += deltaSec * m_PlaySpeed;
-    if (m_TimeSec > m_pData->TimeSec)
-        m_TimeSec = m_pData->TimeSec;
+    if (m_TimeSec > m_Data.TimeSec)
+        m_TimeSec = m_Data.TimeSec;
 }
 
 //-----------------------------------------------------------------------------
@@ -265,11 +265,11 @@ void SpriteMover::Update(float deltaSec)
 //-----------------------------------------------------------------------------
 Int2 SpriteMover::GetPos() const
 {
-    if (!m_pData)
+    if (m_Data.TimeSec < 0.0f)
         return Int2(0, 0);
 
-    auto t = Saturate(m_TimeSec / m_pData->TimeSec);
-    auto p = Vector2::Lerp(m_pData->SrcPos, m_pData->DstPos, t);
+    auto t = Saturate(m_TimeSec / m_Data.TimeSec);
+    auto p = Vector2::Lerp(m_Data.SrcPos, m_Data.DstPos, t);
     return Int2(int(p.x), int(p.y));
 }
 
@@ -307,11 +307,6 @@ float SpriteMover::GetPlaySpeed() const
 //      移動が完了したかどうかチェックします.
 //-----------------------------------------------------------------------------
 bool SpriteMover::IsComplete() const
-{
-    if (!m_pData)
-        return false;
-
-    return m_TimeSec >= m_pData->TimeSec;
-}
+{ return m_TimeSec >= m_Data.TimeSec; }
 
 } // namespace asdx

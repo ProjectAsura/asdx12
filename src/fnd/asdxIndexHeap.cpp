@@ -91,37 +91,12 @@ void IndexHeap::Free(uint32_t value)
 {
     auto nodeId = value / 32;
     auto bitsId = value % 32;
+    assert(nodeId < m_Capacity);
     m_pNodes[nodeId].Flags &= ~(0x1u << bitsId);
 
     if (m_pNodes[nodeId].Flags == 0)
     { m_FreeList.push_back(&m_pNodes[nodeId]); }
     m_FreeCount++;
-}
-
-//-----------------------------------------------------------------------------
-//      全インデックスを解放します.
-//-----------------------------------------------------------------------------
-void IndexHeap::Reset()
-{
-    if (m_pNodes == nullptr)
-        return;
-
-    m_FreeList.clear();
-    auto count = m_Capacity;
-
-    // 強制再初期化する.
-    for(auto i=0u; i<count; ++i)
-    {
-        m_pNodes[i].reset();
-        m_pNodes[i].Offset = 32u * i;
-        m_pNodes[i].Flags  = 0;
-    }
-
-    // フリーリストを登録し直す.
-    for(auto i=0u; i<count; ++i)
-        m_FreeList.push_back(&m_pNodes[i]);
-
-    m_FreeCount = count;
 }
 
 //-----------------------------------------------------------------------------

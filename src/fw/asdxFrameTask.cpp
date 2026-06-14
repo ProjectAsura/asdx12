@@ -39,10 +39,13 @@ bool FrameTaskManager::Init(size_t size)
 //-----------------------------------------------------------------------------
 void FrameTaskManager::Term()
 {
-    for(auto& task : m_TaskList)
-    { task.OnRemove(); }
+    auto itr = m_TaskList.begin();
+    while(itr != m_TaskList.end())
+    {
+        itr->OnRemove();
+        itr = m_TaskList.erase(itr);
+    }
 
-    m_TaskList.clear();
     m_Heap.Term();
 }
 
@@ -51,10 +54,13 @@ void FrameTaskManager::Term()
 //-----------------------------------------------------------------------------
 void FrameTaskManager::Reset()
 {
-    for(auto& task : m_TaskList)
-    { task.OnRemove(); }
+    auto itr = m_TaskList.begin();
+    while(itr != m_TaskList.end())
+    {
+        itr->OnRemove();
+        itr = m_TaskList.erase(itr);
+    }
 
-    m_TaskList.clear();
     m_Heap.Reset();
 }
 

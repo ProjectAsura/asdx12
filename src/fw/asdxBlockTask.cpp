@@ -58,10 +58,13 @@ bool BlockTaskManager::Init(uint32_t blockSize, uint32_t blockCount)
 //-----------------------------------------------------------------------------
 void BlockTaskManager::Term()
 {
-    for(auto& task : m_TaskList)
-    { task.OnRemove(); }
+    auto itr = m_TaskList.begin();
+    while(itr != m_TaskList.end())
+    {
+        itr->OnRemove();
+        itr = m_TaskList.erase(itr);
+    }
 
-    m_TaskList.clear();
     m_Heap.Term();
 
     m_BlockSize = 0;
@@ -77,11 +80,14 @@ void BlockTaskManager::Term()
 //-----------------------------------------------------------------------------
 void BlockTaskManager::Reset()
 {
-    for(auto& task : m_TaskList)
-    { task.OnRemove(); }
-
-    m_TaskList.clear();
-    m_Heap.Reset();
+    auto itr = m_TaskList.begin();
+    while(itr != m_TaskList.end())
+    {
+        auto pTask = &(*itr);
+        itr->OnRemove();
+        itr = m_TaskList.erase(itr);
+        Free(pTask);
+    }
 }
 
 //-----------------------------------------------------------------------------
