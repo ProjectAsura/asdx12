@@ -31,7 +31,7 @@ TaskManagerBase::~TaskManagerBase()
 //-----------------------------------------------------------------------------
 //      タスクを削除します.
 //-----------------------------------------------------------------------------
-void TaskManagerBase::RemoveTask(ITask*& ptr)
+void TaskManagerBase::RemoveTask(TaskBase*& ptr)
 {
     if (ptr == nullptr)
         return;
