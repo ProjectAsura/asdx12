@@ -85,8 +85,12 @@ void TaskManagerBase::RemoveDisposable()
     {
         if (itr->IsDisposable())
         {
-            itr->OnRemove();
+            auto ptr = &(*itr);
+            ptr->OnRemove();
             itr = m_TaskList.erase(itr);
+
+            Free(ptr);
+            ptr = nullptr;
         }
         else
         {
