@@ -43,24 +43,90 @@ float3 SRGBToLinear(float3 color)
 //      BT.601での輝度値を求めます.
 //-----------------------------------------------------------------------------
 float LuminanceBT601(float3 value)
-{
-    return dot(value, float3(0.299f, 0.587f, 0.114f));
-}
+{ return dot(value, float3(0.299f, 0.587f, 0.114f)); }
 
 //-----------------------------------------------------------------------------
 //      BT.709での輝度値を求めます.
 //-----------------------------------------------------------------------------
 float LuminanceBT709(float3 value)
-{
-    return dot(value, float3(0.2126f, 0.7152f, 0.0722f));
-}
+{ return dot(value, float3(0.2126f, 0.7152f, 0.0722f)); }
+
+//-----------------------------------------------------------------------------
+//      BT.2020での輝度値を求めます.
+//-----------------------------------------------------------------------------
+float LuminanceBT2020(float3 value)
+{ return dot(value, float3(0.2627f, 0.6780f, 0.0593f)); }
 
 //-----------------------------------------------------------------------------
 //      HLGでの輝度値を求めます.
 //-----------------------------------------------------------------------------
 float LuminanceHLG(float3 value)
+{ return dot(value, float3(0.2627f, 0.6780f, 0.0593f)); }
+
+//-----------------------------------------------------------------------------
+//      BT.601 YCbCrに変換します.
+//-----------------------------------------------------------------------------
+float3 ToYCbCrBT601(float3 value)
 {
-    return dot(value, float3(0.2627f, 0.6780f, 0.0593f));
+    float Y  = LuminanceBT601(value);
+    float Cb = (value.b - Y) / 1.772f;
+    float Cr = (value.r - Y) / 1.402f;
+    return float3(Y, Cb, Cr);
+}
+
+//-----------------------------------------------------------------------------
+//      BT.709 YCbCrに変換します.
+//-----------------------------------------------------------------------------
+float3 ToYCbCrBT709(float3 value)
+{
+    float Y  = LuminanceBT709(value);
+    float Cb = (value.b - Y) / 1.8556f;
+    float Cr = (value.r - Y) / 1.5748f;
+    return float3(Y, Cb, Cr);
+}
+
+//-----------------------------------------------------------------------------
+//      BT.2020 YCbCrに変換します.
+//-----------------------------------------------------------------------------
+float3 ToYCbCrBT2020(float3 value)
+{
+    float Y  = LuminanceBT2020(value);
+    float Cb = (value.b - Y) / 1.8814f;
+    float Cr = (value.r - Y) / 1.4746f;
+    return float3(Y, Cb, Cr);
+}
+
+//-----------------------------------------------------------------------------
+//      BT.601 YCbCr から BT.601 RGB に変換します.
+//-----------------------------------------------------------------------------
+float3 FromYCbCrBT601(float3 ycbcr)
+{
+    float R = ycbcr.x + (ycbcr.z * 1.402f);
+    float B = ycbcr.x + (ycbcr.y * 1.772f);
+    float G = (ycbcr.x - 0.299f * R - 0.114f * B) / 0.587f;
+    return float3(R, G, B);
+}
+
+//-----------------------------------------------------------------------------
+//      BT.709 YCbCr から BT.709 RGB に変換します.
+//-----------------------------------------------------------------------------
+float3 FromYCbCrBT709(float3 ycbcr)
+{
+    float R = ycbcr.x + (ycbcr.z * 1.5748f);
+    float B = ycbcr.x + (ycbcr.y * 1.8556f);
+    float G = (ycbcr.x - 0.2126f * R - 0.0722f * B) / 0.7152f;
+    return float3(R, G, B);
+}
+
+//-----------------------------------------------------------------------------
+//      BT.2020 YCbCr から　BT.2020 RGB に変換します.
+//-----------------------------------------------------------------------------
+float3 FromYCbCrBT2020(float3 ycbcr)
+{
+    float R = ycbcr.x + (ycbcr.z * 1.4746f);
+    float B = ycbcr.x + (ycbcr.y * 1.8814f);
+    float G = (ycbcr.x - 0.2627f * R - 0.0593f * B) / 0.6780f;
+    return float3(R, G, B);
 }
 
 //-----------------------------------------------------------------------------
@@ -313,6 +379,30 @@ float3 XYZ_To_xyY(float3 color)
 }
 
 //-----------------------------------------------------------------------------
+//      CIE 1931 XYZ表色系からCIE 1976 u'v'色度座標に変換します.
+//-----------------------------------------------------------------------------
+float2 XYZ_To_uv(float3 color)
+{
+    return float2(
+        (4.0f * color.x) / (color.x + 15.0f * color.y + 3.0f * color.z),
+        (9.0f * color.y) / (color.x + 15.0f * color.y + 3.0f * color.z));
+}
+
+//-----------------------------------------------------------------------------
+//      CIE 1976 u'v' 色度座標から CIE 1931 XYZ表色系に変換します.
+//-----------------------------------------------------------------------------
+float3 uv_To_XYZ(float2 uv, float Y = 1.0f)
+{
+    if (abs(uv.y) <= 1e-6f)
+        return float3(0.0f, Y, 0.0f);
+ 
+    return float3(
+        Y * (9.0f * uv.x) / (4.0f * uv.y),
+        Y,
+        Y * (12.0f - 3.0f * uv.x - 20.0f * uv.y) / (4.0f * uv.y));
+}
+
+//-----------------------------------------------------------------------------
 //      ITU-R BT709からCIE xyYへの変換.
 //-----------------------------------------------------------------------------
 float3 BT709_To_xyY(float3 color)
@@ -340,6 +430,15 @@ float3 xyY_To_BT709(float3 color)
 };
 
 //-----------------------------------------------------------------------------
+//      CIE xyY表色系からITU-R BT.2020に変換します.
+//-----------------------------------------------------------------------------
+float3 xyY_To_BT2020(float3 color)
+{
+    float3 XYZ = xyY_To_XYZ(color);
+    return XYZ_To_BT2020(XYZ);
+}
+
+//-----------------------------------------------------------------------------
 //       CIE xyY表色系からAdobeRGBへの変換.
 //-----------------------------------------------------------------------------
 float3 xyY_To_AdobeRGB(float3 color)
@@ -355,15 +454,6 @@ float3 xyY_To_DCI_P3(float3 color)
 {
     float3 XYZ = xyY_To_XYZ(color);
     return XYZ_To_DCI_P3(XYZ);
-}
-
-//-----------------------------------------------------------------------------
-//      CIE xyY表色系からITU-R BT.2020に変換します.
-//-----------------------------------------------------------------------------
-float3 xyY_To_BT2020(float3 color)
-{
-    float3 XYZ = xyY_To_XYZ(color);
-    return XYZ_To_BT2020(XYZ);
 }
 
 //-----------------------------------------------------------------------------
@@ -394,6 +484,50 @@ float3 AP1_To_AP0(float3 color)
     };
 
     return mul(conversion, color);
+}
+
+//-----------------------------------------------------------------------------
+//      xy 色度座標から，相関色温度を求めます.
+//-----------------------------------------------------------------------------
+float CalcCCT(float2 color_xy)
+{
+    // [McCamy 1992] の近似式.
+    // C. S. McCamy, "Correlated color temperature as an explicit function of chromaticity coordinates",
+    // Color Research & Application, Vol.17, No.2, pp.142-144, 1992.
+    const float n = (color_xy.x - 0.3320f) / (color_xy.y - 0.1858f);
+    const float n2 = n * n;
+    return -437.0f * (n * n2) + 3601.0f * n2 - 6861.0f * n - 5514.31f;
+}
+
+//-----------------------------------------------------------------------------
+//      相関色温度から xy 色度座標を求めます.
+//-----------------------------------------------------------------------------
+float2 xy_FromCCT(float T)
+{
+    // https://en.wikipedia.org/wiki/Planckian_locus#Approximation
+    // [Kang 2002] B.Kang, et.al., "Design of Advanced Color Temperature Control System for HDTV Applications", 2002.
+    float invT  = rcp(T);
+    float invT2 = invT * invT;
+    float invT3 = invT * invT2;
+
+    float x, y;
+
+    if (T < 4000.0f)
+        x = -0.2661239e9f * invT3 - 0.2343580e6f * invT2 + 0.8776956e3f * invT + 0.179910f;
+    else
+        x = -3.0258469e9f * invT3 + 2.1070379e6f * invT2 + 0.2226347e3f * invT + 0.240390f;
+
+    float x2 = x * x;
+    float x3 = x * x2;
+ 
+    if (T < 2222.0f)
+        y = -1.1063814f * x3 - 1.34811020f * x2 + 2.1855583f  * x - 0.20219683f;
+    else if (T < 4000.0f)
+        y = -0.9549476f * x3 - 1.37418593f * x2 + 2.09137015f * x - 0.16748867f;
+    else
+        y =  3.0817580f * x3 - 5.87338670f * x2 + 3.75112997f * x - 0.37001483f;
+
+    return float2(x, y);
 }
 
 //-----------------------------------------------------------------------------
@@ -505,22 +639,6 @@ float4 ApplySharpening
         (1.0f + tolerance) * result.x);
 
     return YCoCgToRGB(result);
-}
-
-//-----------------------------------------------------------------------------
-//      疑似油膜表現.
-//-----------------------------------------------------------------------------
-float3 FakeFilm(float3 V, float3 N, float mask, float thickness, float ior)
-{
-    // 高木康行, "モンスターハンター：ワールド アーティストによるシェーダ作成", CEDEC 2018.
-    float cos0 = abs(dot(V, N));
-
-    cos0 *= mask;
-    float tr = cos0 * thickness - ior;
-    float3 n_color = (cos((tr * 35.0f) * float3(0.71f, 0.87f, 1.0f)) * -0.5f) + 0.5f;
-    n_color = lerp(n_color, float3(0.5f, 0.5f, 0.5f), tr);
-    n_color *= n_color * 2.0f;
-    return n_color;
 }
 
 #endif//ASDX_COLOR_HLSLI

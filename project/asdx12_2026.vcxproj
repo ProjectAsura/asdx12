@@ -243,6 +243,7 @@
     <ClCompile Include="..\src\fw\asdxTask.cpp" />
     <ClCompile Include="..\src\fw\asdxBlockTask.cpp" />
     <ClCompile Include="..\src\gfx\asdxAllocationHolder.cpp" />
+    <ClCompile Include="..\src\gfx\asdxBloomEffect.cpp" />
     <ClCompile Include="..\src\gfx\asdxBuffer.cpp" />
     <ClCompile Include="..\src\gfx\asdxCamera.cpp" />
     <ClCompile Include="..\src\gfx\asdxColorEffect.cpp" />
@@ -361,6 +362,7 @@
     <ClInclude Include="..\include\fw\asdxFrameTask.h" />
     <ClInclude Include="..\include\fw\asdxTask.h" />
     <ClInclude Include="..\include\gfx\asdxAllocationHolder.h" />
+    <ClInclude Include="..\include\gfx\asdxBloomEffect.h" />
     <ClInclude Include="..\include\gfx\asdxBuffer.h" />
     <ClInclude Include="..\include\gfx\asdxCamera.h" />
     <ClInclude Include="..\include\gfx\asdxColorEffect.h" />
@@ -428,6 +430,24 @@
     <None Include="..\res\shaders\asdxWaveHelper.hlsli" />
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="..\res\shaders\asdxBloomCompositeCS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMD|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMT|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMT|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMD|x64'">Compute</ShaderType>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxBloomDownPassCS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMD|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMT|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMT|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMD|x64'">Compute</ShaderType>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxBloomFirstPassCS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMD|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMT|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMT|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMD|x64'">Compute</ShaderType>
+    </FxCompile>
     <FxCompile Include="..\res\shaders\asdxColorFilterCS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMT|x64'">Compute</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMT|x64'">Compute</ShaderType>

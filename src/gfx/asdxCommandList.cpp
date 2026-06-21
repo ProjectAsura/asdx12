@@ -148,6 +148,7 @@ void CommandList::SetName(LPCWSTR name)
 //-----------------------------------------------------------------------------
 void SetUAVBarrier(D3D12_RESOURCE_BARRIER& barrier, ID3D12Resource* pResource)
 {
+    assert(pResource != nullptr);
     barrier.Type          = D3D12_RESOURCE_BARRIER_TYPE_UAV;
     barrier.Flags         = D3D12_RESOURCE_BARRIER_FLAG_NONE;
     barrier.UAV.pResource = pResource;
@@ -158,6 +159,7 @@ void SetUAVBarrier(D3D12_RESOURCE_BARRIER& barrier, ID3D12Resource* pResource)
 //-----------------------------------------------------------------------------
 void UAVBarrier(ID3D12GraphicsCommandList* pCmd, ID3D12Resource* pResource)
 {
+    assert(pCmd != nullptr);
     D3D12_RESOURCE_BARRIER barrier = {};
     SetUAVBarrier(barrier, pResource);
     pCmd->ResourceBarrier(1, &barrier);
@@ -174,6 +176,10 @@ void SetTransitionBarrier
     D3D12_RESOURCE_STATES   after
 )
 {
+    assert(pResource != nullptr);
+    if (before == after)
+        return;
+
     barrier.Type                   = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
     barrier.Flags                  = D3D12_RESOURCE_BARRIER_FLAG_NONE;
     barrier.Transition.pResource   = pResource;
@@ -193,6 +199,10 @@ void TransitionBarrier
     D3D12_RESOURCE_STATES       after
 )
 {
+    assert(pCmd != nullptr);
+    if (before == after)
+        return;
+
     D3D12_RESOURCE_BARRIER barrier = {};
     SetTransitionBarrier(barrier, pResource, before, after);
     pCmd->ResourceBarrier(1, &barrier);
@@ -208,6 +218,8 @@ void SetAliasingBarrier
     ID3D12Resource*         pAfter
 )
 {
+    assert(pBefore != nullptr);
+    assert(pAfter  != nullptr);
     barrier.Type                     = D3D12_RESOURCE_BARRIER_TYPE_ALIASING;
     barrier.Flags                    = D3D12_RESOURCE_BARRIER_FLAG_NONE;
     barrier.Aliasing.pResourceBefore = pBefore;
@@ -224,6 +236,7 @@ void AliasingBarrier
     ID3D12Resource*             pAfter
 )
 {
+    assert(pCmd != nullptr);
     D3D12_RESOURCE_BARRIER barrier = {};
     SetAliasingBarrier(barrier, pBefore, pAfter);
     pCmd->ResourceBarrier(1, &barrier);

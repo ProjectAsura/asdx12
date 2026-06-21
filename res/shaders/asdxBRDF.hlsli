@@ -743,4 +743,20 @@ float RoughnessToMipLevel(float linearRoughness, float mipCount)
     return (mipCount - 1) * linearRoughness;
 }
 
+//-----------------------------------------------------------------------------
+//      疑似油膜表現.
+//-----------------------------------------------------------------------------
+float3 FakeFilm(float3 V, float3 N, float mask, float thickness, float ior)
+{
+    // 高木康行, "モンスターハンター：ワールド アーティストによるシェーダ作成", CEDEC 2018.
+    float cos0 = abs(dot(V, N));
+
+    cos0 *= mask;
+    float tr = cos0 * thickness - ior;
+    float3 n_color = (cos((tr * 35.0f) * float3(0.71f, 0.87f, 1.0f)) * -0.5f) + 0.5f;
+    n_color = lerp(n_color, float3(0.5f, 0.5f, 0.5f), tr);
+    n_color *= n_color * 2.0f;
+    return n_color;
+}
+
 #endif//ADX_BRDF_HLSLI

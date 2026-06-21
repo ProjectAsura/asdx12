@@ -441,6 +441,9 @@
     <ClCompile Include="..\src\fw\asdxFrameTask.cpp">
       <Filter>ソース ファイル\fw</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\gfx\asdxBloomEffect.cpp">
+      <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\edit\asdxEditParam.h">
@@ -797,6 +800,9 @@
     <ClInclude Include="..\include\fw\asdxFrameTask.h">
       <Filter>ヘッダー ファイル\fw</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\gfx\asdxBloomEffect.h">
+      <Filter>ヘッダー ファイル\gfx</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\res\shaders\asdxBRDF.hlsli">
@@ -940,6 +946,15 @@
       <Filter>リソース ファイル\shaders</Filter>
     </FxCompile>
     <FxCompile Include="..\res\shaders\asdxGaussianBlurCS.hlsl">
+      <Filter>リソース ファイル\shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxBloomDownPassCS.hlsl">
+      <Filter>リソース ファイル\shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxBloomFirstPassCS.hlsl">
+      <Filter>リソース ファイル\shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxBloomCompositeCS.hlsl">
       <Filter>リソース ファイル\shaders</Filter>
     </FxCompile>
   </ItemGroup>
