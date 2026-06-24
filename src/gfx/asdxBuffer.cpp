@@ -10,6 +10,7 @@
 #include <cassert>
 #include <gfx/asdxBuffer.h>
 #include <gfx/asdxDevice.h>
+#include <gfx/asdxDescriptorHeap.h>
 #include <gfx/asdxUpdateCommand.h>
 #include <fnd/asdxLogger.h>
 #include <fnd/asdxMath.h>
@@ -192,7 +193,7 @@ bool VertexBuffer::Init(uint64_t size, uint32_t stride)
             return false;
         }
 
-        m_Holder.Attach(pAllocation);
+        m_HolderAlloc.Attach(pAllocation);
     }
     else
     {
@@ -225,7 +226,7 @@ void VertexBuffer::Term()
     auto resource = m_Resource.Detach();
     Dispose(resource);
     memset(&m_View, 0, sizeof(m_View));
-    m_Holder.Reset();
+    m_HolderAlloc.Reset();
 }
 
 //-----------------------------------------------------------------------------
@@ -367,7 +368,7 @@ bool IndexBuffer::Init(uint64_t size, bool isShortFormat)
             return false;
         }
 
-        m_Holder.Attach(pAllocation);
+        m_HolderAlloc.Attach(pAllocation);
     }
     else
     {
@@ -400,7 +401,7 @@ void IndexBuffer::Term()
     auto resource = m_Resource.Detach();
     Dispose(resource);
     memset(&m_View, 0, sizeof(m_View));
-    m_Holder.Reset();
+    m_HolderAlloc.Reset();
 }
 
 //-----------------------------------------------------------------------------
@@ -548,7 +549,7 @@ bool ConstantBuffer::Init(uint64_t size)
             return false;
         }
 
-        m_Holder.Attach(pAllocation);
+        m_HolderAlloc.Attach(pAllocation);
     }
     else
     {
@@ -566,6 +567,22 @@ bool ConstantBuffer::Init(uint64_t size)
         }
     }
 
+    {
+        D3D12_CONSTANT_BUFFER_VIEW_DESC viewDesc = {};
+        viewDesc.BufferLocation = m_Resource->GetGPUVirtualAddress();
+        viewDesc.SizeInBytes    = UINT(size);
+
+        auto handleCBV = GetResourceDescriptorHeap()->Alloc(1);
+        if (!handleCBV.IsValid())
+        {
+            ELOGA("Error : DescriptorHeap::Alloc() Failed.");
+            return false;
+        }
+
+        m_HolderCBV = DescriptorHolder(DescriptorHolder::HEAP_RES, handleCBV);
+        pDevice->CreateConstantBufferView(&viewDesc, m_HolderCBV.GetHandleCPU());
+    }
+
     m_Size = size;
 
     return true;
@@ -578,7 +595,7 @@ void ConstantBuffer::Term()
 {
     auto resource = m_Resource.Detach();
     Dispose(resource);
-    m_Holder.Reset();
+    m_HolderAlloc.Reset();
     m_Size = 0;
 }
 
@@ -598,6 +615,24 @@ D3D12_GPU_VIRTUAL_ADDRESS ConstantBuffer::GetGpuAddress() const
     { result = m_Resource->GetGPUVirtualAddress(); }
     return result;
 }
+
+//-----------------------------------------------------------------------------
+//      CPUディスクリプタハンドルを取得します.
+//-----------------------------------------------------------------------------
+D3D12_CPU_DESCRIPTOR_HANDLE ConstantBuffer::GetCpuHandleCBV() const
+{ return m_HolderCBV.GetHandleCPU(); }
+
+//-----------------------------------------------------------------------------
+//      GPUディスクリプタハンドルを取得します.
+//-----------------------------------------------------------------------------
+D3D12_GPU_DESCRIPTOR_HANDLE ConstantBuffer::GetGpuHandleCBV() const
+{ return m_HolderCBV.GetHandleGPU(); }
+
+//-----------------------------------------------------------------------------
+//      バインドレスインデックスを取得します.
+//-----------------------------------------------------------------------------
+uint32_t ConstantBuffer::GetBindlessIndexCBV() const
+{ return m_HolderCBV.GetIndex(); }
 
 //-----------------------------------------------------------------------------
 //      サイズを取得します.
@@ -724,7 +759,43 @@ D3D12_GPU_VIRTUAL_ADDRESS DoubledConstantBuffer::GetGpuAddress() const
 //      指定インデックスのGPUアドレスを取得します.
 //-----------------------------------------------------------------------------
 D3D12_GPU_VIRTUAL_ADDRESS DoubledConstantBuffer::GetGpuAddress(uint8_t index) const
-{ return m_Buffer[m_Index].GetGpuAddress(); }
+{ return m_Buffer[index].GetGpuAddress(); }
+
+//-----------------------------------------------------------------------------
+//      CPUディスクリプタハンドルを取得します.
+//-----------------------------------------------------------------------------
+D3D12_CPU_DESCRIPTOR_HANDLE DoubledConstantBuffer::GetCpuHandleCBV() const
+{ return GetCpuHandleCBV(m_Index); }
+
+//-----------------------------------------------------------------------------
+//      CPUディスクリプタハンドルを取得します.
+//-----------------------------------------------------------------------------
+D3D12_CPU_DESCRIPTOR_HANDLE DoubledConstantBuffer::GetCpuHandleCBV(uint8_t index) const
+{ return m_Buffer[index].GetCpuHandleCBV(); }
+
+//-----------------------------------------------------------------------------
+//      GPUディスクリプタハンドルを取得します.
+//-----------------------------------------------------------------------------
+D3D12_GPU_DESCRIPTOR_HANDLE DoubledConstantBuffer::GetGpuHandleCBV() const
+{ return GetGpuHandleCBV(m_Index); }
+
+//-----------------------------------------------------------------------------
+//      GPUディスクリプタハンドルを取得します.
+//-----------------------------------------------------------------------------
+D3D12_GPU_DESCRIPTOR_HANDLE DoubledConstantBuffer::GetGpuHandleCBV(uint8_t index) const
+{ return m_Buffer[index].GetGpuHandleCBV(); }
+
+//-----------------------------------------------------------------------------
+//      バインドレスインデックスを取得します.
+//-----------------------------------------------------------------------------
+uint32_t DoubledConstantBuffer::GetBindlessIndexCBV() const
+{ return GetBindlessIndexCBV(m_Index); }
+
+//-----------------------------------------------------------------------------
+//      バインドレスインデックスを取得します.
+//-----------------------------------------------------------------------------
+uint32_t DoubledConstantBuffer::GetBindlessIndexCBV(uint8_t index) const
+{ return m_Buffer[index].GetBindlessIndexCBV(); }
 
 //-----------------------------------------------------------------------------
 //      サイズを取得します.
@@ -785,7 +856,7 @@ ByteAddressBuffer::~ByteAddressBuffer()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool ByteAddressBuffer::Init(uint64_t size, D3D12_RESOURCE_STATES state, bool dynamic)
+bool ByteAddressBuffer::Init(uint64_t size, D3D12_RESOURCE_STATES state, uint8_t options, bool dynamic)
 {
     auto rest = size % 4;
     if ( rest != 0 )
@@ -859,7 +930,7 @@ bool ByteAddressBuffer::Init(uint64_t size, D3D12_RESOURCE_STATES state, bool dy
             return false;
         }
 
-        m_Holder.Attach(pAllocation);
+        m_HolderAlloc.Attach(pAllocation);
     }
     else
     {
@@ -877,6 +948,50 @@ bool ByteAddressBuffer::Init(uint64_t size, D3D12_RESOURCE_STATES state, bool dy
         }
     }
 
+    if (!!(options & BUFFER_OPTION_SRV))
+    {
+        auto handleSRV = GetResourceDescriptorHeap()->Alloc(1);
+        if (!handleSRV.IsValid())
+        {
+            ELOGA("Error : DescriptorHeap::Alloc() Failed.");
+            return false;
+        }
+
+        D3D12_SHADER_RESOURCE_VIEW_DESC viewDesc = {};
+        viewDesc.Format                     = DXGI_FORMAT_R32_TYPELESS;
+        viewDesc.ViewDimension              = D3D12_SRV_DIMENSION_BUFFER;
+        viewDesc.Shader4ComponentMapping    = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+        viewDesc.Buffer.FirstElement        = 0;
+        viewDesc.Buffer.NumElements         = UINT(bufferSize / 4u);
+        viewDesc.Buffer.StructureByteStride = 0;
+        viewDesc.Buffer.Flags               = D3D12_BUFFER_SRV_FLAG_RAW;
+
+        m_HolderSRV = DescriptorHolder(DescriptorHolder::HEAP_RES, handleSRV);
+        pDevice->CreateShaderResourceView(m_Resource.GetPtr(), &viewDesc, m_HolderSRV.GetHandleCPU());
+    }
+
+    if (!!(options & BUFFER_OPTION_UAV))
+    {
+        auto handleUAV = GetResourceDescriptorHeap()->Alloc(1);
+        if (!handleUAV.IsValid())
+        {
+            ELOGA("Error : DescriptorHeap::Alloc() Failed.");
+            return false;
+        }
+
+        D3D12_UNORDERED_ACCESS_VIEW_DESC viewDesc = {};
+        viewDesc.Format                         = DXGI_FORMAT_R32_TYPELESS;
+        viewDesc.ViewDimension                  = D3D12_UAV_DIMENSION_BUFFER;
+        viewDesc.Buffer.FirstElement            = 0;
+        viewDesc.Buffer.NumElements             = UINT(bufferSize / 4u);
+        viewDesc.Buffer.StructureByteStride     = 0;
+        viewDesc.Buffer.CounterOffsetInBytes    = 0;
+        viewDesc.Buffer.FirstElement            = D3D12_BUFFER_UAV_FLAG_RAW;
+
+        m_HolderUAV = DescriptorHolder(DescriptorHolder::HEAP_RES, handleUAV);
+        pDevice->CreateUnorderedAccessView(m_Resource.GetPtr(), nullptr, &viewDesc, m_HolderUAV.GetHandleCPU());
+    }
+
     m_State = state;
 
     return true;
@@ -890,6 +1005,7 @@ bool ByteAddressBuffer::Init
     ID3D12GraphicsCommandList*  pCmdList,
     uint64_t                    size,
     const void*                 pInitData,
+    uint8_t                     options,
     bool                        dynamic
 )
 {
@@ -955,7 +1071,7 @@ bool ByteAddressBuffer::Init
                 return false;
             }
 
-            m_Holder.Attach(pAllocation);
+            m_HolderAlloc.Attach(pAllocation);
         }
         else
         {
@@ -986,12 +1102,56 @@ bool ByteAddressBuffer::Init
             m_Resource->Unmap(0, nullptr);
         }
 
+        if (!!(options & BUFFER_OPTION_SRV))
+        {
+            auto handleSRV = GetResourceDescriptorHeap()->Alloc(1);
+            if (!handleSRV.IsValid())
+            {
+                ELOGA("Error : DescriptorHeap::Alloc() Failed.");
+                return false;
+            }
+
+            D3D12_SHADER_RESOURCE_VIEW_DESC viewDesc = {};
+            viewDesc.Format                     = DXGI_FORMAT_R32_TYPELESS;
+            viewDesc.ViewDimension              = D3D12_SRV_DIMENSION_BUFFER;
+            viewDesc.Shader4ComponentMapping    = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+            viewDesc.Buffer.FirstElement        = 0;
+            viewDesc.Buffer.NumElements         = UINT(bufferSize / 4u);
+            viewDesc.Buffer.StructureByteStride = 0;
+            viewDesc.Buffer.Flags               = D3D12_BUFFER_SRV_FLAG_RAW;
+
+            m_HolderSRV = DescriptorHolder(DescriptorHolder::HEAP_RES, handleSRV);
+            pDevice->CreateShaderResourceView(m_Resource.GetPtr(), &viewDesc, m_HolderSRV.GetHandleCPU());
+        }
+
+        if (!!(options & BUFFER_OPTION_UAV))
+        {
+            auto handleUAV = GetResourceDescriptorHeap()->Alloc(1);
+            if (!handleUAV.IsValid())
+            {
+                ELOGA("Error : DescriptorHeap::Alloc() Failed.");
+                return false;
+            }
+
+            D3D12_UNORDERED_ACCESS_VIEW_DESC viewDesc = {};
+            viewDesc.Format                         = DXGI_FORMAT_R32_TYPELESS;
+            viewDesc.ViewDimension                  = D3D12_UAV_DIMENSION_BUFFER;
+            viewDesc.Buffer.FirstElement            = 0;
+            viewDesc.Buffer.NumElements             = UINT(bufferSize / 4u);
+            viewDesc.Buffer.StructureByteStride     = 0;
+            viewDesc.Buffer.CounterOffsetInBytes    = 0;
+            viewDesc.Buffer.FirstElement            = D3D12_BUFFER_UAV_FLAG_RAW;
+
+            m_HolderUAV = DescriptorHolder(DescriptorHolder::HEAP_RES, handleUAV);
+            pDevice->CreateUnorderedAccessView(m_Resource.GetPtr(), nullptr, &viewDesc, m_HolderUAV.GetHandleCPU());
+        }
+
         m_State = D3D12_RESOURCE_STATE_COMMON;
 
         return true;
     }
 
-    if (!Init(size, D3D12_RESOURCE_STATE_COMMON, dynamic))
+    if (!Init(size, D3D12_RESOURCE_STATE_COMMON, options, dynamic))
     { return false; }
 
     UpdateBuffer(pCmdList, m_Resource.GetPtr(), pInitData);
@@ -1018,7 +1178,7 @@ void ByteAddressBuffer::Term()
 {
     auto resource = m_Resource.Detach();
     Dispose(resource);
-    m_Holder.Reset();
+    m_HolderAlloc.Reset();
 }
 
 //-----------------------------------------------------------------------------
@@ -1069,6 +1229,42 @@ D3D12_GPU_VIRTUAL_ADDRESS ByteAddressBuffer::GetGpuAddress() const
 }
 
 //-----------------------------------------------------------------------------
+//      SRV用CPUディスクリプタハンドルを取得します.
+//-----------------------------------------------------------------------------
+D3D12_CPU_DESCRIPTOR_HANDLE ByteAddressBuffer::GetCpuHandleSRV() const
+{ return m_HolderSRV.GetHandleCPU(); }
+
+//-----------------------------------------------------------------------------
+//      SRV用GPUディスクリプタハンドルを取得します.
+//-----------------------------------------------------------------------------
+D3D12_GPU_DESCRIPTOR_HANDLE ByteAddressBuffer::GetGpuHandleSRV() const
+{ return m_HolderSRV.GetHandleGPU(); }
+
+//-----------------------------------------------------------------------------
+//      SRV用バインドレスインデックスを取得します.
+//-----------------------------------------------------------------------------
+uint32_t ByteAddressBuffer::GetBindlessIndexSRV() const
+{ return m_HolderSRV.GetIndex(); }
+
+//-----------------------------------------------------------------------------
+//      UAV用CPUディスクリプタハンドルを取得します.
+//-----------------------------------------------------------------------------
+D3D12_CPU_DESCRIPTOR_HANDLE ByteAddressBuffer::GetCpuHandleUAV() const
+{ return m_HolderUAV.GetHandleCPU(); }
+
+//-----------------------------------------------------------------------------
+//      UAV用GPUディスクリプタハンドルを取得します.
+//-----------------------------------------------------------------------------
+D3D12_GPU_DESCRIPTOR_HANDLE ByteAddressBuffer::GetGpuHandleUAV() const
+{ return m_HolderUAV.GetHandleGPU(); }
+
+//-----------------------------------------------------------------------------
+//      UAV用バインドレスインデックスを取得します.
+//-----------------------------------------------------------------------------
+uint32_t ByteAddressBuffer::GetBindlessIndexUAV() const
+{ return m_HolderUAV.GetIndex(); }
+
+//-----------------------------------------------------------------------------
 //      UAVバリアを設定します.
 //-----------------------------------------------------------------------------
 void ByteAddressBuffer::UAVBarrier(ID3D12GraphicsCommandList* pCmdList)
@@ -1111,7 +1307,7 @@ StructuredBuffer::~StructuredBuffer()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool StructuredBuffer::Init(uint64_t count, uint32_t stride, D3D12_RESOURCE_STATES state, bool dynamic)
+bool StructuredBuffer::Init(uint64_t count, uint32_t stride, D3D12_RESOURCE_STATES state, uint8_t options, bool dynamic)
 {
     auto size = count * stride;
     auto rest = size % 4;
@@ -1183,7 +1379,7 @@ bool StructuredBuffer::Init(uint64_t count, uint32_t stride, D3D12_RESOURCE_STAT
             return false;
         }
 
-        m_Holder.Attach(pAllocation);
+        m_HolderAlloc.Attach(pAllocation);
     }
     else
     {
@@ -1201,6 +1397,50 @@ bool StructuredBuffer::Init(uint64_t count, uint32_t stride, D3D12_RESOURCE_STAT
         }
     }
 
+    if (!!(options & BUFFER_OPTION_SRV))
+    {
+        auto handleSRV = GetResourceDescriptorHeap()->Alloc(1);
+        if (!handleSRV.IsValid())
+        {
+            ELOGA("Error : DescriptorHeap::Alloc()");
+            return false;
+        }
+
+        D3D12_SHADER_RESOURCE_VIEW_DESC viewDesc = {};
+        viewDesc.Format                     = DXGI_FORMAT_UNKNOWN;
+        viewDesc.ViewDimension              = D3D12_SRV_DIMENSION_BUFFER;
+        viewDesc.Shader4ComponentMapping    = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+        viewDesc.Buffer.FirstElement        = 0;
+        viewDesc.Buffer.NumElements         = UINT(count);
+        viewDesc.Buffer.StructureByteStride = stride;
+        viewDesc.Buffer.Flags               = D3D12_BUFFER_SRV_FLAG_NONE;
+
+        m_HolderSRV = DescriptorHolder(DescriptorHolder::HEAP_RES, handleSRV);
+        pDevice->CreateShaderResourceView(m_Resource.GetPtr(), &viewDesc, m_HolderSRV.GetHandleCPU());
+    }
+
+    if (!!(options & BUFFER_OPTION_UAV))
+    {
+        auto handleUAV = GetResourceDescriptorHeap()->Alloc(1);
+        if (!handleUAV.IsValid())
+        {
+            ELOGA("Error : DescriptorHeap::Alloc()");
+            return false;
+        }
+
+        D3D12_UNORDERED_ACCESS_VIEW_DESC viewDesc = {};
+        viewDesc.Format                         = DXGI_FORMAT_UNKNOWN;
+        viewDesc.ViewDimension                  = D3D12_UAV_DIMENSION_BUFFER;
+        viewDesc.Buffer.FirstElement            = 0;
+        viewDesc.Buffer.NumElements             = UINT(count);
+        viewDesc.Buffer.StructureByteStride     = stride;
+        viewDesc.Buffer.CounterOffsetInBytes    = 0;
+        viewDesc.Buffer.Flags                   = D3D12_BUFFER_UAV_FLAG_NONE;
+
+        m_HolderUAV = DescriptorHolder(DescriptorHolder::HEAP_RES, handleUAV);
+        pDevice->CreateUnorderedAccessView(m_Resource.GetPtr(), nullptr, &viewDesc, m_HolderUAV.GetHandleCPU());
+    }
+
     m_State = state;
 
     return true;
@@ -1215,6 +1455,7 @@ bool StructuredBuffer::Init
     uint64_t                    count,
     uint32_t                    stride,
     const void*                 pInitData,
+    uint8_t                     options,
     bool                        dynamic
 )
 {
@@ -1278,7 +1519,7 @@ bool StructuredBuffer::Init
                 return false;
             }
 
-            m_Holder.Attach(pAllocation);
+            m_HolderAlloc.Attach(pAllocation);
         }
         else
         {
@@ -1296,11 +1537,55 @@ bool StructuredBuffer::Init
             }
         }
 
+        if (!!(options & BUFFER_OPTION_SRV))
+        {
+            auto handleSRV = GetResourceDescriptorHeap()->Alloc(1);
+            if (!handleSRV.IsValid())
+            {
+                ELOGA("Error : DescriptorHeap::Alloc()");
+                return false;
+            }
+
+            D3D12_SHADER_RESOURCE_VIEW_DESC viewDesc = {};
+            viewDesc.Format                     = DXGI_FORMAT_UNKNOWN;
+            viewDesc.ViewDimension              = D3D12_SRV_DIMENSION_BUFFER;
+            viewDesc.Shader4ComponentMapping    = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+            viewDesc.Buffer.FirstElement        = 0;
+            viewDesc.Buffer.NumElements         = UINT(count);
+            viewDesc.Buffer.StructureByteStride = stride;
+            viewDesc.Buffer.Flags               = D3D12_BUFFER_SRV_FLAG_NONE;
+
+            m_HolderSRV = DescriptorHolder(DescriptorHolder::HEAP_RES, handleSRV);
+            pDevice->CreateShaderResourceView(m_Resource.GetPtr(), &viewDesc, m_HolderSRV.GetHandleCPU());
+        }
+
+        if (!!(options & BUFFER_OPTION_UAV))
+        {
+            auto handleUAV = GetResourceDescriptorHeap()->Alloc(1);
+            if (!handleUAV.IsValid())
+            {
+                ELOGA("Error : DescriptorHeap::Alloc()");
+                return false;
+            }
+
+            D3D12_UNORDERED_ACCESS_VIEW_DESC viewDesc = {};
+            viewDesc.Format                         = DXGI_FORMAT_UNKNOWN;
+            viewDesc.ViewDimension                  = D3D12_UAV_DIMENSION_BUFFER;
+            viewDesc.Buffer.FirstElement            = 0;
+            viewDesc.Buffer.NumElements             = UINT(count);
+            viewDesc.Buffer.StructureByteStride     = stride;
+            viewDesc.Buffer.CounterOffsetInBytes    = 0;
+            viewDesc.Buffer.Flags                   = D3D12_BUFFER_UAV_FLAG_NONE;
+
+            m_HolderUAV = DescriptorHolder(DescriptorHolder::HEAP_RES, handleUAV);
+            pDevice->CreateUnorderedAccessView(m_Resource.GetPtr(), nullptr, &viewDesc, m_HolderUAV.GetHandleCPU());
+        }
+
         m_State = D3D12_RESOURCE_STATE_COMMON;
         return true;
     }
 
-    if (!Init(count, stride, D3D12_RESOURCE_STATE_COMMON, dynamic))
+    if (!Init(count, stride, D3D12_RESOURCE_STATE_COMMON, options, dynamic))
     { return false;  }
 
     UpdateBuffer(pCmdList, m_Resource.GetPtr(), pInitData);
@@ -1327,7 +1612,7 @@ void StructuredBuffer::Term()
 {
     auto resource = m_Resource.Detach();
     Dispose(resource);
-    m_Holder.Reset();
+    m_HolderAlloc.Reset();
 }
 
 //-----------------------------------------------------------------------------
@@ -1376,6 +1661,42 @@ D3D12_GPU_VIRTUAL_ADDRESS StructuredBuffer::GetGpuAddress() const
     { result = m_Resource->GetGPUVirtualAddress(); }
     return result;
 }
+
+//-----------------------------------------------------------------------------
+//      SRV用CPUディスクリプタハンドルを取得します.
+//-----------------------------------------------------------------------------
+D3D12_CPU_DESCRIPTOR_HANDLE StructuredBuffer::GetCpuHandleSRV() const
+{ return m_HolderSRV.GetHandleCPU(); }
+
+//-----------------------------------------------------------------------------
+//      SRV用GPUディスクリプタハンドルを取得します.
+//-----------------------------------------------------------------------------
+D3D12_GPU_DESCRIPTOR_HANDLE StructuredBuffer::GetGpuHandleSRV() const
+{ return m_HolderSRV.GetHandleGPU(); }
+
+//-----------------------------------------------------------------------------
+//      SRV用バインドレスインデックスを取得します.
+//-----------------------------------------------------------------------------
+uint32_t StructuredBuffer::GetBindlessIndexSRV() const
+{ return m_HolderSRV.GetIndex(); }
+
+//-----------------------------------------------------------------------------
+//      UAV用CPUディスクリプタハンドルを取得します.
+//-----------------------------------------------------------------------------
+D3D12_CPU_DESCRIPTOR_HANDLE StructuredBuffer::GetCpuHandleUAV() const
+{ return m_HolderUAV.GetHandleCPU(); }
+
+//-----------------------------------------------------------------------------
+//      UAV用GPUディスクリプタハンドルを取得します.
+//-----------------------------------------------------------------------------
+D3D12_GPU_DESCRIPTOR_HANDLE StructuredBuffer::GetGpuHandleUAV() const
+{ return m_HolderUAV.GetHandleGPU(); }
+
+//-----------------------------------------------------------------------------
+//      UAV用バインドレスインデックスを取得します.
+//-----------------------------------------------------------------------------
+uint32_t StructuredBuffer::GetBindlessIndexUAV() const
+{ return m_HolderUAV.GetIndex(); }
 
 //-----------------------------------------------------------------------------
 //      UAVバリアを設定します.
@@ -1464,7 +1785,7 @@ bool ScratchBuffer::Init(size_t size)
             return false;
         }
 
-        m_Holder.Attach(pAllocation);
+        m_HolderAlloc.Attach(pAllocation);
     }
     else
     {
@@ -1490,7 +1811,7 @@ bool ScratchBuffer::Init(size_t size)
 //-----------------------------------------------------------------------------
 void ScratchBuffer::Term()
 {
-    m_Holder.Reset();
+    m_HolderAlloc.Reset();
     auto resource = m_Resource.Detach();
     Dispose(resource);
 }
@@ -1543,7 +1864,8 @@ AccelerationStructure::~AccelerationStructure()
 bool AccelerationStructure::Init
 (
     ID3D12GraphicsCommandList4*                                 pCmd,
-    const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS* pInputs
+    const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS* pInputs,
+    uint8_t                                                     options
 )
 {
     auto pDevice = GetD3D12Device();
@@ -1603,7 +1925,7 @@ bool AccelerationStructure::Init
                 return false;
             }
 
-            m_Holder = AllocationHolder(pAllocation);
+            m_HolderAlloc = AllocationHolder(pAllocation);
         }
         else
         {
@@ -1645,6 +1967,25 @@ bool AccelerationStructure::Init
         pCmd->ResourceBarrier(1, &barrier);
     }
 
+    if (!!(options & BUFFER_OPTION_SRV))
+    {
+        auto handleSRV = GetResourceDescriptorHeap()->Alloc(1);
+        if (!handleSRV.IsValid())
+        {
+            ELOGA("Error : DescriptorHeap::Alloc() Failed.");
+            return false;
+        }
+
+        D3D12_SHADER_RESOURCE_VIEW_DESC viewDesc = {};
+        viewDesc.Format                                     = DXGI_FORMAT_UNKNOWN;
+        viewDesc.ViewDimension                              = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
+        viewDesc.Shader4ComponentMapping                    = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+        viewDesc.RaytracingAccelerationStructure.Location   = m_Resource->GetGPUVirtualAddress();
+
+        m_HolderSRV = DescriptorHolder(DescriptorHolder::HEAP_RES, handleSRV);
+        pDevice->CreateShaderResourceView(m_Resource.GetPtr(), &viewDesc, m_HolderSRV.GetHandleCPU());
+    }
+
     // スクラッチバッファを遅延解放.
     scratchBuffer.Term();
 
@@ -1659,7 +2000,7 @@ void AccelerationStructure::Term()
     auto resource = m_Resource.Detach();
     Dispose(resource);
 
-    m_Holder.Reset();
+    m_HolderAlloc.Reset();
 }
 
 //-----------------------------------------------------------------------------
@@ -1672,6 +2013,24 @@ D3D12_GPU_VIRTUAL_ADDRESS AccelerationStructure::GetGpuAddress() const
     { result = m_Resource->GetGPUVirtualAddress(); }
     return result;
 }
+
+//-----------------------------------------------------------------------------
+//      SRV用CPUディスクリプタハンドルを取得します.
+//-----------------------------------------------------------------------------
+D3D12_CPU_DESCRIPTOR_HANDLE AccelerationStructure::GetCpuHandleSRV() const
+{ return m_HolderSRV.GetHandleCPU(); }
+
+//-----------------------------------------------------------------------------
+//      SRV用GPUディスクリプタハンドルを取得します.
+//-----------------------------------------------------------------------------
+D3D12_GPU_DESCRIPTOR_HANDLE AccelerationStructure::GetGpuHandleSRV() const
+{ return m_HolderSRV.GetHandleGPU(); }
+
+//-----------------------------------------------------------------------------
+//      SRV用バインドレスインデックスを取得します.
+//-----------------------------------------------------------------------------
+uint32_t AccelerationStructure::GetBindlessIndexSRV() const
+{ return m_HolderSRV.GetIndex(); }
 
 //-----------------------------------------------------------------------------
 //      リソースを取得します.
