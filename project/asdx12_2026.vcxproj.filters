@@ -948,13 +948,16 @@
     <FxCompile Include="..\res\shaders\asdxGaussianBlurCS.hlsl">
       <Filter>リソース ファイル\shaders</Filter>
     </FxCompile>
-    <FxCompile Include="..\res\shaders\asdxBloomDownPassCS.hlsl">
-      <Filter>リソース ファイル\shaders</Filter>
-    </FxCompile>
     <FxCompile Include="..\res\shaders\asdxBloomFirstPassCS.hlsl">
       <Filter>リソース ファイル\shaders</Filter>
     </FxCompile>
     <FxCompile Include="..\res\shaders\asdxBloomCompositeCS.hlsl">
+      <Filter>リソース ファイル\shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxBloomDownPassCS.hlsl">
+      <Filter>リソース ファイル\shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxSimpleUpscaleCS.hlsl">
       <Filter>リソース ファイル\shaders</Filter>
     </FxCompile>
   </ItemGroup>

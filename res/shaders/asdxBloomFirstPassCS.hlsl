@@ -12,23 +12,23 @@
 #include "asdxSamplers.hlsli"
 
 
-//-----------------------------------------------------------------------------
-// Resources
-//-----------------------------------------------------------------------------
-Texture2D<float4>   ColorMap    : register(t0);
-RWTexture2D<float4> FilteredMap : register(u0);
-
-
 ///////////////////////////////////////////////////////////////////////////////
 // CbParam constant buffers.
 ///////////////////////////////////////////////////////////////////////////////
 cbuffer CbParam : register(b0)
 {
-    uint    SrcResolution;
-    uint    DstResolution;
-    float   Threshold;
-    uint    Reserved;
+    uint    SrcResolution;  //!< 入力解像度.
+    uint    DstResolution;  //!< 出力解像度.
+    float   Threshold;      //!< ブルーム閾値.
+    uint    Reserved;       //!< 予約領域.
 };
+
+//-----------------------------------------------------------------------------
+// Resources
+//-----------------------------------------------------------------------------
+Texture2D<float4>   ColorMap    : register(t0);
+RWTexture2D<float4> OutputMap   : register(u0);
+
 
 //-----------------------------------------------------------------------------
 //      カラーをサンプルします.
@@ -47,26 +47,24 @@ float4 SampleColor(float2 uv)
 void main(uint3 dispatchId : SV_DispatchThreadID, uint groupIndex : SV_GroupIndex)
 {
     uint2 remapId = RemapLane8x8(dispatchId.xy, groupIndex);
-    uint dstW = DstResolution & 0xFFFF;
-    uint dstH = (DstResolution >> 16) & 0xFFFF;
+    uint2 dstSize;
+    dstSize.x = DstResolution & 0xFFFF;
+    dstSize.y = (DstResolution >> 16) & 0xFFFF;
 
-    if (any(remapId > uint2(dstW, dstH)))
+    if (any(remapId >= dstSize))
         return;
 
-    uint srcW = SrcResolution & 0xFFFF;
-    uint srcH = (SrcResolution >> 16) & 0xFFFF;
- 
-    float2 invSrcSize = float2(1.0f / float(srcW), 1.0f / float(srcW));
-    float2 uv = float2(remapId) * invSrcSize;   // ピクセル中心に移動させない.
-    
+    float2 invSize = 1.0f.xx / float2(dstSize);
+    float2 uv = float2(remapId + 0.5f.xx) * invSize;
+
     float4 result = 0.0f.xxxx;
 
     // 中心4テクセル.
     {
-        float4 c0 = SampleColor(uv + float2(-1.0f, -1.0f) * invSrcSize);
-        float4 c1 = SampleColor(uv + float2( 1.0f, -1.0f) * invSrcSize);
-        float4 c2 = SampleColor(uv + float2(-1.0f,  1.0f) * invSrcSize);
-        float4 c3 = SampleColor(uv + float2( 1.0f,  1.0f) * invSrcSize);
+        float4 c0 = SampleColor(uv + float2(-0.5f, -0.5f) * invSize);
+        float4 c1 = SampleColor(uv + float2( 0.5f, -0.5f) * invSize);
+        float4 c2 = SampleColor(uv + float2(-0.5f,  0.5f) * invSize);
+        float4 c3 = SampleColor(uv + float2( 0.5f,  0.5f) * invSize);
 
         float w0 = KarisAntiFireflyWeight(c0.xyz, 1.0f);
         float w1 = KarisAntiFireflyWeight(c1.xyz, 1.0f);
@@ -79,10 +77,10 @@ void main(uint3 dispatchId : SV_DispatchThreadID, uint groupIndex : SV_GroupInde
  
     // 左上.
     {
-        float4 c0 = SampleColor(uv + float2(-2.0f, -2.0f) * invSrcSize);
-        float4 c1 = SampleColor(uv + float2( 0.0f, -2.0f) * invSrcSize);
-        float4 c2 = SampleColor(uv + float2(-2.0f,  0.0f) * invSrcSize);
-        float4 c3 = SampleColor(uv + float2( 0.0f,  0.0f) * invSrcSize);
+        float4 c0 = SampleColor(uv + float2(-1.0f, -1.0f) * invSize);
+        float4 c1 = SampleColor(uv + float2( 0.0f, -1.0f) * invSize);
+        float4 c2 = SampleColor(uv + float2(-1.0f,  0.0f) * invSize);
+        float4 c3 = SampleColor(uv + float2( 0.0f,  0.0f) * invSize);
 
         float w0 = KarisAntiFireflyWeight(c0.xyz, 1.0f);
         float w1 = KarisAntiFireflyWeight(c1.xyz, 1.0f);
@@ -95,10 +93,10 @@ void main(uint3 dispatchId : SV_DispatchThreadID, uint groupIndex : SV_GroupInde
  
     // 右上
     {
-        float4 c0 = SampleColor(uv + float2( 0.0f, -2.0f) * invSrcSize);
-        float4 c1 = SampleColor(uv + float2( 2.0f, -2.0f) * invSrcSize);
-        float4 c2 = SampleColor(uv + float2( 0.0f,  0.0f) * invSrcSize);
-        float4 c3 = SampleColor(uv + float2( 2.0f,  0.0f) * invSrcSize);
+        float4 c0 = SampleColor(uv + float2( 0.0f, -1.0f) * invSize);
+        float4 c1 = SampleColor(uv + float2( 1.0f, -1.0f) * invSize);
+        float4 c2 = SampleColor(uv + float2( 0.0f,  0.0f) * invSize);
+        float4 c3 = SampleColor(uv + float2( 1.0f,  0.0f) * invSize);
 
         float w0 = KarisAntiFireflyWeight(c0.xyz, 1.0f);
         float w1 = KarisAntiFireflyWeight(c1.xyz, 1.0f);
@@ -111,10 +109,10 @@ void main(uint3 dispatchId : SV_DispatchThreadID, uint groupIndex : SV_GroupInde
 
     // 左下
     {
-        float4 c0 = SampleColor(uv + float2(-2.0f,  0.0f) * invSrcSize);
-        float4 c1 = SampleColor(uv + float2( 0.0f,  0.0f) * invSrcSize);
-        float4 c2 = SampleColor(uv + float2(-2.0f, -2.0f) * invSrcSize);
-        float4 c3 = SampleColor(uv + float2( 0.0f, -2.0f) * invSrcSize);
+        float4 c0 = SampleColor(uv + float2(-1.0f,  0.0f) * invSize);
+        float4 c1 = SampleColor(uv + float2( 0.0f,  0.0f) * invSize);
+        float4 c2 = SampleColor(uv + float2(-1.0f,  1.0f) * invSize);
+        float4 c3 = SampleColor(uv + float2( 0.0f,  1.0f) * invSize);
 
         float w0 = KarisAntiFireflyWeight(c0.xyz, 1.0f);
         float w1 = KarisAntiFireflyWeight(c1.xyz, 1.0f);
@@ -127,10 +125,10 @@ void main(uint3 dispatchId : SV_DispatchThreadID, uint groupIndex : SV_GroupInde
 
     // 右下
     {
-        float4 c0 = SampleColor(uv + float2( 0.0f,  0.0f) * invSrcSize);
-        float4 c1 = SampleColor(uv + float2( 2.0f,  0.0f) * invSrcSize);
-        float4 c2 = SampleColor(uv + float2( 0.0f,  2.0f) * invSrcSize);
-        float4 c3 = SampleColor(uv + float2( 2.0f,  2.0f) * invSrcSize);
+        float4 c0 = SampleColor(uv + float2( 0.0f,  0.0f) * invSize);
+        float4 c1 = SampleColor(uv + float2( 1.0f,  0.0f) * invSize);
+        float4 c2 = SampleColor(uv + float2( 0.0f,  1.0f) * invSize);
+        float4 c3 = SampleColor(uv + float2( 1.0f,  1.0f) * invSize);
 
         float w0 = KarisAntiFireflyWeight(c0.xyz, 1.0f);
         float w1 = KarisAntiFireflyWeight(c1.xyz, 1.0f);
@@ -142,5 +140,5 @@ void main(uint3 dispatchId : SV_DispatchThreadID, uint groupIndex : SV_GroupInde
     }
 
     // 結果を書き込み.
-    FilteredMap[remapId] = result;
+    OutputMap[remapId] = result;
 }

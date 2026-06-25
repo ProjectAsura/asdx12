@@ -52,7 +52,7 @@ void main
     { return; }
 
     float2 uv = remappedId / float2(Size);
-    
+
     float4 output = 0.0f.xxxx;
     output += BlurSample(uv, Offset * 0.5f, Weights0.x);
     output += BlurSample(uv, Offset * 2.5f, Weights0.y);

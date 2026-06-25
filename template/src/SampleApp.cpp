@@ -48,7 +48,7 @@ bool LoadTexture(const char* path, asdx::TextureHolder& holder)
 //-----------------------------------------------------------------------------
 //      フォントをロードします.
 //-----------------------------------------------------------------------------
-bool LoadFont(ID3D12GraphicsCommandList* pCmd, const char* path, asdx::Font& font)
+bool LoadFont(const char* path, asdx::Font& font)
 {
     asdx::fs::path input = path;
     asdx::fs::path findPath;
@@ -65,7 +65,7 @@ bool LoadFont(ID3D12GraphicsCommandList* pCmd, const char* path, asdx::Font& fon
         return false;
     }
 
-    if (!font.Init(pCmd, std::move(bin)))
+    if (!font.Init(std::move(bin)))
     {
         ELOGA("Error : Font::Init() Failed. path = %s", path);
         return false;

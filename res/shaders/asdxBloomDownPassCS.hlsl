@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------------
+﻿//----------------------------------------------------------------------------
 // File : asdxBloomDownPassCS.hlsl
 // Desc : Compute Shader For Bloom.
 // Copyright(c) Project Asura. All right reserved.
@@ -11,22 +11,22 @@
 #include "asdxSamplers.hlsli"
 
 
-//-----------------------------------------------------------------------------
-// Resources
-//-----------------------------------------------------------------------------
-Texture2D<float4>   ColorMap    : register(t0);
-RWTexture2D<float4> FilteredMap : register(u0);
-
-
 ///////////////////////////////////////////////////////////////////////////////
 // CbParam constant buffers.
 ///////////////////////////////////////////////////////////////////////////////
 cbuffer CbParam : register(b0)
 {
-    uint    SrcResolution;
-    uint    DstResolution;
-    uint2   Reserved;
+    uint    SrcResolution;  //!< 入力解像度.
+    uint    DstResolution;  //!< 出力解像度.
+    uint2   Reserved;       //!< 予約領域.
 };
+
+//-----------------------------------------------------------------------------
+// Resources
+//-----------------------------------------------------------------------------
+Texture2D<float4>   ColorMap    : register(t0);
+RWTexture2D<float4> OutputMap   : register(u0);
+
 
 //-----------------------------------------------------------------------------
 //      メインエントリーポイントです.
@@ -35,26 +35,24 @@ cbuffer CbParam : register(b0)
 void main(uint3 dispatchId : SV_DispatchThreadID, uint groupIndex : SV_GroupIndex)
 {
     uint2 remapId = RemapLane8x8(dispatchId.xy, groupIndex);
-    uint dstW = DstResolution & 0xFFFF;
-    uint dstH = (DstResolution >> 16) & 0xFFFF;
+    uint2 dstSize;
+    dstSize.x = DstResolution & 0xFFFF;
+    dstSize.y = (DstResolution >> 16) & 0xFFFF;
 
-    if (any(remapId > uint2(dstW, dstH)))
+    if (any(remapId >= dstSize))
         return;
 
-    uint srcW = SrcResolution & 0xFFFF;
-    uint srcH = (SrcResolution >> 16) & 0xFFFF;
- 
-    float2 invSrcSize = float2(1.0f / float(srcW), 1.0f / float(srcW));
-    float2 uv = float2(remapId) * invSrcSize;   // ピクセル中心に移動させない.
-    
-    float4 result = 0.0f.xxxx;
+    float2 invSize = 1.0f.xx / float2(dstSize);
+    float2 uv = float2(remapId + 0.5f.xx) / float2(dstSize);
 
+    float4 result = 0.0f.xxxx;
+ 
     // 中心4テクセル.
     {
-        float4 c0 = ColorMap.SampleLevel(LinearClamp, uv + float2(-1.0f, -1.0f) * invSrcSize, 0.0f);
-        float4 c1 = ColorMap.SampleLevel(LinearClamp, uv + float2( 1.0f, -1.0f) * invSrcSize, 0.0f);
-        float4 c2 = ColorMap.SampleLevel(LinearClamp, uv + float2(-1.0f,  1.0f) * invSrcSize, 0.0f);
-        float4 c3 = ColorMap.SampleLevel(LinearClamp, uv + float2( 1.0f,  1.0f) * invSrcSize, 0.0f);
+        float4 c0 = ColorMap.SampleLevel(LinearClamp, uv + float2(-0.5f, -0.5f) * invSize, 0.0f);
+        float4 c1 = ColorMap.SampleLevel(LinearClamp, uv + float2( 0.5f, -0.5f) * invSize, 0.0f);
+        float4 c2 = ColorMap.SampleLevel(LinearClamp, uv + float2(-0.5f,  0.5f) * invSize, 0.0f);
+        float4 c3 = ColorMap.SampleLevel(LinearClamp, uv + float2( 0.5f,  0.5f) * invSize, 0.0f);
 
         float4 b0 = (c0 + c1 + c2 + c3) * 0.25f;
         result += b0 * 0.5f;
@@ -62,10 +60,10 @@ void main(uint3 dispatchId : SV_DispatchThreadID, uint groupIndex : SV_GroupInde
  
     // 左上.
     {
-        float4 c0 = ColorMap.SampleLevel(LinearClamp, uv + float2(-2.0f, -2.0f) * invSrcSize, 0.0f);
-        float4 c1 = ColorMap.SampleLevel(LinearClamp, uv + float2( 0.0f, -2.0f) * invSrcSize, 0.0f);
-        float4 c2 = ColorMap.SampleLevel(LinearClamp, uv + float2(-2.0f,  0.0f) * invSrcSize, 0.0f);
-        float4 c3 = ColorMap.SampleLevel(LinearClamp, uv + float2( 0.0f,  0.0f) * invSrcSize, 0.0f);
+        float4 c0 = ColorMap.SampleLevel(LinearClamp, uv + float2(-1.0f, -1.0f) * invSize, 0.0f);
+        float4 c1 = ColorMap.SampleLevel(LinearClamp, uv + float2( 0.0f, -1.0f) * invSize, 0.0f);
+        float4 c2 = ColorMap.SampleLevel(LinearClamp, uv + float2(-1.0f,  0.0f) * invSize, 0.0f);
+        float4 c3 = ColorMap.SampleLevel(LinearClamp, uv + float2( 0.0f,  0.0f) * invSize, 0.0f);
 
         float4 b0 = (c0 + c1 + c2 + c3) * 0.25f;
         result += b0 * 0.125f;
@@ -73,10 +71,10 @@ void main(uint3 dispatchId : SV_DispatchThreadID, uint groupIndex : SV_GroupInde
  
     // 右上
     {
-        float4 c0 = ColorMap.SampleLevel(LinearClamp, uv + float2( 0.0f, -2.0f) * invSrcSize, 0.0f);
-        float4 c1 = ColorMap.SampleLevel(LinearClamp, uv + float2( 2.0f, -2.0f) * invSrcSize, 0.0f);
-        float4 c2 = ColorMap.SampleLevel(LinearClamp, uv + float2( 0.0f,  0.0f) * invSrcSize, 0.0f);
-        float4 c3 = ColorMap.SampleLevel(LinearClamp, uv + float2( 2.0f,  0.0f) * invSrcSize, 0.0f);
+        float4 c0 = ColorMap.SampleLevel(LinearClamp, uv + float2( 0.0f, -1.0f) * invSize, 0.0f);
+        float4 c1 = ColorMap.SampleLevel(LinearClamp, uv + float2( 1.0f, -1.0f) * invSize, 0.0f);
+        float4 c2 = ColorMap.SampleLevel(LinearClamp, uv + float2( 0.0f,  0.0f) * invSize, 0.0f);
+        float4 c3 = ColorMap.SampleLevel(LinearClamp, uv + float2( 1.0f,  0.0f) * invSize, 0.0f);
 
         float4 b0 = (c0 + c1 + c2 + c3) * 0.25f;
         result += b0 * 0.125f;
@@ -84,10 +82,10 @@ void main(uint3 dispatchId : SV_DispatchThreadID, uint groupIndex : SV_GroupInde
 
     // 左下
     {
-        float4 c0 = ColorMap.SampleLevel(LinearClamp, uv + float2(-2.0f,  0.0f) * invSrcSize, 0.0f);
-        float4 c1 = ColorMap.SampleLevel(LinearClamp, uv + float2( 0.0f,  0.0f) * invSrcSize, 0.0f);
-        float4 c2 = ColorMap.SampleLevel(LinearClamp, uv + float2(-2.0f, -2.0f) * invSrcSize, 0.0f);
-        float4 c3 = ColorMap.SampleLevel(LinearClamp, uv + float2( 0.0f, -2.0f) * invSrcSize, 0.0f);
+        float4 c0 = ColorMap.SampleLevel(LinearClamp, uv + float2(-1.0f,  0.0f) * invSize, 0.0f);
+        float4 c1 = ColorMap.SampleLevel(LinearClamp, uv + float2( 0.0f,  0.0f) * invSize, 0.0f);
+        float4 c2 = ColorMap.SampleLevel(LinearClamp, uv + float2(-1.0f,  1.0f) * invSize, 0.0f);
+        float4 c3 = ColorMap.SampleLevel(LinearClamp, uv + float2( 0.0f,  1.0f) * invSize, 0.0f);
 
         float4 b0 = (c0 + c1 + c2 + c3) * 0.25f;
         result += b0 * 0.125f;
@@ -95,15 +93,15 @@ void main(uint3 dispatchId : SV_DispatchThreadID, uint groupIndex : SV_GroupInde
 
     // 右下
     {
-        float4 c0 = ColorMap.SampleLevel(LinearClamp, uv + float2( 0.0f,  0.0f) * invSrcSize, 0.0f);
-        float4 c1 = ColorMap.SampleLevel(LinearClamp, uv + float2( 2.0f,  0.0f) * invSrcSize, 0.0f);
-        float4 c2 = ColorMap.SampleLevel(LinearClamp, uv + float2( 0.0f,  2.0f) * invSrcSize, 0.0f);
-        float4 c3 = ColorMap.SampleLevel(LinearClamp, uv + float2( 2.0f,  2.0f) * invSrcSize, 0.0f);
+        float4 c0 = ColorMap.SampleLevel(LinearClamp, uv + float2( 0.0f,  0.0f) * invSize, 0.0f);
+        float4 c1 = ColorMap.SampleLevel(LinearClamp, uv + float2( 1.0f,  0.0f) * invSize, 0.0f);
+        float4 c2 = ColorMap.SampleLevel(LinearClamp, uv + float2( 0.0f,  1.0f) * invSize, 0.0f);
+        float4 c3 = ColorMap.SampleLevel(LinearClamp, uv + float2( 1.0f,  1.0f) * invSize, 0.0f);
 
         float4 b0 = (c0 + c1 + c2 + c3) * 0.25f;
         result += b0 * 0.125f;
     }
 
     // 結果を書き込み.
-    FilteredMap[remapId] = result;
+    OutputMap[remapId] = result;
 }

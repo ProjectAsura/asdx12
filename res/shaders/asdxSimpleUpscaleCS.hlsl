@@ -1,6 +1,6 @@
 ﻿//-----------------------------------------------------------------------------
-// File : asdxBloomCompositeCS.hlsl
-// Desc : Compute Shader For Bloom.
+// File : asdxSimpleUpscaleCS.hlsl
+// Desc : Compute Shader For Upscale.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 
@@ -10,14 +10,15 @@
 #include "asdxComputeUtil.hlsli"
 #include "asdxSamplers.hlsli"
 
+
 ///////////////////////////////////////////////////////////////////////////////
 // CbParam constant buffers.
 ///////////////////////////////////////////////////////////////////////////////
 cbuffer CbParam : register(b0)
 {
-    uint    SrcResolution;  //!< 入力解像度.
-    uint    DstResolution;  //!< 出力解像度.
-    uint2   Reserved;       //!< 予約領域.
+    uint    SrcResolution;
+    uint    DstResolution;
+    uint2   Reserved;
 };
 
 //-----------------------------------------------------------------------------
@@ -40,19 +41,20 @@ void main(uint3 dispatchId : SV_DispatchThreadID, uint groupIndex : SV_GroupInde
 
     if (any(remapId >= dstSize))
         return;
- 
-    float2 invSize = 1.0f.xx / float2(dstSize);
-    float2 uv = float2(remapId + 0.5f.xx) * invSize;
 
+    float2 invSrcSize;
+    invSrcSize.x = 1.0f / float(SrcResolution & 0xFFFF);
+    invSrcSize.y = 1.0f / float((SrcResolution >> 16) & 0xFFFF);
+ 
+    float2 uv = float2(remapId + 0.5f.xx) / float2(dstSize);
     float4 result = 0.0f.xxxx;
 
     // テントフィルタ.
-    result += ColorMap.SampleLevel(LinearClamp, uv + float2(-0.5f, -0.5f) * invSize, 0.0f);
-    result += ColorMap.SampleLevel(LinearClamp, uv + float2( 0.5f, -0.5f) * invSize, 0.0f);
-    result += ColorMap.SampleLevel(LinearClamp, uv + float2(-0.5f,  0.5f) * invSize, 0.0f);
-    result += ColorMap.SampleLevel(LinearClamp, uv + float2( 0.5f,  0.5f) * invSize, 0.0f); 
+    result += ColorMap.SampleLevel(LinearClamp, uv + float2(-0.5f, -0.5f) * invSrcSize, 0.0f);
+    result += ColorMap.SampleLevel(LinearClamp, uv + float2( 0.5f, -0.5f) * invSrcSize, 0.0f);
+    result += ColorMap.SampleLevel(LinearClamp, uv + float2(-0.5f,  0.5f) * invSrcSize, 0.0f);
+    result += ColorMap.SampleLevel(LinearClamp, uv + float2( 0.5f,  0.5f) * invSrcSize, 0.0f); 
     result *= 0.25f;
 
-    // 加算合成.
-    OutputMap[remapId] += result;
+    OutputMap[remapId] = float4(result.rgb, 1.0f);
 }

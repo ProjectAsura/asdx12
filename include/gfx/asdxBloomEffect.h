@@ -70,23 +70,25 @@ public:
     void Resize(uint32_t w, uint32_t h);
 
     //-------------------------------------------------------------------------
-    //! @brief      コンピュートシェーダを起動します.
+    //! @brief      エフェクトを適用します.
     //! 
     //! @param[in]      pCmd        グラフィックスコマンドリスト.
     //! @param[in]      width       SRVの横幅.
     //! @param[in]      height      SRVの縦幅.
     //! @param[in]      handleSRV   入力SRV.
     //-------------------------------------------------------------------------
-    void Dispatch(
+    void Apply(
         ID3D12GraphicsCommandList* pCmd,
         uint32_t width,
         uint32_t height,
         D3D12_GPU_DESCRIPTOR_HANDLE handleSRV);
 
     //-------------------------------------------------------------------------
-    //! @brief      UAVハンドルを取得します.
+    //! @brief      SRVハンドルを取得します.
+    //! 
+    //! @return     SRVハンドルを返却します.
     //-------------------------------------------------------------------------
-    D3D12_GPU_DESCRIPTOR_HANDLE GetGpuHandleUAV() const;
+    D3D12_GPU_DESCRIPTOR_HANDLE GetGpuHandleSRV() const;
 
     //-------------------------------------------------------------------------
     //! @brief      閾値を設定します.
@@ -106,14 +108,17 @@ private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    static const uint32_t kMaxTargetCount = 5;
-    RefPtr<ID3D12RootSignature> m_RootSignature;
-    RefPtr<ID3D12PipelineState> m_FirstPassPSO;
-    RefPtr<ID3D12PipelineState> m_DownPassPSO;
-    RefPtr<ID3D12PipelineState> m_CompositePSO;
-    ComputeTarget               m_ComputeTarget[kMaxTargetCount];
-    float                       m_Threshold               = 1.2f;
-    D3D12_RESOURCE_STATES       m_States[kMaxTargetCount] = {};
+    static const uint32_t       kMaxTargetCount = 5;                    //!< ブラー用最大ターゲット数.
+    RefPtr<ID3D12RootSignature> m_RootSignature;                        //!< ルートシグニチャ.
+    RefPtr<ID3D12PipelineState> m_FirstPassPSO;                         //!< 初期パス用パイプラインステートオブジェクト.
+    RefPtr<ID3D12PipelineState> m_DownPassPSO;                          //!< ダウンサンプル用パイプラインステートオブジェクト.
+    RefPtr<ID3D12PipelineState> m_CompositePSO;                         //!< 合成用パイプランステートオブジェクト.
+    RefPtr<ID3D12PipelineState> m_UpscalePSO;                           //!< アップスケール用パイプラインステートオブジェクト.
+    ComputeTarget               m_BlurTarget[kMaxTargetCount];          //!< 縮小サイズターゲット.
+    ComputeTarget               m_ComputeTarget;                        //!< 元解像度ターゲット.
+    D3D12_RESOURCE_STATES       m_BlurStates[kMaxTargetCount] = {};     //!< 縮小用ステート.
+    D3D12_RESOURCE_STATES       m_States                      = {};     //!< 元解像度用ステート.
+    float                       m_Threshold                   = 1.0f;   //!< 閾値.
 
     //=========================================================================
     // private methods.

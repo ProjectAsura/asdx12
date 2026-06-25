@@ -22,7 +22,12 @@ namespace {
 #include "../res/shaders/Compiled/asdxBloomFirstPassCS.inc"
 #include "../res/shaders/Compiled/asdxBloomDownPassCS.inc"
 #include "../res/shaders/Compiled/asdxBloomCompositeCS.inc"
+#include "../res/shaders/Compiled/asdxSimpleUpscaleCS.inc"
 
+
+///////////////////////////////////////////////////////////////////////////////
+// ROOT_PARAM enum
+///////////////////////////////////////////////////////////////////////////////
 enum ROOT_PARAM
 {
     ROOT_PARAM_CBV0,
@@ -146,6 +151,20 @@ bool BloomEffect::Init(uint32_t w, uint32_t h, DXGI_FORMAT format)
         }
     }
 
+    // アップスケール用のコンピュートパイプラインステート.
+    {
+        D3D12_COMPUTE_PIPELINE_STATE_DESC desc = {};
+        desc.pRootSignature = m_RootSignature.GetPtr();
+        desc.CS             = { asdxSimpleUpscaleCS, sizeof(asdxSimpleUpscaleCS) };
+
+        auto hr = pDevice->CreateComputePipelineState(&desc, IID_PPV_ARGS(m_UpscalePSO.GetAddress()));
+        if (FAILED(hr))
+        {
+            ELOGA("Error : ID3D12Device::CreateComputePipelineState() Failed. errcode = 0x%x", hr);
+            return false;
+        }
+    }
+
     // 合成用のコンピュートパイプラインステート.
     {
         D3D12_COMPUTE_PIPELINE_STATE_DESC desc = {};
@@ -176,11 +195,40 @@ bool BloomEffect::Init(uint32_t w, uint32_t h, DXGI_FORMAT format)
         desc.ClearColor[2]      = 0.0f;
         desc.ClearColor[3]      = 0.0f;
 
+        m_States = desc.InitState;
+
+        if (!m_ComputeTarget.Init(&desc))
+        {
+            ELOGA("Error : ComputeTarget::Init() Failed.",);
+            return false;
+        }
+    }
+
+    // ブラーターゲットの初期化.
+    {
+        TargetDesc desc = {};
+        desc.Dimension          = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+        desc.Width              = w / 4;
+        desc.Height             = h / 4;
+        desc.DepthOrArraySize   = 1;
+        desc.MipLevels          = 1;
+        desc.Format             = format;
+        desc.SampleDesc         = { 1, 0 };
+        desc.InitState          = D3D12_RESOURCE_STATE_COMMON;
+        desc.ClearColor[0]      = 0.0f;
+        desc.ClearColor[1]      = 0.0f;
+        desc.ClearColor[2]      = 0.0f;
+        desc.ClearColor[3]      = 0.0f;
+
+        // 偶数になるように調整.
+        if (desc.Width  % 2 != 0) desc.Width++;
+        if (desc.Height % 2 != 0) desc.Height++;
+
         for(auto i=0u; i<kMaxTargetCount; ++i)
         {
-            m_States[i] = desc.InitState;
+            m_BlurStates[i] = desc.InitState;
 
-            if (!m_ComputeTarget[i].Init(&desc))
+            if (!m_BlurTarget[i].Init(&desc))
             {
                 ELOGA("Error : ComputeTarget::Init() Failed. index = %u", i);
                 return false;
@@ -191,6 +239,10 @@ bool BloomEffect::Init(uint32_t w, uint32_t h, DXGI_FORMAT format)
 
             if (desc.Width  < 1) desc.Width  = 1;
             if (desc.Height < 1) desc.Height = 1;
+
+            // 偶数になるように調整.
+            if (desc.Width  % 2 != 0) desc.Width++;
+            if (desc.Height % 2 != 0) desc.Height++;
         }
     }
 
@@ -203,11 +255,14 @@ bool BloomEffect::Init(uint32_t w, uint32_t h, DXGI_FORMAT format)
 void BloomEffect::Term()
 {
     for(auto i=0; i<kMaxTargetCount; ++i)
-    { m_ComputeTarget[i].Term(); }
+    { m_BlurTarget[i].Term(); }
+
+    m_ComputeTarget.Term();
 
     m_FirstPassPSO .Reset();
     m_DownPassPSO  .Reset();
     m_CompositePSO .Reset();
+    m_UpscalePSO   .Reset();
     m_RootSignature.Reset();
 }
 
@@ -216,22 +271,38 @@ void BloomEffect::Term()
 //-----------------------------------------------------------------------------
 void BloomEffect::Resize(uint32_t w, uint32_t h)
 {
+    m_ComputeTarget.Resize(w, h);
+
+    w >>= 1;
+    h >>= 1;
+
+    if (w < 1) w = 1;
+    if (h < 1) h = 1;
+
+    // 偶数になるように調整.
+    if (w % 2 != 0) w++;
+    if (h % 2 != 0) h++;
+
     for(auto i=0; i<kMaxTargetCount; ++i)
     {
-        m_ComputeTarget[i].Resize(w, h);
+        m_BlurTarget[i].Resize(w, h);
 
         w >>= 1;
         h >>= 1;
 
         if (w < 1) w = 1;
         if (h < 1) h = 1;
+
+        // 偶数になるように調整.
+        if (w % 2 != 0) w++;
+        if (h % 2 != 0) h++;
     }
 }
 
 //-----------------------------------------------------------------------------
-//      コンピュートシェーダを起動します.
+//      エフェクトを適用します.
 //-----------------------------------------------------------------------------
-void BloomEffect::Dispatch
+void BloomEffect::Apply
 (
     ID3D12GraphicsCommandList*  pCmd,
     uint32_t                    width,
@@ -251,86 +322,86 @@ void BloomEffect::Dispatch
         uint16_t dstW;
         uint16_t dstH;
         float    threshold;
-        uint32_t reservd;
+        uint32_t reserved;
     };
 
     pCmd->SetComputeRootSignature(m_RootSignature.GetPtr());
 
     // 最初のパス.
     {
-        auto desc = m_ComputeTarget[0].GetDesc();
+        auto desc = m_BlurTarget[0].GetDesc();
+
+        auto dstW = uint32_t(desc.Width);
+        auto dstH = uint32_t(desc.Height);
 
         Param param = {};
-        param.srcW      = width;
-        param.srcH      = height;
-        param.dstW      = uint32_t(desc.Width);
-        param.dstH      = uint32_t(desc.Height);
+        param.srcW      = uint16_t(width);
+        param.srcH      = uint16_t(height);
+        param.dstW      = uint16_t(dstW);
+        param.dstH      = uint16_t(dstH);
         param.threshold = m_Threshold;
 
-        TransitionBarrier(pCmd, m_ComputeTarget[0].GetResource(), m_States[0], D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-        m_States[0] = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+        TransitionBarrier(pCmd, m_BlurTarget[0].GetResource(), m_BlurStates[0], D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        m_BlurStates[0] = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 
         pCmd->SetPipelineState(m_FirstPassPSO.GetPtr());
         pCmd->SetComputeRoot32BitConstants(ROOT_PARAM_CBV0, 4, &param, 0);
         pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_SRV0, handleSRV);
-        pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_UAV0, m_ComputeTarget[0].GetGpuHandleUAV());
+        pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_UAV0, m_BlurTarget[0].GetGpuHandleUAV());
 
-        auto threadX = uint32_t(desc.Width  + 7u) / 8u;
-        auto threadY = uint32_t(desc.Height + 7u) / 8u;
+        auto threadX = (dstW + 7u) / 8u;
+        auto threadY = (dstH + 7u) / 8u;
 
         pCmd->Dispatch(threadX, threadY, 1);
 
-        UAVBarrier(pCmd, m_ComputeTarget[0].GetResource());
+        UAVBarrier(pCmd, m_BlurTarget[0].GetResource());
     }
 
     // ダウンサンプルパス.
     {
         pCmd->SetPipelineState(m_DownPassPSO.GetPtr());
 
-        auto desc = m_ComputeTarget[0].GetDesc();
-        auto srcW = uint32_t(desc.Width);
-        auto srcH = uint32_t(desc.Height);
-
-        auto dstW = srcW / 2;
-        auto dstH = srcH / 2;
-
         Param param = {};
 
-        for(auto i=1; kMaxTargetCount; ++i)
+        for(auto i=1u; i<kMaxTargetCount; ++i)
         {
-            param.srcW = srcW;
-            param.srcH = srcH;
-            param.dstW = dstW;
-            param.dstH = dstH;
+            uint32_t srcIdx = i - 1;
+            uint32_t dstIdx = i - 0;
 
-            TransitionBarrier(pCmd, m_ComputeTarget[i - 1].GetResource(), m_States[i - 1], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-            TransitionBarrier(pCmd, m_ComputeTarget[i + 0].GetResource(), m_States[i + 0], D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+            auto& srcTarget = m_BlurTarget[srcIdx];
+            auto& dstTarget = m_BlurTarget[dstIdx];
 
-            m_States[i - 1] = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-            m_States[i + 0] = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+            auto pSrcStates = &m_BlurStates[srcIdx];
+            auto pDstStates = &m_BlurStates[dstIdx];
+
+            auto srcDesc = srcTarget.GetDesc();
+            auto srcW = uint32_t(srcDesc.Width);
+            auto srcH = uint32_t(srcDesc.Height);
+
+            auto dstDesc = dstTarget.GetDesc();
+            auto dstW = uint32_t(dstDesc.Width);
+            auto dstH = uint32_t(dstDesc.Height);
+
+            param.srcW = uint16_t(srcW);
+            param.srcH = uint16_t(srcH);
+            param.dstW = uint16_t(dstW);
+            param.dstH = uint16_t(dstH);
+
+            TransitionBarrier(pCmd, srcTarget.GetResource(), (*pSrcStates), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+            TransitionBarrier(pCmd, dstTarget.GetResource(), (*pDstStates), D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+            (*pSrcStates) = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+            (*pDstStates) = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 
             pCmd->SetComputeRoot32BitConstants(ROOT_PARAM_CBV0, 4, &param, 0);
-            pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_SRV0, m_ComputeTarget[i - 1].GetGpuHandleSRV());
-            pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_UAV0, m_ComputeTarget[i + 0].GetGpuHandleUAV());
+            pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_SRV0, srcTarget.GetGpuHandleSRV());
+            pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_UAV0, dstTarget.GetGpuHandleUAV());
 
             auto threadX = (dstW + 7u) / 8u;
             auto threadY = (dstH + 7u) / 8u;
 
             pCmd->Dispatch(threadX, threadY, 1);
 
-            UAVBarrier(pCmd, m_ComputeTarget[i].GetResource());
-
-            srcW >>= 1;
-            srcH >>= 1;
-
-            dstW >>= 1;
-            dstH >>= 1;
-
-            if (srcW < 1) srcW = 1;
-            if (srcH < 1) srcH = 1;
-            if (dstW < 1) dstW = 1;
-            if (dstH < 1) dstH = 1;
-
+            UAVBarrier(pCmd, dstTarget.GetResource());
         }
     }
 
@@ -338,54 +409,133 @@ void BloomEffect::Dispatch
     {
         pCmd->SetPipelineState(m_CompositePSO.GetPtr());
 
-        auto desc = m_ComputeTarget[kMaxTargetCount - 1].GetDesc();
-
-        auto srcW = uint32_t(desc.Width);
-        auto srcH = uint32_t(desc.Height);
-
-        auto dstW = srcW * 2;
-        auto dstH = srcH * 2;
-
         Param param = {};
 
         for(int i=kMaxTargetCount - 1; i >= 1; i--)
         {
-            param.srcW = srcW;
-            param.srcH = srcH;
-            param.dstW = dstW;
-            param.dstH = dstH;
+            uint32_t srcIdx = i - 0;
+            uint32_t dstIdx = i - 1;
 
-            TransitionBarrier(pCmd, m_ComputeTarget[i - 0].GetResource(), m_States[i - 0], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-            TransitionBarrier(pCmd, m_ComputeTarget[i - 1].GetResource(), m_States[i - 1], D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+            auto& srcTarget = m_BlurTarget[srcIdx];
+            auto& dstTarget = m_BlurTarget[dstIdx];
+
+            auto pSrcStates = &m_BlurStates[srcIdx];
+            auto pDstStates = &m_BlurStates[dstIdx];
+
+            auto srcDesc = srcTarget.GetDesc();
+            auto dstDesc = dstTarget.GetDesc();
+
+            auto srcW = uint32_t(srcDesc.Width);
+            auto srcH = uint32_t(srcDesc.Height);
+
+            auto dstW = uint32_t(dstDesc.Width);
+            auto dstH = uint32_t(dstDesc.Height);
+
+            param.srcW = uint16_t(srcW);
+            param.srcH = uint16_t(srcH);
+            param.dstW = uint16_t(dstW);
+            param.dstH = uint16_t(dstH);
+
+            TransitionBarrier(pCmd, srcTarget.GetResource(), (*pSrcStates), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+            TransitionBarrier(pCmd, dstTarget.GetResource(), (*pDstStates), D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+            (*pSrcStates) = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+            (*pDstStates) = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 
             pCmd->SetComputeRoot32BitConstants(ROOT_PARAM_CBV0, 4, &param, 0);
-            pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_SRV0, m_ComputeTarget[i - 0].GetGpuHandleSRV());
-            pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_UAV0, m_ComputeTarget[i - 1].GetGpuHandleUAV());
+            pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_SRV0, srcTarget.GetGpuHandleSRV());
+            pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_UAV0, dstTarget.GetGpuHandleUAV());
 
             auto threadX = (dstW + 7u) / 8u;
             auto threadY = (dstH + 7u) / 8u;
 
             pCmd->Dispatch(threadX, threadY, 1);
 
-            UAVBarrier(pCmd, m_ComputeTarget[i - 1].GetResource());
-
-            srcW <<= 1;
-            srcH <<= 1;
-
-            dstW <<= 1;
-            dstH <<= 1;
+            UAVBarrier(pCmd, dstTarget.GetResource());
         }
 
-        TransitionBarrier(pCmd, m_ComputeTarget[0].GetResource(), m_States[0], D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
-        m_States[0] = D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE;
+        // 最終解像度にアップスケール.
+        {
+            auto& srcTarget = m_BlurTarget[0];
+            auto& dstTarget = m_ComputeTarget;
+
+            auto pSrcStates = &m_BlurStates[0];
+            auto pDstStates = &m_States;
+
+            auto srcDesc = srcTarget.GetDesc();
+            auto dstDesc = dstTarget.GetDesc();
+
+            auto srcW = uint32_t(srcDesc.Width);
+            auto srcH = uint32_t(srcDesc.Height);
+
+            auto dstW = uint32_t(dstDesc.Width);
+            auto dstH = uint32_t(dstDesc.Height);
+
+            param.srcW = uint16_t(srcW);
+            param.srcH = uint16_t(srcH);
+            param.dstW = uint16_t(dstW);
+            param.dstH = uint16_t(dstH);
+
+            pCmd->SetPipelineState(m_UpscalePSO.GetPtr());
+
+            TransitionBarrier(pCmd, srcTarget.GetResource(), (*pSrcStates), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+            TransitionBarrier(pCmd, dstTarget.GetResource(), (*pDstStates), D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+            (*pSrcStates) = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+            (*pDstStates) = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+
+            pCmd->SetComputeRoot32BitConstants(ROOT_PARAM_CBV0, 4, &param, 0);
+            pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_SRV0, srcTarget.GetGpuHandleSRV());
+            pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_UAV0, dstTarget.GetGpuHandleUAV());
+
+            auto threadX = (dstW + 7u) / 8u;
+            auto threadY = (dstH + 7u) / 8u;
+
+            pCmd->Dispatch(threadX, threadY, 1);
+
+            UAVBarrier(pCmd, dstTarget.GetResource());
+        }
+
+        // 最後に元画像を追加.
+        {
+            auto dstDesc = m_ComputeTarget.GetDesc();
+
+            auto srcW = width;
+            auto srcH = height;
+
+            auto dstW = uint32_t(dstDesc.Width);
+            auto dstH = uint32_t(dstDesc.Height);
+
+            param.srcW = uint16_t(srcW);
+            param.srcH = uint16_t(srcH);
+            param.dstW = uint16_t(dstW);
+            param.dstH = uint16_t(dstH);
+
+            pCmd->SetPipelineState(m_CompositePSO.GetPtr());
+
+            TransitionBarrier(pCmd, m_ComputeTarget.GetResource(), m_States, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+            m_States = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+
+            pCmd->SetComputeRoot32BitConstants(ROOT_PARAM_CBV0, 4, &param, 0);
+            pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_SRV0, handleSRV);
+            pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_UAV0, m_ComputeTarget.GetGpuHandleUAV());
+
+            auto threadX = (dstW + 7u) / 8u;
+            auto threadY = (dstH + 7u) / 8u;
+
+            pCmd->Dispatch(threadX, threadY, 1);
+
+            UAVBarrier(pCmd, m_ComputeTarget.GetResource());
+        }
+
+        TransitionBarrier(pCmd, m_ComputeTarget.GetResource(), m_States, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+        m_States = D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE;
     }
 }
 
 //-----------------------------------------------------------------------------
-//      UAVハンドルを取得します.
+//      SRVハンドルを取得します.
 //-----------------------------------------------------------------------------
-D3D12_GPU_DESCRIPTOR_HANDLE BloomEffect::GetGpuHandleUAV() const
-{ return m_ComputeTarget[0].GetGpuHandleUAV(); }
+D3D12_GPU_DESCRIPTOR_HANDLE BloomEffect::GetGpuHandleSRV() const
+{ return m_ComputeTarget.GetGpuHandleSRV(); }
 
 //-----------------------------------------------------------------------------
 //      閾値を設定します.
