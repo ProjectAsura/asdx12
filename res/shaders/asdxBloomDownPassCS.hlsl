@@ -47,6 +47,11 @@ void main(uint3 dispatchId : SV_DispatchThreadID, uint groupIndex : SV_GroupInde
 
     float4 result = 0.0f.xxxx;
  
+    // [Jimenez 2014] Jorge Jimenez, "Next Generation Post Processing in Call of Duty Advanced Warfare,
+    // SIGGRAPH 2014: Advances in Real-Time Rendering in Games Course, 2014.
+    // https://advances.realtimerendering.com/s2014/index.html
+    // の最適化バージョン.
+
     // 中心4テクセル.
     {
         float4 c0 = ColorMap.SampleLevel(LinearClamp, uv + float2(-0.5f, -0.5f) * invSize, 0.0f);
@@ -54,53 +59,41 @@ void main(uint3 dispatchId : SV_DispatchThreadID, uint groupIndex : SV_GroupInde
         float4 c2 = ColorMap.SampleLevel(LinearClamp, uv + float2(-0.5f,  0.5f) * invSize, 0.0f);
         float4 c3 = ColorMap.SampleLevel(LinearClamp, uv + float2( 0.5f,  0.5f) * invSize, 0.0f);
 
-        float4 b0 = (c0 + c1 + c2 + c3) * 0.25f;
-        result += b0 * 0.5f;
+        result += (c0 + c1 + c2 + c3) * 0.125; // = 0.25 * 0.5f = 0.125f.
     }
  
-    // 左上.
-    {
-        float4 c0 = ColorMap.SampleLevel(LinearClamp, uv + float2(-1.0f, -1.0f) * invSize, 0.0f);
-        float4 c1 = ColorMap.SampleLevel(LinearClamp, uv + float2( 0.0f, -1.0f) * invSize, 0.0f);
-        float4 c2 = ColorMap.SampleLevel(LinearClamp, uv + float2(-1.0f,  0.0f) * invSize, 0.0f);
-        float4 c3 = ColorMap.SampleLevel(LinearClamp, uv + float2( 0.0f,  0.0f) * invSize, 0.0f);
-
-        float4 b0 = (c0 + c1 + c2 + c3) * 0.25f;
-        result += b0 * 0.125f;
-    }
+    // QuadID を求める. 
+    // 参考: https://microsoft.github.io/DirectX-Specs/d3d/HLSL_SM_6_6_Derivatives.html
+    uint  quadId  = WaveGetLaneIndex() & 0x3;
+    float offsetX = ((quadId & 1) == 0) ? 1.0f : -1.0f;
+    float offsetY = ((quadId / 2) == 0) ? 1.0f : -1.0f;
  
-    // 右上
-    {
-        float4 c0 = ColorMap.SampleLevel(LinearClamp, uv + float2( 0.0f, -1.0f) * invSize, 0.0f);
-        float4 c1 = ColorMap.SampleLevel(LinearClamp, uv + float2( 1.0f, -1.0f) * invSize, 0.0f);
-        float4 c2 = ColorMap.SampleLevel(LinearClamp, uv + float2( 0.0f,  0.0f) * invSize, 0.0f);
-        float4 c3 = ColorMap.SampleLevel(LinearClamp, uv + float2( 1.0f,  0.0f) * invSize, 0.0f);
+    // A - B - C
+    // |   |   |
+    // D - E - F
+    // |   |   |
+    // G - H - I
 
-        float4 b0 = (c0 + c1 + c2 + c3) * 0.25f;
-        result += b0 * 0.125f;
-    }
+    // 4角を取得 (A, C, G, I).
+    float4 corner[4];
+    corner[0] = ColorMap.SampleLevel(LinearClamp, uv + float2( offsetX,  offsetY) * invSize, 0.0f); // A
+    corner[1] = ColorMap.SampleLevel(LinearClamp, uv + float2( offsetX, -offsetY) * invSize, 0.0f); // G
+    corner[2] = ColorMap.SampleLevel(LinearClamp, uv + float2(-offsetX,  offsetY) * invSize, 0.0f); // C
+    corner[3] = ColorMap.SampleLevel(LinearClamp, uv + float2(-offsetX, -offsetY) * invSize, 0.0f); // I.
 
-    // 左下
-    {
-        float4 c0 = ColorMap.SampleLevel(LinearClamp, uv + float2(-1.0f,  0.0f) * invSize, 0.0f);
-        float4 c1 = ColorMap.SampleLevel(LinearClamp, uv + float2( 0.0f,  0.0f) * invSize, 0.0f);
-        float4 c2 = ColorMap.SampleLevel(LinearClamp, uv + float2(-1.0f,  1.0f) * invSize, 0.0f);
-        float4 c3 = ColorMap.SampleLevel(LinearClamp, uv + float2( 0.0f,  1.0f) * invSize, 0.0f);
+    // 残りの十字方向は，Quad Intrinsicsで取得 (B, D, E, F, H)
+    float4 cross[5];
+    cross[0] = QuadReadAcrossX(corner[0]);          // B
+    cross[1] = QuadReadAcrossY(corner[0]);          // D
+    cross[2] = QuadReadAcrossDiagonal(corner[0]);   // E
+    cross[3] = QuadReadAcrossX(corner[1]);          // H
+    cross[4] = QuadReadAcrossY(corner[2]);          // F.
 
-        float4 b0 = (c0 + c1 + c2 + c3) * 0.25f;
-        result += b0 * 0.125f;
-    }
-
-    // 右下
-    {
-        float4 c0 = ColorMap.SampleLevel(LinearClamp, uv + float2( 0.0f,  0.0f) * invSize, 0.0f);
-        float4 c1 = ColorMap.SampleLevel(LinearClamp, uv + float2( 1.0f,  0.0f) * invSize, 0.0f);
-        float4 c2 = ColorMap.SampleLevel(LinearClamp, uv + float2( 0.0f,  1.0f) * invSize, 0.0f);
-        float4 c3 = ColorMap.SampleLevel(LinearClamp, uv + float2( 1.0f,  1.0f) * invSize, 0.0f);
-
-        float4 b0 = (c0 + c1 + c2 + c3) * 0.25f;
-        result += b0 * 0.125f;
-    }
+    // 2x2のボックスフィルタに 0.125 の重みづけ.
+    result += (corner[0] + cross[0] + cross[1] + cross[2]) * 0.03125f; // = 0.25 * 0.125f = 0.03125f.
+    result += (corner[1] + cross[1] + cross[2] + cross[4]) * 0.03125f;
+    result += (corner[2] + cross[0] + cross[2] + cross[3]) * 0.03125f;
+    result += (corner[3] + cross[2] + cross[3] + cross[4]) * 0.03125f;
 
     // 結果を書き込み.
     OutputMap[remapId] = result;

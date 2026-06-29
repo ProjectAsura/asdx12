@@ -57,7 +57,13 @@ void main(uint3 dispatchId : SV_DispatchThreadID, uint groupIndex : SV_GroupInde
     float2 invSize = 1.0f.xx / float2(dstSize);
     float2 uv = float2(remapId + 0.5f.xx) * invSize;
 
+    const float exposure = 1.0f;
     float4 result = 0.0f.xxxx;
+
+    // [Jimenez 2014] Jorge Jimenez, "Next Generation Post Processing in Call of Duty Advanced Warfare,
+    // SIGGRAPH 2014: Advances in Real-Time Rendering in Games Course, 2014.
+    // https://advances.realtimerendering.com/s2014/index.html
+    // の最適化バージョン.
 
     // 中心4テクセル.
     {
@@ -74,69 +80,70 @@ void main(uint3 dispatchId : SV_DispatchThreadID, uint groupIndex : SV_GroupInde
         float4 b0 = ((c0 * w0) + (c1 * w1) + (c2 * w2) + (c3 * w3)) / (w0 + w1 + w2 + w3);
         result += b0 * 0.5f;
     }
+
+    uint  quadId  = WaveGetLaneIndex() & 0x3;;
+    float offsetX = ((quadId & 1) == 0) ? 1.0f : -1.0f;
+    float offsetY = ((quadId / 2) == 0) ? 1.0f : -1.0f;
  
-    // 左上.
+    // A - B - C
+    // |   |   |
+    // D - E - F
+    // |   |   |
+    // G - H - I
+
+    // 4角をフェッチ (A, C, G, I).
+    float4 corner[4];
+    corner[0] = ColorMap.SampleLevel(LinearClamp, uv + float2( offsetX,  offsetY) * invSize, 0.0f); // A
+    corner[1] = ColorMap.SampleLevel(LinearClamp, uv + float2( offsetX, -offsetY) * invSize, 0.0f); // G
+    corner[2] = ColorMap.SampleLevel(LinearClamp, uv + float2(-offsetX,  offsetY) * invSize, 0.0f); // C
+    corner[3] = ColorMap.SampleLevel(LinearClamp, uv + float2(-offsetX, -offsetY) * invSize, 0.0f); // I.
+
+    // 残りの十字方向は，Quad Intrinsicsで取得 (B, D, E, F, H)
+    float4 cross[5];
+    cross[0] = QuadReadAcrossX(corner[0]);          // B
+    cross[1] = QuadReadAcrossY(corner[0]);          // D
+    cross[2] = QuadReadAcrossDiagonal(corner[0]);   // E
+    cross[3] = QuadReadAcrossX(corner[1]);          // H
+    cross[4] = QuadReadAcrossY(corner[2]);          // F.
+
     {
-        float4 c0 = SampleColor(uv + float2(-1.0f, -1.0f) * invSize);
-        float4 c1 = SampleColor(uv + float2( 0.0f, -1.0f) * invSize);
-        float4 c2 = SampleColor(uv + float2(-1.0f,  0.0f) * invSize);
-        float4 c3 = SampleColor(uv + float2( 0.0f,  0.0f) * invSize);
-
-        float w0 = KarisAntiFireflyWeight(c0.xyz, 1.0f);
-        float w1 = KarisAntiFireflyWeight(c1.xyz, 1.0f);
-        float w2 = KarisAntiFireflyWeight(c2.xyz, 1.0f);
-        float w3 = KarisAntiFireflyWeight(c3.xyz, 1.0f);
+        float w0 = KarisAntiFireflyWeight(corner[0].rgb, exposure);
+        float w1 = KarisAntiFireflyWeight(cross[0].rgb, exposure);
+        float w2 = KarisAntiFireflyWeight(cross[1].rgb, exposure);
+        float w3 = KarisAntiFireflyWeight(cross[2].rgb, exposure);
  
-        float4 b0 = ((c0 * w0) + (c1 * w1) + (c2 * w2) + (c3 * w3)) / (w0 + w1 + w2 + w3);
-        result += b0 * 0.125f;
-    }
- 
-    // 右上
-    {
-        float4 c0 = SampleColor(uv + float2( 0.0f, -1.0f) * invSize);
-        float4 c1 = SampleColor(uv + float2( 1.0f, -1.0f) * invSize);
-        float4 c2 = SampleColor(uv + float2( 0.0f,  0.0f) * invSize);
-        float4 c3 = SampleColor(uv + float2( 1.0f,  0.0f) * invSize);
-
-        float w0 = KarisAntiFireflyWeight(c0.xyz, 1.0f);
-        float w1 = KarisAntiFireflyWeight(c1.xyz, 1.0f);
-        float w2 = KarisAntiFireflyWeight(c2.xyz, 1.0f);
-        float w3 = KarisAntiFireflyWeight(c3.xyz, 1.0f);
- 
-        float4 b0 = ((c0 * w0) + (c1 * w1) + (c2 * w2) + (c3 * w3)) / (w0 + w1 + w2 + w3);
-        result += b0 * 0.125f;
-    }
-
-    // 左下
-    {
-        float4 c0 = SampleColor(uv + float2(-1.0f,  0.0f) * invSize);
-        float4 c1 = SampleColor(uv + float2( 0.0f,  0.0f) * invSize);
-        float4 c2 = SampleColor(uv + float2(-1.0f,  1.0f) * invSize);
-        float4 c3 = SampleColor(uv + float2( 0.0f,  1.0f) * invSize);
-
-        float w0 = KarisAntiFireflyWeight(c0.xyz, 1.0f);
-        float w1 = KarisAntiFireflyWeight(c1.xyz, 1.0f);
-        float w2 = KarisAntiFireflyWeight(c2.xyz, 1.0f);
-        float w3 = KarisAntiFireflyWeight(c3.xyz, 1.0f);
- 
-        float4 b0 = ((c0 * w0) + (c1 * w1) + (c2 * w2) + (c3 * w3)) / (w0 + w1 + w2 + w3);
-        result += b0 * 0.125f;
+        float4 box = ((corner[0] * w0) + (cross[0] * w1) + (cross[1] * w2) + (cross[2] * w3)) / (w0 + w1 + w2 + w3);
+        result += box * 0.125f;
     }
 
-    // 右下
     {
-        float4 c0 = SampleColor(uv + float2( 0.0f,  0.0f) * invSize);
-        float4 c1 = SampleColor(uv + float2( 1.0f,  0.0f) * invSize);
-        float4 c2 = SampleColor(uv + float2( 0.0f,  1.0f) * invSize);
-        float4 c3 = SampleColor(uv + float2( 1.0f,  1.0f) * invSize);
-
-        float w0 = KarisAntiFireflyWeight(c0.xyz, 1.0f);
-        float w1 = KarisAntiFireflyWeight(c1.xyz, 1.0f);
-        float w2 = KarisAntiFireflyWeight(c2.xyz, 1.0f);
-        float w3 = KarisAntiFireflyWeight(c3.xyz, 1.0f);
+        float w0 = KarisAntiFireflyWeight(corner[1].rgb, exposure);
+        float w1 = KarisAntiFireflyWeight(cross[1].rgb, exposure);
+        float w2 = KarisAntiFireflyWeight(cross[2].rgb, exposure);
+        float w3 = KarisAntiFireflyWeight(cross[4].rgb, exposure);
  
-        float4 b0 = ((c0 * w0) + (c1 * w1) + (c2 * w2) + (c3 * w3)) / (w0 + w1 + w2 + w3);
-        result += b0 * 0.125f;
+        float4 box = ((corner[1] * w0) + (cross[1] * w1) + (cross[2] * w2) + (cross[4] * w3)) / (w0 + w1 + w2 + w3);
+        result += box * 0.125f;
+    }
+
+    {
+        float w0 = KarisAntiFireflyWeight(corner[2].rgb, exposure);
+        float w1 = KarisAntiFireflyWeight(cross[0].rgb, exposure);
+        float w2 = KarisAntiFireflyWeight(cross[2].rgb, exposure);
+        float w3 = KarisAntiFireflyWeight(cross[3].rgb, exposure);
+ 
+        float4 box = ((corner[2] * w0) + (cross[0] * w1) + (cross[2] * w2) + (cross[3] * w3)) / (w0 + w1 + w2 + w3);
+        result += box * 0.125f;
+    }
+
+    {
+        float w0 = KarisAntiFireflyWeight(corner[3].rgb, exposure);
+        float w1 = KarisAntiFireflyWeight(cross[2].rgb, exposure);
+        float w2 = KarisAntiFireflyWeight(cross[3].rgb, exposure);
+        float w3 = KarisAntiFireflyWeight(cross[4].rgb, exposure);
+ 
+        float4 box = ((corner[3] * w0) + (cross[2] * w1) + (cross[3] * w2) + (cross[4] * w3)) / (w0 + w1 + w2 + w3);
+        result += box * 0.125f;
     }
 
     // 結果を書き込み.
