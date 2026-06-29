@@ -625,7 +625,7 @@ void SpriteRenderer::Add(int x, int y, int w, int h, int layer, const Vector2& u
     pVertices[ 0 ].Position.z = d;
     pVertices[ 0 ].Color      = m_Color;
     pVertices[ 0 ].TexCoord.x = u0;
-    pVertices[ 0 ].TexCoord.y = v1;
+    pVertices[ 0 ].TexCoord.y = v0;
 
     // Vertex : 1
     pVertices[ 1 ].Position.x = x1;
@@ -633,7 +633,7 @@ void SpriteRenderer::Add(int x, int y, int w, int h, int layer, const Vector2& u
     pVertices[ 1 ].Position.z = d;
     pVertices[ 1 ].Color      = m_Color;
     pVertices[ 1 ].TexCoord.x = u1;
-    pVertices[ 1 ].TexCoord.y = v1;
+    pVertices[ 1 ].TexCoord.y = v0;
 
     // Vertex : 2
     pVertices[ 2 ].Position.x = x0;
@@ -641,7 +641,7 @@ void SpriteRenderer::Add(int x, int y, int w, int h, int layer, const Vector2& u
     pVertices[ 2 ].Position.z = d;
     pVertices[ 2 ].Color      = m_Color;
     pVertices[ 2 ].TexCoord.x = u0;
-    pVertices[ 2 ].TexCoord.y = v0;
+    pVertices[ 2 ].TexCoord.y = v1;
 
     // Vertex : 3
     pVertices[ 3 ].Position.x = x1;
@@ -649,7 +649,7 @@ void SpriteRenderer::Add(int x, int y, int w, int h, int layer, const Vector2& u
     pVertices[ 3 ].Position.z = d;
     pVertices[ 3 ].Color      = m_Color;
     pVertices[ 3 ].TexCoord.x = u1;
-    pVertices[ 3 ].TexCoord.y = v0;
+    pVertices[ 3 ].TexCoord.y = v1;
 
     // スプライト数をカウントアップします.
     m_SpriteCount++;
@@ -716,7 +716,7 @@ void SpriteRenderer::Add(int x, int y, int w, int h, int layer, float rad, const
     pVertices[ 0 ].Position.z = d;
     pVertices[ 0 ].Color      = m_Color;
     pVertices[ 0 ].TexCoord.x = u0;
-    pVertices[ 0 ].TexCoord.y = v1;
+    pVertices[ 0 ].TexCoord.y = v0;
 
     // Vertex : 1
     pVertices[ 1 ].Position.x = p1.x;
@@ -724,7 +724,7 @@ void SpriteRenderer::Add(int x, int y, int w, int h, int layer, float rad, const
     pVertices[ 1 ].Position.z = d;
     pVertices[ 1 ].Color      = m_Color;
     pVertices[ 1 ].TexCoord.x = u1;
-    pVertices[ 1 ].TexCoord.y = v1;
+    pVertices[ 1 ].TexCoord.y = v0;
 
     // Vertex : 2
     pVertices[ 2 ].Position.x = p2.x;
@@ -732,7 +732,7 @@ void SpriteRenderer::Add(int x, int y, int w, int h, int layer, float rad, const
     pVertices[ 2 ].Position.z = d;
     pVertices[ 2 ].Color      = m_Color;
     pVertices[ 2 ].TexCoord.x = u0;
-    pVertices[ 2 ].TexCoord.y = v0;
+    pVertices[ 2 ].TexCoord.y = v1;
 
     // Vertex : 3
     pVertices[ 3 ].Position.x = p3.x;
@@ -740,7 +740,7 @@ void SpriteRenderer::Add(int x, int y, int w, int h, int layer, float rad, const
     pVertices[ 3 ].Position.z = d;
     pVertices[ 3 ].Color      = m_Color;
     pVertices[ 3 ].TexCoord.x = u1;
-    pVertices[ 3 ].TexCoord.y = v0;
+    pVertices[ 3 ].TexCoord.y = v1;
 
     // スプライト数をカウントアップします.
     m_SpriteCount++;
