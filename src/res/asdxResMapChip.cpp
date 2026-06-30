@@ -191,9 +191,9 @@ ResTileCoord MapChipBinary::GetCoord(uint32_t tileId) const
 
     ResTileCoord result;
     result.Uv0.x = u * x;
-    result.Uv0.y = v * (y + 1);
+    result.Uv0.y = v * y;
     result.Uv1.x = u * (x + 1);
-    result.Uv1.y = v * y;
+    result.Uv1.y = v * (y + 1);
 
     return result;
 }

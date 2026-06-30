@@ -932,17 +932,17 @@ void Draw9Slices
     int h1 = (b - t);
     int h2 = (h - b);
 
-    renderer.Add(x0, y0, w0, h0, asdx::Vector2(u0, v1), asdx::Vector2(u1, v0));
-    renderer.Add(x1, y0, w1, h0, asdx::Vector2(u1, v1), asdx::Vector2(u2, v0));
-    renderer.Add(x2, y0, w2, h0, asdx::Vector2(u2, v1), asdx::Vector2(u3, v0));
+    renderer.Add(x0, y0, w0, h0, asdx::Vector2(u0, v0), asdx::Vector2(u1, v1));
+    renderer.Add(x1, y0, w1, h0, asdx::Vector2(u1, v0), asdx::Vector2(u2, v1));
+    renderer.Add(x2, y0, w2, h0, asdx::Vector2(u2, v0), asdx::Vector2(u3, v1));
 
-    renderer.Add(x0, y1, w0, h1, asdx::Vector2(u0, v2), asdx::Vector2(u1, v1));
-    renderer.Add(x1, y1, w1, h1, asdx::Vector2(u1, v2), asdx::Vector2(u2, v1));
-    renderer.Add(x2, y1, w2, h1, asdx::Vector2(u2, v2), asdx::Vector2(u3, v1));
+    renderer.Add(x0, y1, w0, h1, asdx::Vector2(u0, v1), asdx::Vector2(u1, v2));
+    renderer.Add(x1, y1, w1, h1, asdx::Vector2(u1, v1), asdx::Vector2(u2, v2));
+    renderer.Add(x2, y1, w2, h1, asdx::Vector2(u2, v1), asdx::Vector2(u3, v2));
 
-    renderer.Add(x0, y2, w0, h2, asdx::Vector2(u0, v3), asdx::Vector2(u1, v2));
-    renderer.Add(x1, y2, w1, h2, asdx::Vector2(u1, v3), asdx::Vector2(u2, v2));
-    renderer.Add(x2, y2, w2, h2, asdx::Vector2(u2, v3), asdx::Vector2(u3, v2));
+    renderer.Add(x0, y2, w0, h2, asdx::Vector2(u0, v2), asdx::Vector2(u1, v3));
+    renderer.Add(x1, y2, w1, h2, asdx::Vector2(u1, v2), asdx::Vector2(u2, v3));
+    renderer.Add(x2, y2, w2, h2, asdx::Vector2(u2, v2), asdx::Vector2(u3, v3));
 }
 
 //------------------------------------------------------------------------------
