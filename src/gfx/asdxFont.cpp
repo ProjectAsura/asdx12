@@ -201,9 +201,9 @@ bool Font::Find(uint32_t unicode, DrawInfo& info) const
     info.h = unitSize * h;
 
     info.uv0.x = glyph.AtlasBound.Left   / float(m_Binary.GetWidth ());
-    info.uv0.y = glyph.AtlasBound.Bottom / float(m_Binary.GetHeight());
+    info.uv0.y = glyph.AtlasBound.Top    / float(m_Binary.GetHeight());
     info.uv1.x = glyph.AtlasBound.Right  / float(m_Binary.GetWidth ());
-    info.uv1.y = glyph.AtlasBound.Top    / float(m_Binary.GetHeight());
+    info.uv1.y = glyph.AtlasBound.Bottom / float(m_Binary.GetHeight());
 
     info.advance = glyph.Advance * unitSize;
 
