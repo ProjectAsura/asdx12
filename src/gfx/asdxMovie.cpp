@@ -329,7 +329,7 @@ public:
         // 動画を読み込み.
         {
             RefPtr<IMFAttributes> attributes;
-            auto attrCount = 3;
+            auto attrCount = 4;
             auto hr = MFCreateAttributes(attributes.GetAddress(), attrCount);
             if (FAILED(hr))
             {
@@ -349,12 +349,12 @@ public:
             hr = attributes->SetUINT32(MF_SOURCE_READER_DISABLE_DXVA, FALSE);
             assert(SUCCEEDED(hr));
 
-            // ワイド文字列に変換.
-            std::wstring widePath = asdx::ToStringW(path);
-
             // 非同期コールバックを設定.
             hr = attributes->SetUnknown(MF_SOURCE_READER_ASYNC_CALLBACK, &m_Callback);
             assert(SUCCEEDED(hr));
+
+            // ワイド文字列に変換.
+            std::wstring widePath = asdx::ToStringW(path);
 
             // ソースコードリーダーを生成.
             hr = MFCreateSourceReaderFromURL(widePath.c_str(), attributes.GetPtr(), m_Reader.GetAddress());
