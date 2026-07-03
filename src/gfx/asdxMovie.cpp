@@ -22,6 +22,229 @@
 #include <propvarutil.h>
 
 
+namespace {
+
+///////////////////////////////////////////////////////////////////////////////
+// SourceReaderCallback class
+///////////////////////////////////////////////////////////////////////////////
+class SourceReaderCallback : public IMFSourceReaderCallback
+{
+    //=========================================================================
+    // list of friend classes and methods.
+    //=========================================================================
+    /* NOTHING */
+
+public:
+    ///////////////////////////////////////////////////////////////////////////
+    // DecodedSample structure
+    ///////////////////////////////////////////////////////////////////////////
+    struct DecodedSample
+    {
+        DWORD       StreamIndex = 0;
+        DWORD       StreamFlags = 0;
+        LONGLONG    TimeStamp   = 0;
+        IMFSample*  pSample     = nullptr;
+    };
+
+    //=========================================================================
+    // public variables.
+    //=========================================================================
+    /* NOTHING */
+
+    //=========================================================================
+    // public methods.
+    //=========================================================================
+
+    //-------------------------------------------------------------------------
+    //! @brief      コンストラクタです.
+    //-------------------------------------------------------------------------
+    SourceReaderCallback()
+    : m_RefCount(1)
+    , m_pReader (nullptr)
+    { /* DO_NOTHING */ }
+
+    //-------------------------------------------------------------------------
+    //! @brief      デストラクタです.
+    //-------------------------------------------------------------------------
+    ~SourceReaderCallback()
+    { Term(); }
+
+    //-------------------------------------------------------------------------
+    //! @brief      初期化処理を行います.
+    //-------------------------------------------------------------------------
+    void Init(IMFSourceReader* pReader)
+    {
+        assert(pReader != nullptr);
+        Term();
+
+        m_pReader = pReader;
+        m_pReader->AddRef();
+
+        m_CurrIndex = 0;
+        m_PrevIndex = 1;
+    }
+
+    //-------------------------------------------------------------------------
+    //! @brief      終了処理を行います.
+    //-------------------------------------------------------------------------
+    void Term()
+    {
+        for(auto i=0; i<2; ++i)
+        {
+            if (m_DecodedSample[i].pSample)
+            {
+                m_DecodedSample[i].pSample->Release();
+                m_DecodedSample[i].pSample = nullptr;
+            }
+
+            m_DecodedSample[i] = {};
+        }
+
+        if (m_pReader)
+        {
+            m_pReader->Release();
+            m_pReader = nullptr;
+        }
+
+        m_CurrIndex  = 0;
+        m_PrevIndex  = 0;
+    }
+
+    //-------------------------------------------------------------------------
+    //! @brief      参照カウントを増やします.
+    //-------------------------------------------------------------------------
+    ULONG STDMETHODCALLTYPE AddRef() override
+    { return ++m_RefCount; }
+
+    //-------------------------------------------------------------------------
+    //! @brief      解放処理を行います.
+    //-------------------------------------------------------------------------
+    ULONG STDMETHODCALLTYPE Release( ) override
+    {
+        auto count = --m_RefCount;
+        if (count == 0)
+            delete this;
+
+        return count;
+    }
+
+    //-------------------------------------------------------------------------
+    //! @brief      インターフェイスを問い合わせます.
+    //-------------------------------------------------------------------------
+    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void** ppvObject) override
+    {
+        if (riid == IID_IUnknown || riid == IID_IMFSourceReaderCallback)
+        {
+            (*ppvObject) = static_cast<IMFSourceReaderCallback*>(this);
+            AddRef();
+            return S_OK;
+        }
+        (*ppvObject) = nullptr;
+        return E_NOINTERFACE;
+    }
+
+    //-------------------------------------------------------------------------
+    //! @brief      デコード時の処理です.
+    //-------------------------------------------------------------------------
+    HRESULT STDMETHODCALLTYPE OnReadSample
+    (
+        HRESULT     status,
+        DWORD       streamIndex,
+        DWORD       streamFlags,
+        LONGLONG    timeStamp,
+        IMFSample*  pSample
+    ) override
+    {
+        if (!!(streamFlags & MF_SOURCE_READERF_ENDOFSTREAM))
+            m_DecodedSample[m_PrevIndex].StreamFlags = streamFlags;
+
+        if (FAILED(status))
+        {
+            WLOGA("Error : IMFSourceReaderCallback::OnReadSample() failed. errcode = 0x%x", status);
+            return status;
+        }
+
+        if (pSample)
+        {
+            uint8_t index = m_CurrIndex;
+
+            if (m_DecodedSample[index].pSample)
+            {
+                m_DecodedSample[index].pSample->Release();
+                m_DecodedSample[index].pSample = nullptr;
+            }
+
+            m_DecodedSample[index].StreamIndex = streamIndex;
+            m_DecodedSample[index].StreamFlags = streamFlags;
+            m_DecodedSample[index].TimeStamp   = timeStamp;
+            m_DecodedSample[index].pSample     = pSample;
+            m_DecodedSample[index].pSample->AddRef();
+
+            m_Dirty     = true;
+            m_PrevIndex = index;
+            m_CurrIndex = (index + 1) & 0x1;
+        }
+
+        return S_OK;
+    }
+
+    //-------------------------------------------------------------------------
+    //! @brief      フラッシュ時の処理です.
+    //-------------------------------------------------------------------------
+    HRESULT STDMETHODCALLTYPE OnFlush(DWORD /*dwStreamIndex*/) override
+    { return S_OK; }
+
+    //-------------------------------------------------------------------------
+    //! @brief      イベント時の処理です.
+    //-------------------------------------------------------------------------
+    HRESULT STDMETHODCALLTYPE OnEvent(DWORD /*dwStreamIndex*/, IMFMediaEvent* /*pEvent*/) override
+    { return S_OK; }
+
+    //-------------------------------------------------------------------------
+    //! @brief      デコード済みサンプルを取得します.
+    //-------------------------------------------------------------------------
+    const DecodedSample& GetDecodedSample() const
+    {
+        uint8_t idx = m_PrevIndex;
+        return m_DecodedSample[idx];
+    }
+
+    //-------------------------------------------------------------------------
+    //! @brief      ダーティフラグをリセットします.
+    //-------------------------------------------------------------------------
+    void ResetDirtyFlag()
+    {
+        if (!m_Dirty)
+            return;
+
+        // ダーティフラグをリセット.
+        m_Dirty = false;
+
+        // 次のフレームリクエストのため呼び出す.
+        if (m_pReader)
+        { m_pReader->ReadSample(MF_SOURCE_READER_FIRST_VIDEO_STREAM, 0, nullptr, nullptr, nullptr, nullptr); }
+    }
+
+private:
+    //=========================================================================
+    // private variables.
+    //=========================================================================
+    std::atomic<ULONG>      m_RefCount          = {};
+    IMFSourceReader*        m_pReader           = nullptr;
+    std::atomic<uint8_t>    m_CurrIndex         = 0;
+    std::atomic<uint8_t>    m_PrevIndex         = 0;
+    DecodedSample           m_DecodedSample[2]  = {};
+    std::atomic<bool>       m_Dirty             = {};
+
+    //=========================================================================
+    // private methods.
+    //=========================================================================
+    /* NOTHING */
+};
+
+} // namespace 
+
+
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -129,6 +352,10 @@ public:
             // ワイド文字列に変換.
             std::wstring widePath = asdx::ToStringW(path);
 
+            // 非同期コールバックを設定.
+            hr = attributes->SetUnknown(MF_SOURCE_READER_ASYNC_CALLBACK, &m_Callback);
+            assert(SUCCEEDED(hr));
+
             // ソースコードリーダーを生成.
             hr = MFCreateSourceReaderFromURL(widePath.c_str(), attributes.GetPtr(), m_Reader.GetAddress());
             if (FAILED(hr))
@@ -136,6 +363,9 @@ public:
                 ELOGA("Error : MFCreateSourceReaderFromURL() Failed. errcode = 0x%x, path = %s", hr, path);
                 return false;
             }
+
+            // コールバックにリーダーを登録.
+            m_Callback.Init(m_Reader.GetPtr());
         }
 
         // ビデオデコーダーの設定.
@@ -169,10 +399,9 @@ public:
     //-------------------------------------------------------------------------
     void Close() override
     {
-        for(auto i=0; i<2; ++i)
-        { m_Sample[i].Reset(); }
-
         m_Reader.Reset();
+
+        m_Callback.Term();
 
         m_Width             = 0;
         m_Height            = 0;
@@ -216,17 +445,13 @@ public:
         // 再生時刻を設定.
         m_PlayTimeSec = time / 10000000.0;
 
-        // サンプルを破棄.
-        for(auto i=0; i<2; ++i)
-        { m_Sample[i].Reset(); }
-
-        DWORD    flags     = 0;
-        LONGLONG timeStamp = m_LastTimeStamp;
-
         // サンプルを読み込み.
-        hr = m_Reader->ReadSample(MF_SOURCE_READER_FIRST_VIDEO_STREAM, 0, nullptr, &flags, &timeStamp, m_Sample[m_BufferIndex].GetAddress());
-        if (SUCCEEDED(hr))
-        { m_LastTimeStamp = timeStamp; }
+        hr = m_Reader->ReadSample(MF_SOURCE_READER_FIRST_VIDEO_STREAM, 0, nullptr, nullptr, nullptr, nullptr);
+        if (FAILED(hr))
+        {
+            ELOGA("Error : IMFSourceReader::ReadSample() failed. errcode = 0x%x", hr);
+            return false;
+        }
 
         return true;
     }
@@ -252,22 +477,11 @@ public:
         if (m_Finished)
         { return false; }
 
-        DWORD    flags     = 0;
-        LONGLONG timeStamp = m_LastTimeStamp;
-        HRESULT  hr        = S_OK;
+        // デコード済みサンプルを取得.
+        const auto& decoded = m_Callback.GetDecodedSample();
 
-        auto nextId = (m_BufferIndex + 1) & 0x1;
-
-        // サンプルを読み込み.
-        if (m_Sample[nextId].GetPtr() == nullptr)
-        {
-            hr = m_Reader->ReadSample(MF_SOURCE_READER_FIRST_VIDEO_STREAM, 0, nullptr, &flags, &timeStamp, m_Sample[nextId].GetAddress());
-            if (FAILED(hr))
-            {
-                WLOGA("Warning : IMFSourceReader::ReadSample() failed. errcode = 0x%x", hr);
-                return false;
-            }
-        }
+        auto timeStamp = decoded.TimeStamp;
+        auto flags     = decoded.StreamFlags;
 
         // 一時停止でなければ時間を進める.
         if (!m_Pause)
@@ -276,20 +490,15 @@ public:
         auto timeSec = double(timeStamp) / 10000000.0;
         auto isShow  = (m_PlayTimeSec >= timeSec);
 
-        LONGLONG prevTimeStamp = 0;
-        hr = m_Sample[m_BufferIndex]->GetSampleTime(&prevTimeStamp);
-        if (FAILED(hr))
-        {
-            WLOGA("Warning : IMFSample::GetSampleTime() Failed. errcode = 0x%x", hr);
-            return false;
-        }
-
-        m_LastTimeStamp = prevTimeStamp;
-        m_FrameIndex    = uint64_t(m_FrameRate * prevTimeStamp);
+        m_LastTimeStamp = timeStamp;
+        m_FrameIndex    = uint64_t(m_FrameRate * timeStamp);
 
         // 表示タイミングでなければ終了.
         if (!isShow)
         { return false; }
+
+        // ダーティフラグをリセット.
+        m_Callback.ResetDirtyFlag();
 
         if (m_CalcFrameCount)
         { m_FrameCount++; }
@@ -312,7 +521,7 @@ public:
 
         // バッファ取得.
         RefPtr<IMFMediaBuffer> buffer;
-        hr = m_Sample[m_BufferIndex]->GetBufferByIndex(0, buffer.GetAddress());
+        auto hr = decoded.pSample->GetBufferByIndex(0, buffer.GetAddress());
         if (FAILED(hr))
         {
             WLOGA("Warning : IMFSample::GetBufferByIndex() failed. errcode = 0x%x", hr);
@@ -341,7 +550,7 @@ public:
         auto resDesc = pDstResource->GetDesc();
 
         D3D12_PLACED_SUBRESOURCE_FOOTPRINT layout = {};
-        UINT rows = 0;
+        UINT   rows = 0;
         UINT64 rowSize = 0;
         UINT64 totalSize = 0;
         pDevice->GetCopyableFootprints(&resDesc, 0, 1, 0, &layout, &rows, &rowSize, &totalSize);
@@ -404,11 +613,6 @@ public:
             WLOGA("Warning : IMFMediaBuffer::Unlock() failed. errcode = 0x%x", hr);
             return false;
         }
-
-        // 不要になったサンプルを解放.
-        m_Sample[m_BufferIndex].Reset();
-
-        m_BufferIndex = nextId;
 
         // 正常終了.
         return true;
@@ -504,7 +708,6 @@ private:
     //=========================================================================
     std::atomic<uint32_t>   m_RefCount          = {};                   //!< 参照カウント.
     RefPtr<IMFSourceReader> m_Reader            = {};                   //!< ソースリーダー.
-    RefPtr<IMFSample>       m_Sample[2]         = {};                   //!< サンプル.
     uint32_t                m_Width             = 0;                    //!< 横幅.
     uint32_t                m_Height            = 0;                    //!< 縦幅.
     DXGI_FORMAT             m_Format            = DXGI_FORMAT_UNKNOWN;  //!< フォーマット.
@@ -518,7 +721,7 @@ private:
     bool                    m_Finished          = false;                //!< 再生完了フラグ.
     bool                    m_CalcFrameCount    = false;                //!< フレーム数を計算フラグ.
     double                  m_PlayTimeSec       = 0.0;                  //!< 再生時間.
-    uint8_t                 m_BufferIndex       = 0;
+    SourceReaderCallback    m_Callback          = {};
 
     //=========================================================================
     // private variables.
