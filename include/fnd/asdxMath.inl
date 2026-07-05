@@ -5448,56 +5448,83 @@ inline void GetCorners(const Vector4* planes, Vector3* corners)
     corners[6] = ComputeIntersection(planes[5], orig, dir);
 }
 
-//-----------------------------------------------------------------------------
-//      相関色温度を求めます.
-//-----------------------------------------------------------------------------
-inline float CalcCCT(const Vector2& color_xy)
+inline float ApproxBlackBody_x(float T)
 {
-    // [McCamy 1992] の近似式.
-    // C. S. McCamy, "Correlated color temperature as an explicit function of chromaticity coordinates",
-    // Color Research & Application, Vol.17, No.2, pp.142-144, 1992.
-    const float n = (color_xy.x - 0.3320f) / (color_xy.y - 0.1858f);
-    const float n2 = n * n;
-    return -437.0f * (n * n2) + 3601.0f * n2 - 6861.0f * n - 5514.31f;
+    // [Uchimura 2017] Hajime Uchimura, "ColorSystem",
+    // https://github.com/nikq/ColorSystem/blob/master/include/colorsystem.hpp
+    return float(0.811973208
+        + T * (-0.00016747 
+        + T * (0.00000000331067
+        + T * (0.00000000000690001
+        + T * (-1.39671E-15
+        + T * (1.11951E-19
+        + T * -3.31672E-24
+        ))))));
+}
+
+inline float ApproxBlackBody_y(float T)
+{
+    // [Uchimura 2017] Hajime Uchimura, "ColorSystem",
+    // https://github.com/nikq/ColorSystem/blob/master/include/colorsystem.hpp
+    return float(0.136977825
+        + T * (0.000317653
+        + T * (-0.000000127946
+        + T * (0.0000000000222415
+        + T * (-1.81438E-15
+        + T * 5.67564E-20
+        )))));
+}
+
+//-----------------------------------------------------------------------------
+//      uv 色度図座標から xy 色度図座標を求めます.
+//-----------------------------------------------------------------------------
+inline Vector2 uv_from_xy(float x, float y)
+{
+    return Vector2(
+        (4.0f * x) / (-2.0f * x + 12.0f * y + 3.0f),
+        (6.0f * y) / (-2.0f * x + 12.0f * y + 3.0f));
+}
+
+//-----------------------------------------------------------------------------
+//      xy 色度図座標から uv 色度図座標を求めます.
+//-----------------------------------------------------------------------------
+inline Vector2 xy_from_uv(float u, float v)
+{
+    return Vector2(
+        (3.0f * u) / (2.0f * u - 8.0f * v + 4.0f),
+        (2.0f * v) / (2.0f * u - 8.0f * v + 4.0f));
 }
 
 //-----------------------------------------------------------------------------
 //      相関色温度から xy 色度図の座標を求めます.
 //-----------------------------------------------------------------------------
-inline Vector2 CCT_To_xy(float T)
+inline Vector2 CCT_To_xy(float T, float tint)
 {
-    // https://en.wikipedia.org/wiki/Planckian_locus#Approximation
-    // [Kang 2002] B.Kang, et.al., "Design of Advanced Color Temperature Control System for HDTV Applications", 2002.
-    float invT  = 1.0f / T;
-    float invT2 = invT * invT;
-    float invT3 = invT * invT2;
+    // [Uchimura 2017] Hajime Uchimura, "ColorSystem",
+    // https://github.com/nikq/ColorSystem/blob/master/include/colorsystem.hpp
+    auto x0 = ApproxBlackBody_x(T);
+    auto y0 = ApproxBlackBody_y(T);
 
-    float x, y;
+    auto x1 = ApproxBlackBody_x(T - 1.0f);
+    auto y1 = ApproxBlackBody_y(T - 1.0f);
 
-    if (T < 4000.0f)
-        x = -0.2661239e9f * invT3 - 0.2343580e6f * invT2 + 0.8776956e3f * invT + 0.179910f;
-    else
-        x = -3.0258469e9f * invT3 + 2.1070379e6f * invT2 + 0.2226347e3f * invT + 0.240390f;
+    auto uv0 = uv_from_xy(x0, y0);
+    auto uv1 = uv_from_xy(x1, y1);
 
-    float x2 = x * x;
-    float x3 = x * x2;
- 
-    if (T < 2222.0f)
-        y = -1.1063814f * x3 - 1.34811020f * x2 + 2.1855583f  * x - 0.20219683f;
-    else if (T < 4000.0f)
-        y = -0.9549476f * x3 - 1.37418593f * x2 + 2.09137015f * x - 0.16748867f;
-    else
-        y =  3.0817580f * x3 - 5.87338670f * x2 + 3.75112997f * x - 0.37001483f;
+    auto d = (uv1 - uv0);
+    d.SafeNormalize(d);
 
-    return Vector2(x, y);
+    return xy_from_uv(
+        uv0.x - d.y * tint,
+        uv0.y + d.x * tint);
 }
 
 //-----------------------------------------------------------------------------
 //      相関色温度から CIE 1931 XYZ 表色系の値を求めます.
 //-----------------------------------------------------------------------------
-inline Vector3 CCT_To_XYZ(float T, float Y)
+inline Vector3 CCT_To_XYZ(float T, float tint, float Y)
 {
-    const auto xy = CCT_To_xy(T);
+    const auto xy = CCT_To_xy(T, tint);
     const auto X = (xy.x / xy.y) * Y;
     const auto Z = ((1.0f - xy.x - xy.y) / xy.y) * Y;
     return Vector3(X, Y, Z);
@@ -5506,7 +5533,7 @@ inline Vector3 CCT_To_XYZ(float T, float Y)
 //-----------------------------------------------------------------------------
 //      相関色温度から ITU-R. BT.601 のRGB値を求めます.
 //-----------------------------------------------------------------------------
-inline Vector3 CCT_To_BT601(float T, float Y)
+inline Vector3 CCT_To_BT601(float T, float tint, float Y)
 {
     const auto kXYZToBT601 = Matrix(
          3.506002f, -1.739790f, -0.544058f, 0.0f,
@@ -5515,14 +5542,14 @@ inline Vector3 CCT_To_BT601(float T, float Y)
          0.0f,       0.0f,       0.0f,      1.0f
     );
 
-    const auto XYZ = CCT_To_XYZ(T, Y);
+    const auto XYZ = CCT_To_XYZ(T, tint, Y);
     return Vector3::TransformNormal(XYZ, kXYZToBT601);
 }
 
 //-----------------------------------------------------------------------------
 //      相関色温度から ITU-R. BT.709 のRGB値を求めます.
 //-----------------------------------------------------------------------------
-inline Vector3 CCT_To_BT709(float T, float Y)
+inline Vector3 CCT_To_BT709(float T, float tint, float Y)
 {
     const auto kXYZToBT709 = Matrix(
         3.240970f, -1.537383f, -0.498611f, 0.0f,
@@ -5531,14 +5558,14 @@ inline Vector3 CCT_To_BT709(float T, float Y)
         0.0f,       0.0f,       0.0f,      1.0f
     );
 
-    const auto XYZ = CCT_To_XYZ(T, Y);
+    const auto XYZ = CCT_To_XYZ(T, tint, Y);
     return Vector3::TransformNormal(XYZ, kXYZToBT709);
 }
 
 //-----------------------------------------------------------------------------
 //      相関色温度から ITU-R. BT.2020 のRGBを求めます.
 //-----------------------------------------------------------------------------
-inline Vector3 CCT_To_BT2020(float T, float Y)
+inline Vector3 CCT_To_BT2020(float T, float tint, float Y)
 {
     const auto kXYZToBT2020 = asdx::Matrix(
         1.716651f, -0.355671f, -0.253366f, 0.0f,
@@ -5547,7 +5574,7 @@ inline Vector3 CCT_To_BT2020(float T, float Y)
         0.0f,       0.0f,       0.0f,      1.0f
     );
 
-    const auto XYZ = CCT_To_XYZ(T, Y);
+    const auto XYZ = CCT_To_XYZ(T, tint, Y);
     return Vector3::TransformNormal(XYZ, kXYZToBT2020);
 }
 
