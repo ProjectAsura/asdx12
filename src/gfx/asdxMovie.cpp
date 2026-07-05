@@ -329,7 +329,7 @@ public:
         // 動画を読み込み.
         {
             RefPtr<IMFAttributes> attributes;
-            auto attrCount = 4;
+            auto attrCount = 3;
             auto hr = MFCreateAttributes(attributes.GetAddress(), attrCount);
             if (FAILED(hr))
             {
@@ -337,16 +337,12 @@ public:
                 return false;
             }
 
-            // ビデオ処理を有効化.
-            hr = attributes->SetUINT32(MF_SOURCE_READER_ENABLE_VIDEO_PROCESSING, TRUE);
+            // 直接 NV12 を使うので，リサイズや色空間変換・回転処理は不要なので FALSEに.
+            hr = attributes->SetUINT32(MF_SOURCE_READER_ENABLE_VIDEO_PROCESSING, FALSE);
             assert(SUCCEEDED(hr));
 
-            // コード変換用に最適化された Media Foundation 変換を使用.
-            hr = attributes->SetUINT32(MF_SOURCE_READER_ENABLE_TRANSCODE_ONLY_TRANSFORMS, TRUE);
-            assert(SUCCEEDED(hr));
-
-            // DirectX Video Acceleration を有効.
-            hr = attributes->SetUINT32(MF_SOURCE_READER_DISABLE_DXVA, FALSE);
+            // DirectX Video Acceleration を無効にするので，TRUEに.
+            hr = attributes->SetUINT32(MF_SOURCE_READER_DISABLE_DXVA, TRUE);
             assert(SUCCEEDED(hr));
 
             // 非同期コールバックを設定.
