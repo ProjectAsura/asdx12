@@ -3380,6 +3380,45 @@ inline Matrix Matrix::CreateReverseColorMatrix()
          1.0f,  1.0f,  1.0f, 1.0f);
 }
 
+//-----------------------------------------------------------------------------
+//      BT.601を元にホワイトバランス調整行列を生成します.
+//-----------------------------------------------------------------------------
+inline Matrix Matrix::CreateWhiteBalanceBT601(float value, float base)
+{
+    auto cctBase = CCT_To_BT601(base);
+    auto cctWB   = CCT_To_BT601(value);
+    cctWB.x /= cctBase.x;
+    cctWB.y /= cctBase.y;
+    cctWB.z /= cctBase.z;
+    return Matrix::CreateScale(cctWB);
+}
+
+//-----------------------------------------------------------------------------
+//      BT.709を元にホワイトバランス調整行列を生成します.
+//-----------------------------------------------------------------------------
+inline Matrix Matrix::CreateWhiteBalanceBT709(float value, float base)
+{
+    auto cctBase = CCT_To_BT709(base);
+    auto cctWB   = CCT_To_BT709(value);
+    cctWB.x /= cctBase.x;
+    cctWB.y /= cctBase.y;
+    cctWB.z /= cctBase.z;
+    return Matrix::CreateScale(cctWB);
+}
+
+//-----------------------------------------------------------------------------
+//      BT.2020を元にホワイトバランス調整行列を生成します.
+//-----------------------------------------------------------------------------
+inline Matrix Matrix::CreateWhiteBalanceBT2020(float value, float base)
+{
+    auto cctBase = CCT_To_BT2020(base);
+    auto cctWB   = CCT_To_BT2020(value);
+    cctWB.x /= cctBase.x;
+    cctWB.y /= cctBase.y;
+    cctWB.z /= cctBase.z;
+    return Matrix::CreateScale(cctWB);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Quaternion
 ///////////////////////////////////////////////////////////////////////////////
@@ -5407,6 +5446,109 @@ inline void GetCorners(const Vector4* planes, Vector3* corners)
     ComputeIntersectionLine(planes[1], planes[3], orig, dir);
     corners[5] = ComputeIntersection(planes[4], orig, dir);
     corners[6] = ComputeIntersection(planes[5], orig, dir);
+}
+
+//-----------------------------------------------------------------------------
+//      相関色温度を求めます.
+//-----------------------------------------------------------------------------
+inline float CalcCCT(const Vector2& color_xy)
+{
+    // [McCamy 1992] の近似式.
+    // C. S. McCamy, "Correlated color temperature as an explicit function of chromaticity coordinates",
+    // Color Research & Application, Vol.17, No.2, pp.142-144, 1992.
+    const float n = (color_xy.x - 0.3320f) / (color_xy.y - 0.1858f);
+    const float n2 = n * n;
+    return -437.0f * (n * n2) + 3601.0f * n2 - 6861.0f * n - 5514.31f;
+}
+
+//-----------------------------------------------------------------------------
+//      相関色温度から xy 色度図の座標を求めます.
+//-----------------------------------------------------------------------------
+inline Vector2 CCT_To_xy(float T)
+{
+    // https://en.wikipedia.org/wiki/Planckian_locus#Approximation
+    // [Kang 2002] B.Kang, et.al., "Design of Advanced Color Temperature Control System for HDTV Applications", 2002.
+    float invT  = 1.0f / T;
+    float invT2 = invT * invT;
+    float invT3 = invT * invT2;
+
+    float x, y;
+
+    if (T < 4000.0f)
+        x = -0.2661239e9f * invT3 - 0.2343580e6f * invT2 + 0.8776956e3f * invT + 0.179910f;
+    else
+        x = -3.0258469e9f * invT3 + 2.1070379e6f * invT2 + 0.2226347e3f * invT + 0.240390f;
+
+    float x2 = x * x;
+    float x3 = x * x2;
+ 
+    if (T < 2222.0f)
+        y = -1.1063814f * x3 - 1.34811020f * x2 + 2.1855583f  * x - 0.20219683f;
+    else if (T < 4000.0f)
+        y = -0.9549476f * x3 - 1.37418593f * x2 + 2.09137015f * x - 0.16748867f;
+    else
+        y =  3.0817580f * x3 - 5.87338670f * x2 + 3.75112997f * x - 0.37001483f;
+
+    return Vector2(x, y);
+}
+
+//-----------------------------------------------------------------------------
+//      相関色温度から CIE 1931 XYZ 表色系の値を求めます.
+//-----------------------------------------------------------------------------
+inline Vector3 CCT_To_XYZ(float T, float Y)
+{
+    const auto xy = CCT_To_xy(T);
+    const auto X = (xy.x / xy.y) * Y;
+    const auto Z = ((1.0f - xy.x - xy.y) / xy.y) * Y;
+    return Vector3(X, Y, Z);
+}
+
+//-----------------------------------------------------------------------------
+//      相関色温度から ITU-R. BT.601 のRGB値を求めます.
+//-----------------------------------------------------------------------------
+inline Vector3 CCT_To_BT601(float T, float Y)
+{
+    const auto kXYZToBT601 = Matrix(
+         3.506002f, -1.739790f, -0.544058f, 0.0f,
+        -1.069048f,  1.977779f,  0.035171f, 0.0f,
+         0.056307f, -0.196976f,  1.049953f, 0.0f,
+         0.0f,       0.0f,       0.0f,      1.0f
+    );
+
+    const auto XYZ = CCT_To_XYZ(T, Y);
+    return Vector3::TransformNormal(XYZ, kXYZToBT601);
+}
+
+//-----------------------------------------------------------------------------
+//      相関色温度から ITU-R. BT.709 のRGB値を求めます.
+//-----------------------------------------------------------------------------
+inline Vector3 CCT_To_BT709(float T, float Y)
+{
+    const auto kXYZToBT709 = Matrix(
+        3.240970f, -1.537383f, -0.498611f, 0.0f,
+       -0.969244f,  1.875968f,  0.041555f, 0.0f,
+        0.055630f, -0.203977f,  1.056972f, 0.0f,
+        0.0f,       0.0f,       0.0f,      1.0f
+    );
+
+    const auto XYZ = CCT_To_XYZ(T, Y);
+    return Vector3::TransformNormal(XYZ, kXYZToBT709);
+}
+
+//-----------------------------------------------------------------------------
+//      相関色温度から ITU-R. BT.2020 のRGBを求めます.
+//-----------------------------------------------------------------------------
+inline Vector3 CCT_To_BT2020(float T, float Y)
+{
+    const auto kXYZToBT2020 = asdx::Matrix(
+        1.716651f, -0.355671f, -0.253366f, 0.0f,
+       -0.666684f,  1.616481f,  0.015769f, 0.0f,
+        0.017640f, -0.042771f,  0.942103f, 0.0f,
+        0.0f,       0.0f,       0.0f,      1.0f
+    );
+
+    const auto XYZ = CCT_To_XYZ(T, Y);
+    return Vector3::TransformNormal(XYZ, kXYZToBT2020);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

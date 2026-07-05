@@ -45,15 +45,16 @@ namespace asdx {
 //-----------------------------------------------------------------------------
 void ColorEffect::Param::Reset()
 {
-    Saturation = Vector3(1.0f, 1.0f, 1.0f);
-    AddColor   = Vector3(0.0f, 0.0f, 0.0f);
-    MulColor   = Vector3(1.0f, 1.0f, 1.0f);
-    Brightness = 1.0f;
-    Contrast   = 1.0f;
-    HueDegree  = 0.0f;
-    SepiaTone  = 0.0f;
-    GrayScale  = 0.0f;
-    Reverse    = false;
+    Saturation   = Vector3(1.0f, 1.0f, 1.0f);
+    AddColor     = Vector3(0.0f, 0.0f, 0.0f);
+    MulColor     = Vector3(1.0f, 1.0f, 1.0f);
+    Brightness   = 1.0f;
+    Contrast     = 1.0f;
+    HueDegree    = 0.0f;
+    SepiaTone    = 0.0f;
+    GrayScale    = 0.0f;
+    WhiteBalance = 6504.0f;
+    Reverse      = false;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -282,6 +283,7 @@ Matrix ColorEffect::CalcColorMatrix() const
     auto mtxContrast    = Matrix::CreateContrastMatrix(m_Param.Contrast);
     auto mtxGrayScale   = Matrix::CreateGrayScaleMatrix(m_Param.GrayScale);
     auto mtxSepiaTone   = Matrix::CreateSepiaMatrix(m_Param.SepiaTone);
+    auto mtxWb          = Matrix::CreateWhiteBalanceBT709(m_Param.WhiteBalance);
     auto mtxScale       = Matrix::CreateScale(m_Param.MulColor);
     auto mtxAdd         = Matrix::CreateTranslation(m_Param.AddColor);
 
@@ -291,6 +293,7 @@ Matrix ColorEffect::CalcColorMatrix() const
     result = Matrix::Multiply(mtxContrast,   result);
     result = Matrix::Multiply(mtxGrayScale,  result);
     result = Matrix::Multiply(mtxSepiaTone,  result);
+    result = Matrix::Multiply(mtxWb,         result);
 
     if (m_Param.Reverse)
     {

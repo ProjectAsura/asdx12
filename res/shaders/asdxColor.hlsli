@@ -172,6 +172,21 @@ float3 BT709_To_BT2020(float3 color)
 }
 
 //-----------------------------------------------------------------------------
+//      ITU-R BT.601からCIE 1931 XYZ表色系への変換.
+//-----------------------------------------------------------------------------
+float3 BT601_To_XYZ(float3 color)
+{
+    const float3x3 conversion =
+    {
+        0.393521f, 0.365258f, 0.191677f,
+        0.212376f, 0.701060f, 0.086564f,
+        0.018739f, 0.111934f, 0.958385f
+    };
+
+    return mul(conversion, color);
+}
+
+//-----------------------------------------------------------------------------
 //      ITU-R BT.709からCIE 1931 XYZ表色系への変換.
 //-----------------------------------------------------------------------------
 float3 BT709_To_XYZ(float3 color)
@@ -262,17 +277,18 @@ float3 AP1_To_XYZ(float3 color)
 }
 
 //-----------------------------------------------------------------------------
-//      CIE xyY表色系からCIE 1931 XYZ表色系への変換.
+//      CIE 1931 XYZ表色系からITU-R BT.601への変換.
 //-----------------------------------------------------------------------------
-float3 xyY_To_XYZ(float3 color)
+float3 XYZ_To_BT601(float3 color)
 {
-    float3 xyY;
-    float div = color.x + color.y + color.z;
-    div = max(div, 1e-10);
-    xyY.x = color.x / div;
-    xyY.y = color.y / div;
-    xyY.z = color.y;
-    return xyY;
+    const float3x3 conversion =
+    {
+         3.506002f, -1.739790f, -0.544058f,
+        -1.069048f,  1.977779f,  0.035171f,
+         0.056307f, -0.196976f,  1.049953f
+    };
+
+    return mul(conversion, color);
 }
 
 //-----------------------------------------------------------------------------
@@ -366,27 +382,26 @@ float3 XYZ_To_AP1(float3 color)
 }
 
 //-----------------------------------------------------------------------------
-//      CIE 1931 XYZ表色系からCIE xyYへの変換.
+//      CIE 1931 XYZ表色系からCIE 1931 xy 色度座標に変換します.
 //-----------------------------------------------------------------------------
-float3 XYZ_To_xyY(float3 color)
-{
-    float3 XYZ;
-    XYZ.x = color.x * color.z / max(color.y, 1e-10);
-    XYZ.y = color.z;
-    XYZ.z = (1.0f - color.x - color.y) * color.z / max(color.y, 1e-10);
+float2 XYZ_To_xy(float3 XYZ)
+{ return XYZ.xy / (XYZ.x + XYZ.y + XYZ.z).xx; }
 
-    return XYZ;
+//-----------------------------------------------------------------------------
+//      CIE 1931 xy 色度座標からCIE 1931 XYZ表色系に変換します..
+//-----------------------------------------------------------------------------
+float3 xy_To_XYZ(float2 coord, float Y = 1.0f)
+{
+    float X = (coord.x / coord.y) * Y;
+    float Z = ((1.0f - coord.x - coord.y) / coord.y) * Y;
+    return float3(X, Y, Z);
 }
 
 //-----------------------------------------------------------------------------
 //      CIE 1931 XYZ表色系からCIE 1976 u'v'色度座標に変換します.
 //-----------------------------------------------------------------------------
-float2 XYZ_To_uv(float3 color)
-{
-    return float2(
-        (4.0f * color.x) / (color.x + 15.0f * color.y + 3.0f * color.z),
-        (9.0f * color.y) / (color.x + 15.0f * color.y + 3.0f * color.z));
-}
+float2 XYZ_To_uv(float3 XYZ)
+{ return float2(4.0f * XYZ.x, 9.0f * XYZ.y) / (XYZ.x + 15.0f * XYZ.y + 3.0f * XYZ.z).xx; }
 
 //-----------------------------------------------------------------------------
 //      CIE 1976 u'v' 色度座標から CIE 1931 XYZ表色系に変換します.
@@ -403,56 +418,65 @@ float3 uv_To_XYZ(float2 uv, float Y = 1.0f)
 }
 
 //-----------------------------------------------------------------------------
+//      ITU-R BT601からCIE xyYへの変換.
+//-----------------------------------------------------------------------------
+float2 BT601_To_xy(float3 color)
+{
+    float3 XYZ = BT601_To_XYZ(color);
+    return XYZ_To_xy(XYZ);
+}
+
+//-----------------------------------------------------------------------------
 //      ITU-R BT709からCIE xyYへの変換.
 //-----------------------------------------------------------------------------
-float3 BT709_To_xyY(float3 color)
+float2 BT709_To_xy(float3 color)
 {
     float3 XYZ = BT709_To_XYZ(color);
-    return XYZ_To_xyY(XYZ);
+    return XYZ_To_xy(XYZ);
 }
 
 //-----------------------------------------------------------------------------
 //      ITU-R BT.2020からCIE xyY表色系に変換します.
 //-----------------------------------------------------------------------------
-float3 BT2020_To_xyY(float3 color)
+float2 BT2020_To_xy(float3 color)
 {
     float3 XYZ = BT2020_To_XYZ(color);
-    return XYZ_To_xyY(XYZ);
+    return XYZ_To_xy(XYZ);
 }
 
 //-----------------------------------------------------------------------------
 //      CIE xyY表色系からITU-R BT.709への変換.
 //-----------------------------------------------------------------------------
-float3 xyY_To_BT709(float3 color)
+float2 xy_To_BT709(float2 coord, float Y = 1.0f)
 {
-    float3 XYZ = xyY_To_XYZ(color);
+    float3 XYZ = xy_To_XYZ(coord, Y);
     return XYZ_To_BT709(XYZ);
 };
 
 //-----------------------------------------------------------------------------
 //      CIE xyY表色系からITU-R BT.2020に変換します.
 //-----------------------------------------------------------------------------
-float3 xyY_To_BT2020(float3 color)
+float3 xy_To_BT2020(float2 coord, float Y = 1.0f)
 {
-    float3 XYZ = xyY_To_XYZ(color);
+    float3 XYZ = xy_To_XYZ(coord, Y);
     return XYZ_To_BT2020(XYZ);
 }
 
 //-----------------------------------------------------------------------------
 //       CIE xyY表色系からAdobeRGBへの変換.
 //-----------------------------------------------------------------------------
-float3 xyY_To_AdobeRGB(float3 color)
+float3 xy_To_AdobeRGB(float2 coord, float Y = 1.0f)
 {
-    float3 XYZ = xyY_To_XYZ(color);
+    float3 XYZ = xy_To_XYZ(coord, Y);
     return XYZ_To_AdobeRGB(XYZ);
 }
 
 //-----------------------------------------------------------------------------
 //       CIE xyY表色系からDCI-P3への変換.
 //-----------------------------------------------------------------------------
-float3 xyY_To_DCI_P3(float3 color)
+float3 xy_To_DCI_P3(float2 coord, float Y = 1.0f)
 {
-    float3 XYZ = xyY_To_XYZ(color);
+    float3 XYZ = xy_To_XYZ(coord, Y);
     return XYZ_To_DCI_P3(XYZ);
 }
 
@@ -528,6 +552,36 @@ float2 xy_FromCCT(float T)
         y =  3.0817580f * x3 - 5.87338670f * x2 + 3.75112997f * x - 0.37001483f;
 
     return float2(x, y);
+}
+
+//-----------------------------------------------------------------------------
+//      区分ガウス関数.
+//-----------------------------------------------------------------------------
+float PiecewiseGaussian(float val, float mu, float tau1, float tau2)
+{
+    // https://en.wikipedia.org/wiki/CIE_1931_color_space
+    float temp = (val < mu) ? (tau1 * (val - mu)) : (tau2 * (val - mu));
+    return exp(-0.5f * temp * temp);
+}
+
+//-----------------------------------------------------------------------------
+//      波長から XYZ 表色系の近似値を求めます.
+//-----------------------------------------------------------------------------
+float3 WavelengthToXYZ(float lambda)
+{
+    // https://en.wikipedia.org/wiki/CIE_1931_color_space
+    float3 XYZ;
+    XYZ.x  = 1.056f * PiecewiseGaussian(lambda, 599.8f, 0.0264f, 0.0323f);
+    XYZ.x += 0.363f * PiecewiseGaussian(lambda, 442.0f, 0.0624f, 0.0374f);
+    XYZ.x -= 0.065f * PiecewiseGaussian(lambda, 501.1f, 0.0490f, 0.0382f);
+
+    XYZ.y  = 0.821f * PiecewiseGaussian(lambda, 568.8f, 0.0213f, 0.0247f);
+    XYZ.y += 0.286f * PiecewiseGaussian(lambda, 530.0f, 0.0613f, 0.0322f);
+
+    XYZ.z  = 1.217f * PiecewiseGaussian(lambda, 437.0f, 0.0845f, 0.0278f);
+    XYZ.z += 0.681f * PiecewiseGaussian(lambda, 459.0f, 0.0385f, 0.0725f);
+
+    return XYZ;
 }
 
 //-----------------------------------------------------------------------------
