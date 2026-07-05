@@ -296,6 +296,12 @@ Matrix ColorEffect::CalcColorMatrix() const
     result = Matrix::Multiply(mtxSepiaTone,  result);
     result = Matrix::Multiply(mtxWb,         result);
 
+    if (m_Param.BlackAndWhite)
+    {
+        auto mtxBlackAndWhite = Matrix::CreateBlackAndWhiteMatrix();
+        result = Matrix::Multiply(mtxBlackAndWhite, result);
+    }
+
     if (m_Param.Reverse)
     {
         auto mtxReverse = Matrix::CreateReverseColorMatrix();

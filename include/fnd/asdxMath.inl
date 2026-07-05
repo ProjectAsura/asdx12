@@ -3320,23 +3320,23 @@ inline Matrix Matrix::CreateHueMatrix(float hue)
 //-----------------------------------------------------------------------------
 inline Matrix Matrix::CreateSepiaMatrix(float tone)
 {
-    const Vector3 kWhite(0.298912f, 0.586611f, 0.114478f);
-    const Vector3 kSepia(0.941f, 0.784f, 0.569f);
+    const Vector3 kGrayScale(0.299f, 0.587f, 0.114f);   // BT.601ベース.
+    const Vector3 kAttenuation(1.0f, 0.92f, 0.72f);     // 減衰率.
 
     return Matrix(
-        tone * kWhite.x * kSepia.x + (1.0f - tone),
-        tone * kWhite.x * kSepia.y,
-        tone * kWhite.x * kSepia.z,
+        tone * kGrayScale.x * kAttenuation.x + (1.0f - tone),
+        tone * kGrayScale.x * kAttenuation.y,
+        tone * kGrayScale.x * kAttenuation.z,
         0.0f,
 
-        tone * kWhite.y * kSepia.x,
-        tone * kWhite.y * kSepia.y + (1.0f - tone),
-        tone * kWhite.y * kSepia.z,
+        tone * kGrayScale.y * kAttenuation.x,
+        tone * kGrayScale.y * kAttenuation.y + (1.0f - tone),
+        tone * kGrayScale.y * kAttenuation.z,
         0.0f,
 
-        tone * kWhite.z * kSepia.x,
-        tone * kWhite.z * kSepia.y,
-        tone * kWhite.z * kSepia.z + (1.0f - tone),
+        tone * kGrayScale.z * kAttenuation.x,
+        tone * kGrayScale.z * kAttenuation.y,
+        tone * kGrayScale.z * kAttenuation.z + (1.0f - tone),
         0.0f,
 
         0.0f, 0.0f, 0.0f, 1.0f);
@@ -3347,7 +3347,7 @@ inline Matrix Matrix::CreateSepiaMatrix(float tone)
 //-----------------------------------------------------------------------------
 inline Matrix Matrix::CreateGrayScaleMatrix(float tone)
 {
-    const Vector3 kGrayScale(0.22015f, 0.706655f, 0.071330f);
+    const Vector3 kGrayScale(0.2126f, 0.7152f, 0.0722f); // BT.709ベース.
     return Matrix(
         tone * kGrayScale.x + (1.0f - tone),
         tone * kGrayScale.x,
@@ -3365,6 +3365,18 @@ inline Matrix Matrix::CreateGrayScaleMatrix(float tone)
         0.0f,
 
         0.0f, 0.0f, 0.0f, 1.0f);
+}
+
+//-----------------------------------------------------------------------------
+//      白黒化するカラー行列を生成します.
+//-----------------------------------------------------------------------------
+inline Matrix Matrix::CreateBlackAndWhiteMatrix()
+{
+    return Matrix(
+         1.5f,  1.5f,  1.5f, 0.0f,
+         1.5f,  1.5f,  1.5f, 0.0f,
+         1.5f,  1.5f,  1.5f, 0.0f,
+        -1.0f, -1.0f, -1.0f, 1.0f);
 }
 
 //-----------------------------------------------------------------------------
