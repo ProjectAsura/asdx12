@@ -3387,10 +3387,10 @@ inline Matrix Matrix::CreateWhiteBalanceBT601(float value, float base)
 {
     auto cctBase = CCT_To_BT601(base);
     auto cctWB   = CCT_To_BT601(value);
-    cctWB.x /= cctBase.x;
-    cctWB.y /= cctBase.y;
-    cctWB.z /= cctBase.z;
-    return Matrix::CreateScale(cctWB);
+    cctBase.x /= cctWB.x;
+    cctBase.y /= cctWB.y;
+    cctBase.z /= cctWB.z;
+    return Matrix::CreateScale(cctBase);
 }
 
 //-----------------------------------------------------------------------------
@@ -3400,10 +3400,10 @@ inline Matrix Matrix::CreateWhiteBalanceBT709(float value, float base)
 {
     auto cctBase = CCT_To_BT709(base);
     auto cctWB   = CCT_To_BT709(value);
-    cctWB.x /= cctBase.x;
-    cctWB.y /= cctBase.y;
-    cctWB.z /= cctBase.z;
-    return Matrix::CreateScale(cctWB);
+    cctBase.x /= cctWB.x;
+    cctBase.y /= cctWB.y;
+    cctBase.z /= cctWB.z;
+    return Matrix::CreateScale(cctBase);
 }
 
 //-----------------------------------------------------------------------------
@@ -3413,10 +3413,10 @@ inline Matrix Matrix::CreateWhiteBalanceBT2020(float value, float base)
 {
     auto cctBase = CCT_To_BT2020(base);
     auto cctWB   = CCT_To_BT2020(value);
-    cctWB.x /= cctBase.x;
-    cctWB.y /= cctBase.y;
-    cctWB.z /= cctBase.z;
-    return Matrix::CreateScale(cctWB);
+    cctBase.x /= cctWB.x;
+    cctBase.y /= cctWB.y;
+    cctBase.z /= cctWB.z;
+    return Matrix::CreateScale(cctBase);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -5478,7 +5478,7 @@ inline float ApproxBlackBody_y(float T)
 //-----------------------------------------------------------------------------
 //      uv 色度図座標から xy 色度図座標を求めます.
 //-----------------------------------------------------------------------------
-inline Vector2 uv_from_xy(float x, float y)
+inline Vector2 ColorCoord_uv_from_xy(float x, float y)
 {
     return Vector2(
         (4.0f * x) / (-2.0f * x + 12.0f * y + 3.0f),
@@ -5488,7 +5488,7 @@ inline Vector2 uv_from_xy(float x, float y)
 //-----------------------------------------------------------------------------
 //      xy 色度図座標から uv 色度図座標を求めます.
 //-----------------------------------------------------------------------------
-inline Vector2 xy_from_uv(float u, float v)
+inline Vector2 ColorCoord_xy_from_uv(float u, float v)
 {
     return Vector2(
         (3.0f * u) / (2.0f * u - 8.0f * v + 4.0f),
@@ -5508,13 +5508,13 @@ inline Vector2 CCT_To_xy(float T, float tint)
     auto x1 = ApproxBlackBody_x(T - 1.0f);
     auto y1 = ApproxBlackBody_y(T - 1.0f);
 
-    auto uv0 = uv_from_xy(x0, y0);
-    auto uv1 = uv_from_xy(x1, y1);
+    auto uv0 = ColorCoord_uv_from_xy(x0, y0);
+    auto uv1 = ColorCoord_uv_from_xy(x1, y1);
 
     auto d = (uv1 - uv0);
     d.SafeNormalize(d);
 
-    return xy_from_uv(
+    return ColorCoord_xy_from_uv(
         uv0.x - d.y * tint,
         uv0.y + d.x * tint);
 }
@@ -5524,9 +5524,9 @@ inline Vector2 CCT_To_xy(float T, float tint)
 //-----------------------------------------------------------------------------
 inline Vector3 CCT_To_XYZ(float T, float tint, float Y)
 {
-    const auto xy = CCT_To_xy(T, tint);
-    const auto X = (xy.x / xy.y) * Y;
-    const auto Z = ((1.0f - xy.x - xy.y) / xy.y) * Y;
+    const auto coord = CCT_To_xy(T, tint);
+    const auto X = Y * (coord.x / coord.y);
+    const auto Z = Y * ((1.0f - coord.x - coord.y) / coord.y);
     return Vector3(X, Y, Z);
 }
 
