@@ -49,11 +49,12 @@ void ColorEffect::Param::Reset()
     AddColor     = Vector3(0.0f, 0.0f, 0.0f);
     MulColor     = Vector3(1.0f, 1.0f, 1.0f);
     Brightness   = 1.0f;
-    Contrast     = 1.0f;
+    Contrast     = 0.0f;
     HueDegree    = 0.0f;
     SepiaTone    = 0.0f;
     GrayScale    = 0.0f;
     WhiteBalance = 6504.0f;
+    Tint         = 0.0f;
     Reverse      = false;
 }
 
@@ -283,7 +284,7 @@ Matrix ColorEffect::CalcColorMatrix() const
     auto mtxContrast    = Matrix::CreateContrastMatrix(m_Param.Contrast);
     auto mtxGrayScale   = Matrix::CreateGrayScaleMatrix(m_Param.GrayScale);
     auto mtxSepiaTone   = Matrix::CreateSepiaMatrix(m_Param.SepiaTone);
-    auto mtxWb          = Matrix::CreateWhiteBalanceBT709(m_Param.WhiteBalance);
+    auto mtxWb          = Matrix::CreateWhiteBalanceBT709(m_Param.WhiteBalance, 6504.0f, m_Param.Tint);
     auto mtxScale       = Matrix::CreateScale(m_Param.MulColor);
     auto mtxAdd         = Matrix::CreateTranslation(m_Param.AddColor);
 

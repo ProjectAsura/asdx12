@@ -3276,12 +3276,11 @@ inline Matrix Matrix::CreateSaturationMatrix(float saturation)
 //-----------------------------------------------------------------------------
 inline Matrix Matrix::CreateContrastMatrix(float contrast)
 {
-    const auto t = (1.0f - contrast) * 0.5f;
     return Matrix(
-        contrast, 0.0f, 0.0f, 0.0f,
-        0.0f, contrast, 0.0f, 0.0f,
-        0.0f, 0.0f, contrast, 0.0f,
-        t, t, t, 1.0f);
+        1.0f + contrast, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f + contrast, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f + contrast, 0.0f,
+        -0.5f * contrast, -0.5f * contrast, -0.5f * contrast, 1.0f);
 }
 
 //-----------------------------------------------------------------------------
@@ -3383,10 +3382,10 @@ inline Matrix Matrix::CreateReverseColorMatrix()
 //-----------------------------------------------------------------------------
 //      BT.601を元にホワイトバランス調整行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreateWhiteBalanceBT601(float value, float base)
+inline Matrix Matrix::CreateWhiteBalanceBT601(float value, float base, float tint)
 {
-    auto cctBase = CCT_To_BT601(base);
-    auto cctWB   = CCT_To_BT601(value);
+    auto cctBase = CCT_To_BT601(base, 0.0f);
+    auto cctWB   = CCT_To_BT601(value, tint);
     cctBase.x /= cctWB.x;
     cctBase.y /= cctWB.y;
     cctBase.z /= cctWB.z;
@@ -3396,10 +3395,10 @@ inline Matrix Matrix::CreateWhiteBalanceBT601(float value, float base)
 //-----------------------------------------------------------------------------
 //      BT.709を元にホワイトバランス調整行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreateWhiteBalanceBT709(float value, float base)
+inline Matrix Matrix::CreateWhiteBalanceBT709(float value, float base, float tint)
 {
-    auto cctBase = CCT_To_BT709(base);
-    auto cctWB   = CCT_To_BT709(value);
+    auto cctBase = CCT_To_BT709(base, 0.0f);
+    auto cctWB   = CCT_To_BT709(value, tint);
     cctBase.x /= cctWB.x;
     cctBase.y /= cctWB.y;
     cctBase.z /= cctWB.z;
@@ -3409,10 +3408,10 @@ inline Matrix Matrix::CreateWhiteBalanceBT709(float value, float base)
 //-----------------------------------------------------------------------------
 //      BT.2020を元にホワイトバランス調整行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreateWhiteBalanceBT2020(float value, float base)
+inline Matrix Matrix::CreateWhiteBalanceBT2020(float value, float base, float tint)
 {
-    auto cctBase = CCT_To_BT2020(base);
-    auto cctWB   = CCT_To_BT2020(value);
+    auto cctBase = CCT_To_BT2020(base, 0.0f);
+    auto cctWB   = CCT_To_BT2020(value, tint);
     cctBase.x /= cctWB.x;
     cctBase.y /= cctWB.y;
     cctBase.z /= cctWB.z;

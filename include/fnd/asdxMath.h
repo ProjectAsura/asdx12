@@ -2529,24 +2529,27 @@ public:
     //! 
     //! @param[in]      value       色温度[K].
     //! @param[in]      base        ベースとなる色温度[K].
+    //! @param[in]      tint        ティント値.
     //-------------------------------------------------------------------------
-    static Matrix CreateWhiteBalanceBT601(float value, float base = 6504.0f);
+    static Matrix CreateWhiteBalanceBT601(float value, float base = 6504.0f, float tint = 0.0f);
 
     //-------------------------------------------------------------------------
     //! @brief      BT.709を元にホワイトバランス調整行列を生成します.
     //! 
     //! @param[in]      value       色温度[K].
     //! @param[in]      base        ベースとなる色温度[K].
+    //! @param[in]      tint        ティント値.
     //-------------------------------------------------------------------------
-    static Matrix CreateWhiteBalanceBT709(float value, float base = 6504.0f);
+    static Matrix CreateWhiteBalanceBT709(float value, float base = 6504.0f, float tint = 0.0f);
 
     //-------------------------------------------------------------------------
     //! @brief      BT.709を元にホワイトバランス調整行列を生成します.
     //! 
     //! @param[in]      value       色温度[K].
     //! @param[in]      base        ベースとなる色温度[K].
+    //! @param[in]      tint        ティント値.
     //-------------------------------------------------------------------------
-    static Matrix CreateWhiteBalanceBT2020(float value, float base = 6504.0f);
+    static Matrix CreateWhiteBalanceBT2020(float value, float base = 6504.0f, float tint = 0.0f);
 };
 
 

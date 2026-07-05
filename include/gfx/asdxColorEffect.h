@@ -35,11 +35,12 @@ public:
         Vector3 AddColor        = Vector3(0.0f, 0.0f, 0.0f);    //!< 加算カラー.
         Vector3 MulColor        = Vector3(1.0f, 1.0f, 1.0f);    //!< 乗算カラー.
         float   Brightness      = 1.0f;                         //!< 明度.
-        float   Contrast        = 1.0f;                         //!< コントラスト.
+        float   Contrast        = 0.0f;                         //!< コントラスト.
         float   HueDegree       = 0.0f;                         //!< 色相(単位：度).
         float   SepiaTone       = 0.0f;                         //!< セピアトーン.
         float   GrayScale       = 0.0f;                         //!< グレースケール.
         float   WhiteBalance    = 6504.0f;                      //!< ホワイトバランス.
+        float   Tint            = 0.0f;                         //!< ティント値.
         bool    Reverse         = false;                        //!< ネポジ反転
 
         //---------------------------------------------------------------------
