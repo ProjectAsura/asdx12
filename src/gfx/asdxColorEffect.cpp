@@ -27,9 +27,9 @@ namespace {
 ///////////////////////////////////////////////////////////////////////////////
 struct Param1
 {
-    uint32_t        Width;
-    uint32_t        Height;
-    asdx::Vector2   InvSize;
+    uint32_t        Width;      //!< 横幅.
+    uint32_t        Height;     //!< 縦幅.
+    asdx::Vector2   InvSize;    //!< サイズの逆数.
 };
 
 } // namespace
@@ -45,17 +45,17 @@ namespace asdx {
 //-----------------------------------------------------------------------------
 void ColorEffect::Param::Reset()
 {
-    Saturation   = Vector3(1.0f, 1.0f, 1.0f);
-    AddColor     = Vector3(0.0f, 0.0f, 0.0f);
-    MulColor     = Vector3(1.0f, 1.0f, 1.0f);
-    Brightness   = 1.0f;
-    Contrast     = 0.0f;
-    HueDegree    = 0.0f;
-    SepiaTone    = 0.0f;
-    GrayScale    = 0.0f;
-    WhiteBalance = 6504.0f;
-    Tint         = 0.0f;
-    Reverse      = false;
+    Saturation      = Vector3(1.0f, 1.0f, 1.0f);
+    AddColor        = Vector3(0.0f, 0.0f, 0.0f);
+    MulColor        = Vector3(1.0f, 1.0f, 1.0f);
+    Brightness      = 1.0f;
+    Contrast        = 0.0f;
+    HueDegree       = 0.0f;
+    SepiaTone       = 0.0f;
+    GrayScale       = 0.0f;
+    WhiteBalance    = 6504.0f;
+    BlackAndWhite   = false;
+    Reverse         = false;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -284,7 +284,7 @@ Matrix ColorEffect::CalcColorMatrix() const
     auto mtxContrast    = Matrix::CreateContrastMatrix(m_Param.Contrast);
     auto mtxGrayScale   = Matrix::CreateGrayScaleMatrix(m_Param.GrayScale);
     auto mtxSepiaTone   = Matrix::CreateSepiaMatrix(m_Param.SepiaTone);
-    auto mtxWb          = Matrix::CreateWhiteBalanceBT709(m_Param.WhiteBalance, 6504.0f, m_Param.Tint);
+    auto mtxWb          = Matrix::CreateWhiteBalanceMatrix(m_Param.WhiteBalance, 6504.0f);
     auto mtxScale       = Matrix::CreateScale(m_Param.MulColor);
     auto mtxAdd         = Matrix::CreateTranslation(m_Param.AddColor);
 

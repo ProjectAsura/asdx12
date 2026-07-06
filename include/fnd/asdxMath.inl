@@ -3392,25 +3392,12 @@ inline Matrix Matrix::CreateReverseColorMatrix()
 }
 
 //-----------------------------------------------------------------------------
-//      BT.601を元にホワイトバランス調整行列を生成します.
-//-----------------------------------------------------------------------------
-inline Matrix Matrix::CreateWhiteBalanceBT601(float value, float base, float tint)
-{
-    auto cctBase = CCT_To_BT601(base, 0.0f);
-    auto cctWB   = CCT_To_BT601(value, tint);
-    cctBase.x /= cctWB.x;
-    cctBase.y /= cctWB.y;
-    cctBase.z /= cctWB.z;
-    return Matrix::CreateScale(cctBase);
-}
-
-//-----------------------------------------------------------------------------
 //      BT.709を元にホワイトバランス調整行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreateWhiteBalanceBT709(float value, float base, float tint)
+inline Matrix Matrix::CreateWhiteBalanceMatrix(float value, float base)
 {
-    auto cctBase = CCT_To_BT709(base, 0.0f);
-    auto cctWB   = CCT_To_BT709(value, tint);
+    auto cctBase = CCT_To_BT709(base);
+    auto cctWB   = CCT_To_BT709(value);
     cctBase.x /= cctWB.x;
     cctBase.y /= cctWB.y;
     cctBase.z /= cctWB.z;
@@ -3418,16 +3405,75 @@ inline Matrix Matrix::CreateWhiteBalanceBT709(float value, float base, float tin
 }
 
 //-----------------------------------------------------------------------------
-//      BT.2020を元にホワイトバランス調整行列を生成します.
+//      ITU-R BT.601 への変換行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreateWhiteBalanceBT2020(float value, float base, float tint)
+inline Matrix Matrix::CreateXYZToBT601()
 {
-    auto cctBase = CCT_To_BT2020(base, 0.0f);
-    auto cctWB   = CCT_To_BT2020(value, tint);
-    cctBase.x /= cctWB.x;
-    cctBase.y /= cctWB.y;
-    cctBase.z /= cctWB.z;
-    return Matrix::CreateScale(cctBase);
+    return Matrix(
+         3.506002f, -1.739790f, -0.544058f, 0.0f,
+        -1.069048f,  1.977779f,  0.035171f, 0.0f,
+         0.056307f, -0.196976f,  1.049953f, 0.0f,
+         0.0f,       0.0f,       0.0f,      1.0f);
+}
+
+//-----------------------------------------------------------------------------
+//      ITU-R BT.709 への変換行列を生成します.
+//-----------------------------------------------------------------------------
+inline Matrix Matrix::CreateXYZToBT709()
+{
+    return Matrix(
+        3.240970f, -1.537383f, -0.498611f, 0.0f,
+       -0.969244f,  1.875968f,  0.041555f, 0.0f,
+        0.055630f, -0.203977f,  1.056972f, 0.0f,
+        0.0f,       0.0f,       0.0f,      1.0f);
+}
+
+//-----------------------------------------------------------------------------
+//      ITU-R BT.2020 への変換行列を生成します.
+//-----------------------------------------------------------------------------
+inline Matrix Matrix::CreateXYZToBT2020()
+{
+    return Matrix(
+        1.716651f, -0.355671f, -0.253366f, 0.0f,
+       -0.666684f,  1.616481f,  0.015769f, 0.0f,
+        0.017640f, -0.042771f,  0.942103f, 0.0f,
+        0.0f,       0.0f,       0.0f,      1.0f);
+}
+
+//-----------------------------------------------------------------------------
+//      BT.601 から CIE XYZ 表色系の変換行列を生成します.
+//-----------------------------------------------------------------------------
+inline Matrix Matrix::CreateBT601ToXYZ()
+{
+    return Matrix(
+        0.393521f, 0.365258f, 0.191677f, 0.0f,
+        0.212376f, 0.701060f, 0.086564f, 0.0f,
+        0.018739f, 0.111934f, 0.958385f, 0.0f,
+        0.0f,      0.0f,      0.0f,      1.0f);
+}
+
+//-----------------------------------------------------------------------------
+//      BT.709 から CIE XYZ 表色系の変換行列を生成します.
+//-----------------------------------------------------------------------------
+inline Matrix Matrix::CreateBT709ToXYZ()
+{
+    return Matrix(
+        0.412391f, 0.357584f, 0.180481f, 0.0f,
+        0.212639f, 0.715169f, 0.072192f, 0.0f,
+        0.019331f, 0.119195f, 0.950532f, 0.0f,
+        0.0f,      0.0f,      0.0f,      1.0f);
+}
+
+//-----------------------------------------------------------------------------
+//      BT.2020 から CIE XYZ 表色系の変換行列を生成します.
+//-----------------------------------------------------------------------------
+inline Matrix Matrix::CreateBT2020ToXYZ()
+{
+    return Matrix(
+        0.636958f, 0.144617f, 0.168881f, 0.0f,
+        0.262700f, 0.677998f, 0.059302f, 0.0f,
+        0.000000f, 0.028073f, 1.060985f, 0.0f,
+        0.0f,      0.0f,      0.0f,      1.0f);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -5459,33 +5505,6 @@ inline void GetCorners(const Vector4* planes, Vector3* corners)
     corners[6] = ComputeIntersection(planes[5], orig, dir);
 }
 
-inline float ApproxBlackBody_x(float T)
-{
-    // [Uchimura 2017] Hajime Uchimura, "ColorSystem",
-    // https://github.com/nikq/ColorSystem/blob/master/include/colorsystem.hpp
-    return float(0.811973208
-        + T * (-0.00016747 
-        + T * (0.00000000331067
-        + T * (0.00000000000690001
-        + T * (-1.39671E-15
-        + T * (1.11951E-19
-        + T * -3.31672E-24
-        ))))));
-}
-
-inline float ApproxBlackBody_y(float T)
-{
-    // [Uchimura 2017] Hajime Uchimura, "ColorSystem",
-    // https://github.com/nikq/ColorSystem/blob/master/include/colorsystem.hpp
-    return float(0.136977825
-        + T * (0.000317653
-        + T * (-0.000000127946
-        + T * (0.0000000000222415
-        + T * (-1.81438E-15
-        + T * 5.67564E-20
-        )))));
-}
-
 //-----------------------------------------------------------------------------
 //      uv 色度図座標から xy 色度図座標を求めます.
 //-----------------------------------------------------------------------------
@@ -5509,33 +5528,40 @@ inline Vector2 ColorCoord_xy_from_uv(float u, float v)
 //-----------------------------------------------------------------------------
 //      相関色温度から xy 色度図の座標を求めます.
 //-----------------------------------------------------------------------------
-inline Vector2 CCT_To_xy(float T, float tint)
+inline Vector2 CCT_To_xy(float T)
 {
-    // [Uchimura 2017] Hajime Uchimura, "ColorSystem",
-    // https://github.com/nikq/ColorSystem/blob/master/include/colorsystem.hpp
-    auto x0 = ApproxBlackBody_x(T);
-    auto y0 = ApproxBlackBody_y(T);
+    // https://en.wikipedia.org/wiki/Planckian_locus#Approximation
+    // [Kang 2002] B.Kang, et.al., "Design of Advanced Color Temperature Control System for HDTV Applications", 2002.
+    float invT  = 1.0f / T;
+    float invT2 = invT * invT;
+    float invT3 = invT * invT2;
 
-    auto x1 = ApproxBlackBody_x(T - 1.0f);
-    auto y1 = ApproxBlackBody_y(T - 1.0f);
+    float x, y;
 
-    auto uv0 = ColorCoord_uv_from_xy(x0, y0);
-    auto uv1 = ColorCoord_uv_from_xy(x1, y1);
+    if (T < 4000.0f)
+        x = -0.2661239e9f * invT3 - 0.2343580e6f * invT2 + 0.8776956e3f * invT + 0.179910f;
+    else
+        x = -3.0258469e9f * invT3 + 2.1070379e6f * invT2 + 0.2226347e3f * invT + 0.240390f;
 
-    auto d = (uv1 - uv0);
-    d.SafeNormalize(d);
+    float x2 = x * x;
+    float x3 = x * x2;
+ 
+    if (T < 2222.0f)
+        y = -1.1063814f * x3 - 1.34811020f * x2 + 2.1855583f  * x - 0.20219683f;
+    else if (T < 4000.0f)
+        y = -0.9549476f * x3 - 1.37418593f * x2 + 2.09137015f * x - 0.16748867f;
+    else
+        y =  3.0817580f * x3 - 5.87338670f * x2 + 3.75112997f * x - 0.37001483f;
 
-    return ColorCoord_xy_from_uv(
-        uv0.x - d.y * tint,
-        uv0.y + d.x * tint);
+    return Vector2(x, y);
 }
 
 //-----------------------------------------------------------------------------
 //      相関色温度から CIE 1931 XYZ 表色系の値を求めます.
 //-----------------------------------------------------------------------------
-inline Vector3 CCT_To_XYZ(float T, float tint, float Y)
+inline Vector3 CCT_To_XYZ(float T, float Y)
 {
-    const auto coord = CCT_To_xy(T, tint);
+    const auto coord = CCT_To_xy(T);
     const auto X = Y * (coord.x / coord.y);
     const auto Z = Y * ((1.0f - coord.x - coord.y) / coord.y);
     return Vector3(X, Y, Z);
@@ -5544,49 +5570,28 @@ inline Vector3 CCT_To_XYZ(float T, float tint, float Y)
 //-----------------------------------------------------------------------------
 //      相関色温度から ITU-R. BT.601 のRGB値を求めます.
 //-----------------------------------------------------------------------------
-inline Vector3 CCT_To_BT601(float T, float tint, float Y)
+inline Vector3 CCT_To_BT601(float T, float Y)
 {
-    const auto kXYZToBT601 = Matrix(
-         3.506002f, -1.739790f, -0.544058f, 0.0f,
-        -1.069048f,  1.977779f,  0.035171f, 0.0f,
-         0.056307f, -0.196976f,  1.049953f, 0.0f,
-         0.0f,       0.0f,       0.0f,      1.0f
-    );
-
-    const auto XYZ = CCT_To_XYZ(T, tint, Y);
-    return Vector3::TransformNormal(XYZ, kXYZToBT601);
+    const auto XYZ = CCT_To_XYZ(T, Y);
+    return Vector3::TransformNormal(XYZ, Matrix::CreateXYZToBT601());
 }
 
 //-----------------------------------------------------------------------------
 //      相関色温度から ITU-R. BT.709 のRGB値を求めます.
 //-----------------------------------------------------------------------------
-inline Vector3 CCT_To_BT709(float T, float tint, float Y)
+inline Vector3 CCT_To_BT709(float T, float Y)
 {
-    const auto kXYZToBT709 = Matrix(
-        3.240970f, -1.537383f, -0.498611f, 0.0f,
-       -0.969244f,  1.875968f,  0.041555f, 0.0f,
-        0.055630f, -0.203977f,  1.056972f, 0.0f,
-        0.0f,       0.0f,       0.0f,      1.0f
-    );
-
-    const auto XYZ = CCT_To_XYZ(T, tint, Y);
-    return Vector3::TransformNormal(XYZ, kXYZToBT709);
+    const auto XYZ = CCT_To_XYZ(T, Y);
+    return Vector3::TransformNormal(XYZ, Matrix::CreateXYZToBT709());
 }
 
 //-----------------------------------------------------------------------------
 //      相関色温度から ITU-R. BT.2020 のRGBを求めます.
 //-----------------------------------------------------------------------------
-inline Vector3 CCT_To_BT2020(float T, float tint, float Y)
+inline Vector3 CCT_To_BT2020(float T, float Y)
 {
-    const auto kXYZToBT2020 = asdx::Matrix(
-        1.716651f, -0.355671f, -0.253366f, 0.0f,
-       -0.666684f,  1.616481f,  0.015769f, 0.0f,
-        0.017640f, -0.042771f,  0.942103f, 0.0f,
-        0.0f,       0.0f,       0.0f,      1.0f
-    );
-
-    const auto XYZ = CCT_To_XYZ(T, tint, Y);
-    return Vector3::TransformNormal(XYZ, kXYZToBT2020);
+    const auto XYZ = CCT_To_XYZ(T, Y);
+    return Vector3::TransformNormal(XYZ, Matrix::CreateXYZToBT2020());
 }
 
 ///////////////////////////////////////////////////////////////////////////////

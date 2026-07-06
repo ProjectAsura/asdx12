@@ -447,7 +447,7 @@ float2 BT2020_To_xy(float3 color)
 //-----------------------------------------------------------------------------
 //      CIE xyY表色系からITU-R BT.709への変換.
 //-----------------------------------------------------------------------------
-float2 xy_To_BT709(float2 coord, float Y = 1.0f)
+float3 xy_To_BT709(float2 coord, float Y = 1.0f)
 {
     float3 XYZ = xy_To_XYZ(coord, Y);
     return XYZ_To_BT709(XYZ);

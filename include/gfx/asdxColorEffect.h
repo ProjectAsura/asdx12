@@ -40,7 +40,6 @@ public:
         float   SepiaTone       = 0.0f;                         //!< セピアトーン.
         float   GrayScale       = 0.0f;                         //!< グレースケール.
         float   WhiteBalance    = 6504.0f;                      //!< ホワイトバランス.
-        float   Tint            = 0.0f;                         //!< ティント値.
         bool    BlackAndWhite   = false;                        //!< 白黒化.
         bool    Reverse         = false;                        //!< ネポジ反転
 
