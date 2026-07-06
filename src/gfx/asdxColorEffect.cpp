@@ -294,7 +294,8 @@ Matrix ColorEffect::CalcColorMatrix() const
     result = Matrix::Multiply(mtxContrast,   result);
     result = Matrix::Multiply(mtxGrayScale,  result);
     result = Matrix::Multiply(mtxSepiaTone,  result);
-    result = Matrix::Multiply(mtxWb,         result);
+    result = Matrix::Multiply(mtxScale,      result);
+    result = Matrix::Multiply(mtxAdd,        result);
 
     if (m_Param.BlackAndWhite)
     {
@@ -308,8 +309,7 @@ Matrix ColorEffect::CalcColorMatrix() const
         result = Matrix::Multiply(mtxReverse, result);
     }
 
-    result = Matrix::Multiply(mtxScale, result);
-    result = Matrix::Multiply(mtxAdd,   result);
+    result = Matrix::Multiply(mtxWb, result);
 
     return result;
 }
