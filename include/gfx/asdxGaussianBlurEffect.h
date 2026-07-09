@@ -66,10 +66,10 @@ public:
     //! @brief      描画処理を行います.
     //! 
     //! @param[in]      pCmd            グラフィックスコマンドリストです.
-    //! @param[in]      dispersion      分散
+    //! @param[in]      strength        ブラーの強さ.
     //! @param[in]      handleSRV       SRVディスクリプタハンドル
     //-------------------------------------------------------------------------
-    void Draw(ID3D12GraphicsCommandList* pCmd, float dispersion, D3D12_GPU_DESCRIPTOR_HANDLE handleSRV);
+    void Draw(ID3D12GraphicsCommandList* pCmd, float strength, D3D12_GPU_DESCRIPTOR_HANDLE handleSRV);
 
     //-------------------------------------------------------------------------
     //! @brief      GPUディスクリプタハンドルを取得します.
@@ -161,9 +161,9 @@ public:
     //! @brief      コンピュートシェーダを起動します.
     //! 
     //! @param[in]      pCmd        グラフィックスコマンドリスト.
-    //! @param[in]      dispersion  分散.
+    //! @param[in]      strength    ブラーの強さ.
     //-------------------------------------------------------------------------
-    void Dispatch(ID3D12GraphicsCommandList* pCmd, float dispersion, D3D12_GPU_DESCRIPTOR_HANDLE handleSRV);
+    void Dispatch(ID3D12GraphicsCommandList* pCmd, float strength, D3D12_GPU_DESCRIPTOR_HANDLE handleSRV);
 
     //-------------------------------------------------------------------------
     //! @brief      GPUディスクリプタハンドルを取得します.

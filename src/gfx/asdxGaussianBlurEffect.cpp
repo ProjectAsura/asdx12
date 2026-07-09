@@ -35,15 +35,23 @@ struct Param
 };
 
 //-----------------------------------------------------------------------------
+//      2乗値を求めます.
+//-----------------------------------------------------------------------------
+inline float Pow2(float value)
+{ return value * value; }
+
+//-----------------------------------------------------------------------------
 //      ガウスブラーの重みを計算します.
 //-----------------------------------------------------------------------------
-void ComputeGaussWeights(float dispersion, Param& param)
+void ComputeGaussWeights(float sigma, Param& param)
 {
     float total = 0.0f;
+    float invSigma2 = Pow2(1.0f / sigma);
+
     for(auto i=0; i<8; ++i)
     {
         auto pos = 0.5f + 2.0f * i;
-        param.Weights[i] = expf(-0.5f * (pos * pos) / dispersion);
+        param.Weights[i] = expf(-0.5f * Pow2(pos) * invSigma2);
         total += 2.0f * param.Weights[i];
     }
 
@@ -206,12 +214,12 @@ void GaussianBlurEffectPS::Term()
 void GaussianBlurEffectPS::Draw
 (
     ID3D12GraphicsCommandList*  pCmd,
-    float                       dispersion,
+    float                       strength,
     D3D12_GPU_DESCRIPTOR_HANDLE handleSRV
 )
 {
     assert(pCmd != nullptr);
-    assert(dispersion > 0.0f);
+    assert(strength > 0.0f);
 
     auto desc = GetDesc();
 
@@ -220,7 +228,7 @@ void GaussianBlurEffectPS::Draw
     param.OffsetY = 0.0f;
     param.Width   = uint32_t(desc.Width);
     param.Height  = desc.Height;
-    ComputeGaussWeights(dispersion, param);
+    ComputeGaussWeights(strength, param);
 
     D3D12_VIEWPORT viewport = {};
     viewport.TopLeftX   = 0;
@@ -480,10 +488,10 @@ void GaussianBlurEffectCS::Term()
 //-----------------------------------------------------------------------------
 //      コンピュートシェーダを起動します.
 //-----------------------------------------------------------------------------
-void GaussianBlurEffectCS::Dispatch(ID3D12GraphicsCommandList* pCmd, float dispersion, D3D12_GPU_DESCRIPTOR_HANDLE handleSRV)
+void GaussianBlurEffectCS::Dispatch(ID3D12GraphicsCommandList* pCmd, float strength, D3D12_GPU_DESCRIPTOR_HANDLE handleSRV)
 {
     assert(pCmd != nullptr);
-    assert(dispersion > 0.0f);
+    assert(strength > 0.0f);
 
     auto desc = GetDesc();
 
@@ -492,7 +500,7 @@ void GaussianBlurEffectCS::Dispatch(ID3D12GraphicsCommandList* pCmd, float dispe
     param.OffsetY = 0.0f;
     param.Width   = uint32_t(desc.Width);
     param.Height  = desc.Height;
-    ComputeGaussWeights(dispersion, param);
+    ComputeGaussWeights(strength, param);
 
     pCmd->SetComputeRootSignature(m_RootSignature.GetPtr());
     pCmd->SetPipelineState(m_PipelineState.GetPtr());
