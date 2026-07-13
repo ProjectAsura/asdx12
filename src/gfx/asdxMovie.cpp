@@ -912,7 +912,8 @@ bool MovieTexture::Init(const char* path)
         viewDesc.Texture2D.MostDetailedMip  = 0;
         viewDesc.Texture2D.PlaneSlice       = 0;
 
-        m_HandleSRV[i] = asdx::DescriptorHolder(DescriptorHolder::HEAP_RES, GetResourceDescriptorHeap()->Alloc(2));
+        DescriptorHolder holder(DescriptorHolder::HEAP_RES, GetResourceDescriptorHeap()->Alloc(2));
+        m_HandleSRV[i].Swap(holder);
         if (!m_HandleSRV[i].IsValid())
         {
             ELOGA("Error : Descriptor Allocate Failed.");

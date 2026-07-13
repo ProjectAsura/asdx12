@@ -1220,7 +1220,8 @@ bool StructuredBuffer::Init(uint64_t count, uint32_t stride, D3D12_RESOURCE_STAT
         viewDesc.Buffer.StructureByteStride = stride;
         viewDesc.Buffer.Flags               = D3D12_BUFFER_SRV_FLAG_NONE;
 
-        m_HolderSRV = DescriptorHolder(DescriptorHolder::HEAP_RES, handleSRV);
+        DescriptorHolder holder(DescriptorHolder::HEAP_RES, handleSRV);
+        m_HolderSRV.Swap(holder);
         pDevice->CreateShaderResourceView(m_Resource.GetPtr(), &viewDesc, m_HolderSRV.GetHandleCPU());
     }
 
@@ -1242,7 +1243,8 @@ bool StructuredBuffer::Init(uint64_t count, uint32_t stride, D3D12_RESOURCE_STAT
         viewDesc.Buffer.CounterOffsetInBytes    = 0;
         viewDesc.Buffer.Flags                   = D3D12_BUFFER_UAV_FLAG_NONE;
 
-        m_HolderUAV = DescriptorHolder(DescriptorHolder::HEAP_RES, handleUAV);
+        DescriptorHolder holder(DescriptorHolder::HEAP_RES, handleUAV);
+        m_HolderUAV.Swap(holder);
         pDevice->CreateUnorderedAccessView(m_Resource.GetPtr(), nullptr, &viewDesc, m_HolderUAV.GetHandleCPU());
     }
 
@@ -1360,7 +1362,8 @@ bool StructuredBuffer::Init
             viewDesc.Buffer.StructureByteStride = stride;
             viewDesc.Buffer.Flags               = D3D12_BUFFER_SRV_FLAG_NONE;
 
-            m_HolderSRV = DescriptorHolder(DescriptorHolder::HEAP_RES, handleSRV);
+            DescriptorHolder holder(DescriptorHolder::HEAP_RES, handleSRV);
+            m_HolderSRV.Swap(holder);
             pDevice->CreateShaderResourceView(m_Resource.GetPtr(), &viewDesc, m_HolderSRV.GetHandleCPU());
         }
 
@@ -1382,7 +1385,8 @@ bool StructuredBuffer::Init
             viewDesc.Buffer.CounterOffsetInBytes    = 0;
             viewDesc.Buffer.Flags                   = D3D12_BUFFER_UAV_FLAG_NONE;
 
-            m_HolderUAV = DescriptorHolder(DescriptorHolder::HEAP_RES, handleUAV);
+            DescriptorHolder holder(DescriptorHolder::HEAP_RES, handleUAV);
+            m_HolderUAV.Swap(holder);
             pDevice->CreateUnorderedAccessView(m_Resource.GetPtr(), nullptr, &viewDesc, m_HolderUAV.GetHandleCPU());
         }
 
@@ -1790,7 +1794,8 @@ bool AccelerationStructure::Init
         viewDesc.Shader4ComponentMapping                    = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
         viewDesc.RaytracingAccelerationStructure.Location   = m_Resource->GetGPUVirtualAddress();
 
-        m_HolderSRV = DescriptorHolder(DescriptorHolder::HEAP_RES, handleSRV);
+        DescriptorHolder holder(DescriptorHolder::HEAP_RES, handleSRV);
+        m_HolderSRV.Swap(holder);
         pDevice->CreateShaderResourceView(m_Resource.GetPtr(), &viewDesc, m_HolderSRV.GetHandleCPU());
     }
 

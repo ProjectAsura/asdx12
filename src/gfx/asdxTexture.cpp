@@ -249,7 +249,10 @@ bool Texture::Init(ID3D12GraphicsCommandList* pCmdList, const ResTexture& resour
         return false;
     }
 
-    m_DescriptorSRV = DescriptorHolder(DescriptorHolder::HEAP_RES, handleSRV);
+    {
+        DescriptorHolder holder(DescriptorHolder::HEAP_RES, handleSRV);
+        m_DescriptorSRV.Swap(holder);
+    }
     pDevice->CreateShaderResourceView(m_Resource.GetPtr(), &viewDesc, GetHandleCPU());
 
     // コピーコマンドを使ってアップロード.
@@ -466,7 +469,11 @@ bool Texture::Init(const ResTexture& resource)
         return false;
     }
 
-    m_DescriptorSRV = DescriptorHolder(DescriptorHolder::HEAP_RES, handleSRV);
+    
+    {
+        DescriptorHolder holder(DescriptorHolder::HEAP_RES, handleSRV);
+        m_DescriptorSRV.Swap(holder);
+    }
     pDevice->CreateShaderResourceView(m_Resource.GetPtr(), &viewDesc, GetHandleCPU());
 
     // 直接書き込む.

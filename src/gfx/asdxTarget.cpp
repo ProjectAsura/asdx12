@@ -213,7 +213,8 @@ bool ColorTarget::Init(const TargetDesc* pDesc)
             return false;
         }
 
-        m_HolderRTV[i] = DescriptorHolder(DescriptorHolder::HEAP_RTV, handleRTV);
+        DescriptorHolder holder(DescriptorHolder::HEAP_RTV, handleRTV);
+        m_HolderRTV[i].Swap(holder);
         pDevice->CreateRenderTargetView(m_pResource.GetPtr(), &rtv_descs[i], GetCpuHandleRTV());
     }
 
@@ -295,7 +296,8 @@ bool ColorTarget::Init(const TargetDesc* pDesc)
             return false;
         }
 
-        m_HolderSRV = DescriptorHolder(DescriptorHolder::HEAP_RES, handleSRV);
+        DescriptorHolder holder(DescriptorHolder::HEAP_RES, handleSRV);
+        m_HolderSRV.Swap(holder);
         pDevice->CreateShaderResourceView(m_pResource.GetPtr(), &srv_desc, GetCpuHandleSRV());
     }
 
