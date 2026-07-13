@@ -108,4 +108,13 @@ uint32_t DescriptorHolder::GetIndex(uint32_t offset) const
 bool DescriptorHolder::IsValid() const
 { return m_Handle.IsValid(); }
 
+//-----------------------------------------------------------------------------
+//      値を入れ替えます.
+//-----------------------------------------------------------------------------
+void DescriptorHolder::Swap(DescriptorHolder& value)
+{
+    std::swap(m_HeapType, value.m_HeapType);
+    std::swap(m_Handle,   value.m_Handle);
+}
+
 } // namespace asdx

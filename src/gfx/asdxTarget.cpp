@@ -407,7 +407,10 @@ bool ColorTarget::Init
         return false;
     }
     m_HolderRTV.resize(1);
-    m_HolderRTV[0] = DescriptorHolder(DescriptorHolder::HEAP_RTV, handleRTV);
+    {
+        DescriptorHolder holder(DescriptorHolder::HEAP_RTV, handleRTV);
+        m_HolderRTV[0].Swap(holder);
+    }
     pDevice->CreateRenderTargetView(m_pResource.GetPtr(), &rtv_desc, GetCpuHandleRTV());
 
     auto handleSRV = GetResourceDescriptorHeap()->Alloc(1);
@@ -416,7 +419,10 @@ bool ColorTarget::Init
         ELOG("Error : DescriptorHeap::Alloc() Failed.");
         return false;
     }
-    m_HolderSRV = DescriptorHolder(DescriptorHolder::HEAP_RES, handleSRV);
+    {
+        DescriptorHolder holder(DescriptorHolder::HEAP_RES, handleSRV);
+        m_HolderSRV.Swap(holder);
+    }
     pDevice->CreateShaderResourceView(m_pResource.GetPtr(), &srv_desc, GetCpuHandleSRV());
 
     m_PrevState = D3D12_RESOURCE_STATE_COMMON;
@@ -703,7 +709,8 @@ bool DepthTarget::Init(const TargetDesc* pDesc)
             ELOG("Error : DescriptorHeap::Alloc() Failed.");
             return false;
         }
-        m_HolderDSV[i] = DescriptorHolder(DescriptorHolder::HEAP_DSV, handleDSV);
+        DescriptorHolder holder(DescriptorHolder::HEAP_DSV, handleDSV);
+        m_HolderDSV[i].Swap(holder);
         pDevice->CreateDepthStencilView(m_pResource.GetPtr(), &dsv_descs[i], GetCpuHandleDSV());
     }
 
@@ -784,7 +791,10 @@ bool DepthTarget::Init(const TargetDesc* pDesc)
             ELOG("Error : DescriptorHeap::Alloc() Failed.");
             return false;
         }
-        m_HolderSRV = DescriptorHolder(DescriptorHolder::HEAP_RES, handleSRV);
+        {
+            DescriptorHolder holder(DescriptorHolder::HEAP_RES, handleSRV);
+            m_HolderSRV.Swap(holder);
+        }
         pDevice->CreateShaderResourceView(m_pResource.GetPtr(), &srv_desc, GetCpuHandleSRV());
     }
 
@@ -1062,7 +1072,8 @@ bool ComputeTarget::Init(const TargetDesc* pDesc, uint32_t stride)
             ELOG("Error : DescriptorHeap::Alloc() Failed.");
             return false;
         }
-        m_HolderUAV[i] = DescriptorHolder(DescriptorHolder::HEAP_RES, handleUAV);
+        DescriptorHolder holder(DescriptorHolder::HEAP_RES, handleUAV);
+        m_HolderUAV[i].Swap(holder);
         pDevice->CreateUnorderedAccessView(m_pResource.GetPtr(), nullptr, &uav_descs[i], GetCpuHandleUAV());
     }
 
@@ -1137,7 +1148,10 @@ bool ComputeTarget::Init(const TargetDesc* pDesc, uint32_t stride)
             ELOG("Error : DescriptorHeap::Alloc() Failed.");
             return false;
         }
-        m_HolderSRV = DescriptorHolder(DescriptorHolder::HEAP_RES, handleSRV);
+        {
+            DescriptorHolder holder(DescriptorHolder::HEAP_RES, handleSRV);
+            m_HolderSRV.Swap(holder);
+        }
         pDevice->CreateShaderResourceView(m_pResource.GetPtr(), &srv_desc, GetCpuHandleSRV());
     }
 
@@ -1229,7 +1243,8 @@ bool ComputeTarget::Init(ColorTarget& target, uint32_t flags)
             ELOG("Error : DescriptorHeap::Alloc() Failed.");
             return false;
         }
-        m_HolderUAV[i] = DescriptorHolder(DescriptorHolder::HEAP_RES, handleUAV);
+        DescriptorHolder holder(DescriptorHolder::HEAP_RES, handleUAV);
+        m_HolderUAV[i].Swap(holder);
         pDevice->CreateUnorderedAccessView(m_pResource.GetPtr(), nullptr, &uav_descs[i], GetCpuHandleUAV());
     }
 
@@ -1299,7 +1314,10 @@ bool ComputeTarget::Init(ColorTarget& target, uint32_t flags)
             ELOG("Error : DescriptorHeap::Alloc() Failed.");
             return false;
         }
-        m_HolderSRV = DescriptorHolder(DescriptorHolder::HEAP_RES, handleSRV);
+        {
+            DescriptorHolder holder(DescriptorHolder::HEAP_RES, handleSRV);
+            m_HolderSRV.Swap(holder);
+        }
         pDevice->CreateShaderResourceView(m_pResource.GetPtr(), &srv_desc, GetCpuHandleSRV());
     }
 
