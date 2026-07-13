@@ -385,7 +385,7 @@ bool ModelViewer::OnInit()
     // EnvMapのロード.
     {
         asdx::fs::path path;
-        if (!asdx::SearchFilePath("../res/textures/TrueHDRI_YamagataField_20200617_1841_L1000_Clipped_sRGB.env.dds", path))
+        if (!asdx::SearchFilePath("../res/textures/treasure_island.env.dds", path))
         {
             ELOGA("Error : File Not Found.");
             return false;
@@ -398,7 +398,7 @@ bool ModelViewer::OnInit()
     // DiffuseLDテクスチャのロード.
     {
         asdx::fs::path path;
-        if (!asdx::SearchFilePath("../res/textures/TrueHDRI_YamagataField_20200617_1841_L1000_Clipped_sRGB.d.dds", path))
+        if (!asdx::SearchFilePath("../res/textures/treasure_island.d.dds", path))
         {
             ELOGA("Error : File Not Found.");
             return false;
@@ -411,7 +411,7 @@ bool ModelViewer::OnInit()
     // SpecularLDテクスチャのロード.
     {
         asdx::fs::path path;
-        if (!asdx::SearchFilePath("../res/textures/TrueHDRI_YamagataField_20200617_1841_L1000_Clipped_sRGB.s.dds", path))
+        if (!asdx::SearchFilePath("../res/textures/treasure_island.s.dds", path))
         {
             ELOGA("Error : File Not Found.");
             return false;

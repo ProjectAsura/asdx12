@@ -64,14 +64,14 @@ float3 EvaluateDirectLight
 )
 {
     float  f0 = CalcF0(material.Ior);
-    float3 Kd = ToKd(material.BaseColor, material.Metalness, f0) / F_PI;
+    float3 Kd = ToKd(material.BaseColor, material.Metalness, f0);
     float3 Ks = ToKs(material.BaseColor, material.Metalness, f0);
-    
+
     float3 diffuse = Kd / F_PI;
 
     float a2  = material.LinearRoughness * material.LinearRoughness;
     float f90 = CalcF90(Ks);
-    
+
     float  D = D_GGX(dots.NoH, a2);
     float  V = G2_Smith(a2, abs(dots.NoL), abs(dots.NoV));
     float3 F = F_Schlick(Ks, f90.xxx, abs(dots.VoH));

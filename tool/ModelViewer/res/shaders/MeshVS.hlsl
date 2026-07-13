@@ -71,8 +71,7 @@ VSOutput main(const VSInput input, uint instanceId : SV_InstanceID)
 
     Transform4x3 world = WorldMatrices[MatrixId + instanceId];
 
-    float4 localPos = float4(input.Position, 1.0f);
-    float4 worldPos = float4(Transform(world, localPos), 1.0f);
+    float4 worldPos = float4(Transform(world, input.Position), 1.0f);
     float4 viewPos  = Transform(View, worldPos);
     float4 projPos  = Transform(Proj, viewPos);
 
