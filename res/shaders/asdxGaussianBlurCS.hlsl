@@ -18,8 +18,10 @@ cbuffer CbParam : register(b0)
 {
     float4  Weights0;
     float4  Weights1;
-    float2  Offset;
-    uint2   Size;
+    float4  Offset0;
+    float4  Offset1;
+    uint    Resolution;
+    uint    Flags;
 };
 
 //-----------------------------------------------------------------------------
@@ -48,21 +50,29 @@ void main
 )
 {
     uint2 remappedId = RemapLane8x8(dispatchId.xy, groupIndex);
-    if (any(remappedId >= Size))
+
+    uint sizeX = Resolution & 0xFFFF;
+    uint sizeY = (Resolution >> 16) & 0xFFFF;
+ 
+    if (any(remappedId >= uint2(sizeX, sizeY)))
     { return; }
 
-    float2 uv = remappedId / float2(Size);
+    float2 dir = (Flags == 0)
+        ? float2(1.0f / float(sizeX), 0.0f)
+        : float2(0.0f, 1.0f / float(sizeY));
+
+    float2 uv = (remappedId + 0.5f.xx) / float2(sizeX, sizeY);
 
     float4 output = 0.0f.xxxx;
-    output += BlurSample(uv, Offset * 0.5f, Weights0.x);
-    output += BlurSample(uv, Offset * 2.5f, Weights0.y);
-    output += BlurSample(uv, Offset * 4.5f, Weights0.z);
-    output += BlurSample(uv, Offset * 6.5f, Weights0.w);
+    output += BlurSample(uv, dir * Offset0.x, Weights0.x);
+    output += BlurSample(uv, dir * Offset0.y, Weights0.y);
+    output += BlurSample(uv, dir * Offset0.z, Weights0.z);
+    output += BlurSample(uv, dir * Offset0.w, Weights0.w);
 
-    output += BlurSample(uv, Offset *  8.5f, Weights1.x);
-    output += BlurSample(uv, Offset * 10.5f, Weights1.y);
-    output += BlurSample(uv, Offset * 12.5f, Weights1.z);
-    output += BlurSample(uv, Offset * 14.5f, Weights1.w);
+    output += BlurSample(uv, dir * Offset1.x, Weights1.x);
+    output += BlurSample(uv, dir * Offset1.y, Weights1.y);
+    output += BlurSample(uv, dir * Offset1.z, Weights1.z);
+    output += BlurSample(uv, dir * Offset1.w, Weights1.w);
 
     OutputMap[remappedId] = output;
 }

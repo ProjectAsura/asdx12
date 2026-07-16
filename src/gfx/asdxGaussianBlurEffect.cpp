@@ -28,10 +28,10 @@ namespace {
 struct Param
 {
     float       Weights[8];
-    float       OffsetX;
-    float       OffsetY;
-    uint32_t    Width;
-    uint32_t    Height;
+    float       Offsets[8];
+    uint16_t    SizeX;
+    uint16_t    SizeY;
+    uint32_t    Flags;
 };
 
 //-----------------------------------------------------------------------------
@@ -41,21 +41,53 @@ inline float Pow2(float value)
 { return value * value; }
 
 //-----------------------------------------------------------------------------
+//      ガウスブラーの重みを求めます.
+//-----------------------------------------------------------------------------
+float CalcGaussianWeight(float index, float sigma)
+{
+    float norm = 1.0f / sqrtf(2.0f * asdx::F_PI * Pow2(sigma)); // 正規化項.
+    return norm * expf(-0.5f * Pow2(index) / Pow2(sigma));
+}
+
+//-----------------------------------------------------------------------------
+//      ガウスブラーのオフセットを求めます.
+//-----------------------------------------------------------------------------
+float CalcGaussianOffset(float index, float sigma, float& weight)
+{
+    float offset0 = index + 0.0f;
+    float offset1 = index + 1.0f;
+    float w0 = CalcGaussianWeight(offset0, sigma);
+    float w1 = CalcGaussianWeight(offset1, sigma);
+
+    // 真ん中が二回サンプリングされてしまうので，重みを半分にすることで１回とみなすように調整.
+    if (index == 0.0f)
+        w0 /= 2.0f;
+
+    // Raster Grid, "Efficient Gaussian blur with linear sampling",
+    // https://www.rastergrid.com/blog/2010/09/efficient-gaussian-blur-with-linear-sampling/, 2010.
+    weight = (w0 + w1);
+    return (offset0 * w0 + w1 * offset1) / weight;
+}
+
+//-----------------------------------------------------------------------------
 //      ガウスブラーの重みを計算します.
 //-----------------------------------------------------------------------------
 void ComputeGaussWeights(float sigma, Param& param)
 {
     float total = 0.0f;
-    float invSigma2 = Pow2(1.0f / sigma);
-
-    for(auto i=0; i<8; ++i)
+    for(auto i=0; i<8; i++)
     {
-        auto pos = 0.5f + 2.0f * i;
-        param.Weights[i] = expf(-0.5f * Pow2(pos) * invSigma2);
-        total += 2.0f * param.Weights[i];
+        auto p = i * 2.0f;
+        auto w = 0.0f;
+
+        param.Offsets[i] = CalcGaussianOffset(p, sigma, w);
+        param.Weights[i] = w;
+
+        total += 2.0f * w;
     }
 
-    float invTotal = 1.0f / total;
+    // 正規化.
+    auto invTotal = 1.0f / total;
     for(auto i=0; i<8; ++i)
         param.Weights[i] *= invTotal;
 }
@@ -98,7 +130,7 @@ bool GaussianBlurEffectPS::Init(uint32_t width, uint32_t height, DXGI_FORMAT for
 
         D3D12_ROOT_PARAMETER param[2] = {};
         param[0].ParameterType              = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-        param[0].Constants.Num32BitValues   = 12;
+        param[0].Constants.Num32BitValues   = 18;
         param[0].Constants.ShaderRegister   = 0;
         param[0].Constants.RegisterSpace    = 0;
         param[0].ShaderVisibility           = D3D12_SHADER_VISIBILITY_PIXEL;
@@ -224,10 +256,9 @@ void GaussianBlurEffectPS::Draw
     auto desc = GetDesc();
 
     Param param = {};
-    param.OffsetX = 1.0f / float(desc.Width);
-    param.OffsetY = 0.0f;
-    param.Width   = uint32_t(desc.Width);
-    param.Height  = desc.Height;
+    param.SizeX = uint16_t(desc.Width);
+    param.SizeY = uint16_t(desc.Height);
+    param.Flags = 0;
     ComputeGaussWeights(strength, param);
 
     D3D12_VIEWPORT viewport = {};
@@ -268,7 +299,7 @@ void GaussianBlurEffectPS::Draw
     pCmd->OMSetRenderTargets(1, &handleRTV, FALSE, nullptr);
     pCmd->RSSetViewports(1, &viewport);
     pCmd->RSSetScissorRects(1, &rect);
-    pCmd->SetGraphicsRoot32BitConstants(0, 12, &param, 0);
+    pCmd->SetGraphicsRoot32BitConstants(0, 18, &param, 0);
     pCmd->SetGraphicsRootDescriptorTable(1, handleSRV);
     DrawQuad(pCmd);
 
@@ -286,8 +317,7 @@ void GaussianBlurEffectPS::Draw
 
     pCmd->ResourceBarrier(2, barriers);
 
-    param.OffsetX = 0.0f;
-    param.OffsetY = 1.0f / float(desc.Height);
+    param.Flags = 1;
     handleSRV = m_ColorTarget[0].GetGpuHandleSRV();
     handleRTV = m_ColorTarget[1].GetCpuHandleRTV();
 
@@ -299,7 +329,7 @@ void GaussianBlurEffectPS::Draw
     pCmd->OMSetRenderTargets(1, &handleRTV, FALSE, nullptr);
     pCmd->RSSetViewports(1, &viewport);
     pCmd->RSSetScissorRects(1, &rect);
-    pCmd->SetGraphicsRoot32BitConstants(0, 12, &param, 0);
+    pCmd->SetGraphicsRoot32BitConstants(0, 18, &param, 0);
     pCmd->SetGraphicsRootDescriptorTable(1, handleSRV);
     DrawQuad(pCmd);
 
@@ -383,7 +413,7 @@ bool GaussianBlurEffectCS::Init(uint32_t width, uint32_t height, DXGI_FORMAT for
 
         D3D12_ROOT_PARAMETER param[3] = {};
         param[0].ParameterType              = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-        param[0].Constants.Num32BitValues   = 12;
+        param[0].Constants.Num32BitValues   = 18;
         param[0].Constants.ShaderRegister   = 0;
         param[0].Constants.RegisterSpace    = 0;
         param[0].ShaderVisibility           = D3D12_SHADER_VISIBILITY_ALL;
@@ -496,10 +526,9 @@ void GaussianBlurEffectCS::Dispatch(ID3D12GraphicsCommandList* pCmd, float stren
     auto desc = GetDesc();
 
     Param param = {};
-    param.OffsetX = 1.0f / float(desc.Width);
-    param.OffsetY = 0.0f;
-    param.Width   = uint32_t(desc.Width);
-    param.Height  = desc.Height;
+    param.SizeX = uint16_t(desc.Width);
+    param.SizeY = uint16_t(desc.Height);
+    param.Flags = 0;
     ComputeGaussWeights(strength, param);
 
     pCmd->SetComputeRootSignature(m_RootSignature.GetPtr());
@@ -520,7 +549,7 @@ void GaussianBlurEffectCS::Dispatch(ID3D12GraphicsCommandList* pCmd, float stren
 
     auto handleUAV = m_ComputeTarget[0].GetGpuHandleUAV();
 
-    pCmd->SetComputeRoot32BitConstants(0, 12, &param, 0);
+    pCmd->SetComputeRoot32BitConstants(0, 18, &param, 0);
     pCmd->SetComputeRootDescriptorTable(1, handleSRV);
     pCmd->SetComputeRootDescriptorTable(2, handleUAV);
     pCmd->Dispatch(threadX, threadY, 1);
@@ -545,9 +574,8 @@ void GaussianBlurEffectCS::Dispatch(ID3D12GraphicsCommandList* pCmd, float stren
 
     pCmd->ResourceBarrier(3, barriers);
 
-    param.OffsetX = 0.0f;
-    param.OffsetY = 1.0f / float(desc.Height);
-    pCmd->SetComputeRoot32BitConstants(0, 12, &param, 0);
+    param.Flags = 1;
+    pCmd->SetComputeRoot32BitConstants(0, 18, &param, 0);
     pCmd->SetComputeRootDescriptorTable(1, handleSRV);
     pCmd->SetComputeRootDescriptorTable(2, handleUAV);
     pCmd->Dispatch(threadX, threadY, 1);
