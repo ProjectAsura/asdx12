@@ -45,28 +45,33 @@ inline float Pow2(float value)
 //-----------------------------------------------------------------------------
 float CalcGaussianWeight(float index, float sigma)
 {
-    float norm = 1.0f / sqrtf(2.0f * asdx::F_PI * Pow2(sigma)); // 正規化項.
-    return norm * expf(-0.5f * Pow2(index) / Pow2(sigma));
+    // あとで正規化するのと，正規化項は定数倍なので比率計算には影響しないので考慮しない.
+    return expf(-0.5f * Pow2(index) / Pow2(sigma));
 }
 
 //-----------------------------------------------------------------------------
-//      ガウスブラーのオフセットを求めます.
+//      バイリニアオフセットを求めます.
 //-----------------------------------------------------------------------------
-float CalcGaussianOffset(float index, float sigma, float& weight)
+float CalcBilinearOffset(float w0, float w1)
+{ return w0 / (w0 + w1); }
+
+//-----------------------------------------------------------------------------
+//      ガウスブラーの重みとオフセットを求めます.
+//-----------------------------------------------------------------------------
+float CalcGaussianWeightAndOffset(int index, float sigma, float& weight)
 {
-    float offset0 = index + 0.0f;
-    float offset1 = index + 1.0f;
-    float w0 = CalcGaussianWeight(offset0, sigma);
-    float w1 = CalcGaussianWeight(offset1, sigma);
+    float lhs = float(index) + 0.0f;
+    float rhs = float(index) + 1.0f;
 
-    // 真ん中が二回サンプリングされてしまうので，重みを半分にすることで１回とみなすように調整.
-    if (index == 0.0f)
-        w0 /= 2.0f;
+    float w0 = CalcGaussianWeight(lhs, sigma);
+    float w1 = CalcGaussianWeight(rhs, sigma);
+    float offset = CalcBilinearOffset(w0, w1);
 
-    // Raster Grid, "Efficient Gaussian blur with linear sampling",
-    // https://www.rastergrid.com/blog/2010/09/efficient-gaussian-blur-with-linear-sampling/, 2010.
+    if (index == 0)
+        w0 *= 0.5f; // 中心は2回サンプルされるため，重みを半分に.
+
     weight = (w0 + w1);
-    return (offset0 * w0 + w1 * offset1) / weight;
+    return float(index) + offset;
 }
 
 //-----------------------------------------------------------------------------
@@ -77,10 +82,10 @@ void ComputeGaussWeights(float sigma, Param& param)
     float total = 0.0f;
     for(auto i=0; i<8; i++)
     {
-        auto p = i * 2.0f;
+        auto p = i * 2;
         auto w = 0.0f;
 
-        param.Offsets[i] = CalcGaussianOffset(p, sigma, w);
+        param.Offsets[i] = CalcGaussianWeightAndOffset(p, sigma, w);
         param.Weights[i] = w;
 
         total += 2.0f * w;
