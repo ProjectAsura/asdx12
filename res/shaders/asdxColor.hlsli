@@ -14,15 +14,25 @@
 
 
 //-----------------------------------------------------------------------------
+// Costants.
+//-----------------------------------------------------------------------------
+static const float PQ_m1 = 2610.0 / 16384.0;
+static const float PQ_m2 = 2523.0 / 32.0;
+static const float PQ_c1 = 3424.0 / 4096.0;
+static const float PQ_c2 = 2413.0 / 128.0;
+static const float PQ_c3 = 2392.0 / 128.0;
+static const float PQ_MAX_NITS = 10000.0;
+
+
+//-----------------------------------------------------------------------------
 //      リニアからSRGBへの変換.
 //-----------------------------------------------------------------------------
 float3 LinearToSRGB(float3 color)
 {
     float3 result;
-    result.x = (color.x < 0.0031308) ? 12.92 * color.x : 1.055 * pow(abs(color.x), 1.0f / 2.4) - 0.05f;
-    result.y = (color.y < 0.0031308) ? 12.92 * color.y : 1.055 * pow(abs(color.y), 1.0f / 2.4) - 0.05f;
-    result.z = (color.z < 0.0031308) ? 12.92 * color.z : 1.055 * pow(abs(color.z), 1.0f / 2.4) - 0.05f;
-
+    result.x = (color.x < 0.0031308f) ? 12.92f * color.x : 1.055f * pow(abs(color.x), 1.0f / 2.4f) - 0.05f;
+    result.y = (color.y < 0.0031308f) ? 12.92f * color.y : 1.055f * pow(abs(color.y), 1.0f / 2.4f) - 0.05f;
+    result.z = (color.z < 0.0031308f) ? 12.92f * color.z : 1.055f * pow(abs(color.z), 1.0f / 2.4f) - 0.05f;
     return result;
 }
 
@@ -32,11 +42,52 @@ float3 LinearToSRGB(float3 color)
 float3 SRGBToLinear(float3 color)
 {
     float3 result;
-    result.x = (color.x < 0.0405f) ? color.x / 12.92f : pow((abs(color.x) + 0.055) / 1.055f, 2.4f);
-    result.y = (color.y < 0.0405f) ? color.y / 12.92f : pow((abs(color.y) + 0.055) / 1.055f, 2.4f);
-    result.z = (color.z < 0.0405f) ? color.z / 12.92f : pow((abs(color.z) + 0.055) / 1.055f, 2.4f);
-    
+    result.x = (color.x < 0.0405f) ? color.x / 12.92f : pow((abs(color.x) + 0.055f) / 1.055f, 2.4f);
+    result.y = (color.y < 0.0405f) ? color.y / 12.92f : pow((abs(color.y) + 0.055f) / 1.055f, 2.4f);
+    result.z = (color.z < 0.0405f) ? color.z / 12.92f : pow((abs(color.z) + 0.055f) / 1.055f, 2.4f);
     return result;
+}
+
+//-----------------------------------------------------------------------------
+//      リニアからBT.709への変換.
+//-----------------------------------------------------------------------------
+float3 OETF_BT709(float3 color)
+{
+    float3 result;
+    result.r = (color.r <= 0.018f) ? 4.5f * color.r : 1.099f * pow(abs(color.r), 0.45f) - 0.099f;
+    result.g = (color.g <= 0.018f) ? 4.5f * color.g : 1.099f * pow(abs(color.g), 0.45f) - 0.099f;
+    result.b = (color.b <= 0.018f) ? 4.5f * color.b : 1.099f * pow(abs(color.b), 0.45f) - 0.099f;
+    return result;
+}
+
+//-----------------------------------------------------------------------------
+//      BT.709からリニアへの変換.
+//-----------------------------------------------------------------------------
+float3 EOTF_BT709(float3 color)
+{
+    float3 result;
+    result.r = (color.r < 0.081f) ? color.r / 4.5f : pow((color.r + 0.099f) / 1.099f, 1.0f / 0.45f);
+    result.g = (color.g < 0.081f) ? color.g / 4.5f : pow((color.g + 0.099f) / 1.099f, 1.0f / 0.45f);
+    result.b = (color.b < 0.081f) ? color.b / 4.5f : pow((color.b + 0.099f) / 1.099f, 1.0f / 0.45f);
+    return result;
+}
+
+//-----------------------------------------------------------------------------
+//      リニアから BT.2100 PQ への変換.
+//-----------------------------------------------------------------------------
+float3 OETF_BT2100_PQ(float3 color)
+{
+    float3 Y = pow(abs(color.rgb), PQ_m1);
+    return pow((PQ_c1 + PQ_c2 * Y) / (1 + PQ_c3 * Y), PQ_m2);
+}
+
+//-----------------------------------------------------------------------------
+//      BT.2100 PQ からリニアへの変換.
+//-----------------------------------------------------------------------------
+float3 EOTF_BT2100_PQ(float3 color)
+{
+    float3 E = pow(color, 1.0f / PQ_m2);
+    return pow(max(E - PQ_c1, 0.0f) / (PQ_c2 - PQ_c3 * E), 1.0f / PQ_m1);
 }
 
 //-----------------------------------------------------------------------------
@@ -649,17 +700,13 @@ float4 YCoCgToRGB(float4 YCoCg)
 //      Karisのアンチファイアフライウェイトを計算します.
 //-----------------------------------------------------------------------------
 float KarisAntiFireflyWeight(float3 value, float exposure)
-{
-    return rcp(4.0f + LuminanceBT709(value) * exposure);
-}
+{ return rcp(4.0f + LuminanceBT709(value) * exposure); }
 
 //-----------------------------------------------------------------------------
 //      Karisのアンチファイアフライウェイトを計算します.
 //-----------------------------------------------------------------------------
 float KarisAntiFireflyWeightY(float luma, float exposure)
-{
-    return rcp(4.0f + luma * exposure);
-}
+{ return rcp(4.0f + luma * exposure); }
 
 //-----------------------------------------------------------------------------
 //      先鋭化フィルタを適用します.
@@ -694,5 +741,35 @@ float4 ApplySharpening
 
     return YCoCgToRGB(result);
 }
+
+//-----------------------------------------------------------------------------
+//      暗い値を採用します.
+//-----------------------------------------------------------------------------
+float3 BlednDarken(float3 base, float3 blend)
+{ return min(base, blend); }
+
+//-----------------------------------------------------------------------------
+//      明るい値を採用します.
+//-----------------------------------------------------------------------------
+float3 BlendLighten(float3 base, float3 blend)
+{ return max(base, blend); }
+
+//-----------------------------------------------------------------------------
+//      カラー乗算します.
+//-----------------------------------------------------------------------------
+float3 BlendMultiply(float3 base, float3 blend)
+{ return base * blend; }
+
+//-----------------------------------------------------------------------------
+//      スクリーン乗算します.
+//-----------------------------------------------------------------------------
+float3 BlendScreen(float3 base, float3 blend)
+{ return 1.0f - (1.0f - base) * (1.0f - blend); }
+
+//-----------------------------------------------------------------------------
+//      オーバーレイ合成します.
+//-----------------------------------------------------------------------------
+float3 BlendOverlay(float3 base, float3 blend)
+{ return lerp(2.0f * base * blend, 1.0f - 2.0f * (1.0f - base) * (1.0f - blend), step(0.5f, base)); }
 
 #endif//ASDX_COLOR_HLSLI

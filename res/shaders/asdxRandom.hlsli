@@ -12,7 +12,7 @@
 #include "asdxMath.hlsli"
 
 
-// ディザ判定用テールブル.
+// ディザ判定用テーブル
 static const float F_DITHER_LIST[4][4] =
 {
     { 0.37647f, 0.87450f, 0.50196f, 0.99000f },
@@ -25,9 +25,13 @@ static const float F_DITHER_LIST[4][4] =
 //      疑似乱数を生成します.
 //-----------------------------------------------------------------------------
 float FracSin(float2 value)
-{
-    return frac(sin(dot(value.xy, float2(12.9898, 78.233))) * 43758.5453);
-}
+{ return frac(sin(dot(value.xy, float2(12.9898, 78.233))) * 43758.5453); }
+
+//-----------------------------------------------------------------------------
+//      疑似乱数を生成します.
+//-----------------------------------------------------------------------------
+float FracSin(float2 value, float time)
+{ return frac(sin(dot(value.xy, float2(12.9898, 78.233))) * 43758.5453 + time); }
 
 //-----------------------------------------------------------------------------
 //      Hammersleyサンプリング.
@@ -48,7 +52,7 @@ float R1Sequence(float number)
 
     // g  = 1.6180339887498948482;
     // a1 = 1 / g = 0.6180339887498948482
-    return frac(0.5f + number * 0.6180339887498948482);
+    return frac(0.5f + number * 0.6180339887498948482f);
 }
 
 //-----------------------------------------------------------------------------
@@ -59,23 +63,7 @@ float2 R2Sequence(float number)
     // g = 1.32471795724474602596
     // a1 = 1 / g       = 0.75487766624669276005
     // a2 = 1 / (g * g) = 0.5698402909980532659114;
-    return frac(0.5f.xx + number * float2(0.75487766624669276005, 0.5698402909980532659114));
-}
-
-//-----------------------------------------------------------------------------
-//      三角ノイズを計算します.
-//-----------------------------------------------------------------------------
-float TriangleNoise(float2 n, float time)
-{
-    // triangle noise, in [-1.0..1.0[ range
-    float v = 0.07 * frac(time);
-    n += float2(v, v);
-    n = frac(n * float2(5.3987, 5.4421));
-    n += dot(n.yx, n.xy + float2(21.5351, 14.3137));
-
-    float xy = n.x * n.y;
-    // compute in [0..2[ and remap to [-1.0..1.0[
-    return frac(xy * 95.4307) + frac(xy * 75.04961) - 1.0;
+    return frac(0.5f.xx + number * float2(0.75487766624669276005f, 0.5698402909980532659114f));
 }
 
 //-----------------------------------------------------------------------------
@@ -94,9 +82,9 @@ float ValueNoise(float2 p)
     float2 i = floor(p);
     float2 f = frac(p);
     
-    float2 s = smoothstep(0.0, 1.0, f);
-    float nx0 = lerp(FracSin(i + float2(0.0, 0.0)), FracSin(i + float2(1.0, 0.0)), s.x);
-    float nx1 = lerp(FracSin(i + float2(0.0, 1.0)), FracSin(i + float2(1.0, 1.0)), s.x);
+    float2 s = smoothstep(0.0f, 1.0f, f);
+    float nx0 = lerp(FracSin(i + float2(0.0f, 0.0f)), FracSin(i + float2(1.0f, 0.0f)), s.x);
+    float nx1 = lerp(FracSin(i + float2(0.0f, 1.0f)), FracSin(i + float2(1.0f, 1.0f)), s.x);
     return lerp(nx0, nx1, s.y);
 }
 
@@ -226,11 +214,9 @@ float Ibuki(inout uint4 u)
 //-----------------------------------------------------------------------------
 void Dithering(float2 sv_position, float alpha)
 {
-    uint2 screenPos = (uint2) fmod(sv_position, 4.0f);
+    uint2 screenPos = (uint2)fmod(sv_position, 4.0f);
     if (alpha < F_DITHER_LIST[screenPos.x][screenPos.y])
-    {
         discard;
-    }
 }
 
 //-----------------------------------------------------------------------------
@@ -240,26 +226,42 @@ float4 DitherJimenez(float2 uv, float time, float4 rgba)
 {
     // Jimenez 2014, "Next Generation Post-Processing in Call of Duty"
     float noise = InterleavedGradientNoise(uv.xy + time);
-    // remap from [0..1[ to [-1..1[
+    // remap from [0..1) to [-1..1)
     noise = (noise * 2.0) - 1.0;
     return float4(rgba.rgb + noise / 255.0, rgba.a);
 }
 
+//-----------------------------------------------------------------------------
+//      三角ノイズを計算します.
+//-----------------------------------------------------------------------------
+float TriangleNoise(float2 n, float time)
+{
+    // triangle noise, in [-1.0..1.0) range
+    float v = 0.07 * frac(time);
+    n += float2(v, v);
+    n = frac(n * float2(5.3987, 5.4421));
+    n += dot(n.yx, n.xy + float2(21.5351, 14.3137));
+
+    float xy = n.x * n.y;
+    // compute in [0..2) and remap to [-1.0..1.0)
+    return frac(xy * 95.4307) + frac(xy * 75.04961) - 1.0;
+}
+
 //------------------------------------------------------------------------------
-//      Gj?lによるディザーを計算します.
+//      Gjølによるディザーを計算します.
 //------------------------------------------------------------------------------
 float4 DitherTriangleNoise(float4 rgba, float2 uv, float2 screenSize, float time)
 {
-    // Gj?l 2016, "Banding in Games: A Noisy Rant", http://loopit.dk/banding_in_games.pdf.
+    // Mikkel Gjøl, "Banding in Games: A Noisy Rant", http://loopit.dk/banding_in_games.pdf, 2016
     return rgba + TriangleNoise(uv * screenSize, time) / 255.0;
 }
 
 //-----------------------------------------------------------------------------
-//      Gj?lによるRGBディザーを計算します.
+//      GjølによるRGBディザーを計算します.
 //-----------------------------------------------------------------------------
 float4 DitherTriangleNoiseRGB(float4 rgba, float2 uv, float2 screenSize, float time)
 {
-    // Gj?l 2016, "Banding in Games: A Noisy Rant", http://loopit.dk/banding_in_games.pdf.
+    // Mikkel Gjøl, "Banding in Games: A Noisy Rant", http://loopit.dk/banding_in_games.pdf, 2016
     float2 st = uv * screenSize;
     float3 dither = float3(
             TriangleNoise(st, time),
