@@ -53,7 +53,7 @@ float CalcGaussianWeight(float index, float sigma)
 //      バイリニアオフセットを求めます.
 //-----------------------------------------------------------------------------
 float CalcBilinearOffset(float w0, float w1)
-{ return w0 / (w0 + w1); }
+{ return w1 / (w0 + w1); }
 
 //-----------------------------------------------------------------------------
 //      ガウスブラーの重みとオフセットを求めます.
@@ -65,10 +65,11 @@ float CalcGaussianWeightAndOffset(int index, float sigma, float& weight)
 
     float w0 = CalcGaussianWeight(lhs, sigma);
     float w1 = CalcGaussianWeight(rhs, sigma);
-    float offset = CalcBilinearOffset(w0, w1);
 
     if (index == 0)
         w0 *= 0.5f; // 中心は2回サンプルされるため，重みを半分に.
+
+    float offset = CalcBilinearOffset(w0, w1);
 
     weight = (w0 + w1);
     return float(index) + offset;
