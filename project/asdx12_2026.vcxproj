@@ -258,6 +258,7 @@
     <ClCompile Include="..\src\gfx\asdxGaussianBlurEffect.cpp" />
     <ClCompile Include="..\src\gfx\asdxGfxMisc.cpp" />
     <ClCompile Include="..\src\gfx\asdxIBLBaker.cpp" />
+    <ClCompile Include="..\src\gfx\asdxKawaseGlareEffect.cpp" />
     <ClCompile Include="..\src\gfx\asdxLine.cpp" />
     <ClCompile Include="..\src\gfx\asdxMapChip.cpp" />
     <ClCompile Include="..\src\gfx\asdxModel.cpp" />
@@ -378,6 +379,7 @@
     <ClInclude Include="..\include\gfx\asdxGaussianBlurEffect.h" />
     <ClInclude Include="..\include\gfx\asdxGfxMisc.h" />
     <ClInclude Include="..\include\gfx\asdxIBLBaker.h" />
+    <ClInclude Include="..\include\gfx\asdxKawaseGlareEffect.h" />
     <ClInclude Include="..\include\gfx\asdxLine.h" />
     <ClInclude Include="..\include\gfx\asdxMapChip.h" />
     <ClInclude Include="..\include\gfx\asdxModel.h" />

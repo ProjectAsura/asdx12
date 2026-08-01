@@ -60,6 +60,9 @@ BloomEffect::~BloomEffect()
 //-----------------------------------------------------------------------------
 bool BloomEffect::Init(uint32_t w, uint32_t h, DXGI_FORMAT format)
 {
+    if (w == 0 || h == 0 || format == DXGI_FORMAT_UNKNOWN)
+        return false;
+
     auto pDevice = GetD3D12Device();
 
     // ルートシグニチャの初期化.
@@ -327,6 +330,8 @@ void BloomEffect::Apply
 
     pCmd->SetComputeRootSignature(m_RootSignature.GetPtr());
 
+    D3D12_RESOURCE_BARRIER barriers[2] = {};
+
     // 最初のパス.
     {
         auto desc = m_BlurTarget[0].GetDesc();
@@ -341,8 +346,9 @@ void BloomEffect::Apply
         param.dstH      = uint16_t(dstH);
         param.threshold = m_Threshold;
 
-        TransitionBarrier(pCmd, m_BlurTarget[0].GetResource(), m_BlurStates[0], D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        SetTransitionBarrier(barriers[0], m_BlurTarget[0].GetResource(), m_BlurStates[0], D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
         m_BlurStates[0] = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+        pCmd->ResourceBarrier(1, barriers);
 
         pCmd->SetPipelineState(m_FirstPassPSO.GetPtr());
         pCmd->SetComputeRoot32BitConstants(ROOT_PARAM_CBV0, 4, &param, 0);
@@ -387,10 +393,11 @@ void BloomEffect::Apply
             param.dstW = uint16_t(dstW);
             param.dstH = uint16_t(dstH);
 
-            TransitionBarrier(pCmd, srcTarget.GetResource(), (*pSrcStates), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-            TransitionBarrier(pCmd, dstTarget.GetResource(), (*pDstStates), D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+            SetTransitionBarrier(barriers[0], srcTarget.GetResource(), (*pSrcStates), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+            SetTransitionBarrier(barriers[1], dstTarget.GetResource(), (*pDstStates), D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
             (*pSrcStates) = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
             (*pDstStates) = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+            pCmd->ResourceBarrier(2, barriers);
 
             pCmd->SetComputeRoot32BitConstants(ROOT_PARAM_CBV0, 4, &param, 0);
             pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_SRV0, srcTarget.GetGpuHandleSRV());
@@ -436,10 +443,11 @@ void BloomEffect::Apply
             param.dstW = uint16_t(dstW);
             param.dstH = uint16_t(dstH);
 
-            TransitionBarrier(pCmd, srcTarget.GetResource(), (*pSrcStates), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-            TransitionBarrier(pCmd, dstTarget.GetResource(), (*pDstStates), D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+            SetTransitionBarrier(barriers[0], srcTarget.GetResource(), (*pSrcStates), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+            SetTransitionBarrier(barriers[1], dstTarget.GetResource(), (*pDstStates), D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
             (*pSrcStates) = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
             (*pDstStates) = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+            pCmd->ResourceBarrier(2, barriers);
 
             pCmd->SetComputeRoot32BitConstants(ROOT_PARAM_CBV0, 4, &param, 0);
             pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_SRV0, srcTarget.GetGpuHandleSRV());
@@ -477,10 +485,11 @@ void BloomEffect::Apply
 
             pCmd->SetPipelineState(m_UpscalePSO.GetPtr());
 
-            TransitionBarrier(pCmd, srcTarget.GetResource(), (*pSrcStates), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-            TransitionBarrier(pCmd, dstTarget.GetResource(), (*pDstStates), D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+            SetTransitionBarrier(barriers[0], srcTarget.GetResource(), (*pSrcStates), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+            SetTransitionBarrier(barriers[1], dstTarget.GetResource(), (*pDstStates), D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
             (*pSrcStates) = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
             (*pDstStates) = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+            pCmd->ResourceBarrier(2, barriers);
 
             pCmd->SetComputeRoot32BitConstants(ROOT_PARAM_CBV0, 4, &param, 0);
             pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_SRV0, srcTarget.GetGpuHandleSRV());

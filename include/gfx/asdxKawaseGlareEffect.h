@@ -1,6 +1,6 @@
 ﻿//-----------------------------------------------------------------------------
-// File : asdxBloomEffect.h
-// Desc : Bloom Effect.
+// File : asdxKawaseGlareEffect.h
+// Desc : Kawase's Glare Effect.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 #pragma once
@@ -17,9 +17,9 @@
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
-// BloomEffect class
+// KawaseGlareEffect class
 ///////////////////////////////////////////////////////////////////////////////
-class BloomEffect
+class KawaseGlareEffect
 {
     //=========================================================================
     // list of friend classes and methods.
@@ -27,6 +27,15 @@ class BloomEffect
     /* NOTHING */
 
 public:
+    ///////////////////////////////////////////////////////////////////////////
+    // Param structure
+    ///////////////////////////////////////////////////////////////////////////
+    struct Param
+    {
+        float   Threshold       = 1.0f;
+        float   BloomStrength   = 2.0f;
+    };
+
     //=========================================================================
     // public variables.
     //=========================================================================
@@ -39,12 +48,12 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      コンストラクタです.
     //-------------------------------------------------------------------------
-    BloomEffect();
+    KawaseGlareEffect();
 
     //-------------------------------------------------------------------------
     //! @brief      デストラクタです.
     //-------------------------------------------------------------------------
-    ~BloomEffect();
+    ~KawaseGlareEffect();
 
     //-------------------------------------------------------------------------
     //! @brief      初期化処理を行います.
@@ -71,6 +80,20 @@ public:
     void Resize(uint32_t w, uint32_t h);
 
     //-------------------------------------------------------------------------
+    //! @brief      制御パラメータを設定します.
+    //! 
+    //! @param[in]      param       設定するパラメータ.
+    //-------------------------------------------------------------------------
+    void SetParam(const Param& param);
+
+    //-------------------------------------------------------------------------
+    //! @brief      制御パラメータを取得します.
+    //! 
+    //! @return     制御パラメータを返却します.
+    //-------------------------------------------------------------------------
+    const Param& GetParam() const;
+
+    //-------------------------------------------------------------------------
     //! @brief      エフェクトを適用します.
     //! 
     //! @param[in]      pCmd        グラフィックスコマンドリスト.
@@ -79,52 +102,44 @@ public:
     //! @param[in]      handleSRV   入力SRV.
     //-------------------------------------------------------------------------
     void Apply(
-        ID3D12GraphicsCommandList*  pCmd,
-        uint32_t                    width,
-        uint32_t                    height,
-        D3D12_GPU_DESCRIPTOR_HANDLE handleSRV);
+        ID3D12GraphicsCommandList* pCmd,
+        uint32_t width,
+        uint32_t height,
+        D3D12_GPU_DESCRIPTOR_HANDLE handlSRV);
 
     //-------------------------------------------------------------------------
     //! @brief      SRVハンドルを取得します.
     //! 
+    //! @param[in]      index       インデックスです.
     //! @return     SRVハンドルを返却します.
     //-------------------------------------------------------------------------
-    D3D12_GPU_DESCRIPTOR_HANDLE GetGpuHandleSRV() const;
-
-    //-------------------------------------------------------------------------
-    //! @brief      閾値を設定します.
-    //! 
-    //! @param[in]      value       BT.709ベースの輝度の閾値.
-    //-------------------------------------------------------------------------
-    void SetThreshold(float value);
-
-    //-------------------------------------------------------------------------
-    //! @brief      閾値を取得します.
-    //! 
-    //! @return     閾値を返却します.
-    //-------------------------------------------------------------------------
-    float GetThreshold() const;
+    D3D12_GPU_DESCRIPTOR_HANDLE GetGpuHandleSRV(uint8_t index) const;
 
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    static const uint32_t       kMaxTargetCount = 5;                    //!< ブラー用最大ターゲット数.
-    RefPtr<ID3D12RootSignature> m_RootSignature;                        //!< ルートシグニチャ.
-    RefPtr<ID3D12PipelineState> m_FirstPassPSO;                         //!< 初期パス用パイプラインステートオブジェクト.
-    RefPtr<ID3D12PipelineState> m_DownPassPSO;                          //!< ダウンサンプル用パイプラインステートオブジェクト.
-    RefPtr<ID3D12PipelineState> m_CompositePSO;                         //!< 合成用パイプランステートオブジェクト.
-    RefPtr<ID3D12PipelineState> m_UpscalePSO;                           //!< アップスケール用パイプラインステートオブジェクト.
-    ComputeTarget               m_BlurTarget[kMaxTargetCount];          //!< 縮小サイズターゲット.
-    ComputeTarget               m_ComputeTarget;                        //!< 元解像度ターゲット.
-    D3D12_RESOURCE_STATES       m_BlurStates[kMaxTargetCount] = {};     //!< 縮小用ステート.
-    D3D12_RESOURCE_STATES       m_States                      = {};     //!< 元解像度用ステート.
-    float                       m_Threshold                   = 1.0f;   //!< 閾値.
+    static const uint8_t            kMaxTargetCount = 10;                   //!< 最大ターゲット数.
+    RefPtr<ID3D12RootSignature>     m_RootSignature;                        //!< ルートシグニチャ.
+    RefPtr<ID3D12PipelineState>     m_BloomFirstPassPSO;                    //!< ブルームパイプラインステート.
+    RefPtr<ID3D12PipelineState>     m_BloomDownPassPSO;                     //!< ブルームパイプラインステート.
+    RefPtr<ID3D12PipelineState>     m_BloomCompositePSO;                    //!< ブルームパイプラインステート.
+    ComputeTarget                   m_ComputeTarget[kMaxTargetCount];       //!< コンピュートターゲット.
+    D3D12_RESOURCE_STATES           m_TargetStates[kMaxTargetCount] = {};   //!< ターゲットステート.
+    Param                           m_Param;                                //!< 制御パラメータ.
 
     //=========================================================================
     // private methods.
     //=========================================================================
-    /* NOTHING */
+
+    //-------------------------------------------------------------------------
+    //! @brief      ブルームエフェクトを適用します.
+    //-------------------------------------------------------------------------
+    void ApplyBloom(
+        ID3D12GraphicsCommandList*  pCmd,
+        uint32_t                    width,
+        uint32_t                    height,
+        D3D12_GPU_DESCRIPTOR_HANDLE handleSRV);
 };
 
 } // namespace asdx

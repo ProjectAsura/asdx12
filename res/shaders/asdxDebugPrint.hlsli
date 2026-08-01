@@ -21,17 +21,17 @@ float DigitBin(const int x)
 {
     switch(x)
     {
-        case 0: { return 480599.0; }
-        case 1: { return 139810.0; }
-        case 2: { return 476951.0; }
-        case 3: { return 476999.0; }
-        case 4: { return 350020.0; }
-        case 5: { return 464711.0; }
-        case 6: { return 464727.0; }
-        case 7: { return 476228.0; }
-        case 8: { return 481111.0; }
-        case 9: { return 481095.0; }
-        default:{ return 0.0; }
+        case 0: { return 480599.0f; }
+        case 1: { return 139810.0f; }
+        case 2: { return 476951.0f; }
+        case 3: { return 476999.0f; }
+        case 4: { return 350020.0f; }
+        case 5: { return 464711.0f; }
+        case 6: { return 464727.0f; }
+        case 7: { return 476228.0f; }
+        case 8: { return 481111.0f; }
+        case 9: { return 481095.0f; }
+        default:{ return 0.0f; }
     }
 }
 
@@ -43,45 +43,45 @@ float PrintValue
     float  decimalPlaces
 )
 {
-    if ((stringCoords.y < 0.0) || (stringCoords.y >= 1.0))
-        return 0.0;
-    
-    bool neg = (value < 0.0);
+    if ((stringCoords.y < 0.0f) || (stringCoords.y >= 1.0f))
+        return 0.0f;
+
+    bool neg = (value < 0.0f);
     value = abs(value);
-    
-    float log10Value   = log2(value) / log2(10.0);
-    float biggestIndex = max(floor(log10Value), 0.0);
+
+    float log10Value   = log2(value) / log2(10.0f);
+    float biggestIndex = max(floor(log10Value), 0.0f);
     float digitIndex   = maxDigits - floor(stringCoords.x);
-    float charBin      = 0.0;
+    float charBin      = 0.0f;
     
-    if (digitIndex > (-decimalPlaces - 1.01))
+    if (digitIndex > (-decimalPlaces - 1.01f))
     {
         if (digitIndex > biggestIndex)
         {
             if (neg && (digitIndex < (biggestIndex + 1.5)))
-                charBin = 1792.0;
+                charBin = 1792.0f;
         }
         else
         {
-            if (digitIndex == -1.0)
+            if (digitIndex == -1.0f)
             {
-                if (decimalPlaces > 0.0)
-                    charBin = 2.0;
+                if (decimalPlaces > 0.0f)
+                    charBin = 2.0f;
             }
             else
             {
                 float reducedRangeValue = value;
-                if (digitIndex < 0.0)
+                if (digitIndex < 0.0f)
                 {
                     reducedRangeValue = frac(value);
-                    digitIndex += 1.0;
+                    digitIndex += 1.0f;
                 }
-                float digitValue = abs(reducedRangeValue / (pow(10.0, digitIndex)));
-                charBin = DigitBin(int(floor(mod(digitValue, 10.0))));
+                float digitValue = abs(reducedRangeValue / (pow(10.0f, digitIndex)));
+                charBin = DigitBin(int(floor(mod(digitValue, 10.0f))));
             }
         }
     }
-    return floor(mod(charBin / pow(2.0, floor(frac(stringCoords.x) * 4.0) + (floor((1.0f - stringCoords.y) * 5.0) * 4.0)), 2.0));
+    return floor(mod(charBin / pow(2.0f, floor(frac(stringCoords.x) * 4.0f) + (floor((1.0f - stringCoords.y) * 5.0f) * 4.0f)), 2.0f));
 }
 
 float PrintFloat
@@ -109,7 +109,5 @@ float PrintInt
 {
     return PrintFloat(svPosition, drawPos, fontSize, (float)value, maxDigits, 0);
 }
-
-
 
 #endif//DEBUG_PRINT_HLSLI

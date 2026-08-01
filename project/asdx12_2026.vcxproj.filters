@@ -444,6 +444,9 @@
     <ClCompile Include="..\src\gfx\asdxBloomEffect.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\gfx\asdxKawaseGlareEffect.cpp">
+      <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\edit\asdxEditParam.h">
@@ -801,6 +804,9 @@
       <Filter>ヘッダー ファイル\fw</Filter>
     </ClInclude>
     <ClInclude Include="..\include\gfx\asdxBloomEffect.h">
+      <Filter>ヘッダー ファイル\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\gfx\asdxKawaseGlareEffect.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
   </ItemGroup>
