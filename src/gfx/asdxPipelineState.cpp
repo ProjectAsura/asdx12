@@ -796,8 +796,8 @@ bool MeshShaderPipelineState::Init(const MESH_SHADER_PIPELINE_STATE_DESC* pDesc)
     MsPsoDesc msPsoDesc(pDesc);
 
     D3D12_PIPELINE_STATE_STREAM_DESC pssDesc = {};
-    pssDesc.SizeInBytes = sizeof(msPsoDesc);
-    pssDesc.pPipelineStateSubobjectStream = &msPsoDesc;
+    pssDesc.SizeInBytes                     = sizeof(msPsoDesc);
+    pssDesc.pPipelineStateSubobjectStream   = &msPsoDesc;
 
     // パイプラインステート生成.
     auto hr = pDevice->CreatePipelineState(&pssDesc, IID_PPV_ARGS(m_State.GetAddress()));
@@ -957,8 +957,8 @@ void MeshShaderPipelineState::Recreate()
     MsPsoDesc msPsoDesc(&m_Desc);
 
     D3D12_PIPELINE_STATE_STREAM_DESC pssDesc = {};
-    pssDesc.SizeInBytes = sizeof(msPsoDesc);
-    pssDesc.pPipelineStateSubobjectStream = &msPsoDesc;
+    pssDesc.SizeInBytes                     = sizeof(msPsoDesc);
+    pssDesc.pPipelineStateSubobjectStream   = &msPsoDesc;
 
     // パイプラインステート生成.
     ID3D12PipelineState* pPipelineState = nullptr;

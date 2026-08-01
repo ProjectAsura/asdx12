@@ -100,8 +100,8 @@ bool BloomEffect::Init(uint32_t w, uint32_t h, DXGI_FORMAT format)
         D3D12_ROOT_SIGNATURE_DESC desc = {};
         desc.NumParameters      = _countof(param);
         desc.pParameters        = param;
-        desc.NumStaticSamplers  = _countof(asdx::Preset::StaticSamplers);
-        desc.pStaticSamplers    = asdx::Preset::StaticSamplers;
+        desc.NumStaticSamplers  = _countof(Preset::StaticSamplers);
+        desc.pStaticSamplers    = Preset::StaticSamplers;
         desc.Flags              = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
         desc.Flags             |= D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS;
         desc.Flags             |= D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS;

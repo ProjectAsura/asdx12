@@ -49,9 +49,9 @@ bool MotionUpdater::Init(const Model* pModel, const res::MotionClip* pClip)
     for(auto i=0u; i<count; ++i)
     {
         auto& bone = pModel->GetBone(i);
-        auto  name = asdx::BoneProxy::GetName(bone);
+        auto  name = BoneProxy::GetName(bone);
 
-        auto track = asdx::MotionClipProxy::FindTrack(m_pClip, name.c_str());
+        auto track = MotionClipProxy::FindTrack(m_pClip, name.c_str());
         m_pTracks[i] = track;
     }
 
@@ -81,10 +81,10 @@ bool MotionUpdater::Update(float deltaSec)
         return false;
 
     // 計測時間を取得.
-    auto duration = asdx::MotionClipProxy::GetDuration(m_pClip);
+    auto duration = MotionClipProxy::GetDuration(m_pClip);
 
     // 1秒あたりのtick
-    auto tps = asdx::MotionClipProxy::GetTicksPerSecond(m_pClip);
+    auto tps = MotionClipProxy::GetTicksPerSecond(m_pClip);
 
     // 前フレームの時間を一時保存.
     auto prevTime = m_TimeInTicks;
@@ -254,7 +254,7 @@ void MotionPlayer::Init(const Model* pModel)
     for(auto i=0u; i<count; ++i)
     {
         auto& bone     = m_pModel->GetBone(i);
-        auto  bindPose = asdx::BoneProxy::GetBindPoseMatrix(bone);
+        auto  bindPose = BoneProxy::GetBindPoseMatrix(bone);
 
         m_LocalTransforms[i] = bindPose;
         m_WorldTransforms[i] = identity;
@@ -305,8 +305,8 @@ void MotionPlayer::SetClip(const res::MotionClip* pClip)
     for(auto i=0u; i<count; ++i)
     {
         auto& bone     = m_pModel->GetBone(i);
-        auto  bindPose = asdx::BoneProxy::GetBindPoseMatrix(bone);
-        auto  name     = asdx::BoneProxy::GetName(bone);
+        auto  bindPose = BoneProxy::GetBindPoseMatrix(bone);
+        auto  name     = BoneProxy::GetName(bone);
 
         m_LocalTransforms[i] = bindPose;
         m_WorldTransforms[i] = identity;
@@ -498,8 +498,8 @@ void MotionPlayer::UpdateWorldTransform(const Transform4x3& rootTransform)
     auto count = m_pModel->GetBoneCount();
     for(auto i=0u; i<count; ++i)
     {
-        const auto& bone = m_pModel->GetBone(i);
-        const auto parentId = asdx::BoneProxy::GetParentId(bone);
+        const auto& bone     = m_pModel->GetBone(i);
+        const auto  parentId = BoneProxy::GetParentId(bone);
 
         if (parentId >= 0)
         {
@@ -522,8 +522,8 @@ void MotionPlayer::UpdateMatrixPalette()
     auto count = m_pModel->GetBoneCount();
     for(auto i=0u; i<count; ++i)
     {
-        const auto& bone = m_pModel->GetBone(i);
-        const auto invBindPose = asdx::BoneProxy::GetInverseBindPoseMatrix(bone);
+        const auto& bone       = m_pModel->GetBone(i);
+        const auto invBindPose = BoneProxy::GetInverseBindPoseMatrix(bone);
         m_MatrixPalettes[i] = invBindPose * m_WorldTransforms[i];
     }
 }

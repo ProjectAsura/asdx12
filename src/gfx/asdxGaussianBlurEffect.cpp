@@ -150,8 +150,8 @@ bool GaussianBlurEffectPS::Init(uint32_t width, uint32_t height, DXGI_FORMAT for
         D3D12_ROOT_SIGNATURE_DESC desc = {};
         desc.NumParameters      = _countof(param);
         desc.pParameters        = param;
-        desc.NumStaticSamplers  = _countof(asdx::Preset::StaticSamplers);
-        desc.pStaticSamplers    = asdx::Preset::StaticSamplers;
+        desc.NumStaticSamplers  = _countof(Preset::StaticSamplers);
+        desc.pStaticSamplers    = Preset::StaticSamplers;
         desc.Flags              = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
         desc.Flags             |= D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS;
         desc.Flags             |= D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS;
@@ -182,14 +182,14 @@ bool GaussianBlurEffectPS::Init(uint32_t width, uint32_t height, DXGI_FORMAT for
     {
         D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = {};
         desc.pRootSignature                 = m_RootSignature.GetPtr();
-        desc.VS                             = asdx::Preset::FullScreenVS;
+        desc.VS                             = Preset::FullScreenVS;
         desc.PS                             = { asdxGaussianBlurPS, sizeof(asdxGaussianBlurPS) };
-        desc.BlendState                     = asdx::Preset::Opaque;
+        desc.BlendState                     = Preset::Opaque;
         desc.SampleMask                     = D3D12_DEFAULT_SAMPLE_MASK;
-        desc.RasterizerState                = asdx::Preset::CullNone;
-        desc.DepthStencilState              = asdx::Preset::DepthNone;
-        desc.InputLayout.NumElements        = _countof(asdx::Preset::QuadElements);
-        desc.InputLayout.pInputElementDescs = asdx::Preset::QuadElements;
+        desc.RasterizerState                = Preset::CullNone;
+        desc.DepthStencilState              = Preset::DepthNone;
+        desc.InputLayout.NumElements        = _countof(Preset::QuadElements);
+        desc.InputLayout.pInputElementDescs = Preset::QuadElements;
         desc.PrimitiveTopologyType          = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
         desc.NumRenderTargets               = 1;
         desc.RTVFormats[0]                  = format;
@@ -420,12 +420,13 @@ bool GaussianBlurEffectCS::Init(uint32_t width, uint32_t height, DXGI_FORMAT for
         D3D12_ROOT_SIGNATURE_DESC desc = {};
         desc.NumParameters      = _countof(param);
         desc.pParameters        = param;
-        desc.NumStaticSamplers  = _countof(asdx::Preset::StaticSamplers);
-        desc.pStaticSamplers    = asdx::Preset::StaticSamplers;
-        desc.Flags              = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+        desc.NumStaticSamplers  = _countof(Preset::StaticSamplers);
+        desc.pStaticSamplers    = Preset::StaticSamplers;
+        desc.Flags              = D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS;
         desc.Flags             |= D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS;
         desc.Flags             |= D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS;
         desc.Flags             |= D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
+        desc.Flags             |= D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
 
         RefPtr<ID3DBlob> blob;
         RefPtr<ID3DBlob> errorBlob;

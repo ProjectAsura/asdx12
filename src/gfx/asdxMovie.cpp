@@ -546,8 +546,8 @@ public:
         auto resDesc = pDstResource->GetDesc();
 
         D3D12_PLACED_SUBRESOURCE_FOOTPRINT layout = {};
-        UINT   rows = 0;
-        UINT64 rowSize = 0;
+        UINT   rows      = 0;
+        UINT64 rowSize   = 0;
         UINT64 totalSize = 0;
         pDevice->GetCopyableFootprints(&resDesc, 0, 1, 0, &layout, &rows, &rowSize, &totalSize);
 
@@ -879,7 +879,7 @@ bool MovieTexture::Init(const char* path)
     desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
 
     auto heapType = D3D12_HEAP_TYPE_UPLOAD;
-    if (asdx::IsSupportGpuUploadHeap())
+    if (IsSupportGpuUploadHeap())
         heapType = D3D12_HEAP_TYPE_GPU_UPLOAD;
 
     D3D12_HEAP_PROPERTIES props = {};
