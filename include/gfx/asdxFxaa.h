@@ -61,14 +61,30 @@ public:
     //! @brief      FXAAを適用します.
     //! 
     //! @param[in]      pCmd        グラフィックスコマンドリスト.
-    //! @param[in]      width       レンダーターゲットの横幅.
-    //! @param[in]      height      レンダーターゲットの縦幅.
+    //! @param[in]      rtvWidth    レンダーターゲットの横幅.
+    //! @param[in]      rtvHeight   レンダーターゲットの縦幅.
     //! @param[in]      handleSRV   入力シェーダリソースビュー.
     //-------------------------------------------------------------------------
-    void Apply(
+    void Draw(
         ID3D12GraphicsCommandList*  pCmd,
-        uint32_t                    width,
-        uint32_t                    height,
+        uint32_t                    rtvWidth,
+        uint32_t                    rtvHeight,
+        D3D12_GPU_DESCRIPTOR_HANDLE handleSRV);
+
+    //-------------------------------------------------------------------------
+    //! @brief      FXAAを適用します.
+    //! 
+    //! @param[in]      pCmd        グラフィックスコマンドリスト.
+    //! @param[in]      uavWidth    アンオーダードアクセスビューの横幅.
+    //! @param[in]      uavHeight   アンオーダードアクセスビューの縦幅.
+    //! @param[in]      haneleUAV   出力アンオーダードアクセスビュー.
+    //! @param[in]      handleSRV   入力シェーダリソースビュー.
+    //-------------------------------------------------------------------------
+    void Dispatch(
+        ID3D12GraphicsCommandList*  pCmd,
+        uint32_t                    uavWidth,
+        uint32_t                    uavHeight,
+        D3D12_GPU_DESCRIPTOR_HANDLE handleUAV,
         D3D12_GPU_DESCRIPTOR_HANDLE handleSRV);
 
 private:
@@ -76,7 +92,8 @@ private:
     // private variables.
     //=========================================================================
     asdx::RefPtr<ID3D12RootSignature>   m_RootSignature;
-    asdx::RefPtr<ID3D12PipelineState>   m_PipelineState;
+    asdx::RefPtr<ID3D12PipelineState>   m_PipelineStatePS;
+    asdx::RefPtr<ID3D12PipelineState>   m_PipelineStateCS;
 
     //=========================================================================
     // private methods.
