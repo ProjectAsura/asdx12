@@ -10,6 +10,7 @@
 //-----------------------------------------------------------------------------
 #include <utility> // for std::swap
 #include <cassert>
+#include <fnd/asdxDummyTemplate.h>
 
 
 namespace asdx {
@@ -55,7 +56,7 @@ protected:
         // list of friend classed and methods.
         //=====================================================================
         friend class ListBase;
-        template<typename T> friend class List;
+        template<typename T, typename R> friend class List;
 
     public:
         //=====================================================================
@@ -351,7 +352,7 @@ private:
 ///////////////////////////////////////////////////////////////////////////////
 // List class
 ///////////////////////////////////////////////////////////////////////////////
-template<typename T>
+template<typename T, typename R = DefaultTag>
 class List : public ListBase
 {
     //=========================================================================
@@ -363,12 +364,12 @@ public:
     ///////////////////////////////////////////////////////////////////////////
     // Node class
     ///////////////////////////////////////////////////////////////////////////
-    class Node : public ListBase::NodeBase
+    class Node : public ListBase::NodeBase, public DummyTemplate<R>
     {
         //=====================================================================
         // list of friend classes and methods.
         //=====================================================================
-        friend class List<T>;
+        friend class List<T, R>;
 
     public:
         //=====================================================================

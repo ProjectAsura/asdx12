@@ -1,6 +1,6 @@
-﻿//-----------------------------------------------------------------------------
-// File : asdxBloomEffect.h
-// Desc : Bloom Effect.
+﻿//---------------------------------------------------------------------------
+// File : asdxStarEffect.h
+// Desc : Star(Light Streak) Effect.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 #pragma once
@@ -10,16 +10,32 @@
 //-----------------------------------------------------------------------------
 #include <d3d12.h>
 #include <fnd/asdxRef.h>
-#include <fnd/asdxMath.h>
+#include <gfx/asdxBuffer.h>
 #include <gfx/asdxTarget.h>
 
 
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
-// BloomEffect class
+// STAR_TYPE enum
 ///////////////////////////////////////////////////////////////////////////////
-class BloomEffect
+enum STAR_TYPE
+{
+    STAR_DISABLE,               //!< 無効.
+    STAR_CROSS_SCREEN,          //!< クロスフィルタ.
+    STAR_CROSS_SCREEN_SPECTRAL, //!< クロスフィルタ・スペクトル.
+    STAR_SNOW_CROSS,            //!< スノークロス.
+    STAR_SNOW_CROSS_SPECTRAL,   //!< スノークロス・スペクトル.
+    STAR_SUNNY_CROSS,           //!< サニークロス.
+    STAR_SUNNY_CROSS_SPECTRAL,  //!< サニークロス・スペクトル.
+    STAR_CINEMA_VERTICAL,       //!< シネマ垂直方向.
+    STAR_CINEMA_HORIZONTAL,     //!< シネマ水平方向.
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// StarEffect class
+///////////////////////////////////////////////////////////////////////////////
+class StarEffect
 {
     //=========================================================================
     // list of friend classes and methods.
@@ -39,13 +55,13 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      コンストラクタです.
     //-------------------------------------------------------------------------
-    BloomEffect();
+    StarEffect();
 
     //-------------------------------------------------------------------------
     //! @brief      デストラクタです.
     //-------------------------------------------------------------------------
-    ~BloomEffect();
-
+    ~StarEffect();
+ 
     //-------------------------------------------------------------------------
     //! @brief      初期化処理を行います.
     //! 
@@ -63,23 +79,17 @@ public:
     void Term();
 
     //-------------------------------------------------------------------------
-    //! @brief      リサイズ処理を行います.
-    //! 
-    //! @param[in]      w       横幅.
-    //! @param[in]      h       縦幅.
-    //-------------------------------------------------------------------------
-    void Resize(uint32_t w, uint32_t h);
-
-    //-------------------------------------------------------------------------
     //! @brief      エフェクトを適用します.
     //! 
     //! @param[in]      pCmd        グラフィックスコマンドリスト.
+    //! @param[in]      type        光芒タイプ.
     //! @param[in]      width       SRVの横幅.
     //! @param[in]      height      SRVの縦幅.
-    //! @param[in]      handleSRV   入力SRV.
+    //! @param[in]      handleSRV   入力シェーダリソースビュー.
     //-------------------------------------------------------------------------
     void Dispatch(
         ID3D12GraphicsCommandList*  pCmd,
+        STAR_TYPE                   type,
         uint32_t                    width,
         uint32_t                    height,
         D3D12_GPU_DESCRIPTOR_HANDLE handleSRV);
@@ -89,37 +99,19 @@ public:
     //! 
     //! @return     SRVハンドルを返却します.
     //-------------------------------------------------------------------------
-    D3D12_GPU_DESCRIPTOR_HANDLE GetGpuHandleSRV() const;
-
-    //-------------------------------------------------------------------------
-    //! @brief      閾値を設定します.
-    //! 
-    //! @param[in]      value       BT.709ベースの輝度の閾値.
-    //-------------------------------------------------------------------------
-    void SetThreshold(float value);
-
-    //-------------------------------------------------------------------------
-    //! @brief      閾値を取得します.
-    //! 
-    //! @return     閾値を返却します.
-    //-------------------------------------------------------------------------
-    float GetThreshold() const;
+    D3D12_GPU_DESCRIPTOR_HANDLE GetHandleSRV() const;
 
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    static const uint32_t       kMaxTargetCount = 5;                    //!< ブラー用最大ターゲット数.
-    RefPtr<ID3D12RootSignature> m_RootSignature;                        //!< ルートシグニチャ.
-    RefPtr<ID3D12PipelineState> m_FirstPassPSO;                         //!< 初期パス用パイプラインステートオブジェクト.
-    RefPtr<ID3D12PipelineState> m_DownPassPSO;                          //!< ダウンサンプル用パイプラインステートオブジェクト.
-    RefPtr<ID3D12PipelineState> m_CompositePSO;                         //!< 合成用パイプランステートオブジェクト.
-    RefPtr<ID3D12PipelineState> m_UpscalePSO;                           //!< アップスケール用パイプラインステートオブジェクト.
-    ComputeTarget               m_BlurTarget[kMaxTargetCount];          //!< 縮小サイズターゲット.
-    ComputeTarget               m_ComputeTarget;                        //!< 元解像度ターゲット.
-    D3D12_RESOURCE_STATES       m_BlurStates[kMaxTargetCount] = {};     //!< 縮小用ステート.
-    D3D12_RESOURCE_STATES       m_States                      = {};     //!< 元解像度用ステート.
-    float                       m_Threshold                   = 1.0f;   //!< 閾値.
+    RefPtr<ID3D12RootSignature>     m_RootSignature;        //!< ルートシグニチャ.
+    RefPtr<ID3D12PipelineState>     m_StarPSO;              //!< パイプラインステート.
+    RefPtr<ID3D12PipelineState>     m_CompositePSO;
+    ComputeTarget                   m_PingPongTarget[2];
+    ComputeTarget                   m_OutputTarget;
+    D3D12_RESOURCE_STATES           m_PingPongStates[2];
+    D3D12_RESOURCE_STATES           m_OutputStates;
 
     //=========================================================================
     // private methods.

@@ -65,4 +65,14 @@ uint2 RemapLane16x16(uint2 dispatchId, uint groupIndex)
     return (dispatchGroupId * 16) + remappedId;
 }
 
+//-----------------------------------------------------------------------------
+//      解像度を取得します.
+//-----------------------------------------------------------------------------
+uint2 GetTargetSize(uint value)
+{
+    uint w = value & 0xFFFF;
+    uint h = (value >> 16) & 0xFFFF;
+    return uint2(w, h);
+}
+
 #endif//ASDX_COMPUTE_UTIL_HLSLI

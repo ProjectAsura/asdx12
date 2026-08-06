@@ -1,6 +1,6 @@
 ﻿//-----------------------------------------------------------------------------
-// File : asdxKawaseGlareEffect.cpp
-// Desc : Kawase's Glare Effect.
+// File : asdxKawaseBloomEffect.cpp
+// Desc : Kawase's Bloom Effect.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 
@@ -8,7 +8,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <fnd/asdxLogger.h>
-#include <gfx/asdxKawaseGlareEffect.h>
+#include <gfx/asdxKawaseBloomEffect.h>
 #include <gfx/asdxDevice.h>
 #include <gfx/asdxPresetState.h>
 #include <gfx/asdxCommandList.h>
@@ -137,25 +137,25 @@ void ComputeGaussWeights(float sigma, BloomDownParam& param)
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
-// KawaseGlareEffect class
+// KawaseBloomEffect class
 ///////////////////////////////////////////////////////////////////////////////
 
 //-----------------------------------------------------------------------------
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
-KawaseGlareEffect::KawaseGlareEffect()
+KawaseBloomEffect::KawaseBloomEffect()
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      デストラクタです.
 //-----------------------------------------------------------------------------
-KawaseGlareEffect::~KawaseGlareEffect()
+KawaseBloomEffect::~KawaseBloomEffect()
 { Term(); }
 
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool KawaseGlareEffect::Init(uint32_t w, uint32_t h, DXGI_FORMAT format)
+bool KawaseBloomEffect::Init(uint32_t w, uint32_t h, DXGI_FORMAT format)
 {
     if (w == 0 || h == 0 || format == DXGI_FORMAT_UNKNOWN)
         return false;
@@ -320,7 +320,7 @@ bool KawaseGlareEffect::Init(uint32_t w, uint32_t h, DXGI_FORMAT format)
 //-----------------------------------------------------------------------------
 //      終了処理を行います.
 //-----------------------------------------------------------------------------
-void KawaseGlareEffect::Term()
+void KawaseBloomEffect::Term()
 {
     m_BloomFirstPassPSO .Reset();
     m_BloomDownPassPSO  .Reset();
@@ -335,7 +335,7 @@ void KawaseGlareEffect::Term()
 //-----------------------------------------------------------------------------
 //      リサイズ処理を行います.
 //-----------------------------------------------------------------------------
-void KawaseGlareEffect::Resize(uint32_t w, uint32_t h)
+void KawaseBloomEffect::Resize(uint32_t w, uint32_t h)
 {
     for(auto i=0u; i<kMaxTargetCount; i+=2)
     {
@@ -353,43 +353,19 @@ void KawaseGlareEffect::Resize(uint32_t w, uint32_t h)
 //-----------------------------------------------------------------------------
 //      制御パラメータを設定します.
 //-----------------------------------------------------------------------------
-void KawaseGlareEffect::SetParam(const Param& param)
+void KawaseBloomEffect::SetParam(const Param& param)
 { m_Param = param; }
 
 //-----------------------------------------------------------------------------
 //      制御パラメータを取得します.
 //-----------------------------------------------------------------------------
-const KawaseGlareEffect::Param& KawaseGlareEffect::GetParam() const
+const KawaseBloomEffect::Param& KawaseBloomEffect::GetParam() const
 { return m_Param; }
 
 //-----------------------------------------------------------------------------
 //      エフェクトを適用します.
 //-----------------------------------------------------------------------------
-void KawaseGlareEffect::Apply
-(
-    ID3D12GraphicsCommandList*  pCmd,
-    uint32_t                    width,
-    uint32_t                    height,
-    D3D12_GPU_DESCRIPTOR_HANDLE handleSRV
-)
-{
-    // ブルームを適用.
-    ApplyBloom(pCmd, width, height, handleSRV);
-}
-
-//-----------------------------------------------------------------------------
-//      SRVハンドルを取得します.
-//-----------------------------------------------------------------------------
-D3D12_GPU_DESCRIPTOR_HANDLE KawaseGlareEffect::GetGpuHandleSRV(uint8_t index) const
-{
-    assert(index < kMaxTargetCount);
-    return m_ComputeTarget[index].GetGpuHandleSRV();
-}
-
-//-----------------------------------------------------------------------------
-//      ブルームエフェクトを適用します.
-//-----------------------------------------------------------------------------
-void KawaseGlareEffect::ApplyBloom
+void KawaseBloomEffect::Dispatch
 (
     ID3D12GraphicsCommandList*  pCmd,
     uint32_t                    width,
@@ -539,6 +515,24 @@ void KawaseGlareEffect::ApplyBloom
         m_TargetStates[0] = D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE;
         pCmd->ResourceBarrier(1, barriers);
     }
+}
+
+//-----------------------------------------------------------------------------
+//      SRVハンドルを取得します.
+//-----------------------------------------------------------------------------
+D3D12_GPU_DESCRIPTOR_HANDLE KawaseBloomEffect::GetGpuHandleSRV(uint8_t index) const
+{
+    assert(index < kMaxTargetCount);
+    return m_ComputeTarget[index].GetGpuHandleSRV();
+}
+
+//-----------------------------------------------------------------------------
+//      UAVハンドルを取得します.
+//-----------------------------------------------------------------------------
+D3D12_GPU_DESCRIPTOR_HANDLE KawaseBloomEffect::GetGpuHandleUAV(uint8_t index) const
+{
+    assert(index < kMaxTargetCount);
+    return m_ComputeTarget[index].GetGpuHandleUAV();
 }
 
 } // namespace asdx

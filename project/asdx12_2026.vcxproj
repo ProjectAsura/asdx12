@@ -259,7 +259,7 @@
     <ClCompile Include="..\src\gfx\asdxGaussianBlurEffect.cpp" />
     <ClCompile Include="..\src\gfx\asdxGfxMisc.cpp" />
     <ClCompile Include="..\src\gfx\asdxIBLBaker.cpp" />
-    <ClCompile Include="..\src\gfx\asdxKawaseGlareEffect.cpp" />
+    <ClCompile Include="..\src\gfx\asdxKawaseBloomEffect.cpp" />
     <ClCompile Include="..\src\gfx\asdxLine.cpp" />
     <ClCompile Include="..\src\gfx\asdxMapChip.cpp" />
     <ClCompile Include="..\src\gfx\asdxModel.cpp" />
@@ -276,6 +276,7 @@
     <ClCompile Include="..\src\gfx\asdxSkyBox.cpp" />
     <ClCompile Include="..\src\gfx\asdxSprite.cpp" />
     <ClCompile Include="..\src\gfx\asdxSpriteAnimation.cpp" />
+    <ClCompile Include="..\src\gfx\asdxStarEffect.cpp" />
     <ClCompile Include="..\src\gfx\asdxTarget.cpp" />
     <ClCompile Include="..\src\gfx\asdxTexture.cpp" />
     <ClCompile Include="..\src\gfx\asdxTextureManager.cpp" />
@@ -327,6 +328,7 @@
     <ClInclude Include="..\include\fnd\asdxBlackboard.h" />
     <ClInclude Include="..\include\fnd\asdxBlob.h" />
     <ClInclude Include="..\include\fnd\asdxChunkAllocator.h" />
+    <ClInclude Include="..\include\fnd\asdxDummyTemplate.h" />
     <ClInclude Include="..\include\fnd\asdxDragTracker.h" />
     <ClInclude Include="..\include\fnd\asdxFileIO.h" />
     <ClInclude Include="..\include\fnd\asdxFrameHeap.h" />
@@ -378,10 +380,9 @@
     <ClInclude Include="..\include\gfx\asdxFade.h" />
     <ClInclude Include="..\include\gfx\asdxFont.h" />
     <ClInclude Include="..\include\gfx\asdxFxaa.h" />
-    <ClInclude Include="..\include\gfx\asdxGaussianBlurEffect.h" />
     <ClInclude Include="..\include\gfx\asdxGfxMisc.h" />
     <ClInclude Include="..\include\gfx\asdxIBLBaker.h" />
-    <ClInclude Include="..\include\gfx\asdxKawaseGlareEffect.h" />
+    <ClInclude Include="..\include\gfx\asdxKawaseBloomEffect.h" />
     <ClInclude Include="..\include\gfx\asdxLine.h" />
     <ClInclude Include="..\include\gfx\asdxMapChip.h" />
     <ClInclude Include="..\include\gfx\asdxModel.h" />
@@ -398,6 +399,7 @@
     <ClInclude Include="..\include\gfx\asdxSkyBox.h" />
     <ClInclude Include="..\include\gfx\asdxSprite.h" />
     <ClInclude Include="..\include\gfx\asdxSpriteAnimation.h" />
+    <ClInclude Include="..\include\gfx\asdxStarEffect.h" />
     <ClInclude Include="..\include\gfx\asdxTarget.h" />
     <ClInclude Include="..\include\gfx\asdxTexture.h" />
     <ClInclude Include="..\include\gfx\asdxTextureManager.h" />
@@ -637,6 +639,18 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMT|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMD|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMD|x64'">Vertex</ShaderType>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxStarCompositeCS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMD|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMT|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMT|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMD|x64'">Compute</ShaderType>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxStarCS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMD|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMT|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMT|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMD|x64'">Compute</ShaderType>
     </FxCompile>
     <FxCompile Include="..\res\shaders\asdxTaaCS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMT|x64'">Compute</ShaderType>

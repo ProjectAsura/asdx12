@@ -306,10 +306,10 @@ public:
     //! @param[in]      index       インデックス.
     //! @param[in]      value       設定する値.
     //-------------------------------------------------------------------------
-    void Set(size_t index, bool value)
+    void Set(uint8_t index, bool value)
     {
         assert(index < sizeof(T) * 8);
-        auto bit = T(0x1 << index);
+        auto bit = T(0x1) << index;
         if (value)
         { m_Flags |= bit; }
         else
@@ -322,10 +322,10 @@ public:
     //! @param[in]      index       インデックス.
     //! @return     フラグを返却します.
     //-------------------------------------------------------------------------
-    bool Get(size_t index) const
+    bool Get(uint8_t index) const
     {
         assert(index < sizeof(T) * 8);
-        auto bit = T(0x1 << index);
+        auto bit = T(0x1) << index;
         return !!(m_Flags & bit);
     }
 

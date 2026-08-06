@@ -444,10 +444,13 @@
     <ClCompile Include="..\src\gfx\asdxBloomEffect.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxKawaseGlareEffect.cpp">
+    <ClCompile Include="..\src\gfx\asdxFxaa.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxFxaa.cpp">
+    <ClCompile Include="..\src\gfx\asdxStarEffect.cpp">
+      <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gfx\asdxKawaseBloomEffect.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
   </ItemGroup>
@@ -782,9 +785,6 @@
     <ClInclude Include="..\include\gfx\asdxColorEffect.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\gfx\asdxGaussianBlurEffect.h">
-      <Filter>ヘッダー ファイル\gfx</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\gfx\asdxRadialBlurEffect.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
@@ -809,10 +809,16 @@
     <ClInclude Include="..\include\gfx\asdxBloomEffect.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\gfx\asdxKawaseGlareEffect.h">
+    <ClInclude Include="..\include\gfx\asdxFxaa.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\gfx\asdxFxaa.h">
+    <ClInclude Include="..\include\gfx\asdxStarEffect.h">
+      <Filter>ヘッダー ファイル\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fnd\asdxDummyTemplate.h">
+      <Filter>ヘッダー ファイル\fnd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\gfx\asdxKawaseBloomEffect.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
   </ItemGroup>
@@ -976,6 +982,12 @@
       <Filter>リソース ファイル\shaders</Filter>
     </FxCompile>
     <FxCompile Include="..\res\shaders\asdxFxaaCS.hlsl">
+      <Filter>リソース ファイル\shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxStarCS.hlsl">
+      <Filter>リソース ファイル\shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxStarCompositeCS.hlsl">
       <Filter>リソース ファイル\shaders</Filter>
     </FxCompile>
   </ItemGroup>

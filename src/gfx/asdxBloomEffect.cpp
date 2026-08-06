@@ -305,7 +305,7 @@ void BloomEffect::Resize(uint32_t w, uint32_t h)
 //-----------------------------------------------------------------------------
 //      エフェクトを適用します.
 //-----------------------------------------------------------------------------
-void BloomEffect::Apply
+void BloomEffect::Dispatch
 (
     ID3D12GraphicsCommandList*  pCmd,
     uint32_t                    width,
