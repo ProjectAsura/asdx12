@@ -253,6 +253,7 @@
     <ClCompile Include="..\src\gfx\asdxDescriptorHolder.cpp" />
     <ClCompile Include="..\src\gfx\asdxDevice.cpp" />
     <ClCompile Include="..\src\gfx\asdxDred.cpp" />
+    <ClCompile Include="..\src\gfx\asdxEnhancedBarrier.cpp" />
     <ClCompile Include="..\src\gfx\asdxFade.cpp" />
     <ClCompile Include="..\src\gfx\asdxFont.cpp" />
     <ClCompile Include="..\src\gfx\asdxFxaa.cpp" />
@@ -367,6 +368,7 @@
     <ClInclude Include="..\include\fw\asdxFrameTask.h" />
     <ClInclude Include="..\include\fw\asdxTask.h" />
     <ClInclude Include="..\include\gfx\asdxAllocationHolder.h" />
+    <ClInclude Include="..\include\gfx\asdxEnhancedBarrier.h" />
     <ClInclude Include="..\include\gfx\asdxLegacyBarrier.h" />
     <ClInclude Include="..\include\gfx\asdxBloomEffect.h" />
     <ClInclude Include="..\include\gfx\asdxBuffer.h" />
