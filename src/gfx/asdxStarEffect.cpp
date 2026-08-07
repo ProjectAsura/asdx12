@@ -14,7 +14,7 @@
 #include <gfx/asdxStarEffect.h>
 #include <gfx/asdxDevice.h>
 #include <gfx/asdxPresetState.h>
-#include <gfx/asdxCommandList.h>
+#include <gfx/asdxLegacyBarrier.h>
 
 
 namespace {
@@ -420,7 +420,7 @@ void StarEffect::Dispatch
         for(auto j=0; j<kSampleCount; ++j)
         {
             auto aberrColor = asdx::Vector4::Lerp(kAberrationTable[j], kWhiteColor, ratio);
-            colors[i][j] = asdx::Vector4::Lerp(kWhiteColor, aberrColor, glareDef.ChromaticAberration);
+            colors[i][j]    = asdx::Vector4::Lerp(kWhiteColor, aberrColor, glareDef.ChromaticAberration);
         }
     }
 
@@ -449,6 +449,8 @@ void StarEffect::Dispatch
     D3D12_GPU_DESCRIPTOR_HANDLE handleUAV = m_PingPongTarget[0].GetGpuHandleSRV();
 
     pCmd->SetComputeRootSignature(m_RootSignature.GetPtr());
+
+    LegacyBarrier barrier;
 
     // 方向ループ.
     for(auto d=0; d<starDef.StarLineCount; ++d)
@@ -489,20 +491,15 @@ void StarEffect::Dispatch
                 param.Offsets[i].y = offset.y;
             }
 
-            D3D12_RESOURCE_BARRIER barrier[2] = {};
-            SetTransitionBarrier(barrier[0], m_PingPongTarget[dstIdx].GetResource(), m_PingPongStates[dstIdx], D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+            barrier.Transition(m_PingPongTarget[dstIdx].GetResource(), m_PingPongStates[dstIdx], D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
             m_PingPongStates[dstIdx] = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 
-            if (p == 0)
+            if (p != 0)
             {
-                pCmd->ResourceBarrier(1, barrier);
-            }
-            else
-            {
-                SetTransitionBarrier(barrier[1], m_PingPongTarget[srcIdx].GetResource(), m_PingPongStates[srcIdx], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+                barrier.Transition(m_PingPongTarget[srcIdx].GetResource(), m_PingPongStates[srcIdx], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
                 m_PingPongStates[srcIdx] = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-                pCmd->ResourceBarrier(2, barrier);
             }
+            barrier.Apply(pCmd);
 
             // 描画.
             pCmd->SetComputeRoot32BitConstants(ROOT_PARAM_CBV0, 49, &param, 0);
@@ -510,8 +507,8 @@ void StarEffect::Dispatch
             pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_UAV0, handleUAV);
             pCmd->Dispatch(threadX, threadY, 1);
 
-            SetUAVBarrier(barrier[0], m_PingPongTarget[dstIdx].GetResource());
-            pCmd->ResourceBarrier(1, barrier);
+            barrier.UAV(m_PingPongTarget[dstIdx].GetResource());
+            barrier.Apply(pCmd);
 
             stepUV       *= kSampleCount;
             attnPowScale *= kSampleCount;
@@ -525,23 +522,24 @@ void StarEffect::Dispatch
 
         // 出力用ターゲットに合成.
         {
-            D3D12_RESOURCE_BARRIER barrier[2];
-            SetTransitionBarrier(barrier[0], m_PingPongTarget[srcIdx].GetResource(), m_PingPongStates[srcIdx], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-            SetTransitionBarrier(barrier[1], m_OutputTarget.GetResource(), m_OutputStates, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+            barrier.Transition(m_PingPongTarget[srcIdx].GetResource(), m_PingPongStates[srcIdx], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+            barrier.Transition(m_OutputTarget.GetResource(), m_OutputStates, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+            barrier.Apply(pCmd);
             m_PingPongStates[srcIdx] = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
             m_OutputStates = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-            pCmd->ResourceBarrier(2, barrier);
 
             pCmd->SetPipelineState(m_CompositePSO.GetPtr());
             pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_SRV0, handleSRV);
             pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_UAV0, m_OutputTarget.GetGpuHandleUAV());
             pCmd->Dispatch(threadX, threadY, 1);
 
-            UAVBarrier(pCmd, m_OutputTarget.GetResource());
+            barrier.UAV(m_OutputTarget.GetResource());
+            barrier.Apply(pCmd);
         }
     }
 
-    TransitionBarrier(pCmd, m_OutputTarget.GetResource(), m_OutputStates, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+    barrier.Transition(m_OutputTarget.GetResource(), m_OutputStates, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+    barrier.Apply(pCmd);
     m_OutputStates = D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE;
 }
 

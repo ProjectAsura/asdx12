@@ -260,6 +260,7 @@
     <ClCompile Include="..\src\gfx\asdxGfxMisc.cpp" />
     <ClCompile Include="..\src\gfx\asdxIBLBaker.cpp" />
     <ClCompile Include="..\src\gfx\asdxKawaseBloomEffect.cpp" />
+    <ClCompile Include="..\src\gfx\asdxLegacyBarrier.cpp" />
     <ClCompile Include="..\src\gfx\asdxLine.cpp" />
     <ClCompile Include="..\src\gfx\asdxMapChip.cpp" />
     <ClCompile Include="..\src\gfx\asdxModel.cpp" />
@@ -366,6 +367,7 @@
     <ClInclude Include="..\include\fw\asdxFrameTask.h" />
     <ClInclude Include="..\include\fw\asdxTask.h" />
     <ClInclude Include="..\include\gfx\asdxAllocationHolder.h" />
+    <ClInclude Include="..\include\gfx\asdxLegacyBarrier.h" />
     <ClInclude Include="..\include\gfx\asdxBloomEffect.h" />
     <ClInclude Include="..\include\gfx\asdxBuffer.h" />
     <ClInclude Include="..\include\gfx\asdxCamera.h" />

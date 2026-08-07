@@ -11,7 +11,7 @@
 #include <gfx/asdxKawaseBloomEffect.h>
 #include <gfx/asdxDevice.h>
 #include <gfx/asdxPresetState.h>
-#include <gfx/asdxCommandList.h>
+#include <gfx/asdxLegacyBarrier.h>
 
 
 namespace {
@@ -378,7 +378,7 @@ void KawaseBloomEffect::Dispatch
     assert(height != 0);
     assert(handleSRV.ptr != 0);
 
-    D3D12_RESOURCE_BARRIER barriers[3] = {};
+    LegacyBarrier barrier;
 
     pCmd->SetComputeRootSignature(m_RootSignature.GetPtr());
 
@@ -394,10 +394,9 @@ void KawaseBloomEffect::Dispatch
         auto threadX = (param.SizeX + 7u) / 8u;
         auto threadY = (param.SizeY + 7u) / 8u;
 
-        SetTransitionBarrier(barriers[0], m_ComputeTarget[1].GetResource(), m_TargetStates[1], D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        barrier.Transition( m_ComputeTarget[1].GetResource(), m_TargetStates[1], D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        barrier.Apply(pCmd);
         m_TargetStates[1] = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-
-        pCmd->ResourceBarrier(1, barriers);
 
         pCmd->SetPipelineState(m_BloomFirstPassPSO.GetPtr());
         pCmd->SetComputeRoot32BitConstants(ROOT_PARAM_CBV0, 2, &param, 0);
@@ -434,14 +433,12 @@ void KawaseBloomEffect::Dispatch
 
             // 水平方向ブラー.
             {
-                SetUAVBarrier(barriers[0], m_ComputeTarget[src].GetResource());
-                SetTransitionBarrier(barriers[1], m_ComputeTarget[src].GetResource(), m_TargetStates[src], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-                SetTransitionBarrier(barriers[2], m_ComputeTarget[dst].GetResource(), m_TargetStates[dst], D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
- 
+                barrier.UAV(m_ComputeTarget[src].GetResource());
+                barrier.Transition(m_ComputeTarget[src].GetResource(), m_TargetStates[src], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+                barrier.Transition(m_ComputeTarget[dst].GetResource(), m_TargetStates[dst], D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+                barrier.Apply(pCmd); 
                 m_TargetStates[src] = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
                 m_TargetStates[dst] = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-
-                pCmd->ResourceBarrier(3, barriers);
 
                 param.Flags = 0;
                 pCmd->SetComputeRoot32BitConstants(ROOT_PARAM_CBV0, 18, &param, 0);
@@ -455,14 +452,12 @@ void KawaseBloomEffect::Dispatch
 
             // 垂直方向ブラー.
             {
-                SetUAVBarrier(barriers[0], m_ComputeTarget[src].GetResource());
-                SetTransitionBarrier(barriers[1], m_ComputeTarget[src].GetResource(), m_TargetStates[src], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-                SetTransitionBarrier(barriers[2], m_ComputeTarget[dst].GetResource(), m_TargetStates[dst], D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-
+                barrier.UAV(m_ComputeTarget[src].GetResource());
+                barrier.Transition(m_ComputeTarget[src].GetResource(), m_TargetStates[src], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+                barrier.Transition(m_ComputeTarget[dst].GetResource(), m_TargetStates[dst], D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+                barrier.Apply(pCmd);
                 m_TargetStates[src] = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
                 m_TargetStates[dst] = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-
-                pCmd->ResourceBarrier(3, barriers);
 
                 param.Flags = 1;
                 pCmd->SetComputeRoot32BitConstants(ROOT_PARAM_CBV0, 18, &param, 0);
@@ -498,12 +493,12 @@ void KawaseBloomEffect::Dispatch
             auto threadX = (param.DstW + 7u) / 8u;
             auto threadY = (param.DstH + 7u) / 8u;
 
-            SetUAVBarrier(barriers[0], m_ComputeTarget[src].GetResource());
-            SetTransitionBarrier(barriers[1], m_ComputeTarget[src].GetResource(), m_TargetStates[src], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-            SetTransitionBarrier(barriers[2], m_ComputeTarget[dst].GetResource(), m_TargetStates[dst], D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+            barrier.UAV(m_ComputeTarget[src].GetResource());
+            barrier.Transition(m_ComputeTarget[src].GetResource(), m_TargetStates[src], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+            barrier.Transition(m_ComputeTarget[dst].GetResource(), m_TargetStates[dst], D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+            barrier.Apply(pCmd);
             m_TargetStates[src] = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
             m_TargetStates[dst] = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-            pCmd->ResourceBarrier(3, barriers);
 
             pCmd->SetComputeRoot32BitConstants(ROOT_PARAM_CBV0, 2, &param, 0);
             pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_SRV0, m_ComputeTarget[src].GetGpuHandleSRV());
@@ -511,9 +506,9 @@ void KawaseBloomEffect::Dispatch
             pCmd->Dispatch(threadX, threadY, 1);
         }
 
-        SetTransitionBarrier(barriers[0], m_ComputeTarget[0].GetResource(), m_TargetStates[0], D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+        barrier.Transition(m_ComputeTarget[0].GetResource(), m_TargetStates[0], D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+        barrier.Apply(pCmd);
         m_TargetStates[0] = D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE;
-        pCmd->ResourceBarrier(1, barriers);
     }
 }
 

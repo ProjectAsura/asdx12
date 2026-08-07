@@ -11,7 +11,7 @@
 #include <gfx/asdxBloomEffect.h>
 #include <gfx/asdxDevice.h>
 #include <gfx/asdxPresetState.h>
-#include <gfx/asdxCommandList.h>
+#include <gfx/asdxLegacyBarrier.h>
 
 
 namespace {
@@ -330,7 +330,7 @@ void BloomEffect::Dispatch
 
     pCmd->SetComputeRootSignature(m_RootSignature.GetPtr());
 
-    D3D12_RESOURCE_BARRIER barriers[2] = {};
+    LegacyBarrier barrier;
 
     // 最初のパス.
     {
@@ -346,9 +346,9 @@ void BloomEffect::Dispatch
         param.dstH      = uint16_t(dstH);
         param.threshold = m_Threshold;
 
-        SetTransitionBarrier(barriers[0], m_BlurTarget[0].GetResource(), m_BlurStates[0], D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        barrier.Transition(m_BlurTarget[0].GetResource(), m_BlurStates[0], D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        barrier.Apply(pCmd);
         m_BlurStates[0] = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-        pCmd->ResourceBarrier(1, barriers);
 
         pCmd->SetPipelineState(m_FirstPassPSO.GetPtr());
         pCmd->SetComputeRoot32BitConstants(ROOT_PARAM_CBV0, 4, &param, 0);
@@ -360,7 +360,8 @@ void BloomEffect::Dispatch
 
         pCmd->Dispatch(threadX, threadY, 1);
 
-        UAVBarrier(pCmd, m_BlurTarget[0].GetResource());
+        barrier.UAV(m_BlurTarget[0].GetResource());
+        barrier.Apply(pCmd);
     }
 
     // ダウンサンプルパス.
@@ -393,11 +394,11 @@ void BloomEffect::Dispatch
             param.dstW = uint16_t(dstW);
             param.dstH = uint16_t(dstH);
 
-            SetTransitionBarrier(barriers[0], srcTarget.GetResource(), (*pSrcStates), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-            SetTransitionBarrier(barriers[1], dstTarget.GetResource(), (*pDstStates), D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+            barrier.Transition(srcTarget.GetResource(), (*pSrcStates), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+            barrier.Transition(dstTarget.GetResource(), (*pDstStates), D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+            barrier.Apply(pCmd);
             (*pSrcStates) = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
             (*pDstStates) = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-            pCmd->ResourceBarrier(2, barriers);
 
             pCmd->SetComputeRoot32BitConstants(ROOT_PARAM_CBV0, 4, &param, 0);
             pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_SRV0, srcTarget.GetGpuHandleSRV());
@@ -408,7 +409,8 @@ void BloomEffect::Dispatch
 
             pCmd->Dispatch(threadX, threadY, 1);
 
-            UAVBarrier(pCmd, dstTarget.GetResource());
+            barrier.UAV(dstTarget.GetResource());
+            barrier.Apply(pCmd);
         }
     }
 
@@ -443,11 +445,11 @@ void BloomEffect::Dispatch
             param.dstW = uint16_t(dstW);
             param.dstH = uint16_t(dstH);
 
-            SetTransitionBarrier(barriers[0], srcTarget.GetResource(), (*pSrcStates), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-            SetTransitionBarrier(barriers[1], dstTarget.GetResource(), (*pDstStates), D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+            barrier.Transition(srcTarget.GetResource(), (*pSrcStates), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+            barrier.Transition(dstTarget.GetResource(), (*pDstStates), D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+            barrier.Apply(pCmd);
             (*pSrcStates) = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
             (*pDstStates) = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-            pCmd->ResourceBarrier(2, barriers);
 
             pCmd->SetComputeRoot32BitConstants(ROOT_PARAM_CBV0, 4, &param, 0);
             pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_SRV0, srcTarget.GetGpuHandleSRV());
@@ -458,7 +460,8 @@ void BloomEffect::Dispatch
 
             pCmd->Dispatch(threadX, threadY, 1);
 
-            UAVBarrier(pCmd, dstTarget.GetResource());
+            barrier.UAV(dstTarget.GetResource());
+            barrier.Apply(pCmd);
         }
 
         // 最終解像度にアップスケール.
@@ -485,11 +488,11 @@ void BloomEffect::Dispatch
 
             pCmd->SetPipelineState(m_UpscalePSO.GetPtr());
 
-            SetTransitionBarrier(barriers[0], srcTarget.GetResource(), (*pSrcStates), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-            SetTransitionBarrier(barriers[1], dstTarget.GetResource(), (*pDstStates), D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+            barrier.Transition(srcTarget.GetResource(), (*pSrcStates), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+            barrier.Transition(dstTarget.GetResource(), (*pDstStates), D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+            barrier.Apply(pCmd);
             (*pSrcStates) = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
             (*pDstStates) = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-            pCmd->ResourceBarrier(2, barriers);
 
             pCmd->SetComputeRoot32BitConstants(ROOT_PARAM_CBV0, 4, &param, 0);
             pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_SRV0, srcTarget.GetGpuHandleSRV());
@@ -500,7 +503,8 @@ void BloomEffect::Dispatch
 
             pCmd->Dispatch(threadX, threadY, 1);
 
-            UAVBarrier(pCmd, dstTarget.GetResource());
+            barrier.UAV(dstTarget.GetResource());
+            barrier.Apply(pCmd);
         }
 
         // 最後に元画像を追加.
@@ -520,7 +524,8 @@ void BloomEffect::Dispatch
 
             pCmd->SetPipelineState(m_CompositePSO.GetPtr());
 
-            TransitionBarrier(pCmd, m_ComputeTarget.GetResource(), m_States, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+            barrier.Transition(m_ComputeTarget.GetResource(), m_States, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+            barrier.Apply(pCmd);
             m_States = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 
             pCmd->SetComputeRoot32BitConstants(ROOT_PARAM_CBV0, 4, &param, 0);
@@ -532,10 +537,12 @@ void BloomEffect::Dispatch
 
             pCmd->Dispatch(threadX, threadY, 1);
 
-            UAVBarrier(pCmd, m_ComputeTarget.GetResource());
+            barrier.UAV(m_ComputeTarget.GetResource());
+            barrier.Apply(pCmd);
         }
 
-        TransitionBarrier(pCmd, m_ComputeTarget.GetResource(), m_States, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+        barrier.Transition(m_ComputeTarget.GetResource(), m_States, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+        barrier.Apply(pCmd);
         m_States = D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE;
     }
 }
