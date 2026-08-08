@@ -19,7 +19,6 @@ namespace {
 //-----------------------------------------------------------------------------
 // Shaders.
 //-----------------------------------------------------------------------------
-#include "../res/shaders/Compiled/asdxGaussianBlurPS.inc"
 #include "../res/shaders/Compiled/asdxGaussianBlurCS.inc"
 
 

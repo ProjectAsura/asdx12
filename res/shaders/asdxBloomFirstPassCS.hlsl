@@ -52,8 +52,8 @@ void main(uint3 dispatchId : SV_DispatchThreadID, uint groupIndex : SV_GroupInde
     if (any(remapId >= dstSize))
         return;
 
-    float2 uv = float2(remapId + 0.5f.xx) / float2(dstSize);
-    float2 invSrcSize = GetInvTargetSize(SrcResolution);
+    float2 invSize = 1.0f.xx / float2(dstSize);
+    float2 uv = float2(remapId + 0.5f.xx) * invSize;
 
     const float exposure = 1.0f;
     float4 result = 0.0f.xxxx;
@@ -65,10 +65,10 @@ void main(uint3 dispatchId : SV_DispatchThreadID, uint groupIndex : SV_GroupInde
 
     // 中心4テクセル.
     {
-        float4 c0 = SampleColor(uv + float2(-0.5f, -0.5f) * invSrcSize);
-        float4 c1 = SampleColor(uv + float2( 0.5f, -0.5f) * invSrcSize);
-        float4 c2 = SampleColor(uv + float2(-0.5f,  0.5f) * invSrcSize);
-        float4 c3 = SampleColor(uv + float2( 0.5f,  0.5f) * invSrcSize);
+        float4 c0 = SampleColor(uv + float2(-0.5f, -0.5f) * invSize);
+        float4 c1 = SampleColor(uv + float2( 0.5f, -0.5f) * invSize);
+        float4 c2 = SampleColor(uv + float2(-0.5f,  0.5f) * invSize);
+        float4 c3 = SampleColor(uv + float2( 0.5f,  0.5f) * invSize);
 
         float w0 = KarisAntiFireflyWeight(c0.xyz, 1.0f);
         float w1 = KarisAntiFireflyWeight(c1.xyz, 1.0f);
@@ -91,10 +91,10 @@ void main(uint3 dispatchId : SV_DispatchThreadID, uint groupIndex : SV_GroupInde
 
     // 4角をフェッチ (A, C, G, I).
     float4 corner[4];
-    corner[0] = SampleColor(uv + float2( offsetX,  offsetY) * invSrcSize); // A
-    corner[1] = SampleColor(uv + float2( offsetX, -offsetY) * invSrcSize); // G
-    corner[2] = SampleColor(uv + float2(-offsetX,  offsetY) * invSrcSize); // C
-    corner[3] = SampleColor(uv + float2(-offsetX, -offsetY) * invSrcSize); // I.
+    corner[0] = SampleColor(uv + float2( offsetX,  offsetY) * invSize); // A
+    corner[1] = SampleColor(uv + float2( offsetX, -offsetY) * invSize); // G
+    corner[2] = SampleColor(uv + float2(-offsetX,  offsetY) * invSize); // C
+    corner[3] = SampleColor(uv + float2(-offsetX, -offsetY) * invSize); // I.
 
     // 残りの十字方向は，Quad Intrinsicsで取得 (B, D, E, F, H)
     float4 cross[5];
