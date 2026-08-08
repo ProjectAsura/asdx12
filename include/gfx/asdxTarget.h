@@ -471,6 +471,13 @@ public:
     D3D12_GPU_DESCRIPTOR_HANDLE GetGpuHandleUAV(uint32_t index = 0) const;
 
     //-------------------------------------------------------------------------
+    //! @brief      クリア用CPUディスクリプタハンドルを取得します(UAV用).
+    //! 
+    //! @return     クリア用CPUディスクリプタハンドルを返却します(UAV用).
+    //-------------------------------------------------------------------------
+    D3D12_CPU_DESCRIPTOR_HANDLE GetClearCpuHandleUAV(uint32_t index = 0) const;
+
+    //-------------------------------------------------------------------------
     //! @brief      バインドレスインデックスを取得します(SRV用).
     //!
     //! @return     バインドレスインデックスを返却します(SRV用).
@@ -558,6 +565,7 @@ private:
     RefPtr<ID3D12Resource>          m_pResource;
     AllocationHolder                m_HolderAlloc;
     std::vector<DescriptorHolder>   m_HolderUAV;
+    std::vector<DescriptorHolder>   m_HolderClearUAV;
     DescriptorHolder                m_HolderSRV;
     TargetDesc                      m_Desc;
     uint32_t                        m_Stride    = 0;

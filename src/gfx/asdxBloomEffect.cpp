@@ -22,7 +22,7 @@ namespace {
 #include "../res/shaders/Compiled/asdxBloomFirstPassCS.inc"
 #include "../res/shaders/Compiled/asdxBloomDownPassCS.inc"
 #include "../res/shaders/Compiled/asdxBloomCompositeCS.inc"
-#include "../res/shaders/Compiled/asdxSimpleUpscaleCS.inc"
+#include "../res/shaders/Compiled/asdxTentCopyCS.inc"
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -158,7 +158,7 @@ bool BloomEffect::Init(uint32_t w, uint32_t h, DXGI_FORMAT format)
     {
         D3D12_COMPUTE_PIPELINE_STATE_DESC desc = {};
         desc.pRootSignature = m_RootSignature.GetPtr();
-        desc.CS             = { asdxSimpleUpscaleCS, sizeof(asdxSimpleUpscaleCS) };
+        desc.CS             = { asdxTentCopyCS, sizeof(asdxTentCopyCS) };
 
         auto hr = pDevice->CreateComputePipelineState(&desc, IID_PPV_ARGS(m_UpscalePSO.GetAddress()));
         if (FAILED(hr))

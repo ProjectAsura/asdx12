@@ -37,10 +37,10 @@ struct Param0
 ///////////////////////////////////////////////////////////////////////////////
 struct Param1
 {
-    uint32_t    InputWidth;     //!< 入力サイズ横幅
-    uint32_t    InputHeight;    //!< 入力サイズ縦幅.
-    uint32_t    OutputWidth;    //!< 出力サイズ横幅.
-    uint32_t    OutputHeight;   //!< 出力サイズ縦幅.
+    uint16_t    SrcW;   //!< 入力横幅.
+    uint16_t    SrcH;   //!< 入力縦幅.
+    uint16_t    DstW;   //!< 出力横幅.
+    uint16_t    DstH;   //!< 出力縦幅.
 };
 
 } // namespace
@@ -216,13 +216,15 @@ void RadialBlurEffect::Draw
     param0.SampleCount  = m_SampleCount;
 
     Param1 param1 = {};
-    param1.InputWidth   = inputW;
-    param1.InputHeight  = inputH;
+    param1.SrcW = uint16_t(inputW);
+    param1.SrcH = uint16_t(inputH);
+    param1.DstW = uint16_t(inputW);
+    param1.DstH = uint16_t(inputH);
 
     pCmd->SetGraphicsRootSignature(m_RootSignature.GetPtr());
     pCmd->SetPipelineState(m_GraphicsPSO.GetPtr());
     pCmd->SetGraphicsRoot32BitConstants(0, 4, &param0, 0);
-    pCmd->SetGraphicsRoot32BitConstants(1, 4, &param1, 0);
+    pCmd->SetGraphicsRoot32BitConstants(1, 2, &param1, 0);
     pCmd->SetGraphicsRootDescriptorTable(2, handleSRV);
     DrawQuad(pCmd);
 }
@@ -255,15 +257,15 @@ void RadialBlurEffect::Dispatch
     param0.SampleCount  = m_SampleCount;
 
     Param1 param1 = {};
-    param1.InputWidth   = inputW;
-    param1.InputHeight  = inputH;
-    param1.OutputWidth  = outputW;
-    param1.OutputHeight = outputH;
+    param1.SrcW = uint16_t(inputW);
+    param1.SrcH = uint16_t(inputH);
+    param1.DstW = uint16_t(outputW);
+    param1.DstH = uint16_t(outputH);
 
     pCmd->SetComputeRootSignature(m_RootSignature.GetPtr());
     pCmd->SetPipelineState(m_ComputePSO.GetPtr());
     pCmd->SetComputeRoot32BitConstants(0, 4, &param0, 0);
-    pCmd->SetComputeRoot32BitConstants(1, 4, &param1, 0);
+    pCmd->SetComputeRoot32BitConstants(1, 2, &param1, 0);
     pCmd->SetComputeRootDescriptorTable(2, handleSRV);
     pCmd->SetComputeRootDescriptorTable(3, handleUAV);
 

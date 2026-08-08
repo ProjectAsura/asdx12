@@ -24,8 +24,8 @@ cbuffer CbParam0 : register(b0)
 ///////////////////////////////////////////////////////////////////////////////
 cbuffer CbParam1 : register(b1)
 {
-    uint2       TargetSize;
-    float2      InvTargetSize;
+    uint    DstResolution;
+    uint3   Reserved;
 };
 
 //-----------------------------------------------------------------------------
@@ -45,10 +45,11 @@ void main
 )
 {
     uint2 remappedId = RemapLane8x8(dispatchId.xy, groupIndex);
-    if (any(remappedId >= TargetSize)) 
+    uint2 dstSize    = GetTargetSize(DstResolution);
+    if (any(remappedId >= dstSize)) 
     { return; }
 
-    float2 uv = remappedId * InvTargetSize;
+    float2 uv = remappedId / float2(dstSize);
     float4 texel = Input.SampleLevel(LinearClamp, uv, 0.0f);
     Output[remappedId] = mul(ColorMatrix, texel);
 }

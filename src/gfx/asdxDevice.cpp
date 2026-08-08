@@ -221,6 +221,13 @@ public:
     DescriptorHeap* GetHeapSampler() { return &m_HeapSampler; }
 
     //-------------------------------------------------------------------------
+    //! @brief      ディスクリプタヒープを取得します(CPU Resource用).
+    //! 
+    //! @return     ディスクリプタヒープを返却します(CPU Resource用).
+    //-------------------------------------------------------------------------
+    DescriptorHeap* GetHeapResourceCpu() { return &m_HeapResourceCpu; }
+
+    //-------------------------------------------------------------------------
     //! @brief      ディスクリプタヒープを設定します.
     //-------------------------------------------------------------------------
     void SetDescriptorHeaps(ID3D12GraphicsCommandList* pCmdList);
@@ -318,6 +325,7 @@ private:
     DescriptorHeap                  m_HeapDSV;                  //!< DSVディスクリプタヒープ.
     DescriptorHeap                  m_HeapResource;             //!< リソースディスクリプタヒープ.
     DescriptorHeap                  m_HeapSampler;              //!< サンプラーヒープ.
+    DescriptorHeap                  m_HeapResourceCpu;          //!< CPUリソースディスクリプタヒープ.
     Disposer<ID3D12Object>          m_ObjectDisposer;           //!< オブジェクトディスポーザー.
     Disposer<DescriptorPair>        m_DescriptorDisposer;       //!< ディスクリプタディスポーザー.
     SpinLock                        m_SpinLock;                 //!< スピンロックです.
@@ -541,7 +549,7 @@ bool GraphicsSystem::Init(const DeviceDesc& deviceDesc)
         }
     }
 
-    // 定数バッファ・シェーダリソース・アンオーダードアクセスビュー用ディスクリプタヒープ.
+    // リソース用ディスクリプタヒープ.
     {
         D3D12_DESCRIPTOR_HEAP_DESC desc = {};
         desc.NumDescriptors = deviceDesc.MaxShaderResourceCount;
@@ -587,6 +595,19 @@ bool GraphicsSystem::Init(const DeviceDesc& deviceDesc)
         if ( !m_HeapDSV.Init(m_pDevice.GetPtr(), &desc ) )
         {
             ELOG("Error : DescriptorHeap::Init() Failed");
+            return false;
+        }
+    }
+
+    // CPUリソース用ディスクリプタヒープ.
+    {
+        D3D12_DESCRIPTOR_HEAP_DESC desc = {};
+        desc.NumDescriptors = deviceDesc.MaxShaderResourceCount;
+        desc.Type  = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+        desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+        if ( !m_HeapResourceCpu.Init(m_pDevice.GetPtr(), &desc ) )
+        {
+            ELOG("Error : DescriptorHeap::Init() Failed.");
             return false;
         }
     }
@@ -688,6 +709,8 @@ void GraphicsSystem::Term()
     m_HeapResource  .Term();
     m_HeapSampler   .Term();
 
+    m_HeapResourceCpu.Term();
+
     m_pAllocator.Reset();
 
     m_pOutput   .Reset();
@@ -759,6 +782,8 @@ void GraphicsSystem::FrameSync()
     m_HeapDSV     .FrameSync();
     m_HeapResource.FrameSync();
     m_HeapSampler .FrameSync();
+
+    m_HeapResourceCpu.FrameSync();
 }
 
 //-----------------------------------------------------------------------------
@@ -901,6 +926,12 @@ DescriptorHeap* GetResourceDescriptorHeap()
 //-----------------------------------------------------------------------------
 DescriptorHeap* GetSamplerDescriptorHeap()
 { return GraphicsSystem::Instance().GetHeapSampler(); }
+
+//-----------------------------------------------------------------------------
+//      CPU用リソースディスクリプタヒープを取得します.
+//-----------------------------------------------------------------------------
+DescriptorHeap* GetCpuResourceDescriptorHeap()
+{ return GraphicsSystem::Instance().GetHeapResourceCpu(); }
 
 //-----------------------------------------------------------------------------
 //      ディスプレイ情報を取得します.

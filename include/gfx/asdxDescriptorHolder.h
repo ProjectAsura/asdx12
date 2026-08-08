@@ -30,11 +30,12 @@ public:
     ///////////////////////////////////////////////////////////////////////////
     enum HEAP_TYPE
     {
-        HEAP_NONE,  //!< None.
-        HEAP_RTV,   //!< Render Target View.
-        HEAP_DSV,   //!< Depth Stencil View.
-        HEAP_RES,   //!< Resource (CBV, SRV, UAV).
-        HEAP_SMP,   //!< Sampler.
+        HEAP_NONE,      //!< None.
+        HEAP_RTV,       //!< Render Target View.
+        HEAP_DSV,       //!< Depth Stencil View.
+        HEAP_RES,       //!< Resource (CBV, SRV, UAV).
+        HEAP_SMP,       //!< Sampler.
+        HEAP_RES_CPU,   //!< CPU Resource (CBV, SRV, UAV).
     };
 
     //=========================================================================

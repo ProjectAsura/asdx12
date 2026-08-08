@@ -27,9 +27,8 @@ namespace {
 ///////////////////////////////////////////////////////////////////////////////
 struct Param1
 {
-    uint32_t        Width;      //!< 横幅.
-    uint32_t        Height;     //!< 縦幅.
-    asdx::Vector2   InvSize;    //!< サイズの逆数.
+    uint16_t    DstW;   //!< 横幅.
+    uint16_t    DstH;   //!< 縦幅.
 };
 
 } // namespace
@@ -242,15 +241,13 @@ void ColorEffect::Dispatch
     auto matrix = CalcColorMatrix();
 
     Param1 param = {};
-    param.Width         = width;
-    param.Height        = height;
-    param.InvSize.x     = 1.0f / float(width);
-    param.InvSize.y     = 1.0f / float(height);
+    param.DstW = uint16_t(width);
+    param.DstH = uint16_t(height);
 
     pCmd->SetComputeRootSignature(m_RootSignature.GetPtr());
     pCmd->SetPipelineState(m_ComputePSO.GetPtr());
     pCmd->SetComputeRoot32BitConstants(0, 16, &matrix._11, 0);
-    pCmd->SetComputeRoot32BitConstants(1, 4, &param, 0);
+    pCmd->SetComputeRoot32BitConstants(1, 1, &param, 0);
     pCmd->SetComputeRootDescriptorTable(2, handleSRV);
     pCmd->SetComputeRootDescriptorTable(3, handleUAV);
 

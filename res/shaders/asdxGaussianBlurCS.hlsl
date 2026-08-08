@@ -50,7 +50,7 @@ void main
 )
 {
     uint2 remappedId = RemapLane8x8(dispatchId.xy, groupIndex);
-    uint2 dstSize = GetTargetSize(DstResolution);
+    uint2 dstSize    = GetTargetSize(DstResolution);
  
     if (any(remappedId >= dstSize))
     { return; }

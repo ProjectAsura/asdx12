@@ -9,6 +9,7 @@
 //-----------------------------------------------------------------------------
 #include "asdxRandom.hlsli"
 #include "asdxSamplers.hlsli"
+#include "asdxComputeUtil.hlsli"
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -35,8 +36,8 @@ cbuffer CbParam0 : register(b0)
 ///////////////////////////////////////////////////////////////////////////////
 cbuffer CbParam1 : register(b1)
 {
-    uint2   InputSize;
-    uint2   OutputSize;
+    uint    SrcResolution;
+    uint    DstResolution;
 };
 
 //-----------------------------------------------------------------------------
@@ -51,10 +52,12 @@ float4 main(const VSOutput input) : SV_TARGET0
 {
     float4 output = float4(0.0f, 0.0f, 0.0f, 0.0f);
     const float2 center = float2(Center.x, 1.0f - Center.y);
+ 
+    uint2 dstSize = GetTargetSize(DstResolution);
 
     // サンプルオフセットを計算.
-    float2 uvOffset = (center - input.TexCoord) * (Strength / float2(InputSize));
-    uvOffset.x *= (float(InputSize.x) / float(InputSize.y));   // アスペクト比を考慮.
+    float2 uvOffset = (center - input.TexCoord) * (Strength / float2(dstSize));
+    uvOffset.x *= (float(dstSize.x) / float(dstSize.y));   // アスペクト比を考慮.
  
     // サンプル重み.
     const float kWeight = 1.0f / SampleCount;

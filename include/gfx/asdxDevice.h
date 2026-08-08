@@ -57,6 +57,7 @@ struct DeviceDesc
     uint32_t    MaxSamplerCount;                //!< 最大サンプラー数です.
     uint32_t    MaxColorTargetCount;            //!< 最大カラーターゲット数です.
     uint32_t    MaxDepthTargetCount;            //!< 最大深度ターゲット数です.
+    uint32_t    MaxCpuResourceCount;            //!< 最大CPUリソース数です.
     bool        EnableDebug          = false;   //!< デバッグモードを有効にします.
     bool        EnableDRED           = true;    //!< DREDを有効にします
     bool        EnableCapture        = false;   //!< PIXキャプチャーを有効にします.
@@ -149,6 +150,11 @@ DescriptorHeap* GetResourceDescriptorHeap();
 //! @brief      サンプラーディスクリプタヒープを取得します.
 //-----------------------------------------------------------------------------
 DescriptorHeap* GetSamplerDescriptorHeap();
+
+//-----------------------------------------------------------------------------
+//! @brief      CPU用リソースディスクリプタヒープを取得します.
+//-----------------------------------------------------------------------------
+DescriptorHeap* GetCpuResourceDescriptorHeap();
 
 //-----------------------------------------------------------------------------
 //! @brief      ディスプレイ情報を取得します.

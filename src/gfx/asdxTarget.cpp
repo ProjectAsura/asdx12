@@ -1066,7 +1066,7 @@ bool ComputeTarget::Init(const TargetDesc* pDesc, uint32_t stride)
     assert(pDevice != nullptr);
 
     m_HolderUAV.resize(uav_descs.size());
-    for(size_t i=0; i<m_HolderUAV.size(); ++i)
+    for(uint32_t i=0; i<m_HolderUAV.size(); ++i)
     {
         auto handleUAV = GetResourceDescriptorHeap()->Alloc(1);
         if (!handleUAV.IsValid())
@@ -1076,7 +1076,21 @@ bool ComputeTarget::Init(const TargetDesc* pDesc, uint32_t stride)
         }
         DescriptorHolder holder(DescriptorHolder::HEAP_RES, handleUAV);
         m_HolderUAV[i].Swap(holder);
-        pDevice->CreateUnorderedAccessView(m_pResource.GetPtr(), nullptr, &uav_descs[i], GetCpuHandleUAV());
+        pDevice->CreateUnorderedAccessView(m_pResource.GetPtr(), nullptr, &uav_descs[i], GetCpuHandleUAV(i));
+    }
+
+    m_HolderClearUAV.resize(uav_descs.size());
+    for(uint32_t i=0; i<m_HolderClearUAV.size(); ++i)
+    {
+        auto handleUAV = GetCpuResourceDescriptorHeap()->Alloc(1);
+        if (!handleUAV.IsValid())
+        {
+            ELOG("Error : DescriptorHeap::Alloc() Failed.");
+            return false;
+        }
+        DescriptorHolder holder(DescriptorHolder::HEAP_RES_CPU, handleUAV);
+        m_HolderClearUAV[i].Swap(holder);
+        pDevice->CreateUnorderedAccessView(m_pResource.GetPtr(), nullptr, &uav_descs[i], GetClearCpuHandleUAV(i));
     }
 
     if (!(pDesc->Flags & TARGET_FLAG_NO_SRV))
@@ -1237,7 +1251,7 @@ bool ComputeTarget::Init(ColorTarget& target, uint32_t flags)
     assert(pDevice != nullptr);
 
     m_HolderUAV.resize(uav_descs.size());
-    for(size_t i=0; i<m_HolderUAV.size(); ++i)
+    for(uint32_t i=0; i<m_HolderUAV.size(); ++i)
     {
         auto handleUAV = GetResourceDescriptorHeap()->Alloc(1);
         if (!handleUAV.IsValid())
@@ -1247,7 +1261,21 @@ bool ComputeTarget::Init(ColorTarget& target, uint32_t flags)
         }
         DescriptorHolder holder(DescriptorHolder::HEAP_RES, handleUAV);
         m_HolderUAV[i].Swap(holder);
-        pDevice->CreateUnorderedAccessView(m_pResource.GetPtr(), nullptr, &uav_descs[i], GetCpuHandleUAV());
+        pDevice->CreateUnorderedAccessView(m_pResource.GetPtr(), nullptr, &uav_descs[i], GetCpuHandleUAV(i));
+    }
+
+    m_HolderClearUAV.resize(uav_descs.size());
+    for(uint32_t i=0; i<m_HolderClearUAV.size(); ++i)
+    {
+        auto handleUAV = GetCpuResourceDescriptorHeap()->Alloc(1);
+        if (!handleUAV.IsValid())
+        {
+            ELOG("Error : DescriptorHeap::Alloc() Failed.");
+            return false;
+        }
+        DescriptorHolder holder(DescriptorHolder::HEAP_RES_CPU, handleUAV);
+        m_HolderClearUAV[i].Swap(holder);
+        pDevice->CreateUnorderedAccessView(m_pResource.GetPtr(), nullptr, &uav_descs[i], GetClearCpuHandleUAV(i));
     }
 
     if (!(flags & TARGET_FLAG_NO_SRV))
@@ -1343,6 +1371,13 @@ void ComputeTarget::Term()
     m_HolderUAV.clear();
     m_HolderUAV.shrink_to_fit();
 
+    for(size_t i=0; i<m_HolderClearUAV.size(); ++i)
+    {
+        m_HolderClearUAV[i].Reset();
+    }
+    m_HolderClearUAV.clear();
+    m_HolderClearUAV.shrink_to_fit();
+
     m_HolderSRV.Reset();
 
     auto resource = m_pResource.Detach();
@@ -1398,6 +1433,15 @@ D3D12_GPU_DESCRIPTOR_HANDLE ComputeTarget::GetGpuHandleUAV(uint32_t index) const
 {
     assert(index < m_HolderUAV.size());
     return m_HolderUAV[index].GetHandleGPU();
+}
+
+//-----------------------------------------------------------------------------
+//      アンオーダードアクセスビュー用CPUディスクリプタハンドルを取得します.
+//-----------------------------------------------------------------------------
+D3D12_CPU_DESCRIPTOR_HANDLE ComputeTarget::GetClearCpuHandleUAV(uint32_t index) const
+{
+    assert(index < m_HolderClearUAV.size());
+    return m_HolderClearUAV[index].GetHandleCPU();
 }
 
 //-----------------------------------------------------------------------------

@@ -50,10 +50,11 @@ void DescriptorHolder::Reset()
 
     switch(m_HeapType)
     {
-        case HEAP_RTV: { GetRtvDescriptorHeap()->Free(m_Handle); } break;
-        case HEAP_DSV: { GetDsvDescriptorHeap()->Free(m_Handle); } break;
-        case HEAP_RES: { GetResourceDescriptorHeap()->Free(m_Handle); } break;
-        case HEAP_SMP: { GetSamplerDescriptorHeap ()->Free(m_Handle); } break;
+        case HEAP_RTV     : { GetRtvDescriptorHeap        ()->Free(m_Handle); } break;
+        case HEAP_DSV     : { GetDsvDescriptorHeap        ()->Free(m_Handle); } break;
+        case HEAP_RES     : { GetResourceDescriptorHeap   ()->Free(m_Handle); } break;
+        case HEAP_SMP     : { GetSamplerDescriptorHeap    ()->Free(m_Handle); } break;
+        case HEAP_RES_CPU : { GetCpuResourceDescriptorHeap()->Free(m_Handle); } break;
         default: break;
     }
 }
@@ -68,10 +69,11 @@ D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHolder::GetHandleCPU(uint32_t offset) cons
     {
         switch(m_HeapType)
         {
-            case HEAP_RTV: { result = GetRtvDescriptorHeap()->GetHandleCPU(m_Handle, offset); } break;
-            case HEAP_DSV: { result = GetDsvDescriptorHeap()->GetHandleCPU(m_Handle, offset); } break;
-            case HEAP_RES: { result = GetResourceDescriptorHeap()->GetHandleCPU(m_Handle, offset); } break;
-            case HEAP_SMP: { result = GetSamplerDescriptorHeap ()->GetHandleCPU(m_Handle, offset); } break;
+            case HEAP_RTV     : { result = GetRtvDescriptorHeap        ()->GetHandleCPU(m_Handle, offset); } break;
+            case HEAP_DSV     : { result = GetDsvDescriptorHeap        ()->GetHandleCPU(m_Handle, offset); } break;
+            case HEAP_RES     : { result = GetResourceDescriptorHeap   ()->GetHandleCPU(m_Handle, offset); } break;
+            case HEAP_SMP     : { result = GetSamplerDescriptorHeap    ()->GetHandleCPU(m_Handle, offset); } break;
+            case HEAP_RES_CPU : { result = GetCpuResourceDescriptorHeap()->GetHandleCPU(m_Handle, offset); } break;
             default: break;
         }
     }

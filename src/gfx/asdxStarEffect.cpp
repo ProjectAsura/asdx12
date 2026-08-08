@@ -468,16 +468,34 @@ void StarEffect::Dispatch
     auto threadX = (dstW + 7u) / 8u;
     auto threadY = (dstH + 7u) / 8u;
 
+    LegacyBarrier barrier;
+    pCmd->SetComputeRootSignature(m_RootSignature.GetPtr());
+
+    // UAVクリア.
+    {
+        barrier.Transition(m_OutputTarget.GetResource(), m_OutputStates, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        barrier.Apply(pCmd);
+        m_OutputStates = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+
+        float clearValue[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+        pCmd->ClearUnorderedAccessViewFloat(
+            m_OutputTarget.GetGpuHandleUAV(),
+            m_OutputTarget.GetClearCpuHandleUAV(),
+            m_OutputTarget.GetResource(),
+            clearValue,
+            0,
+            nullptr);
+
+        barrier.UAV(m_OutputTarget.GetResource());
+        barrier.Apply(pCmd);
+    }
+
     auto starLines = GetStarLines(glareDef.StarType);
 
     auto srcIdx = 0u;
     auto dstIdx = 1u;
 
     D3D12_GPU_DESCRIPTOR_HANDLE handleUAV = m_PingPongTarget[0].GetGpuHandleSRV();
-
-    pCmd->SetComputeRootSignature(m_RootSignature.GetPtr());
-
-    LegacyBarrier barrier;
 
     // 方向ループ.
     for(auto d=0; d<starDef.StarLineCount; ++d)
@@ -562,7 +580,7 @@ void StarEffect::Dispatch
             barrier.Transition(m_OutputTarget.GetResource(), m_OutputStates, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
             barrier.Apply(pCmd);
             m_PingPongStates[srcIdx] = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-            m_OutputStates = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+            m_OutputStates           = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 
             pCmd->SetPipelineState(m_CompositePSO.GetPtr());
             pCmd->SetComputeRoot32BitConstants(ROOT_PARAM_CBV0, 2, &param, 0);
