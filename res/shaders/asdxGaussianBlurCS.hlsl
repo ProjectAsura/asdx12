@@ -20,8 +20,10 @@ cbuffer CbParam : register(b0)
     float4  Weights1;
     float4  Offset0;
     float4  Offset1;
-    uint    Resolution;
+    uint    SrcResolution;
+    uint    DstResolution;
     uint    Flags;
+    uint    Reserved;
 };
 
 //-----------------------------------------------------------------------------
@@ -50,18 +52,17 @@ void main
 )
 {
     uint2 remappedId = RemapLane8x8(dispatchId.xy, groupIndex);
-
-    uint sizeX = Resolution & 0xFFFF;
-    uint sizeY = (Resolution >> 16) & 0xFFFF;
+    uint2 dstSize = GetTargetSize(DstResolution);
  
-    if (any(remappedId >= uint2(sizeX, sizeY)))
+    if (any(remappedId >= dstSize))
     { return; }
 
+    uint2 srcSize = GetTargetSize(SrcResolution);
     float2 dir = (Flags == 0)
-        ? float2(1.0f / float(sizeX), 0.0f)
-        : float2(0.0f, 1.0f / float(sizeY));
+        ? float2(1.0f / float(srcSize.x), 0.0f)
+        : float2(0.0f, 1.0f / float(srcSize.y));
 
-    float2 uv = (remappedId + 0.5f.xx) / float2(sizeX, sizeY);
+    float2 uv = (remappedId + 0.5f.xx) / float2(dstSize);
 
     float4 output = 0.0f.xxxx;
     output += BlurSample(uv, dir * Offset0.x, Weights0.x);

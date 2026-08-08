@@ -35,15 +35,14 @@ RWTexture2D<float4> OutputMap   : register(u0);
 void main(uint3 dispatchId : SV_DispatchThreadID, uint groupIndex : SV_GroupIndex)
 {
     uint2 remapId = RemapLane8x8(dispatchId.xy, groupIndex);
-    uint2 dstSize;
-    dstSize.x = DstResolution & 0xFFFF;
-    dstSize.y = (DstResolution >> 16) & 0xFFFF;
+    uint2 dstSize = GetTargetSize(DstResolution);
 
     if (any(remapId >= dstSize))
         return;
 
-    float2 invSize = 1.0f.xx / float2(dstSize);
     float2 uv = float2(remapId + 0.5f.xx) / float2(dstSize);
+
+    float2 invSrcSize = GetInvTargetSize(SrcResolution);
 
     float4 result = 0.0f.xxxx;
  
@@ -54,10 +53,10 @@ void main(uint3 dispatchId : SV_DispatchThreadID, uint groupIndex : SV_GroupInde
 
     // 中心4テクセル.
     {
-        float4 c0 = ColorMap.SampleLevel(LinearClamp, uv + float2(-0.5f, -0.5f) * invSize, 0.0f);
-        float4 c1 = ColorMap.SampleLevel(LinearClamp, uv + float2( 0.5f, -0.5f) * invSize, 0.0f);
-        float4 c2 = ColorMap.SampleLevel(LinearClamp, uv + float2(-0.5f,  0.5f) * invSize, 0.0f);
-        float4 c3 = ColorMap.SampleLevel(LinearClamp, uv + float2( 0.5f,  0.5f) * invSize, 0.0f);
+        float4 c0 = ColorMap.SampleLevel(LinearClamp, uv + float2(-0.5f, -0.5f) * invSrcSize, 0.0f);
+        float4 c1 = ColorMap.SampleLevel(LinearClamp, uv + float2( 0.5f, -0.5f) * invSrcSize, 0.0f);
+        float4 c2 = ColorMap.SampleLevel(LinearClamp, uv + float2(-0.5f,  0.5f) * invSrcSize, 0.0f);
+        float4 c3 = ColorMap.SampleLevel(LinearClamp, uv + float2( 0.5f,  0.5f) * invSrcSize, 0.0f);
 
         result += (c0 + c1 + c2 + c3) * 0.125; // = 0.25 * 0.5f = 0.125f.
     }
@@ -76,10 +75,10 @@ void main(uint3 dispatchId : SV_DispatchThreadID, uint groupIndex : SV_GroupInde
 
     // 4角を取得 (A, C, G, I).
     float4 corner[4];
-    corner[0] = ColorMap.SampleLevel(LinearClamp, uv + float2( offsetX,  offsetY) * invSize, 0.0f); // A
-    corner[1] = ColorMap.SampleLevel(LinearClamp, uv + float2( offsetX, -offsetY) * invSize, 0.0f); // G
-    corner[2] = ColorMap.SampleLevel(LinearClamp, uv + float2(-offsetX,  offsetY) * invSize, 0.0f); // C
-    corner[3] = ColorMap.SampleLevel(LinearClamp, uv + float2(-offsetX, -offsetY) * invSize, 0.0f); // I.
+    corner[0] = ColorMap.SampleLevel(LinearClamp, uv + float2( offsetX,  offsetY) * invSrcSize, 0.0f); // A
+    corner[1] = ColorMap.SampleLevel(LinearClamp, uv + float2( offsetX, -offsetY) * invSrcSize, 0.0f); // G
+    corner[2] = ColorMap.SampleLevel(LinearClamp, uv + float2(-offsetX,  offsetY) * invSrcSize, 0.0f); // C
+    corner[3] = ColorMap.SampleLevel(LinearClamp, uv + float2(-offsetX, -offsetY) * invSrcSize, 0.0f); // I.
 
     // 残りの十字方向は，Quad Intrinsicsで取得 (B, D, E, F, H)
     float4 cross[5];

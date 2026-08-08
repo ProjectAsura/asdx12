@@ -1,6 +1,6 @@
 ﻿//-----------------------------------------------------------------------------
-// File : asdxBloomCompositeCS.hlsl
-// Desc : Compute Shader For Bloom.
+// File : asdxBloomFinalPass.hlsl
+// Desc : Compute Shader For Bloom Final Pass.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 
@@ -15,7 +15,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 cbuffer CbParam : register(b0)
 {
-    uint    SrcResolution;  //!< 入力解像度.
+    uint    SrcResolution;  //!< 入力解像度(ブルームデータ).
     uint    DstResolution;  //!< 出力解像度.
     uint2   Reserved;       //!< 予約領域.
 };
@@ -23,35 +23,38 @@ cbuffer CbParam : register(b0)
 //-----------------------------------------------------------------------------
 // Resources
 //-----------------------------------------------------------------------------
-Texture2D<float4>   ColorMap    : register(t0);
-RWTexture2D<float4> OutputMap   : register(u0);
+Texture2D<float4>   BloomMap : register(t0);    //!< 合成済みブルームデータ.
+Texture2D<float4>   SrcMap   : register(t1);    //!< ブルーム入力データ.
+RWTexture2D<float4> DstMap   : register(u0);    //!< 出力データ.
 
 
 //-----------------------------------------------------------------------------
 //      メインエントリーポイントです.
 //-----------------------------------------------------------------------------
 [numthreads(8, 8, 1)]
-void main(uint3 dispatchId : SV_DispatchThreadID, uint groupIndex : SV_GroupIndex)
+void main(uint3 disptachId : SV_DispatchThreadID, uint groupIndex : SV_GroupIndex)
 {
-    uint2 remapId = RemapLane8x8(dispatchId.xy, groupIndex);
+    uint2 remapId = RemapLane8x8(disptachId.xy, groupIndex);
     uint2 dstSize = GetTargetSize(DstResolution);
-
+    
     if (any(remapId >= dstSize))
         return;
- 
-    float2 invDstSize = 1.0f.xx / float2(dstSize);
-    float2 uv = float2(remapId + 0.5f.xx) * invDstSize;
+
+    float2 uv = (float2(remapId) + 0.5f.xx) / float2(dstSize);
     float2 invSrcSize = GetInvTargetSize(SrcResolution);
 
-    float4 result = 0.0f.xxxx;
+    float4 result = 0.0f.x;
 
     // テントフィルタ.
-    result += ColorMap.SampleLevel(LinearClamp, uv + float2(-0.5f, -0.5f) * invSrcSize, 0.0f);
-    result += ColorMap.SampleLevel(LinearClamp, uv + float2( 0.5f, -0.5f) * invSrcSize, 0.0f);
-    result += ColorMap.SampleLevel(LinearClamp, uv + float2(-0.5f,  0.5f) * invSrcSize, 0.0f);
-    result += ColorMap.SampleLevel(LinearClamp, uv + float2( 0.5f,  0.5f) * invSrcSize, 0.0f); 
+    result += BloomMap.SampleLevel(LinearClamp, uv + float2(-0.5f, -0.5f) * invSrcSize, 0.0f);
+    result += BloomMap.SampleLevel(LinearClamp, uv + float2( 0.5f, -0.5f) * invSrcSize, 0.0f);
+    result += BloomMap.SampleLevel(LinearClamp, uv + float2(-0.5f,  0.5f) * invSrcSize, 0.0f);
+    result += BloomMap.SampleLevel(LinearClamp, uv + float2( 0.5f,  0.5f) * invSrcSize, 0.0f); 
     result *= 0.25f;
 
-    // 加算合成.
-    OutputMap[remapId] += result;
+    // 元データを加味.
+    result += SrcMap.SampleLevel(LinearClamp, uv, 0.0f);
+
+    // 結果を格納.
+    DstMap[remapId] = result;
 }

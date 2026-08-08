@@ -27,15 +27,6 @@ class KawaseBloomEffect
     /* NOTHING */
 
 public:
-    ///////////////////////////////////////////////////////////////////////////
-    // Param structure
-    ///////////////////////////////////////////////////////////////////////////
-    struct Param
-    {
-        float   Threshold       = 1.0f;
-        float   BloomStrength   = 2.0f;
-    };
-
     //=========================================================================
     // public variables.
     //=========================================================================
@@ -80,31 +71,17 @@ public:
     void Resize(uint32_t w, uint32_t h);
 
     //-------------------------------------------------------------------------
-    //! @brief      制御パラメータを設定します.
-    //! 
-    //! @param[in]      param       設定するパラメータ.
-    //-------------------------------------------------------------------------
-    void SetParam(const Param& param);
-
-    //-------------------------------------------------------------------------
-    //! @brief      制御パラメータを取得します.
-    //! 
-    //! @return     制御パラメータを返却します.
-    //-------------------------------------------------------------------------
-    const Param& GetParam() const;
-
-    //-------------------------------------------------------------------------
     //! @brief      エフェクトを適用します.
     //! 
     //! @param[in]      pCmd        グラフィックスコマンドリスト.
-    //! @param[in]      width       SRVの横幅.
-    //! @param[in]      height      SRVの縦幅.
+    //! @param[in]      srvWidth    SRVの横幅.
+    //! @param[in]      srvHeight   SRVの縦幅.
     //! @param[in]      handleSRV   入力SRV.
     //-------------------------------------------------------------------------
     void Dispatch(
-        ID3D12GraphicsCommandList* pCmd,
-        uint32_t width,
-        uint32_t height,
+        ID3D12GraphicsCommandList*  pCmd,
+        uint32_t                    srvWidth,
+        uint32_t                    srvHeight,
         D3D12_GPU_DESCRIPTOR_HANDLE handlSRV);
 
     //-------------------------------------------------------------------------
@@ -113,7 +90,7 @@ public:
     //! @param[in]      index       インデックスです.
     //! @return     SRVハンドルを返却します.
     //-------------------------------------------------------------------------
-    D3D12_GPU_DESCRIPTOR_HANDLE GetGpuHandleSRV(uint8_t index) const;
+    D3D12_GPU_DESCRIPTOR_HANDLE GetGpuHandleSRV() const;
 
     //-------------------------------------------------------------------------
     //! @brief      UAVハンドルを取得します.
@@ -121,20 +98,68 @@ public:
     //! @param[in]      index       インデックスです.
     //! @return     UAVハンドルを返却します.
     //-------------------------------------------------------------------------
-    D3D12_GPU_DESCRIPTOR_HANDLE GetGpuHandleUAV(uint8_t index) const;
+    D3D12_GPU_DESCRIPTOR_HANDLE GetGpuHandleUAV() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      ブラー用SRVハンドルを取得します.
+    //! 
+    //! @param[in]      index       インデックスです.
+    //! @return     ブラー用SRVハンドルを返却します.
+    //-------------------------------------------------------------------------
+    D3D12_GPU_DESCRIPTOR_HANDLE GetBlurGpuHandleSRV(uint8_t index) const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      ブラー用UAVハンドルを取得します.
+    //! 
+    //! @param[in]      index       インデックスです.
+    //! @return     ブラー用UAVハンドルを返却します.
+    //-------------------------------------------------------------------------
+    D3D12_GPU_DESCRIPTOR_HANDLE GetBlurGpuHandleUAV(uint8_t index) const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      閾値を設定します.
+    //! 
+    //! @param[in]      value       設定する閾値.
+    //-------------------------------------------------------------------------
+    void SetThreshold(float value);
+
+    //-------------------------------------------------------------------------
+    //! @brief      閾値を取得します.
+    //! 
+    //! @return     閾値を返却します.
+    //-------------------------------------------------------------------------
+    float GetThreshold() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      ブラーの強さを設定します.
+    //! 
+    //! @param[in]      value       設定する値.
+    //-------------------------------------------------------------------------
+    void SetBlurStrength(float value);
+
+    //-------------------------------------------------------------------------
+    //! @brief      ブラーの強さを取得します.
+    //! 
+    //! @return     ブラーの強さを返却します.
+    //-------------------------------------------------------------------------
+    float GetBlurStrength() const;
 
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    static const uint8_t            kMaxTargetCount = 10;                   //!< 最大ターゲット数.
-    RefPtr<ID3D12RootSignature>     m_RootSignature;                        //!< ルートシグニチャ.
-    RefPtr<ID3D12PipelineState>     m_BloomFirstPassPSO;                    //!< ブルームパイプラインステート.
-    RefPtr<ID3D12PipelineState>     m_BloomDownPassPSO;                     //!< ブルームパイプラインステート.
-    RefPtr<ID3D12PipelineState>     m_BloomCompositePSO;                    //!< ブルームパイプラインステート.
-    ComputeTarget                   m_ComputeTarget[kMaxTargetCount];       //!< コンピュートターゲット.
-    D3D12_RESOURCE_STATES           m_TargetStates[kMaxTargetCount] = {};   //!< ターゲットステート.
-    Param                           m_Param;                                //!< 制御パラメータ.
+    static const uint8_t            kMaxTargetCount = 10;                       //!< 最大ターゲット数.
+    RefPtr<ID3D12RootSignature>     m_RootSignature;                            //!< ルートシグニチャ.
+    RefPtr<ID3D12PipelineState>     m_FirstPassPSO;                             //!< 初期パス用パイプラインステート.
+    RefPtr<ID3D12PipelineState>     m_DownPassPSO;                              //!< ダウンサンプル用パイプラインステート.
+    RefPtr<ID3D12PipelineState>     m_CompositePSO;                             //!< 合成用パイプラインステート.
+    RefPtr<ID3D12PipelineState>     m_FinalPassPSO;                             //!< アップスケール用パイプラインステート.
+    ComputeTarget                   m_BlurTarget[kMaxTargetCount];              //!< ブラーターゲット.
+    ComputeTarget                   m_ComputeTarget;                            //!< コンピュートターゲット.
+    D3D12_RESOURCE_STATES           m_BlurTargetStates[kMaxTargetCount] = {};   //!< ブラーターゲットステート.
+    D3D12_RESOURCE_STATES           m_ComputeTargetStates;                      //!< コンピュートターゲットステート.
+    float                           m_Threshold     = 1.0f;                     //!< 閾値.
+    float                           m_BlurStrength  = 3.0f;                     //!< ブラーの強さ.
 
     //=========================================================================
     // private methods.

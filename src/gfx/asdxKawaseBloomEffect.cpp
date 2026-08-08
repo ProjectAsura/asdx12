@@ -22,6 +22,7 @@ namespace {
 #include "../res/shaders/Compiled/asdxBloomFirstPassCS.inc"
 #include "../res/shaders/Compiled/asdxGaussianBlurCS.inc"
 #include "../res/shaders/Compiled/asdxBloomCompositeCS.inc"
+#include "../res/shaders/Compiled/asdxBloomFinalPassCS.inc"
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -32,6 +33,7 @@ enum ROOT_PARAM
     ROOT_PARAM_CBV0,
     ROOT_PARAM_SRV0,
     ROOT_PARAM_UAV0,
+    ROOT_PARAM_SRV1,
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -39,9 +41,11 @@ enum ROOT_PARAM
 ///////////////////////////////////////////////////////////////////////////////
 struct BloomFirstParam
 {
+    uint16_t    SrcW;
+    uint16_t    SrcH;
+    uint16_t    DstW;
+    uint16_t    DstH;
     float       Threshold;
-    uint16_t    SizeX;
-    uint16_t    SizeY;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -51,8 +55,10 @@ struct BloomDownParam
 {
     float       Weights[8];
     float       Offsets[8];
-    uint16_t    SizeX;
-    uint16_t    SizeY;
+    uint16_t    SrcW;
+    uint16_t    SrcH;
+    uint16_t    DstW;
+    uint16_t    DstH;
     uint32_t    Flags;
 };
 
@@ -164,7 +170,7 @@ bool KawaseBloomEffect::Init(uint32_t w, uint32_t h, DXGI_FORMAT format)
 
     // ルートシグニチャの初期化.
     {
-        D3D12_DESCRIPTOR_RANGE range[2] = {};
+        D3D12_DESCRIPTOR_RANGE range[3] = {};
         range[0].RangeType                          = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
         range[0].NumDescriptors                     = 1;
         range[0].BaseShaderRegister                 = 0;
@@ -177,7 +183,13 @@ bool KawaseBloomEffect::Init(uint32_t w, uint32_t h, DXGI_FORMAT format)
         range[1].RegisterSpace                      = 0;
         range[1].OffsetInDescriptorsFromTableStart  = 0;
 
-        D3D12_ROOT_PARAMETER param[3] = {};
+        range[2].RangeType                          = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+        range[2].NumDescriptors                     = 1;
+        range[2].BaseShaderRegister                 = 1;
+        range[2].RegisterSpace                      = 0;
+        range[2].OffsetInDescriptorsFromTableStart  = 0;
+
+        D3D12_ROOT_PARAMETER param[4] = {};
         param[ROOT_PARAM_CBV0].ParameterType              = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
         param[ROOT_PARAM_CBV0].Constants.Num32BitValues   = 18;
         param[ROOT_PARAM_CBV0].Constants.ShaderRegister   = 0;
@@ -193,6 +205,11 @@ bool KawaseBloomEffect::Init(uint32_t w, uint32_t h, DXGI_FORMAT format)
         param[ROOT_PARAM_UAV0].DescriptorTable.NumDescriptorRanges    = 1;
         param[ROOT_PARAM_UAV0].DescriptorTable.pDescriptorRanges      = &range[1];
         param[ROOT_PARAM_UAV0].ShaderVisibility                       = D3D12_SHADER_VISIBILITY_ALL;
+
+        param[ROOT_PARAM_SRV1].ParameterType                          = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+        param[ROOT_PARAM_SRV1].DescriptorTable.NumDescriptorRanges    = 1;
+        param[ROOT_PARAM_SRV1].DescriptorTable.pDescriptorRanges      = &range[2];
+        param[ROOT_PARAM_SRV1].ShaderVisibility                       = D3D12_SHADER_VISIBILITY_ALL;
 
         D3D12_ROOT_SIGNATURE_DESC desc = {};
         desc.NumParameters      = _countof(param);
@@ -230,7 +247,7 @@ bool KawaseBloomEffect::Init(uint32_t w, uint32_t h, DXGI_FORMAT format)
         desc.pRootSignature = m_RootSignature.GetPtr();
         desc.CS             = { asdxBloomFirstPassCS, sizeof(asdxBloomFirstPassCS) };
 
-        auto hr = pDevice->CreateComputePipelineState(&desc, IID_PPV_ARGS(m_BloomFirstPassPSO.GetAddress()));
+        auto hr = pDevice->CreateComputePipelineState(&desc, IID_PPV_ARGS(m_FirstPassPSO.GetAddress()));
         if (FAILED(hr))
         {
             ELOGA("Error : ID3D12Device::CreateComputePipelineState() Failed. errcode = 0x%x", hr);
@@ -244,7 +261,7 @@ bool KawaseBloomEffect::Init(uint32_t w, uint32_t h, DXGI_FORMAT format)
         desc.pRootSignature = m_RootSignature.GetPtr();
         desc.CS             = { asdxGaussianBlurCS, sizeof(asdxGaussianBlurCS) };
 
-        auto hr = pDevice->CreateComputePipelineState(&desc, IID_PPV_ARGS(m_BloomDownPassPSO.GetAddress()));
+        auto hr = pDevice->CreateComputePipelineState(&desc, IID_PPV_ARGS(m_DownPassPSO.GetAddress()));
         if (FAILED(hr))
         {
             ELOGA("Error : ID3D12Device::CreateComputePipelineState() Failed. errcode = 0x%x", hr);
@@ -258,7 +275,21 @@ bool KawaseBloomEffect::Init(uint32_t w, uint32_t h, DXGI_FORMAT format)
         desc.pRootSignature = m_RootSignature.GetPtr();
         desc.CS             = { asdxBloomCompositeCS, sizeof(asdxBloomCompositeCS) };
 
-        auto hr = pDevice->CreateComputePipelineState(&desc, IID_PPV_ARGS(m_BloomCompositePSO.GetAddress()));
+        auto hr = pDevice->CreateComputePipelineState(&desc, IID_PPV_ARGS(m_CompositePSO.GetAddress()));
+        if (FAILED(hr))
+        {
+            ELOGA("Error : ID3D12Device::CreateComputePipelineState() Failed. errcode = 0x%x", hr);
+            return false;
+        }
+    }
+
+    // 最終パス用のコンピュートパイプラインステート.
+    {
+        D3D12_COMPUTE_PIPELINE_STATE_DESC desc = {};
+        desc.pRootSignature = m_RootSignature.GetPtr();
+        desc.CS             = { asdxBloomFinalPassCS, sizeof(asdxBloomFinalPassCS) };
+
+        auto hr = pDevice->CreateComputePipelineState(&desc, IID_PPV_ARGS(m_FinalPassPSO.GetAddress()));
         if (FAILED(hr))
         {
             ELOGA("Error : ID3D12Device::CreateComputePipelineState() Failed. errcode = 0x%x", hr);
@@ -282,25 +313,50 @@ bool KawaseBloomEffect::Init(uint32_t w, uint32_t h, DXGI_FORMAT format)
         desc.ClearColor[2]      = 0.0f;
         desc.ClearColor[3]      = 0.0f;
 
+        if (!m_ComputeTarget.Init(&desc))
+        {
+            ELOGA("Error : ComputeTarget::Init() Failed.");
+            return false;
+        }
+
+        m_ComputeTargetStates = desc.InitState;
+    }
+
+    // ブラーターゲットの初期化.
+    {
+        TargetDesc desc = {};
+        desc.Dimension          = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+        desc.Width              = w / 4;
+        desc.Height             = h / 4;
+        desc.DepthOrArraySize   = 1;
+        desc.MipLevels          = 1;
+        desc.Format             = format;
+        desc.SampleDesc         = { 1, 0 };
+        desc.InitState          = D3D12_RESOURCE_STATE_COMMON;
+        desc.ClearColor[0]      = 0.0f;
+        desc.ClearColor[1]      = 0.0f;
+        desc.ClearColor[2]      = 0.0f;
+        desc.ClearColor[3]      = 0.0f;
+
         if (desc.Width  % 2 != 0) desc.Width++;
         if (desc.Height % 2 != 0) desc.Height++;
 
         for(auto i=0u; i<kMaxTargetCount; i+=2)
         {
-            if (!m_ComputeTarget[i + 0].Init(&desc))
+            if (!m_BlurTarget[i + 0].Init(&desc))
             {
                 ELOGA("Error : ComputeTarget::Init() Failed. index = %u", i + 0);
                 return false;
             }
 
-            if (!m_ComputeTarget[i + 1].Init(&desc))
+            if (!m_BlurTarget[i + 1].Init(&desc))
             {
                 ELOGA("Error : ComputeTarget::Init() Failed. index = %u", i + 1);
                 return false;
             }
 
-            m_TargetStates[i + 0] = desc.InitState;
-            m_TargetStates[i + 1] = desc.InitState;
+            m_BlurTargetStates[i + 0] = desc.InitState;
+            m_BlurTargetStates[i + 1] = desc.InitState;
 
             desc.Width  >>= 1;
             desc.Height >>= 1;
@@ -322,14 +378,16 @@ bool KawaseBloomEffect::Init(uint32_t w, uint32_t h, DXGI_FORMAT format)
 //-----------------------------------------------------------------------------
 void KawaseBloomEffect::Term()
 {
-    m_BloomFirstPassPSO .Reset();
-    m_BloomDownPassPSO  .Reset();
-    m_BloomCompositePSO .Reset();
+    m_FirstPassPSO .Reset();
+    m_DownPassPSO  .Reset();
+    m_CompositePSO .Reset();
+    m_FinalPassPSO .Reset();
 
     m_RootSignature .Reset();
 
     for(auto i=0u; i<kMaxTargetCount; ++i)
-    { m_ComputeTarget[i].Term(); }
+    { m_BlurTarget[i].Term(); }
+    m_ComputeTarget.Term();
 }
 
 //-----------------------------------------------------------------------------
@@ -337,30 +395,31 @@ void KawaseBloomEffect::Term()
 //-----------------------------------------------------------------------------
 void KawaseBloomEffect::Resize(uint32_t w, uint32_t h)
 {
+    m_ComputeTarget.Resize(w, h);
+
+    w = w / 4;
+    h = h / 4;
+
+    // 偶数になるように調整.
+    if (w % 2 != 0) w++;
+    if (h % 2 != 0) h++;
+
     for(auto i=0u; i<kMaxTargetCount; i+=2)
     {
-        m_ComputeTarget[i * 2 + 0].Resize(w, h);
-        m_ComputeTarget[i * 2 + 1].Resize(w, h);
+        m_BlurTarget[i * 2 + 0].Resize(w, h);
+        m_BlurTarget[i * 2 + 1].Resize(w, h);
 
         w >>= 1;
         h >>= 1;
 
         if (w < 1) w = 1;
         if (h < 1) h = 1;
+
+        // 偶数になるように調整.
+        if (w % 2 != 0) w++;
+        if (h % 2 != 0) h++;
     }
 }
-
-//-----------------------------------------------------------------------------
-//      制御パラメータを設定します.
-//-----------------------------------------------------------------------------
-void KawaseBloomEffect::SetParam(const Param& param)
-{ m_Param = param; }
-
-//-----------------------------------------------------------------------------
-//      制御パラメータを取得します.
-//-----------------------------------------------------------------------------
-const KawaseBloomEffect::Param& KawaseBloomEffect::GetParam() const
-{ return m_Param; }
 
 //-----------------------------------------------------------------------------
 //      エフェクトを適用します.
@@ -384,30 +443,32 @@ void KawaseBloomEffect::Dispatch
 
     // ファーストパス.
     {
-        auto desc = m_ComputeTarget[1].GetDesc();
+        auto desc = m_BlurTarget[1].GetDesc();
 
         BloomFirstParam param = {};
-        param.Threshold = m_Param.Threshold;
-        param.SizeX     = uint16_t(desc.Width);
-        param.SizeY     = uint16_t(desc.Height);
+        param.Threshold = m_Threshold;
+        param.SrcW      = width;
+        param.SrcH      = height;
+        param.DstW      = uint16_t(desc.Width);
+        param.DstH      = uint16_t(desc.Height);
 
-        auto threadX = (param.SizeX + 7u) / 8u;
-        auto threadY = (param.SizeY + 7u) / 8u;
+        auto threadX = (param.DstW + 7u) / 8u;
+        auto threadY = (param.DstH + 7u) / 8u;
 
-        barrier.Transition( m_ComputeTarget[1].GetResource(), m_TargetStates[1], D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        barrier.Transition( m_BlurTarget[1].GetResource(), m_BlurTargetStates[1], D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
         barrier.Apply(pCmd);
-        m_TargetStates[1] = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+        m_BlurTargetStates[1] = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 
-        pCmd->SetPipelineState(m_BloomFirstPassPSO.GetPtr());
+        pCmd->SetPipelineState(m_FirstPassPSO.GetPtr());
         pCmd->SetComputeRoot32BitConstants(ROOT_PARAM_CBV0, 2, &param, 0);
         pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_SRV0, handleSRV);
-        pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_UAV0, m_ComputeTarget[1].GetGpuHandleUAV());
+        pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_UAV0, m_BlurTarget[1].GetGpuHandleUAV());
         pCmd->Dispatch(threadX, threadY, 1);
     }
 
     // ダウンサンプルパス.
     {
-        auto desc = m_ComputeTarget[0].GetDesc();
+        auto desc = m_BlurTarget[0].GetDesc();
 
         BloomDownParam param = {};
 
@@ -417,7 +478,10 @@ void KawaseBloomEffect::Dispatch
         auto w = uint32_t(desc.Width);
         auto h = uint32_t(desc.Height);
 
-        pCmd->SetPipelineState(m_BloomDownPassPSO.GetPtr());
+        uint16_t srcW = uint16_t(w);
+        uint16_t srcH = uint16_t(h);
+
+        pCmd->SetPipelineState(m_DownPassPSO.GetPtr());
 
         for(auto i=0u; i<kMaxTargetCount; i+=2)
         {
@@ -426,24 +490,26 @@ void KawaseBloomEffect::Dispatch
 
             dst = i + 0;
 
-            auto desc = m_ComputeTarget[dst].GetDesc();
-            param.SizeX = uint16_t(desc.Width);
-            param.SizeY = uint16_t(desc.Height);
-            ComputeGaussWeights(m_Param.BloomStrength, param);
+            auto desc = m_BlurTarget[dst].GetDesc();
+            param.SrcW  = srcW;
+            param.SrcH  = srcH;
+            param.DstW = uint16_t(desc.Width);
+            param.DstH = uint16_t(desc.Height);
+            ComputeGaussWeights(m_BlurStrength, param);
 
             // 水平方向ブラー.
             {
-                barrier.UAV(m_ComputeTarget[src].GetResource());
-                barrier.Transition(m_ComputeTarget[src].GetResource(), m_TargetStates[src], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-                barrier.Transition(m_ComputeTarget[dst].GetResource(), m_TargetStates[dst], D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+                barrier.UAV(m_BlurTarget[src].GetResource());
+                barrier.Transition(m_BlurTarget[src].GetResource(), m_BlurTargetStates[src], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+                barrier.Transition(m_BlurTarget[dst].GetResource(), m_BlurTargetStates[dst], D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
                 barrier.Apply(pCmd); 
-                m_TargetStates[src] = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-                m_TargetStates[dst] = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+                m_BlurTargetStates[src] = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+                m_BlurTargetStates[dst] = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 
                 param.Flags = 0;
                 pCmd->SetComputeRoot32BitConstants(ROOT_PARAM_CBV0, 18, &param, 0);
-                pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_SRV0, m_ComputeTarget[src].GetGpuHandleSRV());
-                pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_UAV0, m_ComputeTarget[dst].GetGpuHandleUAV());
+                pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_SRV0, m_BlurTarget[src].GetGpuHandleSRV());
+                pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_UAV0, m_BlurTarget[dst].GetGpuHandleUAV());
                 pCmd->Dispatch(threadX, threadY, 1);
             }
 
@@ -452,27 +518,29 @@ void KawaseBloomEffect::Dispatch
 
             // 垂直方向ブラー.
             {
-                barrier.UAV(m_ComputeTarget[src].GetResource());
-                barrier.Transition(m_ComputeTarget[src].GetResource(), m_TargetStates[src], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-                barrier.Transition(m_ComputeTarget[dst].GetResource(), m_TargetStates[dst], D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+                barrier.UAV(m_BlurTarget[src].GetResource());
+                barrier.Transition(m_BlurTarget[src].GetResource(), m_BlurTargetStates[src], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+                barrier.Transition(m_BlurTarget[dst].GetResource(), m_BlurTargetStates[dst], D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
                 barrier.Apply(pCmd);
-                m_TargetStates[src] = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-                m_TargetStates[dst] = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+                m_BlurTargetStates[src] = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+                m_BlurTargetStates[dst] = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 
                 param.Flags = 1;
                 pCmd->SetComputeRoot32BitConstants(ROOT_PARAM_CBV0, 18, &param, 0);
-                pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_SRV0, m_ComputeTarget[src].GetGpuHandleSRV());
-                pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_UAV0, m_ComputeTarget[dst].GetGpuHandleUAV());
+                pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_SRV0, m_BlurTarget[src].GetGpuHandleSRV());
+                pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_UAV0, m_BlurTarget[dst].GetGpuHandleUAV());
                 pCmd->Dispatch(threadX, threadY, 1);
             }
 
-            src = dst;
+            src  = dst;
+            srcW = param.DstW;
+            srcH = param.DstH;
         }
     }
 
     // 合成パス.
     {
-        pCmd->SetPipelineState(m_BloomCompositePSO.GetPtr());
+        pCmd->SetPipelineState(m_CompositePSO.GetPtr());
 
         BloomCompositeParam param = {};
 
@@ -482,8 +550,8 @@ void KawaseBloomEffect::Dispatch
             auto src = (i + 0) * 2 + 1;
             auto dst = (i - 1) * 2 + 0;
 
-            auto srcDesc = m_ComputeTarget[src].GetDesc();
-            auto dstDesc = m_ComputeTarget[dst].GetDesc();
+            auto srcDesc = m_BlurTarget[src].GetDesc();
+            auto dstDesc = m_BlurTarget[dst].GetDesc();
 
             param.SrcW = uint16_t(srcDesc.Width);
             param.SrcH = uint16_t(srcDesc.Height);
@@ -493,41 +561,111 @@ void KawaseBloomEffect::Dispatch
             auto threadX = (param.DstW + 7u) / 8u;
             auto threadY = (param.DstH + 7u) / 8u;
 
-            barrier.UAV(m_ComputeTarget[src].GetResource());
-            barrier.Transition(m_ComputeTarget[src].GetResource(), m_TargetStates[src], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-            barrier.Transition(m_ComputeTarget[dst].GetResource(), m_TargetStates[dst], D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+            barrier.UAV(m_BlurTarget[src].GetResource());
+            barrier.Transition(m_BlurTarget[src].GetResource(), m_BlurTargetStates[src], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+            barrier.Transition(m_BlurTarget[dst].GetResource(), m_BlurTargetStates[dst], D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
             barrier.Apply(pCmd);
-            m_TargetStates[src] = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-            m_TargetStates[dst] = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+            m_BlurTargetStates[src] = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+            m_BlurTargetStates[dst] = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 
             pCmd->SetComputeRoot32BitConstants(ROOT_PARAM_CBV0, 2, &param, 0);
-            pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_SRV0, m_ComputeTarget[src].GetGpuHandleSRV());
-            pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_UAV0, m_ComputeTarget[dst].GetGpuHandleUAV());
+            pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_SRV0, m_BlurTarget[src].GetGpuHandleSRV());
+            pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_UAV0, m_BlurTarget[dst].GetGpuHandleUAV());
             pCmd->Dispatch(threadX, threadY, 1);
         }
+    }
 
-        barrier.Transition(m_ComputeTarget[0].GetResource(), m_TargetStates[0], D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+    // 最終パス.
+    {
+        auto srcDesc = m_BlurTarget[1].GetDesc();
+        auto dstDesc = m_ComputeTarget.GetDesc();
+
+        BloomCompositeParam param = {};
+        param.SrcW = uint16_t(srcDesc.Width);
+        param.SrcH = uint16_t(srcDesc.Height);
+        param.DstW = uint16_t(dstDesc.Width);
+        param.DstH = uint16_t(dstDesc.Height);
+
+        auto threadX = (param.DstW + 7u) / 8u;
+        auto threadY = (param.DstH + 7u) / 8u;
+
+        pCmd->SetPipelineState(m_FinalPassPSO.GetPtr());
+
+        barrier.UAV(m_BlurTarget[1].GetResource());
+        barrier.Transition(m_BlurTarget[1].GetResource(), m_BlurTargetStates[1], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+        barrier.Transition(m_ComputeTarget.GetResource(), m_ComputeTargetStates, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
         barrier.Apply(pCmd);
-        m_TargetStates[0] = D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE;
+        m_BlurTargetStates[1] = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+        m_ComputeTargetStates = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+
+        pCmd->SetComputeRoot32BitConstants(ROOT_PARAM_CBV0, 2, &param, 0);
+        pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_SRV0, m_BlurTarget[1].GetGpuHandleSRV());
+        pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_SRV1, handleSRV);
+        pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_UAV0, m_ComputeTarget.GetGpuHandleUAV());
+        pCmd->Dispatch(threadX, threadY, 1);
+
+        barrier.UAV(m_ComputeTarget.GetResource());
+        barrier.Transition(m_ComputeTarget.GetResource(), m_ComputeTargetStates, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+        barrier.Apply(pCmd);
+        m_ComputeTargetStates = D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE;
     }
 }
 
 //-----------------------------------------------------------------------------
 //      SRVハンドルを取得します.
 //-----------------------------------------------------------------------------
-D3D12_GPU_DESCRIPTOR_HANDLE KawaseBloomEffect::GetGpuHandleSRV(uint8_t index) const
-{
-    assert(index < kMaxTargetCount);
-    return m_ComputeTarget[index].GetGpuHandleSRV();
-}
+D3D12_GPU_DESCRIPTOR_HANDLE KawaseBloomEffect::GetGpuHandleSRV() const
+{ return m_ComputeTarget.GetGpuHandleSRV(); }
 
 //-----------------------------------------------------------------------------
 //      UAVハンドルを取得します.
 //-----------------------------------------------------------------------------
-D3D12_GPU_DESCRIPTOR_HANDLE KawaseBloomEffect::GetGpuHandleUAV(uint8_t index) const
+D3D12_GPU_DESCRIPTOR_HANDLE KawaseBloomEffect::GetGpuHandleUAV() const
+{ return m_ComputeTarget.GetGpuHandleUAV(); }
+
+//-----------------------------------------------------------------------------
+//      ブラー用SRVハンドルを取得します.
+//-----------------------------------------------------------------------------
+D3D12_GPU_DESCRIPTOR_HANDLE KawaseBloomEffect::GetBlurGpuHandleSRV(uint8_t index) const
 {
     assert(index < kMaxTargetCount);
-    return m_ComputeTarget[index].GetGpuHandleUAV();
+    return m_BlurTarget[index].GetGpuHandleSRV();
 }
+
+//-----------------------------------------------------------------------------
+//      ブラー用UAVハンドルを取得します.
+//-----------------------------------------------------------------------------
+D3D12_GPU_DESCRIPTOR_HANDLE KawaseBloomEffect::GetBlurGpuHandleUAV(uint8_t index) const
+{
+    assert(index < kMaxTargetCount);
+    return m_BlurTarget[index].GetGpuHandleUAV();
+}
+
+//-----------------------------------------------------------------------------
+//      閾値を設定します.
+//-----------------------------------------------------------------------------
+void KawaseBloomEffect::SetThreshold(float value)
+{ m_Threshold = value; }
+
+//-----------------------------------------------------------------------------
+//      閾値を取得します.
+//-----------------------------------------------------------------------------
+float KawaseBloomEffect::GetThreshold() const
+{ return m_Threshold; }
+
+//-----------------------------------------------------------------------------
+//      ブラーの強さを設定します.
+//-----------------------------------------------------------------------------
+void KawaseBloomEffect::SetBlurStrength(float value)
+{
+    assert(value > 0.0f);
+    m_BlurStrength = value;
+}
+
+//-----------------------------------------------------------------------------
+//      ブラーの強さを取得します.
+//-----------------------------------------------------------------------------
+float KawaseBloomEffect::GetBlurStrength() const
+{ return m_BlurStrength; }
 
 } // namespace asdx

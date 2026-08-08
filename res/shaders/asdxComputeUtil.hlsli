@@ -75,4 +75,14 @@ uint2 GetTargetSize(uint value)
     return uint2(w, h);
 }
 
+//-----------------------------------------------------------------------------
+//      解像度の逆数を取得します.
+//-----------------------------------------------------------------------------
+float2 GetInvTargetSize(uint value)
+{
+    float w = float(value & 0xFFFF);
+    float h = float((value >> 16) & 0xFFFF);
+    return float2(1.0f / w, 1.0f / h);
+}
+
 #endif//ASDX_COMPUTE_UTIL_HLSLI

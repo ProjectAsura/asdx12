@@ -1,6 +1,6 @@
 ﻿//-----------------------------------------------------------------------------
-// File : asdxBloomCompositeCS.hlsl
-// Desc : Compute Shader For Bloom.
+// File : asdxTentCopyCS.hlsl
+// Desc : Compute Shader For Tent Filedered Copy.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 
@@ -53,5 +53,5 @@ void main(uint3 dispatchId : SV_DispatchThreadID, uint groupIndex : SV_GroupInde
     result *= 0.25f;
 
     // 加算合成.
-    OutputMap[remapId] += result;
+    OutputMap[remapId] = result;
 }

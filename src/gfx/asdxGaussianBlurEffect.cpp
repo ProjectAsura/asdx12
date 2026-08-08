@@ -30,8 +30,10 @@ struct Param
 {
     float       Weights[8];
     float       Offsets[8];
-    uint16_t    SizeX;
-    uint16_t    SizeY;
+    uint16_t    SrcW;
+    uint16_t    SrcH;
+    uint16_t    DstW;
+    uint16_t    DstH;
     uint32_t    Flags;
 };
 
@@ -104,282 +106,25 @@ void ComputeGaussWeights(float sigma, Param& param)
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
-// GaussianBlurEffectPS class
+// GaussianBlurEffect class
 ///////////////////////////////////////////////////////////////////////////////
 
 //-----------------------------------------------------------------------------
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
-GaussianBlurEffectPS::GaussianBlurEffectPS()
+GaussianBlurEffect::GaussianBlurEffect()
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      デストラクタです.
 //-----------------------------------------------------------------------------
-GaussianBlurEffectPS::~GaussianBlurEffectPS()
+GaussianBlurEffect::~GaussianBlurEffect()
 { Term(); }
 
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool GaussianBlurEffectPS::Init(uint32_t width, uint32_t height, DXGI_FORMAT format)
-{
-    auto pDevice = asdx::GetD3D12Device();
-
-    // ルートシグニチャの初期化.
-    {
-        D3D12_DESCRIPTOR_RANGE range = {};
-        range.RangeType                          = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-        range.NumDescriptors                     = 1;
-        range.BaseShaderRegister                 = 0;
-        range.RegisterSpace                      = 0;
-        range.OffsetInDescriptorsFromTableStart  = 0;
-
-        D3D12_ROOT_PARAMETER param[2] = {};
-        param[0].ParameterType              = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-        param[0].Constants.Num32BitValues   = 18;
-        param[0].Constants.ShaderRegister   = 0;
-        param[0].Constants.RegisterSpace    = 0;
-        param[0].ShaderVisibility           = D3D12_SHADER_VISIBILITY_PIXEL;
-
-        param[1].ParameterType                          = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-        param[1].DescriptorTable.NumDescriptorRanges    = 1;
-        param[1].DescriptorTable.pDescriptorRanges      = &range;
-        param[1].ShaderVisibility                       = D3D12_SHADER_VISIBILITY_PIXEL;
-
-        D3D12_ROOT_SIGNATURE_DESC desc = {};
-        desc.NumParameters      = _countof(param);
-        desc.pParameters        = param;
-        desc.NumStaticSamplers  = _countof(Preset::StaticSamplers);
-        desc.pStaticSamplers    = Preset::StaticSamplers;
-        desc.Flags              = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
-        desc.Flags             |= D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS;
-        desc.Flags             |= D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS;
-        desc.Flags             |= D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
-
-        RefPtr<ID3DBlob> blob;
-        RefPtr<ID3DBlob> errorBlob;
-        auto hr = D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1_0, blob.GetAddress(), errorBlob.GetAddress());
-        if (FAILED(hr))
-        {
-            ELOG("Error : D3D12SerializeRootSignature() Failed. errcode = 0x%x", hr);
-            if (errorBlob.GetPtr() != nullptr)
-            {
-                ELOG("Error : Msg = %s", reinterpret_cast<const char*>(errorBlob->GetBufferPointer()));
-            }
-            return false;
-        }
-
-        hr = pDevice->CreateRootSignature(0, blob->GetBufferPointer(), blob->GetBufferSize(), IID_PPV_ARGS(m_RootSignature.GetAddress()));
-        if (FAILED(hr))
-        {
-            ELOG("Error : ID3D12Device::CreateRootSignature() Failed. errcode = 0x%x", hr);
-            return false;
-        }
-    }
-
-    // グラフィックスパイプラインステートの初期化.
-    {
-        D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = {};
-        desc.pRootSignature                 = m_RootSignature.GetPtr();
-        desc.VS                             = Preset::FullScreenVS;
-        desc.PS                             = { asdxGaussianBlurPS, sizeof(asdxGaussianBlurPS) };
-        desc.BlendState                     = Preset::Opaque;
-        desc.SampleMask                     = D3D12_DEFAULT_SAMPLE_MASK;
-        desc.RasterizerState                = Preset::CullNone;
-        desc.DepthStencilState              = Preset::DepthNone;
-        desc.InputLayout.NumElements        = _countof(Preset::QuadElements);
-        desc.InputLayout.pInputElementDescs = Preset::QuadElements;
-        desc.PrimitiveTopologyType          = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-        desc.NumRenderTargets               = 1;
-        desc.RTVFormats[0]                  = format;
-        desc.DSVFormat                      = DXGI_FORMAT_UNKNOWN;
-        desc.SampleDesc.Count               = 1;
-        desc.SampleDesc.Quality             = 0;
-
-        auto hr = pDevice->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(m_PipelineState.GetAddress()));
-        if (FAILED(hr))
-        {
-            ELOGA("Error : ID3D12Device::CreateGraphicsPipelineState() Failed. errcode = 0x%x", hr);
-            return false;
-        }
-    }
-
-    // カラーターゲットを初期化.
-    {
-        TargetDesc desc = {};
-        desc.Dimension          = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-        desc.Width              = width;
-        desc.Height             = height;
-        desc.DepthOrArraySize   = 1;
-        desc.MipLevels          = 1;
-        desc.Format             = format;
-        desc.SampleDesc         = { 1, 0 };
-        desc.InitState          = D3D12_RESOURCE_STATE_COMMON;
-        desc.ClearColor[0]      = 0.0f;
-        desc.ClearColor[1]      = 0.0f;
-        desc.ClearColor[2]      = 0.0f;
-        desc.ClearColor[3]      = 0.0f;
-
-        for(auto i=0; i<2; ++i)
-        {
-            if (!m_ColorTarget[i].Init(&desc))
-            {
-                ELOGA("Error : ColorTarget::Init() Failed.");
-                return false;
-            }
-        }
-    }
-
-    m_State = D3D12_RESOURCE_STATE_COMMON;
-
-    return true;
-}
-
-//-----------------------------------------------------------------------------
-//      終了処理を行います.
-//-----------------------------------------------------------------------------
-void GaussianBlurEffectPS::Term()
-{
-    for(auto i=0; i<2; ++i)
-    { m_ColorTarget[i].Term(); }
-    m_PipelineState.Reset();
-    m_RootSignature.Reset();
-}
-
-//-----------------------------------------------------------------------------
-//      描画処理を行います.
-//-----------------------------------------------------------------------------
-void GaussianBlurEffectPS::Draw
-(
-    ID3D12GraphicsCommandList*  pCmd,
-    float                       strength,
-    D3D12_GPU_DESCRIPTOR_HANDLE handleSRV
-)
-{
-    assert(pCmd != nullptr);
-    assert(strength > 0.0f);
-
-    auto desc = GetDesc();
-
-    Param param = {};
-    param.SizeX = uint16_t(desc.Width);
-    param.SizeY = uint16_t(desc.Height);
-    param.Flags = 0;
-    ComputeGaussWeights(strength, param);
-
-    D3D12_VIEWPORT viewport = {};
-    viewport.TopLeftX   = 0;
-    viewport.TopLeftY   = 0;
-    viewport.Width      = float(desc.Width);
-    viewport.Height     = float(desc.Height);
-    viewport.MinDepth   = 0.0f;
-    viewport.MaxDepth   = 1.0f;
-
-    D3D12_RECT rect = {};
-    rect.left   = 0;
-    rect.right  = LONG(desc.Width);
-    rect.top    = 0;
-    rect.bottom = LONG(desc.Height);
-
-    float clearColor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
-
-    LegacyBarrier barrier;
-    barrier.Transition(m_ColorTarget[0].GetResource(), m_State, D3D12_RESOURCE_STATE_RENDER_TARGET);
-    barrier.Apply(pCmd);
-
-    auto handleRTV = m_ColorTarget[0].GetCpuHandleRTV();
-
-    // ルートシグニチャとパイプラインステートを設定.
-    pCmd->SetGraphicsRootSignature(m_RootSignature.GetPtr());
-    pCmd->SetPipelineState(m_PipelineState.GetPtr());
-
-    // 最初の1回だけクリア.
-    if (m_State == D3D12_RESOURCE_STATE_COMMON)
-    { pCmd->ClearRenderTargetView(handleRTV, clearColor, 0, nullptr); }
-
-    // 水平方向ブラー.
-    pCmd->OMSetRenderTargets(1, &handleRTV, FALSE, nullptr);
-    pCmd->RSSetViewports(1, &viewport);
-    pCmd->RSSetScissorRects(1, &rect);
-    pCmd->SetGraphicsRoot32BitConstants(0, 18, &param, 0);
-    pCmd->SetGraphicsRootDescriptorTable(1, handleSRV);
-    DrawQuad(pCmd);
-
-    barrier.Transition(m_ColorTarget[0].GetResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-    barrier.Transition(m_ColorTarget[1].GetResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
-    barrier.Apply(pCmd);
-
-    param.Flags = 1;
-    handleSRV = m_ColorTarget[0].GetGpuHandleSRV();
-    handleRTV = m_ColorTarget[1].GetCpuHandleRTV();
-
-    // 最初の1回だけクリア.
-    if (m_State == D3D12_RESOURCE_STATE_COMMON)
-    { pCmd->ClearRenderTargetView(handleRTV, clearColor, 0, nullptr); }
-
-    // 垂直方向ブラー.
-    pCmd->OMSetRenderTargets(1, &handleRTV, FALSE, nullptr);
-    pCmd->RSSetViewports(1, &viewport);
-    pCmd->RSSetScissorRects(1, &rect);
-    pCmd->SetGraphicsRoot32BitConstants(0, 18, &param, 0);
-    pCmd->SetGraphicsRootDescriptorTable(1, handleSRV);
-    DrawQuad(pCmd);
-
-    barrier.Transition(m_ColorTarget[1].GetResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-    barrier.Apply(pCmd);
-    m_State = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-}
-
-//-----------------------------------------------------------------------------
-//      GPUディスクリプタハンドルを取得します.
-//-----------------------------------------------------------------------------
-D3D12_GPU_DESCRIPTOR_HANDLE GaussianBlurEffectPS::GetHandleGPU() const
-{ return m_ColorTarget[1].GetGpuHandleSRV(); }
-
-//-----------------------------------------------------------------------------
-//      構成設定を取得します.
-//-----------------------------------------------------------------------------
-TargetDesc GaussianBlurEffectPS::GetDesc() const
-{ return m_ColorTarget[0].GetDesc(); }
-
-//-----------------------------------------------------------------------------
-//      ターゲットをリサイズします.
-//-----------------------------------------------------------------------------
-bool GaussianBlurEffectPS::Resize(uint32_t width, uint32_t height)
-{
-    for(auto i=0; i<2; ++i)
-    {
-        if (!m_ColorTarget[i].Resize(width, height))
-        { return false; }
-    }
-
-    m_State = D3D12_RESOURCE_STATE_COMMON;
-
-    return true;
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-// GaussianBlurEffectCS class
-///////////////////////////////////////////////////////////////////////////////
-
-//-----------------------------------------------------------------------------
-//      コンストラクタです.
-//-----------------------------------------------------------------------------
-GaussianBlurEffectCS::GaussianBlurEffectCS()
-{ /* DO_NOTHING */ }
-
-//-----------------------------------------------------------------------------
-//      デストラクタです.
-//-----------------------------------------------------------------------------
-GaussianBlurEffectCS::~GaussianBlurEffectCS()
-{ Term(); }
-
-//-----------------------------------------------------------------------------
-//      初期化処理を行います.
-//-----------------------------------------------------------------------------
-bool GaussianBlurEffectCS::Init(uint32_t width, uint32_t height, DXGI_FORMAT format)
+bool GaussianBlurEffect::Init(uint32_t width, uint32_t height, DXGI_FORMAT format)
 {
     auto pDevice = asdx::GetD3D12Device();
 
@@ -400,7 +145,7 @@ bool GaussianBlurEffectCS::Init(uint32_t width, uint32_t height, DXGI_FORMAT for
 
         D3D12_ROOT_PARAMETER param[3] = {};
         param[0].ParameterType              = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-        param[0].Constants.Num32BitValues   = 18;
+        param[0].Constants.Num32BitValues   = 19;
         param[0].Constants.ShaderRegister   = 0;
         param[0].Constants.RegisterSpace    = 0;
         param[0].ShaderVisibility           = D3D12_SHADER_VISIBILITY_ALL;
@@ -495,7 +240,7 @@ bool GaussianBlurEffectCS::Init(uint32_t width, uint32_t height, DXGI_FORMAT for
 //-----------------------------------------------------------------------------
 //      終了処理を行います.
 //-----------------------------------------------------------------------------
-void GaussianBlurEffectCS::Term()
+void GaussianBlurEffect::Term()
 {
     for(auto i=0; i<2; ++i)
     { m_ComputeTarget[i].Term(); }
@@ -506,18 +251,24 @@ void GaussianBlurEffectCS::Term()
 //-----------------------------------------------------------------------------
 //      コンピュートシェーダを起動します.
 //-----------------------------------------------------------------------------
-void GaussianBlurEffectCS::Dispatch(ID3D12GraphicsCommandList* pCmd, float strength, D3D12_GPU_DESCRIPTOR_HANDLE handleSRV)
+void GaussianBlurEffect::Dispatch
+(
+    ID3D12GraphicsCommandList*  pCmd,
+    uint32_t                    width,
+    uint32_t                    height,
+    D3D12_GPU_DESCRIPTOR_HANDLE handleSRV
+)
 {
     assert(pCmd != nullptr);
-    assert(strength > 0.0f);
-
     auto desc = GetDesc();
 
     Param param = {};
-    param.SizeX = uint16_t(desc.Width);
-    param.SizeY = uint16_t(desc.Height);
+    param.SrcW = uint16_t(width);
+    param.SrcH = uint16_t(height);
+    param.DstW = uint16_t(desc.Width);
+    param.DstH = uint16_t(desc.Height);
     param.Flags = 0;
-    ComputeGaussWeights(strength, param);
+    ComputeGaussWeights(m_BlurStrength, param);
 
     pCmd->SetComputeRootSignature(m_RootSignature.GetPtr());
     pCmd->SetPipelineState(m_PipelineState.GetPtr());
@@ -533,7 +284,7 @@ void GaussianBlurEffectCS::Dispatch(ID3D12GraphicsCommandList* pCmd, float stren
 
     auto handleUAV = m_ComputeTarget[0].GetGpuHandleUAV();
 
-    pCmd->SetComputeRoot32BitConstants(0, 18, &param, 0);
+    pCmd->SetComputeRoot32BitConstants(0, 19, &param, 0);
     pCmd->SetComputeRootDescriptorTable(1, handleSRV);
     pCmd->SetComputeRootDescriptorTable(2, handleUAV);
     pCmd->Dispatch(threadX, threadY, 1);
@@ -547,7 +298,7 @@ void GaussianBlurEffectCS::Dispatch(ID3D12GraphicsCommandList* pCmd, float stren
     barrier.Apply(pCmd);
 
     param.Flags = 1;
-    pCmd->SetComputeRoot32BitConstants(0, 18, &param, 0);
+    pCmd->SetComputeRoot32BitConstants(0, 19, &param, 0);
     pCmd->SetComputeRootDescriptorTable(1, handleSRV);
     pCmd->SetComputeRootDescriptorTable(2, handleUAV);
     pCmd->Dispatch(threadX, threadY, 1);
@@ -561,19 +312,19 @@ void GaussianBlurEffectCS::Dispatch(ID3D12GraphicsCommandList* pCmd, float stren
 //-----------------------------------------------------------------------------
 //      構成設定を取得します.
 //-----------------------------------------------------------------------------
-TargetDesc GaussianBlurEffectCS::GetDesc() const
+TargetDesc GaussianBlurEffect::GetDesc() const
 { return m_ComputeTarget[0].GetDesc(); }
 
 //-----------------------------------------------------------------------------
 //      GPUディスクリプタハンドルを取得します.
 //-----------------------------------------------------------------------------
-D3D12_GPU_DESCRIPTOR_HANDLE GaussianBlurEffectCS::GetHandleGPU() const
+D3D12_GPU_DESCRIPTOR_HANDLE GaussianBlurEffect::GetHandleGPU() const
 { return m_ComputeTarget[1].GetGpuHandleSRV(); }
 
 //-----------------------------------------------------------------------------
 //      ターゲットをリサイズします.
 //-----------------------------------------------------------------------------
-bool GaussianBlurEffectCS::Resize(uint32_t width, uint32_t height)
+bool GaussianBlurEffect::Resize(uint32_t width, uint32_t height)
 {
     for(auto i=0; i<2; ++i)
     {
@@ -585,5 +336,20 @@ bool GaussianBlurEffectCS::Resize(uint32_t width, uint32_t height)
 
     return true;
 }
+
+//-----------------------------------------------------------------------------
+//      ブラーの強さを設定します.
+//-----------------------------------------------------------------------------
+void GaussianBlurEffect::SetBlurStrength(float value)
+{
+    assert(value > 0.0f);
+    m_BlurStrength = value;
+}
+
+//-----------------------------------------------------------------------------
+//      ブラーの強さを取得します.
+//-----------------------------------------------------------------------------
+float GaussianBlurEffect::GetBlurStrength() const
+{ return m_BlurStrength; }
 
 } // namespace asdx

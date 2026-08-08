@@ -833,6 +833,9 @@
     <ClInclude Include="..\include\gfx\asdxEnhancedBarrier.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\gfx\asdxGaussianBlurEffect.h">
+      <Filter>ヘッダー ファイル\gfx</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\res\shaders\asdxBRDF.hlsli">
@@ -972,9 +975,6 @@
     <FxCompile Include="..\res\shaders\asdxRadialBlurPS.hlsl">
       <Filter>リソース ファイル\shaders</Filter>
     </FxCompile>
-    <FxCompile Include="..\res\shaders\asdxGaussianBlurPS.hlsl">
-      <Filter>リソース ファイル\shaders</Filter>
-    </FxCompile>
     <FxCompile Include="..\res\shaders\asdxGaussianBlurCS.hlsl">
       <Filter>リソース ファイル\shaders</Filter>
     </FxCompile>
@@ -1000,6 +1000,12 @@
       <Filter>リソース ファイル\shaders</Filter>
     </FxCompile>
     <FxCompile Include="..\res\shaders\asdxStarCompositeCS.hlsl">
+      <Filter>リソース ファイル\shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxTentCopyCS.hlsl">
+      <Filter>リソース ファイル\shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxBloomFinalPassCS.hlsl">
       <Filter>リソース ファイル\shaders</Filter>
     </FxCompile>
   </ItemGroup>
