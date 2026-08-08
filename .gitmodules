@@ -37,9 +37,3 @@
 [submodule "external/ImRing"]
 	path = external/ImRing
 	url = https://github.com/ProjectAsura/ImRing
-[submodule "external/FidelityFX-SDK"]
-	path = external/FidelityFX-SDK
-	url = https://github.com/GPUOpen-LibrariesAndSDKs/FidelityFX-SDK.git
-[submodule "external/DLSS"]
-	path = external/DLSS
-	url = https://github.com/NVIDIA/DLSS
