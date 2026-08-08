@@ -53,5 +53,7 @@ void main(uint3 dispatchId : SV_DispatchThreadID, uint groupIndex : SV_GroupInde
     result *= 0.25f;
 
     // 加算合成.
-    OutputMap[remapId] += result;
+    result += OutputMap[remapId];
+
+    OutputMap[remapId] = result;
 }

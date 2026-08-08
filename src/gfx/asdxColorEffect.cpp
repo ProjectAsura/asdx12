@@ -11,6 +11,7 @@
 #include <gfx/asdxColorEffect.h>
 #include <gfx/asdxDevice.h>
 #include <gfx/asdxPresetState.h>
+#include <gfx/asdxScopedMarker.h>
 
 
 namespace {
@@ -214,6 +215,8 @@ void ColorEffect::Draw(ID3D12GraphicsCommandList* pCmd, D3D12_GPU_DESCRIPTOR_HAN
     if (pCmd == nullptr || handleSRV.ptr == 0)
         return;
 
+    ASDX_SCOPED_MARKER(pCmd, ColorEffectPS);
+
     auto matrix = CalcColorMatrix();
 
     pCmd->SetGraphicsRootSignature(m_RootSignature.GetPtr());
@@ -237,6 +240,8 @@ void ColorEffect::Dispatch
 {
     if (pCmd == nullptr || width == 0 || height == 0 || handleUAV.ptr == 0 || handleSRV.ptr == 0)
         return;
+
+    ASDX_SCOPED_MARKER(pCmd, ColorEffectCS);
 
     auto matrix = CalcColorMatrix();
 

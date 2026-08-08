@@ -18,7 +18,7 @@ cbuffer Param : register(b0)
 {
     float4 Offset[4];
     float4 Weight[8];
-    uint   Resolution;
+    uint   DstResolution;
     uint3  Reserved;
 }
 
@@ -35,7 +35,7 @@ RWTexture2D<float4> OutputMap : register(u0);
 void main(uint3 dispatchId : SV_DispatchThreadID, uint groupIndex : SV_GroupIndex)
 {
     uint2 remapId = RemapLane8x8(dispatchId.xy, groupIndex);
-    uint2 dstSize = GetTargetSize(Resolution);
+    uint2 dstSize = GetTargetSize(DstResolution);
 
     if (any(remapId >= dstSize))
         return;

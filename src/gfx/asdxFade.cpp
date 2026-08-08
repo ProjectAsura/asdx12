@@ -7,11 +7,12 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
+#include <fnd/asdxLogger.h>
+#include <res/asdxResTexture.h>
 #include <gfx/asdxFade.h>
 #include <gfx/asdxDevice.h>
 #include <gfx/asdxPresetState.h>
-#include <res/asdxResTexture.h>
-#include <fnd/asdxLogger.h>
+#include <gfx/asdxScopedMarker.h>
 
 
 namespace {
@@ -237,6 +238,8 @@ void Fade::Draw(ID3D12GraphicsCommandList* pCmd, D3D12_GPU_DESCRIPTOR_HANDLE han
 {
     if (m_CurrentAlpha <= 0.0f)
         return;
+
+    ASDX_SCOPED_MARKER(pCmd, Fade);
 
     float color[] = {
         m_CurrentColor.x,

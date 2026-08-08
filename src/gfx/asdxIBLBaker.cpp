@@ -12,6 +12,7 @@
 #include <gfx/asdxPipelineState.h>
 #include <gfx/asdxPresetState.h>
 #include <gfx/asdxDevice.h>
+#include <gfx/asdxScopedMarker.h>
 
 
 namespace {
@@ -167,6 +168,8 @@ void IBLBaker::Bake
     if (pCmd == nullptr)
         return;
 
+    ASDX_SCOPED_MARKER(pCmd, IBLBake);
+
     BakeDiffuse (pCmd, diffuseLD,  width, height, handleSRV);
     BakeSpecular(pCmd, specularLD, width, height, handleSRV);
 }
@@ -183,6 +186,7 @@ void IBLBaker::BakeDiffuse
     D3D12_GPU_DESCRIPTOR_HANDLE handleSRV
 )
 {
+    ASDX_SCOPED_MARKER(pCmd, BakeDiffuse);
     auto desc = diffuseLD.GetDesc();
 
     BakeParam param = {};
@@ -245,6 +249,7 @@ void IBLBaker::BakeSpecular
     D3D12_GPU_DESCRIPTOR_HANDLE handleSRV
 )
 {
+    ASDX_SCOPED_MARKER(pCmd, BakeSpecular);
     auto desc = specularLD.GetDesc();
     const auto linearRoughnessStep = 1.0f / float(desc.MipLevels - 1.0f);
     auto linearRoughness = 0.0f;

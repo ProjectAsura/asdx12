@@ -12,6 +12,7 @@
 #include <gfx/asdxDevice.h>
 #include <gfx/asdxPresetState.h>
 #include <gfx/asdxLegacyBarrier.h>
+#include <gfx/asdxScopedMarker.h>
 
 
 namespace {
@@ -258,6 +259,8 @@ void GaussianBlurEffect::Dispatch
     D3D12_GPU_DESCRIPTOR_HANDLE handleSRV
 )
 {
+    ASDX_SCOPED_MARKER(pCmd, GaussianBlurEffect);
+
     assert(pCmd != nullptr);
     auto desc = GetDesc();
 
@@ -273,8 +276,6 @@ void GaussianBlurEffect::Dispatch
     pCmd->SetPipelineState(m_PipelineState.GetPtr());
 
     LegacyBarrier barrier;
-    barrier.Transition(m_ComputeTarget[0].GetResource(), m_State, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-    barrier.Apply(pCmd);
 
     float clearColor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
 
@@ -283,29 +284,43 @@ void GaussianBlurEffect::Dispatch
 
     auto handleUAV = m_ComputeTarget[0].GetGpuHandleUAV();
 
-    pCmd->SetComputeRoot32BitConstants(0, 19, &param, 0);
-    pCmd->SetComputeRootDescriptorTable(1, handleSRV);
-    pCmd->SetComputeRootDescriptorTable(2, handleUAV);
-    pCmd->Dispatch(threadX, threadY, 1);
+    // 水平方向ブラー.
+    {
+        ASDX_SCOPED_MARKER(pCmd, BlurX);
+
+        barrier.Transition(m_ComputeTarget[0].GetResource(), m_State, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        barrier.Apply(pCmd);
+
+        pCmd->SetComputeRoot32BitConstants(0, 19, &param, 0);
+        pCmd->SetComputeRootDescriptorTable(1, handleSRV);
+        pCmd->SetComputeRootDescriptorTable(2, handleUAV);
+        pCmd->Dispatch(threadX, threadY, 1);
+    }
 
     handleSRV = m_ComputeTarget[0].GetGpuHandleSRV();
     handleUAV = m_ComputeTarget[1].GetGpuHandleUAV();
 
-    barrier.UAV(m_ComputeTarget[0].GetResource());
-    barrier.Transition(m_ComputeTarget[0].GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-    barrier.Transition(m_ComputeTarget[1].GetResource(), D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-    barrier.Apply(pCmd);
+    // 垂直方向ブラー.
+    {
+        ASDX_SCOPED_MARKER(pCmd, BlurY);
 
-    param.Flags = 1;
-    pCmd->SetComputeRoot32BitConstants(0, 19, &param, 0);
-    pCmd->SetComputeRootDescriptorTable(1, handleSRV);
-    pCmd->SetComputeRootDescriptorTable(2, handleUAV);
-    pCmd->Dispatch(threadX, threadY, 1);
+        barrier.UAV(m_ComputeTarget[0].GetResource());
+        barrier.Transition(m_ComputeTarget[0].GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+        barrier.Transition(m_ComputeTarget[1].GetResource(), D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        barrier.Apply(pCmd);
 
-    barrier.UAV(m_ComputeTarget[1].GetResource());
-    barrier.Transition(m_ComputeTarget[1].GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
-    barrier.Apply(pCmd);
-    m_State = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+        param.Flags = 1;
+        pCmd->SetComputeRoot32BitConstants(0, 19, &param, 0);
+        pCmd->SetComputeRootDescriptorTable(1, handleSRV);
+        pCmd->SetComputeRootDescriptorTable(2, handleUAV);
+        pCmd->Dispatch(threadX, threadY, 1);
+
+        barrier.UAV(m_ComputeTarget[1].GetResource());
+        barrier.Transition(m_ComputeTarget[1].GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+        barrier.Apply(pCmd);
+
+        m_State = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+    }
 }
 
 //-----------------------------------------------------------------------------

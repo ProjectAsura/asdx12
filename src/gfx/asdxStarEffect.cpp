@@ -15,6 +15,7 @@
 #include <gfx/asdxDevice.h>
 #include <gfx/asdxPresetState.h>
 #include <gfx/asdxLegacyBarrier.h>
+#include <gfx/asdxScopedMarker.h>
 
 
 namespace {
@@ -386,7 +387,7 @@ bool StarEffect::Init(uint32_t w, uint32_t h, DXGI_FORMAT format)
         desc.ClearColor[2]      = 0.0f;
         desc.ClearColor[3]      = 0.0f;
 
-        if (m_OutputTarget.Init(&desc))
+        if (!m_OutputTarget.Init(&desc))
         {
             ELOGA("Error : ComputeTarget::Init() Failed.");
             return false;
@@ -398,7 +399,7 @@ bool StarEffect::Init(uint32_t w, uint32_t h, DXGI_FORMAT format)
     // パラメータ初期化.
     InitStarLine();
 
-    return false;
+    return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -430,6 +431,8 @@ void StarEffect::Dispatch
     if (pCmd == nullptr || inputHandleSRV.ptr == 0 || width == 0 || height == 0)
         return;
 
+    ASDX_SCOPED_MARKER(pCmd, StarEffect);
+
     const auto tanFov       = atanf(asdx::F_PI / 8.0f);
     const auto kMaxPasses   = 3;
     const auto kSampleCount = 8;
@@ -454,19 +457,7 @@ void StarEffect::Dispatch
     auto srcW = float(width);
     auto srcH = float(height);
 
-    auto outDesc = m_OutputTarget.GetDesc();
-
-    auto dstW = uint16_t(outDesc.Width);
-    auto dstH = uint16_t(outDesc.Height);
-
     auto radOffset = glareDef.StartInclination + starDef.Rotation;
-
-    ShaderParam param = {};
-    param.SizeX = dstW;
-    param.SizeY = dstH;
-
-    auto threadX = (dstW + 7u) / 8u;
-    auto threadY = (dstH + 7u) / 8u;
 
     LegacyBarrier barrier;
     pCmd->SetComputeRootSignature(m_RootSignature.GetPtr());
@@ -492,14 +483,28 @@ void StarEffect::Dispatch
 
     auto starLines = GetStarLines(glareDef.StarType);
 
-    auto srcIdx = 0u;
-    auto dstIdx = 1u;
+    auto workDesc = m_PingPongTarget[0].GetDesc();
+    auto workW = uint16_t(workDesc.Width);
+    auto workH = uint16_t(workDesc.Height);
 
-    D3D12_GPU_DESCRIPTOR_HANDLE handleUAV = m_PingPongTarget[0].GetGpuHandleSRV();
+    auto outDesc = m_OutputTarget.GetDesc();
+    auto outW = uint16_t(outDesc.Width);
+    auto outH = uint16_t(outDesc.Height);
+
+    ShaderParam param = {};
+    param.SizeX = workW;
+    param.SizeY = workH;
+
+    auto starThreadX = (workW + 7u) / 8u;
+    auto starThreadY = (workH + 7u) / 8u;
+
+    auto compThreadX = (outW + 7u) / 8u;
+    auto compThreadY = (outH + 7u) / 8u;
 
     // 方向ループ.
     for(auto d=0; d<starDef.StarLineCount; ++d)
     {
+        ASDX_SCOPED_MARKER(pCmd, Direction);
         auto& starLine = starLines[d];
 
         auto rad = radOffset + starLine.Inclination;
@@ -514,11 +519,17 @@ void StarEffect::Dispatch
         float attnPowScale = (tanFov + 0.1f) * (160.0f + 120.0f) / (srcW + srcH) * 1.2f;
 
         D3D12_GPU_DESCRIPTOR_HANDLE handleSRV = inputHandleSRV;
+        D3D12_GPU_DESCRIPTOR_HANDLE handleUAV = m_PingPongTarget[0].GetGpuHandleUAV();
+
+        auto srcIdx = 1u;
+        auto dstIdx = 0u;
 
         pCmd->SetPipelineState(m_StarPSO.GetPtr());
 
         for(auto p=0; p<starLine.PassCount; ++p)
         {
+            ASDX_SCOPED_MARKER(pCmd, Pass);
+
             for(auto i=0; i<kSampleCount; ++i)
             {
                 auto lum    = powf(starLine.Attenuation, attnPowScale * i);
@@ -550,7 +561,7 @@ void StarEffect::Dispatch
             pCmd->SetComputeRoot32BitConstants(ROOT_PARAM_CBV0, 49, &param, 0);
             pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_SRV0, handleSRV);
             pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_UAV0, handleUAV);
-            pCmd->Dispatch(threadX, threadY, 1);
+            pCmd->Dispatch(starThreadX, starThreadY, 1);
 
             barrier.UAV(m_PingPongTarget[dstIdx].GetResource());
             barrier.Apply(pCmd);
@@ -558,15 +569,17 @@ void StarEffect::Dispatch
             stepUV       *= kSampleCount;
             attnPowScale *= kSampleCount;
 
+            handleSRV = m_PingPongTarget[dstIdx].GetGpuHandleSRV();
+            handleUAV = m_PingPongTarget[srcIdx].GetGpuHandleUAV();
+
             srcIdx = dstIdx;
             dstIdx = (dstIdx + 1) & 0x1;
-
-            handleSRV = m_PingPongTarget[srcIdx].GetGpuHandleSRV();
-            handleUAV = m_PingPongTarget[dstIdx].GetGpuHandleUAV();
         }
 
         // 出力用ターゲットに合成.
         {
+            ASDX_SCOPED_MARKER(pCmd, Composite);
+
             auto srcDesc = m_PingPongTarget[srcIdx].GetDesc();
             auto dstDesc = m_OutputTarget.GetDesc();
 
@@ -586,7 +599,7 @@ void StarEffect::Dispatch
             pCmd->SetComputeRoot32BitConstants(ROOT_PARAM_CBV0, 2, &param, 0);
             pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_SRV0, handleSRV);
             pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_UAV0, m_OutputTarget.GetGpuHandleUAV());
-            pCmd->Dispatch(threadX, threadY, 1);
+            pCmd->Dispatch(compThreadX, compThreadY, 1);
 
             barrier.UAV(m_OutputTarget.GetResource());
             barrier.Apply(pCmd);
@@ -611,6 +624,8 @@ void StarEffect::CompositeBloom
 {
     if (pCmd == nullptr || handleSRV.ptr == 0 || width == 0 || height == 0)
         return;
+
+    ASDX_SCOPED_MARKER(pCmd, StarCompositeBloom);
 
     auto desc = m_OutputTarget.GetDesc();
 

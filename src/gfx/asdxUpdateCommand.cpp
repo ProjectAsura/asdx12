@@ -11,6 +11,7 @@
 #include <fnd/asdxLogger.h>
 #include <gfx/asdxUpdateCommand.h>
 #include <gfx/asdxDevice.h>
+#include <gfx/asdxScopedMarker.h>
 #include <res/asdxResTexture.h>
 
 
@@ -143,6 +144,8 @@ void UpdateSubResources
             return;
         }
 
+        ASDX_SCOPED_MARKER(pCmdList, UpdateSubresource);
+
         for(auto i=0u; i<count; ++i)
         {
             D3D12_MEMCPY_DEST dstData = {};
@@ -202,6 +205,8 @@ void UpdateBuffer
 {
     if (pCmdList == nullptr || pSrcResource == nullptr || pDstResource == nullptr)
     { return; }
+
+    ASDX_SCOPED_MARKER(pCmdList, UpdateBuffer);
 
     auto desc = pDstResource->GetDesc();
 
@@ -268,6 +273,8 @@ void UpdateTexture
 
     // コマンドを生成.
     {
+        ASDX_SCOPED_MARKER(pCmdList, UpdateTexture);
+
         std::vector<D3D12_PLACED_SUBRESOURCE_FOOTPRINT> layouts;
         std::vector<UINT>                               rows;
         std::vector<UINT64>                             rowSizeInBytes;

@@ -10,6 +10,7 @@
 #include <fnd/asdxLogger.h>
 #include <gfx/asdxLine.h>
 #include <gfx/asdxDevice.h>
+#include <gfx/asdxScopedMarker.h>
 #include "D3D12MemAlloc.h"
 
 
@@ -359,6 +360,8 @@ void LineRenderer::SetPipelineState(ID3D12GraphicsCommandList* pCmd, ID3D12Pipel
 //-----------------------------------------------------------------------------
 void LineRenderer::Draw(ID3D12GraphicsCommandList* pCmd)
 {
+    ASDX_SCOPED_MARKER(pCmd, LineDraw);
+
     D3D12_VERTEX_BUFFER_VIEW vbv = {};
     vbv.BufferLocation = m_VB[m_BufferIndex]->GetGPUVirtualAddress() + m_SubmitCount * sizeof(Vertex) * 2;
     vbv.SizeInBytes    = m_LineCount * sizeof(Vertex) * 2;

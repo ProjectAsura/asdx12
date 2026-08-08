@@ -7,10 +7,11 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
+#include <fnd/asdxLogger.h>
 #include <gfx/asdxRadialBlurEffect.h>
 #include <gfx/asdxPresetState.h>
 #include <gfx/asdxDevice.h>
-#include <fnd/asdxLogger.h>
+#include <gfx/asdxScopedMarker.h>
 
 
 namespace {
@@ -207,6 +208,8 @@ void RadialBlurEffect::Draw
     if (pCmd == nullptr || handleSRV.ptr == 0)
         return;
 
+    ASDX_SCOPED_MARKER(pCmd, RadialBlurEffectPS);
+
     assert(inputW != 0);
     assert(inputH != 0);
 
@@ -245,6 +248,8 @@ void RadialBlurEffect::Dispatch
 {
     if (pCmd == nullptr || handleSRV.ptr == 0 || handleUAV.ptr == 0)
         return;
+
+    ASDX_SCOPED_MARKER(pCmd, RadialBlurEffectCS);
 
     assert(inputW != 0);
     assert(inputH != 0);

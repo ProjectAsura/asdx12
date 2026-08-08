@@ -12,6 +12,7 @@
 #include <gfx/asdxDevice.h>
 #include <gfx/asdxPresetState.h>
 #include <gfx/asdxLegacyBarrier.h>
+#include <gfx/asdxScopedMarker.h>
 
 
 namespace {
@@ -432,6 +433,8 @@ void KawaseBloomEffect::Dispatch
     D3D12_GPU_DESCRIPTOR_HANDLE handleSRV
 )
 {
+    ASDX_SCOPED_MARKER(pCmd, KawaseBloomEffect);
+
     assert(pCmd != nullptr);
     assert(width != 0);
     assert(height != 0);
@@ -443,6 +446,8 @@ void KawaseBloomEffect::Dispatch
 
     // ファーストパス.
     {
+        ASDX_SCOPED_MARKER(pCmd, FirstPass);
+
         auto desc = m_BlurTarget[1].GetDesc();
 
         BloomFirstParam param = {};
@@ -468,6 +473,8 @@ void KawaseBloomEffect::Dispatch
 
     // ダウンサンプルパス.
     {
+        ASDX_SCOPED_MARKER(pCmd, DownSamplePass);
+
         auto desc = m_BlurTarget[0].GetDesc();
 
         BloomDownParam param = {};
@@ -499,6 +506,8 @@ void KawaseBloomEffect::Dispatch
 
             // 水平方向ブラー.
             {
+                ASDX_SCOPED_MARKER(pCmd, BlurX);
+
                 barrier.UAV(m_BlurTarget[src].GetResource());
                 barrier.Transition(m_BlurTarget[src].GetResource(), m_BlurTargetStates[src], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
                 barrier.Transition(m_BlurTarget[dst].GetResource(), m_BlurTargetStates[dst], D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
@@ -518,6 +527,8 @@ void KawaseBloomEffect::Dispatch
 
             // 垂直方向ブラー.
             {
+                ASDX_SCOPED_MARKER(pCmd, BlurY);
+
                 barrier.UAV(m_BlurTarget[src].GetResource());
                 barrier.Transition(m_BlurTarget[src].GetResource(), m_BlurTargetStates[src], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
                 barrier.Transition(m_BlurTarget[dst].GetResource(), m_BlurTargetStates[dst], D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
@@ -540,6 +551,8 @@ void KawaseBloomEffect::Dispatch
 
     // 合成パス.
     {
+        ASDX_SCOPED_MARKER(pCmd, CompositePass);
+
         pCmd->SetPipelineState(m_CompositePSO.GetPtr());
 
         BloomCompositeParam param = {};
@@ -577,6 +590,8 @@ void KawaseBloomEffect::Dispatch
 
     // 最終パス.
     {
+        ASDX_SCOPED_MARKER(pCmd, FinalPass);
+
         auto srcDesc = m_BlurTarget[1].GetDesc();
         auto dstDesc = m_ComputeTarget.GetDesc();
 

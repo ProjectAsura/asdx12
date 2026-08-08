@@ -14,6 +14,7 @@
 #include <gfx/asdxPresetState.h>
 #include <gfx/asdxPipelineState.h>
 #include <gfx/asdxDevice.h>
+#include <gfx/asdxScopedMarker.h>
 #include "D3D12MemAlloc.h"
 
 
@@ -2078,6 +2079,8 @@ void ShapeBase::Reset()
 //-----------------------------------------------------------------------------
 void ShapeBase::Draw(ID3D12GraphicsCommandList* pCmd)
 {
+    ASDX_SCOPED_MARKER(pCmd, ShapeDraw);
+
     pCmd->IASetVertexBuffers(0, 1, &m_VBV);
     pCmd->IASetIndexBuffer(&m_IBV);
     pCmd->DrawIndexedInstanced(m_IndexCount, 1, 0, 0, 0);

@@ -40,33 +40,12 @@ public:
     //! @param[in]      pCmd        グラフィックスコマンドリストです.
     //! @param[in]      text        マーカーに表示するテキストです.
     //-------------------------------------------------------------------------
-    ScopedMarker(ID3D12GraphicsCommandList* pCmd, const char* text)
-    : m_pCmd(pCmd)
-    {
-        assert(m_pCmd != nullptr);
-        assert(text != nullptr);
-    #ifdef _PIX3_H_
-        PIXBeginEvent(m_pCmd, PIX_COLOR_DEFAULT, text);
-    #else
-        static const UINT PIX_EVENT_ANSI_VERSION = 1u;
-        auto size = UINT((strlen(text) + 1) * sizeof(char));
-        m_pCmd->BeginEvent(PIX_EVENT_ANSI_VERSION, text, size);
-    #endif
-    }
+    ScopedMarker(ID3D12GraphicsCommandList* pCmd, const char* text);
 
     //-------------------------------------------------------------------------
     //! @brief      デストラクタです.
     //-------------------------------------------------------------------------
-    ~ScopedMarker()
-    {
-        assert(m_pCmd != nullptr);
-    #ifdef _PIX3_H_
-        PIXEndEvent(m_pCmd);
-    #else
-        m_pCmd->EndEvent();
-    #endif
-        m_pCmd = nullptr;
-    }
+    ~ScopedMarker();
 
 private:
     //=========================================================================
@@ -81,3 +60,10 @@ private:
 };
 
 } // namespace asdx
+
+#if defined(DEBUG) || defined(_DEBUG)
+    #define ASDX_SCOPED_MARKER(pCmd, Tag) asdx::ScopedMarker marker_##Tag(pCmd, #Tag)
+#else
+    #define ASDX_SCOPED_MARKER(pCmd, Tag)
+#endif// defined(DEBUG) || defined(_DEBUG)
+

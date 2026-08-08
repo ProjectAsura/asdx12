@@ -11,6 +11,7 @@
 #include <gfx/asdxFxaa.h>
 #include <gfx/asdxDevice.h>
 #include <gfx/asdxPresetState.h>
+#include <gfx/asdxScopedMarker.h>
 
 
 namespace {
@@ -196,6 +197,8 @@ void Fxaa::Draw
 {
     if (pCmd == nullptr || rtvWidth == 0 || rtvHeight == 0 || handleSRV.ptr == 0)
         return;
+
+    ASDX_SCOPED_MARKER(pCmd, Fxaa);
 
     Param param = {};
     param.InvW = 1.0f / float(rtvWidth);

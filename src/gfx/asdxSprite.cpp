@@ -10,6 +10,7 @@
 #include <fnd/asdxLogger.h>
 #include <gfx/asdxSprite.h>
 #include <gfx/asdxDevice.h>
+#include <gfx/asdxScopedMarker.h>
 #include "D3D12MemAlloc.h"
 
 
@@ -753,6 +754,8 @@ void SpriteRenderer::Draw(ID3D12GraphicsCommandList* pCmdList)
 {
     if (m_SpriteCount == 0 || pCmdList == nullptr)
         return;
+
+    ASDX_SCOPED_MARKER(pCmdList, SpriteDraw);
 
     D3D12_VERTEX_BUFFER_VIEW vbv = {};
     vbv.BufferLocation  = m_VB[m_BufferIndex]->GetGPUVirtualAddress();

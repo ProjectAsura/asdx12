@@ -12,6 +12,7 @@
 #include <gfx/asdxPipelineState.h>
 #include <gfx/asdxPresetState.h>
 #include <gfx/asdxDevice.h>
+#include <gfx/asdxScopedMarker.h>
 
 
 namespace {
@@ -250,6 +251,8 @@ void SkyBoxPS::Draw
     if (addressBuffer == 0)
         return;
 
+    ASDX_SCOPED_MARKER(pCmd, SkyBoxPS);
+
     pCmd->SetGraphicsRootSignature(pRootSignature);
     pCmd->SetPipelineState(m_PipelineState.GetPtr());
     pCmd->SetGraphicsRootConstantBufferView(ROOT_PARAM_B0, addressBuffer);
@@ -326,6 +329,8 @@ void SkyBoxCS::Dispatch
     auto addressBuffer = context.GetBuffer().GetGpuAddress();
     if (addressBuffer == 0)
         return;
+
+    ASDX_SCOPED_MARKER(pCmd, SkyBoxCS);
 
     Constants constants = {};
     constants.Width     = width;
@@ -430,6 +435,8 @@ void SkySpherePS::Draw
     if (addressBuffer == 0)
         return;
 
+    ASDX_SCOPED_MARKER(pCmd, SkySpherePS);
+
     pCmd->SetGraphicsRootSignature(pRootSignature);
     pCmd->SetPipelineState(m_PipelineState.GetPtr());
     pCmd->SetGraphicsRootConstantBufferView(ROOT_PARAM_B0, addressBuffer);
@@ -506,6 +513,8 @@ void SkySphereCS::Dispatch
     auto addressBuffer = context.GetBuffer().GetGpuAddress();
     if (addressBuffer == 0)
         return;
+
+    ASDX_SCOPED_MARKER(pCmd, SkySphereCS);
 
     Constants constants = {};
     constants.Width     = width;
