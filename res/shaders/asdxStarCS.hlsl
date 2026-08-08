@@ -35,22 +35,19 @@ RWTexture2D<float4> OutputMap : register(u0);
 void main(uint3 dispatchId : SV_DispatchThreadID, uint groupIndex : SV_GroupIndex)
 {
     uint2 remapId = RemapLane8x8(dispatchId.xy, groupIndex);
-    uint w = Resolution & 0xFFFFF;
-    uint h = (Resolution >> 16) & 0xFFFFF;
+    uint2 dstSize = GetTargetSize(Resolution);
 
-    if (any(remapId >= uint2(w, h)))
+    if (any(remapId >= dstSize))
         return;
 
-    float2 uv = (remapId + 0.5f.xx) / float2(float(w), float(h));
+    float2 uv = (remapId + 0.5f.xx) / float2(dstSize);
  
     const float2 offset[8] = (float2[8])Offset;
 
     float4 result = 0.0f.xxxx;
     [unroll]
     for(int i=0; i<8; ++i)
-    {
         result += ColorMap.SampleLevel(LinearClamp, uv + offset[i].xy, 0.0f) * Weight[i];
-    }
 
     result.a = 1.0f;
 

@@ -23,7 +23,7 @@ namespace {
 // Shaders
 //-----------------------------------------------------------------------------
 #include "../res/shaders/Compiled/asdxStarCS.inc"
-#include "../res/shaders/Compiled/asdxStarCompositeCS.inc"
+#include "../res/shaders/Compiled/asdxBloomCompositeCS.inc"
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -95,6 +95,17 @@ struct ShaderParam
     asdx::Vector4 Weight[8];
     uint16_t      SizeX;
     uint16_t      SizeY;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// CompositeParam structure
+///////////////////////////////////////////////////////////////////////////////
+struct CompositeParam
+{
+    uint16_t SrcW;
+    uint16_t SrcH;
+    uint16_t DstW;
+    uint16_t DstH;
 };
 
 //-----------------------------------------------------------------------------
@@ -321,7 +332,7 @@ bool StarEffect::Init(uint32_t w, uint32_t h, DXGI_FORMAT format)
     {
         D3D12_COMPUTE_PIPELINE_STATE_DESC desc = {};
         desc.pRootSignature = m_RootSignature.GetPtr();
-        desc.CS = { asdxStarCompositeCS, sizeof(asdxStarCompositeCS) };
+        desc.CS = { asdxBloomCompositeCS, sizeof(asdxBloomCompositeCS) };
 
         auto hr = pDevice->CreateComputePipelineState(&desc, IID_PPV_ARGS(m_CompositePSO.GetAddress()));
         if (FAILED(hr))
@@ -331,12 +342,12 @@ bool StarEffect::Init(uint32_t w, uint32_t h, DXGI_FORMAT format)
         }
     }
 
-    // コンピュートターゲット生成.
+    // ピンポンターゲット生成.
     {
         TargetDesc desc = {};
         desc.Dimension          = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-        desc.Width              = w;
-        desc.Height             = h;
+        desc.Width              = w / 2;
+        desc.Height             = h / 2;
         desc.DepthOrArraySize   = 1;
         desc.MipLevels          = 1;
         desc.Format             = format;
@@ -357,6 +368,23 @@ bool StarEffect::Init(uint32_t w, uint32_t h, DXGI_FORMAT format)
 
             m_PingPongStates[i] = desc.InitState;
         }
+    }
+
+    // コンピュートターゲット生成.
+    {
+        TargetDesc desc = {};
+        desc.Dimension          = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+        desc.Width              = w;
+        desc.Height             = h;
+        desc.DepthOrArraySize   = 1;
+        desc.MipLevels          = 1;
+        desc.Format             = format;
+        desc.SampleDesc         = { 1, 0 };
+        desc.InitState          = D3D12_RESOURCE_STATE_COMMON;
+        desc.ClearColor[0]      = 0.0f;
+        desc.ClearColor[1]      = 0.0f;
+        desc.ClearColor[2]      = 0.0f;
+        desc.ClearColor[3]      = 0.0f;
 
         if (m_OutputTarget.Init(&desc))
         {
@@ -394,13 +422,12 @@ void StarEffect::Term()
 void StarEffect::Dispatch
 (
     ID3D12GraphicsCommandList*  pCmd, 
-    STAR_TYPE                   type,
     uint32_t                    width,
     uint32_t                    height,
     D3D12_GPU_DESCRIPTOR_HANDLE inputHandleSRV
 )
 {
-    if (pCmd == nullptr)
+    if (pCmd == nullptr || inputHandleSRV.ptr == 0 || width == 0 || height == 0)
         return;
 
     const auto tanFov       = atanf(asdx::F_PI / 8.0f);
@@ -410,7 +437,7 @@ void StarEffect::Dispatch
     Vector4 colors[kMaxPasses][kSampleCount];
     const Vector4 kWhiteColor(0.63f, 0.63f, 0.63f, 0.0f);
 
-    const GlareDef& glareDef = kGlareDef[type];
+    const GlareDef& glareDef = kGlareDef[m_Type];
     const StarDef&  starDef  = kStarDef[glareDef.StarType];
 
     for(auto i=0; i<kMaxPasses; ++i)
@@ -522,6 +549,15 @@ void StarEffect::Dispatch
 
         // 出力用ターゲットに合成.
         {
+            auto srcDesc = m_PingPongTarget[srcIdx].GetDesc();
+            auto dstDesc = m_OutputTarget.GetDesc();
+
+            CompositeParam param = {};
+            param.SrcW = uint16_t(srcDesc.Width);
+            param.SrcH = uint16_t(srcDesc.Height);
+            param.DstW = uint16_t(dstDesc.Width);
+            param.DstH = uint16_t(dstDesc.Height);
+
             barrier.Transition(m_PingPongTarget[srcIdx].GetResource(), m_PingPongStates[srcIdx], D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
             barrier.Transition(m_OutputTarget.GetResource(), m_OutputStates, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
             barrier.Apply(pCmd);
@@ -529,6 +565,7 @@ void StarEffect::Dispatch
             m_OutputStates = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 
             pCmd->SetPipelineState(m_CompositePSO.GetPtr());
+            pCmd->SetComputeRoot32BitConstants(ROOT_PARAM_CBV0, 2, &param, 0);
             pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_SRV0, handleSRV);
             pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_UAV0, m_OutputTarget.GetGpuHandleUAV());
             pCmd->Dispatch(threadX, threadY, 1);
@@ -544,9 +581,64 @@ void StarEffect::Dispatch
 }
 
 //-----------------------------------------------------------------------------
+//      ブルーム結果を合成します.
+//-----------------------------------------------------------------------------
+void StarEffect::CompositeBloom
+(
+    ID3D12GraphicsCommandList*  pCmd,
+    uint32_t                    width,
+    uint32_t                    height,
+    D3D12_GPU_DESCRIPTOR_HANDLE handleSRV
+)
+{
+    if (pCmd == nullptr || handleSRV.ptr == 0 || width == 0 || height == 0)
+        return;
+
+    auto desc = m_OutputTarget.GetDesc();
+
+    CompositeParam param = {};
+    param.SrcW = uint16_t(width);
+    param.SrcH = uint16_t(height);
+    param.DstW = uint16_t(desc.Width);
+    param.DstH = uint16_t(desc.Height);
+
+    auto threadX = (param.DstW + 7u) / 8u;
+    auto threadY = (param.DstH + 7u) / 8u;
+
+    LegacyBarrier barrier;
+    barrier.Transition(m_OutputTarget.GetResource(), m_OutputStates, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+    barrier.Apply(pCmd);
+    m_OutputStates = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+
+    pCmd->SetComputeRootSignature(m_RootSignature.GetPtr());
+    pCmd->SetPipelineState(m_CompositePSO.GetPtr());
+    pCmd->SetComputeRoot32BitConstants(ROOT_PARAM_CBV0, 2, &param, 0);
+    pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_SRV0, handleSRV);
+    pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_UAV0, m_OutputTarget.GetGpuHandleUAV());
+    pCmd->Dispatch(threadX, threadY, 1);
+
+    barrier.UAV(m_OutputTarget.GetResource());
+    barrier.Transition(m_OutputTarget.GetResource(), m_OutputStates, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+    barrier.Apply(pCmd);
+    m_OutputStates = D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE;
+}
+
+//-----------------------------------------------------------------------------
 //      SRVハンドルを取得します.
 //-----------------------------------------------------------------------------
 D3D12_GPU_DESCRIPTOR_HANDLE StarEffect::GetHandleSRV() const
 { return m_OutputTarget.GetGpuHandleSRV(); }
+
+//-----------------------------------------------------------------------------
+//      光芒タイプを設定します.
+//-----------------------------------------------------------------------------
+void StarEffect::SetType(TYPE type)
+{ m_Type = type; }
+
+//-----------------------------------------------------------------------------
+//      光芒タイプを取得します.
+//-----------------------------------------------------------------------------
+StarEffect::TYPE StarEffect::GetType() const
+{ return m_Type; }
 
 } // namespace asdx

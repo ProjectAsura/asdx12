@@ -17,22 +17,6 @@
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
-// STAR_TYPE enum
-///////////////////////////////////////////////////////////////////////////////
-enum STAR_TYPE
-{
-    STAR_DISABLE,               //!< 無効.
-    STAR_CROSS_SCREEN,          //!< クロスフィルタ.
-    STAR_CROSS_SCREEN_SPECTRAL, //!< クロスフィルタ・スペクトル.
-    STAR_SNOW_CROSS,            //!< スノークロス.
-    STAR_SNOW_CROSS_SPECTRAL,   //!< スノークロス・スペクトル.
-    STAR_SUNNY_CROSS,           //!< サニークロス.
-    STAR_SUNNY_CROSS_SPECTRAL,  //!< サニークロス・スペクトル.
-    STAR_CINEMA_VERTICAL,       //!< シネマ垂直方向.
-    STAR_CINEMA_HORIZONTAL,     //!< シネマ水平方向.
-};
-
-///////////////////////////////////////////////////////////////////////////////
 // StarEffect class
 ///////////////////////////////////////////////////////////////////////////////
 class StarEffect
@@ -43,6 +27,22 @@ class StarEffect
     /* NOTHING */
 
 public:
+    ///////////////////////////////////////////////////////////////////////////////
+    // TYPE enum
+    ///////////////////////////////////////////////////////////////////////////////
+    enum TYPE
+    {
+        DISABLE,               //!< 無効.
+        CROSS_SCREEN,          //!< クロスフィルタ.
+        CROSS_SCREEN_SPECTRAL, //!< クロスフィルタ・スペクトル.
+        SNOW_CROSS,            //!< スノークロス.
+        SNOW_CROSS_SPECTRAL,   //!< スノークロス・スペクトル.
+        SUNNY_CROSS,           //!< サニークロス.
+        SUNNY_CROSS_SPECTRAL,  //!< サニークロス・スペクトル.
+        CINEMA_VERTICAL,       //!< シネマ垂直方向.
+        CINEMA_HORIZONTAL,     //!< シネマ水平方向.
+    };
+
     //=========================================================================
     // public variables.
     //=========================================================================
@@ -82,14 +82,26 @@ public:
     //! @brief      エフェクトを適用します.
     //! 
     //! @param[in]      pCmd        グラフィックスコマンドリスト.
-    //! @param[in]      type        光芒タイプ.
     //! @param[in]      width       SRVの横幅.
     //! @param[in]      height      SRVの縦幅.
     //! @param[in]      handleSRV   入力シェーダリソースビュー.
     //-------------------------------------------------------------------------
     void Dispatch(
         ID3D12GraphicsCommandList*  pCmd,
-        STAR_TYPE                   type,
+        uint32_t                    width,
+        uint32_t                    height,
+        D3D12_GPU_DESCRIPTOR_HANDLE handleSRV);
+
+    //-------------------------------------------------------------------------
+    //! @brief      ブルーム適用結果を合成します.
+    //! 
+    //! @param[in]      pCmd        グラフィックスコマンドリスト.
+    //! @param[in]      width       SRVの横幅.
+    //! @param[in]      height      SRVの縦幅.
+    //! @param[in]      handleSRV   入力シェーダリソースビュー.
+    //-------------------------------------------------------------------------
+    void CompositeBloom(
+        ID3D12GraphicsCommandList*  pCmd,
         uint32_t                    width,
         uint32_t                    height,
         D3D12_GPU_DESCRIPTOR_HANDLE handleSRV);
@@ -101,17 +113,32 @@ public:
     //-------------------------------------------------------------------------
     D3D12_GPU_DESCRIPTOR_HANDLE GetHandleSRV() const;
 
+    //-------------------------------------------------------------------------
+    //! @brief      光芒タイプを設定します.
+    //! 
+    //! @param[in]      type        設定する値.
+    //-------------------------------------------------------------------------
+    void SetType(TYPE type);
+
+    //-------------------------------------------------------------------------
+    //! @brief      光芒タイプを取得します.
+    //! 
+    //! @return     光芒タイプを返却します.
+    //-------------------------------------------------------------------------
+    TYPE GetType() const;
+
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
     RefPtr<ID3D12RootSignature>     m_RootSignature;        //!< ルートシグニチャ.
-    RefPtr<ID3D12PipelineState>     m_StarPSO;              //!< パイプラインステート.
-    RefPtr<ID3D12PipelineState>     m_CompositePSO;
-    ComputeTarget                   m_PingPongTarget[2];
-    ComputeTarget                   m_OutputTarget;
-    D3D12_RESOURCE_STATES           m_PingPongStates[2];
-    D3D12_RESOURCE_STATES           m_OutputStates;
+    RefPtr<ID3D12PipelineState>     m_StarPSO;              //!< 光芒用パイプラインステートです.
+    RefPtr<ID3D12PipelineState>     m_CompositePSO;         //!< 合成用パイプラインステートです.
+    ComputeTarget                   m_PingPongTarget[2];    //!< ピンポンターゲット.
+    ComputeTarget                   m_OutputTarget;         //!< 出力ターゲット.
+    D3D12_RESOURCE_STATES           m_PingPongStates[2];    //!< ピンポンターゲット用リソースステート.
+    D3D12_RESOURCE_STATES           m_OutputStates;         //!< 出力ターゲット用リソースステート.
+    TYPE                            m_Type = TYPE::DISABLE; //!< 光芒タイプ.
 
     //=========================================================================
     // private methods.
