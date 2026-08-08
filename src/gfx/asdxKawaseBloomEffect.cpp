@@ -191,7 +191,7 @@ bool KawaseBloomEffect::Init(uint32_t w, uint32_t h, DXGI_FORMAT format)
 
         D3D12_ROOT_PARAMETER param[4] = {};
         param[ROOT_PARAM_CBV0].ParameterType              = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-        param[ROOT_PARAM_CBV0].Constants.Num32BitValues   = 18;
+        param[ROOT_PARAM_CBV0].Constants.Num32BitValues   = 19;
         param[ROOT_PARAM_CBV0].Constants.ShaderRegister   = 0;
         param[ROOT_PARAM_CBV0].Constants.RegisterSpace    = 0;
         param[ROOT_PARAM_CBV0].ShaderVisibility           = D3D12_SHADER_VISIBILITY_ALL;
@@ -507,7 +507,7 @@ void KawaseBloomEffect::Dispatch
                 m_BlurTargetStates[dst] = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 
                 param.Flags = 0;
-                pCmd->SetComputeRoot32BitConstants(ROOT_PARAM_CBV0, 18, &param, 0);
+                pCmd->SetComputeRoot32BitConstants(ROOT_PARAM_CBV0, 19, &param, 0);
                 pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_SRV0, m_BlurTarget[src].GetGpuHandleSRV());
                 pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_UAV0, m_BlurTarget[dst].GetGpuHandleUAV());
                 pCmd->Dispatch(threadX, threadY, 1);
@@ -526,7 +526,7 @@ void KawaseBloomEffect::Dispatch
                 m_BlurTargetStates[dst] = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 
                 param.Flags = 1;
-                pCmd->SetComputeRoot32BitConstants(ROOT_PARAM_CBV0, 18, &param, 0);
+                pCmd->SetComputeRoot32BitConstants(ROOT_PARAM_CBV0, 19, &param, 0);
                 pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_SRV0, m_BlurTarget[src].GetGpuHandleSRV());
                 pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_UAV0, m_BlurTarget[dst].GetGpuHandleUAV());
                 pCmd->Dispatch(threadX, threadY, 1);
@@ -548,7 +548,7 @@ void KawaseBloomEffect::Dispatch
         for(int i=count-1; i>=1; --i)
         {
             auto src = (i + 0) * 2 + 1;
-            auto dst = (i - 1) * 2 + 0;
+            auto dst = (i - 1) * 2 + 1;
 
             auto srcDesc = m_BlurTarget[src].GetDesc();
             auto dstDesc = m_BlurTarget[dst].GetDesc();
