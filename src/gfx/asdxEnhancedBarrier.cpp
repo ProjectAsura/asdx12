@@ -7,6 +7,7 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
+#include <cassert>
 #include <gfx/asdxEnhancedBarrier.h>
 
 
@@ -45,6 +46,8 @@ void EnhancedBarrier::Global
         return;
 
     auto& barrier = m_Global[m_GlobalCount++];
+    assert(m_GlobalCount <= 16);
+
     barrier.SyncBefore   = syncBefore;
     barrier.SyncAfter    = syncAfter;
     barrier.AccessBefore = accessBefore;
@@ -76,6 +79,8 @@ void EnhancedBarrier::Texture
         return;
 
     auto& barrier = m_Texture[m_TextureCount++];
+    assert(m_TextureCount <= 16);
+
     barrier.pResource       = pResource;
     barrier.SyncBefore      = syncBefore;
     barrier.SyncAfter       = syncAfter;
@@ -123,6 +128,8 @@ void EnhancedBarrier::Buffer
         return;
 
     auto& barrier = m_Buffer[m_BufferCount++];
+    assert(m_BufferCount <= 16);
+
     barrier.pResource = pResource;
     barrier.SyncBefore = syncBefore;
     barrier.SyncAfter = syncAfter;

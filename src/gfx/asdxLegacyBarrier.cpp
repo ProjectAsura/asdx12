@@ -40,7 +40,8 @@ void LegacyBarrier::Transition
         return;
 
     auto& barrier = m_Barrier[m_Count++];
-    assert(m_Count > 16);
+    assert(m_Count <= 16);
+
     barrier.Type                    = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
     barrier.Flags                   = D3D12_RESOURCE_BARRIER_FLAG_NONE;
     barrier.Transition.pResource    = pResource;
@@ -58,6 +59,8 @@ void LegacyBarrier::Aliasing(ID3D12Resource* pBefore, ID3D12Resource* pAfter)
         return;
 
     auto& barrier = m_Barrier[m_Count++];
+    assert(m_Count <= 16);
+
     barrier.Type                        = D3D12_RESOURCE_BARRIER_TYPE_ALIASING;
     barrier.Flags                       = D3D12_RESOURCE_BARRIER_FLAG_NONE;
     barrier.Aliasing.pResourceBefore    = pBefore;
@@ -73,6 +76,8 @@ void LegacyBarrier::UAV(ID3D12Resource* pResource)
         return;
 
     auto& barrier = m_Barrier[m_Count++];
+    assert(m_Count <= 16);
+
     barrier.Type            = D3D12_RESOURCE_BARRIER_TYPE_UAV;
     barrier.Flags           = D3D12_RESOURCE_BARRIER_FLAG_NONE;
     barrier.UAV.pResource   = pResource;
