@@ -16,10 +16,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 cbuffer CbParam : register(b0)
 {
-    float4  Weights0;
-    float4  Weights1;
-    float4  Offset0;
-    float4  Offset1;
+    float4  Weights[2];
+    float4  Offsets[2];
     uint    SrcResolution;
     uint    DstResolution;
     uint    Flags;
@@ -64,16 +62,13 @@ void main
 
     float2 uv = (remappedId + 0.5f.xx) / float2(dstSize);
 
-    float4 output = 0.0f.xxxx;
-    output += BlurSample(uv, dir * Offset0.x, Weights0.x);
-    output += BlurSample(uv, dir * Offset0.y, Weights0.y);
-    output += BlurSample(uv, dir * Offset0.z, Weights0.z);
-    output += BlurSample(uv, dir * Offset0.w, Weights0.w);
+    const float offsets[8] = (float[8])Offsets;
+    const float weights[8] = (float[8])Weights;
 
-    output += BlurSample(uv, dir * Offset1.x, Weights1.x);
-    output += BlurSample(uv, dir * Offset1.y, Weights1.y);
-    output += BlurSample(uv, dir * Offset1.z, Weights1.z);
-    output += BlurSample(uv, dir * Offset1.w, Weights1.w);
+    float4 output = 0.0f.xxxx;
+    [unroll]
+    for(int i=0; i<8; ++i)
+        output += BlurSample(uv, dir * offsets[i], weights[i]);
 
     OutputMap[remappedId] = output;
 }
