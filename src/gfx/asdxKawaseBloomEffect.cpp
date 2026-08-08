@@ -460,7 +460,7 @@ void KawaseBloomEffect::Dispatch
         m_BlurTargetStates[1] = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 
         pCmd->SetPipelineState(m_FirstPassPSO.GetPtr());
-        pCmd->SetComputeRoot32BitConstants(ROOT_PARAM_CBV0, 2, &param, 0);
+        pCmd->SetComputeRoot32BitConstants(ROOT_PARAM_CBV0, 3, &param, 0);
         pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_SRV0, handleSRV);
         pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_UAV0, m_BlurTarget[1].GetGpuHandleUAV());
         pCmd->Dispatch(threadX, threadY, 1);
