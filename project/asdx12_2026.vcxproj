@@ -266,6 +266,7 @@
     <ClCompile Include="..\src\gfx\asdxMapChip.cpp" />
     <ClCompile Include="..\src\gfx\asdxModel.cpp" />
     <ClCompile Include="..\src\gfx\asdxModelManager.cpp" />
+    <ClCompile Include="..\src\gfx\asdxMosaicEffect.cpp" />
     <ClCompile Include="..\src\gfx\asdxMotionPlayer.cpp" />
     <ClCompile Include="..\src\gfx\asdxMovie.cpp" />
     <ClCompile Include="..\src\gfx\asdxPipelineState.cpp" />
@@ -394,6 +395,7 @@
     <ClInclude Include="..\include\gfx\asdxMapChip.h" />
     <ClInclude Include="..\include\gfx\asdxModel.h" />
     <ClInclude Include="..\include\gfx\asdxModelManager.h" />
+    <ClInclude Include="..\include\gfx\asdxMosaicEffect.h" />
     <ClInclude Include="..\include\gfx\asdxMotionPlayer.h" />
     <ClInclude Include="..\include\gfx\asdxPipelineState.h" />
     <ClInclude Include="..\include\gfx\asdxPresetState.h" />
@@ -570,6 +572,18 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMD|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMT|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMD|x64'">Vertex</ShaderType>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxMosaicCS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMD|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMD|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMT|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMT|x64'">Compute</ShaderType>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxMosaicPS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMD|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMD|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMT|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMT|x64'">Pixel</ShaderType>
     </FxCompile>
     <FxCompile Include="..\res\shaders\asdxMoviePS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMD|x64'">Pixel</ShaderType>

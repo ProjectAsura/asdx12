@@ -465,6 +465,9 @@
     <ClCompile Include="..\src\gfx\asdxSmaa.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\gfx\asdxMosaicEffect.cpp">
+      <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\edit\asdxEditParam.h">
@@ -845,6 +848,9 @@
     <ClInclude Include="..\include\gfx\asdxSmaa.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\gfx\asdxMosaicEffect.h">
+      <Filter>ヘッダー ファイル\gfx</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\res\shaders\asdxBRDF.hlsli">
@@ -1024,6 +1030,12 @@
       <Filter>リソース ファイル\shaders</Filter>
     </FxCompile>
     <FxCompile Include="..\res\shaders\asdxSmaaNeighborBlendingCS.hlsl">
+      <Filter>リソース ファイル\shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxMosaicPS.hlsl">
+      <Filter>リソース ファイル\shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxMosaicCS.hlsl">
       <Filter>リソース ファイル\shaders</Filter>
     </FxCompile>
   </ItemGroup>
