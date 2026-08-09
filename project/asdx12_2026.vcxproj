@@ -277,6 +277,7 @@
     <ClCompile Include="..\src\gfx\asdxShaderCompiler.cpp" />
     <ClCompile Include="..\src\gfx\asdxShape.cpp" />
     <ClCompile Include="..\src\gfx\asdxSkyBox.cpp" />
+    <ClCompile Include="..\src\gfx\asdxSmaa.cpp" />
     <ClCompile Include="..\src\gfx\asdxSprite.cpp" />
     <ClCompile Include="..\src\gfx\asdxSpriteAnimation.cpp" />
     <ClCompile Include="..\src\gfx\asdxStarEffect.cpp" />
@@ -403,6 +404,7 @@
     <ClInclude Include="..\include\gfx\asdxScreenCpature.h" />
     <ClInclude Include="..\include\gfx\asdxShaderCompiler.h" />
     <ClInclude Include="..\include\gfx\asdxSkyBox.h" />
+    <ClInclude Include="..\include\gfx\asdxSmaa.h" />
     <ClInclude Include="..\include\gfx\asdxSprite.h" />
     <ClInclude Include="..\include\gfx\asdxSpriteAnimation.h" />
     <ClInclude Include="..\include\gfx\asdxStarEffect.h" />
@@ -436,6 +438,7 @@
     <None Include="..\res\shaders\asdxSamplers.hlsli" />
     <None Include="..\res\shaders\asdxSH.hlsli" />
     <None Include="..\res\shaders\asdxShadow.hlsli" />
+    <None Include="..\res\shaders\asdxSmaa.hlsli" />
     <None Include="..\res\shaders\asdxTangentSpace.hlsli" />
     <None Include="..\res\shaders\asdxTextureUtil.hlsli" />
     <None Include="..\res\shaders\asdxTransform.hlsli" />
@@ -627,6 +630,24 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMD|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMT|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMD|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxSmaaCalcBlendWeightCS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMD|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMT|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMT|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMD|x64'">Compute</ShaderType>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxSmaaEdgeDetectionCS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMD|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMT|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMT|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMD|x64'">Compute</ShaderType>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxSmaaNeighborBlendingCS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMD|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMT|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMT|x64'">Compute</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMD|x64'">Compute</ShaderType>
     </FxCompile>
     <FxCompile Include="..\res\shaders\asdxSpritePS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMT|x64'">Pixel</ShaderType>

@@ -462,6 +462,9 @@
     <ClCompile Include="..\src\gfx\asdxScopedMarker.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\gfx\asdxSmaa.cpp">
+      <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\edit\asdxEditParam.h">
@@ -839,6 +842,9 @@
     <ClInclude Include="..\include\gfx\asdxGaussianBlurEffect.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\gfx\asdxSmaa.h">
+      <Filter>ヘッダー ファイル\gfx</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\res\shaders\asdxBRDF.hlsli">
@@ -893,6 +899,9 @@
       <Filter>リソース ファイル\shaders</Filter>
     </None>
     <None Include="..\res\shaders\asdxMaterial.hlsli">
+      <Filter>リソース ファイル\shaders</Filter>
+    </None>
+    <None Include="..\res\shaders\asdxSmaa.hlsli">
       <Filter>リソース ファイル\shaders</Filter>
     </None>
   </ItemGroup>
@@ -1006,6 +1015,15 @@
       <Filter>リソース ファイル\shaders</Filter>
     </FxCompile>
     <FxCompile Include="..\res\shaders\asdxStarCompositeCS.hlsl">
+      <Filter>リソース ファイル\shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxSmaaEdgeDetectionCS.hlsl">
+      <Filter>リソース ファイル\shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxSmaaCalcBlendWeightCS.hlsl">
+      <Filter>リソース ファイル\shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxSmaaNeighborBlendingCS.hlsl">
       <Filter>リソース ファイル\shaders</Filter>
     </FxCompile>
   </ItemGroup>
