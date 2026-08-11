@@ -23,6 +23,7 @@ namespace {
 //-----------------------------------------------------------------------------
 // Shaders
 //-----------------------------------------------------------------------------
+#include "../res/shaders/Compiled/asdxBloomFirstPassCS.inc"
 #include "../res/shaders/Compiled/asdxStarCS.inc"
 #include "../res/shaders/Compiled/asdxBloomCompositeCS.inc"
 
@@ -96,6 +97,18 @@ struct ShaderParam
     asdx::Vector4 Weight[8];
     uint16_t      SizeX;
     uint16_t      SizeY;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// FirstParam structure
+///////////////////////////////////////////////////////////////////////////////
+struct FirstParam
+{
+    uint16_t SrcW;
+    uint16_t SrcH;
+    uint16_t DstW;
+    uint16_t DstH;
+    float    Threshold;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -315,6 +328,20 @@ bool StarEffect::Init(uint32_t w, uint32_t h, DXGI_FORMAT format)
         }
     }
 
+    // 初期用コンピュートパイプラインステート初期化.
+    {
+        D3D12_COMPUTE_PIPELINE_STATE_DESC desc = {};
+        desc.pRootSignature = m_RootSignature.GetPtr();
+        desc.CS             = { asdxBloomFirstPassCS, sizeof(asdxBloomFirstPassCS) };
+
+        auto hr = pDevice->CreateComputePipelineState(&desc, IID_PPV_ARGS(m_FirstPassPSO.GetAddress()));
+        if (FAILED(hr))
+        {
+            ELOGA("Error : ID3D12Device::CreateComputePipelineState() Failed. errcode = 0x%x", hr);
+            return false;
+        }
+    }
+
     // スター用コンピュートパイプライン初期化.
     {
         D3D12_COMPUTE_PIPELINE_STATE_DESC desc = {};
@@ -358,6 +385,13 @@ bool StarEffect::Init(uint32_t w, uint32_t h, DXGI_FORMAT format)
         desc.ClearColor[1]      = 0.0f;
         desc.ClearColor[2]      = 0.0f;
         desc.ClearColor[3]      = 0.0f;
+
+        if (!m_InputTarget.Init(&desc))
+        {
+            ELOGA("Error : ComputeTarget::Init() Failed.");
+            return false;
+        }
+        m_InputStates = desc.InitState;
 
         for(auto i=0; i<2; ++i)
         {
@@ -407,6 +441,7 @@ bool StarEffect::Init(uint32_t w, uint32_t h, DXGI_FORMAT format)
 //-----------------------------------------------------------------------------
 void StarEffect::Term()
 {
+    m_FirstPassPSO .Reset();
     m_StarPSO      .Reset();
     m_CompositePSO .Reset();
     m_RootSignature.Reset();
@@ -414,6 +449,7 @@ void StarEffect::Term()
     for(auto i=0; i<2; ++i)
         m_PingPongTarget[i].Term();
 
+    m_InputTarget .Term();
     m_OutputTarget.Term();
 }
 
@@ -481,6 +517,35 @@ void StarEffect::Dispatch
         barrier.Apply(pCmd);
     }
 
+    // 初期パス.
+    {
+        auto desc = m_InputTarget.GetDesc();
+
+        FirstParam param = {};
+        param.SrcW      = uint16_t(srcW);
+        param.SrcH      = uint16_t(srcH);
+        param.DstW      = uint16_t(desc.Width);
+        param.DstH      = uint16_t(desc.Height);
+        param.Threshold = m_Threshold;
+
+        auto threadX = (param.DstW + 7u) / 8u;
+        auto threadY = (param.DstH + 7u) / 8u;
+
+        barrier.Transition(m_InputTarget.GetResource(), m_InputStates, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        barrier.Apply(pCmd);
+
+        pCmd->SetPipelineState(m_FirstPassPSO.GetPtr());
+        pCmd->SetComputeRoot32BitConstants(ROOT_PARAM_CBV0, 2, &param, 0);
+        pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_SRV0, inputHandleSRV);
+        pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_UAV0, m_InputTarget.GetGpuHandleUAV());
+        pCmd->Dispatch(threadX, threadY, 1);
+
+        barrier.UAV(m_InputTarget.GetResource());
+        barrier.Transition(m_InputTarget.GetResource(), m_InputStates, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+        barrier.Apply(pCmd);
+        m_InputStates = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+    }
+
     auto starLines = GetStarLines(glareDef.StarType);
 
     auto workDesc = m_PingPongTarget[0].GetDesc();
@@ -518,7 +583,7 @@ void StarEffect::Dispatch
         // 減衰スケール.
         float attnPowScale = (tanFov + 0.1f) * (160.0f + 120.0f) / (srcW + srcH) * 1.2f;
 
-        D3D12_GPU_DESCRIPTOR_HANDLE handleSRV = inputHandleSRV;
+        D3D12_GPU_DESCRIPTOR_HANDLE handleSRV = m_InputTarget.GetGpuHandleSRV();
         D3D12_GPU_DESCRIPTOR_HANDLE handleUAV = m_PingPongTarget[0].GetGpuHandleUAV();
 
         auto srcIdx = 1u;
@@ -673,5 +738,17 @@ void StarEffect::SetType(TYPE type)
 //-----------------------------------------------------------------------------
 StarEffect::TYPE StarEffect::GetType() const
 { return m_Type; }
+
+//-----------------------------------------------------------------------------
+//      閾値を設定します.
+//-----------------------------------------------------------------------------
+void StarEffect::SetThreshold(float value)
+{ m_Threshold = value; }
+
+//-----------------------------------------------------------------------------
+//      閾値を取得します.
+//-----------------------------------------------------------------------------
+float StarEffect::GetThreshold() const
+{ return m_Threshold; }
 
 } // namespace asdx

@@ -127,18 +127,36 @@ public:
     //-------------------------------------------------------------------------
     TYPE GetType() const;
 
+    //-------------------------------------------------------------------------
+    //! @brief      閾値を設定します.
+    //! 
+    //! @param[in]      value       設定する値.
+    //-------------------------------------------------------------------------
+    void SetThreshold(float value);
+
+    //-------------------------------------------------------------------------
+    //! @brief      閾値を取得します.
+    //! 
+    //! @return     閾値を返却します.
+    //-------------------------------------------------------------------------
+    float GetThreshold() const;
+
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
     RefPtr<ID3D12RootSignature>     m_RootSignature;        //!< ルートシグニチャ.
+    RefPtr<ID3D12PipelineState>     m_FirstPassPSO;         //!< 初期用パイプラインステートです.
     RefPtr<ID3D12PipelineState>     m_StarPSO;              //!< 光芒用パイプラインステートです.
     RefPtr<ID3D12PipelineState>     m_CompositePSO;         //!< 合成用パイプラインステートです.
     ComputeTarget                   m_PingPongTarget[2];    //!< ピンポンターゲット.
+    ComputeTarget                   m_InputTarget;          //!< 入力ターゲット.
     ComputeTarget                   m_OutputTarget;         //!< 出力ターゲット.
     D3D12_RESOURCE_STATES           m_PingPongStates[2];    //!< ピンポンターゲット用リソースステート.
+    D3D12_RESOURCE_STATES           m_InputStates;          //!< 入力ターゲット用リソースステート.
     D3D12_RESOURCE_STATES           m_OutputStates;         //!< 出力ターゲット用リソースステート.
     TYPE                            m_Type = TYPE::DISABLE; //!< 光芒タイプ.
+    float                           m_Threshold = 1.0f;     //!< 閾値.
 
     //=========================================================================
     // private methods.
