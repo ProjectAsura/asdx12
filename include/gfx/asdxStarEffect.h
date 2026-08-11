@@ -33,6 +33,8 @@ public:
     enum TYPE
     {
         DISABLE,               //!< 無効.
+        CAMERA,                //!< カメラ.
+        CHEAP_CAMERA,          //!< 安価なカメラ.
         CROSS_SCREEN,          //!< クロスフィルタ.
         CROSS_SCREEN_SPECTRAL, //!< クロスフィルタ・スペクトル.
         SNOW_CROSS,            //!< スノークロス.
@@ -145,18 +147,18 @@ private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    RefPtr<ID3D12RootSignature>     m_RootSignature;        //!< ルートシグニチャ.
-    RefPtr<ID3D12PipelineState>     m_FirstPassPSO;         //!< 初期用パイプラインステートです.
-    RefPtr<ID3D12PipelineState>     m_StarPSO;              //!< 光芒用パイプラインステートです.
-    RefPtr<ID3D12PipelineState>     m_CompositePSO;         //!< 合成用パイプラインステートです.
-    ComputeTarget                   m_PingPongTarget[2];    //!< ピンポンターゲット.
-    ComputeTarget                   m_InputTarget;          //!< 入力ターゲット.
-    ComputeTarget                   m_OutputTarget;         //!< 出力ターゲット.
-    D3D12_RESOURCE_STATES           m_PingPongStates[2];    //!< ピンポンターゲット用リソースステート.
-    D3D12_RESOURCE_STATES           m_InputStates;          //!< 入力ターゲット用リソースステート.
-    D3D12_RESOURCE_STATES           m_OutputStates;         //!< 出力ターゲット用リソースステート.
-    TYPE                            m_Type = TYPE::DISABLE; //!< 光芒タイプ.
-    float                           m_Threshold = 1.0f;     //!< 閾値.
+    RefPtr<ID3D12RootSignature>     m_RootSignature;                        //!< ルートシグニチャ.
+    RefPtr<ID3D12PipelineState>     m_FirstPassPSO;                         //!< 初期用パイプラインステートです.
+    RefPtr<ID3D12PipelineState>     m_StarPSO;                              //!< 光芒用パイプラインステートです.
+    RefPtr<ID3D12PipelineState>     m_CompositePSO;                         //!< 合成用パイプラインステートです.
+    ComputeTarget                   m_PingPongTarget[2];                    //!< ピンポンターゲット.
+    ComputeTarget                   m_InputTarget;                          //!< 入力ターゲット.
+    ComputeTarget                   m_OutputTarget;                         //!< 出力ターゲット.
+    D3D12_RESOURCE_STATES           m_PingPongStates[2] = {};               //!< ピンポンターゲット用リソースステート.
+    D3D12_RESOURCE_STATES           m_InputStates       = {};               //!< 入力ターゲット用リソースステート.
+    D3D12_RESOURCE_STATES           m_OutputStates      = {};               //!< 出力ターゲット用リソースステート.
+    TYPE                            m_Type              = TYPE::DISABLE;    //!< 光芒タイプ.
+    float                           m_Threshold         = 1.0f;             //!< 閾値.
 
     //=========================================================================
     // private methods.

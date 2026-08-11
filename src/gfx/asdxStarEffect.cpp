@@ -48,7 +48,7 @@ enum STAR_DEF_TYPE
     STAR_DEF_CROSS_FILTER,
     STAR_DEF_SNOW_CROSS,
     STAR_DEF_SUNNY_CROSS,
-    STAR_DEF_HORIZONTAL,
+    STAR_DEF_VERTICAL,
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -131,21 +131,21 @@ static const StarDef kStarDef[] = {
     { "CrossFilter", 4, 3, 1.0f, 0.95f, asdx::ToRadian(0.0f) , true  },
     { "SnowCross",   6, 3, 1.0f, 0.96f, asdx::ToRadian(20.0f), true  },
     { "SunnyCross",  8, 3, 1.0f, 0.88f, asdx::ToRadian(0.0f) , false }, 
-    { "Horizonal",   2, 3, 1.0f, 0.96f, asdx::ToRadian(0.0f) , false },
+    { "Vertical",    2, 3, 1.0f, 0.96f, asdx::ToRadian(0.0f) , false },
 };
 
 static const GlareDef kGlareDef[] = {
     { "Disable"                 , 0.0f, STAR_DEF_DISABLE        , asdx::ToRadian(0.0f)  , 0.5f },
-    //{ "Standard Camera"         , 1.0f, STAR_DEF_CROSS          , asdx::ToRadian(0.0f)  , 0.5f },
-    //{ "Cheap Camera"            , 2.0f, STAR_DEF_CROSS          , asdx::ToRadian(0.0f)  , 0.5f },
+    { "Camera"                  , 1.0f, STAR_DEF_CROSS          , asdx::ToRadian(0.0f)  , 0.5f },
+    { "Cheap Camera"            , 2.0f, STAR_DEF_CROSS          , asdx::ToRadian(0.0f)  , 0.5f },
     { "Cross Screen"            , 1.5f, STAR_DEF_CROSS_FILTER   , asdx::ToRadian(25.0f) , 0.5f },
     { "Spectral Cross Screen"   , 1.8f, STAR_DEF_CROSS_FILTER   , asdx::ToRadian(70.0f) , 1.5f },
     { "Snow Cross"              , 1.5f, STAR_DEF_SNOW_CROSS     , asdx::ToRadian(10.0f) , 0.5f },
     { "Spectral Snow Cross"     , 1.8f, STAR_DEF_SNOW_CROSS     , asdx::ToRadian(40.0f) , 1.5f },
     { "Sunny Cross"             , 1.5f, STAR_DEF_SUNNY_CROSS    , asdx::ToRadian(0.0f)  , 0.5f },
     { "Spectral Sunny Cross"    , 1.8f, STAR_DEF_SUNNY_CROSS    , asdx::ToRadian(45.0f) , 1.5f },
-    { "Cinema Vertical"         , 1.0f, STAR_DEF_HORIZONTAL     , asdx::ToRadian(90.0f) , 0.5f },
-    { "Cinema Horizontal"       , 1.0f, STAR_DEF_HORIZONTAL     , asdx::ToRadian(0.0f)  , 0.5f },
+    { "Cinema Vertical"         , 1.0f, STAR_DEF_VERTICAL       , asdx::ToRadian(0.0f)  , 0.5f },
+    { "Cinema Horizontal"       , 1.0f, STAR_DEF_VERTICAL       , asdx::ToRadian(90.0f) , 0.5f },
 };
 
 static const float kSunnyCrossLongAttenuation = 0.95f; // SunnyCrossで，2の倍数の時に適用する減衰率.
@@ -161,6 +161,17 @@ static const asdx::Vector4 kAberrationTable[8] = {
     asdx::Vector4(0.3f, 0.5f, 0.3f, 0.0f),  //   [7]
 };
 
+static const asdx::Vector4 kAnamorphicColor[] = {
+    asdx::Vector4(0.2f, 0.2f, 0.75f, 0.0f), // [0]
+    asdx::Vector4(0.1f, 0.1f, 0.5f,  0.0f), // [1]
+    asdx::Vector4(0.4f, 0.4f, 0.85f, 0.0f), // [2]
+    asdx::Vector4(0.2f, 0.2f, 0.6f,  0.0f), // [3]
+    asdx::Vector4(0.3f, 0.3f, 0.6f,  0.0f), // [4]
+    asdx::Vector4(0.1f, 0.1f, 0.7f,  0.0f), // [5]
+    asdx::Vector4(0.2f, 0.2f, 0.8f,  0.0f), // [6]
+    asdx::Vector4(0.0f, 0.0f, 0.8f,  0.0f), // [7]
+};
+
 //-----------------------------------------------------------------------------
 // Global Variables.
 //-----------------------------------------------------------------------------
@@ -168,7 +179,7 @@ static std::array<StarLine, 4>  g_Cross;
 static std::array<StarLine, 4>  g_CrossFilter;
 static std::array<StarLine, 6>  g_SnowCross;
 static std::array<StarLine, 8>  g_SunnyCross;
-static std::array<StarLine, 2>  g_Horizontal;
+static std::array<StarLine, 2>  g_Vertical;
 static bool                     g_Init = false;
 
 //-----------------------------------------------------------------------------
@@ -198,7 +209,7 @@ void InitStarLine()
     InitFromStarDef(kStarDef[2], g_CrossFilter.data(), g_CrossFilter.size());
     InitFromStarDef(kStarDef[3], g_SnowCross  .data(), g_SnowCross  .size());
     InitFromStarDef(kStarDef[4], g_SunnyCross .data(), g_SunnyCross .size());
-    InitFromStarDef(kStarDef[5], g_Horizontal .data(), g_Horizontal .size());
+    InitFromStarDef(kStarDef[5], g_Vertical   .data(), g_Vertical   .size());
 
     for(size_t i=0; i<g_SunnyCross.size(); i++)
     {
@@ -233,8 +244,8 @@ asdx::ArrayView<StarLine> GetStarLines(STAR_DEF_TYPE type)
     case STAR_DEF_SUNNY_CROSS:
         return asdx::ArrayView<StarLine>(g_SunnyCross.data(), g_SunnyCross.size());
 
-    case STAR_DEF_HORIZONTAL:
-        return asdx::ArrayView<StarLine>(g_Horizontal.data(), g_Horizontal.size());
+    case STAR_DEF_VERTICAL:
+        return asdx::ArrayView<StarLine>(g_Vertical.data(), g_Vertical.size());
     }
 }
 
@@ -485,8 +496,16 @@ void StarEffect::Dispatch
 
         for(auto j=0; j<kSampleCount; ++j)
         {
-            auto aberrColor = asdx::Vector4::Lerp(kAberrationTable[j], kWhiteColor, ratio);
-            colors[i][j]    = asdx::Vector4::Lerp(kWhiteColor, aberrColor, glareDef.ChromaticAberration);
+            asdx::Vector4 aberrColor;
+            if (glareDef.StarType == STAR_DEF_VERTICAL)
+            {
+                colors[i][j] = asdx::Vector4::Lerp(kAnamorphicColor[j], kWhiteColor, ratio);
+            }
+            else
+            {
+                aberrColor   = asdx::Vector4::Lerp(kAberrationTable[j], kWhiteColor, ratio);
+                colors[i][j] = asdx::Vector4::Lerp(kWhiteColor, aberrColor, glareDef.ChromaticAberration);
+            }
         }
     }
 
@@ -533,9 +552,10 @@ void StarEffect::Dispatch
 
         barrier.Transition(m_InputTarget.GetResource(), m_InputStates, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
         barrier.Apply(pCmd);
+        m_InputStates = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 
         pCmd->SetPipelineState(m_FirstPassPSO.GetPtr());
-        pCmd->SetComputeRoot32BitConstants(ROOT_PARAM_CBV0, 2, &param, 0);
+        pCmd->SetComputeRoot32BitConstants(ROOT_PARAM_CBV0, 3, &param, 0);
         pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_SRV0, inputHandleSRV);
         pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_UAV0, m_InputTarget.GetGpuHandleUAV());
         pCmd->Dispatch(threadX, threadY, 1);
