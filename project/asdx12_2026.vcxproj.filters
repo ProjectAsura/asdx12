@@ -1023,9 +1023,6 @@
     <FxCompile Include="..\res\shaders\asdxStarCompositeCS.hlsl">
       <Filter>リソース ファイル\shaders</Filter>
     </FxCompile>
-    <FxCompile Include="..\res\shaders\asdxSmaaEdgeDetectionCS.hlsl">
-      <Filter>リソース ファイル\shaders</Filter>
-    </FxCompile>
     <FxCompile Include="..\res\shaders\asdxSmaaCalcBlendWeightCS.hlsl">
       <Filter>リソース ファイル\shaders</Filter>
     </FxCompile>
@@ -1036,6 +1033,15 @@
       <Filter>リソース ファイル\shaders</Filter>
     </FxCompile>
     <FxCompile Include="..\res\shaders\asdxMosaicCS.hlsl">
+      <Filter>リソース ファイル\shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxSmaaColorEdgeDetectionCS.hlsl">
+      <Filter>リソース ファイル\shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxSmaaColorDepthEdgeDetectionCS.hlsl">
+      <Filter>リソース ファイル\shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxSmaaResolveCS.hlsl">
       <Filter>リソース ファイル\shaders</Filter>
     </FxCompile>
   </ItemGroup>
