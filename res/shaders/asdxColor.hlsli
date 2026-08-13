@@ -772,4 +772,72 @@ float3 BlendScreen(float3 base, float3 blend)
 float3 BlendOverlay(float3 base, float3 blend)
 { return lerp(2.0f * base * blend, 1.0f - 2.0f * (1.0f - base) * (1.0f - blend), step(0.5f, base)); }
 
+//-----------------------------------------------------------------------------
+//      EV100を計算します.
+//-----------------------------------------------------------------------------
+float ComputeEV100(float aperture, float shutterTime, float iso)
+{
+    // [Lagrade 2014] Sebastein Lagarde, Charle de Rousiers, 
+    // "Moving Frostbite to Physically Based Rendering 3.0", pp.85-86, Listining 28.
+ 
+    // EV number is defined as:
+    //      2^EV_s = N^2 /t     and     EV_s = EV_100 + log2(S/100)
+    // This gives
+    //      EV_s = log2(N^2 / t)
+    //      EV_100 + log2(S/100) = log2(N^2 / t)
+    //      EV_100 = log2(N^2 / t) - log2(S/100)
+    //      EV_100 = log2(N^2 /t . 100 / S)
+    return log2(Pow2(aperture) / shutterTime * 100 / iso);
+}
+
+//-----------------------------------------------------------------------------
+//      平均輝度からEV100を計算します.
+//-----------------------------------------------------------------------------
+float ComputeEV100FromAvgLuminance(float avgLuminance)
+{
+    // [Lagrade 2014] Sebastein Lagarde, Charle de Rousiers, 
+    // "Moving Frostbite to Physically Based Rendering 3.0", pp.85-86, Listining 28.
+ 
+    // We later use the middle gray at 12.7% in order to have
+    // a middle gray at 18% with sqrt(2) room for specular highlights
+    // But here we deal with the spot meter measuring the middle gray
+    // which is fixed at 12.5 for matching standard camera
+    // constructor setting (i.e. calibration constant K = 12.5)
+    // Reference: http://en.wikipedia.org/wiki/Film_speed
+    return log2(avgLuminance * 100.0f / 12.5f);
+}
+
+//-----------------------------------------------------------------------------
+//      EV100から露出に変換します.
+//-----------------------------------------------------------------------------
+float ConvertEV100ToExposure(float ev100)
+{
+    // [Lagrade 2014] Sebastein Lagarde, Charle de Rousiers, 
+    // "Moving Frostbite to Physically Based Rendering 3.0", pp.85-86, Listining 28.
+
+    // Compute the maximum luminance possible with H_sbs sensitivity
+    // maxLum = 78 / (  S * q   ) * N^2 /t
+    //        = 78 / (  S * q   ) * 2^EV_100
+    //        = 78 / (100 * 0.65) * 2^EV_100
+    //        = 1.2 * 2^EV_100
+    // Reference: http://en.wikipedia.org/wiki/Film_speed
+    float maxLuminance = 1.2f * pow(2.0f, ev100);
+    return 1.0f / maxLuminance;
+}
+
+//-----------------------------------------------------------------------------
+//      ブルーム輝度を計算します.
+//-----------------------------------------------------------------------------
+float3 ComputeBloomLuminance(float3 bloomColor, float bloomEC, float currentEV)
+{
+    // [Lagrade 2014] Sebastein Lagarde, Charle de Rousiers, 
+    // "Moving Frostbite to Physically Based Rendering 3.0", p.87, Listining 29.
+    
+    // currentEV is the value calculated at the previous frame
+    float bloomEV = currentEV * bloomEC;
+    // convert to luminance
+    // See equation (12) for explanation about conveting EV to luminance.
+    return bloomColor * pow(2.0f, bloomEV - 3.0f);
+}
+
 #endif//ASDX_COLOR_HLSLI

@@ -188,20 +188,25 @@ float GetSpecularLobeHalfAngle(float linearRoughess, float percentOfVolume /*= 0
 }
 
 //-----------------------------------------------------------------------------
-//      スペキュラーAOを計算します.
+//      スペキュラーオクルージョンを計算します.
 //-----------------------------------------------------------------------------
-float CalcSpecularAO(float NoV, float ao, float roughness)
+float CalcSpecularOcclusion(float NoV, float ao, float roughness)
 {
-    // Moving Frostbite to PBR v3.2 Listing 26.
+    // [Lagrade 2014] Sebastein Lagarde, Charle de Rousiers, 
+    // "Moving Frostbite to Physically Based Rendering 3.0", p.77, Listining 26.
     return saturate(pow(max(NoV + ao, 0.0f), exp2(-16.0f * roughness - 1.0f)) - 1.0f + ao);
 }
 
 //-----------------------------------------------------------------------------
-//      水平スペキュラーAOを計算します.
+//      水平スペキュラーオクルージョンを計算します.
 //-----------------------------------------------------------------------------
-float CalcHorizonAO(float RoN)
+float CalcHorizonSpecularOcclusion(float RoN)
 {
-    // CalcSpecularAOがパフォーマンス的に困る場合に，簡易な近似として使用する.
+    // [Google 2018], "Physically Based Rendering in Filament", 
+    // 5.6.19.16 Horizon specular occlusion, Listing 39.
+    // https://google.github.io/filament/Filament.md.html#lighting/units/lightunitsvalidation
+    
+    // CalcSpecularOcclusionがパフォーマンス的に困る場合に，簡易な近似として使用する.
     float horizon = min(1.0f + RoN, 1.0f);
     return horizon * horizon;
 }
@@ -211,10 +216,25 @@ float CalcHorizonAO(float RoN)
 //-----------------------------------------------------------------------------
 float ApplyMicroShadow(float ao, float NoL, float shadow)
 {
-    // See, "The Technical Art of Uncharted 4"
+    // [Brinck 2016] Waylon Brinck, Andrew Maximov,
+    // "The Technical Art of Uncharted 4", SIGGRAPH 2016, Slide 37.
     float aperture = 2.0 * ao * ao;
     float microShadow = saturate(NoL + aperture - 1.0);
     return shadow * microShadow;
+}
+
+//-----------------------------------------------------------------------------
+//      ライトベイクしたオブジェクトに対するAOを計算します.
+//-----------------------------------------------------------------------------
+float AmbientOcclusionFresnel(float3 vertexNormalWS, float3 viewWS, float ao)
+{
+    // [Brinck 2016] Waylon Brinck, Andrew Maximov,
+    // "The Technical Art of Uncharted 4", SIGGRAPH 2016, Slide 40.
+
+    // ライトベイクしたオブジェクトに適用する.
+    // 斜めから見たとき、 クラックの奥まで見通せないようにして、AOの暗い部分をフェードアウトする.
+    float aoFadeTerm = saturate(dot(vertexNormalWS, viewWS));
+    return lerp(1.0f, ao, aoFadeTerm);
 }
 
 //-----------------------------------------------------------------------------
@@ -261,7 +281,7 @@ float D_Charlie(float sheenRoughness2, float NoH)
 //-----------------------------------------------------------------------------
 //      charlie BRDF の l項を計算します.
 //-----------------------------------------------------------------------------
-float TermL(float x, float alpha_g)
+float L_Charlie(float x, float alpha_g)
 {
     float one_minus_alpha_sq = (1.0f - alpha_g) * (1.0f - alpha_g);
     float a = lerp( 21.5473f,  25.3245f, one_minus_alpha_sq);
@@ -278,8 +298,8 @@ float TermL(float x, float alpha_g)
 float LambdaSheen(float cos_theta, float alpha_g)
 {
     return (abs(cos_theta) < 0.5f)
-        ? exp(TermL(cos_theta, alpha_g)) 
-        : exp(2.0f * TermL(0.5, alpha_g) - TermL(1.0f - cos_theta, alpha_g));
+        ? exp(L_Charlie(cos_theta, alpha_g)) 
+        : exp(2.0f * L_Charlie(0.5, alpha_g) - L_Charlie(1.0f - cos_theta, alpha_g));
 }
 
 //-----------------------------------------------------------------------------

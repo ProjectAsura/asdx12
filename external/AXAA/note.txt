@@ -1,0 +1,4 @@
+﻿https://nahjaeho.github.io/?utm_source=chatgpt.com
+
+AXAA: Adaptive approXimate Anti-Aliasing
+https://nahjaeho.github.io/papers/SIG2016/Fxaa3_11.h

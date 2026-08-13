@@ -278,7 +278,6 @@
     <ClCompile Include="..\src\gfx\asdxShaderCompiler.cpp" />
     <ClCompile Include="..\src\gfx\asdxShape.cpp" />
     <ClCompile Include="..\src\gfx\asdxSkyBox.cpp" />
-    <ClCompile Include="..\src\gfx\asdxSmaa.cpp" />
     <ClCompile Include="..\src\gfx\asdxSprite.cpp" />
     <ClCompile Include="..\src\gfx\asdxSpriteAnimation.cpp" />
     <ClCompile Include="..\src\gfx\asdxStarEffect.cpp" />

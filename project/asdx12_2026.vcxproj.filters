@@ -462,9 +462,6 @@
     <ClCompile Include="..\src\gfx\asdxScopedMarker.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxSmaa.cpp">
-      <Filter>ソース ファイル\gfx</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\gfx\asdxMosaicEffect.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
@@ -907,9 +904,6 @@
     <None Include="..\res\shaders\asdxMaterial.hlsli">
       <Filter>リソース ファイル\shaders</Filter>
     </None>
-    <None Include="..\res\shaders\asdxSmaa.hlsli">
-      <Filter>リソース ファイル\shaders</Filter>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\res\shaders\asdxColorFilterCS.hlsl">
@@ -1023,25 +1017,10 @@
     <FxCompile Include="..\res\shaders\asdxStarCompositeCS.hlsl">
       <Filter>リソース ファイル\shaders</Filter>
     </FxCompile>
-    <FxCompile Include="..\res\shaders\asdxSmaaCalcBlendWeightCS.hlsl">
-      <Filter>リソース ファイル\shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="..\res\shaders\asdxSmaaNeighborBlendingCS.hlsl">
-      <Filter>リソース ファイル\shaders</Filter>
-    </FxCompile>
     <FxCompile Include="..\res\shaders\asdxMosaicPS.hlsl">
       <Filter>リソース ファイル\shaders</Filter>
     </FxCompile>
     <FxCompile Include="..\res\shaders\asdxMosaicCS.hlsl">
-      <Filter>リソース ファイル\shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="..\res\shaders\asdxSmaaColorEdgeDetectionCS.hlsl">
-      <Filter>リソース ファイル\shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="..\res\shaders\asdxSmaaColorDepthEdgeDetectionCS.hlsl">
-      <Filter>リソース ファイル\shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="..\res\shaders\asdxSmaaResolveCS.hlsl">
       <Filter>リソース ファイル\shaders</Filter>
     </FxCompile>
   </ItemGroup>
