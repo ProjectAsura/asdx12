@@ -415,9 +415,6 @@ void BloomEffect::Dispatch
             auto threadY = (dstH + 7u) / 8u;
 
             pCmd->Dispatch(threadX, threadY, 1);
-
-            barrier.UAV(dstTarget.GetResource());
-            barrier.Apply(pCmd);
         }
     }
 
@@ -453,6 +450,7 @@ void BloomEffect::Dispatch
             param.dstW = uint16_t(dstW);
             param.dstH = uint16_t(dstH);
 
+            barrier.UAV(srcTarget.GetResource());
             barrier.Transition(srcTarget.GetResource(), (*pSrcStates), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
             barrier.Transition(dstTarget.GetResource(), (*pDstStates), D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
             barrier.Apply(pCmd);
@@ -467,9 +465,6 @@ void BloomEffect::Dispatch
             auto threadY = (dstH + 7u) / 8u;
 
             pCmd->Dispatch(threadX, threadY, 1);
-
-            barrier.UAV(dstTarget.GetResource());
-            barrier.Apply(pCmd);
         }
     }
 
@@ -500,6 +495,7 @@ void BloomEffect::Dispatch
 
         pCmd->SetPipelineState(m_UpscalePSO.GetPtr());
 
+        barrier.UAV(srcTarget.GetResource());
         barrier.Transition(srcTarget.GetResource(), (*pSrcStates), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
         barrier.Transition(dstTarget.GetResource(), (*pDstStates), D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
         barrier.Apply(pCmd);
@@ -514,9 +510,6 @@ void BloomEffect::Dispatch
         auto threadY = (dstH + 7u) / 8u;
 
         pCmd->Dispatch(threadX, threadY, 1);
-
-        barrier.UAV(dstTarget.GetResource());
-        barrier.Apply(pCmd);
     }
 
     // 最後に元画像を追加.
@@ -539,6 +532,7 @@ void BloomEffect::Dispatch
 
         pCmd->SetPipelineState(m_CompositePSO.GetPtr());
 
+        barrier.UAV(m_ComputeTarget.GetResource());
         barrier.Transition(m_ComputeTarget.GetResource(), m_States, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
         barrier.Apply(pCmd);
         m_States = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
