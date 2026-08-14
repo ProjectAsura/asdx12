@@ -169,7 +169,7 @@ bool VertexBuffer::Init(uint64_t size, uint32_t stride)
     desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
     desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
 
-    auto state = D3D12_RESOURCE_STATE_GENERIC_READ;
+    auto state = D3D12_RESOURCE_STATE_COMMON;
     auto flags = D3D12_HEAP_FLAG_NONE;
 
     auto pAllocator = GetD3D12MA();
@@ -344,7 +344,7 @@ bool IndexBuffer::Init(uint64_t size, bool isShortFormat)
     desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
     desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
 
-    auto state = D3D12_RESOURCE_STATE_GENERIC_READ;
+    auto state = D3D12_RESOURCE_STATE_COMMON;
     auto flags = D3D12_HEAP_FLAG_NONE;
 
     auto pAllocator = GetD3D12MA();
@@ -806,13 +806,13 @@ bool ByteAddressBuffer::Init(uint64_t size, D3D12_RESOURCE_STATES state, bool dy
     D3D12_HEAP_TYPE heapType;
     if (dynamic)
     {
-        heapType = IsSupportGpuUploadHeap() 
-            ? D3D12_HEAP_TYPE_GPU_UPLOAD
-            : D3D12_HEAP_TYPE_UPLOAD;
+        heapType = D3D12_HEAP_TYPE_DEFAULT;
     }
     else
     {
-        heapType = D3D12_HEAP_TYPE_DEFAULT;
+        heapType = IsSupportGpuUploadHeap() 
+            ? D3D12_HEAP_TYPE_GPU_UPLOAD
+            : D3D12_HEAP_TYPE_UPLOAD;
     }
 
     // 4 byte アライメントにする.
@@ -1133,13 +1133,13 @@ bool StructuredBuffer::Init(uint64_t count, uint32_t stride, D3D12_RESOURCE_STAT
     D3D12_HEAP_TYPE heapType;
     if (dynamic)
     {
-        heapType = IsSupportGpuUploadHeap() 
-            ? D3D12_HEAP_TYPE_GPU_UPLOAD
-            : D3D12_HEAP_TYPE_UPLOAD;
+        heapType = D3D12_HEAP_TYPE_DEFAULT;
     }
     else
     {
-        heapType = D3D12_HEAP_TYPE_DEFAULT;
+        heapType = IsSupportGpuUploadHeap()
+            ? D3D12_HEAP_TYPE_GPU_UPLOAD
+            : D3D12_HEAP_TYPE_UPLOAD;
     }
 
     D3D12_HEAP_PROPERTIES prop = {};
