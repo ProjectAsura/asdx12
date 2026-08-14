@@ -35,6 +35,16 @@ enum ROOT_PARAM
     ROOT_UAV0,
 };
 
+///////////////////////////////////////////////////////////////////////////////
+// Param structure
+///////////////////////////////////////////////////////////////////////////////
+struct Param
+{
+    float       Scale;
+    uint16_t    DstW;
+    uint16_t    DstH;
+};
+
 } // namespace 
 
 
@@ -229,14 +239,8 @@ void MosaicEffect::Dispatch
     auto size  = Max(inputW, inputH);
     auto block = size * m_Scale;
 
-    struct Param
-    {
-        float    Block;
-        uint16_t DstW;
-        uint16_t DstH;
-    };
     Param param = {};
-    param.Block = block;
+    param.Scale = block;
     param.DstW  = outputW;
     param.DstH  = outputH;
 
@@ -255,10 +259,7 @@ void MosaicEffect::Dispatch
 //      制御パラメータを設定します.
 //-----------------------------------------------------------------------------
 void MosaicEffect::SetScale(float value)
-{
-    assert(value > 0.0f);
-    m_Scale = value;
-}
+{ m_Scale = value; }
 
 //-----------------------------------------------------------------------------
 //      制御パラメータを取得します.

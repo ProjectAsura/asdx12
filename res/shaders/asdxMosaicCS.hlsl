@@ -16,7 +16,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 cbuffer Param : register(b0)
 {
-    float Block;
+    float Scale;
     uint  DstResolution;
     uint2 Reserved;
 };
@@ -39,7 +39,7 @@ void main(uint3 dispatchId : SV_DispatchThreadID, uint groupIndex : SV_GroupInde
         return;
 
     float2 uv = (remapId + 0.5f.xx) / float2(dstSize);
-    float2 st = floor(Block * uv + 0.5f.xx) / Block;
+    float2 st = floor(uv * Scale + 0.5f.xx) / Scale;
     float4 color = ColorMap.SampleLevel(LinearWrap, st, 0.0f);
     color.a = 1.0f;
 

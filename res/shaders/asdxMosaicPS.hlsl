@@ -24,7 +24,7 @@ struct VSOutput
 ///////////////////////////////////////////////////////////////////////////////
 cbuffer Param : register(b0)
 {
-    float Block;
+    float Scale;
     uint  DstResolution;
     uint2 Reserved;
 };
@@ -39,8 +39,9 @@ Texture2D ColorMap : register(t0);
 //-----------------------------------------------------------------------------
 float4 main(const VSOutput input) : SV_TARGET
 {
-    float2 uv = floor(Block * input.TexCoord + 0.5f.xx) / Block;
+    float2 uv = floor(input.TexCoord * Scale + 0.5f.xx) / Scale;
     float4 color = ColorMap.SampleLevel(LinearWrap, uv, 0.0f);
     color.a = 1.0f;
+
     return color;
 }
