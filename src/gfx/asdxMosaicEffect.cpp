@@ -9,6 +9,7 @@
 //-----------------------------------------------------------------------------
 #include <cassert>
 #include <fnd/asdxLogger.h>
+#include <fnd/asdxMath.h>
 #include <gfx/asdxMosaicEffect.h>
 #include <gfx/asdxPresetState.h>
 #include <gfx/asdxDevice.h>
@@ -183,16 +184,25 @@ void MosaicEffect::Term()
 //-----------------------------------------------------------------------------
 //      ピクセルシェーダを用いてエフェクトを適用します.
 //-----------------------------------------------------------------------------
-void MosaicEffect::Draw(ID3D12GraphicsCommandList* pCmd, D3D12_GPU_DESCRIPTOR_HANDLE handleSRV)
+void MosaicEffect::Draw
+(
+    ID3D12GraphicsCommandList*  pCmd,
+    uint32_t                    inputW,
+    uint32_t                    inputH,
+    D3D12_GPU_DESCRIPTOR_HANDLE handleSRV
+)
 {
     if (pCmd == nullptr || handleSRV.ptr == 0)
         return;
 
     ASDX_SCOPED_MARKER(pCmd, MosaicEffectPS);
 
+    auto size  = Max(inputW, inputH);
+    auto block = size * m_Scale;
+
     pCmd->SetGraphicsRootSignature(m_RootSignature.GetPtr());
     pCmd->SetPipelineState(m_GraphicsPSO.GetPtr());
-    pCmd->SetGraphicsRoot32BitConstants(ROOT_CBV0, 1, &m_Param, 0);
+    pCmd->SetGraphicsRoot32BitConstants(ROOT_CBV0, 1, &block, 0);
     pCmd->SetGraphicsRootDescriptorTable(ROOT_SRV0, handleSRV);
     DrawQuad(pCmd);
 }
@@ -206,6 +216,8 @@ void MosaicEffect::Dispatch
     uint32_t                    outputW,
     uint32_t                    outputH,
     D3D12_GPU_DESCRIPTOR_HANDLE handleUAV,
+    uint32_t                    inputW,
+    uint32_t                    inputH,
     D3D12_GPU_DESCRIPTOR_HANDLE handleSRV
 )
 {
@@ -214,6 +226,9 @@ void MosaicEffect::Dispatch
 
     ASDX_SCOPED_MARKER(pCmd, MosaicEffectCS);
 
+    auto size  = Max(inputW, inputH);
+    auto block = size * m_Scale;
+
     struct Param
     {
         float    Block;
@@ -221,7 +236,7 @@ void MosaicEffect::Dispatch
         uint16_t DstH;
     };
     Param param = {};
-    param.Block = m_Param;
+    param.Block = block;
     param.DstW  = outputW;
     param.DstH  = outputH;
 
@@ -239,16 +254,16 @@ void MosaicEffect::Dispatch
 //-----------------------------------------------------------------------------
 //      制御パラメータを設定します.
 //-----------------------------------------------------------------------------
-void MosaicEffect::SetParam(float value)
+void MosaicEffect::SetScale(float value)
 {
     assert(value > 0.0f);
-    m_Param = value;
+    m_Scale = value;
 }
 
 //-----------------------------------------------------------------------------
 //      制御パラメータを取得します.
 //-----------------------------------------------------------------------------
-float MosaicEffect::GetParam() const
-{ return m_Param; }
+float MosaicEffect::GetScale() const
+{ return m_Scale; }
 
 } // namespace asdx

@@ -66,6 +66,8 @@ public:
     //-------------------------------------------------------------------------
     void Draw(
         ID3D12GraphicsCommandList*  pCmd,
+        uint32_t                    inputW,
+        uint32_t                    inputH,
         D3D12_GPU_DESCRIPTOR_HANDLE handleSRV);
 
     //-------------------------------------------------------------------------
@@ -78,25 +80,28 @@ public:
     //! @param[in]      handleSRV   入力シェーダリソースビュー.
     //-------------------------------------------------------------------------
     void Dispatch(
-        ID3D12GraphicsCommandList* pCmd,
-        uint32_t outputW,
-        uint32_t outputH,
+        ID3D12GraphicsCommandList*  pCmd,
+        uint32_t                    outputW,
+        uint32_t                    outputH,
         D3D12_GPU_DESCRIPTOR_HANDLE handleUAV,
+        uint32_t                    inputW,
+        uint32_t                    inputH,
         D3D12_GPU_DESCRIPTOR_HANDLE handleSRV);
 
     //-------------------------------------------------------------------------
     //! @brief      制御パラメータを設定します.
     //! 
-    //! @param[in]      value       設定するパラメータ.
+    //! @param[in]      value       設定するパラメータ[0, 1].
+    //! @note       0に近づくにつれてモザイクが大きくなります.
     //-------------------------------------------------------------------------
-    void SetParam(float value);
+    void SetScale(float value);
 
     //-------------------------------------------------------------------------
     //! @brief      制御パラメータを取得します.
     //! 
     //! @return     制御パラメータを返却します.
     //-------------------------------------------------------------------------
-    float GetParam() const;
+    float GetScale() const;
 
 private:
     //=========================================================================
@@ -105,7 +110,7 @@ private:
     RefPtr<ID3D12RootSignature> m_RootSignature;
     RefPtr<ID3D12PipelineState> m_GraphicsPSO;
     RefPtr<ID3D12PipelineState> m_ComputePSO;
-    float                       m_Param = 1.0f;
+    float                       m_Scale = 1.0f;
 
     //=========================================================================
     // private methods.
