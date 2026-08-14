@@ -13,22 +13,25 @@
 #include "asdxTangentSpace.hlsli"
 #include "asdxRandom.hlsli"
 
+//-----------------------------------------------------------------------------
+// Constant Values.
+//-----------------------------------------------------------------------------
+static const float kDefaultIor = 1.5f;  // 屈折率のデフォルト値.
+static const float kDefaultF0  = 0.04f; // F0のデフォルト値(ior = 1.5として計算したときの値).
+static const float kDefaultAO  = 1.0f;  // アンビエントオクルージョンのデフォルト値.
+
 
 //-----------------------------------------------------------------------------
 //      グロシネスに変換します.
 //-----------------------------------------------------------------------------
 float RoughnessToGlossiness(float roughness)
-{
-    return saturate(1.0f - roughness);
-}
+{ return saturate(1.0f - roughness); }
 
 //-----------------------------------------------------------------------------
 //      ラフネスに変換します.
 //-----------------------------------------------------------------------------
 float GlossinessToRoughness(float glossiness)
-{
-    return saturate(1.0f - glossiness);
-}
+{ return saturate(1.0f - glossiness); }
 
 //-----------------------------------------------------------------------------
 //      PBR RoughnessからTradiational Specular Powerに変換します.
@@ -45,25 +48,19 @@ float GlossinessToSpecularPower(float glossiness)
 //      Traditional Specular Power から PBR Glossinessに変換します.
 //-----------------------------------------------------------------------------
 float SpecularPowerToGlossiness(float specularPower)
-{
-    return log2(specularPower) * 0.01f - 1.0f;
-}
+{ return log2(specularPower) * 0.01f - 1.0f; }
 
 //-----------------------------------------------------------------------------
 //      Traditional Specular Power から　PBR Roughnessに変換します.
 //-----------------------------------------------------------------------------
 float SpecularPowerToRoughness(float specularPower)
-{
-    return SpecularPowerToRoughness(SpecularPowerToGlossiness(specularPower));
-}
+{ return SpecularPowerToRoughness(SpecularPowerToGlossiness(specularPower)); }
 
 //-----------------------------------------------------------------------------
 //      ラフネスからスペキュラー指数を求めます.
 //-----------------------------------------------------------------------------
 float ToSpecularPower(float roughness)
-{
-    return (2.0f / max(0.0002f, roughness * roughness)) - 2.0f;
-}
+{ return (2.0f / max(0.0002f, roughness * roughness)) - 2.0f; }
 
 //-----------------------------------------------------------------------------
 //      スペキュラー指数からラフネス値を求めます.
@@ -115,7 +112,7 @@ float F_Schlick(const float f0, float VoH)
 { return F_Schlick(f0, 1.0f, VoH); }
 
 //-----------------------------------------------------------------------------
-//      フレネル項を用いて
+//      フレネル項を用いて補間を行います.
 //-----------------------------------------------------------------------------
 float3 FresnelLerp(float3 base, float3 layer, float f0, float VoH)
 {
@@ -132,19 +129,14 @@ float3 ConductorFresnel(float3 f0, float3 bsdf, float VoH)
 //-----------------------------------------------------------------------------
 //      拡散反射率を求めます.
 //-----------------------------------------------------------------------------
-float3 ToKd(float3 baseColor, float metalness, float f0)
-{
-    return baseColor * (1.0f - f0) * (1.0f - metalness);
-}
+float3 ToKd(float3 baseColor, float metalness, float f0 = kDefaultF0)
+{ return baseColor * (1.0f - f0) * (1.0f - metalness); }
 
 //-----------------------------------------------------------------------------
 //      鏡面反射率を求めます.
 //-----------------------------------------------------------------------------
-float3 ToKs(float3 baseColor, float metalness, float ior)
-{
-    float f0 = Pow2((1.0f - ior) / (1.0f + ior)); // ior = 1.5 で 0.04 となる.
-    return lerp(f0, baseColor, metalness);
-}
+float3 ToKs(float3 baseColor, float metalness, float f0 = kDefaultF0)
+{ return lerp(f0, baseColor, metalness); }
 
 //-----------------------------------------------------------------------------
 //      ディフューズの支配的な方向を求めます.
@@ -170,7 +162,7 @@ float3 GetSpecularDominantDir(float3 N, float3 R, float roughness)
 //-----------------------------------------------------------------------------
 //      スペキュラーローブの半角の正接を求めます.
 //-----------------------------------------------------------------------------
-float GetSpecularLobeTanHalfAngle(float linearRoughness, float percentOfVolume /*= 0.75*/)
+float GetSpecularLobeTanHalfAngle(float linearRoughness, float percentOfVolume = 0.75f)
 {
     // Moving Frostbite to PBR v3.2 p.72
     float a = linearRoughness * linearRoughness;
@@ -180,7 +172,7 @@ float GetSpecularLobeTanHalfAngle(float linearRoughness, float percentOfVolume /
 //-----------------------------------------------------------------------------
 //      スペキュラーローブの半角を求めます.
 //-----------------------------------------------------------------------------
-float GetSpecularLobeHalfAngle(float linearRoughess, float percentOfVolume /*= 0.75f*/)
+float GetSpecularLobeHalfAngle(float linearRoughess, float percentOfVolume = 0.75f)
 {
     // Moving Frostbite to PBR v3.2 p.72
     float tangent = GetSpecularLobeTanHalfAngle(linearRoughess, percentOfVolume);
@@ -261,7 +253,6 @@ float G2_Smith(float a2, float NoL, float NoV)
 float D_GGX(float NoH, float a2)
 {
     // a2 = linearRoughness * linearRoughnss を渡してください.
-
     float d = (NoH * a2 - NoH) * NoH + 1.0f;
     return a2 / (F_PI * Pow2(d));
 }
@@ -365,7 +356,7 @@ float D_GGX_Anisotropic(float NoH, float ToH, float BoH, float at, float ab)
 float V_GGX_Anisotropic(float NoL, float NoV, float BoV, float ToV, float ToL, float BoL, float at, float ab)
 {
     // [KhronosGroup 2024], KHR_materials_anisotropy,
-    // https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_materials_anisotropy    
+    // https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_materials_anisotropy
     float GGXV = NoL * length(float3(at * ToV, ab * BoV, NoV));
     float GGXL = NoV * length(float3(at * ToL, ab * BoL, NoL));
     float v = 0.5f / (GGXV + GGXL);
@@ -405,14 +396,12 @@ float3 VD_GGXAnisotropic
 //-----------------------------------------------------------------------------
 //      クリアコートBRDFを計算します.
 //-----------------------------------------------------------------------------
-float3 ClearCoatBRDF(float3 material, float clearCoat, float clearCoatRoughness, float NcoL, float NcoV, float NcoH, float ior = 1.5f)
+float3 ClearCoatBRDF(float3 material, float clearCoat, float clearCoatRoughness, float NcoL, float NcoV, float NcoH, float f0 = kDefaultF0)
 {
     // 引数は，下記を渡してください.
     // NcoL = dot(clearCoatNormal, L);
     // NcoV = dot(clearCoatNormal, V);
     // NcoH = dot(clearCoatNormal, H);
-
-    float f0 = Pow2((1.0f - ior) / (1.0f + ior));
 
     // [KhronosGroup 2024] KHR_materials_clearcoat
     // https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_materials_clearcoat.
@@ -426,11 +415,10 @@ float3 ClearCoatBRDF(float3 material, float clearCoat, float clearCoatRoughness,
 //-----------------------------------------------------------------------------
 //      クリアコートエミッシブを計算します.
 //-----------------------------------------------------------------------------
-float3 ClearCoatEmissive(float3 emissive, float clearCoat, float NcoV, float ior = 1.5f)
+float3 ClearCoatEmissive(float3 emissive, float clearCoat, float NcoV, float f0 = kDefaultF0)
 {
     // クリアコート層によってエミッシブが暗くなるので、それを計算する.
     // NcoV = dot(clearCoatNormal, V);
-    float f0 = Pow2((1.0f - ior) / (1.0f + ior));
 
     // [KhronosGroup 2024] KHR_materials_clearcoat
     // https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_materials_clearcoat.
@@ -777,6 +765,48 @@ float3 FakeFilm(float3 V, float3 N, float mask, float thickness, float ior)
     n_color = lerp(n_color, float3(0.5f, 0.5f, 0.5f), tr);
     n_color *= n_color * 2.0f;
     return n_color;
+}
+
+//-----------------------------------------------------------------------------
+//      距離に基づいてラフネスを計算します.
+//-----------------------------------------------------------------------------
+float ComputeDistanceBaseRoughness
+(
+    float distIntersectToShadePoint,
+    float distIntersectionToProbeCenter,
+    float linearRoughness
+)
+{
+    // [Lagarde 2014] Sebastien Lagarde, Charles de Rousier,
+    // "Moving Frostbite to Physically Based Rendering 3.0",
+    // p.72, Listing 25.
+    
+    // To avoid artifacts we clamp to the original linearRoughness
+    // which introduces an acceptable bias and allows conversion
+    // of mirror reflection behavor for a smooth surfaces.
+    float newLinearRoughness = clamp(distIntersectToShadePoint / distIntersectionToProbeCenter * linearRoughness, 0.0f, linearRoughness);
+    return lerp(newLinearRoughness, linearRoughness, linearRoughness);
+}
+
+//-----------------------------------------------------------------------------
+//      アンビエントオクルージョンを取得します.
+//-----------------------------------------------------------------------------
+float GetAO(float bakedAO, float postEffectAO)
+{
+    // [Lagarde 2014] Sebastien Lagarde, Charles de Rousier,
+    // "Moving Frostbite to Physically Based Rendering 3.0", p.80.
+    return min(bakedAO, postEffectAO);
+}
+
+//-----------------------------------------------------------------------------
+//      分散後の屈折率を取得します.
+//-----------------------------------------------------------------------------
+float3 CalcDispersionIOR(float ior, float dispersion)
+{
+    // [Khronos 2024] KHR_materials_dispersion.
+    // https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_materials_dispersion
+    float halfSpread = (ior - 1.0f) * 0.025f * dispersion;
+    return float3(ior - halfSpread, ior, ior + halfSpread);
 }
 
 #endif//ADX_BRDF_HLSLI

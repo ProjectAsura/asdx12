@@ -94,7 +94,8 @@ float3 EvaluateIBL
     SamplerState    clampSampler,   // クランプサンプラー.
     Material        material,       // マテリアルデータ.
     float3          N,              // 法線ベクトル.
-    float3          V               // ビューベクトル.
+    float3          V,              // ビューベクトル.
+    float           ao = kDefaultAO // アンビエントオクルージョン.
 )
 {
     float a = material.LinearRoughness * material.LinearRoughness;
@@ -122,7 +123,7 @@ float3 EvaluateIBL
     float2 preDFG = DFGMap.SampleLevel(clampSampler, uv, 0).xy;
 
     float  f0 = CalcF0(material.Ior);
-    float3 F0 = lerp(f0, material.BaseColor, material.Metalness);
+    float3 F0 = ToKs(material.BaseColor, material.Metalness, f0);
 
     // ラフネスに依存したフレネル項. [Fdez-Agüera 2019]
     float3 Fr = max((1.0f - material.LinearRoughness).xxx, F0) - F0;
@@ -130,7 +131,6 @@ float3 EvaluateIBL
 
     // 単一散乱.
     float3 FssEss = Ks * preDFG.x + preDFG.y;
-    float3 diffuseColor = material.BaseColor * (1.0f - f0) * (1.0f - material.Metalness);
 
     // 多重散乱.
     // [Fdez-Agüera 2019] Carmelo J. Fdez-Agüera,
@@ -139,13 +139,17 @@ float3 EvaluateIBL
     float  Ems    = 1.0f - (preDFG.x + preDFG.y);
     float3 F_avg  = F0 + (1.0f - F0) / 21.0f;
     float3 FmsEms = Ems * FssEss * F_avg / (1.0f - F_avg * Ems);
-    float3 Kd     = diffuseColor * (1.0f - FssEss - FmsEms);
+    float3 Kd     = ToKd(material.BaseColor, material.Metalness, f0) * (1.0f - FssEss - FmsEms);
 
     // 放射照度取得.
     float3 irradiance = DiffuseLD.Sample(wrapSampler, N).rgb;
 
-    // 計算結果を返却.
-    return FssEss * radiance + (FmsEms + Kd) * irradiance;
+    // ディフューズライティングとスペキュラーライティングの結果.
+    float3 diffuse  = (FmsEms + Kd) * irradiance;
+    float3 specular = FssEss * radiance;
+
+    // 計算結果にアンビエントオクルージョンを加味して返却.
+    return diffuse * ao + specular * CalcSpecularOcclusion(NoV, ao, a);
 }
  
 #endif//ASDX_MATERIAL_HLSLI
