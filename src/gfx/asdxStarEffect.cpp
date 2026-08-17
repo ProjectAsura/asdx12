@@ -617,7 +617,7 @@ void StarEffect::Dispatch
 
             for(auto i=0; i<kSampleCount; ++i)
             {
-                auto lum    = powf(starLine.Attenuation, attnPowScale * i);
+                auto lum    = powf(starLine.Attenuation * m_Attenuation, attnPowScale * i);
                 auto weight = colors[starLine.PassCount - 1 - p][i] * lum * (p + 1.0f) * 0.5f;
                 auto offset = stepUV * float(i);
 
@@ -770,5 +770,20 @@ void StarEffect::SetThreshold(float value)
 //-----------------------------------------------------------------------------
 float StarEffect::GetThreshold() const
 { return m_Threshold; }
+
+//-----------------------------------------------------------------------------
+//      減衰スケール値を設定します.
+//-----------------------------------------------------------------------------
+void StarEffect::SetAttenuation(float value)
+{
+    assert(value >= 0.0f);
+    m_Attenuation = value;
+}
+
+//-----------------------------------------------------------------------------
+//      減衰スケール値を取得します.
+//-----------------------------------------------------------------------------
+float StarEffect::GetAttenuation() const
+{ return m_Attenuation; }
 
 } // namespace asdx
