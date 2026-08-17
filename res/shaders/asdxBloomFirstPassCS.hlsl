@@ -20,7 +20,7 @@ cbuffer CbParam : register(b0)
     uint    SrcResolution;  //!< 入力解像度.
     uint    DstResolution;  //!< 出力解像度.
     float   Threshold;      //!< ブルーム閾値.
-    uint    Reserved;       //!< 予約領域.
+    float   Exposure;       //!< 露出値.
 };
 
 //-----------------------------------------------------------------------------
@@ -37,7 +37,7 @@ float4 SampleColor(float2 uv)
 {
     float4 color = ColorMap.SampleLevel(LinearClamp, uv, 0.0f);
     float  luma  = LuminanceBT709(color.rgb);
-    return (luma < Threshold) ? 0.0f.xxxx : color;
+    return (luma < Threshold) ? 0.0f.xxxx : color * Exposure;
 }
 
 //-----------------------------------------------------------------------------

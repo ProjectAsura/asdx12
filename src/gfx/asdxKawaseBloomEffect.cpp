@@ -47,6 +47,7 @@ struct BloomFirstParam
     uint16_t    DstW;
     uint16_t    DstH;
     float       Threshold;
+    float       Exposure;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -452,6 +453,7 @@ void KawaseBloomEffect::Dispatch
 
         BloomFirstParam param = {};
         param.Threshold = m_Threshold;
+        param.Exposure  = m_Exposure;
         param.SrcW      = width;
         param.SrcH      = height;
         param.DstW      = uint16_t(desc.Width);
@@ -465,7 +467,7 @@ void KawaseBloomEffect::Dispatch
         m_BlurTargetStates[1] = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 
         pCmd->SetPipelineState(m_FirstPassPSO.GetPtr());
-        pCmd->SetComputeRoot32BitConstants(ROOT_PARAM_CBV0, 3, &param, 0);
+        pCmd->SetComputeRoot32BitConstants(ROOT_PARAM_CBV0, 4, &param, 0);
         pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_SRV0, handleSRV);
         pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_UAV0, m_BlurTarget[1].GetGpuHandleUAV());
         pCmd->Dispatch(threadX, threadY, 1);
@@ -682,5 +684,20 @@ void KawaseBloomEffect::SetBlurStrength(float value)
 //-----------------------------------------------------------------------------
 float KawaseBloomEffect::GetBlurStrength() const
 { return m_BlurStrength; }
+
+//-----------------------------------------------------------------------------
+//      露出値を設定します.
+//-----------------------------------------------------------------------------
+void KawaseBloomEffect::SetExposure(float value)
+{
+    assert(value >= 0.0f);
+    m_Exposure = value;
+}
+
+//-----------------------------------------------------------------------------
+//      露出値を取得します.
+//-----------------------------------------------------------------------------
+float KawaseBloomEffect::GetExposure() const
+{ return m_Exposure; }
 
 } // namespace asdx

@@ -109,6 +109,7 @@ struct FirstParam
     uint16_t DstW;
     uint16_t DstH;
     float    Threshold;
+    float    Exposure;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -546,6 +547,7 @@ void StarEffect::Dispatch
         param.DstW      = uint16_t(desc.Width);
         param.DstH      = uint16_t(desc.Height);
         param.Threshold = m_Threshold;
+        param.Exposure  = m_Exposure;
 
         auto threadX = (param.DstW + 7u) / 8u;
         auto threadY = (param.DstH + 7u) / 8u;
@@ -555,7 +557,7 @@ void StarEffect::Dispatch
         m_InputStates = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 
         pCmd->SetPipelineState(m_FirstPassPSO.GetPtr());
-        pCmd->SetComputeRoot32BitConstants(ROOT_PARAM_CBV0, 3, &param, 0);
+        pCmd->SetComputeRoot32BitConstants(ROOT_PARAM_CBV0, 4, &param, 0);
         pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_SRV0, inputHandleSRV);
         pCmd->SetComputeRootDescriptorTable(ROOT_PARAM_UAV0, m_InputTarget.GetGpuHandleUAV());
         pCmd->Dispatch(threadX, threadY, 1);
@@ -785,5 +787,20 @@ void StarEffect::SetAttenuation(float value)
 //-----------------------------------------------------------------------------
 float StarEffect::GetAttenuation() const
 { return m_Attenuation; }
+
+//-----------------------------------------------------------------------------
+//      露出値を設定します.
+//-----------------------------------------------------------------------------
+void StarEffect::SetExposure(float value)
+{
+    assert(value >= 0.0f);
+    m_Exposure = value;
+}
+
+//-----------------------------------------------------------------------------
+//      露出値を取得します.
+//-----------------------------------------------------------------------------
+float StarEffect::GetExposure() const
+{ return m_Exposure; }
 
 } // namespace asdx

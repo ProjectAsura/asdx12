@@ -328,7 +328,7 @@ void BloomEffect::Dispatch
         uint16_t dstW;
         uint16_t dstH;
         float    threshold;
-        uint32_t reserved;
+        float    exposure;
     };
 
     pCmd->SetComputeRootSignature(m_RootSignature.GetPtr());
@@ -350,6 +350,7 @@ void BloomEffect::Dispatch
         param.dstW      = uint16_t(dstW);
         param.dstH      = uint16_t(dstH);
         param.threshold = m_Threshold;
+        param.exposure  = m_Exposure;
 
         barrier.Transition(m_BlurTarget[0].GetResource(), m_BlurStates[0], D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
         barrier.Apply(pCmd);
@@ -572,5 +573,20 @@ void BloomEffect::SetThreshold(float value)
 //-----------------------------------------------------------------------------
 float BloomEffect::GetThreshold() const
 { return m_Threshold; }
+
+//-----------------------------------------------------------------------------
+//      露出値を設定します.
+//-----------------------------------------------------------------------------
+void BloomEffect::SetExposure(float value)
+{
+    assert(value >= 0.0f);
+    m_Exposure = value;
+}
+
+//-----------------------------------------------------------------------------
+//      露出値を取得します.
+//-----------------------------------------------------------------------------
+float BloomEffect::GetExposure() const
+{ return m_Exposure; }
 
 } // namespace asdx
