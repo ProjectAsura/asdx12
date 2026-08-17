@@ -1023,6 +1023,9 @@
     <FxCompile Include="..\res\shaders\asdxMosaicCS.hlsl">
       <Filter>リソース ファイル\shaders</Filter>
     </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxStarFirstPassCS.hlsl">
+      <Filter>リソース ファイル\shaders</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\external\D3D12MemoryAllocator\src\D3D12MemAlloc.natvis">
