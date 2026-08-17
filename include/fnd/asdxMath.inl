@@ -5594,6 +5594,75 @@ inline Vector3 CCT_To_BT2020(float T, float Y)
     return Vector3::TransformNormal(XYZ, Matrix::CreateXYZToBT2020());
 }
 
+//-----------------------------------------------------------------------------
+//      リニアからsRGBへの変換.
+//-----------------------------------------------------------------------------
+inline Vector3 LinearToSRGB(const Vector3& value)
+{
+    Vector3 result;
+    result.x = (value.x < 0.0031308f) ? 12.92f * value.x : 1.055f * powf(fabs(value.x), 1.0f / 2.4f) - 0.05f;
+    result.y = (value.y < 0.0031308f) ? 12.92f * value.y : 1.055f * powf(fabs(value.y), 1.0f / 2.4f) - 0.05f;
+    result.z = (value.z < 0.0031308f) ? 12.92f * value.z : 1.055f * powf(fabs(value.z), 1.0f / 2.4f) - 0.05f;
+    return value;
+}
+
+//-----------------------------------------------------------------------------
+//      リニアからsRGBへの変換.
+//-----------------------------------------------------------------------------
+inline Vector4 LinearToSRGB(const Vector4& value)
+{
+    Vector4 result;
+    result.x = (value.x < 0.0031308f) ? 12.92f * value.x : 1.055f * powf(fabs(value.x), 1.0f / 2.4f) - 0.05f;
+    result.y = (value.y < 0.0031308f) ? 12.92f * value.y : 1.055f * powf(fabs(value.y), 1.0f / 2.4f) - 0.05f;
+    result.z = (value.z < 0.0031308f) ? 12.92f * value.z : 1.055f * powf(fabs(value.z), 1.0f / 2.4f) - 0.05f;
+    result.w = value.w;
+    return value;
+}
+
+//-----------------------------------------------------------------------------
+//      sRGBからリニアへの変換.
+//-----------------------------------------------------------------------------
+inline Vector3 SRGBToLinear(const Vector3& value)
+{
+    Vector3 result;
+    result.x = (value.x < 0.0405f) ? value.x / 12.92f : powf((fabs(value.x) + 0.055f) / 1.055f, 2.4f);
+    result.y = (value.y < 0.0405f) ? value.y / 12.92f : powf((fabs(value.y) + 0.055f) / 1.055f, 2.4f);
+    result.z = (value.z < 0.0405f) ? value.z / 12.92f : powf((fabs(value.z) + 0.055f) / 1.055f, 2.4f);
+    return result;
+}
+
+//-----------------------------------------------------------------------------
+//      sRGBからリニアへの変換.
+//-----------------------------------------------------------------------------
+inline Vector4 SRGBToLinear(const Vector4& value)
+{
+    Vector4 result;
+    result.x = (value.x < 0.0405f) ? value.x / 12.92f : powf((fabs(value.x) + 0.055f) / 1.055f, 2.4f);
+    result.y = (value.y < 0.0405f) ? value.y / 12.92f : powf((fabs(value.y) + 0.055f) / 1.055f, 2.4f);
+    result.z = (value.z < 0.0405f) ? value.z / 12.92f : powf((fabs(value.z) + 0.055f) / 1.055f, 2.4f);
+    result.w = value.w;
+    return result;
+}
+
+//-----------------------------------------------------------------------------
+//      ITU-R BT.601での輝度値を求めます.
+//-----------------------------------------------------------------------------
+inline float LuminanceBT601(const Vector3& value)
+{ return Vector3::Dot(value, Vector3(0.299f, 0.587f, 0.114f)); }
+
+//-----------------------------------------------------------------------------
+//      ITU-R BT.709での輝度値を求めます.
+//-----------------------------------------------------------------------------
+inline float LuminanceBT709(const Vector3& value)
+{ return Vector3::Dot(value, Vector3(0.2126f, 0.7152f, 0.0722f)); }
+
+//-----------------------------------------------------------------------------
+//      ITU-R BT.2020での輝度値を求めます.
+//-----------------------------------------------------------------------------
+inline float LuminanceBT2020(const Vector3& value)
+{ return Vector3::Dot(value, Vector3(0.2627f, 0.6780f, 0.0593f)); }
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // Unorm2 structure
 ///////////////////////////////////////////////////////////////////////////////
