@@ -447,9 +447,6 @@
     <ClCompile Include="..\src\gfx\asdxStarEffect.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxKawaseBloomEffect.cpp">
-      <Filter>ソース ファイル\gfx</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\gfx\asdxLegacyBarrier.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
@@ -460,6 +457,9 @@
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
     <ClCompile Include="..\src\gfx\asdxMosaicEffect.cpp">
+      <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gfx\asdxBloomEffect.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
   </ItemGroup>
@@ -824,9 +824,6 @@
     <ClInclude Include="..\include\fnd\asdxDummyTemplate.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\gfx\asdxKawaseBloomEffect.h">
-      <Filter>ヘッダー ファイル\gfx</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\gfx\asdxLegacyBarrier.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
@@ -840,6 +837,9 @@
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
     <ClInclude Include="..\include\gfx\asdxMosaicEffect.h">
+      <Filter>ヘッダー ファイル\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\gfx\asdxBloomEffect.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
   </ItemGroup>

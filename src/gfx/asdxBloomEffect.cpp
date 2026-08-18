@@ -1,5 +1,5 @@
 ﻿//-----------------------------------------------------------------------------
-// File : asdxKawaseBloomEffect.cpp
+// File : asdxBloomEffect.cpp
 // Desc : Kawase's Bloom Effect.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
@@ -8,7 +8,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <fnd/asdxLogger.h>
-#include <gfx/asdxKawaseBloomEffect.h>
+#include <gfx/asdxBloomEffect.h>
 #include <gfx/asdxDevice.h>
 #include <gfx/asdxPresetState.h>
 #include <gfx/asdxLegacyBarrier.h>
@@ -145,25 +145,25 @@ void ComputeGaussWeights(float sigma, BloomDownParam& param)
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
-// KawaseBloomEffect class
+// BloomEffect class
 ///////////////////////////////////////////////////////////////////////////////
 
 //-----------------------------------------------------------------------------
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
-KawaseBloomEffect::KawaseBloomEffect()
+BloomEffect::BloomEffect()
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      デストラクタです.
 //-----------------------------------------------------------------------------
-KawaseBloomEffect::~KawaseBloomEffect()
+BloomEffect::~BloomEffect()
 { Term(); }
 
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool KawaseBloomEffect::Init(uint32_t w, uint32_t h, DXGI_FORMAT format)
+bool BloomEffect::Init(uint32_t w, uint32_t h, DXGI_FORMAT format)
 {
     if (w == 0 || h == 0 || format == DXGI_FORMAT_UNKNOWN)
         return false;
@@ -378,7 +378,7 @@ bool KawaseBloomEffect::Init(uint32_t w, uint32_t h, DXGI_FORMAT format)
 //-----------------------------------------------------------------------------
 //      終了処理を行います.
 //-----------------------------------------------------------------------------
-void KawaseBloomEffect::Term()
+void BloomEffect::Term()
 {
     m_FirstPassPSO .Reset();
     m_DownPassPSO  .Reset();
@@ -395,7 +395,7 @@ void KawaseBloomEffect::Term()
 //-----------------------------------------------------------------------------
 //      リサイズ処理を行います.
 //-----------------------------------------------------------------------------
-void KawaseBloomEffect::Resize(uint32_t w, uint32_t h)
+void BloomEffect::Resize(uint32_t w, uint32_t h)
 {
     m_ComputeTarget.Resize(w, h);
 
@@ -426,7 +426,7 @@ void KawaseBloomEffect::Resize(uint32_t w, uint32_t h)
 //-----------------------------------------------------------------------------
 //      エフェクトを適用します.
 //-----------------------------------------------------------------------------
-void KawaseBloomEffect::Dispatch
+void BloomEffect::Dispatch
 (
     ID3D12GraphicsCommandList*  pCmd,
     uint32_t                    width,
@@ -631,19 +631,19 @@ void KawaseBloomEffect::Dispatch
 //-----------------------------------------------------------------------------
 //      SRVハンドルを取得します.
 //-----------------------------------------------------------------------------
-D3D12_GPU_DESCRIPTOR_HANDLE KawaseBloomEffect::GetGpuHandleSRV() const
+D3D12_GPU_DESCRIPTOR_HANDLE BloomEffect::GetGpuHandleSRV() const
 { return m_ComputeTarget.GetGpuHandleSRV(); }
 
 //-----------------------------------------------------------------------------
 //      UAVハンドルを取得します.
 //-----------------------------------------------------------------------------
-D3D12_GPU_DESCRIPTOR_HANDLE KawaseBloomEffect::GetGpuHandleUAV() const
+D3D12_GPU_DESCRIPTOR_HANDLE BloomEffect::GetGpuHandleUAV() const
 { return m_ComputeTarget.GetGpuHandleUAV(); }
 
 //-----------------------------------------------------------------------------
 //      ブラー用SRVハンドルを取得します.
 //-----------------------------------------------------------------------------
-D3D12_GPU_DESCRIPTOR_HANDLE KawaseBloomEffect::GetBlurGpuHandleSRV(uint8_t index) const
+D3D12_GPU_DESCRIPTOR_HANDLE BloomEffect::GetBlurGpuHandleSRV(uint8_t index) const
 {
     assert(index < kMaxTargetCount);
     return m_BlurTarget[index].GetGpuHandleSRV();
@@ -652,7 +652,7 @@ D3D12_GPU_DESCRIPTOR_HANDLE KawaseBloomEffect::GetBlurGpuHandleSRV(uint8_t index
 //-----------------------------------------------------------------------------
 //      ブラー用UAVハンドルを取得します.
 //-----------------------------------------------------------------------------
-D3D12_GPU_DESCRIPTOR_HANDLE KawaseBloomEffect::GetBlurGpuHandleUAV(uint8_t index) const
+D3D12_GPU_DESCRIPTOR_HANDLE BloomEffect::GetBlurGpuHandleUAV(uint8_t index) const
 {
     assert(index < kMaxTargetCount);
     return m_BlurTarget[index].GetGpuHandleUAV();
@@ -661,19 +661,19 @@ D3D12_GPU_DESCRIPTOR_HANDLE KawaseBloomEffect::GetBlurGpuHandleUAV(uint8_t index
 //-----------------------------------------------------------------------------
 //      閾値を設定します.
 //-----------------------------------------------------------------------------
-void KawaseBloomEffect::SetThreshold(float value)
+void BloomEffect::SetThreshold(float value)
 { m_Threshold = value; }
 
 //-----------------------------------------------------------------------------
 //      閾値を取得します.
 //-----------------------------------------------------------------------------
-float KawaseBloomEffect::GetThreshold() const
+float BloomEffect::GetThreshold() const
 { return m_Threshold; }
 
 //-----------------------------------------------------------------------------
 //      ブラーの強さを設定します.
 //-----------------------------------------------------------------------------
-void KawaseBloomEffect::SetBlurStrength(float value)
+void BloomEffect::SetBlurStrength(float value)
 {
     assert(value > 0.0f);
     m_BlurStrength = value;
@@ -682,13 +682,13 @@ void KawaseBloomEffect::SetBlurStrength(float value)
 //-----------------------------------------------------------------------------
 //      ブラーの強さを取得します.
 //-----------------------------------------------------------------------------
-float KawaseBloomEffect::GetBlurStrength() const
+float BloomEffect::GetBlurStrength() const
 { return m_BlurStrength; }
 
 //-----------------------------------------------------------------------------
 //      露出値を設定します.
 //-----------------------------------------------------------------------------
-void KawaseBloomEffect::SetExposure(float value)
+void BloomEffect::SetExposure(float value)
 {
     assert(value >= 0.0f);
     m_Exposure = value;
@@ -697,7 +697,7 @@ void KawaseBloomEffect::SetExposure(float value)
 //-----------------------------------------------------------------------------
 //      露出値を取得します.
 //-----------------------------------------------------------------------------
-float KawaseBloomEffect::GetExposure() const
+float BloomEffect::GetExposure() const
 { return m_Exposure; }
 
 } // namespace asdx
