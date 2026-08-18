@@ -55,7 +55,6 @@ void main(uint3 dispatchId : SV_DispatchThreadID, uint groupIndex : SV_GroupInde
     float2 invSize = 1.0f.xx / float2(dstSize);
     float2 uv = float2(remapId + 0.5f.xx) * invSize;
 
-    const float exposure = 1.0f;
     float4 result = 0.0f.xxxx;
 
     // [Jimenez 2014] Jorge Jimenez, "Next Generation Post Processing in Call of Duty Advanced Warfare,
@@ -105,40 +104,40 @@ void main(uint3 dispatchId : SV_DispatchThreadID, uint groupIndex : SV_GroupInde
     cross[4] = QuadReadAcrossY(corner[2]);          // F.
 
     {
-        float w0 = KarisAntiFireflyWeight(corner[0].rgb, exposure);
-        float w1 = KarisAntiFireflyWeight(cross[0].rgb, exposure);
-        float w2 = KarisAntiFireflyWeight(cross[1].rgb, exposure);
-        float w3 = KarisAntiFireflyWeight(cross[2].rgb, exposure);
+        float w0 = KarisAntiFireflyWeight(corner[0].rgb, Exposure);
+        float w1 = KarisAntiFireflyWeight(cross[0].rgb, Exposure);
+        float w2 = KarisAntiFireflyWeight(cross[1].rgb, Exposure);
+        float w3 = KarisAntiFireflyWeight(cross[2].rgb, Exposure);
  
         float4 box = ((corner[0] * w0) + (cross[0] * w1) + (cross[1] * w2) + (cross[2] * w3)) / (w0 + w1 + w2 + w3);
         result += box * 0.125f;
     }
 
     {
-        float w0 = KarisAntiFireflyWeight(corner[1].rgb, exposure);
-        float w1 = KarisAntiFireflyWeight(cross[1].rgb, exposure);
-        float w2 = KarisAntiFireflyWeight(cross[2].rgb, exposure);
-        float w3 = KarisAntiFireflyWeight(cross[4].rgb, exposure);
+        float w0 = KarisAntiFireflyWeight(corner[1].rgb, Exposure);
+        float w1 = KarisAntiFireflyWeight(cross[1].rgb, Exposure);
+        float w2 = KarisAntiFireflyWeight(cross[2].rgb, Exposure);
+        float w3 = KarisAntiFireflyWeight(cross[4].rgb, Exposure);
  
         float4 box = ((corner[1] * w0) + (cross[1] * w1) + (cross[2] * w2) + (cross[4] * w3)) / (w0 + w1 + w2 + w3);
         result += box * 0.125f;
     }
 
     {
-        float w0 = KarisAntiFireflyWeight(corner[2].rgb, exposure);
-        float w1 = KarisAntiFireflyWeight(cross[0].rgb, exposure);
-        float w2 = KarisAntiFireflyWeight(cross[2].rgb, exposure);
-        float w3 = KarisAntiFireflyWeight(cross[3].rgb, exposure);
+        float w0 = KarisAntiFireflyWeight(corner[2].rgb, Exposure);
+        float w1 = KarisAntiFireflyWeight(cross[0].rgb, Exposure);
+        float w2 = KarisAntiFireflyWeight(cross[2].rgb, Exposure);
+        float w3 = KarisAntiFireflyWeight(cross[3].rgb, Exposure);
  
         float4 box = ((corner[2] * w0) + (cross[0] * w1) + (cross[2] * w2) + (cross[3] * w3)) / (w0 + w1 + w2 + w3);
         result += box * 0.125f;
     }
 
     {
-        float w0 = KarisAntiFireflyWeight(corner[3].rgb, exposure);
-        float w1 = KarisAntiFireflyWeight(cross[2].rgb, exposure);
-        float w2 = KarisAntiFireflyWeight(cross[3].rgb, exposure);
-        float w3 = KarisAntiFireflyWeight(cross[4].rgb, exposure);
+        float w0 = KarisAntiFireflyWeight(corner[3].rgb, Exposure);
+        float w1 = KarisAntiFireflyWeight(cross[2].rgb, Exposure);
+        float w2 = KarisAntiFireflyWeight(cross[3].rgb, Exposure);
+        float w3 = KarisAntiFireflyWeight(cross[4].rgb, Exposure);
  
         float4 box = ((corner[3] * w0) + (cross[2] * w1) + (cross[3] * w2) + (cross[4] * w3)) / (w0 + w1 + w2 + w3);
         result += box * 0.125f;
