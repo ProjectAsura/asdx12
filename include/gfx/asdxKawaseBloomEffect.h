@@ -171,7 +171,7 @@ private:
     ComputeTarget                   m_BlurTarget[kMaxTargetCount];              //!< ブラーターゲット.
     ComputeTarget                   m_ComputeTarget;                            //!< コンピュートターゲット.
     D3D12_RESOURCE_STATES           m_BlurTargetStates[kMaxTargetCount] = {};   //!< ブラーターゲットステート.
-    D3D12_RESOURCE_STATES           m_ComputeTargetStates;                      //!< コンピュートターゲットステート.
+    D3D12_RESOURCE_STATES           m_ComputeTargetStates = {};                 //!< コンピュートターゲットステート.
     float                           m_Threshold     = 1.0f;                     //!< 閾値.
     float                           m_BlurStrength  = 3.0f;                     //!< ブラーの強さ.
     float                           m_Exposure      = 1.0f;                     //!< 露出値.
