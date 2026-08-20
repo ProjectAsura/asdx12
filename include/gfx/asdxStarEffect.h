@@ -28,21 +28,31 @@ class StarEffect
 
 public:
     ///////////////////////////////////////////////////////////////////////////////
-    // TYPE enum
+    // FILTER_TYPE enum
     ///////////////////////////////////////////////////////////////////////////////
-    enum TYPE
+    enum FILTER_TYPE
     {
-        DISABLE,               //!< 無効.
-        CAMERA,                //!< カメラ.
-        CHEAP_CAMERA,          //!< 安価なカメラ.
-        CROSS_SCREEN,          //!< クロスフィルタ.
-        CROSS_SCREEN_SPECTRAL, //!< クロスフィルタ・スペクトル.
-        SNOW_CROSS,            //!< スノークロス.
-        SNOW_CROSS_SPECTRAL,   //!< スノークロス・スペクトル.
-        SUNNY_CROSS,           //!< サニークロス.
-        SUNNY_CROSS_SPECTRAL,  //!< サニークロス・スペクトル.
-        CINEMA_VERTICAL,       //!< シネマ垂直方向.
-        CINEMA_HORIZONTAL,     //!< シネマ水平方向.
+        NONE,                       //!< 無効.
+        CROSS,                      //!< 4本.
+        CROSS_SPECTRAL,             //!< 4本(スペクトル).
+        SNOW_CROSS,                 //!< 6本.
+        SNOW_CROSS_SPECTRAL,        //!< 6本(スペクトル).
+        SUNNY_CROSS,                //!< 8本.
+        SUNNY_CROSS_SPECTRAL,       //!< 8本(スペクトル).
+        TWINKLE_STAR,               //!< 短め4本
+        TWINKLE_STAR_SPECTRAL,      //!< 短め4本(スペクトル).
+        TWINKLE_STAR6X,             //!< 短め6本.
+        TWINKLE_STAR6X_SPECTRAL,    //!< 短め6本(スペクトル).
+        TWINKLE_STAR8X,             //!< 短め8本.
+        TWINKLE_STAR8X_SPECTRAL,    //!< 短め8本(スペクトル).
+        NATURAL_CROSS,              //!< 4本・効果弱.
+        NATURAL_CROSS_SPECTRAL,     //!< 4本・効果弱(スペクトル).
+        ANAMORFLARE_RED,            //!< アナモルフィックフレア・赤.
+        ANAMORFLARE_YELLOW,         //!< アナモルフィックフレア・黄.
+        ANAMORFLARE_GREEN,          //!< アナモルフィックフレア・緑.
+        ANAMORFLARE_BLUE,           //!< アナモルフィックフレア・青.
+        ANAMORFLARE_CLEAR,          //!< アナモルフィックフレア・無色.
+        ANAMORFLARE_RAINBOW,        //!< アナモルフィックフレア・虹.
     };
 
     //=========================================================================
@@ -116,18 +126,18 @@ public:
     D3D12_GPU_DESCRIPTOR_HANDLE GetHandleSRV() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      光芒タイプを設定します.
+    //! @brief      クロスフィルタタイプを設定します.
     //! 
     //! @param[in]      type        設定する値.
     //-------------------------------------------------------------------------
-    void SetType(TYPE type);
+    void SetType(FILTER_TYPE type);
 
     //-------------------------------------------------------------------------
-    //! @brief      光芒タイプを取得します.
+    //! @brief      クロスフィルタタイプを取得します.
     //! 
-    //! @return     光芒タイプを返却します.
+    //! @return     クロスフィルタタイプを返却します.
     //-------------------------------------------------------------------------
-    TYPE GetType() const;
+    FILTER_TYPE GetType() const;
 
     //-------------------------------------------------------------------------
     //! @brief      閾値を設定します.
@@ -144,20 +154,6 @@ public:
     float GetThreshold() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      減衰スケール値を設定します.
-    //! 
-    //! @param[in]      value       設定する減衰スケール値.
-    //-------------------------------------------------------------------------
-    void SetAttenuation(float value);
-
-    //-------------------------------------------------------------------------
-    //! @brief      減衰スケール値を取得します.
-    //! 
-    //! @return     減衰スケール値を返却します.
-    //-------------------------------------------------------------------------
-    float GetAttenuation() const;
-
-    //-------------------------------------------------------------------------
     //! @brief      露出値を設定します.
     //! 
     //! @param[in]      value       設定する露出値.
@@ -171,24 +167,38 @@ public:
     //-------------------------------------------------------------------------
     float GetExposure() const;
 
+    //-------------------------------------------------------------------------
+    //! @brief      回転角を設定します.
+    //! 
+    //! @param[in]      rad     設定する回転角(単位:ラジアン)
+    //-------------------------------------------------------------------------
+    void SetAngle(float rad);
+
+    //-------------------------------------------------------------------------
+    //! @brief      回転角を取得します.
+    //! 
+    //! @return     回転角を返却します.
+    //-------------------------------------------------------------------------
+    float GetAngle() const;
+
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    RefPtr<ID3D12RootSignature>     m_RootSignature;                        //!< ルートシグニチャ.
-    RefPtr<ID3D12PipelineState>     m_FirstPassPSO;                         //!< 初期用パイプラインステートです.
-    RefPtr<ID3D12PipelineState>     m_StarPSO;                              //!< 光芒用パイプラインステートです.
-    RefPtr<ID3D12PipelineState>     m_CompositePSO;                         //!< 合成用パイプラインステートです.
-    ComputeTarget                   m_PingPongTarget[2];                    //!< ピンポンターゲット.
-    ComputeTarget                   m_InputTarget;                          //!< 入力ターゲット.
-    ComputeTarget                   m_OutputTarget;                         //!< 出力ターゲット.
-    D3D12_RESOURCE_STATES           m_PingPongStates[2] = {};               //!< ピンポンターゲット用リソースステート.
-    D3D12_RESOURCE_STATES           m_InputStates       = {};               //!< 入力ターゲット用リソースステート.
-    D3D12_RESOURCE_STATES           m_OutputStates      = {};               //!< 出力ターゲット用リソースステート.
-    TYPE                            m_Type              = TYPE::DISABLE;    //!< 光芒タイプ.
-    float                           m_Threshold         = 1.0f;             //!< 閾値.
-    float                           m_Attenuation       = 1.0f;             //!< 減衰スケール値.
-    float                           m_Exposure          = 1.0f;             //!< 露出値.
+    RefPtr<ID3D12RootSignature>     m_RootSignature;                            //!< ルートシグニチャ.
+    RefPtr<ID3D12PipelineState>     m_FirstPassPSO;                             //!< 初期用パイプラインステートです.
+    RefPtr<ID3D12PipelineState>     m_StarPSO;                                  //!< 光芒用パイプラインステートです.
+    RefPtr<ID3D12PipelineState>     m_CompositePSO;                             //!< 合成用パイプラインステートです.
+    ComputeTarget                   m_PingPongTarget[2];                        //!< ピンポンターゲット.
+    ComputeTarget                   m_InputTarget;                              //!< 入力ターゲット.
+    ComputeTarget                   m_OutputTarget;                             //!< 出力ターゲット.
+    D3D12_RESOURCE_STATES           m_PingPongStates[2] = {};                   //!< ピンポンターゲット用リソースステート.
+    D3D12_RESOURCE_STATES           m_InputStates       = {};                   //!< 入力ターゲット用リソースステート.
+    D3D12_RESOURCE_STATES           m_OutputStates      = {};                   //!< 出力ターゲット用リソースステート.
+    FILTER_TYPE                     m_Type              = FILTER_TYPE::NONE;    //!< 光芒タイプ.
+    float                           m_Threshold         = 1.0f;                 //!< 閾値.
+    float                           m_Exposure          = 1.0f;                 //!< 露出値.
+    float                           m_Angle             = 0.0f;                 //!< 回転角.
 
     //=========================================================================
     // private methods.

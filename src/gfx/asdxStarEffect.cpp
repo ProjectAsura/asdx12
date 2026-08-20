@@ -45,10 +45,13 @@ enum STAR_DEF_TYPE
 {
     STAR_DEF_DISABLE,
     STAR_DEF_CROSS,
-    STAR_DEF_CROSS_FILTER,
     STAR_DEF_SNOW_CROSS,
     STAR_DEF_SUNNY_CROSS,
-    STAR_DEF_VERTICAL,
+    STAR_DEF_TWINKLE_STAR,
+    STAR_DEF_TWINKLE_STAR6X,
+    STAR_DEF_TWINKLE_STAR8X,
+    STAR_DEF_NATURAL_CROSS,
+    STAR_DEF_ANAMORFLARE,
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -56,13 +59,10 @@ enum STAR_DEF_TYPE
 ///////////////////////////////////////////////////////////////////////////////
 struct StarDef
 {
-    const char* Name;
     int         StarLineCount;
     int         PassCount;
     float       SampleLength;
     float       Attenuation;
-    float       Rotation;
-    bool        IsRotate;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -70,10 +70,8 @@ struct StarDef
 ///////////////////////////////////////////////////////////////////////////////
 struct GlareDef
 {
-    const char*     Name;
-    float           StarLuminance;
     STAR_DEF_TYPE   StarType;
-    float           StartInclination;
+    float           Rotation;
     float           ChromaticAberration;
 };
 
@@ -123,33 +121,59 @@ struct CompositeParam
     uint16_t DstH;
 };
 
+///////////////////////////////////////////////////////////////////////////////
+// ColorTable structure
+///////////////////////////////////////////////////////////////////////////////
+struct ColorTable
+{
+    std::array<asdx::Vector4, 8> Colors;
+};
+
+
 //-----------------------------------------------------------------------------
 // Constant Values.
 //-----------------------------------------------------------------------------
 static const StarDef kStarDef[] = {
-    { "Disable",     0, 0, 0.0f, 0.00f, asdx::ToRadian(0.0f) , false },
-    { "Cross",       4, 3, 1.0f, 0.85f, asdx::ToRadian(0.0f) , true  },
-    { "CrossFilter", 4, 3, 1.0f, 0.95f, asdx::ToRadian(0.0f) , true  },
-    { "SnowCross",   6, 3, 1.0f, 0.96f, asdx::ToRadian(20.0f), true  },
-    { "SunnyCross",  8, 3, 1.0f, 0.88f, asdx::ToRadian(0.0f) , false }, 
-    { "Vertical",    2, 3, 1.0f, 0.96f, asdx::ToRadian(0.0f) , false },
+    { 0, 0, 0.0f, 0.00f }, // Disable
+    { 4, 3, 1.0f, 0.85f }, // Cross
+    { 6, 3, 1.0f, 0.85f }, // SnowCross
+    { 8, 3, 1.0f, 0.85f }, // SunnyCross
+    { 4, 3, 0.4f, 0.70f }, // TwinkleStar
+    { 6, 3, 0.4f, 0.70f }, // TwinkleStar6X
+    { 8, 3, 0.4f, 0.70f }, // TwinkleStar8X
+    { 4, 3, 1.0f, 0.43f }, // NaturalCross
+    { 2, 8, 1.2f, 0.75f }, // AnamorFlare.
 };
 
 static const GlareDef kGlareDef[] = {
-    { "Disable"                 , 0.0f, STAR_DEF_DISABLE        , asdx::ToRadian(0.0f)  , 0.5f },
-    { "Camera"                  , 1.0f, STAR_DEF_CROSS          , asdx::ToRadian(0.0f)  , 0.5f },
-    { "Cheap Camera"            , 2.0f, STAR_DEF_CROSS          , asdx::ToRadian(0.0f)  , 0.5f },
-    { "Cross Screen"            , 1.5f, STAR_DEF_CROSS_FILTER   , asdx::ToRadian(25.0f) , 0.5f },
-    { "Spectral Cross Screen"   , 1.8f, STAR_DEF_CROSS_FILTER   , asdx::ToRadian(70.0f) , 1.5f },
-    { "Snow Cross"              , 1.5f, STAR_DEF_SNOW_CROSS     , asdx::ToRadian(10.0f) , 0.5f },
-    { "Spectral Snow Cross"     , 1.8f, STAR_DEF_SNOW_CROSS     , asdx::ToRadian(40.0f) , 1.5f },
-    { "Sunny Cross"             , 1.5f, STAR_DEF_SUNNY_CROSS    , asdx::ToRadian(0.0f)  , 0.5f },
-    { "Spectral Sunny Cross"    , 1.8f, STAR_DEF_SUNNY_CROSS    , asdx::ToRadian(45.0f) , 1.5f },
-    { "Cinema Vertical"         , 1.0f, STAR_DEF_VERTICAL       , asdx::ToRadian(0.0f)  , 0.5f },
-    { "Cinema Horizontal"       , 1.0f, STAR_DEF_VERTICAL       , asdx::ToRadian(90.0f) , 0.5f },
+    { STAR_DEF_DISABLE        , asdx::ToRadian(0.0f) , 0.5f }, // None
+
+    { STAR_DEF_CROSS          , asdx::ToRadian(45.0f), 0.5f }, // Cross
+    { STAR_DEF_CROSS          , asdx::ToRadian(45.0f), 1.5f }, // Spectral Cross. 
+    { STAR_DEF_SNOW_CROSS     , asdx::ToRadian(10.0f), 0.5f }, // Snow Cross
+    { STAR_DEF_SNOW_CROSS     , asdx::ToRadian(10.0f), 1.5f }, // Spectral Snow Cross.
+    { STAR_DEF_SUNNY_CROSS    , asdx::ToRadian(22.5f), 0.5f }, // Sunny Cross.
+    { STAR_DEF_SUNNY_CROSS    , asdx::ToRadian(22.5f), 1.5f }, // Spectarl Sunny Cross.
+
+    { STAR_DEF_TWINKLE_STAR   , asdx::ToRadian(45.0f), 0.5f }, // Twinkle Star
+    { STAR_DEF_TWINKLE_STAR   , asdx::ToRadian(45.0f), 1.5f }, // Spectral Twinkle Star
+    { STAR_DEF_TWINKLE_STAR6X , asdx::ToRadian(10.0f), 0.5f }, // Twinkle Star 6x.
+    { STAR_DEF_TWINKLE_STAR6X , asdx::ToRadian(10.0f), 1.5f }, // Spectral Twinkle Star 6x.
+    { STAR_DEF_TWINKLE_STAR8X , asdx::ToRadian(22.5f), 0.5f }, // Twinkle Star 8x.
+    { STAR_DEF_TWINKLE_STAR8X , asdx::ToRadian(22.5f), 1.5f }, // Spectral Twinkle Star 8x.
+
+    { STAR_DEF_NATURAL_CROSS  , asdx::ToRadian(45.0f), 0.5f }, // Natural Cross
+    { STAR_DEF_NATURAL_CROSS  , asdx::ToRadian(45.0f), 1.5f }, // Spectral Natural Cross.
+
+    { STAR_DEF_ANAMORFLARE    , asdx::ToRadian(90.0f), 0.5f }, // AnamorFlare Red.
+    { STAR_DEF_ANAMORFLARE    , asdx::ToRadian(90.0f), 0.5f }, // AnamorFlare Yellow.
+    { STAR_DEF_ANAMORFLARE    , asdx::ToRadian(90.0f), 0.5f }, // AnamorFlare Green.
+    { STAR_DEF_ANAMORFLARE    , asdx::ToRadian(90.0f), 0.5f }, // AnamorFlare Blue.
+    { STAR_DEF_ANAMORFLARE    , asdx::ToRadian(90.0f), 0.5f }, // AnamorFlare Clear.
+    { STAR_DEF_ANAMORFLARE    , asdx::ToRadian(90.0f), 1.5f }, // AnamorFlare Rainbow.
 };
 
-static const float kSunnyCrossLongAttenuation = 0.95f; // SunnyCrossで，2の倍数の時に適用する減衰率.
+static const float kSunnyCrossLongAttenuation = 0.92f; // SunnyCrossで，2の倍数の時に適用する減衰率.
 
 static const asdx::Vector4 kAberrationTable[8] = {
     asdx::Vector4(0.5f, 0.5f, 0.5f, 0.0f),  // w [0]
@@ -172,16 +196,26 @@ static const asdx::Vector4 kAnamorphicColor[] = {
     asdx::Vector4(0.2f, 0.2f, 0.8f,  0.0f), // [6]
     asdx::Vector4(0.0f, 0.0f, 0.8f,  0.0f), // [7]
 };
+static const float kAnamorphicHue[] = {
+    140.0f,     // Red.
+    180.0f,     // Yellow.
+    260.0f,     // Green.
+    0.0f,       // Blue.
+};
 
 //-----------------------------------------------------------------------------
 // Global Variables.
 //-----------------------------------------------------------------------------
-static std::array<StarLine, 4>  g_Cross;
-static std::array<StarLine, 4>  g_CrossFilter;
-static std::array<StarLine, 6>  g_SnowCross;
-static std::array<StarLine, 8>  g_SunnyCross;
-static std::array<StarLine, 2>  g_Vertical;
-static bool                     g_Init = false;
+static std::array<StarLine, 4>      g_Cross;
+static std::array<StarLine, 6>      g_SnowCross;
+static std::array<StarLine, 8>      g_SunnyCross;
+static std::array<StarLine, 4>      g_TwinkleStar;
+static std::array<StarLine, 6>      g_TwinkleStar6x;
+static std::array<StarLine, 8>      g_TwinkleStar8x;
+static std::array<StarLine, 4>      g_NaturalCross;
+static std::array<StarLine, 2>      g_AnamorFlare;
+static bool                         g_Init = false;
+static std::array<ColorTable, 6>    g_AnamorFlareColorTable;
 
 //-----------------------------------------------------------------------------
 //      光芒定義から光芒ラインデータを初期化します.
@@ -206,11 +240,14 @@ void InitStarLine()
     if (g_Init)
         return;
 
-    InitFromStarDef(kStarDef[1], g_Cross      .data(), g_Cross      .size());
-    InitFromStarDef(kStarDef[2], g_CrossFilter.data(), g_CrossFilter.size());
-    InitFromStarDef(kStarDef[3], g_SnowCross  .data(), g_SnowCross  .size());
-    InitFromStarDef(kStarDef[4], g_SunnyCross .data(), g_SunnyCross .size());
-    InitFromStarDef(kStarDef[5], g_Vertical   .data(), g_Vertical   .size());
+    InitFromStarDef(kStarDef[1], g_Cross        .data(), g_Cross        .size());
+    InitFromStarDef(kStarDef[2], g_SnowCross    .data(), g_SnowCross    .size());
+    InitFromStarDef(kStarDef[3], g_SunnyCross   .data(), g_SunnyCross   .size());
+    InitFromStarDef(kStarDef[4], g_TwinkleStar  .data(), g_TwinkleStar  .size());
+    InitFromStarDef(kStarDef[5], g_TwinkleStar6x.data(), g_TwinkleStar6x.size());
+    InitFromStarDef(kStarDef[6], g_TwinkleStar8x.data(), g_TwinkleStar8x.size());
+    InitFromStarDef(kStarDef[7], g_NaturalCross .data(), g_NaturalCross .size());
+    InitFromStarDef(kStarDef[8], g_AnamorFlare  .data(), g_AnamorFlare  .size());
 
     for(size_t i=0; i<g_SunnyCross.size(); i++)
     {
@@ -236,18 +273,60 @@ asdx::ArrayView<StarLine> GetStarLines(STAR_DEF_TYPE type)
     case STAR_DEF_CROSS:
         return asdx::ArrayView<StarLine>(g_Cross.data(), g_Cross.size());
 
-    case STAR_DEF_CROSS_FILTER:
-        return asdx::ArrayView<StarLine>(g_CrossFilter.data(), g_CrossFilter.size());
-
     case STAR_DEF_SNOW_CROSS:
         return asdx::ArrayView<StarLine>(g_SnowCross.data(), g_SnowCross.size());
 
     case STAR_DEF_SUNNY_CROSS:
         return asdx::ArrayView<StarLine>(g_SunnyCross.data(), g_SunnyCross.size());
 
-    case STAR_DEF_VERTICAL:
-        return asdx::ArrayView<StarLine>(g_Vertical.data(), g_Vertical.size());
+    case STAR_DEF_TWINKLE_STAR:
+        return asdx::ArrayView<StarLine>(g_TwinkleStar.data(), g_TwinkleStar.size());
+
+    case STAR_DEF_TWINKLE_STAR6X:
+        return asdx::ArrayView<StarLine>(g_TwinkleStar6x.data(), g_TwinkleStar6x.size());
+
+    case STAR_DEF_TWINKLE_STAR8X:
+        return asdx::ArrayView<StarLine>(g_TwinkleStar8x.data(), g_TwinkleStar8x.size());
+
+    case STAR_DEF_NATURAL_CROSS:
+        return asdx::ArrayView<StarLine>(g_NaturalCross.data(), g_NaturalCross.size());
+
+    case STAR_DEF_ANAMORFLARE:
+        return asdx::ArrayView<StarLine>(g_AnamorFlare.data(), g_AnamorFlare.size());
     }
+}
+
+//-----------------------------------------------------------------------------
+//      色相変換した色を取得します.
+//-----------------------------------------------------------------------------
+asdx::Vector4 ColorHue(const asdx::Vector4& color, float rad)
+{
+    asdx::Matrix hue = asdx::Matrix::CreateHueMatrix(rad);
+    return asdx::Vector4::Transform(color, hue);
+}
+
+//-----------------------------------------------------------------------------
+//      アナモルフィックフレア用カラーテーブルを初期化します.
+//-----------------------------------------------------------------------------
+void InitAnamorphicColorTable()
+{
+    // Red, Yellow, Green, Blue.
+    for(auto i=0; i<4; ++i)
+    {
+        for(auto j=0; j<8; ++j)
+        {
+            auto c = ColorHue(kAnamorphicColor[j], kAnamorphicHue[i]);
+            g_AnamorFlareColorTable[i].Colors[j] = c;
+        }
+    }
+
+    // Clear Color.
+    for(auto j=0; j<8; ++j)
+    { g_AnamorFlareColorTable[4].Colors[j] = asdx::Vector4(0.63f, 0.63f, 0.63f, 1.0f); }
+
+    // Rainbow
+    for(auto j=0; j<8; ++j)
+    { g_AnamorFlareColorTable[5].Colors[j] = kAberrationTable[j]; }
 }
 
 } // namespace
@@ -445,6 +524,9 @@ bool StarEffect::Init(uint32_t w, uint32_t h, DXGI_FORMAT format)
     // パラメータ初期化.
     InitStarLine();
 
+    // カラーテーブル初期化.
+    InitAnamorphicColorTable();
+
     return true;
 }
 
@@ -482,7 +564,7 @@ void StarEffect::Dispatch
     ASDX_SCOPED_MARKER(pCmd, StarEffect);
 
     const auto tanFov       = atanf(asdx::F_PI / 8.0f);
-    const auto kMaxPasses   = 3;
+    const auto kMaxPasses   = 8;
     const auto kSampleCount = 8;
 
     Vector4 colors[kMaxPasses][kSampleCount];
@@ -491,20 +573,28 @@ void StarEffect::Dispatch
     const GlareDef& glareDef = kGlareDef[m_Type];
     const StarDef&  starDef  = kStarDef[glareDef.StarType];
 
-    for(auto i=0; i<kMaxPasses; ++i)
+    for(auto i=0; i<starDef.PassCount; ++i)
     {
-        float ratio = float(i + 1) / float(kMaxPasses);
+        float ratio = float(i + 1) / float(starDef.PassCount);
 
         for(auto j=0; j<kSampleCount; ++j)
         {
-            asdx::Vector4 aberrColor;
-            if (glareDef.StarType == STAR_DEF_VERTICAL)
+            // アナモルフィックフレアの場合.
+            if (glareDef.StarType == STAR_DEF_ANAMORFLARE)
             {
-                colors[i][j] = asdx::Vector4::Lerp(kAnamorphicColor[j], kWhiteColor, ratio);
+                // テーブル番号算出.
+                auto tableIndex = int(m_Type) - int(FILTER_TYPE::ANAMORFLARE_RED);
+                assert(0 <= tableIndex && tableIndex <= 5);
+
+                colors[i][j] = asdx::Vector4::Lerp(g_AnamorFlareColorTable[tableIndex].Colors[j], kWhiteColor, ratio);
+
+                if (m_Type == FILTER_TYPE::ANAMORFLARE_RAINBOW)
+                    colors[i][j] = asdx::Vector4::Lerp(kWhiteColor, colors[i][j], glareDef.ChromaticAberration);
             }
+            // それ以外.
             else
             {
-                aberrColor   = asdx::Vector4::Lerp(kAberrationTable[j], kWhiteColor, ratio);
+                auto aberrColor = asdx::Vector4::Lerp(kAberrationTable[j], kWhiteColor, ratio);
                 colors[i][j] = asdx::Vector4::Lerp(kWhiteColor, aberrColor, glareDef.ChromaticAberration);
             }
         }
@@ -513,7 +603,7 @@ void StarEffect::Dispatch
     auto srcW = float(width);
     auto srcH = float(height);
 
-    auto radOffset = glareDef.StartInclination + starDef.Rotation;
+    auto radOffset = glareDef.Rotation + m_Angle;
 
     LegacyBarrier barrier;
     pCmd->SetComputeRootSignature(m_RootSignature.GetPtr());
@@ -592,7 +682,7 @@ void StarEffect::Dispatch
     for(auto d=0; d<starDef.StarLineCount; ++d)
     {
         ASDX_SCOPED_MARKER(pCmd, Direction);
-        auto& starLine = starLines[d];
+        const auto& starLine = starLines[d];
 
         auto rad = radOffset + starLine.Inclination;
         auto s = sinf(rad);
@@ -603,7 +693,7 @@ void StarEffect::Dispatch
         stepUV.y = c / srcH * starLine.SampleLength;
 
         // 減衰スケール.
-        float attnPowScale = (tanFov + 0.1f) * (160.0f + 120.0f) / (srcW + srcH) * 1.2f;
+        float attnPowScale = (tanFov + 0.1f) * (160.0f + 120.0f) / (srcW + srcH) * 1.2f; // GlareDefD3D.cpp 由来のマジックナンバー.
 
         D3D12_GPU_DESCRIPTOR_HANDLE handleSRV = m_InputTarget.GetGpuHandleSRV();
         D3D12_GPU_DESCRIPTOR_HANDLE handleUAV = m_PingPongTarget[0].GetGpuHandleUAV();
@@ -619,7 +709,7 @@ void StarEffect::Dispatch
 
             for(auto i=0; i<kSampleCount; ++i)
             {
-                auto lum    = powf(starLine.Attenuation * m_Attenuation, attnPowScale * i);
+                auto lum    = powf(starLine.Attenuation, attnPowScale * i);
                 auto weight = colors[starLine.PassCount - 1 - p][i] * lum * (p + 1.0f) * 0.5f;
                 auto offset = stepUV * float(i);
 
@@ -750,15 +840,15 @@ D3D12_GPU_DESCRIPTOR_HANDLE StarEffect::GetHandleSRV() const
 { return m_OutputTarget.GetGpuHandleSRV(); }
 
 //-----------------------------------------------------------------------------
-//      光芒タイプを設定します.
+//      クロスフィルタタイプを設定します.
 //-----------------------------------------------------------------------------
-void StarEffect::SetType(TYPE type)
+void StarEffect::SetType(FILTER_TYPE type)
 { m_Type = type; }
 
 //-----------------------------------------------------------------------------
-//      光芒タイプを取得します.
+//      クロスフィルタタイプを取得します.
 //-----------------------------------------------------------------------------
-StarEffect::TYPE StarEffect::GetType() const
+StarEffect::FILTER_TYPE StarEffect::GetType() const
 { return m_Type; }
 
 //-----------------------------------------------------------------------------
@@ -774,21 +864,6 @@ float StarEffect::GetThreshold() const
 { return m_Threshold; }
 
 //-----------------------------------------------------------------------------
-//      減衰スケール値を設定します.
-//-----------------------------------------------------------------------------
-void StarEffect::SetAttenuation(float value)
-{
-    assert(value >= 0.0f);
-    m_Attenuation = value;
-}
-
-//-----------------------------------------------------------------------------
-//      減衰スケール値を取得します.
-//-----------------------------------------------------------------------------
-float StarEffect::GetAttenuation() const
-{ return m_Attenuation; }
-
-//-----------------------------------------------------------------------------
 //      露出値を設定します.
 //-----------------------------------------------------------------------------
 void StarEffect::SetExposure(float value)
@@ -802,5 +877,17 @@ void StarEffect::SetExposure(float value)
 //-----------------------------------------------------------------------------
 float StarEffect::GetExposure() const
 { return m_Exposure; }
+
+//-----------------------------------------------------------------------------
+//      回転角を設定します.
+//-----------------------------------------------------------------------------
+void StarEffect::SetAngle(float rad)
+{ m_Angle = rad; }
+
+//-----------------------------------------------------------------------------
+//      回転角を取得します.
+//-----------------------------------------------------------------------------
+float StarEffect::GetAngle() const
+{ return m_Angle; }
 
 } // namespace asdx
