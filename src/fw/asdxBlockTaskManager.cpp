@@ -1,5 +1,5 @@
 ﻿//-----------------------------------------------------------------------------
-// File : BlockTaskManager.cpp
+// File : asdxBlockTaskManager.cpp
 // Desc : Block Task Manager.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
@@ -8,7 +8,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <fnd/asdxLogger.h>
-#include <fw/asdxBlockTask.h>
+#include <fw/asdxBlockTaskManager.h>
 
 
 namespace asdx {

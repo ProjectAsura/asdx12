@@ -239,9 +239,9 @@
     <ClCompile Include="..\src\fnd\asdxTokenizer.cpp" />
     <ClCompile Include="..\src\fw\asdxApp.cpp" />
     <ClCompile Include="..\src\fw\asdxAppCamera.cpp" />
-    <ClCompile Include="..\src\fw\asdxFrameTask.cpp" />
+    <ClCompile Include="..\src\fw\asdxBlockTaskManager.cpp" />
+    <ClCompile Include="..\src\fw\asdxFrameTaskManager.cpp" />
     <ClCompile Include="..\src\fw\asdxTask.cpp" />
-    <ClCompile Include="..\src\fw\asdxBlockTask.cpp" />
     <ClCompile Include="..\src\gfx\asdxAllocationHolder.cpp" />
     <ClCompile Include="..\src\gfx\asdxBloomEffect.cpp" />
     <ClCompile Include="..\src\gfx\asdxBuffer.cpp" />
@@ -272,7 +272,6 @@
     <ClCompile Include="..\src\gfx\asdxPresetState.cpp" />
     <ClCompile Include="..\src\gfx\asdxRadialBlurEffect.cpp" />
     <ClCompile Include="..\src\gfx\asdxSampler.cpp" />
-    <ClCompile Include="..\src\gfx\asdxScopedMarker.cpp" />
     <ClCompile Include="..\src\gfx\asdxScreenCapture.cpp" />
     <ClCompile Include="..\src\gfx\asdxShaderCompiler.cpp" />
     <ClCompile Include="..\src\gfx\asdxShape.cpp" />
@@ -349,7 +348,6 @@
     <ClInclude Include="..\include\fnd\asdxMisc.h" />
     <ClInclude Include="..\include\fnd\asdxOffsetAllocator.h" />
     <ClInclude Include="..\include\fnd\asdxPath.h" />
-    <ClInclude Include="..\include\fnd\asdxPool.h" />
     <ClInclude Include="..\include\fnd\asdxQueue.h" />
     <ClInclude Include="..\include\fnd\asdxRef.h" />
     <ClInclude Include="..\include\fnd\asdxRelativePtr.h" />
@@ -365,8 +363,8 @@
     <ClInclude Include="..\include\fnd\asdxTokenizer.h" />
     <ClInclude Include="..\include\fw\asdxApp.h" />
     <ClInclude Include="..\include\fw\asdxAppCamera.h" />
-    <ClInclude Include="..\include\fw\asdxBlockTask.h" />
-    <ClInclude Include="..\include\fw\asdxFrameTask.h" />
+    <ClInclude Include="..\include\fw\asdxBlockTaskManager.h" />
+    <ClInclude Include="..\include\fw\asdxFrameTaskManager.h" />
     <ClInclude Include="..\include\fw\asdxTask.h" />
     <ClInclude Include="..\include\gfx\asdxAllocationHolder.h" />
     <ClInclude Include="..\include\gfx\asdxBloomEffect.h" />

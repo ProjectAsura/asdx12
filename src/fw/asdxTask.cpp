@@ -31,7 +31,7 @@ TaskManagerBase::~TaskManagerBase()
 //-----------------------------------------------------------------------------
 //      タスクを削除します.
 //-----------------------------------------------------------------------------
-void TaskManagerBase::RemoveTask(TaskBase*& ptr)
+void TaskManagerBase::RemoveTask(ITask*& ptr)
 {
     if (ptr == nullptr)
         return;
@@ -76,14 +76,14 @@ bool TaskManagerBase::IsAllCompleted() const
 }
 
 //-----------------------------------------------------------------------------
-//      破棄可能タスクを削除します.
+//      遅延削除を行います.
 //-----------------------------------------------------------------------------
-void TaskManagerBase::RemoveDisposable()
+void TaskManagerBase::DeferredRemove()
 {
     auto itr = m_TaskList.begin();
     while(itr != m_TaskList.end())
     {
-        if (itr->IsDisposable())
+        if (itr->IsRemovable())
         {
             auto ptr = &(*itr);
             ptr->OnRemove();

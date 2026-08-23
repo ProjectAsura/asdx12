@@ -1,5 +1,5 @@
 ﻿//-----------------------------------------------------------------------------
-// File : asdxFrameTask.cpp
+// File : asdxFrameTaskManager.cpp
 // Desc : Frame Task Manager.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
@@ -7,7 +7,8 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <fw/asdxFrameTask.h>
+#include <fw/asdxFrameTaskManager.h>
+
 
 namespace asdx {
 

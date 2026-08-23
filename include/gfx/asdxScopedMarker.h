@@ -11,6 +11,13 @@
 #include <cassert>
 #include <d3d12.h>
 
+#if ASDX_ENABLE_PIX3
+    #include <d3d12video.h>
+    #include <pix3.h>
+#else
+    #include <pix.h>
+#endif// ASDX_ENABLE_PIX3
+
 
 namespace asdx {
 
@@ -40,12 +47,22 @@ public:
     //! @param[in]      pCmd        グラフィックスコマンドリストです.
     //! @param[in]      text        マーカーに表示するテキストです.
     //-------------------------------------------------------------------------
-    ScopedMarker(ID3D12GraphicsCommandList* pCmd, const char* text);
+    ScopedMarker(ID3D12GraphicsCommandList* pCmd, const char* text)
+    {
+        assert(m_pCmd != nullptr);
+        assert(text != nullptr);
+        PIXBeginEvent(m_pCmd, PIX_COLOR_DEFAULT, text);
+    }
 
     //-------------------------------------------------------------------------
     //! @brief      デストラクタです.
     //-------------------------------------------------------------------------
-    ~ScopedMarker();
+    ~ScopedMarker()
+    {
+        assert(m_pCmd != nullptr);
+        PIXEndEvent(m_pCmd);
+        m_pCmd = nullptr;
+    }
 
 private:
     //=========================================================================

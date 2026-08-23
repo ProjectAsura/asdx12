@@ -435,12 +435,6 @@
     <ClCompile Include="..\src\fw\asdxTask.cpp">
       <Filter>ソース ファイル\fw</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\fw\asdxBlockTask.cpp">
-      <Filter>ソース ファイル\fw</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\fw\asdxFrameTask.cpp">
-      <Filter>ソース ファイル\fw</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\gfx\asdxFxaa.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
@@ -453,14 +447,17 @@
     <ClCompile Include="..\src\gfx\asdxEnhancedBarrier.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxScopedMarker.cpp">
-      <Filter>ソース ファイル\gfx</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\gfx\asdxMosaicEffect.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
     <ClCompile Include="..\src\gfx\asdxBloomEffect.cpp">
       <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\fw\asdxBlockTaskManager.cpp">
+      <Filter>ソース ファイル\fw</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\fw\asdxFrameTaskManager.cpp">
+      <Filter>ソース ファイル\fw</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -540,9 +537,6 @@
       <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
     <ClInclude Include="..\include\fnd\asdxPath.h">
-      <Filter>ヘッダー ファイル\fnd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\fnd\asdxPool.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
     <ClInclude Include="..\include\fnd\asdxQueue.h">
@@ -809,12 +803,6 @@
     <ClInclude Include="..\include\fw\asdxTask.h">
       <Filter>ヘッダー ファイル\fw</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\fw\asdxBlockTask.h">
-      <Filter>ヘッダー ファイル\fw</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\fw\asdxFrameTask.h">
-      <Filter>ヘッダー ファイル\fw</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\gfx\asdxFxaa.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
@@ -841,6 +829,12 @@
     </ClInclude>
     <ClInclude Include="..\include\gfx\asdxBloomEffect.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fw\asdxBlockTaskManager.h">
+      <Filter>ヘッダー ファイル\fw</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fw\asdxFrameTaskManager.h">
+      <Filter>ヘッダー ファイル\fw</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
