@@ -48,6 +48,7 @@ public:
     //! @param[in]      text        マーカーに表示するテキストです.
     //-------------------------------------------------------------------------
     ScopedMarker(ID3D12GraphicsCommandList* pCmd, const char* text)
+    : m_pCmd(pCmd)
     {
         assert(m_pCmd != nullptr);
         assert(text != nullptr);
