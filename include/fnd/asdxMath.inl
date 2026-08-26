@@ -761,7 +761,17 @@ inline Vector2 Vector2::SmoothStep(const Vector2& a, const Vector2& b, float amo
 //-----------------------------------------------------------------------------
 //      指定された行列を用いて，ベクトルを変換します.
 //-----------------------------------------------------------------------------
-inline Vector2 Vector2::Transform(const Vector2& position, const Matrix& matrix)
+inline Vector2 Vector2::Transform(const Vector2& position, const Matrix4x4& matrix)
+{
+    return Vector2(
+        (position.x * matrix._11) + (position.y * matrix._21) + matrix._41,
+        (position.x * matrix._12) + (position.y * matrix._22) + matrix._42 );
+}
+
+//-----------------------------------------------------------------------------
+//      指定された行列を用いて，ベクトルを変換します.
+//-----------------------------------------------------------------------------
+inline Vector2 Vector2::Transform(const Vector2& position, const Matrix4x3& matrix)
 {
     return Vector2(
         (position.x * matrix._11) + (position.y * matrix._21) + matrix._41,
@@ -771,7 +781,17 @@ inline Vector2 Vector2::Transform(const Vector2& position, const Matrix& matrix)
 //-----------------------------------------------------------------------------
 //      指定された行列を用いて，法線ベクトルを変換します.
 //-----------------------------------------------------------------------------
-inline Vector2 Vector2::TransformNormal(const Vector2& normal, const Matrix& matrix)
+inline Vector2 Vector2::TransformNormal(const Vector2& normal, const Matrix4x4& matrix)
+{
+    return Vector2(
+        (normal.x * matrix._11) + (normal.y * matrix._21),
+        (normal.x * matrix._12) + (normal.y * matrix._22) );
+}
+
+//-----------------------------------------------------------------------------
+//      指定された行列を用いて，法線ベクトルを変換します.
+//-----------------------------------------------------------------------------
+inline Vector2 Vector2::TransformNormal(const Vector2& normal, const Matrix4x3& matrix)
 {
     return Vector2(
         (normal.x * matrix._11) + (normal.y * matrix._21),
@@ -781,7 +801,7 @@ inline Vector2 Vector2::TransformNormal(const Vector2& normal, const Matrix& mat
 //-----------------------------------------------------------------------------
 //      指定された行列を用いてベクトルを変換し，変換結果をw=1に射影します.
 //-----------------------------------------------------------------------------
-inline Vector2 Vector2::TransformCoord(const Vector2& coords, const Matrix& matrix)
+inline Vector2 Vector2::TransformCoord(const Vector2& coords, const Matrix4x4& matrix)
 {
     auto X = (coords.x * matrix._11) + (coords.y * matrix._21) + matrix._41;
     auto Y = (coords.x * matrix._12) + (coords.y * matrix._22) + matrix._42;
@@ -790,6 +810,7 @@ inline Vector2 Vector2::TransformCoord(const Vector2& coords, const Matrix& matr
         X / W,
         Y / W );
 }
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Vector3 structure
@@ -1359,7 +1380,7 @@ inline Vector3 Vector3::SmoothStep(const Vector3& a, const Vector3& b, float amo
 //-----------------------------------------------------------------------------
 //      指定された行列を用いて，ベクトルを変換します.
 //-----------------------------------------------------------------------------
-inline Vector3 Vector3::Transform(const Vector3& position, const Matrix& matrix)
+inline Vector3 Vector3::Transform(const Vector3& position, const Matrix4x4& matrix)
 {
     return Vector3(
         (position.x * matrix._11) + (position.y * matrix._21) + (position.z * matrix._31) + matrix._41,
@@ -1370,7 +1391,7 @@ inline Vector3 Vector3::Transform(const Vector3& position, const Matrix& matrix)
 //-----------------------------------------------------------------------------
 //      指定された行列を用いて，ベクトルを変換します.
 //-----------------------------------------------------------------------------
-inline Vector3 Vector3::Transform(const Vector3& position, const Transform4x3& matrix)
+inline Vector3 Vector3::Transform(const Vector3& position, const Matrix4x3& matrix)
 {
     return Vector3(
         (position.x * matrix._11) + (position.y * matrix._21) + (position.z * matrix._31) + matrix._41,
@@ -1381,7 +1402,7 @@ inline Vector3 Vector3::Transform(const Vector3& position, const Transform4x3& m
 //-----------------------------------------------------------------------------
 //      指定された行列を用いて，法線ベクトルを変換します.
 //-----------------------------------------------------------------------------
-inline Vector3 Vector3::TransformNormal(const Vector3& normal, const Matrix& matrix)
+inline Vector3 Vector3::TransformNormal(const Vector3& normal, const Matrix4x4& matrix)
 {
     return Vector3(
         (normal.x * matrix._11) + (normal.y * matrix._21) + (normal.z * matrix._31),
@@ -1392,7 +1413,7 @@ inline Vector3 Vector3::TransformNormal(const Vector3& normal, const Matrix& mat
 //-----------------------------------------------------------------------------
 //      指定された行列を用いて，法線ベクトルを変換します.
 //-----------------------------------------------------------------------------
-inline Vector3 Vector3::TransformNormal(const Vector3& normal, const Transform4x3& matrix)
+inline Vector3 Vector3::TransformNormal(const Vector3& normal, const Matrix4x3& matrix)
 {
     return Vector3(
         (normal.x * matrix._11) + (normal.y * matrix._21) + (normal.z * matrix._31),
@@ -1403,7 +1424,7 @@ inline Vector3 Vector3::TransformNormal(const Vector3& normal, const Transform4x
 //-----------------------------------------------------------------------------
 //      指定された行列を用いてベクトルを変換し，変換結果をw=1に射影します.
 //-----------------------------------------------------------------------------
-inline Vector3 Vector3::TransformCoord(const Vector3& coords, const Matrix& matrix)
+inline Vector3 Vector3::TransformCoord(const Vector3& coords, const Matrix4x4& matrix)
 {
     auto X = (coords.x * matrix._11) + (coords.y * matrix._21) + (coords.z * matrix._31) + matrix._41;
     auto Y = (coords.x * matrix._12) + (coords.y * matrix._22) + (coords.z * matrix._32) + matrix._42;
@@ -2010,7 +2031,7 @@ inline Vector4 Vector4::SmoothStep(const Vector4& a, const Vector4& b, float amo
 //-----------------------------------------------------------------------------
 //      指定された行列を用いて，ベクトルを変換します.
 //-----------------------------------------------------------------------------
-inline Vector4 Vector4::Transform(const Vector4& position, const Matrix& matrix)
+inline Vector4 Vector4::Transform(const Vector4& position, const Matrix4x4& matrix)
 {
     return Vector4(
         (position.x * matrix._11) + (position.y * matrix._21) + (position.z * matrix._31) + (position.w * matrix._41),
@@ -2042,13 +2063,13 @@ inline Vector4 Vector4::FromRGBA(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// Matrix structure (row-major)
+// Matrix4x4 structure (row-major)
 ///////////////////////////////////////////////////////////////////////////////
 
 //-----------------------------------------------------------------------------
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
-inline Matrix::Matrix()
+inline Matrix4x4::Matrix4x4()
 : _11(1.0f), _12(0.0f), _13(0.0f), _14(0.0f)
 , _21(0.0f), _22(1.0f), _23(0.0f), _24(0.0f)
 , _31(0.0f), _32(0.0f), _33(1.0f), _34(0.0f)
@@ -2058,16 +2079,16 @@ inline Matrix::Matrix()
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-inline Matrix::Matrix(const float* pf)
+inline Matrix4x4::Matrix4x4(const float* pf)
 {
     assert(pf != nullptr);
-    memcpy(&_11, pf, sizeof(Matrix));
+    memcpy(&_11, pf, sizeof(Matrix4x4));
 }
 
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-inline Matrix::Matrix
+inline Matrix4x4::Matrix4x4
 (
     float _f11, float _f12, float _f13, float _f14,
     float _f21, float _f22, float _f23, float _f24,
@@ -2084,7 +2105,7 @@ inline Matrix::Matrix
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-inline Matrix::Matrix(const Vector4& v1, const Vector4& v2, const Vector4& v3, const Vector4& v4)
+inline Matrix4x4::Matrix4x4(const Vector4& v1, const Vector4& v2, const Vector4& v3, const Vector4& v4)
 {
     _11 = v1.x; _12 = v1.y; _13 = v1.z; _14 = v1.z;
     _21 = v2.x; _22 = v2.y; _23 = v2.z; _24 = v2.z;
@@ -2095,31 +2116,31 @@ inline Matrix::Matrix(const Vector4& v1, const Vector4& v2, const Vector4& v3, c
 //-----------------------------------------------------------------------------
 //      インデクサです.
 //-----------------------------------------------------------------------------
-inline float& Matrix::operator () (uint32_t row, uint32_t col)
+inline float& Matrix4x4::operator () (uint32_t row, uint32_t col)
 { return m[row][col]; }
 
 //-----------------------------------------------------------------------------
 //      インデクサです(const版).
 //-----------------------------------------------------------------------------
-inline const float& Matrix::operator () (uint32_t row, uint32_t col) const
+inline const float& Matrix4x4::operator () (uint32_t row, uint32_t col) const
 { return m[row][col]; }
 
 //-----------------------------------------------------------------------------
 //      float* 型へのキャストです.
 //-----------------------------------------------------------------------------
-inline Matrix::operator float* ()
+inline Matrix4x4::operator float* ()
 { return &_11; }
 
 //-----------------------------------------------------------------------------
 //      const float* 型へのキャストです.
 //-----------------------------------------------------------------------------
-inline Matrix::operator const float* () const 
+inline Matrix4x4::operator const float* () const 
 { return &_11; }
 
 //-----------------------------------------------------------------------------
 //      乗算代入演算子です.
 //-----------------------------------------------------------------------------
-inline Matrix& Matrix::operator *= (const Matrix &value)
+inline Matrix4x4& Matrix4x4::operator *= (const Matrix4x4 &value)
 {
     auto m11 = (_11 * value._11) + (_12 * value._21) + (_13 * value._31) + (_14 * value._41);
     auto m12 = (_11 * value._12) + (_12 * value._22) + (_13 * value._32) + (_14 * value._42);
@@ -2152,7 +2173,7 @@ inline Matrix& Matrix::operator *= (const Matrix &value)
 //-----------------------------------------------------------------------------
 //      加算代入演算子です.
 //-----------------------------------------------------------------------------
-inline Matrix& Matrix::operator += (const Matrix& mat)
+inline Matrix4x4& Matrix4x4::operator += (const Matrix4x4& mat)
 {
     _11 += mat._11; _12 += mat._12; _13 += mat._13; _14 += mat._14;
     _21 += mat._21; _22 += mat._22; _23 += mat._23; _24 += mat._24;
@@ -2164,7 +2185,7 @@ inline Matrix& Matrix::operator += (const Matrix& mat)
 //-----------------------------------------------------------------------------
 //      減算代入演算子です.
 //-----------------------------------------------------------------------------
-inline Matrix& Matrix::operator -= (const Matrix& mat)
+inline Matrix4x4& Matrix4x4::operator -= (const Matrix4x4& mat)
 {
     _11 -= mat._11; _12 -= mat._12; _13 -= mat._13; _14 -= mat._14;
     _21 -= mat._21; _22 -= mat._22; _23 -= mat._23; _24 -= mat._24;
@@ -2176,7 +2197,7 @@ inline Matrix& Matrix::operator -= (const Matrix& mat)
 //-----------------------------------------------------------------------------
 //      乗算代入演算子です.
 //-----------------------------------------------------------------------------
-inline Matrix& Matrix::operator *= (float f)
+inline Matrix4x4& Matrix4x4::operator *= (float f)
 {
     _11 *= f; _12 *= f; _13 *= f; _14 *= f;
     _21 *= f; _22 *= f; _23 *= f; _24 *= f;
@@ -2188,7 +2209,7 @@ inline Matrix& Matrix::operator *= (float f)
 //-----------------------------------------------------------------------------
 //      除算代入演算子です.
 //-----------------------------------------------------------------------------
-inline Matrix& Matrix::operator /= (float f)
+inline Matrix4x4& Matrix4x4::operator /= (float f)
 {
     assert(!IsZero(f));
     _11 /= f; _12 /= f; _13 /= f; _14 /= f;
@@ -2201,24 +2222,24 @@ inline Matrix& Matrix::operator /= (float f)
 //-----------------------------------------------------------------------------
 //      代入演算子です.
 //-----------------------------------------------------------------------------
-inline Matrix& Matrix::operator = (const Matrix& value)
+inline Matrix4x4& Matrix4x4::operator = (const Matrix4x4& value)
 {
-    memcpy(&_11, &value._11, sizeof(Matrix));
+    memcpy(&_11, &value._11, sizeof(Matrix4x4));
     return (*this);
 }
 
 //-----------------------------------------------------------------------------
 //      正符号演算子です.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::operator + () const
+inline Matrix4x4 Matrix4x4::operator + () const
 { return (*this); }
 
 //-----------------------------------------------------------------------------
 //      負符号演算子です.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::operator - () const
+inline Matrix4x4 Matrix4x4::operator - () const
 {
-    return Matrix(
+    return Matrix4x4(
         -_11, -_12, -_13, -_14,
         -_21, -_22, -_23, -_24,
         -_31, -_32, -_33, -_34,
@@ -2228,9 +2249,9 @@ inline Matrix Matrix::operator - () const
 //-----------------------------------------------------------------------------
 //      乗算演算子です.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::operator * (const Matrix& value) const
+inline Matrix4x4 Matrix4x4::operator * (const Matrix4x4& value) const
 {
-    return Matrix(
+    return Matrix4x4(
         (_11 * value._11) + (_12 * value._21) + (_13 * value._31) + (_14 * value._41),
         (_11 * value._12) + (_12 * value._22) + (_13 * value._32) + (_14 * value._42),
         (_11 * value._13) + (_12 * value._23) + (_13 * value._33) + (_14 * value._43),
@@ -2255,9 +2276,9 @@ inline Matrix Matrix::operator * (const Matrix& value) const
 //-----------------------------------------------------------------------------
 //      加算演算子です.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::operator + (const Matrix& mat) const
+inline Matrix4x4 Matrix4x4::operator + (const Matrix4x4& mat) const
 {
-    return Matrix(
+    return Matrix4x4(
         _11 + mat._11, _12 + mat._12, _13 + mat._13, _14 + mat._14,
         _21 + mat._21, _22 + mat._22, _23 + mat._23, _24 + mat._24,
         _31 + mat._31, _32 + mat._32, _33 + mat._33, _34 + mat._34,
@@ -2267,9 +2288,9 @@ inline Matrix Matrix::operator + (const Matrix& mat) const
 //-----------------------------------------------------------------------------
 //      減算演算子です.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::operator - (const Matrix& mat) const
+inline Matrix4x4 Matrix4x4::operator - (const Matrix4x4& mat) const
 {
-    return Matrix(
+    return Matrix4x4(
         _11 - mat._11, _12 - mat._12, _13 - mat._13, _14 - mat._14,
         _21 - mat._21, _22 - mat._22, _23 - mat._23, _24 - mat._24,
         _31 - mat._31, _32 - mat._32, _33 - mat._33, _34 - mat._34,
@@ -2279,9 +2300,9 @@ inline Matrix Matrix::operator - (const Matrix& mat) const
 //-----------------------------------------------------------------------------
 //      乗算演算子です.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::operator * (float f) const
+inline Matrix4x4 Matrix4x4::operator * (float f) const
 {
-    return Matrix(
+    return Matrix4x4(
         _11 * f, _12 * f, _13 * f, _14 * f,
         _21 * f, _22 * f, _23 * f, _24 * f,
         _31 * f, _32 * f, _33 * f, _34 * f,
@@ -2291,10 +2312,10 @@ inline Matrix Matrix::operator * (float f) const
 //-----------------------------------------------------------------------------
 //      除算演算子です.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::operator / (float f) const
+inline Matrix4x4 Matrix4x4::operator / (float f) const
 {
     assert(!IsZero(f));
-    return Matrix(
+    return Matrix4x4(
         _11 / f, _12 / f, _13 / f, _14 / f,
         _21 / f, _22 / f, _23 / f, _24 / f,
         _31 / f, _32 / f, _33 / f, _34 / f,
@@ -2304,9 +2325,9 @@ inline Matrix Matrix::operator / (float f) const
 //-----------------------------------------------------------------------------
 //      乗算演算子です.
 //-----------------------------------------------------------------------------
-inline Matrix operator * (float f, const Matrix& mat)
+inline Matrix4x4 operator * (float f, const Matrix4x4& mat)
 {
-    return Matrix(
+    return Matrix4x4(
         f * mat._11, f * mat._12, f * mat._13, f * mat._14,
         f * mat._21, f * mat._22, f * mat._23, f * mat._24,
         f * mat._31, f * mat._32, f * mat._33, f * mat._34,
@@ -2316,19 +2337,19 @@ inline Matrix operator * (float f, const Matrix& mat)
 //-----------------------------------------------------------------------------
 //      等価比較演算子です.
 //-----------------------------------------------------------------------------
-inline bool Matrix::operator == (const Matrix& mat) const
-{ return (0 == memcmp(this, &mat, sizeof(Matrix))); }
+inline bool Matrix4x4::operator == (const Matrix4x4& mat) const
+{ return (0 == memcmp(this, &mat, sizeof(Matrix4x4))); }
 
 //-----------------------------------------------------------------------------
 //      非等価比較演算子です.
 //-----------------------------------------------------------------------------
-inline bool Matrix::operator != (const Matrix& mat) const
-{ return (0 != memcmp(this, &mat, sizeof(Matrix))); }
+inline bool Matrix4x4::operator != (const Matrix4x4& mat) const
+{ return (0 != memcmp(this, &mat, sizeof(Matrix4x4))); }
 
 //-----------------------------------------------------------------------------
 //      行列式を求めます.
 //-----------------------------------------------------------------------------
-inline float Matrix::Determinant() const
+inline float Matrix4x4::Determinant() const
 {
     return
         _11 * _22 * _33 * _44 + _11 * _23 * _34 * _42 +
@@ -2348,7 +2369,7 @@ inline float Matrix::Determinant() const
 //-----------------------------------------------------------------------------
 //      単位行列化します.
 //-----------------------------------------------------------------------------
-inline Matrix& Matrix::Identity()
+inline Matrix4x4& Matrix4x4::Identity()
 {
     _11 = _22 = _33 = _44 = 1.0f;
     _12 = _13 = _14 =
@@ -2361,25 +2382,25 @@ inline Matrix& Matrix::Identity()
 //----------------------------------------------------------------------------
 //      基底Xベクトルを取得します.
 //----------------------------------------------------------------------------
-inline Vector3 Matrix::GetBasisX() const
+inline Vector3 Matrix4x4::GetBasisX() const
 { return Vector3(_11, _21, _31); }
 
 //----------------------------------------------------------------------------
 //      基底Yベクトルを取得します.
 //----------------------------------------------------------------------------
-inline Vector3 Matrix::GetBasisY() const
+inline Vector3 Matrix4x4::GetBasisY() const
 { return Vector3(_12, _22, _32); }
 
 //----------------------------------------------------------------------------
 //      基底Zベクトルを取得します.
 //----------------------------------------------------------------------------
-inline Vector3 Matrix::GetBasisZ() const
+inline Vector3 Matrix4x4::GetBasisZ() const
 { return Vector3(_13, _23, _33); }
 
 //-----------------------------------------------------------------------------
 //      スケール成分を求めます.
 //-----------------------------------------------------------------------------
-inline Vector3 Matrix::CalcScale() const
+inline Vector3 Matrix4x4::CalcScale() const
 {
     auto x = GetBasisX().Length();
     auto y = GetBasisY().Length();
@@ -2390,20 +2411,20 @@ inline Vector3 Matrix::CalcScale() const
 //-----------------------------------------------------------------------------
 //      平行移動成分を取得します.
 //-----------------------------------------------------------------------------
-inline Vector3 Matrix::GetPosition() const
+inline Vector3 Matrix4x4::GetPosition() const
 { return Vector3(_41, _42, _43); }
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// Matrix Methods (row-major)
+// Matrix4x4 Methods (row-major)
 ///////////////////////////////////////////////////////////////////////////////
 
 //-----------------------------------------------------------------------------
 //      単位行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreateIdentity()
+inline Matrix4x4 Matrix4x4::CreateIdentity()
 {
-    return Matrix(
+    return Matrix4x4(
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f,
@@ -2413,7 +2434,7 @@ inline Matrix Matrix::CreateIdentity()
 //-----------------------------------------------------------------------------
 //      単位行列かどうかチェックします.
 //-----------------------------------------------------------------------------
-inline bool Matrix::IsIdentity(const Matrix &value)
+inline bool Matrix4x4::IsIdentity(const Matrix4x4 &value)
 {
     return (
            IsEqual(value.m[0][0], 1.0f)
@@ -2440,9 +2461,9 @@ inline bool Matrix::IsIdentity(const Matrix &value)
 //-----------------------------------------------------------------------------
 //      行列を転置します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::Transpose(const Matrix& value)
+inline Matrix4x4 Matrix4x4::Transpose(const Matrix4x4& value)
 {
-    return Matrix(
+    return Matrix4x4(
         value._11, value._21, value._31, value._41,
         value._12, value._22, value._32, value._42,
         value._13, value._23, value._33, value._43,
@@ -2452,9 +2473,9 @@ inline Matrix Matrix::Transpose(const Matrix& value)
 //-----------------------------------------------------------------------------
 //      行列同士を乗算します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::Multiply(const Matrix& lhs, const Matrix& rhs)
+inline Matrix4x4 Matrix4x4::Multiply(const Matrix4x4& lhs, const Matrix4x4& rhs)
 {
-    return Matrix(
+    return Matrix4x4(
         (lhs._11 * rhs._11) + (lhs._12 * rhs._21) + (lhs._13 * rhs._31) + (lhs._14 * rhs._41),
         (lhs._11 * rhs._12) + (lhs._12 * rhs._22) + (lhs._13 * rhs._32) + (lhs._14 * rhs._42),
         (lhs._11 * rhs._13) + (lhs._12 * rhs._23) + (lhs._13 * rhs._33) + (lhs._14 * rhs._43),
@@ -2480,9 +2501,9 @@ inline Matrix Matrix::Multiply(const Matrix& lhs, const Matrix& rhs)
 //-----------------------------------------------------------------------------
 //      スカラー乗算します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::Multiply(const Matrix& value, float scaleFactor)
+inline Matrix4x4 Matrix4x4::Multiply(const Matrix4x4& value, float scaleFactor)
 {
-    return Matrix(
+    return Matrix4x4(
         value._11 * scaleFactor, value._12 * scaleFactor, value._13 * scaleFactor, value._14 * scaleFactor,
         value._21 * scaleFactor, value._22 * scaleFactor, value._23 * scaleFactor, value._24 * scaleFactor,
         value._31 * scaleFactor, value._32 * scaleFactor, value._33 * scaleFactor, value._34 * scaleFactor,
@@ -2492,9 +2513,9 @@ inline Matrix Matrix::Multiply(const Matrix& value, float scaleFactor)
 //-----------------------------------------------------------------------------
 //      行列同士を乗算し，乗算結果を転置します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::MultiplyTranspose(const Matrix& lhs, const Matrix& rhs)
+inline Matrix4x4 Matrix4x4::MultiplyTranspose(const Matrix4x4& lhs, const Matrix4x4& rhs)
 {
-    return Matrix(
+    return Matrix4x4(
         (lhs._11 * rhs._11) + (lhs._12 * rhs._21) + (lhs._13 * rhs._31) + (lhs._14 * rhs._41),
         (lhs._21 * rhs._11) + (lhs._22 * rhs._21) + (lhs._23 * rhs._31) + (lhs._24 * rhs._41),
         (lhs._31 * rhs._11) + (lhs._32 * rhs._21) + (lhs._33 * rhs._31) + (lhs._34 * rhs._41),
@@ -2519,7 +2540,7 @@ inline Matrix Matrix::MultiplyTranspose(const Matrix& lhs, const Matrix& rhs)
 //-----------------------------------------------------------------------------
 //      逆行列を求めます.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::Invert(const Matrix& value)
+inline Matrix4x4 Matrix4x4::Invert(const Matrix4x4& value)
 {
     auto det = value.Determinant();
     assert(!IsZero(det));
@@ -2544,7 +2565,7 @@ inline Matrix Matrix::Invert(const Matrix& value)
     auto m43 = value._11*value._23*value._42 + value._12*value._21*value._43 + value._13*value._22*value._41 - value._11*value._22*value._43 - value._12*value._23*value._41 - value._13*value._21*value._42;
     auto m44 = value._11*value._22*value._33 + value._12*value._23*value._31 + value._13*value._21*value._32 - value._11*value._23*value._32 - value._12*value._21*value._33 - value._13*value._22*value._31;
 
-    return Matrix(
+    return Matrix4x4(
         m11 / det, m12 / det, m13 / det, m14 / det,
         m21 / det, m22 / det, m23 / det, m24 / det,
         m31 / det, m32 / det, m33 / det, m34 / det,
@@ -2554,9 +2575,9 @@ inline Matrix Matrix::Invert(const Matrix& value)
 //-----------------------------------------------------------------------------
 //      拡大・縮小行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreateScale(float scale)
+inline Matrix4x4 Matrix4x4::CreateScale(float scale)
 {
-    return Matrix(
+    return Matrix4x4(
        scale,   0.0f,   0.0f,   0.0f,
         0.0f,  scale,   0.0f,   0.0f,
         0.0f,   0.0f,  scale,   0.0f,
@@ -2566,9 +2587,9 @@ inline Matrix Matrix::CreateScale(float scale)
 //-----------------------------------------------------------------------------
 //      拡大・縮小行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreateScale(float xScale, float yScale, float zScale)
+inline Matrix4x4 Matrix4x4::CreateScale(float xScale, float yScale, float zScale)
 {
-    return Matrix(
+    return Matrix4x4(
         xScale, 0.0f,   0.0f,   0.0f,
         0.0f,   yScale, 0.0f,   0.0f,
         0.0f,   0.0f,   zScale, 0.0f,
@@ -2578,9 +2599,9 @@ inline Matrix Matrix::CreateScale(float xScale, float yScale, float zScale)
 //-----------------------------------------------------------------------------
 //      拡大・縮小行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreateScale(const Vector3& scales)
+inline Matrix4x4 Matrix4x4::CreateScale(const Vector3& scales)
 {
-    return Matrix(
+    return Matrix4x4(
         scales.x,   0.0f,       0.0f,       0.0f,
         0.0f,       scales.y,   0.0f,       0.0f,
         0.0f,       0.0f,       scales.z,   0.0f,
@@ -2590,9 +2611,9 @@ inline Matrix Matrix::CreateScale(const Vector3& scales)
 //-----------------------------------------------------------------------------
 //      平行移動行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreateTranslation(float xPos, float yPos, float zPos)
+inline Matrix4x4 Matrix4x4::CreateTranslation(float xPos, float yPos, float zPos)
 {
-    return Matrix(
+    return Matrix4x4(
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f,
@@ -2602,9 +2623,9 @@ inline Matrix Matrix::CreateTranslation(float xPos, float yPos, float zPos)
 //-----------------------------------------------------------------------------
 //      平行移動行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreateTranslation(const Vector3& pos)
+inline Matrix4x4 Matrix4x4::CreateTranslation(const Vector3& pos)
 {
-    return Matrix(
+    return Matrix4x4(
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f,
@@ -2614,11 +2635,11 @@ inline Matrix Matrix::CreateTranslation(const Vector3& pos)
 //-----------------------------------------------------------------------------
 //      X軸周りの回転行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreateRotationX(float radian)
+inline Matrix4x4 Matrix4x4::CreateRotationX(float radian)
 {
     auto cosRad = cosf(radian);
     auto sinRad = sinf(radian);
-    return Matrix(
+    return Matrix4x4(
         1.0f,   0.0f,   0.0f,   0.0f,
         0.0f,   cosRad, sinRad, 0.0f,
         0.0f,  -sinRad, cosRad, 0.0f,
@@ -2628,12 +2649,12 @@ inline Matrix Matrix::CreateRotationX(float radian)
 //-----------------------------------------------------------------------------
 //      Y軸周りの回転行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreateRotationY(float radian)
+inline Matrix4x4 Matrix4x4::CreateRotationY(float radian)
 {
     auto cosRad = cosf(radian);
     auto sinRad = sinf(radian);
 
-    return Matrix(
+    return Matrix4x4(
         cosRad, 0.0f,  -sinRad, 0.0f,
         0.0f,   1.0f,   0.0f,   0.0f,
         sinRad, 0.0f,   cosRad, 0.0f,
@@ -2643,12 +2664,12 @@ inline Matrix Matrix::CreateRotationY(float radian)
 //-----------------------------------------------------------------------------
 //      Z軸周りの回転行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreateRotationZ(float radian)
+inline Matrix4x4 Matrix4x4::CreateRotationZ(float radian)
 {
     auto cosRad = cosf(radian);
     auto sinRad = sinf(radian);
 
-    return Matrix(
+    return Matrix4x4(
         cosRad, sinRad, 0.0f, 0.0f,
        -sinRad, cosRad, 0.0f, 0.0f,
         0.0f,   0.0f,   1.0f, 0.0f,
@@ -2658,7 +2679,7 @@ inline Matrix Matrix::CreateRotationZ(float radian)
 //-----------------------------------------------------------------------------
 //      四元数から回転行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreateFromQuaternion(const Quaternion& qua)
+inline Matrix4x4 Matrix4x4::CreateFromQuaternion(const Quaternion& qua)
 {
     auto xx = qua.x * qua.x;
     auto yy = qua.y * qua.y;
@@ -2672,7 +2693,7 @@ inline Matrix Matrix::CreateFromQuaternion(const Quaternion& qua)
     auto yz = qua.y * qua.z;
     auto xw = qua.x * qua.w;
 
-    return Matrix(
+    return Matrix4x4(
         1.0f - 2.0f * (yy + zz),
         2.0f * (xy + zw),
         2.0f * (xz - yw),
@@ -2697,7 +2718,7 @@ inline Matrix Matrix::CreateFromQuaternion(const Quaternion& qua)
 //-----------------------------------------------------------------------------
 //      指定された軸と角度から回転行列を求めます.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreateFromAxisAngle(const Vector3& axis, float radian)
+inline Matrix4x4 Matrix4x4::CreateFromAxisAngle(const Vector3& axis, float radian)
 {
     auto sinRad = sinf(radian);
     auto cosRad = cosf(radian);
@@ -2710,7 +2731,7 @@ inline Matrix Matrix::CreateFromAxisAngle(const Vector3& axis, float radian)
     auto ty = axis.y * axis.y;
     auto tz = axis.z * axis.z;
 
-    return Matrix(
+    return Matrix4x4(
         tx + cosRad * (1.0f - tx),
         ab + axis.z * sinRad,
         ca - axis.y * sinRad,
@@ -2735,7 +2756,7 @@ inline Matrix Matrix::CreateFromAxisAngle(const Vector3& axis, float radian)
 //-----------------------------------------------------------------------------
 //      ヨー・ピッチ・ロール角から回転行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreateRotationFromYawPitchRoll(float yaw, float pitch, float roll)
+inline Matrix4x4 Matrix4x4::CreateRotationFromYawPitchRoll(float yaw, float pitch, float roll)
 {
     auto cp = cosf(pitch);
     auto sp = sinf(pitch);
@@ -2746,7 +2767,7 @@ inline Matrix Matrix::CreateRotationFromYawPitchRoll(float yaw, float pitch, flo
     auto cr = cosf(roll);
     auto sr = sinf(roll);
 
-    return Matrix(
+    return Matrix4x4(
         cr * cy + sr * sp * sy,
         sr * cp,
         sr * sp * cy - cr * sy,
@@ -2772,7 +2793,7 @@ inline Matrix Matrix::CreateRotationFromYawPitchRoll(float yaw, float pitch, flo
 //-----------------------------------------------------------------------------
 //      注視点を基にビュー行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreateLookAt
+inline Matrix4x4 Matrix4x4::CreateLookAt
 (
     const Vector3& cameraPosition,
     const Vector3& cameraTarget,
@@ -2788,7 +2809,7 @@ inline Matrix Matrix::CreateLookAt
     auto yaxis = Vector3::Cross(zaxis, xaxis);
     yaxis.Normalize();
 
-    return Matrix(
+    return Matrix4x4(
         xaxis.x, yaxis.x, zaxis.x, 0.0f,
         xaxis.y, yaxis.y, zaxis.y, 0.0f,
         xaxis.z, yaxis.z, zaxis.z, 0.0f,
@@ -2801,7 +2822,7 @@ inline Matrix Matrix::CreateLookAt
 //-----------------------------------------------------------------------------
 //      視線ベクトルを基にビュー行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreateLookTo
+inline Matrix4x4 Matrix4x4::CreateLookTo
 (
     const Vector3& cameraPosition,
     const Vector3& cameraDir,
@@ -2817,7 +2838,7 @@ inline Matrix Matrix::CreateLookTo
     auto yaxis = Vector3::Cross(zaxis, xaxis);
     yaxis.Normalize();
 
-    return Matrix(
+    return Matrix4x4(
         xaxis.x, yaxis.x, zaxis.x, 0.0f,
         xaxis.y, yaxis.y, zaxis.y, 0.0f,
         xaxis.z, yaxis.z, zaxis.z, 0.0f,
@@ -2830,7 +2851,7 @@ inline Matrix Matrix::CreateLookTo
 //-----------------------------------------------------------------------------
 //      透視投影行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreatePerspective
+inline Matrix4x4 Matrix4x4::CreatePerspective
 (
     float width,
     float height,
@@ -2843,7 +2864,7 @@ inline Matrix Matrix::CreatePerspective
     assert(!IsZero(nearClip - farClip));
     auto range = farClip / (nearClip - farClip);
 
-    return Matrix(
+    return Matrix4x4(
         2.0f * nearClip / width, 
         0.0f, 
         0.0f,
@@ -2868,7 +2889,7 @@ inline Matrix Matrix::CreatePerspective
 //-----------------------------------------------------------------------------
 //      視野角に基づいて透視投影行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreatePerspectiveFieldOfView
+inline Matrix4x4 Matrix4x4::CreatePerspectiveFieldOfView
 (
     float fieldOfView,
     float aspectRatio,
@@ -2884,7 +2905,7 @@ inline Matrix Matrix::CreatePerspectiveFieldOfView
     auto width  = height / aspectRatio;
     auto range  = farClip / (nearClip - farClip);
 
-    return Matrix(
+    return Matrix4x4(
         width,
         0.0f,
         0.0f,
@@ -2909,7 +2930,7 @@ inline Matrix Matrix::CreatePerspectiveFieldOfView
 //-----------------------------------------------------------------------------
 //      視野角に基づいてReverse-Z透視投影行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreatePerspectiveFieldOfViewReverseZ
+inline Matrix4x4 Matrix4x4::CreatePerspectiveFieldOfViewReverseZ
 (
     float fieldOfView,
     float aspectRatio,
@@ -2922,7 +2943,7 @@ inline Matrix Matrix::CreatePerspectiveFieldOfViewReverseZ
     auto height = cosFov / sinFov;
     auto width  = height / aspectRatio;
 
-    return Matrix(
+    return Matrix4x4(
         width,
         0.0f,
         0.0f,
@@ -2947,7 +2968,7 @@ inline Matrix Matrix::CreatePerspectiveFieldOfViewReverseZ
 //-----------------------------------------------------------------------------
 //      カスタマイズした透視投影行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreatePerspectiveOffCenter
+inline Matrix4x4 Matrix4x4::CreatePerspectiveOffCenter
 (
     float left,
     float right,
@@ -2964,7 +2985,7 @@ inline Matrix Matrix::CreatePerspectiveOffCenter
     assert(!IsZero(height));
     assert(!IsZero(depth));
 
-    return Matrix(
+    return Matrix4x4(
         2.0f * nearClip / width,
         0.0f,
         0.0f,
@@ -2989,7 +3010,7 @@ inline Matrix Matrix::CreatePerspectiveOffCenter
 //-----------------------------------------------------------------------------
 //      正射影行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreateOrthographic
+inline Matrix4x4 Matrix4x4::CreateOrthographic
 (
     float width,
     float height,
@@ -3002,7 +3023,7 @@ inline Matrix Matrix::CreateOrthographic
     assert(!IsZero(nearClip - farClip));
     auto range = 1.0f / (nearClip - farClip);
 
-    return Matrix(
+    return Matrix4x4(
         2.0f / width,
         0.0f,
         0.0f,
@@ -3027,7 +3048,7 @@ inline Matrix Matrix::CreateOrthographic
 //-----------------------------------------------------------------------------
 //      カスタマイズした正射影行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreateOrthographicOffCenter
+inline Matrix4x4 Matrix4x4::CreateOrthographicOffCenter
 (
     float left,
     float right,
@@ -3044,7 +3065,7 @@ inline Matrix Matrix::CreateOrthographicOffCenter
     assert(!IsZero(height));
     assert(!IsZero(depth));
 
-    return Matrix(
+    return Matrix4x4(
         2.0f / width,
         0.0f,
         0.0f,
@@ -3070,7 +3091,7 @@ inline Matrix Matrix::CreateOrthographicOffCenter
 //-----------------------------------------------------------------------------
 //      カスタマイズした正射影行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreateOrthographicOffCenterReverseZ
+inline Matrix4x4 Matrix4x4::CreateOrthographicOffCenterReverseZ
 (
     float left,
     float right,
@@ -3087,7 +3108,7 @@ inline Matrix Matrix::CreateOrthographicOffCenterReverseZ
     assert(!IsZero(height));
     assert(!IsZero(depth));
 
-    return Matrix(
+    return Matrix4x4(
         2.0f / width,
         0.0f,
         0.0f,
@@ -3112,9 +3133,9 @@ inline Matrix Matrix::CreateOrthographicOffCenterReverseZ
 //-----------------------------------------------------------------------------
 //      2つの行列を線形補間します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::Lerp(const Matrix& a, const Matrix& b, float amount)
+inline Matrix4x4 Matrix4x4::Lerp(const Matrix4x4& a, const Matrix4x4& b, float amount)
 {
-    return Matrix(
+    return Matrix4x4(
         a._11 + amount * (b._11 - a._11),
         a._12 + amount * (b._12 - a._12),
         a._13 + amount * (b._13 - a._13),
@@ -3139,9 +3160,9 @@ inline Matrix Matrix::Lerp(const Matrix& a, const Matrix& b, float amount)
 //-----------------------------------------------------------------------------
 //      ビルボード行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreateBillboard(const Matrix& value)
+inline Matrix4x4 Matrix4x4::CreateBillboard(const Matrix4x4& value)
 {
-    return Matrix(
+    return Matrix4x4(
         value._11, value._21, value._31, 0.0f,
         value._12, value._22, value._32, 0.0f,
         value._13, value._23, value._33, 0.0f,
@@ -3151,9 +3172,9 @@ inline Matrix Matrix::CreateBillboard(const Matrix& value)
 //-----------------------------------------------------------------------------
 //      Y軸ビルボード行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreateBillboardAxisY(const Matrix& value)
+inline Matrix4x4 Matrix4x4::CreateBillboardAxisY(const Matrix4x4& value)
 {
-    return Matrix(
+    return Matrix4x4(
         value._11,  0.0f,   value._31,  0.0f,
              0.0f,  1.0f,        0.0f,  0.0f,
         value._13,  0.0f,   value._33,  0.0f,
@@ -3163,7 +3184,7 @@ inline Matrix Matrix::CreateBillboardAxisY(const Matrix& value)
 //-----------------------------------------------------------------------------
 //      平行移動行列を左から掛けます.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::AppendTranslation(const Vector3& vec, Matrix& mat)
+inline Matrix4x4 Matrix4x4::AppendTranslation(const Vector3& vec, Matrix4x4& mat)
 {
     auto m41 = (vec.x * mat._11) + (vec.y * mat._21) + (vec.z * mat._31) + mat._41;
     auto m42 = (vec.x * mat._12) + (vec.y * mat._22) + (vec.z * mat._32) + mat._42;
@@ -3179,7 +3200,7 @@ inline Matrix Matrix::AppendTranslation(const Vector3& vec, Matrix& mat)
 //-----------------------------------------------------------------------------
 //      平行移動行列を右から掛けます.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::AppendTranslation(Matrix& mat, const Vector3& vec)
+inline Matrix4x4 Matrix4x4::AppendTranslation(Matrix4x4& mat, const Vector3& vec)
 {
     mat._41 += vec.x;
     mat._42 += vec.y;
@@ -3190,7 +3211,7 @@ inline Matrix Matrix::AppendTranslation(Matrix& mat, const Vector3& vec)
 //-----------------------------------------------------------------------------
 //      スケール行列を左から掛けます.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::AppendScale(const Vector3& vec, Matrix& mat)
+inline Matrix4x4 Matrix4x4::AppendScale(const Vector3& vec, Matrix4x4& mat)
 {
     mat._11 *= vec.x;
     mat._12 *= vec.x;
@@ -3213,7 +3234,7 @@ inline Matrix Matrix::AppendScale(const Vector3& vec, Matrix& mat)
 //-----------------------------------------------------------------------------
 //      スケール行列を右から掛けます.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::AppendScale(Matrix& mat, const Vector3& vec)
+inline Matrix4x4 Matrix4x4::AppendScale(Matrix4x4& mat, const Vector3& vec)
 {
     mat._11 *= vec.x;
     mat._12 *= vec.y;
@@ -3237,16 +3258,16 @@ inline Matrix Matrix::AppendScale(Matrix& mat, const Vector3& vec)
 //-----------------------------------------------------------------------------
 //      明度を調整するカラー行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreateBrightnessMatrix(float brightness)
-{ return Matrix::CreateScale(brightness); }
+inline Matrix4x4 Matrix4x4::CreateBrightnessMatrix(float brightness)
+{ return Matrix4x4::CreateScale(brightness); }
 
 //-----------------------------------------------------------------------------
 //      彩度を調整するカラー行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreateSaturationMatrix(float r, float g, float b)
+inline Matrix4x4 Matrix4x4::CreateSaturationMatrix(float r, float g, float b)
 {
     // https://docs.microsoft.com/ja-jp/windows/win32/direct2d/saturation
-    return Matrix(
+    return Matrix4x4(
         0.213f + 0.787f * r,
         0.213f - 0.213f * r,
         0.213f - 0.213f * r,
@@ -3268,15 +3289,15 @@ inline Matrix Matrix::CreateSaturationMatrix(float r, float g, float b)
 //-----------------------------------------------------------------------------
 //      彩度を調整するカラー行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreateSaturationMatrix(float saturation)
+inline Matrix4x4 Matrix4x4::CreateSaturationMatrix(float saturation)
 { return CreateSaturationMatrix(saturation, saturation, saturation); }
 
 //-----------------------------------------------------------------------------
 //      コントラストを調整するカラー行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreateContrastMatrix(float contrast)
+inline Matrix4x4 Matrix4x4::CreateContrastMatrix(float contrast)
 {
-    return Matrix(
+    return Matrix4x4(
         1.0f + contrast, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f + contrast, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f + contrast, 0.0f,
@@ -3286,14 +3307,14 @@ inline Matrix Matrix::CreateContrastMatrix(float contrast)
 //-----------------------------------------------------------------------------
 //      色相を調整するカラー行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreateHueMatrix(float hue)
+inline Matrix4x4 Matrix4x4::CreateHueMatrix(float hue)
 {
     // https://docs.microsoft.com/ja-jp/windows/win32/direct2d/hue-rotate
     auto rad = ToRadian(hue);
     auto u   = cosf(rad);
     auto w   = sinf(rad);
 
-    return Matrix(
+    return Matrix4x4(
         0.213f + 0.787f * u - 0.213f * w,
         0.213f - 0.213f * u + 0.143f * w,
         0.213f - 0.213f * u - 0.787f * w,
@@ -3318,12 +3339,12 @@ inline Matrix Matrix::CreateHueMatrix(float hue)
 //-----------------------------------------------------------------------------
 //      セピアカラーを調整するカラー行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreateSepiaMatrix(float tone)
+inline Matrix4x4 Matrix4x4::CreateSepiaMatrix(float tone)
 {
     const Vector3 kGrayScale(0.299f, 0.587f, 0.114f);   // BT.601ベース.
     const Vector3 kAttenuation(1.0f, 0.92f, 0.72f);     // 減衰率.
 
-    return Matrix(
+    return Matrix4x4(
         tone * kGrayScale.x * kAttenuation.x + (1.0f - tone),
         tone * kGrayScale.x * kAttenuation.y,
         tone * kGrayScale.x * kAttenuation.z,
@@ -3345,10 +3366,10 @@ inline Matrix Matrix::CreateSepiaMatrix(float tone)
 //-----------------------------------------------------------------------------
 //      グレースケールカラーを調整するカラー行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreateGrayScaleMatrix(float tone)
+inline Matrix4x4 Matrix4x4::CreateGrayScaleMatrix(float tone)
 {
     const Vector3 kGrayScale(0.2126f, 0.7152f, 0.0722f); // BT.709ベース.
-    return Matrix(
+    return Matrix4x4(
         tone * kGrayScale.x + (1.0f - tone),
         tone * kGrayScale.x,
         tone * kGrayScale.x,
@@ -3370,9 +3391,9 @@ inline Matrix Matrix::CreateGrayScaleMatrix(float tone)
 //-----------------------------------------------------------------------------
 //      白黒化するカラー行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreateBlackAndWhiteMatrix()
+inline Matrix4x4 Matrix4x4::CreateBlackAndWhiteMatrix()
 {
-    return Matrix(
+    return Matrix4x4(
          1.5f,  1.5f,  1.5f, 0.0f,
          1.5f,  1.5f,  1.5f, 0.0f,
          1.5f,  1.5f,  1.5f, 0.0f,
@@ -3382,9 +3403,9 @@ inline Matrix Matrix::CreateBlackAndWhiteMatrix()
 //-----------------------------------------------------------------------------
 //      ネガポジ反転のカラー行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreateReverseColorMatrix()
+inline Matrix4x4 Matrix4x4::CreateReverseColorMatrix()
 {
-    return Matrix(
+    return Matrix4x4(
         -1.0f,  0.0f,  0.0f, 0.0f,
          0.0f, -1.0f,  0.0f, 0.0f,
          0.0f,  0.0f, -1.0f, 0.0f,
@@ -3394,22 +3415,22 @@ inline Matrix Matrix::CreateReverseColorMatrix()
 //-----------------------------------------------------------------------------
 //      BT.709を元にホワイトバランス調整行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreateWhiteBalanceMatrix(float value, float base)
+inline Matrix4x4 Matrix4x4::CreateWhiteBalanceMatrix(float value, float base)
 {
     auto cctBase = CCT_To_BT709(base);
     auto cctWB   = CCT_To_BT709(value);
     cctBase.x /= cctWB.x;
     cctBase.y /= cctWB.y;
     cctBase.z /= cctWB.z;
-    return Matrix::CreateScale(cctBase);
+    return Matrix4x4::CreateScale(cctBase);
 }
 
 //-----------------------------------------------------------------------------
 //      ITU-R BT.601 への変換行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreateXYZToBT601()
+inline Matrix4x4 Matrix4x4::CreateXYZToBT601()
 {
-    return Matrix(
+    return Matrix4x4(
          3.506002f, -1.739790f, -0.544058f, 0.0f,
         -1.069048f,  1.977779f,  0.035171f, 0.0f,
          0.056307f, -0.196976f,  1.049953f, 0.0f,
@@ -3419,9 +3440,9 @@ inline Matrix Matrix::CreateXYZToBT601()
 //-----------------------------------------------------------------------------
 //      ITU-R BT.709 への変換行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreateXYZToBT709()
+inline Matrix4x4 Matrix4x4::CreateXYZToBT709()
 {
-    return Matrix(
+    return Matrix4x4(
         3.240970f, -1.537383f, -0.498611f, 0.0f,
        -0.969244f,  1.875968f,  0.041555f, 0.0f,
         0.055630f, -0.203977f,  1.056972f, 0.0f,
@@ -3431,9 +3452,9 @@ inline Matrix Matrix::CreateXYZToBT709()
 //-----------------------------------------------------------------------------
 //      ITU-R BT.2020 への変換行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreateXYZToBT2020()
+inline Matrix4x4 Matrix4x4::CreateXYZToBT2020()
 {
-    return Matrix(
+    return Matrix4x4(
         1.716651f, -0.355671f, -0.253366f, 0.0f,
        -0.666684f,  1.616481f,  0.015769f, 0.0f,
         0.017640f, -0.042771f,  0.942103f, 0.0f,
@@ -3443,9 +3464,9 @@ inline Matrix Matrix::CreateXYZToBT2020()
 //-----------------------------------------------------------------------------
 //      BT.601 から CIE XYZ 表色系の変換行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreateBT601ToXYZ()
+inline Matrix4x4 Matrix4x4::CreateBT601ToXYZ()
 {
-    return Matrix(
+    return Matrix4x4(
         0.393521f, 0.365258f, 0.191677f, 0.0f,
         0.212376f, 0.701060f, 0.086564f, 0.0f,
         0.018739f, 0.111934f, 0.958385f, 0.0f,
@@ -3455,9 +3476,9 @@ inline Matrix Matrix::CreateBT601ToXYZ()
 //-----------------------------------------------------------------------------
 //      BT.709 から CIE XYZ 表色系の変換行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreateBT709ToXYZ()
+inline Matrix4x4 Matrix4x4::CreateBT709ToXYZ()
 {
-    return Matrix(
+    return Matrix4x4(
         0.412391f, 0.357584f, 0.180481f, 0.0f,
         0.212639f, 0.715169f, 0.072192f, 0.0f,
         0.019331f, 0.119195f, 0.950532f, 0.0f,
@@ -3467,14 +3488,27 @@ inline Matrix Matrix::CreateBT709ToXYZ()
 //-----------------------------------------------------------------------------
 //      BT.2020 から CIE XYZ 表色系の変換行列を生成します.
 //-----------------------------------------------------------------------------
-inline Matrix Matrix::CreateBT2020ToXYZ()
+inline Matrix4x4 Matrix4x4::CreateBT2020ToXYZ()
 {
-    return Matrix(
+    return Matrix4x4(
         0.636958f, 0.144617f, 0.168881f, 0.0f,
         0.262700f, 0.677998f, 0.059302f, 0.0f,
         0.000000f, 0.028073f, 1.060985f, 0.0f,
         0.0f,      0.0f,      0.0f,      1.0f);
 }
+
+//-----------------------------------------------------------------------------
+//      4x3 行列から 4x4 行列に変換します.
+//-----------------------------------------------------------------------------
+inline Matrix4x4 Matrix4x4::FromMatrix4x3(const Matrix4x3& value)
+{
+    return Matrix4x4(
+        value._11, value._12, value._13, 0.0f,
+        value._21, value._22, value._23, 0.0f,
+        value._31, value._32, value._33, 0.0f,
+        value._41, value._42, value._43, 1.0f );
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Quaternion
@@ -3849,7 +3883,7 @@ inline Quaternion Quaternion::CreateFromAxisAngle(const Vector3& axis, float rad
 //-----------------------------------------------------------------------------
 //      回転行列から四元数を生成します.
 //-----------------------------------------------------------------------------
-inline Quaternion Quaternion::CreateFromRotationMatrix(const Matrix& value)
+inline Quaternion Quaternion::CreateFromRotationMatrix(const Matrix4x4& value)
 {
     auto tr = value._11 + value._22 + value._33;
     if (tr > 0.0f)
@@ -4002,13 +4036,13 @@ inline Quaternion Quaternion::Squad
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// Transform4x3 structure
+// Matrix4x3 structure
 ///////////////////////////////////////////////////////////////////////////////
 
 //-----------------------------------------------------------------------------
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
-inline Transform4x3::Transform4x3()
+inline Matrix4x3::Matrix4x3()
 : _11(1.0f), _21(0.0f), _31(0.0f), _41(0.0f)
 , _12(0.0f), _22(1.0f), _32(0.0f), _42(0.0f)
 , _13(0.0f), _23(0.0f), _33(1.0f), _43(0.0f)
@@ -4017,7 +4051,7 @@ inline Transform4x3::Transform4x3()
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-inline Transform4x3::Transform4x3
+inline Matrix4x3::Matrix4x3
 (
     float m11, float m12, float m13,
     float m21, float m22, float m23,
@@ -4032,19 +4066,19 @@ inline Transform4x3::Transform4x3
 //-----------------------------------------------------------------------------
 //      float* 型へのキャストです.
 //-----------------------------------------------------------------------------
-inline Transform4x3::operator float* ()
+inline Matrix4x3::operator float* ()
 { return &_11; }
 
 //-----------------------------------------------------------------------------
 //      const float* 型へのキャストです.
 //-----------------------------------------------------------------------------
-inline Transform4x3::operator const float* () const
+inline Matrix4x3::operator const float* () const
 { return &_11; }
 
 //-----------------------------------------------------------------------------
 //      代入演算子です.
 //-----------------------------------------------------------------------------
-inline Transform4x3& Transform4x3::operator = (const Transform4x3& value)
+inline Matrix4x3& Matrix4x3::operator = (const Matrix4x3& value)
 {
     _11 = value._11;
     _12 = value._12;
@@ -4068,7 +4102,7 @@ inline Transform4x3& Transform4x3::operator = (const Transform4x3& value)
 //-----------------------------------------------------------------------------
 //      乗算代入演算子です.
 //-----------------------------------------------------------------------------
-inline Transform4x3& Transform4x3::operator *= (const Transform4x3& value)
+inline Matrix4x3& Matrix4x3::operator *= (const Matrix4x3& value)
 {
     *this = Multiply(*this, value);
     return *this;
@@ -4077,21 +4111,21 @@ inline Transform4x3& Transform4x3::operator *= (const Transform4x3& value)
 //-----------------------------------------------------------------------------
 //      乗算演算子です.
 //-----------------------------------------------------------------------------
-inline Transform4x3 Transform4x3::operator * (const Transform4x3& value) const
+inline Matrix4x3 Matrix4x3::operator * (const Matrix4x3& value) const
 { return Multiply(*this, value); }
 
 //-----------------------------------------------------------------------------
 //      正符号演算子です.
 //-----------------------------------------------------------------------------
-inline Transform4x3 Transform4x3::operator + () const
+inline Matrix4x3 Matrix4x3::operator + () const
 { return *this; }
 
 //-----------------------------------------------------------------------------
 //      負符号演算子です.
 //-----------------------------------------------------------------------------
-inline Transform4x3 Transform4x3::operator - () const
+inline Matrix4x3 Matrix4x3::operator - () const
 {
-    return Transform4x3(
+    return Matrix4x3(
         -_11, -_12, -_13,
         -_21, -_22, -_23,
         -_31, -_32, -_33,
@@ -4101,7 +4135,7 @@ inline Transform4x3 Transform4x3::operator - () const
 //-----------------------------------------------------------------------------
 //      等価比較演算子です.
 //-----------------------------------------------------------------------------
-inline bool Transform4x3::operator == (const Transform4x3& value) const
+inline bool Matrix4x3::operator == (const Matrix4x3& value) const
 {
     return IsEqual(_11, value._11) && IsEqual(_21, value._21) && IsEqual(_31, value._31) && IsEqual(_41, value._41)
         && IsEqual(_12, value._12) && IsEqual(_22, value._22) && IsEqual(_32, value._32) && IsEqual(_42, value._42)
@@ -4111,7 +4145,7 @@ inline bool Transform4x3::operator == (const Transform4x3& value) const
 //-----------------------------------------------------------------------------
 //      非等価比較演算子です.
 //-----------------------------------------------------------------------------
-inline bool Transform4x3::operator != (const Transform4x3& value) const
+inline bool Matrix4x3::operator != (const Matrix4x3& value) const
 {
     return !IsEqual(_11, value._11) || !IsEqual(_21, value._21) || !IsEqual(_31, value._31) || !IsEqual(_41, value._41)
         || !IsEqual(_12, value._12) || !IsEqual(_22, value._22) || !IsEqual(_32, value._32) || !IsEqual(_42, value._42)
@@ -4121,25 +4155,25 @@ inline bool Transform4x3::operator != (const Transform4x3& value) const
 //-----------------------------------------------------------------------------
 //      基底Xベクトルを取得します.
 //-----------------------------------------------------------------------------
-inline Vector3 Transform4x3::GetBasisX() const
+inline Vector3 Matrix4x3::GetBasisX() const
 { return Vector3(_11, _21, _31); }
 
 //-----------------------------------------------------------------------------
 //      基底Yベクトルを取得します.
 //-----------------------------------------------------------------------------
-inline Vector3 Transform4x3::GetBasisY() const
+inline Vector3 Matrix4x3::GetBasisY() const
 { return Vector3(_12, _22, _32); }
 
 //-----------------------------------------------------------------------------
 //      基底Zベクトルを取得します.
 //-----------------------------------------------------------------------------
-inline Vector3 Transform4x3::GetBasisZ() const
+inline Vector3 Matrix4x3::GetBasisZ() const
 { return Vector3(_13, _23, _33); }
 
 //-----------------------------------------------------------------------------
 //      スケール成分を求めます.
 //-----------------------------------------------------------------------------
-inline Vector3 Transform4x3::CalcScale() const
+inline Vector3 Matrix4x3::CalcScale() const
 {
     auto x = GetBasisX().Length();
     auto y = GetBasisY().Length();
@@ -4150,15 +4184,15 @@ inline Vector3 Transform4x3::CalcScale() const
 //-----------------------------------------------------------------------------
 //      平行移動成分を取得します.
 //-----------------------------------------------------------------------------
-inline Vector3 Transform4x3::GetPosition() const
+inline Vector3 Matrix4x3::GetPosition() const
 { return Vector3(_41, _42, _43); }
 
 //-----------------------------------------------------------------------------
 //      Matrix から Transform3x4 へ変換します.
 //-----------------------------------------------------------------------------
-inline Transform4x3 Transform4x3::FromMatrix(const Matrix& value)
+inline Matrix4x3 Matrix4x3::FromMatrix4x4(const Matrix4x4& value)
 {
-    return Transform4x3(
+    return Matrix4x3(
         value.m[0][0], value.m[0][1], value.m[0][2],
         value.m[1][0], value.m[1][1], value.m[1][2],
         value.m[2][0], value.m[2][1], value.m[2][2],
@@ -4166,23 +4200,11 @@ inline Transform4x3 Transform4x3::FromMatrix(const Matrix& value)
 }
 
 //-----------------------------------------------------------------------------
-//      Transform3x4 から Matrix へ変換します.
-//-----------------------------------------------------------------------------
-inline Matrix Transform4x3::ToMatrix(const Transform4x3& value)
-{
-    return Matrix(
-        value._11, value._12, value._13, 0.0f,
-        value._21, value._22, value._23, 0.0f,
-        value._31, value._32, value._33, 0.0f,
-        value._41, value._42, value._43, 1.0f );
-}
-
-//-----------------------------------------------------------------------------
 //      単位行列を生成します.
 //-----------------------------------------------------------------------------
-inline Transform4x3 Transform4x3::CreateIdentity()
+inline Matrix4x3 Matrix4x3::CreateIdentity()
 {
-    return Transform4x3(
+    return Matrix4x3(
         1.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f,
         0.0f, 0.0f, 1.0f,
@@ -4192,9 +4214,9 @@ inline Transform4x3 Transform4x3::CreateIdentity()
 //-----------------------------------------------------------------------------
 //      行列同士を乗算します.
 //-----------------------------------------------------------------------------
-inline Transform4x3 Transform4x3::Multiply(const Transform4x3& lhs, const Transform4x3& rhs)
+inline Matrix4x3 Matrix4x3::Multiply(const Matrix4x3& lhs, const Matrix4x3& rhs)
 {
-    return Transform4x3(
+    return Matrix4x3(
         (lhs._11 * rhs._11) + (lhs._12 * rhs._21) + (lhs._13 * rhs._31),
         (lhs._11 * rhs._12) + (lhs._12 * rhs._22) + (lhs._13 * rhs._32),
         (lhs._11 * rhs._13) + (lhs._12 * rhs._23) + (lhs._13 * rhs._33),
@@ -4215,7 +4237,7 @@ inline Transform4x3 Transform4x3::Multiply(const Transform4x3& lhs, const Transf
 //-----------------------------------------------------------------------------
 //      逆行列を求めます.
 //-----------------------------------------------------------------------------
-inline Transform4x3 Transform4x3::Invert(const Transform4x3& value)
+inline Matrix4x3 Matrix4x3::Invert(const Matrix4x3& value)
 {
     // 3x3 の逆行列を求めて，平行移動成分を打ち消すように計算する.
     auto det = value._11 * value._22 * value._33
@@ -4234,7 +4256,7 @@ inline Transform4x3 Transform4x3::Invert(const Transform4x3& value)
 
     auto invDet = 1.0f / det;
 
-    return Transform4x3(
+    return Matrix4x3(
         (value._22 * value._33 - value._32 * value._23) * invDet,
         (value._32 * value._13 - value._12 * value._33) * invDet,
         (value._12 * value._23 - value._22 * value._13) * invDet,
@@ -4255,15 +4277,15 @@ inline Transform4x3 Transform4x3::Invert(const Transform4x3& value)
 //-----------------------------------------------------------------------------
 //      拡大縮小行列を生成します.
 //-----------------------------------------------------------------------------
-inline Transform4x3 Transform4x3::CreateScale(float scale)
+inline Matrix4x3 Matrix4x3::CreateScale(float scale)
 { return CreateScale(scale, scale, scale); }
 
 //-----------------------------------------------------------------------------
 //      拡大縮小行列を生成します.
 //-----------------------------------------------------------------------------
-inline Transform4x3 Transform4x3::CreateScale(float sx, float sy, float sz)
+inline Matrix4x3 Matrix4x3::CreateScale(float sx, float sy, float sz)
 {
-    return Transform4x3(
+    return Matrix4x3(
         sx,     0.0f,   0.0f,
         0.0f,   sy,     0.0f,
         0.0f,   0.0f,   sz,
@@ -4273,15 +4295,15 @@ inline Transform4x3 Transform4x3::CreateScale(float sx, float sy, float sz)
 //-----------------------------------------------------------------------------
 //      拡大縮小行列を生成します.
 //-----------------------------------------------------------------------------
-inline Transform4x3 Transform4x3::CreateScale(const Vector3& value)
+inline Matrix4x3 Matrix4x3::CreateScale(const Vector3& value)
 { return CreateScale(value.x, value.y, value.z); }
 
 //-----------------------------------------------------------------------------
 //      平行移動行列を生成します.
 //-----------------------------------------------------------------------------
-inline Transform4x3 Transform4x3::CreateTranslation(float tx, float ty, float tz)
+inline Matrix4x3 Matrix4x3::CreateTranslation(float tx, float ty, float tz)
 {
-    return Transform4x3(
+    return Matrix4x3(
         0.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 0.0f,
@@ -4291,18 +4313,18 @@ inline Transform4x3 Transform4x3::CreateTranslation(float tx, float ty, float tz
 //-----------------------------------------------------------------------------
 //      平行移動行列を生成します.
 //-----------------------------------------------------------------------------
-inline Transform4x3 Transform4x3::CreateTranslation(const Vector3& value)
+inline Matrix4x3 Matrix4x3::CreateTranslation(const Vector3& value)
 { return CreateTranslation(value.x, value.y, value.z); }
 
 //-----------------------------------------------------------------------------
 //      X軸周りの回転行列を生成します.
 //-----------------------------------------------------------------------------
-inline Transform4x3 Transform4x3::CreateRotationX(float radian)
+inline Matrix4x3 Matrix4x3::CreateRotationX(float radian)
 {
     auto cosRad = cosf(radian);
     auto sinRad = sinf(radian);
 
-    return Transform4x3(
+    return Matrix4x3(
         1.0f,   0.0f,   0.0f,
         0.0f,   cosRad, sinRad,
         0.0f,  -sinRad, cosRad,
@@ -4312,12 +4334,12 @@ inline Transform4x3 Transform4x3::CreateRotationX(float radian)
 //-----------------------------------------------------------------------------
 //      Y軸周りの回転行列を生成します.
 //-----------------------------------------------------------------------------
-inline Transform4x3 Transform4x3::CreateRotationY(float radian)
+inline Matrix4x3 Matrix4x3::CreateRotationY(float radian)
 {
     auto cosRad = cosf(radian);
     auto sinRad = sinf(radian);
 
-    return Transform4x3(
+    return Matrix4x3(
         cosRad, 0.0f,  -sinRad,
         0.0f,   1.0f,   0.0f,
         sinRad, 0.0f,   cosRad,
@@ -4327,12 +4349,12 @@ inline Transform4x3 Transform4x3::CreateRotationY(float radian)
 //-----------------------------------------------------------------------------
 //      Z軸周りの回転行列を生成します.
 //-----------------------------------------------------------------------------
-inline Transform4x3 Transform4x3::CreateRotationZ(float radian)
+inline Matrix4x3 Matrix4x3::CreateRotationZ(float radian)
 {
     auto cosRad = cosf(radian);
     auto sinRad = sinf(radian);
 
-    return Transform4x3(
+    return Matrix4x3(
         cosRad, sinRad, 0.0f,
        -sinRad, cosRad, 0.0f,
         0.0f,   0.0f,   1.0f,
@@ -4342,7 +4364,7 @@ inline Transform4x3 Transform4x3::CreateRotationZ(float radian)
 //-----------------------------------------------------------------------------
 //      四元数から回転行列を生成します.
 //-----------------------------------------------------------------------------
-inline Transform4x3 Transform4x3::CreateFromQuaternion(const Quaternion& value)
+inline Matrix4x3 Matrix4x3::CreateFromQuaternion(const Quaternion& value)
 {
     auto xx = value.x * value.x;
     auto yy = value.y * value.y;
@@ -4356,7 +4378,7 @@ inline Transform4x3 Transform4x3::CreateFromQuaternion(const Quaternion& value)
     auto yz = value.y * value.z;
     auto xw = value.x * value.w;
 
-    return Transform4x3(
+    return Matrix4x3(
         1.0f - 2.0f * (yy + zz),
         2.0f * (xy + zw),
         2.0f * (xz - yw),
@@ -4377,7 +4399,7 @@ inline Transform4x3 Transform4x3::CreateFromQuaternion(const Quaternion& value)
 //-----------------------------------------------------------------------------
 //      指定された軸と角度から回転行列を生成します.
 //-----------------------------------------------------------------------------
-inline Transform4x3 Transform4x3::CreateFromAxisAngle(const Vector3& axis, float radian)
+inline Matrix4x3 Matrix4x3::CreateFromAxisAngle(const Vector3& axis, float radian)
 {
     auto sinRad = sinf(radian);
     auto cosRad = cosf(radian);
@@ -4390,7 +4412,7 @@ inline Transform4x3 Transform4x3::CreateFromAxisAngle(const Vector3& axis, float
     auto ty = axis.y * axis.y;
     auto tz = axis.z * axis.z;
 
-    return Transform4x3(
+    return Matrix4x3(
         tx + cosRad * (1.0f - tx),
         ab + axis.z * sinRad,
         ca - axis.y * sinRad,
@@ -4411,7 +4433,7 @@ inline Transform4x3 Transform4x3::CreateFromAxisAngle(const Vector3& axis, float
 //-----------------------------------------------------------------------------
 //      ヨー・ピッチ・ロール角から回転行列を生成します.
 //-----------------------------------------------------------------------------
-inline Transform4x3 Transform4x3::CreateRotationFromYawPitchRoll(float yaw, float pitch, float roll)
+inline Matrix4x3 Matrix4x3::CreateRotationFromYawPitchRoll(float yaw, float pitch, float roll)
 {
     auto cp = cosf(pitch);
     auto sp = sinf(pitch);
@@ -4422,7 +4444,7 @@ inline Transform4x3 Transform4x3::CreateRotationFromYawPitchRoll(float yaw, floa
     auto cr = cosf(roll);
     auto sr = sinf(roll);
 
-    return Transform4x3(
+    return Matrix4x3(
         cr * cy + sr * sp * sy,
         sr * cp,
         sr * sp * cy - cr * sy,
@@ -4443,7 +4465,7 @@ inline Transform4x3 Transform4x3::CreateRotationFromYawPitchRoll(float yaw, floa
 //-----------------------------------------------------------------------------
 //      ビュー行列を生成します.
 //-----------------------------------------------------------------------------
-inline Transform4x3 Transform4x3::CreateLookAt(const Vector3& position, const Vector3& target, const Vector3& upward)
+inline Matrix4x3 Matrix4x3::CreateLookAt(const Vector3& position, const Vector3& target, const Vector3& upward)
 {
     auto zaxis = position - target;
     zaxis.Normalize();
@@ -4454,7 +4476,7 @@ inline Transform4x3 Transform4x3::CreateLookAt(const Vector3& position, const Ve
     auto yaxis = Vector3::Cross(zaxis, xaxis);
     yaxis.Normalize();
 
-    return Transform4x3(
+    return Matrix4x3(
         xaxis.x, yaxis.x, zaxis.x,
         xaxis.y, yaxis.y, zaxis.y,
         xaxis.z, yaxis.z, zaxis.z,
@@ -4466,7 +4488,7 @@ inline Transform4x3 Transform4x3::CreateLookAt(const Vector3& position, const Ve
 //-----------------------------------------------------------------------------
 //      ビュー行列を生成します.
 //-----------------------------------------------------------------------------
-inline Transform4x3 Transform4x3::CreateLookTo(const Vector3& position, const Vector3& viewDir, const Vector3& upward)
+inline Matrix4x3 Matrix4x3::CreateLookTo(const Vector3& position, const Vector3& viewDir, const Vector3& upward)
 {
     auto zaxis = -viewDir;
     zaxis.Normalize();
@@ -4477,7 +4499,7 @@ inline Transform4x3 Transform4x3::CreateLookTo(const Vector3& position, const Ve
     auto yaxis = Vector3::Cross(zaxis, xaxis);
     yaxis.Normalize();
 
-    return Transform4x3(
+    return Matrix4x3(
         xaxis.x, yaxis.x, zaxis.x,
         xaxis.y, yaxis.y, zaxis.y,
         xaxis.z, yaxis.z, zaxis.z,
@@ -4489,7 +4511,7 @@ inline Transform4x3 Transform4x3::CreateLookTo(const Vector3& position, const Ve
 //-----------------------------------------------------------------------------
 //      平行移動成分を右から掛けます.
 //-----------------------------------------------------------------------------
-inline Transform4x3 Transform4x3::AppendTranslation(Transform4x3& lhs, const Vector3& rhs)
+inline Matrix4x3 Matrix4x3::AppendTranslation(Matrix4x3& lhs, const Vector3& rhs)
 {
     lhs._41 += rhs.x;
     lhs._42 += rhs.y;
@@ -4500,7 +4522,7 @@ inline Transform4x3 Transform4x3::AppendTranslation(Transform4x3& lhs, const Vec
 //-----------------------------------------------------------------------------
 //      スケール行列を右から掛けます.
 //-----------------------------------------------------------------------------
-inline Transform4x3 Transform4x3::AppendScale(Transform4x3& mat, const Vector3& vec)
+inline Matrix4x3 Matrix4x3::AppendScale(Matrix4x3& mat, const Vector3& vec)
 {
     mat._11 *= vec.x;
     mat._12 *= vec.y;
@@ -4743,7 +4765,35 @@ inline BoundingBox3 BoundingBox3::Merge(const BoundingBox3& lhs, const Vector3& 
 //-----------------------------------------------------------------------------
 //      指定行列で変換処理を行います.
 //-----------------------------------------------------------------------------
-inline BoundingBox3 BoundingBox3::Transform(const BoundingBox3& box, const Matrix& matrix)
+inline BoundingBox3 BoundingBox3::Transform(const BoundingBox3& box, const Matrix4x4& matrix)
+{
+    Vector3 corners[8] = {
+        Vector3(box.Mini.x, box.Mini.y, box.Mini.z),
+        Vector3(box.Maxi.x, box.Mini.y, box.Mini.z),
+        Vector3(box.Mini.x, box.Maxi.y, box.Mini.z),
+        Vector3(box.Maxi.x, box.Maxi.y, box.Mini.z),
+        Vector3(box.Mini.x, box.Mini.y, box.Maxi.z),
+        Vector3(box.Maxi.x, box.Mini.y, box.Maxi.z),
+        Vector3(box.Mini.x, box.Maxi.y, box.Maxi.z),
+        Vector3(box.Maxi.x, box.Maxi.y, box.Maxi.z),
+    };
+
+    BoundingBox3 result;
+    for(auto i=0; i<8; ++i)
+    {
+        auto p = Vector3::Transform(corners[i], matrix);
+
+        result.Mini = Vector3::Min(result.Mini, p);
+        result.Maxi = Vector3::Max(result.Maxi, p);
+    }
+
+    return result;
+}
+
+//-----------------------------------------------------------------------------
+//      指定行列で変換処理を行います.
+//-----------------------------------------------------------------------------
+inline BoundingBox3 BoundingBox3::Transform(const BoundingBox3& box, const Matrix4x3& matrix)
 {
     Vector3 corners[8] = {
         Vector3(box.Mini.x, box.Mini.y, box.Mini.z),
@@ -5043,7 +5093,20 @@ inline BoundingSphere3 BoundingSphere3::Merge(const BoundingSphere3& lhs, const 
 //-----------------------------------------------------------------------------
 //      指定行列で変換処理を行います.
 //-----------------------------------------------------------------------------
-inline BoundingSphere3 BoundingSphere3::Transform(const BoundingSphere3& sphere, const Matrix& matrix)
+inline BoundingSphere3 BoundingSphere3::Transform(const BoundingSphere3& sphere, const Matrix4x4& matrix)
+{
+    auto center = Vector3::Transform(sphere.Center, matrix);
+    auto scale  = matrix.CalcScale();
+
+    auto maxScale = Max(scale.x, Max(scale.y, scale.z));
+    auto radius   = sphere.Radius * maxScale;
+    return BoundingSphere3(center, radius);
+}
+
+//-----------------------------------------------------------------------------
+//      指定行列で変換処理を行います.
+//-----------------------------------------------------------------------------
+inline BoundingSphere3 BoundingSphere3::Transform(const BoundingSphere3& sphere, const Matrix4x3& matrix)
 {
     auto center = Vector3::Transform(sphere.Center, matrix);
     auto scale  = matrix.CalcScale();
@@ -5443,12 +5506,12 @@ inline Vector4 NormalizePlane(const Vector4& value)
 //-----------------------------------------------------------------------------
 //      視錐台を構成する6平面を求めます.
 //-----------------------------------------------------------------------------
-inline void CalcFrustumPlanes(const Matrix& view, const Matrix& proj, Vector4* planes)
+inline void CalcFrustumPlanes(const Matrix4x4& view, const Matrix4x4& proj, Vector4* planes)
 {
     // Gil Gribb, Klaus Hartmann,
     // "Fast Extraction of Viewing Frustum Planes from the World-View-Projection Matrix"
     // https://www.gamedevs.org/
-    auto vp = Matrix::MultiplyTranspose(view, proj);
+    auto vp = Matrix4x4::MultiplyTranspose(view, proj);
 
     planes[PLANE_LEFT]   = Vector4::NormalizePlane(vp.row[3] + vp.row[0]);
     planes[PLANE_RIGHT]  = Vector4::NormalizePlane(vp.row[3] - vp.row[0]);
@@ -5457,6 +5520,27 @@ inline void CalcFrustumPlanes(const Matrix& view, const Matrix& proj, Vector4* p
     planes[PLANE_NEAR]   = Vector4::NormalizePlane(vp.row[2]);
     planes[PLANE_FAR]    = Vector4::NormalizePlane(vp.row[3] - vp.row[2]);
 }
+
+//-----------------------------------------------------------------------------
+//      視錐台を構成する6平面を求めます.
+//-----------------------------------------------------------------------------
+inline void CalcFrustumPlanes(const Matrix4x3& view, const Matrix4x4& proj, Vector4* planes)
+{
+    auto view44 = Matrix4x4(view);
+
+    // Gil Gribb, Klaus Hartmann,
+    // "Fast Extraction of Viewing Frustum Planes from the World-View-Projection Matrix"
+    // https://www.gamedevs.org/
+    auto vp = Matrix4x4::MultiplyTranspose(view44, proj);
+
+    planes[PLANE_LEFT]   = Vector4::NormalizePlane(vp.row[3] + vp.row[0]);
+    planes[PLANE_RIGHT]  = Vector4::NormalizePlane(vp.row[3] - vp.row[0]);
+    planes[PLANE_BOTTOM] = Vector4::NormalizePlane(vp.row[3] + vp.row[1]);
+    planes[PLANE_TOP]    = Vector4::NormalizePlane(vp.row[3] - vp.row[1]);
+    planes[PLANE_NEAR]   = Vector4::NormalizePlane(vp.row[2]);
+    planes[PLANE_FAR]    = Vector4::NormalizePlane(vp.row[3] - vp.row[2]);
+}
+
 
 //-----------------------------------------------------------------------------
 //      交差線を求めます.
@@ -5573,7 +5657,7 @@ inline Vector3 CCT_To_XYZ(float T, float Y)
 inline Vector3 CCT_To_BT601(float T, float Y)
 {
     const auto XYZ = CCT_To_XYZ(T, Y);
-    return Vector3::TransformNormal(XYZ, Matrix::CreateXYZToBT601());
+    return Vector3::TransformNormal(XYZ, Matrix4x4::CreateXYZToBT601());
 }
 
 //-----------------------------------------------------------------------------
@@ -5582,7 +5666,7 @@ inline Vector3 CCT_To_BT601(float T, float Y)
 inline Vector3 CCT_To_BT709(float T, float Y)
 {
     const auto XYZ = CCT_To_XYZ(T, Y);
-    return Vector3::TransformNormal(XYZ, Matrix::CreateXYZToBT709());
+    return Vector3::TransformNormal(XYZ, Matrix4x4::CreateXYZToBT709());
 }
 
 //-----------------------------------------------------------------------------
@@ -5591,7 +5675,7 @@ inline Vector3 CCT_To_BT709(float T, float Y)
 inline Vector3 CCT_To_BT2020(float T, float Y)
 {
     const auto XYZ = CCT_To_XYZ(T, Y);
-    return Vector3::TransformNormal(XYZ, Matrix::CreateXYZToBT2020());
+    return Vector3::TransformNormal(XYZ, Matrix4x4::CreateXYZToBT2020());
 }
 
 //-----------------------------------------------------------------------------

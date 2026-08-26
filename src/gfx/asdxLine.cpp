@@ -673,7 +673,7 @@ void DrawWireBone(LineRenderer& renderer, const Vector3& start, const Vector3& e
 //-----------------------------------------------------------------------------
 //      ワイヤーフレーム錐台を描画します.
 //-----------------------------------------------------------------------------
-void DrawWireFrustum(LineRenderer& renderer, const Matrix& invViewProj, const Vector4& color)
+void DrawWireFrustum(LineRenderer& renderer, const Matrix4x4& invViewProj, const Vector4& color)
 {
     Vector3 corners[8] = {
         Vector3(-1.0f, -1.0f, 0.0f),
@@ -711,12 +711,12 @@ void DrawWireFrustum(LineRenderer& renderer, const Matrix& invViewProj, const Ve
 //-----------------------------------------------------------------------------
 void DrawWireAxis
 (
-    LineRenderer&   renderer,
-    const Matrix&   world,
-    float           length,
-    const Vector4&  colorX,
-    const Vector4&  colorY,
-    const Vector4&  colorZ
+    LineRenderer&       renderer,
+    const Matrix4x4&    world,
+    float               length,
+    const Vector4&      colorX,
+    const Vector4&      colorY,
+    const Vector4&      colorZ
 )
 {
     auto origin = world.GetPosition();

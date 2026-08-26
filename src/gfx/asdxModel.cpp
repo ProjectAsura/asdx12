@@ -552,8 +552,8 @@ bool Model::Init(std::vector<uint8_t>&& binary, const std::string& baseDir)
     }
 
     // バウンディング設定.
-    m_BoundingSphere = m_Binary.GetSphere();
-    m_BoundingBox    = m_Binary.GetBox();
+    m_LocalSphere = m_Binary.GetSphere();
+    m_LocalBox    = m_Binary.GetBox();
 
     return true;
 }
@@ -577,8 +577,9 @@ void Model::Term()
     }
     m_Materials.clear();
 
-    // バウンディングスフィア初期化.
-    m_BoundingSphere = BoundingSphere3();
+    // バウンディング初期化.
+    m_LocalSphere = BoundingSphere3();
+    m_LocalBox    = BoundingBox3();
 
     // モデルバイナリ破棄.
     m_Binary.Term();
@@ -672,16 +673,16 @@ uint64_t Model::GetTotalInstanceCount() const
 { return m_Binary.GetTotalInstanceCount(); }
 
 //-----------------------------------------------------------------------------
-//      バウンディングスフィアを取得します.
+//      ローカル座標系のバウンディングスフィアを取得します.
 //-----------------------------------------------------------------------------
-const BoundingSphere3& Model::GetSphere() const
-{ return m_BoundingSphere; }
+const BoundingSphere3& Model::GetLocalSphere() const
+{ return m_LocalSphere; }
 
 //-----------------------------------------------------------------------------
-//      バウンディングボックスを取得します.
+//      ローカル座標系のバウンディングボックスを取得します.
 //-----------------------------------------------------------------------------
-const BoundingBox3& Model::GetBox() const
-{ return m_BoundingBox; }
+const BoundingBox3& Model::GetLocalBox() const
+{ return m_LocalBox; }
 
 //-----------------------------------------------------------------------------
 //      可視フラグを設定します.

@@ -312,9 +312,9 @@ void JsonWriter::Write(const char* tag, const Quaternion& value)
 }
 
 //-----------------------------------------------------------------------------
-//      Matrix型を書き込みます.
+//      Matrix4x4型を書き込みます.
 //-----------------------------------------------------------------------------
-void JsonWriter::Write(const char* tag, const Matrix& value)
+void JsonWriter::Write(const char* tag, const Matrix4x4& value)
 {
     WriteBeginSection(tag); WriteNextLine(false);
     Write("m11", value._11); WriteNextLine(true);
@@ -337,9 +337,9 @@ void JsonWriter::Write(const char* tag, const Matrix& value)
 }
 
 //-----------------------------------------------------------------------------
-//      Transform3x4型を書き込みます.
+//      Matrix4x3型を書き込みます.
 //-----------------------------------------------------------------------------
-void JsonWriter::Write(const char* tag, const Transform4x3& value)
+void JsonWriter::Write(const char* tag, const Matrix4x3& value)
 {
     WriteBeginSection(tag); WriteNextLine(false);
     Write("m11", value._11); WriteNextLine(true);
@@ -583,9 +583,9 @@ void JsonWriter::Write(const char* tag, std::span<Quaternion> values)
 }
 
 //-----------------------------------------------------------------------------
-//      Matrix型配列を書き込みます.
+//      Matrix4x4型配列を書き込みます.
 //-----------------------------------------------------------------------------
-void JsonWriter::Write(const char* tag, std::span<Matrix> values)
+void JsonWriter::Write(const char* tag, std::span<Matrix4x4> values)
 {
     WriteBeginArray(tag); WriteNextLine(false);
     for(size_t i=0; i<values.size(); ++i)
@@ -617,9 +617,9 @@ void JsonWriter::Write(const char* tag, std::span<Matrix> values)
 }
 
 //-----------------------------------------------------------------------------
-//      Transform3x4型配列を書き込みます.
+//      Matrix4x3型配列を書き込みます.
 //-----------------------------------------------------------------------------
-void JsonWriter::Write(const char* tag, std::span<Transform4x3> values)
+void JsonWriter::Write(const char* tag, std::span<Matrix4x3> values)
 {
     WriteBeginArray(tag); WriteNextLine(false);
     for(size_t i=0; i<values.size(); ++i)

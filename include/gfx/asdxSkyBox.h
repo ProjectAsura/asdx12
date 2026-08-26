@@ -77,7 +77,7 @@ public:
     //! @param[in]      view    ビュー行列.
     //! @param[in]      proj    射影行列.
     //-------------------------------------------------------------------------
-    void UpdateBuffer(const Matrix& view, const Matrix& proj);
+    void UpdateBuffer(const Matrix4x4& view, const Matrix4x4& proj);
 
 private:
     //=========================================================================

@@ -250,7 +250,7 @@ void MotionPlayer::Init(const Model* pModel)
     m_WorldTransforms.resize(count);
     m_MatrixPalettes .resize(count);
 
-    auto identity = Transform4x3::CreateIdentity();
+    auto identity = Matrix4x3::CreateIdentity();
     for(auto i=0u; i<count; ++i)
     {
         auto& bone     = m_pModel->GetBone(i);
@@ -300,7 +300,7 @@ void MotionPlayer::SetClip(const res::MotionClip* pClip)
 
     // 単位行列で初期化.
     auto count    = m_pModel->GetBoneCount();
-    auto identity = Transform4x3::CreateIdentity();
+    auto identity = Matrix4x3::CreateIdentity();
 
     for(auto i=0u; i<count; ++i)
     {
@@ -361,7 +361,7 @@ void MotionPlayer::NextClip
 //-----------------------------------------------------------------------------
 //      更新処理を行います.
 //-----------------------------------------------------------------------------
-void MotionPlayer::Update(float deltaSec, const Transform4x3& rootTransform)
+void MotionPlayer::Update(float deltaSec, const Matrix4x3& rootTransform)
 {
     if (m_pModel == nullptr)
         return;
@@ -493,7 +493,7 @@ void MotionPlayer::UpdateLocalTransform(bool blend)
 //-----------------------------------------------------------------------------
 //      ワールド行列を更新します.
 //-----------------------------------------------------------------------------
-void MotionPlayer::UpdateWorldTransform(const Transform4x3& rootTransform)
+void MotionPlayer::UpdateWorldTransform(const Matrix4x3& rootTransform)
 {
     auto count = m_pModel->GetBoneCount();
     for(auto i=0u; i<count; ++i)
@@ -531,19 +531,19 @@ void MotionPlayer::UpdateMatrixPalette()
 //-----------------------------------------------------------------------------
 //      ローカル変換行列を取得します.
 //-----------------------------------------------------------------------------
-const std::vector<Transform4x3>& MotionPlayer::GetLocalTransforms() const
+const std::vector<Matrix4x3>& MotionPlayer::GetLocalTransforms() const
 { return m_LocalTransforms; }
 
 //-----------------------------------------------------------------------------
 //      ワールド変換行列を取得します.
 //-----------------------------------------------------------------------------
-const std::vector<Transform4x3>& MotionPlayer::GetWorldTransforms() const
+const std::vector<Matrix4x3>& MotionPlayer::GetWorldTransforms() const
 { return m_WorldTransforms; }
 
 //-----------------------------------------------------------------------------
 //      行列パレットを取得します.
 //-----------------------------------------------------------------------------
-const std::vector<Transform4x3>& MotionPlayer::GetMatrixPalettes() const
+const std::vector<Matrix4x3>& MotionPlayer::GetMatrixPalettes() const
 { return m_MatrixPalettes; }
 
 //-----------------------------------------------------------------------------
@@ -609,7 +609,7 @@ void MotionPlayer::Cue()
 //-----------------------------------------------------------------------------
 //      1フレーム進めます.
 //-----------------------------------------------------------------------------
-void MotionPlayer::FrameAdvance(const Transform4x3& rootTransform)
+void MotionPlayer::FrameAdvance(const Matrix4x3& rootTransform)
 {
     if (m_pModel == nullptr)
         return;

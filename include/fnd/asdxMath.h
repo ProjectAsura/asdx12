@@ -27,9 +27,9 @@ namespace asdx {
 struct Vector2;
 struct Vector3;
 struct Vector4;
-struct Matrix;
+struct Matrix4x3;
+struct Matrix4x4;
 struct Quaternion;
-struct Transform4x3;
 
 //-----------------------------------------------------------------------------
 // Type defines.
@@ -867,7 +867,16 @@ public:
     //! @param [in]     matrix      変換行列.
     //! @return     変換されたベクトルを返却します.
     //-------------------------------------------------------------------------
-    static Vector2 Transform(const Vector2& position, const Matrix& matrix);
+    static Vector2 Transform(const Vector2& position, const Matrix4x4& matrix);
+
+    //-------------------------------------------------------------------------
+    //! @brief      指定された行列を用いて，ベクトルを変換します.
+    //!
+    //! @param [in]     position    入力ベクトル.
+    //! @param [in]     matrix      変換行列.
+    //! @return     変換されたベクトルを返却します.
+    //-------------------------------------------------------------------------
+    static Vector2 Transform(const Vector2& position, const Matrix4x3& matrix);
 
     //-------------------------------------------------------------------------
     //! @brief      指定された行列を用いて，法線ベクトルを変換します.
@@ -876,7 +885,16 @@ public:
     //! @param [in]     matrix      変換行列.
     //! @return     変換された法線ベクトル.
     //-------------------------------------------------------------------------
-    static Vector2 TransformNormal(const Vector2& normal, const Matrix& matrix);
+    static Vector2 TransformNormal(const Vector2& normal, const Matrix4x4& matrix);
+
+    //-------------------------------------------------------------------------
+    //! @brief      指定された行列を用いて，法線ベクトルを変換します.
+    //!
+    //! @param [in]     normal      入力ベクトル.
+    //! @param [in]     matrix      変換行列.
+    //! @return     変換された法線ベクトル.
+    //-------------------------------------------------------------------------
+    static Vector2 TransformNormal(const Vector2& normal, const Matrix4x3& matrix);
 
     //-------------------------------------------------------------------------
     //! @brief      指定された行列を用いてベクトルを変換し，変換結果をw=1に射影します.
@@ -885,7 +903,7 @@ public:
     //! @param [in]     matrix      変換行列.
     //! @return     行列変換後, w=1に射影されたベクトルを返却します.
     //-------------------------------------------------------------------------
-    static Vector2 TransformCoord(const Vector2& coords, const Matrix& matrix);
+    static Vector2 TransformCoord(const Vector2& coords, const Matrix4x4& matrix);
 };
 
 
@@ -1336,7 +1354,7 @@ public:
     //! @param [in]     matrix      変換行列.
     //! @return     変換されたベクトルを返却します.
     //-------------------------------------------------------------------------
-    static Vector3 Transform(const Vector3& position, const Matrix& matrix);
+    static Vector3 Transform(const Vector3& position, const Matrix4x4& matrix);
 
     //-------------------------------------------------------------------------
     //! @brief      指定された行列を用いて，法線ベクトルを変換します.
@@ -1345,7 +1363,7 @@ public:
     //! @param [in]     matrix      変換行列.
     //! @return     変換された法線ベクトル.
     //-------------------------------------------------------------------------
-    static Vector3 Transform(const Vector3& position, const Transform4x3& matrix);
+    static Vector3 Transform(const Vector3& position, const Matrix4x3& matrix);
 
     //-------------------------------------------------------------------------
     //! @brief      指定された行列を用いて，法線ベクトルを変換します.
@@ -1354,7 +1372,7 @@ public:
     //! @param [in]     matrix      変換行列.
     //! @return     変換された法線ベクトル.
     //-------------------------------------------------------------------------
-    static Vector3 TransformNormal(const Vector3& normal, const Matrix& matrix);
+    static Vector3 TransformNormal(const Vector3& normal, const Matrix4x4& matrix);
 
     //-------------------------------------------------------------------------
     //! @brief      指定された行列を用いて，法線ベクトルを変換します.
@@ -1363,7 +1381,7 @@ public:
     //! @param [in]     matrix      変換行列.
     //! @return     変換された法線ベクトル.
     //-------------------------------------------------------------------------
-    static Vector3 TransformNormal(const Vector3& normal, const Transform4x3& matrix);
+    static Vector3 TransformNormal(const Vector3& normal, const Matrix4x3& matrix);
 
     //-------------------------------------------------------------------------
     //! @brief      指定された行列を用いてベクトルを変換し，変換結果をw=1に射影します.
@@ -1372,7 +1390,7 @@ public:
     //! @param [in]     matrix      変換行列.
     //! @return     行列変換後, w=1に射影されたベクトルを返却します.
     //-------------------------------------------------------------------------
-    static Vector3 TransformCoord(const Vector3& coord, const Matrix& matrix);
+    static Vector3 TransformCoord(const Vector3& coord, const Matrix4x4& matrix);
 
     //-------------------------------------------------------------------------
     //! @brief      スカラー3重積を計算します.
@@ -1832,7 +1850,7 @@ public:
     //! @param [in]     matrix      変換行列.
     //! @return     変換されたベクトルを返却します.
     //-------------------------------------------------------------------------
-    static Vector4 Transform(const Vector4& position, const Matrix& matrix);
+    static Vector4 Transform(const Vector4& position, const Matrix4x4& matrix);
 
     //-------------------------------------------------------------------------
     //! @brief      平面式を正規化します.
@@ -1856,9 +1874,9 @@ public:
 
 ///////////////////////////////////////////////////////////////////////////////
 // Matrix structure
-// 行列クラス    (行優先行列 row-major)
+// 4x4行列クラス    (行優先行列 row-major)
 ///////////////////////////////////////////////////////////////////////////////
-struct Matrix
+struct Matrix4x4
 {
     //=========================================================================
     // list of friend classes and methods.
@@ -1871,7 +1889,7 @@ struct Matrix
     //! @param [in]     value       乗算される行列.
     //! @return     乗算結果を返却します.
     //-------------------------------------------------------------------------
-    friend Matrix operator * ( float, const Matrix& );
+    friend Matrix4x4 operator * ( float, const Matrix4x4& );
 
 public:
     //=========================================================================
@@ -1897,14 +1915,14 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      コンストラクタです.
     //-------------------------------------------------------------------------
-    Matrix();
+    Matrix4x4();
 
     //-------------------------------------------------------------------------
     //! @brief      引数付きコンストラクタです.
     //!
     //! @param [in]     pValues     要素数16の配列.
     //-------------------------------------------------------------------------
-    explicit Matrix(const float* pValues);
+    explicit Matrix4x4(const float* pValues);
 
     //-------------------------------------------------------------------------
     //! @brief      引数付きコンストラクタです.
@@ -1926,21 +1944,21 @@ public:
     //! @param [in]     m43         4行3列の値.
     //! @param [in]     m44         4行4列の値.
     //-------------------------------------------------------------------------
-    explicit Matrix (
+    explicit Matrix4x4(
         float m11, float m12, float m13, float m14,
         float m21, float m22, float m23, float m24,
         float m31, float m32, float m33, float m34,
         float m41, float m42, float m43, float m44 );
 
-    //---------------------------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
     //! @brief      引数付きコンストラクタです.
     //!
     //! @param[in]      v0      1行目の値です.
     //! @param[in]      v1      2行目の値です.
     //! @param[in]      v2      3行目の値です.
     //! @param[in]      v3      4行目の値です.
-    //---------------------------------------------------------------------------------------------
-    explicit Matrix(const Vector4& v1, const Vector4& v2, const Vector4& v3, const Vector4& v4);
+    //-------------------------------------------------------------------------
+    explicit Matrix4x4(const Vector4& v1, const Vector4& v2, const Vector4& v3, const Vector4& v4);
 
     //-------------------------------------------------------------------------
     //! @brief      インデクサです.
@@ -1980,7 +1998,7 @@ public:
     //! @param [in]     value       乗算する行列.
     //! @return     乗算結果を返却します.
     //-------------------------------------------------------------------------
-    Matrix& operator *= (const Matrix& value);
+    Matrix4x4& operator *= (const Matrix4x4& value);
 
     //-------------------------------------------------------------------------
     //! @brief      加算代入演算子です.
@@ -1988,7 +2006,7 @@ public:
     //! @param [in]     value       加算する行列.
     //! @return     加算結果を返却します.
     //-------------------------------------------------------------------------
-    Matrix& operator += (const Matrix& value);
+    Matrix4x4& operator += (const Matrix4x4& value);
 
     //-------------------------------------------------------------------------
     //! @brief      減算代入演算子です.
@@ -1996,7 +2014,7 @@ public:
     //! @param [in]     value       減算する行列.
     //! @return     減算結果を返却します.
     //-------------------------------------------------------------------------
-    Matrix& operator -= (const Matrix& value);
+    Matrix4x4& operator -= (const Matrix4x4& value);
 
     //-------------------------------------------------------------------------
     //! @brief      乗算代入演算子です.
@@ -2004,7 +2022,7 @@ public:
     //! @param [in]     value       乗算するスカラー値.
     //! @return     乗算結果を返却します.
     //-------------------------------------------------------------------------
-    Matrix& operator *= (float value);
+    Matrix4x4& operator *= (float value);
 
     //-------------------------------------------------------------------------
     //! @brief      除算代入演算子です.
@@ -2012,7 +2030,7 @@ public:
     //! @param [in]     value       除算するスカラー値.
     //! @return     除算結果を返却します.
     //-------------------------------------------------------------------------
-    Matrix& operator /= (float value);
+    Matrix4x4& operator /= (float value);
 
     //-------------------------------------------------------------------------
     //! @brief      代入演算子です.
@@ -2020,21 +2038,21 @@ public:
     //! @param [in]     value       代入する値.
     //! @return     代入結果を返却します.
     //-------------------------------------------------------------------------
-    Matrix& operator = (const Matrix& value);
+    Matrix4x4& operator = (const Matrix4x4& value);
 
     //-------------------------------------------------------------------------
     //! @brief      正符号演算子です.
     //!
     //! @return     自分自身を値を返却します.
     //-------------------------------------------------------------------------
-    Matrix operator + () const;
+    Matrix4x4 operator + () const;
 
     //-------------------------------------------------------------------------
     //! @brief      負符号演算子です.
     //
     //! @return     各成分にマイナスを付けた値を返却します.
     //-------------------------------------------------------------------------
-    Matrix operator - () const;
+    Matrix4x4 operator - () const;
 
     //-------------------------------------------------------------------------
     //! @brief      乗算演算子です.
@@ -2042,7 +2060,7 @@ public:
     //! @param [in]     value       乗算する値.
     //! @return     乗算結果を返却します.
     //-------------------------------------------------------------------------
-    Matrix operator * (const Matrix& value) const;
+    Matrix4x4 operator * (const Matrix4x4& value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      加算演算子です.
@@ -2050,7 +2068,7 @@ public:
     //! @param [in]     value       加算する値.
     //! @return     加算結果を返却します.
     //-------------------------------------------------------------------------
-    Matrix operator + (const Matrix& value) const;
+    Matrix4x4 operator + (const Matrix4x4& value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      減算演算子です.
@@ -2058,7 +2076,7 @@ public:
     //! @param [in]     value       減算する値.
     //! @retrurn    減算結果を返却します.
     //-------------------------------------------------------------------------
-    Matrix operator - (const Matrix& value) const;
+    Matrix4x4 operator - (const Matrix4x4& value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      乗算演算子です.
@@ -2066,14 +2084,14 @@ public:
     //! @param [in]     value       乗算するスカラー値.
     //! @return     乗算結果を返却します.
     //-------------------------------------------------------------------------
-    Matrix operator * (float value) const;
+    Matrix4x4 operator * (float value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      除算演算子です.
     //!
     //! @param [in]     value       除算するスカラー値.
     //-------------------------------------------------------------------------
-    Matrix operator / (float value) const;
+    Matrix4x4 operator / (float value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      等価比較演算子です.
@@ -2082,7 +2100,7 @@ public:
     //! @retval true    値が等価です.
     //! @retval false   値が非等価です.
     //-------------------------------------------------------------------------
-    bool operator == (const Matrix& value) const;
+    bool operator == (const Matrix4x4& value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      非等価比較演算子です.
@@ -2091,7 +2109,7 @@ public:
     //! @retval true    値が非等価です.
     //! @retval false   値が等価です.
     //-------------------------------------------------------------------------
-    bool operator != (const Matrix& value) const;
+    bool operator != (const Matrix4x4& value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      行列式を求めます.
@@ -2105,7 +2123,7 @@ public:
     //!
     //! @return     単位行列にした結果を返却します.
     //-------------------------------------------------------------------------
-    Matrix& Identity();
+    Matrix4x4& Identity();
 
     //-------------------------------------------------------------------------
     //! @brief      基底Xベクトルを取得します.
@@ -2147,7 +2165,7 @@ public:
     //!
     //! @return     単位行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix CreateIdentity();
+    static Matrix4x4 CreateIdentity();
 
     //-------------------------------------------------------------------------
     //! @brief      単位行列であるか判定します.
@@ -2156,7 +2174,7 @@ public:
     //! @retval true    単位行列です.
     //! @retval false   非単位行列です.
     //-------------------------------------------------------------------------
-    static bool IsIdentity(const Matrix &value);
+    static bool IsIdentity(const Matrix4x4 &value);
 
     //-------------------------------------------------------------------------
     //! @brief      行列を転置します.
@@ -2164,7 +2182,7 @@ public:
     //! @param [in]     value       転置する行列.
     //! @return     行列を転置した結果を返却します.
     //-------------------------------------------------------------------------
-    static Matrix Transpose(const Matrix& value);
+    static Matrix4x4 Transpose(const Matrix4x4& value);
 
     //-------------------------------------------------------------------------
     //! @brief      行列同士を乗算します.
@@ -2173,7 +2191,7 @@ public:
     //! @param [in]     b           入力行列.
     //! @return     乗算結果を返却します.
     //-------------------------------------------------------------------------
-    static Matrix Multiply(const Matrix& a, const Matrix& b);
+    static Matrix4x4 Multiply(const Matrix4x4& a, const Matrix4x4& b);
 
     //-------------------------------------------------------------------------
     //! @brief      スカラー乗算します.
@@ -2182,7 +2200,7 @@ public:
     //! @param [in]     scalar      スカラー値.
     //! @return     行列をスカラー倍した結果を返却します.
     //-------------------------------------------------------------------------
-    static Matrix Multiply(const Matrix& value, float scalar );
+    static Matrix4x4 Multiply(const Matrix4x4& value, float scalar );
 
     //-------------------------------------------------------------------------
     //! @brief      行列同士を乗算し，乗算結果を転置します.
@@ -2191,14 +2209,14 @@ public:
     //! @param [in]     b           入力行列.
     //! @return     行列同士を乗算し，乗算結果を転置した値を返却します.
     //-------------------------------------------------------------------------
-    static Matrix MultiplyTranspose(const Matrix& a, const Matrix& b);
+    static Matrix4x4 MultiplyTranspose(const Matrix4x4& a, const Matrix4x4& b);
 
     //-------------------------------------------------------------------------
     //! @brief      逆行列を求めます.
     //!
     //! @param [in]     value       逆行列を求める値.
     //-------------------------------------------------------------------------
-    static Matrix Invert(const Matrix& value);
+    static Matrix4x4 Invert(const Matrix4x4& value);
 
     //-------------------------------------------------------------------------
     //! @brief      拡大縮小行列を生成します.
@@ -2206,7 +2224,7 @@ public:
     //! @param [in]     scale      拡大縮小値.
     //! @return     拡大縮小行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix CreateScale(float scale);
+    static Matrix4x4 CreateScale(float scale);
 
     //-------------------------------------------------------------------------
     //! @brief      拡大縮小行列を生成します.
@@ -2216,7 +2234,7 @@ public:
     //! @param [in]     sz          Z成分の拡大縮小値.
     //! @return     拡大縮小行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix CreateScale(float sx, float sy, float sz);
+    static Matrix4x4 CreateScale(float sx, float sy, float sz);
 
     //-------------------------------------------------------------------------
     //! @brief      拡大縮小行列を生成します.
@@ -2224,7 +2242,7 @@ public:
     //! @param [in]     value       拡大縮小値.
     //! @return     拡大縮小行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix CreateScale(const Vector3& value);
+    static Matrix4x4 CreateScale(const Vector3& value);
 
     //-------------------------------------------------------------------------
     //! @brief      平行移動行列を生成します.
@@ -2234,7 +2252,7 @@ public:
     //! @param [in]     tz          Z成分の平行移動値.
     //! @return     平行移動行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix CreateTranslation(float tx, float ty, float tz);
+    static Matrix4x4 CreateTranslation(float tx, float ty, float tz);
 
     //-------------------------------------------------------------------------
     //! @brief      平行移動行列を生成します.
@@ -2242,7 +2260,7 @@ public:
     //! @param [in]     translate   平行移動値.
     //! @return     平行移動行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix CreateTranslation(const Vector3& translate);
+    static Matrix4x4 CreateTranslation(const Vector3& translate);
 
     //-------------------------------------------------------------------------
     //! @brief      X軸回りの回転行列を生成します.
@@ -2250,7 +2268,7 @@ public:
     //! @param [in]     radian         角度(ラジアン).
     //! @return     X軸回りの回転行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix CreateRotationX(float radian);
+    static Matrix4x4 CreateRotationX(float radian);
 
     //-------------------------------------------------------------------------
     //! @brief      Y軸回りの回転行列を生成します.
@@ -2258,7 +2276,7 @@ public:
     //! @param [in]     radian         角度(ラジアン).
     //! @return     Y軸回りの回転行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix CreateRotationY(float radian);
+    static Matrix4x4 CreateRotationY(float radian);
 
     //-------------------------------------------------------------------------
     //! @brief      Z軸回りの回転行列を生成します.
@@ -2266,7 +2284,7 @@ public:
     //! @param [in]     radian         角度(ラジアン).
     //! @return     Z軸回りの回転行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix CreateRotationZ(float radian);
+    static Matrix4x4 CreateRotationZ(float radian);
 
     //-------------------------------------------------------------------------
     //! @brief      四元数から行列を生成します.
@@ -2274,7 +2292,7 @@ public:
     //! @param [in]     value       四元数.
     //! @return     四元数から生成された行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix CreateFromQuaternion(const Quaternion& qua);
+    static Matrix4x4 CreateFromQuaternion(const Quaternion& qua);
 
     //-------------------------------------------------------------------------
     //! @brief      指定された軸と角度から回転行列を生成します.
@@ -2283,7 +2301,7 @@ public:
     //! @param [in]     radian      回転角(ラジアン).
     //! @return     回転行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix CreateFromAxisAngle(const Vector3& axis, float radian);
+    static Matrix4x4 CreateFromAxisAngle(const Vector3& axis, float radian);
 
     //-------------------------------------------------------------------------
     //! @brief      ヨー・ピッチ・ロール角から回転行列を生成します.
@@ -2293,7 +2311,7 @@ public:
     //! @param [in]     roll        ロール角(ラジアン).
     //! @return     回転行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix CreateRotationFromYawPitchRoll(float yaw, float pitch, float roll);
+    static Matrix4x4 CreateRotationFromYawPitchRoll(float yaw, float pitch, float roll);
 
     //-------------------------------------------------------------------------
     //! @brief      ビュー行列を生成します.
@@ -2303,7 +2321,7 @@ public:
     //! @param [in]     upward      上向きベクトル.
     //! @return     ビュー行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix CreateLookAt(const Vector3& position, const Vector3& target, const Vector3& upward);
+    static Matrix4x4 CreateLookAt(const Vector3& position, const Vector3& target, const Vector3& upward);
 
     //-------------------------------------------------------------------------
     //! @brief      ビュー行列を生成します.
@@ -2313,7 +2331,7 @@ public:
     //! @param [in]     upward      上向きベクトル.
     //! @return     ビュー行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix CreateLookTo(const Vector3& position, const Vector3& viewDir, const Vector3& upward);
+    static Matrix4x4 CreateLookTo(const Vector3& position, const Vector3& viewDir, const Vector3& upward);
 
     //-------------------------------------------------------------------------
     //! @brief      透視投影行列を生成します.
@@ -2324,7 +2342,7 @@ public:
     //! @param [in]     farClip     遠クリップ平面までの距離.
     //! @return     透視投影行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix CreatePerspective(float width, float height, float nearClip, float farClip);
+    static Matrix4x4 CreatePerspective(float width, float height, float nearClip, float farClip);
 
     //-------------------------------------------------------------------------
     //! @brief      視野角に基づいて透視投影行列を生成します.
@@ -2335,7 +2353,7 @@ public:
     //! @param [in]     farClip         遠クリップ平面までの距離.
     //! @return     透視投影行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix CreatePerspectiveFieldOfView(float fieldOfView, float aspectRatio, float nearClip, float farClip);
+    static Matrix4x4 CreatePerspectiveFieldOfView(float fieldOfView, float aspectRatio, float nearClip, float farClip);
 
     //-------------------------------------------------------------------------
     //! @brief      視野角に基づいてReverse-Z透視投影行列を生成します.
@@ -2345,7 +2363,7 @@ public:
     //! @param [in]     nearClip        近クリップ平面までの距離.
     //! @return     投資投影行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix CreatePerspectiveFieldOfViewReverseZ(float filedOfView, float aspectRatio, float nearClip);
+    static Matrix4x4 CreatePerspectiveFieldOfViewReverseZ(float filedOfView, float aspectRatio, float nearClip);
 
     //-------------------------------------------------------------------------
     //! @brief      カスタマイズした透視投影行列を生成します.
@@ -2358,7 +2376,7 @@ public:
     //! @param [in]     farClip     遠クリップ平面までの距離.
     //! @return     透視投影行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix CreatePerspectiveOffCenter(float left, float right, float bottom, float top, float nearClip, float farClip);
+    static Matrix4x4 CreatePerspectiveOffCenter(float left, float right, float bottom, float top, float nearClip, float farClip);
 
     //-------------------------------------------------------------------------
     //! @brief      正射影行列を生成します.
@@ -2369,7 +2387,7 @@ public:
     //! @param [in]     farClip     遠クリップ平面までの距離.
     //! @return     正射影行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix CreateOrthographic(float width, float height, float nearClip, float farClip);
+    static Matrix4x4 CreateOrthographic(float width, float height, float nearClip, float farClip);
 
     //-------------------------------------------------------------------------
     //! @brief      カスタマイズした正射影行列を生成します.
@@ -2382,7 +2400,7 @@ public:
     //! @param [in]     farClip     遠クリップ平面までの距離.
     //! @return     正射影行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix CreateOrthographicOffCenter(float left, float right, float bottom, float top, float nearClip, float farClip);
+    static Matrix4x4 CreateOrthographicOffCenter(float left, float right, float bottom, float top, float nearClip, float farClip);
 
     //-------------------------------------------------------------------------
     //! @brief      カスタマイズした正射影行列を生成します.
@@ -2395,7 +2413,7 @@ public:
     //! @param [in]     farClip     遠クリップ平面までの距離.
     //! @return     正射影行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix CreateOrthographicOffCenterReverseZ(float left, float right, float bottom, float top, float nearClip, float farClip);
+    static Matrix4x4 CreateOrthographicOffCenterReverseZ(float left, float right, float bottom, float top, float nearClip, float farClip);
 
     //-------------------------------------------------------------------------
     //! @brief      2つの行列を線形補間します.
@@ -2405,7 +2423,7 @@ public:
     //! @param [in]     amount      補間係数.
     //! @return     線形補間した行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix Lerp(const Matrix& a, const Matrix& b, float amount);
+    static Matrix4x4 Lerp(const Matrix4x4& a, const Matrix4x4& b, float amount);
 
     //-------------------------------------------------------------------------
     //! @brief      ビルボード行列を生成します.
@@ -2413,7 +2431,7 @@ public:
     //! @param[in]      value       ビュー行列.
     //! @return     ビルボード行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix CreateBillboard(const Matrix& value);
+    static Matrix4x4 CreateBillboard(const Matrix4x4& value);
 
     //-------------------------------------------------------------------------
     //! @brief      Y軸ビルボード行列を生成します.
@@ -2421,7 +2439,7 @@ public:
     //! @param[in]      value       ビュー行列.
     //! @return     Y軸ビルボード行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix CreateBillboardAxisY(const Matrix& value);
+    static Matrix4x4 CreateBillboardAxisY(const Matrix4x4& value);
 
     //-------------------------------------------------------------------------
     //! @brief      平行移動行列を左から掛けます.
@@ -2430,7 +2448,7 @@ public:
     //! @param[in]      mat         行列.
     //! @return     平行移動行列を左から掛けた結果を返却します.
     //-------------------------------------------------------------------------
-    static Matrix AppendTranslation(const Vector3& vec, Matrix& mat);
+    static Matrix4x4 AppendTranslation(const Vector3& vec, Matrix4x4& mat);
 
     //-------------------------------------------------------------------------
     //! @brief      平行移動行列を右から掛けます.
@@ -2439,7 +2457,7 @@ public:
     //! @param[in]      vec         平行移動量.
     //! @return     平行移動行列を右から掛けた結果を返却します.
     //-------------------------------------------------------------------------
-    static Matrix AppendTranslation(Matrix& mat, const Vector3& vec);
+    static Matrix4x4 AppendTranslation(Matrix4x4& mat, const Vector3& vec);
 
     //-------------------------------------------------------------------------
     //! @brief      スケール行列を左から掛けます.
@@ -2448,7 +2466,7 @@ public:
     //! @param[in]      mat         行列.
     //! @return     左からスケール行列を掛けた結果を返却します.
     //-------------------------------------------------------------------------
-    static Matrix AppendScale(const Vector3& vec, Matrix& mat);
+    static Matrix4x4 AppendScale(const Vector3& vec, Matrix4x4& mat);
 
     //-------------------------------------------------------------------------
     //! @brief      スケール行列を右から掛けます.
@@ -2457,7 +2475,7 @@ public:
     //! @param[in]      vec         スケール値.
     //! @return     右からスケール行列を掛けた結果を返却します.
     //-------------------------------------------------------------------------
-    static Matrix AppendScale(Matrix& mat, const Vector3& vec);
+    static Matrix4x4 AppendScale(Matrix4x4& mat, const Vector3& vec);
 
     //-------------------------------------------------------------------------
     //! @brief      明度を調整するカラー行列を生成します.
@@ -2465,7 +2483,7 @@ public:
     //! @param[in]      brightness  明度[0, 1].
     //! @return     明度を調整するカラー行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix CreateBrightnessMatrix(float brightness);
+    static Matrix4x4 CreateBrightnessMatrix(float brightness);
 
     //-------------------------------------------------------------------------
     //! @brief      彩度を調整するカラー行列を生成します.
@@ -2475,7 +2493,7 @@ public:
     //! @param[in]      b       青成分の彩度[0, 1]
     //! @return     彩度を調整するカラー行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix CreateSaturationMatrix(float r, float g, float b);
+    static Matrix4x4 CreateSaturationMatrix(float r, float g, float b);
 
     //-------------------------------------------------------------------------
     //! @brief      彩度を調整するカラー行列を生成します.
@@ -2483,7 +2501,7 @@ public:
     //! @param[in]      saturation  彩度[0, 1]
     //! @return     彩度を調整するカラー行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix CreateSaturationMatrix(float saturation);
+    static Matrix4x4 CreateSaturationMatrix(float saturation);
 
     //-------------------------------------------------------------------------
     //! @brief      コントラストを調整するカラー行列を生成します.
@@ -2491,7 +2509,7 @@ public:
     //! @param[in]      contrast    コントラスト[0, 1]
     //! @return     コントラストを調整するカラー行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix CreateContrastMatrix(float contrast);
+    static Matrix4x4 CreateContrastMatrix(float contrast);
 
     //-------------------------------------------------------------------------
     //! @brief      色相を調整するカラー行列を生成します.
@@ -2499,7 +2517,7 @@ public:
     //! @param[in]      hueDegree   色相[0度-360度].
     //! @return     色相を調整するカラー行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix CreateHueMatrix(float hueDegree);
+    static Matrix4x4 CreateHueMatrix(float hueDegree);
 
     //-------------------------------------------------------------------------
     //! @brief      セピアカラーを調整するカラー行列を生成します.
@@ -2507,7 +2525,7 @@ public:
     //! @param[in]      tone        セピアトーン[0, 1]
     //! @return     セピアカラーを調整するカラー行列返却します.
     //-------------------------------------------------------------------------
-    static Matrix CreateSepiaMatrix(float tone);
+    static Matrix4x4 CreateSepiaMatrix(float tone);
 
     //-------------------------------------------------------------------------
     //! @brief      グレイスケールカラーを調整するカラー行列を生成します.
@@ -2515,21 +2533,21 @@ public:
     //! @param[in]      tone        グレイスケールトーン[0, 1]
     //! @return     グレイスケールカラーを調整するカラー行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix CreateGrayScaleMatrix(float tone);
+    static Matrix4x4 CreateGrayScaleMatrix(float tone);
 
     //-------------------------------------------------------------------------
     //! @brief      白黒化のカラー行列を生成します.
     //! 
     //! @return     白黒化のカラー行列を生成します.
     //-------------------------------------------------------------------------
-    static Matrix CreateBlackAndWhiteMatrix();
+    static Matrix4x4 CreateBlackAndWhiteMatrix();
 
     //-------------------------------------------------------------------------
     //! @brief      色を反転するカラー行列を生成します.
     //! 
     //! @return     色を反転するカラー行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix CreateReverseColorMatrix();
+    static Matrix4x4 CreateReverseColorMatrix();
 
     //-------------------------------------------------------------------------
     //! @brief      ホワイトバランス調整行列を生成します.
@@ -2537,49 +2555,57 @@ public:
     //! @param[in]      value       色温度[K].
     //! @param[in]      base        ベースとなる色温度[K].
     //-------------------------------------------------------------------------
-    static Matrix CreateWhiteBalanceMatrix(float value, float base = 6504.0f);
+    static Matrix4x4 CreateWhiteBalanceMatrix(float value, float base = 6504.0f);
 
     //-------------------------------------------------------------------------
     //! @brief      CIE XYZ表色系からITU-R BT.601への変換行列を生成します.
     //! 
     //! @return     ITU-R BT.601 への変換行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix CreateXYZToBT601();
+    static Matrix4x4 CreateXYZToBT601();
 
     //-------------------------------------------------------------------------
     //! @brief      CIE XYZ表色系からITU-R BT.709への変換行列を生成します.
     //! 
     //! @return     ITU-R BT.709 への変換行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix CreateXYZToBT709();
+    static Matrix4x4 CreateXYZToBT709();
 
     //-------------------------------------------------------------------------
     //! @brief      CIE XYZ表色系からITU-R BT.2020への変換行列を生成します.
     //! 
     //! @return     ITU-R BT.2020 への変換行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix CreateXYZToBT2020();
+    static Matrix4x4 CreateXYZToBT2020();
 
     //-------------------------------------------------------------------------
     //! @brief      ITU-R BT.601 から　CIE XYZ 表色系への変換行列を生成します.
     //! 
     //! @return     CIE XYZ 表色系の変換行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix CreateBT601ToXYZ();
+    static Matrix4x4 CreateBT601ToXYZ();
 
     //-------------------------------------------------------------------------
     //! @brief      ITU-R BT.709 から　CIE XYZ 表色系への変換行列を生成します.
     //! 
     //! @return     CIE XYZ 表色系の変換行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix CreateBT709ToXYZ();
+    static Matrix4x4 CreateBT709ToXYZ();
 
     //-------------------------------------------------------------------------
     //! @brief      ITU-R BT.2020 から　CIE XYZ 表色系への変換行列を生成します.
     //! 
     //! @return     CIE XYZ 表色系の変換行列を返却します.
     //-------------------------------------------------------------------------
-    static Matrix CreateBT2020ToXYZ();
+    static Matrix4x4 CreateBT2020ToXYZ();
+
+    //-------------------------------------------------------------------------
+    //! @brief      4x3行列から4x4行列に変換します.
+    //! 
+    //! @param[in]      value       4x3行列.
+    //! @return     4x4行列に変換した結果を返却します.
+    //-------------------------------------------------------------------------
+    static Matrix4x4 FromMatrix4x3(const Matrix4x3& value);
 };
 
 
@@ -2890,7 +2916,7 @@ public:
     //! @param [in]     value       回転行列.
     //! @return     回転行列から生成した四元数を返却します.
     //-------------------------------------------------------------------------
-    static Quaternion CreateFromRotationMatrix(const Matrix& value);
+    static Quaternion CreateFromRotationMatrix(const Matrix4x4& value);
 
     //-------------------------------------------------------------------------
     //! @brief      オイラー角(XYZの順)を取得します.
@@ -2924,9 +2950,9 @@ public:
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-// Transform4x3 structure 
+// Matrix4x3 structure 
 ///////////////////////////////////////////////////////////////////////////////
-struct Transform4x3
+struct Matrix4x3
 {
     // MEMO : メモリレイアウトは列優先となっていますが,
     //        計算は Matrix クラスと同様にするために，行優先として計算します.
@@ -2961,12 +2987,12 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      コンストラクタです.
     //--------------------------------------------------------------------------
-    Transform4x3();
+    Matrix4x3();
 
     //-------------------------------------------------------------------------
     //! @brief      引数付きコンストラクタです.
     //--------------------------------------------------------------------------
-    Transform4x3(
+    Matrix4x3(
         float m11, float m12, float m13,
         float m21, float m22, float m23,
         float m31, float m32, float m33,
@@ -2992,21 +3018,21 @@ public:
     //! @param [in]     value       代入する値.
     //! @return     代入結果を返却します.
     //-------------------------------------------------------------------------
-    Transform4x3& operator = (const Transform4x3& value);
+    Matrix4x3& operator = (const Matrix4x3& value);
 
     //-------------------------------------------------------------------------
     //! @brief      正符号演算子です.
     //!
     //! @return     自分自身を値を返却します.
     //-------------------------------------------------------------------------
-    Transform4x3 operator + () const;
+    Matrix4x3 operator + () const;
 
     //-------------------------------------------------------------------------
     //! @brief      負符号演算子です.
     //
     //! @return     各成分にマイナスを付けた値を返却します.
     //-------------------------------------------------------------------------
-    Transform4x3 operator - () const;
+    Matrix4x3 operator - () const;
 
     //-------------------------------------------------------------------------
     //! @brief      乗算代入演算子です.
@@ -3014,7 +3040,7 @@ public:
     //! @param [in]     value       乗算する行列.
     //! @return     乗算結果を返却します.
     //-------------------------------------------------------------------------
-    Transform4x3& operator *= (const Transform4x3& value);
+    Matrix4x3& operator *= (const Matrix4x3& value);
 
     //-------------------------------------------------------------------------
     //! @brief      乗算演算子です.
@@ -3022,7 +3048,7 @@ public:
     //! @param [in]     value       乗算する値.
     //! @return     乗算結果を返却します.
     //-------------------------------------------------------------------------
-    Transform4x3 operator * (const Transform4x3& value) const;
+    Matrix4x3 operator * (const Matrix4x3& value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      等価比較演算子です.
@@ -3031,7 +3057,7 @@ public:
     //! @retval true    値が等価です.
     //! @retval false   値が非等価です.
     //-------------------------------------------------------------------------
-    bool operator == (const Transform4x3& value) const;
+    bool operator == (const Matrix4x3& value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      非等価比較演算子です.
@@ -3040,7 +3066,7 @@ public:
     //! @retval true    値が非等価です.
     //! @retval false   値が等価です.
     //-------------------------------------------------------------------------
-    bool operator != (const Transform4x3& value) const;
+    bool operator != (const Matrix4x3& value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      基底Xベクトルを取得します.
@@ -3083,22 +3109,14 @@ public:
     //! @param[in]      value       変換元のMatrix型の値.
     //! @return     変換結果を返却します.
     //--------------------------------------------------------------------------
-    static Transform4x3 FromMatrix(const Matrix& value);
-
-    //-------------------------------------------------------------------------
-    //! @brief      Transform3x4型からMatrix型へ変換します.
-    //! 
-    //! @param[in]      value       変換元のTransform3x4型の値.
-    //! @return     変換結果を返却します.
-    //-------------------------------------------------------------------------
-    static Matrix ToMatrix(const Transform4x3& value);
+    static Matrix4x3 FromMatrix4x4(const Matrix4x4& value);
 
     //-------------------------------------------------------------------------
     //! @brief      単位行列を生成します.
     //!
     //! @return     単位行列を返却します.
     //-------------------------------------------------------------------------
-    static Transform4x3 CreateIdentity();
+    static Matrix4x3 CreateIdentity();
 
     //-------------------------------------------------------------------------
     //! @brief      行列同士を乗算します.
@@ -3107,14 +3125,14 @@ public:
     //! @param [in]     rhs           入力行列.
     //! @return     乗算結果を返却します.
     //-------------------------------------------------------------------------
-    static Transform4x3 Multiply(const Transform4x3& lhs, const Transform4x3& rhs);
+    static Matrix4x3 Multiply(const Matrix4x3& lhs, const Matrix4x3& rhs);
 
     //-------------------------------------------------------------------------
     //! @brief      逆行列を求めます.
     //!
     //! @param [in]     value       逆行列を求める値.
     //-------------------------------------------------------------------------
-    static Transform4x3 Invert(const Transform4x3& value);
+    static Matrix4x3 Invert(const Matrix4x3& value);
 
     //-------------------------------------------------------------------------
     //! @brief      拡大縮小行列を生成します.
@@ -3122,7 +3140,7 @@ public:
     //! @param [in]     scale      拡大縮小値.
     //! @return     拡大縮小行列を返却します.
     //-------------------------------------------------------------------------
-    static Transform4x3 CreateScale(float scale);
+    static Matrix4x3 CreateScale(float scale);
 
     //-------------------------------------------------------------------------
     //! @brief      拡大縮小行列を生成します.
@@ -3132,7 +3150,7 @@ public:
     //! @param [in]     sz          Z成分の拡大縮小値.
     //! @return     拡大縮小行列を返却します.
     //-------------------------------------------------------------------------
-    static Transform4x3 CreateScale(float sx, float sy, float sz);
+    static Matrix4x3 CreateScale(float sx, float sy, float sz);
 
     //-------------------------------------------------------------------------
     //! @brief      拡大縮小行列を生成します.
@@ -3140,7 +3158,7 @@ public:
     //! @param [in]     value       拡大縮小値.
     //! @return     拡大縮小行列を返却します.
     //-------------------------------------------------------------------------
-    static Transform4x3 CreateScale(const Vector3& value);
+    static Matrix4x3 CreateScale(const Vector3& value);
 
     //-------------------------------------------------------------------------
     //! @brief      平行移動行列を生成します.
@@ -3150,7 +3168,7 @@ public:
     //! @param [in]     tz          Z成分の平行移動値.
     //! @return     平行移動行列を返却します.
     //-------------------------------------------------------------------------
-    static Transform4x3 CreateTranslation(float tx, float ty, float tz);
+    static Matrix4x3 CreateTranslation(float tx, float ty, float tz);
 
     //-------------------------------------------------------------------------
     //! @brief      平行移動行列を生成します.
@@ -3158,7 +3176,7 @@ public:
     //! @param [in]     translate   平行移動値.
     //! @return     平行移動行列を返却します.
     //-------------------------------------------------------------------------
-    static Transform4x3 CreateTranslation(const Vector3& value);
+    static Matrix4x3 CreateTranslation(const Vector3& value);
 
     //-------------------------------------------------------------------------
     //! @brief      X軸回りの回転行列を生成します.
@@ -3166,7 +3184,7 @@ public:
     //! @param [in]     radian         角度(ラジアン).
     //! @return     X軸回りの回転行列を返却します.
     //-------------------------------------------------------------------------
-    static Transform4x3 CreateRotationX(float radian);
+    static Matrix4x3 CreateRotationX(float radian);
 
     //-------------------------------------------------------------------------
     //! @brief      Y軸回りの回転行列を生成します.
@@ -3174,7 +3192,7 @@ public:
     //! @param [in]     radian         角度(ラジアン).
     //! @return     Y軸回りの回転行列を返却します.
     //-------------------------------------------------------------------------
-    static Transform4x3 CreateRotationY(float radian);
+    static Matrix4x3 CreateRotationY(float radian);
 
     //-------------------------------------------------------------------------
     //! @brief      Z軸回りの回転行列を生成します.
@@ -3182,7 +3200,7 @@ public:
     //! @param [in]     radian         角度(ラジアン).
     //! @return     Z軸回りの回転行列を返却します.
     //-------------------------------------------------------------------------
-    static Transform4x3 CreateRotationZ(float radian);
+    static Matrix4x3 CreateRotationZ(float radian);
 
     //-------------------------------------------------------------------------
     //! @brief      四元数から行列を生成します.
@@ -3190,7 +3208,7 @@ public:
     //! @param [in]     value       四元数.
     //! @return     四元数から生成された行列を返却します.
     //-------------------------------------------------------------------------
-    static Transform4x3 CreateFromQuaternion(const Quaternion& value);
+    static Matrix4x3 CreateFromQuaternion(const Quaternion& value);
 
     //-------------------------------------------------------------------------
     //! @brief      指定された軸と角度から回転行列を生成します.
@@ -3199,7 +3217,7 @@ public:
     //! @param [in]     radian      回転角(ラジアン).
     //! @return     回転行列を返却します.
     //-------------------------------------------------------------------------
-    static Transform4x3 CreateFromAxisAngle(const Vector3& axis, float radian);
+    static Matrix4x3 CreateFromAxisAngle(const Vector3& axis, float radian);
 
     //-------------------------------------------------------------------------
     //! @brief      ヨー・ピッチ・ロール角から回転行列を生成します.
@@ -3209,7 +3227,7 @@ public:
     //! @param [in]     roll        ロール角(ラジアン).
     //! @return     回転行列を返却します.
     //-------------------------------------------------------------------------
-    static Transform4x3 CreateRotationFromYawPitchRoll(float yaw, float pitch, float roll);
+    static Matrix4x3 CreateRotationFromYawPitchRoll(float yaw, float pitch, float roll);
 
     //-------------------------------------------------------------------------
     //! @brief      ビュー行列を生成します.
@@ -3219,7 +3237,7 @@ public:
     //! @param [in]     upward      上向きベクトル.
     //! @return     ビュー行列を返却します.
     //-------------------------------------------------------------------------
-    static Transform4x3 CreateLookAt(const Vector3& position, const Vector3& target, const Vector3& upward);
+    static Matrix4x3 CreateLookAt(const Vector3& position, const Vector3& target, const Vector3& upward);
 
     //-------------------------------------------------------------------------
     //! @brief      ビュー行列を生成します.
@@ -3229,7 +3247,7 @@ public:
     //! @param [in]     upward      上向きベクトル.
     //! @return     ビュー行列を返却します.
     //-------------------------------------------------------------------------
-    static Transform4x3 CreateLookTo(const Vector3& position, const Vector3& viewDir, const Vector3& upward);
+    static Matrix4x3 CreateLookTo(const Vector3& position, const Vector3& viewDir, const Vector3& upward);
 
     //-------------------------------------------------------------------------
     //! @brief      平行移動行列を右から掛けます.
@@ -3238,7 +3256,7 @@ public:
     //! @param[in]         rhs         平行移動量.
     //! @return     平行移動行列を右から掛けた結果を返却します.
     //-------------------------------------------------------------------------
-    static Transform4x3 AppendTranslation(Transform4x3& lhs, const Vector3& rhs);
+    static Matrix4x3 AppendTranslation(Matrix4x3& lhs, const Vector3& rhs);
 
     //-------------------------------------------------------------------------
     //! @brief      スケール行列を右から掛けます.
@@ -3247,7 +3265,7 @@ public:
     //! @param[in]      rhs         スケール値.
     //! @return     右からスケール行列を掛けた結果を返却します.
     //-------------------------------------------------------------------------
-    static Transform4x3 AppendScale(Transform4x3& lhs, const Vector3& rhs);
+    static Matrix4x3 AppendScale(Matrix4x3& lhs, const Vector3& rhs);
 };
 
 
@@ -3468,7 +3486,16 @@ public:
     //! @param[in]      matrix      変換行列.
     //! @return     変換結果を返却します.
     //-------------------------------------------------------------------------
-    static BoundingBox3 Transform(const BoundingBox3& box, const Matrix& matrix);
+    static BoundingBox3 Transform(const BoundingBox3& box, const Matrix4x4& matrix);
+
+    //-------------------------------------------------------------------------
+    //! @brief      指定行列で変換処理を行います.
+    //! 
+    //! @param[in]      box         バウンディングボックス.
+    //! @param[in]      matrix      変換行列.
+    //! @return     変換結果を返却します.
+    //-------------------------------------------------------------------------
+    static BoundingBox3 Transform(const BoundingBox3& box, const Matrix4x3& matrix);
 
     //------------------------------------------------------------------------
     //! @brief      頂点データからバウンディングスフィアを求めます.
@@ -3675,7 +3702,16 @@ public:
     //! @param[in]      matrix      変換行列.
     //! @return     変換したバウンディングスフィアを返却します.
     //------------------------------------------------------------------------
-    static BoundingSphere3 Transform(const BoundingSphere3& sphere, const Matrix& matrix);
+    static BoundingSphere3 Transform(const BoundingSphere3& sphere, const Matrix4x4& matrix);
+
+    //------------------------------------------------------------------------
+    //! @brief      指定行列で変換処理を行います.
+    //! 
+    //! @param[in]      sphere      バウンディングスフィア.
+    //! @param[in]      matrix      変換行列.
+    //! @return     変換したバウンディングスフィアを返却します.
+    //------------------------------------------------------------------------
+    static BoundingSphere3 Transform(const BoundingSphere3& sphere, const Matrix4x3& matrix);
 
     //------------------------------------------------------------------------
     //! @brief      2点の外接球を求めます.
@@ -4090,7 +4126,7 @@ Vector4 NormalizePlane(const Vector4& value);
 //! @param[in]      proj            射影行列です.
 //! @param[out]     planes          平面の格納先です.
 //------------------------------------------------------------------------------
-void CalcFrustumPlanes(const Matrix& view, const Matrix& proj, Vector4* planes);
+void CalcFrustumPlanes(const Matrix4x4& view, const Matrix4x4& proj, Vector4* planes);
 
 //-----------------------------------------------------------------------------
 //! @brief      平面とレイの交差点を求めます.

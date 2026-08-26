@@ -158,21 +158,21 @@ uint64_t ModelHolder::GetTotalInstanceCount() const
 }
 
 //-----------------------------------------------------------------------------
-//      バウンディングスフィアを取得します.
+//      ローカル座標系のバウンディングスフィアを取得します.
 //-----------------------------------------------------------------------------
-const BoundingSphere3& ModelHolder::GetSphere() const
+const BoundingSphere3& ModelHolder::GetLocalSphere() const
 {
     assert(m_pModel != nullptr);
-    return m_pModel->GetSphere();
+    return m_pModel->GetLocalSphere();
 }
 
 //-----------------------------------------------------------------------------
-//      バウンディングボックスを取得します.
+//      ローカル座標系のバウンディングボックスを取得します.
 //-----------------------------------------------------------------------------
-const BoundingBox3& ModelHolder::GetBox() const
+const BoundingBox3& ModelHolder::GetLocalBox() const
 {
     assert(m_pModel != nullptr);
-    return m_pModel->GetBox();
+    return m_pModel->GetLocalBox();
 }
 
 //-----------------------------------------------------------------------------
@@ -251,6 +251,21 @@ bool ModelHolder::FindMesh(const char* name, uint32_t& index) const
     }
 
     return m_pModel->FindMesh(name, index);
+}
+
+//-----------------------------------------------------------------------------
+//      インスタンスを検索します.
+//-----------------------------------------------------------------------------
+bool ModelHolder::FindInstance(const char* name, uint32_t& batchIndex, uint32_t& instanceIndex) const
+{
+    if (m_pModel == nullptr)
+    {
+        batchIndex    = UINT32_MAX;
+        instanceIndex = UINT32_MAX;
+        return false;
+    }
+
+    return m_pModel->FindInstance(name, batchIndex, instanceIndex);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

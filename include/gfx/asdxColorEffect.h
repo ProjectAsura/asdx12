@@ -138,7 +138,7 @@ private:
     //! 
     //! @return     カラー行列を返却します.
     //-------------------------------------------------------------------------
-    Matrix CalcColorMatrix() const;
+    Matrix4x4 CalcColorMatrix() const;
 };
 
 } // namespace asdx

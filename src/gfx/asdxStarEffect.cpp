@@ -301,7 +301,7 @@ asdx::ArrayView<StarLine> GetStarLines(STAR_DEF_TYPE type)
 //-----------------------------------------------------------------------------
 asdx::Vector4 ColorHue(const asdx::Vector4& color, float rad)
 {
-    asdx::Matrix hue = asdx::Matrix::CreateHueMatrix(rad);
+    auto hue = asdx::Matrix4x4::CreateHueMatrix(rad);
     return asdx::Vector4::Transform(color, hue);
 }
 

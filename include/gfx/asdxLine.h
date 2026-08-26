@@ -335,9 +335,9 @@ void DrawWireBone(
 //! @param[in]      color           カラー.
 //-----------------------------------------------------------------------------
 void DrawWireFrustum(
-    LineRenderer&   renderer,
-    const Matrix&   invViewProj,
-    const Vector4&  color);
+    LineRenderer&       renderer,
+    const Matrix4x4&    invViewProj,
+    const Vector4&      color);
 
 //-----------------------------------------------------------------------------
 //! @brief      ワイヤーフレーム軸を描画します.
@@ -350,12 +350,12 @@ void DrawWireFrustum(
 //! @param[in]      colorZ          Z軸のカラー.
 //-----------------------------------------------------------------------------
 void DrawWireAxis(
-    LineRenderer&   renderer,
-    const Matrix&   world,
-    float           length,
-    const Vector4&  colorX,
-    const Vector4&  colorY,
-    const Vector4&  colorZ);
+    LineRenderer&       renderer,
+    const Matrix4x4&    world,
+    float               length,
+    const Vector4&      colorX,
+    const Vector4&      colorY,
+    const Vector4&      colorZ);
 
 //-----------------------------------------------------------------------------
 //! @brief      六角形を描画します.

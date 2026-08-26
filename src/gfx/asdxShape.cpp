@@ -28,8 +28,8 @@ namespace {
 ///////////////////////////////////////////////////////////////////////////////
 struct CameraParam
 {
-    asdx::Matrix View;
-    asdx::Matrix Proj;
+    asdx::Matrix4x4 View;
+    asdx::Matrix4x4 Proj;
 };
 
 //-----------------------------------------------------------------------------
@@ -1590,7 +1590,7 @@ void ShapeStates::Term()
 //-----------------------------------------------------------------------------
 //      ビュー行列と射影行列を設定します.
 //-----------------------------------------------------------------------------
-void ShapeStates::SetViewProj(const asdx::Matrix& view, const asdx::Matrix& proj)
+void ShapeStates::SetViewProj(const asdx::Matrix4x4& view, const asdx::Matrix4x4& proj)
 {
     m_View = view;
     m_Proj = proj;
@@ -1663,13 +1663,13 @@ void ShapeStates::ApplyWireframeState(ID3D12GraphicsCommandList* pCmd)
 //-----------------------------------------------------------------------------
 //      ビュー行列を取得します.
 //-----------------------------------------------------------------------------
-const Matrix& ShapeStates::GetView() const
+const Matrix4x4& ShapeStates::GetView() const
 { return m_View; }
 
 //-----------------------------------------------------------------------------
 //      射影行列を取得します.
 //-----------------------------------------------------------------------------
-const Matrix& ShapeStates::GetProj() const
+const Matrix4x4& ShapeStates::GetProj() const
 { return m_Proj; }
 
 
@@ -1778,7 +1778,7 @@ bool ShapeParams::Init(uint32_t count)
     m_Params.resize(count);
     for(size_t i=0; i<count; ++i)
     {
-        m_Params[i].World = Matrix::CreateIdentity();
+        m_Params[i].World = Matrix4x4::CreateIdentity();
         m_Params[i].Color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
     }
 
@@ -1800,7 +1800,7 @@ void ShapeParams::Term()
 //-----------------------------------------------------------------------------
 //      ワールド行列を設定します.
 //-----------------------------------------------------------------------------
-void ShapeParams::SetWorld(uint32_t index, const asdx::Matrix& value)
+void ShapeParams::SetWorld(uint32_t index, const asdx::Matrix4x4& value)
 {
     assert(index < m_Params.size());
     m_Params[index].World = value;
@@ -1818,7 +1818,7 @@ void ShapeParams::SetColor(uint32_t index, const asdx::Vector4& value)
 //-----------------------------------------------------------------------------
 //      ワールド行列を取得します.
 //-----------------------------------------------------------------------------
-const Matrix& ShapeParams::GetWorld(uint32_t index) const
+const Matrix4x4& ShapeParams::GetWorld(uint32_t index) const
 {
     assert(index < m_Params.size());
     return m_Params[index].World;
@@ -2649,7 +2649,7 @@ bool BoneShape::Init(float length, float width)
     };
 
     // 基底変換行列
-    auto basis = asdx::Matrix(
+    auto basis = asdx::Matrix4x4(
         0.0f, 0.0f, 1.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
         1.0f, 0.0f, 0.0f, 0.0f,

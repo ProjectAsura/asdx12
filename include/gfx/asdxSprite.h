@@ -435,7 +435,7 @@ private:
     uint32_t                    m_MaxSpriteCount    = 0;                            //!< 最大スプライト数.
     uint32_t                    m_MaxBatchCount     = 0;                            //!< 最大バッチ数.
     uint8_t                     m_BufferIndex       = 0;                            //!< バッファインデックス.
-    Matrix                      m_Transform         = Matrix::CreateIdentity();     //!< 変換行列.
+    Matrix4x4                   m_Transform         = Matrix4x4::CreateIdentity();  //!< 変換行列.
     Vector2                     m_ScreenSize        = Vector2(0, 0);                //!< スクリーンサイズ.
     Unorm4                      m_Color             = {};                           //!< 頂点カラー.
     D3D12_GPU_DESCRIPTOR_HANDLE m_HandleSRV         = {};                           //!< シェーダリソースビュー.

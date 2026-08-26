@@ -92,7 +92,7 @@ void AppCamera::OnKey( uint32_t keyCode, bool isKeyDown, bool isAltDown )
 //-----------------------------------------------------------------------------
 //      ビュー行列を取得します.
 //-----------------------------------------------------------------------------
-const asdx::Matrix& AppCamera::GetView() const
+const asdx::Matrix4x4& AppCamera::GetView() const
 { return m_Camera.GetView(); }
 
 //-----------------------------------------------------------------------------

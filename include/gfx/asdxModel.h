@@ -486,18 +486,18 @@ public:
     uint64_t GetTotalInstanceCount() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      バウンディングスフィアを取得します.
+    //! @brief      ローカル座標系のバウンディングスフィアを取得します.
     //! 
-    //! @return     バウンディングスフィアを返却します.
+    //! @return     ローカル座標系のバウンディングスフィアを返却します.
     //-------------------------------------------------------------------------
-    const BoundingSphere3& GetSphere() const;
+    const BoundingSphere3& GetLocalSphere() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      バウンディングボックスを取得します.
+    //! @brief      ローカル座標系のバウンディングボックスを取得します.
     //! 
-    //! @return     バウンディングボックスを返却します.
+    //! @return     ローカル座標系のバウンディングボックスを返却します.
     //!------------------------------------------------------------------------
-    const BoundingBox3& GetBox() const;
+    const BoundingBox3& GetLocalBox() const;
 
     //-------------------------------------------------------------------------
     //! @brief      可視フラグを設定します.
@@ -577,8 +577,8 @@ private:
     ModelBinary                 m_Binary;                       //!< モデルバイナリです.
     std::vector<Mesh>           m_Meshes;                       //!< メッシュです.
     std::vector<Material>       m_Materials;                    //!< マテリアルです.
-    BoundingSphere3             m_BoundingSphere;               //!< バウンディングスフィアです.
-    BoundingBox3                m_BoundingBox;                  //!< バウンディングボックスです.
+    BoundingSphere3             m_LocalSphere;                  //!< ローカルバウンディングスフィアです.
+    BoundingBox3                m_LocalBox;                     //!< ローカルバウンディングボックスです.
     bool                        m_Visibility    = true;         //!< 可視フラグです.
     void*                       m_pUserData     = nullptr;      //!< ユーザーデータです.
     std::string                 m_BaseDir;                      //!< ベースディレクトリ.

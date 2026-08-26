@@ -276,42 +276,42 @@ const ColorEffect::Param& ColorEffect::GetParam() const
 //-----------------------------------------------------------------------------
 //      カラー行列を計算します.
 //-----------------------------------------------------------------------------
-Matrix ColorEffect::CalcColorMatrix() const
+Matrix4x4 ColorEffect::CalcColorMatrix() const
 {
-    Matrix result = Matrix::CreateIdentity();
+    Matrix4x4 result = Matrix4x4::CreateIdentity();
 
-    auto mtxHue         = Matrix::CreateHueMatrix(m_Param.HueDegree);
-    auto mtxSaturation  = Matrix::CreateSaturationMatrix(m_Param.Saturation.x, m_Param.Saturation.y, m_Param.Saturation.z);
-    auto mtxBrightness  = Matrix::CreateBrightnessMatrix(m_Param.Brightness);
-    auto mtxContrast    = Matrix::CreateContrastMatrix(m_Param.Contrast);
-    auto mtxGrayScale   = Matrix::CreateGrayScaleMatrix(m_Param.GrayScale);
-    auto mtxSepiaTone   = Matrix::CreateSepiaMatrix(m_Param.SepiaTone);
-    auto mtxWb          = Matrix::CreateWhiteBalanceMatrix(m_Param.WhiteBalance, 6504.0f);
-    auto mtxScale       = Matrix::CreateScale(m_Param.MulColor);
-    auto mtxAdd         = Matrix::CreateTranslation(m_Param.AddColor);
+    auto mtxHue         = Matrix4x4::CreateHueMatrix(m_Param.HueDegree);
+    auto mtxSaturation  = Matrix4x4::CreateSaturationMatrix(m_Param.Saturation.x, m_Param.Saturation.y, m_Param.Saturation.z);
+    auto mtxBrightness  = Matrix4x4::CreateBrightnessMatrix(m_Param.Brightness);
+    auto mtxContrast    = Matrix4x4::CreateContrastMatrix(m_Param.Contrast);
+    auto mtxGrayScale   = Matrix4x4::CreateGrayScaleMatrix(m_Param.GrayScale);
+    auto mtxSepiaTone   = Matrix4x4::CreateSepiaMatrix(m_Param.SepiaTone);
+    auto mtxWb          = Matrix4x4::CreateWhiteBalanceMatrix(m_Param.WhiteBalance, 6504.0f);
+    auto mtxScale       = Matrix4x4::CreateScale(m_Param.MulColor);
+    auto mtxAdd         = Matrix4x4::CreateTranslation(m_Param.AddColor);
 
-    result = Matrix::Multiply(mtxHue,        result);
-    result = Matrix::Multiply(mtxSaturation, result);
-    result = Matrix::Multiply(mtxBrightness, result);
-    result = Matrix::Multiply(mtxContrast,   result);
-    result = Matrix::Multiply(mtxGrayScale,  result);
-    result = Matrix::Multiply(mtxSepiaTone,  result);
-    result = Matrix::Multiply(mtxScale,      result);
-    result = Matrix::Multiply(mtxAdd,        result);
+    result = Matrix4x4::Multiply(mtxHue,        result);
+    result = Matrix4x4::Multiply(mtxSaturation, result);
+    result = Matrix4x4::Multiply(mtxBrightness, result);
+    result = Matrix4x4::Multiply(mtxContrast,   result);
+    result = Matrix4x4::Multiply(mtxGrayScale,  result);
+    result = Matrix4x4::Multiply(mtxSepiaTone,  result);
+    result = Matrix4x4::Multiply(mtxScale,      result);
+    result = Matrix4x4::Multiply(mtxAdd,        result);
 
     if (m_Param.BlackAndWhite)
     {
-        auto mtxBlackAndWhite = Matrix::CreateBlackAndWhiteMatrix();
-        result = Matrix::Multiply(mtxBlackAndWhite, result);
+        auto mtxBlackAndWhite = Matrix4x4::CreateBlackAndWhiteMatrix();
+        result = Matrix4x4::Multiply(mtxBlackAndWhite, result);
     }
 
     if (m_Param.Reverse)
     {
-        auto mtxReverse = Matrix::CreateReverseColorMatrix();
-        result = Matrix::Multiply(mtxReverse, result);
+        auto mtxReverse = Matrix4x4::CreateReverseColorMatrix();
+        result = Matrix4x4::Multiply(mtxReverse, result);
     }
 
-    result = Matrix::Multiply(mtxWb, result);
+    result = Matrix4x4::Multiply(mtxWb, result);
 
     return result;
 }

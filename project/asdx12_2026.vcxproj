@@ -233,6 +233,7 @@
     <ClCompile Include="..\src\fnd\asdxMouse.cpp" />
     <ClCompile Include="..\src\fnd\asdxOffsetAllocator.cpp" />
     <ClCompile Include="..\src\fnd\asdxPath.cpp" />
+    <ClCompile Include="..\src\fnd\asdxSceneNode.cpp" />
     <ClCompile Include="..\src\fnd\asdxStateMachine.cpp" />
     <ClCompile Include="..\src\fnd\asdxTablet.cpp" />
     <ClCompile Include="..\src\fnd\asdxThreadPool.cpp" />
@@ -351,6 +352,9 @@
     <ClInclude Include="..\include\fnd\asdxQueue.h" />
     <ClInclude Include="..\include\fnd\asdxRef.h" />
     <ClInclude Include="..\include\fnd\asdxRelativePtr.h" />
+    <ClInclude Include="..\include\fnd\asdxScene.h" />
+    <ClInclude Include="..\include\fnd\asdxSceneComponent.h" />
+    <ClInclude Include="..\include\fnd\asdxSceneNode.h" />
     <ClInclude Include="..\include\fnd\asdxSpinLock.h" />
     <ClInclude Include="..\include\fnd\asdxStack.h" />
     <ClInclude Include="..\include\fnd\asdxStateMachine.h" />
@@ -361,6 +365,7 @@
     <ClInclude Include="..\include\fnd\asdxThreadPool.h" />
     <ClInclude Include="..\include\fnd\asdxTimeTracker.h" />
     <ClInclude Include="..\include\fnd\asdxTokenizer.h" />
+    <ClInclude Include="..\include\fnd\asdxTrasnform.h" />
     <ClInclude Include="..\include\fw\asdxApp.h" />
     <ClInclude Include="..\include\fw\asdxAppCamera.h" />
     <ClInclude Include="..\include\fw\asdxBlockTaskManager.h" />

@@ -77,7 +77,7 @@ public:
     //! @param[in]      proj        射影行列
     //! @note       内部処理でダブルバッファ更新が行われます.
     //-------------------------------------------------------------------------
-    void SetViewProj(const Matrix& view, const Matrix& proj);
+    void SetViewProj(const Matrix4x4& view, const Matrix4x4& proj);
 
     //-------------------------------------------------------------------------
     //! @brief      不透明ステートを適用します.
@@ -110,14 +110,14 @@ public:
     //! 
     //! @return     ビュー行列を返却します.
     //-------------------------------------------------------------------------
-    const Matrix& GetView() const;
+    const Matrix4x4& GetView() const;
 
     //-------------------------------------------------------------------------
     //! @brief      射影行列を取得します.
     //! 
     //! @return     射影行列を返却します.
     //-------------------------------------------------------------------------
-    const Matrix& GetProj() const;
+    const Matrix4x4& GetProj() const;
 
 private:
     //=========================================================================
@@ -130,8 +130,8 @@ private:
     RefPtr<ID3D12Resource>      m_CameraBuffer;
     AllocationHolder            m_CameraBufferAllocation;
     uint8_t                     m_BufferIndex = 0;
-    Matrix                      m_View;
-    Matrix                      m_Proj;
+    Matrix4x4                   m_View;
+    Matrix4x4                   m_Proj;
 
     //=========================================================================
     // private methods.
@@ -185,7 +185,7 @@ public:
     //! @param[in]      index       番号.
     //! @param[in]      value       設定する値.
     //-------------------------------------------------------------------------
-    void SetWorld(uint32_t index, const Matrix& value);
+    void SetWorld(uint32_t index, const Matrix4x4& value);
 
     //-------------------------------------------------------------------------
     //! @brief      カラーを設定します.
@@ -201,7 +201,7 @@ public:
     //! @param[in]      index       番号.
     //! @return     ワールド行列を返却します.
     //-------------------------------------------------------------------------
-    const Matrix& GetWorld(uint32_t index) const;
+    const Matrix4x4& GetWorld(uint32_t index) const;
 
     //-------------------------------------------------------------------------
     //! @brief      カラーを取得します.
@@ -225,8 +225,8 @@ private:
     ///////////////////////////////////////////////////////////////////////////
     struct Param
     {
-        Matrix  World;
-        Vector4 Color;
+        Matrix4x4   World;
+        Vector4     Color;
     };
 
     //=========================================================================

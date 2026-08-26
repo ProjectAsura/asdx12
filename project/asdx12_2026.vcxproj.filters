@@ -459,6 +459,9 @@
     <ClCompile Include="..\src\fw\asdxFrameTaskManager.cpp">
       <Filter>ソース ファイル\fw</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\fnd\asdxSceneNode.cpp">
+      <Filter>ソース ファイル\fnd</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\edit\asdxEditParam.h">
@@ -835,6 +838,18 @@
     </ClInclude>
     <ClInclude Include="..\include\fw\asdxFrameTaskManager.h">
       <Filter>ヘッダー ファイル\fw</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fnd\asdxSceneNode.h">
+      <Filter>ヘッダー ファイル\fnd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fnd\asdxTrasnform.h">
+      <Filter>ヘッダー ファイル\fnd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fnd\asdxSceneComponent.h">
+      <Filter>ヘッダー ファイル\fnd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fnd\asdxScene.h">
+      <Filter>ソース ファイル\fnd</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

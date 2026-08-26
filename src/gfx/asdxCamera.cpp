@@ -102,7 +102,7 @@ namespace asdx {
 Camera::Camera()
 : m_Param()
 , m_Preset()
-, m_View( Matrix::CreateIdentity() )
+, m_View( Matrix4x4::CreateIdentity() )
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
@@ -177,7 +177,7 @@ void Camera::Reset()
 //-----------------------------------------------------------------------------
 //      ビュー行列を取得します.
 //-----------------------------------------------------------------------------
-const asdx::Matrix& Camera::GetView() const
+const asdx::Matrix4x4& Camera::GetView() const
 { return m_View; }
 
 //-----------------------------------------------------------------------------
@@ -355,14 +355,14 @@ void Camera::Update()
         { dir.Normalize(); }
 
         // 視線ベクトル軸とした回転行列を作成.
-        asdx::Matrix rotate = Matrix::CreateFromAxisAngle(dir, m_Param.Twist);
+        asdx::Matrix4x4 rotate = Matrix4x4::CreateFromAxisAngle(dir, m_Param.Twist);
 
         // アップベクトルを回転.
         upward = Vector3::Transform(upward, rotate);
     }
 
     // ビュー行列を更新.
-    m_View = Matrix::CreateLookAt(m_Param.Position, m_Param.Target, upward);
+    m_View = Matrix4x4::CreateLookAt(m_Param.Position, m_Param.Target, upward);
 }
 
 //-----------------------------------------------------------------------------

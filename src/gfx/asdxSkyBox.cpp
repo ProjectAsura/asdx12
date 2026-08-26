@@ -35,8 +35,8 @@ enum ROOT_PARAM
 ///////////////////////////////////////////////////////////////////////////////
 struct Param
 {
-    asdx::Matrix View;
-    asdx::Matrix Proj;
+    asdx::Matrix4x4 View;
+    asdx::Matrix4x4 Proj;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -155,7 +155,7 @@ const DoubledConstantBuffer& SkyContext::GetBuffer() const
 //-----------------------------------------------------------------------------
 //      定数バッファを更新します.
 //-----------------------------------------------------------------------------
-void SkyContext::UpdateBuffer(const Matrix& view, const Matrix& proj)
+void SkyContext::UpdateBuffer(const Matrix4x4& view, const Matrix4x4& proj)
 {
     Param param = {};
     param.View = view;

@@ -578,7 +578,7 @@ void SpriteRenderer::SetScreenSize(uint32_t w, uint32_t h)
     float sx = (m_ScreenSize.x > 0.0f) ? 2.0f / m_ScreenSize.x : 0.0f;
     float sy = (m_ScreenSize.y > 0.0f) ? 2.0f / m_ScreenSize.y : 0.0f;
 
-    m_Transform = Matrix(
+    m_Transform = Matrix4x4(
           sx,   0.0f,   0.0f,   0.0f,
         0.0f,    -sy,   0.0f,   0.0f,
         0.0f,   0.0f,   1.0f,   0.0f,

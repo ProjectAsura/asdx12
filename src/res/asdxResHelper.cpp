@@ -43,7 +43,7 @@ res::Unorm3 ToUnorm3(const Unorm3& value)
 res::Unorm4 ToUnorm4(const Unorm4& value)
 { return res::Unorm4(value.x, value.y, value.z, value.w); }
 
-res::Float3x4 ToFloat3x4(const Transform4x3& value)
+res::Float3x4 ToFloat3x4(const Matrix4x3& value)
 {
     return res::Float3x4(
         value._11, value._21, value._31, value._41,
@@ -51,7 +51,7 @@ res::Float3x4 ToFloat3x4(const Transform4x3& value)
         value._13, value._23, value._33, value._43);
 }
 
-res::Float4x4 ToFloat4x4(const Matrix& value)
+res::Float4x4 ToFloat4x4(const Matrix4x4& value)
 {
     return res::Float4x4(
         value._11, value._12, value._13, value._14,
@@ -95,19 +95,19 @@ Uint3 FromUint3(const res::Uint3& value)
 Uint4 FromUint4(const res::Uint4& value)
 { return Uint4(value.X(), value.Y(), value.Z(), value.W()); }
 
-Transform4x3 FromFloat3x4(const res::Float3x4& value)
+Matrix4x3 FromFloat3x4(const res::Float3x4& value)
 {
     // コンストラクタには転置状態で渡す必要あり.
-    return Transform4x3(
+    return Matrix4x3(
         value.M11(), value.M21(), value.M31(),
         value.M12(), value.M22(), value.M32(),
         value.M13(), value.M23(), value.M33(),
         value.M14(), value.M24(), value.M34());
 }
 
-Matrix FromFloat4x4(const res::Float4x4& value)
+Matrix4x4 FromFloat4x4(const res::Float4x4& value)
 {
-    return Matrix(
+    return Matrix4x4(
         value.M11(), value.M12(), value.M13(), value.M14(),
         value.M21(), value.M22(), value.M23(), value.M24(),
         value.M31(), value.M32(), value.M33(), value.M34(),

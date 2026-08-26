@@ -226,12 +226,12 @@ const res::MotionClip* MotionBinary::GetClip(uint32_t index) const
 //-----------------------------------------------------------------------------
 //      ルート変換行列を取得します.
 //-----------------------------------------------------------------------------
-Transform4x3 MotionBinary::GetRootTransform() const
+Matrix4x3 MotionBinary::GetRootTransform() const
 {
     if (m_Blob.empty())
-        return Transform4x3::CreateIdentity();
+        return Matrix4x3::CreateIdentity();
 
-    return *reinterpret_cast<const Transform4x3*>(res::GetMotionBinary(m_Blob.data())->RootTransform());
+    return *reinterpret_cast<const Matrix4x3*>(res::GetMotionBinary(m_Blob.data())->RootTransform());
 }
 
 //-----------------------------------------------------------------------------
@@ -307,7 +307,7 @@ Vector3 MotionTrackProxy::FindScaleKey(const res::MotionTrack* track, float time
 //-----------------------------------------------------------------------------
 //      ローカル変換行列を求めます.
 //-----------------------------------------------------------------------------
-Transform4x3 MotionTrackProxy::FindLocalTransform(const res::MotionTrack* track, float timeSec)
+Matrix4x3 MotionTrackProxy::FindLocalTransform(const res::MotionTrack* track, float timeSec)
 {
     assert(track != nullptr);
     auto S = FindScaleKey(track, timeSec);
@@ -319,7 +319,7 @@ Transform4x3 MotionTrackProxy::FindLocalTransform(const res::MotionTrack* track,
 //-----------------------------------------------------------------------------
 //      スケールなしのローカル変換行列を求めます.
 //-----------------------------------------------------------------------------
-Transform4x3 MotionTrackProxy::FindLocalTransformNoScale(const res::MotionTrack* track, float timeSec)
+Matrix4x3 MotionTrackProxy::FindLocalTransformNoScale(const res::MotionTrack* track, float timeSec)
 {
     assert(track != nullptr);
     auto R = FindRotationKey(track, timeSec);
@@ -330,23 +330,23 @@ Transform4x3 MotionTrackProxy::FindLocalTransformNoScale(const res::MotionTrack*
 //-----------------------------------------------------------------------------
 //      変換行列を求めます.
 //-----------------------------------------------------------------------------
-Transform4x3 MotionTrackProxy::CalcTransform(const Vector3& scale, const Quaternion& rotation, const Vector3& translation)
+Matrix4x3 MotionTrackProxy::CalcTransform(const Vector3& scale, const Quaternion& rotation, const Vector3& translation)
 {
-    Transform4x3 result;
-    result  = Transform4x3::CreateScale(scale);
-    result *= Transform4x3::CreateFromQuaternion(rotation);
-    result  = Transform4x3::AppendTranslation(result, translation);
+    Matrix4x3 result;
+    result  = Matrix4x3::CreateScale(scale);
+    result *= Matrix4x3::CreateFromQuaternion(rotation);
+    result  = Matrix4x3::AppendTranslation(result, translation);
     return result;
 }
 
 //-----------------------------------------------------------------------------
 //      変換行列をスケールなしで求めます.
 //-----------------------------------------------------------------------------
-Transform4x3 MotionTrackProxy::CalcTransformNoScale(const Quaternion& rotation, const Vector3& translation)
+Matrix4x3 MotionTrackProxy::CalcTransformNoScale(const Quaternion& rotation, const Vector3& translation)
 {
-    Transform4x3 result;
-    result = Transform4x3::CreateFromQuaternion(rotation);
-    result = Transform4x3::AppendTranslation(result, translation);
+    Matrix4x3 result;
+    result = Matrix4x3::CreateFromQuaternion(rotation);
+    result = Matrix4x3::AppendTranslation(result, translation);
     return result;
 }
 

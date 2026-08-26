@@ -327,12 +327,12 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      バインドポーズ行列を取得します.
     //-------------------------------------------------------------------------
-    static Transform4x3 GetBindPoseMatrix(const res::Bone& bone);
+    static Matrix4x3 GetBindPoseMatrix(const res::Bone& bone);
 
     //-------------------------------------------------------------------------
     //! @brief      バインドポーズ逆行列を取得します.
     //-------------------------------------------------------------------------
-    static Transform4x3 GetInverseBindPoseMatrix(const res::Bone& bone);
+    static Matrix4x3 GetInverseBindPoseMatrix(const res::Bone& bone);
 
     //-------------------------------------------------------------------------
     //! @brief      子ボーンID配列を取得します.
@@ -470,7 +470,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      変換行列の配列を取得します.
     //-------------------------------------------------------------------------
-    static ArrayView<Transform4x3> GetTransforms(const res::ModelBatch& batch);
+    static ArrayView<Matrix4x3> GetTransforms(const res::ModelBatch& batch);
 
     //-------------------------------------------------------------------------
     //! @brief      メッシュ番号の配列を取得します.

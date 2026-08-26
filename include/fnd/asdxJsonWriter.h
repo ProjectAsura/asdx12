@@ -206,14 +206,14 @@ public:
     void Write(const char* tag, const Quaternion& value);
 
     //-------------------------------------------------------------------------
-    //! @brief      Matrix型を書き込みます.
+    //! @brief      Matrix4x4型を書き込みます.
     //-------------------------------------------------------------------------
-    void Write(const char* tag, const Matrix& value);
+    void Write(const char* tag, const Matrix4x4& value);
 
     //-------------------------------------------------------------------------
-    //! @brief      Transform4x3型を書き込みます.
+    //! @brief      Matrix4x3型を書き込みます.
     //-------------------------------------------------------------------------
-    void Write(const char* tag, const Transform4x3& value);
+    void Write(const char* tag, const Matrix4x3& value);
 
     //-------------------------------------------------------------------------
     //! @brief      bool型配列を書き込みます.
@@ -291,14 +291,14 @@ public:
     void Write(const char* tag, std::span<Quaternion> values);
 
     //-------------------------------------------------------------------------
-    //! @brief      Matrix型配列を書き込みます.
+    //! @brief      Matrix4x4型配列を書き込みます.
     //-------------------------------------------------------------------------
-    void Write(const char* tag, std::span<Matrix> values);
+    void Write(const char* tag, std::span<Matrix4x4> values);
 
     //-------------------------------------------------------------------------
-    //! @brief      Transform4x3型配列を書き込みます.
+    //! @brief      Matrix4x3型配列を書き込みます.
     //-------------------------------------------------------------------------
-    void Write(const char* tag, std::span<Transform4x3> values);
+    void Write(const char* tag, std::span<Matrix4x3> values);
 
     //-------------------------------------------------------------------------
     //! @brief      文字列型配列を書き込みます.

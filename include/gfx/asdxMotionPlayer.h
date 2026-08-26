@@ -284,28 +284,28 @@ public:
     //! @param[in]      deltaSec            経過時間(秒).
     //! @param[in]      rootTransform       ルート変換行列.
     //-------------------------------------------------------------------------
-    void Update(float deltaSec, const Transform4x3& rootTransform);
+    void Update(float deltaSec, const Matrix4x3& rootTransform);
 
     //-------------------------------------------------------------------------
     //! @brief      ローカル変換行列を取得します.
     //! 
     //! @return     ローカル変換行列を返却します.
     //--------------------------------------------------------------------------
-    const std::vector<Transform4x3>& GetLocalTransforms() const;
+    const std::vector<Matrix4x3>& GetLocalTransforms() const;
 
     //-------------------------------------------------------------------------
     //! @brief      ワールド変換行列を取得します.
     //!
     //! @return     ワールド変換行列を返却します.
     //-------------------------------------------------------------------------
-    const std::vector<Transform4x3>& GetWorldTransforms() const;
+    const std::vector<Matrix4x3>& GetWorldTransforms() const;
 
     //-------------------------------------------------------------------------
     //! @brief      行列パレットを取得します.
     //! 
     //! @return     行列パレットを返却します.
     //-------------------------------------------------------------------------
-    const std::vector<Transform4x3>& GetMatrixPalettes() const;
+    const std::vector<Matrix4x3>& GetMatrixPalettes() const;
 
     //-------------------------------------------------------------------------
     //! @brief      現在の再生時間を取得します.
@@ -380,7 +380,7 @@ public:
     //! 
     //! @param[in]      rootTransform       ルート変換行列.
     //-------------------------------------------------------------------------
-    void FrameAdvance(const Transform4x3& rootTransform);
+    void FrameAdvance(const Matrix4x3& rootTransform);
 
     //-------------------------------------------------------------------------
     //! @brief      再生完了イベントリスナーを登録します.
@@ -401,9 +401,9 @@ private:
     // private variables.
     //=========================================================================
     const Model*                m_pModel            = nullptr;
-    std::vector<Transform4x3>   m_LocalTransforms   = {};
-    std::vector<Transform4x3>   m_WorldTransforms   = {};
-    std::vector<Transform4x3>   m_MatrixPalettes    = {};
+    std::vector<Matrix4x3>      m_LocalTransforms   = {};
+    std::vector<Matrix4x3>      m_WorldTransforms   = {};
+    std::vector<Matrix4x3>      m_MatrixPalettes    = {};
     MotionUpdater               m_Updater[2]        = {};
     uint8_t                     m_CurrIndex         = 0;
     uint8_t                     m_NextIndex         = 1;
@@ -427,7 +427,7 @@ private:
     //! 
     //! @param[in]      rootTransform       ルート変換行列.
     //-------------------------------------------------------------------------
-    void UpdateWorldTransform(const Transform4x3& rootTransform);
+    void UpdateWorldTransform(const Matrix4x3& rootTransform);
 
     //-------------------------------------------------------------------------
     //! @brief      行列パレットを更新します.
