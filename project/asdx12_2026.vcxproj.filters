@@ -88,6 +88,12 @@
     <Filter Include="ヘッダー ファイル\snd">
       <UniqueIdentifier>{ba1760f9-2c78-42e0-b65f-cc0a146b6a19}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ヘッダー ファイル\rs">
+      <UniqueIdentifier>{05a1bfdc-a724-443f-86d2-43c03ea6316b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\rs">
+      <UniqueIdentifier>{bc43c4c3-6d0c-4d55-9d0e-816e64a748df}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\edit\asdxEditParam.cpp">
@@ -459,8 +465,29 @@
     <ClCompile Include="..\src\fw\asdxFrameTaskManager.cpp">
       <Filter>ソース ファイル\fw</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\fnd\asdxSceneNode.cpp">
-      <Filter>ソース ファイル\fnd</Filter>
+    <ClCompile Include="..\src\rs\asdxSceneNode.cpp">
+      <Filter>ソース ファイル\rs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\rs\asdxSpotLightComponent.cpp">
+      <Filter>ソース ファイル\rs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\rs\asdxPointLightComponent.cpp">
+      <Filter>ソース ファイル\rs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\rs\asdxDirectionalLightComponent.cpp">
+      <Filter>ソース ファイル\rs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\rs\asdxStaticModelComponent.cpp">
+      <Filter>ソース ファイル\rs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\rs\asdxSkeletalModelComponent.cpp">
+      <Filter>ソース ファイル\rs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\rs\asdxCameraComponent.cpp">
+      <Filter>ソース ファイル\rs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\rs\asdxDecalComponent.cpp">
+      <Filter>ソース ファイル\rs</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -848,8 +875,35 @@
     <ClInclude Include="..\include\fnd\asdxSceneComponent.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\fnd\asdxScene.h">
-      <Filter>ソース ファイル\fnd</Filter>
+    <ClInclude Include="..\include\rs\asdxScene.h">
+      <Filter>ヘッダー ファイル\rs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\rs\asdxSceneComponent.h">
+      <Filter>ヘッダー ファイル\rs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\rs\asdxSceneNode.h">
+      <Filter>ヘッダー ファイル\rs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\rs\asdxSpotLightComponent.h">
+      <Filter>ヘッダー ファイル\rs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\rs\asdxDirectionalLightComponent.h">
+      <Filter>ヘッダー ファイル\rs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\rs\asdxPointLightComponent.h">
+      <Filter>ヘッダー ファイル\rs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\rs\asdxStaticModelComponent.h">
+      <Filter>ヘッダー ファイル\rs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\rs\asdxSkeletalModelComponent.h">
+      <Filter>ヘッダー ファイル\rs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\rs\asdxCameraComponent.h">
+      <Filter>ヘッダー ファイル\rs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\rs\asdxDecalComponent.h">
+      <Filter>ヘッダー ファイル\rs</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -10,8 +10,9 @@
 //-----------------------------------------------------------------------------
 #include <vector>
 #include <memory>
+#include <string>
 #include <fnd/asdxTrasnform.h>
-#include <fnd/asdxSceneComponent.h>
+#include <rs/asdxSceneComponent.h>
 
 
 namespace asdx {
@@ -96,6 +97,27 @@ public:
     const Transform& GetTransform() const;
 
     //-------------------------------------------------------------------------
+    //! @brief      名前を設定します.
+    //! 
+    //! @param[in]      value       設定する名前.
+    //-------------------------------------------------------------------------
+    void SetName(const std::string& value);
+
+    //-------------------------------------------------------------------------
+    //! @brief      名前を設定します.
+    //! 
+    //! @param[in]      value       設定する名前.
+    //-------------------------------------------------------------------------
+    void SetName(const char* value);
+
+    //-------------------------------------------------------------------------
+    //! @brief      名前を取得します.
+    //! 
+    //! @return     名前を返却します.
+    //-------------------------------------------------------------------------
+    const std::string& GetName() const;
+
+    //-------------------------------------------------------------------------
     //! @brief      コンポーネントを追加します.
     //! 
     //! @return     追加したコンポーネントを返却します.
@@ -151,6 +173,7 @@ private:
     std::vector<SceneNode*>     m_Children;
     Transform                   m_Transform;
     std::vector<ComponentItem>  m_Components;
+    std::string                 m_Name;
 
     //=========================================================================
     // private methods.
