@@ -477,16 +477,7 @@
     <ClCompile Include="..\src\rs\asdxDirectionalLightComponent.cpp">
       <Filter>ソース ファイル\rs</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\rs\asdxStaticModelComponent.cpp">
-      <Filter>ソース ファイル\rs</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\rs\asdxSkeletalModelComponent.cpp">
-      <Filter>ソース ファイル\rs</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\rs\asdxCameraComponent.cpp">
-      <Filter>ソース ファイル\rs</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\rs\asdxDecalComponent.cpp">
+    <ClCompile Include="..\src\rs\asdxModelComponent.cpp">
       <Filter>ソース ファイル\rs</Filter>
     </ClCompile>
   </ItemGroup>
@@ -893,16 +884,10 @@
     <ClInclude Include="..\include\rs\asdxPointLightComponent.h">
       <Filter>ヘッダー ファイル\rs</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\rs\asdxStaticModelComponent.h">
+    <ClInclude Include="..\include\rs\asdxModelComponent.h">
       <Filter>ヘッダー ファイル\rs</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\rs\asdxSkeletalModelComponent.h">
-      <Filter>ヘッダー ファイル\rs</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\rs\asdxCameraComponent.h">
-      <Filter>ヘッダー ファイル\rs</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\rs\asdxDecalComponent.h">
+    <ClInclude Include="..\include\rs\asdxMotionPlayerComponent.h">
       <Filter>ヘッダー ファイル\rs</Filter>
     </ClInclude>
   </ItemGroup>

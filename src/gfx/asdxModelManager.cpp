@@ -41,231 +41,78 @@ bool ModelHolder::IsValid() const
 { return (m_pModel != nullptr) && (m_Hash != 0); }
 
 //-----------------------------------------------------------------------------
-//      マテリアル数を取得します.
+//      モデルを取得します.
 //-----------------------------------------------------------------------------
-uint32_t ModelHolder::GetMaterialCount() const
+const Model* ModelHolder::GetModel() const
+{ return m_pModel; }
+
+const Model* ModelHolder::operator->() const
+{ return m_pModel; }
+
+//-----------------------------------------------------------------------------
+//      入れ替えます.
+//-----------------------------------------------------------------------------
+void ModelHolder::Swap(ModelHolder& value)
 {
-    assert(m_pModel != nullptr);
-    return m_pModel->GetMaterialCount();
+    auto pModel = m_pModel;
+    auto hash   = m_Hash;
+
+    m_pModel = value.m_pModel;
+    m_Hash   = value.m_Hash;
+
+    value.m_pModel = pModel;
+    value.m_Hash   = hash;
 }
 
 //-----------------------------------------------------------------------------
-//      マテリアルを取得します.
+//      入れ替えます.
 //-----------------------------------------------------------------------------
-const Material* ModelHolder::GetMaterial(uint32_t index) const
+void ModelHolder::Swap(ModelHolder&& value)
 {
-    assert(m_pModel != nullptr);
-    return m_pModel->GetMaterial(index);
+    auto pModel = m_pModel;
+    auto hash   = m_Hash;
+
+    m_pModel = value.m_pModel;
+    m_Hash   = value.m_Hash;
+
+    value.m_pModel = pModel;
+    value.m_Hash   = hash;
 }
 
 //-----------------------------------------------------------------------------
-//      リソースマテリアルを取得します.
+//      等価比較演算子です.
 //-----------------------------------------------------------------------------
-const res::Material& ModelHolder::GetResMaterial(uint32_t index) const
+bool ModelHolder::operator == (const ModelHolder& value) const
 {
-    assert(m_pModel != nullptr);
-    return m_pModel->GetResMaterial(index);
+    return (m_pModel == value.m_pModel)
+        && (m_Hash   == value.m_Hash);
 }
 
 //-----------------------------------------------------------------------------
-//      ボーンを持つかどうかチェックします.
+//      非等価比較演算子です.
 //-----------------------------------------------------------------------------
-bool ModelHolder::HasBone() const
+bool ModelHolder::operator != (const ModelHolder& value) const
 {
-    assert(m_pModel != nullptr);
-    return m_pModel->HasBone();
+    return (m_pModel != value.m_pModel)
+        || (m_Hash   != value.m_Hash);
 }
 
 //-----------------------------------------------------------------------------
-//      ボーン数を取得します.
+//      代入演算子です.
 //-----------------------------------------------------------------------------
-uint32_t ModelHolder::GetBoneCount() const
+ModelHolder& ModelHolder::operator = (const ModelHolder& value)
 {
-    assert(m_pModel != nullptr);
-    return m_pModel->GetBoneCount();
+    ModelHolder(value.m_pModel, value.m_Hash).Swap(*this);
+    return *this;
 }
 
 //-----------------------------------------------------------------------------
-//      ボーンを取得します.
+//      ムーブ代入演算子です.
 //-----------------------------------------------------------------------------
-const res::Bone& ModelHolder::GetBone(uint32_t index) const
+ModelHolder& ModelHolder::operator = (ModelHolder&& value)
 {
-    assert(m_pModel != nullptr);
-    return m_pModel->GetBone(index);
-}
-
-//-----------------------------------------------------------------------------
-//      メッシュ数を取得します.
-//-----------------------------------------------------------------------------
-uint32_t ModelHolder::GetMeshCount() const
-{
-    assert(m_pModel != nullptr);
-    return m_pModel->GetMeshCount();
-}
-
-//-----------------------------------------------------------------------------
-//      メッシュを取得します(const版).
-//-----------------------------------------------------------------------------
-const Mesh* ModelHolder::GetMesh(uint32_t index) const
-{
-    assert(m_pModel != nullptr);
-    return m_pModel->GetMesh(index);
-}
-
-//-----------------------------------------------------------------------------
-//      メッシュを取得します.
-//-----------------------------------------------------------------------------
-Mesh* ModelHolder::GetMesh(uint32_t index)
-{
-    assert(m_pModel != nullptr);
-    return m_pModel->GetMesh(index);
-}
-
-//-----------------------------------------------------------------------------
-//      リソースメッシュを取得します.
-//-----------------------------------------------------------------------------
-const res::Mesh& ModelHolder::GetResMesh(uint32_t index) const
-{
-    assert(m_pModel != nullptr);
-    return m_pModel->GetResMesh(index);
-}
-
-//-----------------------------------------------------------------------------
-//      バッチ数を取得します.
-//-----------------------------------------------------------------------------
-uint32_t ModelHolder::GetBatchCount() const
-{
-    assert(m_pModel != nullptr);
-    return m_pModel->GetBatchCount();
-}
-
-//-----------------------------------------------------------------------------
-//      バッチを取得します.
-//-----------------------------------------------------------------------------
-const res::ModelBatch& ModelHolder::GetBatch(uint32_t index) const
-{
-    assert(m_pModel != nullptr);
-    return m_pModel->GetBatch(index);
-}
-
-//-----------------------------------------------------------------------------
-//      総インスタンス数を取得します.
-//-----------------------------------------------------------------------------
-uint64_t ModelHolder::GetTotalInstanceCount() const
-{
-    assert(m_pModel != nullptr);
-    return m_pModel->GetTotalInstanceCount();
-}
-
-//-----------------------------------------------------------------------------
-//      ローカル座標系のバウンディングスフィアを取得します.
-//-----------------------------------------------------------------------------
-const BoundingSphere3& ModelHolder::GetLocalSphere() const
-{
-    assert(m_pModel != nullptr);
-    return m_pModel->GetLocalSphere();
-}
-
-//-----------------------------------------------------------------------------
-//      ローカル座標系のバウンディングボックスを取得します.
-//-----------------------------------------------------------------------------
-const BoundingBox3& ModelHolder::GetLocalBox() const
-{
-    assert(m_pModel != nullptr);
-    return m_pModel->GetLocalBox();
-}
-
-//-----------------------------------------------------------------------------
-//      可視フラグを設定します.
-//-----------------------------------------------------------------------------
-void ModelHolder::SetVisibility(bool value)
-{
-    assert(m_pModel != nullptr);
-    return m_pModel->SetVisibility(value);
-}
-
-//-----------------------------------------------------------------------------
-//      可視フラグを取得します.
-//-----------------------------------------------------------------------------
-bool ModelHolder::IsVisible() const
-{
-    assert(m_pModel != nullptr);
-    return m_pModel->IsVisible();
-}
-
-//-----------------------------------------------------------------------------
-//      ユーザーデータを設定します.
-//-----------------------------------------------------------------------------
-void ModelHolder::SetUserData(void* value)
-{
-    assert(m_pModel != nullptr);
-    return m_pModel->SetUserData(value);
-}
-
-//-----------------------------------------------------------------------------
-//      ユーザーデータを取得します.
-//-----------------------------------------------------------------------------
-void* ModelHolder::GetUserData() const
-{
-    assert(m_pModel != nullptr);
-    return m_pModel->GetUserData();
-}
-
-//-----------------------------------------------------------------------------
-//      ボーンを検索します.
-//-----------------------------------------------------------------------------
-bool ModelHolder::FindBone(const char* name, uint32_t& index) const
-{
-    if (m_pModel == nullptr)
-    {
-        index = UINT32_MAX;
-        return false;
-    }
-
-    return m_pModel->FindBone(name, index);
-}
-
-//-----------------------------------------------------------------------------
-//      マテリアルを検索します.
-//-----------------------------------------------------------------------------
-bool ModelHolder::FindMaterial(const char* name, uint32_t& index) const
-{
-    if (m_pModel == nullptr)
-    {
-        index = UINT32_MAX;
-        return false;
-    }
-
-    return m_pModel->FindMaterial(name, index);
-}
-
-//-----------------------------------------------------------------------------
-//      メッシュを検索します.
-//-----------------------------------------------------------------------------
-bool ModelHolder::FindMesh(const char* name, uint32_t& index) const
-{
-    if (m_pModel == nullptr)
-    {
-        index = UINT32_MAX;
-        return false;
-    }
-
-    return m_pModel->FindMesh(name, index);
-}
-
-//-----------------------------------------------------------------------------
-//      インスタンスを検索します.
-//-----------------------------------------------------------------------------
-bool ModelHolder::FindInstance(const char* name, uint32_t& batchIndex, uint32_t& instanceIndex) const
-{
-    if (m_pModel == nullptr)
-    {
-        batchIndex    = UINT32_MAX;
-        instanceIndex = UINT32_MAX;
-        return false;
-    }
-
-    return m_pModel->FindInstance(name, batchIndex, instanceIndex);
+    ModelHolder(value.m_pModel, value.m_Hash).Swap(*this);
+    return *this;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
