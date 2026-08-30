@@ -102,10 +102,10 @@ void IndexHeap::Free(uint32_t value)
     auto nodeId = value / 32;
     auto bitsId = value % 32;
     assert(nodeId < m_Capacity);
-    auto wasFull = (m_pNodes[nodeId].Flags == UINT32_MAX);
+    auto full = (m_pNodes[nodeId].Flags == UINT32_MAX);
     m_pNodes[nodeId].Flags &= ~(0x1u << bitsId);
 
-    if (wasFull)
+    if (full)
     { m_FreeList.push_back(&m_pNodes[nodeId]); }
     m_FreeCount++;
 }

@@ -8,8 +8,8 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <fnd/asdxFunction.h>
-#include <functional>
-#include <thread>
+#include <functional> // for std::bind
+#include <thread>     // for std::thread
 
 
 TEST(FunctionTest, Basic)
