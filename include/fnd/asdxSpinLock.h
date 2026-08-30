@@ -43,7 +43,10 @@ public:
     {
         uint32_t old = 0;
         while(!m_State.compare_exchange_weak(old, 1u, std::memory_order_acquire))
-        { _mm_pause(); }
+        {
+            old = 0; // 失敗したら戻しておく.
+            _mm_pause();
+        }
     }
 
     //-------------------------------------------------------------------------

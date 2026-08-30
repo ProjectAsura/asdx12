@@ -204,8 +204,10 @@ private:
     uint32_t    m_FreeStorage           = 0;        //!< 未使用ストレージ.
     uint32_t    m_UsedBinsTop           = 0;        //!< 使用中ビンの先頭.
     Node*       m_Nodes                 = nullptr;  //!< ノード.
-    uint32_t*   m_FreeNodes             = nullptr;  //!< フリーノード.
-    int64_t     m_FreeOffset            = -1;       //!< フリーオフセット.
+    //uint32_t*   m_FreeNodes             = nullptr;  //!< フリーノード.
+    //int64_t     m_FreeOffset            = -1;       //!< フリーオフセット.
+    uint32_t    m_FreeHead              = Node::UNUSED;
+    uint32_t    m_FreeCount             = 0;
 
     std::array<uint8_t,  TOP_BINS_COUNT>    m_UsedBins;     //!< 使用中ビン.
     std::array<uint32_t, LEAF_BINS_COUNT>   m_BinIndices;   //!< ビン番号.
@@ -228,6 +230,10 @@ private:
     //! @param[in]      index       ノード番号.
     //-------------------------------------------------------------------------
     void RemoveNode(uint32_t index);
+
+    void PushFreeNode(uint32_t index);
+
+    uint32_t PopFreeNode();
 
     //-------------------------------------------------------------------------
     //! @brief      ノードを生成します.
