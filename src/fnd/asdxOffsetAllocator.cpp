@@ -171,8 +171,6 @@ OffsetAllocator::OffsetAllocator(OffsetAllocator&& other) noexcept
 , m_FreeStorage         (other.m_FreeStorage)
 , m_UsedBinsTop         (other.m_UsedBinsTop)
 , m_Nodes               (other.m_Nodes)
-//, m_FreeNodes           (other.m_FreeNodes)
-//, m_FreeOffset          (other.m_FreeOffset)
 , m_FreeHead            (other.m_FreeHead)
 , m_FreeCount           (other.m_FreeCount)
 , m_UsedBins            (other.m_UsedBins)
@@ -181,8 +179,6 @@ OffsetAllocator::OffsetAllocator(OffsetAllocator&& other) noexcept
     other.m_Nodes               = nullptr;
     other.m_FreeHead            = Node::UNUSED;
     other.m_FreeCount           = 0;
-    //other.m_FreeNodes           = nullptr;
-    //other.m_FreeOffset          = -1;
     other.m_MaxAllocatableCount = 0;
     other.m_UsedBinsTop         = 0;
 }
@@ -209,12 +205,6 @@ void OffsetAllocator::Term()
         m_Nodes = nullptr;
     }
 
-    //if (m_FreeNodes)
-    //{
-    //    delete [] m_FreeNodes;
-    //    m_FreeNodes = nullptr;
-    //}
-
     for(auto i=0u; i<TOP_BINS_COUNT; ++i)
         m_UsedBins[i] = 0;
 
@@ -228,7 +218,6 @@ void OffsetAllocator::Term()
 
     m_FreeHead              = Node::UNUSED;
     m_FreeCount             = 0;
-    //m_FreeOffset            = -1;
 }
 
 //-----------------------------------------------------------------------------
@@ -236,9 +225,8 @@ void OffsetAllocator::Term()
 //-----------------------------------------------------------------------------
 void OffsetAllocator::Reset()
 {
-    m_FreeStorage           = 0;
-    m_UsedBinsTop           = 0;
-//    m_FreeOffset            = int64_t(m_MaxAllocatableCount);
+    m_FreeStorage = 0;
+    m_UsedBinsTop = 0;
 
     for(auto i=0u; i<TOP_BINS_COUNT; ++i)
         m_UsedBins[i] = 0;
@@ -251,28 +239,14 @@ void OffsetAllocator::Reset()
         delete [] m_Nodes;
         m_Nodes = nullptr;
     }
-    //if (m_FreeNodes)
-    //{
-    //    delete [] m_FreeNodes;
-    //    m_FreeNodes = nullptr;
-    //}
 
     m_Nodes = new Node[m_MaxAllocatableCount + 1];
-    //m_FreeNodes = new uint32_t[m_MaxAllocatableCount + 1];
-
-    //for(auto i=0u; i<=m_MaxAllocatableCount; ++i)
-    //{
-    //    m_FreeNodes[i] = m_MaxAllocatableCount - i;
-    //}
 
     m_FreeHead  = m_MaxAllocatableCount;
     m_FreeCount = m_MaxAllocatableCount + 1;    // 関数最後の初期化用のInsertNode() で１個減って正しい値になる.
 
     for(auto i=0u; i < m_MaxAllocatableCount + 1; ++i)
-    {
-        m_Nodes[i].BinListPrev = 
-            (i == 0) ? Node::UNUSED : i - 1;
-    }
+        m_Nodes[i].BinListPrev = (i == 0) ? Node::UNUSED : (i - 1);
 
     InsertNode(m_Size, 0);
 }
@@ -438,7 +412,6 @@ void OffsetAllocator::Free(OffsetHandle& handle)
     auto neighborPrev = node.NeighborPrev;
 
     // フリーリストへと削除されたノードを挿入する.
-    //m_FreeNodes[++m_FreeOffset] = nodeIndex;
     PushFreeNode(nodeIndex);
 
     // ビンに(結合された)フリーノードを挿入する.
@@ -497,11 +470,8 @@ uint32_t OffsetAllocator::InsertNode(uint32_t size, uint32_t offset)
 
     // フリーリストのノードを取り出し、ビンリンクリストの先頭に挿入 (next = old top).
     auto topNodeIndex = m_BinIndices[binIndex];
-    //auto nodeIndex    = m_FreeNodes[m_FreeOffset--];
     auto nodeIndex = PopFreeNode();
     assert(nodeIndex != Node::UNUSED);
-    //m_FreeHead = m_Nodes[nodeIndex].BinListPrev;
-    //--m_FreeCount;
     if (nodeIndex == Node::UNUSED)
         return Node::UNUSED;
 
@@ -560,10 +530,6 @@ void OffsetAllocator::RemoveNode(uint32_t nodeIndex)
     }
 
     // フリーリストへノードを挿入.
-    //m_FreeNodes[++m_FreeOffset] = nodeIndex;
-    //m_Nodes[nodeIndex].BinListPrev = m_FreeHead;
-    //m_FreeHead = nodeIndex;
-    //++m_FreeCount;
     PushFreeNode(nodeIndex);
     m_FreeStorage -= node.DataSize;
 }
@@ -580,6 +546,9 @@ OffsetAllocator::Node OffsetAllocator::GenNode(uint32_t offset, uint32_t size, u
     return node;
 }
 
+//-----------------------------------------------------------------------------
+//      フリーノードを追加します.
+//-----------------------------------------------------------------------------
 void OffsetAllocator::PushFreeNode(uint32_t index)
 {
     assert(m_Nodes != nullptr);
@@ -598,6 +567,9 @@ void OffsetAllocator::PushFreeNode(uint32_t index)
     ++m_FreeCount;
 }
 
+//-----------------------------------------------------------------------------
+//      フリーノードを取り出します.
+//-----------------------------------------------------------------------------
 uint32_t OffsetAllocator::PopFreeNode()
 {
     assert(m_FreeCount > 0);
@@ -618,6 +590,7 @@ uint32_t OffsetAllocator::PopFreeNode()
 
     return nodeIndex;
 }
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // ThreadSafeOffsetAllocator class

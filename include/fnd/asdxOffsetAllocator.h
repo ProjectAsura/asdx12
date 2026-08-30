@@ -199,15 +199,13 @@ private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    uint32_t    m_Size                  = 0;        //!< メモリサイズ.
-    uint32_t    m_MaxAllocatableCount   = 0;        //!< 最大確保可能回数.
-    uint32_t    m_FreeStorage           = 0;        //!< 未使用ストレージ.
-    uint32_t    m_UsedBinsTop           = 0;        //!< 使用中ビンの先頭.
-    Node*       m_Nodes                 = nullptr;  //!< ノード.
-    //uint32_t*   m_FreeNodes             = nullptr;  //!< フリーノード.
-    //int64_t     m_FreeOffset            = -1;       //!< フリーオフセット.
-    uint32_t    m_FreeHead              = Node::UNUSED;
-    uint32_t    m_FreeCount             = 0;
+    uint32_t    m_Size                  = 0;            //!< メモリサイズ.
+    uint32_t    m_MaxAllocatableCount   = 0;            //!< 最大確保可能回数.
+    uint32_t    m_FreeStorage           = 0;            //!< 未使用ストレージ.
+    uint32_t    m_UsedBinsTop           = 0;            //!< 使用中ビンの先頭.
+    Node*       m_Nodes                 = nullptr;      //!< ノード.
+    uint32_t    m_FreeHead              = Node::UNUSED; //!< フリーリストの先頭番号.
+    uint32_t    m_FreeCount             = 0;            //!< フリーノードの数.
 
     std::array<uint8_t,  TOP_BINS_COUNT>    m_UsedBins;     //!< 使用中ビン.
     std::array<uint32_t, LEAF_BINS_COUNT>   m_BinIndices;   //!< ビン番号.
@@ -231,8 +229,18 @@ private:
     //-------------------------------------------------------------------------
     void RemoveNode(uint32_t index);
 
+    //-------------------------------------------------------------------------
+    //! @brief      フリーノードを追加します.
+    //! 
+    //! @param[in]      index       ノード番号.
+    //-------------------------------------------------------------------------
     void PushFreeNode(uint32_t index);
 
+    //-------------------------------------------------------------------------
+    //! @brief      フリーノードを取り出します.
+    //! 
+    //! @return     ノード番号を返却します.
+    //-------------------------------------------------------------------------
     uint32_t PopFreeNode();
 
     //-------------------------------------------------------------------------

@@ -8,6 +8,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <fnd/asdxFunction.h>
+#include <functional>
 #include <thread>
 
 
@@ -53,7 +54,7 @@ TEST(FunctionTest, Basic)
     {
         struct FakePass
         {
-            asdx::Action<void> action;
+            asdx::Action<> action;
         };
 
         FakePass pass = {};
@@ -120,4 +121,64 @@ TEST(FunctionTest, Thread)
         thread.join();
         EXPECT_TRUE(called);
     }
+}
+
+TEST(FunctionTest, Copy)
+{
+    int count = 0;
+
+    asdx::Function<void()> a = [&]() { ++count; };
+    asdx::Function<void()> b = a;
+
+    a();
+    b();
+
+    EXPECT_EQ(count, 2);
+}
+
+TEST(FunctionTest, Move)
+{
+    int count = 0;
+
+    asdx::Function<void()> a = [&]() { ++count; };
+    asdx::Function<void()> b = std::move(a);
+
+    EXPECT_FALSE(a);
+    EXPECT_TRUE(b);
+
+    b();
+
+    EXPECT_EQ(count, 1);
+}
+
+TEST(FunctionTest, EmptyCopy)
+{
+    asdx::Function<void()> a;
+    asdx::Function<void()> b = a;
+
+    EXPECT_FALSE(b);
+}
+
+TEST(FunctionTest, SelfAssignment)
+{
+    asdx::Function<void()> f = []() {};
+    f = f;
+
+    EXPECT_TRUE(f);
+    f();
+}
+
+TEST(FunctionTest, Bind)
+{
+    int result = 0;
+
+    auto bound = std::bind(
+        [](int& output, int value) { output = value; },
+        std::ref(result),
+        42);
+
+    asdx::Function<void(), 128> f = bound;
+    f();
+
+    EXPECT_EQ(result, 42);
 }

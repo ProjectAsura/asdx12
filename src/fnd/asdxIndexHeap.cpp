@@ -41,7 +41,17 @@ bool IndexHeap::Init(uint32_t count)
     for(auto i=0u; i<allocCount; ++i)
     {
         m_pNodes[i].Offset = 32u * i;
-        m_pNodes[i].Flags  = 0;
+
+        // 1ノードは32個のインデックスを管理するため、このノードで有効なビット数を求めます。
+        // 最後のノードでは、count を超えた分のインデックスが存在しない場合があります.
+        auto validBits = count - m_pNodes[i].Offset;
+        if (validBits > 32u)
+        { validBits = 32u; }
+
+        // 有効なビットが32個未満の場合は、存在しないインデックスを使用済みにして
+        // Alloc()から返されないようにします.
+        m_pNodes[i].Flags = (validBits == 32u) ? 0u : UINT32_MAX << validBits;
+
         m_FreeList.push_back(&m_pNodes[i]);
     }
     m_FreeCount = count;
@@ -92,9 +102,10 @@ void IndexHeap::Free(uint32_t value)
     auto nodeId = value / 32;
     auto bitsId = value % 32;
     assert(nodeId < m_Capacity);
+    auto wasFull = (m_pNodes[nodeId].Flags == UINT32_MAX);
     m_pNodes[nodeId].Flags &= ~(0x1u << bitsId);
 
-    if (m_pNodes[nodeId].Flags == 0)
+    if (wasFull)
     { m_FreeList.push_back(&m_pNodes[nodeId]); }
     m_FreeCount++;
 }
