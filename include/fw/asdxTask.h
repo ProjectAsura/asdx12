@@ -8,6 +8,7 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
+#include <fnd/asdxMacro.h>
 #include <fnd/asdxList.h>
 
 
@@ -44,6 +45,13 @@ struct TaskBase : public List<TaskBase>::Node
     //! @brief      描画時の処理です.
     //-------------------------------------------------------------------------
     virtual void OnDraw() {}
+
+#if ASDX_DEBUG
+    //-------------------------------------------------------------------------
+    //! @brief      デバッグ用処理です.
+    //-------------------------------------------------------------------------
+    virtual void OnDebug() {}
+#endif
 
     //-------------------------------------------------------------------------
     //! @brief      完了フラグを取得します.
@@ -91,17 +99,7 @@ public:
     //! @brief      タスクを生成します.
     //-------------------------------------------------------------------------
     template<typename T, class... Args>
-    T* CreateTask(Args&&... args)
-    {
-        auto buf = Alloc(sizeof(T));
-        if (!buf)
-            return nullptr;
-
-        auto pTask = new (buf) T(std::forward<Args>(args)...);
-        pTask->OnCreate();
-        m_TaskList.push_back(pTask);
-        return pTask;
-    }
+    T* CreateTask(Args&&... args);
 
     //-------------------------------------------------------------------------
     //! @brief      タスクを削除します.
@@ -165,5 +163,21 @@ protected:
     //-------------------------------------------------------------------------
     virtual void Free(void* ptr) = 0;
 };
+
+//-----------------------------------------------------------------------------
+//      タスクを生成します.
+//-----------------------------------------------------------------------------
+template<typename T, class... Args>
+T* TaskManagerBase::CreateTask(Args&&... args)
+{
+    auto buf = Alloc(sizeof(T));
+    if (!buf)
+        return nullptr;
+
+    auto pTask = new (buf) T(std::forward<Args>(args)...);
+    pTask->OnCreate();
+    m_TaskList.push_back(pTask);
+    return pTask;
+}
 
 } // namespace asdx
