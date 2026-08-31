@@ -83,5 +83,68 @@ TEST(QueueTest, Basic)
     queue.clear();
     EXPECT_EQ(queue.size(), 0);
     EXPECT_TRUE(queue.empty());
+}
 
+TEST(QueueTest, IgnoresNullNode)
+{
+    asdx::Queue<IntNode> queue;
+    IntNode node(1);
+
+    queue.push(nullptr);
+
+    EXPECT_TRUE(queue.empty());
+    EXPECT_EQ(queue.size(), 0);
+    EXPECT_EQ(queue.pop(), nullptr);
+
+    queue.push(&node);
+    EXPECT_EQ(queue.pop(), &node);
+    EXPECT_TRUE(queue.empty());
+}
+
+TEST(QueueTest, ReusesPoppedNode)
+{
+    IntNode node0(1);
+    IntNode node1(2);
+    IntNode node2(3);
+
+    asdx::Queue<IntNode> queue;
+    queue.push(&node0);
+    queue.push(&node1);
+    queue.push(&node2);
+
+    EXPECT_EQ(queue.pop(), &node0);
+    queue.push(&node0);
+
+    EXPECT_EQ(queue.size(), 3);
+    EXPECT_EQ(queue.pop(), &node1);
+    EXPECT_EQ(queue.pop(), &node2);
+    EXPECT_EQ(queue.pop(), &node0);
+    EXPECT_TRUE(queue.empty());
+}
+
+TEST(QueueTest, ReusesNodesAfterClear)
+{
+    IntNode node0(1);
+    IntNode node1(2);
+    IntNode node2(3);
+
+    asdx::Queue<IntNode> queue;
+    queue.push(&node0);
+    queue.push(&node1);
+    queue.push(&node2);
+    queue.clear();
+
+    EXPECT_TRUE(queue.empty());
+    EXPECT_EQ(queue.size(), 0);
+
+    queue.push(&node2);
+    queue.push(&node0);
+    queue.push(&node1);
+
+    EXPECT_EQ(queue.size(), 3);
+    EXPECT_EQ(queue.pop(), &node2);
+    EXPECT_EQ(queue.pop(), &node0);
+    EXPECT_EQ(queue.pop(), &node1);
+    EXPECT_EQ(queue.pop(), nullptr);
+    EXPECT_TRUE(queue.empty());
 }

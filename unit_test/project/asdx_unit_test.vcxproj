@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
@@ -68,16 +68,25 @@
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\fnd\ArrayViewTest.cpp" />
     <ClCompile Include="..\src\fnd\BitTest.cpp" />
     <ClCompile Include="..\src\fnd\ChunkAllocatorTest.cpp" />
+    <ClCompile Include="..\src\fnd\FrameHeapTest.cpp" />
     <ClCompile Include="..\src\fnd\FunctionTest.cpp" />
     <ClCompile Include="..\src\fnd\IndexHeapTest.cpp" />
     <ClCompile Include="..\src\fnd\JobSystemTest.cpp" />
     <ClCompile Include="..\src\fnd\ListTest.cpp" />
+    <ClCompile Include="..\src\fnd\MathTest.cpp" />
+    <ClCompile Include="..\src\fnd\MessageTest.cpp" />
+    <ClCompile Include="..\src\fnd\MiscTest.cpp" />
     <ClCompile Include="..\src\fnd\OffsetAllocatorTest.cpp" />
     <ClCompile Include="..\src\fnd\QueueTest.cpp" />
     <ClCompile Include="..\src\fnd\RelativePtrTest.cpp" />
+    <ClCompile Include="..\src\fnd\SpinLockTest.cpp" />
     <ClCompile Include="..\src\fnd\StackTest.cpp" />
+    <ClCompile Include="..\src\fnd\ThreadPoolTest.cpp" />
+    <ClCompile Include="..\src\fnd\TokenizerTest.cpp" />
+    <ClCompile Include="..\src\fnd\TransformTest.cpp" />
     <ClCompile Include="..\src\gfx\DisposerTest.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

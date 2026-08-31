@@ -80,12 +80,14 @@ void FrameHeap::Reset()
 //-----------------------------------------------------------------------------
 void* FrameHeap::Alloc(size_t size, size_t alignment)
 {
-    auto upsize = RoundUp(size, alignment);
-    if (GetRestSize() < upsize)
+    const auto address = reinterpret_cast<uintptr_t>(m_pBuffer + m_Offset);
+    const auto padding = (alignment - address % alignment) % alignment;
+    const auto upsize  = RoundUp(size, alignment);
+    if (GetRestSize() < padding || GetRestSize() - padding < upsize)
     { return nullptr; }
 
-    auto ptr = m_pBuffer + m_Offset;
-    m_Offset += upsize;
+    auto ptr = m_pBuffer + m_Offset + padding;
+    m_Offset += padding + upsize;
     return ptr;
 }
 

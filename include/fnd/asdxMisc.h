@@ -1,6 +1,6 @@
 ﻿//-----------------------------------------------------------------------------
 // File : asdxMisc.h
-// Desc : Utility Moudle.
+// Desc : Miscellaneous Utility Moudle.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 #pragma once
@@ -53,6 +53,7 @@ inline const char* ToChar(const char8_t* value) noexcept
 { return reinterpret_cast<const char*>(value); }
 #endif
 
+#if _HAS_CXX20
 //-----------------------------------------------------------------------------
 //! @brief      文字数を数えます.
 //-----------------------------------------------------------------------------
@@ -119,6 +120,7 @@ inline int u8cmp(const char8_t* lhs, const char8_t* rhs)
 
     return c1 - c2;
 }
+#endif
 
 //-----------------------------------------------------------------------------
 //! @brief      ワイド文字列に変換します.
@@ -314,13 +316,13 @@ inline index_t BinarySearch(const T items[], index_t count, const T& key, Compar
         int ret = comp(items[mid], key);
         if (ret == 0)
             return mid;
-        else if (ret < key)
+        else if (ret < 0)
             lhs = mid + 1;
         else
             rhs = mid;
     }
 
-    return SIZE_MAX;
+    return static_cast<index_t>(SIZE_MAX);
 }
 
 //-----------------------------------------------------------------------------
@@ -338,7 +340,7 @@ inline index_t BinarySearch(const T items[], index_t count, const T& key)
 {
     return BinarySearch(items, count, key,
         [](const T& lhs, const T& rhs)
-        { return lhs == rhs; });
+        { return (lhs > rhs) - (lhs < rhs); });
 }
 
 //-----------------------------------------------------------------------------

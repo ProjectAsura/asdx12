@@ -79,6 +79,19 @@ struct TestListener3 : public asdx::JobListener
     bool Called[COUNT_OF_JOB_ID] = {};
 };
 
+struct OrderListener : public asdx::JobListener
+{
+    explicit OrderListener(int* order)
+        : Order(order)
+    {}
+
+    void OnRun(uint32_t jobId) override
+    {
+        *Order = static_cast<int>(jobId);
+    }
+
+    int* Order = nullptr;
+};
 
 TEST(JobSystemTest, Basic)
 {
@@ -147,4 +160,86 @@ TEST(JobSystemTest, Basic)
 
     asdx::TermJobSystem();
     EXPECT_TRUE(asdx::GetJobSystem() == nullptr);
+}
+
+TEST(JobSystemTest, Lifecycle)
+{
+    asdx::TermJobSystem();
+    EXPECT_TRUE(asdx::GetJobSystem() == nullptr);
+
+    EXPECT_TRUE(asdx::InitJobSystem(2, 1));
+    auto pJobSystem = asdx::GetJobSystem();
+    EXPECT_TRUE(pJobSystem != nullptr);
+
+    EXPECT_FALSE(asdx::InitJobSystem(2, 1));
+    EXPECT_EQ(asdx::GetJobSystem(), pJobSystem);
+
+    asdx::TermJobSystem();
+    EXPECT_TRUE(asdx::GetJobSystem() == nullptr);
+    asdx::TermJobSystem();
+    EXPECT_TRUE(asdx::GetJobSystem() == nullptr);
+}
+
+TEST(JobSystemTest, EmptyRunAndReuse)
+{
+    EXPECT_TRUE(asdx::InitJobSystem(2, 2));
+    auto pJobSystem = asdx::GetJobSystem();
+
+    pJobSystem->Run();
+
+    TestListener1 listener;
+    auto job = asdx::Job(JOB_ID_01, 0, 1, &listener);
+    EXPECT_TRUE(pJobSystem->Add(job));
+    pJobSystem->Run();
+    EXPECT_TRUE(listener.Called[JOB_ID_01]);
+
+    listener.Called[JOB_ID_01] = false;
+    pJobSystem->Run();
+    EXPECT_TRUE(listener.Called[JOB_ID_01]);
+
+    EXPECT_TRUE(pJobSystem->Remove(job));
+    asdx::TermJobSystem();
+}
+
+TEST(JobSystemTest, RejectsDuplicateAndMissingJobs)
+{
+    EXPECT_TRUE(asdx::InitJobSystem(2, 1));
+    auto pJobSystem = asdx::GetJobSystem();
+    TestListener1 listener;
+    auto job = asdx::Job(JOB_ID_01, 0, 1, &listener);
+
+    EXPECT_TRUE(pJobSystem->Add(job));
+    EXPECT_FALSE(pJobSystem->Add(job));
+    EXPECT_TRUE(pJobSystem->Remove(job));
+    EXPECT_FALSE(pJobSystem->Remove(job));
+
+    asdx::TermJobSystem();
+}
+
+TEST(JobSystemTest, RunsJobsInDependencyOrder)
+{
+    EXPECT_TRUE(asdx::InitJobSystem(4, 2));
+    auto pJobSystem = asdx::GetJobSystem();
+    int order[3] = { -1, -1, -1 };
+    OrderListener listener0(&order[0]);
+    OrderListener listener1(&order[1]);
+    OrderListener listener2(&order[2]);
+
+    auto job0 = asdx::Job(0, 0, 1, &listener0);
+    auto job1 = asdx::Job(1, 1, 2, &listener1);
+    auto job2 = asdx::Job(2, 2, 3, &listener2);
+    EXPECT_TRUE(pJobSystem->Add(job0));
+    EXPECT_TRUE(pJobSystem->Add(job1));
+    EXPECT_TRUE(pJobSystem->Add(job2));
+
+    pJobSystem->Run();
+
+    EXPECT_EQ(order[0], 0);
+    EXPECT_EQ(order[1], 1);
+    EXPECT_EQ(order[2], 2);
+
+    EXPECT_TRUE(pJobSystem->Remove(job0));
+    EXPECT_TRUE(pJobSystem->Remove(job1));
+    EXPECT_TRUE(pJobSystem->Remove(job2));
+    asdx::TermJobSystem();
 }

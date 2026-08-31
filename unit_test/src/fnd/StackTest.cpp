@@ -84,3 +84,67 @@ TEST(StackTest, Basic)
     EXPECT_EQ(stack.size(), 0);
     EXPECT_TRUE(stack.empty());
 }
+
+TEST(StackTest, IgnoresNullNode)
+{
+    asdx::Stack<IntNode> stack;
+    IntNode node(1);
+
+    stack.push(nullptr);
+
+    EXPECT_TRUE(stack.empty());
+    EXPECT_EQ(stack.size(), 0);
+    EXPECT_EQ(stack.pop(), nullptr);
+
+    stack.push(&node);
+    EXPECT_EQ(stack.pop(), &node);
+    EXPECT_TRUE(stack.empty());
+}
+
+TEST(StackTest, ReusesPoppedNode)
+{
+    IntNode node0(1);
+    IntNode node1(2);
+    IntNode node2(3);
+
+    asdx::Stack<IntNode> stack;
+    stack.push(&node0);
+    stack.push(&node1);
+    stack.push(&node2);
+
+    EXPECT_EQ(stack.pop(), &node2);
+    stack.push(&node2);
+
+    EXPECT_EQ(stack.size(), 3);
+    EXPECT_EQ(stack.pop(), &node2);
+    EXPECT_EQ(stack.pop(), &node1);
+    EXPECT_EQ(stack.pop(), &node0);
+    EXPECT_TRUE(stack.empty());
+}
+
+TEST(StackTest, ReusesNodesAfterClear)
+{
+    IntNode node0(1);
+    IntNode node1(2);
+    IntNode node2(3);
+
+    asdx::Stack<IntNode> stack;
+    stack.push(&node0);
+    stack.push(&node1);
+    stack.push(&node2);
+    stack.clear();
+
+    EXPECT_TRUE(stack.empty());
+    EXPECT_EQ(stack.size(), 0);
+
+    stack.push(&node0);
+    stack.push(&node2);
+    stack.push(&node1);
+
+    EXPECT_EQ(stack.size(), 3);
+    EXPECT_EQ(stack.pop(), &node1);
+    EXPECT_EQ(stack.pop(), &node2);
+    EXPECT_EQ(stack.pop(), &node0);
+    EXPECT_EQ(stack.pop(), nullptr);
+    EXPECT_TRUE(stack.empty());
+}

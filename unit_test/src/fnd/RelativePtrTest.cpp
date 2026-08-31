@@ -19,6 +19,17 @@ struct TestData
     asdx::RelativePtr<float>    FloatValues;
 };
 
+struct RelativePtrObject
+{
+    int Value;
+};
+
+struct RelativePtrOperatorData
+{
+    asdx::RelativePtr<RelativePtrObject> Object;
+    RelativePtrObject                    Target;
+};
+
 TEST(RelativePtrTest, Basic)
 {
     // テストデータ作成.
@@ -77,4 +88,24 @@ TEST(RelativePtrTest, Basic)
 
     // テストデータを削除する.
     remove("testdata.dat");
+}
+
+TEST(RelativePtrTest, DefaultConstructed)
+{
+    const asdx::RelativePtr<int> ptr;
+
+    EXPECT_FALSE(ptr);
+}
+
+TEST(RelativePtrTest, PointerOperators)
+{
+    RelativePtrOperatorData data = {};
+    data.Target.Value = 42;
+    data.Object.SetOffset(static_cast<uint32_t>(
+        reinterpret_cast<uintptr_t>(&data.Target) - reinterpret_cast<uintptr_t>(&data.Object)));
+
+    EXPECT_TRUE(data.Object);
+    EXPECT_EQ(data.Object.operator->(), &data.Target);
+    EXPECT_EQ(data.Object->Value, 42);
+    EXPECT_EQ((*data.Object).Value, 42);
 }

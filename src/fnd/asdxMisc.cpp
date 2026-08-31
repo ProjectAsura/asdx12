@@ -244,6 +244,9 @@ std::string Replace
     std::string         replace
 )
 {
+    if (pattern.empty())
+        return input;
+
     std::string result = input;
     auto pos = result.find( pattern );
 
@@ -267,6 +270,9 @@ std::u8string Replace
     std::u8string         replace
 )
 {
+    if (pattern.empty())
+        return input;
+
     std::u8string result = input;
     auto pos = result.find( pattern );
 

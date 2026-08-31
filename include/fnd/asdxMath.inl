@@ -752,7 +752,7 @@ inline Vector2 Vector2::Lerp(const Vector2& a, const Vector2& b, float amount)
 inline Vector2 Vector2::SmoothStep(const Vector2& a, const Vector2& b, float amount)
 {
     auto s = asdx::Clamp(amount, 0.0f, 1.0f);
-    auto u = (s * s) + (3.0f - (2.0f * s));
+    auto u = (3.0f * s * s) - (2.0f * s * s * s);
     return Vector2(
         a.x + u * (b.x - a.x),
         a.y + u * (b.y - a.y) );
@@ -1370,7 +1370,7 @@ inline Vector3 Vector3::Lerp(const Vector3& a, const Vector3& b, float amount)
 inline Vector3 Vector3::SmoothStep(const Vector3& a, const Vector3& b, float amount)
 {
     auto s = asdx::Clamp(amount, 0.0f, 1.0f);
-    auto u = (s * s) + (3.0f - (2.0f * s));
+    auto u = (3.0f * s * s) - (2.0f * s * s * s);
     return Vector3(
         a.x + u * (b.x - a.x),
         a.y + u * (b.y - a.y),
@@ -2020,7 +2020,7 @@ inline Vector4 Vector4::Lerp(const Vector4& a, const Vector4& b, float amount)
 inline Vector4 Vector4::SmoothStep(const Vector4& a, const Vector4& b, float amount)
 {
     auto s = asdx::Clamp(amount, 0.0f, 1.0f );
-    auto u = (s * s) + (3.0f - (2.0f * s));
+    auto u = (3.0f * s * s) - (2.0f * s * s * s);
     return Vector4(
         a.x + u * (b.x - a.x),
         a.y + u * (b.y - a.y),
@@ -3796,7 +3796,7 @@ inline Quaternion Quaternion::Multiply(const Quaternion& lhs, const Quaternion& 
         (rhs.x * lhs.w) + (lhs.x * rhs.w) + (rhs.y * lhs.z) - (rhs.z * lhs.y),
         (rhs.y * lhs.w) + (lhs.y * rhs.w) + (rhs.z * lhs.x) - (rhs.x * lhs.z),
         (rhs.z * lhs.w) + (lhs.z * rhs.w) + (rhs.x * lhs.y) - (rhs.y * lhs.x),
-        (rhs.w * lhs.w) - (rhs.x * lhs.x) - (rhs.y * lhs.y) + (rhs.z * lhs.z) );
+        (rhs.w * lhs.w) - (rhs.x * lhs.x) - (rhs.y * lhs.y) - (rhs.z * lhs.z) );
 }
 
 //-----------------------------------------------------------------------------
@@ -4304,9 +4304,9 @@ inline Matrix4x3 Matrix4x3::CreateScale(const Vector3& value)
 inline Matrix4x3 Matrix4x3::CreateTranslation(float tx, float ty, float tz)
 {
     return Matrix4x3(
-        0.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 0.0f,
+        1.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 1.0f,
         tx,   ty,   tz);
 }
 
@@ -5684,10 +5684,10 @@ inline Vector3 CCT_To_BT2020(float T, float Y)
 inline Vector3 LinearToSRGB(const Vector3& value)
 {
     Vector3 result;
-    result.x = (value.x < 0.0031308f) ? 12.92f * value.x : 1.055f * powf(fabs(value.x), 1.0f / 2.4f) - 0.05f;
-    result.y = (value.y < 0.0031308f) ? 12.92f * value.y : 1.055f * powf(fabs(value.y), 1.0f / 2.4f) - 0.05f;
-    result.z = (value.z < 0.0031308f) ? 12.92f * value.z : 1.055f * powf(fabs(value.z), 1.0f / 2.4f) - 0.05f;
-    return value;
+    result.x = (value.x < 0.0031308f) ? 12.92f * value.x : 1.055f * powf(fabs(value.x), 1.0f / 2.4f) - 0.055f;
+    result.y = (value.y < 0.0031308f) ? 12.92f * value.y : 1.055f * powf(fabs(value.y), 1.0f / 2.4f) - 0.055f;
+    result.z = (value.z < 0.0031308f) ? 12.92f * value.z : 1.055f * powf(fabs(value.z), 1.0f / 2.4f) - 0.055f;
+    return result;
 }
 
 //-----------------------------------------------------------------------------
@@ -5696,11 +5696,11 @@ inline Vector3 LinearToSRGB(const Vector3& value)
 inline Vector4 LinearToSRGB(const Vector4& value)
 {
     Vector4 result;
-    result.x = (value.x < 0.0031308f) ? 12.92f * value.x : 1.055f * powf(fabs(value.x), 1.0f / 2.4f) - 0.05f;
-    result.y = (value.y < 0.0031308f) ? 12.92f * value.y : 1.055f * powf(fabs(value.y), 1.0f / 2.4f) - 0.05f;
-    result.z = (value.z < 0.0031308f) ? 12.92f * value.z : 1.055f * powf(fabs(value.z), 1.0f / 2.4f) - 0.05f;
+    result.x = (value.x < 0.0031308f) ? 12.92f * value.x : 1.055f * powf(fabs(value.x), 1.0f / 2.4f) - 0.055f;
+    result.y = (value.y < 0.0031308f) ? 12.92f * value.y : 1.055f * powf(fabs(value.y), 1.0f / 2.4f) - 0.055f;
+    result.z = (value.z < 0.0031308f) ? 12.92f * value.z : 1.055f * powf(fabs(value.z), 1.0f / 2.4f) - 0.055f;
     result.w = value.w;
-    return value;
+    return result;
 }
 
 //-----------------------------------------------------------------------------
@@ -5709,9 +5709,9 @@ inline Vector4 LinearToSRGB(const Vector4& value)
 inline Vector3 SRGBToLinear(const Vector3& value)
 {
     Vector3 result;
-    result.x = (value.x < 0.0405f) ? value.x / 12.92f : powf((fabs(value.x) + 0.055f) / 1.055f, 2.4f);
-    result.y = (value.y < 0.0405f) ? value.y / 12.92f : powf((fabs(value.y) + 0.055f) / 1.055f, 2.4f);
-    result.z = (value.z < 0.0405f) ? value.z / 12.92f : powf((fabs(value.z) + 0.055f) / 1.055f, 2.4f);
+    result.x = (value.x < 0.04045f) ? value.x / 12.92f : powf((fabs(value.x) + 0.055f) / 1.055f, 2.4f);
+    result.y = (value.y < 0.04045f) ? value.y / 12.92f : powf((fabs(value.y) + 0.055f) / 1.055f, 2.4f);
+    result.z = (value.z < 0.04045f) ? value.z / 12.92f : powf((fabs(value.z) + 0.055f) / 1.055f, 2.4f);
     return result;
 }
 
@@ -5721,9 +5721,9 @@ inline Vector3 SRGBToLinear(const Vector3& value)
 inline Vector4 SRGBToLinear(const Vector4& value)
 {
     Vector4 result;
-    result.x = (value.x < 0.0405f) ? value.x / 12.92f : powf((fabs(value.x) + 0.055f) / 1.055f, 2.4f);
-    result.y = (value.y < 0.0405f) ? value.y / 12.92f : powf((fabs(value.y) + 0.055f) / 1.055f, 2.4f);
-    result.z = (value.z < 0.0405f) ? value.z / 12.92f : powf((fabs(value.z) + 0.055f) / 1.055f, 2.4f);
+    result.x = (value.x < 0.04045f) ? value.x / 12.92f : powf((fabs(value.x) + 0.055f) / 1.055f, 2.4f);
+    result.y = (value.y < 0.04045f) ? value.y / 12.92f : powf((fabs(value.y) + 0.055f) / 1.055f, 2.4f);
+    result.z = (value.z < 0.04045f) ? value.z / 12.92f : powf((fabs(value.z) + 0.055f) / 1.055f, 2.4f);
     result.w = value.w;
     return result;
 }

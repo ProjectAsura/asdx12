@@ -63,16 +63,20 @@ public:
     //-------------------------------------------------------------------------
     void* Alloc(size_t size, size_t alignment = kDefaultAlignment)
     {
-        auto addSize = (size + (alignment - 1)) & ~(alignment - 1);
+        auto offset = (m_Buffer == nullptr) ? m_Size : m_Offset;
+        offset = (offset + (alignment - 1)) & ~(alignment - 1);
+
+        // 1回目はサイズ計算のみ.
         if (m_Buffer == nullptr)
         {
-            m_Size += addSize;
+            m_Size = offset + size;
             return nullptr;
         }
+        // 2回目にメモリ割り当て.
         else
         {
-            auto ptr  = m_Buffer + m_Offset;
-            m_Offset += addSize;
+            auto ptr  = m_Buffer + offset;
+            m_Offset = offset + size;
             assert(m_Offset <= m_Size);
             return ptr;
         }
@@ -89,6 +93,9 @@ public:
     T* New(size_t count = 1)
     {
         auto buf = reinterpret_cast<T*>(Alloc(sizeof(T) * count, alignof(T)));
+        if (buf == nullptr)
+            return nullptr;
+
         auto mem = buf;
         for(size_t i=0; i<count; ++i)
         {

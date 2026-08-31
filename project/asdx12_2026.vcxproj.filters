@@ -857,13 +857,7 @@
     <ClInclude Include="..\include\fw\asdxFrameTaskManager.h">
       <Filter>ヘッダー ファイル\fw</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\fnd\asdxSceneNode.h">
-      <Filter>ヘッダー ファイル\fnd</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\fnd\asdxTrasnform.h">
-      <Filter>ヘッダー ファイル\fnd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\fnd\asdxSceneComponent.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
     <ClInclude Include="..\include\rs\asdxScene.h">

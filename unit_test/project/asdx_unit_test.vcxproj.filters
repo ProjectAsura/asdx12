@@ -35,6 +35,33 @@
     <ClCompile Include="..\src\gfx\DisposerTest.cpp">
       <Filter>gfx</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\fnd\FrameHeapTest.cpp">
+      <Filter>fnd</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\fnd\ArrayViewTest.cpp">
+      <Filter>fnd</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\fnd\SpinLockTest.cpp">
+      <Filter>fnd</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\fnd\MessageTest.cpp">
+      <Filter>fnd</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\fnd\ThreadPoolTest.cpp">
+      <Filter>fnd</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\fnd\MiscTest.cpp">
+      <Filter>fnd</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\fnd\TokenizerTest.cpp">
+      <Filter>fnd</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\fnd\TransformTest.cpp">
+      <Filter>fnd</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\fnd\MathTest.cpp">
+      <Filter>fnd</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />

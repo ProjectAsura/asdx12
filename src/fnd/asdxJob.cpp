@@ -394,7 +394,7 @@ public:
         // 2重登録を回避するためにチェック.
         if (m_SyncPoints[job.StartPoint].Contain(job))
         {
-            ELOG("Error : ジョブが既に登録済みです.");
+            ELOGA("Error : ジョブが既に登録済みです.");
             return false;
         }
 
@@ -420,7 +420,7 @@ public:
         auto itr = m_SyncPoints[job.StartPoint].Find(job);
         if (itr == nullptr)
         {
-            ELOG("Error : 指定されたジョブが見つからないため, 削除に失敗しました.");
+            ELOGA("Error : 指定されたジョブが見つからないため, 削除に失敗しました.");
             return false;
         }
 

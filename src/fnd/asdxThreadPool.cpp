@@ -112,10 +112,8 @@ public:
     void Wait() override
     {
         std::unique_lock<std::mutex> locker(m_Mutex);
-        if (m_Queue.empty())
-        { return; }
-
-        m_Condtion.wait(locker);
+        m_Condtion.wait(locker,
+            [this](){ return m_Queue.empty() && m_ActiveCount == 0; });
     }
 
 private:
@@ -123,6 +121,7 @@ private:
     // private variables.
     //=========================================================================
     bool                        m_RequestTerminate = false;
+    uint32_t                    m_ActiveCount = 0;
     asdx::Queue<IRunnable>      m_Queue;
     std::mutex                  m_Mutex;
     std::condition_variable     m_Condtion;
@@ -145,9 +144,16 @@ private:
 
                 runnable = m_Queue.pop();
                 assert(runnable != nullptr);
+                ++m_ActiveCount;
             }
 
             runnable->Run();
+
+            {
+                std::unique_lock<std::mutex> locker(m_Mutex);
+                --m_ActiveCount;
+            }
+            m_Condtion.notify_all();
         }
     };
 
