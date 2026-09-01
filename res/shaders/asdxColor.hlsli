@@ -30,9 +30,9 @@ static const float PQ_MAX_NITS = 10000.0;
 float3 LinearToSRGB(float3 color)
 {
     float3 result;
-    result.x = (color.x < 0.0031308f) ? 12.92f * color.x : 1.055f * pow(abs(color.x), 1.0f / 2.4f) - 0.05f;
-    result.y = (color.y < 0.0031308f) ? 12.92f * color.y : 1.055f * pow(abs(color.y), 1.0f / 2.4f) - 0.05f;
-    result.z = (color.z < 0.0031308f) ? 12.92f * color.z : 1.055f * pow(abs(color.z), 1.0f / 2.4f) - 0.05f;
+    result.x = (color.x < 0.0031308f) ? 12.92f * color.x : 1.055f * pow(abs(color.x), 1.0f / 2.4f) - 0.055f;
+    result.y = (color.y < 0.0031308f) ? 12.92f * color.y : 1.055f * pow(abs(color.y), 1.0f / 2.4f) - 0.055f;
+    result.z = (color.z < 0.0031308f) ? 12.92f * color.z : 1.055f * pow(abs(color.z), 1.0f / 2.4f) - 0.055f;
     return result;
 }
 
@@ -42,9 +42,9 @@ float3 LinearToSRGB(float3 color)
 float3 SRGBToLinear(float3 color)
 {
     float3 result;
-    result.x = (color.x < 0.0405f) ? color.x / 12.92f : pow((abs(color.x) + 0.055f) / 1.055f, 2.4f);
-    result.y = (color.y < 0.0405f) ? color.y / 12.92f : pow((abs(color.y) + 0.055f) / 1.055f, 2.4f);
-    result.z = (color.z < 0.0405f) ? color.z / 12.92f : pow((abs(color.z) + 0.055f) / 1.055f, 2.4f);
+    result.x = (color.x < 0.04045f) ? color.x / 12.92f : pow((abs(color.x) + 0.055f) / 1.055f, 2.4f);
+    result.y = (color.y < 0.04045f) ? color.y / 12.92f : pow((abs(color.y) + 0.055f) / 1.055f, 2.4f);
+    result.z = (color.z < 0.04045f) ? color.z / 12.92f : pow((abs(color.z) + 0.055f) / 1.055f, 2.4f);
     return result;
 }
 
