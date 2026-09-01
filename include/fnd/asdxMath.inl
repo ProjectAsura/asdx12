@@ -3586,7 +3586,7 @@ inline Quaternion& Quaternion::operator *= (const Quaternion& q)
     auto X = (q.x * w) + (x * q.w) + (q.y * z) - (q.z * y);
     auto Y = (q.y * w) + (y * q.w) + (q.z * x) - (q.x * z);
     auto Z = (q.z * w) + (z * q.w) + (q.x * y) - (q.y * x);
-    auto W = (q.w * w) - (q.x * x) - (q.y * y) + (q.z * z);
+    auto W = (q.w * w) - (q.x * x) - (q.y * y) - (q.z * z);
     x = X;
     y = Y;
     z = Z;
@@ -3652,7 +3652,7 @@ inline Quaternion Quaternion::operator * (const Quaternion& q) const
         (q.x * w) + (x * q.w) + (q.y * z) - (q.z * y),
         (q.y * w) + (y * q.w) + (q.z * x) - (q.x * z),
         (q.z * w) + (z * q.w) + (q.x * y) - (q.y * x),
-        (q.w * w) - (q.x * x) - (q.y * y) + (q.z * z)
+        (q.w * w) - (q.x * x) - (q.y * y) - (q.z * z)
    );
 }
 
