@@ -88,6 +88,8 @@
     <ClCompile Include="..\src\fnd\ThreadPoolTest.cpp" />
     <ClCompile Include="..\src\fnd\TokenizerTest.cpp" />
     <ClCompile Include="..\src\fnd\TransformTest.cpp" />
+    <ClCompile Include="..\src\fw\BlockTaskTest.cpp" />
+    <ClCompile Include="..\src\fw\FrameTaskTest.cpp" />
     <ClCompile Include="..\src\gfx\DisposerTest.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

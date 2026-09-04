@@ -65,6 +65,12 @@
     <ClCompile Include="..\src\fnd\BlockHeapTest.cpp">
       <Filter>fnd</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\fw\BlockTaskTest.cpp">
+      <Filter>fw</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\fw\FrameTaskTest.cpp">
+      <Filter>fw</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -75,6 +81,9 @@
     </Filter>
     <Filter Include="gfx">
       <UniqueIdentifier>{44801ccc-9a33-43c5-b7ee-1823df4800b4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="fw">
+      <UniqueIdentifier>{2935beaa-50f7-4d27-af51-75b113549589}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
