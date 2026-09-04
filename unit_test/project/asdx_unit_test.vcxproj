@@ -70,6 +70,7 @@
   <ItemGroup>
     <ClCompile Include="..\src\fnd\ArrayViewTest.cpp" />
     <ClCompile Include="..\src\fnd\BitTest.cpp" />
+    <ClCompile Include="..\src\fnd\BlockHeapTest.cpp" />
     <ClCompile Include="..\src\fnd\ChunkAllocatorTest.cpp" />
     <ClCompile Include="..\src\fnd\FrameHeapTest.cpp" />
     <ClCompile Include="..\src\fnd\FunctionTest.cpp" />

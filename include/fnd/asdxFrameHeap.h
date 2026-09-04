@@ -103,9 +103,11 @@ public:
     //!             ÉÅÉÇÉäämï€Ç…é∏îsÇµÇΩèÍçáÇÕ nullptr Ç™ï‘ãpÇ≥ÇÍÇ‹Ç∑.
     //-------------------------------------------------------------------------
     template<typename T, class... Args>
-    T* New(Args... args)
+    T* New(Args&&... args)
     {
-        const auto buf = Alloc(sizeof(T), alignof(T));
+        auto buf = Alloc(sizeof(T), alignof(T));
+        if (buf == nullptr)
+            return nullptr;
         return new(buf) T(args...);
     }
 

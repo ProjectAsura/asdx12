@@ -480,6 +480,9 @@
     <ClCompile Include="..\src\rs\asdxModelComponent.cpp">
       <Filter>ソース ファイル\rs</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\fnd\asdxBlockHeap.cpp">
+      <Filter>ソース ファイル\fnd</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\edit\asdxEditParam.h">
@@ -883,6 +886,9 @@
     </ClInclude>
     <ClInclude Include="..\include\rs\asdxMotionPlayerComponent.h">
       <Filter>ヘッダー ファイル\rs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fnd\asdxBlockHeap.h">
+      <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

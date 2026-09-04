@@ -1,6 +1,6 @@
 ﻿//-----------------------------------------------------------------------------
-// File : asdxBlockTaskManager.cpp
-// Desc : Block Task Manager.
+// File : asdxBlockHeap.cpp
+// Desc : Block Heap.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 
@@ -8,102 +8,120 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <fnd/asdxLogger.h>
-#include <fw/asdxBlockTaskManager.h>
+#include <fnd/asdxBlockHeap.h>
+#include <cstdlib>
 
 
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
-// BlockTaskManager class
+// BlockHeap class
 ///////////////////////////////////////////////////////////////////////////////
 
 //-----------------------------------------------------------------------------
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
-BlockTaskManager::BlockTaskManager()
-: TaskManagerBase()
+BlockHeap::BlockHeap()
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      デストラクタです.
 //-----------------------------------------------------------------------------
-BlockTaskManager::~BlockTaskManager()
+BlockHeap::~BlockHeap()
 { Term(); }
 
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool BlockTaskManager::Init(uint32_t blockSize, uint32_t blockCount)
+bool BlockHeap::Init(uint32_t blockSize, uint32_t blockCount)
 {
-    return m_Heap.Init(blockSize, blockCount);
+    assert(m_pBuffer == nullptr);
+
+    auto size = blockSize * blockCount;
+    m_pBuffer = reinterpret_cast<uint8_t*>(malloc(size));
+    if (m_pBuffer == nullptr)
+    {
+        ELOGA("Error : Out of Memory.");
+        return false;
+    }
+
+    m_BlockSize = blockSize;
+
+    if (!m_IndexHeap.Init(blockCount))
+    {
+        ELOGA("Error : IndexHeap::Init() Failed.");
+        return false;
+    }
+
+    return true;
 }
 
 //-----------------------------------------------------------------------------
 //      終了処理を行います.
 //-----------------------------------------------------------------------------
-void BlockTaskManager::Term()
+void BlockHeap::Term()
 {
-    auto itr = m_TaskList.begin();
-    while(itr != m_TaskList.end())
+    m_IndexHeap.Term();
+ 
+    if (m_pBuffer != nullptr)
     {
-        itr->OnRemove();
-        itr = m_TaskList.erase(itr);
+        free(m_pBuffer);
+        m_pBuffer = nullptr;
     }
 
-    m_Heap.Term();
+    m_BlockSize = 0;
 }
-
-//-----------------------------------------------------------------------------
-//      全タスクを削除します.
-//-----------------------------------------------------------------------------
-void BlockTaskManager::Reset()
-{
-    auto itr = m_TaskList.begin();
-    while(itr != m_TaskList.end())
-    {
-        auto pTask = &(*itr);
-        itr->OnRemove();
-        itr = m_TaskList.erase(itr);
-        Free(pTask);
-    }
-}
-
-//-----------------------------------------------------------------------------
-//      割り当て済みタスク数を取得します.
-//-----------------------------------------------------------------------------
-uint32_t BlockTaskManager::GetUsedCount() const
-{ return m_Heap.GetUsedCount(); }
-
-//-----------------------------------------------------------------------------
-//      未割当タスク数を取得します.
-//-----------------------------------------------------------------------------
-uint32_t BlockTaskManager::GetFreeCount() const
-{ return m_Heap.GetFreeCount(); }
-
-//-----------------------------------------------------------------------------
-//      最大タスク数を取得します.
-//-----------------------------------------------------------------------------
-uint32_t BlockTaskManager::GetCapacity() const
-{ return m_Heap.GetCapacity(); }
 
 //-----------------------------------------------------------------------------
 //      メモリを確保します.
 //-----------------------------------------------------------------------------
-void* BlockTaskManager::Alloc(size_t size)
+void* BlockHeap::Alloc()
 {
-    if (size > m_Heap.GetBlockSize())
-    {
-        ELOGA("Error : Invalid Argument. BlockSize exceed. size = %zu, blockSize = %u", size, m_Heap.GetBlockSize());
+    auto idx = m_IndexHeap.Alloc();
+    if (idx == UINT32_MAX)
         return nullptr;
-    }
 
-    return m_Heap.Alloc();
+    auto ptr = m_pBuffer + (m_BlockSize * idx);
+    memset(ptr, 0, sizeof(m_BlockSize));
+    return ptr;
 }
 
 //-----------------------------------------------------------------------------
 //      メモリを解放します.
 //-----------------------------------------------------------------------------
-void BlockTaskManager::Free(void* ptr)
-{ m_Heap.Free(ptr); }
+void BlockHeap::Free(void* ptr)
+{
+    if (ptr == nullptr)
+        return;
+
+    auto dif = uintptr_t(ptr) - uintptr_t(m_pBuffer);
+    auto idx = uint32_t(dif / m_BlockSize);
+    m_IndexHeap.Free(idx);
+    memset(ptr, 0xff, sizeof(m_BlockSize));
+}
+
+//-----------------------------------------------------------------------------
+//      使用ブロック数を取得します.
+//-----------------------------------------------------------------------------
+uint32_t BlockHeap::GetUsedCount() const
+{ return m_IndexHeap.GetUsedCount(); }
+
+//-----------------------------------------------------------------------------
+//      未割当ブロック数を取得します.
+//-----------------------------------------------------------------------------
+uint32_t BlockHeap::GetFreeCount() const
+{ return m_IndexHeap.GetFreeCount(); }
+
+//-----------------------------------------------------------------------------
+//      最大ブロック数を取得します.
+//-----------------------------------------------------------------------------
+uint32_t BlockHeap::GetCapacity() const
+{ return m_IndexHeap.GetCapacity(); }
+
+//-----------------------------------------------------------------------------
+//      ブロックサイズを取得します.
+//-----------------------------------------------------------------------------
+uint32_t BlockHeap::GetBlockSize() const
+{ return m_BlockSize; }
 
 } // namespace asdx

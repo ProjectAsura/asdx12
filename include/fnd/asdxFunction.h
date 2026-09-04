@@ -134,7 +134,7 @@ public:
     explicit operator bool() const
     { return m_Base != nullptr; }
 
-    ReturnType operator()(Args... args) const
+    ReturnType operator()(Args&&... args) const
     {
         assert(m_Base != nullptr);
         return m_Base->Invoke(std::forward<Args>(args)...);

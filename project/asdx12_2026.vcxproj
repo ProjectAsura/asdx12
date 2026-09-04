@@ -218,6 +218,7 @@
     <ClCompile Include="..\src\fnd\asdxBit.cpp" />
     <ClCompile Include="..\src\fnd\asdxBlackboard.cpp" />
     <ClCompile Include="..\src\fnd\asdxBlob.cpp" />
+    <ClCompile Include="..\src\fnd\asdxBlockHeap.cpp" />
     <ClCompile Include="..\src\fnd\asdxFileIO.cpp" />
     <ClCompile Include="..\src\fnd\asdxFrameHeap.cpp" />
     <ClCompile Include="..\src\fnd\asdxGamePad.cpp" />
@@ -334,6 +335,7 @@
     <ClInclude Include="..\include\fnd\asdxBit.h" />
     <ClInclude Include="..\include\fnd\asdxBlackboard.h" />
     <ClInclude Include="..\include\fnd\asdxBlob.h" />
+    <ClInclude Include="..\include\fnd\asdxBlockHeap.h" />
     <ClInclude Include="..\include\fnd\asdxChunkAllocator.h" />
     <ClInclude Include="..\include\fnd\asdxDummyTemplate.h" />
     <ClInclude Include="..\include\fnd\asdxDragTracker.h" />
