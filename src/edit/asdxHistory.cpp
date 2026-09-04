@@ -14,6 +14,7 @@
 
 
 namespace asdx {
+namespace edit {
 
 ///////////////////////////////////////////////////////////////////////////////
 // EventHandler class
@@ -360,4 +361,5 @@ void HistoryMgr::Undo()
     UndoExecuted.Invoke();
 }
 
+} // namespace edit
 } // namespace asdx

@@ -14,6 +14,7 @@
 
 
 namespace asdx {
+namespace edit {
 
 //-----------------------------------------------------------------------------
 // Forward Declarations.
@@ -705,13 +706,14 @@ private:
     /* NOTHING */
 };
 
+} // namespace edit
 } // namespace asdx
 
 
 #ifdef ASDX_ENABLE_TINYXML2
 #include <tinyxml2.h>
 
-namespace asdx {
+namespace asdx::edit {
 
 tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditBool&    control);
 tinyxml2::XMLElement* Serialize(tinyxml2::XMLDocument* doc, const char* tag, const EditInt&     control);
@@ -733,5 +735,5 @@ void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditColor3&  co
 void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditColor4&  control);
 void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditTexture& control);
 
-} // namespace asdx
+} // namespace asdx::edit
 #endif//ASDX_ENABLE_TINYXML2

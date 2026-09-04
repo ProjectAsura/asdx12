@@ -30,7 +30,7 @@ namespace {
 // ParamHistory
 ///////////////////////////////////////////////////////////////////////////////
 template<typename T>
-class ParamHistory : public asdx::IHistory
+class ParamHistory : public asdx::edit::IHistory
 {
     //=========================================================================
     // list of friend classes and methods.
@@ -91,7 +91,7 @@ private:
 ///////////////////////////////////////////////////////////////////////////////
 // TextureHistory class
 ///////////////////////////////////////////////////////////////////////////////
-class TextureHistory : public asdx::IHistory
+class TextureHistory : public asdx::edit::IHistory
 {
     //=========================================================================
     // list of friend classes and methods.
@@ -176,6 +176,7 @@ private:
 
 
 namespace asdx {
+namespace edit {
 
 ///////////////////////////////////////////////////////////////////////////////
 // EditBool class
@@ -951,11 +952,13 @@ void EditTexture::DrawControl
 D3D12_GPU_DESCRIPTOR_HANDLE EditTexture::GetHandleGPU() const
 { return m_Texture.GetHandleGPU(); }
 
+} // namespace edit
 } // namespace asdx
 
 
 #ifdef ASDX_ENABLE_TINYXML2
 namespace asdx {
+namespace edit {
 
 //-----------------------------------------------------------------------------
 //      XMLエレメントを生成します.
@@ -1199,5 +1202,6 @@ void Deserialize(tinyxml2::XMLElement* element, const char* tag, EditTexture& co
     control.SetPath(path);
 }
 
+} // namespace edit
 } // namespace asdx
 #endif//ASDX_ENABLE_TINYXML2

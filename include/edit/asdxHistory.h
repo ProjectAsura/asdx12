@@ -15,6 +15,7 @@
 
 
 namespace asdx {
+namespace edit {
 
 //-----------------------------------------------------------------------------
 // Type Definition
@@ -134,5 +135,5 @@ private:
     ~HistoryMgr();
 };
 
-
+} // namespace edit
 } // namespace asdx
