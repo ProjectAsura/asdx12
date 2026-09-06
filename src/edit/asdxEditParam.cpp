@@ -12,6 +12,7 @@
 #include <fnd/asdxMisc.h>
 #include <fnd/asdxPath.h>
 #include <res/asdxResTexture.h>
+#include <gfx/asdxTexture.h>
 
 
 #ifdef ASDX_ENABLE_IMGUI
@@ -950,7 +951,7 @@ void EditTexture::DrawControl
 //      ビューを取得します.
 //-----------------------------------------------------------------------------
 D3D12_GPU_DESCRIPTOR_HANDLE EditTexture::GetHandleGPU() const
-{ return m_Texture.GetHandleGPU(); }
+{ return m_Texture->GetHandleGPU(); }
 
 } // namespace edit
 } // namespace asdx

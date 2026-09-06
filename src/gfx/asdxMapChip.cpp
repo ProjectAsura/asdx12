@@ -8,6 +8,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <gfx/asdxMapChip.h>
+#include <gfx/asdxTexture.h>
 #include <fnd/asdxLogger.h>
 #include <utility>
 #include <string>
@@ -121,7 +122,7 @@ const MapChipBinary& MapChip::GetBinary() const
 //-----------------------------------------------------------------------------
 void MapChip::Draw(SpriteRenderer& renderer, D3D12_GPU_DESCRIPTOR_HANDLE sampler)
 {
-    renderer.ChangeBatch(renderer.GetDefaultState(), m_Texture.GetHandleGPU(), sampler);
+    renderer.ChangeBatch(renderer.GetDefaultState(), m_Texture->GetHandleGPU(), sampler);
 
     auto columns = m_Binary.GetMapColumns();
     auto rows    = m_Binary.GetMapRows();

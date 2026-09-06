@@ -20,67 +20,6 @@
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
-// TextureHolder class
-///////////////////////////////////////////////////////////////////////////////
-
-//-----------------------------------------------------------------------------
-//      引数付きコンストラクタです.
-//-----------------------------------------------------------------------------
-TextureHolder::TextureHolder(Texture* pTexture, uint64_t hash)
-: m_pTexture(pTexture)
-, m_Hash    (hash)
-{ /* DO_NOTHING */ }
-
-//-----------------------------------------------------------------------------
-//      解放処理を行います.
-//-----------------------------------------------------------------------------
-void TextureHolder::Reset()
-{ TextureManager::Instance().Remove(*this); }
-
-//-----------------------------------------------------------------------------
-//      有効かどうかチェックします.
-//-----------------------------------------------------------------------------
-bool TextureHolder::IsValid() const
-{ return (m_pTexture != nullptr) && (m_Hash != 0); }
-
-//-----------------------------------------------------------------------------
-//      リソース設定を取得します.
-//-----------------------------------------------------------------------------
-D3D12_RESOURCE_DESC TextureHolder::GetDesc() const
-{
-    assert(m_pTexture != nullptr);
-    return m_pTexture->GetDesc();
-}
-
-//-----------------------------------------------------------------------------
-//      バインドレスインデックスを取得します.
-//-----------------------------------------------------------------------------
-uint32_t TextureHolder::GetBindlessIndex() const
-{
-    assert(m_pTexture != nullptr);
-    return m_pTexture->GetBindlessIndex();
-}
-
-//-----------------------------------------------------------------------------
-//      CPUディスクリプタハンドルを取得します.
-//-----------------------------------------------------------------------------
-D3D12_CPU_DESCRIPTOR_HANDLE TextureHolder::GetHandleCPU() const
-{
-    assert(m_pTexture != nullptr);
-    return m_pTexture->GetHandleCPU();
-}
-
-//-----------------------------------------------------------------------------
-//      GPUディスクリプタハンドルを取得します.
-//-----------------------------------------------------------------------------
-D3D12_GPU_DESCRIPTOR_HANDLE TextureHolder::GetHandleGPU() const
-{
-    assert(m_pTexture != nullptr);
-    return m_pTexture->GetHandleGPU();
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
 // TextureManager class
 ///////////////////////////////////////////////////////////////////////////////
 TextureManager TextureManager::s_Instance = {};
@@ -263,10 +202,10 @@ void TextureManager::Remove(TextureHolder& holder)
     if (!holder.IsValid())
         return;
 
-    if (holder.m_pTexture->GetRefCount() > 1)
+    if (holder.m_pRes->GetRefCount() > 1)
     {
         // 参照カウンタを下げる.
-        holder.m_pTexture->Release();
+        holder.m_pRes->Release();
     }
     else
     {
@@ -285,8 +224,8 @@ void TextureManager::Remove(TextureHolder& holder)
     }
 
     // クリア処理.
-    holder.m_pTexture = nullptr;
-    holder.m_Hash     = 0;
+    holder.m_pRes = nullptr;
+    holder.m_Hash = 0;
 }
 
 //-----------------------------------------------------------------------------

@@ -17,108 +17,6 @@
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
-// ModelHolder class
-///////////////////////////////////////////////////////////////////////////////
-
-//-----------------------------------------------------------------------------
-//      引数付きコンストラクタです.
-//-----------------------------------------------------------------------------
-ModelHolder::ModelHolder(Model* pModel, uint64_t hash)
-: m_pModel  (pModel)
-, m_Hash    (hash)
-{ /* DO_NOTHING */ }
-
-//-----------------------------------------------------------------------------
-//      解放処理を行います.
-//-----------------------------------------------------------------------------
-void ModelHolder::Reset()
-{ ModelManager::Instance().Remove(*this); }
-
-//-----------------------------------------------------------------------------
-//      有効かどうかチェックします.
-//-----------------------------------------------------------------------------
-bool ModelHolder::IsValid() const
-{ return (m_pModel != nullptr) && (m_Hash != 0); }
-
-//-----------------------------------------------------------------------------
-//      モデルを取得します.
-//-----------------------------------------------------------------------------
-const Model* ModelHolder::GetModel() const
-{ return m_pModel; }
-
-//-----------------------------------------------------------------------------
-//      入れ替えます.
-//-----------------------------------------------------------------------------
-void ModelHolder::Swap(ModelHolder& value)
-{
-    auto pModel = m_pModel;
-    auto hash   = m_Hash;
-
-    m_pModel = value.m_pModel;
-    m_Hash   = value.m_Hash;
-
-    value.m_pModel = pModel;
-    value.m_Hash   = hash;
-}
-
-//-----------------------------------------------------------------------------
-//      入れ替えます.
-//-----------------------------------------------------------------------------
-void ModelHolder::Swap(ModelHolder&& value)
-{
-    auto pModel = m_pModel;
-    auto hash   = m_Hash;
-
-    m_pModel = value.m_pModel;
-    m_Hash   = value.m_Hash;
-
-    value.m_pModel = pModel;
-    value.m_Hash   = hash;
-}
-
-//-----------------------------------------------------------------------------
-//      アロー演算子です.
-//-----------------------------------------------------------------------------
-const Model* ModelHolder::operator->() const
-{ return m_pModel; }
-
-//-----------------------------------------------------------------------------
-//      等価比較演算子です.
-//-----------------------------------------------------------------------------
-bool ModelHolder::operator == (const ModelHolder& value) const
-{
-    return (m_pModel == value.m_pModel)
-        && (m_Hash   == value.m_Hash);
-}
-
-//-----------------------------------------------------------------------------
-//      非等価比較演算子です.
-//-----------------------------------------------------------------------------
-bool ModelHolder::operator != (const ModelHolder& value) const
-{
-    return (m_pModel != value.m_pModel)
-        || (m_Hash   != value.m_Hash);
-}
-
-//-----------------------------------------------------------------------------
-//      代入演算子です.
-//-----------------------------------------------------------------------------
-ModelHolder& ModelHolder::operator = (const ModelHolder& value)
-{
-    ModelHolder(value.m_pModel, value.m_Hash).Swap(*this);
-    return *this;
-}
-
-//-----------------------------------------------------------------------------
-//      ムーブ代入演算子です.
-//-----------------------------------------------------------------------------
-ModelHolder& ModelHolder::operator = (ModelHolder&& value)
-{
-    value.Swap(*this);
-    return *this;
-}
-
-///////////////////////////////////////////////////////////////////////////////
 // ModelManager class
 ///////////////////////////////////////////////////////////////////////////////
 ModelManager ModelManager::s_Instance = {};
@@ -231,10 +129,10 @@ void ModelManager::Remove(ModelHolder& holder)
     if (!holder.IsValid())
         return;
 
-    if (holder.m_pModel->GetRefCount() > 1)
+    if (holder.m_pRes->GetRefCount() > 1)
     {
         // 参照カウントを減らす.
-        holder.m_pModel->Release();
+        holder.m_pRes->Release();
     }
     else
     {
@@ -252,8 +150,8 @@ void ModelManager::Remove(ModelHolder& holder)
     }
 
     // クリア処理.
-    holder.m_pModel = nullptr;
-    holder.m_Hash   = 0;
+    holder.m_pRes = nullptr;
+    holder.m_Hash = 0;
 }
 
 } // namespace asdx
