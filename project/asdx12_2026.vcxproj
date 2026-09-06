@@ -291,11 +291,6 @@
     <ClCompile Include="..\src\res\asdxResModel.cpp" />
     <ClCompile Include="..\src\res\asdxResMotion.cpp" />
     <ClCompile Include="..\src\res\asdxResTexture.cpp" />
-    <ClCompile Include="..\src\rs\asdxDirectionalLightComponent.cpp" />
-    <ClCompile Include="..\src\rs\asdxModelComponent.cpp" />
-    <ClCompile Include="..\src\rs\asdxPointLightComponent.cpp" />
-    <ClCompile Include="..\src\rs\asdxSceneNode.cpp" />
-    <ClCompile Include="..\src\rs\asdxSpotLightComponent.cpp" />
     <ClCompile Include="..\src\snd\asdxSoundData.cpp" />
     <ClCompile Include="..\src\snd\asdxSoundEngine.cpp" />
     <ClCompile Include="..\src\snd\asdxSoundResource.cpp" />
@@ -428,14 +423,6 @@
     <ClInclude Include="..\include\res\asdxResModel.h" />
     <ClInclude Include="..\include\res\asdxResMotion.h" />
     <ClInclude Include="..\include\res\asdxResTexture.h" />
-    <ClInclude Include="..\include\rs\asdxDirectionalLightComponent.h" />
-    <ClInclude Include="..\include\rs\asdxModelComponent.h" />
-    <ClInclude Include="..\include\rs\asdxMotionPlayerComponent.h" />
-    <ClInclude Include="..\include\rs\asdxPointLightComponent.h" />
-    <ClInclude Include="..\include\rs\asdxScene.h" />
-    <ClInclude Include="..\include\rs\asdxSceneComponent.h" />
-    <ClInclude Include="..\include\rs\asdxSceneNode.h" />
-    <ClInclude Include="..\include\rs\asdxSpotLightComponent.h" />
     <ClInclude Include="..\include\snd\asdxSoundEngine.h" />
     <ClInclude Include="..\include\snd\asdxSoundResource.h" />
   </ItemGroup>
@@ -446,6 +433,7 @@
     <None Include="..\res\shaders\asdxComputeUtil.hlsli" />
     <None Include="..\res\shaders\asdxCulling.hlsli" />
     <None Include="..\res\shaders\asdxDebugPrint.hlsli" />
+    <None Include="..\res\shaders\asdxLight.hlsli" />
     <None Include="..\res\shaders\asdxMaterial.hlsli" />
     <None Include="..\res\shaders\asdxMath.hlsli" />
     <None Include="..\res\shaders\asdxRandom.hlsli" />

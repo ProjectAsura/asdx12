@@ -63,30 +63,6 @@ float Light::GetIntensity() const
 { return m_Intensity; }
 
 //-----------------------------------------------------------------------------
-//      照度を取得します.
-//-----------------------------------------------------------------------------
-float Light::GetIlluminance(float distance) const
-{
-    switch(m_Type)
-    {
-    case LightType::Point:
-        return CandelaToLux(m_Intensity, distance, 1.0f);
-
-    case LightType::Spot:
-        return CandelaToLux(m_Intensity, distance, 1.0f);
-
-    case LightType::Directional:
-        return m_Intensity;
-
-    case LightType::ImageBased:
-        return m_Intensity;
-
-    default:
-        return 0.0f;
-    }
-}
-
-//-----------------------------------------------------------------------------
 //      シャドウキャストフラグを設定します.
 //-----------------------------------------------------------------------------
 void Light::SetCastShadow(bool value)
@@ -106,39 +82,33 @@ bool Light::IsCastShadow() const
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-PointLight::PointLight(float cd)
-: Light(LightType::Point, PhotometricUnit::Candela, cd)
+PointLight::PointLight(float lm)
+: Light(LightType::Point, PhotometricUnit::Lumen, lm)
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      強度をカンデラ単位で取得します.
 //-----------------------------------------------------------------------------
 float PointLight::GetCandela() const
-{ return GetIntensity(); }
+{ return PointLumenToCandela(GetIntensity()); }
 
 //-----------------------------------------------------------------------------
 //      強度をルーメン単位で取得します.
 //-----------------------------------------------------------------------------
 float PointLight::GetLumen() const
-{ return PointCandelaToLumen(GetIntensity()); }
-
-//-----------------------------------------------------------------------------
-//      指定距離において強度をルクス単位で取得します.
-//-----------------------------------------------------------------------------
-float PointLight::GetLuxAtDistance(float distance) const
-{ return CandelaToLux(GetIntensity(), distance, 1.0f); }
+{ return GetIntensity(); }
 
 //-----------------------------------------------------------------------------
 //      強度をカンデラ単位で設定します.
 //-----------------------------------------------------------------------------
 void PointLight::SetCandela(float value)
-{ SetIntensity(value); }
+{ SetIntensity(PointCandelaToLumen(value)); }
 
 //-----------------------------------------------------------------------------
 //      強度をルーメン単位で設定します.
 //-----------------------------------------------------------------------------
 void PointLight::SetLumen(float value)
-{ SetIntensity(PointLumenToCandela(value)); }
+{ SetIntensity(value); }
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -148,8 +118,8 @@ void PointLight::SetLumen(float value)
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-SpotLight::SpotLight(float cd, float innerAngle, float outerAngle)
-: Light(LightType::Spot, PhotometricUnit::Candela, cd)
+SpotLight::SpotLight(float lm, float innerAngle, float outerAngle)
+: Light(LightType::Spot, PhotometricUnit::Lumen, lm)
 , m_InnerAngle(innerAngle)
 , m_OuterAngle(outerAngle)
 { ValidateCone(); }
@@ -158,19 +128,13 @@ SpotLight::SpotLight(float cd, float innerAngle, float outerAngle)
 //      強度をカンデラ単位で取得します.
 //-----------------------------------------------------------------------------
 float SpotLight::GetCandela() const
-{ return GetIntensity(); }
+{ return SpotLumenToCandela(GetIntensity(), m_OuterAngle); }
 
 //-----------------------------------------------------------------------------
 //      強度をルーメン単位で取得します.
 //-----------------------------------------------------------------------------
 float SpotLight::GetLumen() const
-{ return SpotCandelaToLumen(GetIntensity(), m_OuterAngle); }
-
-//-----------------------------------------------------------------------------
-//      指定距離において強度をルクス単位で取得します.
-//-----------------------------------------------------------------------------
-float SpotLight::GetLuxAtDistance(float distance) const
-{ return CandelaToLux(GetIntensity(), distance, 1.0f); }
+{ return GetIntensity(); }
 
 //-----------------------------------------------------------------------------
 //      内角を取得します.
@@ -200,13 +164,13 @@ void SpotLight::SetOuterAngle(float rad)
 //      強度をカンデラ単位で設定します.
 //-----------------------------------------------------------------------------
 void SpotLight::SetCandela(float cd)
-{ SetIntensity(cd); }
+{ SetIntensity(SpotCandelaToLumen(cd, m_OuterAngle)); }
 
 //-----------------------------------------------------------------------------
 //      強度をルーメン単位で設定します.
 //-----------------------------------------------------------------------------
 void SpotLight::SetLumen(float lm)
-{ SetIntensity(SpotLumenToCandela(lm, m_OuterAngle)); }
+{ SetIntensity(lm); }
 
 //-----------------------------------------------------------------------------
 //      円錐角を有効範囲に収めます.
@@ -218,6 +182,7 @@ void SpotLight::ValidateCone()
     if (m_InnerAngle > m_OuterAngle)
     { m_InnerAngle = m_OuterAngle; }
 }
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // DirectionalLight class
@@ -242,6 +207,7 @@ float DirectionalLight::GetLux() const
 void DirectionalLight::SetLux(float lx)
 { SetIntensity(lx); }
 
+
 ///////////////////////////////////////////////////////////////////////////////
 // ImageBasedLight class
 ///////////////////////////////////////////////////////////////////////////////
@@ -264,6 +230,18 @@ float ImageBasedLight::GetLux() const
 //-----------------------------------------------------------------------------
 void ImageBasedLight::SetLux(float lx)
 { SetIntensity(lx); }
+
+//-----------------------------------------------------------------------------
+//      テクスチャを設定します.
+//-----------------------------------------------------------------------------
+void ImageBasedLight::SetTexture(const TextureHolder& value)
+{ m_Texture = value; }
+
+//-----------------------------------------------------------------------------
+//      テクスチャを取得します.
+//-----------------------------------------------------------------------------
+const TextureHolder& ImageBasedLight::GetTexture() const
+{ return m_Texture; }
 
 
 ///////////////////////////////////////////////////////////////////////////////

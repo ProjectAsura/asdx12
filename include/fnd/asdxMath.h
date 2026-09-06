@@ -4259,7 +4259,7 @@ float ConeSolidAngle(float outerConeHalfAngle);
 //! 
 //! @param[in]      cd          カンデラ.
 //! @param[in]      distance    距離.
-//! @param[in]      cosAngle    角度の余弦(中心角の半角)..
+//! @param[in]      cosAngle    角度の余弦(中心角の半角).
 //! @return     ルクスに変換した結果を返却します.
 //-----------------------------------------------------------------------------
 float CandelaToLux(float cd, float distance, float cosAngle);
@@ -4269,7 +4269,7 @@ float CandelaToLux(float cd, float distance, float cosAngle);
 //! 
 //! @param[in]      lux         ルクス
 //! @param[in]      distance    距離.
-//! @param[in]      cosAngle    角度の余弦(中心角の半角)..
+//! @param[in]      cosAngle    角度の余弦(中心角の半角).
 //! @return     カンデラに変換した結果を返却します.
 //-----------------------------------------------------------------------------
 float LuxToCandela(float lux, float distance, float cosAngle);

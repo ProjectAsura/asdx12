@@ -29,7 +29,7 @@ struct ResPointLight
     Vector3     Position;       //!< 位置座標.
     Vector3     Color;          //!< カラー.
     float       Radius;         //!< 半径.
-    float       Itensity;       //!< 強度(カンデラ単位).
+    float       Itensity;       //!< 強度(ルーメン単位).
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -41,7 +41,7 @@ struct ResSpotLight
     Vector3     Direction;      //!< 照射方向.
     Vector3     Color;          //!< カラー.
     float       Radius;         //!< 半径.
-    float       Intensity;      //!< 強度(カンデラ単位)
+    float       Intensity;      //!< 強度(ルーメン単位)
     float       InnterAngle;    //!< 内角(ラジアン単位).
     float       OuterAngle;     //!< 外角(ラジアン単位).
 };
