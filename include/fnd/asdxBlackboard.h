@@ -120,6 +120,11 @@ public:
         return result;
     }
 
+    //-------------------------------------------------------------------------
+    //! @brief      データを削除します.
+    //-------------------------------------------------------------------------
+    void Remove(const char* tag);
+
 private:
     //=========================================================================
     // private variables.
@@ -264,7 +269,7 @@ public:
     T GetAs(const char* tag)
     {
         ScopedLock<SpinLock> locker(m_SpinLock);
-        return m_Blackboard.GetAs(tag);
+        return m_Blackboard.GetAs<T>(tag);
     }
 
 private:

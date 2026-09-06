@@ -71,6 +71,9 @@
     <ClCompile Include="..\src\fw\FrameTaskTest.cpp">
       <Filter>fw</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\fnd\BlackboardTest.cpp">
+      <Filter>fnd</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />

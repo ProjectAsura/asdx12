@@ -54,7 +54,7 @@ TEST(FunctionTest, Basic)
     {
         struct FakePass
         {
-            asdx::Action<> action;
+            asdx::Function<void(void)> action;
         };
 
         FakePass pass = {};
