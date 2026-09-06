@@ -483,6 +483,9 @@
     <ClCompile Include="..\src\fnd\asdxBlockHeap.cpp">
       <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\gfx\asdxLightManager.cpp">
+      <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\edit\asdxEditParam.h">
@@ -889,6 +892,9 @@
     </ClInclude>
     <ClInclude Include="..\include\fnd\asdxBlockHeap.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\gfx\asdxLightManager.h">
+      <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

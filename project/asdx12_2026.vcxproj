@@ -262,6 +262,7 @@
     <ClCompile Include="..\src\gfx\asdxGfxMisc.cpp" />
     <ClCompile Include="..\src\gfx\asdxIBLBaker.cpp" />
     <ClCompile Include="..\src\gfx\asdxLegacyBarrier.cpp" />
+    <ClCompile Include="..\src\gfx\asdxLightManager.cpp" />
     <ClCompile Include="..\src\gfx\asdxLine.cpp" />
     <ClCompile Include="..\src\gfx\asdxMapChip.cpp" />
     <ClCompile Include="..\src\gfx\asdxModel.cpp" />
@@ -394,6 +395,7 @@
     <ClInclude Include="..\include\gfx\asdxFxaa.h" />
     <ClInclude Include="..\include\gfx\asdxGfxMisc.h" />
     <ClInclude Include="..\include\gfx\asdxIBLBaker.h" />
+    <ClInclude Include="..\include\gfx\asdxLightManager.h" />
     <ClInclude Include="..\include\gfx\asdxLine.h" />
     <ClInclude Include="..\include\gfx\asdxMapChip.h" />
     <ClInclude Include="..\include\gfx\asdxModel.h" />

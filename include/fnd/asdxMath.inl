@@ -5746,6 +5746,105 @@ inline float LuminanceBT709(const Vector3& value)
 inline float LuminanceBT2020(const Vector3& value)
 { return Vector3::Dot(value, Vector3(0.2627f, 0.6780f, 0.0593f)); }
 
+//-----------------------------------------------------------------------------
+//      円錐の立体角を求めます.
+//-----------------------------------------------------------------------------
+inline float ConeSolidAngle(float outerConeHalfAngle)
+{
+    const auto cosTheta = cosf(outerConeHalfAngle);
+    return F_2PI * (1.0f - cosTheta);
+}
+
+//-----------------------------------------------------------------------------
+//      カンデラからルクスに変換します.
+//-----------------------------------------------------------------------------
+inline float CandelaToLux(float cd, float distance, float cosIncidentAngle)
+{
+    assert(distance > 0.0f);
+    return (cd * cosIncidentAngle) / (distance * distance);
+}
+
+//-----------------------------------------------------------------------------
+//      ルクスからカンデラに変換します.
+//-----------------------------------------------------------------------------
+inline float LuxToCandela(float lux, float distance, float cosIncidentAngle)
+{
+    assert(distance > 0.0f);
+    assert(cosIncidentAngle > 0.0f);
+    return (lux * distance * distance) / cosIncidentAngle;
+}
+
+//-----------------------------------------------------------------------------
+//      カンデラからルーメンに変換します.
+//-----------------------------------------------------------------------------
+inline float CandelaToLumen(float cd, float solidAngle)
+{ return cd * solidAngle; }
+
+//-----------------------------------------------------------------------------
+//      ルーメンからカンデラに変換します.
+//-----------------------------------------------------------------------------
+inline float LumenToCandela(float lm, float solidAngle)
+{
+    assert(solidAngle > 0.0f);
+    return lm / solidAngle;
+}
+
+//-----------------------------------------------------------------------------
+//      ルクスからルーメンに変換します.
+//-----------------------------------------------------------------------------
+inline float LuxToLumen(float lux, float distance, float cosAngle)
+{
+    auto cd = LuxToCandela(lux, distance, cosAngle);
+    auto omega = F_2PI * (1.0f - cosAngle);
+    return CandelaToLumen(cd, omega);
+}
+
+//-----------------------------------------------------------------------------
+//      ルーメンからルクスに変換します.
+//-----------------------------------------------------------------------------
+inline float LumenToLux(float lm, float distance, float cosAngle)
+{
+    auto omega = F_2PI * (1.0f - cosAngle);
+    auto cd = LumenToCandela(lm, omega);
+    return CandelaToLux(cd, distance, cosAngle);
+}
+
+//-----------------------------------------------------------------------------
+//      ポイントライトをカンデラからルーメンに変換します.
+//-----------------------------------------------------------------------------
+inline float PointCandelaToLumen(float cd)
+{
+    // ConeSolidAngle() に 2π を渡し, CandelaToLumen() を呼んだ結果と同じ.
+    return cd * 4.0f * F_PI;
+}
+
+//-----------------------------------------------------------------------------
+//      ポイントライトをルーメンからカンデラに変換します.
+//-----------------------------------------------------------------------------
+inline float PointLumenToCandela(float lm)
+{
+    // ConeSolidAngle() に 2π を渡し, LumenToCandela() を呼んだ結果と同じ.
+    return lm / (4.0f * F_PI);
+}
+
+//-----------------------------------------------------------------------------
+//      スポットライトをカンデラからルーメンに変換します.
+//-----------------------------------------------------------------------------
+inline float SpotCandelaToLumen(float cd, float outerConeHalfAngle)
+{
+    auto omega = ConeSolidAngle(outerConeHalfAngle);
+    return CandelaToLumen(cd, omega);
+}
+
+//-----------------------------------------------------------------------------
+//      スポットライトをルーメンからカンデラに変換します.
+//-----------------------------------------------------------------------------
+inline float SpotLumenToCandela(float lm, float outerConeHalfAngle)
+{
+    auto omega = ConeSolidAngle(outerConeHalfAngle);
+    return LumenToCandela(lm, omega);
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Unorm2 structure

@@ -46,9 +46,6 @@ bool ModelHolder::IsValid() const
 const Model* ModelHolder::GetModel() const
 { return m_pModel; }
 
-const Model* ModelHolder::operator->() const
-{ return m_pModel; }
-
 //-----------------------------------------------------------------------------
 //      入れ替えます.
 //-----------------------------------------------------------------------------
@@ -78,6 +75,12 @@ void ModelHolder::Swap(ModelHolder&& value)
     value.m_pModel = pModel;
     value.m_Hash   = hash;
 }
+
+//-----------------------------------------------------------------------------
+//      アロー演算子です.
+//-----------------------------------------------------------------------------
+const Model* ModelHolder::operator->() const
+{ return m_pModel; }
 
 //-----------------------------------------------------------------------------
 //      等価比較演算子です.
@@ -111,7 +114,7 @@ ModelHolder& ModelHolder::operator = (const ModelHolder& value)
 //-----------------------------------------------------------------------------
 ModelHolder& ModelHolder::operator = (ModelHolder&& value)
 {
-    ModelHolder(value.m_pModel, value.m_Hash).Swap(*this);
+    value.Swap(*this);
     return *this;
 }
 
