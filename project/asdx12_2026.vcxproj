@@ -242,6 +242,7 @@
     <ClCompile Include="..\src\fw\asdxAppCamera.cpp" />
     <ClCompile Include="..\src\fw\asdxBlockTaskManager.cpp" />
     <ClCompile Include="..\src\fw\asdxFrameTaskManager.cpp" />
+    <ClCompile Include="..\src\fw\asdxScene.cpp" />
     <ClCompile Include="..\src\fw\asdxTask.cpp" />
     <ClCompile Include="..\src\gfx\asdxAllocationHolder.cpp" />
     <ClCompile Include="..\src\gfx\asdxBloomEffect.cpp" />
@@ -370,6 +371,7 @@
     <ClInclude Include="..\include\fw\asdxAppCamera.h" />
     <ClInclude Include="..\include\fw\asdxBlockTaskManager.h" />
     <ClInclude Include="..\include\fw\asdxFrameTaskManager.h" />
+    <ClInclude Include="..\include\fw\asdxScene.h" />
     <ClInclude Include="..\include\fw\asdxTask.h" />
     <ClInclude Include="..\include\gfx\asdxAllocationHolder.h" />
     <ClInclude Include="..\include\gfx\asdxBloomEffect.h" />
@@ -418,7 +420,6 @@
     <ClInclude Include="..\include\gfx\asdxMovie.h" />
     <ClInclude Include="..\include\res\asdxResFont.h" />
     <ClInclude Include="..\include\res\asdxResHelper.h" />
-    <ClInclude Include="..\include\res\asdxResLight.h" />
     <ClInclude Include="..\include\res\asdxResMapChip.h" />
     <ClInclude Include="..\include\res\asdxResModel.h" />
     <ClInclude Include="..\include\res\asdxResMotion.h" />

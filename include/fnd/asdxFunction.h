@@ -232,7 +232,4 @@ private:
     }
 };
 
-template<typename... Args>
-using Action = Function<void(Args...)>;
-
 } // namespace asdx
