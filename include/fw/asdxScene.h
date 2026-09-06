@@ -8,8 +8,8 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <fnd/asdxMessage.h>
 #include <fnd/asdxList.h>
+#include <fnd/asdxBlackboard.h>
 #include <fnd/asdxSpinLock.h>
 
 
@@ -18,9 +18,7 @@ namespace asdx {
 ///////////////////////////////////////////////////////////////////////////////
 // IScene interface
 ///////////////////////////////////////////////////////////////////////////////
-struct IScene 
-: public IMessageListener
-, public List<IScene>::Node
+struct IScene : public List<IScene>::Node
 {
     //-------------------------------------------------------------------------
     //! @brief      デストラクタです.
@@ -160,14 +158,22 @@ public:
     //-------------------------------------------------------------------------
     void RemoveScene(uint32_t id);
 
+    //-------------------------------------------------------------------------
+    //! @brief      ブラックボードを取得します.
+    //! 
+    //! @return     ブラックボードを返却します.
+    //-------------------------------------------------------------------------
+    ThreadSafeBlackboard& GetBlackboard();
+
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    static SceneManager s_Instance;
-    SpinLock            m_SpinLock;
-    IScene*             m_pActiveScene = nullptr;
-    List<IScene>        m_SceneList;
+    static SceneManager     s_Instance;
+    SpinLock                m_SpinLock;
+    IScene*                 m_pActiveScene = nullptr;
+    List<IScene>            m_SceneList;
+    ThreadSafeBlackboard    m_Blackboard;
 
     //=========================================================================
     // private methods.

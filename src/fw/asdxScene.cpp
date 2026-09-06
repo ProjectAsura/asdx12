@@ -92,9 +92,6 @@ bool SceneManager::ChangeScene(uint32_t id)
             if (m_pActiveScene != nullptr)
             { m_pActiveScene->OnExit(); }
 
-            // シーン間でのデータをやり取りするために、ここでブロードキャスト.
-            MessageManager::Instance().Broadcast();
-
             // アクティブシーン切り替え.
             m_pActiveScene = &(itr);
 
@@ -156,24 +153,37 @@ void SceneManager::RemoveScene(uint32_t id)
         if (itr->GetId() == id)
         {
             auto scene = &(*itr);
+
+            // シーン終了コールバック呼び出し.
             if (m_pActiveScene == scene)
             {
                 m_pActiveScene->OnExit();
                 m_pActiveScene = nullptr;
             }
 
-            m_SceneList.erase(itr);
+            // リストから削除.
+            itr = m_SceneList.erase(itr);
 
+            // シーンを削除.
             if (scene)
             {
                 delete scene;
                 scene = nullptr;
             }
 
+            // 正常終了.
             return;
         }
+
+        // 次へ.
         itr++;
     }
 }
+
+//-----------------------------------------------------------------------------
+//      ブラックボードを取得します.
+//-----------------------------------------------------------------------------
+ThreadSafeBlackboard& SceneManager::GetBlackboard()
+{ return m_Blackboard; }
 
 } // namespace asdx
