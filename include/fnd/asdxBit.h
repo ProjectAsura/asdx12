@@ -151,6 +151,24 @@ inline To bit_cast(const From& value)
 //-----------------------------------------------------------------------------
 //! @brief      ビットフィールドを抽出します.
 //-----------------------------------------------------------------------------
+inline uint8_t BitFieldExtract(uint8_t src, uint8_t offset, uint8_t bits)
+{
+    uint8_t mask = uint8_t(1 << bits) - uint8_t(1);
+    return (src >> offset) & mask;
+}
+
+//-----------------------------------------------------------------------------
+//! @brief      ビットフィールドを抽出します.
+//-----------------------------------------------------------------------------
+inline uint16_t BitFieldExtract(uint16_t src, uint16_t offset, uint16_t bits)
+{
+    uint16_t mask = uint16_t(1 << bits) - uint16_t(1);
+    return (src >> offset) & mask;
+}
+
+//-----------------------------------------------------------------------------
+//! @brief      ビットフィールドを抽出します.
+//-----------------------------------------------------------------------------
 inline uint32_t BitFieldExtract(uint32_t src, uint32_t offset, uint32_t bits)
 {
     uint32_t mask = (1u << bits) - 1u;
@@ -160,14 +178,68 @@ inline uint32_t BitFieldExtract(uint32_t src, uint32_t offset, uint32_t bits)
 //-----------------------------------------------------------------------------
 //! @brief      ビットフィールドを抽出します.
 //-----------------------------------------------------------------------------
+inline uint64_t BitFieldExtract(uint64_t src, uint64_t offset, uint64_t bits)
+{
+    uint64_t mask = (1ull << bits) - 1ull;
+    return (src >> offset) & mask;
+}
+
+//-----------------------------------------------------------------------------
+//! @brief      ビットフィールドを抽出します.
+//-----------------------------------------------------------------------------
+inline int8_t BitFieldExtractSigned(int8_t src, uint8_t offset, uint8_t bits)
+{
+    int8_t lhs = 8 - offset - bits;
+    int8_t rhs = 8 - bits;
+    return int8_t(src << lhs) >> rhs;
+}
+
+//-----------------------------------------------------------------------------
+//! @brief      ビットフィールドを抽出します.
+//-----------------------------------------------------------------------------
+inline int16_t BitFieldExtractSigned(int16_t src, uint16_t offset, uint16_t bits)
+{
+    int16_t lhs = 16 - offset - bits;
+    int16_t rhs = 16 - bits;
+    return int16_t(src << lhs) >> rhs;
+}
+
+//-----------------------------------------------------------------------------
+//! @brief      ビットフィールドを抽出します.
+//-----------------------------------------------------------------------------
 inline int32_t BitFieldExtractSigned(int32_t src, uint32_t offset, uint32_t bits)
 {
-    if (bits == 0)
-        return 0;
-
-    int32_t lhs = 32 - (offset + bits);
+    int32_t lhs = 32 - offset - bits;
     int32_t rhs = 32 - bits;
-    return (src << lhs) >> rhs;
+    return int32_t(src << lhs) >> rhs;
+}
+
+//-----------------------------------------------------------------------------
+//! @brief      ビットフィールドを抽出します.
+//-----------------------------------------------------------------------------
+inline int64_t BitFieldExtractSigned(int64_t src, uint64_t offset, uint64_t bits)
+{
+    int64_t lhs = 64 - offset - bits;
+    int64_t rhs = 64 - bits;
+    return int64_t(src << lhs) >> rhs;
+}
+
+//-----------------------------------------------------------------------------
+//! @brief      ビットフィールドを挿入します.
+//-----------------------------------------------------------------------------
+inline uint8_t BitFieldInsert(uint8_t src, uint8_t insert, uint8_t offset, uint8_t bits)
+{
+    uint8_t mask = ~(UINT8_MAX << bits) << offset;
+    return (src & ~mask) | uint8_t(insert << offset);
+}
+
+//-----------------------------------------------------------------------------
+//! @brief      ビットフィールドを挿入します.
+//-----------------------------------------------------------------------------
+inline uint16_t BitFieldInsert(uint16_t src, uint16_t insert, uint16_t offset, uint16_t bits)
+{
+    uint16_t mask = ~(UINT16_MAX << bits) << offset;
+    return (src & ~mask) | uint16_t(insert << offset);
 }
 
 //-----------------------------------------------------------------------------
@@ -175,8 +247,17 @@ inline int32_t BitFieldExtractSigned(int32_t src, uint32_t offset, uint32_t bits
 //-----------------------------------------------------------------------------
 inline uint32_t BitFieldInsert(uint32_t src, uint32_t insert, uint32_t offset, uint32_t bits)
 {
-    uint32_t mask = ~(0xffffffff << bits) << offset;
-    return (src & ~mask) | (insert << offset);
+    uint32_t mask = ~(UINT32_MAX << bits) << offset;
+    return (src & ~mask) | uint32_t(insert << offset);
+}
+
+//-----------------------------------------------------------------------------
+//! @brief      ビットフィールドを挿入します.
+//-----------------------------------------------------------------------------
+inline uint64_t BitFieldInsert(uint64_t src, uint64_t insert, uint64_t offset, uint64_t bits)
+{
+    uint64_t mask = ~(UINT64_MAX << bits) << offset;
+    return (src & ~mask) | uint64_t(insert << offset);
 }
 
 //-----------------------------------------------------------------------------

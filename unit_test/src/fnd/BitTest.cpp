@@ -574,6 +574,21 @@ TEST(BitTest, BitOp)
 
     EXPECT_EQ(asdx::BitFieldExtractSigned(0x00000005, 0, 3), -3);
     EXPECT_EQ(asdx::BitFieldExtractSigned(0x00000003, 0, 3), 3);
+
+    const uint8_t value8 = asdx::BitFieldInsert(uint8_t(0), uint8_t(0x3), 1, 2);
+    EXPECT_EQ(value8, 0x6);
+    EXPECT_EQ(asdx::BitFieldExtract(value8, 1, 2), 0x3);
+    EXPECT_EQ(asdx::BitFieldExtractSigned(int8_t(0xa), 1, 3), -3);
+
+    const uint16_t value16 = asdx::BitFieldInsert(uint16_t(0), uint16_t(0x1234), 0, 16);
+    EXPECT_EQ(value16, 0x1234);
+    EXPECT_EQ(asdx::BitFieldExtract(value16, 4, 8), 0x23);
+    EXPECT_EQ(asdx::BitFieldExtractSigned(uint16_t(0xff80), 0, 16), -128);
+
+    const uint64_t value64 = asdx::BitFieldInsert(uint64_t(0), uint64_t(0x123456789abcdef0), 0, 64);
+    EXPECT_EQ(value64, 0x123456789abcdef0);
+    EXPECT_EQ(asdx::BitFieldExtract(value64, 32, 32), 0x12345678);
+    EXPECT_EQ(asdx::BitFieldExtractSigned(int64_t(0xfffffffffffffff0), 0, 64), -16);
 }
 
 TEST(BitTest, BitInterleave)
