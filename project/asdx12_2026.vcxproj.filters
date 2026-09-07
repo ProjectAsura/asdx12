@@ -827,9 +827,6 @@
     <ClInclude Include="..\include\gfx\asdxGaussianBlurEffect.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\gfx\asdxSmaa.h">
-      <Filter>ヘッダー ファイル\gfx</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\gfx\asdxMosaicEffect.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>

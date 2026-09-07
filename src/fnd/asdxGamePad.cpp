@@ -11,22 +11,7 @@
 #include <Windows.h>
 #include <Xinput.h>
 #include <fnd/asdxHid.h>
-
-
-namespace /* anonymous */ {
-
-//-----------------------------------------------------------------------------
-//! @brief      2つの値のうち，大きい方を返却します.
-//!
-//! @param [in]     a       判定する値.
-//! @param [in]     b       判定する値.
-//! @return     2つの値のうち，大きい方を返却します.
-//-----------------------------------------------------------------------------
-template<typename T> inline
-T Max( T a, T b )
-{ return ( a > b ) ? a : b; }
-
-} // namespace /* anonymous */
+#include <fnd/asdxMath.h>
 
 
 namespace asdx {

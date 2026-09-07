@@ -39,10 +39,11 @@ void Keyboard::UpdateState()
 {
     m_Index = 1 - m_Index;
 
-    uint8_t keys[ MAX_KEYS ] = {};
+    uint8_t keys[MAX_KEYS] = {};
     GetKeyboardState(keys);
-    for( uint32_t i=0; i<MAX_KEYS; ++i )
-    { m_Keys[ m_Index ][ i ] = ( ( keys[ i ] & 0x80 ) != 0 ) ? true : false; }
+
+    for(auto i=0u; i<MAX_KEYS; ++i )
+    { m_Keys[m_Index][i] = !!(keys[i] & 0x80); }
 }
 
 //-----------------------------------------------------------------------------
@@ -59,7 +60,7 @@ bool Keyboard::IsHold(uint32_t keyCode) const
     assert( keyCode < MAX_KEYS );
     uint32_t idx = m_Index;
     uint32_t key = ConvertKey( keyCode );
-    return m_Keys[ idx ][ key ];
+    return m_Keys[idx][key];
 }
 
 //-----------------------------------------------------------------------------
@@ -70,7 +71,7 @@ bool Keyboard::IsDown(uint32_t keyCode) const
     assert( keyCode < MAX_KEYS );
     uint32_t idx = m_Index;
     uint32_t key = ConvertKey( keyCode );
-    return m_Keys[ idx ][ key ] && ( !m_Keys[ 1 - idx ][ key ] );
+    return m_Keys[idx][key] && (!m_Keys[1 - idx][key]);
 }
 
 //-----------------------------------------------------------------------------
@@ -81,11 +82,11 @@ uint32_t Keyboard::ConvertKey(uint32_t keyCode)
     uint32_t key = keyCode;
     uint32_t result = 0;
 
-    bool isAscii = ( 0x20 <= key && key <= 0x7e );
-    if ( isAscii )
+    bool isAscii = (0x20 <= key && key <= 0x7e);
+    if (isAscii)
     { return key; }
 
-    switch( key )
+    switch(key)
     {
         case asdx::KEY_RETURN:  { result = VK_RETURN; }     break;
         case asdx::KEY_TAB:     { result = VK_TAB; }        break;

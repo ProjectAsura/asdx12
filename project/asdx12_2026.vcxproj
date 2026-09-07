@@ -409,7 +409,6 @@
     <ClInclude Include="..\include\gfx\asdxScreenCpature.h" />
     <ClInclude Include="..\include\gfx\asdxShaderCompiler.h" />
     <ClInclude Include="..\include\gfx\asdxSkyBox.h" />
-    <ClInclude Include="..\include\gfx\asdxSmaa.h" />
     <ClInclude Include="..\include\gfx\asdxSprite.h" />
     <ClInclude Include="..\include\gfx\asdxSpriteAnimation.h" />
     <ClInclude Include="..\include\gfx\asdxStarEffect.h" />
