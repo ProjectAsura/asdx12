@@ -177,8 +177,8 @@ T* TaskManagerBase::CreateTask(Args&&... args)
         return nullptr;
 
     auto pTask = new (buf) T(std::forward<Args>(args)...);
-    pTask->OnCreate();
     m_TaskList.push_back(pTask);
+    pTask->OnCreate();
     return pTask;
 }
 

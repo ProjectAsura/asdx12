@@ -26,9 +26,6 @@ class Queue
     /* NOTHING */
 
 public:
-    class Node;
-    typedef Node QueueNode;
-
     ///////////////////////////////////////////////////////////////////////////
     // Node clas
     ///////////////////////////////////////////////////////////////////////////
@@ -60,16 +57,16 @@ public:
         //---------------------------------------------------------------------
         //! @brief      デストラクタです.
         //---------------------------------------------------------------------
-        ~Node()
+        virtual ~Node()
         {
             auto prev = m_Prev;
             auto next = m_Next;
 
             if (prev != nullptr)
-            { prev->QueueNode::m_Next = next; }
+            { prev->Queue::Node::m_Next = next; }
 
             if (next != nullptr)
-            { next->QueueNode::m_Prev = prev; }
+            { next->Queue::Node::m_Prev = prev; }
 
             m_Prev = nullptr;
             m_Next = nullptr;
@@ -90,8 +87,8 @@ public:
             if (lhs == nullptr || rhs == nullptr)
             { return; }
 
-            lhs->QueueNode::m_Next = rhs;
-            rhs->QueueNode::m_Prev = lhs;
+            lhs->Queue::Node::m_Next = rhs;
+            rhs->Queue::Node::m_Prev = lhs;
         }
 
         //---------------------------------------------------------------------
@@ -102,17 +99,17 @@ public:
             if (node == nullptr)
             { return; }
 
-            auto prev = node->QueueNode::m_Prev;
-            auto next = node->QueueNode::m_Next;
+            auto prev = node->Queue::Node::m_Prev;
+            auto next = node->Queue::Node::m_Next;
 
             if (prev != nullptr)
-            { prev->QueueNode::m_Next = next; }
+            { prev->Queue::Node::m_Next = next; }
 
             if (next != nullptr)
-            { next->QueueNode::m_Prev = prev; }
+            { next->Queue::Node::m_Prev = prev; }
 
-            node->QueueNode::m_Prev = nullptr;
-            node->QueueNode::m_Next = nullptr;
+            node->Queue::Node::m_Prev = nullptr;
+            node->Queue::Node::m_Next = nullptr;
         }
     };
 
@@ -148,8 +145,8 @@ public:
         while(itr != nullptr)
         {
             auto node = itr;
-            itr = itr->QueueNode::m_Next;
-            QueueNode::Unlink(node);
+            itr = itr->Queue::Node::m_Next;
+            Queue::Node::Unlink(node);
         }
 
         m_Head = nullptr;
@@ -167,7 +164,7 @@ public:
         { return; }
 
         // 継承チェック.
-        assert(static_cast<QueueNode*>(node) != nullptr);
+        assert(static_cast<Queue<T>::Node*>(node) != nullptr);
 
         if (m_Head == nullptr)
         {
@@ -176,7 +173,7 @@ public:
         }
         else
         {
-            QueueNode::Link(m_Tail, node);
+            Queue::Node::Link(m_Tail, node);
             m_Tail = node;
         }
         m_Count++;
@@ -191,8 +188,8 @@ public:
         { return nullptr; }
 
         auto head = m_Head;
-        auto next = m_Head->QueueNode::m_Next;
-        QueueNode::Unlink(head);
+        auto next = m_Head->Queue::Node::m_Next;
+        Queue::Node::Unlink(head);
         m_Head = next;
         m_Count--;
         if (m_Count == 0)

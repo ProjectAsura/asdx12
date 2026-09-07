@@ -160,12 +160,14 @@ inline uint32_t BitFieldExtract(uint32_t src, uint32_t offset, uint32_t bits)
 //-----------------------------------------------------------------------------
 //! @brief      ビットフィールドを抽出します.
 //-----------------------------------------------------------------------------
-inline int BitFieldExtractSigned(int src, uint32_t offset, uint32_t bits)
+inline int32_t BitFieldExtractSigned(int32_t src, uint32_t offset, uint32_t bits)
 {
-    int shifted = src >> offset;
-    int signBit = shifted & (1u << (bits - 1u));
-    uint32_t mask = (1u << bits) - 1u;
-    return ~signBit | (shifted & mask);
+    if (bits == 0)
+        return 0;
+
+    int32_t lhs = 32 - (offset + bits);
+    int32_t rhs = 32 - bits;
+    return (src << lhs) >> rhs;
 }
 
 //-----------------------------------------------------------------------------
@@ -253,7 +255,7 @@ inline void DecodeMorton2(uint32_t code, uint32_t& x, uint32_t& y)
 //-----------------------------------------------------------------------------
 //      3次元のモートンコードをデコードします.
 //-----------------------------------------------------------------------------
-inline void DecodeMorton3(uint32_t code, uint32_t& x, uint32_t& y, uint32_t z)
+inline void DecodeMorton3(uint32_t code, uint32_t& x, uint32_t& y, uint32_t& z)
 {
     x = Compact1By2(code >> 0);
     y = Compact1By2(code >> 1);

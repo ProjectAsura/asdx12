@@ -65,7 +65,6 @@ bool StateMachine::RegisterState(uint32_t state, IStateListener* pListener)
         return true;
     }
 
-    assert(itr == m_Listeners.end());
     return false;
 }
 

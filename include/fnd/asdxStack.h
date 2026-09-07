@@ -26,9 +26,6 @@ class Stack
     /* NOTHING */
 
 public:
-    class Node;
-    typedef Node StackNode;
-
     ///////////////////////////////////////////////////////////////////////////
     // Node class
     ///////////////////////////////////////////////////////////////////////////
@@ -56,16 +53,16 @@ public:
         //---------------------------------------------------------------------
         //! @brief      デストラクタです.
         //---------------------------------------------------------------------
-        ~Node()
+        virtual ~Node()
         {
             auto prev = m_Prev;
             auto next = m_Next;
 
             if (prev != nullptr)
-            { prev->StackNode::m_Next = next; }
+            { prev->Stack::Node::m_Next = next; }
 
             if (next != nullptr)
-            { next->StackNode::m_Prev = prev; }
+            { next->Stack::Node::m_Prev = prev; }
 
             m_Prev = nullptr;
             m_Next = nullptr;
@@ -86,8 +83,8 @@ public:
             if (lhs == nullptr || rhs == nullptr)
             { return; }
 
-            lhs->StackNode::m_Next = rhs;
-            rhs->StackNode::m_Prev = lhs;
+            lhs->Stack::Node::m_Next = rhs;
+            rhs->Stack::Node::m_Prev = lhs;
         }
 
         //---------------------------------------------------------------------
@@ -98,17 +95,17 @@ public:
             if (node == nullptr)
             { return; }
 
-            auto prev = node->StackNode::m_Prev;
-            auto next = node->StackNode::m_Next;
+            auto prev = node->Stack::Node::m_Prev;
+            auto next = node->Stack::Node::m_Next;
 
             if (prev != nullptr)
-            { prev->StackNode::m_Next = next; }
+            { prev->Stack::Node::m_Next = next; }
 
             if (next != nullptr)
-            { next->StackNode::m_Prev = prev; }
+            { next->Stack::Node::m_Prev = prev; }
 
-            node->StackNode::m_Prev = nullptr;
-            node->StackNode::m_Next = nullptr;
+            node->Stack::Node::m_Prev = nullptr;
+            node->Stack::Node::m_Next = nullptr;
         }
     };
 
@@ -143,7 +140,7 @@ public:
         { return; }
 
         // 継承チェック.
-        assert(static_cast<StackNode*>(node) != nullptr);
+        assert(static_cast<Stack<T>::Node*>(node) != nullptr);
 
         if (m_Head == nullptr)
         {
@@ -151,7 +148,7 @@ public:
         }
         else
         {
-            StackNode::Link(m_Head, node);
+            Stack::Node::Link(m_Head, node);
             m_Head = node;
         }
         m_Count++;
@@ -166,8 +163,8 @@ public:
         { return nullptr; }
 
         auto head = m_Head;
-        auto prev = m_Head->StackNode::m_Prev;
-        StackNode::Unlink(head);
+        auto prev = m_Head->Stack::Node::m_Prev;
+        Stack::Node::Unlink(head);
         m_Head = prev;
         m_Count--;
 
@@ -183,8 +180,8 @@ public:
         while(itr != nullptr)
         {
             auto node = itr;
-            itr = itr->StackNode::m_Prev;
-            StackNode::Unlink(node);
+            itr = itr->Stack::Node::m_Prev;
+            Stack::Node::Unlink(node);
         }
 
         m_Count = 0;

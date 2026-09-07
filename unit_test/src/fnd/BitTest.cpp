@@ -252,7 +252,7 @@ TEST(BitTest, FindOne16)
         uint16_t bit = 0;
         EXPECT_EQ(asdx::FindOneR(bit), 0);
 
-        for(int i=0; i<8; ++i)
+        for(int i=0; i<16; ++i)
         {
             uint16_t mask = 0x1 << i;
             EXPECT_EQ(asdx::FindOneR(mask), i+1);
@@ -271,6 +271,12 @@ TEST(BitTest, BitFlag16)
     EXPECT_TRUE(flags.Get(0));
     EXPECT_FALSE(flags.Get(1));
     EXPECT_TRUE(flags.Any());
+    EXPECT_EQ(flags.Mask(0x3), 0x1);
+    EXPECT_EQ(flags.FindUnused(), 16);
+
+    flags.Set(0, false);
+    EXPECT_TRUE(flags.None());
+    EXPECT_EQ(flags.FindUnused(), 16);
 
     flags = asdx::BitFlag16(0xffff);
     EXPECT_EQ((uint16_t)flags, 0xffff);
@@ -565,4 +571,55 @@ TEST(BitTest, BitOp)
 
     ext = asdx::BitFieldExtract(val, 0, 2);
     EXPECT_EQ(ext, 0x3);
+
+    EXPECT_EQ(asdx::BitFieldExtractSigned(0x00000005, 0, 3), -3);
+    EXPECT_EQ(asdx::BitFieldExtractSigned(0x00000003, 0, 3), 3);
+}
+
+TEST(BitTest, BitInterleave)
+{
+    const uint32_t value = 0x1234;
+    EXPECT_EQ(asdx::Compact1By1(asdx::Part1By1(value)), value);
+
+    const uint32_t value3 = 0x2aa;
+    EXPECT_EQ(asdx::Compact1By2(asdx::Part1By2(value3)), value3);
+}
+
+TEST(BitTest, MortonCode)
+{
+    const uint32_t x2 = 0x1234;
+    const uint32_t y2 = 0x5678;
+    uint32_t decodedX2 = 0;
+    uint32_t decodedY2 = 0;
+    asdx::DecodeMorton2(asdx::EncodeMorton2(x2, y2), decodedX2, decodedY2);
+    EXPECT_EQ(decodedX2, x2 & 0xffff);
+    EXPECT_EQ(decodedY2, y2 & 0xffff);
+
+    const uint32_t x3 = 0x12;
+    const uint32_t y3 = 0x23;
+    const uint32_t z3 = 0x34;
+    uint32_t decodedX3 = 0;
+    uint32_t decodedY3 = 0;
+    uint32_t decodedZ3 = 0;
+    asdx::DecodeMorton3(asdx::EncodeMorton3(x3, y3, z3), decodedX3, decodedY3, decodedZ3);
+    EXPECT_EQ(decodedX3, x3);
+    EXPECT_EQ(decodedY3, y3);
+    EXPECT_EQ(decodedZ3, z3);
+}
+
+TEST(BitTest, CountBit)
+{
+    EXPECT_EQ(asdx::CountBit(uint8_t(0)), 0);
+    EXPECT_EQ(asdx::CountBit(uint8_t(0xff)), 8);
+    EXPECT_EQ(asdx::CountBit(uint16_t(0x8001)), 2);
+    EXPECT_EQ(asdx::CountBit(uint32_t(0x80000001)), 2);
+    EXPECT_EQ(asdx::CountBit(uint64_t(0x8000000000000001ull)), 2);
+}
+
+TEST(BitTest, BitCast)
+{
+    const uint32_t bits = 0x3f800000;
+    const float value = asdx::bit_cast<float>(bits);
+    EXPECT_EQ(value, 1.0f);
+    EXPECT_EQ(asdx::bit_cast<uint32_t>(value), bits);
 }

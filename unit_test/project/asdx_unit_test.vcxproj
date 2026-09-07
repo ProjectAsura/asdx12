@@ -86,6 +86,7 @@
     <ClCompile Include="..\src\fnd\RelativePtrTest.cpp" />
     <ClCompile Include="..\src\fnd\SpinLockTest.cpp" />
     <ClCompile Include="..\src\fnd\StackTest.cpp" />
+    <ClCompile Include="..\src\fnd\StateMachineTest.cpp" />
     <ClCompile Include="..\src\fnd\ThreadPoolTest.cpp" />
     <ClCompile Include="..\src\fnd\TokenizerTest.cpp" />
     <ClCompile Include="..\src\fnd\TransformTest.cpp" />

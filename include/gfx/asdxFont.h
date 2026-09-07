@@ -10,6 +10,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <cstdint>
+#include <format>
 #include <d3d12.h>
 #include <fnd/asdxMath.h>
 #include <res/asdxResFont.h>
@@ -125,7 +126,8 @@ public:
     //! @param[in]      scale       スケール値.
     //! return      文字列の横幅を返却します.
     //-------------------------------------------------------------------------
-    int CalcWidth(const char8_t* text, float scale = 1.0f) const;
+    int CalcWidth(const char8_t* text, float scale = 1.0f) const
+    { return CalcWidth(reinterpret_cast<const char*>(text), scale); }
 #endif
 
     //-------------------------------------------------------------------------
@@ -242,7 +244,15 @@ public:
     //! @param[out]     outY            文字描画後のY成分.
     //! @param[in]      format          書式指定子.
     //-------------------------------------------------------------------------
-    void AddFormat(SpriteRenderer& renderer, const Font& font, int x, int y, int layer, int* outX, int* outY, const char* format, ...);
+    template<class... Args>
+    void AddFormat(SpriteRenderer& renderer, const Font& font, int x, int y, int layer, int* outX, int* outY, const char* format, Args&&... args)
+    {
+        char buffer[1024] = {};
+        auto result = std::format_to_n(buffer, sizeof(buffer) - 1, format, std::forward<Args>(args)...);
+        const auto length = (result.size < sizeof(buffer) - 1) ? result.size : sizeof(buffer) - 1;
+        buffer[length] = '\0'; // null終端化.
+        Add(renderer, font, x, y, layer, outX, outY, buffer);
+    }
 
     //-------------------------------------------------------------------------
     //! @brief      フォーマットを指定してフォントスプライトを追加します.
@@ -254,7 +264,9 @@ public:
     //! @param[in]      layer           奥行方向.
     //! @param[in]      format          書式指定子.
     //-------------------------------------------------------------------------
-    void AddFormat(SpriteRenderer& renderer, const Font& font, int x, int y, int layer, const char* format, ...);
+    template<class... Args>
+    void AddFormat(SpriteRenderer& renderer, const Font& font, int x, int y, int layer, const char* format, Args&&... args)
+    { AddFormat(renderer, font, x, y, layer, nullptr, nullptr, format, std::forward<Args>(args)...); }
 
     //-------------------------------------------------------------------------
     //! @brief      フォーマットを指定してフォントスプライトを追加します.
@@ -265,7 +277,9 @@ public:
     //! @param[in]      y               描画位置のY成分.
     //! @param[in]      format          書式指定子.
     //-------------------------------------------------------------------------
-    void AddFormat(SpriteRenderer& renderer, const Font& font, int x, int y, const char* format, ...);
+    template<class... Args>
+    void AddFormat(SpriteRenderer& renderer, const Font& font, int x, int y, const char* format, Args&&... args)
+    { AddFormat(renderer, font, x, y, 0, nullptr, nullptr, format, std::forward<Args>(args)...); }
 
 #if _HAS_CXX20
     //-------------------------------------------------------------------------
@@ -280,7 +294,8 @@ public:
     //! @param[out]     outY            文字描画後のY成分.
     //! @param[in]      text            文字列.
     //-------------------------------------------------------------------------
-    void Add(SpriteRenderer& renderer, const Font& font, int x, int y, int layer, int* outX, int* outY, const char8_t* text);
+    void Add(SpriteRenderer& renderer, const Font& font, int x, int y, int layer, int* outX, int* outY, const char8_t* text)
+    { Add(renderer, font, x, y, layer, outX, outY, reinterpret_cast<const char*>(text)); }
 
     //-------------------------------------------------------------------------
     //! @brief      フォントスプライトを追加します.
@@ -293,7 +308,7 @@ public:
     //! @param[in]      text            文字列.
     //-------------------------------------------------------------------------
     void Add(SpriteRenderer& renderer, const Font& font, int x, int y, int layer, const char8_t* text)
-    { Add(renderer, font, x, y, layer, nullptr, nullptr, text); }
+    { Add(renderer, font, x, y, layer, nullptr, nullptr, reinterpret_cast<const char*>(text)); }
 
     //-------------------------------------------------------------------------
     //! @brief      フォントスプライトを追加します.
@@ -305,7 +320,7 @@ public:
     //! @param[in]      text            文字列.
     //-------------------------------------------------------------------------
     void Add(SpriteRenderer& renderer, const Font& font, int x, int y, const char8_t* text)
-    { Add(renderer, font, x, y, 0, nullptr, nullptr, text); }
+    { Add(renderer, font, x, y, 0, nullptr, nullptr, reinterpret_cast<const char*>(text)); }
 
     //-------------------------------------------------------------------------
     //! @brief      フォーマットを指定してフォントスプライトを追加します.
@@ -319,7 +334,9 @@ public:
     //! @param[out]     outY            文字描画後のY成分.
     //! @param[in]      format          書式指定子.
     //-------------------------------------------------------------------------
-    void AddFormat(SpriteRenderer& renderer, const Font& font, int x, int y, int layer, int* outX, int* outY, const char8_t* format, ...);
+    template<class... Args>
+    void AddFormat(SpriteRenderer& renderer, const Font& font, int x, int y, int layer, int* outX, int* outY, const char8_t* format, Args&&... args)
+    { Add(renderer, font, x, y, layer, outX, outY, reinterpret_cast<const char*>(format), std::forward<Args>(args)...); }
 
     //-------------------------------------------------------------------------
     //! @brief      フォーマットを指定してフォントスプライトを追加します.
@@ -331,7 +348,9 @@ public:
     //! @param[in]      layer           奥行方向.
     //! @param[in]      format          書式指定子.
     //-------------------------------------------------------------------------
-    void AddFormat(SpriteRenderer& renderer, const Font& font, int x, int y, int layer, const char8_t* format, ...);
+    template<class... Args>
+    void AddFormat(SpriteRenderer& renderer, const Font& font, int x, int y, int layer, const char8_t* format, Args&&... args)
+    { AddFormat(renderer, font, x, y, layer, nullptr, nullptr, reinterpret_cast<const char*>(format), std::forward<Args>(args)...); }
 
     //-------------------------------------------------------------------------
     //! @brief      フォーマットを指定してフォントスプライトを追加します.
@@ -342,7 +361,9 @@ public:
     //! @param[in]      y               描画位置のY成分.
     //! @param[in]      format          書式指定子.
     //-------------------------------------------------------------------------
-    void AddFormat(SpriteRenderer& renderer, const Font& font, int x, int y, const char8_t* format, ...);
+    template<class... Args>
+    void AddFormat(SpriteRenderer& renderer, const Font& font, int x, int y, const char8_t* format, Args&&... args)
+    { AddFormat(renderer, font, x, y, 0, nullptr, nullptr, reinterpret_cast<const char*>(format), std::forward<Args>(args)...); }
 #endif
 
     //-------------------------------------------------------------------------

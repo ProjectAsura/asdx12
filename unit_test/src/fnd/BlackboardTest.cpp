@@ -15,8 +15,8 @@ namespace {
 
 struct TestData
 {
-    int32_t Value = 0;
-    float Factor = 0.0f;
+    int32_t Value  = 0;
+    float   Factor = 0.0f;
 };
 
 } // namespace
