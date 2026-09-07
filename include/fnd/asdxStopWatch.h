@@ -8,8 +8,7 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <cstdint>
-#include <profileapi.h>
+#include <chrono>
 
 
 namespace asdx {
@@ -25,6 +24,9 @@ class StopWatch
     /* NOTHING */
 
 public:
+    using Clock     = std::chrono::steady_clock;
+    using TimePoint = Clock::time_point;
+
     //=========================================================================
     // public variables.
     //=========================================================================
@@ -40,43 +42,50 @@ public:
     StopWatch()
     : m_Start   ()
     , m_End     ()
-    {
-        LARGE_INTEGER freq;
-        QueryPerformanceFrequency(&freq);
-        m_InvTicksPerSec = 1.0 / double(freq.QuadPart);
-    }
+    { /* DO_NOTHING */ }
 
     //-------------------------------------------------------------------------
     //! @brief      開始点を記録します.
     //-------------------------------------------------------------------------
     void Start()
-    { QueryPerformanceCounter(&m_Start); }
+    { m_Start = Clock::now(); }
 
     //-------------------------------------------------------------------------
     //! @brief      終了点を記録します.
     //-------------------------------------------------------------------------
     void End()
-    { QueryPerformanceCounter(&m_End); }
+    { m_End = Clock::now(); }
 
     //-------------------------------------------------------------------------
     //! @brief      経過時間を秒単位で取得します.
     //-------------------------------------------------------------------------
     double GetElapsedSec() const
-    { return (m_End.QuadPart - m_Start.QuadPart) * m_InvTicksPerSec; }
+    { return std::chrono::duration<double>(m_End - m_Start).count(); }
 
     //-------------------------------------------------------------------------
     //! @brief      経過時間をミリ秒単位で取得します.
     //-------------------------------------------------------------------------
     double GetElapsedMsec() const 
-    { return GetElapsedSec() * 1000.0f; }
+    { return std::chrono::duration<double, std::milli>(m_End - m_Start).count(); }
+
+    //-------------------------------------------------------------------------
+    //! @brief      経過時間をマイクロ秒単位で取得します.
+    //-------------------------------------------------------------------------
+    double GetElapsedUsec() const
+    { return std::chrono::duration<double, std::micro>(m_End - m_Start).count(); }
+
+    //-------------------------------------------------------------------------
+    //! @brief      経過時間をナノ秒単位で取得します.
+    //-------------------------------------------------------------------------
+    double GetElapsedNsec() const
+    { return std::chrono::duration<double, std::nano>(m_End - m_Start).count(); }
 
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    LARGE_INTEGER   m_Start;
-    LARGE_INTEGER   m_End;
-    double          m_InvTicksPerSec;
+    TimePoint   m_Start;
+    TimePoint   m_End;
 
     //=========================================================================
     // private methods.

@@ -8,8 +8,7 @@
 //-------------------------------------------------------------------------------------------------
 // Includes
 //-------------------------------------------------------------------------------------------------
-#include <cstdint>
-#include <profileapi.h>
+#include <chrono>
 
 
 namespace asdx {
@@ -25,6 +24,9 @@ class StepTimer
     /* NOTHING */
 
 public:
+    using Clock     = std::chrono::steady_clock;
+    using TimePoint = Clock::time_point;
+
     //=============================================================================================
     // private variables
     //=============================================================================================
@@ -38,19 +40,11 @@ public:
     //! @brief      コンストラクタです.
     //---------------------------------------------------------------------------------------------
     StepTimer()
-    : m_IsStop     ( true )
-    , m_StopTime   ( 0 )
-    , m_ElapsedTime( 0 )
-    , m_BaseTime   ( 0 )
-    {
-        LARGE_INTEGER qwTicksPerSec = { 0 };
-
-        // 周波数を取得します.
-        QueryPerformanceFrequency( &qwTicksPerSec );
-
-        m_TicksPerSec = qwTicksPerSec.QuadPart;
-        m_InvTicksPerSec = 1.0 / static_cast<double>( m_TicksPerSec );
-    }
+    : m_IsStop     (true)
+    , m_StopTime   ()
+    , m_ElapsedTime()
+    , m_BaseTime   ()
+    { /* DO_NOTHING */ }
 
     //---------------------------------------------------------------------------------------------
     //! @brief      タイマーをリセットします.
@@ -58,11 +52,11 @@ public:
     void Reset()
     {
         // 調整された現在時間を取得
-        auto qwTime = GetAdjustedCurrentTime();
+        auto now = GetAdjustedCurrentTime();
 
-        m_BaseTime    = qwTime;
-        m_ElapsedTime = qwTime;
-        m_StopTime    = 0;
+        m_BaseTime    = now;
+        m_ElapsedTime = now;
+        m_StopTime    = {};
         m_IsStop      = false;
     }
 
@@ -71,17 +65,14 @@ public:
     //---------------------------------------------------------------------------------------------
     void Start()
     {
-        LARGE_INTEGER qwTime = { 0 };
-
-        // 現在のカウンタを取得.
-        QueryPerformanceCounter( &qwTime );
+        const auto now = std::chrono::steady_clock::now();
 
         // 停止中ならベース時間を加算.
         if ( m_IsStop )
-        { m_BaseTime += qwTime.QuadPart - m_StopTime; }
+        { m_BaseTime += now - m_StopTime; }
 
-        m_StopTime    = 0;
-        m_ElapsedTime = qwTime.QuadPart;
+        m_StopTime    = {};
+        m_ElapsedTime = now;
         m_IsStop      = false;
     }
 
@@ -93,13 +84,10 @@ public:
         if ( m_IsStop )
         { return; }
 
-        LARGE_INTEGER qwTime = { 0 };
+        const auto now = std::chrono::steady_clock::now();
 
-        // 現在のカウンタを取得.
-        QueryPerformanceCounter( &qwTime );
-
-        m_StopTime    = qwTime.QuadPart;
-        m_ElapsedTime = qwTime.QuadPart;
+        m_StopTime    = now;
+        m_ElapsedTime = now;
         m_IsStop      = true;
     }
 
@@ -107,7 +95,7 @@ public:
     //! @brief      0.1秒タイマーを進めます.
     //---------------------------------------------------------------------------------------------
     void Advance()
-    { m_StopTime += m_TicksPerSec / 10; }
+    { m_StopTime += std::chrono::milliseconds(100); }
 
     //---------------------------------------------------------------------------------------------
     //! @brief      停止状態かどうか判定します.
@@ -125,13 +113,8 @@ public:
     //---------------------------------------------------------------------------------------------
     double GetAbsoluteSec() const
     {
-        LARGE_INTEGER qwTime = { 0 };
-
-        // 現在のカウンタを取得.
-        QueryPerformanceCounter( &qwTime );
-
         // システム時間を算出して，返却する.
-        return qwTime.QuadPart * m_InvTicksPerSec;
+        return std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
     }
 
     //---------------------------------------------------------------------------------------------
@@ -142,10 +125,10 @@ public:
     double GetRelativeSec()
     {
         // 調整された現在時間を取得.
-        auto qwTime = GetAdjustedCurrentTime();
+        auto now = GetAdjustedCurrentTime();
 
         // 時間を算出.
-        return ( qwTime - m_BaseTime ) * m_InvTicksPerSec;
+        return std::chrono::duration<double>(now - m_BaseTime).count();
     }
 
     //---------------------------------------------------------------------------------------------
@@ -156,13 +139,13 @@ public:
     double GetElapsedSec()
     {
         // 調整された現在時間を取得.
-        auto qwTime = GetAdjustedCurrentTime();
+        auto now = GetAdjustedCurrentTime();
 
         // 経過時間を算出.
-        auto elapsedTime = ( qwTime - m_ElapsedTime ) * m_InvTicksPerSec;
+        auto elapsedTime = std::chrono::duration<double>(now - m_ElapsedTime).count();
 
         // 経過時間を更新.
-        m_ElapsedTime = qwTime;
+        m_ElapsedTime = now;
 
         // 0以下であればランプ.
         if ( elapsedTime < 0 )
@@ -178,26 +161,26 @@ public:
     //! @param [out]    absoluteTime   システム時間を格納する変数.
     //! @param [out]    elapsedTime    経過時間を格納する変数.
     //---------------------------------------------------------------------------------------------
-    void GetValues( double& time, double& absoluteTime, double& elapsedTime )
+    void GetValues(double& time, double& absoluteTime, double& elapsedTime)
     {
         // 調整された現在時間を取得.
-        auto qwTime = GetAdjustedCurrentTime();
+        auto now = GetAdjustedCurrentTime();
 
         // 経過時間を取得.
-        auto diffTime = ( qwTime - m_ElapsedTime ) * m_InvTicksPerSec;
+        auto diffTime = std::chrono::duration<double>(now - m_ElapsedTime).count();
 
         // 経過時間を更新.
-        m_ElapsedTime = qwTime;
+        m_ElapsedTime = now;
 
         // 0以下であればクランプ.
         if ( diffTime < 0 )
         { diffTime = 0.0; }
 
         // システム時間.
-        absoluteTime = qwTime * m_InvTicksPerSec;
+        absoluteTime = std::chrono::duration<double>(now.time_since_epoch()).count();
 
         // 相対時間.
-        time = ( qwTime - m_BaseTime ) * m_InvTicksPerSec;
+        time = std::chrono::duration<double>(now - m_BaseTime).count();
 
         // 経過時間.
         elapsedTime = diffTime;
@@ -208,11 +191,9 @@ private:
     // private variables
     //=============================================================================================
     bool        m_IsStop;               //!< 停止状態かどうか.
-    int64_t     m_TicksPerSec;          //!< 1秒あたりのタイマー刻み数.
-    int64_t     m_StopTime;             //!< 停止時間.
-    int64_t     m_ElapsedTime;          //!< 最後の処理から経過時間です.
-    int64_t     m_BaseTime;             //!< タイマーの開始時間です.
-    double      m_InvTicksPerSec;       //!< 1タイマー刻み数当たりの秒数.
+    TimePoint   m_StopTime;             //!< 停止時間.
+    TimePoint   m_ElapsedTime;          //!< 最後の処理から経過時間です.
+    TimePoint   m_BaseTime;             //!< タイマーの開始時間です.
 
     //=============================================================================================
     // private methods
@@ -221,18 +202,14 @@ private:
     //---------------------------------------------------------------------------------------------
     //! @brief      調整された現在時間を取得します.
     //---------------------------------------------------------------------------------------------
-    int64_t GetAdjustedCurrentTime( void )
+    TimePoint GetAdjustedCurrentTime()
     {
-        LARGE_INTEGER qwTime;
-
         // 停止状態であれば，停止時間を返却.
-        if ( m_StopTime != 0 )
-        { qwTime.QuadPart = m_StopTime; }
+        if ( m_StopTime != TimePoint{} )
+        { return m_StopTime; }
         // 非停止状態ならば，現在のカウンタを取得.
         else
-        { QueryPerformanceCounter( &qwTime ); }
-
-        return qwTime.QuadPart;
+        { return Clock::now(); }
     }
 };
 
