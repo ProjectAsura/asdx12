@@ -63,20 +63,16 @@ TEST(MessageTest, TypedMessageStoresValue)
     EXPECT_FLOAT_EQ(msg.GetAs<TestData>()->Factor, 2.5f);
 }
 
-TEST(MessageTest, BroadcastsCopiedMessage)
+TEST(MessageTest, SendsMessage)
 {
-    auto& manager = asdx::MessageManager::Instance();
-    ASSERT_TRUE(manager.Init(1024));
+    asdx::MessageHandler handler;
 
     TestListener listener;
-    manager.AddListener(&listener);
+    handler += &listener;
 
-    TestData data = { 5, 3.0f };
-    asdx::Message msg(21, &data, sizeof(data));
-    manager.EnqueueMessage(msg);
-
-    data.Value = 99;
-    manager.Broadcast();
+    const TestData data = { 5, 3.0f };
+    const asdx::Message msg(21, &data, sizeof(data));
+    handler.Send(msg);
 
     EXPECT_EQ(listener.MessageCount, 1);
     EXPECT_EQ(listener.LastType, 21u);
@@ -84,48 +80,39 @@ TEST(MessageTest, BroadcastsCopiedMessage)
     EXPECT_EQ(listener.LastData.Value, 5);
     EXPECT_FLOAT_EQ(listener.LastData.Factor, 3.0f);
 
-    manager.Term();
 }
 
-TEST(MessageTest, BroadcastsMessageWithoutBuffer)
+TEST(MessageTest, SendsMessageWithoutBuffer)
 {
-    auto& manager = asdx::MessageManager::Instance();
-    ASSERT_TRUE(manager.Init(256));
+    asdx::MessageHandler handler;
 
     TestListener listener;
-    manager.AddListener(&listener);
-    manager.EnqueueMessage(asdx::Message(31));
-    manager.Broadcast();
+    handler += &listener;
+    handler.Send(asdx::Message(31));
 
     EXPECT_EQ(listener.MessageCount, 1);
     EXPECT_EQ(listener.LastType, 31u);
     EXPECT_EQ(listener.LastSize, 0u);
 
-    manager.Term();
 }
 
 TEST(MessageTest, ListenerOperations)
 {
-    auto& manager = asdx::MessageManager::Instance();
-    ASSERT_TRUE(manager.Init(512));
+    asdx::MessageHandler handler;
 
     TestListener listener1;
     TestListener listener2;
-    manager.AddListener(&listener1);
-    manager.AddListener(&listener2);
-    manager.RemoveListener(&listener1);
+    handler += &listener1;
+    handler += &listener2;
+    handler -= &listener1;
 
-    manager.EnqueueMessage(asdx::Message(41));
-    manager.Broadcast();
+    handler.Send(asdx::Message(41));
 
     EXPECT_EQ(listener1.MessageCount, 0);
     EXPECT_EQ(listener2.MessageCount, 1);
 
-    manager.Clear();
-    manager.EnqueueMessage(asdx::Message(42));
-    manager.Broadcast();
+    handler -= &listener2;
+    handler.Send(asdx::Message(42));
     EXPECT_EQ(listener2.MessageCount, 1);
-
-    manager.Term();
 }
 

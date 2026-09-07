@@ -328,6 +328,5 @@ private:
     /* NOTHING */
 };
 
-
 } // namespace asdx
 

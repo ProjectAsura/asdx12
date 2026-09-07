@@ -14,87 +14,74 @@
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
-// MessageManager class
+// Message class
 ///////////////////////////////////////////////////////////////////////////////
-MessageManager MessageManager::s_Instance;
 
 //-----------------------------------------------------------------------------
-//      シングルトンインスタンスを取得します.
+//      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-MessageManager& MessageManager::Instance()
-{ return s_Instance; }
+Message::Message(uint32_t type, const void* buffer, uint64_t size)
+: m_Type(type)
+, m_pBuffer(buffer)
+, m_Size(size)
+{ /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
-//      初期化処理を行います.
+//      メッセージタイプを取得します.
 //-----------------------------------------------------------------------------
-bool MessageManager::Init(size_t size)
-{ return m_Heap.Init(size); }
+uint32_t Message::GetType() const
+{ return m_Type; }
 
 //-----------------------------------------------------------------------------
-//      解放処理を行います.
+//      バッファサイズを取得します.
 //-----------------------------------------------------------------------------
-void MessageManager::Term()
+uint64_t Message::GetSize() const
+{ return m_Size; }
+
+//-----------------------------------------------------------------------------
+//      バッファを返却します.
+//-----------------------------------------------------------------------------
+const void* Message::GetBuffer() const
+{ return m_pBuffer; }
+
+
+///////////////////////////////////////////////////////////////////////////////
+// MessageHandler class
+///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      デストラクタです.
+//-----------------------------------------------------------------------------
+MessageHandler::~MessageHandler()
+{ m_Listeners.clear(); }
+
+//-----------------------------------------------------------------------------
+//      メッセージを送ります.
+//-----------------------------------------------------------------------------
+void MessageHandler::Send(const Message& msg)
 {
-    m_Listeners.clear();
-    m_Queue.clear();
-    m_Heap.Term();
+    for(auto& itr : m_Listeners)
+    { itr->OnMessage(msg); }
 }
 
 //-----------------------------------------------------------------------------
 //      メッセージリスナーを追加します.
 //-----------------------------------------------------------------------------
-void MessageManager::AddListener(IMessageListener* instance)
-{ m_Listeners.push_back(instance); }
-
+MessageHandler& MessageHandler::operator += (IMessageListener* listener)
+{
+    assert(listener != nullptr);
+    m_Listeners.push_back(listener);
+    return *this;
+}
 //-----------------------------------------------------------------------------
 //      メッセージリスナーを削除します.
 //-----------------------------------------------------------------------------
-void MessageManager::RemoveListener(IMessageListener* instance)
-{ m_Listeners.remove(instance); }
-
-//-----------------------------------------------------------------------------
-//      全メッセージリスナーを破棄します.
-//-----------------------------------------------------------------------------
-void MessageManager::Clear()
-{ m_Listeners.clear(); }
-
-//-----------------------------------------------------------------------------
-//      メッセージを追加します.
-//-----------------------------------------------------------------------------
-void MessageManager::EnqueueMessage(const Message& msg)
+MessageHandler& MessageHandler::operator -= (IMessageListener* listener)
 {
-    auto buf = m_Heap.Alloc(sizeof(Message));
-    assert(buf != nullptr);
-
-    if (msg.GetSize() > 0)
-    {
-        auto data = m_Heap.Alloc(msg.GetSize());
-        memcpy(data, msg.GetBuffer(), msg.GetSize());
-
-        auto instance = new (buf) Message(msg.GetType(), data, msg.GetSize());
-        m_Queue.push(instance);
-    }
-    else
-    {
-        auto instance = new (buf) Message(msg.GetType());
-        m_Queue.push(instance);
-    }
+    assert(listener != nullptr);
+    m_Listeners.remove(listener);
+    return *this;
 }
 
-//-----------------------------------------------------------------------------
-//      メッセージをブロードキャストします.
-//-----------------------------------------------------------------------------
-void MessageManager::Broadcast()
-{
-    while(!m_Queue.empty())
-    {
-        auto msg = m_Queue.pop();
-
-        for(auto& itr : m_Listeners)
-        { itr->OnMessage(*msg); }
-    }
-
-    m_Heap.Reset();
-}
 
 } // namespace asdx
