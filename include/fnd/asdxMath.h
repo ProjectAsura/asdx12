@@ -30,6 +30,8 @@ struct Vector4;
 struct Matrix4x3;
 struct Matrix4x4;
 struct Quaternion;
+struct BoundingBox;
+struct BoundingSphere;
 
 //-----------------------------------------------------------------------------
 // Type defines.
@@ -79,6 +81,25 @@ enum PLANE_TYPE
     SHADOW_PLANE_COUNT = 8,     //!< シャドウカリング用平面数.
 };
 
+///////////////////////////////////////////////////////////////////////////////
+// PlaneIntersectionType enum
+///////////////////////////////////////////////////////////////////////////////
+enum class PlaneIntersectionType : uint8_t
+{
+    Front        = 0,
+    Intersecting = 1,
+    Back         = 2,
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// ContaimentType enum
+///////////////////////////////////////////////////////////////////////////////
+enum class ContainmentType : uint8_t
+{
+    Disjoint    = 0,
+    Intersects  = 1,
+    Contains    = 2,
+};
 
 //-----------------------------------------------------------------------------
 // Function
@@ -1146,6 +1167,13 @@ public:
     Vector3& SafeNormalize(const Vector3& set);
 
     //-------------------------------------------------------------------------
+    //! @brief      xy成分をVector2型として取り出します.
+    //! 
+    //! @return     xy成分をVector2型として返却します.
+    //-------------------------------------------------------------------------
+    Vector2 ToVector2() const;
+
+    //-------------------------------------------------------------------------
     //! @brief      各成分の絶対値を求めます.
     //!
     //! @param [in]     value       絶対値を求める値.
@@ -1691,6 +1719,13 @@ public:
     Vector4& SafeNormalize(const Vector4& set);
 
     //-------------------------------------------------------------------------
+    //! @brief      xyz成分をVector3型として取り出します.
+    //! 
+    //! @return     xyz成分をVector3型として返却します.
+    //-------------------------------------------------------------------------
+    Vector3 ToVector3() const;
+
+    //-------------------------------------------------------------------------
     //! @brief      各成分の絶対値を求めます.
     //!
     //! @param [in]     value       絶対値を求める値.
@@ -1870,6 +1905,25 @@ public:
     //! @return     正規化した平面式を返却します.
     //-------------------------------------------------------------------------
     static Vector4 NormalizePlane(const Vector4& value);
+
+    //-------------------------------------------------------------------------
+    //! @brief      平面と点の符号付き距離を求めます.
+    //! 
+    //! @param[in]      plane       平面式.
+    //! @param[in]      point
+    //! @return     符号付き距離を返却します.
+    //-------------------------------------------------------------------------
+    static float PlaneDistance(const Vector4& plane, const Vector3& point);
+
+    //-------------------------------------------------------------------------
+    //! @brief      平面を変換します.
+    //! 
+    //! @param[in]      plane       変換する平面.
+    //! @param[in]      rotation    回転値.
+    //! @param[in]      translation 平行移動値.
+    //! @return     変換した平面式を返却します.
+    //-------------------------------------------------------------------------
+    static Vector4 TransformPlane(const Vector4& plane, const Quaternion& rotation, const Vector3& translation);
 
     //-------------------------------------------------------------------------
     //! @brief      RGBAの値から生成します.
@@ -3279,11 +3333,10 @@ public:
     static Matrix4x3 AppendScale(Matrix4x3& lhs, const Vector3& rhs);
 };
 
-
 ///////////////////////////////////////////////////////////////////////////////
-// BoundingBox2 structure
+// BoundingBox structure
 ///////////////////////////////////////////////////////////////////////////////
-struct BoundingBox2
+struct BoundingBox
 {
     //=========================================================================
     // list of friend classes and methods.
@@ -3294,8 +3347,8 @@ public:
     //=========================================================================
     // public variables.
     //=========================================================================
-    Vector2 Mini;   //!< 最小値です.
-    Vector2 Maxi;   //!< 最大値です.
+    Vector3 Min;    //!< 最小値.
+    Vector3 Max;    //!< 最大値.
 
     //=========================================================================
     // public methods.
@@ -3304,226 +3357,174 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      コンストラクタです.
     //-------------------------------------------------------------------------
-    BoundingBox2();
+    BoundingBox();
 
     //-------------------------------------------------------------------------
     //! @brief      引数付きコンストラクタです.
     //! 
-    //! @param[in]      mini        最小値です.
-    //! @param[in]      maxi        最大値です.
+    //! @param[in]      mini        最小値.
+    //! @param[in]      maxi        最大値.
     //-------------------------------------------------------------------------
-    BoundingBox2(const Vector2& mini, const Vector2& maxi);
+    BoundingBox(const Vector3& mini, const Vector3& maxi);
 
     //-------------------------------------------------------------------------
-    //! @brief      中心座標を求めます.
+    //! @brief      コピーコンストラクタです.
     //! 
-    //! @return     中心座標を返却します.
+    //! @param[in]      value       コピーする値.
     //-------------------------------------------------------------------------
-    Vector2 GetCenter() const;
+    BoundingBox(const BoundingBox& value);
 
     //-------------------------------------------------------------------------
-    //! @brief      サイズを求めます.
+    //! @brief      8角を取得します.
     //! 
-    //! @return     サイズを返却します.
-    //-------------------------------------------------------------------------
-    Vector2 GetSize() const;
-
-    //-------------------------------------------------------------------------
-    //! @brief      点が含まれるかどうか判定します.
-    //! 
-    //! @param[in]      value       点の座標.
-    //! @retval true    含みます.
-    //! @retval false   含みません.
-    //-------------------------------------------------------------------------
-    bool Contains(const Vector2& value) const;
-
-    //-------------------------------------------------------------------------
-    //! @brief      バウンディングボックスが含まれるかどうか判定します.
-    //! 
-    //! @param[in]      value       バウンディングボックス.
-    //! @retval true    含みます.
-    //! @retval false   含みません.
-    //-------------------------------------------------------------------------
-    bool Contains(const BoundingBox2& value) const;
-
-    //-------------------------------------------------------------------------
-    //! @brief      バウンディングボックスの4頂点の座標を求めます.
-    //!
-    //! @return     バウンディングボックスの4頂点の座標を返却します.
-    //-------------------------------------------------------------------------
-    std::array<Vector2, 4> GetCorners() const;
-
-    //-------------------------------------------------------------------------
-    //! @brief      代入演算子です.
-    //! 
-    //! @param[in]      value       代入する値です.
-    //! @return     代入結果を返却します.
-    //-------------------------------------------------------------------------
-    BoundingBox2& operator = (const BoundingBox2& value);
-
-    //-------------------------------------------------------------------------
-    //! @brief      マージ処理を行います.
-    //! 
-    //! @param[in]      lhs         バウンディングボックス.
-    //! @param[in]      rhs         バウンディングボックス.
-    //! @return     マージ結果を返却します.
-    //-------------------------------------------------------------------------
-    static BoundingBox2 Merge(const BoundingBox2& lhs, const BoundingBox2& rhs);
-
-    //-------------------------------------------------------------------------
-    //! @brief      マージ処理を行います.
-    //! 
-    //! @param[in]      lhs         バウンディングボックス.
-    //! @param[in]      rhs         点の座標.
-    //! @return     マージ結果を返却します.
-    //-------------------------------------------------------------------------
-    static BoundingBox2 Merge(const BoundingBox2& lhs, const Vector2& rhs);
-
-    //------------------------------------------------------------------------
-    //! @brief      頂点データからバウンディングスフィアを求めます.
-    //! 
-    //! @param[in]      vertices        頂点座標データ.
-    //! @param[in]      vertexCount     頂点数.
-    //! @param[in]      vertexStride    1頂点のサイズ.
-    //! @return     求めたバウンディングスフィアを返却します.
-    //------------------------------------------------------------------------
-    static BoundingBox2 Create(const float* vertices, size_t vertexCount, size_t vertexStride);
-};
-
-
-///////////////////////////////////////////////////////////////////////////////
-// BoundingBox3 structure
-///////////////////////////////////////////////////////////////////////////////
-struct BoundingBox3
-{
-    //=========================================================================
-    // list of friend classes and methods.
-    //=========================================================================
-    /* NOTHING */
-
-public:
-    //=========================================================================
-    // public variables.
-    //=========================================================================
-    Vector3 Mini;   //!< 最大値です.
-    Vector3 Maxi;   //!< 最小値です.
-
-    //=========================================================================
-    // public methods.
-    //=========================================================================
-
-    //-------------------------------------------------------------------------
-    //! @brief      コンストラクタです.
-    //-------------------------------------------------------------------------
-    BoundingBox3();
-
-    //-------------------------------------------------------------------------
-    //! @brief      引数付きコンストラクタです.
-    //! 
-    //! @param[in]      mini        最小値です.
-    //! @param[in]      maxi        最大値です.
-    //-------------------------------------------------------------------------
-    BoundingBox3(const Vector3& mini, const Vector3& maxi);
-
-    //-------------------------------------------------------------------------
-    //! @brief      中心座標を求めます.
-    //! 
-    //! @return     中心座標を返却します.
-    //-------------------------------------------------------------------------
-    Vector3 GetCenter() const;
-
-    //-------------------------------------------------------------------------
-    //! @brief      サイズを求めます.
-    //! 
-    //! @return     サイズを返却します.
-    //-------------------------------------------------------------------------
-    Vector3 GetSize() const;
-
-    //-------------------------------------------------------------------------
-    //! @brief      点が含まれるかどうか判定します.
-    //! 
-    //! @param[in]      value       点の座標.
-    //! @retval true    含みます.
-    //! @retval false   含みません.
-    //-------------------------------------------------------------------------
-    bool Contains(const Vector3& value) const;
-
-    //-------------------------------------------------------------------------
-    //! @brief      バウンディングボックスが含まれるかどうか判定します.
-    //! 
-    //! @param[in]      value       バウンディングボックス.
-    //! @retval true    含みます.
-    //! @retval false   含みません.
-    //-------------------------------------------------------------------------
-    bool Contains(const BoundingBox3& value) const;
-
-    //-------------------------------------------------------------------------
-    //! @brief      バウンディングボックスの8頂点の座標を求めます.
-    //! 
-    //! @return     バウンディングボックスの8頂点の座標を返却します.
+    //! @return     8角を返却します.
     //-------------------------------------------------------------------------
     std::array<Vector3, 8> GetCorners() const;
 
     //-------------------------------------------------------------------------
+    //! @brief      AABBとの交差判定を行います.
+    //! 
+    //! @param[in]      box         交差判定を行うAABB.
+    //! @retval true    交差あり.
+    //! @retval false   交差なし.
+    //-------------------------------------------------------------------------
+    bool Intersects(const BoundingBox& box) const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      球との交差判定を行います.
+    //! 
+    //! @param[in]      sphere      交差判定を行う球.
+    //! @retval true    交差あり.
+    //! @retval fasle   交差なし.
+    //-------------------------------------------------------------------------
+    bool Intersects(const BoundingSphere& sphere) const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      平面との交差判定を行います.
+    //! 
+    //! @param[in]      plane       交差判定を行う平面.
+    //! @return     交差判定結果を返却します.
+    //-------------------------------------------------------------------------
+    PlaneIntersectionType Intersects(const Vector4& plane) const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      レイとの交差判定を行います.
+    //! 
+    //! @param[in]      origin      レイの原点.
+    //! @param[in]      direction   レイの方向ベクトル.
+    //! @param[out]     distance    交差位置までの距離.
+    //! @retval true    交差あり.
+    //! @retval false   交差なし.
+    //-------------------------------------------------------------------------
+    bool Intersects(const Vector3& origin, const Vector3& direction, float* distance) const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      点が含まれるかどうか判定します.
+    //! 
+    //! @param[in]      point       判定する点.
+    //! @return     包含タイプを返却します.
+    //-------------------------------------------------------------------------
+    ContainmentType Contains(const Vector3& point) const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      AABBが含まれるかどうか判定します.
+    //! 
+    //! @param[in]      box         判定するAABB.
+    //! @return     包含タイプを返却します.
+    //-------------------------------------------------------------------------
+    ContainmentType Contains(const BoundingBox& box) const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      球が含まれるかどうか判定します.
+    //! 
+    //! @param[in]      sphere      判定する球.
+    //! @return     包含タイプを返却します.
+    //-------------------------------------------------------------------------
+    ContainmentType Contains(const BoundingSphere& sphere) const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      6平面によって含まれるかどうか判定します.
+    //! 
+    //! @param[in]      plane       錐台の6平面
+    //! @return     包含タイプを返却します.
+    //-------------------------------------------------------------------------
+    ContainmentType ContainedBy(const std::array<Vector4, 6>& planes) const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      等価比較演算子です.
+    //! 
+    //! @param[in]      value       比較する値.
+    //! @retval true    等価です.
+    //! @retval false   非等価です.
+    //-------------------------------------------------------------------------
+    bool operator == (const BoundingBox& value) const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      非等価比較演算子です.
+    //! 
+    //! @param[in]      value       比較する値.
+    //! @retval true    非等価です.
+    //! @retval false   等価です.
+    //-------------------------------------------------------------------------
+    bool operator != (const BoundingBox& value) const;
+
+    //-------------------------------------------------------------------------
     //! @brief      代入演算子です.
     //! 
-    //! @param[in]      value       代入する値です.
+    //! @param[in]      value       代入する値.
     //! @return     代入結果を返却します.
     //-------------------------------------------------------------------------
-    BoundingBox3& operator = (const BoundingBox3& value);
+    BoundingBox& operator = (const BoundingBox& value);
 
     //-------------------------------------------------------------------------
-    //! @brief      マージ処理を行います.
+    //! @brief      2つのAABBをマージします.
     //! 
-    //! @param[in]      lhs         バウンディングボックス.
-    //! @param[in]      rhs         バウンディングボックス.
+    //! @param[in]      lhs         判定するAABB1.
+    //! @param[in]      rhs         判定するAABB2.
     //! @return     マージ結果を返却します.
     //-------------------------------------------------------------------------
-    static BoundingBox3 Merge(const BoundingBox3& lhs, const BoundingBox3& rhs);
+    static BoundingBox CreateMerged(const BoundingBox& lhs, const BoundingBox& rhs);
 
     //-------------------------------------------------------------------------
-    //! @brief      マージ処理を行います.
+    //! @brief      球からAABBを生成します.
     //! 
-    //! @param[in]      lhs         バウンディングボックス.
-    //! @param[in]      rhs         点の座標.
-    //! @return     マージ結果を返却します.
+    //! @param[in]      sphere      判定する球
+    //! @return     球から生成したAABBを返却します.
     //-------------------------------------------------------------------------
-    static BoundingBox3 Merge(const BoundingBox3& lhs, const Vector3& rhs);
+    static BoundingBox CreateFromSphere(const BoundingSphere& sphere);
 
     //-------------------------------------------------------------------------
-    //! @brief      指定行列で変換処理を行います.
+    //! @brief      点群からAABBを生成します.
     //! 
-    //! @param[in]      box         バウンディングボックス.
-    //! @param[in]      matrix      変換行列.
-    //! @return     変換結果を返却します.
+    //! @param[in]      points      点のリスト.
+    //! @param[in]      count       点の数.
+    //! @return     点群から生成したAABBを返却します.
     //-------------------------------------------------------------------------
-    static BoundingBox3 Transform(const BoundingBox3& box, const Matrix4x4& matrix);
+    static BoundingBox CreateFromPoints(const Vector3* points, size_t count);
 
     //-------------------------------------------------------------------------
-    //! @brief      指定行列で変換処理を行います.
+    //! @brief      指定行列で変換します.
     //! 
-    //! @param[in]      box         バウンディングボックス.
-    //! @param[in]      matrix      変換行列.
-    //! @return     変換結果を返却します.
+    //! @param[in]      box         変換するAABB
+    //! @param[in]      mtx         変換行列.
+    //! @return     指定行列での変換結果を返却します.
     //-------------------------------------------------------------------------
-    static BoundingBox3 Transform(const BoundingBox3& box, const Matrix4x3& matrix);
+    static BoundingBox Transform(const BoundingBox& box, const Matrix4x4& mtx);
 
-    //------------------------------------------------------------------------
-    //! @brief      頂点データからバウンディングスフィアを求めます.
+    //-------------------------------------------------------------------------
+    //! @brief      指定行列で変換します.
     //! 
-    //! @param[in]      vertices        頂点座標データ.
-    //! @param[in]      vertexCount     頂点数.
-    //! @param[in]      vertexStride    1頂点のサイズ.
-    //! @return     求めたバウンディングスフィアを返却します.
-    //------------------------------------------------------------------------
-    static BoundingBox3 Create(const float* vertices, size_t vertexCount, size_t vertexStride);
+    //! @param[in]      box         変換するAABB
+    //! @param[in]      mtx         変換行列.
+    //! @return     指定行列での変換結果を返却します.
+    //-------------------------------------------------------------------------
+    static BoundingBox Transform(const BoundingBox& box, const Matrix4x3& mtx);
 };
 
-
 ///////////////////////////////////////////////////////////////////////////////
-// BoundingSphere2 structure
+// BoundingSphere structure
 ///////////////////////////////////////////////////////////////////////////////
-struct BoundingSphere2
+struct BoundingSphere
 {
     //=========================================================================
     // list of friend classes and methods.
@@ -3534,8 +3535,8 @@ public:
     //=========================================================================
     // public variables.
     //=========================================================================
-    Vector2 Center;     //!< 中心位置です.
-    float   Radius;     //!< 半径です.
+    Vector3 Center;     //!< 中心座標.
+    float   Radius;     //!< 半径.
 
     //=========================================================================
     // public methods.
@@ -3544,42 +3545,109 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      コンストラクタです.
     //-------------------------------------------------------------------------
-    BoundingSphere2();
+    BoundingSphere();
 
     //-------------------------------------------------------------------------
     //! @brief      引数付きコンストラクタです.
     //! 
-    //! @param[in]      x           中心位置X.
-    //! @param[in]      y           中心位置Y.
+    //! @param[in]      center      中心座標.
     //! @param[in]      radius      半径.
     //-------------------------------------------------------------------------
-    BoundingSphere2(float x, float y, float radius);
+    BoundingSphere(const Vector3& center, float radius);
 
     //-------------------------------------------------------------------------
-    //! @brief      引数付きコンストラクタです.
+    //! @brief      コピーコンストラクタです.
     //! 
-    //! @param[in]      center      中心位置です.
-    //! @param[in]      radius      半径です.
+    //! @param[in]      value       コピーする値.
     //-------------------------------------------------------------------------
-    BoundingSphere2(const Vector2& center, float radius);
+    BoundingSphere(const BoundingSphere& value);
 
     //-------------------------------------------------------------------------
-    //! @brief      点を含むかどうか判定します.
+    //! @brief      AABBとの交差判定を行います.
     //! 
-    //! @param[in]      value       点の座標です.
-    //! @retval true    含みます.
-    //! @retval false   含みません.
+    //! @param[in]      box         交差判定するAABB.
+    //! @retval true    交差あり.
+    //! @retval false   交差なし.
     //-------------------------------------------------------------------------
-    bool Contains(const Vector2& value) const;
+    bool Intersects(const BoundingBox& box) const;
 
     //-------------------------------------------------------------------------
-    //! @brief      バウンディングスフィアを含むかどうか判定します.
+    //! @brief      球との交差判定を行います.
     //! 
-    //! @param[in]      value       バウンディングスフィア.
-    //! @retval true    含みます.
-    //! @retval false   含みません.
+    //! @param[in]      sphere      交差判定する球.
+    //! @retval true    交差あり.
+    //! @retval false   交差なし.
     //-------------------------------------------------------------------------
-    bool Contains(const BoundingSphere2& value) const;
+    bool Intersects(const BoundingSphere& sphere) const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      平面との交差判定を行います.
+    //! 
+    //! @param[in]      plane       交差判定する平面.
+    //! @return     交差判定を結果を返却します.
+    //-------------------------------------------------------------------------
+    PlaneIntersectionType Intersects(const Vector4& plane) const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      レイとの交差判定を行います.
+    //! 
+    //! @param[in]      origin      レイの原点.
+    //! @param[in]      direction   レイの方向ベクトル.
+    //! @param[out]     distance    交差位置までの距離.
+    //! @retval true    交差あり.
+    //! @retval false   交差なし.
+    //-------------------------------------------------------------------------
+    bool Intersects(const Vector3& origin, const Vector3& dirction, float* distance) const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      点が含まれるかどうか判定します.
+    //! 
+    //! @param[in]      point       判定する点.
+    //! @return     包含タイプを返却します.
+    //-------------------------------------------------------------------------
+    ContainmentType Contains(const Vector3& point) const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      AABBが含まれるかどうか判定します.
+    //! 
+    //! @param[in]      box         判定するAABB.
+    //! @return     包含タイプを返却します.
+    //-------------------------------------------------------------------------
+    ContainmentType Contains(const BoundingBox& box) const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      球がふくまれるかどうか判定します.
+    //! 
+    //! @param[in]      sphere      判定する球.
+    //! @return     包含タイプを返却します.
+    //-------------------------------------------------------------------------
+    ContainmentType Contains(const BoundingSphere& sphere) const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      指定6平面によって含まれるかどうか判定します.
+    //! 
+    //! @param[in]      planes      平面リスト.
+    //! @return     包含タイプを返却します.
+    //-------------------------------------------------------------------------
+    ContainmentType ContainedBy(const std::array<Vector4, 6>& planes) const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      等価比較演算子です.
+    //! 
+    //! @param[in]      value       比較する値です.
+    //! @retval true    等価です.
+    //! @retval false   非等価です.
+    //-------------------------------------------------------------------------
+    bool operator == (const BoundingSphere& value) const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      非等価比較演算子です.
+    //! 
+    //! @param[in]      value       比較する値です.
+    //! @retval true    非等価です.
+    //! @retval false   等価です.
+    //-------------------------------------------------------------------------
+    bool operator != (const BoundingSphere& value) const;
 
     //-------------------------------------------------------------------------
     //! @brief      代入演算子です.
@@ -3587,171 +3655,51 @@ public:
     //! @param[in]      value       代入する値です.
     //! @return     代入結果を返却します.
     //-------------------------------------------------------------------------
-    BoundingSphere2& operator = (const BoundingSphere2& value);
+    BoundingSphere& operator = (const BoundingSphere& value);
 
     //-------------------------------------------------------------------------
-    //! @brief      マージ処理を行います
+    //! @brief      2つの球をマージします.
     //! 
-    //! @param[in]      lhs         バウンディングスフィア.
-    //! @param[in]      rhs         バウンディングスフィア.
+    //! @param[in]      lhs         マージする球.
+    //! @param[in]      rhs         マージする球.
     //! @return     マージ結果を返却します.
     //-------------------------------------------------------------------------
-    static BoundingSphere2 Merge(const BoundingSphere2& lhs, const BoundingSphere2& rhs);
+    static BoundingSphere CreateMerged(const BoundingSphere& lhs, const BoundingSphere& rhs);
 
     //-------------------------------------------------------------------------
-    //! @brief      マージ処理を行います.
+    //! @brief      AABBから球を生成します.
     //! 
-    //! @param[in]      lhs         バウンディングスフィア.
-    //! @param[in]      rhs         点の座標.
-    //! @return     マージ結果を返却します.
+    //! @param[in]      box         AABB.
+    //! @return     AABBから生成した球を返却します.
     //-------------------------------------------------------------------------
-    static BoundingSphere2 Merge(const BoundingSphere2& lhs, const Vector2& rhs);
+    static BoundingSphere CreateFromBoundingBox(const BoundingBox& box);
 
-    //------------------------------------------------------------------------
-    //! @brief      頂点データからバウンディングスフィアを求めます.
+    //-------------------------------------------------------------------------
+    //! @brief      点群から球を生成します.
     //! 
-    //! @param[in]      vertices        頂点座標データ.
-    //! @param[in]      vertexCount     頂点数.
-    //! @param[in]      vertexStride    1頂点のサイズ.
-    //! @return     求めたバウンディングスフィアを返却します.
-    //------------------------------------------------------------------------
-    static BoundingSphere2 Create(const float* vertices, size_t vertexCount, size_t vertexStride);
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// BoundingSphere3 structure
-///////////////////////////////////////////////////////////////////////////////
-struct BoundingSphere3
-{
-    //=========================================================================
-    // list of friend classes and methods.
-    //=========================================================================
-    /* NOTHING */
-
-public:
-    //=========================================================================
-    // public variables.
-    //=========================================================================
-    Vector3 Center;     //!< 中心位置です.
-    float   Radius;     //!< 半径です.
-
-    //=========================================================================
-    // public methods.
-    //=========================================================================
+    //! @param[in]      points      点群.
+    //! @param[in]      count       点の数.
+    //! @return     点群から生成した球を返却します.
+    //-------------------------------------------------------------------------
+    static BoundingSphere CreateFromPoints(const Vector3* points, size_t count);
 
     //-------------------------------------------------------------------------
-    //! @brief      コンストラクタです.
-    //-------------------------------------------------------------------------
-    BoundingSphere3();
-
-    //-------------------------------------------------------------------------
-    //! @brief      引数付きコンストラクタ.
+    //! @brief      指定行列で変換した球を返却します.
     //! 
-    //! @param[in]      x       中心位置X
-    //! @param[in]      y       中心位置Y
-    //! @param[in]      z       中心位置Z.
-    //! @param[in]      radius  半径.
+    //! @param[in]      sphere      変換する球.
+    //! @param[in]      value       変換行列.
+    //! @return     指定行列で変換した球を返却します.
     //-------------------------------------------------------------------------
-    BoundingSphere3(float x, float y, float z, float radius);
+    static BoundingSphere Transform(const BoundingSphere& sphere, const Matrix4x4& value);
 
     //-------------------------------------------------------------------------
-    //! @brief      引数付きコンストラクタです.
+    //! @brief      指定行列で変換した球を返却します.
     //! 
-    //! @param[in]      center      中心位置です.
-    //! @param[in]      radius      半径です.
+    //! @param[in]      sphere      変換する球.
+    //! @param[in]      value       変換行列.
+    //! @return     指定行列で変換した球を返却します.
     //-------------------------------------------------------------------------
-    BoundingSphere3(const Vector3& center, float radius);
-
-    //-------------------------------------------------------------------------
-    //! @brief      点を含むかどうか判定します.
-    //! 
-    //! @param[in]      value       点の座標です.
-    //! @retval true    含みます.
-    //! @retval false   含みません.
-    //-------------------------------------------------------------------------
-    bool Contains(const Vector3& value) const;
-
-    //-------------------------------------------------------------------------
-    //! @brief      バウンディングスフィアを含むかどうか判定します.
-    //! 
-    //! @param[in]      value       バウンディングスフィア.
-    //! @retval true    含みます.
-    //! @retval false   含みません.
-    //-------------------------------------------------------------------------
-    bool Contains(const BoundingSphere3& value) const;
-
-    //-------------------------------------------------------------------------
-    //! @brief      代入演算子です.
-    //! 
-    //! @param[in]      value       代入する値です.
-    //! @return     代入結果を返却します.
-    //-------------------------------------------------------------------------
-    BoundingSphere3& operator = (const BoundingSphere3& value);
-
-    //-------------------------------------------------------------------------
-    //! @brief      マージ処理を行います
-    //! 
-    //! @param[in]      lhs         バウンディングスフィア.
-    //! @param[in]      rhs         バウンディングスフィア.
-    //! @return     マージ結果を返却します.
-    //-------------------------------------------------------------------------
-    static BoundingSphere3 Merge(const BoundingSphere3& lhs, const BoundingSphere3& rhs);
-
-    //-------------------------------------------------------------------------
-    //! @brief      マージ処理を行います.
-    //! 
-    //! @param[in]      lhs         バウンディングスフィア.
-    //! @param[in]      rhs         点の座標.
-    //! @return     マージ結果を返却します.
-    //-------------------------------------------------------------------------
-    static BoundingSphere3 Merge(const BoundingSphere3& lhs, const Vector3& rhs);
-
-    //------------------------------------------------------------------------
-    //! @brief      指定行列で変換処理を行います.
-    //! 
-    //! @param[in]      sphere      バウンディングスフィア.
-    //! @param[in]      matrix      変換行列.
-    //! @return     変換したバウンディングスフィアを返却します.
-    //------------------------------------------------------------------------
-    static BoundingSphere3 Transform(const BoundingSphere3& sphere, const Matrix4x4& matrix);
-
-    //------------------------------------------------------------------------
-    //! @brief      指定行列で変換処理を行います.
-    //! 
-    //! @param[in]      sphere      バウンディングスフィア.
-    //! @param[in]      matrix      変換行列.
-    //! @return     変換したバウンディングスフィアを返却します.
-    //------------------------------------------------------------------------
-    static BoundingSphere3 Transform(const BoundingSphere3& sphere, const Matrix4x3& matrix);
-
-    //------------------------------------------------------------------------
-    //! @brief      2点の外接球を求めます.
-    //! 
-    //! @param[in]      a       点a.
-    //! @param[in]      b       点b.
-    //! @return     外接球を返却します.
-    //------------------------------------------------------------------------
-    static BoundingSphere3 Create(const Vector3& a, const Vector3& b);
-
-    //------------------------------------------------------------------------
-    //! @brief      3点の外接球を求めます.
-    //! 
-    //! @param[in]      a       点a.
-    //! @param[in]      b       点b.
-    //! @param[in]      c       点c.
-    //! @return     外接球を返却します.
-    //------------------------------------------------------------------------
-    static BoundingSphere3 Create(const Vector3& a, const Vector3& b, const Vector3& c);
-
-    //------------------------------------------------------------------------
-    //! @brief      頂点データからバウンディングスフィアを求めます.
-    //! 
-    //! @param[in]      vertices        頂点座標データ.
-    //! @param[in]      vertexCount     頂点数.
-    //! @param[in]      vertexStride    1頂点のサイズ.
-    //! @return     求めたバウンディングスフィアを返却します.
-    //------------------------------------------------------------------------
-    static BoundingSphere3 Create(const float* vertices, size_t vertexCount, size_t vertexStride);
+    static BoundingSphere Transform(const BoundingSphere& sphere, const Matrix4x3& value);
 };
 
 
@@ -4131,23 +4079,22 @@ Vector2 Hammersley( uint32_t i, uint32_t numSamples );
 Vector4 NormalizePlane(const Vector4& value);
 
 //-----------------------------------------------------------------------------
-//! @brief      視錐台を構成する平面を計算します.
+//! @brief      視錐台を構成する6平面を計算します.
 //!
 //! @param[in]      view            ビュー行列です.
 //! @param[in]      proj            射影行列です.
 //! @param[out]     planes          平面の格納先です.
 //------------------------------------------------------------------------------
-void CalcFrustumPlanes(const Matrix4x4& view, const Matrix4x4& proj, Vector4* planes);
+std::array<Vector4, 6> CalcFrustumPlanes(const Matrix4x4& view, const Matrix4x4& proj);
 
 //-----------------------------------------------------------------------------
-//! @brief      平面とレイの交差点を求めます.
+//! @brief      視錐台を構成する6平面を計算します.
 //!
-//! @param[in]      plane       平面式です.
-//! @param[in]      orig        レイの原点です.
-//! @param[in]      dir         レイの方向ベクトルです.
-//! @return     交差点を返却します.
-//-----------------------------------------------------------------------------
-Vector3 ComputeIntersection(const Vector4& plane, const Vector3& orig, const Vector3& dir);
+//! @param[in]      view            ビュー行列です.
+//! @param[in]      proj            射影行列です.
+//! @param[out]     planes          平面の格納先です.
+//------------------------------------------------------------------------------
+std::array<Vector4, 6> CalcFrustumPlanes(const Matrix4x3& view, const Matrix4x4& proj);
 
 //-----------------------------------------------------------------------------
 //! @brief      視錐台の8角を求めます.
@@ -4155,7 +4102,99 @@ Vector3 ComputeIntersection(const Vector4& plane, const Vector3& orig, const Vec
 //! @param[in]      planes      錐台を構成する6平面です.
 //! @param[out]     corners     錐台の8角を返却します.
 //-----------------------------------------------------------------------------
-void GetCorners(const Vector4* planes, Vector3* corners);
+std::array<Vector3, 8> GetCorners(const std::array<Vector4, 6>& planes);
+
+//-----------------------------------------------------------------------------
+//! @brief      レイとAABBの交差判定を行います.
+//! 
+//! @param[in]      origin      レイの原点.
+//! @param[in]      direction   レイの方向ベクトル.
+//! @param[in]      mini        AABBの最小値.
+//! @param[in]      maxi        AABBの最大値.
+//! @param[out]     distance    衝突位置までの距離.
+//! @retval true    交差あり.
+//! @retval false   交差なし.
+//-----------------------------------------------------------------------------
+bool IntersectRayAABB(
+    const Vector3&  origin,
+    const Vector3&  direction,
+    const Vector3&  mini,
+    const Vector3&  maxi,
+    float*          distance);
+
+//-----------------------------------------------------------------------------
+//! @brief      レイとOBBの交差判定を行います.
+//! 
+//! @param[in]      origin      レイの原点.
+//! @param[in]      direction   レイの方向ベクトル.
+//! @param[in]      center      OBBの中心位置.
+//! @param[in]      halfExtent  OBBの中心からの大きさ.
+//! @param[in]      orientation OBBの向き.
+//! @param[out]     distance    衝突位置までの距離.
+//! @retval true    交差あり.
+//! @retval false   交差なし.
+//-----------------------------------------------------------------------------
+bool IntersectRayOBB(
+    const Vector3&      origin,
+    const Vector3&      direction,
+    const Vector3&      center,
+    const Vector3&      halfExtent,
+    const Quaternion&   orientation,
+    float*              distance);
+
+//-----------------------------------------------------------------------------
+//! @brief      レイと球の交差判定を行います.
+//! 
+//! @param[in]      origin      レイの原点.
+//! @param[in]      direction   レイの方向ベクトル.
+//! @param[in]      center      球の中心位置.
+//! @param[in]      radius      球の半径.
+//! @param[out]     distance    衝突位置までの距離.
+//! @retval true    交差あり.
+//! @retval false   交差なし.
+//-----------------------------------------------------------------------------
+bool IntersectRaySphere(
+    const Vector3&  origin,
+    const Vector3&  direction,
+    const Vector3&  center,
+    float           radius,
+    float*          distance);
+
+//-----------------------------------------------------------------------------
+//! @brief      レイと平面の交差判定を行います.
+//! 
+//! @param[in]      origin      レイの原点.
+//! @param[in]      direction   レイの方向ベクトル.
+//! @param[in]      plane       平面式.
+//! @param[out]     distance    衝突位置までの距離.
+//! @retval true    交差あり.
+//! @retval false   交差なし.
+//-----------------------------------------------------------------------------
+bool IntersectRayPlane(
+    const Vector3&  origin,
+    const Vector3&  direction,
+    const Vector4&  plane,
+    float*          distance);
+
+//-----------------------------------------------------------------------------
+//! @brief      レイとポリゴンの交差判定を行います
+//! 
+//! @param[in]      origin      レイの原点.
+//! @param[in]      direction   レイの方向ベクトル.
+//! @param[in]      p0          ポリゴンの頂点.
+//! @param[in]      p1          ポリゴンの頂点.
+//! @param[in]      p2          ポリゴンの頂点.
+//! @param[out]     distance    衝突位置までの距離.
+//! @retval true    交差あり.
+//! @retval false   交差なし.
+//-----------------------------------------------------------------------------
+bool IntersectRayPolygon(
+    const Vector3&  origin,
+    const Vector3&  direction,
+    const Vector3&  p0,
+    const Vector3&  p1,
+    const Vector3&  p2,
+    float*          distance);
 
 //-----------------------------------------------------------------------------
 //! @brief      相関色温度から CIE 1931 xy 色度座標を求めます.

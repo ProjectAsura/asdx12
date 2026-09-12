@@ -36,8 +36,8 @@ res::Unorm4 ToUnorm4(const Unorm4& value);
 res::Float3x4 ToFloat3x4(const Matrix4x3& value);
 res::Float4x4 ToFloat4x4(const Matrix4x4& value);
 
-res::BoundingBox ToBox(const BoundingBox3& value);
-res::BoundingSphere ToSphere(const BoundingSphere3& value);
+res::BoundingBox ToBox(const BoundingBox& value);
+res::BoundingSphere ToSphere(const BoundingSphere& value);
 
 Vector2 FromFloat2(const res::Float2& value);
 Vector3 FromFloat3(const res::Float3& value);
@@ -51,7 +51,7 @@ Uint4 FromUint4(const res::Uint4& value);
 Matrix4x3 FromFloat3x4(const res::Float3x4& value);
 Matrix4x4 FromFloat4x4(const res::Float4x4& value);
 
-BoundingBox3 FromBox(const res::BoundingBox& value);
-BoundingSphere3 FromSphere(const res::BoundingSphere& value);
+BoundingBox FromBox(const res::BoundingBox& value);
+BoundingSphere FromSphere(const res::BoundingSphere& value);
 
 } // namespace asdx

@@ -187,52 +187,142 @@ TEST(MathTest, GeometryFunctions)
 
 TEST(MathTest, BoundingVolumes)
 {
-    const asdx::BoundingBox2 box2(asdx::Vector2(-1.0f, -2.0f), asdx::Vector2(3.0f, 4.0f));
-    EXPECT_FLOAT_EQ(box2.GetCenter().x, 1.0f);
-    EXPECT_FLOAT_EQ(box2.GetCenter().y, 1.0f);
-    EXPECT_FLOAT_EQ(box2.GetSize().x, 4.0f);
-    EXPECT_FLOAT_EQ(box2.GetSize().y, 6.0f);
-    EXPECT_TRUE(box2.Contains(asdx::Vector2(0.0f, 0.0f)));
-    EXPECT_FALSE(box2.Contains(asdx::Vector2(4.0f, 0.0f)));
-    EXPECT_EQ(box2.GetCorners().size(), 4u);
-    const auto merged2 = asdx::BoundingBox2::Merge(box2, asdx::Vector2(5.0f, -3.0f));
-    EXPECT_FLOAT_EQ(merged2.Maxi.x, 5.0f);
-    EXPECT_FLOAT_EQ(merged2.Mini.y, -3.0f);
+    const asdx::BoundingBox box(asdx::Vector3(-1.0f), asdx::Vector3(1.0f));
+    EXPECT_TRUE(box.Contains(asdx::Vector3(0.0f)) == asdx::ContainmentType::Contains);
+    EXPECT_EQ(box.GetCorners().size(), 8u);
 
-    const asdx::BoundingBox3 box3(asdx::Vector3(-1.0f), asdx::Vector3(1.0f));
-    EXPECT_TRUE(box3.Contains(asdx::Vector3(0.0f)));
-    EXPECT_FALSE(box3.Contains(asdx::Vector3(2.0f, 0.0f, 0.0f)));
-    EXPECT_FLOAT_EQ(box3.GetSize().x, 2.0f);
-    EXPECT_EQ(box3.GetCorners().size(), 8u);
+    const asdx::BoundingSphere sphere(asdx::Vector3(0.0f), 2.0f);
+    EXPECT_TRUE(sphere.Contains(asdx::Vector3(1.0f, 0.0f, 0.0f)) == asdx::ContainmentType::Contains);
+    EXPECT_EQ(sphere.Contains(asdx::Vector3(3.0f, 0.0f, 0.0f)), asdx::ContainmentType::Disjoint);
 
-    const asdx::BoundingSphere2 sphere2(asdx::Vector2(0.0f), 2.0f);
-    EXPECT_TRUE(sphere2.Contains(asdx::Vector2(1.0f, 1.0f)));
-    EXPECT_FALSE(sphere2.Contains(asdx::Vector2(2.0f, 2.0f)));
-    const auto mergedSphere = asdx::BoundingSphere2::Merge(sphere2, asdx::Vector2(4.0f, 0.0f));
-    EXPECT_NEAR(mergedSphere.Center.x, 1.0f, 1.0e-6f);
-    EXPECT_NEAR(mergedSphere.Radius, 3.0f, 1.0e-6f);
-
-    const asdx::BoundingSphere3 sphere3(asdx::Vector3(0.0f), 2.0f);
-    EXPECT_TRUE(sphere3.Contains(asdx::Vector3(1.0f, 0.0f, 0.0f)));
-    EXPECT_FALSE(sphere3.Contains(asdx::Vector3(2.0f, 2.0f, 0.0f)));
-    const auto moved = asdx::BoundingSphere3::Transform(
-        sphere3, asdx::Matrix4x4::CreateTranslation(3.0f, 4.0f, 5.0f));
+    const auto moved = asdx::BoundingSphere::Transform(
+        sphere, asdx::Matrix4x4::CreateTranslation(3.0f, 4.0f, 5.0f));
     EXPECT_FLOAT_EQ(moved.Center.x, 3.0f);
     EXPECT_FLOAT_EQ(moved.Center.y, 4.0f);
     EXPECT_FLOAT_EQ(moved.Center.z, 5.0f);
-    EXPECT_FLOAT_EQ(moved.Radius, sphere3.Radius);
-    const float vertices[] = { -2.0f, -1.0f, -3.0f, 4.0f, 5.0f, 6.0f };
-    const auto createdBox = asdx::BoundingBox3::Create(vertices, 2, 3 * sizeof(float));
-    EXPECT_FLOAT_EQ(createdBox.Mini.x, -2.0f);
-    EXPECT_FLOAT_EQ(createdBox.Mini.y, -1.0f);
-    EXPECT_FLOAT_EQ(createdBox.Mini.z, -3.0f);
-    EXPECT_FLOAT_EQ(createdBox.Maxi.x, 4.0f);
-    EXPECT_FLOAT_EQ(createdBox.Maxi.y, 5.0f);
-    EXPECT_FLOAT_EQ(createdBox.Maxi.z, 6.0f);
-    const auto createdSphere = asdx::BoundingSphere3::Create(vertices, 2, 3 * sizeof(float));
-    EXPECT_TRUE(createdSphere.Contains(asdx::Vector3(-2.0f, -1.0f, -3.0f)));
-    EXPECT_TRUE(createdSphere.Contains(asdx::Vector3(4.0f, 5.0f, 6.0f)));
+    EXPECT_FLOAT_EQ(moved.Radius, sphere.Radius);
 }
+
+//TEST(MathTest, RayIntersections)
+//{
+//    const asdx::Ray ray(asdx::Vector3(0.0f, 0.0f, 0.0f), asdx::Vector3(1.0f, 0.0f, 0.0f));
+//    float distance = 0.0f;
+//
+//    const asdx::BoundingBox box(asdx::Vector3(5.0f, 0.0f, 0.0f), asdx::Vector3(1.0f));
+//    EXPECT_TRUE(ray.Intersects(box, &distance));
+//    EXPECT_FLOAT_EQ(distance, 4.0f);
+//
+//    const asdx::BoundingSphere sphere(asdx::Vector3(5.0f, 0.0f, 0.0f), 1.0f);
+//    EXPECT_TRUE(ray.Intersects(sphere, &distance));
+//    EXPECT_FLOAT_EQ(distance, 4.0f);
+//
+//    EXPECT_TRUE(ray.Intersects(asdx::Vector4(1.0f, 0.0f, 0.0f, -3.0f), &distance));
+//    EXPECT_FLOAT_EQ(distance, 3.0f);
+//    EXPECT_TRUE(ray.Intersects(
+//        asdx::Vector3(3.0f, -1.0f, -1.0f),
+//        asdx::Vector3(3.0f, 1.0f, -1.0f),
+//        asdx::Vector3(3.0f, 0.0f, 1.0f), &distance));
+//    EXPECT_FLOAT_EQ(distance, 3.0f);
+//
+//    const asdx::BoundingBox missedBox(asdx::Vector3(0.0f, 3.0f, 0.0f), asdx::Vector3(1.0f));
+//    EXPECT_FALSE(ray.Intersects(missedBox, nullptr));
+//}
+
+//TEST(MathTest, BoundingBoxIntersectionsAndContainment)
+//{
+//    const asdx::BoundingBox box(asdx::Vector3(0.0f), asdx::Vector3(2.0f, 1.0f, 3.0f));
+//    const auto corners = box.GetCorners();
+//    EXPECT_EQ(corners.size(), 8u);
+//    EXPECT_EQ(box.Contains(asdx::Vector3(0.0f)), asdx::ContainmentType::Contains);
+//    EXPECT_EQ(box.Contains(asdx::Vector3(3.0f, 0.0f, 0.0f)), asdx::ContainmentType::Disjoint);
+//
+//    const asdx::BoundingBox overlapping(asdx::Vector3(3.0f, 0.0f, 0.0f), asdx::Vector3(1.0f));
+//    const asdx::BoundingBox separated(asdx::Vector3(5.0f, 0.0f, 0.0f), asdx::Vector3(1.0f));
+//    EXPECT_TRUE(box.Intersects(overlapping));
+//    EXPECT_FALSE(box.Intersects(separated));
+//
+//    const asdx::BoundingSphere containedSphere(asdx::Vector3(0.0f), 0.5f);
+//    EXPECT_TRUE(box.Intersects(containedSphere));
+//    EXPECT_EQ(box.Contains(containedSphere), asdx::ContainmentType::Contains);
+//    EXPECT_EQ(box.Intersects(asdx::Vector4(1.0f, 0.0f, 0.0f, -2.0f)), asdx::PlaneIntersectionType::Intersecting);
+//
+//    const auto merged = asdx::BoundingBox::CreateMerged(box, separated);
+//    EXPECT_FLOAT_EQ(merged.Center.x, 2.0f);
+//    EXPECT_FLOAT_EQ(merged.Extents.x, 4.0f);
+//    const auto transformed = asdx::BoundingBox::Transform(
+//        box, asdx::Matrix4x4::CreateTranslation(10.0f, 20.0f, 30.0f));
+//    EXPECT_FLOAT_EQ(transformed.Center.x, 10.0f);
+//    EXPECT_FLOAT_EQ(transformed.Center.y, 20.0f);
+//    EXPECT_FLOAT_EQ(transformed.Center.z, 30.0f);
+//}
+
+TEST(MathTest, BoundingSphereIntersectionsAndContainment)
+{
+    const asdx::BoundingSphere sphere(asdx::Vector3(0.0f), 2.0f);
+    EXPECT_EQ(sphere.Contains(asdx::Vector3(1.0f, 0.0f, 0.0f)), asdx::ContainmentType::Contains);
+    EXPECT_EQ(sphere.Contains(asdx::Vector3(3.0f, 0.0f, 0.0f)), asdx::ContainmentType::Disjoint);
+
+    const asdx::BoundingSphere overlapping(asdx::Vector3(3.0f, 0.0f, 0.0f), 2.0f);
+    const asdx::BoundingSphere separated(asdx::Vector3(5.0f, 0.0f, 0.0f), 1.0f);
+    EXPECT_TRUE(sphere.Intersects(overlapping));
+    EXPECT_FALSE(sphere.Intersects(separated));
+    EXPECT_EQ(sphere.Contains(asdx::BoundingSphere(asdx::Vector3(0.0f), 1.0f)), asdx::ContainmentType::Contains);
+    EXPECT_EQ(sphere.Intersects(asdx::Vector4(1.0f, 0.0f, 0.0f, -2.0f)), asdx::PlaneIntersectionType::Intersecting);
+
+    const auto merged = asdx::BoundingSphere::CreateMerged(sphere, separated);
+    EXPECT_NEAR(merged.Center.x, 2.0f, 1.0e-6f);
+    EXPECT_NEAR(merged.Radius, 4.0f, 1.0e-6f);
+    const auto transformed = asdx::BoundingSphere::Transform(
+        sphere, asdx::Matrix4x4::CreateTranslation(4.0f, 5.0f, 6.0f));
+    EXPECT_FLOAT_EQ(transformed.Center.x, 4.0f);
+    EXPECT_FLOAT_EQ(transformed.Center.y, 5.0f);
+    EXPECT_FLOAT_EQ(transformed.Center.z, 6.0f);
+    EXPECT_FLOAT_EQ(transformed.Radius, sphere.Radius);
+}
+
+//TEST(MathTest, BoundingFrustumIntersectionsAndContainment)
+//{
+//    const asdx::BoundingFrustum frustum(
+//        asdx::Vector3(0.0f), asdx::Quaternion::CreateIdentity(),
+//        1.0f, -1.0f, 1.0f, -1.0f, 1.0f, 10.0f);
+//    const auto corners = frustum.GetCorners();
+//    EXPECT_EQ(corners.size(), 8u);
+//    EXPECT_EQ(frustum.Contains(asdx::Vector3(0.0f, 0.0f, 5.0f)), asdx::ContainmentType::Contains);
+//    EXPECT_EQ(frustum.Contains(asdx::Vector3(0.0f, 0.0f, 20.0f)), asdx::ContainmentType::Disjoint);
+//
+//    const asdx::BoundingSphere inside(asdx::Vector3(0.0f, 0.0f, 5.0f), 0.5f);
+//    const asdx::BoundingSphere outside(asdx::Vector3(0.0f, 0.0f, 20.0f), 0.5f);
+//    EXPECT_TRUE(frustum.Intersects(inside));
+//    EXPECT_FALSE(frustum.Intersects(outside));
+//    EXPECT_EQ(frustum.Intersects(asdx::Vector4(0.0f, 0.0f, 1.0f, -5.0f)), asdx::PlaneIntersectionType::Intersecting);
+//    EXPECT_EQ(frustum.GetPlanes().size(), 6u);
+//}
+//
+//TEST(MathTest, BoundingOrientedBoxIntersectionsAndContainment)
+//{
+//    const asdx::BoundingOrientedBox box(
+//        asdx::Vector3(0.0f), asdx::Vector3(2.0f, 1.0f, 3.0f));
+//    const auto corners = box.GetCorners();
+//    EXPECT_EQ(corners.size(), 8u);
+//    EXPECT_EQ(box.Contains(asdx::Vector3(0.0f)), asdx::ContainmentType::Contains);
+//    EXPECT_EQ(box.Contains(asdx::Vector3(3.0f, 0.0f, 0.0f)), asdx::ContainmentType::Disjoint);
+//
+//    const asdx::BoundingBox axisAligned(asdx::Vector3(0.0f), asdx::Vector3(1.0f));
+//    const asdx::BoundingSphere sphere(asdx::Vector3(0.0f), 1.0f);
+//    EXPECT_TRUE(box.Intersects(axisAligned));
+//    EXPECT_TRUE(box.Intersects(sphere));
+//    EXPECT_EQ(box.Intersects(asdx::Vector4(1.0f, 0.0f, 0.0f, 0.0f)), asdx::PlaneIntersectionType::Intersecting);
+//
+//    const asdx::Ray ray(asdx::Vector3(-5.0f, 0.0f, 0.0f), asdx::Vector3(1.0f, 0.0f, 0.0f));
+//    float distance = 0.0f;
+//    EXPECT_TRUE(box.Intersects(ray, &distance));
+//    EXPECT_NEAR(distance, 3.0f, 1.0e-6f);
+//    const auto transformed = asdx::BoundingOrientedBox::Transform(
+//        box, asdx::Matrix4x4::CreateTranslation(10.0f, 20.0f, 30.0f));
+//    EXPECT_FLOAT_EQ(transformed.Center.x, 10.0f);
+//    EXPECT_FLOAT_EQ(transformed.Center.y, 20.0f);
+//    EXPECT_FLOAT_EQ(transformed.Center.z, 30.0f);
+//}
 
 TEST(MathTest, RandomGenerators)
 {

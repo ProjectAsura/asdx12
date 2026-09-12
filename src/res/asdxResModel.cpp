@@ -169,21 +169,21 @@ const res::ModelBatch& ModelBinary::GetBatch(uint32_t index) const
 //-----------------------------------------------------------------------------
 //      バウンディングスフィアを取得します.
 //-----------------------------------------------------------------------------
-BoundingSphere3 ModelBinary::GetSphere() const
+BoundingSphere ModelBinary::GetSphere() const
 {
     assert(!m_Blob.empty());
     auto val = res::GetModelBinary(m_Blob.data())->BoundSphere();
-    return BoundingSphere3(val->Center().X(), val->Center().Y(), val->Center().Z(), val->Radius());
+    return BoundingSphere(Vector3(val->Center().X(), val->Center().Y(), val->Center().Z()), val->Radius());
 }
 
 //-----------------------------------------------------------------------------
 //      バウンディングボックスを取得します.
 //-----------------------------------------------------------------------------
-BoundingBox3 ModelBinary::GetBox() const
+BoundingBox ModelBinary::GetBox() const
 {
     assert(!m_Blob.empty());
     auto val = res::GetModelBinary(m_Blob.data())->BoundBox();
-    return BoundingBox3(
+    return BoundingBox(
         asdx::Vector3(val->Min().X(), val->Min().Y(), val->Min().Z()),
         asdx::Vector3(val->Max().X(), val->Max().Y(), val->Max().Z()));
 }
@@ -378,23 +378,24 @@ ArrayView<uint32_t> MeshProxy::GetVerexIndices(const res::Mesh& mesh)
 //-----------------------------------------------------------------------------
 //      バウンディングスフィアを取得します.
 //-----------------------------------------------------------------------------
-BoundingSphere3 MeshProxy::GetSphere(const res::Mesh& mesh)
+BoundingSphere MeshProxy::GetSphere(const res::Mesh& mesh)
 {
     auto val = mesh.BoundSphere();
-    return BoundingSphere3(
+    return BoundingSphere(
+        Vector3(
         val->Center().X(),
         val->Center().Y(),
-        val->Center().Z(),
+        val->Center().Z()),
         val->Radius());
 }
 
 //-----------------------------------------------------------------------------
 //      バウンディングスフィアを取得します.
 //-----------------------------------------------------------------------------
-BoundingBox3 MeshProxy::GetBox(const res::Mesh& mesh)
+BoundingBox MeshProxy::GetBox(const res::Mesh& mesh)
 {
     auto val = mesh.BoundBox();
-    return BoundingBox3(
+    return BoundingBox(
         asdx::Vector3(val->Min().X(), val->Min().Y(), val->Min().Z()),
         asdx::Vector3(val->Max().X(), val->Max().Y(), val->Max().Z()));
 }
@@ -570,21 +571,21 @@ ArrayView<uint32_t> ModelBatchProxy::GetMeshIds(const res::ModelBatch& batch)
 //-----------------------------------------------------------------------------
 //      ローカル空間でのバウンディングスフィアを取得します.
 //-----------------------------------------------------------------------------
-BoundingSphere3 ModelBatchProxy::GetSphere(const res::ModelBatch& batch)
+BoundingSphere ModelBatchProxy::GetSphere(const res::ModelBatch& batch)
 {
-    return BoundingSphere3(
-        batch.BoundSphere()->Center().X(),
+    return BoundingSphere(
+        Vector3(batch.BoundSphere()->Center().X(),
         batch.BoundSphere()->Center().Y(),
-        batch.BoundSphere()->Center().Z(),
+        batch.BoundSphere()->Center().Z()),
         batch.BoundSphere()->Radius());
 }
 
 //-----------------------------------------------------------------------------
 //      ローカル空間でのバウンディングボックスを取得します.
 //-----------------------------------------------------------------------------
-BoundingBox3 ModelBatchProxy::GetBox(const res::ModelBatch& batch)
+BoundingBox ModelBatchProxy::GetBox(const res::ModelBatch& batch)
 {
-    return BoundingBox3(
+    return BoundingBox(
         Vector3(batch.BoundBox()->Min().X(),
                 batch.BoundBox()->Min().Y(),
                 batch.BoundBox()->Min().Z()),

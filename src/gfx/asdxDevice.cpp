@@ -98,6 +98,25 @@ void LoadPixGpuCpatureDll()
     }
 }
 
+//-----------------------------------------------------------------------------
+//      ダンプ開始時のコールバック関数.
+//-----------------------------------------------------------------------------
+static UINT CALLBACK OnDumpBegin(UINT64 flags)
+{
+    // TODO : 追加のアプリ情報を渡す.
+    // pDumpDevice->AddBlobToDumpFile(&info, sizeof(info), 0x1001);
+    return 1;
+}
+
+//-----------------------------------------------------------------------------
+//      ダンプ終了時のコールバック関数.
+//-----------------------------------------------------------------------------
+static void CALLBACK OnDumpEnd(const wchar_t* dumpPath)
+{
+    if (dumpPath != nullptr)
+    { ELOGA("Output DirectX Dump File. path = %ls", dumpPath); }
+}
+
 } // namespace
 
 
@@ -533,6 +552,38 @@ bool GraphicsSystem::Init(const DeviceDesc& deviceDesc)
             }
         }
     }
+
+    #ifdef __ID3D12DevicePreview_INTERFACE_DEFINED__
+    {
+        auto supportDumpFile = false;
+
+        // DirectX Dump File のサポートチェック.
+        D3D12_FEATURE_DATA_DUMP_FILE feature = {};
+        auto hr = m_pDevice->CheckFeatureSupport(D3D12_FEATURE_DUMP_FILE, &feature, sizeof(features));
+        if (SUCCEEDED(hr))
+        {
+            supportDumpFile = feature.SupportedByOS
+                          && (feature.DumpFileDriverTier != D3D12_DUMP_FILE_DRIVER_TINER_NOT_SUPPORTED);
+        }
+
+        if (supportDumpFile)
+        {
+            ILOGA("Info : Support DirectX Dump File.");
+            RefPtr<ID3D12DevicePreview> preview;
+            hr = m_pDevice->QueryInterface(IID_PPV_ARGS(preview.GetAddress()));
+            if (SUCCEEDED(hr))
+            {
+                // ローカルに保存するように設定.
+                preview->RetainDumpFile(TRUE);
+
+                // ダンプ出力時のコールバック関数を設定.
+                preview->SetDumpFileCallbacks(
+                    &OnDumpBegin,
+                    &OnDumpEnd);
+            }
+        }
+    }
+    #endif//__ID3D12DevicePreview_INTERFACE_DEFINED__
 
     // D3D12MA
     {

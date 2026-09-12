@@ -150,14 +150,14 @@ public:
     //! 
     //! @return     バウンディングスフィアを返却します.
     //-------------------------------------------------------------------------
-    BoundingSphere3 GetSphere() const;
+    BoundingSphere GetSphere() const;
 
     //-------------------------------------------------------------------------
     //! @brief      バウンディングボックスを取得します.
     //! 
     //! @return     バウンディングボックスを返却します.
     //-------------------------------------------------------------------------
-    BoundingBox3 GetBox() const;
+    BoundingBox GetBox() const;
 
     //-------------------------------------------------------------------------
     //! @brief      ボーンを検索します.
@@ -285,12 +285,12 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      バウンディングスフィアを取得します.
     //-------------------------------------------------------------------------
-    static BoundingSphere3 GetSphere(const res::Mesh& mesh);
+    static BoundingSphere GetSphere(const res::Mesh& mesh);
 
     //-------------------------------------------------------------------------
     //! @brief      バウンディングボックスを取得します.
     //-------------------------------------------------------------------------
-    static BoundingBox3 GetBox(const res::Mesh& mesh);
+    static BoundingBox GetBox(const res::Mesh& mesh);
 };
 
 
@@ -480,12 +480,12 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      ローカル空間でのバウンディングスフィアを取得します
     //-------------------------------------------------------------------------
-    static BoundingSphere3 GetSphere(const res::ModelBatch& batch);
+    static BoundingSphere GetSphere(const res::ModelBatch& batch);
 
     //-------------------------------------------------------------------------
     //! @brief      ローカル空間でのバウンディングボックスを取得します.
     //-------------------------------------------------------------------------
-    static BoundingBox3 GetBox(const res::ModelBatch& batch);
+    static BoundingBox GetBox(const res::ModelBatch& batch);
 };
 
 } // namespace asdx

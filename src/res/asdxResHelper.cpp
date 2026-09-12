@@ -60,14 +60,14 @@ res::Float4x4 ToFloat4x4(const Matrix4x4& value)
         value._41, value._42, value._43, value._44);
 }
 
-res::BoundingBox ToBox(const BoundingBox3& value)
+res::BoundingBox ToBox(const BoundingBox& value)
 {
     return res::BoundingBox(
-        res::Float3(value.Mini.x, value.Mini.y, value.Mini.z),
-        res::Float3(value.Maxi.x, value.Maxi.y, value.Maxi.z));
+        res::Float3(value.Min.x, value.Min.y, value.Min.z),
+        res::Float3(value.Max.x, value.Max.y, value.Max.z));
 }
 
-res::BoundingSphere ToSphere(const BoundingSphere3& value)
+res::BoundingSphere ToSphere(const BoundingSphere& value)
 {
     return res::BoundingSphere(
         res::Float3(value.Center.x, value.Center.y, value.Center.z),
@@ -114,16 +114,16 @@ Matrix4x4 FromFloat4x4(const res::Float4x4& value)
         value.M41(), value.M42(), value.M43(), value.M44());
 }
 
-BoundingBox3 FromBox(const res::BoundingBox& value)
+BoundingBox FromBox(const res::BoundingBox& value)
 {
-    return BoundingBox3(
+    return BoundingBox(
         Vector3(value.Min().X(), value.Min().Y(), value.Min().Z()),
         Vector3(value.Max().X(), value.Max().Y(), value.Max().Z()));
 }
 
-BoundingSphere3 FromSphere(const res::BoundingSphere& value)
+BoundingSphere FromSphere(const res::BoundingSphere& value)
 {
-    return BoundingSphere3(
+    return BoundingSphere(
         Vector3(value.Center().X(), value.Center().Y(), value.Center().Z()),
         value.Radius());
 }

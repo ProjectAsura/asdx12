@@ -1049,6 +1049,12 @@ inline Vector3& Vector3::SafeNormalize(const Vector3& set)
     return (*this);
 }
 
+//-----------------------------------------------------------------------------
+//      xy成分をVector2型として取り出します.
+//-----------------------------------------------------------------------------
+inline Vector2 Vector3::ToVector2() const
+{ return Vector2(x, y); }
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Vector3 methods
@@ -1763,6 +1769,12 @@ inline Vector4& Vector4::SafeNormalize(const Vector4& set)
     return (*this);
 }
 
+//-----------------------------------------------------------------------------
+//      xyz成分をVector3型として取り出します.
+//-----------------------------------------------------------------------------
+inline Vector3 Vector4::ToVector3() const
+{ return Vector3(x, y, z); }
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Vector4  Methods
@@ -2047,6 +2059,22 @@ inline Vector4 Vector4::NormalizePlane(const Vector4& value)
 {
     auto mag = sqrt(value.x * value.x + value.y * value.y + value.z * value.z);
     return Vector4(value.x / mag, value.y / mag, value.z / mag, value.w / mag);
+}
+
+//-----------------------------------------------------------------------------
+//      平面と点の距離を求めます.
+//-----------------------------------------------------------------------------
+inline float Vector4::PlaneDistance(const Vector4& plane, const Vector3& point)
+{ return plane.x * point.x + plane.y * point.y + plane.z * point.z + plane.w; }
+
+//-----------------------------------------------------------------------------
+//      平面式を変換します.
+//-----------------------------------------------------------------------------
+inline Vector4 Vector4::TransformPlane(const Vector4& plane, const Quaternion& rotation, const Vector3& translation)
+{
+    auto normal = Vector3::Rotate(plane.ToVector3(), rotation);
+    auto d = plane.w - Vector3::Dot(normal, translation);
+    return Vector4(normal, d);
 }
 
 //-----------------------------------------------------------------------------
@@ -4543,466 +4571,272 @@ inline Matrix4x3 Matrix4x3::AppendScale(Matrix4x3& mat, const Vector3& vec)
     return mat;
 }
 
+
 ///////////////////////////////////////////////////////////////////////////////
-// BoundingBox2 structure
+// BoundingBox structure
 ///////////////////////////////////////////////////////////////////////////////
 
 //-----------------------------------------------------------------------------
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
-inline BoundingBox2::BoundingBox2()
-: Mini( FLT_MAX,  FLT_MAX)
-, Maxi(-FLT_MAX, -FLT_MAX)
+inline BoundingBox::BoundingBox()
+: Min( FLT_MAX,  FLT_MAX,  FLT_MAX)
+, Max(-FLT_MAX, -FLT_MAX, -FLT_MAX)
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-inline BoundingBox2::BoundingBox2(const Vector2& mini, const Vector2& maxi)
-: Mini(mini)
-, Maxi(maxi)
+inline BoundingBox::BoundingBox(const Vector3& mini, const Vector3& maxi)
+: Min(mini)
+, Max(maxi)
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
-//      中心座標を求めます.
+//      コピーコンストラクタです.
 //-----------------------------------------------------------------------------
-inline Vector2 BoundingBox2::GetCenter() const
-{ return (Maxi + Mini) * 0.5f; }
+inline BoundingBox::BoundingBox(const BoundingBox& value)
+: Min(value.Min)
+, Max(value.Max)
+{ /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
-//      サイズを求めます.
+//      8角を取得します.
 //-----------------------------------------------------------------------------
-inline Vector2 BoundingBox2::GetSize() const
-{ return Vector2::Abs(Maxi - Mini); }
+inline std::array<Vector3, 8> BoundingBox::GetCorners() const
+{
+    std::array<Vector3, 8> corners;
+
+    corners[0] = Vector3(Min.x, Max.y, Max.z);
+    corners[1] = Vector3(Max.x, Max.y, Max.z);
+    corners[2] = Vector3(Max.x, Min.y, Max.z);
+    corners[3] = Vector3(Min.x, Min.y, Max.z);
+    corners[4] = Vector3(Min.x, Max.y, Min.z);
+    corners[5] = Vector3(Max.x, Max.y, Min.z);
+    corners[6] = Vector3(Max.x, Min.y, Min.z);
+    corners[7] = Vector3(Min.x, Min.y, Min.z);
+
+    return corners;
+}
+
+//-----------------------------------------------------------------------------
+//      AABBとの交差判定を行います.
+//-----------------------------------------------------------------------------
+inline bool BoundingBox::Intersects(const BoundingBox& box) const
+{
+    return Max.x >= box.Min.x && Min.x <= box.Max.x
+        && Max.y >= box.Min.y && Min.y <= box.Max.y
+        && Max.z >= box.Min.z && Min.z <= box.Max.z;
+}
+
+//-----------------------------------------------------------------------------
+//      球との交差判定を行います.
+//-----------------------------------------------------------------------------
+inline bool BoundingBox::Intersects(const BoundingSphere& sphere) const
+{
+    auto point = Vector3::Clamp(sphere.Center, Min, Max);
+    return Vector3::DistanceSq(point, sphere.Center) <= sphere.Radius * sphere.Radius;
+}
+
+//-----------------------------------------------------------------------------
+//      平面との交差判定を行います.
+//-----------------------------------------------------------------------------
+inline PlaneIntersectionType BoundingBox::Intersects(const Vector4& plane) const
+{
+    Vector3 v0, v1;
+    v0.x = (plane.x >= 0.0f) ? Min.x : Max.x;
+    v0.y = (plane.y >= 0.0f) ? Min.y : Max.y;
+    v0.z = (plane.z >= 0.0f) ? Min.z : Max.z;
+
+    v1.x = (plane.x >= 0.0f) ? Max.x : Min.x;
+    v1.y = (plane.y >= 0.0f) ? Max.y : Min.y;
+    v1.z = (plane.z >= 0.0f) ? Max.z : Min.z;
+
+    auto d = Vector3::Dot(plane.ToVector3(), v0);
+    if (d + plane.w > 0.0f)
+        return PlaneIntersectionType::Front;
+
+    d = Vector3::Dot(plane.ToVector3(), v1);
+    if (d + plane.w < 0.0f)
+        return PlaneIntersectionType::Back;
+
+    return PlaneIntersectionType::Intersecting;
+}
+
+//-----------------------------------------------------------------------------
+//      レイとの交差判定を行います.
+//-----------------------------------------------------------------------------
+inline bool BoundingBox::Intersects(const Vector3& origin, const Vector3& direction, float* distance) const
+{ return IntersectRayAABB(origin, direction, Min, Max, distance); }
 
 //-----------------------------------------------------------------------------
 //      点が含まれるかどうか判定します.
 //-----------------------------------------------------------------------------
-inline bool BoundingBox2::Contains(const Vector2& value) const
+inline ContainmentType BoundingBox::Contains(const Vector3& point) const
 {
-    return (value.x >= Mini.x && value.x <= Maxi.x
-         && value.y >= Mini.y && value.y <= Maxi.y);
+    if (Min.x > point.x || point.x > Max.x
+     || Min.y > point.y || point.y > Max.y
+     || Min.z > point.z || point.z > Max.z)
+        return ContainmentType::Disjoint;
+
+    return ContainmentType::Contains;
 }
 
 //-----------------------------------------------------------------------------
-//      バウンディングボックスが含まれるかどうか判定します.
+//      AABBが含まれるかどうか判定します.
 //-----------------------------------------------------------------------------
-inline bool BoundingBox2::Contains(const BoundingBox2& value) const
+inline ContainmentType BoundingBox::Contains(const BoundingBox& box) const
 {
-    return (value.Mini.x >= Mini.x && value.Maxi.x <= Maxi.x
-         && value.Mini.y >= Mini.y && value.Maxi.y <= Maxi.y);
+    if (Max.x <= box.Min.x || Min.x > box.Max.x)
+        return ContainmentType::Disjoint;
+
+    if (Max.y <= box.Min.y || Min.y > box.Max.y)
+        return ContainmentType::Disjoint;
+
+    if (Max.z <= box.Min.z || Min.z > box.Max.z)
+        return ContainmentType::Disjoint;
+
+    if (Min.x > box.Min.x || box.Max.x > Max.x
+     || Min.y > box.Min.y || box.Max.y > Max.y
+     || Min.z > box.Min.z || box.Max.z > Max.z)
+        return ContainmentType::Intersects;
+
+    return ContainmentType::Contains;
 }
 
 //-----------------------------------------------------------------------------
-//      バウンディングボックスの4頂点を取得します.
+//      球が含まれるかどうか判定します.
 //-----------------------------------------------------------------------------
-inline std::array<Vector2, 4> BoundingBox2::GetCorners() const
+inline ContainmentType BoundingBox::Contains(const BoundingSphere& sphere) const
 {
-    return std::array<Vector2, 4>
+    auto v = Vector3::Clamp(sphere.Center, Min, Max);
+    auto d = Vector3::DistanceSq(sphere.Center, v);
+    if (d > sphere.Radius * sphere.Radius)
+        return ContainmentType::Disjoint;
+
+    if (Min.x + sphere.Radius <= sphere.Center.x || sphere.Center.x > Max.x - sphere.Radius || Max.x - Min.x <= sphere.Radius
+     || Min.y + sphere.Radius <= sphere.Center.y || sphere.Center.y > Max.y - sphere.Radius || Max.x - Min.y <= sphere.Radius
+     || Min.z + sphere.Radius <= sphere.Center.z || sphere.Center.z > Max.z - sphere.Radius || Max.x - Min.z <= sphere.Radius)
+        return ContainmentType::Intersects;
+
+    return ContainmentType::Contains;
+}
+
+//-----------------------------------------------------------------------------
+//      6平面によって含まれるかどうか判定します.
+//-----------------------------------------------------------------------------
+inline ContainmentType BoundingBox::ContainedBy(const std::array<Vector4, 6>& planes) const
+{
+    bool intersecting = false;
+    for (const auto& plane : planes)
     {
-        Vector2(Mini.x, Mini.y),
-        Vector2(Maxi.x, Mini.y),
-        Vector2(Mini.x, Maxi.y),
-        Vector2(Maxi.x, Maxi.y),
-    };
+        auto result = Intersects(plane);
+        if (result == PlaneIntersectionType::Back)
+            return ContainmentType::Disjoint;
+
+        if (result == PlaneIntersectionType::Intersecting)
+            intersecting = true;
+    }
+    return intersecting
+        ? ContainmentType::Intersects 
+        : ContainmentType::Contains;
+}
+
+//-----------------------------------------------------------------------------
+//      等価比較演算子です.
+//-----------------------------------------------------------------------------
+inline bool BoundingBox::operator == (const BoundingBox& value) const
+{
+    return (Min == value.Min)
+        && (Max == value.Max);
+}
+
+//-----------------------------------------------------------------------------
+//      非等価比較演算子です.
+//-----------------------------------------------------------------------------
+inline bool BoundingBox::operator != (const BoundingBox& value) const
+{
+    return (Min != value.Min)
+        || (Max != value.Max);
 }
 
 //-----------------------------------------------------------------------------
 //      代入演算子です.
 //-----------------------------------------------------------------------------
-inline BoundingBox2& BoundingBox2::operator = (const BoundingBox2& value)
+inline BoundingBox& BoundingBox::operator = (const BoundingBox& value)
 {
-    Mini = value.Mini;
-    Maxi = value.Maxi;
+    Min = value.Min;
+    Max = value.Max;
     return *this;
 }
 
 //-----------------------------------------------------------------------------
-//      マージ処理を行います.
+//      マージします.
 //-----------------------------------------------------------------------------
-inline BoundingBox2 BoundingBox2::Merge(const BoundingBox2& lhs, const BoundingBox2& rhs)
+inline BoundingBox BoundingBox::CreateMerged(const BoundingBox& lhs, const BoundingBox& rhs)
 {
-    BoundingBox2 result;
-    result.Mini = Vector2::Min(lhs.Mini, rhs.Mini);
-    result.Maxi = Vector2::Max(lhs.Maxi, rhs.Maxi);
-    return result;
+    auto mini = Vector3::Min(lhs.Min, rhs.Max);
+    auto maxi = Vector3::Max(lhs.Max, rhs.Max);
+    return BoundingBox(mini, maxi);
 }
 
 //-----------------------------------------------------------------------------
-//      マージ処理を行います.
+//      球からAABBを生成します.
 //-----------------------------------------------------------------------------
-inline BoundingBox2 BoundingBox2::Merge(const BoundingBox2& lhs, const Vector2& rhs)
-{
-    BoundingBox2 result;
-    result.Mini = Vector2::Min(lhs.Mini, rhs);
-    result.Maxi = Vector2::Max(lhs.Maxi, rhs);
-    return result;
-}
+inline BoundingBox BoundingBox::CreateFromSphere(const BoundingSphere& sphere)
+{ return BoundingBox(sphere.Center, Vector3(sphere.Radius, sphere.Radius, sphere.Radius)); }
 
 //-----------------------------------------------------------------------------
-//      頂点列からバウンディングスフィアを求めます.
+//      点群からAABBを生成します.
 //-----------------------------------------------------------------------------
-inline BoundingBox2 BoundingBox2::Create(const float* pVertices, size_t vertexCount, size_t vertexStride)
+inline BoundingBox BoundingBox::CreateFromPoints(const Vector3* points, size_t count)
 {
-    auto stride = vertexStride / sizeof(float);
-    auto vertex = pVertices;
-    BoundingBox2 result;
-    result.Mini = Vector2(vertex[0], vertex[1]);
-    result.Maxi = Vector2(vertex[0], vertex[1]);
-    vertex += stride;
+    if (!points || count == 0) 
+        return BoundingBox();
 
-    for(size_t i=1; i<vertexCount; ++i)
+    auto mini = points[0];
+    auto maxi = points[0];
+    for (size_t i = 1; i < count; ++i) 
     {
-        auto pos = Vector2(vertex[0], vertex[1]);
-        result = Merge(result, pos);
-        vertex += stride;
+        mini = Vector3::Min(mini, points[i]);
+        maxi = Vector3::Max(maxi, points[i]);
     }
+    return BoundingBox(mini, maxi);
+}
 
-    return result;
+//-----------------------------------------------------------------------------
+//      指定行列で変換します.
+//-----------------------------------------------------------------------------
+inline BoundingBox BoundingBox::Transform(const BoundingBox& box, const Matrix4x4& mtx)
+{
+    auto corners = box.GetCorners();
+    for (auto& corner : corners) 
+    { corner = Vector3::Transform(corner, mtx); }
+
+    return CreateFromPoints(corners.data(), corners.size());
+}
+
+//-----------------------------------------------------------------------------
+//      指定行列で変換します.
+//-----------------------------------------------------------------------------
+inline BoundingBox BoundingBox::Transform(const BoundingBox& box, const Matrix4x3& mtx)
+{
+    auto corners = box.GetCorners();
+    for (auto& corner : corners) 
+    { corner = Vector3::Transform(corner, mtx); }
+
+    return CreateFromPoints(corners.data(), corners.size());
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// BoundingBox3 structure
+// BoundingSphere structure
 ///////////////////////////////////////////////////////////////////////////////
 
 //-----------------------------------------------------------------------------
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
-inline BoundingBox3::BoundingBox3()
-: Mini( FLT_MAX,  FLT_MAX,  FLT_MAX)
-, Maxi(-FLT_MAX, -FLT_MAX, -FLT_MAX)
-{ /* DO_NOTHING */ }
-
-//-----------------------------------------------------------------------------
-//      引数付きコンストラクタです.
-//-----------------------------------------------------------------------------
-inline BoundingBox3::BoundingBox3(const Vector3& mini, const Vector3& maxi)
-: Mini(mini)
-, Maxi(maxi)
-{ /* DO_NOTHING */ }
-
-//-----------------------------------------------------------------------------
-//      中心座標を求めます.
-//-----------------------------------------------------------------------------
-inline Vector3 BoundingBox3::GetCenter() const
-{ return (Maxi + Mini) * 0.5f; }
-
-//-----------------------------------------------------------------------------
-//      サイズを求めます.
-//-----------------------------------------------------------------------------
-inline Vector3 BoundingBox3::GetSize() const
-{ return Vector3::Abs(Maxi - Mini); }
-
-//-----------------------------------------------------------------------------
-//      点が含まれるかどうか判定します
-//-----------------------------------------------------------------------------
-inline bool BoundingBox3::Contains(const Vector3& value) const
-{
-    return (value.x >= Mini.x && value.x <= Maxi.x 
-         && value.y >= Mini.y && value.y <= Maxi.y
-         && value.z >= Mini.z && value.z <= Maxi.z);
-}
-
-//-----------------------------------------------------------------------------
-//      バウンディングボックスが含まれるかどうか判定します.
-//-----------------------------------------------------------------------------
-inline bool BoundingBox3::Contains(const BoundingBox3& value) const
-{
-    return (value.Mini.x >= Mini.x && value.Maxi.x <= Maxi.x
-         && value.Mini.y >= Mini.y && value.Maxi.y <= Maxi.y
-         && value.Mini.z >= Mini.z && value.Maxi.z <= Maxi.z);
-}
-
-//-----------------------------------------------------------------------------
-//      バウンディングボックスの8頂点を取得します.
-//-----------------------------------------------------------------------------
-inline std::array<Vector3, 8> BoundingBox3::GetCorners() const
-{
-    return std::array<Vector3, 8>
-    {
-        Vector3(Mini.x, Mini.y, Mini.z),
-        Vector3(Maxi.x, Mini.y, Mini.z),
-        Vector3(Mini.x, Maxi.y, Mini.z),
-        Vector3(Maxi.x, Maxi.y, Mini.z),
-        Vector3(Mini.x, Mini.y, Maxi.z),
-        Vector3(Maxi.x, Mini.y, Maxi.z),
-        Vector3(Mini.x, Maxi.y, Maxi.z),
-        Vector3(Maxi.x, Maxi.y, Maxi.z),
-    };
-}
-
-//-----------------------------------------------------------------------------
-//      代入演算子です.
-//-----------------------------------------------------------------------------
-inline BoundingBox3& BoundingBox3::operator = (const BoundingBox3& value)
-{
-    Mini = value.Mini;
-    Maxi = value.Maxi;
-    return *this;
-}
-
-//-----------------------------------------------------------------------------
-//      マージ処理を行います.
-//-----------------------------------------------------------------------------
-inline BoundingBox3 BoundingBox3::Merge(const BoundingBox3& lhs, const BoundingBox3& rhs)
-{
-    return BoundingBox3(
-        Vector3::Min(lhs.Mini, rhs.Mini),
-        Vector3::Max(lhs.Maxi, rhs.Maxi));
-}
-
-//-----------------------------------------------------------------------------
-//      マージ処理を行います.
-//-----------------------------------------------------------------------------
-inline BoundingBox3 BoundingBox3::Merge(const BoundingBox3& lhs, const Vector3& rhs)
-{
-    return BoundingBox3(
-        Vector3::Min(lhs.Mini, rhs),
-        Vector3::Max(lhs.Maxi, rhs));
-}
-
-//-----------------------------------------------------------------------------
-//      指定行列で変換処理を行います.
-//-----------------------------------------------------------------------------
-inline BoundingBox3 BoundingBox3::Transform(const BoundingBox3& box, const Matrix4x4& matrix)
-{
-    Vector3 corners[8] = {
-        Vector3(box.Mini.x, box.Mini.y, box.Mini.z),
-        Vector3(box.Maxi.x, box.Mini.y, box.Mini.z),
-        Vector3(box.Mini.x, box.Maxi.y, box.Mini.z),
-        Vector3(box.Maxi.x, box.Maxi.y, box.Mini.z),
-        Vector3(box.Mini.x, box.Mini.y, box.Maxi.z),
-        Vector3(box.Maxi.x, box.Mini.y, box.Maxi.z),
-        Vector3(box.Mini.x, box.Maxi.y, box.Maxi.z),
-        Vector3(box.Maxi.x, box.Maxi.y, box.Maxi.z),
-    };
-
-    BoundingBox3 result;
-    for(auto i=0; i<8; ++i)
-    {
-        auto p = Vector3::Transform(corners[i], matrix);
-
-        result.Mini = Vector3::Min(result.Mini, p);
-        result.Maxi = Vector3::Max(result.Maxi, p);
-    }
-
-    return result;
-}
-
-//-----------------------------------------------------------------------------
-//      指定行列で変換処理を行います.
-//-----------------------------------------------------------------------------
-inline BoundingBox3 BoundingBox3::Transform(const BoundingBox3& box, const Matrix4x3& matrix)
-{
-    Vector3 corners[8] = {
-        Vector3(box.Mini.x, box.Mini.y, box.Mini.z),
-        Vector3(box.Maxi.x, box.Mini.y, box.Mini.z),
-        Vector3(box.Mini.x, box.Maxi.y, box.Mini.z),
-        Vector3(box.Maxi.x, box.Maxi.y, box.Mini.z),
-        Vector3(box.Mini.x, box.Mini.y, box.Maxi.z),
-        Vector3(box.Maxi.x, box.Mini.y, box.Maxi.z),
-        Vector3(box.Mini.x, box.Maxi.y, box.Maxi.z),
-        Vector3(box.Maxi.x, box.Maxi.y, box.Maxi.z),
-    };
-
-    BoundingBox3 result;
-    for(auto i=0; i<8; ++i)
-    {
-        auto p = Vector3::Transform(corners[i], matrix);
-
-        result.Mini = Vector3::Min(result.Mini, p);
-        result.Maxi = Vector3::Max(result.Maxi, p);
-    }
-
-    return result;
-}
-
-//-----------------------------------------------------------------------------
-//      頂点列からバウンディングスフィアを求めます.
-//-----------------------------------------------------------------------------
-inline BoundingBox3 BoundingBox3::Create(const float* pVertices, size_t vertexCount, size_t vertexStride)
-{
-    auto stride = vertexStride / sizeof(float);
-    auto vertex = pVertices;
-    BoundingBox3 result;
-    result.Mini = Vector3(vertex[0], vertex[1], vertex[2]);
-    result.Maxi = Vector3(vertex[0], vertex[1], vertex[2]);
-    vertex += stride;
-
-    for(size_t i=1; i<vertexCount; ++i)
-    {
-        auto pos = Vector3(vertex[0], vertex[1], vertex[2]);
-        result = Merge(result, pos);
-        vertex += stride;
-    }
-
-    return result;
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-// BoundingSphere2 structure
-///////////////////////////////////////////////////////////////////////////////
-
-//-----------------------------------------------------------------------------
-//      コンストラクタです.
-//-----------------------------------------------------------------------------
-inline BoundingSphere2::BoundingSphere2()
-: Center(0.0f, 0.0f)
-, Radius(0.0f)
-{ /* DO_NOTHING */ }
-
-//-----------------------------------------------------------------------------
-//      引数付きコンストラクタです.
-//-----------------------------------------------------------------------------
-inline BoundingSphere2::BoundingSphere2(float x, float y, float radius)
-: Center(x, y)
-, Radius(radius)
-{ /* DO_NOTHING */ }
-
-//-----------------------------------------------------------------------------
-//      引数付きコンストラクタです.
-//-----------------------------------------------------------------------------
-inline BoundingSphere2::BoundingSphere2(const Vector2& center, float radius)
-: Center(center)
-, Radius(radius)
-{ /* DO_NOTHING */ }
-
-//-----------------------------------------------------------------------------
-//      点を含むかどうか判定します.
-//-----------------------------------------------------------------------------
-inline bool BoundingSphere2::Contains(const Vector2& value) const
-{
-    auto diff = value - Center;
-    return Vector2::Dot(diff, diff) <= (Radius * Radius);
-}
-
-//-----------------------------------------------------------------------------
-//      バウンディングスフィアを含むかどうか判定します.
-//-----------------------------------------------------------------------------
-inline bool BoundingSphere2::Contains(const BoundingSphere2& value) const
-{
-    auto diff = value.Center - Center;
-    return Vector2::Dot(diff, diff) <= ((Radius - value.Radius) * (Radius - value.Radius));
-}
-
-//-----------------------------------------------------------------------------
-//      代入演算子です.
-//-----------------------------------------------------------------------------
-inline BoundingSphere2& BoundingSphere2::operator = (const BoundingSphere2& value)
-{
-    Center = value.Center;
-    Radius = value.Radius;
-    return *this;
-}
-
-//-----------------------------------------------------------------------------
-//      マージ処理を行います.
-//-----------------------------------------------------------------------------
-inline BoundingSphere2 BoundingSphere2::Merge(const BoundingSphere2& lhs, const BoundingSphere2& rhs)
-{
-    auto diff = rhs.Center - lhs.Center;
-    auto dist = diff.Length();
-
-    // 一方が他方を完全に包含している場合.
-    if (lhs.Radius >= dist + rhs.Radius) return lhs;
-    if (rhs.Radius >= dist + lhs.Radius) return rhs;
-
-    // 新しい半径と中心補間.
-    auto newRadius = (dist + lhs.Radius + rhs.Radius) * 0.5f;
-    auto t = (newRadius - lhs.Radius) / dist;
-
-    auto newCenter = lhs.Center + diff * t;
-    return BoundingSphere2(newCenter, newRadius);
-}
-
-//-----------------------------------------------------------------------------
-//      マージ処理を行います.
-//-----------------------------------------------------------------------------
-inline BoundingSphere2 BoundingSphere2::Merge(const BoundingSphere2& lhs, const Vector2& rhs)
-{
-    auto diff = rhs - lhs.Center;
-    auto dist = diff.Length();
-
-    // 既に点を含んでいる場合はそのまま返す.
-    if (dist <= lhs.Radius) return lhs;
-
-    // 新しい半径.
-    auto newRadius = (lhs.Radius + dist) * 0.5f;
-    auto t = (newRadius - lhs.Radius) / dist;
-
-    auto newCenter = lhs.Center + diff * t;
-    return BoundingSphere2(newCenter, newRadius);
-}
-
-//-----------------------------------------------------------------------------
-//      頂点列からバウンディングスフィアを求めます.
-//-----------------------------------------------------------------------------
-inline BoundingSphere2 BoundingSphere2::Create(const float* pVertices, size_t vertexCount, size_t vertexStride)
-{
-    // Ritter法.
-    BoundingSphere2 result;
-    if (pVertices == nullptr || vertexCount == 0 || vertexStride == 0)
-    { return result; }
-
-    auto vertex = pVertices;
-    auto stride = vertexStride / sizeof(float);
-
-    // 最も離れた2点を探す.
-    auto pos = Vector2(vertex[0], vertex[1]);
-
-    Vector2 xMin = pos;
-    Vector2 xMax = pos;
-
-    Vector2 yMin = pos;
-    Vector2 yMax = pos;
-
-    for(size_t i=0; i<vertexCount; ++i)
-    {
-        pos = Vector2(vertex[0], vertex[1]);
-        if (pos.x < xMin.x) xMin = pos;
-        if (pos.x > xMax.x) xMax = pos;
-        if (pos.y < yMin.y) yMin = pos;
-        if (pos.y > yMax.y) yMax = pos;
-        vertex += stride;
-    }
-
-    auto dx = Vector2::DistanceSq(xMax, xMin);
-    auto dy = Vector2::DistanceSq(yMax, yMin);
-
-    Vector2 p1 = xMin;
-    Vector2 p2 = xMax;
-    if (dy > dx)
-    {
-        p1 = yMin;
-        p2 = yMax;
-    }
-
-    result.Center = (p1 + p2) * 0.5f;
-    result.Radius = Vector2::Distance(p2, result.Center);
-
-    // 全ての点を内包するように拡大.
-    vertex = pVertices;
-    for(size_t i=0; i<vertexCount; ++i)
-    {
-        pos = Vector2(vertex[0], vertex[1]);
-        result = Merge(result, pos);
-        vertex += stride;
-    }
-
-    return result;
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-// BoundingSphere3 structure
-///////////////////////////////////////////////////////////////////////////////
-
-//-----------------------------------------------------------------------------
-//      コンストラクタです.
-//-----------------------------------------------------------------------------
-inline BoundingSphere3::BoundingSphere3()
+inline BoundingSphere::BoundingSphere()
 : Center(0.0f, 0.0f, 0.0f)
 , Radius(0.0f)
 { /* DO_NOTHING */ }
@@ -5010,179 +4844,193 @@ inline BoundingSphere3::BoundingSphere3()
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-inline BoundingSphere3::BoundingSphere3(float x, float y, float z, float radius)
-: Center(x, y, z)
-, Radius(radius)
-{ /* DO_NOTHING */ }
-
-//-----------------------------------------------------------------------------
-//      引数付きコンストラクタです.
-//-----------------------------------------------------------------------------
-inline BoundingSphere3::BoundingSphere3(const Vector3& center, float radius)
+inline BoundingSphere::BoundingSphere(const Vector3& center, float radius)
 : Center(center)
 , Radius(radius)
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
-//      点を含むかどうか判定します.
+//      コピーコンストラクタです.
 //-----------------------------------------------------------------------------
-inline bool BoundingSphere3::Contains(const Vector3& value) const
+inline BoundingSphere::BoundingSphere(const BoundingSphere& value)
+: Center(value.Center), Radius(value.Radius)
+{ /* DO_NOTHING */}
+
+//-----------------------------------------------------------------------------
+//      AABBとの交差判定を行います.
+//-----------------------------------------------------------------------------
+inline bool BoundingSphere::Intersects(const BoundingBox& box) const
+{ return box.Intersects(*this); }
+
+//-----------------------------------------------------------------------------
+//      球との交差判定を行います.
+//-----------------------------------------------------------------------------
+inline bool BoundingSphere::Intersects(const BoundingSphere& sphere) const
 {
-    auto diff = value - Center;
-    return Vector3::Dot(diff, diff) <= (Radius * Radius);
+    auto radius = Radius + sphere.Radius;
+    return Vector3::DistanceSq(Center, sphere.Center) <= radius * radius;
 }
 
 //-----------------------------------------------------------------------------
-//      バウンディングスフィアを含むかどうか判定します.
+//      平面との交差判定を行います.
 //-----------------------------------------------------------------------------
-inline bool BoundingSphere3::Contains(const BoundingSphere3& value) const
+inline PlaneIntersectionType BoundingSphere::Intersects(const Vector4& plane) const
 {
-    auto diff = value.Center - Center;
-    return Vector3::Dot(diff, diff) <= ((Radius - value.Radius) * (Radius - value.Radius));
+    auto d = Vector4::PlaneDistance(plane, Center);
+    if (d > Radius) 
+        return PlaneIntersectionType::Front;
+    if (d < -Radius)
+        return PlaneIntersectionType::Back;
+
+    return PlaneIntersectionType::Intersecting;
 }
+
+//-----------------------------------------------------------------------------
+//      レイとの交差判定を行います.
+//-----------------------------------------------------------------------------
+inline bool BoundingSphere::Intersects(const Vector3& origin, const Vector3& direction, float* distance) const
+{ return IntersectRaySphere(origin, direction, Center, Radius, distance); }
+
+//-----------------------------------------------------------------------------
+//      点が含まれるかどうか判定します.
+//-----------------------------------------------------------------------------
+inline ContainmentType BoundingSphere::Contains(const Vector3& point) const
+{
+    return Vector3::DistanceSq(Center, point) <= Radius * Radius
+        ? ContainmentType::Contains 
+        : ContainmentType::Disjoint;
+}
+
+//-----------------------------------------------------------------------------
+//      AABBが含まれるかどうか判定します.
+//-----------------------------------------------------------------------------
+inline ContainmentType BoundingSphere::Contains(const BoundingBox& box) const
+{
+    auto corners = box.GetCorners();
+    bool all = true;
+    for (const auto& p : corners)
+    {
+        if (Contains(p) != ContainmentType::Contains) 
+            all = false;
+    }
+    if (all)
+        return ContainmentType::Contains;
+
+    return Intersects(box)
+        ? ContainmentType::Intersects
+        : ContainmentType::Disjoint;
+}
+
+//-----------------------------------------------------------------------------
+//      球が含まれるかどうか判定します.
+//-----------------------------------------------------------------------------
+inline ContainmentType BoundingSphere::Contains(const BoundingSphere& sphere) const
+{
+    auto d = Vector3::Distance(Center, sphere.Center);
+    if (d + sphere.Radius <= Radius)
+        return ContainmentType::Contains;
+
+    return (d <= Radius + sphere.Radius)
+        ? ContainmentType::Intersects
+        : ContainmentType::Disjoint;
+}
+
+//-----------------------------------------------------------------------------
+//      6平面によって含まれるかどうか判定します.
+//-----------------------------------------------------------------------------
+inline ContainmentType BoundingSphere::ContainedBy(const std::array<Vector4, 6>& planes) const
+{
+    bool intersecting = false;
+    for (const auto& p : planes)
+    {
+        auto type = Intersects(p);
+        if (type == PlaneIntersectionType::Back)
+            return ContainmentType::Disjoint;
+
+        if (type == PlaneIntersectionType::Intersecting) 
+            intersecting = true;
+    }
+    return intersecting 
+        ? ContainmentType::Intersects
+        : ContainmentType::Contains;
+}
+
+//-----------------------------------------------------------------------------
+//      等価比較演算子です
+//-----------------------------------------------------------------------------
+inline bool BoundingSphere::operator == (const BoundingSphere& value) const
+{ return (Center == value.Center) && IsEqual(Radius, value.Radius); }
+
+//-----------------------------------------------------------------------------
+//      非等価比較演算子です.
+//-----------------------------------------------------------------------------
+inline bool BoundingSphere::operator != (const BoundingSphere& value) const
+{ return !(*this == value); }
 
 //-----------------------------------------------------------------------------
 //      代入演算子です.
 //-----------------------------------------------------------------------------
-inline BoundingSphere3& BoundingSphere3::operator = (const BoundingSphere3& value)
+inline BoundingSphere& BoundingSphere::operator = (const BoundingSphere& value)
 {
     Center = value.Center;
     Radius = value.Radius;
-    return *this;
+    return (*this);
 }
 
 //-----------------------------------------------------------------------------
-//      マージ処理を行います.
+//      マージします.
 //-----------------------------------------------------------------------------
-inline BoundingSphere3 BoundingSphere3::Merge(const BoundingSphere3& lhs, const BoundingSphere3& rhs)
+inline BoundingSphere BoundingSphere::CreateMerged(const BoundingSphere& lhs, const BoundingSphere& rhs)
 {
-    auto diff = rhs.Center - lhs.Center;
-    auto dist = diff.Length();
+    auto delta    = rhs.Center - lhs.Center;
+    auto distance = delta.Length();
+    if (lhs.Radius >= distance + rhs.Radius)
+        return lhs;
+    if (rhs.Radius >= distance + lhs.Radius) 
+        return rhs;
 
-    // 一方が他方を完全に包含している場合.
-    if (lhs.Radius >= dist + rhs.Radius) return lhs;
-    if (rhs.Radius >= dist + lhs.Radius) return rhs;
-
-    // 新しい半径と中心補間.
-    auto newRadius = (dist + lhs.Radius + rhs.Radius) * 0.5f;
-    auto t = (newRadius - lhs.Radius) / dist;
-
-    auto newCenter = lhs.Center + diff * t;
-    return BoundingSphere3(newCenter, newRadius);
+    auto radius = (distance + lhs.Radius + rhs.Radius) * 0.5f;
+    auto center = lhs.Center + delta * ((radius - lhs.Radius) / distance);
+    return BoundingSphere(center, radius);
 }
 
 //-----------------------------------------------------------------------------
-//      マージ処理を行います.
+//      AABBから生成します.
 //-----------------------------------------------------------------------------
-inline BoundingSphere3 BoundingSphere3::Merge(const BoundingSphere3& lhs, const Vector3& rhs)
+inline BoundingSphere BoundingSphere::CreateFromBoundingBox(const BoundingBox& box)
+{ return BoundingSphere((box.Min + box.Max) * 0.5f, (box.Max - box.Min).Length() * 0.5f); }
+
+//-----------------------------------------------------------------------------
+//      点群から生成します.
+//-----------------------------------------------------------------------------
+inline BoundingSphere BoundingSphere::CreateFromPoints(const Vector3* points, size_t count)
 {
-    auto diff = rhs - lhs.Center;
-    auto dist = diff.Length();
-
-    // 既に点を含んでいる場合はそのまま返す.
-    if (dist <= lhs.Radius) return lhs;
-
-    // 新しい半径.
-    auto newRadius = (lhs.Radius + dist) * 0.5f;
-    auto t = (newRadius - lhs.Radius) / dist;
-
-    auto newCenter = lhs.Center + diff * t;
-    return BoundingSphere3(newCenter, newRadius);
+    auto box = BoundingBox::CreateFromPoints(points, count);
+    return CreateFromBoundingBox(box);
 }
 
 //-----------------------------------------------------------------------------
-//      指定行列で変換処理を行います.
+//      指定行列で変換します.
 //-----------------------------------------------------------------------------
-inline BoundingSphere3 BoundingSphere3::Transform(const BoundingSphere3& sphere, const Matrix4x4& matrix)
+inline BoundingSphere BoundingSphere::Transform(const BoundingSphere& sphere, const Matrix4x4& value)
 {
-    auto center = Vector3::Transform(sphere.Center, matrix);
-    auto scale  = matrix.CalcScale();
-
-    auto maxScale = Max(scale.x, Max(scale.y, scale.z));
-    auto radius   = sphere.Radius * maxScale;
-    return BoundingSphere3(center, radius);
+    auto center = Vector3::Transform(sphere.Center, value);
+    auto x = Vector3::TransformNormal(Vector3(sphere.Radius, 0.0f, 0.0f), value).Length();
+    auto y = Vector3::TransformNormal(Vector3(0.0f, sphere.Radius, 0.0f), value).Length();
+    auto z = Vector3::TransformNormal(Vector3(0.0f, 0.0f, sphere.Radius), value).Length();
+    return BoundingSphere(center, Max(x, Max(y, z)));
 }
 
 //-----------------------------------------------------------------------------
-//      指定行列で変換処理を行います.
+//      指定行列で変換します.
 //-----------------------------------------------------------------------------
-inline BoundingSphere3 BoundingSphere3::Transform(const BoundingSphere3& sphere, const Matrix4x3& matrix)
+inline BoundingSphere BoundingSphere::Transform(const BoundingSphere& sphere, const Matrix4x3& value)
 {
-    auto center = Vector3::Transform(sphere.Center, matrix);
-    auto scale  = matrix.CalcScale();
-
-    auto maxScale = Max(scale.x, Max(scale.y, scale.z));
-    auto radius   = sphere.Radius * maxScale;
-    return BoundingSphere3(center, radius);
-}
-
-//-----------------------------------------------------------------------------
-//      頂点列からバウンディングスフィアを求めます.
-//-----------------------------------------------------------------------------
-inline BoundingSphere3 BoundingSphere3::Create(const float* pVertices, size_t vertexCount, size_t vertexStride)
-{
-    // Ritter法.
-    BoundingSphere3 result;
-    if (pVertices == nullptr || vertexCount == 0 || vertexStride == 0)
-    { return result; }
-
-    auto vertex = pVertices;
-    auto stride = vertexStride / sizeof(float);
-
-    // 最も離れた2点を探す.
-    auto pos = Vector3(vertex[0], vertex[1], vertex[2]);
-
-    Vector3 xMin = pos;
-    Vector3 xMax = pos;
-
-    Vector3 yMin = pos;
-    Vector3 yMax = pos;
-
-    Vector3 zMin = pos;
-    Vector3 zMax = pos;
-
-    for(size_t i=0; i<vertexCount; ++i)
-    {
-        pos = Vector3(vertex[0], vertex[1], vertex[2]);
-        if (pos.x < xMin.x) xMin = pos;
-        if (pos.x > xMax.x) xMax = pos;
-        if (pos.y < yMin.y) yMin = pos;
-        if (pos.y > yMax.y) yMax = pos;
-        if (pos.z < zMin.z) zMin = pos;
-        if (pos.z > zMax.z) zMax = pos;
-        vertex += stride;
-    }
-
-    auto dx = Vector3::DistanceSq(xMax, xMin);
-    auto dy = Vector3::DistanceSq(yMax, yMin);
-    auto dz = Vector3::DistanceSq(zMax, zMin);
-
-    Vector3 p1 = xMin;
-    Vector3 p2 = xMax;
-    if (dy > dx && dy > dz)
-    {
-        p1 = yMin;
-        p2 = yMax;
-    }
-    else if (dz > dx && dz > dy)
-    {
-        p1 = zMin;
-        p2 = zMax;
-    }
-
-    result.Center = (p1 + p2) * 0.5f;
-    result.Radius = Vector3::Distance(p2, result.Center);
-
-    // 全ての点を内包するように拡大.
-    vertex = pVertices;
-    for(size_t i=0; i<vertexCount; ++i)
-    {
-        pos = Vector3(vertex[0], vertex[1], vertex[2]);
-        result = Merge(result, pos);
-        vertex += stride;
-    }
-
-    return result;
+    auto center = Vector3::Transform(sphere.Center, value);
+    auto x = Vector3::TransformNormal(Vector3(sphere.Radius, 0.0f, 0.0f), value).Length();
+    auto y = Vector3::TransformNormal(Vector3(0.0f, sphere.Radius, 0.0f), value).Length();
+    auto z = Vector3::TransformNormal(Vector3(0.0f, 0.0f, sphere.Radius), value).Length();
+    return BoundingSphere(center, Max(x, Max(y, z)));
 }
 
 
@@ -5506,12 +5354,14 @@ inline Vector4 NormalizePlane(const Vector4& value)
 //-----------------------------------------------------------------------------
 //      視錐台を構成する6平面を求めます.
 //-----------------------------------------------------------------------------
-inline void CalcFrustumPlanes(const Matrix4x4& view, const Matrix4x4& proj, Vector4* planes)
+inline std::array<Vector4, 6> CalcFrustumPlanes(const Matrix4x4& view, const Matrix4x4& proj)
 {
     // Gil Gribb, Klaus Hartmann,
     // "Fast Extraction of Viewing Frustum Planes from the World-View-Projection Matrix"
     // https://www.gamedevs.org/
     auto vp = Matrix4x4::MultiplyTranspose(view, proj);
+
+    std::array<Vector4, 6> planes;
 
     planes[PLANE_LEFT]   = Vector4::NormalizePlane(vp.row[3] + vp.row[0]);
     planes[PLANE_RIGHT]  = Vector4::NormalizePlane(vp.row[3] - vp.row[0]);
@@ -5519,12 +5369,14 @@ inline void CalcFrustumPlanes(const Matrix4x4& view, const Matrix4x4& proj, Vect
     planes[PLANE_TOP]    = Vector4::NormalizePlane(vp.row[3] - vp.row[1]);
     planes[PLANE_NEAR]   = Vector4::NormalizePlane(vp.row[2]);
     planes[PLANE_FAR]    = Vector4::NormalizePlane(vp.row[3] - vp.row[2]);
+
+    return planes;
 }
 
 //-----------------------------------------------------------------------------
 //      視錐台を構成する6平面を求めます.
 //-----------------------------------------------------------------------------
-inline void CalcFrustumPlanes(const Matrix4x3& view, const Matrix4x4& proj, Vector4* planes)
+inline std::array<Vector4, 6> CalcFrustumPlanes(const Matrix4x3& view, const Matrix4x4& proj)
 {
     auto view44 = Matrix4x4(view);
 
@@ -5533,14 +5385,17 @@ inline void CalcFrustumPlanes(const Matrix4x3& view, const Matrix4x4& proj, Vect
     // https://www.gamedevs.org/
     auto vp = Matrix4x4::MultiplyTranspose(view44, proj);
 
+    std::array<Vector4, 6> planes;
+
     planes[PLANE_LEFT]   = Vector4::NormalizePlane(vp.row[3] + vp.row[0]);
     planes[PLANE_RIGHT]  = Vector4::NormalizePlane(vp.row[3] - vp.row[0]);
     planes[PLANE_BOTTOM] = Vector4::NormalizePlane(vp.row[3] + vp.row[1]);
     planes[PLANE_TOP]    = Vector4::NormalizePlane(vp.row[3] - vp.row[1]);
     planes[PLANE_NEAR]   = Vector4::NormalizePlane(vp.row[2]);
     planes[PLANE_FAR]    = Vector4::NormalizePlane(vp.row[3] - vp.row[2]);
-}
 
+    return planes;
+}
 
 //-----------------------------------------------------------------------------
 //      交差線を求めます.
@@ -5567,10 +5422,10 @@ inline Vector3 ComputeIntersection(const Vector4& plane, const Vector3& orig, co
 //-----------------------------------------------------------------------------
 //      視錐台の8角を求めます.
 //-----------------------------------------------------------------------------
-inline void GetCorners(const Vector4* planes, Vector3* corners)
+inline std::array<Vector3, 8> GetCorners(const std::array<Vector4, 6>& planes)
 {
-    assert(planes  != nullptr);
-    assert(corners != nullptr);
+    std::array<Vector3, 8> corners;
+
     Vector3 orig, dir;
     ComputeIntersectionLine(planes[0], planes[2], orig, dir);
     corners[0] = ComputeIntersection(planes[4], orig, dir);
@@ -5587,6 +5442,179 @@ inline void GetCorners(const Vector4* planes, Vector3* corners)
     ComputeIntersectionLine(planes[1], planes[3], orig, dir);
     corners[5] = ComputeIntersection(planes[4], orig, dir);
     corners[6] = ComputeIntersection(planes[5], orig, dir);
+
+    return corners;
+}
+
+//-----------------------------------------------------------------------------
+//      レイとボックスの交差判定を行います.
+//-----------------------------------------------------------------------------
+inline bool IntersectRayAABB
+(
+    const Vector3&  origin,
+    const Vector3&  direction,
+    const Vector3&  mini,
+    const Vector3&  maxi,
+    float*          distance
+)
+{
+    auto tmin = 0.0f;
+    auto tmax = FLT_MAX;
+    const float pos[3] = { origin.x, origin.y, origin.z };
+    const float dir[3] = { direction.x, direction.y, direction.z };
+    const float minValue[3] = { mini.x, mini.y, mini.z };
+    const float maxValue[3] = { maxi.x, maxi.y, maxi.z };
+
+    for (auto i = 0; i < 3; ++i)
+    {
+        if (IsZero(dir[i]))
+        {
+            if (pos[i] < minValue[i] || pos[i] > maxValue[i])
+            { return false; }
+
+            continue;
+        }
+        auto inv = 1.0f / dir[i];
+        auto t0  = (minValue[i] - pos[i]) * inv;
+        auto t1  = (maxValue[i] - pos[i]) * inv;
+        if (t0 > t1)
+        { 
+            auto t = t0;
+            t0 = t1;
+            t1 = t;
+        }
+
+        tmin = Max(tmin, t0);
+        tmax = Min(tmax, t1);
+        if (tmin > tmax)
+        { return false; }
+    }
+    if (distance) 
+    { *distance = tmin; }
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      レイとOBBの交差判定を行います.
+//-----------------------------------------------------------------------------
+inline bool IntersectRayOBB
+(
+    const Vector3&      origin,
+    const Vector3&      direction,
+    const Vector3&      center,
+    const Vector3&      halfExtent,
+    const Quaternion&   orientation,
+    float*              distance
+)
+{
+    auto pos = Vector3::InverseRotate(origin - center, orientation);
+    auto dir = Vector3::InverseRotate(direction, orientation);
+    return IntersectRayAABB(pos, dir, -halfExtent, halfExtent, distance);
+}
+
+//-----------------------------------------------------------------------------
+//      レイと球の交差判定を行います.
+//-----------------------------------------------------------------------------
+inline bool IntersectRaySphere
+(
+    const Vector3&  origin,
+    const Vector3&  direction, 
+    const Vector3&  center, 
+    float           radius,
+    float*          distance
+)
+{
+    auto m = origin - center;
+    auto a = Vector3::Dot(direction, direction);
+    if (IsZero(a))
+    { return false; }
+    
+    auto b = Vector3::Dot(m, direction);
+    auto c = Vector3::Dot(m, m) - radius * radius;
+    auto discriminant = b * b - a * c;
+    if (discriminant < 0.0f) 
+    { return false; }
+
+    auto root = sqrtf(discriminant);
+    auto t = (-b - root) / a;
+
+    if (t < 0.0f)
+    { t = (-b + root) / a; }
+
+    if (t < 0.0f)
+    { return false; }
+
+    if (distance)
+    { *distance = t; }
+    
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      レイと平面の交差判定を行います.
+//-----------------------------------------------------------------------------
+inline bool IntersectRayPlane
+(
+    const Vector3& origin,
+    const Vector3& direction,
+    const Vector4& plane,
+    float* distance
+)
+{
+    auto denominator = Vector3::Dot(Vector3(plane.x, plane.y, plane.z), direction);
+    if (IsZero(denominator))
+    { return false; }
+
+    auto t = -(Vector3::Dot(Vector3(plane.x, plane.y, plane.z), origin) + plane.w) / denominator;
+    if (t < 0.0f) 
+    { return false; }
+
+    if (distance)
+    { *distance = t; }
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      レイとポリゴンの交差判定を行います.
+//-----------------------------------------------------------------------------
+inline bool IntersectRayPolygon
+(
+    const Vector3& origin,
+    const Vector3& direction,
+    const Vector3& p0,
+    const Vector3& p1,
+    const Vector3& p2,
+    float*         distance
+)
+{
+    auto edge1 = p1 - p0;
+    auto edge2 = p2 - p0;
+    auto h = Vector3::Cross(direction, edge2);
+    auto a = Vector3::Dot(edge1, h);
+    if (IsZero(a)) 
+    { return false; }
+
+    auto f = 1.0f / a;
+    auto s = origin - p0;
+    auto u = f * Vector3::Dot(s, h);
+    if (u < 0.0f || u > 1.0f) 
+    { return false; }
+
+    auto q = Vector3::Cross(s, edge1);
+    auto v = f * Vector3::Dot(direction, q);
+    if (v < 0.0f || u + v > 1.0f) 
+    { return false; }
+
+    auto t = f * Vector3::Dot(edge2, q);
+    if (t < 0.0f)
+    { return false; }
+
+    if (distance)
+    { *distance = t; }
+
+    return true;
 }
 
 //-----------------------------------------------------------------------------

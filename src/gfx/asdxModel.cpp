@@ -282,13 +282,13 @@ uint32_t Mesh::GetIndexCount() const
 //-----------------------------------------------------------------------------
 //      バウンディングスフィアを取得します.
 //-----------------------------------------------------------------------------
-const BoundingSphere3& Mesh::GetSphere() const
+const BoundingSphere& Mesh::GetSphere() const
 { return m_BoundingSphere; }
 
 //-----------------------------------------------------------------------------
 //      バウンディングボックスを取得します.
 //-----------------------------------------------------------------------------
-const BoundingBox3& Mesh::GetBox() const
+const BoundingBox& Mesh::GetBox() const
 { return m_BoundingBox; }
 
 //-----------------------------------------------------------------------------
@@ -566,8 +566,8 @@ void Model::Term()
     m_Materials.clear();
 
     // バウンディング初期化.
-    m_LocalSphere = BoundingSphere3();
-    m_LocalBox    = BoundingBox3();
+    m_LocalSphere = BoundingSphere();
+    m_LocalBox    = BoundingBox();
 
     // モデルバイナリ破棄.
     m_Binary.Term();
@@ -663,13 +663,13 @@ uint64_t Model::GetTotalInstanceCount() const
 //-----------------------------------------------------------------------------
 //      ローカル座標系のバウンディングスフィアを取得します.
 //-----------------------------------------------------------------------------
-const BoundingSphere3& Model::GetLocalSphere() const
+const BoundingSphere& Model::GetLocalSphere() const
 { return m_LocalSphere; }
 
 //-----------------------------------------------------------------------------
 //      ローカル座標系のバウンディングボックスを取得します.
 //-----------------------------------------------------------------------------
-const BoundingBox3& Model::GetLocalBox() const
+const BoundingBox& Model::GetLocalBox() const
 { return m_LocalBox; }
 
 //-----------------------------------------------------------------------------
