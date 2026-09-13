@@ -47,17 +47,10 @@ struct QuadVertex
 };
 
 //-----------------------------------------------------------------------------
-//      PIXキャプチャー用のDLLをロードします.
+//      指定されたフォルダパスからPIXキャプチャー用のDLLをロードします.
 //-----------------------------------------------------------------------------
-void LoadPixGpuCpatureDll()
+bool LoadPixGpuCapturerDll(const wchar_t* pixSearchPath)
 {
-    LPWSTR programFilesPath = nullptr;
-    SHGetKnownFolderPath(FOLDERID_ProgramFiles, KF_FLAG_DEFAULT, NULL, &programFilesPath);
-
-    wchar_t pixSearchPath[MAX_PATH] = {};
-    StringCchCopy(pixSearchPath, MAX_PATH, programFilesPath);
-    StringCchCat(pixSearchPath, MAX_PATH, L"\\Microsoft PIX\\*");
-
     WIN32_FIND_DATA findData;
     bool foundPixInstallation = false;
     wchar_t newestVersionFound[MAX_PATH] = {};
@@ -84,7 +77,7 @@ void LoadPixGpuCpatureDll()
 
     if (!foundPixInstallation)
     {
-        return;
+        return false;
     }
 
     wchar_t dllPath[MAX_PATH] = {};
@@ -92,10 +85,47 @@ void LoadPixGpuCpatureDll()
     StringCchCat(dllPath, MAX_PATH, &newestVersionFound[0]);
     StringCchCat(dllPath, MAX_PATH, L"\\WinPixGpuCapturer.dll");
 
+    bool loaded = false;
     if (GetModuleHandleW(L"WinPixGpuCapturer.dll") == 0)
     {
-        LoadLibraryW(dllPath);
+        auto handle = LoadLibraryW(dllPath);
+        if (handle != nullptr)
+        { loaded = true; }
     }
+
+    return loaded;
+}
+
+//-----------------------------------------------------------------------------
+//      PIXキャプチャー用のDLLをロードします.
+//-----------------------------------------------------------------------------
+void LoadPixGpuCapturerDll()
+{
+    LPWSTR programFilesPath = nullptr;
+    SHGetKnownFolderPath(FOLDERID_ProgramFiles, KF_FLAG_DEFAULT, NULL, &programFilesPath);
+
+    // プレビュー版からロードを試みる.
+    {
+        wchar_t pixSearchPath[MAX_PATH] = {};
+        StringCchCopy(pixSearchPath, MAX_PATH, programFilesPath);
+        StringCchCat(pixSearchPath, MAX_PATH, L"\\Microsoft PIX Preview\\*");
+
+        if (LoadPixGpuCapturerDll(pixSearchPath))
+        { return; }
+    }
+
+    // 正式版からロードを試みる.
+    {
+        wchar_t pixSearchPath[MAX_PATH] = {};
+        StringCchCopy(pixSearchPath, MAX_PATH, programFilesPath);
+        StringCchCat(pixSearchPath, MAX_PATH, L"\\Microsoft PIX\\*");
+
+        if (LoadPixGpuCapturerDll(pixSearchPath))
+        { return; }
+    }
+
+    // ロードに失敗.
+    ELOGA("Error : WinPixGpuCapturer.dll Load Failed.");
 }
 
 //-----------------------------------------------------------------------------
@@ -395,7 +425,7 @@ bool GraphicsSystem::Init(const DeviceDesc& deviceDesc)
 {
     // PIXキャプチャー設定.
     if (deviceDesc.EnableCapture)
-    { LoadPixGpuCpatureDll(); }
+    { LoadPixGpuCapturerDll(); }
 
     if (deviceDesc.EnableDebug)
     {
