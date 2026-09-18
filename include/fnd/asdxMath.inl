@@ -5346,12 +5346,6 @@ inline Vector2 Hammersley(uint32_t i, uint32_t numSamples)
 }
 
 //-----------------------------------------------------------------------------
-//      平面式を正規化します.
-//-----------------------------------------------------------------------------
-inline Vector4 NormalizePlane(const Vector4& value)
-{ return Vector4::NormalizePlane(value); }
-
-//-----------------------------------------------------------------------------
 //      視錐台を構成する6平面を求めます.
 //-----------------------------------------------------------------------------
 inline std::array<Vector4, 6> CalcFrustumPlanes(const Matrix4x4& view, const Matrix4x4& proj)
