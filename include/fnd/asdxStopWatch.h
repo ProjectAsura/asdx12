@@ -93,5 +93,4 @@ private:
     /* NOTHING */
 };
 
-
 } // namespace asdx

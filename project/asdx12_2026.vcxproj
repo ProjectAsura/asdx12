@@ -92,7 +92,7 @@
       <VariableName>%(Filename)</VariableName>
       <HeaderFileOutput>$(ProjectDir)..\res\shaders\Compiled\%(Filename).inc</HeaderFileOutput>
       <AdditionalIncludeDirectories>$(ProjectDir)..\res\shaders;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalOptions>-Fd $(ProjectDir)..\res\shaders\Symbol\%(Filename).pdb %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-Qstrip_debug -Zsb -Fd $(ProjectDir)..\res\shaders\Symbol\ %(AdditionalOptions)</AdditionalOptions>
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugMD|x64'">
@@ -117,7 +117,7 @@
       <VariableName>%(Filename)</VariableName>
       <HeaderFileOutput>$(ProjectDir)..\res\shaders\Compiled\%(Filename).inc</HeaderFileOutput>
       <AdditionalIncludeDirectories>$(ProjectDir)..\res\shaders;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalOptions>-Fd $(ProjectDir)..\res\shaders\Symbol\%(Filename).pdb %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-Qstrip_debug -Zsb -Fd $(ProjectDir)..\res\shaders\Symbol\ %(AdditionalOptions)</AdditionalOptions>
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseMT|x64'">
@@ -143,7 +143,7 @@
       <ShaderModel>6.6</ShaderModel>
       <VariableName>%(Filename)</VariableName>
       <HeaderFileOutput>$(ProjectDir)..\res\shaders\Compiled\%(Filename).inc</HeaderFileOutput>
-      <AdditionalOptions>-Fd $(ProjectDir)..\res\shaders\Symbol\%(Filename).pdb %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-Qstrip_debug -Zsb -Fd $(ProjectDir)..\res\shaders\Symbol\ %(AdditionalOptions)</AdditionalOptions>
       <EnableDebuggingInformation>true</EnableDebuggingInformation>
     </FxCompile>
   </ItemDefinitionGroup>
@@ -170,7 +170,7 @@
       <ShaderModel>6.6</ShaderModel>
       <VariableName>%(Filename)</VariableName>
       <HeaderFileOutput>$(ProjectDir)..\res\shaders\Compiled\%(Filename).inc</HeaderFileOutput>
-      <AdditionalOptions>-Fd $(ProjectDir)..\res\shaders\Symbol\%(Filename).pdb %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-Qstrip_debug -Zsb -Fd $(ProjectDir)..\res\shaders\Symbol\ %(AdditionalOptions)</AdditionalOptions>
       <EnableDebuggingInformation>true</EnableDebuggingInformation>
     </FxCompile>
   </ItemDefinitionGroup>
