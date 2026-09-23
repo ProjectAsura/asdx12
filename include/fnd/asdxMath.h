@@ -16,7 +16,7 @@
 #include <array>
 #if _HAS_CXX20
 #include <bit>
-#endif
+#endif//_HAS_CXX20
 
 
 namespace asdx {

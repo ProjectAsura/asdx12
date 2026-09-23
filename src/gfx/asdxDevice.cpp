@@ -583,6 +583,17 @@ bool GraphicsSystem::Init(const DeviceDesc& deviceDesc)
         }
     }
 
+    #ifdef __ID3D12DeviceTools2_FWD_DEFINED__
+    {
+        asdx::RefPtr<ID3D12DeviceTools2> tools;
+        hr = m_pDevice->QueryInterface(IID_PPV_ARGS(tools.GetAddress()));
+        if (SUCCEEDED(hr))
+        {
+            tools->SetUserDefinedAnnotationMode(D3D12_USER_DEFINED_ANNOTATION_MODE_DRIVER_RETAIL);
+        }
+    }
+    #endif//__ID3D12DeviceTools2_FWD_DEFINED__
+
     #ifdef __ID3D12DevicePreview_INTERFACE_DEFINED__
     {
         auto supportDumpFile = false;
@@ -603,6 +614,14 @@ bool GraphicsSystem::Init(const DeviceDesc& deviceDesc)
             hr = m_pDevice->QueryInterface(IID_PPV_ARGS(preview.GetAddress()));
             if (SUCCEEDED(hr))
             {
+                auto options = D3D12_DUMP_FILE_DRIVER_OPTION_NO_OVERHEAD 
+                             | D3D12_DUMP_FILE_DRIVER_OPTION_SHADER_REGISTERS
+                             | D3D12_DUMP_FILE_DRIVER_OPTION_RESOURCES
+                             //| D3D12_DUMP_FILE_DRIVER_OPTION_EVENT_MARKERS
+                ;// options.
+
+                preview->ConfigureDumpFile(options);
+
                 // ローカルに保存するように設定.
                 preview->RetainDumpFile(TRUE);
 
