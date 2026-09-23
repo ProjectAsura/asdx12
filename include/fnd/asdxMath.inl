@@ -6,6 +6,296 @@
 #pragma once
 
 namespace asdx {
+namespace math {
+
+//-----------------------------------------------------------------------------
+// Constant Values.
+//-----------------------------------------------------------------------------
+static const Vector3 kBoxOffsets[8] = {
+    Vector3(-1.0f, -1.0f,  1.0f),
+    Vector3( 1.0f, -1.0f,  1.0f),
+    Vector3( 1.0f,  1.0f,  1.0f),
+    Vector3(-1.0f,  1.0f,  1.0f),
+    Vector3(-1.0f, -1.0f, -1.0f),
+    Vector3( 1.0f, -1.0f, -1.0f),
+    Vector3( 1.0f,  1.0f, -1.0f),
+    Vector3(-1.0f,  1.0f, -1.0f),
+};
+
+inline bool SolveCubic(float e, float f, float g, float* t, float* u, float* v)
+{
+    float p, q, h, rc, d, theta, costh3, sinth3;
+
+    p = f - e * e / 3.0f;
+    q = g - e * f / 3.0f + e * e * e * 2.0f / 27.0f;
+    h = q * q / 4.0f + p * p * p / 27.0f;
+
+    if (h > 0)
+    {
+        (*t) = (*u) = (*v) = 0.0f;
+        return false;
+    }
+
+    if ((h == 0) && (q == 0))
+    {
+        (*t) = -e / 3.0f;
+        (*u) = -e / 3.0f;
+        (*v) = -e / 3.0f;
+
+        return true;
+    }
+
+    d = sqrtf(q * q / 4.0f - h);
+    if (d < 0)
+        rc = -powf(-d, 1.0f / 3.0f);
+    else
+        rc =  powf(d, 1.0f / 3.0f);
+
+    theta  = acosf(-q / (2.0f * d));
+    costh3 = cosf(theta / 3.0f);
+    sinth3 = sqrtf(3.0f) * sinf(theta / 3.0f);
+
+    (*t) = 2.0f * rc * costh3 - e / 3.0f;
+    (*u) = -rc * (costh3 + sinth3) - e / 3.0f;
+    (*v) = -rc * (costh3 - sinth3) - e / 3.0f;
+
+    return true;
+}
+
+inline Vector3 CalculateEigenVector
+(
+    float m11, float m12, float m13,
+    float m22, float m23,
+    float m33,
+    float e
+)
+{
+    float fTmp[3];
+    fTmp[0] = m12 * m23 - m13 * (m22 - e);
+    fTmp[1] = m13 * m12 - m23 * (m11 - e);
+    fTmp[2] = (m11 - e) * (m22 - e) - m12 * m12;
+
+    auto vTmp = Vector3(fTmp[0], fTmp[1], fTmp[2]);
+
+    if (vTmp == Vector3(0.0f, 0.0f, 0.0f))
+    {
+        float f1, f2, f3;
+        if ((m11 - e != 0) || (m12 != 0) || (m13 != 0))
+        {
+            f1 = m11 - e;
+            f2 = m12;
+            f3 = m13;
+        }
+        else if ((m12 != 0) || (m22 - e != 0) || (m23 != 0))
+        {
+            f1 = m12;
+            f2 = m22 - e;
+            f3 = m23;
+        }
+        else if ((m13 != 0) || (m23 != 0) || (m33 - e != 0))
+        {
+            f1 = m13;
+            f2 = m23;
+            f3 = m33 - e;
+        }
+        else
+        {
+            f1 = 1.0f;
+            f2 = 0.0f;
+            f3 = 0.0f;
+        }
+
+        if (f1 == 0)
+            vTmp.x = 0.0f;
+        else
+            vTmp.x = 1.0f;
+
+        if (f2 == 0)
+            vTmp.y = 0.0f;
+        else
+            vTmp.y = 1.0f;
+
+        if (f3 == 0)
+        {
+            vTmp.z = 0.0f;
+            if (m12 != 0)
+                vTmp.y = -f1 / f2;
+        }
+        else
+        {
+            vTmp.z = (f2 - f1) / f3;
+        }
+    }
+
+    if (vTmp.LengthSq() > 1e-5f)
+    {
+        return Vector3::Normalize(vTmp);
+    }
+    else
+    {
+        vTmp *= 1e5f;
+        return Vector3::Normalize(vTmp);
+    }
+}
+
+inline bool CalculateEigenVectors
+(
+    float m11, float m12, float m13,
+    float m22, float m23,
+    float m33,
+    float e1, float e2, float e3,
+    Vector3* pV1,
+    Vector3* pV2,
+    Vector3* pV3
+)
+{
+    (*pV1) = CalculateEigenVector(m11, m12, m13, m22, m23, m33, e1);
+    (*pV2) = CalculateEigenVector(m11, m12, m13, m22, m23, m33, e2);
+    (*pV3) = CalculateEigenVector(m11, m12, m13, m22, m23, m33, e3);
+
+    bool v1z = false;
+    bool v2z = false;
+    bool v3z = false;
+
+    const auto zero = Vector3(0.0f, 0.0f, 0.0f);
+
+    if ((*pV1) == zero)
+        v1z = true;
+    if ((*pV2) == zero)
+        v2z = true;
+    if ((*pV3) == zero)
+        v3z = true;
+
+    bool e12 = fabs(Vector3::Dot(*pV1, *pV2)) > 0.1f;
+    bool e13 = fabs(Vector3::Dot(*pV1, *pV3)) > 0.1f;
+    bool e23 = fabs(Vector3::Dot(*pV2, *pV3)) > 0.1f;
+
+    if ((v1z && v2z && v3z)
+     || (e12 && e13 && e23)
+     || (e12 && v3z)
+     || (e13 && v2z)
+     || (e23 && v1z)) 
+    {
+        (*pV1) = Vector3(1.0f, 0.0f, 0.0f);
+        (*pV2) = Vector3(0.0f, 1.0f, 0.0f);
+        (*pV3) = Vector3(0.0f, 0.0f, 1.0f);
+        return true;
+    }
+
+    if (v1z && v2z)
+    {
+        auto vTmp = Vector3::Cross(Vector3(0.0f, 1.0f, 0.0f), *pV3);
+        if (vTmp.LengthSq() < 1e-5f)
+        {
+            vTmp = Vector3::Cross(Vector3(1.0f, 0.0f, 0.0f), *pV3);
+        }
+        (*pV1) = Vector3::Normalize(vTmp);
+        (*pV2) = Vector3::Cross(*pV3, *pV1);
+        return true;
+    }
+
+    if (v3z && v1z)
+    {
+        auto vTmp = Vector3::Cross(Vector3(0.0f, 1.0f, 0.0f), *pV2);
+        if (vTmp.LengthSq() < 1e-5f)
+        {
+            vTmp = Vector3::Cross(Vector3(1.0f, 0.0f, 0.0f), *pV2);
+        }
+        (*pV3) = Vector3::Normalize(vTmp);
+        (*pV1) = Vector3::Cross(*pV2, *pV3);
+        return true;
+    }
+
+    if (v2z && v3z)
+    {
+        auto vTmp = Vector3::Cross(Vector3(0.0f, 1.0f, 0.0f), *pV1);
+        if (vTmp.LengthSq() < 1e-5f)
+        {
+            vTmp = Vector3::Cross(Vector3(1.0f, 0.0f, 0.0f), *pV1);
+        }
+        (*pV2) = Vector3::Normalize(vTmp);
+        (*pV3) = Vector3::Cross(*pV1, *pV2);
+        return true;
+    }
+
+    if ((v1z) || e12)
+    {
+        (*pV1) = Vector3::Cross(*pV2, *pV3);
+        return true;
+    }
+
+    if ((v2z) || e23)
+    {
+        (*pV2) = Vector3::Cross(*pV3, *pV1);
+        return true;
+    }
+
+    if ((v3z) || e13)
+    {
+        (*pV3) = Vector3::Cross(*pV1, *pV2);
+        return true;
+    }
+
+    return true;
+}
+
+inline bool CalculateEigenVectorsFromCovarianceMatrix
+(
+    float       xx,
+    float       yy,
+    float       zz,
+    float       xy,
+    float       xz,
+    float       yz,
+    Vector3*    pV1,
+    Vector3*    pV2,
+    Vector3*    pV3
+)
+{
+    auto e = -(xx + yy + zz);
+    auto f = xx * yy + yy * zz + zz * xx - xy * xy - xz * xz - yz * yz;
+    auto g = xy * xy * zz + xz * xz * yy + yz * yz * xx - xy * yz * xz * 2.0f - xx * yy * zz;
+
+    float ev1, ev2, ev3;
+    if (!SolveCubic(e, f, g, &ev1, &ev2, &ev3))
+    {
+        (*pV1) = Vector3(1.0f, 0.0f, 0.0f);
+        (*pV2) = Vector3(0.0f, 1.0f, 0.0f);
+        (*pV3) = Vector3(0.0f, 0.0f, 1.0f);
+        return false;
+    }
+
+    return CalculateEigenVectors(xx, xy, xz, yy, yz, zz, ev1, ev2, ev3, pV1, pV2, pV3);
+}
+
+inline void FastIntersectOrientedBoxPlane
+(
+    const Vector3&  center,
+    const Vector3&  extents,
+    const Vector3&  axis0,
+    const Vector3&  axis1,
+    const Vector3&  axis2,
+    const Vector4&  plane,
+    bool&           outside,
+    bool&           inside
+)
+{
+    auto dist = Vector4::PlaneDistance(plane, center);
+
+    auto n = plane.ToVector3();
+    auto radius0 = Vector3::Dot(n, axis0);
+    auto radius1 = Vector3::Dot(n, axis1);
+    auto radius2 = Vector3::Dot(n, axis2);
+
+    auto radius = extents.x * fabs(radius0) 
+                + extents.y * fabs(radius1)
+                + extents.z * fabs(radius2);
+
+    outside = dist > radius;
+    inside  = dist < -radius;
+}
+
+} // namespace math
 
 ///////////////////////////////////////////////////////////////////////////////
 // Functions
@@ -1502,6 +1792,16 @@ inline Vector3 Vector3::FromRGB(uint8_t r, uint8_t g, uint8_t b)
         asdx::Saturate(float(r) / 255.0f),
         asdx::Saturate(float(g) / 255.0f),
         asdx::Saturate(float(b) / 255.0f));
+}
+
+//-----------------------------------------------------------------------------
+//      指定した点が領域内に存在するかチェックします.
+//-----------------------------------------------------------------------------
+inline bool Vector3::InBounds(const Vector3& value, const Vector3& halfExtents)
+{
+    return (value.x <= halfExtents.x && value.x >= -halfExtents.x)
+        && (value.y <= halfExtents.y && value.y >= -halfExtents.y)
+        && (value.z <= halfExtents.z && value.z >= -halfExtents.z);
 }
 
 
@@ -3816,6 +4116,17 @@ inline bool Quaternion::IsNormalized(const Quaternion& value)
 { return IsZero(1.0f - value.Length()); }
 
 //-----------------------------------------------------------------------------
+//      回転値が同じかどうかチェックします.
+//-----------------------------------------------------------------------------
+inline bool Quaternion::IsSameRotation(const Quaternion& lhs, const Quaternion& rhs)
+{
+    auto l = Quaternion::Normalize(lhs);
+    auto r = Quaternion::Normalize(rhs);
+    auto d = Quaternion::Dot(l, r);
+    return fabs(d) > 1.0f - FLT_EPSILON;
+}
+
+//-----------------------------------------------------------------------------
 //      乗算を行います.
 //-----------------------------------------------------------------------------
 inline Quaternion Quaternion::Multiply(const Quaternion& lhs, const Quaternion& rhs)
@@ -4573,6 +4884,286 @@ inline Matrix4x3 Matrix4x3::AppendScale(Matrix4x3& mat, const Vector3& vec)
 
 
 ///////////////////////////////////////////////////////////////////////////////
+// XorShift class
+///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      コンストラクタです.
+//-----------------------------------------------------------------------------
+inline XorShift::XorShift(uint32_t seed)
+{ SetSeed(seed); }
+
+//-----------------------------------------------------------------------------
+//      コピーコンストラクタです.
+//-----------------------------------------------------------------------------
+inline XorShift::XorShift(const XorShift& value)
+: m_X(value.m_X)
+, m_Y(value.m_Y)
+, m_Z(value.m_Z)
+, m_W(value.m_W)
+{ /* DO_NOTHING */ }
+
+//-----------------------------------------------------------------------------
+//      ランダム種を設定します.
+//-----------------------------------------------------------------------------
+inline void XorShift::SetSeed(uint32_t seed)
+{
+    m_X = 123456789;
+    m_Y = 362436069;
+    m_Z = 521288629;
+    m_W = ( seed <= 0 ) ? 88675123 : seed;
+}
+
+//-----------------------------------------------------------------------------
+//      疑似乱数を取得します.
+//-----------------------------------------------------------------------------
+inline uint32_t XorShift::GetValue()
+{
+    auto t = m_X ^ (m_X << 11);
+    m_X = m_Y;
+    m_Y = m_Z;
+    m_Z = m_W;
+    m_W = (m_W ^ (m_W >> 19)) ^ (t ^ (t >> 8));
+    return m_W;
+}
+
+//-----------------------------------------------------------------------------
+//      代入演算子です.
+//-----------------------------------------------------------------------------
+inline XorShift& XorShift::operator=(const XorShift& value)
+{
+    m_X = value.m_X;
+    m_Y = value.m_Y;
+    m_Z = value.m_Z;
+    m_W = value.m_W;
+    return *this;
+}
+
+//-----------------------------------------------------------------------------
+//      等価演算子です.
+//-----------------------------------------------------------------------------
+inline bool XorShift::operator == (const XorShift& value) const
+{
+    return (m_X == value.m_X)
+        && (m_Y == value.m_Y)
+        && (m_Z == value.m_Z)
+        && (m_W == value.m_W);
+}
+
+//-----------------------------------------------------------------------------
+//      非等価演算子です.
+//-----------------------------------------------------------------------------
+inline bool XorShift::operator != (const XorShift& value) const
+{
+    return (m_X != value.m_X)
+        || (m_Y != value.m_Y)
+        || (m_Z != value.m_Z)
+        || (m_W != value.m_W);
+}
+
+//-----------------------------------------------------------------------------
+//      ステートを設定します.
+//-----------------------------------------------------------------------------
+inline void XorShift::SetState(uint32_t x, uint32_t y, uint32_t z, uint32_t w)
+{
+    m_X = x;
+    m_Y = y;
+    m_Z = z;
+    m_W = w;
+}
+
+//-----------------------------------------------------------------------------
+//      ステートを取得します.
+//-----------------------------------------------------------------------------
+inline void XorShift::GetState(uint32_t& x, uint32_t& y, uint32_t& z, uint32_t& w) const
+{
+    x = m_X;
+    y = m_Y;
+    z = m_Z;
+    w = m_W;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// PCG class
+///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      コンストラクタです.
+//-----------------------------------------------------------------------------
+inline PCG::PCG(uint64_t seed)
+{ SetSeed(seed); }
+
+//-----------------------------------------------------------------------------
+//      コピーコンストラクタです.
+//-----------------------------------------------------------------------------
+inline PCG::PCG(const PCG& value)
+: m_State(value.m_State)
+{ /* DO_NOTHING */ }
+
+//-----------------------------------------------------------------------------
+//      ランダム種を設定します.
+//-----------------------------------------------------------------------------
+inline void PCG::SetSeed(uint64_t seed)
+{
+    m_State = seed + s_Increment;
+    GetValue();
+}
+
+//-----------------------------------------------------------------------------
+//      乱数をuint32_t型として取得します.
+//-----------------------------------------------------------------------------
+inline uint32_t PCG::GetValue()
+{
+    auto x = m_State;
+    auto count = uint32_t(x >> 59);
+
+    m_State = x * s_Multiplier + s_Increment;
+    x ^= x >> 18;
+    return Rotate(uint32_t(x >> 27), count);
+}
+
+//-----------------------------------------------------------------------------
+//      代入演算子です.
+//-----------------------------------------------------------------------------
+inline PCG& PCG::operator = (const PCG& value)
+{
+    m_State = value.m_State;
+    return (*this);
+}
+
+//-----------------------------------------------------------------------------
+//      等価演算子です.
+//-----------------------------------------------------------------------------
+inline bool PCG::operator == (const PCG& value) const
+{ return m_State == value.m_State; }
+
+//-----------------------------------------------------------------------------
+//      非等価演算子です.
+//-----------------------------------------------------------------------------
+inline bool PCG::operator != (const PCG& value) const
+{ return m_State != value.m_State; }
+
+//-----------------------------------------------------------------------------
+//      ビット回転処理を行います.
+//-----------------------------------------------------------------------------
+inline uint32_t PCG::Rotate(uint32_t x, uint32_t r)
+{ return x >> r | x << ((~r + 1u) & 31); }
+
+//-----------------------------------------------------------------------------
+//      ステートを設定します.
+//-----------------------------------------------------------------------------
+inline void PCG::SetState(uint64_t state)
+{ m_State = state; }
+
+//-----------------------------------------------------------------------------
+//      ステートを取得します.
+//-----------------------------------------------------------------------------
+inline uint64_t PCG::GetState() const
+{ return m_State; }
+
+
+///////////////////////////////////////////////////////////////////////////////
+// RandomHelper class
+///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      疑似乱数を指定範囲に変換します.
+//-----------------------------------------------------------------------------
+inline uint32_t RandomHelper::GetAsUint(uint32_t value, uint32_t mini, uint32_t maxi)
+{
+    uint32_t ret = value % (maxi - mini);
+    ret += mini;
+    return ret;
+}
+
+//-----------------------------------------------------------------------------
+//      疑似乱数を int型に変換します.
+//-----------------------------------------------------------------------------
+inline int RandomHelper::GetAsInt(uint32_t value)
+{
+    int ret = value & 0x7fffffff;
+    return ret;
+}
+
+//-----------------------------------------------------------------------------
+//      疑似乱数を int型に変換し，指定範囲に変換します.
+//-----------------------------------------------------------------------------
+inline int RandomHelper::GetAsInt(uint32_t value, int mini, int maxi)
+{
+    int ret = GetAsInt(value);
+    ret %= (maxi - mini);
+    ret += mini;
+    return ret;
+}
+
+//-----------------------------------------------------------------------------
+//      疑似乱数を float型に変換します.
+//-----------------------------------------------------------------------------
+inline float RandomHelper::GetAsFloat(uint32_t value)
+{
+    // 2^(-32)をかけて[0, 1)のfloatに戻す.
+    return float(value * 2.3283064365386962890625e-10);
+}
+
+//-----------------------------------------------------------------------------
+//      疑似乱数を float型に変換し，指定範囲に変換します.
+//-----------------------------------------------------------------------------
+inline float RandomHelper::GetAsFloat(uint32_t value, float mini, float maxi)
+{
+    float ret = GetAsFloat(value);
+    ret *= (maxi - mini);
+    ret += mini;
+    return ret;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Quad2 class
+///////////////////////////////////////////////////////////////////////////////
+
+//-----------------------------------------------------------------------------
+//      コントラクタです.
+//-----------------------------------------------------------------------------
+inline Quad2::Quad2(int px, int py, int width, int height)
+: x(px)
+, y(py)
+, w(width)
+, h(height)
+{ /* DO_NOTHING */ }
+
+//-----------------------------------------------------------------------------
+//      平行移動します.
+//-----------------------------------------------------------------------------
+inline Quad2& Quad2::Move(int tx, int ty)
+{
+    x += tx;
+    y += ty;
+    return (*this);
+}
+
+//-----------------------------------------------------------------------------
+//      矩形と矩形の包含を調べます.
+//-----------------------------------------------------------------------------
+inline bool Quad2::Contains(const Quad2& lhs, const Quad2& rhs)
+{
+    return lhs.x < (rhs.x + rhs.w)
+        && rhs.x < (lhs.x + lhs.w)
+        && lhs.y < (rhs.y + rhs.h)
+        && rhs.y < (lhs.y + lhs.h);
+}
+
+//-----------------------------------------------------------------------------
+//      点と矩形の包含を調べます.
+//-----------------------------------------------------------------------------
+inline bool Quad2::Contains(int x, int y, const Quad2& quad)
+{
+    return (quad.x <= x && x <= (quad.x + quad.w))
+        && (quad.y <= y && y <= (quad.y + quad.h));
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
 // BoundingBox structure
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -4599,6 +5190,18 @@ inline BoundingBox::BoundingBox(const BoundingBox& value)
 : Min(value.Min)
 , Max(value.Max)
 { /* DO_NOTHING */ }
+
+//-----------------------------------------------------------------------------
+//      中心位置を求めます.
+//-----------------------------------------------------------------------------
+inline Vector3 BoundingBox::CalcCenter() const
+{ return (Max + Min) * 0.5f; }
+
+//-----------------------------------------------------------------------------
+//      長さの半分を求めます.
+//-----------------------------------------------------------------------------
+inline Vector3 BoundingBox::CalcHalfExtent() const
+{ return Vector3::Abs(Max - Min) * 0.5f; }
 
 //-----------------------------------------------------------------------------
 //      8角を取得します.
@@ -5035,283 +5638,583 @@ inline BoundingSphere BoundingSphere::Transform(const BoundingSphere& sphere, co
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// XorShift class
+// BoundingOrientedBox structure
 ///////////////////////////////////////////////////////////////////////////////
 
 //-----------------------------------------------------------------------------
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
-inline XorShift::XorShift(uint32_t seed)
-{ SetSeed(seed); }
+inline BoundingOrientedBox::BoundingOrientedBox()
+: Center        (0.0f, 0.0f, 0.0f)
+, HalfExtents   (0.0f, 0.0f, 0.0f)
+, Orientation   (0.0f, 0.0f, 0.0f, 1.0f)
+{ /* DO_NOITHING */ }
+
+//-----------------------------------------------------------------------------
+//      引数付きコンストラクタです.
+//-----------------------------------------------------------------------------
+inline BoundingOrientedBox::BoundingOrientedBox
+(
+    const Vector3&      center,
+    const Vector3&      halfExtents,
+    const Quaternion&   orientation
+)
+: Center        (center)
+, HalfExtents   (halfExtents)
+, Orientation   (orientation)
+{ /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      コピーコンストラクタです.
 //-----------------------------------------------------------------------------
-inline XorShift::XorShift(const XorShift& value)
-: m_X(value.m_X)
-, m_Y(value.m_Y)
-, m_Z(value.m_Z)
-, m_W(value.m_W)
+inline BoundingOrientedBox::BoundingOrientedBox(const BoundingOrientedBox& value)
+: Center        (value.Center)
+, HalfExtents   (value.HalfExtents)
+, Orientation   (value.Orientation)
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
-//      ランダム種を設定します.
+//      8角を取得します.
 //-----------------------------------------------------------------------------
-inline void XorShift::SetSeed(uint32_t seed)
+inline std::array<Vector3, 8> BoundingOrientedBox::GetCorners() const
 {
-    m_X = 123456789;
-    m_Y = 362436069;
-    m_Z = 521288629;
-    m_W = ( seed <= 0 ) ? 88675123 : seed;
+    std::array<Vector3, 8> result;
+
+    for(size_t i=0; i<result.size(); ++i)
+        result[i] = Vector3::Rotate(HalfExtents * math::kBoxOffsets[i], Orientation) + Center;
+
+    return result;
 }
 
 //-----------------------------------------------------------------------------
-//      疑似乱数を取得します.
+//      AABBとの交差判定を行います.
 //-----------------------------------------------------------------------------
-inline uint32_t XorShift::GetValue()
+inline bool BoundingOrientedBox::Intersects(const BoundingBox& value) const
 {
-    auto t = m_X ^ (m_X << 11);
-    m_X = m_Y;
-    m_Y = m_Z;
-    m_Z = m_W;
-    m_W = (m_W ^ (m_W >> 19)) ^ (t ^ (t >> 8));
-    return m_W;
+    auto obb = CreateFromBoundingBox(value);
+    return Intersects(obb);
+}
+
+//-----------------------------------------------------------------------------
+//      球との交差判定を行います.
+//-----------------------------------------------------------------------------
+inline bool BoundingOrientedBox::Intersects(const BoundingSphere& value) const
+{
+    auto sphereCenter = Vector3::InverseRotate(value.Center - Center, Orientation);
+
+    float d2 = 0.0f;
+
+    if (sphereCenter.x < -HalfExtents.x) 
+        d2 += Pow2(sphereCenter.x + HalfExtents.x);
+    else if (sphereCenter.x > HalfExtents.x) 
+        d2 += Pow2(sphereCenter.x - HalfExtents.x);
+
+    if (sphereCenter.y < -HalfExtents.y) 
+        d2 += Pow2(sphereCenter.y + HalfExtents.y);
+    else if (sphereCenter.y > HalfExtents.y) 
+        d2 += Pow2(sphereCenter.y - HalfExtents.y);
+
+    if (sphereCenter.z < -HalfExtents.z) 
+        d2 += Pow2(sphereCenter.z + HalfExtents.z);
+    else if (sphereCenter.z > HalfExtents.z) 
+        d2 += Pow2(sphereCenter.z - HalfExtents.z);
+
+    return (d2 < Pow2(value.Radius));
+}
+
+//-----------------------------------------------------------------------------
+//      OBBとの交差判定を行います.
+//-----------------------------------------------------------------------------
+inline bool BoundingOrientedBox::Intersects(const BoundingOrientedBox& box) const
+{
+    //-------------------------------------------------------------------------
+    // A = this
+    // B = box
+    //
+    // すべて A のローカル座標系で計算する.
+    //-------------------------------------------------------------------------
+
+    //--------------------------------------------------------------------------
+    // B の姿勢を A の座標系から見た相対回転.
+    //
+    // DirectXMath:
+    //     Q = A_quat * conjugate(B_quat)
+    //
+    // と同じ.
+    //--------------------------------------------------------------------------
+    const auto Q = Quaternion::Multiply(Orientation, Quaternion::Conjugate(box.Orientation));
+
+    //--------------------------------------------------------------------------
+    // B のローカル X/Y/Z 軸を A の座標系へ変換.
+    //
+    // DirectXCollision の R の各行/列を、
+    // Vector3::Rotate() によって直接取得する.
+    //--------------------------------------------------------------------------
+    const auto Bx = Vector3::Rotate(Vector3(1.0f, 0.0f, 0.0f), Q);
+    const auto By = Vector3::Rotate(Vector3(0.0f, 1.0f, 0.0f), Q);
+    const auto Bz = Vector3::Rotate(Vector3(0.0f, 0.0f, 1.0f), Q);
+
+    //--------------------------------------------------------------------------
+    // B の中心を A のローカル座標系へ変換.
+    //
+    // DirectXMath:
+    //     t = XMVector3InverseRotate(B_cent - A_cent, A_quat)
+    //--------------------------------------------------------------------------
+    const auto t = Vector3::InverseRotate(box.Center - Center, Orientation);
+
+    //--------------------------------------------------------------------------
+    // 各 OBB の半サイズ.
+    //--------------------------------------------------------------------------
+    const Vector3 hA = HalfExtents;
+    const Vector3 hB = box.HalfExtents;
+
+    //--------------------------------------------------------------------------
+    // Separating Axis Test.
+    //
+    // 軸 axis に対する各 OBB の射影半径を求め、
+    //
+    //     |dot(t, axis)| > radiusA + radiusB
+    //
+    // なら、その axis が分離軸となる.
+    //
+    // axis は正規化する必要がない.
+    // 左辺・右辺とも axis の長さに比例するため.
+    //--------------------------------------------------------------------------
+    const auto TestAxis = [&](const Vector3& axis) -> bool
+    {
+        const float axisLengthSq = Vector3::Dot(axis, axis);
+
+        // A_i と B_j が平行な場合など、Cross() が零ベクトルになる軸はテスト不要.
+        if (axisLengthSq <= 1.0e-12f)
+            return true;
+
+        const float distance =
+            std::fabs(Vector3::Dot(t, axis));
+
+        // A の射影半径.
+        //
+        // A のローカル軸は
+        //     (1,0,0)
+        //     (0,1,0)
+        //     (0,0,1)
+        // なので、単純に axis の各成分を使用できる.
+        const float radiusA =
+            hA.x * std::fabs(axis.x) +
+            hA.y * std::fabs(axis.y) +
+            hA.z * std::fabs(axis.z);
+
+        // B の射影半径.
+        //
+        // Bx / By / Bz は A の座標系で表された
+        // B の各ローカル軸.
+        const float radiusB =
+            hB.x * std::fabs(Vector3::Dot(Bx, axis)) +
+            hB.y * std::fabs(Vector3::Dot(By, axis)) +
+            hB.z * std::fabs(Vector3::Dot(Bz, axis));
+
+        // 分離軸が見つかった.
+        if (distance > radiusA + radiusB)
+            return false;
+
+        return true;
+    };
+
+    //--------------------------------------------------------------------------
+    // 1. A の 3 軸
+    //
+    //     A0 = (1,0,0)
+    //     A1 = (0,1,0)
+    //     A2 = (0,0,1)
+    //--------------------------------------------------------------------------
+    if (!TestAxis(Vector3(1.0f, 0.0f, 0.0f)))
+        return false;
+
+    if (!TestAxis(Vector3(0.0f, 1.0f, 0.0f)))
+        return false;
+
+    if (!TestAxis(Vector3(0.0f, 0.0f, 1.0f)))
+        return false;
+
+    //--------------------------------------------------------------------------
+    // 2. B の 3 軸
+    //--------------------------------------------------------------------------
+    if (!TestAxis(Bx))
+        return false;
+
+    if (!TestAxis(By))
+        return false;
+
+    if (!TestAxis(Bz))
+        return false;
+
+    //--------------------------------------------------------------------------
+    // 3. A_i x B_j
+    //
+    // OBB vs OBB の SAT で必要となる 9 本の軸.
+    //
+    //     A0 x B0
+    //     A0 x B1
+    //     A0 x B2
+    //     A1 x B0
+    //     A1 x B1
+    //     A1 x B2
+    //     A2 x B0
+    //     A2 x B1
+    //     A2 x B2
+    //--------------------------------------------------------------------------
+    const Vector3 A0(1.0f, 0.0f, 0.0f);
+    const Vector3 A1(0.0f, 1.0f, 0.0f);
+    const Vector3 A2(0.0f, 0.0f, 1.0f);
+
+    if (!TestAxis(Vector3::Cross(A0, Bx)))
+        return false;
+
+    if (!TestAxis(Vector3::Cross(A0, By)))
+        return false;
+
+    if (!TestAxis(Vector3::Cross(A0, Bz)))
+        return false;
+
+    if (!TestAxis(Vector3::Cross(A1, Bx)))
+        return false;
+
+    if (!TestAxis(Vector3::Cross(A1, By)))
+        return false;
+
+    if (!TestAxis(Vector3::Cross(A1, Bz)))
+        return false;
+
+    if (!TestAxis(Vector3::Cross(A2, Bx)))
+        return false;
+
+    if (!TestAxis(Vector3::Cross(A2, By)))
+        return false;
+
+    if (!TestAxis(Vector3::Cross(A2, Bz)))
+        return false;
+
+    // 15 軸すべてで分離軸が見つからなかった.
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      平面との交差判定を行います.
+//-----------------------------------------------------------------------------
+inline PlaneIntersectionType BoundingOrientedBox::Intersects(const Vector4& plane) const
+{
+    auto rotation = Matrix4x4::CreateFromQuaternion(Orientation);
+
+    auto axisX = rotation.GetBasisX();
+    auto axisY = rotation.GetBasisY();
+    auto axisZ = rotation.GetBasisZ();
+
+    auto n = plane.ToVector3();
+
+    auto r = HalfExtents.x * fabs(Vector3::Dot(n, axisX))
+           + HalfExtents.y * fabs(Vector3::Dot(n, axisY))
+           + HalfExtents.z * fabs(Vector3::Dot(n, axisZ));
+
+    auto s = Vector3::Dot(n, Center) - plane.w;
+
+    if (-r > s)
+        return PlaneIntersectionType::Back;
+    else if (s > r)
+        return PlaneIntersectionType::Front;
+
+    return PlaneIntersectionType::Intersecting;
+}
+
+//-----------------------------------------------------------------------------
+//      レイとの交差判定を行います.
+//-----------------------------------------------------------------------------
+inline bool BoundingOrientedBox::Intersects(const Vector3& origin, const Vector3& direction, float* distance) const
+{
+    return IntersectRayOBB(
+        origin,
+        direction,
+        Center,
+        HalfExtents,
+        Orientation,
+        distance);
+}
+
+//-----------------------------------------------------------------------------
+//      点が含まれるかどうか判定します.
+//-----------------------------------------------------------------------------
+inline ContainmentType BoundingOrientedBox::Contains(const Vector3& value) const
+{
+    auto v = Vector3::InverseRotate(value - Center, Orientation);
+    return Vector3::InBounds(v, HalfExtents) ? ContainmentType::Contains : ContainmentType::Disjoint;
+}
+
+//-----------------------------------------------------------------------------
+//      AABBが含まれるかどうか判定します.
+//-----------------------------------------------------------------------------
+inline ContainmentType BoundingOrientedBox::Contains(const BoundingBox& value) const
+{
+    auto obb = CreateFromBoundingBox(value);
+    return Contains(obb);
+}
+
+//-----------------------------------------------------------------------------
+//      球が含まれるかどうか判定します.
+//-----------------------------------------------------------------------------
+inline ContainmentType BoundingOrientedBox::Contains(const BoundingSphere& value) const
+{
+    auto sphereCenter = Vector3::InverseRotate(value.Center - Center, Orientation);
+
+    auto d2 = 0.0f;
+    if (sphereCenter.x < -HalfExtents.x)
+        d2 += Pow2(sphereCenter.x + HalfExtents.x);
+    else if (sphereCenter.x > HalfExtents.x)
+        d2 += Pow2(sphereCenter.x - HalfExtents.x);
+
+    if (sphereCenter.y < -HalfExtents.y)
+        d2 += Pow2(sphereCenter.y + HalfExtents.y);
+    else if (sphereCenter.y > HalfExtents.y)
+        d2 += Pow2(sphereCenter.y - HalfExtents.y);
+
+    if (sphereCenter.z < -HalfExtents.z)
+        d2 += Pow2(sphereCenter.z + HalfExtents.z);
+    else if (sphereCenter.z > HalfExtents.z)
+        d2 += Pow2(sphereCenter.z - HalfExtents.z);
+
+    if (d2 > Pow2(value.Radius))
+        return ContainmentType::Disjoint;
+
+    auto mini = sphereCenter - Vector3(value.Radius, value.Radius, value.Radius);
+    auto maxi = sphereCenter + Vector3(value.Radius, value.Radius, value.Radius);
+
+    return Vector3::InBounds(mini, HalfExtents) && Vector3::InBounds(maxi, HalfExtents) 
+        ? ContainmentType::Contains
+        : ContainmentType::Intersects;
+}
+
+//-----------------------------------------------------------------------------
+//      OBBが含まれるかどうか判定します.
+//-----------------------------------------------------------------------------
+inline ContainmentType BoundingOrientedBox::Contains(const BoundingOrientedBox& value) const
+{
+    if (!Intersects(value))
+        return ContainmentType::Disjoint;
+
+    auto offset = value.Center - Center;
+
+    for(size_t i=0; i<8; ++i)
+    {
+        auto c = Vector3::Rotate(value.HalfExtents * math::kBoxOffsets[i], value.Orientation) + offset;
+        c = Vector3::InverseRotate(c, Orientation);
+
+        if (!Vector3::InBounds(c, HalfExtents))
+            return ContainmentType::Intersects;
+    }
+
+    return ContainmentType::Contains;
+}
+
+//-----------------------------------------------------------------------------
+//      錐台によって含まれるかどうか判定します.
+//-----------------------------------------------------------------------------
+inline ContainmentType BoundingOrientedBox::ContainedBy(const std::array<Vector4, 6>& planes) const
+{
+    bool outside = false;
+    bool inside  = false;
+
+    auto mtx = Matrix4x4::CreateFromQuaternion(Orientation);
+    auto axis0 = mtx.GetBasisX();
+    auto axis1 = mtx.GetBasisY();
+    auto axis2 = mtx.GetBasisZ();
+
+    math::FastIntersectOrientedBoxPlane(Center, HalfExtents, axis0, axis1, axis2, planes[0], outside, inside);
+
+    bool anyOutside = outside;
+    bool allInside  = inside;
+
+    for(size_t i=1; i<6; ++i)
+    {
+        math::FastIntersectOrientedBoxPlane(Center, HalfExtents, axis0, axis1, axis2, planes[i], outside, inside);
+        anyOutside |= outside;
+        allInside  &= inside;
+    }
+
+    if (anyOutside)
+        return ContainmentType::Disjoint;
+    if (allInside)
+        return ContainmentType::Contains;
+    return ContainmentType::Intersects;
+}
+
+//-----------------------------------------------------------------------------
+//      等価比較演算子です.
+//-----------------------------------------------------------------------------
+inline bool BoundingOrientedBox::operator == (const BoundingOrientedBox& value) const
+{
+    return (Center      == value.Center)
+        && (HalfExtents == value.HalfExtents)
+        && (Orientation == value.Orientation);
+}
+
+//-----------------------------------------------------------------------------
+//      非等価比較演算子です.
+//-----------------------------------------------------------------------------
+inline bool BoundingOrientedBox::operator != (const BoundingOrientedBox& value) const
+{
+    return (Center      != value.Center)
+        || (HalfExtents != value.HalfExtents)
+        || (Orientation != value.Orientation);
 }
 
 //-----------------------------------------------------------------------------
 //      代入演算子です.
 //-----------------------------------------------------------------------------
-inline XorShift& XorShift::operator=(const XorShift& value)
+inline BoundingOrientedBox& BoundingOrientedBox::operator = (const BoundingOrientedBox& value)
 {
-    m_X = value.m_X;
-    m_Y = value.m_Y;
-    m_Z = value.m_Z;
-    m_W = value.m_W;
-    return *this;
-}
-
-//-----------------------------------------------------------------------------
-//      等価演算子です.
-//-----------------------------------------------------------------------------
-inline bool XorShift::operator == (const XorShift& value) const
-{
-    return (m_X == value.m_X)
-        && (m_Y == value.m_Y)
-        && (m_Z == value.m_Z)
-        && (m_W == value.m_W);
-}
-
-//-----------------------------------------------------------------------------
-//      非等価演算子です.
-//-----------------------------------------------------------------------------
-inline bool XorShift::operator != (const XorShift& value) const
-{
-    return (m_X != value.m_X)
-        || (m_Y != value.m_Y)
-        || (m_Z != value.m_Z)
-        || (m_W != value.m_W);
-}
-
-//-----------------------------------------------------------------------------
-//      ステートを設定します.
-//-----------------------------------------------------------------------------
-inline void XorShift::SetState(uint32_t x, uint32_t y, uint32_t z, uint32_t w)
-{
-    m_X = x;
-    m_Y = y;
-    m_Z = z;
-    m_W = w;
-}
-
-//-----------------------------------------------------------------------------
-//      ステートを取得します.
-//-----------------------------------------------------------------------------
-inline void XorShift::GetState(uint32_t& x, uint32_t& y, uint32_t& z, uint32_t& w) const
-{
-    x = m_X;
-    y = m_Y;
-    z = m_Z;
-    w = m_W;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// PCG class
-///////////////////////////////////////////////////////////////////////////////
-
-//-----------------------------------------------------------------------------
-//      コンストラクタです.
-//-----------------------------------------------------------------------------
-inline PCG::PCG(uint64_t seed)
-{ SetSeed(seed); }
-
-//-----------------------------------------------------------------------------
-//      コピーコンストラクタです.
-//-----------------------------------------------------------------------------
-inline PCG::PCG(const PCG& value)
-: m_State(value.m_State)
-{ /* DO_NOTHING */ }
-
-//-----------------------------------------------------------------------------
-//      ランダム種を設定します.
-//-----------------------------------------------------------------------------
-inline void PCG::SetSeed(uint64_t seed)
-{
-    m_State = seed + s_Increment;
-    GetValue();
-}
-
-//-----------------------------------------------------------------------------
-//      乱数をuint32_t型として取得します.
-//-----------------------------------------------------------------------------
-inline uint32_t PCG::GetValue()
-{
-    auto x = m_State;
-    auto count = uint32_t(x >> 59);
-
-    m_State = x * s_Multiplier + s_Increment;
-    x ^= x >> 18;
-    return Rotate(uint32_t(x >> 27), count);
-}
-
-//-----------------------------------------------------------------------------
-//      代入演算子です.
-//-----------------------------------------------------------------------------
-inline PCG& PCG::operator = (const PCG& value)
-{
-    m_State = value.m_State;
+    Center      = value.Center;
+    HalfExtents = value.HalfExtents;
+    Orientation = value.Orientation;
     return (*this);
 }
 
 //-----------------------------------------------------------------------------
-//      等価演算子です.
+//      AABBからOBBを生成します.
 //-----------------------------------------------------------------------------
-inline bool PCG::operator == (const PCG& value) const
-{ return m_State == value.m_State; }
-
-//-----------------------------------------------------------------------------
-//      非等価演算子です.
-//-----------------------------------------------------------------------------
-inline bool PCG::operator != (const PCG& value) const
-{ return m_State != value.m_State; }
-
-//-----------------------------------------------------------------------------
-//      ビット回転処理を行います.
-//-----------------------------------------------------------------------------
-inline uint32_t PCG::Rotate(uint32_t x, uint32_t r)
-{ return x >> r | x << ((~r + 1u) & 31); }
-
-//-----------------------------------------------------------------------------
-//      ステートを設定します.
-//-----------------------------------------------------------------------------
-inline void PCG::SetState(uint64_t state)
-{ m_State = state; }
-
-//-----------------------------------------------------------------------------
-//      ステートを取得します.
-//-----------------------------------------------------------------------------
-inline uint64_t PCG::GetState() const
-{ return m_State; }
-
-
-///////////////////////////////////////////////////////////////////////////////
-// RandomHelper class
-///////////////////////////////////////////////////////////////////////////////
-
-//-----------------------------------------------------------------------------
-//      疑似乱数を指定範囲に変換します.
-//-----------------------------------------------------------------------------
-inline uint32_t RandomHelper::GetAsUint(uint32_t value, uint32_t mini, uint32_t maxi)
+inline BoundingOrientedBox BoundingOrientedBox::CreateFromBoundingBox(const BoundingBox& value)
 {
-    uint32_t ret = value % (maxi - mini);
-    ret += mini;
-    return ret;
+    return BoundingOrientedBox(
+        value.CalcCenter(),
+        value.CalcHalfExtent(),
+        Quaternion(0.0f, 0.0f, 0.0f, 1.0f));
 }
 
 //-----------------------------------------------------------------------------
-//      疑似乱数を int型に変換します.
+//      点群からOBBを生成します.
 //-----------------------------------------------------------------------------
-inline int RandomHelper::GetAsInt(uint32_t value)
+inline BoundingOrientedBox BoundingOrientedBox::CreateFromPoints(const Vector3* point, size_t count)
 {
-    int ret = value & 0x7fffffff;
-    return ret;
+    Vector3 centerOfMass(0.0f, 0.0f, 0.0f);
+
+    for(size_t i=0; i<count; ++i)
+    {
+        centerOfMass += point[i];
+    }
+    centerOfMass /= float(count);
+
+    auto xx_yy_zz = Vector3(0.0f, 0.0f, 0.0f);
+    auto xy_xz_yz = Vector3(0.0f, 0.0f, 0.0f);
+
+    for(size_t i=0; i<count; ++i)
+    {
+        xx_yy_zz += point[i] * point[i];
+
+        auto xxy = Vector3(point[i].x, point[i].x, point[i].y);
+        auto yzz = Vector3(point[i].y, point[i].z, point[i].z);
+
+        xy_xz_yz += xxy * yzz;
+    }
+
+    Vector3 v1, v2, v3;
+    math::CalculateEigenVectorsFromCovarianceMatrix(
+        xx_yy_zz.x,
+        xx_yy_zz.y,
+        xx_yy_zz.z,
+        xy_xz_yz.x,
+        xy_xz_yz.y,
+        xy_xz_yz.z,
+        &v1,
+        &v2,
+        &v3);
+
+    Matrix4x4 mtx(
+        Vector4(v1, 0.0f),
+        Vector4(v2, 0.0f),
+        Vector4(v3, 0.0f),
+        Vector4(0.0f, 0.0f, 0.0f, 1.0f));
+
+    auto det = mtx.Determinant();
+
+    if (det < 0.0f)
+    {
+        mtx.row[0] = -mtx.row[0];
+        mtx.row[1] = -mtx.row[1];
+        mtx.row[2] = -mtx.row[2];
+    }
+
+    auto orientation = Quaternion::CreateFromRotationMatrix(mtx);
+    orientation = Quaternion::Normalize(orientation);
+
+    mtx = Matrix4x4::CreateFromQuaternion(orientation);
+    auto inverseMtx = Matrix4x4::Invert(mtx);
+
+    Vector3 mini, maxi;
+    mini = maxi = Vector3::TransformNormal(point[0], inverseMtx);
+
+    for(size_t i=1; i<count; ++i)
+    {
+        auto p = Vector3::TransformNormal(point[i], inverseMtx);
+        mini = Vector3::Min(mini, p);
+        maxi = Vector3::Max(maxi, p);
+    }
+
+    auto center = (mini + maxi) * 0.5f;
+    center = Vector3::TransformNormal(center, mtx);
+
+    return BoundingOrientedBox(
+        center,
+        Vector3::Abs(maxi - mini) * 0.5f,
+        orientation);
 }
 
 //-----------------------------------------------------------------------------
-//      疑似乱数を int型に変換し，指定範囲に変換します.
+//      指定行列で変換します.
 //-----------------------------------------------------------------------------
-inline int RandomHelper::GetAsInt(uint32_t value, int mini, int maxi)
+inline BoundingOrientedBox BoundingOrientedBox::Transform(const BoundingOrientedBox& box, const Matrix4x4& mtx)
 {
-    int ret = GetAsInt(value);
-    ret %= (maxi - mini);
-    ret += mini;
-    return ret;
+    auto corner = box.HalfExtents * math::kBoxOffsets[0] + box.Center;
+    corner = Vector3::Transform(corner, mtx);
+
+    Vector3 mini = corner;
+    Vector3 maxi = corner;
+
+    for(size_t i=1; i<8; ++i)
+    {
+        corner = box.HalfExtents * math::kBoxOffsets[i] + box.Center;
+        corner = Vector3::Transform(corner, mtx);
+
+        mini = Vector3::Min(mini, corner);
+        maxi = Vector3::Max(mini, corner);
+    }
+
+    auto center  = (mini + maxi) * 0.5f;
+    auto extents = Vector3::Abs(maxi - mini) * 0.5f;
+
+    return BoundingOrientedBox(center, extents, box.Orientation);
 }
 
 //-----------------------------------------------------------------------------
-//      疑似乱数を float型に変換します.
+//      指定行列で変換します.
 //-----------------------------------------------------------------------------
-inline float RandomHelper::GetAsFloat(uint32_t value)
+inline BoundingOrientedBox BoundingOrientedBox::Transform(const BoundingOrientedBox& box, const Matrix4x3& mtx)
 {
-    // 2^(-32)をかけて[0, 1)のfloatに戻す.
-    return float(value * 2.3283064365386962890625e-10);
+    auto corner = box.HalfExtents * math::kBoxOffsets[0] + box.Center;
+    corner = Vector3::Transform(corner, mtx);
+
+    Vector3 mini = corner;
+    Vector3 maxi = corner;
+
+    for(size_t i=1; i<8; ++i)
+    {
+        corner = box.HalfExtents * math::kBoxOffsets[i] + box.Center;
+        corner = Vector3::Transform(corner, mtx);
+
+        mini = Vector3::Min(mini, corner);
+        maxi = Vector3::Max(mini, corner);
+    }
+
+    auto center  = (mini + maxi) * 0.5f;
+    auto extents = Vector3::Abs(maxi - mini) * 0.5f;
+
+    return BoundingOrientedBox(center, extents, box.Orientation);
 }
-
-//-----------------------------------------------------------------------------
-//      疑似乱数を float型に変換し，指定範囲に変換します.
-//-----------------------------------------------------------------------------
-inline float RandomHelper::GetAsFloat(uint32_t value, float mini, float maxi)
-{
-    float ret = GetAsFloat(value);
-    ret *= (maxi - mini);
-    ret += mini;
-    return ret;
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-// Quad2 class
-///////////////////////////////////////////////////////////////////////////////
-
-//-----------------------------------------------------------------------------
-//      コントラクタです.
-//-----------------------------------------------------------------------------
-inline Quad2::Quad2(int px, int py, int width, int height)
-: x(px)
-, y(py)
-, w(width)
-, h(height)
-{ /* DO_NOTHING */ }
-
-//-----------------------------------------------------------------------------
-//      平行移動します.
-//-----------------------------------------------------------------------------
-inline Quad2& Quad2::Move(int tx, int ty)
-{
-    x += tx;
-    y += ty;
-    return (*this);
-}
-
-//-----------------------------------------------------------------------------
-//      矩形と矩形の包含を調べます.
-//-----------------------------------------------------------------------------
-inline bool Quad2::Contains(const Quad2& lhs, const Quad2& rhs)
-{
-    return lhs.x < (rhs.x + rhs.w)
-        && rhs.x < (lhs.x + lhs.w)
-        && lhs.y < (rhs.y + rhs.h)
-        && rhs.y < (lhs.y + lhs.h);
-}
-
-//-----------------------------------------------------------------------------
-//      点と矩形の包含を調べます.
-//-----------------------------------------------------------------------------
-inline bool Quad2::Contains(int x, int y, const Quad2& quad)
-{
-    return (quad.x <= x && x <= (quad.x + quad.w))
-        && (quad.y <= y && y <= (quad.y + quad.h));
-}
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // Other functions.
@@ -5322,11 +6225,110 @@ inline bool Quad2::Contains(int x, int y, const Quad2& quad)
 //-----------------------------------------------------------------------------
 inline void CalcONB(const Vector3& N, Vector3& T, Vector3& B)
 {
-    float sig = (N.z >= 0.0) ? 1.0f : -1.0f;
-    float a = -1.0f / (sig + N.z);
+    // Tom Duff, James Burgess, Per Christensen, Christophe Hery, Andrew Kensler, Max Liani, and Ryusuke Villemin
+    // "Building an Orthonormal Bais, Revisited",
+    // Journal of Computer Graphics Techniques Vol.6, No.1, 2017.
+    // Listing 3.参照.
+    float s = (N.z >= 0.0) ? 1.0f : -1.0f;
+    float a = -1.0f / (s + N.z);
     float b = N.x * N.y * a;
-    T = Vector3(1.0f + sig * N.x * N.x * a, sig * b, -sig * N.x);
-    B = Vector3(b, sig + N.y * N.y * a, -N.y);
+    T = Vector3(1.0f + s * N.x * N.x * a, s * b, -s * N.x);
+    B = Vector3(b, s + N.y * N.y * a, -N.y);
+}
+
+//-----------------------------------------------------------------------------
+//      八面体リピート処理を行います.
+//-----------------------------------------------------------------------------
+inline Vector2 OctahedronWrap(const Vector2& value)
+{
+    return Vector2(
+        1.0f - abs(value.y) * ((value.x >= 0.0f) ? 1.0f : -1.0f),
+        1.0f - abs(value.x) * ((value.y >= 0.0f) ? 1.0f : -1.0f));
+}
+
+//-----------------------------------------------------------------------------
+//      八面体エンコード処理を行います.
+//-----------------------------------------------------------------------------
+inline Vector2 EncodeOctahedron(const Vector3& value)
+{
+    // Octahedron normal vector encoding.
+    // https://knarkowicz.wordpress.com/2014/04/16/octahedron-normal-vector-encoding/
+    auto div = abs(value.x) + abs(value.y) + abs(value.z);
+    Vector3 n = value / div;
+    Vector2 ret = (n.z >= 0.0f) ? n.ToVector2() : OctahedronWrap(n.ToVector2());
+    return ret * 0.5f + Vector2(0.5f, 0.5f);
+}
+
+//-----------------------------------------------------------------------------
+//      八面体デコード処理を行います.
+//-----------------------------------------------------------------------------
+inline Vector3 DecodeOctahedron(const Vector2& value)
+{
+    // Octahedron normal vector encoding.
+    // https://knarkowicz.wordpress.com/2014/04/16/octahedron-normal-vector-encoding/
+    auto e = value * 2.0f - Vector2(1.0f, 1.0f);
+    auto n = Vector3(e.x, e.y, 1.0f - abs(e.x) - abs(e.y));
+    auto t = Saturate(-n.z);
+    n.x += ((n.x >= 0.0f) ? -t : t);
+    n.y += ((n.y >= 0.0f) ? -t : t);
+    return Vector3::SafeNormalize(n, Vector3(0.0f, 0.0f, 0.0f));
+}
+
+//-----------------------------------------------------------------------------
+//      ダイアモンドエンコード処理を行います.
+//-----------------------------------------------------------------------------
+inline float EncodeDiamond(const Vector2& value)
+{
+    auto m = abs(value.x) + abs(value.y);
+    auto x = value.x / m;
+    auto s = Sign(value.x);
+    return -s * 0.25f * x + 0.5f + s * 0.25f;
+}
+
+//-----------------------------------------------------------------------------
+//      ダイアモンドデコード処理を行います.
+//-----------------------------------------------------------------------------
+inline Vector2 DecodeDiamond(float value)
+{
+    Vector2 ret;
+    auto s = Sign(value - 0.5f);
+    ret.x = -s * 4.0f * value + 1.0f + s * 2.0f;
+    ret.y =  s * (1.0f - abs(value));
+    return Vector2::SafeNormalize(ret, Vector2(0.0f, 0.0f));
+}
+
+//-----------------------------------------------------------------------------
+//      接線ベクトルをダイアモンドエンコードします.
+//-----------------------------------------------------------------------------
+inline float EncodeTangentByDiamond(const Vector3& normal, const Vector3& tangent)
+{
+    Vector3 t1;
+    if (abs(normal.y) > abs(normal.z))
+        t1 = Vector3(normal.y, -normal.x, 0.0f);
+    else
+        t1 = Vector3(normal.z, 0.0f, -normal.x);
+
+    t1 = Vector3::Normalize(t1);
+    auto t2 = Vector3::Cross(t1, normal);
+    auto pt = Vector2(Vector3::Dot(tangent, t1), Vector3::Dot(tangent, t2));
+    return EncodeDiamond(pt);
+}
+
+//-----------------------------------------------------------------------------
+//      接線ベクトルをダイアモンドデコードします.
+//-----------------------------------------------------------------------------
+inline Vector3 DecodeTangentByDiamond(const Vector3& normal, float diamond)
+{
+    Vector3 t1;
+    if (abs(normal.y) > abs(normal.z))
+        t1 = Vector3(normal.y, -normal.x, 0.0f);
+    else
+        t1 = Vector3(normal.z, 0.0f, -normal.x);
+
+    t1 = Vector3::Normalize(t1);
+    auto t2 = Vector3::Cross(t1, normal);
+    auto dt = DecodeDiamond(diamond);
+    return dt.x * t1 + dt.y * t2;
 }
 
 //-----------------------------------------------------------------------------
@@ -5609,6 +6611,39 @@ inline bool IntersectRayPolygon
     { *distance = t; }
 
     return true;
+}
+
+//-----------------------------------------------------------------------------
+//      重心座標を求めます.
+//-----------------------------------------------------------------------------
+inline Vector2 CalcBarycentric
+(
+    const Vector3& a,   // vertex0
+    const Vector3& b,   // vertex1
+    const Vector3& c,   // vertex2
+    const Vector3& p    // point.
+)
+{
+    // [Ericson 2005] Christer Ericson,
+    // "ゲームプログラミングのためのリアルタイム衝突判定",
+    // 株式会社ボーンデジタル, pp.46-48, 2005.
+
+    auto v0 = b - a;
+    auto v1 = c - a;
+    auto v2 = p - a;
+
+    auto d00 = Vector3::Dot(v0, v0);
+    auto d01 = Vector3::Dot(v0, v1);
+    auto d11 = Vector3::Dot(v1, v1);
+    auto d20 = Vector3::Dot(v2, v0);
+    auto d21 = Vector3::Dot(v2, v1);
+
+    auto denom = d00 * d11 - d01 * d01;
+
+    Vector2 result;
+    result.x = (d11 * d20 - d01 * d21) / denom;
+    result.y = (d00 * d21 - d01 * d20) / denom;
+    return result;
 }
 
 //-----------------------------------------------------------------------------
