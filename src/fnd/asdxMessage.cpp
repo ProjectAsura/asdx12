@@ -21,9 +21,9 @@ namespace asdx {
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
 Message::Message(uint32_t type, const void* buffer, uint64_t size)
-: m_Type(type)
-, m_pBuffer(buffer)
-, m_Size(size)
+: m_Type    (type)
+, m_pBuffer (buffer)
+, m_Size    (size)
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------

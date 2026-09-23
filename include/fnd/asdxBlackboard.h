@@ -113,7 +113,7 @@ public:
     //! @return     値を返却します.
     //-------------------------------------------------------------------------
     template<typename T>
-    T GetAs(const char* tag)
+    T GetAs(const char* tag) const
     {
         T result = {};
         Get(tag, &result, sizeof(T));
@@ -272,6 +272,15 @@ public:
         return m_Blackboard.GetAs<T>(tag);
     }
 
+    //-------------------------------------------------------------------------
+    //! @brief      データを削除します.
+    //-------------------------------------------------------------------------
+    void Remove(const char* tag)
+    {
+        ScopedLock<SpinLock> locker(m_SpinLock);
+        m_Blackboard.Remove(tag);
+    }
+
 private:
     //=========================================================================
     // private variables.
@@ -284,6 +293,5 @@ private:
     //=========================================================================
     /* NOTHING */
 };
-
 
 } // namespace asdx

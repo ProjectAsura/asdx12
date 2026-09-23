@@ -248,6 +248,7 @@
     <ClCompile Include="..\src\fw\asdxAppCamera.cpp" />
     <ClCompile Include="..\src\fw\asdxBlockTaskManager.cpp" />
     <ClCompile Include="..\src\fw\asdxFrameTaskManager.cpp" />
+    <ClCompile Include="..\src\fw\asdxPhase.cpp" />
     <ClCompile Include="..\src\fw\asdxScene.cpp" />
     <ClCompile Include="..\src\fw\asdxTask.cpp" />
     <ClCompile Include="..\src\gfx\asdxAllocationHolder.cpp" />
@@ -377,6 +378,7 @@
     <ClInclude Include="..\include\fw\asdxAppCamera.h" />
     <ClInclude Include="..\include\fw\asdxBlockTaskManager.h" />
     <ClInclude Include="..\include\fw\asdxFrameTaskManager.h" />
+    <ClInclude Include="..\include\fw\asdxPhase.h" />
     <ClInclude Include="..\include\fw\asdxScene.h" />
     <ClInclude Include="..\include\fw\asdxTask.h" />
     <ClInclude Include="..\include\gfx\asdxAllocationHolder.h" />

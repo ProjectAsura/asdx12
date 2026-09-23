@@ -468,6 +468,9 @@
     <ClCompile Include="..\src\fw\asdxScene.cpp">
       <Filter>ソース ファイル\fw</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\fw\asdxPhase.cpp">
+      <Filter>ソース ファイル\fw</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\edit\asdxEditParam.h">
@@ -852,6 +855,9 @@
       <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
     <ClInclude Include="..\include\fw\asdxScene.h">
+      <Filter>ヘッダー ファイル\fw</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fw\asdxPhase.h">
       <Filter>ヘッダー ファイル\fw</Filter>
     </ClInclude>
   </ItemGroup>
