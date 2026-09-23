@@ -67,6 +67,9 @@ bool PhaseManager::Init(IPhaseFactory* pFactory, uint64_t firstPhaseId)
         return false;
     }
 
+    // フェーズ番号設定.
+    m_PhaseId = firstPhaseId;
+
     // フェーズ開始
     m_pPhase->OnStart();
 
@@ -165,6 +168,8 @@ void PhaseManager::Restart()
 {
     if (!m_pPhase)
         return;
+
+    DLOGA("Restart Phase (0x%llx)", m_PhaseId);
 
     m_pPhase->OnEnd();
     m_pPhase->OnStart();
