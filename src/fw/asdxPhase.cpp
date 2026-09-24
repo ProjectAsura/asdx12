@@ -85,7 +85,7 @@ void PhaseManager::Term()
     // フェーズ破棄.
     if (m_pPhase != nullptr && m_pFactory != nullptr)
     {
-        m_pPhase->OnEnd();
+        m_pPhase->OnFinish();
         m_pFactory->Dispose(m_pPhase);
     }
 
@@ -116,7 +116,7 @@ void PhaseManager::Change(uint64_t phaseId)
     if (m_pPhase)
     {
         // 終了処理呼び出し.
-        m_pPhase->OnEnd();
+        m_pPhase->OnFinish();
 
         // フェーズ破棄.
         m_pFactory->Dispose(m_pPhase);
@@ -171,7 +171,7 @@ void PhaseManager::Restart()
 
     DLOGA("Restart Phase (0x%llx)", m_PhaseId);
 
-    m_pPhase->OnEnd();
+    m_pPhase->OnFinish();
     m_pPhase->OnStart();
 }
 
