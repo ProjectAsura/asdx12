@@ -15,14 +15,14 @@
 
 namespace {
 
-struct TestRunnable : public asdx::IRunnable
+struct TestRunnable : public asdx::IExecutable
 {
     explicit TestRunnable(std::atomic<uint32_t>* runCount, uint32_t delay = 0)
         : RunCount(runCount)
         , Delay(delay)
     {}
 
-    void Run() override
+    void Execute() override
     {
         if (Delay != 0)
         { std::this_thread::sleep_for(std::chrono::milliseconds(Delay)); }
@@ -69,7 +69,7 @@ TEST(ThreadPoolTest, PushArrayAndReuse)
     TestRunnable runnable5(&runCount, 10);
     TestRunnable runnable6(&runCount, 10);
     TestRunnable runnable7(&runCount, 10);
-    asdx::IRunnable* runnablePointers[8] =
+    asdx::IExecutable* runnablePointers[8] =
     {
         &runnable0, &runnable1, &runnable2, &runnable3,
         &runnable4, &runnable5, &runnable6, &runnable7,

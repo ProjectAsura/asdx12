@@ -3921,6 +3921,16 @@ public:
     static BoundingBox CreateFromPoints(const Vector3* points, size_t count);
 
     //-------------------------------------------------------------------------
+    //! @brief      点群からAABBを生成します.
+    //! 
+    //! @param[in]      points      点のリスト.
+    //! @param[in]      count       点の数.
+    //! @param[in]      stride      次の頂点へのずらしサイズ.
+    //! @return     点群から生成したAABBを返却します.
+    //-------------------------------------------------------------------------
+    static BoundingBox CreateFromPoints(const float* points, size_t count, size_t stride);
+
+    //-------------------------------------------------------------------------
     //! @brief      指定行列で変換します.
     //! 
     //! @param[in]      box         変換するAABB
@@ -4100,6 +4110,16 @@ public:
     //! @return     点群から生成した球を返却します.
     //-------------------------------------------------------------------------
     static BoundingSphere CreateFromPoints(const Vector3* points, size_t count);
+
+    //-------------------------------------------------------------------------
+    //! @brief      点群から球を生成します.
+    //! 
+    //! @param[in]      points      点のリスト.
+    //! @param[in]      count       点の数.
+    //! @param[in]      stride      次の頂点へのずらしサイズ.
+    //! @return     点群から生成したAABBを返却します.
+    //-------------------------------------------------------------------------
+    static BoundingSphere CreateFromPoints(const float* points, size_t count, size_t stride);
 
     //-------------------------------------------------------------------------
     //! @brief      指定行列で変換した球を返却します.
@@ -4299,6 +4319,16 @@ public:
     //! @return     点群から作成したOBBを返却します.
     //-------------------------------------------------------------------------
     static BoundingOrientedBox CreateFromPoints(const Vector3* points, size_t count);
+
+    //-------------------------------------------------------------------------
+    //! @brief      点群からOBBを作成します.
+    //! 
+    //! @param[in]      points      点群.
+    //! @param[in]      count       点の数.
+    //! @param[in]      stride      次の頂点へのずらしサイズ.
+    //! @return     点群から作成したOBBを返却します.
+    //-------------------------------------------------------------------------
+    static BoundingOrientedBox CreateFromPoints(const float* points, size_t count, size_t stride);
 
     //-------------------------------------------------------------------------
     //! @brief      指定行列で変換します.

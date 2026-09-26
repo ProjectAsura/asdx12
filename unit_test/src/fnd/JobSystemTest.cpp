@@ -48,7 +48,7 @@ enum JOB_ID
 
 struct TestListener1 : public asdx::JobListener
 {
-    void OnRun(uint32_t jobId) override
+    void OnJob(uint32_t jobId) override
     {
         if (jobId < COUNT_OF_JOB_ID)
         { Called[jobId] = true; }
@@ -59,7 +59,7 @@ struct TestListener1 : public asdx::JobListener
 
 struct TestListener2 : public asdx::JobListener
 {
-    void OnRun(uint32_t jobId) override
+    void OnJob(uint32_t jobId) override
     {
         if (jobId < COUNT_OF_JOB_ID)
         { Called[jobId] = true; }
@@ -70,7 +70,7 @@ struct TestListener2 : public asdx::JobListener
 
 struct TestListener3 : public asdx::JobListener
 {
-    void OnRun(uint32_t jobId) override
+    void OnJob(uint32_t jobId) override
     {
         if (jobId < COUNT_OF_JOB_ID)
         { Called[jobId] = true; }
@@ -85,7 +85,7 @@ struct OrderListener : public asdx::JobListener
         : Order(order)
     {}
 
-    void OnRun(uint32_t jobId) override
+    void OnJob(uint32_t jobId) override
     {
         *Order = static_cast<int>(jobId);
     }

@@ -79,7 +79,6 @@
     <ClCompile Include="..\src\fnd\JobSystemTest.cpp" />
     <ClCompile Include="..\src\fnd\ListTest.cpp" />
     <ClCompile Include="..\src\fnd\MathTest.cpp" />
-    <ClCompile Include="..\src\fnd\MessageTest.cpp" />
     <ClCompile Include="..\src\fnd\MiscTest.cpp" />
     <ClCompile Include="..\src\fnd\OffsetAllocatorTest.cpp" />
     <ClCompile Include="..\src\fnd\QueueTest.cpp" />

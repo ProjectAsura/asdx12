@@ -44,9 +44,6 @@
     <ClCompile Include="..\src\fnd\SpinLockTest.cpp">
       <Filter>fnd</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\fnd\MessageTest.cpp">
-      <Filter>fnd</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\fnd\ThreadPoolTest.cpp">
       <Filter>fnd</Filter>
     </ClCompile>

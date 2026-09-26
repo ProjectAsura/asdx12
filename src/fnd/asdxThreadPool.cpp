@@ -75,14 +75,14 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      ジョブを追加します.
     //-------------------------------------------------------------------------
-    void Push(IRunnable* runnable) override
+    void Push(IExecutable* executable) override
     {
-        assert(runnable != nullptr);
+        assert(executable != nullptr);
 
         // ブロック.
         {
             std::unique_lock<std::mutex> locker(m_Mutex);
-            m_Queue.push(runnable);
+            m_Queue.push(executable);
         }
 
         m_Condtion.notify_all();
@@ -91,16 +91,16 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      ジョブを追加します.
     //-------------------------------------------------------------------------
-    void Push(uint32_t count, IRunnable** runnables) override
+    void Push(uint32_t count, IExecutable** executables) override
     {
         assert(count > 0);
-        assert(runnables != nullptr);
+        assert(executables != nullptr);
 
         // ブロック.
         {
             std::unique_lock<std::mutex> locker(m_Mutex);
             for(auto i=0u; i<count; ++i)
-            { m_Queue.push(runnables[i]); }
+            { m_Queue.push(executables[i]); }
         }
 
         m_Condtion.notify_all();
@@ -122,7 +122,7 @@ private:
     //=========================================================================
     bool                        m_RequestTerminate = false;
     uint32_t                    m_ActiveCount = 0;
-    asdx::Queue<IRunnable>      m_Queue;
+    asdx::Queue<IExecutable>    m_Queue;
     std::mutex                  m_Mutex;
     std::condition_variable     m_Condtion;
     std::vector<std::thread>    m_Threads;
@@ -131,7 +131,7 @@ private:
     {
         while(true)
         {
-            IRunnable* runnable = nullptr;
+            IExecutable* executable = nullptr;
             {
                 std::unique_lock<std::mutex> locker(m_Mutex);
                 while(m_Queue.empty())
@@ -142,12 +142,12 @@ private:
                     m_Condtion.wait(locker);
                 }
 
-                runnable = m_Queue.pop();
-                assert(runnable != nullptr);
+                executable = m_Queue.pop();
+                assert(executable != nullptr);
                 ++m_ActiveCount;
             }
 
-            runnable->Run();
+            executable->Execute();
 
             {
                 std::unique_lock<std::mutex> locker(m_Mutex);

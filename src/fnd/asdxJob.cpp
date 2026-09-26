@@ -475,7 +475,7 @@ private:
 void JobNode::Run()
 {
     // ジョブを実行.
-    Job.pListener->OnRun(Job.UserId);
+    Job.pListener->OnJob(Job.UserId);
 
     // 同期ポイントに通知.
     pSyncPoint->IncrementReadyCount();

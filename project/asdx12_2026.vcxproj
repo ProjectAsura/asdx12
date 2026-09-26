@@ -225,6 +225,7 @@
     <ClCompile Include="..\src\fnd\asdxBlackboard.cpp" />
     <ClCompile Include="..\src\fnd\asdxBlob.cpp" />
     <ClCompile Include="..\src\fnd\asdxBlockHeap.cpp" />
+    <ClCompile Include="..\src\fnd\asdxEventHandler.cpp" />
     <ClCompile Include="..\src\fnd\asdxFileIO.cpp" />
     <ClCompile Include="..\src\fnd\asdxFrameHeap.cpp" />
     <ClCompile Include="..\src\fnd\asdxGamePad.cpp" />
@@ -235,7 +236,6 @@
     <ClCompile Include="..\src\fnd\asdxJsonWriter.cpp" />
     <ClCompile Include="..\src\fnd\asdxKeyboard.cpp" />
     <ClCompile Include="..\src\fnd\asdxLogger.cpp" />
-    <ClCompile Include="..\src\fnd\asdxMessage.cpp" />
     <ClCompile Include="..\src\fnd\asdxMisc.cpp" />
     <ClCompile Include="..\src\fnd\asdxMouse.cpp" />
     <ClCompile Include="..\src\fnd\asdxOffsetAllocator.cpp" />
@@ -343,6 +343,8 @@
     <ClInclude Include="..\include\fnd\asdxChunkAllocator.h" />
     <ClInclude Include="..\include\fnd\asdxDummyTemplate.h" />
     <ClInclude Include="..\include\fnd\asdxDragTracker.h" />
+    <ClInclude Include="..\include\fnd\asdxEventHandler.h" />
+    <ClInclude Include="..\include\fnd\asdxExecutable.h" />
     <ClInclude Include="..\include\fnd\asdxFileIO.h" />
     <ClInclude Include="..\include\fnd\asdxFrameHeap.h" />
     <ClInclude Include="..\include\fnd\asdxFunction.h" />
@@ -355,7 +357,6 @@
     <ClInclude Include="..\include\fnd\asdxLogger.h" />
     <ClInclude Include="..\include\fnd\asdxMacro.h" />
     <ClInclude Include="..\include\fnd\asdxMath.h" />
-    <ClInclude Include="..\include\fnd\asdxMessage.h" />
     <ClInclude Include="..\include\fnd\asdxMisc.h" />
     <ClInclude Include="..\include\fnd\asdxOffsetAllocator.h" />
     <ClInclude Include="..\include\fnd\asdxPath.h" />

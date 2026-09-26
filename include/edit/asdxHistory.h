@@ -8,10 +8,10 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <list>
 #include <vector>
 #include <functional>
 #include <fnd/asdxSpinLock.h>
+#include <fnd/asdxEventHandler.h>
 
 
 namespace asdx {
@@ -24,15 +24,6 @@ using Action = std::function<void(void)>;
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// IEventListener interface
-///////////////////////////////////////////////////////////////////////////////
-struct IEventListener
-{
-    virtual ~IEventListener() {}
-    virtual void OnNotify() = 0;
-};
-
-///////////////////////////////////////////////////////////////////////////////
 // IHistory interface
 ///////////////////////////////////////////////////////////////////////////////
 struct IHistory
@@ -40,23 +31,6 @@ struct IHistory
     virtual ~IHistory() {}
     virtual void Redo() = 0;
     virtual void Undo() = 0;
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// EventHandler class
-///////////////////////////////////////////////////////////////////////////////
-class EventHandler
-{
-public:
-    EventHandler();
-    ~EventHandler();
-
-    void Invoke();
-    EventHandler& operator += (IEventListener* listener);
-    EventHandler& operator -= (IEventListener* listener);
-
-private:
-    std::list<IEventListener*>  m_Listeners;
 };
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -22,20 +22,60 @@ static const Vector3 kBoxOffsets[8] = {
     Vector3(-1.0f,  1.0f, -1.0f),
 };
 
+//-----------------------------------------------------------------------------
+//      3次方程式を解きます.
+//-----------------------------------------------------------------------------
 inline bool SolveCubic(float e, float f, float g, float* t, float* u, float* v)
 {
+    // 三次方程式
+    //
+    //     x^3 + e*x^2 + f*x + g = 0
+    //
+    // の実数解を求める。
+    //
+    // x = y - e/3 と置いて二次項を消去すると、
+    //
+    //     y^3 + p*y + q = 0
+    //
+    // という減次三次方程式 (depressed cubic) が得られる。
+    //
+    // 本関数では、3つの実数解が存在する場合に
+    // t, u, v へそれぞれの解を格納する。
+    // 実数解が1つしか存在しない場合は false を返す。
     float p, q, h, rc, d, theta, costh3, sinth3;
 
+    // 二次項を消去した三次方程式
+    //
+    //     y^3 + p*y + q = 0
+    //
+    // の係数 p, q を求める。
     p = f - e * e / 3.0f;
     q = g - e * f / 3.0f + e * e * e * 2.0f / 27.0f;
+
+    // Cardano の公式における判別用の値を求める。
+    //
+    //     h = (q/2)^2 + (p/3)^3
+    //
+    // h > 0  : 実数解が1つ、複素数解が2つ
+    // h = 0  : 重解を持つ
+    // h < 0  : 異なる3つの実数解を持つ
     h = q * q / 4.0f + p * p * p / 27.0f;
 
+    // 実数解が1つしかない場合。
+    // この関数では3つの実数解を求めることを目的としているため、
+    // 解を0で初期化して失敗を返す。
     if (h > 0)
     {
         (*t) = (*u) = (*v) = 0.0f;
         return false;
     }
 
+    // h == 0 かつ q == 0 の場合は三重根となる。
+    //
+    // 減次三次方程式では y = 0 なので、
+    // x = y - e/3 = -e/3
+    //
+    // が3つすべての解となる。
     if ((h == 0) && (q == 0))
     {
         (*t) = -e / 3.0f;
@@ -45,16 +85,34 @@ inline bool SolveCubic(float e, float f, float g, float* t, float* u, float* v)
         return true;
     }
 
+    // h <= 0 の場合は三角関数を用いて3つの実数解を求める。
+    //
+    // h = q^2/4 + p^3/27 より、
+    //
+    //     d = sqrt(q^2/4 - h)
+    //
+    // を計算する。
     d = sqrtf(q * q / 4.0f - h);
+
+    // d の立方根を求める。
+    // 符号を維持した実数の立方根になるように計算する。
     if (d < 0)
         rc = -powf(-d, 1.0f / 3.0f);
     else
         rc =  powf(d, 1.0f / 3.0f);
 
+    // Cardano の公式を三角関数形式で解くための角度を求める。
+    //
+    //     theta = acos(-q / (2*d))
+    //
+    // 以降では theta/3 の sin, cos を利用して
+    // 3つの実数解を構成する。
     theta  = acosf(-q / (2.0f * d));
     costh3 = cosf(theta / 3.0f);
     sinth3 = sqrtf(3.0f) * sinf(theta / 3.0f);
 
+    // 減次三次方程式の3つの解を求め、
+    // x = y - e/3 によって元の三次方程式の解へ戻す。
     (*t) = 2.0f * rc * costh3 - e / 3.0f;
     (*u) = -rc * (costh3 + sinth3) - e / 3.0f;
     (*v) = -rc * (costh3 - sinth3) - e / 3.0f;
@@ -62,6 +120,9 @@ inline bool SolveCubic(float e, float f, float g, float* t, float* u, float* v)
     return true;
 }
 
+//-----------------------------------------------------------------------------
+//      固有ベクトルを求めます.
+//-----------------------------------------------------------------------------
 inline Vector3 CalculateEigenVector
 (
     float m11, float m12, float m13,
@@ -138,6 +199,9 @@ inline Vector3 CalculateEigenVector
     }
 }
 
+//-----------------------------------------------------------------------------
+//      3つの固有ベクトルを求めます.
+//-----------------------------------------------------------------------------
 inline bool CalculateEigenVectors
 (
     float m11, float m12, float m13,
@@ -239,6 +303,9 @@ inline bool CalculateEigenVectors
     return true;
 }
 
+//-----------------------------------------------------------------------------
+//      共分散行列から固有ベクトルを求めます.
+//-----------------------------------------------------------------------------
 inline bool CalculateEigenVectorsFromCovarianceMatrix
 (
     float       xx,
@@ -268,6 +335,9 @@ inline bool CalculateEigenVectorsFromCovarianceMatrix
     return CalculateEigenVectors(xx, xy, xz, yy, yz, zz, ev1, ev2, ev3, pV1, pV2, pV3);
 }
 
+//-----------------------------------------------------------------------------
+//      OBBと平面の交差判定を行います.
+//-----------------------------------------------------------------------------
 inline void FastIntersectOrientedBoxPlane
 (
     const Vector3&  center,
@@ -5408,6 +5478,28 @@ inline BoundingBox BoundingBox::CreateFromPoints(const Vector3* points, size_t c
 }
 
 //-----------------------------------------------------------------------------
+//      点群からAABBを生成します.
+//-----------------------------------------------------------------------------
+inline BoundingBox BoundingBox::CreateFromPoints(const float* points, size_t count, size_t stride)
+{
+    if (!points || count == 0) 
+        return BoundingBox();
+
+    auto mini = Vector3(points[0], points[1], points[2]);
+    auto maxi = Vector3(points[0], points[1], points[2]);
+    points += stride;
+
+    for (size_t i = 1; i < count; ++i) 
+    {
+        auto p = Vector3(points[0], points[1], points[2]);
+        mini = Vector3::Min(mini, p);
+        maxi = Vector3::Max(maxi, p);
+        points += stride;
+    }
+    return BoundingBox(mini, maxi);
+}
+
+//-----------------------------------------------------------------------------
 //      指定行列で変換します.
 //-----------------------------------------------------------------------------
 inline BoundingBox BoundingBox::Transform(const BoundingBox& box, const Matrix4x4& mtx)
@@ -5609,6 +5701,15 @@ inline BoundingSphere BoundingSphere::CreateFromBoundingBox(const BoundingBox& b
 inline BoundingSphere BoundingSphere::CreateFromPoints(const Vector3* points, size_t count)
 {
     auto box = BoundingBox::CreateFromPoints(points, count);
+    return CreateFromBoundingBox(box);
+}
+
+//-----------------------------------------------------------------------------
+//      点群から生成します.
+//-----------------------------------------------------------------------------
+inline BoundingSphere BoundingSphere::CreateFromPoints(const float* points, size_t count, size_t stride)
+{
+    auto box = BoundingBox::CreateFromPoints(points, count, stride);
     return CreateFromBoundingBox(box);
 }
 
@@ -6151,6 +6252,98 @@ inline BoundingOrientedBox BoundingOrientedBox::CreateFromPoints(const Vector3* 
     for(size_t i=1; i<count; ++i)
     {
         auto p = Vector3::TransformNormal(point[i], inverseMtx);
+        mini = Vector3::Min(mini, p);
+        maxi = Vector3::Max(maxi, p);
+    }
+
+    auto center = (mini + maxi) * 0.5f;
+    center = Vector3::TransformNormal(center, mtx);
+
+    return BoundingOrientedBox(
+        center,
+        Vector3::Abs(maxi - mini) * 0.5f,
+        orientation);
+}
+
+//-----------------------------------------------------------------------------
+//      点群からOBBを生成します.
+//-----------------------------------------------------------------------------
+inline BoundingOrientedBox BoundingOrientedBox::CreateFromPoints(const float* points, size_t count, size_t stride)
+{
+    auto pnt = points;
+    Vector3 centerOfMass(0.0f, 0.0f, 0.0f);
+
+    for(size_t i=0; i<count; ++i)
+    {
+        auto p = Vector3(pnt[0], pnt[1], pnt[2]);
+        pnt += stride;
+
+        centerOfMass += p;
+    }
+    centerOfMass /= float(count);
+
+    auto xx_yy_zz = Vector3(0.0f, 0.0f, 0.0f);
+    auto xy_xz_yz = Vector3(0.0f, 0.0f, 0.0f);
+
+    pnt = points;
+    for(size_t i=0; i<count; ++i)
+    {
+        auto p = Vector3(pnt[0], pnt[1], pnt[2]);
+        pnt += stride;
+
+        xx_yy_zz += p * p;
+
+        auto xxy = Vector3(p.x, p.x, p.y);
+        auto yzz = Vector3(p.y, p.z, p.z);
+
+        xy_xz_yz += xxy * yzz;
+    }
+
+    Vector3 v1, v2, v3;
+    math::CalculateEigenVectorsFromCovarianceMatrix(
+        xx_yy_zz.x,
+        xx_yy_zz.y,
+        xx_yy_zz.z,
+        xy_xz_yz.x,
+        xy_xz_yz.y,
+        xy_xz_yz.z,
+        &v1,
+        &v2,
+        &v3);
+
+    Matrix4x4 mtx(
+        Vector4(v1, 0.0f),
+        Vector4(v2, 0.0f),
+        Vector4(v3, 0.0f),
+        Vector4(0.0f, 0.0f, 0.0f, 1.0f));
+
+    auto det = mtx.Determinant();
+
+    if (det < 0.0f)
+    {
+        mtx.row[0] = -mtx.row[0];
+        mtx.row[1] = -mtx.row[1];
+        mtx.row[2] = -mtx.row[2];
+    }
+
+    auto orientation = Quaternion::CreateFromRotationMatrix(mtx);
+    orientation = Quaternion::Normalize(orientation);
+
+    mtx = Matrix4x4::CreateFromQuaternion(orientation);
+    auto inverseMtx = Matrix4x4::Invert(mtx);
+
+    pnt = points;
+
+    Vector3 mini, maxi;
+    mini = maxi = Vector3::TransformNormal(Vector3(pnt[0], pnt[1], pnt[2]), inverseMtx);
+    pnt += stride;
+
+    for(size_t i=1; i<count; ++i)
+    {
+        auto pt = Vector3(pnt[0], pnt[1], pnt[2]);
+        pnt += stride;
+
+        auto p = Vector3::TransformNormal(pt, inverseMtx);
         mini = Vector3::Min(mini, p);
         maxi = Vector3::Max(maxi, p);
     }

@@ -40,8 +40,8 @@ static constexpr uint32_t CURRENT_VERSION = 3u;  //!< 現在サポートされ�
 ///////////////////////////////////////////////////////////////////////////////
 struct BoundingInfo
 {
-    asdx::BoundingBox3      Box;
-    asdx::BoundingSphere3   Sphere;
+    asdx::BoundingBox       Box;
+    asdx::BoundingSphere    Sphere;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -70,7 +70,7 @@ asdx::res::Unorm4 ToUnorm4(const aiColor4D& color)
 //-----------------------------------------------------------------------------
 //      Float4x4 に変換します.
 //-----------------------------------------------------------------------------
-asdx::res::Float4x4 ToFloat4x4(const asdx::Matrix& matrix)
+asdx::res::Float4x4 ToFloat4x4(const asdx::Matrix4x4& matrix)
 {
     return asdx::res::Float4x4(
         matrix._11, matrix._12, matrix._13, matrix._14,
@@ -82,7 +82,7 @@ asdx::res::Float4x4 ToFloat4x4(const asdx::Matrix& matrix)
 //-----------------------------------------------------------------------------
 //      Float3x4 に変換します.
 //-----------------------------------------------------------------------------
-asdx::res::Float3x4 ToFloat3x4(const asdx::Matrix& matrix)
+asdx::res::Float3x4 ToFloat3x4(const asdx::Matrix4x4& matrix)
 {
     // 転置して格納.
     return asdx::res::Float3x4(
@@ -119,9 +119,9 @@ asdx::res::Float3x4 ToFloat3x4(const aiMatrix4x4& matrix)
 //-----------------------------------------------------------------------------
 //      Matrix に変換します.
 //-----------------------------------------------------------------------------
-asdx::Matrix ToMatrix(const aiMatrix4x4& matrix)
+asdx::Matrix4x4 ToMatrix(const aiMatrix4x4& matrix)
 {
-    return asdx::Matrix(
+    return asdx::Matrix4x4(
         matrix.a1, matrix.b1, matrix.c1, matrix.d1,
         matrix.a2, matrix.b2, matrix.c2, matrix.d2,
         matrix.a3, matrix.b3, matrix.c3, matrix.d3,
@@ -156,17 +156,17 @@ aiMatrix4x4 ToAiMatrix(const asdx::res::Float3x4* matrix)
 //-----------------------------------------------------------------------------
 //      res::BoundingBox に変換します.
 //-----------------------------------------------------------------------------
-asdx::res::BoundingBox ToBox(const asdx::BoundingBox3& box)
+asdx::res::BoundingBox ToBox(const asdx::BoundingBox& box)
 {
     return asdx::res::BoundingBox(
-        asdx::res::Float3(box.Mini.x, box.Mini.y, box.Mini.z),
-        asdx::res::Float3(box.Maxi.x, box.Maxi.y, box.Maxi.z));
+        asdx::res::Float3(box.Min.x, box.Min.y, box.Min.z),
+        asdx::res::Float3(box.Max.x, box.Max.y, box.Max.z));
 }
 
 //-----------------------------------------------------------------------------
 //      res::BoundingSphere に変換します.
 //-----------------------------------------------------------------------------
-asdx::res::BoundingSphere ToSphere(const asdx::BoundingSphere3& sphere)
+asdx::res::BoundingSphere ToSphere(const asdx::BoundingSphere& sphere)
 {
     return asdx::res::BoundingSphere(
         asdx::res::Float3(sphere.Center.x, sphere.Center.y, sphere.Center.z),
@@ -396,7 +396,7 @@ void ParseMesh
     const aiVector3D kZero(0.0f, 0.0f, 0.0f);
     const aiColor4D  kWhite(1.0f, 1.0f, 1.0f, 1.0f);
 
-    asdx::BoundingBox3 box;
+    asdx::BoundingBox box;
 
     for(auto i=0u; i<srcMesh->mNumVertices; ++i)
     {
@@ -410,9 +410,9 @@ void ParseMesh
         texcoords[i] = asdx::res::Float2(tex.x, tex.y);
         colors   [i] = ToUnorm4(col);
 
-        auto p   = asdx::Vector3(pos.x, pos.y, pos.z);
-        box.Mini = asdx::Vector3::Min(box.Mini, p);
-        box.Maxi = asdx::Vector3::Max(box.Maxi, p);
+        auto p  = asdx::Vector3(pos.x, pos.y, pos.z);
+        box.Min = asdx::Vector3::Min(box.Min, p);
+        box.Max = asdx::Vector3::Max(box.Max, p);
     }
 
     std::vector<uint32_t> vertexIndices;
@@ -642,7 +642,7 @@ void ParseMesh
         assert(ret == 1);
     }
 
-    auto sphere  = asdx::BoundingSphere3::Create(&srcMesh->mVertices[0].x, srcMesh->mNumVertices, sizeof(aiVector3D));
+    auto sphere  = asdx::BoundingSphere::CreateFromPoints(reinterpret_cast<const asdx::Vector3*>(&srcMesh->mVertices[0].x), srcMesh->mNumVertices);
     auto bSphere = ToSphere(sphere);
     auto bBox    = ToBox(box);
 
@@ -1127,8 +1127,8 @@ void ParseModelInstance
         // 名前を取得.
         auto name = std::string(pNode->mName.C_Str());
 
-        asdx::BoundingBox3    box;
-        asdx::BoundingSphere3 sphere;
+        asdx::BoundingBox    box;
+        asdx::BoundingSphere sphere;
 
         auto itr = batches.find(hash);
         if (itr == batches.end())
@@ -1143,8 +1143,8 @@ void ParseModelInstance
                 item.Meshes[i] = pNode->mMeshes[i];
 
                 // バウンディングを求める.
-                box    = asdx::BoundingBox3::Merge(box, bounds[i].Box);
-                sphere = asdx::BoundingSphere3::Merge(sphere, bounds[i].Sphere);
+                box    = asdx::BoundingBox::CreateMerged(box, bounds[i].Box);
+                sphere = asdx::BoundingSphere::CreateMerged(sphere, bounds[i].Sphere);
             }
 
             item.Bounds.Box    = box;
@@ -1167,12 +1167,12 @@ void ParseModelInstance
 
         // 変換行列でバウンディングを変換.
         auto transform   = ToMatrix(mtx);
-        auto transBox    = asdx::BoundingBox3::Transform(box, transform);
-        auto transSphere = asdx::BoundingSphere3::Transform(sphere, transform);
+        auto transBox    = asdx::BoundingBox::Transform(box, transform);
+        auto transSphere = asdx::BoundingSphere::Transform(sphere, transform);
 
         // モデルバイナリ用にマージしたものを求める.
-        mergedInfo.Box    = asdx::BoundingBox3::Merge(mergedInfo.Box, transBox);
-        mergedInfo.Sphere = asdx::BoundingSphere3::Merge(mergedInfo.Sphere, transSphere);
+        mergedInfo.Box    = asdx::BoundingBox::CreateMerged(mergedInfo.Box, transBox);
+        mergedInfo.Sphere = asdx::BoundingSphere::CreateMerged(mergedInfo.Sphere, transSphere);
     }
 
     // 子供を再帰的に処理.
@@ -1299,8 +1299,8 @@ bool ModelConverter::Convert
 
         ParseMesh(builder, boneMap, bounds[i], pScene->mRootNode, dstMesh, srcMesh);
 
-        mergedInfo.Box    = asdx::BoundingBox3::Merge(mergedInfo.Box, bounds[i].Box);
-        mergedInfo.Sphere = asdx::BoundingSphere3::Merge(mergedInfo.Sphere, bounds[i].Sphere);
+        mergedInfo.Box    = asdx::BoundingBox::CreateMerged(mergedInfo.Box, bounds[i].Box);
+        mergedInfo.Sphere = asdx::BoundingSphere::CreateMerged(mergedInfo.Sphere, bounds[i].Sphere);
     }
 
     // マテリアルデータを変換.
@@ -1338,7 +1338,7 @@ bool ModelConverter::Convert
     auto bSphere = ToSphere(mergedInfo.Sphere);
 
     auto rootMtx          = ToMatrix(pScene->mRootNode->mTransformation);
-    auto invRootMtx       = asdx::Matrix::Invert(rootMtx);
+    auto invRootMtx       = asdx::Matrix4x4::Invert(rootMtx);
     auto rootTransform    = ToFloat3x4(rootMtx);
     auto invRootTransform = ToFloat3x4(invRootMtx);
 
