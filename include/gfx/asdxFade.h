@@ -87,7 +87,23 @@ public:
     //! @param[in]      alpha           目標アルファ値.
     //! @param[in]      durationSec     遷移完了までの時間(単位：秒).
     //-------------------------------------------------------------------------
-    void FadeTo(const asdx::Vector3& color, float alpha, float durationSec);
+    void FadeTo(const Vector3& color, float alpha, float durationSec);
+
+    //-------------------------------------------------------------------------
+    //! @brief      フェード処理を設定します.
+    //! 
+    //! @param[in]      srcColor        開始カラー.
+    //! @param[in]      dstColor        目標カラー.
+    //! @param[in]      srcAlpha        開始アルファ値.
+    //! @param[in]      dstAlpha        目標アルファ値.
+    //! @param[in]      durationSec     遷移完了までの時間(単位：秒).
+    //-------------------------------------------------------------------------
+    void FadeTo(
+        const Vector3& srcColor,
+        const Vector3& dstColor,
+        float          srcAlpha,
+        float          dstAlpha,
+        float          durationSec);
 
     //-------------------------------------------------------------------------
     //! @brief      フェードインします.
@@ -109,7 +125,7 @@ public:
     //! @param[in]      color           目標カラー.
     //! @param[in]      durationSec     遷移完了までの時間(単位:秒).
     //-------------------------------------------------------------------------
-    void FadeIn(const asdx::Vector3& color, float durationSec);
+    void FadeIn(const Vector3& color, float durationSec);
 
     //-------------------------------------------------------------------------
     //! @brief      フェードアウトします.
@@ -117,7 +133,7 @@ public:
     //! @param[in]      color           目標カラー.
     //! @param[in]      durationSec     遷移完了までの時間(単位:秒).
     //-------------------------------------------------------------------------
-    void FadeOut(const asdx::Vector3& color, float durationSec);
+    void FadeOut(const Vector3& color, float durationSec);
 
     //-------------------------------------------------------------------------
     //! @brief      画面を明滅させます.
@@ -125,7 +141,7 @@ public:
     //! @param[in]      color           目標カラー.
     //! @param[in]      durationSec     明滅完了までの時間(単位:秒).
     //-------------------------------------------------------------------------
-    void Flash(const asdx::Vector3& color, float durationSec);
+    void Flash(const Vector3& color, float durationSec);
 
     //-------------------------------------------------------------------------
     //! @brief      完了済みかどうかチェックします.
@@ -134,6 +150,62 @@ public:
     //! @retval false   未完了です.
     //-------------------------------------------------------------------------
     bool IsComplete() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      遷移完了までの時間(単位：秒)を取得します.
+    //! 
+    //! @return     遷移完了までの時間(単位：秒)を返却します.
+    //-------------------------------------------------------------------------
+    float GetDurationSec() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      経過時間(単位：秒)を取得します.
+    //! 
+    //! @return     経過時間(単位：秒)を返却します.
+    //-------------------------------------------------------------------------
+    float GetElapsedSec() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      開始カラーを取得します.
+    //! 
+    //! @return     開始カラーを返却します.
+    //-------------------------------------------------------------------------
+    Vector3 GetStartColor() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      目標カラーを取得します.
+    //! 
+    //! @return     目標カラーを返却します.
+    //-------------------------------------------------------------------------
+    Vector3 GetTargetColor() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      現在カラーを取得します.
+    //! 
+    //! @return     現在カラーを返却します.
+    //-------------------------------------------------------------------------
+    Vector3 GetCurrentColor() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      開始アルファ値を取得します.
+    //! 
+    //! @return     開始アルファ値を返却します.
+    //-------------------------------------------------------------------------
+    float GetStartAlpha() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      目標アルファ値を取得します.
+    //! 
+    //! @return     目標アルファ値を返却します.
+    //-------------------------------------------------------------------------
+    float GetTargetAlpha() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      現在アルファ値を取得します.
+    //! 
+    //! @return     現在アルファ値を返却します.
+    //-------------------------------------------------------------------------
+    float GetCurrentAlpha() const;
 
 private:
     //=========================================================================
@@ -144,15 +216,15 @@ private:
     RefPtr<ID3D12PipelineState> m_PipelineState;    //!< パイプラインステートです.
     Texture*                    m_WhiteTexture;     //!< テクスチャ.
 
-    asdx::Vector3   m_StartColor   = asdx::Vector3(0.0f, 0.0f, 0.0f);
-    asdx::Vector3   m_TargetColor  = asdx::Vector3(0.0f, 0.0f, 0.0f);
-    asdx::Vector3   m_CurrentColor = asdx::Vector3(0.0f, 0.0f, 0.0f);
-    float           m_StartAlpha   = 0.0f;
-    float           m_TargetAlpha  = 0.0f;
-    float           m_CurrentAlpha = 0.0f;
-    float           m_ElapsedSec   = 0.0f;
-    float           m_DurationSec  = 1.0f;
-    bool            m_Complete     = false;
+    Vector3 m_StartColor   = Vector3(0.0f, 0.0f, 0.0f); //!< 開始カラー.
+    Vector3 m_TargetColor  = Vector3(0.0f, 0.0f, 0.0f); //!< 目標カラー.
+    Vector3 m_CurrentColor = Vector3(0.0f, 0.0f, 0.0f); //!< 現在カラー.
+    float   m_StartAlpha   = 0.0f;                      //!< 開始アルファ.
+    float   m_TargetAlpha  = 0.0f;                      //!< 目標アルファ.
+    float   m_CurrentAlpha = 0.0f;                      //!< 現在アルファ.
+    float   m_ElapsedSec   = 0.0f;                      //!< 経過時間.
+    float   m_DurationSec  = 1.0f;                      //!< 遷移時間.
+    bool    m_Complete     = false;                     //!< 完了フラグ.
 
     //========================================================================
     // private methods.

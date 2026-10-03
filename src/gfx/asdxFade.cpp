@@ -265,13 +265,36 @@ void Fade::Draw(ID3D12GraphicsCommandList* pCmd)
 //-----------------------------------------------------------------------------
 //      フェード処理を設定します.
 //-----------------------------------------------------------------------------
-void Fade::FadeTo(const asdx::Vector3& color, float alpha, float durationSec)
+void Fade::FadeTo(const Vector3& color, float alpha, float durationSec)
 {
     m_StartColor  = m_CurrentColor;
     m_TargetColor = color;
 
     m_StartAlpha  = m_CurrentAlpha;
     m_TargetAlpha = alpha;
+
+    m_DurationSec = durationSec;
+    m_ElapsedSec  = 0.0f;
+    m_Complete    = false;
+}
+
+//-----------------------------------------------------------------------------
+//      フェード処理を設定します.
+//-----------------------------------------------------------------------------
+void Fade::FadeTo
+(
+    const Vector3&  srcColor,
+    const Vector3&  dstColor,
+    float           srcAlpha,
+    float           dstAlpha,
+    float           durationSec
+)
+{
+    m_StartColor  = srcColor;
+    m_TargetColor = dstColor;
+
+    m_StartAlpha  = srcAlpha;
+    m_TargetAlpha = dstAlpha;
 
     m_DurationSec = durationSec;
     m_ElapsedSec  = 0.0f;
@@ -317,5 +340,53 @@ void Fade::Flash(const asdx::Vector3& color, float duration)
 //-----------------------------------------------------------------------------
 bool Fade::IsComplete() const
 { return m_Complete; }
+
+//-----------------------------------------------------------------------------
+//      遷移時間を取得します.
+//-----------------------------------------------------------------------------
+float Fade::GetDurationSec() const
+{ return m_DurationSec; }
+
+//-----------------------------------------------------------------------------
+//      経過時間を取得します.
+//-----------------------------------------------------------------------------
+float Fade::GetElapsedSec() const
+{ return m_ElapsedSec; }
+
+//-----------------------------------------------------------------------------
+//      開始カラーを取得します.
+//-----------------------------------------------------------------------------
+Vector3 Fade::GetStartColor() const
+{ return m_StartColor; }
+
+//-----------------------------------------------------------------------------
+//      目標カラーを取得します.
+//-----------------------------------------------------------------------------
+Vector3 Fade::GetTargetColor() const
+{ return m_TargetColor; }
+
+//-----------------------------------------------------------------------------
+//      現在カラーを取得します.
+//-----------------------------------------------------------------------------
+Vector3 Fade::GetCurrentColor() const
+{ return m_CurrentColor; }
+
+//-----------------------------------------------------------------------------
+//      開始アルファ値を取得します.
+//-----------------------------------------------------------------------------
+float Fade::GetStartAlpha() const
+{ return m_StartAlpha; }
+
+//-----------------------------------------------------------------------------
+//      目標アルファ値を取得します.
+//-----------------------------------------------------------------------------
+float Fade::GetTargetAlpha() const
+{ return m_TargetAlpha; }
+
+//-----------------------------------------------------------------------------
+//      現在アルファ値を取得します.
+//-----------------------------------------------------------------------------
+float Fade::GetCurrentAlpha() const
+{ return m_CurrentAlpha; }
 
 } // namespace asdx
