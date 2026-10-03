@@ -219,9 +219,10 @@ void Fade::Update(float deltaSec)
 
     m_ElapsedSec += deltaSec;
 
-    float t = Saturate(m_ElapsedSec / m_DurationSec);
-    m_CurrentColor = Vector3::Lerp(m_StartColor, m_TargetColor, t);
-    m_CurrentAlpha = Lerp(m_StartAlpha, m_TargetAlpha, t);
+    auto t = Saturate(m_ElapsedSec / m_DurationSec);
+    auto t2 = t * t;
+    m_CurrentColor = Vector3::Lerp(m_StartColor, m_TargetColor, t2);
+    m_CurrentAlpha = Lerp(m_StartAlpha, m_TargetAlpha, t2);
 
     if (t >= 1.0f)
     {
