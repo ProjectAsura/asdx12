@@ -390,4 +390,13 @@ float Fade::GetTargetAlpha() const
 float Fade::GetCurrentAlpha() const
 { return m_CurrentAlpha; }
 
+//-----------------------------------------------------------------------------
+//      補間値を取得します.
+//-----------------------------------------------------------------------------
+float Fade::GetLerpValue() const
+{
+    auto t = Saturate(m_ElapsedSec / m_DurationSec);
+    return t * t;
+}
+
 } // namespace asdx
