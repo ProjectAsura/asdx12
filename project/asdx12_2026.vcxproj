@@ -366,6 +366,7 @@
     <ClInclude Include="..\include\fnd\asdxResHolder.h" />
     <ClInclude Include="..\include\fnd\asdxSpinLock.h" />
     <ClInclude Include="..\include\fnd\asdxStack.h" />
+    <ClInclude Include="..\include\fnd\asdxStackAllocator.h" />
     <ClInclude Include="..\include\fnd\asdxStateMachine.h" />
     <ClInclude Include="..\include\fnd\asdxStepTimer.h" />
     <ClInclude Include="..\include\fnd\asdxStopWatch.h" />

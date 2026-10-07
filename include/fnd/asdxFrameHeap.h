@@ -9,6 +9,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <cstdint>
+#include <utility>
 
 
 namespace asdx {
@@ -108,7 +109,7 @@ public:
         auto buf = Alloc(sizeof(T), alignof(T));
         if (buf == nullptr)
             return nullptr;
-        return new(buf) T(args...);
+        return new(buf) T(std::forward<Args>(args)...);
     }
 
 private:

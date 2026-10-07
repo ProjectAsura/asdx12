@@ -55,5 +55,4 @@ struct IThreadPool
 //-----------------------------------------------------------------------------
 bool CreateThreadPool(uint8_t threadCount, IThreadPool** ppThreadPool);
 
-
 } // namespace asdx

@@ -114,7 +114,7 @@ public:
         auto buf = Alloc();
         if (buf == nullptr)
             return nullptr;
-        return new(buf) T(args...);
+        return new(buf) T(std::forward<Args>(args)...);
     }
 
 private:

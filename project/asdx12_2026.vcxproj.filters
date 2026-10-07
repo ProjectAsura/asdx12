@@ -863,6 +863,9 @@
     <ClInclude Include="..\include\fnd\asdxEventHandler.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\fnd\asdxStackAllocator.h">
+      <Filter>ヘッダー ファイル\fnd</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\res\shaders\asdxBRDF.hlsli">

@@ -12,6 +12,7 @@
 #include <cassert>
 #include <cstring>
 #include <new>
+#include <utility>
 
 
 namespace asdx {
@@ -22,6 +23,7 @@ namespace asdx {
 class ChunkAllocator
 {
     // ※ do-while 構文を使用してメモリを確保してください.
+    // また、デストラクタは呼びされない仕様なので注意してください.
 
     //=========================================================================
     // list of friend classes and methods.
@@ -85,24 +87,18 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      new演算子を利用した確保処理を行います.
     //! 
-    //! @param[in]      count       確保数.
+    //! @param[in]      args        可変引数テンプレートです.
     //! @return     AllocChunk() が呼び出し後は, 確保メモリへのポインタを返却します.
     //!             AllocChunk() が呼び出し前は，nullptr を返却します.
     //-------------------------------------------------------------------------
-    template<typename T>
-    T* New(size_t count = 1)
+    template<typename T, class... Args>
+    T* New(Args&&... args)
     {
-        auto buf = reinterpret_cast<T*>(Alloc(sizeof(T) * count, alignof(T)));
+        auto buf = reinterpret_cast<T*>(Alloc(sizeof(T), alignof(T)));
         if (buf == nullptr)
             return nullptr;
 
-        auto mem = buf;
-        for(size_t i=0; i<count; ++i)
-        {
-            new (mem) T;
-            mem++;
-        }
-        return buf;
+        return new(buf) T(std::forward<Args>(args)...);
     }
 
     //-------------------------------------------------------------------------

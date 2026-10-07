@@ -36,6 +36,17 @@ using TextureHolder = ResHolder<Texture, TextureManager>;
 ///////////////////////////////////////////////////////////////////////////////
 class TextureManager
 {
+    // NOTE:
+    // 次のデフォルトテクスチャがサポートされています. サイズは 32x32です.
+    // * default.BaseColor          = (64 or 128, 255)      : R8G8B8A8_UNORM_SRGB (市松模様です, 16ピクセルごとに変化).
+    // * default.Normal             = (128, 128, 255, 255)  : R8G8B8A8_UNORM
+    // * default.Orm                = (255, 128, 0, 255)    : R8G8B8A8_UNORM
+    // * default.TransparentBlack   = (0, 0, 0, 0)          : R8G8B8A8_UNORM
+    // * default.OpaqueBlack        = (0, 0, 0, 255)        : R8G8B8A8_UNORM
+    // * default.TransparentWhite   = (255, 255, 255, 0)    : R8G8B8A8_UNORM
+    // * default.OpaqueWhite        = (255, 255, 255, 255)  : R8G8B8A8_UNORM
+    // * default.Velocity           = (128, 128)            : R8G8_UNORM
+
     //=========================================================================
     // list of friend classe and methods.
     //=========================================================================

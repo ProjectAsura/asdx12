@@ -603,7 +603,7 @@ void TextureManager::CreateDefaultTextures()
     // Velocity Map.
     {
         std::vector<uint8_t> pixels;
-        pixels.resize(32 * 32* 4);
+        pixels.resize(32 * 32* 2);
 
         auto idx = 0;
         for(auto i=0; i<32; ++i)
@@ -612,17 +612,15 @@ void TextureManager::CreateDefaultTextures()
             {
                 pixels[idx + 0] = 128;
                 pixels[idx + 1] = 128;
-                pixels[idx + 2] = 0;
-                pixels[idx + 3] = 255;
-                idx += 4;
+                idx += 2;
             }
         }
 
         ResSubResource subRes = {};
         subRes.Width        = 32;
         subRes.Height       = 32;
-        subRes.RowPitch     = 32 * 4;
-        subRes.SlicePitch   = 32 * 32 * 4;
+        subRes.RowPitch     = 32 * 2;
+        subRes.SlicePitch   = 32 * 32 * 2;
         subRes.PixelOffset  = 0;
 
         ResTexture res = {};
@@ -630,7 +628,7 @@ void TextureManager::CreateDefaultTextures()
         res.Width               = 32;
         res.Height              = 32;
         res.DepthOrArraySize    = 1;
-        res.Format              = DXGI_FORMAT_R8G8B8A8_UNORM;
+        res.Format              = DXGI_FORMAT_R8G8_UNORM;
         res.MipLevels           = 1;
         res.SubResources        = ArrayView(&subRes, 1);
         res.Pixels              = ArrayView(pixels.data(), pixels.size());
