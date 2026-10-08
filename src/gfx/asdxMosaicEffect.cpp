@@ -276,21 +276,20 @@ bool MosaicPS::Init(DXGI_FORMAT format)
     // グラフィックスパイプラインステートの初期化.
     {
         D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = {};
-        desc.pRootSignature                 = m_RootSignature.GetPtr();
-        desc.VS                             = asdx::Preset::FullScreenVS;
-        desc.PS                             = { asdxMosaicPS, sizeof(asdxMosaicPS) };
-        desc.BlendState                     = asdx::Preset::Opaque;
-        desc.SampleMask                     = D3D12_DEFAULT_SAMPLE_MASK;
-        desc.RasterizerState                = asdx::Preset::CullNone;
-        desc.DepthStencilState              = asdx::Preset::DepthNone;
-        desc.InputLayout.NumElements        = _countof(asdx::Preset::QuadElements);
-        desc.InputLayout.pInputElementDescs = asdx::Preset::QuadElements;
-        desc.PrimitiveTopologyType          = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-        desc.NumRenderTargets               = 1;
-        desc.RTVFormats[0]                  = format;
-        desc.DSVFormat                      = DXGI_FORMAT_UNKNOWN;
-        desc.SampleDesc.Count               = 1;
-        desc.SampleDesc.Quality             = 0;
+        desc.pRootSignature         = m_RootSignature.GetPtr();
+        desc.VS                     = Preset::FullScreenVS;
+        desc.PS                     = { asdxMosaicPS, sizeof(asdxMosaicPS) };
+        desc.BlendState             = Preset::Opaque;
+        desc.SampleMask             = D3D12_DEFAULT_SAMPLE_MASK;
+        desc.RasterizerState        = Preset::CullNone;
+        desc.DepthStencilState      = Preset::DepthNone;
+        desc.InputLayout            = { Preset::QuadElements, _countof(Preset::QuadElements) };
+        desc.PrimitiveTopologyType  = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+        desc.NumRenderTargets       = 1;
+        desc.RTVFormats[0]          = format;
+        desc.DSVFormat              = DXGI_FORMAT_UNKNOWN;
+        desc.SampleDesc.Count       = 1;
+        desc.SampleDesc.Quality     = 0;
 
         auto hr = pDevice->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(m_PipelineState.GetAddress()));
         if (FAILED(hr))

@@ -374,7 +374,7 @@ bool GaussianBlurPS::Init(DXGI_FORMAT format)
         desc.SampleMask             = D3D12_DEFAULT_SAMPLE_MASK;
         desc.RasterizerState        = asdx::Preset::CullNone;
         desc.DepthStencilState      = asdx::Preset::DepthNone;
-        desc.InputLayout            = { asdx::Preset::QuadElements, UINT(sizeof(asdx::Preset::QuadElements)) };
+        desc.InputLayout            = { asdx::Preset::QuadElements, _countof(asdx::Preset::QuadElements) };
         desc.PrimitiveTopologyType  = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
         desc.NumRenderTargets       = 1;
         desc.RTVFormats[0]          = format;
