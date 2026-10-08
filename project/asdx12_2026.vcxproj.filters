@@ -402,13 +402,7 @@
     <ClCompile Include="..\src\gfx\asdxMovie.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxRadialBlurEffect.cpp">
-      <Filter>ソース ファイル\gfx</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\gfx\asdxColorEffect.cpp">
-      <Filter>ソース ファイル\gfx</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxGaussianBlurEffect.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
     <ClCompile Include="..\external\meshoptimizer\meshletcodec.cpp">
@@ -447,9 +441,6 @@
     <ClCompile Include="..\src\gfx\asdxMosaicEffect.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gfx\asdxBloomEffect.cpp">
-      <Filter>ソース ファイル\gfx</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\fw\asdxBlockTaskManager.cpp">
       <Filter>ソース ファイル\fw</Filter>
     </ClCompile>
@@ -470,6 +461,15 @@
     </ClCompile>
     <ClCompile Include="..\src\fnd\asdxEventHandler.cpp">
       <Filter>ソース ファイル\fnd</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gfx\asdxBloom.cpp">
+      <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gfx\asdxGaussianBlur.cpp">
+      <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gfx\asdxRadialBlur.cpp">
+      <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -794,9 +794,6 @@
     <ClInclude Include="..\include\gfx\asdxColorEffect.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\gfx\asdxRadialBlurEffect.h">
-      <Filter>ヘッダー ファイル\gfx</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\snd\asdxSoundEngine.h">
       <Filter>ヘッダー ファイル\snd</Filter>
     </ClInclude>
@@ -824,13 +821,7 @@
     <ClInclude Include="..\include\gfx\asdxEnhancedBarrier.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\gfx\asdxGaussianBlurEffect.h">
-      <Filter>ヘッダー ファイル\gfx</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\gfx\asdxMosaicEffect.h">
-      <Filter>ヘッダー ファイル\gfx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\gfx\asdxBloomEffect.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
     <ClInclude Include="..\include\fw\asdxBlockTaskManager.h">
@@ -865,6 +856,15 @@
     </ClInclude>
     <ClInclude Include="..\include\fnd\asdxStackAllocator.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\gfx\asdxBloom.h">
+      <Filter>ヘッダー ファイル\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\gfx\asdxGaussianBlur.h">
+      <Filter>ヘッダー ファイル\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\gfx\asdxRadialBlur.h">
+      <Filter>ヘッダー ファイル\gfx</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -1042,6 +1042,9 @@
       <Filter>リソース ファイル\shaders</Filter>
     </FxCompile>
     <FxCompile Include="..\res\shaders\asdxStarFirstPassCS.hlsl">
+      <Filter>リソース ファイル\shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxGaussianBlurPS.hlsl">
       <Filter>リソース ファイル\shaders</Filter>
     </FxCompile>
   </ItemGroup>

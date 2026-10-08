@@ -8,7 +8,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <fnd/asdxLogger.h>
-#include <gfx/asdxBloomEffect.h>
+#include <gfx/asdxBloom.h>
 #include <gfx/asdxDevice.h>
 #include <gfx/asdxPresetState.h>
 #include <gfx/asdxLegacyBarrier.h>

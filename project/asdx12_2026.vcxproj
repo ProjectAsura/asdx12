@@ -252,7 +252,7 @@
     <ClCompile Include="..\src\fw\asdxScene.cpp" />
     <ClCompile Include="..\src\fw\asdxTask.cpp" />
     <ClCompile Include="..\src\gfx\asdxAllocationHolder.cpp" />
-    <ClCompile Include="..\src\gfx\asdxBloomEffect.cpp" />
+    <ClCompile Include="..\src\gfx\asdxBloom.cpp" />
     <ClCompile Include="..\src\gfx\asdxBuffer.cpp" />
     <ClCompile Include="..\src\gfx\asdxCamera.cpp" />
     <ClCompile Include="..\src\gfx\asdxColorEffect.cpp" />
@@ -266,7 +266,7 @@
     <ClCompile Include="..\src\gfx\asdxFade.cpp" />
     <ClCompile Include="..\src\gfx\asdxFont.cpp" />
     <ClCompile Include="..\src\gfx\asdxFxaa.cpp" />
-    <ClCompile Include="..\src\gfx\asdxGaussianBlurEffect.cpp" />
+    <ClCompile Include="..\src\gfx\asdxGaussianBlur.cpp" />
     <ClCompile Include="..\src\gfx\asdxGfxMisc.cpp" />
     <ClCompile Include="..\src\gfx\asdxIBLBaker.cpp" />
     <ClCompile Include="..\src\gfx\asdxLegacyBarrier.cpp" />
@@ -280,7 +280,7 @@
     <ClCompile Include="..\src\gfx\asdxMovie.cpp" />
     <ClCompile Include="..\src\gfx\asdxPipelineState.cpp" />
     <ClCompile Include="..\src\gfx\asdxPresetState.cpp" />
-    <ClCompile Include="..\src\gfx\asdxRadialBlurEffect.cpp" />
+    <ClCompile Include="..\src\gfx\asdxRadialBlur.cpp" />
     <ClCompile Include="..\src\gfx\asdxSampler.cpp" />
     <ClCompile Include="..\src\gfx\asdxScreenCapture.cpp" />
     <ClCompile Include="..\src\gfx\asdxShaderCompiler.cpp" />
@@ -384,9 +384,9 @@
     <ClInclude Include="..\include\fw\asdxScene.h" />
     <ClInclude Include="..\include\fw\asdxTask.h" />
     <ClInclude Include="..\include\gfx\asdxAllocationHolder.h" />
-    <ClInclude Include="..\include\gfx\asdxBloomEffect.h" />
+    <ClInclude Include="..\include\gfx\asdxBloom.h" />
     <ClInclude Include="..\include\gfx\asdxEnhancedBarrier.h" />
-    <ClInclude Include="..\include\gfx\asdxGaussianBlurEffect.h" />
+    <ClInclude Include="..\include\gfx\asdxGaussianBlur.h" />
     <ClInclude Include="..\include\gfx\asdxLegacyBarrier.h" />
     <ClInclude Include="..\include\gfx\asdxBuffer.h" />
     <ClInclude Include="..\include\gfx\asdxCamera.h" />
@@ -412,7 +412,7 @@
     <ClInclude Include="..\include\gfx\asdxMotionPlayer.h" />
     <ClInclude Include="..\include\gfx\asdxPipelineState.h" />
     <ClInclude Include="..\include\gfx\asdxPresetState.h" />
-    <ClInclude Include="..\include\gfx\asdxRadialBlurEffect.h" />
+    <ClInclude Include="..\include\gfx\asdxRadialBlur.h" />
     <ClInclude Include="..\include\gfx\asdxSampler.h" />
     <ClInclude Include="..\include\gfx\asdxScopedMarker.h" />
     <ClInclude Include="..\include\gfx\asdxShape.h" />
@@ -541,6 +541,12 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMT|x64'">Compute</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMT|x64'">Compute</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMD|x64'">Compute</ShaderType>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxGaussianBlurPS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMT|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMD|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMT|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMD|x64'">Pixel</ShaderType>
     </FxCompile>
     <FxCompile Include="..\res\shaders\asdxIBLBakeDiffuseCS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMT|x64'">Compute</ShaderType>
