@@ -227,7 +227,12 @@ void GaussianBlurCS::Dispatch(ID3D12GraphicsCommandList* pCmd, Param& args)
     ASDX_SCOPED_MARKER(pCmd, GaussianBlurCS);
 
     assert(pCmd != nullptr);
-    auto desc = args.Targets[0].GetDesc();
+    assert(args.pTargets[0] != nullptr);
+    assert(args.pTargets[1] != nullptr);
+    assert(args.pStates[0] != nullptr);
+    assert(args.pStates[1] != nullptr);
+
+    auto desc = args.pTargets[0]->GetDesc();
 
     ShaderParam param = {};
     param.SrcW = uint16_t(args.SrvWidth);
@@ -246,13 +251,13 @@ void GaussianBlurCS::Dispatch(ID3D12GraphicsCommandList* pCmd, Param& args)
     auto threadY = (desc.Height + 7) / 8;
 
     auto handleSRV = args.HandleSRV;
-    auto handleUAV = args.Targets[0].GetGpuHandleUAV();
+    auto handleUAV = args.pTargets[0]->GetGpuHandleUAV();
 
     // 水平方向ブラー.
     {
         ASDX_SCOPED_MARKER(pCmd, BlurX);
 
-        barrier.Transition(args.Targets[0].GetResource(), args.States[0], D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        barrier.Transition(args.pTargets[0]->GetResource(), *(args.pStates[0]), D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
         barrier.Apply(pCmd);
 
         pCmd->SetComputeRoot32BitConstants(0, 19, &param, 0);
@@ -261,16 +266,16 @@ void GaussianBlurCS::Dispatch(ID3D12GraphicsCommandList* pCmd, Param& args)
         pCmd->Dispatch(threadX, threadY, 1);
     }
 
-    handleSRV = args.Targets[0].GetGpuHandleSRV();
-    handleUAV = args.Targets[1].GetGpuHandleUAV();
+    handleSRV = args.pTargets[0]->GetGpuHandleSRV();
+    handleUAV = args.pTargets[1]->GetGpuHandleUAV();
 
     // 垂直方向ブラー.
     {
         ASDX_SCOPED_MARKER(pCmd, BlurY);
 
-        barrier.UAV(args.Targets[0].GetResource());
-        barrier.Transition(args.Targets[0].GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-        barrier.Transition(args.Targets[1].GetResource(), args.States[1], D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        barrier.UAV(args.pTargets[0]->GetResource());
+        barrier.Transition(args.pTargets[0]->GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+        barrier.Transition(args.pTargets[1]->GetResource(), *(args.pStates[1]), D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
         barrier.Apply(pCmd);
 
         param.Flags = 1;
@@ -279,12 +284,12 @@ void GaussianBlurCS::Dispatch(ID3D12GraphicsCommandList* pCmd, Param& args)
         pCmd->SetComputeRootDescriptorTable(2, handleUAV);
         pCmd->Dispatch(threadX, threadY, 1);
 
-        barrier.UAV(args.Targets[1].GetResource());
-        barrier.Transition(args.Targets[1].GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+        barrier.UAV(args.pTargets[1]->GetResource());
+        barrier.Transition(args.pTargets[1]->GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
         barrier.Apply(pCmd);
 
-        args.States[0] = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-        args.States[1] = D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE;
+        *(args.pStates[0]) = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+        *(args.pStates[1]) = D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE;
     }
 }
 
@@ -409,7 +414,12 @@ void GaussianBlurPS::Draw(ID3D12GraphicsCommandList* pCmd, Param& args)
     ASDX_SCOPED_MARKER(pCmd, GaussianBlurPS);
 
     assert(pCmd != nullptr);
-    auto desc = args.Targets[0].GetDesc();
+    assert(args.pTargets[0] != nullptr);
+    assert(args.pTargets[1] != nullptr);
+    assert(args.pStates[0] != nullptr);
+    assert(args.pStates[1] != nullptr);
+
+    auto desc = args.pTargets[0]->GetDesc();
 
     ShaderParam param = {};
     param.SrcW = uint16_t(args.SrvWidth);
@@ -440,18 +450,21 @@ void GaussianBlurPS::Draw(ID3D12GraphicsCommandList* pCmd, Param& args)
 
     auto handleSRV = args.HandleSRV;
 
+    FLOAT clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+
     // 水平方向ブラー.
     {
         ASDX_SCOPED_MARKER(pCmd, BlurX);
 
-        barrier.Transition(args.Targets[0].GetResource(), args.States[0], D3D12_RESOURCE_STATE_RENDER_TARGET);
+        barrier.Transition(args.pTargets[0]->GetResource(), *(args.pStates[0]), D3D12_RESOURCE_STATE_RENDER_TARGET);
         barrier.Apply(pCmd);
 
         D3D12_CPU_DESCRIPTOR_HANDLE rtvs[] = {
-            args.Targets[0].GetCpuHandleRTV()
+            args.pTargets[0]->GetCpuHandleRTV()
         };
 
         pCmd->OMSetRenderTargets(1, rtvs, FALSE, nullptr);
+        pCmd->ClearRenderTargetView(rtvs[0], clearColor, 0, nullptr);
         pCmd->RSSetViewports(1, &viewport);
         pCmd->RSSetScissorRects(1, &scissor);
 
@@ -460,33 +473,34 @@ void GaussianBlurPS::Draw(ID3D12GraphicsCommandList* pCmd, Param& args)
         DrawQuad(pCmd);
     }
 
-    handleSRV = args.Targets[0].GetGpuHandleSRV();
+    handleSRV = args.pTargets[0]->GetGpuHandleSRV();
 
     // 垂直方向ブラー.
     {
         ASDX_SCOPED_MARKER(pCmd, BlurY);
 
         D3D12_CPU_DESCRIPTOR_HANDLE rtvs[] = {
-            args.Targets[1].GetCpuHandleRTV()
+            args.pTargets[1]->GetCpuHandleRTV()
         };
 
-        barrier.Transition(args.Targets[0].GetResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-        barrier.Transition(args.Targets[1].GetResource(), args.States[1], D3D12_RESOURCE_STATE_RENDER_TARGET);
+        barrier.Transition(args.pTargets[0]->GetResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        barrier.Transition(args.pTargets[1]->GetResource(), *(args.pStates[1]), D3D12_RESOURCE_STATE_RENDER_TARGET);
         barrier.Apply(pCmd);
 
         param.Flags = 1;
         pCmd->OMSetRenderTargets(1, rtvs, FALSE, nullptr);
+        pCmd->ClearRenderTargetView(rtvs[0], clearColor, 0, nullptr);
         pCmd->RSSetViewports(1, &viewport);
         pCmd->RSSetScissorRects(1, &scissor);
         pCmd->SetGraphicsRoot32BitConstants(0, 19, &param, 0);
         pCmd->SetGraphicsRootDescriptorTable(1, handleSRV);
         DrawQuad(pCmd);
 
-        barrier.Transition(args.Targets[1].GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+        barrier.Transition(args.pTargets[1]->GetResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
         barrier.Apply(pCmd);
 
-        args.States[0] = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-        args.States[1] = D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE;
+        *(args.pStates[0]) = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+        *(args.pStates[1]) = D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE;
     }
 }
 

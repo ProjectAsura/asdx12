@@ -35,8 +35,8 @@ public:
         D3D12_GPU_DESCRIPTOR_HANDLE HandleSRV     = {};
         uint32_t                    SrvWidth      = 0;
         uint32_t                    SrvHeight     = 0;
-        ComputeTarget               Targets[2]    = {};
-        D3D12_RESOURCE_STATES       States[2]     = {};
+        ComputeTarget*              pTargets[2]   = {};
+        D3D12_RESOURCE_STATES*      pStates[2]    = {};
         float                       BlurStrength  = 3.0f;
     };
 
@@ -112,8 +112,8 @@ public:
         D3D12_GPU_DESCRIPTOR_HANDLE HandleSRV     = {};
         uint32_t                    SrvWidth      = 0;
         uint32_t                    SrvHeight     = 0;
-        ColorTarget                 Targets[2]    = {};
-        D3D12_RESOURCE_STATES       States[2]     = {};
+        ColorTarget*                pTargets[2]   = {};
+        D3D12_RESOURCE_STATES*      pStates[2]    = {};
         float                       BlurStrength  = 3.0f;
     };
 
