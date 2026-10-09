@@ -450,8 +450,6 @@ void GaussianBlurPS::Draw(ID3D12GraphicsCommandList* pCmd, Param& args)
 
     auto handleSRV = args.HandleSRV;
 
-    FLOAT clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-
     // 水平方向ブラー.
     {
         ASDX_SCOPED_MARKER(pCmd, BlurX);
@@ -464,7 +462,6 @@ void GaussianBlurPS::Draw(ID3D12GraphicsCommandList* pCmd, Param& args)
         };
 
         pCmd->OMSetRenderTargets(1, rtvs, FALSE, nullptr);
-        pCmd->ClearRenderTargetView(rtvs[0], clearColor, 0, nullptr);
         pCmd->RSSetViewports(1, &viewport);
         pCmd->RSSetScissorRects(1, &scissor);
 
@@ -489,7 +486,6 @@ void GaussianBlurPS::Draw(ID3D12GraphicsCommandList* pCmd, Param& args)
 
         param.Flags = 1;
         pCmd->OMSetRenderTargets(1, rtvs, FALSE, nullptr);
-        pCmd->ClearRenderTargetView(rtvs[0], clearColor, 0, nullptr);
         pCmd->RSSetViewports(1, &viewport);
         pCmd->RSSetScissorRects(1, &scissor);
         pCmd->SetGraphicsRoot32BitConstants(0, 19, &param, 0);
