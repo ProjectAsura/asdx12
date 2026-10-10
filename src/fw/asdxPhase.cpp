@@ -68,7 +68,8 @@ bool PhaseManager::Init(IPhaseFactory* pFactory, uint64_t firstPhaseId)
     }
 
     // フェーズ番号設定.
-    m_PhaseId = firstPhaseId;
+    m_PrevPhaseId = firstPhaseId;
+    m_CurrPhaseId = firstPhaseId;
 
     // フェーズ開始
     m_pPhase->OnStart();
@@ -94,7 +95,8 @@ void PhaseManager::Term()
     m_pPhase   = nullptr;
 
     // フェーズ番号クリア.
-    m_PhaseId  = UINT64_MAX;
+    m_PrevPhaseId = UINT64_MAX;
+    m_CurrPhaseId = UINT64_MAX;
 
     // ブラックボードをクリア.
     m_Blackboard.Clear();
@@ -106,7 +108,7 @@ void PhaseManager::Term()
 void PhaseManager::Change(uint64_t phaseId)
 {
     // フェーズ番号が同じなら処理しない.
-    if (m_PhaseId == phaseId)
+    if (m_CurrPhaseId == phaseId)
         return;
 
     // ファクトリーが設定されていることが必須.
@@ -126,14 +128,15 @@ void PhaseManager::Change(uint64_t phaseId)
     }
 
     // デバッグログ表示.
-    DLOGA("Change Phase (0x%llx) ---> (0x%llx).", m_PhaseId, phaseId);
+    DLOGA("Change Phase (0x%llx) ---> (0x%llx).", m_CurrPhaseId, phaseId);
 
     // フェーズ生成.
     m_pPhase = m_pFactory->Create(phaseId);
     assert(m_pPhase != nullptr);
 
-    // フェーズ番号を設定.
-    m_PhaseId = phaseId;
+    // フェーズ番号を更新.
+    m_PrevPhaseId = m_CurrPhaseId;
+    m_CurrPhaseId = phaseId;
 
     // フェーズ開始処理を呼び出し.
     m_pPhase->OnStart();
@@ -169,17 +172,23 @@ void PhaseManager::Restart()
     if (!m_pPhase)
         return;
 
-    DLOGA("Restart Phase (0x%llx)", m_PhaseId);
+    DLOGA("Restart Phase (0x%llx)", m_CurrPhaseId);
 
     m_pPhase->OnFinish();
     m_pPhase->OnStart();
 }
 
 //-----------------------------------------------------------------------------
-//      フェーズ番号を取得します.
+//      現在のフェーズ番号を取得します.
 //-----------------------------------------------------------------------------
-uint64_t PhaseManager::GetPhaseId() const
-{ return m_PhaseId; }
+uint64_t PhaseManager::GetCurrPhaseId() const
+{ return m_CurrPhaseId; }
+
+//-----------------------------------------------------------------------------
+//      前のフェーズ番号を取得します.
+//-----------------------------------------------------------------------------
+uint64_t PhaseManager::GetPrevPhaseId() const
+{ return m_PrevPhaseId; }
 
 //-----------------------------------------------------------------------------
 //      ブラックボードを取得します.
