@@ -1,5 +1,5 @@
 ﻿//-----------------------------------------------------------------------------
-// File : asdxMosaicEffect.cpp
+// File : asdxMosaic.cpp
 // Desc : Mosaic Effect.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
@@ -10,7 +10,7 @@
 #include <cassert>
 #include <fnd/asdxLogger.h>
 #include <fnd/asdxMath.h>
-#include <gfx/asdxMosaicEffect.h>
+#include <gfx/asdxMosaic.h>
 #include <gfx/asdxPresetState.h>
 #include <gfx/asdxDevice.h>
 #include <gfx/asdxScopedMarker.h>
@@ -196,6 +196,12 @@ void MosaicCS::Dispatch(ID3D12GraphicsCommandList* pCmd, const Param& args)
     pCmd->Dispatch(threadX, threadY, 1);
 }
 
+//-----------------------------------------------------------------------------
+//      ルートシグニチャを取得します.
+//-----------------------------------------------------------------------------
+ID3D12RootSignature* MosaicCS::GetRootSignature() const
+{ return m_RootSignature.GetPtr(); }
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // MosaicPS class
@@ -330,5 +336,11 @@ void MosaicPS::Draw(ID3D12GraphicsCommandList* pCmd, const Param& args)
     pCmd->SetGraphicsRootDescriptorTable(ROOT_SRV0, args.HandleSRV);
     DrawQuad(pCmd);
 }
+
+//-----------------------------------------------------------------------------
+//      ルートシグニチャを取得します.
+//-----------------------------------------------------------------------------
+ID3D12RootSignature* MosaicPS::GetRootSignature() const
+{ return m_RootSignature.GetPtr(); }
 
 } // namespace asdx

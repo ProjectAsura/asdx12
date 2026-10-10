@@ -1,5 +1,5 @@
 ﻿//-----------------------------------------------------------------------------
-// File : asdxBloomEffect.cpp
+// File : asdxBloom.cpp
 // Desc : Kawase's Bloom Effect.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
@@ -145,25 +145,25 @@ void ComputeGaussWeights(float sigma, BloomDownParam& param)
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
-// BloomEffect class
+// Bloom class
 ///////////////////////////////////////////////////////////////////////////////
 
 //-----------------------------------------------------------------------------
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
-BloomEffect::BloomEffect()
+Bloom::Bloom()
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      デストラクタです.
 //-----------------------------------------------------------------------------
-BloomEffect::~BloomEffect()
+Bloom::~Bloom()
 { Term(); }
 
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool BloomEffect::Init(uint32_t w, uint32_t h, DXGI_FORMAT format)
+bool Bloom::Init(uint32_t w, uint32_t h, DXGI_FORMAT format)
 {
     if (w == 0 || h == 0 || format == DXGI_FORMAT_UNKNOWN)
         return false;
@@ -378,7 +378,7 @@ bool BloomEffect::Init(uint32_t w, uint32_t h, DXGI_FORMAT format)
 //-----------------------------------------------------------------------------
 //      終了処理を行います.
 //-----------------------------------------------------------------------------
-void BloomEffect::Term()
+void Bloom::Term()
 {
     m_FirstPassPSO .Reset();
     m_DownPassPSO  .Reset();
@@ -395,7 +395,7 @@ void BloomEffect::Term()
 //-----------------------------------------------------------------------------
 //      リサイズ処理を行います.
 //-----------------------------------------------------------------------------
-void BloomEffect::Resize(uint32_t w, uint32_t h)
+void Bloom::Resize(uint32_t w, uint32_t h)
 {
     m_ComputeTarget.Resize(w, h);
 
@@ -426,7 +426,7 @@ void BloomEffect::Resize(uint32_t w, uint32_t h)
 //-----------------------------------------------------------------------------
 //      エフェクトを適用します.
 //-----------------------------------------------------------------------------
-void BloomEffect::Dispatch
+void Bloom::Dispatch
 (
     ID3D12GraphicsCommandList*  pCmd,
     uint32_t                    width,
@@ -434,7 +434,7 @@ void BloomEffect::Dispatch
     D3D12_GPU_DESCRIPTOR_HANDLE handleSRV
 )
 {
-    ASDX_SCOPED_MARKER(pCmd, KawaseBloomEffect);
+    ASDX_SCOPED_MARKER(pCmd, KawaseBloom);
 
     assert(pCmd != nullptr);
     assert(width != 0);
@@ -631,19 +631,19 @@ void BloomEffect::Dispatch
 //-----------------------------------------------------------------------------
 //      SRVハンドルを取得します.
 //-----------------------------------------------------------------------------
-D3D12_GPU_DESCRIPTOR_HANDLE BloomEffect::GetGpuHandleSRV() const
+D3D12_GPU_DESCRIPTOR_HANDLE Bloom::GetGpuHandleSRV() const
 { return m_ComputeTarget.GetGpuHandleSRV(); }
 
 //-----------------------------------------------------------------------------
 //      UAVハンドルを取得します.
 //-----------------------------------------------------------------------------
-D3D12_GPU_DESCRIPTOR_HANDLE BloomEffect::GetGpuHandleUAV() const
+D3D12_GPU_DESCRIPTOR_HANDLE Bloom::GetGpuHandleUAV() const
 { return m_ComputeTarget.GetGpuHandleUAV(); }
 
 //-----------------------------------------------------------------------------
 //      ブラー用SRVハンドルを取得します.
 //-----------------------------------------------------------------------------
-D3D12_GPU_DESCRIPTOR_HANDLE BloomEffect::GetBlurGpuHandleSRV(uint8_t index) const
+D3D12_GPU_DESCRIPTOR_HANDLE Bloom::GetBlurGpuHandleSRV(uint8_t index) const
 {
     assert(index < kMaxTargetCount);
     return m_BlurTarget[index].GetGpuHandleSRV();
@@ -652,7 +652,7 @@ D3D12_GPU_DESCRIPTOR_HANDLE BloomEffect::GetBlurGpuHandleSRV(uint8_t index) cons
 //-----------------------------------------------------------------------------
 //      ブラー用UAVハンドルを取得します.
 //-----------------------------------------------------------------------------
-D3D12_GPU_DESCRIPTOR_HANDLE BloomEffect::GetBlurGpuHandleUAV(uint8_t index) const
+D3D12_GPU_DESCRIPTOR_HANDLE Bloom::GetBlurGpuHandleUAV(uint8_t index) const
 {
     assert(index < kMaxTargetCount);
     return m_BlurTarget[index].GetGpuHandleUAV();
@@ -661,19 +661,19 @@ D3D12_GPU_DESCRIPTOR_HANDLE BloomEffect::GetBlurGpuHandleUAV(uint8_t index) cons
 //-----------------------------------------------------------------------------
 //      閾値を設定します.
 //-----------------------------------------------------------------------------
-void BloomEffect::SetThreshold(float value)
+void Bloom::SetThreshold(float value)
 { m_Threshold = value; }
 
 //-----------------------------------------------------------------------------
 //      閾値を取得します.
 //-----------------------------------------------------------------------------
-float BloomEffect::GetThreshold() const
+float Bloom::GetThreshold() const
 { return m_Threshold; }
 
 //-----------------------------------------------------------------------------
 //      ブラーの強さを設定します.
 //-----------------------------------------------------------------------------
-void BloomEffect::SetBlurStrength(float value)
+void Bloom::SetBlurStrength(float value)
 {
     assert(value > 0.0f);
     m_BlurStrength = value;
@@ -682,13 +682,13 @@ void BloomEffect::SetBlurStrength(float value)
 //-----------------------------------------------------------------------------
 //      ブラーの強さを取得します.
 //-----------------------------------------------------------------------------
-float BloomEffect::GetBlurStrength() const
+float Bloom::GetBlurStrength() const
 { return m_BlurStrength; }
 
 //-----------------------------------------------------------------------------
 //      露出値を設定します.
 //-----------------------------------------------------------------------------
-void BloomEffect::SetExposure(float value)
+void Bloom::SetExposure(float value)
 {
     assert(value >= 0.0f);
     m_Exposure = value;
@@ -697,7 +697,13 @@ void BloomEffect::SetExposure(float value)
 //-----------------------------------------------------------------------------
 //      露出値を取得します.
 //-----------------------------------------------------------------------------
-float BloomEffect::GetExposure() const
+float Bloom::GetExposure() const
 { return m_Exposure; }
+
+//-----------------------------------------------------------------------------
+//      ルートシグニチャを取得します.
+//-----------------------------------------------------------------------------
+ID3D12RootSignature* Bloom::GetRootSignature() const
+{ return m_RootSignature.GetPtr(); }
 
 } // namespace asdx

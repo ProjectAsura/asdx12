@@ -229,6 +229,13 @@ void ColorEffectCS::Dispatch(ID3D12GraphicsCommandList* pCmd, const Param& args)
     pCmd->Dispatch(threadX, threadY, 1);
 }
 
+//-----------------------------------------------------------------------------
+//      ルートシグニチャを取得します.
+//-----------------------------------------------------------------------------
+ID3D12RootSignature* ColorEffectCS::GetRootSignature() const
+{ return m_RootSignature.GetPtr(); }
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // ColorEffectPS class
 ///////////////////////////////////////////////////////////////////////////////
@@ -367,5 +374,11 @@ void ColorEffectPS::Draw(ID3D12GraphicsCommandList* pCmd, const Param& args)
     pCmd->SetGraphicsRootDescriptorTable(2, args.HandleSRV);
     DrawQuad(pCmd);
 }
+
+//-----------------------------------------------------------------------------
+//      ルートシグニチャを取得します.
+//-----------------------------------------------------------------------------
+ID3D12RootSignature* ColorEffectPS::GetRootSignature() const
+{ return m_RootSignature.GetPtr(); }
 
 } // namespace asdx

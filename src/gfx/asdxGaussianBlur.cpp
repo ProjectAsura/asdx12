@@ -293,6 +293,12 @@ void GaussianBlurCS::Dispatch(ID3D12GraphicsCommandList* pCmd, Param& args)
     }
 }
 
+//-----------------------------------------------------------------------------
+//      ルートシグニチャを取得します.
+//-----------------------------------------------------------------------------
+ID3D12RootSignature* GaussianBlurCS::GetRootSignature() const
+{ return m_RootSignature.GetPtr(); }
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // GaussianBlurPS class
@@ -499,5 +505,11 @@ void GaussianBlurPS::Draw(ID3D12GraphicsCommandList* pCmd, Param& args)
         *(args.pStates[1]) = D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE;
     }
 }
+
+//-----------------------------------------------------------------------------
+//      ルートシグニチャを取得します.
+//-----------------------------------------------------------------------------
+ID3D12RootSignature* GaussianBlurPS::GetRootSignature() const
+{ return m_RootSignature.GetPtr(); }
 
 } // namespace asdx

@@ -399,4 +399,10 @@ float Fade::GetLerpValue() const
     return t * t;
 }
 
+//-----------------------------------------------------------------------------
+//      ルートシグニチャを取得します.
+//-----------------------------------------------------------------------------
+ID3D12RootSignature* Fade::GetRootSignature() const
+{ return m_RootSig.GetPtr(); }
+
 } // namespace asdx

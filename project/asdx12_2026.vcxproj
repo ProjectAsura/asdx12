@@ -275,7 +275,7 @@
     <ClCompile Include="..\src\gfx\asdxMapChip.cpp" />
     <ClCompile Include="..\src\gfx\asdxModel.cpp" />
     <ClCompile Include="..\src\gfx\asdxModelManager.cpp" />
-    <ClCompile Include="..\src\gfx\asdxMosaicEffect.cpp" />
+    <ClCompile Include="..\src\gfx\asdxMosaic.cpp" />
     <ClCompile Include="..\src\gfx\asdxMotionPlayer.cpp" />
     <ClCompile Include="..\src\gfx\asdxMovie.cpp" />
     <ClCompile Include="..\src\gfx\asdxPipelineState.cpp" />
@@ -408,7 +408,7 @@
     <ClInclude Include="..\include\gfx\asdxMapChip.h" />
     <ClInclude Include="..\include\gfx\asdxModel.h" />
     <ClInclude Include="..\include\gfx\asdxModelManager.h" />
-    <ClInclude Include="..\include\gfx\asdxMosaicEffect.h" />
+    <ClInclude Include="..\include\gfx\asdxMosaic.h" />
     <ClInclude Include="..\include\gfx\asdxMotionPlayer.h" />
     <ClInclude Include="..\include\gfx\asdxPipelineState.h" />
     <ClInclude Include="..\include\gfx\asdxPresetState.h" />

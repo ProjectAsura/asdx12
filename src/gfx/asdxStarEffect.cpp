@@ -890,4 +890,10 @@ void StarEffect::SetAngle(float rad)
 float StarEffect::GetAngle() const
 { return m_Angle; }
 
+//-----------------------------------------------------------------------------
+//      ルートシグニチャを取得します.
+//-----------------------------------------------------------------------------
+ID3D12RootSignature* StarEffect::GetRootSignature() const
+{ return m_RootSignature.GetPtr(); }
+
 } // namespace asdx

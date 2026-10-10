@@ -206,6 +206,13 @@ void RadialBlurCS::Dispatch(ID3D12GraphicsCommandList* pCmd, const Param& args)
     pCmd->Dispatch(threadX, threadY, 1);
 }
 
+//-----------------------------------------------------------------------------
+//      ルートシグニチャを取得します.
+//-----------------------------------------------------------------------------
+ID3D12RootSignature* RadialBlurCS::GetRootSignature() const
+{ return m_RootSignature.GetPtr(); }
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // RadialBlurPS class
 ///////////////////////////////////////////////////////////////////////////////
@@ -355,5 +362,11 @@ void RadialBlurPS::Draw(ID3D12GraphicsCommandList* pCmd, const Param& args)
     pCmd->SetGraphicsRootDescriptorTable(2, args.HandleSRV);
     DrawQuad(pCmd);
 }
+
+//-----------------------------------------------------------------------------
+//      ルートシグニチャを取得します.
+//-----------------------------------------------------------------------------
+ID3D12RootSignature* RadialBlurPS::GetRootSignature() const
+{ return m_RootSignature.GetPtr(); }
 
 } // namespace asdx
