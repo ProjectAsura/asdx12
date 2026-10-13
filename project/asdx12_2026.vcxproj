@@ -74,7 +74,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;ASDX_AUTO_LINK;ASDX_ENABLE_DXC;ASDX_ENABLE_IMGUI;ASDX_ENABLE_TINYXML2;ASDX_ENABLE_NV_AFTERMATH;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NOMINMAX;_DEBUG;_CONSOLE;ASDX_AUTO_LINK;ASDX_ENABLE_DXC;ASDX_ENABLE_IMGUI;ASDX_ENABLE_TINYXML2;ASDX_ENABLE_NV_AFTERMATH;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;$(ProjectDir)..\external\meshoptimizer;$(ProjectDir)..\external\flatbuffers\include;$(ProjectDir)..\external\PixEvents;$(ProjectDir)..\external\PixEvents\include;$(ProjectDir)..\external\simdjson\include;$(ProjectDir)..\external\simdjson\src;$(ProjectDir)..\external\ImGuizmo;$(ProjectDir)..\external\implot;$(ProjectDir)..\external\implot3d;$(ProjectDir)..\external\D3D12MemoryAllocator\include;$(ProjectDir)..\external\xxHash;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -99,7 +99,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;ASDX_AUTO_LINK;ASDX_ENABLE_DXC;ASDX_ENABLE_IMGUI;ASDX_ENABLE_TINYXML2;ASDX_ENABLE_NV_AFTERMATH;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NOMINMAX;_DEBUG;_CONSOLE;ASDX_AUTO_LINK;ASDX_ENABLE_DXC;ASDX_ENABLE_IMGUI;ASDX_ENABLE_TINYXML2;ASDX_ENABLE_NV_AFTERMATH;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;$(ProjectDir)..\external\meshoptimizer;$(ProjectDir)..\external\flatbuffers\include;$(ProjectDir)..\external\PixEvents;$(ProjectDir)..\external\PixEvents\include;$(ProjectDir)..\external\cflat;$(ProjectDir)..\external\simdjson\include;$(ProjectDir)..\external\simdjson\src;$(ProjectDir)..\external\ImGuizmo;$(ProjectDir)..\external\implot;$(ProjectDir)..\external\implot3d;$(ProjectDir)..\external\D3D12MemoryAllocator\include;$(ProjectDir)..\external\xxHash;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -126,7 +126,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;ASDX_AUTO_LINK;ASDX_ENABLE_DXC;ASDX_ENABLE_IMGUI;ASDX_ENABLE_TINYXML2;ASDX_ENABLE_NV_AFTERMATH;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NOMINMAX;NDEBUG;_CONSOLE;ASDX_AUTO_LINK;ASDX_ENABLE_DXC;ASDX_ENABLE_IMGUI;ASDX_ENABLE_TINYXML2;ASDX_ENABLE_NV_AFTERMATH;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;$(ProjectDir)..\external\meshoptimizer;$(ProjectDir)..\external\flatbuffers\include;$(ProjectDir)..\external\PixEvents;$(ProjectDir)..\external\PixEvents\include;$(ProjectDir)..\external\simdjson\include;$(ProjectDir)..\external\simdjson\src;$(ProjectDir)..\external\ImGuizmo;$(ProjectDir)..\external\implot;$(ProjectDir)..\external\implot3d;$(ProjectDir)..\external\D3D12MemoryAllocator\include;$(ProjectDir)..\external\xxHash;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -153,7 +153,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;ASDX_AUTO_LINK;ASDX_ENABLE_DXC;ASDX_ENABLE_IMGUI;ASDX_ENABLE_TINYXML2;ASDX_ENABLE_NV_AFTERMATH;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NOMINMAX;NDEBUG;_CONSOLE;ASDX_AUTO_LINK;ASDX_ENABLE_DXC;ASDX_ENABLE_IMGUI;ASDX_ENABLE_TINYXML2;ASDX_ENABLE_NV_AFTERMATH;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir)..\include;$(ProjectDir)..\external\imgui;$(ProjectDir)..\external\tinyxml2;$(ProjectDir)..\external\meshoptimizer;$(ProjectDir)..\external\flatbuffers\include;$(ProjectDir)..\external\PixEvents;$(ProjectDir)..\external\PixEvents\include;$(ProjectDir)..\external\simdjson\include;$(ProjectDir)..\external\simdjson\src;$(ProjectDir)..\external\ImGuizmo;$(ProjectDir)..\external\implot;$(ProjectDir)..\external\implot3d;$(ProjectDir)..\external\D3D12MemoryAllocator\include;$(ProjectDir)..\external\xxHash;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -177,48 +177,12 @@
   <ItemGroup>
     <ClCompile Include="..\external\D3D12MemoryAllocator\src\D3D12MemAlloc.cpp" />
     <ClCompile Include="..\external\fpng\src\fpng.cpp" />
-    <ClCompile Include="..\external\ImGuizmo\GraphEditor.cpp" />
-    <ClCompile Include="..\external\ImGuizmo\ImCurveEdit.cpp" />
-    <ClCompile Include="..\external\ImGuizmo\ImGradient.cpp" />
-    <ClCompile Include="..\external\ImGuizmo\ImGuizmo.cpp" />
-    <ClCompile Include="..\external\ImGuizmo\ImSequencer.cpp" />
-    <ClCompile Include="..\external\imgui\imgui.cpp" />
-    <ClCompile Include="..\external\imgui\imgui_draw.cpp" />
-    <ClCompile Include="..\external\imgui\imgui_tables.cpp" />
-    <ClCompile Include="..\external\imgui\imgui_widgets.cpp" />
-    <ClCompile Include="..\external\implot3d\implot3d.cpp" />
-    <ClCompile Include="..\external\implot3d\implot3d_items.cpp" />
-    <ClCompile Include="..\external\implot3d\implot3d_meshes.cpp" />
-    <ClCompile Include="..\external\implot\implot.cpp" />
-    <ClCompile Include="..\external\implot\implot_items.cpp" />
-    <ClCompile Include="..\external\ImRing\ImRing.cpp" />
-    <ClCompile Include="..\external\meshoptimizer\allocator.cpp" />
-    <ClCompile Include="..\external\meshoptimizer\clusterizer.cpp" />
-    <ClCompile Include="..\external\meshoptimizer\indexanalyzer.cpp" />
-    <ClCompile Include="..\external\meshoptimizer\indexcodec.cpp" />
-    <ClCompile Include="..\external\meshoptimizer\indexgenerator.cpp" />
-    <ClCompile Include="..\external\meshoptimizer\meshletcodec.cpp" />
-    <ClCompile Include="..\external\meshoptimizer\meshletutils.cpp" />
-    <ClCompile Include="..\external\meshoptimizer\opacitymap.cpp" />
-    <ClCompile Include="..\external\meshoptimizer\overdrawoptimizer.cpp" />
-    <ClCompile Include="..\external\meshoptimizer\partition.cpp" />
-    <ClCompile Include="..\external\meshoptimizer\quantization.cpp" />
-    <ClCompile Include="..\external\meshoptimizer\rasterizer.cpp" />
-    <ClCompile Include="..\external\meshoptimizer\simplifier.cpp" />
-    <ClCompile Include="..\external\meshoptimizer\spatialorder.cpp" />
-    <ClCompile Include="..\external\meshoptimizer\stripifier.cpp" />
-    <ClCompile Include="..\external\meshoptimizer\vcacheoptimizer.cpp" />
-    <ClCompile Include="..\external\meshoptimizer\vertexcodec.cpp" />
-    <ClCompile Include="..\external\meshoptimizer\vertexfilter.cpp" />
-    <ClCompile Include="..\external\meshoptimizer\vfetchoptimizer.cpp" />
-    <ClCompile Include="..\external\simdjson\src\simdjson.cpp" />
-    <ClCompile Include="..\external\tinyxml2\tinyxml2.cpp" />
-    <ClCompile Include="..\external\xxHash\xxhash.c" />
     <ClCompile Include="..\src\edit\asdxEditParam.cpp" />
     <ClCompile Include="..\src\edit\asdxFileWatcher.cpp" />
     <ClCompile Include="..\src\edit\asdxGitHelper.cpp" />
     <ClCompile Include="..\src\edit\asdxGuiMgr.cpp" />
     <ClCompile Include="..\src\edit\asdxHistory.cpp" />
+    <ClCompile Include="..\src\edit\asdxJsonWriter.cpp" />
     <ClCompile Include="..\src\edit\asdxP4VHelper.cpp" />
     <ClCompile Include="..\src\edit\asdxTcpConnector.cpp" />
     <ClCompile Include="..\src\fnd\asdxBit.cpp" />
@@ -233,7 +197,6 @@
     <ClCompile Include="..\src\fnd\asdxHidManager.cpp" />
     <ClCompile Include="..\src\fnd\asdxIndexHeap.cpp" />
     <ClCompile Include="..\src\fnd\asdxJob.cpp" />
-    <ClCompile Include="..\src\fnd\asdxJsonWriter.cpp" />
     <ClCompile Include="..\src\fnd\asdxKeyboard.cpp" />
     <ClCompile Include="..\src\fnd\asdxLogger.cpp" />
     <ClCompile Include="..\src\fnd\asdxMisc.cpp" />
@@ -306,32 +269,13 @@
   <ItemGroup>
     <ClInclude Include="..\external\D3D12MemoryAllocator\include\D3D12MemAlloc.h" />
     <ClInclude Include="..\external\fpng\src\fpng.h" />
-    <ClInclude Include="..\external\ImGuizmo\GraphEditor.h" />
-    <ClInclude Include="..\external\ImGuizmo\ImCurveEdit.h" />
-    <ClInclude Include="..\external\ImGuizmo\ImGradient.h" />
-    <ClInclude Include="..\external\ImGuizmo\ImGuizmo.h" />
-    <ClInclude Include="..\external\ImGuizmo\ImSequencer.h" />
-    <ClInclude Include="..\external\ImGuizmo\ImZoomSlider.h" />
-    <ClInclude Include="..\external\imgui\imconfig.h" />
-    <ClInclude Include="..\external\imgui\imgui.h" />
-    <ClInclude Include="..\external\imgui\imgui_internal.h" />
-    <ClInclude Include="..\external\imgui\imstb_rectpack.h" />
-    <ClInclude Include="..\external\imgui\imstb_textedit.h" />
-    <ClInclude Include="..\external\imgui\imstb_truetype.h" />
-    <ClInclude Include="..\external\implot3d\implot3d.h" />
-    <ClInclude Include="..\external\implot3d\implot3d_internal.h" />
-    <ClInclude Include="..\external\implot\implot.h" />
-    <ClInclude Include="..\external\implot\implot_internal.h" />
-    <ClInclude Include="..\external\ImRing\ImRing.h" />
-    <ClInclude Include="..\external\meshoptimizer\meshoptimizer.h" />
-    <ClInclude Include="..\external\tinyxml2\tinyxml2.h" />
-    <ClInclude Include="..\external\xxHash\xxhash.h" />
     <ClInclude Include="..\include\edit\asdxEditParam.h" />
     <ClInclude Include="..\include\edit\asdxFileWatcher.h" />
     <ClInclude Include="..\include\edit\asdxGitHelper.h" />
     <ClInclude Include="..\include\edit\asdxGridSnap.h" />
     <ClInclude Include="..\include\edit\asdxGuiMgr.h" />
     <ClInclude Include="..\include\edit\asdxHistory.h" />
+    <ClInclude Include="..\include\edit\asdxJsonWriter.h" />
     <ClInclude Include="..\include\edit\asdxLivePP.h" />
     <ClInclude Include="..\include\edit\asdxP4VHelper.h" />
     <ClInclude Include="..\include\edit\asdxTcpConnector.h" />
@@ -352,7 +296,6 @@
     <ClInclude Include="..\include\fnd\asdxHid.h" />
     <ClInclude Include="..\include\fnd\asdxIndexHeap.h" />
     <ClInclude Include="..\include\fnd\asdxJob.h" />
-    <ClInclude Include="..\include\fnd\asdxJsonWriter.h" />
     <ClInclude Include="..\include\fnd\asdxList.h" />
     <ClInclude Include="..\include\fnd\asdxLogger.h" />
     <ClInclude Include="..\include\fnd\asdxMacro.h" />

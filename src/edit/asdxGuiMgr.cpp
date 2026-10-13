@@ -10,12 +10,36 @@
 #include <edit/asdxGuiMgr.h>
 
 #ifdef ASDX_ENABLE_IMGUI
+#define IMGUI_DEFINE_MATH_OPERATORS
+
 #include <fnd/asdxLogger.h>
 #include <fnd/asdxPath.h>
 #include <gfx/asdxDevice.h>
 #include <res/asdxResTexture.h>
 #include <imgui.h>
 #include <imgui_internal.h>
+
+//-----------------------------------------------------------------------------
+// Source Code Link
+//-----------------------------------------------------------------------------
+// ImGui.
+#include "../../external/imgui/imgui.cpp"
+#include "../../external/imgui/imgui_draw.cpp"
+#include "../../external/imgui/imgui_widgets.cpp"
+#include "../../external/imgui/imgui_tables.cpp"
+
+// ImGuizmo
+#include "../../external/ImGuizmo/ImGuizmo.cpp"
+#include "../../external/ImGuizmo/ImSequencer.cpp"
+#include "../../external/ImGuizmo/ImCurveEdit.cpp"
+#include "../../external/ImGuizmo/GraphEditor.cpp"
+
+// implot
+#include "../../external/implot/implot.cpp"
+#include "../../external/implot/implot_items.cpp"
+
+// ImRing
+#include "../../external/ImRing/ImRing.cpp"
 
 
 namespace {

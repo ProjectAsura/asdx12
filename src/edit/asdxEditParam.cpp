@@ -958,6 +958,11 @@ D3D12_GPU_DESCRIPTOR_HANDLE EditTexture::GetHandleGPU() const
 
 
 #ifdef ASDX_ENABLE_TINYXML2
+//-----------------------------------------------------------------------------
+// Source Code Link.
+//-----------------------------------------------------------------------------
+#include "../../external/tinyxml2/tinyxml2.cpp"
+
 namespace asdx {
 namespace edit {
 

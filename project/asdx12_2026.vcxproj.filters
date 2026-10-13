@@ -55,33 +55,6 @@
     <Filter Include="ソース ファイル\external\fpng">
       <UniqueIdentifier>{207a6693-82fc-4e32-9a1c-954116fe0648}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ソース ファイル\external\imgui">
-      <UniqueIdentifier>{2c963b9a-d7c0-4f5b-bfeb-ac1ec7f8f924}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ソース ファイル\external\ImGuizmo">
-      <UniqueIdentifier>{4602854d-f19c-4436-b741-636200973dad}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ソース ファイル\external\implot">
-      <UniqueIdentifier>{8d8a4fd7-55bb-4a06-b4a6-d84ac150f864}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ソース ファイル\external\implot3d">
-      <UniqueIdentifier>{125ab9ea-23e3-4e17-b600-4dfc5a8ca415}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ソース ファイル\external\meshoptimizer">
-      <UniqueIdentifier>{1252c6ff-8296-4046-9fda-b8c11ae2a731}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ソース ファイル\external\simdjson">
-      <UniqueIdentifier>{6e6c0622-c808-4867-9b17-c7c241786d87}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ソース ファイル\external\tinyxml2">
-      <UniqueIdentifier>{926437f3-2191-410d-b324-03d03cfb157a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ソース ファイル\external\xxHash">
-      <UniqueIdentifier>{c857f23b-7b16-4289-9fc4-964a16f3b1f5}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ソース ファイル\external\ImRing">
-      <UniqueIdentifier>{c4846cfa-c31f-41dd-99c2-73cad051a9fd}</UniqueIdentifier>
-    </Filter>
     <Filter Include="ソース ファイル\snd">
       <UniqueIdentifier>{e6befb71-0f4e-47e3-b109-0874f1226e9d}</UniqueIdentifier>
     </Filter>
@@ -276,108 +249,6 @@
     <ClCompile Include="..\external\fpng\src\fpng.cpp">
       <Filter>ソース ファイル\external\fpng</Filter>
     </ClCompile>
-    <ClCompile Include="..\external\imgui\imgui.cpp">
-      <Filter>ソース ファイル\external\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\imgui\imgui_draw.cpp">
-      <Filter>ソース ファイル\external\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\imgui\imgui_tables.cpp">
-      <Filter>ソース ファイル\external\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\imgui\imgui_widgets.cpp">
-      <Filter>ソース ファイル\external\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\ImGuizmo\GraphEditor.cpp">
-      <Filter>ソース ファイル\external\ImGuizmo</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\ImGuizmo\ImCurveEdit.cpp">
-      <Filter>ソース ファイル\external\ImGuizmo</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\ImGuizmo\ImGradient.cpp">
-      <Filter>ソース ファイル\external\ImGuizmo</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\ImGuizmo\ImGuizmo.cpp">
-      <Filter>ソース ファイル\external\ImGuizmo</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\ImGuizmo\ImSequencer.cpp">
-      <Filter>ソース ファイル\external\ImGuizmo</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\implot\implot.cpp">
-      <Filter>ソース ファイル\external\implot</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\implot\implot_items.cpp">
-      <Filter>ソース ファイル\external\implot</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\implot3d\implot3d.cpp">
-      <Filter>ソース ファイル\external\implot3d</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\implot3d\implot3d_items.cpp">
-      <Filter>ソース ファイル\external\implot3d</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\implot3d\implot3d_meshes.cpp">
-      <Filter>ソース ファイル\external\implot3d</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\xxHash\xxhash.c">
-      <Filter>ソース ファイル\external\xxHash</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\tinyxml2\tinyxml2.cpp">
-      <Filter>ソース ファイル\external\tinyxml2</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\simdjson\src\simdjson.cpp">
-      <Filter>ソース ファイル\external\simdjson</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\meshoptimizer\allocator.cpp">
-      <Filter>ソース ファイル\external\meshoptimizer</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\meshoptimizer\clusterizer.cpp">
-      <Filter>ソース ファイル\external\meshoptimizer</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\meshoptimizer\indexanalyzer.cpp">
-      <Filter>ソース ファイル\external\meshoptimizer</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\meshoptimizer\indexcodec.cpp">
-      <Filter>ソース ファイル\external\meshoptimizer</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\meshoptimizer\indexgenerator.cpp">
-      <Filter>ソース ファイル\external\meshoptimizer</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\meshoptimizer\overdrawoptimizer.cpp">
-      <Filter>ソース ファイル\external\meshoptimizer</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\meshoptimizer\partition.cpp">
-      <Filter>ソース ファイル\external\meshoptimizer</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\meshoptimizer\quantization.cpp">
-      <Filter>ソース ファイル\external\meshoptimizer</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\meshoptimizer\rasterizer.cpp">
-      <Filter>ソース ファイル\external\meshoptimizer</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\meshoptimizer\simplifier.cpp">
-      <Filter>ソース ファイル\external\meshoptimizer</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\meshoptimizer\spatialorder.cpp">
-      <Filter>ソース ファイル\external\meshoptimizer</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\meshoptimizer\stripifier.cpp">
-      <Filter>ソース ファイル\external\meshoptimizer</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\meshoptimizer\vcacheoptimizer.cpp">
-      <Filter>ソース ファイル\external\meshoptimizer</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\meshoptimizer\vertexcodec.cpp">
-      <Filter>ソース ファイル\external\meshoptimizer</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\meshoptimizer\vertexfilter.cpp">
-      <Filter>ソース ファイル\external\meshoptimizer</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\meshoptimizer\vfetchoptimizer.cpp">
-      <Filter>ソース ファイル\external\meshoptimizer</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\ImRing\ImRing.cpp">
-      <Filter>ソース ファイル\external\ImRing</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\edit\asdxGitHelper.cpp">
       <Filter>ソース ファイル\edit</Filter>
     </ClCompile>
@@ -386,9 +257,6 @@
     </ClCompile>
     <ClCompile Include="..\src\gfx\asdxLine.cpp">
       <Filter>ソース ファイル\gfx</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\fnd\asdxJsonWriter.cpp">
-      <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
     <ClCompile Include="..\src\gfx\asdxSkyBox.cpp">
       <Filter>ソース ファイル\gfx</Filter>
@@ -404,15 +272,6 @@
     </ClCompile>
     <ClCompile Include="..\src\gfx\asdxColorEffect.cpp">
       <Filter>ソース ファイル\gfx</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\meshoptimizer\meshletcodec.cpp">
-      <Filter>ソース ファイル\external\meshoptimizer</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\meshoptimizer\meshletutils.cpp">
-      <Filter>ソース ファイル\external\meshoptimizer</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\meshoptimizer\opacitymap.cpp">
-      <Filter>ソース ファイル\external\meshoptimizer</Filter>
     </ClCompile>
     <ClCompile Include="..\src\snd\asdxSoundEngine.cpp">
       <Filter>ソース ファイル\snd</Filter>
@@ -470,6 +329,9 @@
     </ClCompile>
     <ClCompile Include="..\src\gfx\asdxMosaic.cpp">
       <Filter>ソース ファイル\gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\edit\asdxJsonWriter.cpp">
+      <Filter>ソース ファイル\edit</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -695,68 +557,8 @@
     <ClInclude Include="..\external\fpng\src\fpng.h">
       <Filter>ソース ファイル\external\fpng</Filter>
     </ClInclude>
-    <ClInclude Include="..\external\imgui\imgui.h">
-      <Filter>ソース ファイル\external\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\external\imgui\imgui_internal.h">
-      <Filter>ソース ファイル\external\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\external\imgui\imstb_rectpack.h">
-      <Filter>ソース ファイル\external\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\external\imgui\imstb_textedit.h">
-      <Filter>ソース ファイル\external\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\external\imgui\imstb_truetype.h">
-      <Filter>ソース ファイル\external\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\external\imgui\imconfig.h">
-      <Filter>ソース ファイル\external\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\external\ImGuizmo\GraphEditor.h">
-      <Filter>ソース ファイル\external\ImGuizmo</Filter>
-    </ClInclude>
-    <ClInclude Include="..\external\ImGuizmo\ImCurveEdit.h">
-      <Filter>ソース ファイル\external\ImGuizmo</Filter>
-    </ClInclude>
-    <ClInclude Include="..\external\ImGuizmo\ImGradient.h">
-      <Filter>ソース ファイル\external\ImGuizmo</Filter>
-    </ClInclude>
-    <ClInclude Include="..\external\ImGuizmo\ImGuizmo.h">
-      <Filter>ソース ファイル\external\ImGuizmo</Filter>
-    </ClInclude>
-    <ClInclude Include="..\external\ImGuizmo\ImSequencer.h">
-      <Filter>ソース ファイル\external\ImGuizmo</Filter>
-    </ClInclude>
-    <ClInclude Include="..\external\ImGuizmo\ImZoomSlider.h">
-      <Filter>ソース ファイル\external\ImGuizmo</Filter>
-    </ClInclude>
-    <ClInclude Include="..\external\implot\implot.h">
-      <Filter>ソース ファイル\external\implot</Filter>
-    </ClInclude>
-    <ClInclude Include="..\external\implot\implot_internal.h">
-      <Filter>ソース ファイル\external\implot</Filter>
-    </ClInclude>
-    <ClInclude Include="..\external\implot3d\implot3d.h">
-      <Filter>ソース ファイル\external\implot3d</Filter>
-    </ClInclude>
-    <ClInclude Include="..\external\implot3d\implot3d_internal.h">
-      <Filter>ソース ファイル\external\implot3d</Filter>
-    </ClInclude>
-    <ClInclude Include="..\external\xxHash\xxhash.h">
-      <Filter>ソース ファイル\external\xxHash</Filter>
-    </ClInclude>
-    <ClInclude Include="..\external\tinyxml2\tinyxml2.h">
-      <Filter>ソース ファイル\external\tinyxml2</Filter>
-    </ClInclude>
-    <ClInclude Include="..\external\meshoptimizer\meshoptimizer.h">
-      <Filter>ソース ファイル\external\meshoptimizer</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\edit\asdxLivePP.h">
       <Filter>ヘッダー ファイル\edit</Filter>
-    </ClInclude>
-    <ClInclude Include="..\external\ImRing\ImRing.h">
-      <Filter>ソース ファイル\external\ImRing</Filter>
     </ClInclude>
     <ClInclude Include="..\include\edit\asdxGitHelper.h">
       <Filter>ヘッダー ファイル\edit</Filter>
@@ -766,9 +568,6 @@
     </ClInclude>
     <ClInclude Include="..\include\gfx\asdxLine.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\fnd\asdxJsonWriter.h">
-      <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
     <ClInclude Include="..\include\gfx\asdxSkyBox.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
@@ -865,6 +664,9 @@
     </ClInclude>
     <ClInclude Include="..\include\gfx\asdxMosaic.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\edit\asdxJsonWriter.h">
+      <Filter>ヘッダー ファイル\edit</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
