@@ -82,6 +82,7 @@ float4 GetHistoryColor(float2 uv)
 //-----------------------------------------------------------------------------
 float2 GetVelocity(float2 uv)
 {
+    // "Temporal Reprojection Anti-Aliasing in INSIDE", GDC 2018,
     // https://www.gdcvault.com/play/1022970/Temporal-Reprojection-Anti-Aliasing-in
 
     float2 result = VelocityMap.SampleLevel(LinearClamp, uv, 0.0f);

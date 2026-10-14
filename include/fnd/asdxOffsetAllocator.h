@@ -9,7 +9,6 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <cstdint>
-#include <array>
 #include <fnd/asdxSpinLock.h>
 
 
@@ -206,9 +205,8 @@ private:
     Node*       m_Nodes                 = nullptr;      //!< ノード.
     uint32_t    m_FreeHead              = Node::UNUSED; //!< フリーリストの先頭番号.
     uint32_t    m_FreeCount             = 0;            //!< フリーノードの数.
-
-    std::array<uint8_t,  TOP_BINS_COUNT>    m_UsedBins;     //!< 使用中ビン.
-    std::array<uint32_t, LEAF_BINS_COUNT>   m_BinIndices;   //!< ビン番号.
+    uint8_t*    m_UsedBins              = nullptr;      //!< 使用中ビン.
+    uint32_t*   m_BinIndices            = nullptr;      //!< ビン番号.
 
     //=========================================================================
     // private methods.

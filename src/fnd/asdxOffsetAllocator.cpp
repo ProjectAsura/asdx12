@@ -191,6 +191,9 @@ void OffsetAllocator::Init(uint32_t size, uint32_t maxAllocatableCount)
     m_Size                  = size;
     m_MaxAllocatableCount   = maxAllocatableCount;
 
+    m_UsedBins   = new uint8_t  [TOP_BINS_COUNT];
+    m_BinIndices = new uint32_t [LEAF_BINS_COUNT];
+
     Reset();
 }
 
@@ -205,11 +208,23 @@ void OffsetAllocator::Term()
         m_Nodes = nullptr;
     }
 
-    for(auto i=0u; i<TOP_BINS_COUNT; ++i)
-        m_UsedBins[i] = 0;
+    if (m_UsedBins != nullptr)
+    {
+        for(auto i=0u; i<TOP_BINS_COUNT; ++i)
+            m_UsedBins[i] = 0;
 
-    for(auto i=0u; i<LEAF_BINS_COUNT; ++i)
-        m_BinIndices[i] = Node::UNUSED;
+        delete[] m_UsedBins;
+        m_UsedBins = nullptr;
+    }
+
+    if (m_BinIndices != nullptr)
+    {
+        for(auto i=0u; i<LEAF_BINS_COUNT; ++i)
+            m_BinIndices[i] = Node::UNUSED;
+
+        delete[] m_BinIndices;
+        m_BinIndices = nullptr;
+    }
 
     m_Size                  = 0;
     m_MaxAllocatableCount   = 0;
@@ -228,11 +243,17 @@ void OffsetAllocator::Reset()
     m_FreeStorage = 0;
     m_UsedBinsTop = 0;
 
-    for(auto i=0u; i<TOP_BINS_COUNT; ++i)
-        m_UsedBins[i] = 0;
+    if (m_UsedBins != nullptr)
+    {
+        for(auto i=0u; i<TOP_BINS_COUNT; ++i)
+            m_UsedBins[i] = 0;
+    }
 
-    for(auto i=0u; i<LEAF_BINS_COUNT; ++i)
-        m_BinIndices[i] = Node::UNUSED;
+    if (m_BinIndices != nullptr)
+    {
+        for(auto i=0u; i<LEAF_BINS_COUNT; ++i)
+            m_BinIndices[i] = Node::UNUSED;
+    }
 
     if (m_Nodes)
     {
@@ -661,6 +682,5 @@ uint32_t ThreadSafeOffsetAllocator::GetUsedSize() const
 //-----------------------------------------------------------------------------
 uint32_t ThreadSafeOffsetAllocator::GetFreeSize() const
 { return m_Allocator.GetFreeSize(); }
-
 
 } // namespace asdx

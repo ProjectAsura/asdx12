@@ -10,7 +10,6 @@
 #include <fnd/asdxHash.h>
 #include <string>
 #include "xxHash.h"
-#include "xxHash.c" // Source Code Link.
 
 namespace asdx {
 

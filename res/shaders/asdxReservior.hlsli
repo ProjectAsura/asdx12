@@ -33,7 +33,7 @@ struct Reservior
     //-------------------------------------------------------------------------
     //      更新処理を行います.
     //-------------------------------------------------------------------------
-    void Update(float random, Reservior<T> input)
+    void Update(Reservior<T> input, float random)
     {
         Weight += input.Weight;
         if ((random < (input.Weight / Weight) || Count == 0)
