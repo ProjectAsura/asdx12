@@ -39,18 +39,13 @@ GamePad::~GamePad()
 void GamePad::ResetState()
 {
     m_Buttons  = 0;
-    m_TriggerL = 0;
-    m_TriggerR = 0;
+    m_TriggerL = 0.0f;
+    m_TriggerR = 0.0f;
 
-    m_ThumbLX = 0;
-    m_ThumbLY = 0;
-    m_ThumbRX = 0;
-    m_ThumbRY = 0;
-
-    m_NormThumbLX = 0.0f;
-    m_NormThumbLY = 0.0f;
-    m_NormThumbRX = 0.0f;
-    m_NormThumbRY = 0.0f;
+    m_ThumbLX = 0.0f;
+    m_ThumbLY = 0.0f;
+    m_ThumbRX = 0.0f;
+    m_ThumbRY = 0.0f;
 
     m_PressedButtons = 0;
     m_LastButtons    = 0;
@@ -83,40 +78,40 @@ void GamePad::UpdateState()
 
     // XINPUT_STATEのデータを設定.
     m_Buttons  = state.Gamepad.wButtons;
-    m_TriggerL = state.Gamepad.bLeftTrigger;
-    m_TriggerR = state.Gamepad.bRightTrigger;
-    m_ThumbLX  = state.Gamepad.sThumbLX;
-    m_ThumbLY  = state.Gamepad.sThumbLY;
-    m_ThumbRX  = state.Gamepad.sThumbRX;
-    m_ThumbRY  = state.Gamepad.sThumbRY;
+    m_TriggerL = float(state.Gamepad.bLeftTrigger)  / 255.0f;
+    m_TriggerR = float(state.Gamepad.bRightTrigger) / 255.0f;
+    auto thumbLX  = state.Gamepad.sThumbLX;
+    auto thumbLY  = state.Gamepad.sThumbLY;
+    auto thumbRX  = state.Gamepad.sThumbRX;
+    auto thumbRY  = state.Gamepad.sThumbRY;
 
 
-    if ( m_ThumbLX <  XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE &&
-         m_ThumbLX > -XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE )
-    { m_ThumbLX = 0; }
+    if ( thumbLX <  XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE &&
+         thumbLX > -XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE )
+    { thumbLX = 0; }
 
-    if ( m_ThumbLY <  XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE &&
-         m_ThumbLY > -XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE )
-    { m_ThumbLY = 0; }
+    if ( thumbLY <  XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE &&
+         thumbLY > -XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE )
+    { thumbLY = 0; }
 
-    if ( m_ThumbRX <  XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE &&
-         m_ThumbRX > -XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE )
-    { m_ThumbRX = 0; }
+    if ( thumbRX <  XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE &&
+         thumbRX > -XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE )
+    { thumbRX = 0; }
 
-    if ( m_ThumbRY <  XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE &&
-         m_ThumbRY > -XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE )
-    { m_ThumbRY = 0; }
+    if ( thumbRY <  XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE &&
+         thumbRY > -XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE )
+    { thumbRY = 0; }
 
     // 正規化.
-    m_NormThumbLX = Max<float>( -1.0f, static_cast<float>(m_ThumbLX) / 32767.0f );
-    m_NormThumbLY = Max<float>( -1.0f, static_cast<float>(m_ThumbLY) / 32767.0f );
-    m_NormThumbRX = Max<float>( -1.0f, static_cast<float>(m_ThumbRX) / 32767.0f );
-    m_NormThumbRY = Max<float>( -1.0f, static_cast<float>(m_ThumbRY) / 32767.0f );
+    m_ThumbLX = Max<float>( -1.0f, float(thumbLX) / 32767.0f );
+    m_ThumbLY = Max<float>( -1.0f, float(thumbLY) / 32767.0f );
+    m_ThumbRX = Max<float>( -1.0f, float(thumbRX) / 32767.0f );
+    m_ThumbRY = Max<float>( -1.0f, float(thumbRY) / 32767.0f );
 
-    if ( m_TriggerL > XINPUT_GAMEPAD_TRIGGER_THRESHOLD )
+    if ( state.Gamepad.bLeftTrigger > XINPUT_GAMEPAD_TRIGGER_THRESHOLD )
     { m_Buttons |= PAD_TRIGGER_L; }
 
-    if ( m_TriggerR > XINPUT_GAMEPAD_TRIGGER_THRESHOLD )
+    if ( state.Gamepad.bRightTrigger > XINPUT_GAMEPAD_TRIGGER_THRESHOLD )
     { m_Buttons |= PAD_TRIGGER_R; }
 
     m_PressedButtons = ( m_LastButtons ^ m_Buttons ) & m_Buttons;
@@ -164,51 +159,39 @@ bool GamePad::IsHold(uint32_t buttonMask) const
 { return !!(m_Buttons & buttonMask); }
 
 //-----------------------------------------------------------------------------
-//      左サムスティックのX成分を取得します.
-//-----------------------------------------------------------------------------
-int16_t GamePad::GetThumbLX() const
-{ return m_ThumbLX; }
-
-//-----------------------------------------------------------------------------
-//      左サムスティックのY成分を取得します.
-//-----------------------------------------------------------------------------
-int16_t GamePad::GetThumbLY() const
-{ return m_ThumbLY; }
-
-//-----------------------------------------------------------------------------
-//      右サムスティックのX成分を取得します.
-//-----------------------------------------------------------------------------
-int16_t GamePad::GetThumbRX() const
-{ return m_ThumbRX; }
-
-//-----------------------------------------------------------------------------
-//      右サムスティックのY成分を取得します.
-//-----------------------------------------------------------------------------
-int16_t GamePad::GetThumbRY() const
-{ return m_ThumbRY; }
-
-//-----------------------------------------------------------------------------
 //      正規化された左サムスティックのX成分を取得します.
 //-----------------------------------------------------------------------------
-float GamePad::GetNormalizedThumbLX() const
-{ return m_NormThumbLX; }
+float GamePad::GetThumbLX() const
+{ return m_ThumbLX; }
 
 //-----------------------------------------------------------------------------
 //      正規化された左サムスティックのY成分を取得します.
 //-----------------------------------------------------------------------------
-float GamePad::GetNormalizedThumbLY() const
-{ return m_NormThumbLY; }
+float GamePad::GetThumbLY() const
+{ return m_ThumbLY; }
 
 //-----------------------------------------------------------------------------
 //      正規化された右サムスティックのX成分を取得します.
 //-----------------------------------------------------------------------------
-float GamePad::GetNormalizedThumbRX() const
-{ return m_NormThumbRX; }
+float GamePad::GetThumbRX() const
+{ return m_ThumbRX; }
 
 //-----------------------------------------------------------------------------
 //      正規化された右サムスティックのY成分を取得します.
 //-----------------------------------------------------------------------------
-float GamePad::GetNormalizedThumbRY() const
-{ return m_NormThumbRY; }
+float GamePad::GetThumbRY() const
+{ return m_ThumbRY; }
+
+//-----------------------------------------------------------------------------
+//      左トリガーの値を取得します.
+//-----------------------------------------------------------------------------
+float GamePad::GetTriggerL() const
+{ return m_TriggerL; }
+
+//-----------------------------------------------------------------------------
+//      右トリガーの値を取得します.
+//-----------------------------------------------------------------------------
+float GamePad::GetTriggerR() const
+{ return m_TriggerR; }
 
 } // namespace asdx
