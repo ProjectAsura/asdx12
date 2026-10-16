@@ -900,40 +900,29 @@ void UpdateHid(void* hWnd)
 //-----------------------------------------------------------------------------
 //      ゲームパッドを取得します.
 //-----------------------------------------------------------------------------
-const IGamePad* GetPad(uint32_t index)
+const IGamePad& GetPad(uint32_t index)
 {
-    assert(g_Init);
-    if (!g_Init)
-        return nullptr;
-
     assert(index < 4);
     ScopedLock<SpinLock> locker(g_SpinLock);
-    return &g_Pad[index];
+    return g_Pad[index];
 }
 
 //-----------------------------------------------------------------------------
 //      キーボードを取得します.
 //-----------------------------------------------------------------------------
-const IKeyboard* GetKeyboard()
+const IKeyboard& GetKeyboard()
 {
-    assert(g_Init);
-    if (!g_Init)
-        return nullptr;
-
     ScopedLock<SpinLock> locker(g_SpinLock);
-    return &g_Keyboard;
+    return g_Keyboard;
 }
 
 //-----------------------------------------------------------------------------
 //      マウスを取得します.
 //-----------------------------------------------------------------------------
-const IMouse* GetMouse()
+const IMouse& GetMouse()
 {
-    assert(g_Init);
-    if (!g_Init)
-        return nullptr;
-
-    return &g_Mouse;
+    ScopedLock<SpinLock> locker(g_SpinLock);
+    return g_Mouse;
 }
 
 //-----------------------------------------------------------------------------

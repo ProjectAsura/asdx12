@@ -372,7 +372,7 @@ bool IsLockHid();
 //! @return     ゲームパッドを返却します. 
 //! @note       未初期化の場合は nullptr が返却されます.
 //-----------------------------------------------------------------------------
-const IGamePad* GetPad(uint32_t index);
+const IGamePad& GetPad(uint32_t index);
 
 //-----------------------------------------------------------------------------
 //! @brief      キーボードを取得します.
@@ -380,7 +380,7 @@ const IGamePad* GetPad(uint32_t index);
 //! @return     キーボードを返却します.
 //! @note       未初期化の場合は nullptr が返却されます.
 //-----------------------------------------------------------------------------
-const IKeyboard* GetKeyboard();
+const IKeyboard& GetKeyboard();
 
 //-----------------------------------------------------------------------------
 //! @brief      マウスを取得します.
@@ -388,6 +388,6 @@ const IKeyboard* GetKeyboard();
 //! @return     マウスを返却します.
 //! @note       未初期化の場合は nullptr が返却されます.
 //-----------------------------------------------------------------------------
-const IMouse* GetMouse();
+const IMouse& GetMouse();
 
 } // namespace asdx
