@@ -96,13 +96,7 @@
     <ClCompile Include="..\src\fnd\asdxFrameHeap.cpp">
       <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\fnd\asdxGamePad.cpp">
-      <Filter>ソース ファイル\fnd</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\fnd\asdxHash.cpp">
-      <Filter>ソース ファイル\fnd</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\fnd\asdxHidManager.cpp">
       <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
     <ClCompile Include="..\src\fnd\asdxIndexHeap.cpp">
@@ -111,16 +105,10 @@
     <ClCompile Include="..\src\fnd\asdxJob.cpp">
       <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\fnd\asdxKeyboard.cpp">
-      <Filter>ソース ファイル\fnd</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\fnd\asdxLogger.cpp">
       <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
     <ClCompile Include="..\src\fnd\asdxMisc.cpp">
-      <Filter>ソース ファイル\fnd</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\fnd\asdxMouse.cpp">
       <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
     <ClCompile Include="..\src\fnd\asdxOffsetAllocator.cpp">
@@ -332,6 +320,9 @@
     </ClCompile>
     <ClCompile Include="..\external\xxHash\xxhash.c">
       <Filter>ソース ファイル\external\xxHash</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\fnd\asdxHid.cpp">
+      <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
