@@ -474,8 +474,6 @@ public:
     //-------------------------------------------------------------------------
     void UpdateState(IGameInput* pInput)
     {
-        ResetState();
-
         if (pInput != nullptr)
             UpdateByGameInput(pInput);
         else
