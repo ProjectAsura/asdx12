@@ -15,6 +15,7 @@
 #include <fnd/asdxHid.h>
 #include <fnd/asdxRef.h>
 #include <fnd/asdxMath.h>
+#include <fnd/asdxSpinLock.h>
 
 
 #ifndef GAMEINPUT_API_VERSION
@@ -789,11 +790,13 @@ namespace {
 //-----------------------------------------------------------------------------
 // Global Variables.
 //-----------------------------------------------------------------------------
-GamePad             g_Pad[4]    = {};
-Keyboard            g_Keyboard  = {};
-Mouse               g_Mouse     = {};
-bool                g_Init      = false;
-RefPtr<IGameInput>  g_GameInput = {};
+GamePad             g_Pad[4]     = {};
+Keyboard            g_Keyboard   = {};
+Mouse               g_Mouse      = {};
+bool                g_Init       = false;
+RefPtr<IGameInput>  g_GameInput  = {};
+SpinLock            g_SpinLock   = {};
+std::atomic<bool>   g_CtrlLock   = false;
 
 //-----------------------------------------------------------------------------
 //      アサイン済みかどうかチェックします.
@@ -818,7 +821,6 @@ bool IsAssigned(IGameInputDevice* pDevice, uint32_t index)
     return false;
 }
 
-
 } // namespace
 
 //-----------------------------------------------------------------------------
@@ -828,6 +830,8 @@ void InitHid()
 {
     if (g_Init)
         return;
+
+    ScopedLock<SpinLock> locker(g_SpinLock);
 
     auto hr = GameInputCreate(g_GameInput.GetAddress());
     if (FAILED(hr))
@@ -840,7 +844,8 @@ void InitHid()
     for(auto i=0u; i<4; ++i)
         g_Pad[i].SetPlayerIndex(i);
 
-    g_Init = true;
+    g_Init      = true;
+    g_CtrlLock  = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -851,6 +856,7 @@ void TermHid()
     if (!g_Init)
         return;
 
+    ScopedLock<SpinLock> locker(g_SpinLock);
     for(auto i=0; i<4; ++i)
     {
         g_Pad[i].Term();
@@ -858,7 +864,8 @@ void TermHid()
     }
 
     g_GameInput.Reset();
-    g_Init = false;
+    g_Init     = false;
+    g_CtrlLock = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -869,11 +876,25 @@ void UpdateHid(void* hWnd)
     if (!g_Init)
         return;
 
-    for(auto i=0; i<4; ++i)
-        g_Pad[i].UpdateState(g_GameInput.GetPtr());
+    ScopedLock<SpinLock> locker(g_SpinLock);
+    // ロック中の場合はステートをリセット.
+    if (g_CtrlLock)
+    {
+        for(auto i=0; i<4; ++i)
+            g_Pad[i].ResetState();
 
-    g_Keyboard.UpdateState();
-    g_Mouse.UpdateState(hWnd);
+        g_Keyboard.ResetState();
+        g_Mouse.ResetState();
+    }
+    // 非ロック中のみ更新.
+    else
+    {
+        for(auto i=0; i<4; ++i)
+            g_Pad[i].UpdateState(g_GameInput.GetPtr());
+
+        g_Keyboard.UpdateState();
+        g_Mouse.UpdateState(hWnd);
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -881,10 +902,12 @@ void UpdateHid(void* hWnd)
 //-----------------------------------------------------------------------------
 IGamePad* GetPad(uint32_t index)
 {
+    assert(g_Init);
     if (!g_Init)
         return nullptr;
 
     assert(index < 4);
+    ScopedLock<SpinLock> locker(g_SpinLock);
     return &g_Pad[index];
 }
 
@@ -892,12 +915,49 @@ IGamePad* GetPad(uint32_t index)
 //      キーボードを取得します.
 //-----------------------------------------------------------------------------
 IKeyboard* GetKeyboard()
-{ return (g_Init) ? &g_Keyboard : nullptr; }
+{
+    assert(g_Init);
+    if (!g_Init)
+        return nullptr;
+
+    ScopedLock<SpinLock> locker(g_SpinLock);
+    return &g_Keyboard;
+}
 
 //-----------------------------------------------------------------------------
 //      マウスを取得します.
 //-----------------------------------------------------------------------------
 IMouse* GetMouse()
-{ return (g_Init) ? &g_Mouse : nullptr; }
+{
+    assert(g_Init);
+    if (!g_Init)
+        return nullptr;
+
+    return &g_Mouse;
+}
+
+//-----------------------------------------------------------------------------
+//      HID処理をロックします.
+//-----------------------------------------------------------------------------
+void LockHid()
+{
+    assert(g_Init);
+    g_CtrlLock = true;
+}
+
+//-----------------------------------------------------------------------------
+//      HID処理のロックを解除します.
+//-----------------------------------------------------------------------------
+void UnlockHid()
+{
+    assert(g_Init);
+    g_CtrlLock = false;
+}
+
+//-----------------------------------------------------------------------------
+//      HID処理がロック中かチェックします.
+//-----------------------------------------------------------------------------
+bool IsLockHid()
+{ return g_CtrlLock; }
 
 } // namespace asdx
