@@ -488,7 +488,7 @@ public:
     //! @param[in]      lhs     左のモーターの振動量(有効値:0.0 ～ 1.0).
     //! @param[in]      rhs     右のモーターの振動量(有効値:0.0 ～ 1.0).
     //-------------------------------------------------------------------------
-    void Vibrate(float lhs, float rhs) override
+    void Vibrate(float lhs, float rhs) const override
     {
         if (!m_Device)
         {
@@ -900,7 +900,7 @@ void UpdateHid(void* hWnd)
 //-----------------------------------------------------------------------------
 //      ゲームパッドを取得します.
 //-----------------------------------------------------------------------------
-IGamePad* GetPad(uint32_t index)
+const IGamePad* GetPad(uint32_t index)
 {
     assert(g_Init);
     if (!g_Init)
@@ -914,7 +914,7 @@ IGamePad* GetPad(uint32_t index)
 //-----------------------------------------------------------------------------
 //      キーボードを取得します.
 //-----------------------------------------------------------------------------
-IKeyboard* GetKeyboard()
+const IKeyboard* GetKeyboard()
 {
     assert(g_Init);
     if (!g_Init)
@@ -927,7 +927,7 @@ IKeyboard* GetKeyboard()
 //-----------------------------------------------------------------------------
 //      マウスを取得します.
 //-----------------------------------------------------------------------------
-IMouse* GetMouse()
+const IMouse* GetMouse()
 {
     assert(g_Init);
     if (!g_Init)
