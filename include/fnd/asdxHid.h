@@ -123,6 +123,16 @@ enum MOUSE_BUTTON
     MAX_MOUSE_BUTTON_COUNT,
 };
 
+//-----------------------------------------------------------------------------
+// Constant Values.
+//-----------------------------------------------------------------------------
+static constexpr uint16_t kVendorMicrosoft = 0x045E;
+static constexpr uint16_t kVendorSony      = 0x054C;
+static constexpr uint16_t kVendorNintendo  = 0x057E;
+static constexpr uint16_t kVendorHori      = 0x0F0D;
+static constexpr uint16_t kVendorLogicool  = 0x046D;
+static constexpr uint16_t kVendorElecom    = 0x056E;
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // IGamePad interface.
@@ -216,6 +226,20 @@ struct IGamePad
     //! @return     右トリガーの値を返却します.
     //-------------------------------------------------------------------------
     virtual float GetTriggerR() const = 0;
+
+    //-------------------------------------------------------------------------
+    //! @brief      コントローラーのベンダーIDを取得します.
+    //! 
+    //! @return     コントローラーのベンダーIDを返却します.
+    //-------------------------------------------------------------------------
+    virtual uint16_t GetVendorId() const = 0;
+
+    //-------------------------------------------------------------------------
+    //! @brief      コントローラーの製品IDを取得します.
+    //! 
+    //! @return     コントローラーの製品IDを返却します.
+    //-------------------------------------------------------------------------
+    virtual uint16_t GetProductId() const = 0;
 };
 
 

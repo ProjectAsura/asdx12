@@ -578,6 +578,32 @@ public:
     { return m_TriggerR; }
 
     //-------------------------------------------------------------------------
+    //! @brief      ベンダーIDを取得します.
+    //! 
+    //! @return     ベンダーIDを返却します.
+    //-------------------------------------------------------------------------
+    uint16_t GetVendorId() const override
+    {
+        if (m_Device.GetPtr() != nullptr)
+            return m_Device->GetDeviceInfo()->vendorId;
+
+        return kVendorMicrosoft; // MS扱い.
+    }
+
+    //-------------------------------------------------------------------------
+    //! @brief      製品IDを取得します.
+    //! 
+    //! @return     製品IDを返却します.
+    //-------------------------------------------------------------------------
+    uint16_t GetProductId() const override
+    {
+        if (m_Device.GetPtr() != nullptr)
+            return m_Device->GetDeviceInfo()->productId;
+
+        return 0x028E; // 有線Xbox360コントローラー扱い.
+    }
+
+    //-------------------------------------------------------------------------
     //! @brief      ボタンの値をリセットします.
     //-------------------------------------------------------------------------
     void ResetState()
@@ -637,7 +663,8 @@ private:
         RefPtr<IGameInputReading> reading;
         if (!m_Device)
         {
-            auto hr = pInput->GetCurrentReading(GameInputKindGamepad, nullptr, reading.GetAddress());
+            auto hr = pInput->GetCurrentReading(
+                GameInputKindGamepad, nullptr, reading.GetAddress());
             if (FAILED(hr))
                 return;
 
@@ -653,7 +680,8 @@ private:
         }
         else
         {
-            auto hr= pInput->GetCurrentReading(GameInputKindGamepad, m_Device.GetPtr(), reading.GetAddress());
+            auto hr= pInput->GetCurrentReading(
+                GameInputKindGamepad, m_Device.GetPtr(), reading.GetAddress());
             if (FAILED(hr))
                 return;
         }
