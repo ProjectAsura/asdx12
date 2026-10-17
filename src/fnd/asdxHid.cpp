@@ -587,7 +587,7 @@ public:
         if (m_Device.GetPtr() != nullptr)
             return m_Device->GetDeviceInfo()->vendorId;
 
-        return kVendorMicrosoft; // MS扱い.
+        return kPadVendorMicrosoft; // MS扱い.
     }
 
     //-------------------------------------------------------------------------

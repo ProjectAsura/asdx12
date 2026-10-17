@@ -126,12 +126,12 @@ enum MOUSE_BUTTON
 //-----------------------------------------------------------------------------
 // Constant Values.
 //-----------------------------------------------------------------------------
-static constexpr uint16_t kVendorMicrosoft = 0x045E;
-static constexpr uint16_t kVendorSony      = 0x054C;
-static constexpr uint16_t kVendorNintendo  = 0x057E;
-static constexpr uint16_t kVendorHori      = 0x0F0D;
-static constexpr uint16_t kVendorLogicool  = 0x046D;
-static constexpr uint16_t kVendorElecom    = 0x056E;
+static constexpr uint16_t kPadVendorMicrosoft = 0x045E;
+static constexpr uint16_t kPadVendorSony      = 0x054C;
+static constexpr uint16_t kPadVendorNintendo  = 0x057E;
+static constexpr uint16_t kPadVendorHori      = 0x0F0D;
+static constexpr uint16_t kPadVendorLogicool  = 0x046D;
+static constexpr uint16_t kPadVendorElecom    = 0x056E;
 
 
 ///////////////////////////////////////////////////////////////////////////////
