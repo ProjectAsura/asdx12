@@ -902,9 +902,12 @@ void UpdateHid(void* hWnd)
     if (!g_Init)
         return;
 
+    // ウィンドウフォーカスを持つかどうかチェック.
+    auto hasFocus = (GetFocus() == hWnd);
+
     ScopedLock<SpinLock> locker(g_SpinLock);
-    // ロック中の場合はステートをリセット.
-    if (g_CtrlLock)
+    // ロック中やウィンドウフォーカスがない場合はステートをリセット.
+    if (g_CtrlLock || !hasFocus)
     {
         for(auto i=0; i<4; ++i)
             g_Pad[i].ResetState();
