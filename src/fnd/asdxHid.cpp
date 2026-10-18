@@ -673,7 +673,10 @@ private:
 
             // デバイス取得に失敗　または 別インデックスで登録済みなら失敗扱い.
             if (pDevice == nullptr || IsAssigned(pDevice, m_PlayerIndex))
+            {
+                ResetState();
                 return;
+            }
 
             // デバイスを設定
             m_Device.Attach(pDevice);
@@ -735,7 +738,6 @@ private:
         auto thumbLY  = state.Gamepad.sThumbLY;
         auto thumbRX  = state.Gamepad.sThumbRX;
         auto thumbRY  = state.Gamepad.sThumbRY;
-
 
         if ( thumbLX <  XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE &&
              thumbLX > -XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE )
@@ -840,7 +842,6 @@ bool IsAssigned(IGameInputDevice* pDevice, uint32_t index)
         // 同じデバイスなら登録済み.
         if (g_Pad[i].GetDevice() == pDevice)
             return true;
-
     }
 
     // 一致するものが見つからなかった.
@@ -913,7 +914,7 @@ void UpdateHid(void* hWnd)
             g_Pad[i].ResetState();
 
         g_Keyboard.ResetState();
-        g_Mouse.ResetState();
+        g_Mouse   .ResetState();
     }
     // 非ロック中のみ更新.
     else
@@ -922,7 +923,7 @@ void UpdateHid(void* hWnd)
             g_Pad[i].UpdateState(g_GameInput.GetPtr());
 
         g_Keyboard.UpdateState();
-        g_Mouse.UpdateState(hWnd);
+        g_Mouse   .UpdateState(hWnd);
     }
 }
 
@@ -936,7 +937,7 @@ void ResetHid()
         g_Pad[i].ResetState();
 
     g_Keyboard.ResetState();
-    g_Mouse.ResetState();
+    g_Mouse   .ResetState();
 }
 
 //-----------------------------------------------------------------------------
