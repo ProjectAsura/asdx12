@@ -67,15 +67,15 @@ bool IsNullOrEmpty(const std::string& value)
 //-----------------------------------------------------------------------------
 //      ファイルパスを求めます.
 //-----------------------------------------------------------------------------
-std::string CalcFilePath(const std::string& baseDir, const asdx::StringView& view)
+std::string CalcFilePath(const asdx::StringView& baseDir, const asdx::StringView& view)
 {
     if (view.is_null_or_empty())
         return std::string();
 
-    if (IsNullOrEmpty(baseDir))
+    if (baseDir.is_null_or_empty())
         return view.c_str();
 
-    return baseDir + "\\" + view.c_str();
+    return std::string(baseDir.c_str()) + "\\" + view.c_str();
 }
 
 } // namespace
@@ -104,7 +104,8 @@ Mesh::~Mesh()
 bool Mesh::Init(const res::Mesh& mesh)
 {
     // 名前を設定.
-    m_Name = MeshProxy::GetName(mesh).c_str();
+    auto name = MeshProxy::GetName(mesh);
+    m_Name.assign(name.c_str(), name.size());
 
     // マテリアルIDを設定.
     m_MaterialId = MeshProxy::GetMaterialId(mesh);
@@ -210,7 +211,7 @@ void Mesh::Term()
 //-----------------------------------------------------------------------------
 //      メッシュ名を取得します.
 //-----------------------------------------------------------------------------
-const std::string& Mesh::GetName() const
+const String& Mesh::GetName() const
 { return m_Name; }
 
 //-----------------------------------------------------------------------------
@@ -307,19 +308,6 @@ D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC Mesh::GetTrianglesDesc() const
     return result;
 }
 
-//-----------------------------------------------------------------------------
-//      ユーザーデータを設定します.
-//-----------------------------------------------------------------------------
-void Mesh::SetUserData(void* value)
-{ m_pUserData = value; }
-
-//-----------------------------------------------------------------------------
-//      ユーザーデータを取得します.
-//-----------------------------------------------------------------------------
-void* Mesh::GetUserData() const
-{ return m_pUserData; }
-
-
 ///////////////////////////////////////////////////////////////////////////////
 // Material class
 ///////////////////////////////////////////////////////////////////////////////
@@ -339,7 +327,7 @@ Material::~Material()
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool Material::Init(const res::Material& material, const std::string& baseDir)
+bool Material::Init(const res::Material& material, const asdx::StringView& baseDir)
 {
     struct MaterialParam
     {
@@ -508,10 +496,8 @@ uint32_t Model::GetRefCount() const
 //-----------------------------------------------------------------------------
 //      初期化処理を行います.
 //-----------------------------------------------------------------------------
-bool Model::Init(std::vector<uint8_t>&& binary, const std::string& baseDir)
+bool Model::Init(std::vector<uint8_t>&& binary, const StringView& baseDir)
 {
-    m_BaseDir = baseDir;
-
     // モデルバイナリロード.
     m_Binary.Load(std::move(binary));
 
@@ -673,18 +659,6 @@ const BoundingBox& Model::GetLocalBox() const
 { return m_LocalBox; }
 
 //-----------------------------------------------------------------------------
-//      ユーザーデータを設定します.
-//-----------------------------------------------------------------------------
-void Model::SetUserData(void* value)
-{ m_pUserData = value; }
-
-//-----------------------------------------------------------------------------
-//      ユーザーデータを取得します.
-//-----------------------------------------------------------------------------
-void* Model::GetUserData() const
-{ return m_pUserData; }
-
-//-----------------------------------------------------------------------------
 //      ボーン名を検索します.
 //-----------------------------------------------------------------------------
 bool Model::FindBone(const char* name, uint32_t& index) const
@@ -751,7 +725,7 @@ bool Model::Create(const char* path, Model** ppModel)
     }
 
     auto baseDir = asdx::fs::path(path).parent_path().string();
-    if (!instance->Init(std::move(binary), baseDir))
+    if (!instance->Init(std::move(binary), StringView(baseDir.c_str())))
     {
         ELOG("Error : Model::Init() Failed.");
         instance->Release();

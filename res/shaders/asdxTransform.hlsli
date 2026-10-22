@@ -7,24 +7,16 @@
 #define ASDX_TRANSFORM_HLSLI
 
 
-///////////////////////////////////////////////////////////////////////////////
-// Transform4x3 structure
-///////////////////////////////////////////////////////////////////////////////
-struct Transform4x3
-{
-    float4 Col[3];  // メモリレイアウトは列優先です.
-};
-
 //-----------------------------------------------------------------------------
 //      指定行列で変換します.
 //-----------------------------------------------------------------------------
-float3 Transform(Transform4x3 m, float3 v)
+float3 Transform(float4x3 m, float3 v)
 {
     float4 val = float4(v, 1.0f);
     return float3(
-        dot(m.Col[0], val),
-        dot(m.Col[1], val),
-        dot(m.Col[2], val));
+        dot(m._11_21_31_41, val),
+        dot(m._12_22_32_42, val),
+        dot(m._13_23_33_43, val));
 }
 
 //-----------------------------------------------------------------------------
@@ -39,23 +31,23 @@ float4 Transform(float4x4 m, float4 v)
 //-----------------------------------------------------------------------------
 //      平行移動成分を除いた指定行列で変換します.
 //-----------------------------------------------------------------------------
-float3 TransformNormal(Transform4x3 m, float3 v)
+float3 TransformNormal(float4x3 m, float3 v)
 {
     return float3(
-        dot(m.Col[0].xyz, v),
-        dot(m.Col[1].xyz, v),
-        dot(m.Col[2].xyz, v));
+        dot(m._11_21_31, v),
+        dot(m._12_22_32, v),
+        dot(m._13_23_33, v));
 }
 
 //-----------------------------------------------------------------------------
 //      平行移動成分を除いた指定行列で変換します.
 //-----------------------------------------------------------------------------
-float3 TransformNormal(Transform4x3 m, float4 v)
+float3 TransformNormal(float4x3 m, float4 v)
 {
     return float3(
-        dot(m.Col[0].xyz, v.xyz),
-        dot(m.Col[1].xyz, v.xyz),
-        dot(m.Col[2].xyz, v.xyz));
+        dot(m._11_21_31, v.xyz),
+        dot(m._12_22_32, v.xyz),
+        dot(m._13_23_33, v.xyz));
 }
 
 //-----------------------------------------------------------------------------
@@ -80,61 +72,61 @@ float4 TransformCoord(float4x4 m, float4 v)
 //-----------------------------------------------------------------------------
 //      float4x4 に変換します.
 //-----------------------------------------------------------------------------
-float4x4 ToFloat4x4(Transform4x3 m)
+float4x4 ToFloat4x4(float4x3 m)
 {
     return float4x4(
-        m.Col[0].x, m.Col[1].x, m.Col[2].x, 0.0f,
-        m.Col[0].y, m.Col[1].y, m.Col[2].y, 0.0f,
-        m.Col[0].z, m.Col[1].z, m.Col[2].z, 0.0f,
-        m.Col[0].w, m.Col[1].w, m.Col[2].w, 1.0f);
+        m._11, m._12, m._13, 0.0f,
+        m._21, m._22, m._23, 0.0f,
+        m._31, m._32, m._33, 0.0f,
+        m._41, m._42, m._43, 1.0f);
 }
 
 //-----------------------------------------------------------------------------
 //      Transform3x4 に変換します.
 //-----------------------------------------------------------------------------
-Transform4x3 ToTransform3x4(float4x4 m)
+float4x3 ToTransform3x4(float4x4 m)
 {
     // m は行優先行列とします.
-    Transform4x3 result;
-    result.Col[0] = m._11_21_31_41;
-    result.Col[1] = m._12_22_32_42;
-    result.Col[2] = m._13_23_33_43;
-    return result;
+    return float4x3(
+        m._11, m._12, m._13,
+        m._21, m._22, m._23,
+        m._31, m._32, m._33,
+        m._41, m._42, m._43);
 }
 
 //-----------------------------------------------------------------------------
 //      X軸を取得します.
 //-----------------------------------------------------------------------------
-float3 GetAxisX(Transform4x3 view)
-{ return view.Col[0].xyz; }
+float3 GetAxisX(float4x3 view)
+{ return view._11_21_31; }
 
 //-----------------------------------------------------------------------------
 //      Y軸を取得します.
 //-----------------------------------------------------------------------------
-float3 GetAxisY(Transform4x3 view)
-{ return view.Col[1].xyz; }
+float3 GetAxisY(float4x3 view)
+{ return view._12_22_32; }
 
 //-----------------------------------------------------------------------------
 //      Z軸を取得します.
 //-----------------------------------------------------------------------------
-float3 GetAxisZ(Transform4x3 view)
-{ return view.Col[2].xyz; }
+float3 GetAxisZ(float4x3 view)
+{ return view._13_23_33; }
 
 //-----------------------------------------------------------------------------
 //      カメラ位置を取得します.
 //-----------------------------------------------------------------------------
-float3 GetCameraPosition(Transform4x3 view)
+float3 GetCameraPosition(float4x3 view)
 {
-    return -view.Col[0].xyz * view.Col[0].w
-           -view.Col[1].xyz * view.Col[1].w
-           -view.Col[2].xyz * view.Col[2].w;
+    return -view._11_21_31 * view._41
+           -view._12_22_32 * view._42
+           -view._13_23_33 * view._43;
 }
 
 //-----------------------------------------------------------------------------
 //      平行移動成分を取得します.
 //-----------------------------------------------------------------------------
-float3 GetTranslation(Transform4x3 value)
-{ return float3(value.Col[0].w, value.Col[1].w, value.Col[2].w); }
+float3 GetTranslation(float4x3 value)
+{ return float3(value._41, value._42, value._43); }
 
 // float4x4 の GetAxisX(), GetAxisY(), GetAxisZ(), GetPosition() は
 // asdxMath.hlsli にて定義されているため、ここでは定義しません.

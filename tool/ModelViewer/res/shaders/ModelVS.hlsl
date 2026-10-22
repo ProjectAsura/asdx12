@@ -63,8 +63,8 @@ cbuffer ModelParam : register(b1)
     uint2   Reserved;
 };
 
-StructuredBuffer<Transform4x3> WorldMatrice  : register(t0);
-StructuredBuffer<Transform4x3> MatrixPallets : register(t1);
+StructuredBuffer<float4x3> WorldMatrice  : register(t0);
+StructuredBuffer<float4x3> MatrixPallets : register(t1);
 
 //-----------------------------------------------------------------------------
 //      メインエントリーポイントです.
@@ -84,7 +84,7 @@ VSOutput main(const VSInput input, uint instanceId : SV_InstanceID)
         skinnedTangent += TransformNormal(MatrixPallets[input.BoneIndices[i]], input.Tangent) * input.BoneWeights[i];
     }
 
-    Transform4x3 world = WorldMatrice[MatrixId + instanceId];
+    float4x3 world = WorldMatrice[MatrixId + instanceId];
 
     float4 worldPos = float4(Transform(world, skinnedPos), 1.0f);
     float4 viewPos  = Transform(View,  worldPos);

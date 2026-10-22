@@ -659,6 +659,9 @@
     <ClInclude Include="..\external\xxHash\xxhash.h">
       <Filter>ソース ファイル\external\xxHash</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\fnd\asdxString.h">
+      <Filter>ヘッダー ファイル\fnd</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\res\shaders\asdxBRDF.hlsli">

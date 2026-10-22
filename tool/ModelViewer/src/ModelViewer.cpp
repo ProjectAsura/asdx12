@@ -74,8 +74,8 @@ static const uint32_t kSkeletalMeshElementCount = 7;
 ///////////////////////////////////////////////////////////////////////////////
 struct alignas(256) ParamScene
 {
-    asdx::Matrix    View;
-    asdx::Matrix    Proj;
+    asdx::Matrix4x4 View;
+    asdx::Matrix4x4 Proj;
     asdx::Vector3   CameraPos;
     float           FieldOfView;
     float           NearClip;
@@ -519,7 +519,7 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
     DrawModelInfo();
  
     // ギズモを描画.
-    auto modelWorld = asdx::Transform4x3::CreateIdentity();
+    auto modelWorld = asdx::Matrix4x3::CreateIdentity();
     DrawGizmo(modelWorld);
 
     // コンテキストメニューを描画.
@@ -540,13 +540,13 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
     // 射影行列を計算.
     constexpr auto fov = asdx::ToRadian(37.5f);
     const auto aspect = float(m_Width) / float(m_Height);
-    m_Proj = asdx::Matrix::CreatePerspectiveFieldOfView(fov, aspect, m_Camera.GetNearClip(), m_Camera.GetFarClip());
+    m_Proj = asdx::Matrix4x4::CreatePerspectiveFieldOfView(fov, aspect, m_Camera.GetNearClip(), m_Camera.GetFarClip());
 
     // シェイプ用のカメラ行列を設定.
     m_ShapeStates.SetViewProj(m_Camera.GetView(), m_Proj);
 
     // スカイ用カメラ行列を更新.
-    auto skyProj = asdx::Matrix::CreatePerspectiveFieldOfView(fov, aspect, 1.0f, 10.0f);
+    auto skyProj = asdx::Matrix4x4::CreatePerspectiveFieldOfView(fov, aspect, 1.0f, 10.0f);
     m_SkyContext.UpdateBuffer(m_Camera.GetView(), skyProj);
 
     // 定数バッファを更新.
@@ -580,14 +580,14 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
             {
                 auto& mtx = m_MotionPlayer.GetMatrixPalettes();
                 auto  ptr = m_MatrixPalletBuffer[idx].Map();
-                memcpy(ptr, mtx.data(), sizeof(asdx::Transform4x3) * mtx.size());
+                memcpy(ptr, mtx.data(), sizeof(asdx::Matrix4x3) * mtx.size());
                 m_MatrixPalletBuffer[idx].Unmap();
             }
         }
 
         // ワールド行列バッファ更新.
         {
-            auto worlds = m_WorldMatrixBuffer[idx].MapAs<asdx::Transform4x3>();
+            auto worlds = m_WorldMatrixBuffer[idx].MapAs<asdx::Matrix4x3>();
 
             auto batchCount = m_Model->GetBatchCount();
             size_t offset = 0;
@@ -675,8 +675,8 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
             for(auto j=0u; j<meshIds.size(); ++j)
             {
                 const auto mesh = m_Model->GetMesh(meshIds[j]);
-                if (!mesh->IsVisible())
-                    continue;
+                //if (!mesh->IsVisible())
+                //    continue;
 
                 const auto material  = m_Model->GetMaterial(mesh->GetMaterialId());
                 const auto alphaMode = material->GetAlphaMode();
@@ -714,10 +714,10 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
                 auto countVBV = (isSkeletal) ? kSkeletalMeshElementCount : kStaticMeshElementCount;
 
                 pCmd->SetGraphicsRootConstantBufferView(ROOT_PARAM_B2,  material->GetBuffer().GetGpuAddress());
-                pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T10, material->GetTexture(asdx::Material::TEXTURE_BASE_COLOR).GetHandleGPU());
-                pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T11, material->GetTexture(asdx::Material::TEXTURE_NORMAL)    .GetHandleGPU());
-                pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T12, material->GetTexture(asdx::Material::TEXTURE_ORM)       .GetHandleGPU());
-                pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T13, material->GetTexture(asdx::Material::TEXTURE_EMISSIVE)  .GetHandleGPU());
+                pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T10, material->GetTexture(asdx::Material::TEXTURE_BASE_COLOR)->GetHandleGPU());
+                pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T11, material->GetTexture(asdx::Material::TEXTURE_NORMAL)    ->GetHandleGPU());
+                pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T12, material->GetTexture(asdx::Material::TEXTURE_ORM)       ->GetHandleGPU());
+                pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T13, material->GetTexture(asdx::Material::TEXTURE_EMISSIVE)  ->GetHandleGPU());
 
                 pCmd->IASetVertexBuffers(0, countVBV, VBVs);
                 pCmd->IASetIndexBuffer(&IBV);
@@ -1089,7 +1089,7 @@ void ModelViewer::RecreateModel()
         m_ModelInfo.IndexCount  += mesh->GetIndexCount();
     }
 
-    auto sphere = m_Model->GetSphere();
+    auto sphere = m_Model->GetLocalSphere();
 
     // カメラを初期化.
     m_Camera.Init(
@@ -1111,7 +1111,7 @@ void ModelViewer::RecreateModel()
         {
             m_MatrixPalletBuffer[i].Term();
 
-            if (!m_MatrixPalletBuffer[i].Init(boneCount, sizeof(asdx::Transform4x3), D3D12_RESOURCE_STATE_COMMON, true))
+            if (!m_MatrixPalletBuffer[i].Init(boneCount, sizeof(asdx::Matrix4x3), D3D12_RESOURCE_STATE_COMMON, true))
             {
                 ELOGA("Error : Matrix Pallet Buffer Init Failed. index = %u", i);
             }
@@ -1125,14 +1125,14 @@ void ModelViewer::RecreateModel()
     {
         m_WorldMatrixBuffer[i].Term();
 
-        if (!m_WorldMatrixBuffer[i].Init(instanceCount, sizeof(asdx::Transform4x3), D3D12_RESOURCE_STATE_COMMON, true))
+        if (!m_WorldMatrixBuffer[i].Init(instanceCount, sizeof(asdx::Matrix4x3), D3D12_RESOURCE_STATE_COMMON, true))
         {
             ELOGA("Error : WorldMatrix Buffer Init Failed. index = %u", i);
         }
     }
 
-    auto ptr0 = m_WorldMatrixBuffer[0].MapAs<asdx::Transform4x3>();
-    auto ptr1 = m_WorldMatrixBuffer[1].MapAs<asdx::Transform4x3>();
+    auto ptr0 = m_WorldMatrixBuffer[0].MapAs<asdx::Matrix4x3>();
+    auto ptr1 = m_WorldMatrixBuffer[1].MapAs<asdx::Matrix4x3>();
 
     size_t offset = 0;
     for(auto i=0u; i<batchCount; ++i)
@@ -1141,9 +1141,9 @@ void ModelViewer::RecreateModel()
         auto mtx = asdx::ModelBatchProxy::GetTransforms(batch);
 
         if (ptr0 != nullptr)
-            memcpy(&ptr0[offset], mtx.data(), sizeof(asdx::Transform4x3) * mtx.size());
+            memcpy(&ptr0[offset], mtx.data(), sizeof(asdx::Matrix4x3) * mtx.size());
         if (ptr1 != nullptr)
-            memcpy(&ptr1[offset], mtx.data(), sizeof(asdx::Transform4x3) * mtx.size());
+            memcpy(&ptr1[offset], mtx.data(), sizeof(asdx::Matrix4x3) * mtx.size());
 
         offset += mtx.size();
     }

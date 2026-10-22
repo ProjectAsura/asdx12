@@ -108,7 +108,7 @@ private:
     asdx::Vector3                       m_ModelScale         = asdx::Vector3(1.0f, 1.0f, 1.0f);
     bool                                m_EnableGuizmo       = false;
     ImGuizmo::OPERATION                 m_GuizmoOperation    = {};
-    asdx::Matrix                        m_Proj;
+    asdx::Matrix4x4                     m_Proj;
     asdx::BoneShape                     m_BoneShape;
     asdx::SphereShape                   m_SphereShape;
     asdx::ShapeStates                   m_ShapeStates;
@@ -245,17 +245,17 @@ private:
     //-------------------------------------------------------------------------
     //! @brief      ギズモを描画します.
     //-------------------------------------------------------------------------
-    void DrawGizmo(asdx::Transform4x3& modelWorld);
+    void DrawGizmo(asdx::Matrix4x3& modelWorld);
 
     //-------------------------------------------------------------------------
     //! @brief      バウンディングスフィアを描画します.
     //-------------------------------------------------------------------------
-    void DrawBoundingSphere(const asdx::Transform4x3& modelWorld);
+    void DrawBoundingSphere(const asdx::Matrix4x3& modelWorld);
 
     //-------------------------------------------------------------------------
     //! @brief      ボーンを描画します.
     //-------------------------------------------------------------------------
-    void DrawBones(const asdx::Transform4x3& modelWorld);
+    void DrawBones(const asdx::Matrix4x3& modelWorld);
 
     //-------------------------------------------------------------------------
     //! @brief      グリッドを描画します.

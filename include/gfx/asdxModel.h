@@ -13,6 +13,7 @@
 #include <fnd/asdxRef.h>
 #include <fnd/asdxMath.h>
 #include <fnd/asdxList.h>
+#include <fnd/asdxString.h>
 #include <gfx/asdxBuffer.h>
 #include <gfx/asdxTextureManager.h>
 #include <res/asdxResModel.h>
@@ -76,7 +77,7 @@ public:
     //! 
     //! @return     メッシュ名を返却します.
     //-------------------------------------------------------------------------
-    const std::string& GetName() const;
+    const String& GetName() const;
 
     //-------------------------------------------------------------------------
     //! @brief      位置座標バッファを取得します.
@@ -169,28 +170,11 @@ public:
     //-------------------------------------------------------------------------
     D3D12_RAYTRACING_GEOMETRY_TRIANGLES_DESC GetTrianglesDesc() const;
 
-    //-------------------------------------------------------------------------
-    //! @brief      ユーザーデータを設定します.
-    //! 
-    //! @param[in]      value       設定するユーザーデータです.
-    //-------------------------------------------------------------------------
-    void SetUserData(void* value);
-
-    //-------------------------------------------------------------------------
-    //! @brief      ユーザーデータを取得します.
-    //! 
-    //! @return     ユーザーデータを返却します.
-    //-------------------------------------------------------------------------
-    void* GetUserData() const;
-
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    std::string     m_Name;                         //!< メッシュ名.
-    uint32_t        m_MaterialId    = UINT32_MAX;   //!< マテリアルID.
-    uint32_t        m_VertexCount   = 0;            //!< 頂点数.
-    uint32_t        m_IndexCount    = 0;            //!< 頂点インデックス数.
+    String          m_Name;                         //!< メッシュ名.
     VertexBuffer    m_Positions;                    //!< 位置座標バッファ.
     VertexBuffer    m_Normals;                      //!< 法線バッファ.
     VertexBuffer    m_Tangents;                     //!< 接線バッファ.
@@ -201,7 +185,9 @@ private:
     IndexBuffer     m_VertexIndices;                //!< 頂点インデックスバッファ.
     BoundingSphere  m_BoundingSphere;               //!< バウンディングスフィア.
     BoundingBox     m_BoundingBox;                  //!< バウンディングボックス.
-    void*           m_pUserData     = nullptr;      //!< ユーザーデータです.
+    uint32_t        m_MaterialId    = UINT32_MAX;   //!< マテリアルID.
+    uint32_t        m_VertexCount   = 0;            //!< 頂点数.
+    uint32_t        m_IndexCount    = 0;            //!< 頂点インデックス数.
 
     //=========================================================================
     // private methods.
@@ -260,7 +246,7 @@ public:
     //! @retval true    初期化に成功.
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
-    bool Init(const res::Material& material, const std::string& baseDir);
+    bool Init(const res::Material& material, const StringView& baseDir);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.
@@ -484,20 +470,6 @@ public:
     const BoundingBox& GetLocalBox() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      ユーザーデータを設定します.
-    //! 
-    //! @param[in]      value       設定するユーザーデータ.
-    //-------------------------------------------------------------------------
-    void SetUserData(void* value);
-
-    //-------------------------------------------------------------------------
-    //! @brief      ユーザーデータを取得します.
-    //! 
-    //! @return     ユーザーデータを返却します.
-    //-------------------------------------------------------------------------
-    void* GetUserData() const;
-
-    //-------------------------------------------------------------------------
     //! @brief      ボーンを検索します.
     //! 
     //! @param[in]      name        検索するボーン名.
@@ -548,8 +520,6 @@ private:
     std::vector<Material>       m_Materials;                    //!< マテリアルです.
     BoundingSphere              m_LocalSphere;                  //!< ローカルバウンディングスフィアです.
     BoundingBox                 m_LocalBox;                     //!< ローカルバウンディングボックスです.
-    void*                       m_pUserData     = nullptr;      //!< ユーザーデータです.
-    std::string                 m_BaseDir;                      //!< ベースディレクトリ.
 
     //=========================================================================
     // private methods.
@@ -572,7 +542,7 @@ private:
     //! @retval true    初期化に成功.
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
-    bool Init(std::vector<uint8_t>&& binary, const std::string& baseDir);
+    bool Init(std::vector<uint8_t>&& binary, const StringView& baseDir);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.

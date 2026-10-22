@@ -125,7 +125,8 @@ bool CreateUploadBuffer
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
 VertexBuffer::VertexBuffer()
-{ memset(&m_View, 0, sizeof(m_View)); }
+: m_Stride(0)
+{ /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      デストラクタです.
@@ -211,9 +212,7 @@ bool VertexBuffer::Init(uint64_t size, uint32_t stride)
         }
     }
 
-    m_View.BufferLocation   = m_Resource->GetGPUVirtualAddress();
-    m_View.SizeInBytes      = UINT(size);
-    m_View.StrideInBytes    = stride;
+    m_Stride = stride;
 
     return true;
 }
@@ -225,7 +224,7 @@ void VertexBuffer::Term()
 {
     auto resource = m_Resource.Detach();
     Dispose(resource);
-    memset(&m_View, 0, sizeof(m_View));
+    m_Stride = 0;
     m_HolderAlloc.Reset();
 }
 
@@ -263,7 +262,13 @@ void VertexBuffer::Unmap()
 //      頂点バッファビューを取得します.
 //-----------------------------------------------------------------------------
 D3D12_VERTEX_BUFFER_VIEW VertexBuffer::GetVBV() const
-{ return m_View; }
+{
+    D3D12_VERTEX_BUFFER_VIEW vbv = {};
+    vbv.BufferLocation = m_Resource->GetGPUVirtualAddress();
+    vbv.SizeInBytes    = UINT(m_Resource->GetDesc().Width);
+    vbv.StrideInBytes  = m_Stride;
+    return vbv;
+}
 
 //-----------------------------------------------------------------------------
 //      リソースを取得します.
@@ -300,7 +305,7 @@ void VertexBuffer::SetName(LPCWSTR tag)
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
 IndexBuffer::IndexBuffer()
-{ memset(&m_View, 0, sizeof(m_View)); }
+{ /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      デストラクタです.
@@ -386,10 +391,6 @@ bool IndexBuffer::Init(uint64_t size, bool isShortFormat)
         }
     }
 
-    m_View.BufferLocation   = m_Resource->GetGPUVirtualAddress();
-    m_View.SizeInBytes      = UINT(size);
-    m_View.Format           = (isShortFormat) ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
-
     return true;
 }
 
@@ -400,7 +401,6 @@ void IndexBuffer::Term()
 {
     auto resource = m_Resource.Detach();
     Dispose(resource);
-    memset(&m_View, 0, sizeof(m_View));
     m_HolderAlloc.Reset();
 }
 
@@ -438,7 +438,15 @@ void IndexBuffer::Unmap()
 //      インデックスバッファビューを取得します.
 //-----------------------------------------------------------------------------
 D3D12_INDEX_BUFFER_VIEW IndexBuffer::GetIBV() const
-{ return m_View; }
+{
+    auto desc = m_Resource->GetDesc();
+
+    D3D12_INDEX_BUFFER_VIEW ibv = {};
+    ibv.BufferLocation  = m_Resource->GetGPUVirtualAddress();
+    ibv.SizeInBytes     = UINT(desc.Width);
+    ibv.Format          = desc.Format;
+    return ibv;
+}
 
 //-----------------------------------------------------------------------------
 //      リソースを取得します.
@@ -567,8 +575,6 @@ bool ConstantBuffer::Init(uint64_t size)
         }
     }
 
-    m_Size = size;
-
     return true;
 }
 
@@ -580,7 +586,6 @@ void ConstantBuffer::Term()
     auto resource = m_Resource.Detach();
     Dispose(resource);
     m_HolderAlloc.Reset();
-    m_Size = 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -604,7 +609,12 @@ D3D12_GPU_VIRTUAL_ADDRESS ConstantBuffer::GetGpuAddress() const
 //      サイズを取得します.
 //-----------------------------------------------------------------------------
 uint64_t ConstantBuffer::GetSize() const
-{ return m_Size; }
+{
+    if (!m_Resource)
+        return 0;
+
+    return m_Resource->GetDesc().Width;
+}
 
 //-----------------------------------------------------------------------------
 //      メモリマッピングを行います.

@@ -60,7 +60,7 @@ cbuffer ModelParam : register(b1)
     uint2   Reserved;
 };
 
-StructuredBuffer<Transform4x3>  WorldMatrices : register(t0);
+StructuredBuffer<float4x3>  WorldMatrices : register(t0);
 
 //-----------------------------------------------------------------------------
 //      メインエントリーポイントです.
@@ -69,7 +69,7 @@ VSOutput main(const VSInput input, uint instanceId : SV_InstanceID)
 {
     VSOutput output = (VSOutput)0;
 
-    Transform4x3 world = WorldMatrices[MatrixId + instanceId];
+    float4x3 world = WorldMatrices[MatrixId + instanceId];
 
     float4 worldPos = float4(Transform(world, input.Position), 1.0f);
     float4 viewPos  = Transform(View, worldPos);

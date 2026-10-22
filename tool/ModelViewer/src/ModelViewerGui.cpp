@@ -12,6 +12,7 @@
 #include <fnd/asdxLogger.h>
 #include <fnd/asdxPath.h>
 #include <gfx/asdxGfxMisc.h>
+#include <gfx/asdxTexture.h>
 #include <res/asdxResTexture.h>
 #include <DirectXMath.h>
 #include <TextureConverter.h>
@@ -104,10 +105,10 @@ static void DrawTextureInfo(const char* label, const char* path, const asdx::Tex
 
     ImGui::TableNextRow();
     ImGui::TableSetColumnIndex(0);
-    ImGui::Image(holder.GetHandleGPU().ptr, ImVec2(64, 64));
+    ImGui::Image(holder->GetHandleGPU().ptr, ImVec2(64, 64));
 
     ImGui::TableSetColumnIndex(1);
-    auto desc = holder.GetDesc();
+    auto desc = holder->GetDesc();
     ImGui::Text("Dimension : %s", asdx::ToShortString(desc.Dimension));
     ImGui::Text("Size      : (%llu, %u, %u)", desc.Width, desc.Height, desc.DepthOrArraySize);
     ImGui::Text("MipLevels : %u", desc.MipLevels);
@@ -304,7 +305,7 @@ void ModelViewer::DrawLisence()
 //-----------------------------------------------------------------------------
 //      ギズモを描画します.
 //-----------------------------------------------------------------------------
-void ModelViewer::DrawGizmo(asdx::Transform4x3& modelWorld)
+void ModelViewer::DrawGizmo(asdx::Matrix4x3& modelWorld)
 {
     if (m_ModelInfo.MeshCount == 0)
         return;
@@ -325,13 +326,13 @@ void ModelViewer::DrawGizmo(asdx::Transform4x3& modelWorld)
             matrix, &m_ModelTranslation.x, &m_ModelRotation.x, &m_ModelScale.x);
     }
 
-    modelWorld = asdx::Transform4x3::FromMatrix(asdx::Matrix(matrix));
+    modelWorld = asdx::Matrix4x3::FromMatrix4x4(asdx::Matrix4x4(matrix));
 }
 
 //-----------------------------------------------------------------------------
 //      バウンディングスフィアを描画します.
 //-----------------------------------------------------------------------------
-void ModelViewer::DrawBoundingSphere(const asdx::Transform4x3& modelWorld)
+void ModelViewer::DrawBoundingSphere(const asdx::Matrix4x3& modelWorld)
 {
     if (!m_Model)
         return;
@@ -339,13 +340,13 @@ void ModelViewer::DrawBoundingSphere(const asdx::Transform4x3& modelWorld)
     if (!m_DrawBoundingSphere)
         return;
 
-    auto mtx = asdx::Transform4x3::ToMatrix(modelWorld);
+    auto mtx = asdx::Matrix4x4::FromMatrix4x3(modelWorld);
 
     // メッシュのバウンディングスフィア.
     for(auto i=0u; i<m_Model->GetMeshCount(); ++i)
     {
         auto& sphere = m_Model->GetMesh(i)->GetSphere();
-        auto  world  = asdx::Matrix::CreateScale(sphere.Radius) * asdx::Matrix::CreateTranslation(sphere.Center) * mtx;
+        auto  world  = asdx::Matrix4x4::CreateScale(sphere.Radius) * asdx::Matrix4x4::CreateTranslation(sphere.Center) * mtx;
 
         uint32_t index = uint32_t(i);
         m_ShapeParams.SetWorld(index, world);
@@ -354,8 +355,8 @@ void ModelViewer::DrawBoundingSphere(const asdx::Transform4x3& modelWorld)
 
     // モデルのバウンディングスフィア.
     {
-        auto& sphere = m_Model->GetSphere();
-        auto  world  = asdx::Matrix::CreateScale(sphere.Radius) * asdx::Matrix::CreateTranslation(sphere.Center) * mtx;
+        auto& sphere = m_Model->GetLocalSphere();
+        auto  world  = asdx::Matrix4x4::CreateScale(sphere.Radius) * asdx::Matrix4x4::CreateTranslation(sphere.Center) * mtx;
 
         uint32_t index = uint32_t(m_Model->GetMeshCount());
         m_ShapeParams.SetWorld(index, world);
@@ -366,7 +367,7 @@ void ModelViewer::DrawBoundingSphere(const asdx::Transform4x3& modelWorld)
 //-----------------------------------------------------------------------------
 //      ボーンを描画します.
 //-----------------------------------------------------------------------------
-void ModelViewer::DrawBones(const asdx::Transform4x3& modelWorld)
+void ModelViewer::DrawBones(const asdx::Matrix4x3& modelWorld)
 {
     if (!m_Model)
         return;
@@ -455,10 +456,10 @@ void ModelViewer::DrawMeshTab()
             }
 
             auto drawMesh = m_Model->GetMesh(i);
-            auto visible = drawMesh->IsVisible();
+            //auto visible = drawMesh->IsVisible();
 
-            if (ImGui::Checkbox(asdx::ToChar(u8"表示"), &visible))
-            { drawMesh->SetVisibility(visible); }
+            //if (ImGui::Checkbox(asdx::ToChar(u8"表示"), &visible))
+            //{ drawMesh->SetVisibility(visible); }
 
             ImGui::BeginTable("##MeshTable", 2);
             ImGui::TableSetupColumn("##MeshRow0", ImGuiTableColumnFlags_WidthFixed);

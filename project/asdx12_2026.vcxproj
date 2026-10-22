@@ -310,6 +310,7 @@
     <ClInclude Include="..\include\fnd\asdxStateMachine.h" />
     <ClInclude Include="..\include\fnd\asdxStepTimer.h" />
     <ClInclude Include="..\include\fnd\asdxStopWatch.h" />
+    <ClInclude Include="..\include\fnd\asdxString.h" />
     <ClInclude Include="..\include\fnd\asdxStringView.h" />
     <ClInclude Include="..\include\fnd\asdxTablet.h" />
     <ClInclude Include="..\include\fnd\asdxThreadPool.h" />
