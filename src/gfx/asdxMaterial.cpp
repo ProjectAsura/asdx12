@@ -44,6 +44,9 @@ bool Material::Init(const ResMaterial& res)
         return false;
     }
 
+    // シェーダ名.
+    m_Shader.assign(res.Shader.c_str(), res.Shader.size());
+
     // 定数バッファ更新.
     if (res.Buffer.data() != nullptr)
     {
@@ -85,6 +88,7 @@ void Material::Term()
     { m_Textures[i].Reset(); }
 
     m_Textures.clear();
+    m_Shader  .clear();
 }
 
 //-----------------------------------------------------------------------------
@@ -108,6 +112,12 @@ void Material::Release()
 //-----------------------------------------------------------------------------
 uint32_t Material::GetRefCount() const
 { return m_RefCount; }
+
+//-----------------------------------------------------------------------------
+//      シェーダ名を取得します.
+//-----------------------------------------------------------------------------
+StringView Material::GetShader() const
+{ return StringView(m_Shader.c_str()); }
 
 //-----------------------------------------------------------------------------
 //      定数バッファを取得します.

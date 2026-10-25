@@ -32,27 +32,16 @@ namespace {
 //-----------------------------------------------------------------------------
 // Constant Values.
 //-----------------------------------------------------------------------------
-static constexpr uint32_t CURRENT_VERSION = 3u;  //!< 現在サポートされているバージョン.
-
+static constexpr uint32_t CURRENT_VERSION = 4u;  //!< 現在サポートされているバージョン.
 
 ///////////////////////////////////////////////////////////////////////////////
-// BoundingInfo structure
+// MeshInstance structure
 ///////////////////////////////////////////////////////////////////////////////
-struct BoundingInfo
+struct MeshInstance
 {
-    asdx::BoundingBox       Box;
-    asdx::BoundingSphere    Sphere;
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// BatchInfo structure
-///////////////////////////////////////////////////////////////////////////////
-struct BatchInfo
-{
-    std::vector<flatbuffers::Offset<flatbuffers::String>> Names;
-    std::vector<asdx::res::Float3x4>    Transforms;
-    std::vector<uint32_t>               Meshes;
-    BoundingInfo                        Bounds;
+    std::vector<flatbuffers::Offset<flatbuffers::String>>   Names;          // NamesとTransformsが　1vs1 対応.
+    std::vector<asdx::res::Float3x4>                        Transforms;     // 変換行列.
+    std::vector<uint32_t>                                   Meshes;         // 描画に使うメッシュリスト.
 };
 
 //-----------------------------------------------------------------------------
@@ -375,7 +364,6 @@ void ParseMesh
 (
     flatbuffers::FlatBufferBuilder&                 builder,
     const std::unordered_map<std::string, int>&     boneMap,
-    BoundingInfo&                                   bounds,
     const aiNode*                                   rootNode,
     flatbuffers::Offset<asdx::res::Mesh>&           dstMesh,
     const aiMesh*                                   srcMesh
@@ -642,13 +630,6 @@ void ParseMesh
         assert(ret == 1);
     }
 
-    auto sphere  = asdx::BoundingSphere::CreateFromPoints(reinterpret_cast<const asdx::Vector3*>(&srcMesh->mVertices[0].x), srcMesh->mNumVertices);
-    auto bSphere = ToSphere(sphere);
-    auto bBox    = ToBox(box);
-
-    bounds.Box    = box;
-    bounds.Sphere = sphere;
-
     dstMesh = asdx::res::CreateMeshDirect(
         builder,
         srcMesh->mName.C_Str(),
@@ -660,11 +641,10 @@ void ParseMesh
         &texcoords,
         &boneWeights,
         &boneIndices,
-        &vertexIndices,
-        &bSphere,
-        &bBox);
+        &vertexIndices);
 }
 
+#if 0
 //-----------------------------------------------------------------------------
 //      ファイルパスを連結します.
 //-----------------------------------------------------------------------------
@@ -884,6 +864,7 @@ std::string GetTexturePath
 
     return result;
 }
+#endif
 
 //-----------------------------------------------------------------------------
 //      マテリアルを解析します.
@@ -892,10 +873,11 @@ void ParseMaterial
 (
     flatbuffers::FlatBufferBuilder& builder,
     const aiScene*                  pScene,
-    const std::string&              inputDir,
-    const std::string&              txbOutPath,
-    bool                            txbConvert,
-    std::vector<flatbuffers::Offset<asdx::res::Material>>& materials
+    std::vector<flatbuffers::Offset<flatbuffers::String>>& materials
+    //const std::string&              inputDir,
+    //const std::string&              txbOutPath,
+    //bool                            txbConvert,
+    //std::vector<flatbuffers::Offset<asdx::res::Material>>& materials
 )
 {
     materials.reserve(pScene->mNumMaterials);
@@ -904,8 +886,9 @@ void ParseMaterial
         const auto srcMat = pScene->mMaterials[i];
         std::string name = srcMat->GetName().C_Str();
         if (name.empty() || name == "")
-        { name = "material__" + std::to_string(i); }
+        { name = "mat__" + std::to_string(i); }
 
+#if 0
         std::string baseColorMap;
         std::string normalMap;
         std::string ormMap;
@@ -1068,6 +1051,9 @@ void ParseMaterial
             twoSided);
 
         materials.emplace_back(dstMat);
+#endif
+
+        materials.push_back(builder.CreateString(name.c_str()));
     }
 }
 
@@ -1102,9 +1088,7 @@ void ParseModelInstance
     flatbuffers::FlatBufferBuilder&             builder,
     const aiNode*                               pNode,
     const std::unordered_map<std::string, int>& boneMap,
-    const std::vector<BoundingInfo>&            bounds,
-    std::unordered_map<uint64_t, BatchInfo>&    batches,
-    BoundingInfo&                               mergedInfo
+    std::unordered_map<uint64_t, MeshInstance>& instances
 )
 {
     if (pNode == nullptr)
@@ -1130,37 +1114,28 @@ void ParseModelInstance
         asdx::BoundingBox    box;
         asdx::BoundingSphere sphere;
 
-        auto itr = batches.find(hash);
-        if (itr == batches.end())
+        auto itr = instances.find(hash);
+        if (itr == instances.end())
         {
             auto worldMtx = ToFloat4x4(mtx);
 
-            BatchInfo item = {};
+            MeshInstance item = {};
             item.Meshes.resize(pNode->mNumMeshes);
 
             for(auto i=0u; i<pNode->mNumMeshes; ++i)
             {
                 item.Meshes[i] = pNode->mMeshes[i];
-
-                // バウンディングを求める.
-                box    = asdx::BoundingBox::CreateMerged(box, bounds[i].Box);
-                sphere = asdx::BoundingSphere::CreateMerged(sphere, bounds[i].Sphere);
             }
 
-            item.Bounds.Box    = box;
-            item.Bounds.Sphere = sphere;
 
             item.Names.push_back(builder.CreateString(name.c_str()));
             item.Transforms.push_back(ToFloat3x4(mtx));
 
             // バッチに登録.
-            batches[hash] = item;
+            instances[hash] = item;
         }
         else
         {
-            box    = itr->second.Bounds.Box;
-            sphere = itr->second.Bounds.Sphere;
-
             itr->second.Names.push_back(builder.CreateString(name.c_str()));
             itr->second.Transforms.push_back(ToFloat3x4(mtx));
         }
@@ -1169,16 +1144,12 @@ void ParseModelInstance
         auto transform   = ToMatrix(mtx);
         auto transBox    = asdx::BoundingBox::Transform(box, transform);
         auto transSphere = asdx::BoundingSphere::Transform(sphere, transform);
-
-        // モデルバイナリ用にマージしたものを求める.
-        mergedInfo.Box    = asdx::BoundingBox::CreateMerged(mergedInfo.Box, transBox);
-        mergedInfo.Sphere = asdx::BoundingSphere::CreateMerged(mergedInfo.Sphere, transSphere);
     }
 
     // 子供を再帰的に処理.
     for(auto i=0u; i<pNode->mNumChildren; ++i)
     {
-        ParseModelInstance(builder, pNode->mChildren[i], boneMap, bounds, batches, mergedInfo);
+        ParseModelInstance(builder, pNode->mChildren[i], boneMap, instances);
     }
 }
 
@@ -1288,54 +1259,38 @@ bool ModelConverter::Convert
 
     // メッシュデータを変換.
     std::vector<flatbuffers::Offset<asdx::res::Mesh>> meshes;
-    std::vector<BoundingInfo> bounds;
     meshes.resize(pScene->mNumMeshes);
-    bounds.resize(pScene->mNumMeshes);
-    BoundingInfo mergedInfo = {};
     for(auto i=0u; i<pScene->mNumMeshes; ++i)
     {
         const auto srcMesh = pScene->mMeshes[i];
         auto& dstMesh = meshes[i];
 
-        ParseMesh(builder, boneMap, bounds[i], pScene->mRootNode, dstMesh, srcMesh);
-
-        mergedInfo.Box    = asdx::BoundingBox::CreateMerged(mergedInfo.Box, bounds[i].Box);
-        mergedInfo.Sphere = asdx::BoundingSphere::CreateMerged(mergedInfo.Sphere, bounds[i].Sphere);
+        ParseMesh(builder, boneMap, pScene->mRootNode, dstMesh, srcMesh);
     }
 
     // マテリアルデータを変換.
-    std::vector<flatbuffers::Offset<asdx::res::Material>> materials;
-    ParseMaterial(builder, pScene, inputDir, txbOutPath, txbConvert, materials);
+    std::vector<flatbuffers::Offset<::flatbuffers::String>> materials;
+    ParseMaterial(builder, pScene, materials);
 
-    // モデルインスタンスを変換.
-    std::unordered_map<uint64_t, BatchInfo> batches;
-    ParseModelInstance(builder, pScene->mRootNode, boneMap, bounds, batches, mergedInfo);
+    // メッシュインスタンスを変換.
+    std::unordered_map<uint64_t, MeshInstance> batches;
+    ParseModelInstance(builder, pScene->mRootNode, boneMap, batches);
 
-    std::vector<flatbuffers::Offset<asdx::res::ModelBatch>> dstBatches;
+    std::vector<flatbuffers::Offset<asdx::res::MeshInstance>> dstInstances;
     uint64_t totalInstanceCount = 0;
     for(auto& itr : batches)
     {
-        auto bBox    = ToBox(itr.second.Bounds.Box);
-        auto bSphere = ToSphere(itr.second.Bounds.Sphere);
-
-        totalInstanceCount += itr.second.Transforms.size();
-
-        auto batch = asdx::res::CreateModelBatchDirect(
+        auto batch = asdx::res::CreateMeshInstanceDirect(
             builder,
             &itr.second.Names,
             &itr.second.Transforms,
-            &itr.second.Meshes,
-            &bSphere,
-            &bBox);
+            &itr.second.Meshes);
 
-        dstBatches.emplace_back(batch);
+        dstInstances.emplace_back(batch);
     }
 
     // 不要になったのでクリア.
     boneMap.clear();
-
-    auto bBox    = ToBox(mergedInfo.Box);
-    auto bSphere = ToSphere(mergedInfo.Sphere);
 
     auto rootMtx          = ToMatrix(pScene->mRootNode->mTransformation);
     auto invRootMtx       = asdx::Matrix4x4::Invert(rootMtx);
@@ -1348,10 +1303,7 @@ bool ModelConverter::Convert
         &meshes,
         &materials,
         &bones,
-        &dstBatches,
-        &bSphere,
-        &bBox,
-        totalInstanceCount,
+        &dstInstances,
         &rootTransform,
         &invRootTransform);
 
@@ -1381,7 +1333,7 @@ bool ModelConverter::ReverseConvert(const std::vector<uint8_t>& binary, const ch
     aiScene scene = {};
 
     auto rootNode = new aiNode();
-    rootNode->mName           = "RootNode";
+    rootNode->mName           = "root";
     rootNode->mTransformation = ToAiMatrix(modelBin->RootTransform());
     rootNode->mParent         = nullptr;
     rootNode->mNumChildren    = 0;
@@ -1392,6 +1344,7 @@ bool ModelConverter::ReverseConvert(const std::vector<uint8_t>& binary, const ch
 
     scene.mRootNode = rootNode;
 
+#if 0
     auto materials = modelBin->Materials();
     {
         auto count = materials->size();
@@ -1502,6 +1455,7 @@ bool ModelConverter::ReverseConvert(const std::vector<uint8_t>& binary, const ch
             scene.mMaterials[i] = dstMat;
         }
     }
+#endif
 
     auto bones = modelBin->Bones();
     std::vector<aiNode*> dstNodes;
@@ -1731,16 +1685,16 @@ bool ModelConverter::ReverseConvert(const std::vector<uint8_t>& binary, const ch
         }
     }
 
-    auto batches = modelBin->Batches();
+    auto instances = modelBin->MeshInstances();
     std::vector<std::vector<uint32_t>> instanceMeshes;
-    if (batches != nullptr)
+    if (instances != nullptr)
     {
         auto invMatrix = ToAiMatrix(modelBin->InvRootTransform());
-        instanceMeshes.resize(batches->size());
+        instanceMeshes.resize(instances->size());
 
-        for(auto i=0u; i<batches->size(); ++i)
+        for(auto i=0u; i<instances->size(); ++i)
         {
-            const auto batch = batches->Get(i);
+            const auto batch = instances->Get(i);
             auto meshCount = uint32_t(batch->Meshes()->size());
             instanceMeshes[i].resize(meshCount);
             for(auto j=0u; j<meshCount; ++j)

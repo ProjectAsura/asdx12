@@ -165,9 +165,8 @@ ResMeshInstance Model::GetMeshInstance(size_t index) const
     assert(index < m_MeshInstances.size());
 
     ResMeshInstance result;
-    result.Name      = StringView(m_MeshInstances[index].Name.c_str());
-    result.Meshes    = ArrayView (m_MeshInstances[index].Meshes    .data(), m_MeshInstances[index].Meshes    .size());
-    result.Transform = ArrayView (m_MeshInstances[index].Transforms.data(), m_MeshInstances[index].Transforms.size());
+    result.Meshes    = ArrayView<uint32_t> (m_MeshInstances[index].Meshes    .data(), m_MeshInstances[index].Meshes    .size());
+    result.Transform = ArrayView<Matrix4x3>(m_MeshInstances[index].Transforms.data(), m_MeshInstances[index].Transforms.size());
     return result;
 }
 
@@ -197,24 +196,6 @@ bool Model::FindMaterial(const char* name, size_t& index) const
     for(size_t i=0; i<m_Materials.size(); ++i)
     {
         if (strcmp(m_Materials[i].c_str(), name) == 0)
-        {
-            index = i;
-            return true;
-        }
-    }
-
-    index = SIZE_MAX;
-    return false;
-}
-
-//-----------------------------------------------------------------------------
-//      メッシュインタンスを検索します.
-//-----------------------------------------------------------------------------
-bool Model::FindMeshInstance(const char* name, size_t& index) const
-{
-    for(size_t i=0; i<m_MeshInstances.size(); ++i)
-    {
-        if (strcmp(m_MeshInstances[i].Name.c_str(), name) == 0)
         {
             index = i;
             return true;

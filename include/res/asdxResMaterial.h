@@ -41,6 +41,7 @@ enum CullMode : uint8_t
 ///////////////////////////////////////////////////////////////////////////////
 struct ResMaterial
 {
+    StringView              Shader;     //!< シェーダ名.
     ArrayView<uint8_t>      Buffer;     //!< 定数バッファ.
     ArrayView<StringView>   Textures;   //!< テクスチャ.
     AlphaMode               AlphaMode;  //!< アルファモード.
@@ -102,6 +103,7 @@ private:
     // private variables.
     //=========================================================================
     std::vector<uint8_t>    m_Blob;
+    std::vector<StringView> m_Textures;
 
     //=========================================================================
     // private method.

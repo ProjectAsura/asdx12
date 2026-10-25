@@ -24,9 +24,8 @@ namespace asdx {
 ///////////////////////////////////////////////////////////////////////////////
 struct ResMeshInstance
 {
-    StringView              Name;
-    ArrayView<uint32_t>     Meshes;
     ArrayView<Matrix4x3>    Transform;
+    ArrayView<uint32_t>     Meshes;
 };
 
 
@@ -96,6 +95,9 @@ private:
     // private variables.
     //=========================================================================
     std::vector<uint8_t>            m_Blob;
+    std::vector<ResMesh>            m_Meshes;
+    std::vector<StringView>         m_Materials;
+    std::vector<ResBone>            m_Bones;
     std::vector<ResMeshInstance>    m_Instances;
 
     //=========================================================================

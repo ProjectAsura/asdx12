@@ -138,23 +138,12 @@ public:
     //-------------------------------------------------------------------------
     bool FindMaterial(const char* name, size_t& index) const;
 
-    //-------------------------------------------------------------------------
-    //! @brief      メッシュインタンスを検索します.
-    //! 
-    //! @param[in]      name        メッシュインスタンス名.
-    //! @param[out]     index       メッシュインタンス番号.
-    //! @retval true    検索に成功.
-    //! @retval false   検索に失敗.
-    //-------------------------------------------------------------------------
-    bool FindMeshInstance(const char* name, size_t& index) const;
-
 private:
     ///////////////////////////////////////////////////////////////////////////
     // MeshInstance structure
     ///////////////////////////////////////////////////////////////////////////
     struct MeshInstance
     {
-        String                  Name;
         std::vector<uint32_t>   Meshes;
         std::vector<Matrix4x3>  Transforms;
     };

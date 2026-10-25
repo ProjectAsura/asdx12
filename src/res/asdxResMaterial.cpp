@@ -9,7 +9,7 @@
 //-----------------------------------------------------------------------------
 #include <fnd/asdxMacro.h>
 #include <res/asdxResMaterial.h>
-//#include "MaterialBinary_generated.h"
+#include "MaterialBinary_generated.h"
 
 
 namespace {
@@ -20,15 +20,16 @@ namespace {
 static constexpr uint32_t CURRENT_VERSION = 1u; //!< 現在ランタイムでサポートされているバージョン.
 
 
-//static_assert((uint8_t)asdx::res::AlphaType_Opaque == (uint8_t)asdx::AlphaMode::Opaque);
-//static_assert((uint8_t)asdx::res::AlphaType_Mask   == (uint8_t)asdx::AlphaMode::Mask);
-//static_assert((uint8_t)asdx::res::AlphaType_Blend  == (uint8_t)asdx::AlphaMode::Blend);
+static_assert((uint8_t)asdx::res::AlphaType_Opaque == (uint8_t)asdx::AlphaMode::Opaque);
+static_assert((uint8_t)asdx::res::AlphaType_Mask   == (uint8_t)asdx::AlphaMode::Mask);
+static_assert((uint8_t)asdx::res::AlphaType_Blend  == (uint8_t)asdx::AlphaMode::Blend);
 
-//static_assert((uint8_t)asdx::res::CullType_Back  == (uint8_t)asdx::CullMode::Back);
-//static_assert((uint8_t)asdx::res::CullType_Front == (uint8_t)asdx::CullMode::Front);
-//static_assert((uint8_t)asdx::res::CullType_None  == (uint8_t)asdx::CullMode::None);
+static_assert((uint8_t)asdx::res::CullType_Back  == (uint8_t)asdx::CullMode::Back);
+static_assert((uint8_t)asdx::res::CullType_Front == (uint8_t)asdx::CullMode::Front);
+static_assert((uint8_t)asdx::res::CullType_None  == (uint8_t)asdx::CullMode::None);
 
 } // namespace
+
 
 namespace asdx {
 
@@ -58,12 +59,20 @@ void MaterialBinary::Load(std::vector<uint8_t>&& blob)
 #if ASDX_DEBUG
     // データ整合性をチェック.
     {
-        //assert(!m_Blob.empty());
-        //flatbuffers::Verifier verifier(m_Blob.data(), m_Blob.size());
-        //assert(res::VerifyMaterialBinaryBuffer(verifier));
-        //ASDX_UNUSED(verifier);
+        assert(!m_Blob.empty());
+        flatbuffers::Verifier verifier(m_Blob.data(), m_Blob.size());
+        assert(res::VerifyMaterialBinaryBuffer(verifier));
+        ASDX_UNUSED(verifier);
     }
 #endif
+
+    auto bin = asdx::res::GetMaterialBinary(m_Blob.data());
+
+    m_Textures.resize(bin->Textures()->size());
+    for(size_t i=0; i<m_Textures.size(); ++i)
+    {
+        m_Textures[i] = StringView(bin->Textures()->Get(i)->c_str());
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -73,6 +82,9 @@ void MaterialBinary::Term()
 {
     m_Blob.clear();
     m_Blob.shrink_to_fit();
+
+    m_Textures.clear();
+    m_Textures.shrink_to_fit();
 }
 
 //-----------------------------------------------------------------------------
@@ -80,7 +92,14 @@ void MaterialBinary::Term()
 //-----------------------------------------------------------------------------
 ResMaterial MaterialBinary::GetResource() const
 {
+    auto bin = asdx::res::GetMaterialBinary(m_Blob.data());
+
     ResMaterial result = {};
+    result.Shader    = StringView(bin->Shader()->c_str());
+    result.Buffer    = ArrayView<uint8_t>(bin->Buffer()->data(), bin->Buffer()->size());
+    result.Textures  = ArrayView<StringView>(m_Textures.data(), m_Textures.size());
+    result.AlphaMode = AlphaMode(bin->AlphaMode());
+    result.CullMode  = CullMode(bin->CullMode());
 
     return result;
 }

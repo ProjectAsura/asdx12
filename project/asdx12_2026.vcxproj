@@ -191,6 +191,7 @@
     <ClCompile Include="..\src\fnd\asdxBlockHeap.cpp" />
     <ClCompile Include="..\src\fnd\asdxEventHandler.cpp" />
     <ClCompile Include="..\src\fnd\asdxFileIO.cpp" />
+    <ClCompile Include="..\src\fnd\asdxFlatDoc.cpp" />
     <ClCompile Include="..\src\fnd\asdxFrameHeap.cpp" />
     <ClCompile Include="..\src\fnd\asdxHash.cpp" />
     <ClCompile Include="..\src\fnd\asdxHid.cpp" />
@@ -292,6 +293,7 @@
     <ClInclude Include="..\include\fnd\asdxEventHandler.h" />
     <ClInclude Include="..\include\fnd\asdxExecutable.h" />
     <ClInclude Include="..\include\fnd\asdxFileIO.h" />
+    <ClInclude Include="..\include\fnd\asdxFlatDoc.h" />
     <ClInclude Include="..\include\fnd\asdxFrameHeap.h" />
     <ClInclude Include="..\include\fnd\asdxFunction.h" />
     <ClInclude Include="..\include\fnd\asdxHash.h" />

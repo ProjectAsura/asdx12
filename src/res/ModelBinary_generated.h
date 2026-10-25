@@ -24,11 +24,8 @@ struct BoneBuilder;
 struct Mesh;
 struct MeshBuilder;
 
-struct Material;
-struct MaterialBuilder;
-
-struct ModelBatch;
-struct ModelBatchBuilder;
+struct MeshInstance;
+struct MeshInstanceBuilder;
 
 struct ModelBinary;
 struct ModelBinaryBuilder;
@@ -179,9 +176,7 @@ struct Mesh FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
     VT_TEXCOORDS = 16,
     VT_BONEWEIGHTS = 18,
     VT_BONEINDICES = 20,
-    VT_VERTEXINDICES = 22,
-    VT_BOUNDSPHERE = 24,
-    VT_BOUNDBOX = 26
+    VT_VERTEXINDICES = 22
   };
   const ::flatbuffers::String *Name() const {
     return GetPointer<const ::flatbuffers::String *>(VT_NAME);
@@ -213,12 +208,6 @@ struct Mesh FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   const ::flatbuffers::Vector<uint32_t> *VertexIndices() const {
     return GetPointer<const ::flatbuffers::Vector<uint32_t> *>(VT_VERTEXINDICES);
   }
-  const asdx::res::BoundingSphere *BoundSphere() const {
-    return GetStruct<const asdx::res::BoundingSphere *>(VT_BOUNDSPHERE);
-  }
-  const asdx::res::BoundingBox *BoundBox() const {
-    return GetStruct<const asdx::res::BoundingBox *>(VT_BOUNDBOX);
-  }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_NAME) &&
@@ -240,8 +229,6 @@ struct Mesh FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
            verifier.VerifyVector(BoneIndices()) &&
            VerifyOffset(verifier, VT_VERTEXINDICES) &&
            verifier.VerifyVector(VertexIndices()) &&
-           VerifyField<asdx::res::BoundingSphere>(verifier, VT_BOUNDSPHERE, 4) &&
-           VerifyField<asdx::res::BoundingBox>(verifier, VT_BOUNDBOX, 4) &&
            verifier.EndTable();
   }
 };
@@ -280,12 +267,6 @@ struct MeshBuilder {
   void add_VertexIndices(::flatbuffers::Offset<::flatbuffers::Vector<uint32_t>> VertexIndices) {
     fbb_.AddOffset(Mesh::VT_VERTEXINDICES, VertexIndices);
   }
-  void add_BoundSphere(const asdx::res::BoundingSphere *BoundSphere) {
-    fbb_.AddStruct(Mesh::VT_BOUNDSPHERE, BoundSphere);
-  }
-  void add_BoundBox(const asdx::res::BoundingBox *BoundBox) {
-    fbb_.AddStruct(Mesh::VT_BOUNDBOX, BoundBox);
-  }
   explicit MeshBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -308,12 +289,8 @@ inline ::flatbuffers::Offset<Mesh> CreateMesh(
     ::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::Float2 *>> TexCoords = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::Float4 *>> BoneWeights = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::Uint4 *>> BoneIndices = 0,
-    ::flatbuffers::Offset<::flatbuffers::Vector<uint32_t>> VertexIndices = 0,
-    const asdx::res::BoundingSphere *BoundSphere = nullptr,
-    const asdx::res::BoundingBox *BoundBox = nullptr) {
+    ::flatbuffers::Offset<::flatbuffers::Vector<uint32_t>> VertexIndices = 0) {
   MeshBuilder builder_(_fbb);
-  builder_.add_BoundBox(BoundBox);
-  builder_.add_BoundSphere(BoundSphere);
   builder_.add_VertexIndices(VertexIndices);
   builder_.add_BoneIndices(BoneIndices);
   builder_.add_BoneWeights(BoneWeights);
@@ -338,9 +315,7 @@ inline ::flatbuffers::Offset<Mesh> CreateMeshDirect(
     const std::vector<asdx::res::Float2> *TexCoords = nullptr,
     const std::vector<asdx::res::Float4> *BoneWeights = nullptr,
     const std::vector<asdx::res::Uint4> *BoneIndices = nullptr,
-    const std::vector<uint32_t> *VertexIndices = nullptr,
-    const asdx::res::BoundingSphere *BoundSphere = nullptr,
-    const asdx::res::BoundingBox *BoundBox = nullptr) {
+    const std::vector<uint32_t> *VertexIndices = nullptr) {
   auto Name__ = Name ? _fbb.CreateString(Name) : 0;
   auto Positions__ = Positions ? _fbb.CreateVectorOfStructs<asdx::res::Float3>(*Positions) : 0;
   auto Normals__ = Normals ? _fbb.CreateVectorOfStructs<asdx::res::Float3>(*Normals) : 0;
@@ -361,246 +336,15 @@ inline ::flatbuffers::Offset<Mesh> CreateMeshDirect(
       TexCoords__,
       BoneWeights__,
       BoneIndices__,
-      VertexIndices__,
-      BoundSphere,
-      BoundBox);
+      VertexIndices__);
 }
 
-struct Material FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef MaterialBuilder Builder;
-  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_NAME = 4,
-    VT_BASECOLORFACTOR = 6,
-    VT_ALPHA = 8,
-    VT_OCCLUSIONFACTOR = 10,
-    VT_ROUGHNESSFACTOR = 12,
-    VT_METALNESSFACTOR = 14,
-    VT_IOR = 16,
-    VT_EMISSIVEFACTOR = 18,
-    VT_BASECOLORMAP = 20,
-    VT_NORMALMAP = 22,
-    VT_ORMMAP = 24,
-    VT_EMISSIVEMAP = 26,
-    VT_ALPHAMODE = 28,
-    VT_ALPHACUTOFF = 30,
-    VT_TWOSIDED = 32
-  };
-  const ::flatbuffers::String *Name() const {
-    return GetPointer<const ::flatbuffers::String *>(VT_NAME);
-  }
-  const asdx::res::Float3 *BaseColorFactor() const {
-    return GetStruct<const asdx::res::Float3 *>(VT_BASECOLORFACTOR);
-  }
-  float Alpha() const {
-    return GetField<float>(VT_ALPHA, 0.0f);
-  }
-  float OcclusionFactor() const {
-    return GetField<float>(VT_OCCLUSIONFACTOR, 0.0f);
-  }
-  float RoughnessFactor() const {
-    return GetField<float>(VT_ROUGHNESSFACTOR, 0.0f);
-  }
-  float MetalnessFactor() const {
-    return GetField<float>(VT_METALNESSFACTOR, 0.0f);
-  }
-  float Ior() const {
-    return GetField<float>(VT_IOR, 0.0f);
-  }
-  const asdx::res::Float3 *EmissiveFactor() const {
-    return GetStruct<const asdx::res::Float3 *>(VT_EMISSIVEFACTOR);
-  }
-  const ::flatbuffers::String *BaseColorMap() const {
-    return GetPointer<const ::flatbuffers::String *>(VT_BASECOLORMAP);
-  }
-  const ::flatbuffers::String *NormalMap() const {
-    return GetPointer<const ::flatbuffers::String *>(VT_NORMALMAP);
-  }
-  const ::flatbuffers::String *OrmMap() const {
-    return GetPointer<const ::flatbuffers::String *>(VT_ORMMAP);
-  }
-  const ::flatbuffers::String *EmissiveMap() const {
-    return GetPointer<const ::flatbuffers::String *>(VT_EMISSIVEMAP);
-  }
-  asdx::res::AlphaType AlphaMode() const {
-    return static_cast<asdx::res::AlphaType>(GetField<uint8_t>(VT_ALPHAMODE, 0));
-  }
-  float AlphaCutOff() const {
-    return GetField<float>(VT_ALPHACUTOFF, 0.0f);
-  }
-  bool TwoSided() const {
-    return GetField<uint8_t>(VT_TWOSIDED, 0) != 0;
-  }
-  bool Verify(::flatbuffers::Verifier &verifier) const {
-    return VerifyTableStart(verifier) &&
-           VerifyOffset(verifier, VT_NAME) &&
-           verifier.VerifyString(Name()) &&
-           VerifyField<asdx::res::Float3>(verifier, VT_BASECOLORFACTOR, 4) &&
-           VerifyField<float>(verifier, VT_ALPHA, 4) &&
-           VerifyField<float>(verifier, VT_OCCLUSIONFACTOR, 4) &&
-           VerifyField<float>(verifier, VT_ROUGHNESSFACTOR, 4) &&
-           VerifyField<float>(verifier, VT_METALNESSFACTOR, 4) &&
-           VerifyField<float>(verifier, VT_IOR, 4) &&
-           VerifyField<asdx::res::Float3>(verifier, VT_EMISSIVEFACTOR, 4) &&
-           VerifyOffset(verifier, VT_BASECOLORMAP) &&
-           verifier.VerifyString(BaseColorMap()) &&
-           VerifyOffset(verifier, VT_NORMALMAP) &&
-           verifier.VerifyString(NormalMap()) &&
-           VerifyOffset(verifier, VT_ORMMAP) &&
-           verifier.VerifyString(OrmMap()) &&
-           VerifyOffset(verifier, VT_EMISSIVEMAP) &&
-           verifier.VerifyString(EmissiveMap()) &&
-           VerifyField<uint8_t>(verifier, VT_ALPHAMODE, 1) &&
-           VerifyField<float>(verifier, VT_ALPHACUTOFF, 4) &&
-           VerifyField<uint8_t>(verifier, VT_TWOSIDED, 1) &&
-           verifier.EndTable();
-  }
-};
-
-struct MaterialBuilder {
-  typedef Material Table;
-  ::flatbuffers::FlatBufferBuilder &fbb_;
-  ::flatbuffers::uoffset_t start_;
-  void add_Name(::flatbuffers::Offset<::flatbuffers::String> Name) {
-    fbb_.AddOffset(Material::VT_NAME, Name);
-  }
-  void add_BaseColorFactor(const asdx::res::Float3 *BaseColorFactor) {
-    fbb_.AddStruct(Material::VT_BASECOLORFACTOR, BaseColorFactor);
-  }
-  void add_Alpha(float Alpha) {
-    fbb_.AddElement<float>(Material::VT_ALPHA, Alpha, 0.0f);
-  }
-  void add_OcclusionFactor(float OcclusionFactor) {
-    fbb_.AddElement<float>(Material::VT_OCCLUSIONFACTOR, OcclusionFactor, 0.0f);
-  }
-  void add_RoughnessFactor(float RoughnessFactor) {
-    fbb_.AddElement<float>(Material::VT_ROUGHNESSFACTOR, RoughnessFactor, 0.0f);
-  }
-  void add_MetalnessFactor(float MetalnessFactor) {
-    fbb_.AddElement<float>(Material::VT_METALNESSFACTOR, MetalnessFactor, 0.0f);
-  }
-  void add_Ior(float Ior) {
-    fbb_.AddElement<float>(Material::VT_IOR, Ior, 0.0f);
-  }
-  void add_EmissiveFactor(const asdx::res::Float3 *EmissiveFactor) {
-    fbb_.AddStruct(Material::VT_EMISSIVEFACTOR, EmissiveFactor);
-  }
-  void add_BaseColorMap(::flatbuffers::Offset<::flatbuffers::String> BaseColorMap) {
-    fbb_.AddOffset(Material::VT_BASECOLORMAP, BaseColorMap);
-  }
-  void add_NormalMap(::flatbuffers::Offset<::flatbuffers::String> NormalMap) {
-    fbb_.AddOffset(Material::VT_NORMALMAP, NormalMap);
-  }
-  void add_OrmMap(::flatbuffers::Offset<::flatbuffers::String> OrmMap) {
-    fbb_.AddOffset(Material::VT_ORMMAP, OrmMap);
-  }
-  void add_EmissiveMap(::flatbuffers::Offset<::flatbuffers::String> EmissiveMap) {
-    fbb_.AddOffset(Material::VT_EMISSIVEMAP, EmissiveMap);
-  }
-  void add_AlphaMode(asdx::res::AlphaType AlphaMode) {
-    fbb_.AddElement<uint8_t>(Material::VT_ALPHAMODE, static_cast<uint8_t>(AlphaMode), 0);
-  }
-  void add_AlphaCutOff(float AlphaCutOff) {
-    fbb_.AddElement<float>(Material::VT_ALPHACUTOFF, AlphaCutOff, 0.0f);
-  }
-  void add_TwoSided(bool TwoSided) {
-    fbb_.AddElement<uint8_t>(Material::VT_TWOSIDED, static_cast<uint8_t>(TwoSided), 0);
-  }
-  explicit MaterialBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
-        : fbb_(_fbb) {
-    start_ = fbb_.StartTable();
-  }
-  ::flatbuffers::Offset<Material> Finish() {
-    const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<Material>(end);
-    return o;
-  }
-};
-
-inline ::flatbuffers::Offset<Material> CreateMaterial(
-    ::flatbuffers::FlatBufferBuilder &_fbb,
-    ::flatbuffers::Offset<::flatbuffers::String> Name = 0,
-    const asdx::res::Float3 *BaseColorFactor = nullptr,
-    float Alpha = 0.0f,
-    float OcclusionFactor = 0.0f,
-    float RoughnessFactor = 0.0f,
-    float MetalnessFactor = 0.0f,
-    float Ior = 0.0f,
-    const asdx::res::Float3 *EmissiveFactor = nullptr,
-    ::flatbuffers::Offset<::flatbuffers::String> BaseColorMap = 0,
-    ::flatbuffers::Offset<::flatbuffers::String> NormalMap = 0,
-    ::flatbuffers::Offset<::flatbuffers::String> OrmMap = 0,
-    ::flatbuffers::Offset<::flatbuffers::String> EmissiveMap = 0,
-    asdx::res::AlphaType AlphaMode = asdx::res::AlphaType_Opaque,
-    float AlphaCutOff = 0.0f,
-    bool TwoSided = false) {
-  MaterialBuilder builder_(_fbb);
-  builder_.add_AlphaCutOff(AlphaCutOff);
-  builder_.add_EmissiveMap(EmissiveMap);
-  builder_.add_OrmMap(OrmMap);
-  builder_.add_NormalMap(NormalMap);
-  builder_.add_BaseColorMap(BaseColorMap);
-  builder_.add_EmissiveFactor(EmissiveFactor);
-  builder_.add_Ior(Ior);
-  builder_.add_MetalnessFactor(MetalnessFactor);
-  builder_.add_RoughnessFactor(RoughnessFactor);
-  builder_.add_OcclusionFactor(OcclusionFactor);
-  builder_.add_Alpha(Alpha);
-  builder_.add_BaseColorFactor(BaseColorFactor);
-  builder_.add_Name(Name);
-  builder_.add_TwoSided(TwoSided);
-  builder_.add_AlphaMode(AlphaMode);
-  return builder_.Finish();
-}
-
-inline ::flatbuffers::Offset<Material> CreateMaterialDirect(
-    ::flatbuffers::FlatBufferBuilder &_fbb,
-    const char *Name = nullptr,
-    const asdx::res::Float3 *BaseColorFactor = nullptr,
-    float Alpha = 0.0f,
-    float OcclusionFactor = 0.0f,
-    float RoughnessFactor = 0.0f,
-    float MetalnessFactor = 0.0f,
-    float Ior = 0.0f,
-    const asdx::res::Float3 *EmissiveFactor = nullptr,
-    const char *BaseColorMap = nullptr,
-    const char *NormalMap = nullptr,
-    const char *OrmMap = nullptr,
-    const char *EmissiveMap = nullptr,
-    asdx::res::AlphaType AlphaMode = asdx::res::AlphaType_Opaque,
-    float AlphaCutOff = 0.0f,
-    bool TwoSided = false) {
-  auto Name__ = Name ? _fbb.CreateString(Name) : 0;
-  auto BaseColorMap__ = BaseColorMap ? _fbb.CreateString(BaseColorMap) : 0;
-  auto NormalMap__ = NormalMap ? _fbb.CreateString(NormalMap) : 0;
-  auto OrmMap__ = OrmMap ? _fbb.CreateString(OrmMap) : 0;
-  auto EmissiveMap__ = EmissiveMap ? _fbb.CreateString(EmissiveMap) : 0;
-  return asdx::res::CreateMaterial(
-      _fbb,
-      Name__,
-      BaseColorFactor,
-      Alpha,
-      OcclusionFactor,
-      RoughnessFactor,
-      MetalnessFactor,
-      Ior,
-      EmissiveFactor,
-      BaseColorMap__,
-      NormalMap__,
-      OrmMap__,
-      EmissiveMap__,
-      AlphaMode,
-      AlphaCutOff,
-      TwoSided);
-}
-
-struct ModelBatch FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef ModelBatchBuilder Builder;
+struct MeshInstance FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef MeshInstanceBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_NAMES = 4,
     VT_TRANSFORMS = 6,
-    VT_MESHES = 8,
-    VT_BOUNDSPHERE = 10,
-    VT_BOUNDBOX = 12
+    VT_MESHES = 8
   };
   const ::flatbuffers::Vector<::flatbuffers::Offset<::flatbuffers::String>> *Names() const {
     return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<::flatbuffers::String>> *>(VT_NAMES);
@@ -611,12 +355,6 @@ struct ModelBatch FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   const ::flatbuffers::Vector<uint32_t> *Meshes() const {
     return GetPointer<const ::flatbuffers::Vector<uint32_t> *>(VT_MESHES);
   }
-  const asdx::res::BoundingSphere *BoundSphere() const {
-    return GetStruct<const asdx::res::BoundingSphere *>(VT_BOUNDSPHERE);
-  }
-  const asdx::res::BoundingBox *BoundBox() const {
-    return GetStruct<const asdx::res::BoundingBox *>(VT_BOUNDBOX);
-  }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_NAMES) &&
@@ -626,75 +364,59 @@ struct ModelBatch FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
            verifier.VerifyVector(Transforms()) &&
            VerifyOffset(verifier, VT_MESHES) &&
            verifier.VerifyVector(Meshes()) &&
-           VerifyField<asdx::res::BoundingSphere>(verifier, VT_BOUNDSPHERE, 4) &&
-           VerifyField<asdx::res::BoundingBox>(verifier, VT_BOUNDBOX, 4) &&
            verifier.EndTable();
   }
 };
 
-struct ModelBatchBuilder {
-  typedef ModelBatch Table;
+struct MeshInstanceBuilder {
+  typedef MeshInstance Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
   void add_Names(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<::flatbuffers::String>>> Names) {
-    fbb_.AddOffset(ModelBatch::VT_NAMES, Names);
+    fbb_.AddOffset(MeshInstance::VT_NAMES, Names);
   }
   void add_Transforms(::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::Float3x4 *>> Transforms) {
-    fbb_.AddOffset(ModelBatch::VT_TRANSFORMS, Transforms);
+    fbb_.AddOffset(MeshInstance::VT_TRANSFORMS, Transforms);
   }
   void add_Meshes(::flatbuffers::Offset<::flatbuffers::Vector<uint32_t>> Meshes) {
-    fbb_.AddOffset(ModelBatch::VT_MESHES, Meshes);
+    fbb_.AddOffset(MeshInstance::VT_MESHES, Meshes);
   }
-  void add_BoundSphere(const asdx::res::BoundingSphere *BoundSphere) {
-    fbb_.AddStruct(ModelBatch::VT_BOUNDSPHERE, BoundSphere);
-  }
-  void add_BoundBox(const asdx::res::BoundingBox *BoundBox) {
-    fbb_.AddStruct(ModelBatch::VT_BOUNDBOX, BoundBox);
-  }
-  explicit ModelBatchBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+  explicit MeshInstanceBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  ::flatbuffers::Offset<ModelBatch> Finish() {
+  ::flatbuffers::Offset<MeshInstance> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<ModelBatch>(end);
+    auto o = ::flatbuffers::Offset<MeshInstance>(end);
     return o;
   }
 };
 
-inline ::flatbuffers::Offset<ModelBatch> CreateModelBatch(
+inline ::flatbuffers::Offset<MeshInstance> CreateMeshInstance(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<::flatbuffers::String>>> Names = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::Float3x4 *>> Transforms = 0,
-    ::flatbuffers::Offset<::flatbuffers::Vector<uint32_t>> Meshes = 0,
-    const asdx::res::BoundingSphere *BoundSphere = nullptr,
-    const asdx::res::BoundingBox *BoundBox = nullptr) {
-  ModelBatchBuilder builder_(_fbb);
-  builder_.add_BoundBox(BoundBox);
-  builder_.add_BoundSphere(BoundSphere);
+    ::flatbuffers::Offset<::flatbuffers::Vector<uint32_t>> Meshes = 0) {
+  MeshInstanceBuilder builder_(_fbb);
   builder_.add_Meshes(Meshes);
   builder_.add_Transforms(Transforms);
   builder_.add_Names(Names);
   return builder_.Finish();
 }
 
-inline ::flatbuffers::Offset<ModelBatch> CreateModelBatchDirect(
+inline ::flatbuffers::Offset<MeshInstance> CreateMeshInstanceDirect(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     const std::vector<::flatbuffers::Offset<::flatbuffers::String>> *Names = nullptr,
     const std::vector<asdx::res::Float3x4> *Transforms = nullptr,
-    const std::vector<uint32_t> *Meshes = nullptr,
-    const asdx::res::BoundingSphere *BoundSphere = nullptr,
-    const asdx::res::BoundingBox *BoundBox = nullptr) {
+    const std::vector<uint32_t> *Meshes = nullptr) {
   auto Names__ = Names ? _fbb.CreateVector<::flatbuffers::Offset<::flatbuffers::String>>(*Names) : 0;
   auto Transforms__ = Transforms ? _fbb.CreateVectorOfStructs<asdx::res::Float3x4>(*Transforms) : 0;
   auto Meshes__ = Meshes ? _fbb.CreateVector<uint32_t>(*Meshes) : 0;
-  return asdx::res::CreateModelBatch(
+  return asdx::res::CreateMeshInstance(
       _fbb,
       Names__,
       Transforms__,
-      Meshes__,
-      BoundSphere,
-      BoundBox);
+      Meshes__);
 }
 
 struct ModelBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
@@ -704,12 +426,9 @@ struct ModelBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
     VT_MESHES = 6,
     VT_MATERIALS = 8,
     VT_BONES = 10,
-    VT_BATCHES = 12,
-    VT_BOUNDSPHERE = 14,
-    VT_BOUNDBOX = 16,
-    VT_TOTALINSTANCECOUNT = 18,
-    VT_ROOTTRANSFORM = 20,
-    VT_INVROOTTRANSFORM = 22
+    VT_MESHINSTANCES = 12,
+    VT_ROOTTRANSFORM = 14,
+    VT_INVROOTTRANSFORM = 16
   };
   uint32_t Version() const {
     return GetField<uint32_t>(VT_VERSION, 0);
@@ -717,23 +436,14 @@ struct ModelBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::Mesh>> *Meshes() const {
     return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::Mesh>> *>(VT_MESHES);
   }
-  const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::Material>> *Materials() const {
-    return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::Material>> *>(VT_MATERIALS);
+  const ::flatbuffers::Vector<::flatbuffers::Offset<::flatbuffers::String>> *Materials() const {
+    return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<::flatbuffers::String>> *>(VT_MATERIALS);
   }
   const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::Bone>> *Bones() const {
     return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::Bone>> *>(VT_BONES);
   }
-  const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::ModelBatch>> *Batches() const {
-    return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::ModelBatch>> *>(VT_BATCHES);
-  }
-  const asdx::res::BoundingSphere *BoundSphere() const {
-    return GetStruct<const asdx::res::BoundingSphere *>(VT_BOUNDSPHERE);
-  }
-  const asdx::res::BoundingBox *BoundBox() const {
-    return GetStruct<const asdx::res::BoundingBox *>(VT_BOUNDBOX);
-  }
-  uint64_t TotalInstanceCount() const {
-    return GetField<uint64_t>(VT_TOTALINSTANCECOUNT, 0);
+  const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MeshInstance>> *MeshInstances() const {
+    return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MeshInstance>> *>(VT_MESHINSTANCES);
   }
   const asdx::res::Float3x4 *RootTransform() const {
     return GetStruct<const asdx::res::Float3x4 *>(VT_ROOTTRANSFORM);
@@ -749,16 +459,13 @@ struct ModelBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
            verifier.VerifyVectorOfTables(Meshes()) &&
            VerifyOffset(verifier, VT_MATERIALS) &&
            verifier.VerifyVector(Materials()) &&
-           verifier.VerifyVectorOfTables(Materials()) &&
+           verifier.VerifyVectorOfStrings(Materials()) &&
            VerifyOffset(verifier, VT_BONES) &&
            verifier.VerifyVector(Bones()) &&
            verifier.VerifyVectorOfTables(Bones()) &&
-           VerifyOffset(verifier, VT_BATCHES) &&
-           verifier.VerifyVector(Batches()) &&
-           verifier.VerifyVectorOfTables(Batches()) &&
-           VerifyField<asdx::res::BoundingSphere>(verifier, VT_BOUNDSPHERE, 4) &&
-           VerifyField<asdx::res::BoundingBox>(verifier, VT_BOUNDBOX, 4) &&
-           VerifyField<uint64_t>(verifier, VT_TOTALINSTANCECOUNT, 8) &&
+           VerifyOffset(verifier, VT_MESHINSTANCES) &&
+           verifier.VerifyVector(MeshInstances()) &&
+           verifier.VerifyVectorOfTables(MeshInstances()) &&
            VerifyField<asdx::res::Float3x4>(verifier, VT_ROOTTRANSFORM, 4) &&
            VerifyField<asdx::res::Float3x4>(verifier, VT_INVROOTTRANSFORM, 4) &&
            verifier.EndTable();
@@ -775,23 +482,14 @@ struct ModelBinaryBuilder {
   void add_Meshes(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::Mesh>>> Meshes) {
     fbb_.AddOffset(ModelBinary::VT_MESHES, Meshes);
   }
-  void add_Materials(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::Material>>> Materials) {
+  void add_Materials(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<::flatbuffers::String>>> Materials) {
     fbb_.AddOffset(ModelBinary::VT_MATERIALS, Materials);
   }
   void add_Bones(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::Bone>>> Bones) {
     fbb_.AddOffset(ModelBinary::VT_BONES, Bones);
   }
-  void add_Batches(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::ModelBatch>>> Batches) {
-    fbb_.AddOffset(ModelBinary::VT_BATCHES, Batches);
-  }
-  void add_BoundSphere(const asdx::res::BoundingSphere *BoundSphere) {
-    fbb_.AddStruct(ModelBinary::VT_BOUNDSPHERE, BoundSphere);
-  }
-  void add_BoundBox(const asdx::res::BoundingBox *BoundBox) {
-    fbb_.AddStruct(ModelBinary::VT_BOUNDBOX, BoundBox);
-  }
-  void add_TotalInstanceCount(uint64_t TotalInstanceCount) {
-    fbb_.AddElement<uint64_t>(ModelBinary::VT_TOTALINSTANCECOUNT, TotalInstanceCount, 0);
+  void add_MeshInstances(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MeshInstance>>> MeshInstances) {
+    fbb_.AddOffset(ModelBinary::VT_MESHINSTANCES, MeshInstances);
   }
   void add_RootTransform(const asdx::res::Float3x4 *RootTransform) {
     fbb_.AddStruct(ModelBinary::VT_ROOTTRANSFORM, RootTransform);
@@ -814,21 +512,15 @@ inline ::flatbuffers::Offset<ModelBinary> CreateModelBinary(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t Version = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::Mesh>>> Meshes = 0,
-    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::Material>>> Materials = 0,
+    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<::flatbuffers::String>>> Materials = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::Bone>>> Bones = 0,
-    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::ModelBatch>>> Batches = 0,
-    const asdx::res::BoundingSphere *BoundSphere = nullptr,
-    const asdx::res::BoundingBox *BoundBox = nullptr,
-    uint64_t TotalInstanceCount = 0,
+    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MeshInstance>>> MeshInstances = 0,
     const asdx::res::Float3x4 *RootTransform = nullptr,
     const asdx::res::Float3x4 *InvRootTransform = nullptr) {
   ModelBinaryBuilder builder_(_fbb);
-  builder_.add_TotalInstanceCount(TotalInstanceCount);
   builder_.add_InvRootTransform(InvRootTransform);
   builder_.add_RootTransform(RootTransform);
-  builder_.add_BoundBox(BoundBox);
-  builder_.add_BoundSphere(BoundSphere);
-  builder_.add_Batches(Batches);
+  builder_.add_MeshInstances(MeshInstances);
   builder_.add_Bones(Bones);
   builder_.add_Materials(Materials);
   builder_.add_Meshes(Meshes);
@@ -840,28 +532,22 @@ inline ::flatbuffers::Offset<ModelBinary> CreateModelBinaryDirect(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t Version = 0,
     const std::vector<::flatbuffers::Offset<asdx::res::Mesh>> *Meshes = nullptr,
-    const std::vector<::flatbuffers::Offset<asdx::res::Material>> *Materials = nullptr,
+    const std::vector<::flatbuffers::Offset<::flatbuffers::String>> *Materials = nullptr,
     const std::vector<::flatbuffers::Offset<asdx::res::Bone>> *Bones = nullptr,
-    const std::vector<::flatbuffers::Offset<asdx::res::ModelBatch>> *Batches = nullptr,
-    const asdx::res::BoundingSphere *BoundSphere = nullptr,
-    const asdx::res::BoundingBox *BoundBox = nullptr,
-    uint64_t TotalInstanceCount = 0,
+    const std::vector<::flatbuffers::Offset<asdx::res::MeshInstance>> *MeshInstances = nullptr,
     const asdx::res::Float3x4 *RootTransform = nullptr,
     const asdx::res::Float3x4 *InvRootTransform = nullptr) {
   auto Meshes__ = Meshes ? _fbb.CreateVector<::flatbuffers::Offset<asdx::res::Mesh>>(*Meshes) : 0;
-  auto Materials__ = Materials ? _fbb.CreateVector<::flatbuffers::Offset<asdx::res::Material>>(*Materials) : 0;
+  auto Materials__ = Materials ? _fbb.CreateVector<::flatbuffers::Offset<::flatbuffers::String>>(*Materials) : 0;
   auto Bones__ = Bones ? _fbb.CreateVector<::flatbuffers::Offset<asdx::res::Bone>>(*Bones) : 0;
-  auto Batches__ = Batches ? _fbb.CreateVector<::flatbuffers::Offset<asdx::res::ModelBatch>>(*Batches) : 0;
+  auto MeshInstances__ = MeshInstances ? _fbb.CreateVector<::flatbuffers::Offset<asdx::res::MeshInstance>>(*MeshInstances) : 0;
   return asdx::res::CreateModelBinary(
       _fbb,
       Version,
       Meshes__,
       Materials__,
       Bones__,
-      Batches__,
-      BoundSphere,
-      BoundBox,
-      TotalInstanceCount,
+      MeshInstances__,
       RootTransform,
       InvRootTransform);
 }

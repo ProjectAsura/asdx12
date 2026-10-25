@@ -28,6 +28,9 @@
     <Filter Include="external\MikkTSpace">
       <UniqueIdentifier>{100f51ab-ab6b-406c-aa4a-2d3069920f66}</UniqueIdentifier>
     </Filter>
+    <Filter Include="external\xxHash64">
+      <UniqueIdentifier>{83b7a375-3c35-46ec-8cda-dd8a84f2e8e5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\FontConverter.cpp">
@@ -120,6 +123,15 @@
     <ClCompile Include="..\src\LevelConverter.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\MaterialConverter.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\external\xxHash\xxhash.c">
+      <Filter>external\xxHash64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\fnd\asdxFlatDoc.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\FontConverter.h">
@@ -138,6 +150,12 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="..\include\LevelConverter.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\MaterialConverter.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\fnd\asdxFlatDoc.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
@@ -164,6 +182,9 @@
       <Filter>リソース ファイル</Filter>
     </None>
     <None Include="..\..\..\res\format\ResTypes.fbs">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="..\format\MaterialBinary.fbs">
       <Filter>リソース ファイル</Filter>
     </None>
   </ItemGroup>

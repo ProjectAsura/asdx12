@@ -339,6 +339,9 @@
     <ClCompile Include="..\src\gfx\asdxMaterialManager.cpp">
       <Filter>ソース ファイル\gfx</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\fnd\asdxFlatDoc.cpp">
+      <Filter>ソース ファイル\fnd</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\edit\asdxEditParam.h">
@@ -697,6 +700,9 @@
     </ClInclude>
     <ClInclude Include="..\include\gfx\asdxMaterialManager.h">
       <Filter>ヘッダー ファイル\gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fnd\asdxFlatDoc.h">
+      <Filter>ヘッダー ファイル\fnd</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

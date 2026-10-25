@@ -10,6 +10,7 @@
 //-----------------------------------------------------------------------------
 #include <vector>
 #include <fnd/asdxRef.h>
+#include <fnd/asdxString.h>
 #include <res/asdxResMaterial.h>
 #include <gfx/asdxBuffer.h>
 #include <gfx/asdxTextureManager.h>
@@ -63,6 +64,13 @@ public:
     //! @return     参照カウンタを返却します.
     //-------------------------------------------------------------------------
     uint32_t GetRefCount() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      シェーダ名を取得します.
+    //! 
+    //! @return     シェーダ名を返却します.
+    //-------------------------------------------------------------------------
+    StringView GetShader() const;
 
     //-------------------------------------------------------------------------
     //! @brief      定数バッファを取得します.
@@ -119,6 +127,7 @@ private:
     // private variables.
     //=========================================================================
     std::atomic<uint32_t>       m_RefCount  = {};                   //!< 参照カウンタ.
+    String                      m_Shader;                           //!< シェーダ名です.
     ConstantBuffer              m_Buffer;                           //!< 定数バッファ.
     std::vector<TextureHolder>  m_Textures;                         //!< テクスチャ.
     AlphaMode                   m_AlphaMode = AlphaMode::Opaque;    //!< アルファモード.

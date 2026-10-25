@@ -1,0 +1,26 @@
+﻿# マテリアルフォーマット形式.
+# material flat doc
+
+# shader name
+string Shader asdxModelPS.hlsl
+
+# AlphaMode [0, 1, 2]
+uint AlphaMode 0
+
+# CullMode [0=Back, 1=Front, 2=None]
+uint CullMode 0
+
+# material parameter
+float3 BaseColor 1.0 1.0 1.0
+float Alpha 1.0
+float Occlusion 0.0
+float Roughness 0.0
+float Metalness 1.0
+float Ior 1.0
+float3 Emissive 1.0 1.0 1.0
+
+# material textures
+string BaseColorMap "path"
+string NormalMap "path"
+string OrmMap "path"
+string EmissiveMap "path"
