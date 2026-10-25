@@ -619,7 +619,7 @@ uint64_t ConstantBuffer::GetSize() const
 //-----------------------------------------------------------------------------
 //      メモリマッピングを行います.
 //-----------------------------------------------------------------------------
-void* ConstantBuffer::Map()
+void* ConstantBuffer::Map() const
 {
     if (m_Resource.GetPtr() == nullptr)
     { return nullptr; }
@@ -638,7 +638,7 @@ void* ConstantBuffer::Map()
 //-----------------------------------------------------------------------------
 //      メモリマッピングを解除します.
 //-----------------------------------------------------------------------------
-void ConstantBuffer::Unmap()
+void ConstantBuffer::Unmap() const
 {
     if (m_Resource.GetPtr() == nullptr)
     { return; }

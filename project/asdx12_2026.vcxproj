@@ -233,6 +233,9 @@
     <ClCompile Include="..\src\gfx\asdxLightManager.cpp" />
     <ClCompile Include="..\src\gfx\asdxLine.cpp" />
     <ClCompile Include="..\src\gfx\asdxMapChip.cpp" />
+    <ClCompile Include="..\src\gfx\asdxMaterial.cpp" />
+    <ClCompile Include="..\src\gfx\asdxMaterialManager.cpp" />
+    <ClCompile Include="..\src\gfx\asdxMesh.cpp" />
     <ClCompile Include="..\src\gfx\asdxModel.cpp" />
     <ClCompile Include="..\src\gfx\asdxModelManager.cpp" />
     <ClCompile Include="..\src\gfx\asdxMosaic.cpp" />
@@ -245,6 +248,7 @@
     <ClCompile Include="..\src\gfx\asdxScreenCapture.cpp" />
     <ClCompile Include="..\src\gfx\asdxShaderCompiler.cpp" />
     <ClCompile Include="..\src\gfx\asdxShape.cpp" />
+    <ClCompile Include="..\src\gfx\asdxSkeleton.cpp" />
     <ClCompile Include="..\src\gfx\asdxSkyBox.cpp" />
     <ClCompile Include="..\src\gfx\asdxSprite.cpp" />
     <ClCompile Include="..\src\gfx\asdxSpriteAnimation.cpp" />
@@ -256,6 +260,7 @@
     <ClCompile Include="..\src\res\asdxResFont.cpp" />
     <ClCompile Include="..\src\res\asdxResHelper.cpp" />
     <ClCompile Include="..\src\res\asdxResMapChip.cpp" />
+    <ClCompile Include="..\src\res\asdxResMaterial.cpp" />
     <ClCompile Include="..\src\res\asdxResModel.cpp" />
     <ClCompile Include="..\src\res\asdxResMotion.cpp" />
     <ClCompile Include="..\src\res\asdxResTexture.cpp" />
@@ -347,6 +352,9 @@
     <ClInclude Include="..\include\gfx\asdxLightManager.h" />
     <ClInclude Include="..\include\gfx\asdxLine.h" />
     <ClInclude Include="..\include\gfx\asdxMapChip.h" />
+    <ClInclude Include="..\include\gfx\asdxMaterial.h" />
+    <ClInclude Include="..\include\gfx\asdxMaterialManager.h" />
+    <ClInclude Include="..\include\gfx\asdxMesh.h" />
     <ClInclude Include="..\include\gfx\asdxModel.h" />
     <ClInclude Include="..\include\gfx\asdxModelManager.h" />
     <ClInclude Include="..\include\gfx\asdxMosaic.h" />
@@ -359,6 +367,7 @@
     <ClInclude Include="..\include\gfx\asdxShape.h" />
     <ClInclude Include="..\include\gfx\asdxScreenCpature.h" />
     <ClInclude Include="..\include\gfx\asdxShaderCompiler.h" />
+    <ClInclude Include="..\include\gfx\asdxSkeleton.h" />
     <ClInclude Include="..\include\gfx\asdxSkyBox.h" />
     <ClInclude Include="..\include\gfx\asdxSprite.h" />
     <ClInclude Include="..\include\gfx\asdxSpriteAnimation.h" />
@@ -368,9 +377,12 @@
     <ClInclude Include="..\include\gfx\asdxTextureManager.h" />
     <ClInclude Include="..\include\gfx\asdxUpdateCommand.h" />
     <ClInclude Include="..\include\gfx\asdxMovie.h" />
+    <ClInclude Include="..\include\res\asdxResBone.h" />
     <ClInclude Include="..\include\res\asdxResFont.h" />
     <ClInclude Include="..\include\res\asdxResHelper.h" />
     <ClInclude Include="..\include\res\asdxResMapChip.h" />
+    <ClInclude Include="..\include\res\asdxResMaterial.h" />
+    <ClInclude Include="..\include\res\asdxResMesh.h" />
     <ClInclude Include="..\include\res\asdxResModel.h" />
     <ClInclude Include="..\include\res\asdxResMotion.h" />
     <ClInclude Include="..\include\res\asdxResTexture.h" />
@@ -520,6 +532,18 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMD|x64'">Pixel</ShaderType>
     </FxCompile>
     <FxCompile Include="..\res\shaders\asdxLineVS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMT|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMD|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMT|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMD|x64'">Vertex</ShaderType>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxMeshVS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMT|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMD|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMT|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMD|x64'">Vertex</ShaderType>
+    </FxCompile>
+    <FxCompile Include="..\res\shaders\asdxModelVS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMT|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='DebugMD|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='ReleaseMT|x64'">Vertex</ShaderType>

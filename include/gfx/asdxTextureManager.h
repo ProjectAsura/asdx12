@@ -119,8 +119,10 @@ public:
     //! @param[out]     ppTexture       テクスチャの格納先.
     //! @retval true    生成に成功.
     //! @retval false   生成に失敗.
+    //! @note       作成されたテクスチャはテクスチャマネージャでは管理しません.
+    //!             この関数はテクスチャマネージャ内部でも使用されます.
     //-------------------------------------------------------------------------
-    bool CreateTexture(ResTexture& resource, Texture** ppTexture);
+    bool CreateTexture(const ResTexture& resource, Texture** ppTexture);
 
 private:
     //=========================================================================

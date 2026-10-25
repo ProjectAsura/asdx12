@@ -648,7 +648,7 @@ void TextureManager::CreateDefaultTextures()
 //-----------------------------------------------------------------------------
 //      テクスチャを生成します.
 //-----------------------------------------------------------------------------
-bool TextureManager::CreateTexture(ResTexture& resource, Texture** ppTexture)
+bool TextureManager::CreateTexture(const ResTexture& resource, Texture** ppTexture)
 {
     if (asdx::IsSupportGpuUploadHeap())
         return Texture::Create(resource, ppTexture);

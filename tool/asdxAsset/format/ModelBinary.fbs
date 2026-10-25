@@ -30,48 +30,22 @@ table Mesh
     BoneWeights   : [Float4];
     BoneIndices   : [Uint4];
     VertexIndices : [uint];
-    BoundSphere   : BoundingSphere;
-    BoundBox      : BoundingBox;
 }
 
-table Material
-{
-    Name            : string;
-    BaseColorFactor : Float3;
-    Alpha           : float;
-    OcclusionFactor : float;
-    RoughnessFactor : float;
-    MetalnessFactor : float;
-    Ior             : float;
-    EmissiveFactor  : Float3;
-    BaseColorMap    : string;
-    NormalMap       : string;
-    OrmMap          : string;
-    EmissiveMap     : string;
-    AlphaMode       : AlphaType;
-    AlphaCutOff     : float;
-    TwoSided        : bool;
-}
-
-table ModelBatch
+table MeshInstance
 {
     Names       : [string];
-    Transforms  : [Float3x4];
     Meshes      : [uint];
-    BoundSphere : BoundingSphere;
-    BoundBox    : BoundingBox;
+    Transforms  : [Float3x4];
 }
 
 table ModelBinary
 {
     Version             : uint;
     Meshes              : [Mesh];
-    Materials           : [Material];
+    Materials           : [string];
     Bones               : [Bone];
-    Batches             : [ModelBatch];
-    BoundSphere         : BoundingSphere;
-    BoundBox            : BoundingBox;
-    TotalInstanceCount  : ulong;
+    MeshInstances       : [MeshInstance];
     RootTransform       : Float3x4;
     InvRootTransform    : Float3x4;
 }

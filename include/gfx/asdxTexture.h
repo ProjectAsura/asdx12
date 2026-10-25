@@ -25,7 +25,7 @@ struct ResTexture;
 ///////////////////////////////////////////////////////////////////////////////
 // Texture class
 ///////////////////////////////////////////////////////////////////////////////
-class Texture : public IReference
+class Texture final : public IReference
 {
     //=========================================================================
     // list of friend classes and methods.

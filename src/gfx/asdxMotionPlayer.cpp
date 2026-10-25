@@ -43,15 +43,14 @@ bool MotionUpdater::Init(const Model* pModel, const res::MotionClip* pClip)
 
     m_pClip = pClip;
 
-    auto count = pModel->GetBoneCount();
+    const auto& skeleton = pModel->GetSkeleton();
+    auto count = skeleton.GetBoneCount();
     m_pTracks.resize(count);
 
     for(auto i=0u; i<count; ++i)
     {
-        auto& bone = pModel->GetBone(i);
-        auto  name = BoneProxy::GetName(bone);
-
-        auto track = MotionClipProxy::FindTrack(m_pClip, name.c_str());
+        auto bone  = skeleton.GetBone(i);
+        auto track = MotionClipProxy::FindTrack(m_pClip, bone.Name.c_str());
         m_pTracks[i] = track;
     }
 
@@ -245,7 +244,8 @@ void MotionPlayer::Init(const Model* pModel)
     assert(pModel != nullptr);
     m_pModel = pModel;
 
-    auto count = m_pModel->GetBoneCount();
+    const auto& skeleton = m_pModel->GetSkeleton();
+    auto count = skeleton.GetBoneCount();
     m_LocalTransforms.resize(count);
     m_WorldTransforms.resize(count);
     m_MatrixPalettes .resize(count);
@@ -253,10 +253,8 @@ void MotionPlayer::Init(const Model* pModel)
     auto identity = Matrix4x3::CreateIdentity();
     for(auto i=0u; i<count; ++i)
     {
-        auto& bone     = m_pModel->GetBone(i);
-        auto  bindPose = BoneProxy::GetBindPoseMatrix(bone);
-
-        m_LocalTransforms[i] = bindPose;
+        auto bone = skeleton.GetBone(i);
+        m_LocalTransforms[i] = bone.BindPose;
         m_WorldTransforms[i] = identity;
         m_MatrixPalettes [i] = identity;
     }
@@ -298,17 +296,16 @@ void MotionPlayer::SetClip(const res::MotionClip* pClip)
     else
         m_Updater[m_CurrIndex].Init(m_pModel, pClip);
 
+    const auto& skeleton = m_pModel->GetSkeleton();
+
     // 単位行列で初期化.
-    auto count    = m_pModel->GetBoneCount();
+    auto count    = skeleton.GetBoneCount();
     auto identity = Matrix4x3::CreateIdentity();
 
     for(auto i=0u; i<count; ++i)
     {
-        auto& bone     = m_pModel->GetBone(i);
-        auto  bindPose = BoneProxy::GetBindPoseMatrix(bone);
-        auto  name     = BoneProxy::GetName(bone);
-
-        m_LocalTransforms[i] = bindPose;
+        auto bone = skeleton.GetBone(i);
+        m_LocalTransforms[i] = bone.BindPose;
         m_WorldTransforms[i] = identity;
         m_MatrixPalettes [i] = identity;
     }
@@ -418,7 +415,8 @@ void MotionPlayer::Update(float deltaSec, const Matrix4x3& rootTransform)
 //-----------------------------------------------------------------------------
 void MotionPlayer::UpdateLocalTransform(bool blend)
 {
-    auto count = m_pModel->GetBoneCount();
+    const auto& skeleton = m_pModel->GetSkeleton();
+    auto count = skeleton.GetBoneCount();
 
     // アニメーションブレンド.
     if (blend)
@@ -495,11 +493,12 @@ void MotionPlayer::UpdateLocalTransform(bool blend)
 //-----------------------------------------------------------------------------
 void MotionPlayer::UpdateWorldTransform(const Matrix4x3& rootTransform)
 {
-    auto count = m_pModel->GetBoneCount();
+    const auto& skeleton = m_pModel->GetSkeleton();
+    auto count = skeleton.GetBoneCount();
     for(auto i=0u; i<count; ++i)
     {
-        const auto& bone     = m_pModel->GetBone(i);
-        const auto  parentId = BoneProxy::GetParentId(bone);
+        const auto bone     = skeleton.GetBone(i);
+        const auto parentId = bone.Parent;
 
         if (parentId >= 0)
         {
@@ -519,12 +518,12 @@ void MotionPlayer::UpdateWorldTransform(const Matrix4x3& rootTransform)
 //-----------------------------------------------------------------------------
 void MotionPlayer::UpdateMatrixPalette()
 {
-    auto count = m_pModel->GetBoneCount();
+    const auto& skeleton = m_pModel->GetSkeleton();
+    auto count = skeleton.GetBoneCount();
     for(auto i=0u; i<count; ++i)
     {
-        const auto& bone       = m_pModel->GetBone(i);
-        const auto invBindPose = BoneProxy::GetInverseBindPoseMatrix(bone);
-        m_MatrixPalettes[i] = invBindPose * m_WorldTransforms[i];
+        const auto bone = skeleton.GetBone(i);
+        m_MatrixPalettes[i] = bone.InvBindPose * m_WorldTransforms[i];
     }
 }
 
