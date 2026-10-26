@@ -11,7 +11,7 @@ enum AlphaType : ubyte
 
 table Bone
 {
-    Name            : string;
+    Hash            : ulong;
     Parent          : int;
     BindPose        : Float3x4;
     InverseBindPose : Float3x4;
@@ -20,7 +20,7 @@ table Bone
 
 table Mesh
 {
-    Name          : string;
+    Hash          : ulong;
     MaterialId    : uint;
     Positions     : [Float3];
     Normals       : [Float3];
@@ -32,22 +32,29 @@ table Mesh
     VertexIndices : [uint];
 }
 
+table InstanceNode
+{
+    Hash        : uint;
+    WorldMatrix : Float3x4;
+}
+
 table MeshInstance
 {
-    Names       : [string];
-    Transforms  : [Float3x4];
     Meshes      : [uint];
+    Hashes      : [ulong];
+    Transforms  : [Float3x4];
 }
 
 table ModelBinary
 {
     Version             : uint;
     Meshes              : [Mesh];
-    Materials           : [string];
+    Materials           : [ulong];
     Bones               : [Bone];
     MeshInstances       : [MeshInstance];
     RootTransform       : Float3x4;
     InvRootTransform    : Float3x4;
+    HashTable           : [NamePair];
 }
 
 root_type ModelBinary;

@@ -50,7 +50,7 @@ bool MotionUpdater::Init(const Model* pModel, const res::MotionClip* pClip)
     for(auto i=0u; i<count; ++i)
     {
         auto bone  = skeleton.GetBone(i);
-        auto track = MotionClipProxy::FindTrack(m_pClip, bone.Name.c_str());
+        auto track = MotionClipProxy::FindTrack(m_pClip, bone.Hash);
         m_pTracks[i] = track;
     }
 

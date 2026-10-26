@@ -9,6 +9,7 @@
 //-----------------------------------------------------------------------------
 #include <cstring>
 #include <cassert>
+#include <fnd/asdxHash.h>
 #include <gfx/asdxSkeleton.h>
 
 
@@ -39,7 +40,7 @@ void Skeleton::Init(const ArrayView<ResBone>& bones)
         return;
 
     auto count = bones.size();
-    m_Names       .resize(count);
+    m_Hashes      .resize(count);
     m_Parents     .resize(count);
     m_BindPoses   .resize(count);
     m_InvBindPoses.resize(count);
@@ -47,9 +48,9 @@ void Skeleton::Init(const ArrayView<ResBone>& bones)
 
     for(size_t i=0; i<count; ++i)
     {
-        m_Names[i].assign(bones[i].Name.c_str(), bones[i].Name.size());
-        m_Parents[i] = bones[i].Parent;
-        m_BindPoses[i] = bones[i].BindPose;
+        m_Hashes[i]       = bones[i].Hash;
+        m_Parents[i]      = bones[i].Parent;
+        m_BindPoses[i]    = bones[i].BindPose;
         m_InvBindPoses[i] = bones[i].InvBindPose;
 
         auto size = bones[i].Children.size();
@@ -64,7 +65,7 @@ void Skeleton::Init(const ArrayView<ResBone>& bones)
 //-----------------------------------------------------------------------------
 void Skeleton::Term()
 {
-    m_Names         .clear();
+    m_Hashes        .clear();
     m_Parents       .clear();
     m_BindPoses     .clear();
     m_InvBindPoses  .clear();
@@ -93,7 +94,7 @@ ResBone Skeleton::GetBone(size_t index) const
 {
     assert(index < GetBoneCount());
     ResBone result;
-    result.Name         = StringView(m_Names[index].c_str());
+    result.Hash         = m_Hashes[index];
     result.Parent       = m_Parents[index];
     result.BindPose     = m_BindPoses[index];
     result.InvBindPose  = m_InvBindPoses[index];
@@ -106,11 +107,20 @@ ResBone Skeleton::GetBone(size_t index) const
 //-----------------------------------------------------------------------------
 bool Skeleton::FindBone(const char* name, size_t& index) const
 {
-    for(size_t i=0; i<m_Names.size(); ++i)
+    auto hash = CalcHash(name);
+    return FindBone(hash, index);
+}
+
+//-----------------------------------------------------------------------------
+//      ボーン名を検索します.
+//-----------------------------------------------------------------------------
+bool Skeleton::FindBone(uint64_t hash, size_t& index) const
+{
+    for(size_t i=0; i<m_Hashes.size(); ++i)
     {
-        if (strcmp(m_Names[i].c_str(), name) == 0)
+        if (m_Hashes[i] == hash)
         {
-            index = uint32_t(i);
+            index = i;
             return true;
         }
     }

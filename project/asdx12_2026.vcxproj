@@ -387,6 +387,7 @@
     <ClInclude Include="..\include\res\asdxResMesh.h" />
     <ClInclude Include="..\include\res\asdxResModel.h" />
     <ClInclude Include="..\include\res\asdxResMotion.h" />
+    <ClInclude Include="..\include\res\asdxResNamePair.h" />
     <ClInclude Include="..\include\res\asdxResTexture.h" />
     <ClInclude Include="..\include\snd\asdxSoundEngine.h" />
     <ClInclude Include="..\include\snd\asdxSoundResource.h" />

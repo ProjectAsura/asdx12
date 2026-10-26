@@ -97,12 +97,12 @@ public:
     const Mesh& GetMesh(size_t index) const;
 
     //-------------------------------------------------------------------------
-    //! @brief      マテリアル名を取得します.
+    //! @brief      マテリアル名ハッシュを取得します.
     //! 
     //! @param[in]      index       マテリアル番号.
-    //! @return     マテリアル名を返却します.
+    //! @return     マテリアル名ハッシュを返却します.
     //-------------------------------------------------------------------------
-    const String& GetMaterial(size_t index) const;
+    uint64_t GetMaterial(size_t index) const;
 
     //-------------------------------------------------------------------------
     //! @brief      スケルトンを取得します.
@@ -138,12 +138,23 @@ public:
     //-------------------------------------------------------------------------
     bool FindMaterial(const char* name, size_t& index) const;
 
+    //-------------------------------------------------------------------------
+    //! @brief      ハッシュから名前を検索します.
+    //! 
+    //! @param[in]      hash        ハッシュ値.
+    //! @param[out]     result      名前.
+    //! @retval true    検索に成功.
+    //! @retval false   検索に失敗.
+    //-------------------------------------------------------------------------
+    bool FindName(uint64_t hash, StringView& result) const;
+
 private:
     ///////////////////////////////////////////////////////////////////////////
     // MeshInstance structure
     ///////////////////////////////////////////////////////////////////////////
     struct MeshInstance
     {
+        std::vector<uint64_t>   Hashes;
         std::vector<uint32_t>   Meshes;
         std::vector<Matrix4x3>  Transforms;
     };
@@ -151,11 +162,12 @@ private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    std::atomic<uint32_t>       m_RefCount = {};
-    std::vector<Mesh>           m_Meshes;
-    std::vector<String>         m_Materials;
-    std::vector<MeshInstance>   m_MeshInstances;
-    Skeleton                    m_Skeleton;
+    std::atomic<uint32_t>                   m_RefCount = {};
+    std::vector<Mesh>                       m_Meshes;
+    std::vector<uint64_t>                   m_Materials;
+    std::vector<MeshInstance>               m_MeshInstances;
+    Skeleton                                m_Skeleton;
+    std::unordered_map<uint64_t, String>    m_HashTable;
 
     //=========================================================================
     // private methods.

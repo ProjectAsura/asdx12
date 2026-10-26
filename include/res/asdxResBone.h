@@ -10,7 +10,6 @@
 //-----------------------------------------------------------------------------
 #include <cstdint>
 #include <fnd/asdxMath.h>
-#include <fnd/asdxStringView.h>
 #include <fnd/asdxArrayView.h>
 
 
@@ -27,7 +26,7 @@ using BoneId = int32_t;
 ///////////////////////////////////////////////////////////////////////////////
 struct ResBone
 {
-    StringView          Name;           //!< ボーン名.
+    uint64_t            Hash;           //!< ボーン名のハッシュ.
     BoneId              Parent;         //!< 親ボーンID. (親がいない場合は -1).
     Matrix4x3           BindPose;       //!< バインドポーズ行列.
     Matrix4x3           InvBindPose;    //!< 逆バインドポーズ行列.

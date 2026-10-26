@@ -74,7 +74,7 @@ void ModelBinary::Load(std::vector<uint8_t>&& blob)
     auto bin = asdx::res::GetModelBinary(m_Blob.data());
 
     m_Meshes.resize(bin->Meshes()->size());
-    for(size_t i=0; i<m_Meshes.size(); ++i)
+    for(uint32_t i=0; i<m_Meshes.size(); ++i)
     {
         const auto mesh = bin->Meshes()->Get(i);
         m_Meshes[i].Positions       = ToArrayView<Vector3>(mesh->Positions());
@@ -87,18 +87,12 @@ void ModelBinary::Load(std::vector<uint8_t>&& blob)
         m_Meshes[i].VertexIndices   = ToArrayView<uint32_t>(mesh->VertexIndices());
     }
 
-    m_Materials.resize(bin->Materials()->size());
-    for(size_t i=0; i<m_Materials.size(); ++i)
-    {
-        m_Materials[i] = StringView(bin->Materials()->Get(i)->c_str());
-    }
-
     m_Bones.resize(bin->Bones()->size());
-    for(size_t i=0; i<m_Bones.size(); ++i)
+    for(uint32_t i=0; i<m_Bones.size(); ++i)
     {
         auto bone = bin->Bones()->Get(i);
 
-        m_Bones[i].Name         = StringView(bone->Name()->c_str());
+        m_Bones[i].Hash         = bone->Hash();
         m_Bones[i].Parent       = bone->Parent();
         m_Bones[i].BindPose     = FromFloat3x4(*bone->BindPose());
         m_Bones[i].InvBindPose  = FromFloat3x4(*bone->InverseBindPose());
@@ -106,12 +100,21 @@ void ModelBinary::Load(std::vector<uint8_t>&& blob)
     }
 
     m_Instances.resize(bin->MeshInstances()->size());
-    for(size_t i=0; i<m_Instances.size(); ++i)
+    for(uint32_t i=0; i<m_Instances.size(); ++i)
     {
         auto instance = bin->MeshInstances()->Get(i);
 
-        m_Instances[i].Meshes = ToArrayView<uint32_t>(instance->Meshes());
+        m_Instances[i].Hashes    = ToArrayView<uint64_t>(instance->Hashes());
+        m_Instances[i].Meshes    = ToArrayView<uint32_t>(instance->Meshes());
         m_Instances[i].Transform = ToArrayView<Matrix4x3>(instance->Transforms());
+    }
+
+    m_HashTable.reserve(bin->HashTable()->size());
+    for(uint32_t i=0u; i<m_HashTable.size(); ++i)
+    {
+        auto pair = bin->HashTable()->Get(i);
+        m_HashTable[i].Hash = pair->Hash();
+        m_HashTable[i].Name = StringView(pair->Name()->c_str());
     }
 }
 
@@ -123,14 +126,17 @@ void ModelBinary::Term()
     m_Meshes.clear();
     m_Meshes.shrink_to_fit();
 
-    m_Materials.clear();
-    m_Materials.shrink_to_fit();
-
     m_Bones.clear();
     m_Bones.shrink_to_fit();
 
-    m_Blob.clear();
-    m_Blob.shrink_to_fit();
+    m_Instances.clear();
+    m_Instances.shrink_to_fit();
+
+    m_HashTable.clear();
+    m_HashTable.shrink_to_fit();
+
+    m_Bones.clear();
+    m_Bones.shrink_to_fit();
 }
 
 //-----------------------------------------------------------------------------
@@ -141,9 +147,11 @@ ResModel ModelBinary::GetResource() const
     auto bin = asdx::res::GetModelBinary(m_Blob.data());
 
     ResModel result = {};
-    result.Meshes    = ArrayView<ResMesh>(m_Meshes.data(), m_Meshes.size());
-    result.Materials = ArrayView<StringView>(m_Materials.data(), m_Materials.size());
-    result.Bones     = ArrayView<ResBone>(m_Bones.data(), m_Bones.size());
+    result.Meshes        = ArrayView<ResMesh>(m_Meshes.data(), m_Meshes.size());
+    result.Materials     = ArrayView<uint64_t>(bin->Materials()->data(), bin->Materials()->size());
+    result.Bones         = ArrayView<ResBone>(m_Bones.data(), m_Bones.size());
+    result.MeshInstances = ArrayView<ResMeshInstance>(m_Instances.data(), m_Instances.size());
+    result.HashTable     = ArrayView<ResNamePair>(m_HashTable.data(), m_HashTable.size());
 
     return result;
 }

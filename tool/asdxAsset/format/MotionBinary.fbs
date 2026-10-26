@@ -16,7 +16,7 @@ struct KeyQuaternion
 
 table MotionTrack
 {
-    Name      : string (key);
+    Hash      : ulong (key);
     Positions : [KeyFloat3];
     Rotations : [KeyQuaternion];
     Scalings  : [KeyFloat3];
@@ -24,7 +24,7 @@ table MotionTrack
 
 table MotionClip
 {
-    Name           : string (key);
+    Hash           : ulong (key);
     Duration       : float;
     TicksPerSecond : float;
     Tracks         : [MotionTrack];
@@ -35,6 +35,7 @@ table MotionBinary
     Version         : uint;
     RootTransform   : Float3x4;
     Clips           : [MotionClip];
+    HashTable       : [NamePair];
 }
 
 root_type MotionBinary;

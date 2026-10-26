@@ -9,11 +9,18 @@
 //-----------------------------------------------------------------------------
 #include <fnd/asdxMacro.h>
 #include <fnd/asdxLogger.h>
+#include <fnd/asdxHash.h>
 #include <res/asdxResMotion.h>
 #include "MotionBinary_generated.h"
 
 
 namespace {
+
+//-----------------------------------------------------------------------------
+// Constant Values.
+//-----------------------------------------------------------------------------
+const uint32_t CURRENT_VERSION = 2u;
+
 
 //-----------------------------------------------------------------------------
 //      Vector3型に変換します.
@@ -177,7 +184,7 @@ MotionBinary::~MotionBinary()
 //-----------------------------------------------------------------------------
 //      ロード処理を行います.
 //-----------------------------------------------------------------------------
-void MotionBinary::Load(std::vector<uint8_t>&& blob)
+bool MotionBinary::Load(std::vector<uint8_t>&& blob)
 {
     m_Blob = std::move(blob);
 
@@ -190,6 +197,17 @@ void MotionBinary::Load(std::vector<uint8_t>&& blob)
         ASDX_UNUSED(verifier);
     }
 #endif
+
+    // バージョンチェック.
+    auto bin = res::GetMotionBinary(m_Blob.data());
+    assert(bin->Version() == CURRENT_VERSION);
+    if (bin->Version() != CURRENT_VERSION)
+    {
+        ELOGA("Error : Model Binary Version not match. expect = %u, loaded = %u", CURRENT_VERSION, bin->Version());
+        return false;
+    }
+
+    return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -235,14 +253,23 @@ Matrix4x3 MotionBinary::GetRootTransform() const
 }
 
 //-----------------------------------------------------------------------------
-//      クリップを検索します.
+//      クリップ名を検索します.
 //-----------------------------------------------------------------------------
 const res::MotionClip* MotionBinary::FindClip(const char* name) const
+{
+    auto hash = CalcHash(name);
+    return FindClip(hash);
+}
+
+//-----------------------------------------------------------------------------
+//      クリップを検索します.
+//-----------------------------------------------------------------------------
+const res::MotionClip* MotionBinary::FindClip(uint64_t hash) const
 {
     if (m_Blob.empty())
         return nullptr;
 
-    return res::GetMotionBinary(m_Blob.data())->Clips()->LookupByKey(name);
+    return res::GetMotionBinary(m_Blob.data())->Clips()->LookupByKey(hash);
 }
 
 
@@ -251,12 +278,12 @@ const res::MotionClip* MotionBinary::FindClip(const char* name) const
 ///////////////////////////////////////////////////////////////////////////////
 
 //-----------------------------------------------------------------------------
-//      トラック名を取得します.
+//      トラック名ハッシュを取得します.
 //-----------------------------------------------------------------------------
-const char* MotionTrackProxy::GetName(const res::MotionTrack* track)
+uint64_t MotionTrackProxy::GetHash(const res::MotionTrack* track)
 {
     assert(track != nullptr);
-    return track->Name()->c_str();
+    return track->Hash();
 }
 
 //-----------------------------------------------------------------------------
@@ -357,10 +384,10 @@ Matrix4x3 MotionTrackProxy::CalcTransformNoScale(const Quaternion& rotation, con
 //-----------------------------------------------------------------------------
 //      クリップ名を取得します.
 //-----------------------------------------------------------------------------
-const char* MotionClipProxy::GetName(const res::MotionClip* clip)
+uint64_t MotionClipProxy::GetHash(const res::MotionClip* clip)
 {
     assert(clip != nullptr);
-    return clip->Name()->c_str();
+    return clip->Hash();
 }
 
 //-----------------------------------------------------------------------------
@@ -404,8 +431,18 @@ const res::MotionTrack* MotionClipProxy::GetTrack(const res::MotionClip* clip, u
 //-----------------------------------------------------------------------------
 const res::MotionTrack* MotionClipProxy::FindTrack(const res::MotionClip* clip, const char* name)
 {
-    assert(clip != nullptr);
-    return clip->Tracks()->LookupByKey(name);
+    auto hash = CalcHash(name);
+    return FindTrack(clip, hash);
 }
+
+//-----------------------------------------------------------------------------
+//      モーショントラックを検索します.
+//-----------------------------------------------------------------------------
+const res::MotionTrack* MotionClipProxy::FindTrack(const res::MotionClip* clip, uint64_t hash)
+{
+    assert(clip != nullptr);
+    return clip->Tracks()->LookupByKey(hash);
+}
+
 
 } // namespace asdx

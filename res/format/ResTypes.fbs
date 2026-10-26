@@ -157,3 +157,9 @@ struct Range
     Offset : uint;
     Count  : uint;
 }
+
+table NamePair
+{
+    Hash : ulong (key);
+    Name : string;
+}

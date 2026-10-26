@@ -69,7 +69,7 @@ void MaterialBinary::Load(std::vector<uint8_t>&& blob)
     auto bin = asdx::res::GetMaterialBinary(m_Blob.data());
 
     m_Textures.resize(bin->Textures()->size());
-    for(size_t i=0; i<m_Textures.size(); ++i)
+    for(uint32_t i=0; i<m_Textures.size(); ++i)
     {
         m_Textures[i] = StringView(bin->Textures()->Get(i)->c_str());
     }

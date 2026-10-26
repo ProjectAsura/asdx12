@@ -92,25 +92,19 @@ FLATBUFFERS_STRUCT_END(KeyQuaternion, 20);
 struct MotionTrack FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef MotionTrackBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_NAME = 4,
+    VT_HASH = 4,
     VT_POSITIONS = 6,
     VT_ROTATIONS = 8,
     VT_SCALINGS = 10
   };
-  const ::flatbuffers::String *Name() const {
-    return GetPointer<const ::flatbuffers::String *>(VT_NAME);
+  uint64_t Hash() const {
+    return GetField<uint64_t>(VT_HASH, 0);
   }
   bool KeyCompareLessThan(const MotionTrack * const o) const {
-    return *Name() < *o->Name();
+    return Hash() < o->Hash();
   }
-  int KeyCompareWithValue(const char *_Name) const {
-    return strcmp(Name()->c_str(), _Name);
-  }
-  template<typename StringType>
-  int KeyCompareWithValue(const StringType& _Name) const {
-    if (Name()->c_str() < _Name) return -1;
-    if (_Name < Name()->c_str()) return 1;
-    return 0;
+  int KeyCompareWithValue(uint64_t _Hash) const {
+    return static_cast<int>(Hash() > _Hash) - static_cast<int>(Hash() < _Hash);
   }
   const ::flatbuffers::Vector<const asdx::res::KeyFloat3 *> *Positions() const {
     return GetPointer<const ::flatbuffers::Vector<const asdx::res::KeyFloat3 *> *>(VT_POSITIONS);
@@ -123,8 +117,7 @@ struct MotionTrack FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyOffsetRequired(verifier, VT_NAME) &&
-           verifier.VerifyString(Name()) &&
+           VerifyField<uint64_t>(verifier, VT_HASH, 8) &&
            VerifyOffset(verifier, VT_POSITIONS) &&
            verifier.VerifyVector(Positions()) &&
            VerifyOffset(verifier, VT_ROTATIONS) &&
@@ -139,8 +132,8 @@ struct MotionTrackBuilder {
   typedef MotionTrack Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  void add_Name(::flatbuffers::Offset<::flatbuffers::String> Name) {
-    fbb_.AddOffset(MotionTrack::VT_NAME, Name);
+  void add_Hash(uint64_t Hash) {
+    fbb_.AddElement<uint64_t>(MotionTrack::VT_HASH, Hash, 0);
   }
   void add_Positions(::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::KeyFloat3 *>> Positions) {
     fbb_.AddOffset(MotionTrack::VT_POSITIONS, Positions);
@@ -158,38 +151,36 @@ struct MotionTrackBuilder {
   ::flatbuffers::Offset<MotionTrack> Finish() {
     const auto end = fbb_.EndTable(start_);
     auto o = ::flatbuffers::Offset<MotionTrack>(end);
-    fbb_.Required(o, MotionTrack::VT_NAME);
     return o;
   }
 };
 
 inline ::flatbuffers::Offset<MotionTrack> CreateMotionTrack(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    ::flatbuffers::Offset<::flatbuffers::String> Name = 0,
+    uint64_t Hash = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::KeyFloat3 *>> Positions = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::KeyQuaternion *>> Rotations = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<const asdx::res::KeyFloat3 *>> Scalings = 0) {
   MotionTrackBuilder builder_(_fbb);
+  builder_.add_Hash(Hash);
   builder_.add_Scalings(Scalings);
   builder_.add_Rotations(Rotations);
   builder_.add_Positions(Positions);
-  builder_.add_Name(Name);
   return builder_.Finish();
 }
 
 inline ::flatbuffers::Offset<MotionTrack> CreateMotionTrackDirect(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    const char *Name = nullptr,
+    uint64_t Hash = 0,
     std::vector<asdx::res::KeyFloat3> *Positions = nullptr,
     std::vector<asdx::res::KeyQuaternion> *Rotations = nullptr,
     std::vector<asdx::res::KeyFloat3> *Scalings = nullptr) {
-  auto Name__ = Name ? _fbb.CreateString(Name) : 0;
   auto Positions__ = Positions ? _fbb.CreateVectorOfSortedStructs<asdx::res::KeyFloat3>(Positions) : 0;
   auto Rotations__ = Rotations ? _fbb.CreateVectorOfSortedStructs<asdx::res::KeyQuaternion>(Rotations) : 0;
   auto Scalings__ = Scalings ? _fbb.CreateVectorOfSortedStructs<asdx::res::KeyFloat3>(Scalings) : 0;
   return asdx::res::CreateMotionTrack(
       _fbb,
-      Name__,
+      Hash,
       Positions__,
       Rotations__,
       Scalings__);
@@ -198,25 +189,19 @@ inline ::flatbuffers::Offset<MotionTrack> CreateMotionTrackDirect(
 struct MotionClip FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef MotionClipBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_NAME = 4,
+    VT_HASH = 4,
     VT_DURATION = 6,
     VT_TICKSPERSECOND = 8,
     VT_TRACKS = 10
   };
-  const ::flatbuffers::String *Name() const {
-    return GetPointer<const ::flatbuffers::String *>(VT_NAME);
+  uint64_t Hash() const {
+    return GetField<uint64_t>(VT_HASH, 0);
   }
   bool KeyCompareLessThan(const MotionClip * const o) const {
-    return *Name() < *o->Name();
+    return Hash() < o->Hash();
   }
-  int KeyCompareWithValue(const char *_Name) const {
-    return strcmp(Name()->c_str(), _Name);
-  }
-  template<typename StringType>
-  int KeyCompareWithValue(const StringType& _Name) const {
-    if (Name()->c_str() < _Name) return -1;
-    if (_Name < Name()->c_str()) return 1;
-    return 0;
+  int KeyCompareWithValue(uint64_t _Hash) const {
+    return static_cast<int>(Hash() > _Hash) - static_cast<int>(Hash() < _Hash);
   }
   float Duration() const {
     return GetField<float>(VT_DURATION, 0.0f);
@@ -229,8 +214,7 @@ struct MotionClip FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyOffsetRequired(verifier, VT_NAME) &&
-           verifier.VerifyString(Name()) &&
+           VerifyField<uint64_t>(verifier, VT_HASH, 8) &&
            VerifyField<float>(verifier, VT_DURATION, 4) &&
            VerifyField<float>(verifier, VT_TICKSPERSECOND, 4) &&
            VerifyOffset(verifier, VT_TRACKS) &&
@@ -244,8 +228,8 @@ struct MotionClipBuilder {
   typedef MotionClip Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  void add_Name(::flatbuffers::Offset<::flatbuffers::String> Name) {
-    fbb_.AddOffset(MotionClip::VT_NAME, Name);
+  void add_Hash(uint64_t Hash) {
+    fbb_.AddElement<uint64_t>(MotionClip::VT_HASH, Hash, 0);
   }
   void add_Duration(float Duration) {
     fbb_.AddElement<float>(MotionClip::VT_DURATION, Duration, 0.0f);
@@ -263,36 +247,34 @@ struct MotionClipBuilder {
   ::flatbuffers::Offset<MotionClip> Finish() {
     const auto end = fbb_.EndTable(start_);
     auto o = ::flatbuffers::Offset<MotionClip>(end);
-    fbb_.Required(o, MotionClip::VT_NAME);
     return o;
   }
 };
 
 inline ::flatbuffers::Offset<MotionClip> CreateMotionClip(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    ::flatbuffers::Offset<::flatbuffers::String> Name = 0,
+    uint64_t Hash = 0,
     float Duration = 0.0f,
     float TicksPerSecond = 0.0f,
     ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MotionTrack>>> Tracks = 0) {
   MotionClipBuilder builder_(_fbb);
+  builder_.add_Hash(Hash);
   builder_.add_Tracks(Tracks);
   builder_.add_TicksPerSecond(TicksPerSecond);
   builder_.add_Duration(Duration);
-  builder_.add_Name(Name);
   return builder_.Finish();
 }
 
 inline ::flatbuffers::Offset<MotionClip> CreateMotionClipDirect(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    const char *Name = nullptr,
+    uint64_t Hash = 0,
     float Duration = 0.0f,
     float TicksPerSecond = 0.0f,
     std::vector<::flatbuffers::Offset<asdx::res::MotionTrack>> *Tracks = nullptr) {
-  auto Name__ = Name ? _fbb.CreateString(Name) : 0;
   auto Tracks__ = Tracks ? _fbb.CreateVectorOfSortedTables<asdx::res::MotionTrack>(Tracks) : 0;
   return asdx::res::CreateMotionClip(
       _fbb,
-      Name__,
+      Hash,
       Duration,
       TicksPerSecond,
       Tracks__);
@@ -303,7 +285,8 @@ struct MotionBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_VERSION = 4,
     VT_ROOTTRANSFORM = 6,
-    VT_CLIPS = 8
+    VT_CLIPS = 8,
+    VT_HASHTABLE = 10
   };
   uint32_t Version() const {
     return GetField<uint32_t>(VT_VERSION, 0);
@@ -314,6 +297,9 @@ struct MotionBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MotionClip>> *Clips() const {
     return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MotionClip>> *>(VT_CLIPS);
   }
+  const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::NamePair>> *HashTable() const {
+    return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::NamePair>> *>(VT_HASHTABLE);
+  }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_VERSION, 4) &&
@@ -321,6 +307,9 @@ struct MotionBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
            VerifyOffset(verifier, VT_CLIPS) &&
            verifier.VerifyVector(Clips()) &&
            verifier.VerifyVectorOfTables(Clips()) &&
+           VerifyOffset(verifier, VT_HASHTABLE) &&
+           verifier.VerifyVector(HashTable()) &&
+           verifier.VerifyVectorOfTables(HashTable()) &&
            verifier.EndTable();
   }
 };
@@ -338,6 +327,9 @@ struct MotionBinaryBuilder {
   void add_Clips(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MotionClip>>> Clips) {
     fbb_.AddOffset(MotionBinary::VT_CLIPS, Clips);
   }
+  void add_HashTable(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::NamePair>>> HashTable) {
+    fbb_.AddOffset(MotionBinary::VT_HASHTABLE, HashTable);
+  }
   explicit MotionBinaryBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -353,8 +345,10 @@ inline ::flatbuffers::Offset<MotionBinary> CreateMotionBinary(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t Version = 0,
     const asdx::res::Float3x4 *RootTransform = nullptr,
-    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MotionClip>>> Clips = 0) {
+    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MotionClip>>> Clips = 0,
+    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::NamePair>>> HashTable = 0) {
   MotionBinaryBuilder builder_(_fbb);
+  builder_.add_HashTable(HashTable);
   builder_.add_Clips(Clips);
   builder_.add_RootTransform(RootTransform);
   builder_.add_Version(Version);
@@ -365,13 +359,16 @@ inline ::flatbuffers::Offset<MotionBinary> CreateMotionBinaryDirect(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t Version = 0,
     const asdx::res::Float3x4 *RootTransform = nullptr,
-    std::vector<::flatbuffers::Offset<asdx::res::MotionClip>> *Clips = nullptr) {
+    std::vector<::flatbuffers::Offset<asdx::res::MotionClip>> *Clips = nullptr,
+    std::vector<::flatbuffers::Offset<asdx::res::NamePair>> *HashTable = nullptr) {
   auto Clips__ = Clips ? _fbb.CreateVectorOfSortedTables<asdx::res::MotionClip>(Clips) : 0;
+  auto HashTable__ = HashTable ? _fbb.CreateVectorOfSortedTables<asdx::res::NamePair>(HashTable) : 0;
   return asdx::res::CreateMotionBinary(
       _fbb,
       Version,
       RootTransform,
-      Clips__);
+      Clips__,
+      HashTable__);
 }
 
 inline const asdx::res::MotionBinary *GetMotionBinary(const void *buf) {

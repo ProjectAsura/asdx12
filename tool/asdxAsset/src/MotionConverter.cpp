@@ -13,6 +13,7 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <MotionBinary_generated.h>
+#include "../../../external/xxHash/xxhash.h"
 
 #ifndef ELOG
 #define ELOG(x, ...) fprintf_s(stderr, "[File:%s, Line:%d] " x "\n", __FILE__, __LINE__, ##__VA_ARGS__ )
@@ -24,7 +25,7 @@ namespace {
 //-----------------------------------------------------------------------------
 // Constant Values.
 //-----------------------------------------------------------------------------
-static constexpr uint32_t CURRENT_VERION = 1u;  //!< 現在サポートされているファイルバージョン.
+static constexpr uint32_t CURRENT_VERION = 2u;  //!< 現在サポートされているファイルバージョン.
 
 
 //-----------------------------------------------------------------------------
@@ -70,6 +71,26 @@ asdx::res::Float3x4 ToFloat3x4(const aiMatrix4x4& matrix)
         matrix.b1, matrix.b2, matrix.b3, matrix.b4,
         matrix.c1, matrix.c2, matrix.c3, matrix.c4);
 }
+
+//-----------------------------------------------------------------------------
+//      名前テーブルに登録します.
+//-----------------------------------------------------------------------------
+void RegisterNameTable(std::vector<std::string>& table, const char* name)
+{
+    for(size_t i=0; i<table.size(); ++i)
+    {
+        if (strcmp(table[i].c_str(), name) == 0)
+            return;
+    }
+
+    table.push_back(name);
+}
+
+//-----------------------------------------------------------------------------
+//      名前からハッシュ値を求めます.
+//-----------------------------------------------------------------------------
+uint64_t CalcNameHash(const char* name)
+{ return XXH3_64bits(name, strlen(name)); }
 
 } // namespace
 
@@ -155,6 +176,8 @@ bool MotionConverter::Convert(const std::string& path, std::vector<uint8_t>& bin
         return false;
     }
 
+    std::vector<std::string> nameTable;
+
     flatbuffers::FlatBufferBuilder builder(1024);
 
     // データを変換.
@@ -168,6 +191,8 @@ bool MotionConverter::Convert(const std::string& path, std::vector<uint8_t>& bin
         {
             name = "Clip" + std::to_string(i);
         }
+
+        RegisterNameTable(nameTable, name.c_str());
 
         auto duration       = float(srcAnim->mDuration);
         auto ticksPerSecond = float(srcAnim->mTicksPerSecond);
@@ -211,10 +236,13 @@ bool MotionConverter::Convert(const std::string& path, std::vector<uint8_t>& bin
                 scalings[k] = ToKeyFloat3(srcKey);
             }
 
+            RegisterNameTable(nameTable, srcCh->mNodeName.C_Str());
+            auto hash = CalcNameHash(srcCh->mNodeName.C_Str());
+
             // ボーンアニメーションを生成.
             auto bone = asdx::res::CreateMotionTrackDirect(
                 builder,
-                srcCh->mNodeName.C_Str(),
+                hash,
                 &positions,
                 &rotations,
                 &scalings);
@@ -223,10 +251,12 @@ bool MotionConverter::Convert(const std::string& path, std::vector<uint8_t>& bin
             bones.emplace_back(bone);
         }
 
+        auto hash = CalcNameHash(name.c_str());
+
         // アニメーションクリップ生成.
         auto clip = asdx::res::CreateMotionClipDirect(
             builder,
-            name.c_str(),
+            hash,
             duration,
             ticksPerSecond,
             &bones);
@@ -248,12 +278,20 @@ bool MotionConverter::Convert(const std::string& path, std::vector<uint8_t>& bin
             0.0f, 0.0f, 1.0f, 0.0f);
     }
 
+    std::vector<flatbuffers::Offset<asdx::res::NamePair>> hashTable;
+    for(auto& itr : nameTable)
+    {
+        auto hash = CalcNameHash(itr.c_str());
+        hashTable.push_back(asdx::res::CreateNamePairDirect(builder, hash, itr.c_str()));
+    }
+
     // バイナリ生成.
     auto bin = asdx::res::CreateMotionBinaryDirect(
         builder,
         CURRENT_VERION,
         &rootTransform,
-        &clips);
+        &clips,
+        &hashTable);
 
     // バイナリ作成完了.
     builder.Finish(bin);

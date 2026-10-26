@@ -15,6 +15,7 @@
 #include <fnd/asdxStringView.h>
 #include <res/asdxResBone.h>
 #include <res/asdxResMesh.h>
+#include <res/asdxResNamePair.h>
 
 
 namespace asdx {
@@ -24,10 +25,10 @@ namespace asdx {
 ///////////////////////////////////////////////////////////////////////////////
 struct ResMeshInstance
 {
-    ArrayView<Matrix4x3>    Transform;
-    ArrayView<uint32_t>     Meshes;
+    ArrayView<uint32_t>     Meshes;     //!< 描画に使用するメッシュリスト.
+    ArrayView<uint64_t>     Hashes;     //!< 各インスタンスの名前ハッシュ.
+    ArrayView<Matrix4x3>    Transform;  //!< 各インスタンスの変換行列.
 };
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // ResModel structure
@@ -35,9 +36,10 @@ struct ResMeshInstance
 struct ResModel
 {
     ArrayView<ResMesh>          Meshes;
-    ArrayView<StringView>       Materials;
+    ArrayView<uint64_t>         Materials;
     ArrayView<ResBone>          Bones;
     ArrayView<ResMeshInstance>  MeshInstances;
+    ArrayView<ResNamePair>      HashTable;
 };
 
 
@@ -96,9 +98,9 @@ private:
     //=========================================================================
     std::vector<uint8_t>            m_Blob;
     std::vector<ResMesh>            m_Meshes;
-    std::vector<StringView>         m_Materials;
     std::vector<ResBone>            m_Bones;
     std::vector<ResMeshInstance>    m_Instances;
+    std::vector<ResNamePair>        m_HashTable;
 
     //=========================================================================
     // private methods.

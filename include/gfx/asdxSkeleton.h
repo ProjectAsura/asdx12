@@ -90,11 +90,21 @@ public:
     //-------------------------------------------------------------------------
     bool FindBone(const char* name, size_t& index) const;
 
+    //-------------------------------------------------------------------------
+    //! @brief      ボーン名を検索します.
+    //! 
+    //! @param[in]      hash        ボーン名ハッシュ.
+    //! @param[out]     index       ボーン番号.
+    //! @retval true    検索に成功.
+    //! @retval false   検索に失敗.
+    //-------------------------------------------------------------------------
+    bool FindBone(uint64_t hash, size_t& index) const;
+
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    std::vector<String>                 m_Names;            //!< ボーン名.
+    std::vector<uint64_t>               m_Hashes;           //!< ボーン名ハッシュ.
     std::vector<BoneId>                 m_Parents;          //!< 親ボーンID.
     std::vector<Matrix4x3>              m_BindPoses;        //!< バインドポーズ行列.
     std::vector<Matrix4x3>              m_InvBindPoses;     //!< 逆バインドポーズ行列.

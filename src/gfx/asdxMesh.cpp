@@ -149,8 +149,7 @@ bool Mesh::Init(const ResMesh& res)
     }
 
     // メッシュ名.
-    if (!res.Name.empty())
-        m_Name.assign(res.Name.c_str(), res.Name.size());
+    m_Hash = res.Hash;
 
     // マテリアルID.
     m_MaterialId = res.MaterialId;
@@ -177,7 +176,7 @@ bool Mesh::Init(const ResMesh& res)
 //-----------------------------------------------------------------------------
 void Mesh::Term()
 {
-    m_Name.clear();
+    m_Hash = 0;
 
     m_Positions     .Term();
     m_Normals       .Term();
@@ -197,10 +196,10 @@ void Mesh::Term()
 }
 
 //-----------------------------------------------------------------------------
-//      メッシュ名を取得します.
+//      メッシュ名のハッシュ値を取得します.
 //-----------------------------------------------------------------------------
-const String& Mesh::GetName() const
-{ return m_Name; }
+uint64_t Mesh::GetHash() const
+{ return m_Hash; }
 
 //-----------------------------------------------------------------------------
 //      マテリアルIDを取得します.
@@ -249,6 +248,12 @@ const VertexBuffer& Mesh::GetBoneIndices() const
 //-----------------------------------------------------------------------------
 const VertexBuffer& Mesh::GetBoneWeights() const
 { return m_BoneWeights; }
+
+//-----------------------------------------------------------------------------
+//      頂点インデックスを取得します.
+//-----------------------------------------------------------------------------
+const IndexBuffer& Mesh::GetVertexIndices() const
+{ return m_VertexIndices; }
 
 //-----------------------------------------------------------------------------
 //      頂点数を取得します.
@@ -315,7 +320,7 @@ void DrawMesh
     };
 
     auto count = (isSkeletal) ? kSkeletalMeshElementCount : kStaticMeshElementCount;
-    auto ibv = pMesh->GetIndices().GetIBV();
+    auto ibv = pMesh->GetVertexIndices().GetIBV();
     pCmd->IASetVertexBuffers(0, count, vbvs);
     pCmd->IASetIndexBuffer(&ibv);
     pCmd->DrawIndexedInstanced(pMesh->GetIndexCount(), instanceCount, 0, 0, 0);

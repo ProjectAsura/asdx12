@@ -13,7 +13,9 @@
 #include <assimp/postprocess.h>
 #include <MaterialConverter.h>
 #include <MaterialBinary_generated.h>
-#include "../../../include/fnd/asdxFlatDoc.h"
+#include <simdjson.h>
+#include "../../../include/fnd/asdxMath.h"
+#include "../../../include/edit/asdxJsonWriter.h"
 
 
 #ifndef ELOG
@@ -68,51 +70,66 @@ bool MaterialConverter::Convert(const Desc& desc)
         return false;
     }
 
-    // FlatDocロード.
-    asdx::FlatDoc doc;
-    if (!doc.Load(desc.InputPath.c_str()))
-    {
-        ELOG("Error : FlatDoc Open Failed. path = %s", desc.InputPath.c_str());
-        return false;
-    }
+    simdjson::ondemand::parser parser;
+    auto json = simdjson::padded_string::load(desc.InputPath.c_str());
+    auto doc  = parser.iterate(json);
+
+    auto shader = doc["shader"].get_string().value();
+
+    auto alpha_mode = doc["alpha_mode"].get_uint64().value();
+    auto cull_mode  = doc["cull_mode"].get_uint64().value();
+
+    auto param = doc["param"].get_object();
+    auto base_color = param["base_color"].get_array();
+    auto alpha      = param["alpha"].get_double().value();
+    auto occlusion  = param["occlusion"].get_double().value();
+    auto roughness  = param["roughness"].get_double().value();
+    auto metalness  = param["metalness"].get_double().value();
+    auto ior        = param["ior"].get_double().value();
+    auto emissive   = param["emissive"].get_array();
+
+    auto textures = doc["textures"].get_object();
+    auto map_base_color = textures["base_color"].get_string().value();
+    auto map_normal     = textures["normal"].get_string().value();
+    auto map_orm        = textures["orm"].get_string().value();
+    auto map_emissive   = textures["emissive"].get_string().value();
+
+    ShaderParam shaderParam = {};
+    shaderParam.BaseColor  = asdx::Float3(
+            float(base_color.at(0).get_double().value()),
+            float(base_color.at(1).get_double().value()),
+            float(base_color.at(2).get_double().value()));
+    shaderParam.Alpha      = float(alpha);
+    shaderParam.Occlusion  = float(occlusion);
+    shaderParam.Roughness  = float(roughness);
+    shaderParam.Metalness  = float(metalness);
+    shaderParam.Ior        = float(ior);
+    shaderParam.Emissive   = asdx::Float3(
+            float(emissive.at(0).get_double().value()),
+            float(emissive.at(1).get_double().value()),
+            float(emissive.at(2).get_double().value()));
 
     flatbuffers::FlatBufferBuilder builder(1024);
 
-    ShaderParam param = {};
-    param.BaseColor = doc.GetFloat3("BaseColor", asdx::Float3(1.0f, 1.0f, 1.0f));
-    param.Alpha     = doc.GetFloat("Alpha", 1.0f);
-    param.Occlusion = doc.GetFloat("Occlusion", 1.0f);
-    param.Roughness = doc.GetFloat("Roughness", 0.5f);
-    param.Metalness = doc.GetFloat("Metalness", 0.0f);
-    param.Ior       = doc.GetFloat("Ior", 1.0f);
-    param.Emissive  = doc.GetFloat3("Emissive", asdx::Float3(0.0f, 0.0f, 0.0f));
-    param.Reserved  = 0;
 
-    asdx::res::AlphaType alphaMode = asdx::res::AlphaType(doc.GetUint("AlphaMode", 0));
-    asdx::res::CullType  cullMode  = asdx::res::CullType(doc.GetUint("CullMode", 0));
-
-    auto shader = doc.GetString("Shader");
-
-    auto baseColorMap = doc.GetString("BaseColorMap", "default.BaseColor");
-    auto normalMap    = doc.GetString("NormalMap"   , "default.Normal");
-    auto ormMap       = doc.GetString("OrmMap"      , "default.Orm");
-    auto emissiveMap  = doc.GetString("EmissiveMap" , "default.TransparentBlack");
+    asdx::res::AlphaType alphaMode = asdx::res::AlphaType(alpha_mode);
+    asdx::res::CullType  cullMode  = asdx::res::CullType(cull_mode);
 
     {
         std::vector<flatbuffers::Offset<flatbuffers::String>> textures;
-        textures.push_back(builder.CreateString(baseColorMap.c_str()));
-        textures.push_back(builder.CreateString(normalMap.c_str()));
-        textures.push_back(builder.CreateString(ormMap.c_str()));
-        textures.push_back(builder.CreateString(emissiveMap.c_str()));
+        textures.push_back(builder.CreateString(map_base_color.data()));
+        textures.push_back(builder.CreateString(map_normal.data()));
+        textures.push_back(builder.CreateString(map_orm.data()));
+        textures.push_back(builder.CreateString(map_emissive.data()));
 
         std::vector<uint8_t> buffer;
-        buffer.resize(sizeof(param));
-        memcpy(buffer.data(), &param, sizeof(param));
+        buffer.resize(sizeof(shaderParam));
+        memcpy(buffer.data(), &shaderParam, sizeof(shaderParam));
 
         auto material = asdx::res::CreateMaterialBinaryDirect(
             builder,
             CURRENT_VERSION,
-            shader.c_str(),
+            shader.data(),
             &buffer,
             &textures,
             alphaMode,
@@ -159,30 +176,39 @@ bool MaterialConverter::ReverseConvert(const std::string& path, const std::vecto
     assert(sizeof(param) == bin->Buffer()->size());
     memcpy(&param, bin->Buffer()->data(), bin->Buffer()->size());
 
-    asdx::FlatDoc doc;
-    doc.SetString("Shader", bin->Shader()->c_str());
+    asdx::JsonWriter writer;
+    writer.Begin();
 
-    doc.SetUint("AlphaMode", uint32_t(bin->AlphaMode()));
-    doc.SetUint("CullMode" , uint32_t(bin->CullMode()));
+    writer.Write("shader", bin->Shader()->c_str());
+    writer.Write("alpha_mode", uint8_t(bin->AlphaMode()));
+    writer.Write("cull_mode" , uint8_t(bin->CullMode()));
 
-    doc.SetFloat3("BaseColor", param.BaseColor);
-    doc.SetFloat ("Alpha"    , param.Alpha);
-    doc.SetFloat ("Occlusion", param.Occlusion);
-    doc.SetFloat ("Roughness", param.Roughness);
-    doc.SetFloat ("Metalness", param.Metalness);
-    doc.SetFloat ("Ior"      , param.Ior);
-    doc.SetFloat3("Emissive" , param.Emissive);
-
-    assert(bin->Textures()->size() == 4);
-    doc.SetString("BaseColorMap", bin->Textures()->Get(0)->c_str());
-    doc.SetString("NormalMap"   , bin->Textures()->Get(1)->c_str());
-    doc.SetString("OrmMap"      , bin->Textures()->Get(2)->c_str());
-    doc.SetString("EmissiveMap" , bin->Textures()->Get(3)->c_str());
-
-    // FlatDocに保存.
-    if (!doc.Save(path.c_str()))
+    writer.WriteBeginSection("param");
     {
-        ELOG("Error : FlatDoc Save Failed. path = %s", path.c_str());
+        writer.Write("base_color", asdx::Vector3(param.BaseColor.x, param.BaseColor.y, param.BaseColor.z));
+        writer.Write("alpha", param.Alpha);
+        writer.Write("occlusion", param.Occlusion);
+        writer.Write("roughness", param.Roughness);
+        writer.Write("metalness", param.Metalness);
+        writer.Write("ior", param.Ior);
+        writer.Write("emissive", asdx::Vector3(param.Emissive.x, param.Emissive.y, param.Emissive.z));
+    }
+    writer.WriteEndSection();
+
+    writer.WriteBeginSection("textures");
+    {
+        writer.Write("base_color", bin->Textures()->Get(0)->c_str());
+        writer.Write("normal"    , bin->Textures()->Get(1)->c_str());
+        writer.Write("orm"       , bin->Textures()->Get(2)->c_str());
+        writer.Write("emissive"  , bin->Textures()->Get(3)->c_str());
+    }
+    writer.WriteEndSection();
+
+    writer.End();
+
+    if (!writer.Save(path.c_str()))
+    {
+        ELOG("Error : JsonWriter::Save() Failed. path = %s", path.c_str());
         return false;
     }
 

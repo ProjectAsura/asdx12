@@ -54,6 +54,9 @@ struct Transform;
 
 struct Range;
 
+struct NamePair;
+struct NamePairBuilder;
+
 FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Float2 FLATBUFFERS_FINAL_CLASS {
  private:
   float X_;
@@ -724,6 +727,75 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Range FLATBUFFERS_FINAL_CLASS {
   }
 };
 FLATBUFFERS_STRUCT_END(Range, 8);
+
+struct NamePair FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef NamePairBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_HASH = 4,
+    VT_NAME = 6
+  };
+  uint64_t Hash() const {
+    return GetField<uint64_t>(VT_HASH, 0);
+  }
+  bool KeyCompareLessThan(const NamePair * const o) const {
+    return Hash() < o->Hash();
+  }
+  int KeyCompareWithValue(uint64_t _Hash) const {
+    return static_cast<int>(Hash() > _Hash) - static_cast<int>(Hash() < _Hash);
+  }
+  const ::flatbuffers::String *Name() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_NAME);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint64_t>(verifier, VT_HASH, 8) &&
+           VerifyOffset(verifier, VT_NAME) &&
+           verifier.VerifyString(Name()) &&
+           verifier.EndTable();
+  }
+};
+
+struct NamePairBuilder {
+  typedef NamePair Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_Hash(uint64_t Hash) {
+    fbb_.AddElement<uint64_t>(NamePair::VT_HASH, Hash, 0);
+  }
+  void add_Name(::flatbuffers::Offset<::flatbuffers::String> Name) {
+    fbb_.AddOffset(NamePair::VT_NAME, Name);
+  }
+  explicit NamePairBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<NamePair> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<NamePair>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<NamePair> CreateNamePair(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint64_t Hash = 0,
+    ::flatbuffers::Offset<::flatbuffers::String> Name = 0) {
+  NamePairBuilder builder_(_fbb);
+  builder_.add_Hash(Hash);
+  builder_.add_Name(Name);
+  return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<NamePair> CreateNamePairDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint64_t Hash = 0,
+    const char *Name = nullptr) {
+  auto Name__ = Name ? _fbb.CreateString(Name) : 0;
+  return asdx::res::CreateNamePair(
+      _fbb,
+      Hash,
+      Name__);
+}
 
 }  // namespace res
 }  // namespace asdx

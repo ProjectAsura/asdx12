@@ -9,7 +9,6 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <fnd/asdxMath.h>
-#include <fnd/asdxStringView.h>
 #include <fnd/asdxArrayView.h>
 
 
@@ -20,7 +19,7 @@ namespace asdx {
 ///////////////////////////////////////////////////////////////////////////////
 struct ResMesh
 {
-    StringView          Name;           //!< メッシュ名.
+    uint64_t            Hash;           //!< メッシュ名のハッシュ値.
     uint32_t            MaterialId;     //!< マテリアルID.
     ArrayView<Vector3>  Positions;      //!< 位置座標.
     ArrayView<Vector3>  Normals;        //!< 法線ベクトル.
