@@ -453,8 +453,8 @@ void ModelViewer::DrawMeshTab()
 
             {
                 auto hash = mesh.GetHash();
-                asdx::StringView name;
-                m_Model->FindName(hash, name);
+                asdx::StringView name =m_Model->FindName(hash);
+                assert(!name.IsNullOrEmpty());
 
                 if (!ImGui::CollapsingHeader(name.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
                 {
@@ -480,8 +480,8 @@ void ModelViewer::DrawMeshTab()
 
             {
                 auto hash = m_Model->GetMaterial(materialId);
-                asdx::StringView name;
-                m_Model->FindName(hash, name);
+                asdx::StringView name = m_Model->FindName(hash);
+                assert(!name.IsNullOrEmpty());
 
                 TABLE2(
                     ImGui::Text(asdx::ToChar(u8"マテリアル名")),
@@ -641,8 +641,8 @@ void ModelViewer::DrawBoneTab()
 
             {
                 auto hash = res.Hash;
-                asdx::StringView name;
-                m_Model->FindName(hash, name);
+                asdx::StringView name = m_Model->FindName(hash);
+                assert(!name.IsNullOrEmpty());
 
                 if (!ImGui::CollapsingHeader(name.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
                 {
@@ -658,8 +658,8 @@ void ModelViewer::DrawBoneTab()
             if (parentId >= 0)
             {
                 const auto parentBone = skeleton.GetBone(parentId);
-                asdx::StringView name;
-                if (m_Model->FindName(parentBone.Hash, name))
+                asdx::StringView name = m_Model->FindName(parentBone.Hash);
+                if (!name.IsNullOrEmpty())
                 { parentName = name.c_str(); }
             }
 
@@ -675,8 +675,8 @@ void ModelViewer::DrawBoneTab()
                 if (childId >= 0)
                 {
                     const auto& childBone = skeleton.GetBone(uint32_t(childId));
-                    asdx::StringView name;
-                    if (m_Model->FindName(childBone.Hash, name))
+                    asdx::StringView name = m_Model->FindName(childBone.Hash);
+                    if (!name.IsNullOrEmpty())
                     { childName = name.c_str(); }
                 }
 

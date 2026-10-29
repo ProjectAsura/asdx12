@@ -383,4 +383,27 @@ bool Model::Create(const ResModel& res, Model** ppModel)
     return true;
 }
 
+//-----------------------------------------------------------------------------
+//      生成処理を行います.
+//-----------------------------------------------------------------------------
+bool Model::Create(const ModelBinary& bin, Model** ppModel)
+{
+    auto instance = new(std::nothrow) Model;
+    if (instance == nullptr)
+    {
+        ELOGA("Error : Out of memory.");
+        return false;
+    }
+
+    if (!instance->Init(bin))
+    {
+        ELOGA("Error : Model Initialize Failed.");
+        instance->Release();
+        return false;
+    }
+
+    (*ppModel) = instance;
+    return true;
+}
+
 } // namespace asdx

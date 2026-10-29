@@ -591,16 +591,17 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
         {
             auto worlds = m_WorldMatrixBuffer[idx].MapAs<asdx::Matrix4x3>();
 
-            auto batchCount = m_Model->GetMeshInstanceCount();
+            auto batchCount = m_Model->GetMeshBatchCount();
             size_t offset = 0;
             for(auto i=0u; i<batchCount; ++i)
             {
-                const auto& batch = m_Model->GetMeshInstance(i);
-                auto transform     = batch.Transform;
-                auto instanceCount = batch.Transform.size();
-
+                const auto& batch = m_Model->GetMeshBatch(i);
+                auto instanceCount = batch.Instances.size();
                 for(auto j=0u; j<instanceCount; ++j)
-                    worlds[offset + j] = modelWorld * transform[j];
+                {
+                    auto& instance = batch.Instances[j];
+                    worlds[offset + j] = modelWorld * instance.Transform;
+                }
 
                 offset += instanceCount;
             }
@@ -668,13 +669,13 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
         auto offset = 0u;
         for(auto i=0u; i<batchCount; ++i)
         {
-            const auto& batch = m_Model->GetMeshInstance(i);
+            const auto& batch = m_Model->GetMeshBatch(i);
             auto meshIds = batch.Meshes;
 
             uint32_t matrixId = offset;
 
             pCmd->SetGraphicsRoot32BitConstants(ROOT_PARAM_B1, 1, &matrixId, 0);
-            auto instanceCount = batch.Transform.size();
+            auto instanceCount = batch.Instances.size();
 
             for(auto j=0u; j<meshIds.size(); ++j)
             {
@@ -1053,8 +1054,7 @@ void ModelViewer::RecreateModel()
     asdx::ModelBinary bin;
     bin.Load(std::move(copyBinary));
 
-    auto res = bin.GetResource();
-    if (!asdx::Model::Create(res, &pModel))
+    if (!asdx::Model::Create(bin, &pModel))
     {
         ELOGA("Error : ModelManager::CreateModel() Failed.");
         return;
@@ -1084,16 +1084,16 @@ void ModelViewer::RecreateModel()
         m_ModelInfo.IndexCount  += mesh.GetIndexCount();
     }
 
-    auto sphere = m_Model->GetLocalSphere();
+    //auto sphere = m_Model->GetLocalSphere();
 
-    // カメラを初期化.
-    m_Camera.Init(
-        asdx::Vector3(sphere.Center.x, sphere.Center.y, sphere.Center.z + sphere.Radius * 3.0f),
-        sphere.Center,
-        asdx::Vector3(0.0f, 0.0f, 1.0f),
-        0.1f,
-        10000.0f);
-    m_Camera.Present();
+    //// カメラを初期化.
+    //m_Camera.Init(
+    //    asdx::Vector3(sphere.Center.x, sphere.Center.y, sphere.Center.z + sphere.Radius * 3.0f),
+    //    sphere.Center,
+    //    asdx::Vector3(0.0f, 0.0f, 1.0f),
+    //    0.1f,
+    //    10000.0f);
+    //m_Camera.Present();
 
     // モーションプレイヤーを初期化.
     m_MotionPlayer.Init(pModel);
@@ -1113,13 +1113,7 @@ void ModelViewer::RecreateModel()
         }
     }
 
-    auto totalCount = 0;
-    for(size_t i=0; i<m_Model->GetMeshInstanceCount(); ++i)
-    {
-        totalCount += m_Model->GetMeshInstance(i).Transform.size();
-    }
-
-    auto batchCount = m_Model->GetMeshInstanceCount();
+    auto totalCount = m_Model->GetMeshInstanceCount();
     for(auto i=0; i<2; ++i)
     {
         m_WorldMatrixBuffer[i].Term();
@@ -1133,18 +1127,18 @@ void ModelViewer::RecreateModel()
     auto ptr0 = m_WorldMatrixBuffer[0].MapAs<asdx::Matrix4x3>();
     auto ptr1 = m_WorldMatrixBuffer[1].MapAs<asdx::Matrix4x3>();
 
+    auto batchCount = m_Model->GetMeshBatchCount();
     size_t offset = 0;
     for(auto i=0u; i<batchCount; ++i)
     {
-        const auto& batch = m_Model->GetBatch(i);
-        auto mtx = asdx::ModelBatchProxy::GetTransforms(batch);
-
-        if (ptr0 != nullptr)
-            memcpy(&ptr0[offset], mtx.data(), sizeof(asdx::Matrix4x3) * mtx.size());
-        if (ptr1 != nullptr)
-            memcpy(&ptr1[offset], mtx.data(), sizeof(asdx::Matrix4x3) * mtx.size());
-
-        offset += mtx.size();
+        const auto batch = m_Model->GetMeshBatch(i);
+        for(auto j=0u; j<batch.Instances.size(); ++i)
+        {
+            auto& mtx = batch.Instances[j].Transform;
+            ptr0[offset] = mtx;
+            ptr1[offset] = mtx;
+            offset++;
+        }
     }
 
     m_WorldMatrixBuffer[0].Unmap();
@@ -1301,7 +1295,11 @@ void ModelViewer::LoadMotion()
     m_ClipNames.resize(count);
 
     for(auto i=0u; i<count; ++i)
-        m_ClipNames[i] = asdx::MotionClipProxy::GetName(m_MotionBinary.GetClip(i));
+    {
+        auto hash = asdx::MotionClipProxy::GetHash(m_MotionBinary.GetClip(i));
+        auto name = m_MotionBinary.FindName(hash);
+        m_ClipNames[i] = name.c_str();
+    }
 
     auto clip = m_MotionBinary.GetClip(0);
     m_MotionPlayer.SetClip(clip);
