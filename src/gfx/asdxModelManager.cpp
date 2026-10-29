@@ -117,11 +117,9 @@ ModelHolder ModelManager::GetOrCreate(const char* fullPath)
     ModelBinary binary;
     binary.Load(std::move(blob));
 
-    auto resource = binary.GetResource();
-
     // モデル生成.
     Model* pModel = nullptr;
-    if (!Model::Create(resource, &pModel))
+    if (!Model::Create(binary, &pModel))
     {
         ELOG("Error : Model Create Failed. path = %s", fullPath);
         return ModelHolder();

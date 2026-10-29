@@ -278,11 +278,11 @@ bool MotionConverter::Convert(const std::string& path, std::vector<uint8_t>& bin
             0.0f, 0.0f, 1.0f, 0.0f);
     }
 
-    std::vector<flatbuffers::Offset<asdx::res::NamePair>> hashTable;
+    std::vector<flatbuffers::Offset<asdx::res::HashString>> hashTable;
     for(auto& itr : nameTable)
     {
         auto hash = CalcNameHash(itr.c_str());
-        hashTable.push_back(asdx::res::CreateNamePairDirect(builder, hash, itr.c_str()));
+        hashTable.push_back(asdx::res::CreateHashStringDirect(builder, hash, itr.c_str()));
     }
 
     // バイナリ生成.

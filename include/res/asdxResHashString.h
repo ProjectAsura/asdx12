@@ -1,6 +1,6 @@
 ﻿//-----------------------------------------------------------------------------
-// File : asdxResNamePair.h
-// Desc : Name Pair.
+// File : asdxResHashString.h
+// Desc : Hash String.
 // Copyright(c) Project Asura. All right reserved.
 //-----------------------------------------------------------------------------
 #pragma once
@@ -15,12 +15,12 @@
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
-// ResNamePair structure
+// ResHashString structure
 ///////////////////////////////////////////////////////////////////////////////
-struct ResNamePair
+struct ResHashString
 {
     uint64_t    Hash;   //!< 名前のハッシュ値.
-    StringView  Name;   //!< 名前の文字列.
+    StringView  View;   //!< 名前の文字列.
 };
 
 } // namespace asdx

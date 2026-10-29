@@ -297,8 +297,8 @@ struct MotionBinary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MotionClip>> *Clips() const {
     return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MotionClip>> *>(VT_CLIPS);
   }
-  const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::NamePair>> *HashTable() const {
-    return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::NamePair>> *>(VT_HASHTABLE);
+  const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::HashString>> *HashTable() const {
+    return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::HashString>> *>(VT_HASHTABLE);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -327,7 +327,7 @@ struct MotionBinaryBuilder {
   void add_Clips(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MotionClip>>> Clips) {
     fbb_.AddOffset(MotionBinary::VT_CLIPS, Clips);
   }
-  void add_HashTable(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::NamePair>>> HashTable) {
+  void add_HashTable(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::HashString>>> HashTable) {
     fbb_.AddOffset(MotionBinary::VT_HASHTABLE, HashTable);
   }
   explicit MotionBinaryBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
@@ -346,7 +346,7 @@ inline ::flatbuffers::Offset<MotionBinary> CreateMotionBinary(
     uint32_t Version = 0,
     const asdx::res::Float3x4 *RootTransform = nullptr,
     ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::MotionClip>>> Clips = 0,
-    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::NamePair>>> HashTable = 0) {
+    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<asdx::res::HashString>>> HashTable = 0) {
   MotionBinaryBuilder builder_(_fbb);
   builder_.add_HashTable(HashTable);
   builder_.add_Clips(Clips);
@@ -360,9 +360,9 @@ inline ::flatbuffers::Offset<MotionBinary> CreateMotionBinaryDirect(
     uint32_t Version = 0,
     const asdx::res::Float3x4 *RootTransform = nullptr,
     std::vector<::flatbuffers::Offset<asdx::res::MotionClip>> *Clips = nullptr,
-    std::vector<::flatbuffers::Offset<asdx::res::NamePair>> *HashTable = nullptr) {
+    std::vector<::flatbuffers::Offset<asdx::res::HashString>> *HashTable = nullptr) {
   auto Clips__ = Clips ? _fbb.CreateVectorOfSortedTables<asdx::res::MotionClip>(Clips) : 0;
-  auto HashTable__ = HashTable ? _fbb.CreateVectorOfSortedTables<asdx::res::NamePair>(HashTable) : 0;
+  auto HashTable__ = HashTable ? _fbb.CreateVectorOfSortedTables<asdx::res::HashString>(HashTable) : 0;
   return asdx::res::CreateMotionBinary(
       _fbb,
       Version,

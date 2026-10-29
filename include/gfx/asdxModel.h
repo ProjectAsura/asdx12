@@ -51,6 +51,16 @@ public:
     static bool Create(const ResModel& res, Model** ppModel);
 
     //-------------------------------------------------------------------------
+    //! @brief      生成処理を行います.
+    //! 
+    //! @param[in]      binary      モデルバイナリ.
+    //! @param[out]     ppModel     モデルの格納先.
+    //! @retval true    生成に成功.
+    //! @retval false   生成に失敗.
+    //-------------------------------------------------------------------------
+    static bool Create(const ModelBinary& binary, Model** ppModel);
+
+    //-------------------------------------------------------------------------
     //! @brief      参照カウントを上げます.
     //-------------------------------------------------------------------------
     void AddRef() override;
@@ -82,11 +92,18 @@ public:
     size_t GetMaterialCount() const;
 
     //-------------------------------------------------------------------------
+    //! @brief      メッシュバッチ数を取得します.
+    //! 
+    //! @return     メッシュバッチ数を返却します.
+    //-------------------------------------------------------------------------
+    size_t GetMeshBatchCount() const;
+
+    //-------------------------------------------------------------------------
     //! @brief      メッシュインスタンス数を取得します.
     //! 
     //! @return     メッシュインスタンス数を返却します.
     //-------------------------------------------------------------------------
-    size_t GetMeshInstanceCount() const;
+    uint64_t GetMeshInstanceCount() const;
 
     //-------------------------------------------------------------------------
     //! @brief      メッシュを取得します.
@@ -112,12 +129,12 @@ public:
     const Skeleton& GetSkeleton() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      メッシュインタンスを取得します.
+    //! @brief      メッシュバッチを取得します.
     //! 
-    //! @param[in]      index       メッシュインスタンス番号.
-    //! @return     メッシュインタンスを返却します.
+    //! @param[in]      index       バッチ番号.
+    //! @return     メッシュバッチを返却します.
     //-------------------------------------------------------------------------
-    ResMeshInstance GetMeshInstance(size_t index) const;
+    ResMeshBatch GetMeshBatch(size_t index) const;
 
     //-------------------------------------------------------------------------
     //! @brief      メッシュを検索します.
@@ -127,7 +144,7 @@ public:
     //! @retval true    検索に成功.
     //! @retval false   検索に失敗.
     //-------------------------------------------------------------------------
-    bool FindMesh(const char* name, size_t& index) const;
+    bool FindMesh(uint64_t hash, size_t& index) const;
 
     //-------------------------------------------------------------------------
     //! @brief      マテリアル名を検索します.
@@ -136,27 +153,24 @@ public:
     //! @retval true    検索に成功.
     //! @retval false   検索に失敗.
     //-------------------------------------------------------------------------
-    bool FindMaterial(const char* name, size_t& index) const;
+    bool FindMaterial(uint64_t hash, size_t& index) const;
 
     //-------------------------------------------------------------------------
     //! @brief      ハッシュから名前を検索します.
     //! 
     //! @param[in]      hash        ハッシュ値.
-    //! @param[out]     result      名前.
-    //! @retval true    検索に成功.
-    //! @retval false   検索に失敗.
+    //! @return     名前を返却します.
     //-------------------------------------------------------------------------
-    bool FindName(uint64_t hash, StringView& result) const;
+    StringView FindName(uint64_t hash) const;
 
 private:
     ///////////////////////////////////////////////////////////////////////////
-    // MeshInstance structure
+    // MeshBatch structure
     ///////////////////////////////////////////////////////////////////////////
-    struct MeshInstance
+    struct MeshBatch
     {
-        std::vector<uint64_t>   Hashes;
-        std::vector<uint32_t>   Meshes;
-        std::vector<Matrix4x3>  Transforms;
+        std::vector<uint32_t>           Meshes;
+        std::vector<ResMeshInstance>    Instances;
     };
 
     //=========================================================================
@@ -165,9 +179,10 @@ private:
     std::atomic<uint32_t>                   m_RefCount = {};
     std::vector<Mesh>                       m_Meshes;
     std::vector<uint64_t>                   m_Materials;
-    std::vector<MeshInstance>               m_MeshInstances;
+    std::vector<MeshBatch>                  m_Batches;
     Skeleton                                m_Skeleton;
     std::unordered_map<uint64_t, String>    m_HashTable;
+    uint64_t                                m_MeshInstanceCount;
 
     //=========================================================================
     // private methods.
@@ -191,6 +206,15 @@ private:
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
     bool Init(const ResModel& res);
+
+    //-------------------------------------------------------------------------
+    //! @brief      初期化処理を行います.
+    //! 
+    //! @param[in]      binary      モデルバイナリ.
+    //! @retval true    初期化に成功.
+    //! @retval false   初期化に失敗.
+    //-------------------------------------------------------------------------
+    bool Init(const ModelBinary& binary);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.

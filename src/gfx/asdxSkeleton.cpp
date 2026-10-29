@@ -11,6 +11,7 @@
 #include <cassert>
 #include <fnd/asdxHash.h>
 #include <gfx/asdxSkeleton.h>
+#include <res/asdxResModel.h>
 
 
 namespace asdx {
@@ -46,7 +47,7 @@ void Skeleton::Init(const ArrayView<ResBone>& bones)
     m_InvBindPoses.resize(count);
     m_Children    .resize(count);
 
-    for(size_t i=0; i<count; ++i)
+    for(auto i=0u; i<count; ++i)
     {
         m_Hashes[i]       = bones[i].Hash;
         m_Parents[i]      = bones[i].Parent;
@@ -55,8 +56,40 @@ void Skeleton::Init(const ArrayView<ResBone>& bones)
 
         auto size = bones[i].Children.size();
         m_Children[i].resize(size);
-        for(size_t j=0; j<size; ++j)
+        for(auto j=0u; j<size; ++j)
             m_Children[i][j] = bones[i].Children[j];
+    }
+}
+
+//-----------------------------------------------------------------------------
+//      初期化処理を行います.
+//-----------------------------------------------------------------------------
+void Skeleton::Init(const ModelBinary& bin)
+{
+    auto count = bin.GetBoneCount();
+    if (count == 0)
+        return;
+
+    m_Hashes        .resize(count);
+    m_Parents       .resize(count);
+    m_BindPoses     .resize(count);
+    m_InvBindPoses  .resize(count);
+    m_Children      .resize(count);
+
+    for(auto i=0u; i<count; ++i)
+    {
+        const auto bone = bin.GetBone(i);
+
+        m_Hashes[i]       = bone.Hash;
+        m_Parents[i]      = bone.Parent;
+        m_BindPoses[i]    = bone.BindPose;
+        m_InvBindPoses[i] = bone.InvBindPose;
+
+        auto size = bone.Children.size();
+        m_Children[i].resize(size);
+        for(auto j=0u; j<size; ++j)
+            m_Children[i][j] = bone.Children[j];
+
     }
 }
 

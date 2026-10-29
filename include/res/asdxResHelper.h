@@ -9,6 +9,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <fnd/asdxMath.h>
+#include <fnd/asdxArrayView.h>
 
 // NOTE : ResTypes_generated.h をこのファイルよりも先にインクルードしておいてください.
 // 
@@ -53,5 +54,17 @@ Matrix4x4 FromFloat4x4(const res::Float4x4& value);
 
 BoundingBox FromBox(const res::BoundingBox& value);
 BoundingSphere FromSphere(const res::BoundingSphere& value);
+
+//-----------------------------------------------------------------------------
+//      配列ビューに変換します.
+//-----------------------------------------------------------------------------
+template<typename T, typename U> inline
+asdx::ArrayView<T> ToArrayView(const flatbuffers::Vector<U>* value)
+{
+    if (value == nullptr)
+        return asdx::ArrayView<T>();
+
+    return asdx::ArrayView<T>(reinterpret_cast<const T*>(value->data()), value->size()); 
+}
 
 } // namespace asdx

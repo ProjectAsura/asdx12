@@ -2,13 +2,6 @@
 
 namespace asdx.res;
 
-enum AlphaType : ubyte
-{
-    Opaque,
-    Mask,
-    Blend,
-}
-
 table Bone
 {
     Hash            : ulong;
@@ -32,17 +25,16 @@ table Mesh
     VertexIndices : [uint];
 }
 
-table InstanceNode
+struct MeshInstance
 {
-    Hash        : uint;
-    WorldMatrix : Float3x4;
+    Hash      : ulong;
+    Transform : Float3x4;
 }
 
-table MeshInstance
+table MeshBatch
 {
     Meshes      : [uint];
-    Hashes      : [ulong];
-    Transforms  : [Float3x4];
+    Instances   : [MeshInstance];
 }
 
 table ModelBinary
@@ -51,10 +43,10 @@ table ModelBinary
     Meshes              : [Mesh];
     Materials           : [ulong];
     Bones               : [Bone];
-    MeshInstances       : [MeshInstance];
+    MeshBatches         : [MeshBatch];
+    HashTable           : [HashString];
     RootTransform       : Float3x4;
     InvRootTransform    : Float3x4;
-    HashTable           : [NamePair];
 }
 
 root_type ModelBinary;

@@ -145,7 +145,7 @@ struct BoundingSphere
     Radius : float;
 }
 
-struct Transform
+struct SrtTransform
 {
     Scale       : Float3;
     Rotation    : Quaternion;
@@ -158,8 +158,8 @@ struct Range
     Count  : uint;
 }
 
-table NamePair
+table HashString
 {
     Hash : ulong (key);
-    Name : string;
+    Text : string;
 }

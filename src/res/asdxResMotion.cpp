@@ -272,6 +272,22 @@ const res::MotionClip* MotionBinary::FindClip(uint64_t hash) const
     return res::GetMotionBinary(m_Blob.data())->Clips()->LookupByKey(hash);
 }
 
+//-----------------------------------------------------------------------------
+//      名前を検索します.
+//-----------------------------------------------------------------------------
+StringView MotionBinary::FindName(uint64_t hash) const
+{
+    if (m_Blob.empty())
+        return StringView();
+
+    auto bin = res::GetMotionBinary(m_Blob.data());
+    auto pair = bin->HashTable()->LookupByKey(hash);
+    if (pair == nullptr)
+        return StringView();
+
+    return StringView(pair->Text()->c_str());
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // MotionTrackProxy class
@@ -443,6 +459,5 @@ const res::MotionTrack* MotionClipProxy::FindTrack(const res::MotionClip* clip, 
     assert(clip != nullptr);
     return clip->Tracks()->LookupByKey(hash);
 }
-
 
 } // namespace asdx

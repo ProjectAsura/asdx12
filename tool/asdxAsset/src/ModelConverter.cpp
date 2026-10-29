@@ -35,13 +35,12 @@ namespace {
 static constexpr uint32_t CURRENT_VERSION = 4u;  //!< 現在サポートされているバージョン.
 
 ///////////////////////////////////////////////////////////////////////////////
-// MeshInstance structure
+// MeshBatch structure
 ///////////////////////////////////////////////////////////////////////////////
-struct MeshInstance
+struct MeshBatch
 {
-    std::vector<uint64_t>               Hashes;         // HashesとTransformsが　1vs1 対応.
-    std::vector<asdx::res::Float3x4>    Transforms;     // 変換行列.
-    std::vector<uint32_t>               Meshes;         // 描画に使うメッシュリスト.
+    std::vector<uint32_t> Meshes; // 描画に使うメッシュリスト.
+    std::vector<asdx::res::MeshInstance> Instances; // インスタンスリスト.
 };
 
 //-----------------------------------------------------------------------------
@@ -1123,7 +1122,7 @@ void ParseModelInstance
     flatbuffers::FlatBufferBuilder&             builder,
     const aiNode*                               pNode,
     const std::unordered_map<std::string, int>& boneMap,
-    std::unordered_map<uint64_t, MeshInstance>& instances,
+    std::unordered_map<uint64_t, MeshBatch>&    batches,
     std::vector<std::string>&                   nameTable
 )
 {
@@ -1150,12 +1149,12 @@ void ParseModelInstance
         asdx::BoundingBox    box;
         asdx::BoundingSphere sphere;
 
-        auto itr = instances.find(hash);
-        if (itr == instances.end())
+        auto itr = batches.find(hash);
+        if (itr == batches.end())
         {
             auto worldMtx = ToFloat4x4(mtx);
 
-            MeshInstance item = {};
+            MeshBatch item = {};
             item.Meshes.resize(pNode->mNumMeshes);
 
             for(auto i=0u; i<pNode->mNumMeshes; ++i)
@@ -1167,19 +1166,23 @@ void ParseModelInstance
             auto hash = CalcNameHash(name.c_str());
             RegisterNameTable(nameTable, name.c_str());
 
-            item.Hashes.push_back(hash);
-            item.Transforms.push_back(ToFloat3x4(mtx));
+            auto transform = ToFloat3x4(mtx);
+
+            item.Instances.push_back(
+                asdx::res::MeshInstance(hash, transform));
 
             // バッチに登録.
-            instances[hash] = item;
+            batches[hash] = item;
         }
         else
         {
             auto hash = CalcNameHash(name.c_str());
             RegisterNameTable(nameTable, name.c_str());
 
-            itr->second.Hashes.push_back(hash);
-            itr->second.Transforms.push_back(ToFloat3x4(mtx));
+            auto transform = ToFloat3x4(mtx);
+    
+            itr->second.Instances.push_back(
+                asdx::res::MeshInstance(hash, transform));
         }
 
         // 変換行列でバウンディングを変換.
@@ -1191,7 +1194,7 @@ void ParseModelInstance
     // 子供を再帰的に処理.
     for(auto i=0u; i<pNode->mNumChildren; ++i)
     {
-        ParseModelInstance(builder, pNode->mChildren[i], boneMap, instances, nameTable);
+        ParseModelInstance(builder, pNode->mChildren[i], boneMap, batches, nameTable);
     }
 }
 
@@ -1317,30 +1320,28 @@ bool ModelConverter::Convert
     ParseMaterial(builder, pScene, materials, nameTable);
 
     // メッシュインスタンスを変換.
-    std::unordered_map<uint64_t, MeshInstance> batches;
+    std::unordered_map<uint64_t, MeshBatch> batches;
     ParseModelInstance(builder, pScene->mRootNode, boneMap, batches, nameTable);
 
-    std::vector<flatbuffers::Offset<asdx::res::MeshInstance>> dstInstances;
-    uint64_t totalInstanceCount = 0;
+    std::vector<flatbuffers::Offset<asdx::res::MeshBatch>> dstBatches;
     for(auto& itr : batches)
     {
-        auto batch = asdx::res::CreateMeshInstanceDirect(
+        auto batch = asdx::res::CreateMeshBatchDirect(
             builder,
             &itr.second.Meshes,
-            &itr.second.Hashes,
-            &itr.second.Transforms);
+            &itr.second.Instances);
 
-        dstInstances.emplace_back(batch);
+        dstBatches.emplace_back(batch);
     }
 
     // 不要になったのでクリア.
     boneMap.clear();
 
-    std::vector<flatbuffers::Offset<asdx::res::NamePair>> hashTable;
+    std::vector<flatbuffers::Offset<asdx::res::HashString>> hashTable;
     for(auto& itr : nameTable)
     {
         auto hash = CalcNameHash(itr.c_str());
-        hashTable.push_back(asdx::res::CreateNamePairDirect(builder, hash, itr.c_str()));
+        hashTable.push_back(asdx::res::CreateHashStringDirect(builder, hash, itr.c_str()));
     }
 
     auto rootMtx          = ToMatrix(pScene->mRootNode->mTransformation);
@@ -1354,10 +1355,10 @@ bool ModelConverter::Convert
         &meshes,
         &materials,
         &bones,
-        &dstInstances,
+        &dstBatches,
+        &hashTable,
         &rootTransform,
-        &invRootTransform,
-        &hashTable);
+        &invRootTransform);
 
     builder.Finish(bin);
 
@@ -1522,7 +1523,7 @@ bool ModelConverter::ReverseConvert(const std::vector<uint8_t>& binary, const ch
 
             auto namePair = modelBin->HashTable()->LookupByKey(srcBone->Hash());
 
-            dstNode->mName           = namePair->Name()->c_str();
+            dstNode->mName           = namePair->Text()->c_str();
             dstNode->mTransformation = ToAiMatrix(srcBone->BindPose());
             dstNode->mNumMeshes      = 0;
             dstNode->mMeshes         = nullptr;
@@ -1577,7 +1578,7 @@ bool ModelConverter::ReverseConvert(const std::vector<uint8_t>& binary, const ch
 
             auto namePair = modelBin->HashTable()->LookupByKey(srcMesh->Hash());
 
-            dstMesh->mName           = namePair->Name()->c_str();
+            dstMesh->mName           = namePair->Text()->c_str();
             dstMesh->mPrimitiveTypes = aiPrimitiveType_TRIANGLE;
             dstMesh->mNumVertices    = vertexCount;
             dstMesh->mNumFaces       = faceCount;
@@ -1700,7 +1701,7 @@ bool ModelConverter::ReverseConvert(const std::vector<uint8_t>& binary, const ch
 
                     auto namePair = modelBin->HashTable()->LookupByKey(srcBone->Hash());
 
-                    dstBone->mName          = namePair->Name()->c_str();
+                    dstBone->mName          = namePair->Text()->c_str();
                     dstBone->mNumWeights    = weightCount;
                     dstBone->mWeights       = new aiVertexWeight[weightCount];
                     dstBone->mOffsetMatrix  = ToAiMatrix(srcBone->InverseBindPose());
@@ -1743,7 +1744,7 @@ bool ModelConverter::ReverseConvert(const std::vector<uint8_t>& binary, const ch
         }
     }
 
-    auto instances = modelBin->MeshInstances();
+    auto instances = modelBin->MeshBatches();
     std::vector<std::vector<uint32_t>> instanceMeshes;
     if (instances != nullptr)
     {
@@ -1760,13 +1761,15 @@ bool ModelConverter::ReverseConvert(const std::vector<uint8_t>& binary, const ch
                 instanceMeshes[i][j] = batch->Meshes()->Get(j);
             }
 
-            auto instanceCount = batch->Transforms()->size();
+            auto instanceCount = batch->Instances()->size();
             for(auto j=0u; j<instanceCount; ++j)
             {
-                auto namePair = modelBin->HashTable()->LookupByKey(batch->Hashes()->Get(j));
+                auto instance = batch->Instances()->Get(j);
 
-                auto name = namePair->Name();
-                auto transform = ToAiMatrix(batch->Transforms()->Get(j));
+                auto namePair = modelBin->HashTable()->LookupByKey(instance->Hash());
+
+                auto name = namePair->Text();
+                auto transform = ToAiMatrix(&instance->Transform());
 
                 auto dstNode = new aiNode();
                 dstNode->mParent         = rootNode;

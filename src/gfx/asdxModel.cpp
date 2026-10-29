@@ -49,7 +49,7 @@ bool Model::Init(const ResModel& res)
 
     // メッシュ初期化.
     m_Meshes.resize(res.Meshes.size());
-    for(size_t i=0; i<res.Meshes.size(); ++i)
+    for(auto i=0u; i<res.Meshes.size(); ++i)
     {
         if (!m_Meshes[i].Init(res.Meshes[i]))
         {
@@ -62,45 +62,125 @@ bool Model::Init(const ResModel& res)
     if (!res.Materials.empty())
     {
         m_Materials.resize(res.Materials.size());
-        for(size_t i=0; i<res.Materials.size(); ++i)
-        {
+        for(auto i=0u; i<res.Materials.size(); ++i)
             m_Materials[i] = res.Materials[i];
-        }
     }
 
     // スケルトン初期化.
     m_Skeleton.Init(res.Bones);
 
-    if (!res.MeshInstances.empty())
+    uint64_t instanceCount = 0;
+
+    // メッシュバッチ初期化.
+    if (!res.Bathces.empty())
     {
-        m_MeshInstances.reserve(res.MeshInstances.size());
-        for(size_t i=0; i<res.MeshInstances.size(); ++i)
+        m_Batches.resize(res.Bathces.size());
+        for(auto i=0u; i<res.Bathces.size(); ++i)
         {
-            const auto& src = res.MeshInstances[i];
-            auto& dst = m_MeshInstances[i];
+            const auto& batch = res.Bathces[i];
+            m_Batches[i].Meshes.resize(batch.Meshes.size());
+            for(auto j=0u; j<batch.Meshes.size(); ++j)
+                m_Batches[i].Meshes[j] = batch.Meshes[j];
 
-            dst.Hashes.resize(src.Hashes.size());
-            for(size_t j=0; j<dst.Hashes.size(); ++j)
-            { dst.Hashes[j] = src.Hashes[j]; }
+            m_Batches[i].Instances.resize(batch.Instances.size());
+            for(auto j=0u; j<batch.Instances.size(); ++j)
+                m_Batches[i].Instances[j] = batch.Instances[j];
 
-            dst.Meshes.resize(src.Meshes.size());
-            for(size_t j=0; j<dst.Meshes.size(); ++j)
-            { dst.Meshes[j] = src.Meshes[j]; }
-
-            dst.Transforms.resize(src.Transform.size());
-            for(size_t j=0; j<dst.Transforms.size(); ++j)
-            { dst.Transforms[j] = src.Transform[j]; }
+            instanceCount += batch.Instances.size();
         }
     }
 
+    // メッシュインタンス数を設定.
+    m_MeshInstanceCount = instanceCount;
 
+    // ハッシュテーブル初期化.
     if (!res.HashTable.empty())
     {
         for(auto i=0; i<res.HashTable.size(); ++i)
         {
             m_HashTable[res.HashTable[i].Hash].assign(
-                res.HashTable[i].Name.c_str(),
-                res.HashTable[i].Name.size());
+                res.HashTable[i].View.c_str(),
+                res.HashTable[i].View.size());
+        }
+    }
+
+    // 正常終了.
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      初期化処理を行います.
+//-----------------------------------------------------------------------------
+bool Model::Init(const ModelBinary& bin)
+{
+    // メッシュが空かどうかチェック.
+    if (bin.GetMeshCount() == 0)
+    {
+        ELOGA("Error : Invalid Argument.");
+        return false;
+    }
+
+    // メッシュ初期化.
+    {
+        auto count = bin.GetMeshCount();
+        m_Meshes.resize(count);
+        for(auto i=0u; i<count; ++i)
+        {
+            auto res = bin.GetMesh(i);
+            if (!m_Meshes[i].Init(res))
+            {
+                ELOGA("Error : Mesh Initialize Failed. index = %zu", i);
+                return false;
+            }
+        }
+    }
+
+    // マテリアル名設定.
+    if (bin.GetMaterialCount() != 0)
+    {
+        auto count = bin.GetMaterialCount();
+        m_Materials.resize(count);
+        for(auto i=0u; i<count; ++i)
+            m_Materials[i] = bin.GetMaterialHash(i);
+    }
+
+    // スケルトン初期化.
+    m_Skeleton.Init(bin);
+
+    uint64_t instanceCount = 0;
+    // メッシュバッチ初期化.
+    if (bin.GetMeshBatchCount() != 0)
+    {
+        auto count = bin.GetMeshBatchCount();
+        m_Batches.resize(count);
+        for(auto i=0u; i<count; ++i)
+        {
+            const auto batch = bin.GetMeshBatch(i);
+            m_Batches[i].Meshes.resize(batch.Meshes.size());
+            for(auto j=0u; j<batch.Meshes.size(); ++j)
+                m_Batches[i].Meshes[j] = batch.Meshes[j];
+
+            m_Batches[i].Instances.resize(batch.Instances.size());
+            for(auto j=0u; j<batch.Instances.size(); ++j)
+                m_Batches[i].Instances[j] = batch.Instances[j];
+
+            instanceCount += batch.Instances.size();
+        }
+    }
+
+    // メッシュインタンス数を設定.
+    m_MeshInstanceCount = instanceCount;
+
+    // ハッシュテーブル初期化.
+    if (bin.GetHashStringCount() != 0)
+    {
+        auto count = bin.GetHashStringCount();
+        for(auto i=0u; i<count; ++i)
+        {
+            auto pair = bin.GetHashString(i);
+            m_HashTable[pair.Hash].assign(
+                pair.View.c_str(),
+                pair.View.size());
         }
     }
 
@@ -117,19 +197,31 @@ void Model::Term()
     for(size_t i=0; i<m_Meshes.size(); ++i)
         m_Meshes[i].Term();
     m_Meshes.clear();
+    m_Meshes.shrink_to_fit();
 
     // マテリアル名解放.
     m_Materials.clear();
+    m_Materials.shrink_to_fit();
 
     // スケルトン解放
     m_Skeleton.Term();
 
-    // メッシュインスタンス解放.
-    m_MeshInstances.clear();
+    for(size_t i=0; i<m_Batches.size(); ++i)
+    {
+        m_Batches[i].Instances.clear();
+        m_Batches[i].Instances.shrink_to_fit();
+
+        m_Batches[i].Meshes.clear();
+        m_Batches[i].Meshes.shrink_to_fit();
+    }
+    m_Batches.clear();
+    m_Batches.shrink_to_fit();
 
     for(size_t i=0; i<m_HashTable.size(); ++i)
         m_HashTable[i].clear();
     m_HashTable.clear();
+
+    m_MeshInstanceCount = 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -170,7 +262,13 @@ size_t Model::GetMaterialCount() const
 //      メッシュインタンス数を取得します.
 //-----------------------------------------------------------------------------
 size_t Model::GetMeshInstanceCount() const
-{ return m_MeshInstances.size(); }
+{ return m_MeshInstanceCount; }
+
+//-----------------------------------------------------------------------------
+//      メッシュバッチ数を返却します.
+//-----------------------------------------------------------------------------
+size_t Model::GetMeshBatchCount() const
+{ return m_Batches.size(); }
 
 //-----------------------------------------------------------------------------
 //      メッシュを取得します.
@@ -197,26 +295,26 @@ const Skeleton& Model::GetSkeleton() const
 { return m_Skeleton; }
 
 //-----------------------------------------------------------------------------
-//      メッシュインタンスを取得します.
+//      メッシュバッチを取得します.
 //-----------------------------------------------------------------------------
-ResMeshInstance Model::GetMeshInstance(size_t index) const
+ResMeshBatch Model::GetMeshBatch(size_t index) const
 {
-    assert(index < m_MeshInstances.size());
+    assert(index < m_Batches.size());
 
-    ResMeshInstance result;
-    result.Meshes    = ArrayView<uint32_t> (m_MeshInstances[index].Meshes    .data(), m_MeshInstances[index].Meshes    .size());
-    result.Hashes    = ArrayView<uint64_t> (m_MeshInstances[index].Hashes    .data(), m_MeshInstances[index].Hashes    .size());
-    result.Transform = ArrayView<Matrix4x3>(m_MeshInstances[index].Transforms.data(), m_MeshInstances[index].Transforms.size());
+    const auto& batch = m_Batches[index];
+    
+    ResMeshBatch result = {};
+    result.Meshes    = ArrayView<uint32_t>(batch.Meshes.data(), batch.Meshes.size());
+    result.Instances = ArrayView<ResMeshInstance>(batch.Instances.data(), batch.Instances.size());
     return result;
 }
+
 
 //-----------------------------------------------------------------------------
 //      メッシュを検索します.
 //-----------------------------------------------------------------------------
-bool Model::FindMesh(const char* name, size_t& index) const
+bool Model::FindMesh(uint64_t hash, size_t& index) const
 {
-    auto hash = CalcHash(name);
-
     for(size_t i=0; i<m_Meshes.size(); ++i)
     {
         if (m_Meshes[i].GetHash() == hash)
@@ -233,10 +331,8 @@ bool Model::FindMesh(const char* name, size_t& index) const
 //-----------------------------------------------------------------------------
 //      マテリアルを検索します.
 //-----------------------------------------------------------------------------
-bool Model::FindMaterial(const char* name, size_t& index) const
+bool Model::FindMaterial(uint64_t hash, size_t& index) const
 {
-    auto hash = CalcHash(name);
-
     for(size_t i=0; i<m_Materials.size(); ++i)
     {
         if (m_Materials[i] == hash)
@@ -253,17 +349,15 @@ bool Model::FindMaterial(const char* name, size_t& index) const
 //-----------------------------------------------------------------------------
 //      名前を検索します.
 //-----------------------------------------------------------------------------
-bool Model::FindName(uint64_t hash, StringView& result) const
+StringView Model::FindName(uint64_t hash) const
 {
     auto itr = m_HashTable.find(hash);
     if (itr == m_HashTable.end())
     {
-        result = StringView();
-        return false;
+        return StringView();
     }
 
-    result = StringView(itr->second.c_str());
-    return true;
+    return StringView(itr->second.c_str());
 }
 
 //-----------------------------------------------------------------------------

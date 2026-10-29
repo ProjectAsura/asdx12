@@ -35,7 +35,7 @@ table MotionBinary
     Version         : uint;
     RootTransform   : Float3x4;
     Clips           : [MotionClip];
-    HashTable       : [NamePair];
+    HashTable       : [HashString];
 }
 
 root_type MotionBinary;

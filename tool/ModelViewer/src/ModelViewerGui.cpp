@@ -345,7 +345,7 @@ void ModelViewer::DrawBoundingSphere(const asdx::Matrix4x3& modelWorld)
     // メッシュのバウンディングスフィア.
     for(auto i=0u; i<m_Model->GetMeshCount(); ++i)
     {
-        auto& sphere = m_Model->GetMesh(i)->GetSphere();
+        auto& sphere = m_Model->GetMesh(i).GetSphere();
         auto  world  = asdx::Matrix4x4::CreateScale(sphere.Radius) * asdx::Matrix4x4::CreateTranslation(sphere.Center) * mtx;
 
         uint32_t index = uint32_t(i);
@@ -353,15 +353,15 @@ void ModelViewer::DrawBoundingSphere(const asdx::Matrix4x3& modelWorld)
         m_ShapeParams.SetColor(index, asdx::Vector4(0.0f, 1.0f, 0.0f, 0.1f));
     }
 
-    // モデルのバウンディングスフィア.
-    {
-        auto& sphere = m_Model->GetLocalSphere();
-        auto  world  = asdx::Matrix4x4::CreateScale(sphere.Radius) * asdx::Matrix4x4::CreateTranslation(sphere.Center) * mtx;
+    //// モデルのバウンディングスフィア.
+    //{
+    //    auto& sphere = m_Model->GetLocalSphere();
+    //    auto  world  = asdx::Matrix4x4::CreateScale(sphere.Radius) * asdx::Matrix4x4::CreateTranslation(sphere.Center) * mtx;
 
-        uint32_t index = uint32_t(m_Model->GetMeshCount());
-        m_ShapeParams.SetWorld(index, world);
-        m_ShapeParams.SetColor(index, asdx::Vector4(1.0f, 1.0f, 0.0f, 0.1f));
-    }
+    //    uint32_t index = uint32_t(m_Model->GetMeshCount());
+    //    m_ShapeParams.SetWorld(index, world);
+    //    m_ShapeParams.SetColor(index, asdx::Vector4(1.0f, 1.0f, 0.0f, 0.1f));
+    //}
 }
 
 //-----------------------------------------------------------------------------
@@ -375,12 +375,14 @@ void ModelViewer::DrawBones(const asdx::Matrix4x3& modelWorld)
     if (!m_DrawBones)
         return;
 
-    auto count    = m_Model->GetBoneCount();
+    const auto& skeleton = m_Model->GetSkeleton();
+
+    auto count    = skeleton.GetBoneCount();
     auto matrices = m_MotionPlayer.GetWorldTransforms();
     for(auto i=0u; i<count; ++i)
     {
-        auto& bone = m_Model->GetBone(i);
-        auto parentId = asdx::BoneProxy::GetParentId(bone);
+        auto bone = skeleton.GetBone(i);
+        auto parentId = bone.Parent;
         if (parentId < 0)
             continue;
 
@@ -447,12 +449,18 @@ void ModelViewer::DrawMeshTab()
         {
             ImGui::PushID(i);
 
-            const auto& res = m_Model->GetResMesh(i);
-            auto name = asdx::MeshProxy::GetName(res);
-            if (!ImGui::CollapsingHeader(name.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
+            auto& mesh = m_Model->GetMesh(i);
+
             {
-                ImGui::PopID();
-                continue;
+                auto hash = mesh.GetHash();
+                asdx::StringView name;
+                m_Model->FindName(hash, name);
+
+                if (!ImGui::CollapsingHeader(name.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
+                {
+                    ImGui::PopID();
+                    continue;
+                }
             }
 
             auto drawMesh = m_Model->GetMesh(i);
@@ -464,27 +472,32 @@ void ModelViewer::DrawMeshTab()
             ImGui::BeginTable("##MeshTable", 2);
             ImGui::TableSetupColumn("##MeshRow0", ImGuiTableColumnFlags_WidthFixed);
 
-            auto materialId = asdx::MeshProxy::GetMaterialId(res);
+            auto materialId = mesh.GetMaterialId();
 
             TABLE2(
                 ImGui::Text(asdx::ToChar(u8"マテリアルID")),
                 ImGui::Text(asdx::ToChar(u8"%u"), materialId));
 
-            const auto& material = m_Model->GetResMaterial(materialId);
-            auto matName = asdx::MaterialProxy::GetName(material);
-            TABLE2(
-                ImGui::Text(asdx::ToChar(u8"マテリアル名")),
-                ImGui::Text(asdx::ToChar(u8"%s"), matName));
+            {
+                auto hash = m_Model->GetMaterial(materialId);
+                asdx::StringView name;
+                m_Model->FindName(hash, name);
 
-            auto positions = asdx::MeshProxy::GetPositions(res);
+                TABLE2(
+                    ImGui::Text(asdx::ToChar(u8"マテリアル名")),
+                    ImGui::Text(asdx::ToChar(u8"%s"), name.c_str()));
+
+            }
+
+            auto vertexCount = mesh.GetVertexCount();
             TABLE2(
                 ImGui::Text(asdx::ToChar(u8"頂点数")),
-                ImGui::Text(asdx::ToChar(u8"%llu"), positions.size()));
+                ImGui::Text(asdx::ToChar(u8"%llu"), vertexCount));
 
-            auto indices = asdx::MeshProxy::GetVerexIndices(res);
+            auto indexCount = mesh.GetIndexCount();
             TABLE2(
                 ImGui::Text(asdx::ToChar(u8"ポリゴン数")),
-                ImGui::Text(asdx::ToChar(u8"%llu"), indices.size() / 3));
+                ImGui::Text(asdx::ToChar(u8"%llu"), indexCount / 3));
 
             ImGui::EndTable();
 
@@ -506,6 +519,7 @@ void ModelViewer::DrawMeshTab()
 //-----------------------------------------------------------------------------
 void ModelViewer::DrawMaterialTab()
 {
+#if 0
     if (!ImGui::BeginTabItem(asdx::ToChar(u8"マテリアル")))
         return;
 
@@ -529,68 +543,68 @@ void ModelViewer::DrawMaterialTab()
             ImGui::BeginTable("##ParamTable", 2);
             ImGui::TableSetupColumn("##ParamRow0", ImGuiTableColumnFlags_WidthFixed);
 
-            auto baseColor = asdx::MaterialProxy::GetBaseColorFactor(res);
-            TABLE2(
-                ImGui::Text(asdx::ToChar(u8"ベースカラー")),
-                ImGui::Text("%f, %f, %f", baseColor.x, baseColor.y, baseColor.z));
+            //auto baseColor = asdx::MaterialProxy::GetBaseColorFactor(res);
+            //TABLE2(
+            //    ImGui::Text(asdx::ToChar(u8"ベースカラー")),
+            //    ImGui::Text("%f, %f, %f", baseColor.x, baseColor.y, baseColor.z));
 
-            auto alpha = asdx::MaterialProxy::GetAlpha(res);
-            TABLE2(
-                ImGui::Text(asdx::ToChar(u8"アルファ値")),
-                ImGui::Text("%f", alpha));
+            //auto alpha = asdx::MaterialProxy::GetAlpha(res);
+            //TABLE2(
+            //    ImGui::Text(asdx::ToChar(u8"アルファ値")),
+            //    ImGui::Text("%f", alpha));
 
-            auto occlusion = asdx::MaterialProxy::GetOcclusionFactor(res);
-            TABLE2(
-                ImGui::Text(asdx::ToChar(u8"オクルージョン")),
-                ImGui::Text("%f", occlusion));
+            //auto occlusion = asdx::MaterialProxy::GetOcclusionFactor(res);
+            //TABLE2(
+            //    ImGui::Text(asdx::ToChar(u8"オクルージョン")),
+            //    ImGui::Text("%f", occlusion));
 
-            auto roughness = asdx::MaterialProxy::GetRoughnessFactor(res);
-            TABLE2(
-                ImGui::Text(asdx::ToChar(u8"ラフネス")),
-                ImGui::Text("%f", roughness));
+            //auto roughness = asdx::MaterialProxy::GetRoughnessFactor(res);
+            //TABLE2(
+            //    ImGui::Text(asdx::ToChar(u8"ラフネス")),
+            //    ImGui::Text("%f", roughness));
 
-            auto ior = asdx::MaterialProxy::GetIor(res);
-            TABLE2(
-                ImGui::Text(asdx::ToChar(u8"屈折率")),
-                ImGui::Text("%f", ior));
+            //auto ior = asdx::MaterialProxy::GetIor(res);
+            //TABLE2(
+            //    ImGui::Text(asdx::ToChar(u8"屈折率")),
+            //    ImGui::Text("%f", ior));
 
-            auto emissive = asdx::MaterialProxy::GetEmissiveFactor(res);
-            TABLE2(
-                ImGui::Text(asdx::ToChar(u8"エミッシブ")),
-                ImGui::Text("%f, %f, %f", emissive.x, emissive.y, emissive.z));
+            //auto emissive = asdx::MaterialProxy::GetEmissiveFactor(res);
+            //TABLE2(
+            //    ImGui::Text(asdx::ToChar(u8"エミッシブ")),
+            //    ImGui::Text("%f, %f, %f", emissive.x, emissive.y, emissive.z));
 
-            auto alphaCutOff = asdx::MaterialProxy::GetAlphaCutOff(res);
-            TABLE2(
-                ImGui::Text(asdx::ToChar(u8"アルファカットオフ")),
-                ImGui::Text("%f", alphaCutOff));
+            //auto alphaCutOff = asdx::MaterialProxy::GetAlphaCutOff(res);
+            //TABLE2(
+            //    ImGui::Text(asdx::ToChar(u8"アルファカットオフ")),
+            //    ImGui::Text("%f", alphaCutOff));
 
-            auto alphaMode = asdx::MaterialProxy::GetAlphaMode(res);
-            TABLE2(
-                ImGui::Text(asdx::ToChar(u8"アルファモード")),
-                ImGui::Text("%s", ToString(alphaMode)));
+            //auto alphaMode = asdx::MaterialProxy::GetAlphaMode(res);
+            //TABLE2(
+            //    ImGui::Text(asdx::ToChar(u8"アルファモード")),
+            //    ImGui::Text("%s", ToString(alphaMode)));
 
-            ImGui::EndTable();
-            ImGui::Separator();
+            //ImGui::EndTable();
+            //ImGui::Separator();
 
-            auto baseColorMap = asdx::MaterialProxy::GetBaseColorMap(res);
-            auto baseColorPath = (baseColorMap.is_null_or_empty() ? "NONE" : baseColorMap.c_str());
-            DrawTextureInfo(asdx::ToChar(u8"ベースカラーマップ"), baseColorPath, mtl->GetTexture(asdx::Material::TEXTURE_BASE_COLOR));
-            ImGui::Separator();
+            //auto baseColorMap = asdx::MaterialProxy::GetBaseColorMap(res);
+            //auto baseColorPath = (baseColorMap.is_null_or_empty() ? "NONE" : baseColorMap.c_str());
+            //DrawTextureInfo(asdx::ToChar(u8"ベースカラーマップ"), baseColorPath, mtl->GetTexture(asdx::Material::TEXTURE_BASE_COLOR));
+            //ImGui::Separator();
 
-            auto normalMap = asdx::MaterialProxy::GetNormalMap(res);
-            auto normalPath = (normalMap.is_null_or_empty() ? "NONE" : normalMap.c_str());
-            DrawTextureInfo(asdx::ToChar(u8"法線マップ"), normalPath, mtl->GetTexture(asdx::Material::TEXTURE_NORMAL));
-            ImGui::Separator();
+            //auto normalMap = asdx::MaterialProxy::GetNormalMap(res);
+            //auto normalPath = (normalMap.is_null_or_empty() ? "NONE" : normalMap.c_str());
+            //DrawTextureInfo(asdx::ToChar(u8"法線マップ"), normalPath, mtl->GetTexture(asdx::Material::TEXTURE_NORMAL));
+            //ImGui::Separator();
 
-            auto ormMap = asdx::MaterialProxy::GetOrmMap(res);
-            auto ormPath = (ormMap.is_null_or_empty() ? "NONE" : ormMap.c_str());
-            DrawTextureInfo(asdx::ToChar(u8"ORMマップ"), ormPath, mtl->GetTexture(asdx::Material::TEXTURE_ORM));
-            ImGui::Separator();
+            //auto ormMap = asdx::MaterialProxy::GetOrmMap(res);
+            //auto ormPath = (ormMap.is_null_or_empty() ? "NONE" : ormMap.c_str());
+            //DrawTextureInfo(asdx::ToChar(u8"ORMマップ"), ormPath, mtl->GetTexture(asdx::Material::TEXTURE_ORM));
+            //ImGui::Separator();
 
-            auto emissiveMap = asdx::MaterialProxy::GetEmissiveMap(res);
-            auto emissivePath = (emissiveMap.is_null_or_empty() ? "NONE" : emissiveMap.c_str());
-            DrawTextureInfo(asdx::ToChar(u8"エミッシブマップ"), emissivePath, mtl->GetTexture(asdx::Material::TEXTURE_EMISSIVE));
-            ImGui::Separator();
+            //auto emissiveMap = asdx::MaterialProxy::GetEmissiveMap(res);
+            //auto emissivePath = (emissiveMap.is_null_or_empty() ? "NONE" : emissiveMap.c_str());
+            //DrawTextureInfo(asdx::ToChar(u8"エミッシブマップ"), emissivePath, mtl->GetTexture(asdx::Material::TEXTURE_EMISSIVE));
+            //ImGui::Separator();
 
             ImGui::PopID();
         }
@@ -601,6 +615,7 @@ void ModelViewer::DrawMaterialTab()
     }
 
     ImGui::EndTabItem();
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -611,45 +626,58 @@ void ModelViewer::DrawBoneTab()
     if (!ImGui::BeginTabItem(asdx::ToChar(u8"ボーン")))
         return;
 
-    if (!!m_Model && m_Model->GetBoneCount() > 0)
+    if (!m_Model)
+        return;
+
+    auto& skeleton = m_Model->GetSkeleton();
+    if (skeleton.HasBone())
     {
-        auto count = m_Model->GetBoneCount();
+        auto count = skeleton.GetBoneCount();
         for(auto i=0u; i<count; ++i)
         {
-            const auto& res = m_Model->GetBone(i);
+            const auto res = skeleton.GetBone(i);
 
             ImGui::PushID(i);
 
-            auto name = asdx::BoneProxy::GetName(res);
-            if (!ImGui::CollapsingHeader(name.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
             {
-                ImGui::PopID();
-                continue;
+                auto hash = res.Hash;
+                asdx::StringView name;
+                m_Model->FindName(hash, name);
+
+                if (!ImGui::CollapsingHeader(name.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
+                {
+                    ImGui::PopID();
+                    continue;
+                }
             }
 
             ImGui::BeginTable("##BoneTable", 2);
 
-            auto parentId = asdx::BoneProxy::GetParentId(res);
+            auto parentId = res.Parent;
             const char* parentName = "NONE";
             if (parentId >= 0)
             {
-                const auto& parentBone = m_Model->GetBone(parentId);
-                parentName = asdx::BoneProxy::GetName(parentBone).c_str();
+                const auto parentBone = skeleton.GetBone(parentId);
+                asdx::StringView name;
+                if (m_Model->FindName(parentBone.Hash, name))
+                { parentName = name.c_str(); }
             }
 
             TABLE2(
                 ImGui::Text(asdx::ToChar(u8"親ボーン")),
                 ImGui::Text(asdx::ToChar(u8"%s"), parentName));
 
-            auto children = asdx::BoneProxy::GetChildren(res);
+            auto children = res.Children;
             for(auto j=0u; j<children.size(); ++j)
             {
                 auto childId = children[j];
                 const char* childName = "NONE";
                 if (childId >= 0)
                 {
-                    const auto& childBone = m_Model->GetBone(uint32_t(childId));
-                    childName = asdx::BoneProxy::GetName(childBone).c_str();
+                    const auto& childBone = skeleton.GetBone(uint32_t(childId));
+                    asdx::StringView name;
+                    if (m_Model->FindName(childBone.Hash, name))
+                    { childName = name.c_str(); }
                 }
 
                 TABLE2(

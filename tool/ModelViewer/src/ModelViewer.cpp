@@ -571,8 +571,10 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
     if (!!m_Model)
     {
         auto idx = GetCurrentBackBufferIndex();
+        const auto& skeleton = m_Model->GetSkeleton();
 
-        auto isSkeletal = (m_MotionBinary.GetClipCount() > 0) && (m_Model->GetBoneCount() > 0);
+        auto isSkeletal = (m_MotionBinary.GetClipCount() > 0) && skeleton.HasBone();
+
         // 行列パレットバッファ更新
         if (isSkeletal)
         {
@@ -589,13 +591,13 @@ void ModelViewer::OnFrameMove(const asdx::App::FrameEventArgs& args)
         {
             auto worlds = m_WorldMatrixBuffer[idx].MapAs<asdx::Matrix4x3>();
 
-            auto batchCount = m_Model->GetBatchCount();
+            auto batchCount = m_Model->GetMeshInstanceCount();
             size_t offset = 0;
             for(auto i=0u; i<batchCount; ++i)
             {
-                const auto& batch = m_Model->GetBatch(i);
-                auto transform     = asdx::ModelBatchProxy::GetTransforms(batch);
-                auto instanceCount = asdx::ModelBatchProxy::GetInstanceCount(batch);
+                const auto& batch = m_Model->GetMeshInstance(i);
+                auto transform     = batch.Transform;
+                auto instanceCount = batch.Transform.size();
 
                 for(auto j=0u; j<instanceCount; ++j)
                     worlds[offset + j] = modelWorld * transform[j];
@@ -645,8 +647,10 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
 
         pCmd->SetGraphicsRootSignature(m_RootSignature.GetPtr());
 
+        const auto& skeleton = m_Model->GetSkeleton();
+
         auto isSkeletal = (m_MotionBinary.GetClipCount() > 0) 
-            && (m_Model->GetBoneCount() > 0)
+            && skeleton.HasBone()
             && (m_MatrixPalletBuffer[idx].GetResource() != nullptr);
 
         pCmd->SetGraphicsRootConstantBufferView(ROOT_PARAM_B0, m_SceneCB[idx].GetGpuAddress());
@@ -660,17 +664,17 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
         if (isSkeletal)
         { pCmd->SetGraphicsRootShaderResourceView(ROOT_PARAM_T1, m_MatrixPalletBuffer[idx].GetGpuAddress()); }
 
-        auto batchCount = m_Model->GetBatchCount();
+        auto batchCount = m_Model->GetMeshInstanceCount();
         auto offset = 0u;
         for(auto i=0u; i<batchCount; ++i)
         {
-            const auto& batch = m_Model->GetBatch(i);
-            auto meshIds = asdx::ModelBatchProxy::GetMeshIds(batch);
+            const auto& batch = m_Model->GetMeshInstance(i);
+            auto meshIds = batch.Meshes;
 
             uint32_t matrixId = offset;
 
             pCmd->SetGraphicsRoot32BitConstants(ROOT_PARAM_B1, 1, &matrixId, 0);
-            auto instanceCount = asdx::ModelBatchProxy::GetInstanceCount(batch);
+            auto instanceCount = batch.Transform.size();
 
             for(auto j=0u; j<meshIds.size(); ++j)
             {
@@ -678,54 +682,39 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
                 //if (!mesh->IsVisible())
                 //    continue;
 
-                const auto material  = m_Model->GetMaterial(mesh->GetMaterialId());
-                const auto alphaMode = material->GetAlphaMode();
+                const auto materialHash  = m_Model->GetMaterial(mesh.GetMaterialId());
+                //const auto alphaMode = material->GetAlphaMode();
 
-                if (isSkeletal)
-                {
-                    if (m_EnableWireframe)
-                    { m_WireframeState.SkeletalModel.SetState(pCmd); }
-                    else if (alphaMode == asdx::AlphaMode::Opaque || alphaMode == asdx::AlphaMode::Mask)
-                    { m_OpaqueState.SkeletalModel.SetState(pCmd); }
-                    else if (alphaMode == asdx::AlphaMode::Blend)
-                    { m_AlphaBlendState.SkeletalModel.SetState(pCmd); }
-                }
-                else
-                {
-                    if (m_EnableWireframe)
-                    { m_WireframeState.StaticModel.SetState(pCmd); }
-                    else if (alphaMode == asdx::AlphaMode::Opaque || alphaMode == asdx::AlphaMode::Mask)
-                    { m_OpaqueState.StaticModel.SetState(pCmd); }
-                    else if (alphaMode == asdx::AlphaMode::Blend)
-                    { m_AlphaBlendState.StaticModel.SetState(pCmd); }
-                }
+                //if (isSkeletal)
+                //{
+                //    if (m_EnableWireframe)
+                //    { m_WireframeState.SkeletalModel.SetState(pCmd); }
+                //    else if (alphaMode == asdx::AlphaMode::Opaque || alphaMode == asdx::AlphaMode::Mask)
+                //    { m_OpaqueState.SkeletalModel.SetState(pCmd); }
+                //    else if (alphaMode == asdx::AlphaMode::Blend)
+                //    { m_AlphaBlendState.SkeletalModel.SetState(pCmd); }
+                //}
+                //else
+                //{
+                //    if (m_EnableWireframe)
+                //    { m_WireframeState.StaticModel.SetState(pCmd); }
+                //    else if (alphaMode == asdx::AlphaMode::Opaque || alphaMode == asdx::AlphaMode::Mask)
+                //    { m_OpaqueState.StaticModel.SetState(pCmd); }
+                //    else if (alphaMode == asdx::AlphaMode::Blend)
+                //    { m_AlphaBlendState.StaticModel.SetState(pCmd); }
+                //}
 
-                D3D12_VERTEX_BUFFER_VIEW VBVs[] = {
-                    mesh->GetPositions  ().GetVBV(),
-                    mesh->GetNormals    ().GetVBV(),
-                    mesh->GetTangents   ().GetVBV(),
-                    mesh->GetTexCoords  ().GetVBV(),
-                    mesh->GetColors     ().GetVBV(),
-                    mesh->GetBoneIndices().GetVBV(),
-                    mesh->GetBoneWeights().GetVBV(),
-                };
 
-                auto IBV = mesh->GetIndices().GetIBV();
-                auto countVBV = (isSkeletal) ? kSkeletalMeshElementCount : kStaticMeshElementCount;
+                //pCmd->SetGraphicsRootConstantBufferView(ROOT_PARAM_B2,  material->GetBuffer().GetGpuAddress());
+                //pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T10, material->GetTexture(asdx::Material::TEXTURE_BASE_COLOR)->GetHandleGPU());
+                //pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T11, material->GetTexture(asdx::Material::TEXTURE_NORMAL)    ->GetHandleGPU());
+                //pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T12, material->GetTexture(asdx::Material::TEXTURE_ORM)       ->GetHandleGPU());
+                //pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T13, material->GetTexture(asdx::Material::TEXTURE_EMISSIVE)  ->GetHandleGPU());
 
-                pCmd->SetGraphicsRootConstantBufferView(ROOT_PARAM_B2,  material->GetBuffer().GetGpuAddress());
-                pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T10, material->GetTexture(asdx::Material::TEXTURE_BASE_COLOR)->GetHandleGPU());
-                pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T11, material->GetTexture(asdx::Material::TEXTURE_NORMAL)    ->GetHandleGPU());
-                pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T12, material->GetTexture(asdx::Material::TEXTURE_ORM)       ->GetHandleGPU());
-                pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T13, material->GetTexture(asdx::Material::TEXTURE_EMISSIVE)  ->GetHandleGPU());
-
-                pCmd->IASetVertexBuffers(0, countVBV, VBVs);
-                pCmd->IASetIndexBuffer(&IBV);
-
-                pCmd->DrawIndexedInstanced(mesh->GetIndexCount(), instanceCount, 0, 0, 0);
+                asdx::DrawMesh(pCmd, &mesh, uint32_t(instanceCount), isSkeletal);
             }
 
-            offset += instanceCount;
+            offset += uint32_t(instanceCount);
         }
 
         if (m_DrawBoundingSphere)
@@ -1061,7 +1050,11 @@ void ModelViewer::RecreateModel()
 
     // モデルを生成をします.
     std::vector<uint8_t> copyBinary = m_ModelBinary;
-    if (!asdx::Model::Create(std::move(copyBinary), m_ModelBaseDir.c_str(), &pModel))
+    asdx::ModelBinary bin;
+    bin.Load(std::move(copyBinary));
+
+    auto res = bin.GetResource();
+    if (!asdx::Model::Create(res, &pModel))
     {
         ELOGA("Error : ModelManager::CreateModel() Failed.");
         return;
@@ -1075,18 +1068,20 @@ void ModelViewer::RecreateModel()
     // 成功したら差し替え.
     m_Model.Attach(pModel);
 
+    auto& skeleton = m_Model->GetSkeleton();
+
     m_ModelInfo.MeshCount     = m_Model->GetMeshCount();
     m_ModelInfo.MaterialCount = m_Model->GetMaterialCount();
-    m_ModelInfo.BoneCount     = m_Model->GetBoneCount();
+    m_ModelInfo.BoneCount     = skeleton.GetBoneCount();
 
     m_ModelInfo.VertexCount = 0;
     m_ModelInfo.IndexCount  = 0;
 
     for(auto i=0u; i<m_Model->GetMeshCount(); ++i)
     {
-        auto mesh = m_Model->GetMesh(i);
-        m_ModelInfo.VertexCount += mesh->GetVertexCount();
-        m_ModelInfo.IndexCount  += mesh->GetIndexCount();
+        const auto& mesh = m_Model->GetMesh(i);
+        m_ModelInfo.VertexCount += mesh.GetVertexCount();
+        m_ModelInfo.IndexCount  += mesh.GetIndexCount();
     }
 
     auto sphere = m_Model->GetLocalSphere();
@@ -1104,7 +1099,7 @@ void ModelViewer::RecreateModel()
     m_MotionPlayer.Init(pModel);
 
     // 行列パレット用 SRV を生成.
-    auto boneCount = m_Model->GetBoneCount();
+    auto boneCount = skeleton.GetBoneCount();
     if (boneCount > 0)
     {
         for(auto i=0; i<2; ++i)
@@ -1118,14 +1113,18 @@ void ModelViewer::RecreateModel()
         }
     }
 
-    auto instanceCount = m_Model->GetTotalInstanceCount();
-    auto batchCount    = m_Model->GetBatchCount();
+    auto totalCount = 0;
+    for(size_t i=0; i<m_Model->GetMeshInstanceCount(); ++i)
+    {
+        totalCount += m_Model->GetMeshInstance(i).Transform.size();
+    }
 
+    auto batchCount = m_Model->GetMeshInstanceCount();
     for(auto i=0; i<2; ++i)
     {
         m_WorldMatrixBuffer[i].Term();
 
-        if (!m_WorldMatrixBuffer[i].Init(instanceCount, sizeof(asdx::Matrix4x3), D3D12_RESOURCE_STATE_COMMON, true))
+        if (!m_WorldMatrixBuffer[i].Init(totalCount, sizeof(asdx::Matrix4x3), D3D12_RESOURCE_STATE_COMMON, true))
         {
             ELOGA("Error : WorldMatrix Buffer Init Failed. index = %u", i);
         }
