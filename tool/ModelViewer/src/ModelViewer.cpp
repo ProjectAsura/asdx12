@@ -19,6 +19,7 @@
 #include "ModelConverter.h"
 #include "MotionConverter.h"
 #include "TextureConverter.h"
+#include "MaterialConverter.h"
 #include <assimp/Exporter.hpp>
 
 
@@ -421,6 +422,39 @@ bool ModelViewer::OnInit()
         CreateTexture(path.string().c_str(), &m_SpecularLD);
     }
 
+    // デフォルトマテリアルを生成.
+    {
+        asdx::ResBasicMaterialParam param = {};
+        param.BaseColor     = asdx::Float3(1.0f, 1.0f, 1.0f);
+        param.Alpha         = 1.0f;
+        param.Occlusion     = 1.0f;
+        param.Roughness     = 1.0f;
+        param.Metalness     = 1.0f;
+        param.Ior           = 1.0f;
+        param.Emissive      = asdx::Float3(0.0f, 0.0f, 0.0f);
+        param.AlphaCutOff   = 0.0f;
+
+        asdx::StringView views[4] = {
+            "default.BaseColor",
+            "default.Normal",
+            "default.Orm",
+            "default.TransparentBlack",
+        };
+
+        asdx::ResMaterial res;
+        res.Shader    = "DefaultPS";
+        res.AlphaMode = asdx::AlphaMode::Opaque;
+        res.CullMode  = asdx::CullMode::Back;
+        res.Buffer    = asdx::ArrayView<uint8_t>(reinterpret_cast<uint8_t*>(&param), sizeof(param));
+        res.Textures  = asdx::ArrayView<asdx::StringView>(views, 4);
+
+        if (!asdx::Material::Create(res, m_DefaultMaterial.GetAddress()))
+        {
+            ELOGA("Error : Default Material Create Failed.");
+            return false;
+        }
+    }
+
     // コマンドの記録を終了.
     pCmd->Close();
 
@@ -683,34 +717,39 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
                 //if (!mesh->IsVisible())
                 //    continue;
 
-                const auto materialHash  = m_Model->GetMaterial(mesh.GetMaterialId());
-                //const auto alphaMode = material->GetAlphaMode();
+                const asdx::Material* pMaterial = m_DefaultMaterial.GetPtr();
+                auto materialId = mesh.GetMaterialId();
+                if (materialId != UINT32_MAX && !m_Materials.empty())
+                {
+                    pMaterial = m_Materials[materialId].GetPtr();
+                }
 
-                //if (isSkeletal)
-                //{
-                //    if (m_EnableWireframe)
-                //    { m_WireframeState.SkeletalModel.SetState(pCmd); }
-                //    else if (alphaMode == asdx::AlphaMode::Opaque || alphaMode == asdx::AlphaMode::Mask)
-                //    { m_OpaqueState.SkeletalModel.SetState(pCmd); }
-                //    else if (alphaMode == asdx::AlphaMode::Blend)
-                //    { m_AlphaBlendState.SkeletalModel.SetState(pCmd); }
-                //}
-                //else
-                //{
-                //    if (m_EnableWireframe)
-                //    { m_WireframeState.StaticModel.SetState(pCmd); }
-                //    else if (alphaMode == asdx::AlphaMode::Opaque || alphaMode == asdx::AlphaMode::Mask)
-                //    { m_OpaqueState.StaticModel.SetState(pCmd); }
-                //    else if (alphaMode == asdx::AlphaMode::Blend)
-                //    { m_AlphaBlendState.StaticModel.SetState(pCmd); }
-                //}
+                const auto alphaMode = pMaterial->GetAlphaMode();
 
+                if (isSkeletal)
+                {
+                    if (m_EnableWireframe)
+                    { m_WireframeState.SkeletalModel.SetState(pCmd); }
+                    else if (alphaMode == asdx::AlphaMode::Opaque || alphaMode == asdx::AlphaMode::Mask)
+                    { m_OpaqueState.SkeletalModel.SetState(pCmd); }
+                    else if (alphaMode == asdx::AlphaMode::Blend)
+                    { m_AlphaBlendState.SkeletalModel.SetState(pCmd); }
+                }
+                else
+                {
+                    if (m_EnableWireframe)
+                    { m_WireframeState.StaticModel.SetState(pCmd); }
+                    else if (alphaMode == asdx::AlphaMode::Opaque || alphaMode == asdx::AlphaMode::Mask)
+                    { m_OpaqueState.StaticModel.SetState(pCmd); }
+                    else if (alphaMode == asdx::AlphaMode::Blend)
+                    { m_AlphaBlendState.StaticModel.SetState(pCmd); }
+                }
 
-                //pCmd->SetGraphicsRootConstantBufferView(ROOT_PARAM_B2,  material->GetBuffer().GetGpuAddress());
-                //pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T10, material->GetTexture(asdx::Material::TEXTURE_BASE_COLOR)->GetHandleGPU());
-                //pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T11, material->GetTexture(asdx::Material::TEXTURE_NORMAL)    ->GetHandleGPU());
-                //pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T12, material->GetTexture(asdx::Material::TEXTURE_ORM)       ->GetHandleGPU());
-                //pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T13, material->GetTexture(asdx::Material::TEXTURE_EMISSIVE)  ->GetHandleGPU());
+                pCmd->SetGraphicsRootConstantBufferView(ROOT_PARAM_B2,  pMaterial->GetBuffer().GetGpuAddress());
+                pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T10, pMaterial->GetTexture(0)->GetHandleGPU());
+                pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T11, pMaterial->GetTexture(1)->GetHandleGPU());
+                pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T12, pMaterial->GetTexture(2)->GetHandleGPU());
+                pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T13, pMaterial->GetTexture(3)->GetHandleGPU());
 
                 asdx::DrawMesh(pCmd, &mesh, uint32_t(instanceCount), isSkeletal);
             }
@@ -932,43 +971,43 @@ void ModelViewer::OnDrop(const wchar_t** dropFiles, uint32_t fileCount)
 
     // 最初の1つだけ処理する.
     auto path = asdx::fs::path(dropFiles[0]);
+    auto baseDir = path.parent_path().string();
+
     std::vector<uint8_t> modelBinary;
     if (path.extension().string() == ".mdb")
     {
         if (asdx::LoadA(path.string().c_str(), modelBinary))
         {
-            // カレントディレクトリ取得.
-            char tempDir[512] = {};
-            GetCurrentDirectoryA(512, tempDir);
-
             // モデルパスをカレントディレクトリに変更に.
-            auto dir = path.parent_path().string();
-            m_ModelBaseDir = dir;
+            m_ModelBaseDir = baseDir;
 
             m_ModelBinary = std::move(modelBinary);
-            RecreateModel();
 
-            // ディレクトリを元に戻す.
-            SetCurrentDirectoryA(tempDir);
+            RecreateModel();
         }
     }
     else
     {
-        if (ModelConverter::Convert(path.string().c_str(), true, path.parent_path().string(), modelBinary))
+
+        ModelConverter::Desc desc;
+        desc.InputPath          = path.string();
+        desc.ModelOutputPath    = path.replace_extension(".mdb").string();
+        desc.MaterialOutputPath = baseDir + "\\materials\\";
+        desc.TextureOutputPath  = baseDir + "\\textures\\";
+        desc.ConvertMaterial    = true;
+        desc.ConvertTexture     = true;
+
+        std::vector<std::vector<uint8_t>> materialBinaries;
+
+        if (ModelConverter::Convert(desc, modelBinary, materialBinaries))
         {
-            // カレントディレクトリ取得.
-            char tempDir[512] = {};
-            GetCurrentDirectoryA(512, tempDir);
-
             // モデルパスをカレントディレクトリに変更に.
-            auto dir = path.parent_path().string();
-            m_ModelBaseDir = dir;
+            m_ModelBaseDir = baseDir;
 
-            m_ModelBinary = std::move(modelBinary);
+            m_ModelBinary      = std::move(modelBinary);
+            m_MaterialBinaries = std::move(materialBinaries);
+
             RecreateModel();
-
-            // ディレクトリを元に戻す.
-            SetCurrentDirectoryA(tempDir);
         }
     }
 }
@@ -1048,16 +1087,36 @@ void ModelViewer::MenuHelp()
 void ModelViewer::RecreateModel()
 {
     asdx::Model* pModel = nullptr;
+    std::vector<asdx::RefPtr<asdx::Material>> materials;
 
     // モデルを生成をします.
-    std::vector<uint8_t> copyBinary = m_ModelBinary;
-    asdx::ModelBinary bin;
-    bin.Load(std::move(copyBinary));
-
-    if (!asdx::Model::Create(bin, &pModel))
     {
-        ELOGA("Error : ModelManager::CreateModel() Failed.");
-        return;
+        std::vector<uint8_t> copyBinary = m_ModelBinary;
+        asdx::ModelBinary bin;
+        bin.Load(std::move(copyBinary));
+
+        if (!asdx::Model::Create(bin, &pModel))
+        {
+            ELOGA("Error : Model::Create() Failed.");
+            return;
+        }
+    }
+
+    // マテリアルを生成します.
+    {
+        materials.resize(m_MaterialBinaries.size());
+        for(size_t i=0; i<m_MaterialBinaries.size(); ++i)
+        {
+            std::vector<uint8_t> copyBinary = m_MaterialBinaries[i];
+            asdx::MaterialBinary bin;
+            bin.Load(std::move(copyBinary));
+
+            if (!asdx::Material::Create(bin.GetResource(), materials[i].GetAddress()))
+            {
+                ELOGA("Error : Material::Create() Failed.");
+                return;
+            }
+        }
     }
 
     m_MotionPlayer.SetClip(nullptr);
@@ -1067,6 +1126,7 @@ void ModelViewer::RecreateModel()
 
     // 成功したら差し替え.
     m_Model.Attach(pModel);
+    m_Materials = std::move(materials);
 
     auto& skeleton = m_Model->GetSkeleton();
 
@@ -1218,13 +1278,24 @@ void ModelViewer::LoadModel()
     {
         m_ModelBaseDir = path.parent_path().string();
 
-        if (!ModelConverter::Convert(input.c_str(), true, m_ModelBaseDir, modelBinary))
+        std::vector<std::vector<uint8_t>> materialBinaries;
+
+        ModelConverter::Desc desc;
+        desc.ConvertMaterial    = true;
+        desc.ConvertTexture     = true;
+        desc.MaterialOutputPath = m_ModelBaseDir + "\\materials\\";
+        desc.TextureOutputPath  = m_ModelBaseDir + "\\textures\\";
+        desc.InputPath          = input;
+        desc.ModelOutputPath    = path.replace_extension(".mdb").string();
+
+        if (!ModelConverter::Convert(desc, modelBinary, materialBinaries))
         {
             ELOGA("Error : ModelConverter::Convert() Failed.");
             return;
         }
 
-        m_ModelBinary = std::move(modelBinary);
+        m_ModelBinary       = std::move(modelBinary);
+        m_MaterialBinaries  = std::move(materialBinaries);
         RecreateModel();
     }
 }

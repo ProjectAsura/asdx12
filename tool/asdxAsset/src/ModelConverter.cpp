@@ -1061,13 +1061,13 @@ void ParseMaterial
         if (mtbConvert)
         {
             if (baseColorMap.empty())
-                baseColorMap = "default.BaseColor.txb";
+                baseColorMap = "default.BaseColor";
             if (normalMap.empty())
-                normalMap = "default.Normal.txb";
+                normalMap = "default.Normal";
             if (ormMap.empty())
-                ormMap = "default.Orm.txb";
+                ormMap = "default.Orm";
             if (emissiveMap.empty())
-                emissiveMap = "default.Emissive.txb";
+                emissiveMap = "default.TransparentBlack";
 
             res.Textures.resize(4);
             res.Textures[0] = baseColorMap;
@@ -1423,7 +1423,7 @@ bool ModelConverter::Convert
 //      逆変換処理を行います.
 //-----------------------------------------------------------------------------
 bool ModelConverter::ReverseConvert(
-    const std::vector<uint8_t>& binary, 
+    const std::vector<uint8_t>& binary,
     const char* format,
     const std::string& path)
 {

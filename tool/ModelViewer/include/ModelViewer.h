@@ -13,6 +13,8 @@
 #include <fw/asdxAppCamera.h>
 #include <gfx/asdxCommandQueue.h>
 #include <gfx/asdxModel.h>
+#include <gfx/asdxMaterial.h>
+#include <gfx/asdxMaterialManager.h>
 #include <gfx/asdxPipelineState.h>
 #include <gfx/asdxBuffer.h>
 #include <gfx/asdxShape.h>
@@ -85,7 +87,7 @@ private:
     //=========================================================================
     asdx::WaitPoint                     m_FrameWaitPoint;
     std::vector<uint8_t>                m_ModelBinary;
-    asdx::RefPtr<asdx::Model>           m_Model;
+    std::vector<std::vector<uint8_t>>   m_MaterialBinaries;
     std::string                         m_ModelBaseDir;
     std::string                         m_ModelOutputPath;
     std::string                         m_PrefabOutputPath;
@@ -137,6 +139,10 @@ private:
     std::string                         m_PathEnvMap;
     std::string                         m_PathDiffuseLD;
     std::string                         m_PathSpecularLD;
+
+    asdx::RefPtr<asdx::Model>                   m_Model;
+    std::vector<asdx::RefPtr<asdx::Material>>   m_Materials;
+    asdx::RefPtr<asdx::Material>                m_DefaultMaterial;
 
     //=========================================================================
     // private methods.

@@ -56,26 +56,29 @@ public:
     };
 
     ///////////////////////////////////////////////////////////////////////////
+    // MaterialParam structre
+    ///////////////////////////////////////////////////////////////////////////
+    struct MaterialParam
+    {
+        asdx::Float3    BaseColor   = asdx::Float3(1.0f, 1.0f, 1.0f);
+        float           Alpha       = 1.0f;
+        float           Occlusion   = 1.0f;
+        float           Roughness   = 1.0f;
+        float           Metalness   = 1.0f;
+        float           Ior         = 1.0f;
+        asdx::Float3    Emissive    = asdx::Float3(0.0f, 0.0f, 0.0f);
+        float           AlphaCutOff = 0.0f;
+    };
+
+    ///////////////////////////////////////////////////////////////////////////
     // Material structure
     ///////////////////////////////////////////////////////////////////////////
     struct Material
     {
-        struct Param
-        {
-            asdx::Float3    BaseColor   = asdx::Float3(1.0f, 1.0f, 1.0f);
-            float           Alpha       = 1.0f;
-            float           Occlusion   = 1.0f;
-            float           Roughness   = 0.5f;
-            float           Metalness   = 0.0f;
-            float           Ior         = 1.0f;
-            asdx::Float3    Emissive    = asdx::Float3(0.0f, 0.0f, 0.0f);
-            float           AlphaCutOff = 0.0f;
-        };
-
         std::string                 Shader;
         uint8_t                     AlphaMode = AlphaMode::Opaque;
         uint8_t                     CullMode  = CullMode::Back;
-        Param                       Param     = {};
+        MaterialParam               Param     = {};
         std::vector<std::string>    Textures;
     };
 

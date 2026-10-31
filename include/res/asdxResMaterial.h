@@ -10,6 +10,7 @@
 //-----------------------------------------------------------------------------
 #include <cstdint>
 #include <vector>
+#include <fnd/asdxMath.h>
 #include <fnd/asdxArrayView.h>
 #include <fnd/asdxStringView.h>
 
@@ -37,6 +38,21 @@ enum CullMode : uint8_t
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+// ResBasicMaterialParam structure
+///////////////////////////////////////////////////////////////////////////////
+struct ResBasicMaterialParam
+{
+    Float3  BaseColor   = Float3(1.0f, 1.0f, 1.0f);     //!< ベースカラー.
+    float   Alpha       = 1.0f;                         //!< アルファ値.
+    float   Occlusion   = 1.0f;                         //!< オクルージョン乗算値.
+    float   Roughness   = 1.0f;                         //!< ラフネス乗算値.
+    float   Metalness   = 1.0f;                         //!< メタルネス乗算値.
+    float   Ior         = 1.0f;                         //!< 屈折率.
+    Float3  Emissive    = Float3(0.0f, 0.0f, 0.0f);     //!< エミッシブ.
+    float   AlphaCutOff = 0.0f;                         //!< アルファテスト閾値.
+};
+
+///////////////////////////////////////////////////////////////////////////////
 // ResMaterial structure
 ///////////////////////////////////////////////////////////////////////////////
 struct ResMaterial
@@ -47,7 +63,6 @@ struct ResMaterial
     AlphaMode               AlphaMode;  //!< アルファモード.
     CullMode                CullMode;   //!< カリングモード.
 };
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // MaterialBinary class
