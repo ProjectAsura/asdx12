@@ -44,7 +44,18 @@ public:
     {
         std::string InputPath;      //!< 入力ファイルパス.
         std::string OutputPath;     //!< 出力ファイルパス(mdbのみ).
-        bool        TextureConvert; //!< テクスチャコンバートも行う場合は true.
+    };
+
+    ///////////////////////////////////////////////////////////////////////////
+    // DescEx structure
+    ///////////////////////////////////////////////////////////////////////////
+    struct DescEx
+    {
+        std::string InputPath;          //!< 入力ファイルパス.
+        std::string TextureOutputPath;  //!< テクスチャ出力ベースパス.
+        std::string MaterialOutputPath; //!< マテリアル出力ベースパス.
+        bool        ConvertTexture;     //!< テクスチャコンバートを行う場合は true.
+        bool        ConvertMaterial;    //!< マテリアルコンバートを行う場合は true.
     };
 
     //=========================================================================
@@ -75,18 +86,16 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      変換処理を行います.
     //! 
-    //! @param[in]      path            入力ファイルパス.
-    //! @param[in]      txbConvert      テクスチャコンバートを行う場合は true.
-    //! @param[in]      txbOutPath      テクスチャ出力パス.
-    //! @param[out]     binary          出力バイナリ.
+    //! @param[in]      desc            変換設定.
+    //! @param[out]     modelBinary     モデルバイナリの格納先.
+    //! @param[out]     materialBinary  マテリアルバイナリの格納先.
     //! @retval true    変換に成功.
     //! @retval fasle   変換に失敗.
     //-------------------------------------------------------------------------
-    static bool Convert(
-        const std::string&      path,
-        bool                    txbConvert,
-        const std::string&      txbOutPath,
-        std::vector<uint8_t>&   binary);
+    static bool ConvertEx(
+        const DescEx&                       desc,
+        std::vector<uint8_t>&               modelBinary,
+        std::vector<std::vector<uint8_t>>&  materialBinaries);
 
     //-------------------------------------------------------------------------
     //! @brief      逆変換処理を行います.
@@ -97,7 +106,10 @@ public:
     //! @retval true    変換に成功.
     //! @retval false   変換に失敗.
     //-------------------------------------------------------------------------
-    static bool ReverseConvert(const std::vector<uint8_t>& binary, const char* format, const std::string& path);
+    static bool ReverseConvert(
+        const std::vector<uint8_t>& binary,
+        const char*                 format,
+        const std::string&          path);
 
 private:
     //=========================================================================

@@ -11,6 +11,7 @@
 //-----------------------------------------------------------------------------
 #include <string>
 #include <vector>
+#include "../../../include/fnd/asdxMath.h"
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -32,6 +33,29 @@ public:
         std::string InputPath;          //!< 入力ファイルパス.
         std::string OutputPath;         //!< 出力ファイルパス.
         bool        TextureConvert;     //!< テクスチャコンバートも行う場合は true.
+    };
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Material structure
+    ///////////////////////////////////////////////////////////////////////////
+    struct Material
+    {
+        struct Param
+        {
+            asdx::Float3                BaseColor;
+            float                       Alpha;
+            float                       Occlusion;
+            float                       Roughness;
+            float                       Metalness;
+            float                       Ior;
+            asdx::Float3                Emissive;
+        };
+
+        std::string                 Shader;
+        uint8_t                     AlphaMode;
+        uint8_t                     CullMode;
+        Param                       Param;
+        std::vector<std::string>    Textures;
     };
 
     //=========================================================================
@@ -60,6 +84,25 @@ public:
     static bool Convert(const Desc& desc);
 
     //-------------------------------------------------------------------------
+    //! @brief      変換処理を行います.
+    //! 
+    //! @param[in]      desc        変換設定.
+    //! @retval true    変換に成功.
+    //! @retval false   変換に失敗.
+    //-------------------------------------------------------------------------
+    static bool Convert(const Material& material, std::vector<uint8_t>& binary);
+
+    //-------------------------------------------------------------------------
+    //! @brief      逆変換処理を行います.
+    //! 
+    //! @param[in]      binary      入力バイナリ.
+    //! @param[in]      path        JSON出力ファイルパス.
+    //! @retval true    変換に成功.
+    //! @retval false   変化に失敗.
+    //-------------------------------------------------------------------------
+    static bool ReverseConvert(const std::string& path, const std::vector<uint8_t>& binary);
+
+    //-------------------------------------------------------------------------
     //! @brief      逆変換処理を行います.
     //! 
     //! @param[in]      binary      入力バイナリ.
@@ -67,7 +110,7 @@ public:
     //! @retval true    変換に成功.
     //! @retval false   変化に失敗.
     //-------------------------------------------------------------------------
-    static bool ReverseConvert(const std::string& path, const std::vector<uint8_t>& binary);
+    static bool ReverseConvert(const std::vector<uint8_t>& binary, Material& result);
 
 private:
     //=========================================================================

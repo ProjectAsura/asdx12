@@ -117,10 +117,11 @@ bool MaterialConverter::Convert(const Desc& desc)
 
     {
         std::vector<flatbuffers::Offset<flatbuffers::String>> textures;
-        textures.push_back(builder.CreateString(map_base_color.data()));
-        textures.push_back(builder.CreateString(map_normal.data()));
-        textures.push_back(builder.CreateString(map_orm.data()));
-        textures.push_back(builder.CreateString(map_emissive.data()));
+        textures.resize(4);
+        textures[0] = builder.CreateString(map_base_color.data());
+        textures[1] = builder.CreateString(map_normal.data());
+        textures[2] = builder.CreateString(map_orm.data());
+        textures[3] = builder.CreateString(map_emissive.data());
 
         std::vector<uint8_t> buffer;
         buffer.resize(sizeof(shaderParam));
@@ -151,6 +152,55 @@ bool MaterialConverter::Convert(const Desc& desc)
 
         fwrite(binary.data(), binary.size(), 1, fp);
         fclose(fp);
+    }
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      変換処理を行います.
+//-----------------------------------------------------------------------------
+bool MaterialConverter::Convert(const Material& material, std::vector<uint8_t>& binary)
+{
+    flatbuffers::FlatBufferBuilder builder(1024);
+
+    asdx::res::AlphaType alphaMode = asdx::res::AlphaType(material.AlphaMode);
+    asdx::res::CullType  cullMode  = asdx::res::CullType(material.CullMode);
+
+    {
+        std::vector<flatbuffers::Offset<flatbuffers::String>> textures;
+        textures.resize(material.Textures.size());
+        for(size_t i=0; i<material.Textures.size(); ++i)
+        {
+            textures[i] = builder.CreateString(material.Textures[i].c_str());
+        }
+
+        ShaderParam shaderParam = {};
+        shaderParam.BaseColor = material.Param.BaseColor;
+        shaderParam.Alpha     = material.Param.Alpha;
+        shaderParam.Occlusion = material.Param.Occlusion;
+        shaderParam.Roughness = material.Param.Roughness;
+        shaderParam.Metalness = material.Param.Metalness;
+        shaderParam.Ior       = material.Param.Ior;
+        shaderParam.Emissive  = material.Param.Emissive;
+
+        std::vector<uint8_t> buffer;
+        buffer.resize(sizeof(ShaderParam));
+        memcpy(buffer.data(), &shaderParam, sizeof(shaderParam));
+
+        auto res = asdx::res::CreateMaterialBinaryDirect(
+            builder,
+            CURRENT_VERSION,
+            material.Shader.c_str(),
+            &buffer,
+            &textures,
+            alphaMode,
+            cullMode);
+
+        builder.Finish(res);
+
+        binary.resize(builder.GetSize());
+        memcpy(binary.data(), builder.GetBufferPointer(), builder.GetSize());
     }
 
     return true;
@@ -213,5 +263,45 @@ bool MaterialConverter::ReverseConvert(const std::string& path, const std::vecto
     }
 
     // 正常終了.
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+//      逆変換処理を行います.
+//-----------------------------------------------------------------------------
+bool MaterialConverter::ReverseConvert(const std::vector<uint8_t>& binary, Material& result)
+{
+    // 引数チェック.
+    if (binary.empty())
+    {
+        ELOG("Error : Invalid Argument.");
+        return false;
+    }
+
+    // マテリアルバイナリへ.
+    auto bin = asdx::res::GetMaterialBinary(binary.data());
+
+    // シェーダパラメータに変換.
+    ShaderParam param = {};
+    assert(sizeof(param) == bin->Buffer()->size());
+    memcpy(&param, bin->Buffer()->data(), bin->Buffer()->size());
+
+    result.Shader           = bin->Shader()->c_str();
+    result.AlphaMode        = uint8_t(bin->AlphaMode());
+    result.CullMode         = uint8_t(bin->CullMode());
+    result.Param.BaseColor  = param.BaseColor;
+    result.Param.Alpha      = param.Alpha;
+    result.Param.Occlusion  = param.Occlusion;
+    result.Param.Roughness  = param.Roughness;
+    result.Param.Metalness  = param.Metalness;
+    result.Param.Ior        = param.Ior;
+    result.Param.Emissive   = param.Emissive;
+
+    result.Textures.resize(bin->Textures()->size());
+    for(auto i=0u; i<bin->Textures()->size(); ++i)
+    {
+        result.Textures[i] = bin->Textures()->Get(i)->c_str();
+    }
+
     return true;
 }

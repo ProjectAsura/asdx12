@@ -1,0 +1,29 @@
+include "../../../res/format/ResTypes.fbs";
+
+namespace asdx.res;
+
+enum AlphaType : ubyte
+{
+    Opaque,
+    Mask,
+    Blend,
+}
+
+enum CullType : ubyte
+{
+    Back,
+    Front,
+    None,
+}
+
+table MaterialBinary
+{
+    Version     : uint;
+    Shader      : string;
+    Buffer      : [ubyte];
+    Textures    : [string];
+    AlphaMode   : AlphaType;
+    CullMode    : CullType;
+}
+
+root_type MaterialBinary;

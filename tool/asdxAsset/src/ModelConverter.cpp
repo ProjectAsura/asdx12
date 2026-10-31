@@ -1222,17 +1222,26 @@ bool ModelConverter::Convert(const Desc& desc)
         return false;
     }
 
-    std::filesystem::path txbOutPath = desc.OutputPath;
-    txbOutPath = txbOutPath.parent_path();
+    std::filesystem::path basePath = desc.OutputPath;
+    basePath = basePath.parent_path();
 
-    std::vector<uint8_t> binary;
-    if (!Convert(desc.InputPath.c_str(), desc.TextureConvert, txbOutPath.string(), binary))
+
+    DescEx descEx = {};
+    descEx.InputPath       = desc.InputPath;
+    descEx.ConvertTexture  = true;
+    descEx.ConvertMaterial = true;
+    descEx.MaterialOutputPath = basePath.string() + "\\materials\\";
+    descEx.TextureOutputPath  = basePath.string() + "\\textures\\";
+
+    std::vector<uint8_t> modelBinary;
+    std::vector<std::vector<uint8_t>> materialBinaries; 
+    if (!ConvertEx(descEx, modelBinary, materialBinaries))
     {
         ELOG("Error : Convert Failed.");
         return false;
     }
 
-    // バイナリファイルに出力.
+    // モデルバイナリをファイルに出力.
     {
         FILE* fp = nullptr;
         auto err = fopen_s(&fp, desc.OutputPath.c_str(), "wb");
@@ -1242,8 +1251,16 @@ bool ModelConverter::Convert(const Desc& desc)
             return false;
         }
 
-        fwrite(binary.data(), binary.size(), 1, fp);
+        fwrite(modelBinary.data(), modelBinary.size(), 1, fp);
         fclose(fp);
+    }
+
+    // マテリアルバイナリをファイルに出力.
+    {
+    }
+
+    // テクスチャバイナリをファイルに出力.
+    {
     }
 
     return true;
@@ -1252,32 +1269,39 @@ bool ModelConverter::Convert(const Desc& desc)
 //-----------------------------------------------------------------------------
 //      変換処理を行います.
 //-----------------------------------------------------------------------------
-bool ModelConverter::Convert
+bool ModelConverter::ConvertEx
 (
-    const std::string&      path,
-    bool                    txbConvert,
-    const std::string&      txbOutPath,
-    std::vector<uint8_t>&   binary
+    const DescEx&                       desc,
+    std::vector<uint8_t>&               modelBinary,
+    std::vector<std::vector<uint8_t>>&  materialBinaries
 )
 {
-    if (path.empty())
+    if (desc.InputPath.empty())
     {
         ELOG("Error : Invalid Argument.");
         return false;
     }
 
     std::string inputDir;
-    if (txbConvert)
+    if (!desc.TextureOutputPath.empty() && desc.ConvertTexture)
     {
-        asdx::fs::path p = path;
-        inputDir = p.parent_path().string();
-
-        // 出力ディレクトリが存在しなければ作成する.
-        auto texDir = txbOutPath + "\\textures";
-        if (!asdx::fs::exists(texDir))
+        // テクスチャ出力ディレクトリが存在しなければ作成する.
+        auto dir = std::filesystem::path(desc.TextureOutputPath);
+        if (!asdx::fs::exists(dir))
         {
-            if (!asdx::fs::create_directories(texDir))
-            { ELOG("Error : create_directories() Failed. path = %s", texDir.c_str()); }
+            if (!asdx::fs::create_directories(dir))
+            { ELOG("Error : create_directories() Failed. path = %s", dir.string().c_str()); }
+        }
+    }
+
+    if (!desc.MaterialOutputPath.empty() && desc.ConvertMaterial)
+    {
+        // テクスチャ出力ディレクトリが存在しなければ作成する.
+        auto dir = std::filesystem::path(desc.MaterialOutputPath);
+        if (!asdx::fs::exists(dir))
+        {
+            if (!asdx::fs::create_directories(dir))
+            { ELOG("Error : create_directories() Failed. path = %s", dir.string().c_str()); }
         }
     }
 
@@ -1287,11 +1311,11 @@ bool ModelConverter::Convert
     flag |= aiProcess_FlipWindingOrder;
 
     Assimp::Importer importer;
-    auto pScene = importer.ReadFile(path.c_str(), flag);
+    auto pScene = importer.ReadFile(desc.InputPath.c_str(), flag);
 
     if (pScene == nullptr)
     {
-        ELOG("Error : Importer::ReadFile() Failed. path = %s", path.c_str());
+        ELOG("Error : Importer::ReadFile() Failed. path = %s", desc.InputPath.c_str());
         return false;
     }
 
@@ -1362,8 +1386,8 @@ bool ModelConverter::Convert
 
     builder.Finish(bin);
 
-    binary.resize(builder.GetSize());
-    memcpy(binary.data(), builder.GetBufferPointer(), builder.GetSize());
+    modelBinary.resize(builder.GetSize());
+    memcpy(modelBinary.data(), builder.GetBufferPointer(), builder.GetSize());
 
     pScene = nullptr;
 
