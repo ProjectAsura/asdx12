@@ -240,6 +240,7 @@ private:
     //=========================================================================
     RefPtr<ID3D12Resource>      m_Resource;     //!< リソースです.
     AllocationHolder            m_HolderAlloc;  //!< アロケーション情報.
+    bool                        m_IsShortFormat = false;
 
     //=========================================================================
     // private methods.

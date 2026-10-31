@@ -516,12 +516,22 @@ void ModelViewer::OnTerm()
 
     m_Model.Reset();
 
+    for(size_t i=0; i<m_Materials.size(); ++i)
+    {
+        m_Materials[i].Reset();
+    }
+    m_Materials.clear();
+    m_DefaultMaterial.Reset();
+
     m_AxisVertexBuffer.Term();
     m_GridVertexBuffer.Term();
 
     m_SkyBoxPS   .Term();
     m_SkySpherePS.Term();
     m_SkyContext .Term();
+
+    m_ModelBinary.clear();
+    m_MaterialBinaries.clear();
 
     asdx::SafeRelease(m_EnvMap);
     asdx::SafeRelease(m_DiffuseLD);
@@ -751,6 +761,7 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
                 pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T12, pMaterial->GetTexture(2)->GetHandleGPU());
                 pCmd->SetGraphicsRootDescriptorTable   (ROOT_PARAM_T13, pMaterial->GetTexture(3)->GetHandleGPU());
 
+                pCmd->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
                 asdx::DrawMesh(pCmd, &mesh, uint32_t(instanceCount), isSkeletal);
             }
 

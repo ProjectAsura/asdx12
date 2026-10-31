@@ -391,6 +391,8 @@ bool IndexBuffer::Init(uint64_t size, bool isShortFormat)
         }
     }
 
+    m_IsShortFormat = isShortFormat;
+
     return true;
 }
 
@@ -444,7 +446,7 @@ D3D12_INDEX_BUFFER_VIEW IndexBuffer::GetIBV() const
     D3D12_INDEX_BUFFER_VIEW ibv = {};
     ibv.BufferLocation  = m_Resource->GetGPUVirtualAddress();
     ibv.SizeInBytes     = UINT(desc.Width);
-    ibv.Format          = desc.Format;
+    ibv.Format          = (m_IsShortFormat) ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
     return ibv;
 }
 

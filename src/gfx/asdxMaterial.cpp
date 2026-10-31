@@ -38,7 +38,8 @@ Material::~Material()
 bool Material::Init(const ResMaterial& res)
 {
     // 定数バッファ初期化.
-    if (!m_Buffer.Init(res.Buffer.size()))
+    auto bufSize = RoundUp<uint64_t>(res.Buffer.size(), 256u);
+    if (!m_Buffer.Init(bufSize))
     {
         ELOGA("Error : ConstantBuffer Initialize Failed.");
         return false;
