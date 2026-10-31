@@ -13,6 +13,7 @@
 #include <fnd/asdxPath.h>
 #include <ModelConverter.h>
 #include <TextureConverter.h>
+#include <MaterialConverter.h>
 #include <mikktspace.h>
 #include <assimp/Importer.hpp>
 #include <assimp/Exporter.hpp>
@@ -674,7 +675,6 @@ void ParseMesh
         &vertexIndices);
 }
 
-#if 0
 //-----------------------------------------------------------------------------
 //      ファイルパスを連結します.
 //-----------------------------------------------------------------------------
@@ -894,21 +894,21 @@ std::string GetTexturePath
 
     return result;
 }
-#endif
 
 //-----------------------------------------------------------------------------
 //      マテリアルを解析します.
 //-----------------------------------------------------------------------------
 void ParseMaterial
 (
-    flatbuffers::FlatBufferBuilder& builder,
-    const aiScene*                  pScene,
-    std::vector<uint64_t>&          materials,
-    std::vector<std::string>&       nameTable
-    //const std::string&              inputDir,
-    //const std::string&              txbOutPath,
-    //bool                            txbConvert,
-    //std::vector<flatbuffers::Offset<asdx::res::Material>>& materials
+    flatbuffers::FlatBufferBuilder&     builder,
+    const aiScene*                      pScene,
+    std::vector<uint64_t>&              materials,
+    std::vector<std::string>&           nameTable,
+    std::vector<std::vector<uint8_t>>&  binaries,
+    const std::string&                  inputDir,
+    const std::string&                  txbOutPath,
+    bool                                txbConvert,
+    bool                                mtbConvert
 )
 {
     materials.reserve(pScene->mNumMaterials);
@@ -919,27 +919,22 @@ void ParseMaterial
         if (name.empty() || name == "")
         { name = "mat__" + std::to_string(i); }
 
+        // マテリアル名ハッシュ追加.
+        auto hash = CalcNameHash(name.c_str());
+        materials.push_back(hash);
+
+        // ハッシュテーブルに追加.
         RegisterNameTable(nameTable, name.c_str());
 
-#if 0
+
+        MaterialConverter::Material res;
+
         std::string baseColorMap;
         std::string normalMap;
         std::string ormMap;
         std::string emissiveMap;
 
-        asdx::Vector3 baseColorFactor = asdx::Vector3(1.0f, 1.0f, 1.0f);
-        asdx::Vector3 emissiveFactor  = asdx::Vector3(0.0f, 0.0f, 0.0f);
-        float alpha                   = 1.0f;
-        float occulusionFactor        = 1.0f;
-        float roughnessFactor         = 1.0f;
-        float metalnessFactor         = 1.0f;
-        float ior                     = 1.0f;
-        bool  isOpaque                = true;
-        float alphaCutOff             = 0.0f;
-        bool  twoSided                = false;
-
-        auto alphaMode = asdx::res::AlphaType_Opaque;
-
+        auto isOpaque = false;
         int shadingModel = 0;
         srcMat->Get(AI_MATKEY_SHADING_MODEL, shadingModel);
 
@@ -954,9 +949,9 @@ void ParseMaterial
             aiColor4D value;
             if (srcMat->Get(AI_MATKEY_COLOR_EMISSIVE, value) == AI_SUCCESS)
             {
-                emissiveFactor.x = value.r;
-                emissiveFactor.y = value.g;
-                emissiveFactor.z = value.b;
+                res.Param.Emissive.x = value.r;
+                res.Param.Emissive.y = value.g;
+                res.Param.Emissive.z = value.b;
             }
         }
 
@@ -965,8 +960,8 @@ void ParseMaterial
             float value;
             if (srcMat->Get(AI_MATKEY_OPACITY, value) == AI_SUCCESS)
             {
-                alpha = value;
-                if (alpha < 1.0f)
+                res.Param.Alpha = value;
+                if (res.Param.Alpha < 1.0f)
                 { isOpaque = false; }
             }
         }
@@ -975,14 +970,14 @@ void ParseMaterial
         {
             float value;
             if (srcMat->Get(AI_MATKEY_REFRACTI, value) == AI_SUCCESS)
-            { ior = value; }
+            { res.Param.Ior = value; }
         }
 
         // 両面描画.
         {
             bool value;
             if (srcMat->Get(AI_MATKEY_TWOSIDED, value) == AI_SUCCESS)
-            { twoSided = value; }
+            { res.CullMode = MaterialConverter::CullMode::None; }
         }
 
         // PBRモデルの場合.
@@ -999,9 +994,9 @@ void ParseMaterial
                 aiColor4D value;
                 if (srcMat->Get(AI_MATKEY_BASE_COLOR, value) == AI_SUCCESS)
                 {
-                    baseColorFactor.x = value.r;
-                    baseColorFactor.y = value.g;
-                    baseColorFactor.z = value.b;
+                    res.Param.BaseColor.x = value.r;
+                    res.Param.BaseColor.y = value.g;
+                    res.Param.BaseColor.z = value.b;
                 }
             }
 
@@ -1010,7 +1005,7 @@ void ParseMaterial
                 float value;
                 if (srcMat->Get(AI_MATKEY_ROUGHNESS_FACTOR, value) == AI_SUCCESS)
                 {
-                    roughnessFactor = value;
+                    res.Param.Roughness = value;
                 }
             }
 
@@ -1019,7 +1014,7 @@ void ParseMaterial
                 float value;
                 if (srcMat->Get(AI_MATKEY_METALLIC_FACTOR, value) == AI_SUCCESS)
                 {
-                    metalnessFactor = value;
+                    res.Param.Metalness = value;
                 }
             }
 
@@ -1030,17 +1025,18 @@ void ParseMaterial
                 {
                     if (strcmp(alphaModeStr.C_Str(), "OPQAUE") == 0)
                     {
-                        alphaMode = asdx::res::AlphaType_Opaque;
+                        res.AlphaMode = MaterialConverter::AlphaMode::Opaque;
                     }
                     else if (strcmp(alphaModeStr.C_Str(), "MASK") == 0)
                     {
-                        alphaMode   = asdx::res::AlphaType_Mask;
-                        alphaCutOff = 0.5f;
+                        res.AlphaMode = MaterialConverter::AlphaMode::Mask;
+                        float alphaCutOff = 0.5f;
                         srcMat->Get("$mat.gltf.alphaCutoff", 0, 0, alphaCutOff);
+                        res.Param.AlphaCutOff = alphaCutOff;
                     }
                     else if (strcmp(alphaModeStr.C_Str(), "BLEND") == 0)
                     {
-                        alphaMode = asdx::res::AlphaType_Blend;
+                        res.AlphaMode = MaterialConverter::AlphaMode::Blend;
                     }
                 }
             }
@@ -1055,39 +1051,36 @@ void ParseMaterial
                 aiColor4D value;
                 if (srcMat->Get(AI_MATKEY_COLOR_DIFFUSE, value) == AI_SUCCESS)
                 {
-                    baseColorFactor.x = value.r;
-                    baseColorFactor.y = value.g;
-                    baseColorFactor.z = value.b;
+                    res.Param.BaseColor.x = value.r;
+                    res.Param.BaseColor.y = value.g;
+                    res.Param.BaseColor.z = value.b;
                 }
             }
         }
 
-        asdx::res::Float3 bf(baseColorFactor.x, baseColorFactor.y, baseColorFactor.z);
-        asdx::res::Float3 ef(emissiveFactor .x,  emissiveFactor.y, emissiveFactor .z);
+        if (mtbConvert)
+        {
+            if (baseColorMap.empty())
+                baseColorMap = "default.BaseColor.txb";
+            if (normalMap.empty())
+                normalMap = "default.Normal.txb";
+            if (ormMap.empty())
+                ormMap = "default.Orm.txb";
+            if (emissiveMap.empty())
+                emissiveMap = "default.Emissive.txb";
 
-        auto dstMat = asdx::res::CreateMaterialDirect(
-            builder,
-            name.c_str(),
-            &bf,
-            alpha,
-            occulusionFactor,
-            roughnessFactor,
-            metalnessFactor,
-            ior,
-            &ef,
-            baseColorMap.c_str(),
-            normalMap.c_str(),
-            ormMap.c_str(),
-            emissiveMap.c_str(),
-            alphaMode,
-            alphaCutOff,
-            twoSided);
+            res.Textures.resize(4);
+            res.Textures[0] = baseColorMap;
+            res.Textures[1] = normalMap;
+            res.Textures[2] = ormMap;
+            res.Textures[3] = emissiveMap;
 
-        materials.emplace_back(dstMat);
-#endif
-
-        auto hash = CalcNameHash(name.c_str());
-        materials.push_back(hash);
+            std::vector<uint8_t> bin;
+            if (MaterialConverter::Convert(res, bin))
+            {
+                binaries.emplace_back(bin);
+            }
+        }
     }
 }
 
@@ -1194,7 +1187,12 @@ void ParseModelInstance
     // 子供を再帰的に処理.
     for(auto i=0u; i<pNode->mNumChildren; ++i)
     {
-        ParseModelInstance(builder, pNode->mChildren[i], boneMap, batches, nameTable);
+        ParseModelInstance(
+            builder,
+            pNode->mChildren[i],
+            boneMap,
+            batches,
+            nameTable);
     }
 }
 
@@ -1216,26 +1214,18 @@ uint32_t ModelConverter::GetCurrentVersion()
 //-----------------------------------------------------------------------------
 bool ModelConverter::Convert(const Desc& desc)
 {
-    if (desc.InputPath.empty() || desc.OutputPath.empty())
+    if (desc.InputPath.empty() || desc.ModelOutputPath.empty())
     {
         ELOG("Error : Invalid Argument.");
         return false;
     }
 
-    std::filesystem::path basePath = desc.OutputPath;
+    std::filesystem::path basePath = desc.ModelOutputPath;
     basePath = basePath.parent_path();
-
-
-    DescEx descEx = {};
-    descEx.InputPath       = desc.InputPath;
-    descEx.ConvertTexture  = true;
-    descEx.ConvertMaterial = true;
-    descEx.MaterialOutputPath = basePath.string() + "\\materials\\";
-    descEx.TextureOutputPath  = basePath.string() + "\\textures\\";
 
     std::vector<uint8_t> modelBinary;
     std::vector<std::vector<uint8_t>> materialBinaries; 
-    if (!ConvertEx(descEx, modelBinary, materialBinaries))
+    if (!Convert(desc, modelBinary, materialBinaries))
     {
         ELOG("Error : Convert Failed.");
         return false;
@@ -1244,10 +1234,10 @@ bool ModelConverter::Convert(const Desc& desc)
     // モデルバイナリをファイルに出力.
     {
         FILE* fp = nullptr;
-        auto err = fopen_s(&fp, desc.OutputPath.c_str(), "wb");
+        auto err = fopen_s(&fp, desc.ModelOutputPath.c_str(), "wb");
         if (err != 0)
         {
-            ELOG("Error : Output File Open Failed. path = %s", desc.OutputPath.c_str());
+            ELOG("Error : Output File Open Failed. path = %s", desc.ModelOutputPath.c_str());
             return false;
         }
 
@@ -1255,12 +1245,27 @@ bool ModelConverter::Convert(const Desc& desc)
         fclose(fp);
     }
 
-    // マテリアルバイナリをファイルに出力.
+    if (desc.ConvertMaterial)
     {
-    }
+        auto modelBin = asdx::res::GetModelBinary(modelBinary.data());
+        for(size_t i=0; i<materialBinaries.size(); ++i)
+        {
+            auto hash = modelBin->Materials()->Get(uint32_t(i));
+            auto name = modelBin->HashTable()->LookupByKey(hash);
 
-    // テクスチャバイナリをファイルに出力.
-    {
+            auto path = desc.MaterialOutputPath + "\\" + std::string(name->Text()->c_str()) + ".mtb";
+
+            FILE* fp = nullptr;
+            auto err = fopen_s(&fp, path.c_str(), "wb");
+            if (err != 0)
+            {
+                ELOG("Error : Output File Open Failed. path = %s", path.c_str());
+                continue;
+            }
+
+            fwrite(materialBinaries[i].data(), materialBinaries[i].size(), 1, fp);
+            fclose(fp);
+        }
     }
 
     return true;
@@ -1269,9 +1274,9 @@ bool ModelConverter::Convert(const Desc& desc)
 //-----------------------------------------------------------------------------
 //      変換処理を行います.
 //-----------------------------------------------------------------------------
-bool ModelConverter::ConvertEx
+bool ModelConverter::Convert
 (
-    const DescEx&                       desc,
+    const Desc&                         desc,
     std::vector<uint8_t>&               modelBinary,
     std::vector<std::vector<uint8_t>>&  materialBinaries
 )
@@ -1339,9 +1344,28 @@ bool ModelConverter::ConvertEx
         ParseMesh(builder, boneMap, pScene->mRootNode, dstMesh, srcMesh, nameTable);
     }
 
+    //flatbuffers::FlatBufferBuilder&     builder,
+    //const aiScene*                      pScene,
+    //std::vector<uint64_t>&              materials,
+    //std::vector<std::string>&           nameTable,
+    //std::vector<std::vector<uint8_t>>&  binaries,
+    //const std::string&                  inputDir,
+    //const std::string&                  txbOutPath,
+    //bool                                txbConvert,
+    //bool                                mtbConvert
+
     // マテリアルデータを変換.
     std::vector<uint64_t> materials;
-    ParseMaterial(builder, pScene, materials, nameTable);
+    ParseMaterial(
+        builder,
+        pScene,
+        materials,
+        nameTable,
+        materialBinaries,
+        desc.InputPath,
+        desc.TextureOutputPath,
+        desc.ConvertTexture,
+        desc.ConvertMaterial);
 
     // メッシュインスタンスを変換.
     std::unordered_map<uint64_t, MeshBatch> batches;
@@ -1362,6 +1386,7 @@ bool ModelConverter::ConvertEx
     boneMap.clear();
 
     std::vector<flatbuffers::Offset<asdx::res::HashString>> hashTable;
+    hashTable.reserve(nameTable.size());
     for(auto& itr : nameTable)
     {
         auto hash = CalcNameHash(itr.c_str());
@@ -1397,7 +1422,10 @@ bool ModelConverter::ConvertEx
 //-----------------------------------------------------------------------------
 //      逆変換処理を行います.
 //-----------------------------------------------------------------------------
-bool ModelConverter::ReverseConvert(const std::vector<uint8_t>& binary, const char* format, const std::string& path)
+bool ModelConverter::ReverseConvert(
+    const std::vector<uint8_t>& binary, 
+    const char* format,
+    const std::string& path)
 {
     if (binary.empty() || path.empty() || path == "" || format == nullptr)
     {
@@ -1421,7 +1449,6 @@ bool ModelConverter::ReverseConvert(const std::vector<uint8_t>& binary, const ch
 
     scene.mRootNode = rootNode;
 
-#if 0
     auto materials = modelBin->Materials();
     {
         auto count = materials->size();
@@ -1435,8 +1462,18 @@ bool ModelConverter::ReverseConvert(const std::vector<uint8_t>& binary, const ch
 
             // マテリアル名.
             {
-                aiString name(srcMat->Name()->c_str());
-                dstMat->AddProperty(&name, AI_MATKEY_NAME);
+                auto tag = modelBin->HashTable()->LookupByKey(srcMat);
+                if (tag != nullptr)
+                {
+                    aiString name(tag->Text()->c_str());
+                    dstMat->AddProperty(&name, AI_MATKEY_NAME);
+                }
+                else
+                {
+                    std::string tag = "mat__" + std::to_string(i);
+                    aiString name(tag.c_str());
+                    dstMat->AddProperty(&name, AI_MATKEY_NAME);
+                }
             }
 
             // シェーディングモデル.
@@ -1447,48 +1484,56 @@ bool ModelConverter::ReverseConvert(const std::vector<uint8_t>& binary, const ch
 
             // ベースカラーファクター.
             {
-                auto bc = srcMat->BaseColorFactor();
-                aiColor4D value(bc->X(), bc->Y(), bc->Z(), 1.0f);
+                //auto bc = srcMat->BaseColorFactor();
+                //aiColor4D value(bc->X(), bc->Y(), bc->Z(), 1.0f);
+                aiColor4D value(1.0f, 1.0f, 1.0f, 1.0f);
                 dstMat->AddProperty(&value, 1, AI_MATKEY_BASE_COLOR);
             }
 
             // アルファ.
             {
-                auto alpha = srcMat->Alpha();
+                //auto alpha = srcMat->Alpha();
+                auto alpha = 1.0f;
                 dstMat->AddProperty(&alpha, 1, AI_MATKEY_OPACITY);
             }
 
             // 屈折率.
             {
-                auto ior = srcMat->Ior();
+                //auto ior = srcMat->Ior();
+                auto ior = 1.0f;
                 dstMat->AddProperty(&ior, 1, AI_MATKEY_REFRACTI);
             }
 
             // 両面描画フラグ.
             {
-                auto twoSided = srcMat->TwoSided();
+                //auto twoSided = srcMat->TwoSided();
+                int twoSided = 0;
                 dstMat->AddProperty(&twoSided, 1, AI_MATKEY_TWOSIDED);
             }
 
             // ラフネスファクター.
             {
-                auto roughness = srcMat->RoughnessFactor();
+                //auto roughness = srcMat->RoughnessFactor();
+                auto roughness = 0.5f;
                 dstMat->AddProperty(&roughness, 1, AI_MATKEY_ROUGHNESS_FACTOR);
             }
 
             // メタルネスファクター.
             {
-                auto metalness = srcMat->MetalnessFactor();
+                //auto metalness = srcMat->MetalnessFactor();
+                auto metalness = 0.0f;
                 dstMat->AddProperty(&metalness, 1, AI_MATKEY_METALLIC_FACTOR);
             }
 
             // エミッシブファクター.
             {
-                auto emissive = srcMat->EmissiveFactor();
-                aiColor3D value(emissive->X(), emissive->Y(), emissive->Z());
+                //auto emissive = srcMat->EmissiveFactor();
+                //aiColor3D value(emissive->X(), emissive->Y(), emissive->Z());
+                aiColor3D value(0.0f, 0.0f, 0.0f);
                 dstMat->AddProperty(&value, 1, AI_MATKEY_COLOR_EMISSIVE);
             }
 
+        #if 0
             // ベースカラーマップ.
             {
                 auto mapPath = srcMat->BaseColorMap();
@@ -1528,17 +1573,18 @@ bool ModelConverter::ReverseConvert(const std::vector<uint8_t>& binary, const ch
                     dstMat->AddProperty(&value, AI_MATKEY_TEXTURE(aiTextureType_EMISSIVE, 0));
                 }
             }
+        #endif
 
             scene.mMaterials[i] = dstMat;
         }
     }
-#endif
 
     auto bones = modelBin->Bones();
     std::vector<aiNode*> dstNodes;
     if (bones != nullptr)
     {
         auto count = bones->size();
+        dstNodes.reserve(count);
 
         for(auto i=0u; i<count; ++i)
         {
@@ -1555,13 +1601,9 @@ bool ModelConverter::ReverseConvert(const std::vector<uint8_t>& binary, const ch
 
             auto parentId = srcBone->Parent();
             if (parentId >= 0)
-            {
                 dstNode->mParent = &dstNode[parentId];
-            }
             else
-            {
                 dstNode->mParent = rootNode;
-            }
 
             const auto srcChildren = srcBone->Children();
             if (srcChildren != nullptr)

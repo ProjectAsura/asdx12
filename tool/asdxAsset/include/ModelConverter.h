@@ -42,16 +42,8 @@ public:
     ///////////////////////////////////////////////////////////////////////////
     struct Desc
     {
-        std::string InputPath;      //!< 入力ファイルパス.
-        std::string OutputPath;     //!< 出力ファイルパス(mdbのみ).
-    };
-
-    ///////////////////////////////////////////////////////////////////////////
-    // DescEx structure
-    ///////////////////////////////////////////////////////////////////////////
-    struct DescEx
-    {
         std::string InputPath;          //!< 入力ファイルパス.
+        std::string ModelOutputPath;    //!< モデル出力ファイルパス.
         std::string TextureOutputPath;  //!< テクスチャ出力ベースパス.
         std::string MaterialOutputPath; //!< マテリアル出力ベースパス.
         bool        ConvertTexture;     //!< テクスチャコンバートを行う場合は true.
@@ -92,8 +84,8 @@ public:
     //! @retval true    変換に成功.
     //! @retval fasle   変換に失敗.
     //-------------------------------------------------------------------------
-    static bool ConvertEx(
-        const DescEx&                       desc,
+    static bool Convert(
+        const Desc&                         desc,
         std::vector<uint8_t>&               modelBinary,
         std::vector<std::vector<uint8_t>>&  materialBinaries);
 

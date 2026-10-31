@@ -42,7 +42,7 @@ struct ShaderParam
     float           Metalness;  //!< メタルネス値.
     float           Ior;        //!< 屈折率.
     asdx::Float3    Emissive;   //!< エミッシブ.
-    uint32_t        Reserved;   //!< 予約領域.
+    float           AlphaCutOff;//!< アルファ抜き閾値.
 };
 
 } // namespace
@@ -80,13 +80,14 @@ bool MaterialConverter::Convert(const Desc& desc)
     auto cull_mode  = doc["cull_mode"].get_uint64().value();
 
     auto param = doc["param"].get_object();
-    auto base_color = param["base_color"].get_array();
-    auto alpha      = param["alpha"].get_double().value();
-    auto occlusion  = param["occlusion"].get_double().value();
-    auto roughness  = param["roughness"].get_double().value();
-    auto metalness  = param["metalness"].get_double().value();
-    auto ior        = param["ior"].get_double().value();
-    auto emissive   = param["emissive"].get_array();
+    auto base_color     = param["base_color"].get_array();
+    auto alpha          = param["alpha"].get_double().value();
+    auto occlusion      = param["occlusion"].get_double().value();
+    auto roughness      = param["roughness"].get_double().value();
+    auto metalness      = param["metalness"].get_double().value();
+    auto ior            = param["ior"].get_double().value();
+    auto emissive       = param["emissive"].get_array();
+    auto alpha_cutoff   = param["alpha_cutoff"].get_double().value();
 
     auto textures = doc["textures"].get_object();
     auto map_base_color = textures["base_color"].get_string().value();
@@ -176,13 +177,14 @@ bool MaterialConverter::Convert(const Material& material, std::vector<uint8_t>& 
         }
 
         ShaderParam shaderParam = {};
-        shaderParam.BaseColor = material.Param.BaseColor;
-        shaderParam.Alpha     = material.Param.Alpha;
-        shaderParam.Occlusion = material.Param.Occlusion;
-        shaderParam.Roughness = material.Param.Roughness;
-        shaderParam.Metalness = material.Param.Metalness;
-        shaderParam.Ior       = material.Param.Ior;
-        shaderParam.Emissive  = material.Param.Emissive;
+        shaderParam.BaseColor   = material.Param.BaseColor;
+        shaderParam.Alpha       = material.Param.Alpha;
+        shaderParam.Occlusion   = material.Param.Occlusion;
+        shaderParam.Roughness   = material.Param.Roughness;
+        shaderParam.Metalness   = material.Param.Metalness;
+        shaderParam.Ior         = material.Param.Ior;
+        shaderParam.Emissive    = material.Param.Emissive;
+        shaderParam.AlphaCutOff = material.Param.AlphaCutOff;
 
         std::vector<uint8_t> buffer;
         buffer.resize(sizeof(ShaderParam));
