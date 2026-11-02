@@ -519,6 +519,7 @@ void ModelViewer::OnTerm()
         m_Materials[i].Reset();
     }
     m_Materials.clear();
+    m_EditMaterials.clear();
     m_DefaultMaterial.Reset();
 
     m_AxisVertexBuffer.Term();
