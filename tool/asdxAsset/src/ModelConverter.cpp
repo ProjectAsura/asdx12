@@ -924,6 +924,7 @@ void ParseMaterial
         RegisterNameTable(nameTable, name.c_str());
 
         EditMaterial res;
+        res.Shader = "DefaultPS";
 
         std::string baseColorMap;
         std::string normalMap;

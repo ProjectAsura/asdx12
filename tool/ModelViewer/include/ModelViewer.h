@@ -22,6 +22,7 @@
 #include <gfx/asdxSkyBox.h>
 #include <imgui.h>
 #include <ImGuizmo.h>
+#include <MaterialConverter.h>
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -140,6 +141,7 @@ private:
 
     asdx::RefPtr<asdx::Model>                   m_Model;
     std::vector<asdx::RefPtr<asdx::Material>>   m_Materials;
+    std::vector<EditMaterial>                   m_EditMaterials;
     asdx::RefPtr<asdx::Material>                m_DefaultMaterial;
 
     //=========================================================================

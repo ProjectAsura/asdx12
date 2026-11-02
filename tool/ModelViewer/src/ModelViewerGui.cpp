@@ -139,6 +139,32 @@ static const char* ToString(asdx::AlphaMode mode)
     }
 }
 
+//-----------------------------------------------------------------------------
+//      カリングモードを文字列にします.
+//-----------------------------------------------------------------------------
+static const char* ToString(asdx::CullMode mode)
+{
+    switch (mode)
+    {
+    case asdx::CullMode::Back:
+        return "Back";
+    case asdx::CullMode::Front:
+        return "Front";
+    case asdx::CullMode::None:
+        return "None";
+    default:
+        return "Unknown";
+    }
+}
+
+//-----------------------------------------------------------------------------
+//      文字列が空かどうかをチェックします. 
+//-----------------------------------------------------------------------------
+bool IsNullOrEmpty(const std::string& str)
+{
+    return str.empty() || str == "NONE";
+}
+
 } // namespace
 
 
@@ -518,7 +544,6 @@ void ModelViewer::DrawMeshTab()
 //-----------------------------------------------------------------------------
 void ModelViewer::DrawMaterialTab()
 {
-#if 0
     if (!ImGui::BeginTabItem(asdx::ToChar(u8"マテリアル")))
         return;
 
@@ -527,82 +552,98 @@ void ModelViewer::DrawMaterialTab()
         auto count = m_Model->GetMaterialCount();
         for(auto i=0u; i<count; ++i)
         {
-            const auto& res = m_Model->GetResMaterial(i);
             ImGui::PushID(i);
 
-            auto name = asdx::MaterialProxy::GetName(res);
+            auto hash = m_Model->GetMaterial(i);
+            auto name = m_Model->FindName(hash);
+            assert(!name.IsNullOrEmpty());
+
             if (!ImGui::CollapsingHeader(name.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
             {
                 ImGui::PopID();
                 continue;
             }
 
-            const auto mtl = m_Model->GetMaterial(i);
+            const auto& mtl = m_EditMaterials[i];
 
             ImGui::BeginTable("##ParamTable", 2);
             ImGui::TableSetupColumn("##ParamRow0", ImGuiTableColumnFlags_WidthFixed);
 
-            //auto baseColor = asdx::MaterialProxy::GetBaseColorFactor(res);
-            //TABLE2(
-            //    ImGui::Text(asdx::ToChar(u8"ベースカラー")),
-            //    ImGui::Text("%f, %f, %f", baseColor.x, baseColor.y, baseColor.z));
+            auto baseColor = mtl.Param.BaseColor;
+            TABLE2(
+                ImGui::Text(asdx::ToChar(u8"ベースカラー")),
+                ImGui::Text("%f, %f, %f", baseColor.x, baseColor.y, baseColor.z));
 
-            //auto alpha = asdx::MaterialProxy::GetAlpha(res);
-            //TABLE2(
-            //    ImGui::Text(asdx::ToChar(u8"アルファ値")),
-            //    ImGui::Text("%f", alpha));
+            auto alpha = mtl.Param.Alpha;
+            TABLE2(
+                ImGui::Text(asdx::ToChar(u8"アルファ値")),
+                ImGui::Text("%f", alpha));
 
-            //auto occlusion = asdx::MaterialProxy::GetOcclusionFactor(res);
-            //TABLE2(
-            //    ImGui::Text(asdx::ToChar(u8"オクルージョン")),
-            //    ImGui::Text("%f", occlusion));
+            auto occlusion = mtl.Param.Occlusion;
+            TABLE2(
+                ImGui::Text(asdx::ToChar(u8"オクルージョン")),
+                ImGui::Text("%f", occlusion));
 
-            //auto roughness = asdx::MaterialProxy::GetRoughnessFactor(res);
-            //TABLE2(
-            //    ImGui::Text(asdx::ToChar(u8"ラフネス")),
-            //    ImGui::Text("%f", roughness));
+            auto roughness = mtl.Param.Roughness;
+            TABLE2(
+                ImGui::Text(asdx::ToChar(u8"ラフネス")),
+                ImGui::Text("%f", roughness));
 
-            //auto ior = asdx::MaterialProxy::GetIor(res);
-            //TABLE2(
-            //    ImGui::Text(asdx::ToChar(u8"屈折率")),
-            //    ImGui::Text("%f", ior));
+            auto metalness = mtl.Param.Metalness;
+            TABLE2(
+                ImGui::Text(asdx::ToChar(u8"メタルネス")),
+                ImGui::Text("%f", metalness));
 
-            //auto emissive = asdx::MaterialProxy::GetEmissiveFactor(res);
-            //TABLE2(
-            //    ImGui::Text(asdx::ToChar(u8"エミッシブ")),
-            //    ImGui::Text("%f, %f, %f", emissive.x, emissive.y, emissive.z));
+            auto ior = mtl.Param.Ior;
+            TABLE2(
+                ImGui::Text(asdx::ToChar(u8"屈折率")),
+                ImGui::Text("%f", ior));
 
-            //auto alphaCutOff = asdx::MaterialProxy::GetAlphaCutOff(res);
-            //TABLE2(
-            //    ImGui::Text(asdx::ToChar(u8"アルファカットオフ")),
-            //    ImGui::Text("%f", alphaCutOff));
+            auto emissive = mtl.Param.Emissive;
+            TABLE2(
+                ImGui::Text(asdx::ToChar(u8"エミッシブ")),
+                ImGui::Text("%f, %f, %f", emissive.x, emissive.y, emissive.z));
 
-            //auto alphaMode = asdx::MaterialProxy::GetAlphaMode(res);
-            //TABLE2(
-            //    ImGui::Text(asdx::ToChar(u8"アルファモード")),
-            //    ImGui::Text("%s", ToString(alphaMode)));
+            auto alphaCutOff = mtl.Param.AlphaCutOff;
+            TABLE2(
+                ImGui::Text(asdx::ToChar(u8"アルファカットオフ")),
+                ImGui::Text("%f", alphaCutOff));
 
-            //ImGui::EndTable();
-            //ImGui::Separator();
+            auto alphaMode = asdx::AlphaMode(mtl.AlphaMode);
+            TABLE2(
+                ImGui::Text(asdx::ToChar(u8"アルファモード")),
+                ImGui::Text("%s", ToString(alphaMode)));
 
-            //auto baseColorMap = asdx::MaterialProxy::GetBaseColorMap(res);
-            //auto baseColorPath = (baseColorMap.is_null_or_empty() ? "NONE" : baseColorMap.c_str());
-            //DrawTextureInfo(asdx::ToChar(u8"ベースカラーマップ"), baseColorPath, mtl->GetTexture(asdx::Material::TEXTURE_BASE_COLOR));
-            //ImGui::Separator();
+            auto cullMode = asdx::CullMode(mtl.CullMode);
+            TABLE2(
+                ImGui::Text(asdx::ToChar(u8"カリングモード")),
+                ImGui::Text("%s", ToString(cullMode)));
 
-            //auto normalMap = asdx::MaterialProxy::GetNormalMap(res);
-            //auto normalPath = (normalMap.is_null_or_empty() ? "NONE" : normalMap.c_str());
-            //DrawTextureInfo(asdx::ToChar(u8"法線マップ"), normalPath, mtl->GetTexture(asdx::Material::TEXTURE_NORMAL));
-            //ImGui::Separator();
+            ImGui::EndTable();
+            ImGui::Separator();
 
-            //auto ormMap = asdx::MaterialProxy::GetOrmMap(res);
-            //auto ormPath = (ormMap.is_null_or_empty() ? "NONE" : ormMap.c_str());
-            //DrawTextureInfo(asdx::ToChar(u8"ORMマップ"), ormPath, mtl->GetTexture(asdx::Material::TEXTURE_ORM));
-            //ImGui::Separator();
+            auto  baseColorMap  = mtl.Textures[MaterialConverter::kBaseColorMapIndex];
+            auto  baseColorPath = (IsNullOrEmpty(baseColorMap) ? "NONE" : baseColorMap.c_str());
+            auto& baseColorTex  = m_Materials[i]->GetTexture(MaterialConverter::kBaseColorMapIndex);
+            DrawTextureInfo(asdx::ToChar(u8"ベースカラーマップ"), baseColorPath, baseColorTex);
+            ImGui::Separator();
 
-            //auto emissiveMap = asdx::MaterialProxy::GetEmissiveMap(res);
-            //auto emissivePath = (emissiveMap.is_null_or_empty() ? "NONE" : emissiveMap.c_str());
-            //DrawTextureInfo(asdx::ToChar(u8"エミッシブマップ"), emissivePath, mtl->GetTexture(asdx::Material::TEXTURE_EMISSIVE));
+            auto  normalMap  = mtl.Textures[MaterialConverter::kNormalMapIndex];
+            auto  normalPath = (IsNullOrEmpty(normalMap) ? "NONE" : normalMap.c_str());
+            auto& normalTex  = m_Materials[i]->GetTexture(MaterialConverter::kNormalMapIndex);
+            DrawTextureInfo(asdx::ToChar(u8"法線マップ"), normalPath, normalTex);
+            ImGui::Separator();
+
+            auto  ormMap  = mtl.Textures[MaterialConverter::kOrmMapIndex];
+            auto  ormPath = (IsNullOrEmpty(ormMap) ? "NONE" : ormMap.c_str());
+            auto& ormTex  = m_Materials[i]->GetTexture(MaterialConverter::kOrmMapIndex);
+            DrawTextureInfo(asdx::ToChar(u8"ORMマップ"), ormPath, ormTex);
+            ImGui::Separator();
+
+            auto  emissiveMap  = mtl.Textures[MaterialConverter::kEmissiveMapIndex];
+            auto  emissivePath = (IsNullOrEmpty(emissiveMap) ? "NONE" : emissiveMap.c_str());
+            auto& emissiveTex  = m_Materials[i]->GetTexture(MaterialConverter::kEmissiveMapIndex);
+            DrawTextureInfo(asdx::ToChar(u8"エミッシブマップ"), emissivePath, emissiveTex);
             //ImGui::Separator();
 
             ImGui::PopID();
@@ -614,7 +655,6 @@ void ModelViewer::DrawMaterialTab()
     }
 
     ImGui::EndTabItem();
-#endif
 }
 
 //-----------------------------------------------------------------------------

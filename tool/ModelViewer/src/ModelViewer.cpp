@@ -1106,6 +1106,7 @@ void ModelViewer::RecreateModel()
         if (count > 0)
         {
             materials.resize(count);
+            m_EditMaterials.resize(count);
             for(size_t i=0; i<count; ++i)
             {
                 auto hash = pModel->GetMaterial(i);
@@ -1125,6 +1126,27 @@ void ModelViewer::RecreateModel()
                 bin.Load(std::move(materialBinary), m_ModelBaseDir.c_str());
 
                 auto res = bin.GetResource();
+
+                const auto param = reinterpret_cast<const EditMaterialParam*>(res.Buffer.data());
+
+                m_EditMaterials[i].Shader               = res.Shader.c_str();
+                m_EditMaterials[i].AlphaMode            = res.AlphaMode;
+                m_EditMaterials[i].CullMode             = res.CullMode;
+                m_EditMaterials[i].Param.BaseColor      = param->BaseColor;
+                m_EditMaterials[i].Param.Alpha          = param->Alpha;
+                m_EditMaterials[i].Param.Occlusion      = param->Occlusion;
+                m_EditMaterials[i].Param.Roughness      = param->Roughness;
+                m_EditMaterials[i].Param.Metalness      = param->Metalness;
+                m_EditMaterials[i].Param.Ior            = param->Ior;
+                m_EditMaterials[i].Param.Emissive       = param->Emissive;
+                m_EditMaterials[i].Param.AlphaCutOff    = param->AlphaCutOff;
+
+                m_EditMaterials[i].Textures.resize(4);
+                m_EditMaterials[i].Textures[MaterialConverter::kBaseColorMapIndex]  = res.Textures[MaterialConverter::kBaseColorMapIndex].c_str();
+                m_EditMaterials[i].Textures[MaterialConverter::kNormalMapIndex]     = res.Textures[MaterialConverter::kNormalMapIndex].c_str();
+                m_EditMaterials[i].Textures[MaterialConverter::kOrmMapIndex]        = res.Textures[MaterialConverter::kOrmMapIndex].c_str();
+                m_EditMaterials[i].Textures[MaterialConverter::kEmissiveMapIndex]   = res.Textures[MaterialConverter::kEmissiveMapIndex].c_str();
+
                 if (!asdx::Material::Create(res, materials[i].GetAddress()))
                     continue;
             }
