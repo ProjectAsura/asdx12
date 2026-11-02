@@ -12,8 +12,56 @@
 #include <string>
 #include <vector>
 #include <string_view>
+#include <BinaryData.h>
 #include "../../../include/fnd/asdxMath.h"
 
+
+///////////////////////////////////////////////////////////////////////////
+// EditAlphaMode enum
+///////////////////////////////////////////////////////////////////////////
+enum EditAlphaMode : uint8_t
+{
+    Opaque, //!< 不透明.
+    Mask,   //!< マスク.
+    Blend,  //!< アルファブレンド
+};
+
+///////////////////////////////////////////////////////////////////////////
+// EditCullMode enum
+///////////////////////////////////////////////////////////////////////////
+enum EditCullMode : uint8_t
+{
+    Back,   //!< 背面カリング.
+    Front,  //!< 全面カリング.
+    None,   //!< カリングなし.(両面描画) 
+};
+
+///////////////////////////////////////////////////////////////////////////
+// EditMaterialParam structre
+///////////////////////////////////////////////////////////////////////////
+struct EditMaterialParam
+{
+    asdx::Float3    BaseColor   = asdx::Float3(1.0f, 1.0f, 1.0f);   //!< ベースカラー乗算値.
+    float           Alpha       = 1.0f;                             //!< アルファ値.
+    float           Occlusion   = 1.0f;                             //!< オクルージョン乗算値.
+    float           Roughness   = 1.0f;                             //!< ラフネス乗算値.
+    float           Metalness   = 1.0f;                             //!< メタルネス乗算値.
+    float           Ior         = 1.0f;                             //!< 屈折率.
+    asdx::Float3    Emissive    = asdx::Float3(0.0f, 0.0f, 0.0f);   //!< エミッシブ乗算値.
+    float           AlphaCutOff = 0.0f;                             //!< アルファテスト閾値.
+};
+
+///////////////////////////////////////////////////////////////////////////
+// EditMaterial structure
+///////////////////////////////////////////////////////////////////////////
+struct EditMaterial
+{
+    std::string                 Shader;                             //!< マテリアルピクセルシェーダ名.
+    uint8_t                     AlphaMode = EditAlphaMode::Opaque;  //!< アルファモード.
+    uint8_t                     CullMode  = EditCullMode::Back;     //!< カリングモード.
+    EditMaterialParam           Param     = {};                     //!< マテリアルパラメータ.
+    std::vector<std::string>    Textures;                           //!< テクスチャパス.
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 // MaterialConverter class
@@ -35,52 +83,6 @@ public:
         std::string OutputPath; //!< 出力ファイルパス.
     };
 
-    ///////////////////////////////////////////////////////////////////////////
-    // AlphaMode enum
-    ///////////////////////////////////////////////////////////////////////////
-    enum AlphaMode : uint8_t
-    {
-        Opaque, //!< 不透明.
-        Mask,   //!< マスク.
-        Blend,  //!< アルファブレンド
-    };
-
-    ///////////////////////////////////////////////////////////////////////////
-    // CullMode enum
-    ///////////////////////////////////////////////////////////////////////////
-    enum CullMode : uint8_t
-    {
-        Back,   //!< 背面カリング.
-        Front,  //!< 全面カリング.
-        None,   //!< カリングなし.(両面描画) 
-    };
-
-    ///////////////////////////////////////////////////////////////////////////
-    // MaterialParam structre
-    ///////////////////////////////////////////////////////////////////////////
-    struct MaterialParam
-    {
-        asdx::Float3    BaseColor   = asdx::Float3(1.0f, 1.0f, 1.0f);   //!< ベースカラー乗算値.
-        float           Alpha       = 1.0f;                             //!< アルファ値.
-        float           Occlusion   = 1.0f;                             //!< オクルージョン乗算値.
-        float           Roughness   = 1.0f;                             //!< ラフネス乗算値.
-        float           Metalness   = 1.0f;                             //!< メタルネス乗算値.
-        float           Ior         = 1.0f;                             //!< 屈折率.
-        asdx::Float3    Emissive    = asdx::Float3(0.0f, 0.0f, 0.0f);   //!< エミッシブ乗算値.
-        float           AlphaCutOff = 0.0f;                             //!< アルファテスト閾値.
-    };
-
-    ///////////////////////////////////////////////////////////////////////////
-    // Material structure
-    ///////////////////////////////////////////////////////////////////////////
-    struct Material
-    {
-        std::string                 Shader;                         //!< マテリアルピクセルシェーダ名.
-        uint8_t                     AlphaMode = AlphaMode::Opaque;  //!< アルファモード.
-        uint8_t                     CullMode  = CullMode::Back;     //!< カリングモード.
-        MaterialParam               Param     = {};                 //!< マテリアルパラメータ.
-        std::vector<std::string>    Textures;                       //!< テクスチャパス.
-    };
 
     //=========================================================================
     // public variables.
@@ -122,7 +124,7 @@ public:
     //! @retval true    変換に成功.
     //! @retval false   変換に失敗.
     //-------------------------------------------------------------------------
-    static bool Convert(const Material& material, std::vector<uint8_t>& binary);
+    static bool Convert(const EditMaterial& material, Binary& binary);
 
     //-------------------------------------------------------------------------
     //! @brief      逆変換処理を行います.
@@ -132,7 +134,7 @@ public:
     //! @retval true    変換に成功.
     //! @retval false   変化に失敗.
     //-------------------------------------------------------------------------
-    static bool ReverseConvert(const std::string& path, const std::vector<uint8_t>& binary);
+    static bool ReverseConvert(const std::string& path, const Binary& binary);
 
     //-------------------------------------------------------------------------
     //! @brief      逆変換処理を行います.
@@ -142,7 +144,7 @@ public:
     //! @retval true    変換に成功.
     //! @retval false   変化に失敗.
     //-------------------------------------------------------------------------
-    static bool ReverseConvert(const std::vector<uint8_t>& binary, Material& result);
+    static bool ReverseConvert(const Binary& binary, EditMaterial& result);
 
 private:
     //=========================================================================

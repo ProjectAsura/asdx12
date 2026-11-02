@@ -217,8 +217,6 @@ void Model::Term()
     m_Batches.clear();
     m_Batches.shrink_to_fit();
 
-    for(size_t i=0; i<m_HashTable.size(); ++i)
-        m_HashTable[i].clear();
     m_HashTable.clear();
 
     m_MeshInstanceCount = 0;

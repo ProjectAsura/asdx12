@@ -8,6 +8,8 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <fnd/asdxMacro.h>
+#include <fnd/asdxLogger.h>
+#include <fnd/asdxPath.h>
 #include <res/asdxResMaterial.h>
 #include "MaterialBinary_generated.h"
 
@@ -52,7 +54,7 @@ MaterialBinary::~MaterialBinary()
 //-----------------------------------------------------------------------------
 //      メモリからロードします.
 //-----------------------------------------------------------------------------
-void MaterialBinary::Load(std::vector<uint8_t>&& blob)
+void MaterialBinary::Load(std::vector<uint8_t>&& blob, const StringView& dir)
 {
     m_Blob = std::move(blob);
 
@@ -68,10 +70,44 @@ void MaterialBinary::Load(std::vector<uint8_t>&& blob)
 
     auto bin = asdx::res::GetMaterialBinary(m_Blob.data());
 
-    m_Textures.resize(bin->Textures()->size());
-    for(uint32_t i=0; i<m_Textures.size(); ++i)
+    // バイナリバージョンをチェック.
+    assert(bin->Version() == CURRENT_VERSION);
+
+    // テクスチャ数取得.
+    auto count = bin->Textures()->size();
+
+    // ディレクトリ解決を行う.
+    m_ResolvedPaths.resize(count);
+    for(uint32_t i=0; i<count; ++i)
     {
-        m_Textures[i] = StringView(bin->Textures()->Get(i)->c_str());
+        auto src = bin->Textures()->Get(i)->c_str();
+
+        // デフォルトテクスチャは解決しない.
+        if (strstr(src, "default.") != nullptr)
+        {
+            m_ResolvedPaths[i] = src;
+            continue;
+        }
+
+        // ファイルパスを解決する.
+        auto path = std::string(dir.c_str()) + "\\" + src;
+        fs::path findPath;
+        if (!SearchFilePath(path, findPath))
+        {
+            ELOGA("Error : SearchFilePath() Failed. path = %s", path.c_str());
+            m_ResolvedPaths[i] = src;
+            continue;
+        }
+
+        // 解決したパスを設定.
+        m_ResolvedPaths[i] = findPath.string();
+    }
+
+    // テクスチャパスを設定.
+    m_Textures.resize(count);
+    for(uint32_t i=0; i<count; ++i)
+    {
+        m_Textures[i] = StringView(m_ResolvedPaths[i].c_str());;
     }
 }
 
@@ -85,6 +121,9 @@ void MaterialBinary::Term()
 
     m_Textures.clear();
     m_Textures.shrink_to_fit();
+
+    m_ResolvedPaths.clear();
+    m_ResolvedPaths.shrink_to_fit();
 }
 
 //-----------------------------------------------------------------------------

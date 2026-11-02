@@ -10,6 +10,7 @@
 //-----------------------------------------------------------------------------
 #include <cstdint>
 #include <vector>
+#include <string>
 #include <fnd/asdxMath.h>
 #include <fnd/asdxArrayView.h>
 #include <fnd/asdxStringView.h>
@@ -98,8 +99,9 @@ public:
     //! @brief      メモリからロードします.
     //! 
     //! @param[in]      blob        バイナリラージオブジェクト.
+    //! @param[in]      dir         テクスチャベースディレクトリ.
     //-------------------------------------------------------------------------
-    void Load(std::vector<uint8_t>&& blob);
+    void Load(std::vector<uint8_t>&& blob, const StringView& dir);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.
@@ -117,8 +119,9 @@ private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    std::vector<uint8_t>    m_Blob;
-    std::vector<StringView> m_Textures;
+    std::vector<uint8_t>        m_Blob;
+    std::vector<StringView>     m_Textures;
+    std::vector<std::string>    m_ResolvedPaths;
 
     //=========================================================================
     // private method.

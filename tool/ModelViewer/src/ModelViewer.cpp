@@ -19,8 +19,6 @@
 #include "ModelConverter.h"
 #include "MotionConverter.h"
 #include "TextureConverter.h"
-#include "MaterialConverter.h"
-#include <assimp/Exporter.hpp>
 
 
 namespace {
@@ -531,7 +529,6 @@ void ModelViewer::OnTerm()
     m_SkyContext .Term();
 
     m_ModelBinary.clear();
-    m_MaterialBinaries.clear();
 
     asdx::SafeRelease(m_EnvMap);
     asdx::SafeRelease(m_DiffuseLD);
@@ -723,7 +720,7 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
 
             for(auto j=0u; j<meshIds.size(); ++j)
             {
-                const auto mesh = m_Model->GetMesh(meshIds[j]);
+                const auto& mesh = m_Model->GetMesh(meshIds[j]);
                 //if (!mesh->IsVisible())
                 //    continue;
 
@@ -731,7 +728,9 @@ void ModelViewer::OnFrameRender(const asdx::App::FrameEventArgs& args)
                 auto materialId = mesh.GetMaterialId();
                 if (materialId != UINT32_MAX && !m_Materials.empty())
                 {
-                    pMaterial = m_Materials[materialId].GetPtr();
+                    auto mat = m_Materials[materialId].GetPtr();
+                    if (mat != nullptr)
+                        pMaterial = mat;
                 }
 
                 const auto alphaMode = pMaterial->GetAlphaMode();
@@ -984,7 +983,7 @@ void ModelViewer::OnDrop(const wchar_t** dropFiles, uint32_t fileCount)
     auto path = asdx::fs::path(dropFiles[0]);
     auto baseDir = path.parent_path().string();
 
-    std::vector<uint8_t> modelBinary;
+    Binary modelBinary;
     if (path.extension().string() == ".mdb")
     {
         if (asdx::LoadA(path.string().c_str(), modelBinary))
@@ -999,24 +998,12 @@ void ModelViewer::OnDrop(const wchar_t** dropFiles, uint32_t fileCount)
     }
     else
     {
-
-        ModelConverter::Desc desc;
-        desc.InputPath          = path.string();
-        desc.ModelOutputPath    = path.replace_extension(".mdb").string();
-        desc.MaterialOutputPath = baseDir + "\\materials\\";
-        desc.TextureOutputPath  = baseDir + "\\textures\\";
-        desc.ConvertMaterial    = true;
-        desc.ConvertTexture     = true;
-
-        std::vector<std::vector<uint8_t>> materialBinaries;
-
-        if (ModelConverter::Convert(desc, modelBinary, materialBinaries))
+        if (ModelConverter::Convert(path.string().c_str(), true, true, modelBinary))
         {
             // モデルパスをカレントディレクトリに変更に.
             m_ModelBaseDir = baseDir;
 
-            m_ModelBinary      = std::move(modelBinary);
-            m_MaterialBinaries = std::move(materialBinaries);
+            m_ModelBinary = std::move(modelBinary);
 
             RecreateModel();
         }
@@ -1115,17 +1102,31 @@ void ModelViewer::RecreateModel()
 
     // マテリアルを生成します.
     {
-        materials.resize(m_MaterialBinaries.size());
-        for(size_t i=0; i<m_MaterialBinaries.size(); ++i)
+        auto count = pModel->GetMaterialCount();
+        if (count > 0)
         {
-            std::vector<uint8_t> copyBinary = m_MaterialBinaries[i];
-            asdx::MaterialBinary bin;
-            bin.Load(std::move(copyBinary));
-
-            if (!asdx::Material::Create(bin.GetResource(), materials[i].GetAddress()))
+            materials.resize(count);
+            for(size_t i=0; i<count; ++i)
             {
-                ELOGA("Error : Material::Create() Failed.");
-                return;
+                auto hash = pModel->GetMaterial(i);
+                auto name = pModel->FindName(hash);
+
+                if (name.IsNullOrEmpty())
+                    continue;
+
+                auto matPath = m_ModelBaseDir + "\\materials\\" + name.c_str() + ".mtb";
+                Binary materialBinary;
+
+                // マテリアルバイナリがあるかどうかチェック.
+                if (!asdx::LoadA(matPath.c_str(), materialBinary))
+                    continue;
+
+                asdx::MaterialBinary bin;
+                bin.Load(std::move(materialBinary), m_ModelBaseDir.c_str());
+
+                auto res = bin.GetResource();
+                if (!asdx::Material::Create(res, materials[i].GetAddress()))
+                    continue;
             }
         }
     }
@@ -1155,16 +1156,38 @@ void ModelViewer::RecreateModel()
         m_ModelInfo.IndexCount  += mesh.GetIndexCount();
     }
 
-    //auto sphere = m_Model->GetLocalSphere();
+    asdx::BoundingSphere sphere;
+    {
+        for(size_t i=0; i<m_Model->GetMeshBatchCount(); ++i)
+        {
+            const auto& batch = m_Model->GetMeshBatch(i);
 
-    //// カメラを初期化.
-    //m_Camera.Init(
-    //    asdx::Vector3(sphere.Center.x, sphere.Center.y, sphere.Center.z + sphere.Radius * 3.0f),
-    //    sphere.Center,
-    //    asdx::Vector3(0.0f, 0.0f, 1.0f),
-    //    0.1f,
-    //    10000.0f);
-    //m_Camera.Present();
+            asdx::BoundingSphere bs;
+            for(size_t j=0; j<batch.Meshes.size(); ++j)
+            {
+                const auto& mesh = m_Model->GetMesh(batch.Meshes[j]);
+                if (j == 0)
+                    bs = mesh.GetSphere();
+                else
+                    bs = asdx::BoundingSphere::CreateMerged(bs, mesh.GetSphere());
+            }
+
+            for(size_t j=0; j<batch.Instances.size(); ++j)
+            {
+                auto translatedBS = asdx::BoundingSphere::Transform(bs, batch.Instances[j].Transform);
+                sphere = asdx::BoundingSphere::CreateMerged(sphere, translatedBS);
+            }
+        }
+    }
+
+    // カメラを初期化.
+    m_Camera.Init(
+        asdx::Vector3(sphere.Center.x, sphere.Center.y, sphere.Center.z + sphere.Radius * 3.0f),
+        sphere.Center,
+        asdx::Vector3(0.0f, 0.0f, 1.0f),
+        0.1f,
+        10000.0f);
+    m_Camera.Present();
 
     // モーションプレイヤーを初期化.
     m_MotionPlayer.Init(pModel);
@@ -1203,7 +1226,7 @@ void ModelViewer::RecreateModel()
     for(auto i=0u; i<batchCount; ++i)
     {
         const auto batch = m_Model->GetMeshBatch(i);
-        for(auto j=0u; j<batch.Instances.size(); ++i)
+        for(auto j=0u; j<batch.Instances.size(); ++j)
         {
             auto& mtx = batch.Instances[j].Transform;
             ptr0[offset] = mtx;
@@ -1289,24 +1312,15 @@ void ModelViewer::LoadModel()
     {
         m_ModelBaseDir = path.parent_path().string();
 
-        std::vector<std::vector<uint8_t>> materialBinaries;
+       auto inputPath = path.replace_extension(".mdb").string();
 
-        ModelConverter::Desc desc;
-        desc.ConvertMaterial    = true;
-        desc.ConvertTexture     = true;
-        desc.MaterialOutputPath = m_ModelBaseDir + "\\materials\\";
-        desc.TextureOutputPath  = m_ModelBaseDir + "\\textures\\";
-        desc.InputPath          = input;
-        desc.ModelOutputPath    = path.replace_extension(".mdb").string();
-
-        if (!ModelConverter::Convert(desc, modelBinary, materialBinaries))
+        if (!ModelConverter::Convert(inputPath, true, true, modelBinary))
         {
             ELOGA("Error : ModelConverter::Convert() Failed.");
             return;
         }
 
         m_ModelBinary       = std::move(modelBinary);
-        m_MaterialBinaries  = std::move(materialBinaries);
         RecreateModel();
     }
 }

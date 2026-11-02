@@ -428,15 +428,17 @@ void ParseMesh
     }
 
     std::vector<uint32_t> vertexIndices;
-    vertexIndices.resize(srcMesh->mNumFaces * 3);
+    vertexIndices.reserve(srcMesh->mNumFaces * 3);
     for(auto i=0u; i<srcMesh->mNumFaces; ++i)
     {
         const auto& face = srcMesh->mFaces[i];
-        assert(face.mNumIndices == 3);
+        if (face.mNumIndices < 3)
+            continue;
 
-        vertexIndices[i * 3 + 0] = face.mIndices[0];
-        vertexIndices[i * 3 + 1] = face.mIndices[1];
-        vertexIndices[i * 3 + 2] = face.mIndices[2];
+        assert(face.mNumIndices == 3);
+        vertexIndices.push_back(face.mIndices[0]);
+        vertexIndices.push_back(face.mIndices[1]);
+        vertexIndices.push_back(face.mIndices[2]);
     }
 
     if (srcMesh->HasBones())
@@ -651,7 +653,7 @@ void ParseMesh
         context.m_pInterface = &iface;
         context.m_pUserData  = &info;
         [[maybe_unused]] auto ret = genTangSpaceDefault(&context);
-        assert(ret == 1);
+        //assert(ret == 1);
     }
 
     RegisterNameTable(nameTable, srcMesh->mName.C_Str());
@@ -901,9 +903,7 @@ void ParseMaterial
     const aiScene*                      pScene,
     std::vector<uint64_t>&              materials,
     std::vector<std::string>&           nameTable,
-    std::vector<std::vector<uint8_t>>&  binaries,
     const std::string&                  inputDir,
-    const std::string&                  txbOutPath,
     bool                                txbConvert,
     bool                                mtbConvert
 )
@@ -923,8 +923,7 @@ void ParseMaterial
         // ハッシュテーブルに追加.
         RegisterNameTable(nameTable, name.c_str());
 
-
-        MaterialConverter::Material res;
+        EditMaterial res;
 
         std::string baseColorMap;
         std::string normalMap;
@@ -934,6 +933,8 @@ void ParseMaterial
         auto isOpaque = false;
         int shadingModel = 0;
         srcMat->Get(AI_MATKEY_SHADING_MODEL, shadingModel);
+
+        auto txbOutPath = inputDir;
 
         // 法線マップ.
         normalMap = GetTexturePath(pScene, srcMat, aiTextureType_NORMALS, inputDir, txbOutPath, txbConvert);
@@ -974,7 +975,7 @@ void ParseMaterial
         {
             bool value;
             if (srcMat->Get(AI_MATKEY_TWOSIDED, value) == AI_SUCCESS)
-            { res.CullMode = MaterialConverter::CullMode::None; }
+            { res.CullMode = EditCullMode::None; }
         }
 
         // PBRモデルの場合.
@@ -1022,18 +1023,18 @@ void ParseMaterial
                 {
                     if (strcmp(alphaModeStr.C_Str(), "OPQAUE") == 0)
                     {
-                        res.AlphaMode = MaterialConverter::AlphaMode::Opaque;
+                        res.AlphaMode = EditAlphaMode::Opaque;
                     }
                     else if (strcmp(alphaModeStr.C_Str(), "MASK") == 0)
                     {
-                        res.AlphaMode = MaterialConverter::AlphaMode::Mask;
+                        res.AlphaMode = EditAlphaMode::Mask;
                         float alphaCutOff = 0.5f;
                         srcMat->Get("$mat.gltf.alphaCutoff", 0, 0, alphaCutOff);
                         res.Param.AlphaCutOff = alphaCutOff;
                     }
                     else if (strcmp(alphaModeStr.C_Str(), "BLEND") == 0)
                     {
-                        res.AlphaMode = MaterialConverter::AlphaMode::Blend;
+                        res.AlphaMode = EditAlphaMode::Blend;
                     }
                 }
             }
@@ -1075,7 +1076,12 @@ void ParseMaterial
             std::vector<uint8_t> bin;
             if (MaterialConverter::Convert(res, bin))
             {
-                binaries.emplace_back(bin);
+                auto matDir  = PathCombine(inputDir, "materials");
+                auto binPath = PathCombine(matDir, name + ".mtb");
+                if (!SaveBinary(binPath.c_str(), bin))
+                {
+                    ELOGA("Error : MaterialBinary Save Failed. path = %s", binPath.c_str());
+                }
             }
         }
     }
@@ -1211,58 +1217,26 @@ uint32_t ModelConverter::GetCurrentVersion()
 //-----------------------------------------------------------------------------
 bool ModelConverter::Convert(const Desc& desc)
 {
-    if (desc.InputPath.empty() || desc.ModelOutputPath.empty())
+    if (desc.InputPath.empty() || desc.OutputPath.empty())
     {
         ELOGA("Error : Invalid Argument.");
         return false;
     }
 
-    std::filesystem::path basePath = desc.ModelOutputPath;
+    std::filesystem::path basePath = desc.OutputPath;
     basePath = basePath.parent_path();
 
-    std::vector<uint8_t> modelBinary;
-    std::vector<std::vector<uint8_t>> materialBinaries; 
-    if (!Convert(desc, modelBinary, materialBinaries))
+    Binary modelBinary;
+    if (!Convert(desc.InputPath, desc.ConvertTexture, desc.ConvertMaterial, modelBinary))
     {
         ELOGA("Error : Convert Failed.");
         return false;
     }
 
     // モデルバイナリをファイルに出力.
+    if (!SaveBinary(desc.OutputPath.c_str(), modelBinary))
     {
-        FILE* fp = nullptr;
-        auto err = fopen_s(&fp, desc.ModelOutputPath.c_str(), "wb");
-        if (err != 0)
-        {
-            ELOGA("Error : Output File Open Failed. path = %s", desc.ModelOutputPath.c_str());
-            return false;
-        }
-
-        fwrite(modelBinary.data(), modelBinary.size(), 1, fp);
-        fclose(fp);
-    }
-
-    if (desc.ConvertMaterial)
-    {
-        auto modelBin = asdx::res::GetModelBinary(modelBinary.data());
-        for(size_t i=0; i<materialBinaries.size(); ++i)
-        {
-            auto hash = modelBin->Materials()->Get(uint32_t(i));
-            auto name = modelBin->HashTable()->LookupByKey(hash);
-
-            auto path = desc.MaterialOutputPath + "\\" + std::string(name->Text()->c_str()) + ".mtb";
-
-            FILE* fp = nullptr;
-            auto err = fopen_s(&fp, path.c_str(), "wb");
-            if (err != 0)
-            {
-                ELOGA("Error : Output File Open Failed. path = %s", path.c_str());
-                continue;
-            }
-
-            fwrite(materialBinaries[i].data(), materialBinaries[i].size(), 1, fp);
-            fclose(fp);
-        }
+        return false;
     }
 
     return true;
@@ -1273,22 +1247,27 @@ bool ModelConverter::Convert(const Desc& desc)
 //-----------------------------------------------------------------------------
 bool ModelConverter::Convert
 (
-    const Desc&                         desc,
-    std::vector<uint8_t>&               modelBinary,
-    std::vector<std::vector<uint8_t>>&  materialBinaries
+    const std::string& path,
+    bool               convertTexture,
+    bool               convertMaterial,
+    Binary&            modelBinary
 )
 {
-    if (desc.InputPath.empty())
+    // 引数チェック.
+    if (path.empty())
     {
         ELOGA("Error : Invalid Argument.");
         return false;
     }
 
-    std::string inputDir;
-    if (!desc.TextureOutputPath.empty() && desc.ConvertTexture)
+    // 入力ディレクトリを取得.
+    std::string inputDir = std::filesystem::path(path).parent_path().string();
+
+    if (!convertTexture)
     {
+        auto dir = std::filesystem::path(inputDir + "\\textures");
+
         // テクスチャ出力ディレクトリが存在しなければ作成する.
-        auto dir = std::filesystem::path(desc.TextureOutputPath);
         if (!asdx::fs::exists(dir))
         {
             if (!asdx::fs::create_directories(dir))
@@ -1296,10 +1275,11 @@ bool ModelConverter::Convert
         }
     }
 
-    if (!desc.MaterialOutputPath.empty() && desc.ConvertMaterial)
+    if (!convertMaterial)
     {
+        auto dir = std::filesystem::path(inputDir + "\\materials");
+
         // テクスチャ出力ディレクトリが存在しなければ作成する.
-        auto dir = std::filesystem::path(desc.MaterialOutputPath);
         if (!asdx::fs::exists(dir))
         {
             if (!asdx::fs::create_directories(dir))
@@ -1313,11 +1293,11 @@ bool ModelConverter::Convert
     flag |= aiProcess_FlipWindingOrder;
 
     Assimp::Importer importer;
-    auto pScene = importer.ReadFile(desc.InputPath.c_str(), flag);
+    auto pScene = importer.ReadFile(path.c_str(), flag);
 
     if (pScene == nullptr)
     {
-        ELOGA("Error : Importer::ReadFile() Failed. path = %s", desc.InputPath.c_str());
+        ELOGA("Error : Importer::ReadFile() Failed. path = %s", path.c_str());
         return false;
     }
 
@@ -1341,16 +1321,6 @@ bool ModelConverter::Convert
         ParseMesh(builder, boneMap, pScene->mRootNode, dstMesh, srcMesh, nameTable);
     }
 
-    //flatbuffers::FlatBufferBuilder&     builder,
-    //const aiScene*                      pScene,
-    //std::vector<uint64_t>&              materials,
-    //std::vector<std::string>&           nameTable,
-    //std::vector<std::vector<uint8_t>>&  binaries,
-    //const std::string&                  inputDir,
-    //const std::string&                  txbOutPath,
-    //bool                                txbConvert,
-    //bool                                mtbConvert
-
     // マテリアルデータを変換.
     std::vector<uint64_t> materials;
     ParseMaterial(
@@ -1358,11 +1328,9 @@ bool ModelConverter::Convert
         pScene,
         materials,
         nameTable,
-        materialBinaries,
-        desc.InputPath,
-        desc.TextureOutputPath,
-        desc.ConvertTexture,
-        desc.ConvertMaterial);
+        inputDir,
+        convertTexture,
+        convertMaterial);
 
     // メッシュインスタンスを変換.
     std::unordered_map<uint64_t, MeshBatch> batches;

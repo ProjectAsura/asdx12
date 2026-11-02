@@ -140,16 +140,10 @@ bool MaterialConverter::Convert(const Desc& desc)
         binary.resize(builder.GetSize());
         memcpy(binary.data(), builder.GetBufferPointer(), builder.GetSize());
 
-        FILE* fp = nullptr;
-        auto err = fopen_s(&fp, desc.OutputPath.c_str(), "wb");
-        if (err != 0)
+        if (!SaveBinary(desc.OutputPath.c_str(), binary))
         {
-            ELOGA("Error : Output File Open Failed. path = %s, errcode = 0x%x", desc.OutputPath.c_str(), err);
             return false;
         }
-
-        fwrite(binary.data(), binary.size(), 1, fp);
-        fclose(fp);
     }
 
     return true;
@@ -158,7 +152,7 @@ bool MaterialConverter::Convert(const Desc& desc)
 //-----------------------------------------------------------------------------
 //      変換処理を行います.
 //-----------------------------------------------------------------------------
-bool MaterialConverter::Convert(const Material& material, std::vector<uint8_t>& binary)
+bool MaterialConverter::Convert(const EditMaterial& material, Binary& binary)
 {
     flatbuffers::FlatBufferBuilder builder(1024);
 
@@ -208,7 +202,7 @@ bool MaterialConverter::Convert(const Material& material, std::vector<uint8_t>& 
 //-----------------------------------------------------------------------------
 //      逆変換処理を行います.
 //-----------------------------------------------------------------------------
-bool MaterialConverter::ReverseConvert(const std::string& path, const std::vector<uint8_t>& binary)
+bool MaterialConverter::ReverseConvert(const std::string& path, const Binary& binary)
 {
     // 引数チェック.
     if (path.empty() || binary.empty())
@@ -268,7 +262,7 @@ bool MaterialConverter::ReverseConvert(const std::string& path, const std::vecto
 //-----------------------------------------------------------------------------
 //      逆変換処理を行います.
 //-----------------------------------------------------------------------------
-bool MaterialConverter::ReverseConvert(const std::vector<uint8_t>& binary, Material& result)
+bool MaterialConverter::ReverseConvert(const std::vector<uint8_t>& binary, EditMaterial& result)
 {
     // 引数チェック.
     if (binary.empty())

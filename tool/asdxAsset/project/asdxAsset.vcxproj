@@ -176,6 +176,7 @@
     <ClCompile Include="..\..\..\external\xxHash\xxhash.c" />
     <ClCompile Include="..\..\..\src\edit\asdxJsonWriter.cpp" />
     <ClCompile Include="..\..\..\src\fnd\asdxLogger.cpp" />
+    <ClCompile Include="..\src\BinaryData.cpp" />
     <ClCompile Include="..\src\FontConverter.cpp" />
     <ClCompile Include="..\src\LevelConverter.cpp" />
     <ClCompile Include="..\src\MapChipConverter.cpp" />
@@ -186,6 +187,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\include\edit\asdxJsonWriter.h" />
+    <ClInclude Include="..\include\BinaryData.h" />
     <ClInclude Include="..\include\FontConverter.h" />
     <ClInclude Include="..\include\LevelConverter.h" />
     <ClInclude Include="..\include\MapChipConverter.h" />

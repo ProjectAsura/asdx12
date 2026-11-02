@@ -24,6 +24,7 @@
 //-----------------------------------------------------------------------------
 #include <string>
 #include <vector>
+#include <BinaryData.h>
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -43,9 +44,7 @@ public:
     struct Desc
     {
         std::string InputPath;          //!< 入力ファイルパス.
-        std::string ModelOutputPath;    //!< モデル出力ファイルパス.
-        std::string TextureOutputPath;  //!< テクスチャ出力ベースパス.
-        std::string MaterialOutputPath; //!< マテリアル出力ベースパス.
+        std::string OutputPath;         //!< モデル出力ファイルパス.
         bool        ConvertTexture;     //!< テクスチャコンバートを行う場合は true.
         bool        ConvertMaterial;    //!< マテリアルコンバートを行う場合は true.
     };
@@ -78,16 +77,14 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      変換処理を行います.
     //! 
-    //! @param[in]      desc            変換設定.
-    //! @param[out]     modelBinary     モデルバイナリの格納先.
-    //! @param[out]     materialBinary  マテリアルバイナリの格納先.
+    //! @param[in]      path       入力ファイルパス.
+    //! @param[in]      convTxb    テクスチャコンバートを行う場合は true.
+    //! @param[in]      convMtb    マテリアルコンバートを行う場合は true.
+    //! @param[out]     binary     モデルバイナリの格納先.
     //! @retval true    変換に成功.
     //! @retval fasle   変換に失敗.
     //-------------------------------------------------------------------------
-    static bool Convert(
-        const Desc&                         desc,
-        std::vector<uint8_t>&               modelBinary,
-        std::vector<std::vector<uint8_t>>&  materialBinaries);
+    static bool Convert(const std::string& path, bool convTxb, bool convMtb, Binary& binary);
 
     //-------------------------------------------------------------------------
     //! @brief      逆変換処理を行います.
@@ -98,10 +95,7 @@ public:
     //! @retval true    変換に成功.
     //! @retval false   変換に失敗.
     //-------------------------------------------------------------------------
-    static bool ReverseConvert(
-        const std::vector<uint8_t>& binary,
-        const char*                 format,
-        const std::string&          path);
+    static bool ReverseConvert(const Binary& binary, const char* format, const std::string& path);
 
 private:
     //=========================================================================

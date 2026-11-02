@@ -449,11 +449,11 @@ void ModelViewer::DrawMeshTab()
         {
             ImGui::PushID(i);
 
-            auto& mesh = m_Model->GetMesh(i);
+            const auto& mesh = m_Model->GetMesh(i);
 
             {
                 auto hash = mesh.GetHash();
-                asdx::StringView name =m_Model->FindName(hash);
+                asdx::StringView name = m_Model->FindName(hash);
                 assert(!name.IsNullOrEmpty());
 
                 if (!ImGui::CollapsingHeader(name.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
@@ -463,7 +463,6 @@ void ModelViewer::DrawMeshTab()
                 }
             }
 
-            auto drawMesh = m_Model->GetMesh(i);
             //auto visible = drawMesh->IsVisible();
 
             //if (ImGui::Checkbox(asdx::ToChar(u8"表示"), &visible))

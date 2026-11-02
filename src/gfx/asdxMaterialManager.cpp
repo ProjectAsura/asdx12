@@ -7,6 +7,7 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
+#include <fnd/asdxPath.h>
 #include <fnd/asdxLogger.h>
 #include <fnd/asdxHash.h>
 #include <fnd/asdxFileIO.h>
@@ -107,8 +108,11 @@ MaterialHolder MaterialManager::GetOrCreate(const char* fullPath)
         return MaterialHolder();
     }
 
+    // ベースディレクトリ取得.
+    auto dir = fs::path(fullPath).parent_path().string();
+
     MaterialBinary binary;
-    binary.Load(std::move(blob));
+    binary.Load(std::move(blob), dir.c_str());
 
     // リソース取得.
     auto resource = binary.GetResource();

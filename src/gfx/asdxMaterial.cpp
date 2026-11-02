@@ -9,8 +9,6 @@
 //-----------------------------------------------------------------------------
 #include <fnd/asdxLogger.h>
 #include <gfx/asdxMaterial.h>
-#include <gfx/asdxUpdateCommand.h>
-#include <gfx/asdxTexture.h>
 
 
 namespace asdx {
@@ -37,6 +35,13 @@ Material::~Material()
 //-----------------------------------------------------------------------------
 bool Material::Init(const ResMaterial& res)
 {
+    // 引数チェック.
+    if (res.Shader.empty())
+    {
+        ELOGA("Error : Invalid Argument.");
+        return false;
+    }
+
     // 定数バッファ初期化.
     auto bufSize = RoundUp<uint64_t>(res.Buffer.size(), 256u);
     if (!m_Buffer.Init(bufSize))

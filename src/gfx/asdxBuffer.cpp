@@ -264,9 +264,13 @@ void VertexBuffer::Unmap()
 D3D12_VERTEX_BUFFER_VIEW VertexBuffer::GetVBV() const
 {
     D3D12_VERTEX_BUFFER_VIEW vbv = {};
-    vbv.BufferLocation = m_Resource->GetGPUVirtualAddress();
-    vbv.SizeInBytes    = UINT(m_Resource->GetDesc().Width);
-    vbv.StrideInBytes  = m_Stride;
+
+    if (m_Resource.GetPtr() != nullptr)
+    {
+        vbv.BufferLocation = m_Resource->GetGPUVirtualAddress();
+        vbv.SizeInBytes    = UINT(m_Resource->GetDesc().Width);
+        vbv.StrideInBytes  = m_Stride;
+    }
     return vbv;
 }
 
@@ -441,12 +445,14 @@ void IndexBuffer::Unmap()
 //-----------------------------------------------------------------------------
 D3D12_INDEX_BUFFER_VIEW IndexBuffer::GetIBV() const
 {
-    auto desc = m_Resource->GetDesc();
-
     D3D12_INDEX_BUFFER_VIEW ibv = {};
-    ibv.BufferLocation  = m_Resource->GetGPUVirtualAddress();
-    ibv.SizeInBytes     = UINT(desc.Width);
-    ibv.Format          = (m_IsShortFormat) ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
+    if (m_Resource.GetPtr() != nullptr)
+    {
+        auto desc = m_Resource->GetDesc();
+        ibv.BufferLocation  = m_Resource->GetGPUVirtualAddress();
+        ibv.SizeInBytes     = UINT(desc.Width);
+        ibv.Format          = (m_IsShortFormat) ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
+    }
     return ibv;
 }
 
