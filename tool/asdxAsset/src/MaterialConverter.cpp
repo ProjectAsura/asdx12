@@ -9,18 +9,15 @@
 //-----------------------------------------------------------------------------
 #include <assimp/Importer.hpp>
 #include <assimp/Exporter.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
 #include <MaterialConverter.h>
 #include <MaterialBinary_generated.h>
 #include <simdjson.h>
 #include "../../../include/fnd/asdxMath.h"
+#include "../../../include/fnd/asdxLogger.h"
 #include "../../../include/edit/asdxJsonWriter.h"
 
 
-#ifndef ELOG
-#define ELOG(x, ...) fprintf_s(stderr, "[File:%s, Line:%d] " x "\n", __FILE__, __LINE__, ##__VA_ARGS__ )
-#endif//ELOG
+
 
 namespace {
 
@@ -66,7 +63,7 @@ bool MaterialConverter::Convert(const Desc& desc)
     // 引数チェック.
     if (desc.InputPath.empty() || desc.OutputPath.empty())
     {
-        ELOG("Error : Invalid Argument.");
+        ELOGA("Error : Invalid Argument.");
         return false;
     }
 
@@ -147,7 +144,7 @@ bool MaterialConverter::Convert(const Desc& desc)
         auto err = fopen_s(&fp, desc.OutputPath.c_str(), "wb");
         if (err != 0)
         {
-            ELOG("Error : Output File Open Failed. path = %s, errcode = 0x%x", desc.OutputPath.c_str(), err);
+            ELOGA("Error : Output File Open Failed. path = %s, errcode = 0x%x", desc.OutputPath.c_str(), err);
             return false;
         }
 
@@ -216,7 +213,7 @@ bool MaterialConverter::ReverseConvert(const std::string& path, const std::vecto
     // 引数チェック.
     if (path.empty() || binary.empty())
     {
-        ELOG("Error : Invalid Argument.");
+        ELOGA("Error : Invalid Argument.");
         return false;
     }
 
@@ -260,7 +257,7 @@ bool MaterialConverter::ReverseConvert(const std::string& path, const std::vecto
 
     if (!writer.Save(path.c_str()))
     {
-        ELOG("Error : JsonWriter::Save() Failed. path = %s", path.c_str());
+        ELOGA("Error : JsonWriter::Save() Failed. path = %s", path.c_str());
         return false;
     }
 
@@ -276,7 +273,7 @@ bool MaterialConverter::ReverseConvert(const std::vector<uint8_t>& binary, Mater
     // 引数チェック.
     if (binary.empty())
     {
-        ELOG("Error : Invalid Argument.");
+        ELOGA("Error : Invalid Argument.");
         return false;
     }
 

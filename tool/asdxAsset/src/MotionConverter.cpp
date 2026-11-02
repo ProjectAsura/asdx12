@@ -14,10 +14,7 @@
 #include <assimp/postprocess.h>
 #include <MotionBinary_generated.h>
 #include "../../../external/xxHash/xxhash.h"
-
-#ifndef ELOG
-#define ELOG(x, ...) fprintf_s(stderr, "[File:%s, Line:%d] " x "\n", __FILE__, __LINE__, ##__VA_ARGS__ )
-#endif//ELOG
+#include "../../../include/fnd/asdxLogger.h"
 
 
 namespace {
@@ -113,7 +110,7 @@ bool MotionConverter::Convert(const Desc& desc)
     // 引数チェック.
     if (desc.InputPath.empty() || desc.OutputPath.empty())
     {
-        ELOG("Error : Invalid Argument.");
+        ELOGA("Error : Invalid Argument.");
         return false;
     }
 
@@ -121,7 +118,7 @@ bool MotionConverter::Convert(const Desc& desc)
     std::vector<uint8_t> binary;
     if (!Convert(desc.InputPath, binary))
     {
-        ELOG("Error : Convert Failed.");
+        ELOGA("Error : Convert Failed.");
         return false;
     }
 
@@ -131,7 +128,7 @@ bool MotionConverter::Convert(const Desc& desc)
         auto err = fopen_s(&fp, desc.OutputPath.c_str(), "wb");
         if (err != 0)
         {
-            ELOG("Error : File Open Failed. path = %s, errcode = 0x%x", desc.OutputPath.c_str(), err);
+            ELOGA("Error : File Open Failed. path = %s, errcode = 0x%x", desc.OutputPath.c_str(), err);
             return false;
         }
 
@@ -150,7 +147,7 @@ bool MotionConverter::Convert(const std::string& path, std::vector<uint8_t>& bin
 {
     if (path.empty())
     {
-        ELOG("Error : Invalid Argument.");
+        ELOGA("Error : Invalid Argument.");
         return false;
     }
 
@@ -165,14 +162,14 @@ bool MotionConverter::Convert(const std::string& path, std::vector<uint8_t>& bin
 
     if (pScene == nullptr)
     {
-        ELOG("Error : Importer::ReadFile() Failed. path = %s", path.c_str());
+        ELOGA("Error : Importer::ReadFile() Failed. path = %s", path.c_str());
         return false;
     }
 
     // アニメーションデータがあるかどうかチェック.
     if (!pScene->HasAnimations())
     {
-        ELOG("Error : Not Found Animation Data. path = %s", path.c_str());
+        ELOGA("Error : Not Found Animation Data. path = %s", path.c_str());
         return false;
     }
 

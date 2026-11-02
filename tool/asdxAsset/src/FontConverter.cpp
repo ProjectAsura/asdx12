@@ -16,6 +16,7 @@
 #include <simdjson.h>
 #include <DirectXTex.h>
 #include <FontBinary_generated.h>
+#include "../../include/fnd/asdxLogger.h"
 
 
 namespace {
@@ -123,7 +124,7 @@ bool FontConverter::Convert(const Desc& desc)
         assert(!isFlipY);
         if (isFlipY)
         {
-            fprintf_s(stderr, "Error : yOrigin is not \"top\".");
+            ELOGA("Error : yOrigin is not \"top\".");
             return false;
         }
 
@@ -150,37 +151,37 @@ bool FontConverter::Convert(const Desc& desc)
                 scratchImage);
             if (FAILED(hr))
             {
-                fprintf_s(stderr, "Error : DirectX::LoadFromDDSFile() Failed. errcode = 0x%x\n", hr);
+                ELOGA("Error : DirectX::LoadFromDDSFile() Failed. errcode = 0x%x", hr);
                 return false;
             }
 
             if (texMetaData.format == DXGI_FORMAT_UNKNOWN)
             {
-                fprintf_s(stderr, "Error : Unsupported Resource Format.");
+                ELOGA("Error : Unsupported Resource Format.");
                 return false;
             }
 
             if (texMetaData.width != texWidth)
             {
-                fprintf_s(stderr, "Error : Width not matched. expected width = %u, actual width = %zu\n", texWidth, texMetaData.width);
+                ELOGA("Error : Width not matched. expected width = %u, actual width = %zu", texWidth, texMetaData.width);
                 return false;
             }
 
             if (texMetaData.height != texHeight)
             {
-                fprintf_s(stderr, "Error : Height not matched. expected height = %u, actual height = %zu\n", texHeight, texMetaData.height);
+                ELOGA("Error : Height not matched. expected height = %u, actual height = %zu", texHeight, texMetaData.height);
                 return false;
             }
 
             if (texMetaData.dimension != DirectX::TEX_DIMENSION_TEXTURE2D)
             {
-                fprintf_s(stderr, "Error : Invalid Deimension.");
+                ELOGA("Error : Invalid Dimension.");
                 return false;
             }
 
             if (texMetaData.depth != 1 || texMetaData.arraySize != 1)
             {
-                fprintf_s(stderr, "Error : Invalid DepthOrArraySize. depth = %zu, arraySize = %zu\n", texMetaData.depth, texMetaData.arraySize);
+                ELOGA("Error : Invalid DepthOrArraySize. depth = %zu, arraySize = %zu", texMetaData.depth, texMetaData.arraySize);
                 return false;
             }
 
@@ -227,7 +228,7 @@ bool FontConverter::Convert(const Desc& desc)
         auto err = fopen_s(&fp, desc.OutputPath.c_str(), "wb");
         if (err != 0)
         {
-            fprintf_s(stderr, "Output File Open Failed. path = %s, errcode = 0x%x\n", desc.OutputPath.c_str(), err);
+            ELOGA("Error : Output File Open Failed. path = %s, errcode = 0x%x", desc.OutputPath.c_str(), err);
             return false;
         }
 

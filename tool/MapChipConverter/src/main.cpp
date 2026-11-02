@@ -35,6 +35,7 @@ int main(int argc, char** argv)
     parser.add<std::string>("input",  'i', "Input Txm File Path.", true, "");
     parser.add<std::string>("output", 'o', "Output MapChip Binary Path", true, "");
     parser.add<bool>("texconv", 'c', "Texture Binary Convert", false, false);
+    parser.add("help", 'h', "show help");
 
     // 解析実行.
     parser.parse_check(argc, argv);

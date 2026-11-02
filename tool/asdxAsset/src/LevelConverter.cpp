@@ -12,11 +12,8 @@
 #include <simdjson.h>
 #include <LevelBinary_generated.h>
 #include <res/asdxResHelper.h>
+#include "../../include/fnd/asdxLogger.h"
 
-
-#ifndef ELOG
-#define ELOG(x, ...) fprintf_s(stderr, "[File:%s, Line:%d] " x "\n", __FILE__, __LINE__, ##__VA_ARGS__ )
-#endif//ELOG
 
 namespace {
 
@@ -88,14 +85,14 @@ bool LevelConverter::Convert(const Desc& desc)
 {
     if (desc.InputPath.empty() || desc.OutputPath.empty())
     {
-        ELOG("Error : Invalid Argument.");
+        ELOGA("Error : Invalid Argument.");
         return false;
     }
 
     std::vector<uint8_t> binary;
     if (!Convert(desc.InputPath, binary))
     {
-        ELOG("Error : Convert Failed.");
+        ELOGA("Error : Convert Failed.");
         return false;
     }
 
@@ -105,7 +102,7 @@ bool LevelConverter::Convert(const Desc& desc)
         auto err = fopen_s(&fp, desc.OutputPath.c_str(), "wb");
         if (err != 0)
         {
-            ELOG("Error : Output File Open Failed. path = %s", desc.OutputPath.c_str());
+            ELOGA("Error : Output File Open Failed. path = %s", desc.OutputPath.c_str());
             return false;
         }
 
@@ -124,13 +121,13 @@ bool LevelConverter::Convert(const std::string& path, std::vector<uint8_t>& bina
     EditLevel level;
     if (!Load(path, level))
     {
-        ELOG("Error : Load() Failed. path = %s", path.c_str());
+        ELOGA("Error : Load() Failed. path = %s", path.c_str());
         return false;
     }
 
     if (!Convert(level, binary))
     {
-        ELOG("Error : Binary Convert Failed.");
+        ELOGA("Error : Binary Convert Failed.");
         return false;
     }
 
@@ -296,7 +293,7 @@ bool LevelConverter::ReverseConvert(const std::vector<uint8_t>& input, EditLevel
 {
     if (input.empty())
     {
-        ELOG("Error : Invalid Argument");
+        ELOGA("Error : Invalid Argument");
         return false;
     }
 
@@ -442,7 +439,7 @@ bool LevelConverter::ReverseConvert(const std::vector<uint8_t>& binary, const st
     EditLevel level;
     if (!ReverseConvert(binary, level))
     {
-        ELOG("Error : Reverse Convert Failed.");
+        ELOGA("Error : Reverse Convert Failed.");
         return false;
     }
 
@@ -459,7 +456,7 @@ bool LevelConverter::Save(const std::string& path, const EditLevel& level)
     auto err = fopen_s(&fp, path.c_str(), "w");
     if (err != 0)
     {
-        ELOG("Error : File Open Failed. path = %s", path.c_str());
+        ELOGA("Error : File Open Failed. path = %s", path.c_str());
         return false;
     }
 
@@ -671,7 +668,7 @@ bool LevelConverter::Load(const std::string& path, EditLevel& level)
     simdjson::padded_string json;
     if (simdjson::padded_string::load(path).get(json))
     {
-        ELOG("Error : Json Load Failed. path = %s", path.c_str());
+        ELOGA("Error : Json Load Failed. path = %s", path.c_str());
         return false;
     }
 

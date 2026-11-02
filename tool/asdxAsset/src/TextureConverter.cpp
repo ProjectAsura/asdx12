@@ -14,11 +14,8 @@
 #include <TextureBinary_generated.h>
 #include <DirectXTex.h>
 #include <filesystem>
+#include "../../include/fnd/asdxLogger.h"
 
-
-#ifndef ELOG
-#define ELOG(x, ...) fprintf_s(stderr, "[File:%s, Line:%d] " x "\n", __FILE__, __LINE__, ##__VA_ARGS__)
-#endif//ELOG
 
 namespace {
 
@@ -113,14 +110,14 @@ bool TextureConverter::Convert(const Desc& desc)
 {
     if (desc.InputPath.empty() || desc.OutputPath.empty())
     {
-        ELOG("Error : Invalid Arguments.");
+        ELOGA("Error : Invalid Arguments.");
         return false;
     }
 
     std::vector<uint8_t> blob;
     if (!Convert(desc.InputPath.c_str(), blob))
     {
-        ELOG("Error : Binary Convert Failed.");
+        ELOGA("Error : Binary Convert Failed.");
         return false;
     }
 
@@ -130,7 +127,7 @@ bool TextureConverter::Convert(const Desc& desc)
         auto err = fopen_s(&fp, desc.OutputPath.c_str(), "wb");
         if (err != 0)
         {
-            ELOG("Error : Output File Open Failed. path = %s, errcode = 0x%x\n", desc.OutputPath.c_str(), err);
+            ELOGA("Error : Output File Open Failed. path = %s, errcode = 0x%x", desc.OutputPath.c_str(), err);
             return false;
         }
 
@@ -150,7 +147,7 @@ bool TextureConverter::Convert(const char* path, std::vector<uint8_t>& output)
 {
     if (path == nullptr)
     {
-        ELOG("Error : Invalid Arguments.");
+        ELOGA("Error : Invalid Arguments.");
         return false;
     }
 
@@ -188,13 +185,13 @@ bool TextureConverter::Convert(const char* path, std::vector<uint8_t>& output)
 
     if (FAILED(hr))
     {
-        ELOG("Error : TextureConvert::Convert() Failed. path = %s, errcode = 0x%x", path, hr);
+        ELOGA("Error : TextureConvert::Convert() Failed. path = %s, errcode = 0x%x", path, hr);
         return false;
     }
 
     if (!Convert(scratchImage, output))
     {
-        ELOG("Error : Output Binary Create Failed.");
+        ELOGA("Error : Output Binary Create Failed.");
         return false;
     }
 
@@ -210,7 +207,7 @@ bool TextureConverter::Convert(const DirectX::ScratchImage& scratchImage, std::v
 
     if (texMetaData.format == DXGI_FORMAT_UNKNOWN)
     {
-        ELOG("Error : Unsupported Resource Format. format = 0x%x\n", texMetaData.format);
+        ELOGA("Error : Unsupported Resource Format. format = 0x%x", texMetaData.format);
         return false;
     }
 
@@ -267,7 +264,7 @@ bool TextureConverter::ReverseConvert(const std::vector<uint8_t>& input, DirectX
 {
     if (input.empty())
     {
-        ELOG("Error : Invalid Argument.\n");
+        ELOGA("Error : Invalid Argument.");
         return false;
     }
 
@@ -318,7 +315,7 @@ bool TextureConverter::ReverseConvert(const std::vector<uint8_t>& input, DirectX
 
     if (FAILED(hr))
     {
-        ELOG("Error : ReverseConvert Failed. errcode = 0x%x", hr);
+        ELOGA("Error : ReverseConvert Failed. errcode = 0x%x", hr);
         return false;
     }
 

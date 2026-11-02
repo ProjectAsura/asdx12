@@ -27,14 +27,21 @@ int main(int argc, char** argv)
     // 引数を設定.
     parser.add<std::string>("input",  'i', "input model file path", true, "");
     parser.add<std::string>("output", 'o', "output model file path", true, "");
+    parser.add<std::string>("path_txb", 't', "output texture base path", false, "");
+    parser.add<std::string>("path_mtb", 'm', "output material base path", false, "");
+    parser.add("help", 'h', "show help");
 
     // 解析実行.
     parser.parse_check(argc, argv);
 
     // 変換設定.
     ModelConverter::Desc desc = {};
-    desc.InputPath  = parser.get<std::string>("input");
-    desc.OutputPath = parser.get<std::string>("output");
+    desc.InputPath          = parser.get<std::string>("input");
+    desc.ModelOutputPath    = parser.get<std::string>("output");
+    desc.TextureOutputPath  = parser.get<std::string>("path_txb");
+    desc.MaterialOutputPath = parser.get<std::string>("path_mtb");
+    desc.ConvertTexture     = !desc.TextureOutputPath.empty();
+    desc.ConvertMaterial    = !desc.MaterialOutputPath.empty();
 
     // 変換処理実行.
     auto ret = ModelConverter::Convert(desc);
@@ -42,7 +49,7 @@ int main(int argc, char** argv)
     // 正常終了.
     if (ret)
     {
-        fprintf_s(stdout, "Model Convert Success! OutputPath = %s\n", desc.OutputPath.c_str());
+        fprintf_s(stdout, "Model Convert Success! OutputPath = %s\n", desc.ModelOutputPath.c_str());
         return 0;
     }
 

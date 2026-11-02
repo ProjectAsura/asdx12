@@ -22,11 +22,8 @@
 #include <ModelBinary_generated.h>
 #include <DirectXTex.h>
 #include "../../../external/xxHash/xxhash.h"
+#include "../../../include/fnd/asdxLogger.h"
 
-
-#ifndef ELOG
-#define ELOG(x, ...) fprintf_s(stderr, "[File:%s, Line:%d] " x "\n", __FILE__, __LINE__, ##__VA_ARGS__ )
-#endif//ELOG
 
 namespace {
 
@@ -698,7 +695,7 @@ void ConvertTXB(const std::string& input, const std::string& output)
     desc.OutputPath = output;
 
     if (!TextureConverter::Convert(desc))
-    { ELOG("Error : TextureConverter::Convert() Failed. path = %s", input.c_str()); }
+    { ELOGA("Error : TextureConverter::Convert() Failed. path = %s", input.c_str()); }
 }
 
 //-----------------------------------------------------------------------------
@@ -720,7 +717,7 @@ bool SaveAssimpTexture(const aiTexture* pTexture, const std::string& outputDir)
         auto err = fopen_s(&fp, path.c_str(), "wb");
         if (err != 0)
         {
-            ELOG("File Open Failed. path = %s", path.c_str());
+            ELOGA("File Open Failed. path = %s", path.c_str());
             return false;
         }
 
@@ -755,7 +752,7 @@ bool SaveAssimpTexture(const aiTexture* pTexture, const std::string& outputDir)
     auto hr = scratch.InitializeFromImage(image);
     if (FAILED(hr))
     {
-        ELOG("Error : DirectX::ScratchImage::InitializeFromImage() Failed. errcode = 0x%x", hr);
+        ELOGA("Error : DirectX::ScratchImage::InitializeFromImage() Failed. errcode = 0x%x", hr);
         return false;
     }
 
@@ -801,7 +798,7 @@ bool SaveAssimpTexture(const aiTexture* pTexture, const std::string& outputDir)
             wpath.c_str());
         if (FAILED(hr))
         {
-            ELOG("Error : DirectX::SaveToTGAFile() Failed. errcode = 0x%x", hr);
+            ELOGA("Error : DirectX::SaveToTGAFile() Failed. errcode = 0x%x", hr);
             return false;
         }
     }
@@ -813,7 +810,7 @@ bool SaveAssimpTexture(const aiTexture* pTexture, const std::string& outputDir)
             wpath.c_str());
         if (FAILED(hr))
         {
-            ELOG("Error : DirectX::SaveToDDSFile() Failed. errcode = 0x%x", hr);
+            ELOGA("Error : DirectX::SaveToDDSFile() Failed. errcode = 0x%x", hr);
             return false;
         }
     }
@@ -824,7 +821,7 @@ bool SaveAssimpTexture(const aiTexture* pTexture, const std::string& outputDir)
             wpath.c_str());
         if (FAILED(hr))
         {
-            ELOG("Error : DirectX::SaveToHDRFile() Failed. errcode = 0x%x", hr);
+            ELOGA("Error : DirectX::SaveToHDRFile() Failed. errcode = 0x%x", hr);
             return false;
         }
     }
@@ -838,7 +835,7 @@ bool SaveAssimpTexture(const aiTexture* pTexture, const std::string& outputDir)
  
         if (FAILED(hr))
         {
-            ELOG("Error : DirectX::SaveToWICFile() Failed. errcode = 0x%x", hr);
+            ELOGA("Error : DirectX::SaveToWICFile() Failed. errcode = 0x%x", hr);
             return false;
         }
     }
@@ -1216,7 +1213,7 @@ bool ModelConverter::Convert(const Desc& desc)
 {
     if (desc.InputPath.empty() || desc.ModelOutputPath.empty())
     {
-        ELOG("Error : Invalid Argument.");
+        ELOGA("Error : Invalid Argument.");
         return false;
     }
 
@@ -1227,7 +1224,7 @@ bool ModelConverter::Convert(const Desc& desc)
     std::vector<std::vector<uint8_t>> materialBinaries; 
     if (!Convert(desc, modelBinary, materialBinaries))
     {
-        ELOG("Error : Convert Failed.");
+        ELOGA("Error : Convert Failed.");
         return false;
     }
 
@@ -1237,7 +1234,7 @@ bool ModelConverter::Convert(const Desc& desc)
         auto err = fopen_s(&fp, desc.ModelOutputPath.c_str(), "wb");
         if (err != 0)
         {
-            ELOG("Error : Output File Open Failed. path = %s", desc.ModelOutputPath.c_str());
+            ELOGA("Error : Output File Open Failed. path = %s", desc.ModelOutputPath.c_str());
             return false;
         }
 
@@ -1259,7 +1256,7 @@ bool ModelConverter::Convert(const Desc& desc)
             auto err = fopen_s(&fp, path.c_str(), "wb");
             if (err != 0)
             {
-                ELOG("Error : Output File Open Failed. path = %s", path.c_str());
+                ELOGA("Error : Output File Open Failed. path = %s", path.c_str());
                 continue;
             }
 
@@ -1283,7 +1280,7 @@ bool ModelConverter::Convert
 {
     if (desc.InputPath.empty())
     {
-        ELOG("Error : Invalid Argument.");
+        ELOGA("Error : Invalid Argument.");
         return false;
     }
 
@@ -1295,7 +1292,7 @@ bool ModelConverter::Convert
         if (!asdx::fs::exists(dir))
         {
             if (!asdx::fs::create_directories(dir))
-            { ELOG("Error : create_directories() Failed. path = %s", dir.string().c_str()); }
+            { ELOGA("Error : create_directories() Failed. path = %s", dir.string().c_str()); }
         }
     }
 
@@ -1306,7 +1303,7 @@ bool ModelConverter::Convert
         if (!asdx::fs::exists(dir))
         {
             if (!asdx::fs::create_directories(dir))
-            { ELOG("Error : create_directories() Failed. path = %s", dir.string().c_str()); }
+            { ELOGA("Error : create_directories() Failed. path = %s", dir.string().c_str()); }
         }
     }
 
@@ -1320,7 +1317,7 @@ bool ModelConverter::Convert
 
     if (pScene == nullptr)
     {
-        ELOG("Error : Importer::ReadFile() Failed. path = %s", desc.InputPath.c_str());
+        ELOGA("Error : Importer::ReadFile() Failed. path = %s", desc.InputPath.c_str());
         return false;
     }
 
@@ -1429,7 +1426,7 @@ bool ModelConverter::ReverseConvert(
 {
     if (binary.empty() || path.empty() || path == "" || format == nullptr)
     {
-        ELOG("Error : Invalid Argument");
+        ELOGA("Error : Invalid Argument");
         return false;
     }
 
@@ -1897,7 +1894,7 @@ bool ModelConverter::ReverseConvert(
 
     if (ret != aiReturn_SUCCESS)
     {
-        ELOG("Error : Assimp::Exporter::Export() Failed. path = %s", path.c_str());
+        ELOGA("Error : Assimp::Exporter::Export() Failed. path = %s", path.c_str());
         return false;
     }
 

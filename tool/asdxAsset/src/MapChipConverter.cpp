@@ -18,11 +18,8 @@
 #include <tinyxml2.h>
 #include <filesystem>
 #include "MapChipBinary_generated.h"
+#include "../../../include/fnd/asdxLogger.h"
 
-
-#ifndef ELOG
-#define ELOG(x, ...) fprintf_s(stderr, "[File:%s, Line:%d] " x "\n", __FILE__, __LINE__, ##__VA_ARGS__)
-#endif//ELOG
 
 #define DEBUG_OUTPUT    (0)
 
@@ -197,7 +194,7 @@ void ConvertTXB(const std::string& input, const std::string& output)
     desc.OutputPath = output;
 
     if (!TextureConverter::Convert(desc))
-    { ELOG("Error : TextureConverter::Convert() Failed. path = %s", input.c_str()); }
+    { ELOGA("Error : TextureConverter::Convert() Failed. path = %s", input.c_str()); }
 }
 
 //-----------------------------------------------------------------------------
@@ -209,14 +206,14 @@ bool LoadMapData(const char* path, MapData& outData)
     auto err = doc.LoadFile(path);
     if (err != tinyxml2::XML_SUCCESS)
     {
-        ELOG("Error : Txm File Load Filed. path = %s, errcode = 0x%x", path, err);
+        ELOGA("Error : Txm File Load Filed. path = %s, errcode = 0x%x", path, err);
         return false;
     }
 
     auto map = doc.FirstChildElement("map");
     if (map == nullptr)
     {
-        ELOG("Error : Map Element Not Found");
+        ELOGA("Error : Map Element Not Found");
         return false;
     }
 
@@ -321,7 +318,7 @@ bool LoadMapData(const char* path, MapData& outData)
         assert(ret);
         if (!ret)
         {
-            ELOG("Error : data encoding is not \"csv\".");
+            ELOGA("Error : data encoding is not \"csv\".");
             return false;
         }
 
@@ -469,14 +466,14 @@ bool MapChipConverter::Convert(const Desc& desc)
 {
     if (desc.InputPath.empty() || desc.OutputPath.empty())
     {
-        ELOG("Error : Invalid Argument.");
+        ELOGA("Error : Invalid Argument.");
         return false;
     }
 
     MapData mapData = {};
     if (!LoadMapData(desc.InputPath.c_str(), mapData))
     {
-        ELOG("Error : LoadMapData() Failed.");
+        ELOGA("Error : LoadMapData() Failed.");
         return false;
     }
 
@@ -676,7 +673,7 @@ bool MapChipConverter::Convert(const Desc& desc)
         auto err = fopen_s(&fp, desc.OutputPath.c_str(), "wb");
         if (err != 0)
         {
-            ELOG("Error : Output File Open Failed. path = %s, errcode = 0x%x", desc.OutputPath.c_str(), err);
+            ELOGA("Error : Output File Open Failed. path = %s, errcode = 0x%x", desc.OutputPath.c_str(), err);
             return false;
         }
 

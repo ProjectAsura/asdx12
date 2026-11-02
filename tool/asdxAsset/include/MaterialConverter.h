@@ -11,6 +11,7 @@
 //-----------------------------------------------------------------------------
 #include <string>
 #include <vector>
+#include <string_view>
 #include "../../../include/fnd/asdxMath.h"
 
 
@@ -30,9 +31,8 @@ public:
     ///////////////////////////////////////////////////////////////////////////
     struct Desc
     {
-        std::string InputPath;          //!< 入力ファイルパス.
-        std::string OutputPath;         //!< 出力ファイルパス.
-        bool        TextureConvert;     //!< テクスチャコンバートも行う場合は true.
+        std::string InputPath;  //!< 入力ファイルパス.
+        std::string OutputPath; //!< 出力ファイルパス.
     };
 
     ///////////////////////////////////////////////////////////////////////////
@@ -40,9 +40,9 @@ public:
     ///////////////////////////////////////////////////////////////////////////
     enum AlphaMode : uint8_t
     {
-        Opaque,
-        Mask,
-        Blend,
+        Opaque, //!< 不透明.
+        Mask,   //!< マスク.
+        Blend,  //!< アルファブレンド
     };
 
     ///////////////////////////////////////////////////////////////////////////
@@ -50,9 +50,9 @@ public:
     ///////////////////////////////////////////////////////////////////////////
     enum CullMode : uint8_t
     {
-        Back,
-        Front,
-        None,
+        Back,   //!< 背面カリング.
+        Front,  //!< 全面カリング.
+        None,   //!< カリングなし.(両面描画) 
     };
 
     ///////////////////////////////////////////////////////////////////////////
@@ -60,14 +60,14 @@ public:
     ///////////////////////////////////////////////////////////////////////////
     struct MaterialParam
     {
-        asdx::Float3    BaseColor   = asdx::Float3(1.0f, 1.0f, 1.0f);
-        float           Alpha       = 1.0f;
-        float           Occlusion   = 1.0f;
-        float           Roughness   = 1.0f;
-        float           Metalness   = 1.0f;
-        float           Ior         = 1.0f;
-        asdx::Float3    Emissive    = asdx::Float3(0.0f, 0.0f, 0.0f);
-        float           AlphaCutOff = 0.0f;
+        asdx::Float3    BaseColor   = asdx::Float3(1.0f, 1.0f, 1.0f);   //!< ベースカラー乗算値.
+        float           Alpha       = 1.0f;                             //!< アルファ値.
+        float           Occlusion   = 1.0f;                             //!< オクルージョン乗算値.
+        float           Roughness   = 1.0f;                             //!< ラフネス乗算値.
+        float           Metalness   = 1.0f;                             //!< メタルネス乗算値.
+        float           Ior         = 1.0f;                             //!< 屈折率.
+        asdx::Float3    Emissive    = asdx::Float3(0.0f, 0.0f, 0.0f);   //!< エミッシブ乗算値.
+        float           AlphaCutOff = 0.0f;                             //!< アルファテスト閾値.
     };
 
     ///////////////////////////////////////////////////////////////////////////
@@ -75,17 +75,25 @@ public:
     ///////////////////////////////////////////////////////////////////////////
     struct Material
     {
-        std::string                 Shader;
-        uint8_t                     AlphaMode = AlphaMode::Opaque;
-        uint8_t                     CullMode  = CullMode::Back;
-        MaterialParam               Param     = {};
-        std::vector<std::string>    Textures;
+        std::string                 Shader;                         //!< マテリアルピクセルシェーダ名.
+        uint8_t                     AlphaMode = AlphaMode::Opaque;  //!< アルファモード.
+        uint8_t                     CullMode  = CullMode::Back;     //!< カリングモード.
+        MaterialParam               Param     = {};                 //!< マテリアルパラメータ.
+        std::vector<std::string>    Textures;                       //!< テクスチャパス.
     };
 
     //=========================================================================
     // public variables.
     //=========================================================================
-    /* NOTHING */
+    static constexpr uint32_t kBaseColorMapIndex  = 0;
+    static constexpr uint32_t kNormalMapIndex     = 1;
+    static constexpr uint32_t kOrmMapIndex        = 2;
+    static constexpr uint32_t kEmissiveMapIndex   = 3;
+
+    static constexpr std::string_view kDefaultBaseColorMap = "default.BaseColor";
+    static constexpr std::string_view kDefaultNormalMap    = "default.Normal";
+    static constexpr std::string_view kDefaultOrmMap       = "default.Orm";
+    static constexpr std::string_view kDefaultEmissiveMap  = "default.TransparentBlack";
 
     //=========================================================================
     // public methods.

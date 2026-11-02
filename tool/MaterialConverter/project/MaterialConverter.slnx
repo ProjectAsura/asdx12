@@ -1,0 +1,10 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="../../asdxAsset/project/asdxAsset.vcxproj" Id="b9d43f50-8879-4195-81ab-e3b1ea58f566">
+    <Platform Project="x64" />
+  </Project>
+  <Project Path="MaterialConverter.vcxproj" Id="2ae4288a-7858-4eb5-8b53-c2f54c91d88a" />
+</Solution>

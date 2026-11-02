@@ -175,6 +175,7 @@
     <ClCompile Include="..\..\..\external\tinyxml2\tinyxml2.cpp" />
     <ClCompile Include="..\..\..\external\xxHash\xxhash.c" />
     <ClCompile Include="..\..\..\src\edit\asdxJsonWriter.cpp" />
+    <ClCompile Include="..\..\..\src\fnd\asdxLogger.cpp" />
     <ClCompile Include="..\src\FontConverter.cpp" />
     <ClCompile Include="..\src\LevelConverter.cpp" />
     <ClCompile Include="..\src\MapChipConverter.cpp" />

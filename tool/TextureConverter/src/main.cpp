@@ -27,6 +27,7 @@ int main(int argc, char** argv)
     // 引数指定を設定.
     parser.add<std::string>("input",  'i', "input texture file path", true, "");
     parser.add<std::string>("output", 'o', "output texture file path", true, "");
+    parser.add("help", 'h', "show help");
 
     // 解析実行.
     parser.parse_check(argc, argv);
