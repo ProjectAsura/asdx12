@@ -288,7 +288,7 @@ bool IsInitAsyncFileIO()
 //-----------------------------------------------------------------------------
 //      非同期読み込みリクエストを行います.
 //-----------------------------------------------------------------------------
-RequestId RequestLoad(const char* path)
+FileHandle RequestLoad(const char* path)
 {
     assert(s_pAsyncFileIO != nullptr);
     if (s_pAsyncFileIO == nullptr)
@@ -300,7 +300,7 @@ RequestId RequestLoad(const char* path)
 //-----------------------------------------------------------------------------
 //      非同期書き込みリクエストを行います.
 //-----------------------------------------------------------------------------
-RequestId RequestSave(const char* path, const std::vector<uint8_t>& blob)
+FileHandle RequestSave(const char* path, const std::vector<uint8_t>& blob)
 {
     assert(s_pAsyncFileIO != nullptr);
     if (s_pAsyncFileIO == nullptr)
@@ -312,7 +312,7 @@ RequestId RequestSave(const char* path, const std::vector<uint8_t>& blob)
 //-----------------------------------------------------------------------------
 //      リクエストが完了したかどうか確認します.
 //-----------------------------------------------------------------------------
-bool IsFinished(RequestId handle)
+bool IsFinished(FileHandle handle)
 {
     assert(s_pAsyncFileIO != nullptr);
     if (s_pAsyncFileIO == nullptr)
@@ -324,7 +324,7 @@ bool IsFinished(RequestId handle)
 //-----------------------------------------------------------------------------
 //      非同期読み込み結果を取得します.
 //-----------------------------------------------------------------------------
-std::vector<uint8_t> GetLoadResult(RequestId requestId)
+std::vector<uint8_t> GetLoadResult(FileHandle requestId)
 {
     assert(s_pAsyncFileIO != nullptr);
     if (s_pAsyncFileIO == nullptr)
@@ -336,7 +336,7 @@ std::vector<uint8_t> GetLoadResult(RequestId requestId)
 //-----------------------------------------------------------------------------
 //      非同期書き込み結果を取得します.
 //-----------------------------------------------------------------------------
-bool GetSaveResult(RequestId requestId)
+bool GetSaveResult(FileHandle requestId)
 {
     assert(s_pAsyncFileIO != nullptr);
     if (s_pAsyncFileIO == nullptr)

@@ -9,14 +9,14 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <fnd/asdxMath.h>
-#include <fnd/asdxString.h>
-#include <fnd/asdxStringView.h>
-#include <fnd/asdxArrayView.h>
 #include <gfx/asdxBuffer.h>
 
 
 namespace asdx {
 
+//-----------------------------------------------------------------------------
+// Forward Declarations.
+//-----------------------------------------------------------------------------
 struct ResMesh;
 
 ///////////////////////////////////////////////////////////////////////////////

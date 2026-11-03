@@ -10,8 +10,6 @@
 //-----------------------------------------------------------------------------
 #include <list>
 #include <algorithm>
-#include <fnd/asdxRef.h>
-#include <fnd/asdxSpinLock.h>
 
 
 namespace asdx {

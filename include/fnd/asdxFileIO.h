@@ -17,12 +17,12 @@ namespace asdx {
 //-----------------------------------------------------------------------------
 // Using Statements
 //-----------------------------------------------------------------------------
-using RequestId = uint32_t;     //!< リクエストID. 
+using FileHandle = uint32_t;     //!< リクエストID. 
 
 //-----------------------------------------------------------------------------
 // Constant Values.
 //-----------------------------------------------------------------------------
-static constexpr RequestId kInvalidRequestId = UINT32_MAX;
+static constexpr FileHandle kInvalidRequestId = UINT32_MAX;
 
 
 //-----------------------------------------------------------------------------
@@ -52,7 +52,7 @@ bool IsInitAsyncFileIO();
 //! @param[in]      path        ファイルパス.
 //! @return     リクエストIDを返却します.
 //-----------------------------------------------------------------------------
-RequestId RequestLoad(const char* path);
+FileHandle RequestLoad(const char* path);
 
 //-----------------------------------------------------------------------------
 //! @brief      非同期書き込みをリクエストします.
@@ -61,7 +61,7 @@ RequestId RequestLoad(const char* path);
 //! @param[in]      blob        バイナリラージオブジェクト.
 //! @return     リクエストIDを返却します.
 //-----------------------------------------------------------------------------
-RequestId RequestSave(const char* path, const std::vector<uint8_t>& blob);
+FileHandle RequestSave(const char* path, const std::vector<uint8_t>& blob);
 
 //-----------------------------------------------------------------------------
 //! @brief      リクエストが完了したかどうか確認します.
@@ -70,7 +70,7 @@ RequestId RequestSave(const char* path, const std::vector<uint8_t>& blob);
 //! @retval true    完了済みです.
 //! @retval false   未完了です.
 //-----------------------------------------------------------------------------
-bool IsFinished(RequestId requestId);
+bool IsFinished(FileHandle requestId);
 
 //-----------------------------------------------------------------------------
 //! @brief      非同期読み込み結果を取得します
@@ -80,7 +80,7 @@ bool IsFinished(RequestId requestId);
 //! @note       リクエストが完了したら必ず呼び出してください.
 //!             内部でメモリ解放を行うため，呼び出しされないとメモリリークが発生します.
 //-----------------------------------------------------------------------------
-std::vector<uint8_t> GetLoadResult(RequestId requestId);
+std::vector<uint8_t> GetLoadResult(FileHandle requestId);
 
 //-----------------------------------------------------------------------------
 //! @brief      非同期書き込み結果を取得します
@@ -90,7 +90,7 @@ std::vector<uint8_t> GetLoadResult(RequestId requestId);
 //! @note       リクエストが完了したら必ず呼び出してください.
 //!             内部でメモリ解放を行うため，呼び出しされないとメモリリークが発生します.
 //-----------------------------------------------------------------------------
-bool GetSaveResult(RequestId requestId);
+bool GetSaveResult(FileHandle requestId);
 
 //-----------------------------------------------------------------------------
 //! @brief      同期読み込みを行います.

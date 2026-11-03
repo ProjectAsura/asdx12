@@ -11,7 +11,6 @@
 #include <d3d12.h>
 #include <fnd/asdxMath.h>
 #include <fnd/asdxRef.h>
-#include <fnd/asdxIndexHeap.h>
 #include <gfx/asdxAllocationHolder.h>
 
 

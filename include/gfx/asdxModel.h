@@ -10,8 +10,6 @@
 //-----------------------------------------------------------------------------
 #include <unordered_map>
 #include <fnd/asdxRef.h>
-#include <fnd/asdxList.h>
-#include <res/asdxResMesh.h>
 #include <res/asdxResModel.h>
 #include <gfx/asdxMesh.h>
 #include <gfx/asdxMaterial.h>

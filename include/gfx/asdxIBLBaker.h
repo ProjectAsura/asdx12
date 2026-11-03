@@ -9,7 +9,6 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <gfx/asdxTarget.h>
-#include <gfx/asdxPipelineState.h>
 
 
 namespace asdx {

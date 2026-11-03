@@ -10,7 +10,7 @@
 //-----------------------------------------------------------------------------
 #include <cstdint>
 #include <vector>
-#include "asdxResTexture.h"
+#include <res/asdxResTexture.h>
 
 
 namespace asdx {

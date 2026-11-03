@@ -10,7 +10,6 @@
 //-----------------------------------------------------------------------------
 #include <d3d12.h>
 #include <fnd/asdxRef.h>
-#include <gfx/asdxBuffer.h>
 #include <gfx/asdxTarget.h>
 
 
