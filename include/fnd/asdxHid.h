@@ -126,12 +126,16 @@ enum MOUSE_BUTTON
 //-----------------------------------------------------------------------------
 // Constant Values.
 //-----------------------------------------------------------------------------
+// Vendor ID.
 static constexpr uint16_t kPadVendorMicrosoft = 0x045E;
 static constexpr uint16_t kPadVendorSony      = 0x054C;
 static constexpr uint16_t kPadVendorNintendo  = 0x057E;
 static constexpr uint16_t kPadVendorHori      = 0x0F0D;
 static constexpr uint16_t kPadVendorLogicool  = 0x046D;
 static constexpr uint16_t kPadVendorElecom    = 0x056E;
+// Product ID.
+static constexpr uint16_t kPadProductDualSense      = 0x0CE6;
+static constexpr uint16_t kPadProductDualSenseEdge  = 0x0DF2;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -418,5 +422,18 @@ const IKeyboard& GetKeyboard();
 //! @note       未初期化の場合は nullptr が返却されます.
 //-----------------------------------------------------------------------------
 const IMouse& GetMouse();
+
+//-----------------------------------------------------------------------------
+//! @brief      PlayStation DualSense コントローラーかどうかチェックします.
+//! 
+//! @retval true    DualSenseです.
+//! @retval false   非DualSenseです.
+//-----------------------------------------------------------------------------
+inline bool IsDualSense(const IGamePad& pad)
+{
+    return pad.GetVendorId()  == kPadVendorSony
+       && (pad.GetProductId() == kPadProductDualSense
+       ||  pad.GetProductId() == kPadProductDualSenseEdge);
+}
 
 } // namespace asdx
