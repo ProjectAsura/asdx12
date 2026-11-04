@@ -32,6 +32,14 @@ using namespace GameInput::v3;
 using namespace GameInput::v4;
 #endif
 
+namespace {
+
+// Product ID.
+static constexpr uint16_t kPadProductDualSense      = 0x0CE6;
+static constexpr uint16_t kPadProductDualSenseEdge  = 0x0DF2;
+
+} // namespace
+
 namespace asdx {
 
 namespace {
@@ -584,10 +592,14 @@ public:
     //-------------------------------------------------------------------------
     uint16_t GetVendorId() const override
     {
+    #if GAMEINPUT_API_VERSION == 4
+        return m_Device->GetVendorId();
+    #else
         if (m_Device.GetPtr() != nullptr)
             return m_Device->GetDeviceInfo()->vendorId;
 
         return kPadVendorMicrosoft; // MS扱い.
+    #endif
     }
 
     //-------------------------------------------------------------------------
@@ -597,11 +609,27 @@ public:
     //-------------------------------------------------------------------------
     uint16_t GetProductId() const override
     {
+    #if GAMEINPUT_API_VERSION == 4
+        return m_Device->GetProductId();
+    #else
         if (m_Device.GetPtr() != nullptr)
             return m_Device->GetDeviceInfo()->productId;
 
         return 0x028E; // 有線Xbox360コントローラー扱い.
+    #endif
     }
+
+    //-------------------------------------------------------------------------
+    //! @brief      センサーがサポートされているかチェックします.
+    //-------------------------------------------------------------------------
+    bool IsSupportSensor() const override
+    { return m_SupportSensor; }
+
+    //-------------------------------------------------------------------------
+    //! @brief      センサー情報を取得します.
+    //-------------------------------------------------------------------------
+    SensorState GetSensorState() const override
+    { return m_SensorState; }
 
     //-------------------------------------------------------------------------
     //! @brief      ボタンの値をリセットします.
@@ -619,6 +647,8 @@ public:
 
         m_PressedButtons = 0;
         m_LastButtons    = 0;
+
+        m_SensorState = {};
     }
 
     //-------------------------------------------------------------------------
@@ -644,6 +674,8 @@ private:
     uint32_t    m_Buttons;              //!< ボタンの状態.
     uint32_t    m_PressedButtons;       //!< 押されているボタン.
     uint32_t    m_LastButtons;          //!< 1つ前のボタンの状態.
+    SensorState m_SensorState;          //!< センサー情報.
+    bool        m_SupportSensor = false;//!< センサーサポート.
 
     RefPtr<IGameInputDevice> m_Device;
 
@@ -666,7 +698,10 @@ private:
             auto hr = pInput->GetCurrentReading(
                 GameInputKindGamepad, nullptr, reading.GetAddress());
             if (FAILED(hr))
+            {
+                m_IsConnected = false;
                 return;
+            }
 
             IGameInputDevice* pDevice = nullptr;
             reading->GetDevice(&pDevice);
@@ -675,11 +710,28 @@ private:
             if (pDevice == nullptr || IsAssigned(pDevice, m_PlayerIndex))
             {
                 ResetState();
+                m_IsConnected = false;
                 return;
             }
 
             // デバイスを設定
             m_Device.Attach(pDevice);
+
+        #if GAMEINPUT_API_VERSION == 2 || GAMEINPUT_API_VERSION == 3
+            m_SupportSensor = false;
+            GameInputDeviceInfo info = {};
+            if (SUCCEEDED(m_Device->GetDeviceInfo(&info)))
+            {
+                if (info.sensorsInfo != nullptr && 
+                    info.sensorsInfo->supportedSensors != GameInputSnesorsNone)
+                {
+                    m_SupportSensor = true;
+                }
+            }
+        #elif GAMEINPUT_API_VERSION == 4
+            auto kind = m_Device->GetSupportedInput();
+            m_SupportSensor = !!(kind & GameInputKindSensors);
+        #endif
         }
         else
         {
@@ -709,6 +761,26 @@ private:
 
         m_PressedButtons = ( m_LastButtons ^ m_Buttons ) & m_Buttons;
         m_LastButtons    = m_Buttons;
+
+    #if GAMEINPUT_API_VERSION >= 2
+        if (m_SupportSensor)
+        {
+            GameInputSensorsState state = {};
+            if (reading->GetSensorsState(&state))
+            {
+                m_SensorState.Acceleration.x    = state.accelerationInGX;
+                m_SensorState.Acceleration.y    = state.accelerationInGY;
+                m_SensorState.Acceleration.z    = state.accelerationInGZ;
+                m_SensorState.AngularVelocity.x = state.angularVelocityInRadPerSecX;
+                m_SensorState.AngularVelocity.y = state.angularVelocityInRadPerSecY;
+                m_SensorState.AngularVelocity.z = state.angularVelocityInRadPerSecZ;
+                m_SensorState.Orientation.x     = state.orientationX;
+                m_SensorState.Orientation.y     = state.orientationY;
+                m_SensorState.Orientation.z     = state.orientationZ;
+                m_SensorState.Orientation.w     = state.orientationW;
+            }
+        }
+    #endif
     }
 
     //-------------------------------------------------------------------------
@@ -769,6 +841,9 @@ private:
 
         m_PressedButtons = ( m_LastButtons ^ m_Buttons ) & m_Buttons;
         m_LastButtons    = m_Buttons;
+
+        m_SupportSensor = false;
+        m_SensorState   = {};
     }
 
     //-------------------------------------------------------------------------
@@ -991,5 +1066,15 @@ void UnlockHid()
 //-----------------------------------------------------------------------------
 bool IsLockHid()
 { return g_CtrlLock; }
+
+//-----------------------------------------------------------------------------
+//      DualSenseかどうかチェックします.
+//-----------------------------------------------------------------------------
+bool IsDualSense(const IGamePad& pad)
+{
+    return pad.GetVendorId()  == kPadVendorSony
+       && (pad.GetProductId() == kPadProductDualSense
+       ||  pad.GetProductId() == kPadProductDualSenseEdge);
+}
 
 } // namespace asdx

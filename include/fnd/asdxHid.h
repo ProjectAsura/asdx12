@@ -9,6 +9,7 @@
 // Includes
 //-------------------------------------------------------------------------
 #include <cstdint>
+#include <fnd/asdxMath.h>
 
 
 #ifdef ASDX_AUTO_LINK
@@ -133,10 +134,17 @@ static constexpr uint16_t kPadVendorNintendo  = 0x057E;
 static constexpr uint16_t kPadVendorHori      = 0x0F0D;
 static constexpr uint16_t kPadVendorLogicool  = 0x046D;
 static constexpr uint16_t kPadVendorElecom    = 0x056E;
-// Product ID.
-static constexpr uint16_t kPadProductDualSense      = 0x0CE6;
-static constexpr uint16_t kPadProductDualSenseEdge  = 0x0DF2;
 
+
+///////////////////////////////////////////////////////////////////////////////
+// SensorState structure
+///////////////////////////////////////////////////////////////////////////////
+struct SensorState
+{
+    Vector3     Acceleration;       // Acceleration [g].
+    Vector3     AngularVelocity;    // Angular Velocity [rad/sec].
+    Quaternion  Orientation;        // Orientation.
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 // IGamePad interface.
@@ -244,6 +252,21 @@ struct IGamePad
     //! @return     コントローラーの製品IDを返却します.
     //-------------------------------------------------------------------------
     virtual uint16_t GetProductId() const = 0;
+
+    //-------------------------------------------------------------------------
+    //! @brief      センサーがサポートされているかチェックします.
+    //! 
+    //! @retval true    サポートしています.
+    //! @retval fase    非サポートです.
+    //-------------------------------------------------------------------------
+    virtual bool IsSupportSensor() const = 0;
+
+    //-------------------------------------------------------------------------
+    //! @brief      センサー情報を取得します.
+    //! 
+    //! @return     センサー情報を返却します.
+    //-------------------------------------------------------------------------
+    virtual SensorState GetSensorState() const = 0;
 };
 
 
@@ -429,11 +452,6 @@ const IMouse& GetMouse();
 //! @retval true    DualSenseです.
 //! @retval false   非DualSenseです.
 //-----------------------------------------------------------------------------
-inline bool IsDualSense(const IGamePad& pad)
-{
-    return pad.GetVendorId()  == kPadVendorSony
-       && (pad.GetProductId() == kPadProductDualSense
-       ||  pad.GetProductId() == kPadProductDualSenseEdge);
-}
+bool IsDualSense(const IGamePad& pad);
 
 } // namespace asdx
