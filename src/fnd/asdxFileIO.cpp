@@ -292,7 +292,7 @@ FileHandle RequestLoad(const char* path)
 {
     assert(s_pAsyncFileIO != nullptr);
     if (s_pAsyncFileIO == nullptr)
-        return kInvalidRequestId;
+        return kInvalidFileHandle;
 
     return s_pAsyncFileIO->RequestLoad(path);
 }
@@ -304,7 +304,7 @@ FileHandle RequestSave(const char* path, const std::vector<uint8_t>& blob)
 {
     assert(s_pAsyncFileIO != nullptr);
     if (s_pAsyncFileIO == nullptr)
-        return kInvalidRequestId;
+        return kInvalidFileHandle;
 
     return s_pAsyncFileIO->RequestSave(path, blob);
 }

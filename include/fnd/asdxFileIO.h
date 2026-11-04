@@ -22,7 +22,7 @@ using FileHandle = uint32_t;     //!< リクエストID.
 //-----------------------------------------------------------------------------
 // Constant Values.
 //-----------------------------------------------------------------------------
-static constexpr FileHandle kInvalidRequestId = UINT32_MAX;
+static constexpr FileHandle kInvalidFileHandle = UINT32_MAX;
 
 
 //-----------------------------------------------------------------------------

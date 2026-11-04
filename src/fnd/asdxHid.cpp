@@ -743,7 +743,6 @@ private:
 
         GameInputGamepadState state = {};
         reading->GetGamepadState(&state);
-        reading.Reset();
 
         m_Buttons  = ConvertButtons(state.buttons);
         m_TriggerL = state.leftTrigger;
