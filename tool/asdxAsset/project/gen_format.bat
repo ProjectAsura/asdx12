@@ -11,6 +11,7 @@ call :gen MapChipBinary
 call :gen ModelBinary
 call :gen MotionBinary
 call :gen MaterialBinary
+call :gen LevelBinary
 
 @rem ----- 終了.
 popd
