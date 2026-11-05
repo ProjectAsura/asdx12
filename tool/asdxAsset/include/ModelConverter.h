@@ -25,6 +25,7 @@
 #include <string>
 #include <vector>
 #include <BinaryData.h>
+#include <MaterialConverter.h>
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -92,10 +93,15 @@ public:
     //! @param[in]      binary      入力バイナリ.
     //! @param[in]      format      出力フォーマット.
     //! @param[in]      path        出力ファイルパス.
+    //! @param[in]      materials   マテリアルデータ.
     //! @retval true    変換に成功.
     //! @retval false   変換に失敗.
     //-------------------------------------------------------------------------
-    static bool ReverseConvert(const Binary& binary, const char* format, const std::string& path);
+    static bool ReverseConvert(
+        const Binary&                       binary,
+        const char*                         format,
+        const std::string&                  path,
+        const std::vector<EditMaterial>&    materials);
 
 private:
     //=========================================================================

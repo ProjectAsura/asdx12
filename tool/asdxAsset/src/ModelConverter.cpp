@@ -1388,10 +1388,13 @@ bool ModelConverter::Convert
 //-----------------------------------------------------------------------------
 //      逆変換処理を行います.
 //-----------------------------------------------------------------------------
-bool ModelConverter::ReverseConvert(
-    const std::vector<uint8_t>& binary,
-    const char* format,
-    const std::string& path)
+bool ModelConverter::ReverseConvert
+(
+    const std::vector<uint8_t>&         binary,
+    const char*                         format,
+    const std::string&                  path,
+    const std::vector<EditMaterial>&    materials
+)
 {
     if (binary.empty() || path.empty() || path == "" || format == nullptr)
     {
@@ -1415,20 +1418,22 @@ bool ModelConverter::ReverseConvert(
 
     scene.mRootNode = rootNode;
 
-    auto materials = modelBin->Materials();
+    auto materialHashes = modelBin->Materials();
     {
-        auto count = materials->size();
+        auto count = materialHashes->size();
         scene.mNumMaterials = count;
         scene.mMaterials    = new aiMaterial* [count];
 
         for(auto i=0u; i<count; ++i)
         {
-            auto srcMat = materials->Get(i);
+            auto hash = materialHashes->Get(i);
             auto dstMat = new aiMaterial();
+
+            const auto& srcMat = materials[i];
 
             // マテリアル名.
             {
-                auto tag = modelBin->HashTable()->LookupByKey(srcMat);
+                auto tag = modelBin->HashTable()->LookupByKey(hash);
                 if (tag != nullptr)
                 {
                     aiString name(tag->Text()->c_str());
@@ -1450,96 +1455,91 @@ bool ModelConverter::ReverseConvert(
 
             // ベースカラーファクター.
             {
-                //auto bc = srcMat->BaseColorFactor();
-                //aiColor4D value(bc->X(), bc->Y(), bc->Z(), 1.0f);
-                aiColor4D value(1.0f, 1.0f, 1.0f, 1.0f);
+                auto bc = srcMat.Param.BaseColor;
+                aiColor4D value(bc.x, bc.y, bc.z, 1.0f);
                 dstMat->AddProperty(&value, 1, AI_MATKEY_BASE_COLOR);
             }
 
             // アルファ.
             {
-                //auto alpha = srcMat->Alpha();
-                auto alpha = 1.0f;
+                auto alpha = srcMat.Param.Alpha;
                 dstMat->AddProperty(&alpha, 1, AI_MATKEY_OPACITY);
             }
 
             // 屈折率.
             {
-                //auto ior = srcMat->Ior();
-                auto ior = 1.0f;
+                auto ior = srcMat.Param.Ior;
                 dstMat->AddProperty(&ior, 1, AI_MATKEY_REFRACTI);
             }
 
             // 両面描画フラグ.
             {
-                //auto twoSided = srcMat->TwoSided();
-                int twoSided = 0;
+                int twoSided = (srcMat.CullMode == EditCullMode::None) ? 1 : 0;
                 dstMat->AddProperty(&twoSided, 1, AI_MATKEY_TWOSIDED);
             }
 
             // ラフネスファクター.
             {
-                //auto roughness = srcMat->RoughnessFactor();
-                auto roughness = 0.5f;
+                auto roughness = srcMat.Param.Roughness;
                 dstMat->AddProperty(&roughness, 1, AI_MATKEY_ROUGHNESS_FACTOR);
             }
 
             // メタルネスファクター.
             {
-                //auto metalness = srcMat->MetalnessFactor();
-                auto metalness = 0.0f;
+                auto metalness = srcMat.Param.Metalness;
                 dstMat->AddProperty(&metalness, 1, AI_MATKEY_METALLIC_FACTOR);
             }
 
             // エミッシブファクター.
             {
-                //auto emissive = srcMat->EmissiveFactor();
-                //aiColor3D value(emissive->X(), emissive->Y(), emissive->Z());
-                aiColor3D value(0.0f, 0.0f, 0.0f);
+                auto emissive = srcMat.Param.Emissive;
+                aiColor3D value(emissive.x, emissive.y, emissive.z);
                 dstMat->AddProperty(&value, 1, AI_MATKEY_COLOR_EMISSIVE);
             }
 
-        #if 0
             // ベースカラーマップ.
+            if (srcMat.Textures.size() >= 1)
             {
-                auto mapPath = srcMat->BaseColorMap();
-                if (mapPath != nullptr)
+                auto& mapPath = srcMat.Textures[0];
+                if (!mapPath.empty())
                 {
-                    aiString value(mapPath->c_str());
+                    aiString value(mapPath.c_str());
                     dstMat->AddProperty(&value, AI_MATKEY_TEXTURE(aiTextureType_BASE_COLOR, 0));
                 }
             }
 
             // 法線マップ.
+            if (srcMat.Textures.size() >= 2)
             {
-                auto mapPath = srcMat->NormalMap();
-                if (mapPath != nullptr)
+                auto& mapPath = srcMat.Textures[1];
+                if (!mapPath.empty())
                 {
-                    aiString value(mapPath->c_str());
+                    aiString value(mapPath.c_str());
                     dstMat->AddProperty(&value, AI_MATKEY_TEXTURE(aiTextureType_NORMALS, 0));
                 }
             }
 
             // Occlusion/Roughness/Metalnessマップ.
+            if (srcMat.Textures.size() >= 3)
             {
-                auto mapPath = srcMat->OrmMap();
-                if (mapPath != nullptr)
+                auto& mapPath = srcMat.Textures[2];
+                if (!mapPath.empty())
                 {
-                    aiString value(mapPath->c_str());
+                    aiString value(mapPath.c_str());
                     dstMat->AddProperty(&value, AI_MATKEY_TEXTURE(aiTextureType_GLTF_METALLIC_ROUGHNESS, 0));
                 }
             }
 
             // エミッシブマップ.
+            if (srcMat.Textures.size() >= 4)
             {
-                auto mapPath = srcMat->EmissiveMap();
-                if (mapPath != nullptr)
+                auto& mapPath = srcMat.Textures[3];
+                if (!mapPath.empty())
                 {
-                    aiString value(mapPath->c_str());
+                    aiString value(mapPath.c_str());
                     dstMat->AddProperty(&value, AI_MATKEY_TEXTURE(aiTextureType_EMISSIVE, 0));
                 }
             }
-        #endif
 
             scene.mMaterials[i] = dstMat;
         }
