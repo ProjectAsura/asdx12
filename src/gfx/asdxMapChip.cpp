@@ -163,6 +163,7 @@ void MapChip::Draw(SpriteRenderer& renderer, D3D12_GPU_DESCRIPTOR_HANDLE sampler
                     y * m_DrawTileH + m_ScrollY,
                     m_DrawTileW,
                     m_DrawTileH,
+                    int(l),
                     coord.Uv0,
                     coord.Uv1);
             }

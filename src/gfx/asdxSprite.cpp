@@ -612,7 +612,7 @@ void SpriteRenderer::Add(int x, int y, int w, int h, int layer, const Vector2& u
     float v0 = uv0.y;
     float v1 = uv1.y;
 
-    float d = float(layer);
+    float d = 1.0f - (float(layer) / float(m_MaxLayerCount));
 
     // 位置座標.
     float x0 = float(x);
@@ -886,6 +886,18 @@ D3D12_GPU_DESCRIPTOR_HANDLE SpriteRenderer::GetHandleSampler() const
 //-----------------------------------------------------------------------------
 ID3D12RootSignature* SpriteRenderer::GetRootSignature() const
 { return m_RootSig.GetPtr(); }
+
+//-----------------------------------------------------------------------------
+//      最大レイヤー数を設定します.
+//-----------------------------------------------------------------------------
+void SpriteRenderer::SetMaxLayerCount(int value)
+{ m_MaxLayerCount = value; }
+
+//-----------------------------------------------------------------------------
+//      最大レイヤー数を取得します.
+//-----------------------------------------------------------------------------
+int SpriteRenderer::GetMaxLayerCount() const
+{ return m_MaxLayerCount; }
 
 //-----------------------------------------------------------------------------
 //      9 slices を描画します.
