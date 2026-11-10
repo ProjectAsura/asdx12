@@ -40,6 +40,7 @@ enum TILE_FLAG
     TILE_FLAG_EVENT     = 0x1 << 1,   //!< イベントあり.
     TILE_FLAG_DAMAGE    = 0x1 << 2,   //!< ダメージあり.
     TILE_FLAG_TOL       = 0x1 << 3,   //!< 離着陸可能 (TOL: Take Off and Landing).
+    TILE_FLAG_HIDEBODY  = 0x1 << 4,   //!< キャラ胴体を隠す.
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -555,6 +556,9 @@ bool MapChipConverter::Convert(const Desc& desc)
 
             if (tile.Prop.EnableTOL)
                 flags |= TILE_FLAG_TOL;
+
+            if (tile.Prop.HideBody)
+                flags |= TILE_FLAG_HIDEBODY;
 
             convProps[j].Flags |= flags;
             convProps[j].Prob = tile.Prop.Prob;
