@@ -51,7 +51,8 @@ struct TileProp
     uint8_t HasEvent     : 1 = 0;
     uint8_t HasDamage    : 1 = 0;
     uint8_t EnableTOL    : 1 = 0;
-    uint8_t Reserved     : 4 = 0;
+    uint8_t HideBody     : 1 = 0;
+    uint8_t Reserved     : 3 = 0;
     uint8_t Prob             = 0;
 };
 
@@ -277,6 +278,10 @@ bool LoadMapData(const char* path, MapData& outData)
                     {
                         tp.Prob = prop->IntAttribute("value");
                     }
+                    else if (_stricmp(name, "hide") == 0)
+                    {
+                        tp.HideBody = prop->BoolAttribute("value") ? 1 : 0;
+                    }
 
                     t.Prop = tp;
                 }
@@ -395,6 +400,7 @@ bool LoadMapData(const char* path, MapData& outData)
             printf_s("    hasEvent     : %d\n", outData.TileSets[i].Tiles[j].Prop.HasEvent);
             printf_s("    hasDamage    : %d\n", outData.TileSets[i].Tiles[j].Prop.HasDamage);
             printf_s("    enableToL    : %d\n", outData.TileSets[i].Tiles[j].Prop.EnableTOL);
+            printf_s("    hideBody     : %d\n", outData.TileSets[i].Tiles[j].Prop.HideBody);
 
             for(size_t k=0; k<outData.TileSets[i].Tiles[j].Frames.size(); ++k)
             {
