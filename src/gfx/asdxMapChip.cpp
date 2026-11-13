@@ -78,6 +78,22 @@ bool MapChip::Init
 
     UpdateDrawCount();
 
+    auto chipCount = m_Binary.GetChipCount();
+    for(auto i=0u; i<chipCount; ++i)
+    {
+        auto chip = m_Binary.GetChip(i);
+        if (chip.Frames.empty())
+            continue;
+
+        ChipFrame frame = {};
+        frame.ElapapsedSec   = 0.0f;
+        frame.ArrayIndex     = 0;
+        frame.ChipIndex      = i;
+        frame.ResolvedChipId = chip.Frames[0].Id;
+
+        m_ChipFrames[chip.Id] = frame;
+    }
+
     return true;
 }
 
@@ -103,6 +119,8 @@ void MapChip::Term()
     m_Clamp = false;
 
     m_Texture.Reset();
+
+    m_ChipFrames.clear();
 }
 
 //-----------------------------------------------------------------------------
@@ -118,6 +136,37 @@ const MapChipBinary& MapChip::GetBinary() const
 { return m_Binary; }
 
 //-----------------------------------------------------------------------------
+//      更新処理を行います.
+//-----------------------------------------------------------------------------
+void MapChip::Update(float deltaSec)
+{
+    if (m_ChipFrames.empty())
+        return;
+
+    for(auto& itr : m_ChipFrames)
+    {
+        auto& frame = itr.second;
+
+        // 経過時間取得.
+        auto& elapsedSec = frame.ElapapsedSec;
+
+        // 時間を進める.
+        elapsedSec += deltaSec;
+
+        auto chip = m_Binary.GetChip(frame.ChipIndex);
+        auto idx = frame.ArrayIndex;
+
+        // 継続時間を超えたら、次のフレームに切り替える.
+        if (chip.Frames[idx].Duration < elapsedSec)
+        {
+            frame.ArrayIndex     = (idx + 1) % uint32_t(chip.Frames.size());
+            frame.ElapapsedSec   = fmod(elapsedSec, chip.Frames[idx].Duration);
+            frame.ResolvedChipId = chip.Frames[frame.ArrayIndex].Id;
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
 //      描画処理を行います.
 //-----------------------------------------------------------------------------
 void MapChip::Draw(SpriteRenderer& renderer, D3D12_GPU_DESCRIPTOR_HANDLE sampler)
@@ -127,9 +176,13 @@ void MapChip::Draw(SpriteRenderer& renderer, D3D12_GPU_DESCRIPTOR_HANDLE sampler
     auto columns = m_Binary.GetMapColumns();
     auto rows    = m_Binary.GetMapRows();
     auto firstId = m_Binary.GetFirstChipId();
+    auto layers  = m_Binary.GetLayerCount();
+
+    auto prevChipId    = -1;
+    auto resolveChipId = -1;
 
     // レイヤーごとに描画.
-    for(auto l=0u; l<m_Binary.GetLayerCount(); ++l)
+    for(auto l=0u; l<layers; ++l)
     {
         auto layer = m_Binary.GetLayer(l);
 
@@ -156,8 +209,25 @@ void MapChip::Draw(SpriteRenderer& renderer, D3D12_GPU_DESCRIPTOR_HANDLE sampler
                 if (layer.Tiles[id] < firstId)
                     continue;
 
-                auto tileId = layer.Tiles[id] - firstId;
-                auto coord = m_Binary.GetCoord(tileId);
+                // タイルに対応するチップ番号を求める.
+                auto chipId = layer.Tiles[id] - firstId;
+
+                // 無駄に検索しないように抑制.
+                if (prevChipId != chipId)
+                {
+                    prevChipId = chipId;
+
+                    auto itr = m_ChipFrames.find(chipId);
+                    if (itr != m_ChipFrames.end())
+                        resolveChipId = itr->second.ResolvedChipId;
+                    else
+                        resolveChipId = chipId;
+                }
+
+                // チップ番号からテクスチャ座標を計算.
+                auto coord = m_Binary.GetCoord(resolveChipId);
+
+                // スプライトを追加.
                 renderer.Add(
                     x * m_DrawTileW + m_ScrollX,
                     y * m_DrawTileH + m_ScrollY,

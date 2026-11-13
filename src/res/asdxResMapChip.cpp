@@ -9,10 +9,15 @@
 //-----------------------------------------------------------------------------
 #include <fnd/asdxMacro.h>
 #include <res/asdxResMapChip.h>
+#include "ResTypes_generated.h"
 #include "MapChipBinary_generated.h"
+#include <res/asdxResHelper.h>
 
 
 namespace asdx {
+
+static_assert(sizeof (ResChipFrame) == sizeof (res::MapChipFrame));
+static_assert(alignof(ResChipFrame) == alignof(res::MapChipFrame));
 
 ///////////////////////////////////////////////////////////////////////////////
 // MapChipBinary class
@@ -179,12 +184,12 @@ ResMapLayer MapChipBinary::GetLayer(uint32_t index) const
 //-----------------------------------------------------------------------------
 //      指定タイルのテクスチャ座標を取得します.
 //-----------------------------------------------------------------------------
-ResTileCoord MapChipBinary::GetCoord(uint32_t tileId) const
+ResTileCoord MapChipBinary::GetCoord(uint32_t chipId) const
 {
     assert(!m_Blob.empty());
     auto bin = res::GetMapChipBinary(m_Blob.data());
-    auto x = tileId % bin->ChipCount()->X();
-    auto y = (tileId / bin->ChipCount()->X()) % bin->ChipCount()->Y();
+    auto x = chipId % bin->ChipCount()->X();
+    auto y = (chipId / bin->ChipCount()->X()) % bin->ChipCount()->Y();
 
     auto u = float(bin->ChipSize()->X()) / float(bin->TextureSize()->X());
     auto v = float(bin->ChipSize()->Y()) / float(bin->TextureSize()->Y());
@@ -245,6 +250,32 @@ uint32_t MapChipBinary::CalcChipIndex(uint32_t x, uint32_t y) const
     auto tx = Clamp(x, 0u, bin->ChipCount()->X() - 1u);
     auto ty = Clamp(y, 0u, bin->ChipCount()->Y() - 1u);
     return ty * bin->ChipCount()->X() + tx;
+}
+
+//-----------------------------------------------------------------------------
+//      チップ数を取得します.
+//-----------------------------------------------------------------------------
+uint32_t MapChipBinary::GetChipCount() const
+{
+    assert(!m_Blob.empty());
+    auto bin = res::GetMapChipBinary(m_Blob.data());
+    return bin->Chips()->size();
+}
+
+//-----------------------------------------------------------------------------
+//      チップを取得します.
+//-----------------------------------------------------------------------------
+ResChip MapChipBinary::GetChip(uint32_t index) const
+{
+    assert(!m_Blob.empty());
+    auto bin = res::GetMapChipBinary(m_Blob.data());
+    assert(index < bin->Chips()->size());
+    auto chip = bin->Chips()->Get(index);
+
+    ResChip result;
+    result.Id     = chip->Id();
+    result.Frames = ToArrayView<ResChipFrame>(chip->Frames());
+    return result;
 }
 
 } // namespace asdx
