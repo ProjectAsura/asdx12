@@ -497,13 +497,14 @@ bool MapChipConverter::Convert(const Desc& desc)
         for(auto j=0; j<tile.Frames.size(); ++j)
         {
             dstFrames.emplace_back(
-                asdx::res::MapChipFrame(tile.Frames[j].Id, tile.Frames[j].Duration));
+                asdx::res::MapChipFrame(tile.Frames[j].Id, tile.Frames[j].Duration * 0.001f));
         }
 
         auto dstChip = asdx::res::CreateMapChipDirect(
             builder,
             tile.Id,
             &dstFrames);
+        dstChips.push_back(dstChip);
     }
 
     struct ConvTileProp
