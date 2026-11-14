@@ -3768,9 +3768,18 @@ struct UVRegion
     //! @brief      引数付きコンストラクタです.
     //-------------------------------------------------------------------------
     constexpr UVRegion(int x, int y, int w, int h, int texW, int texH)
-    : TL(float(x) / float(texW),  float(y) / float(texH) + float(h) / float(texH))
-    , BR(float(x) / float(texW) + float(w) / float(texW),  float(y) / float(texH))
-    { /* DO_NOTHING */ }
+    {
+        float fx = float(x) / float(texW);
+        float fy = float(y) / float(texH);
+
+        float fw = float(w) / float(texW);
+        float fh = float(h) / float(texH);
+
+        TL.x = fx;
+        TL.y = fy;
+        BR.x = fx + fw;
+        BR.y = fy + fh;
+    }
 
     //------------------------------------------------------------------------
     //! @brief      左右反転した結果を取得します.
