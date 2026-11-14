@@ -5,22 +5,9 @@
 //-----------------------------------------------------------------------------
 #pragma once
 
+
 namespace asdx {
 namespace math {
-
-//-----------------------------------------------------------------------------
-// Constant Values.
-//-----------------------------------------------------------------------------
-static const Vector3 kBoxOffsets[8] = {
-    Vector3(-1.0f, -1.0f,  1.0f),
-    Vector3( 1.0f, -1.0f,  1.0f),
-    Vector3( 1.0f,  1.0f,  1.0f),
-    Vector3(-1.0f,  1.0f,  1.0f),
-    Vector3(-1.0f, -1.0f, -1.0f),
-    Vector3( 1.0f, -1.0f, -1.0f),
-    Vector3( 1.0f,  1.0f, -1.0f),
-    Vector3(-1.0f,  1.0f, -1.0f),
-};
 
 //-----------------------------------------------------------------------------
 //      3次方程式を解きます.
@@ -653,7 +640,7 @@ inline constexpr double Lerp(double a, double b, double amount) noexcept
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-inline Vector2::Vector2(const float* pf)
+inline constexpr Vector2::Vector2(const float* pf)
 {
     assert(pf != nullptr);
     x = pf[0];
@@ -663,7 +650,7 @@ inline Vector2::Vector2(const float* pf)
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-inline Vector2::Vector2(float value)
+inline constexpr Vector2::Vector2(float value)
 : x(value)
 , y(value)
 { /* DO_NOTHING */ }
@@ -671,7 +658,7 @@ inline Vector2::Vector2(float value)
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-inline Vector2::Vector2(float nx, float ny)
+inline constexpr Vector2::Vector2(float nx, float ny)
 : x(nx)
 , y(ny)
 { /* DO_NOTHING */ }
@@ -1179,7 +1166,7 @@ inline Vector2 Vector2::TransformCoord(const Vector2& coords, const Matrix4x4& m
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-inline Vector3::Vector3(const float* pf)
+inline constexpr Vector3::Vector3(const float* pf)
 {
     assert(pf != nullptr);
     x = pf[0];
@@ -1190,7 +1177,7 @@ inline Vector3::Vector3(const float* pf)
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-inline Vector3::Vector3(float scalar)
+inline constexpr Vector3::Vector3(float scalar)
 : x(scalar)
 , y(scalar)
 , z(scalar)
@@ -1199,7 +1186,7 @@ inline Vector3::Vector3(float scalar)
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-inline Vector3::Vector3(const Vector2& value, float nz)
+inline constexpr Vector3::Vector3(const Vector2& value, float nz)
 : x(value.x)
 , y(value.y)
 , z(nz)
@@ -1208,7 +1195,7 @@ inline Vector3::Vector3(const Vector2& value, float nz)
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-inline Vector3::Vector3(float nx, float ny, float nz)
+inline constexpr Vector3::Vector3(float nx, float ny, float nz)
 : x(nx)
 , y(ny)
 , z(nz)
@@ -1882,7 +1869,7 @@ inline bool Vector3::InBounds(const Vector3& value, const Vector3& halfExtents)
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-inline Vector4::Vector4(const float* pf)
+inline constexpr Vector4::Vector4(const float* pf)
 {
     assert(pf != nullptr);
     x = pf[0];
@@ -1894,7 +1881,7 @@ inline Vector4::Vector4(const float* pf)
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-inline Vector4::Vector4(float scalar)
+inline constexpr Vector4::Vector4(float scalar)
 : x(scalar)
 , y(scalar)
 , z(scalar)
@@ -1904,7 +1891,7 @@ inline Vector4::Vector4(float scalar)
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-inline Vector4::Vector4(const Vector2& value, float nz, float nw)
+inline constexpr Vector4::Vector4(const Vector2& value, float nz, float nw)
 : x(value.x)
 , y(value.y)
 , z(nz)
@@ -1914,7 +1901,7 @@ inline Vector4::Vector4(const Vector2& value, float nz, float nw)
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-inline Vector4::Vector4(const Vector3& value, float nw)
+inline constexpr Vector4::Vector4(const Vector3& value, float nw)
 : x(value.x)
 , y(value.y)
 , z(value.z)
@@ -1924,7 +1911,7 @@ inline Vector4::Vector4(const Vector3& value, float nw)
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-inline Vector4::Vector4(float nx, float ny, float nz, float nw)
+inline constexpr Vector4::Vector4(float nx, float ny, float nz, float nw)
 : x(nx)
 , y(ny)
 , z(nz)
@@ -2467,7 +2454,7 @@ inline Vector4 Vector4::FromRGBA(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 //-----------------------------------------------------------------------------
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
-inline Matrix4x4::Matrix4x4()
+inline constexpr Matrix4x4::Matrix4x4()
 : _11(1.0f), _12(0.0f), _13(0.0f), _14(0.0f)
 , _21(0.0f), _22(1.0f), _23(0.0f), _24(0.0f)
 , _31(0.0f), _32(0.0f), _33(1.0f), _34(0.0f)
@@ -2477,16 +2464,19 @@ inline Matrix4x4::Matrix4x4()
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-inline Matrix4x4::Matrix4x4(const float* pf)
+inline constexpr Matrix4x4::Matrix4x4(const float* pf)
 {
     assert(pf != nullptr);
-    memcpy(&_11, pf, sizeof(Matrix4x4));
+    _11 = pf[0];    _12 = pf[1];    _13 = pf[2];    _14 = pf[3];
+    _21 = pf[4];    _22 = pf[5];    _23 = pf[6];    _24 = pf[7];
+    _31 = pf[8];    _32 = pf[9];    _33 = pf[10];   _34 = pf[11];
+    _41 = pf[12];   _42 = pf[13];   _43 = pf[14];   _44 = pf[15];
 }
 
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-inline Matrix4x4::Matrix4x4
+inline constexpr Matrix4x4::Matrix4x4
 (
     float _f11, float _f12, float _f13, float _f14,
     float _f21, float _f22, float _f23, float _f24,
@@ -2503,7 +2493,7 @@ inline Matrix4x4::Matrix4x4
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-inline Matrix4x4::Matrix4x4(const Vector4& v1, const Vector4& v2, const Vector4& v3, const Vector4& v4)
+inline constexpr Matrix4x4::Matrix4x4(const Vector4& v1, const Vector4& v2, const Vector4& v3, const Vector4& v4)
 {
     _11 = v1.x; _12 = v1.y; _13 = v1.z; _14 = v1.z;
     _21 = v2.x; _22 = v2.y; _23 = v2.z; _24 = v2.z;
@@ -3915,13 +3905,13 @@ inline Matrix4x4 Matrix4x4::FromMatrix4x3(const Matrix4x3& value)
 //-----------------------------------------------------------------------------
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
-inline Quaternion::Quaternion()
+inline constexpr Quaternion::Quaternion()
 { /* DO_NOTHING */ }
 
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-inline Quaternion::Quaternion(const float* pf)
+inline constexpr Quaternion::Quaternion(const float* pf)
 {
     assert(pf != nullptr);
     x = pf[0];
@@ -3933,7 +3923,7 @@ inline Quaternion::Quaternion(const float* pf)
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-inline Quaternion::Quaternion(float nx, float ny, float nz, float nw)
+inline constexpr Quaternion::Quaternion(float nx, float ny, float nz, float nw)
 : x(nx)
 , y(ny)
 , z(nz)
@@ -4451,7 +4441,7 @@ inline Quaternion Quaternion::Squad
 //-----------------------------------------------------------------------------
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
-inline Matrix4x3::Matrix4x3()
+inline constexpr Matrix4x3::Matrix4x3()
 : _11(1.0f), _21(0.0f), _31(0.0f), _41(0.0f)
 , _12(0.0f), _22(1.0f), _32(0.0f), _42(0.0f)
 , _13(0.0f), _23(0.0f), _33(1.0f), _43(0.0f)
@@ -4460,7 +4450,7 @@ inline Matrix4x3::Matrix4x3()
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-inline Matrix4x3::Matrix4x3
+inline constexpr Matrix4x3::Matrix4x3
 (
     float m11, float m12, float m13,
     float m21, float m22, float m23,
@@ -5195,7 +5185,7 @@ inline float RandomHelper::GetAsFloat(uint32_t value, float mini, float maxi)
 //-----------------------------------------------------------------------------
 //      コントラクタです.
 //-----------------------------------------------------------------------------
-inline Quad2::Quad2(int px, int py, int width, int height)
+inline constexpr Quad2::Quad2(int px, int py, int width, int height)
 : x(px)
 , y(py)
 , w(width)
@@ -5232,6 +5222,23 @@ inline bool Quad2::Contains(int x, int y, const Quad2& quad)
         && (quad.y <= y && y <= (quad.y + quad.h));
 }
 
+namespace math { 
+
+//-----------------------------------------------------------------------------
+// Constant Values.
+//-----------------------------------------------------------------------------
+inline constexpr Vector3 kBoxOffsets[8] = {
+    Vector3(-1.0f, -1.0f,  1.0f),
+    Vector3( 1.0f, -1.0f,  1.0f),
+    Vector3( 1.0f,  1.0f,  1.0f),
+    Vector3(-1.0f,  1.0f,  1.0f),
+    Vector3(-1.0f, -1.0f, -1.0f),
+    Vector3( 1.0f, -1.0f, -1.0f),
+    Vector3( 1.0f,  1.0f, -1.0f),
+    Vector3(-1.0f,  1.0f, -1.0f),
+};
+
+} // namespace math
 
 ///////////////////////////////////////////////////////////////////////////////
 // BoundingBox structure
@@ -5240,7 +5247,7 @@ inline bool Quad2::Contains(int x, int y, const Quad2& quad)
 //-----------------------------------------------------------------------------
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
-inline BoundingBox::BoundingBox()
+inline constexpr BoundingBox::BoundingBox()
 : Min( FLT_MAX,  FLT_MAX,  FLT_MAX)
 , Max(-FLT_MAX, -FLT_MAX, -FLT_MAX)
 { /* DO_NOTHING */ }
@@ -5248,7 +5255,7 @@ inline BoundingBox::BoundingBox()
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-inline BoundingBox::BoundingBox(const Vector3& mini, const Vector3& maxi)
+inline constexpr BoundingBox::BoundingBox(const Vector3& mini, const Vector3& maxi)
 : Min(mini)
 , Max(maxi)
 { /* DO_NOTHING */ }
@@ -5531,7 +5538,7 @@ inline BoundingBox BoundingBox::Transform(const BoundingBox& box, const Matrix4x
 //-----------------------------------------------------------------------------
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
-inline BoundingSphere::BoundingSphere()
+inline constexpr BoundingSphere::BoundingSphere()
 : Center(0.0f, 0.0f, 0.0f)
 , Radius(0.0f)
 { /* DO_NOTHING */ }
@@ -5539,7 +5546,7 @@ inline BoundingSphere::BoundingSphere()
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-inline BoundingSphere::BoundingSphere(const Vector3& center, float radius)
+inline constexpr BoundingSphere::BoundingSphere(const Vector3& center, float radius)
 : Center(center)
 , Radius(radius)
 { /* DO_NOTHING */ }
@@ -5745,7 +5752,7 @@ inline BoundingSphere BoundingSphere::Transform(const BoundingSphere& sphere, co
 //-----------------------------------------------------------------------------
 //      コンストラクタです.
 //-----------------------------------------------------------------------------
-inline BoundingOrientedBox::BoundingOrientedBox()
+inline constexpr BoundingOrientedBox::BoundingOrientedBox()
 : Center        (0.0f, 0.0f, 0.0f)
 , HalfExtents   (0.0f, 0.0f, 0.0f)
 , Orientation   (0.0f, 0.0f, 0.0f, 1.0f)
@@ -5754,7 +5761,7 @@ inline BoundingOrientedBox::BoundingOrientedBox()
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-inline BoundingOrientedBox::BoundingOrientedBox
+inline constexpr BoundingOrientedBox::BoundingOrientedBox
 (
     const Vector3&      center,
     const Vector3&      halfExtents,
@@ -7103,7 +7110,7 @@ inline float SpotLumenToCandela(float lm, float outerConeHalfAngle)
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-inline Unorm2::Unorm2(uint8_t nx, uint8_t ny)
+inline constexpr Unorm2::Unorm2(uint8_t nx, uint8_t ny)
 : x(nx)
 , y(ny)
 { /* DO_NOTHING */ }
@@ -7111,7 +7118,7 @@ inline Unorm2::Unorm2(uint8_t nx, uint8_t ny)
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-inline Unorm2::Unorm2(float nx, float ny)
+inline constexpr Unorm2::Unorm2(float nx, float ny)
 : x(uint8_t(asdx::Saturate(nx) * 255.0f))
 , y(uint8_t(asdx::Saturate(ny) * 255.0f))
 { /* DO_NOTHING */ }
@@ -7119,7 +7126,7 @@ inline Unorm2::Unorm2(float nx, float ny)
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-inline Unorm2::Unorm2(const Vector2& value)
+inline constexpr Unorm2::Unorm2(const Vector2& value)
 : x(uint8_t(asdx::Saturate(value.x) * 255.0f))
 , y(uint8_t(asdx::Saturate(value.y) * 255.0f))
 { /* DO_NOTHING */ }
@@ -7142,7 +7149,7 @@ inline Vector2 Unorm2::ToVector2() const
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-inline Unorm3::Unorm3(uint8_t nx, uint8_t ny, uint8_t nz)
+inline constexpr Unorm3::Unorm3(uint8_t nx, uint8_t ny, uint8_t nz)
 : x(nx)
 , y(ny)
 , z(nz)
@@ -7151,7 +7158,7 @@ inline Unorm3::Unorm3(uint8_t nx, uint8_t ny, uint8_t nz)
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-inline Unorm3::Unorm3(float nx, float ny, float nz)
+inline constexpr Unorm3::Unorm3(float nx, float ny, float nz)
 : x(uint8_t(asdx::Saturate(nx) * 255.0f))
 , y(uint8_t(asdx::Saturate(ny) * 255.0f))
 , z(uint8_t(asdx::Saturate(nz) * 255.0f))
@@ -7160,7 +7167,7 @@ inline Unorm3::Unorm3(float nx, float ny, float nz)
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-inline Unorm3::Unorm3(const Vector3& value)
+inline constexpr Unorm3::Unorm3(const Vector3& value)
 : x(uint8_t(asdx::Saturate(value.x) * 255.0f))
 , y(uint8_t(asdx::Saturate(value.y) * 255.0f))
 , z(uint8_t(asdx::Saturate(value.z) * 255.0f))
@@ -7207,7 +7214,7 @@ inline Unorm3 Unorm3::FromBGR(uint32_t value)
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-inline Unorm4::Unorm4(uint8_t nx, uint8_t ny, uint8_t nz, uint8_t nw)
+inline constexpr Unorm4::Unorm4(uint8_t nx, uint8_t ny, uint8_t nz, uint8_t nw)
 : x(nx)
 , y(ny)
 , z(nz)
@@ -7217,7 +7224,7 @@ inline Unorm4::Unorm4(uint8_t nx, uint8_t ny, uint8_t nz, uint8_t nw)
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-inline Unorm4::Unorm4(float nx, float ny, float nz, float nw)
+inline constexpr Unorm4::Unorm4(float nx, float ny, float nz, float nw)
 : x(uint8_t(asdx::Saturate(nx) * 255.0f))
 , y(uint8_t(asdx::Saturate(ny) * 255.0f))
 , z(uint8_t(asdx::Saturate(nz) * 255.0f))
@@ -7227,7 +7234,7 @@ inline Unorm4::Unorm4(float nx, float ny, float nz, float nw)
 //-----------------------------------------------------------------------------
 //      引数付きコンストラクタです.
 //-----------------------------------------------------------------------------
-inline Unorm4::Unorm4(const Vector4& value)
+inline constexpr Unorm4::Unorm4(const Vector4& value)
 : x(uint8_t(asdx::Saturate(value.x) * 255.0f))
 , y(uint8_t(asdx::Saturate(value.y) * 255.0f))
 , z(uint8_t(asdx::Saturate(value.z) * 255.0f))
