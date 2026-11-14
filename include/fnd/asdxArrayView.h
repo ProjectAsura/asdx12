@@ -37,7 +37,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      コンストラクタです.
     //-------------------------------------------------------------------------
-    ArrayView()
+    constexpr ArrayView()
     : m_pValues (nullptr)
     , m_Size    (0)
     { /* DO_NOTHING */ }
@@ -45,7 +45,7 @@ public:
     //-------------------------------------------------------------------------
     //! @brief      引数付きコンストラクタです.
     //-------------------------------------------------------------------------
-    ArrayView(const T* pValues, size_t size)
+    constexpr ArrayView(const T* pValues, size_t size)
     : m_pValues (pValues)
     , m_Size    (size)
     { /* DO_NOTHING */ }
