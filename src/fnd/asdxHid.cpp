@@ -444,9 +444,6 @@ public:
     ~GamePad()
     { Term(); }
 
-    //-------------------------------------------------------------------------
-    //! @brief      終了処理を行います.
-    //-------------------------------------------------------------------------
     void Term()
     { m_Device.Reset(); }
 
@@ -702,8 +699,7 @@ private:
                 GameInputKindGamepad, nullptr, reading.GetAddress());
             if (FAILED(hr))
             {
-                // 失敗した場合は，XInputでの更新を試みる.
-                UpdateByXInput();
+                m_IsConnected = false;
                 return;
             }
 
@@ -742,9 +738,7 @@ private:
             auto hr= pInput->GetCurrentReading(
                 GameInputKindGamepad, m_Device.GetPtr(), reading.GetAddress());
             if (FAILED(hr))
-            {
                 return;
-            }
         }
 
         GameInputGamepadState state = {};
@@ -796,7 +790,7 @@ private:
         XINPUT_STATE state = {};
 
         const auto result = XInputGetState(m_PlayerIndex, &state);
-        if (result == ERROR_SUCCESS)
+        if ( result == ERROR_SUCCESS )
         {
             m_IsConnected = true;
         }
