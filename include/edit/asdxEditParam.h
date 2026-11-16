@@ -21,7 +21,7 @@ namespace edit {
 //-----------------------------------------------------------------------------
 struct IHistory;
 
-using ComboItemGetter = bool (*)(void* data, int idx, const char** out_text);
+using ComboItemGetter = const char*(*)(void* data, int idx);
 
 ///////////////////////////////////////////////////////////////////////////////
 // EditBool class

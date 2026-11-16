@@ -25,5 +25,8 @@ SamplerState ColorSmp : register(s0);
 //-----------------------------------------------------------------------------
 float4 main(const VSOutput input) : SV_TARGET
 {
-    return ColorMap.Sample(ColorSmp, input.TexCoord) * input.Color;
+    float4 color = ColorMap.Sample(ColorSmp, input.TexCoord) * input.Color;
+    if (color.a <= 1e-6f)
+        discard;
+    return color;
 }
