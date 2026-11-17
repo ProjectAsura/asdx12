@@ -51,9 +51,107 @@ struct TargetDesc
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+// BaseTarget class
+///////////////////////////////////////////////////////////////////////////////
+class BaseTarget
+{
+    //=========================================================================
+    // list of friend classes and methods.
+    //=========================================================================
+    /* NOTHING */
+
+public:
+    //=========================================================================
+    // public variables.
+    //=========================================================================
+    /* NOTHING */
+
+    //=========================================================================
+    // public methods.
+    //=========================================================================
+
+    //-------------------------------------------------------------------------
+    //! @brief
+    //-------------------------------------------------------------------------
+    BaseTarget() = default;
+
+    //-------------------------------------------------------------------------
+    //! @brief
+    //-------------------------------------------------------------------------
+    virtual ~BaseTarget();
+
+    //-------------------------------------------------------------------------
+    //! @brief      リソースを取得します.
+    //!
+    //! @return     リソースを返却します.
+    //-------------------------------------------------------------------------
+    ID3D12Resource* GetResource() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      構成設定を取得します.
+    //!
+    //! @return     構成設定を返却します.
+    //-------------------------------------------------------------------------
+    TargetDesc GetDesc() const;
+
+    //-------------------------------------------------------------------------
+    //! @brief      デバッグ名を設定します.
+    //!
+    //! @param[in]      tag     タグ名.
+    //-------------------------------------------------------------------------
+    void SetName(LPCWSTR tag);
+
+#if ASDX_ENABLE_SINGLE_THREAD
+    //-------------------------------------------------------------------------
+    //! @brief      ステート遷移を行います.
+    //! 
+    //! @param[in]      pCmdList    コマンドリスト.
+    //! @param[in]      nextState   遷移後のステート.
+    //-------------------------------------------------------------------------
+    void ChangeState(ID3D12GraphicsCommandList* pCmdList, D3D12_RESOURCE_STATES nextState)
+    {
+        if (nextState == m_PrevState)
+        { return; }
+
+        D3D12_RESOURCE_BARRIER barrier = {};
+        barrier.Type                    = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+        barrier.Transition.pResource    = m_pResource.GetPtr();
+        barrier.Transition.Subresource  = 0;
+        barrier.Transition.StateBefore  = m_PrevState;
+        barrier.Transition.StateAfter   = nextState;
+
+        pCmdList->ResourceBarrier(1, &barrier);
+
+        m_PrevState = nextState;
+    }
+
+    //-------------------------------------------------------------------------
+    //! @brief      ステートを取得します.
+    //! 
+    //! @return     ステートを返却します.
+    //-------------------------------------------------------------------------
+    D3D12_RESOURCE_STATES GetState() const { return m_PrevState; }
+#endif
+
+protected:
+    //=========================================================================
+    // protected variables.
+    //=========================================================================
+    RefPtr<ID3D12Resource>          m_pResource;
+    AllocationHolder                m_HolderAlloc;
+    TargetDesc                      m_Desc;
+    D3D12_RESOURCE_STATES           m_PrevState = D3D12_RESOURCE_STATE_COMMON;
+
+    //=========================================================================
+    // protected methods.
+    //=========================================================================
+    /* NOTHING */
+};
+
+///////////////////////////////////////////////////////////////////////////////
 // ColorTarget class
 ///////////////////////////////////////////////////////////////////////////////
-class ColorTarget
+class ColorTarget final : public BaseTarget
 {
     //=========================================================================
     // list of friend classes and methods.
@@ -116,13 +214,6 @@ public:
     bool Resize(uint32_t width, uint32_t height);
 
     //-------------------------------------------------------------------------
-    //! @brief      リソースを取得します.
-    //!
-    //! @return     リソースを返却します.
-    //-------------------------------------------------------------------------
-    ID3D12Resource* GetResource() const;
-
-    //-------------------------------------------------------------------------
     //! @brief      CPUディスクリプタハンドルを取得します(RTV用).
     //! 
     //! @return     CPUディスクリプタハンドルを返却します(RTV用).
@@ -151,68 +242,18 @@ public:
     D3D12_GPU_DESCRIPTOR_HANDLE GetGpuHandleSRV() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      構成設定を取得します.
-    //!
-    //! @return     構成設定を返却します.
-    //-------------------------------------------------------------------------
-    TargetDesc GetDesc() const;
-
-    //-------------------------------------------------------------------------
     //! @brief      sRGBフラグを取得します.
     //! 
     //! @return     sRGBフラグを返却します.
     //-------------------------------------------------------------------------
     bool IsSRGB() const;
 
-    //-------------------------------------------------------------------------
-    //! @brief      デバッグ名を設定します.
-    //!
-    //! @param[in]      tag     タグ名.
-    //-------------------------------------------------------------------------
-    void SetName(LPCWSTR tag);
-
-#if ASDX_ENABLE_SINGLE_THREAD
-    //-------------------------------------------------------------------------
-    //! @brief      ステート遷移を行います.
-    //! 
-    //! @param[in]      pCmdList    コマンドリスト.
-    //! @param[in]      nextState   遷移後のステート.
-    //-------------------------------------------------------------------------
-    void ChangeState(ID3D12GraphicsCommandList* pCmdList, D3D12_RESOURCE_STATES nextState)
-    {
-        if (nextState == m_PrevState)
-        { return; }
-
-        D3D12_RESOURCE_BARRIER barrier = {};
-        barrier.Type                    = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-        barrier.Transition.pResource    = m_pResource.GetPtr();
-        barrier.Transition.Subresource  = 0;
-        barrier.Transition.StateBefore  = m_PrevState;
-        barrier.Transition.StateAfter   = nextState;
-
-        pCmdList->ResourceBarrier(1, &barrier);
-
-        m_PrevState = nextState;
-    }
-
-    //-------------------------------------------------------------------------
-    //! @brief      ステートを取得します.
-    //! 
-    //! @return     ステートを返却します.
-    //-------------------------------------------------------------------------
-    D3D12_RESOURCE_STATES GetState() const { return m_PrevState; }
-#endif
-
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    RefPtr<ID3D12Resource>          m_pResource;
-    AllocationHolder                m_HolderAlloc;
     std::vector<DescriptorHolder>   m_HolderRTV;
     DescriptorHolder                m_HolderSRV;
-    TargetDesc                      m_Desc;
-    D3D12_RESOURCE_STATES           m_PrevState = D3D12_RESOURCE_STATE_COMMON;
 
     //=========================================================================
     // private methods.
@@ -224,7 +265,7 @@ private:
 ///////////////////////////////////////////////////////////////////////////////
 // DepthTarget class
 ///////////////////////////////////////////////////////////////////////////////
-class DepthTarget
+class DepthTarget final : public BaseTarget
 {
     //=========================================================================
     // list of friend classes and methods.
@@ -277,13 +318,6 @@ public:
     bool Resize(uint32_t width, uint32_t height);
 
     //-------------------------------------------------------------------------
-    //! @brief      リソースを取得します.
-    //!
-    //! @return     リソースを返却します.
-    //-------------------------------------------------------------------------
-    ID3D12Resource* GetResource() const;
-
-    //-------------------------------------------------------------------------
     //! @brief      CPUディスクリプタハンドルを取得します(DSV用).
     //! 
     //! @return     CPUディスクリプタハンドルを返却します(DSV用).
@@ -311,62 +345,12 @@ public:
     //-------------------------------------------------------------------------
     D3D12_GPU_DESCRIPTOR_HANDLE GetGpuHandleSRV() const;
 
-    //-------------------------------------------------------------------------
-    //! @brief      構成設定を取得します.
-    //! 
-    //! @return     構成設定を返却します.
-    //-------------------------------------------------------------------------
-    TargetDesc GetDesc() const;
-
-    //-------------------------------------------------------------------------
-    //! @brief      デバッグ名を設定します.
-    //!
-    //! @param[in]      tag     タグ名.
-    //-------------------------------------------------------------------------
-    void SetName(LPCWSTR tag);
-
-#if ASDX_ENABLE_SINGLE_THREAD
-    //-------------------------------------------------------------------------
-    //! @brief      ステート遷移を行います.
-    //! 
-    //! @param[in]      pCmdList    コマンドリスト.
-    //! @param[in]      nextState   遷移後のステート.
-    //-------------------------------------------------------------------------
-    void ChangeState(ID3D12GraphicsCommandList* pCmdList, D3D12_RESOURCE_STATES nextState)
-    {
-        if (nextState == m_PrevState)
-        { return; }
-
-        D3D12_RESOURCE_BARRIER barrier = {};
-        barrier.Type                    = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-        barrier.Transition.pResource    = m_pResource.GetPtr();
-        barrier.Transition.Subresource  = 0;
-        barrier.Transition.StateBefore  = m_PrevState;
-        barrier.Transition.StateAfter   = nextState;
-
-        pCmdList->ResourceBarrier(1, &barrier);
-
-        m_PrevState = nextState;
-    }
-
-    //-------------------------------------------------------------------------
-    //! @brief      ステートを取得します.
-    //! 
-    //! @return     ステートを返却します.
-    //-------------------------------------------------------------------------
-    D3D12_RESOURCE_STATES GetState() const { return m_PrevState; }
-#endif
-
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    RefPtr<ID3D12Resource>          m_pResource;
-    AllocationHolder                m_HolderAlloc;
     std::vector<DescriptorHolder>   m_HolderDSV;
     DescriptorHolder                m_HolderSRV;
-    TargetDesc                      m_Desc;
-    D3D12_RESOURCE_STATES           m_PrevState = D3D12_RESOURCE_STATE_COMMON;
 
     //=========================================================================
     // private methods.
@@ -376,9 +360,9 @@ private:
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// ComputeTarget
+// ComputeTarget class
 ///////////////////////////////////////////////////////////////////////////////
-class ComputeTarget
+class ComputeTarget final : public BaseTarget
 {
 public:
     //=========================================================================
@@ -442,13 +426,6 @@ public:
     bool Resize(uint32_t width, uint32_t height = 1, uint16_t depth = 1);
 
     //-------------------------------------------------------------------------
-    //! @brief      リソースを取得します.
-    //!
-    //! @return     リソースを返却します.
-    //-------------------------------------------------------------------------
-    ID3D12Resource* GetResource() const;
-
-    //-------------------------------------------------------------------------
     //! @brief      バインドレスインデックスを取得します(UAV用).
     //!
     //! @return     バインドレスインデックスを返却します(UAV用).
@@ -498,25 +475,11 @@ public:
     D3D12_GPU_DESCRIPTOR_HANDLE GetGpuHandleSRV() const;
 
     //-------------------------------------------------------------------------
-    //! @brief      構成設定を取得します.
-    //! 
-    //! @return     構成設定を返却します.
-    //-------------------------------------------------------------------------
-    TargetDesc GetDesc() const;
-
-    //-------------------------------------------------------------------------
     //! @brief      ストライドサイズを取得します.
     //! 
     //! @return     ストライドサイズを返却します.
     //-------------------------------------------------------------------------
     uint32_t GetStride() const;
-
-    //-------------------------------------------------------------------------
-    //! @brief      デバッグ名を設定します.
-    //!
-    //! @param[in]      tag     タグ名.
-    //-------------------------------------------------------------------------
-    void SetName(LPCWSTR tag);
 
     //-------------------------------------------------------------------------
     //! @brief      UAVバリアを設定します.
@@ -525,50 +488,14 @@ public:
     //-------------------------------------------------------------------------
     void UAVBarrier(ID3D12GraphicsCommandList* pCmdList);
 
-#if ASDX_ENABLE_SINGLE_THREAD
-    //-------------------------------------------------------------------------
-    //! @brief      ステート遷移を行います.
-    //! 
-    //! @param[in]      pCmdList    コマンドリスト.
-    //! @param[in]      nextState   遷移後のステート.
-    //-------------------------------------------------------------------------
-    void ChangeState(ID3D12GraphicsCommandList* pCmdList, D3D12_RESOURCE_STATES nextState)
-    {
-        if (nextState == m_PrevState)
-        { return; }
-
-        D3D12_RESOURCE_BARRIER barrier = {};
-        barrier.Type                    = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-        barrier.Transition.pResource    = m_pResource.GetPtr();
-        barrier.Transition.Subresource  = 0;
-        barrier.Transition.StateBefore  = m_PrevState;
-        barrier.Transition.StateAfter   = nextState;
-
-        pCmdList->ResourceBarrier(1, &barrier);
-
-        m_PrevState = nextState;
-    }
-
-    //-------------------------------------------------------------------------
-    //! @brief      ステートを取得します.
-    //! 
-    //! @return     ステートを返却します.
-    //-------------------------------------------------------------------------
-    D3D12_RESOURCE_STATES GetState() const { return m_PrevState; }
-#endif
-
 private:
     //=========================================================================
     // private variables.
     //=========================================================================
-    RefPtr<ID3D12Resource>          m_pResource;
-    AllocationHolder                m_HolderAlloc;
     std::vector<DescriptorHolder>   m_HolderUAV;
     std::vector<DescriptorHolder>   m_HolderClearUAV;
     DescriptorHolder                m_HolderSRV;
-    TargetDesc                      m_Desc;
     uint32_t                        m_Stride    = 0;
-    D3D12_RESOURCE_STATES           m_PrevState = D3D12_RESOURCE_STATE_COMMON;
 
     //=========================================================================
     // private methods.
