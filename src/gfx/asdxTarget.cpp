@@ -16,6 +16,104 @@
 #include <D3D12MemAlloc.h>
 
 
+namespace {
+
+bool InitResource(const asdx::TargetDesc* pDesc, D3D12_RESOURCE_FLAGS flags, ID3D12Resource** ppResource, asdx::AllocationHolder& holder)
+{
+    HRESULT hr = S_OK;
+
+    auto format = asdx::GetNoSRGBFormat(pDesc->Format);
+
+    D3D12_HEAP_PROPERTIES props = {
+        D3D12_HEAP_TYPE_DEFAULT,
+        D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
+        D3D12_MEMORY_POOL_UNKNOWN,
+        1,
+        1
+    };
+
+    auto layout = (pDesc->Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
+        ? D3D12_TEXTURE_LAYOUT_ROW_MAJOR
+        : D3D12_TEXTURE_LAYOUT_UNKNOWN;
+
+    D3D12_RESOURCE_DESC desc = {
+        pDesc->Dimension,
+        pDesc->Alignment,
+        pDesc->Width,
+        pDesc->Height,
+        pDesc->DepthOrArraySize,
+        pDesc->MipLevels,
+        format,
+        pDesc->SampleDesc,
+        layout,
+        flags
+    };
+
+    D3D12_CLEAR_VALUE clearValue = {};
+    clearValue.Format = format;
+
+    if (!!(flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET))
+    {
+        clearValue.Color[0] = pDesc->ClearColor[0];
+        clearValue.Color[1] = pDesc->ClearColor[1];
+        clearValue.Color[2] = pDesc->ClearColor[2];
+        clearValue.Color[3] = pDesc->ClearColor[3];
+    }
+    else if (!!(flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL))
+    {
+        clearValue.DepthStencil.Depth   = pDesc->ClearDepth;
+        clearValue.DepthStencil.Stencil = pDesc->ClearStencil;
+    }
+
+    D3D12_CLEAR_VALUE* pClearValue = &clearValue;
+    if (!!(flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS))
+        pClearValue = nullptr;
+
+    auto allocator = asdx::GetD3D12MA();
+    if (allocator != nullptr)
+    {
+        D3D12MA::ALLOCATION_DESC allocDesc = {};
+        allocDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
+
+        D3D12MA::Allocation* pAllocation;
+
+        hr = allocator->CreateResource(
+            &allocDesc,
+            &desc,
+            pDesc->InitState,
+            pClearValue,
+            &pAllocation,
+            IID_PPV_ARGS(ppResource));
+        if (FAILED(hr))
+        {
+            ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
+            return false;
+        }
+
+        holder = asdx::AllocationHolder(pAllocation);
+    }
+    else
+    {
+        hr = asdx::GetD3D12Device()->CreateCommittedResource( 
+            &props,
+            D3D12_HEAP_FLAG_NONE,
+            &desc,
+            pDesc->InitState,
+            pClearValue,
+            IID_PPV_ARGS(ppResource));
+        if (FAILED(hr))
+        {
+            ELOG( "Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr );
+            return false;
+        }
+    }
+
+    return true;
+}
+
+
+} // namespace
+
 namespace asdx {
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -87,77 +185,84 @@ bool ColorTarget::Init(const TargetDesc* pDesc)
         return false;
     }
 
-    HRESULT hr = S_OK;
+    //HRESULT hr = S_OK;
 
+    //{
+    //    auto format = GetNoSRGBFormat(pDesc->Format);
+
+    //    D3D12_HEAP_PROPERTIES props = {
+    //        D3D12_HEAP_TYPE_DEFAULT,
+    //        D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
+    //        D3D12_MEMORY_POOL_UNKNOWN,
+    //        1,
+    //        1
+    //    };
+
+    //    D3D12_RESOURCE_DESC desc = {
+    //        pDesc->Dimension,
+    //        pDesc->Alignment,
+    //        pDesc->Width,
+    //        pDesc->Height,
+    //        pDesc->DepthOrArraySize,
+    //        pDesc->MipLevels,
+    //        format,
+    //        pDesc->SampleDesc,
+    //        D3D12_TEXTURE_LAYOUT_UNKNOWN,
+    //        D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET
+    //    };
+
+    //    D3D12_CLEAR_VALUE clearValue = {};
+    //    clearValue.Format   = format,
+    //    clearValue.Color[0] = pDesc->ClearColor[0];
+    //    clearValue.Color[1] = pDesc->ClearColor[1];
+    //    clearValue.Color[2] = pDesc->ClearColor[2];
+    //    clearValue.Color[3] = pDesc->ClearColor[3];
+
+    //    auto allocator = GetD3D12MA();
+    //    if (allocator != nullptr)
+    //    {
+    //        D3D12MA::ALLOCATION_DESC allocDesc = {};
+    //        allocDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
+
+    //        D3D12MA::Allocation* pAllocation;
+
+    //        hr = allocator->CreateResource(
+    //            &allocDesc,
+    //            &desc,
+    //            pDesc->InitState,
+    //            &clearValue,
+    //            &pAllocation,
+    //            IID_PPV_ARGS(m_pResource.GetAddress()));
+    //        if (FAILED(hr))
+    //        {
+    //            ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
+    //            return false;
+    //        }
+
+    //        m_HolderAlloc = AllocationHolder(pAllocation);
+    //    }
+    //    else
+    //    {
+    //        hr = GetD3D12Device()->CreateCommittedResource( 
+    //            &props,
+    //            D3D12_HEAP_FLAG_NONE,
+    //            &desc,
+    //            pDesc->InitState,
+    //            &clearValue,
+    //            IID_PPV_ARGS(m_pResource.GetAddress()));
+    //        if (FAILED(hr))
+    //        {
+    //            ELOG( "Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr );
+    //            return false;
+    //        }
+    //    }
+    //}
+
+    auto flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET | D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+    if (!InitResource(pDesc, flags, m_pResource.GetAddress(), m_HolderAlloc))
     {
-        auto format = GetNoSRGBFormat(pDesc->Format);
-
-        D3D12_HEAP_PROPERTIES props = {
-            D3D12_HEAP_TYPE_DEFAULT,
-            D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
-            D3D12_MEMORY_POOL_UNKNOWN,
-            1,
-            1
-        };
-
-        D3D12_RESOURCE_DESC desc = {
-            pDesc->Dimension,
-            pDesc->Alignment,
-            pDesc->Width,
-            pDesc->Height,
-            pDesc->DepthOrArraySize,
-            pDesc->MipLevels,
-            format,
-            pDesc->SampleDesc,
-            D3D12_TEXTURE_LAYOUT_UNKNOWN,
-            D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET
-        };
-
-        D3D12_CLEAR_VALUE clearValue = {};
-        clearValue.Format   = format,
-        clearValue.Color[0] = pDesc->ClearColor[0];
-        clearValue.Color[1] = pDesc->ClearColor[1];
-        clearValue.Color[2] = pDesc->ClearColor[2];
-        clearValue.Color[3] = pDesc->ClearColor[3];
-
-        auto allocator = GetD3D12MA();
-        if (allocator != nullptr)
-        {
-            D3D12MA::ALLOCATION_DESC allocDesc = {};
-            allocDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
-
-            D3D12MA::Allocation* pAllocation;
-
-            hr = allocator->CreateResource(
-                &allocDesc,
-                &desc,
-                pDesc->InitState,
-                &clearValue,
-                &pAllocation,
-                IID_PPV_ARGS(m_pResource.GetAddress()));
-            if (FAILED(hr))
-            {
-                ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
-                return false;
-            }
-
-            m_HolderAlloc = AllocationHolder(pAllocation);
-        }
-        else
-        {
-            hr = GetD3D12Device()->CreateCommittedResource( 
-                &props,
-                D3D12_HEAP_FLAG_NONE,
-                &desc,
-                pDesc->InitState,
-                &clearValue,
-                IID_PPV_ARGS(m_pResource.GetAddress()));
-            if (FAILED(hr))
-            {
-                ELOG( "Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr );
-                return false;
-            }
-        }
+        ELOGA("Error : InitResource() Failed.");
+        return false;
     }
 
     memcpy(&m_Desc, pDesc, sizeof(m_Desc));
@@ -519,72 +624,78 @@ bool DepthTarget::Init(const TargetDesc* pDesc)
         return false;
     }
 
-    HRESULT hr = S_OK;
+    //HRESULT hr = S_OK;
+    //{
+    //    D3D12_HEAP_PROPERTIES props = {
+    //        D3D12_HEAP_TYPE_DEFAULT,
+    //        D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
+    //        D3D12_MEMORY_POOL_UNKNOWN,
+    //        1,
+    //        1
+    //    };
+
+    //    D3D12_RESOURCE_DESC desc = {
+    //        pDesc->Dimension,
+    //        pDesc->Alignment,
+    //        pDesc->Width,
+    //        pDesc->Height,
+    //        pDesc->DepthOrArraySize,
+    //        pDesc->MipLevels,
+    //        pDesc->Format,
+    //        pDesc->SampleDesc,
+    //        D3D12_TEXTURE_LAYOUT_UNKNOWN,
+    //        D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL
+    //    };
+
+    //    D3D12_CLEAR_VALUE clearValue = {};
+    //    clearValue.Format               = pDesc->Format;
+    //    clearValue.DepthStencil.Depth   = pDesc->ClearDepth;
+    //    clearValue.DepthStencil.Stencil = pDesc->ClearStencil;
+
+    //    auto allocator = GetD3D12MA();
+    //    if (allocator != nullptr)
+    //    {
+    //        D3D12MA::ALLOCATION_DESC allocDesc = {};
+    //        allocDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
+
+    //        D3D12MA::Allocation* pAllocation = nullptr;
+
+    //        hr = allocator->CreateResource(
+    //            &allocDesc,
+    //            &desc,
+    //            pDesc->InitState,
+    //            &clearValue,
+    //            &pAllocation,
+    //            IID_PPV_ARGS(m_pResource.GetAddress()));
+    //        if (FAILED(hr))
+    //        {
+    //            ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
+    //            return false;
+    //        }
+
+    //        m_HolderAlloc = AllocationHolder(pAllocation);
+    //    }
+    //    else
+    //    {
+    //        hr = GetD3D12Device()->CreateCommittedResource( 
+    //            &props,
+    //            D3D12_HEAP_FLAG_NONE,
+    //            &desc,
+    //            pDesc->InitState,
+    //            &clearValue,
+    //            IID_PPV_ARGS(m_pResource.GetAddress()));
+    //        if (FAILED(hr))
+    //        {
+    //            ELOG( "Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr );
+    //            return false;
+    //        }
+    //    }
+    //}
+
+    if (!InitResource(pDesc, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL, m_pResource.GetAddress(), m_HolderAlloc))
     {
-        D3D12_HEAP_PROPERTIES props = {
-            D3D12_HEAP_TYPE_DEFAULT,
-            D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
-            D3D12_MEMORY_POOL_UNKNOWN,
-            1,
-            1
-        };
-
-        D3D12_RESOURCE_DESC desc = {
-            pDesc->Dimension,
-            pDesc->Alignment,
-            pDesc->Width,
-            pDesc->Height,
-            pDesc->DepthOrArraySize,
-            pDesc->MipLevels,
-            pDesc->Format,
-            pDesc->SampleDesc,
-            D3D12_TEXTURE_LAYOUT_UNKNOWN,
-            D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL
-        };
-
-        D3D12_CLEAR_VALUE clearValue = {};
-        clearValue.Format               = pDesc->Format;
-        clearValue.DepthStencil.Depth   = pDesc->ClearDepth;
-        clearValue.DepthStencil.Stencil = pDesc->ClearStencil;
-
-        auto allocator = GetD3D12MA();
-        if (allocator != nullptr)
-        {
-            D3D12MA::ALLOCATION_DESC allocDesc = {};
-            allocDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
-
-            D3D12MA::Allocation* pAllocation = nullptr;
-
-            hr = allocator->CreateResource(
-                &allocDesc,
-                &desc,
-                pDesc->InitState,
-                &clearValue,
-                &pAllocation,
-                IID_PPV_ARGS(m_pResource.GetAddress()));
-            if (FAILED(hr))
-            {
-                ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
-                return false;
-            }
-
-            m_HolderAlloc = AllocationHolder(pAllocation);
-        }
-        else
-        {
-            hr = GetD3D12Device()->CreateCommittedResource( 
-                &props,
-                D3D12_HEAP_FLAG_NONE,
-                &desc,
-                pDesc->InitState,
-                &clearValue,
-                IID_PPV_ARGS(m_pResource.GetAddress()));
-            if (FAILED(hr))
-            {
-                ELOG( "Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr );
-                return false;
-            }
-        }
+        ELOGA("Error : InitResource() Failed.");
+        return false;
     }
 
     memcpy(&m_Desc, pDesc, sizeof(m_Desc));
@@ -879,71 +990,77 @@ bool ComputeTarget::Init(const TargetDesc* pDesc, uint32_t stride)
         return false;
     }
 
-    HRESULT hr = S_OK;
+    //HRESULT hr = S_OK;
+    //{
+    //    D3D12_HEAP_PROPERTIES props = {
+    //        D3D12_HEAP_TYPE_DEFAULT,
+    //        D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
+    //        D3D12_MEMORY_POOL_UNKNOWN,
+    //        1,
+    //        1
+    //    };
+
+    //    auto layout = (pDesc->Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
+    //        ? D3D12_TEXTURE_LAYOUT_ROW_MAJOR
+    //        : D3D12_TEXTURE_LAYOUT_UNKNOWN;
+
+    //    D3D12_RESOURCE_DESC desc = {
+    //        pDesc->Dimension,
+    //        pDesc->Alignment,
+    //        pDesc->Width,
+    //        pDesc->Height,
+    //        pDesc->DepthOrArraySize,
+    //        pDesc->MipLevels,
+    //        pDesc->Format,
+    //        pDesc->SampleDesc,
+    //        layout,
+    //        D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS
+    //    };
+
+    //    auto allocator = GetD3D12MA();
+    //    if (allocator != nullptr)
+    //    {
+    //        D3D12MA::ALLOCATION_DESC allocDesc = {};
+    //        allocDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
+
+    //        D3D12MA::Allocation* pAllocation = nullptr;
+
+    //        hr = allocator->CreateResource(
+    //            &allocDesc,
+    //            &desc,
+    //            pDesc->InitState,
+    //            nullptr,
+    //            &pAllocation,
+    //            IID_PPV_ARGS(m_pResource.GetAddress()));
+    //        if (FAILED(hr))
+    //        {
+    //            ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
+    //            return false;
+    //        }
+
+    //        m_HolderAlloc = AllocationHolder(pAllocation);
+    //    }
+    //    else
+    //    {
+    //        hr = GetD3D12Device()->CreateCommittedResource( 
+    //            &props,
+    //            D3D12_HEAP_FLAG_NONE,
+    //            &desc,
+    //            pDesc->InitState,
+    //            nullptr,
+    //            IID_PPV_ARGS(m_pResource.GetAddress()));
+    //        if (FAILED(hr))
+    //        {
+    //            ELOG( "Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr );
+    //            return false;
+    //        }
+    //    }
+    //}
+
+    if (!InitResource(pDesc, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, m_pResource.GetAddress(), m_HolderAlloc))
     {
-        D3D12_HEAP_PROPERTIES props = {
-            D3D12_HEAP_TYPE_DEFAULT,
-            D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
-            D3D12_MEMORY_POOL_UNKNOWN,
-            1,
-            1
-        };
-
-        auto layout = (pDesc->Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
-            ? D3D12_TEXTURE_LAYOUT_ROW_MAJOR
-            : D3D12_TEXTURE_LAYOUT_UNKNOWN;
-
-        D3D12_RESOURCE_DESC desc = {
-            pDesc->Dimension,
-            pDesc->Alignment,
-            pDesc->Width,
-            pDesc->Height,
-            pDesc->DepthOrArraySize,
-            pDesc->MipLevels,
-            pDesc->Format,
-            pDesc->SampleDesc,
-            layout,
-            D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS
-        };
-
-        auto allocator = GetD3D12MA();
-        if (allocator != nullptr)
-        {
-            D3D12MA::ALLOCATION_DESC allocDesc = {};
-            allocDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
-
-            D3D12MA::Allocation* pAllocation = nullptr;
-
-            hr = allocator->CreateResource(
-                &allocDesc,
-                &desc,
-                pDesc->InitState,
-                nullptr,
-                &pAllocation,
-                IID_PPV_ARGS(m_pResource.GetAddress()));
-            if (FAILED(hr))
-            {
-                ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
-                return false;
-            }
-
-            m_HolderAlloc = AllocationHolder(pAllocation);
-        }
-        else
-        {
-            hr = GetD3D12Device()->CreateCommittedResource( 
-                &props,
-                D3D12_HEAP_FLAG_NONE,
-                &desc,
-                pDesc->InitState,
-                nullptr,
-                IID_PPV_ARGS(m_pResource.GetAddress()));
-            if (FAILED(hr))
-            {
-                ELOG( "Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr );
-                return false;
-            }
-        }
+        ELOGA("Error : InitResource() Failed.");
+        return false;
     }
 
     memcpy(&m_Desc, pDesc, sizeof(m_Desc));
