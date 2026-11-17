@@ -741,7 +741,14 @@ private:
             auto hr= pInput->GetCurrentReading(
                 GameInputKindGamepad, m_Device.GetPtr(), reading.GetAddress());
             if (FAILED(hr))
+            {
+                if (!m_Device->IsConnected())
+                {
+                    m_Device.Reset();
+                    m_IsConnected = false;
+                }
                 return;
+            }
         }
 
         GameInputGamepadState state = {};
