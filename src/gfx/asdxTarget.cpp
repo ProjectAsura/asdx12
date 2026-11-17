@@ -18,10 +18,20 @@
 
 namespace {
 
-bool InitResource(const asdx::TargetDesc* pDesc, D3D12_RESOURCE_FLAGS flags, ID3D12Resource** ppResource, asdx::AllocationHolder& holder)
+//-----------------------------------------------------------------------------
+//      リソースを初期化します.
+//-----------------------------------------------------------------------------
+bool InitResource
+(
+    const asdx::TargetDesc* pDesc,
+    D3D12_RESOURCE_FLAGS    flags,
+    ID3D12Resource**        ppResource,
+    asdx::AllocationHolder& holder
+)
 {
     HRESULT hr = S_OK;
 
+    // リソースはSRGB指定なし.
     auto format = asdx::GetNoSRGBFormat(pDesc->Format);
 
     D3D12_HEAP_PROPERTIES props = {
@@ -66,6 +76,8 @@ bool InitResource(const asdx::TargetDesc* pDesc, D3D12_RESOURCE_FLAGS flags, ID3
     }
 
     D3D12_CLEAR_VALUE* pClearValue = &clearValue;
+
+    // UAVの場合はクリア値を指定しない.
     if (!!(flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS))
         pClearValue = nullptr;
 
@@ -185,79 +197,7 @@ bool ColorTarget::Init(const TargetDesc* pDesc)
         return false;
     }
 
-    //HRESULT hr = S_OK;
-
-    //{
-    //    auto format = GetNoSRGBFormat(pDesc->Format);
-
-    //    D3D12_HEAP_PROPERTIES props = {
-    //        D3D12_HEAP_TYPE_DEFAULT,
-    //        D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
-    //        D3D12_MEMORY_POOL_UNKNOWN,
-    //        1,
-    //        1
-    //    };
-
-    //    D3D12_RESOURCE_DESC desc = {
-    //        pDesc->Dimension,
-    //        pDesc->Alignment,
-    //        pDesc->Width,
-    //        pDesc->Height,
-    //        pDesc->DepthOrArraySize,
-    //        pDesc->MipLevels,
-    //        format,
-    //        pDesc->SampleDesc,
-    //        D3D12_TEXTURE_LAYOUT_UNKNOWN,
-    //        D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET
-    //    };
-
-    //    D3D12_CLEAR_VALUE clearValue = {};
-    //    clearValue.Format   = format,
-    //    clearValue.Color[0] = pDesc->ClearColor[0];
-    //    clearValue.Color[1] = pDesc->ClearColor[1];
-    //    clearValue.Color[2] = pDesc->ClearColor[2];
-    //    clearValue.Color[3] = pDesc->ClearColor[3];
-
-    //    auto allocator = GetD3D12MA();
-    //    if (allocator != nullptr)
-    //    {
-    //        D3D12MA::ALLOCATION_DESC allocDesc = {};
-    //        allocDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
-
-    //        D3D12MA::Allocation* pAllocation;
-
-    //        hr = allocator->CreateResource(
-    //            &allocDesc,
-    //            &desc,
-    //            pDesc->InitState,
-    //            &clearValue,
-    //            &pAllocation,
-    //            IID_PPV_ARGS(m_pResource.GetAddress()));
-    //        if (FAILED(hr))
-    //        {
-    //            ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
-    //            return false;
-    //        }
-
-    //        m_HolderAlloc = AllocationHolder(pAllocation);
-    //    }
-    //    else
-    //    {
-    //        hr = GetD3D12Device()->CreateCommittedResource( 
-    //            &props,
-    //            D3D12_HEAP_FLAG_NONE,
-    //            &desc,
-    //            pDesc->InitState,
-    //            &clearValue,
-    //            IID_PPV_ARGS(m_pResource.GetAddress()));
-    //        if (FAILED(hr))
-    //        {
-    //            ELOG( "Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr );
-    //            return false;
-    //        }
-    //    }
-    //}
-
+    // リソースを初期化.
     auto flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET | D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
     if (!InitResource(pDesc, flags, m_pResource.GetAddress(), m_HolderAlloc))
     {
@@ -265,15 +205,18 @@ bool ColorTarget::Init(const TargetDesc* pDesc)
         return false;
     }
 
+    // 構成設定とリソースステートを設定.
     memcpy(&m_Desc, pDesc, sizeof(m_Desc));
     m_PrevState = m_Desc.InitState;
 
+    // ビューを初期化.
     if (!InitView())
     {
         ELOGA("Error : InitView() Failed.");
         return false;
     }
 
+    // 正常終了.
     return true;
 }
 
@@ -306,6 +249,7 @@ bool ColorTarget::Init
     if (sRGB)
     { desc.Format = GetSRGBFormat(desc.Format); }
 
+    // 構成設定
     m_Desc.Dimension        = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
     m_Desc.Alignment        = desc.Alignment;
     m_Desc.Width            = desc.Width;
@@ -323,14 +267,17 @@ bool ColorTarget::Init
     m_Desc.ClearStencil     = 0;
     m_Desc.Flags            = TARGET_FLAG_NONE;
 
+    // リソースステートを設定.
     m_PrevState = D3D12_RESOURCE_STATE_COMMON;
 
+    // ビューを初期化
     if (!InitView())
     {
         ELOGA("Error : InitView() Failed.");
         return false;
     }
 
+    // 正常終了.
     return true;
 }
 
@@ -624,89 +571,25 @@ bool DepthTarget::Init(const TargetDesc* pDesc)
         return false;
     }
 
-    //HRESULT hr = S_OK;
-    //{
-    //    D3D12_HEAP_PROPERTIES props = {
-    //        D3D12_HEAP_TYPE_DEFAULT,
-    //        D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
-    //        D3D12_MEMORY_POOL_UNKNOWN,
-    //        1,
-    //        1
-    //    };
-
-    //    D3D12_RESOURCE_DESC desc = {
-    //        pDesc->Dimension,
-    //        pDesc->Alignment,
-    //        pDesc->Width,
-    //        pDesc->Height,
-    //        pDesc->DepthOrArraySize,
-    //        pDesc->MipLevels,
-    //        pDesc->Format,
-    //        pDesc->SampleDesc,
-    //        D3D12_TEXTURE_LAYOUT_UNKNOWN,
-    //        D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL
-    //    };
-
-    //    D3D12_CLEAR_VALUE clearValue = {};
-    //    clearValue.Format               = pDesc->Format;
-    //    clearValue.DepthStencil.Depth   = pDesc->ClearDepth;
-    //    clearValue.DepthStencil.Stencil = pDesc->ClearStencil;
-
-    //    auto allocator = GetD3D12MA();
-    //    if (allocator != nullptr)
-    //    {
-    //        D3D12MA::ALLOCATION_DESC allocDesc = {};
-    //        allocDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
-
-    //        D3D12MA::Allocation* pAllocation = nullptr;
-
-    //        hr = allocator->CreateResource(
-    //            &allocDesc,
-    //            &desc,
-    //            pDesc->InitState,
-    //            &clearValue,
-    //            &pAllocation,
-    //            IID_PPV_ARGS(m_pResource.GetAddress()));
-    //        if (FAILED(hr))
-    //        {
-    //            ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
-    //            return false;
-    //        }
-
-    //        m_HolderAlloc = AllocationHolder(pAllocation);
-    //    }
-    //    else
-    //    {
-    //        hr = GetD3D12Device()->CreateCommittedResource( 
-    //            &props,
-    //            D3D12_HEAP_FLAG_NONE,
-    //            &desc,
-    //            pDesc->InitState,
-    //            &clearValue,
-    //            IID_PPV_ARGS(m_pResource.GetAddress()));
-    //        if (FAILED(hr))
-    //        {
-    //            ELOG( "Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr );
-    //            return false;
-    //        }
-    //    }
-    //}
-
+    // リソースを初期化.
     if (!InitResource(pDesc, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL, m_pResource.GetAddress(), m_HolderAlloc))
     {
         ELOGA("Error : InitResource() Failed.");
         return false;
     }
 
+    // 構成設定とリソースステートを設定.
     memcpy(&m_Desc, pDesc, sizeof(m_Desc));
     m_PrevState = m_Desc.InitState;
 
+    // ビューを初期化.
     if (!InitView())
     {
         ELOGA("Error : InitView() Failed.");
         return false;
     }
 
+    // 正常終了.
     return true;
 }
 
@@ -990,89 +873,26 @@ bool ComputeTarget::Init(const TargetDesc* pDesc, uint32_t stride)
         return false;
     }
 
-    //HRESULT hr = S_OK;
-    //{
-    //    D3D12_HEAP_PROPERTIES props = {
-    //        D3D12_HEAP_TYPE_DEFAULT,
-    //        D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
-    //        D3D12_MEMORY_POOL_UNKNOWN,
-    //        1,
-    //        1
-    //    };
-
-    //    auto layout = (pDesc->Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
-    //        ? D3D12_TEXTURE_LAYOUT_ROW_MAJOR
-    //        : D3D12_TEXTURE_LAYOUT_UNKNOWN;
-
-    //    D3D12_RESOURCE_DESC desc = {
-    //        pDesc->Dimension,
-    //        pDesc->Alignment,
-    //        pDesc->Width,
-    //        pDesc->Height,
-    //        pDesc->DepthOrArraySize,
-    //        pDesc->MipLevels,
-    //        pDesc->Format,
-    //        pDesc->SampleDesc,
-    //        layout,
-    //        D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS
-    //    };
-
-    //    auto allocator = GetD3D12MA();
-    //    if (allocator != nullptr)
-    //    {
-    //        D3D12MA::ALLOCATION_DESC allocDesc = {};
-    //        allocDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
-
-    //        D3D12MA::Allocation* pAllocation = nullptr;
-
-    //        hr = allocator->CreateResource(
-    //            &allocDesc,
-    //            &desc,
-    //            pDesc->InitState,
-    //            nullptr,
-    //            &pAllocation,
-    //            IID_PPV_ARGS(m_pResource.GetAddress()));
-    //        if (FAILED(hr))
-    //        {
-    //            ELOG("Error : D3D12MA::Allocator::CreateResource() Failed. errcode = 0x%x", hr);
-    //            return false;
-    //        }
-
-    //        m_HolderAlloc = AllocationHolder(pAllocation);
-    //    }
-    //    else
-    //    {
-    //        hr = GetD3D12Device()->CreateCommittedResource( 
-    //            &props,
-    //            D3D12_HEAP_FLAG_NONE,
-    //            &desc,
-    //            pDesc->InitState,
-    //            nullptr,
-    //            IID_PPV_ARGS(m_pResource.GetAddress()));
-    //        if (FAILED(hr))
-    //        {
-    //            ELOG( "Error : ID3D12Device::CreateCommittedResource() Failed. errcode = 0x%x", hr );
-    //            return false;
-    //        }
-    //    }
-    //}
-
+    // リソースを初期化.
     if (!InitResource(pDesc, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, m_pResource.GetAddress(), m_HolderAlloc))
     {
         ELOGA("Error : InitResource() Failed.");
         return false;
     }
 
+    // 構成設定・リソースステート・構造体サイズを設定.
     memcpy(&m_Desc, pDesc, sizeof(m_Desc));
     m_PrevState = m_Desc.InitState;
     m_Stride    = stride;
 
+    // ビューを初期化.
     if (!InitView())
     {
         ELOGA("Error : InitView() Failed.");
         return false;
     }
 
+    // 正常終了.
     return true;
 }
 
@@ -1081,18 +901,22 @@ bool ComputeTarget::Init(const TargetDesc* pDesc, uint32_t stride)
 //-----------------------------------------------------------------------------
 bool ComputeTarget::Init(ColorTarget& target, uint32_t flags)
 {
+    // リソースを設定. 参照カウントが増えます.
     m_pResource = target.GetResource();
 
+    // 構成設定・リソースステート・構造体サイズを設定.
     m_Desc      = target.GetDesc();
     m_PrevState = m_Desc.InitState;
     m_Stride    = 0;
 
+    // ビューを初期化.
     if (!InitView())
     {
         ELOGA("Error : InitView() Failed.");
         return false;
     }
 
+    // 正常終了.
     return true;
 }
 
