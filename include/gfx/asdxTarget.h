@@ -23,11 +23,15 @@ namespace asdx {
 ///////////////////////////////////////////////////////////////////////////////
 enum TARGET_FLAGS
 {
-    TARGET_FLAG_NONE           = 0,             //!< フラグ設定なし.
-    TARGET_FLAG_CREATE_MIP_RTV = 0x1 << 0,      //!< RTVに対して各ミップごとのディスクリプタを生成する.
-    TARGET_FLAG_CREATE_MIP_DSV = 0x1 << 1,      //!< DSVに対して各ミップごとのディスクリプタを生成する.
-    TARGET_FLAG_CREATE_MIP_UAV = 0x1 << 3,      //!< UAVに対して各ミップごとのディスクリプタを生成する.
-    TARGET_FLAG_NO_SRV         = 0x1 << 4,      //!< SRVを作成しない.
+    TARGET_FLAG_NONE                = 0,            //!< フラグ設定なし.
+    TARGET_FLAG_CREATE_MIP_RTV      = 0x1 << 0,     //!< RTVに対して各ミップごとのディスクリプタを生成する.
+    TARGET_FLAG_CREATE_MIP_DSV      = 0x1 << 1,     //!< DSVに対して各ミップごとのディスクリプタを生成する.
+    TARGET_FLAG_CREATE_MIP_UAV      = 0x1 << 2,     //!< UAVに対して各ミップごとのディスクリプタを生成する.
+    TARGET_FLAG_NO_SRV              = 0x1 << 3,     //!< SRVを作成しない.
+    TARGET_FLAG_ALIASING_RESOURCE   = 0x1 << 4,     //!< エイリアシングリソースとして作成します.
+    TARGET_FLAG_ALLOW_RTV           = 0x1 << 5,     //!< RTVを許可します (TARGET_FLAG_ALIASING_RESOURCE 有効時のみ).
+    TARGET_FLAG_ALLOW_DSV           = 0x1 << 6,     //!< DSVを許可します (TARGET_FLAG_ALIASING_RESOURCE 有効時のみ).
+    TARGET_FLAG_ALLOW_UAV           = 0x1 << 7,     //!< UAVを許可します (TARGET_FLAG_ALIASING_RESOURCE 有効時のみ).
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -48,6 +52,8 @@ struct TargetDesc
     float                       ClearDepth          = 1.0f;                                 //!< クリア深度値です.
     uint8_t                     ClearStencil        = 0;                                    //!< クリアステンシル値です.
     uint32_t                    Flags               = TARGET_FLAG_NONE;                     //!< ターゲットフラグです.
+    uint64_t                    HeapSize            = 0;
+    uint64_t                    HeapOffset          = 0;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -58,7 +64,9 @@ class BaseTarget
     //=========================================================================
     // list of friend classes and methods.
     //=========================================================================
-    /* NOTHING */
+    friend class ColorTarget;
+    friend class DepthTarget;
+    friend class ComputeTarget;
 
 public:
     //=========================================================================
@@ -138,6 +146,7 @@ protected:
     // protected variables.
     //=========================================================================
     RefPtr<ID3D12Resource>          m_pResource;
+    RefPtr<ID3D12Heap>              m_pHeap;
     AllocationHolder                m_HolderAlloc;
     TargetDesc                      m_Desc;
     D3D12_RESOURCE_STATES           m_PrevState = D3D12_RESOURCE_STATE_COMMON;
@@ -197,6 +206,16 @@ public:
     //! @retval false   初期化失敗.
     //-------------------------------------------------------------------------
     bool Init(IDXGISwapChain* pSwapChain, uint32_t backbufferIndex, bool sRGB);
+
+    //-------------------------------------------------------------------------
+    //! @brief      エイリアシングリソースとして初期化します.
+    //! 
+    //! @param[in]      pDesc       構成設定です.
+    //! @param[in]      target      ベースターゲット.
+    //! @retval true    初期化に成功.
+    //! @retval false   初期化に失敗.
+    //-------------------------------------------------------------------------
+    bool InitAliasing(const TargetDesc* pDesc, const BaseTarget& target);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.
@@ -308,6 +327,16 @@ public:
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
     bool Init(const TargetDesc* pDesc);
+
+    //-------------------------------------------------------------------------
+    //! @brief      エイリアシングリソースとして初期化します.
+    //! 
+    //! @param[in]      pDesc       構成設定です.
+    //! @param[in]      target      ベースターゲット.
+    //! @retval true    初期化に成功.
+    //! @retval false   初期化に失敗.
+    //-------------------------------------------------------------------------
+    bool InitAliasing(const TargetDesc* pDesc, const BaseTarget& target);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.
@@ -422,6 +451,16 @@ public:
     //! @retval false   初期化に失敗.
     //-------------------------------------------------------------------------
     bool Init(ColorTarget& target, uint32_t flags);
+
+    //-------------------------------------------------------------------------
+    //! @brief      エイリアシングリソースとして初期化します.
+    //! 
+    //! @param[in]      pDesc       構成設定です.
+    //! @param[in]      target      ベースターゲット.
+    //! @retval true    初期化に成功.
+    //! @retval false   初期化に失敗.
+    //-------------------------------------------------------------------------
+    bool InitAliasing(const TargetDesc* pDesc, uint32_t stride, const BaseTarget& target);
 
     //-------------------------------------------------------------------------
     //! @brief      終了処理を行います.

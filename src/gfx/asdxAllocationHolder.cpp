@@ -72,4 +72,10 @@ D3D12MA::Allocation* AllocationHolder::Detach()
     return res;
 }
 
+//-----------------------------------------------------------------------------
+//      ポインタを取得します.
+//-----------------------------------------------------------------------------
+D3D12MA::Allocation* AllocationHolder::GetPtr() const
+{ return m_Allocation; }
+
 } // namespace asdx
