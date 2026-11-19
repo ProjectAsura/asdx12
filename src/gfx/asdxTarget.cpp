@@ -1152,6 +1152,8 @@ bool ComputeTarget::Init(ColorTarget& target, uint32_t flags)
     m_PrevState = m_Desc.InitState;
     m_Stride    = 0;
 
+    m_Desc.Flags = flags;
+
     // ビューを初期化.
     if (!InitView())
     {
