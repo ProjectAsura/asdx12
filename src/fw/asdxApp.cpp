@@ -562,8 +562,8 @@ bool App::InitD3D()
             desc.SampleDesc.Count   = 1;
             desc.SampleDesc.Quality = 0;
             desc.InitState          = D3D12_RESOURCE_STATE_DEPTH_WRITE;
-            desc.ClearDepth         = m_ClearDepth;
-            desc.ClearStencil       = m_ClearStencil;
+            //desc.ClearDepth         = m_ClearDepth;
+            //desc.ClearStencil       = m_ClearStencil;
 
             if (!m_DepthTarget.Init(&desc))
             {

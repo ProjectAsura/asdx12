@@ -472,10 +472,10 @@ bool StarEffect::Init(uint32_t w, uint32_t h, DXGI_FORMAT format)
         desc.Format             = format;
         desc.SampleDesc         = { 1, 0 };
         desc.InitState          = D3D12_RESOURCE_STATE_COMMON;
-        desc.ClearColor[0]      = 0.0f;
-        desc.ClearColor[1]      = 0.0f;
-        desc.ClearColor[2]      = 0.0f;
-        desc.ClearColor[3]      = 0.0f;
+        //desc.ClearColor[0]      = 0.0f;
+        //desc.ClearColor[1]      = 0.0f;
+        //desc.ClearColor[2]      = 0.0f;
+        //desc.ClearColor[3]      = 0.0f;
 
         if (!m_InputTarget.Init(&desc))
         {
@@ -507,10 +507,10 @@ bool StarEffect::Init(uint32_t w, uint32_t h, DXGI_FORMAT format)
         desc.Format             = format;
         desc.SampleDesc         = { 1, 0 };
         desc.InitState          = D3D12_RESOURCE_STATE_COMMON;
-        desc.ClearColor[0]      = 0.0f;
-        desc.ClearColor[1]      = 0.0f;
-        desc.ClearColor[2]      = 0.0f;
-        desc.ClearColor[3]      = 0.0f;
+        //desc.ClearColor[0]      = 0.0f;
+        //desc.ClearColor[1]      = 0.0f;
+        //desc.ClearColor[2]      = 0.0f;
+        //desc.ClearColor[3]      = 0.0f;
 
         if (!m_OutputTarget.Init(&desc))
         {

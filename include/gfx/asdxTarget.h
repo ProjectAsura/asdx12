@@ -48,9 +48,9 @@ struct TargetDesc
     DXGI_FORMAT                 Format              = DXGI_FORMAT_UNKNOWN;                  //!< フォーマットです.
     DXGI_SAMPLE_DESC            SampleDesc          = { 1, 0 };                             //!< サンプル設定です.
     D3D12_RESOURCE_STATES       InitState           = D3D12_RESOURCE_STATE_COMMON;          //!< 初期ステート.
-    float                       ClearColor[4]       = { 1.0f, 1.0f, 1.0f, 1.0f };           //!< クリアカラー値です.
-    float                       ClearDepth          = 1.0f;                                 //!< クリア深度値です.
-    uint8_t                     ClearStencil        = 0;                                    //!< クリアステンシル値です.
+    //float                       ClearColor[4]       = { 1.0f, 1.0f, 1.0f, 1.0f };           //!< クリアカラー値です.
+    //float                       ClearDepth          = 1.0f;                                 //!< クリア深度値です.
+    //uint8_t                     ClearStencil        = 0;                                    //!< クリアステンシル値です.
     uint32_t                    Flags               = TARGET_FLAG_NONE;                     //!< ターゲットフラグです.
     uint64_t                    HeapSize            = 0;
     uint64_t                    HeapOffset          = 0;
