@@ -62,28 +62,6 @@ bool InitResource
         flags
     };
 
-    //D3D12_CLEAR_VALUE clearValue = {};
-    //clearValue.Format = format;
-
-    //if (!!(flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET))
-    //{
-    //    clearValue.Color[0] = pDesc->ClearColor[0];
-    //    clearValue.Color[1] = pDesc->ClearColor[1];
-    //    clearValue.Color[2] = pDesc->ClearColor[2];
-    //    clearValue.Color[3] = pDesc->ClearColor[3];
-    //}
-    //else if (!!(flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL))
-    //{
-    //    clearValue.DepthStencil.Depth   = pDesc->ClearDepth;
-    //    clearValue.DepthStencil.Stencil = pDesc->ClearStencil;
-    //}
-
-    //D3D12_CLEAR_VALUE* pClearValue = &clearValue;
-
-    //// UAVの場合はクリア値を指定しない.
-    //if (!!(flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS))
-    //    pClearValue = nullptr;
-
     auto allocator = asdx::GetD3D12MA();
     if (allocator != nullptr)
     {
@@ -199,24 +177,14 @@ bool InitAliasingResource
     if (!!(pDesc->Flags & asdx::TARGET_FLAG_ALLOW_RTV))
     {
         flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
-        //clearValue.Color[0] = pDesc->ClearColor[0];
-        //clearValue.Color[1] = pDesc->ClearColor[1];
-        //clearValue.Color[2] = pDesc->ClearColor[2];
-        //clearValue.Color[3] = pDesc->ClearColor[3];
     }
     if (!!(pDesc->Flags & asdx::TARGET_FLAG_ALLOW_DSV))
     {
         flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-        //clearValue.DepthStencil.Depth   = pDesc->ClearDepth;
-        //clearValue.DepthStencil.Stencil = pDesc->ClearStencil;
     }
     if (!!(pDesc->Flags & asdx::TARGET_FLAG_ALLOW_UAV))
     {
         flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-        //clearValue.Color[0] = pDesc->ClearColor[0];
-        //clearValue.Color[1] = pDesc->ClearColor[1];
-        //clearValue.Color[2] = pDesc->ClearColor[2];
-        //clearValue.Color[3] = pDesc->ClearColor[3];
     }
 
     auto layout = (pDesc->Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
@@ -235,12 +203,6 @@ bool InitAliasingResource
         layout,
         flags
     };
-
-    //D3D12_CLEAR_VALUE* pClearValue = &clearValue;
-
-    //// UAVの場合はクリア値を指定しない.
-    //if (!!(flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS))
-    //    pClearValue = nullptr;
 
     auto allocator = asdx::GetD3D12MA();
     if (allocator != nullptr)
@@ -470,12 +432,6 @@ bool ColorTarget::Init
     m_Desc.Format           = desc.Format;
     m_Desc.SampleDesc       = desc.SampleDesc;
     m_Desc.InitState        = D3D12_RESOURCE_STATE_COMMON;
-    //m_Desc.ClearColor[0]    = 0.0f;
-    //m_Desc.ClearColor[1]    = 0.0f;
-    //m_Desc.ClearColor[2]    = 0.0f;
-    //m_Desc.ClearColor[3]    = 0.0f;
-    //m_Desc.ClearDepth       = 1.0f;
-    //m_Desc.ClearStencil     = 0;
     m_Desc.Flags            = TARGET_FLAG_NONE;
 
     // リソースステートを設定.
