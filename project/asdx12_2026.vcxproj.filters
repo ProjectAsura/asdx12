@@ -342,6 +342,9 @@
     <ClCompile Include="..\src\fnd\asdxFlatDoc.cpp">
       <Filter>ソース ファイル\fnd</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\edit\asdxCsvParser.cpp">
+      <Filter>ソース ファイル\edit</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\edit\asdxEditParam.h">
@@ -703,6 +706,9 @@
     </ClInclude>
     <ClInclude Include="..\include\fnd\asdxFlatDoc.h">
       <Filter>ヘッダー ファイル\fnd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\edit\asdxCsvParser.h">
+      <Filter>ヘッダー ファイル\edit</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
