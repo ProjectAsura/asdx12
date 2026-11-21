@@ -94,6 +94,10 @@ bool MapChip::Init
         m_ChipFrames[chip.Id] = frame;
     }
 
+    m_LayerOffsets.resize(m_Binary.GetLayerCount());
+    for(size_t i=0; i<m_LayerOffsets.size(); ++i)
+    { m_LayerOffsets[i] = Vector2(0.0f, 0.0f); }
+
     return true;
 }
 
@@ -121,6 +125,9 @@ void MapChip::Term()
     m_Texture.Reset();
 
     m_ChipFrames.clear();
+
+    m_LayerOffsets.clear();
+    m_LayerOffsets.shrink_to_fit();
 }
 
 //-----------------------------------------------------------------------------
@@ -186,23 +193,28 @@ void MapChip::Draw(SpriteRenderer& renderer, D3D12_GPU_DESCRIPTOR_HANDLE sampler
     {
         auto layer = m_Binary.GetLayer(l);
 
-        for(int y=-1; y<=m_DrawRows; ++y) // 前後1タイル分の余白を考慮.
+        // オフセット値を計算.
+        const auto tileOffset = GetLayerTileOffset(l);
+        const auto chipOffset = GetLayerChipOffset(l);
+
+        for(int y = -2; y < m_DrawRows + 2; ++y) // 前後2タイル分の余白を考慮.
         {
-            for(int x=-1; x<=m_DrawCols; ++x) // 前後1タイル分の余白を考慮.
+            for(int x = -2; x < m_DrawCols + 2; ++x) // 前後2タイル分の余白を考慮.
             {
                 auto tx = (x >= 0) ? x : columns - 1;
                 auto ty = (y >= 0) ? y : rows - 1;
 
+                // 番号を算出.
                 uint32_t idX, idY;
                 if (m_Clamp)
                 {
-                    idX = asdx::Clamp(tx + m_TileOffsetX, 0u, columns);
-                    idY = asdx::Clamp(ty + m_TileOffsetY, 0u, rows);
+                    idX = asdx::Clamp(tx + m_TileOffsetX + tileOffset.x, 0u, columns);
+                    idY = asdx::Clamp(ty + m_TileOffsetY + tileOffset.y, 0u, rows);
                 }
                 else
                 {
-                    idX = (tx + m_TileOffsetX) % columns;
-                    idY = (ty + m_TileOffsetY) % rows;
+                    idX = (tx + m_TileOffsetX + tileOffset.x) % columns;
+                    idY = (ty + m_TileOffsetY + tileOffset.y) % rows;
                 }
 
                 auto id = idX + (idY * columns);
@@ -229,8 +241,8 @@ void MapChip::Draw(SpriteRenderer& renderer, D3D12_GPU_DESCRIPTOR_HANDLE sampler
 
                 // スプライトを追加.
                 renderer.Add(
-                    x * m_DrawTileW + m_ScrollX,
-                    y * m_DrawTileH + m_ScrollY,
+                    x * m_DrawTileW + m_ScrollX + chipOffset.x,
+                    y * m_DrawTileH + m_ScrollY + chipOffset.y,
                     m_DrawTileW,
                     m_DrawTileH,
                     int(l),
@@ -391,7 +403,7 @@ void MapChip::UpdateTileOffset()
         {
             if (int(m_TileOffsetX) - 1 < 0)
             {
-                m_ScrollX = m_DrawTileW;
+                m_ScrollX     = m_DrawTileW;
                 m_TileOffsetX = 0;
             }
             else
@@ -409,7 +421,7 @@ void MapChip::UpdateTileOffset()
             }
             else
             {
-                m_ScrollX = -m_DrawTileW;
+                m_ScrollX     = -m_DrawTileW;
                 m_TileOffsetX = columns - 1;
             }
         }
@@ -426,7 +438,7 @@ void MapChip::UpdateTileOffset()
         }
         else if (m_ScrollX <= -m_DrawTileW)
         {
-            m_ScrollX = 0;
+            m_ScrollX     = 0;
             m_TileOffsetX = (m_TileOffsetX + 1) % columns;
         }
     }
@@ -438,7 +450,7 @@ void MapChip::UpdateTileOffset()
         {
             if (int(m_TileOffsetY) - 1 < 0)
             {
-                m_ScrollY = m_DrawTileH;
+                m_ScrollY     = m_DrawTileH;
                 m_TileOffsetY = 0;
             }
             else
@@ -456,7 +468,7 @@ void MapChip::UpdateTileOffset()
             }
             else 
             {
-                m_ScrollY = -m_DrawTileH;
+                m_ScrollY     = -m_DrawTileH;
                 m_TileOffsetY = rows - 1;
             }
         }
@@ -473,10 +485,51 @@ void MapChip::UpdateTileOffset()
         }
         else if (m_ScrollY <= -m_DrawTileH)
         {
-            m_ScrollY = 0;
+            m_ScrollY     = 0;
             m_TileOffsetY = (m_TileOffsetY + 1) % rows;
         }
     }
+}
+
+//-----------------------------------------------------------------------------
+//      レイヤーオフセットを設定します.
+//-----------------------------------------------------------------------------
+void MapChip::SetLayerOffset(uint32_t index, const Vector2& offset)
+{
+    assert(index < m_LayerOffsets.size());
+    m_LayerOffsets[index] = offset;
+}
+
+//-----------------------------------------------------------------------------
+//      レイヤーオフセットを取得します.
+//-----------------------------------------------------------------------------
+const Vector2& MapChip::GetLayerOffset(uint32_t index) const
+{
+    assert(index < m_LayerOffsets.size());
+    return m_LayerOffsets[index];
+}
+
+//-----------------------------------------------------------------------------
+//      レイヤーのタイルオフセットを取得します.
+//-----------------------------------------------------------------------------
+Int2 MapChip::GetLayerTileOffset(uint32_t index) const
+{
+    assert(index < m_LayerOffsets.size());
+    // オフセットは逆方向なのでマイナスになる.
+    return Int2(
+        -int(m_LayerOffsets[index].x / m_DrawTileW),
+        -int(m_LayerOffsets[index].y / m_DrawTileH));
+}
+
+//-----------------------------------------------------------------------------
+//      レイヤーのチップオフセットを取得します.
+//-----------------------------------------------------------------------------
+Int2 MapChip::GetLayerChipOffset(uint32_t index) const
+{
+    assert(index < m_LayerOffsets.size());
+    return Int2(
+        int(fmod(m_LayerOffsets[index].x, float(m_DrawTileW))),
+        int(fmod(m_LayerOffsets[index].y, float(m_DrawTileH))));
 }
 
 } // namespace asdx
