@@ -177,7 +177,6 @@
   <ItemGroup>
     <ClCompile Include="..\external\D3D12MemoryAllocator\src\D3D12MemAlloc.cpp" />
     <ClCompile Include="..\external\xxHash\xxhash.c" />
-    <ClCompile Include="..\src\edit\asdxCsvParser.cpp" />
     <ClCompile Include="..\src\edit\asdxEditParam.cpp" />
     <ClCompile Include="..\src\edit\asdxFileWatcher.cpp" />
     <ClCompile Include="..\src\edit\asdxGitHelper.cpp" />
@@ -273,7 +272,6 @@
   <ItemGroup>
     <ClInclude Include="..\external\D3D12MemoryAllocator\include\D3D12MemAlloc.h" />
     <ClInclude Include="..\external\xxHash\xxhash.h" />
-    <ClInclude Include="..\include\edit\asdxCsvParser.h" />
     <ClInclude Include="..\include\edit\asdxEditParam.h" />
     <ClInclude Include="..\include\edit\asdxFileWatcher.h" />
     <ClInclude Include="..\include\edit\asdxGitHelper.h" />
