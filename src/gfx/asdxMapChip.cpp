@@ -197,9 +197,9 @@ void MapChip::Draw(SpriteRenderer& renderer, D3D12_GPU_DESCRIPTOR_HANDLE sampler
         const auto tileOffset = GetLayerTileOffset(l);
         const auto chipOffset = GetLayerChipOffset(l);
 
-        for(int y = -2; y < m_DrawRows + 2; ++y) // 前後2タイル分の余白を考慮.
+        for(int y = -m_BlankMarginL; y < m_DrawRows + m_BlankMarginR; ++y)
         {
-            for(int x = -2; x < m_DrawCols + 2; ++x) // 前後2タイル分の余白を考慮.
+            for(int x = -m_BlankMarginT; x < m_DrawCols + m_BlankMarginB; ++x)
             {
                 auto tx = (x >= 0) ? x : columns - 1;
                 auto ty = (y >= 0) ? y : rows - 1;
@@ -531,5 +531,40 @@ Int2 MapChip::GetLayerChipOffset(uint32_t index) const
         int(fmod(m_LayerOffsets[index].x, float(m_DrawTileW))),
         int(fmod(m_LayerOffsets[index].y, float(m_DrawTileH))));
 }
+
+//-----------------------------------------------------------------------------
+//      タイルマージンを設定します.
+//-----------------------------------------------------------------------------
+void MapChip::SetBlankMargin(int left, int right, int top, int bottom)
+{
+    m_BlankMarginL = left;
+    m_BlankMarginR = right;
+    m_BlankMarginT = top;
+    m_BlankMarginB = bottom;
+}
+
+//-----------------------------------------------------------------------------
+//      左タイルマージンを取得します.
+//-----------------------------------------------------------------------------
+int MapChip::GetBlankMarginL() const
+{ return m_BlankMarginL; }
+
+//-----------------------------------------------------------------------------
+//      右タイルマージンを取得します.
+//-----------------------------------------------------------------------------
+int MapChip::GetBlankMarginR() const
+{ return m_BlankMarginR; }
+
+//-----------------------------------------------------------------------------
+//      上タイルマージンを取得します.
+//-----------------------------------------------------------------------------
+int MapChip::GetBlankMarginT() const
+{ return m_BlankMarginT; }
+
+//-----------------------------------------------------------------------------
+//      下タイルマージンを取得します.
+//-----------------------------------------------------------------------------
+int MapChip::GetBlankMarginB() const
+{ return m_BlankMarginB; }
 
 } // namespace asdx
