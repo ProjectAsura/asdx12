@@ -94,9 +94,13 @@ bool MapChip::Init
         m_ChipFrames[chip.Id] = frame;
     }
 
-    m_LayerOffsets.resize(m_Binary.GetLayerCount());
-    for(size_t i=0; i<m_LayerOffsets.size(); ++i)
-    { m_LayerOffsets[i] = Vector2(0.0f, 0.0f); }
+    m_LayerInfos.resize(m_Binary.GetLayerCount());
+    for(size_t i=0; i<m_LayerInfos.size(); ++i)
+    {
+        auto& info = m_LayerInfos[i];
+        info.Offset     = Vector2(0.0f, 0.0f); 
+        info.Visibility = true;
+    }
 
     return true;
 }
@@ -126,8 +130,8 @@ void MapChip::Term()
 
     m_ChipFrames.clear();
 
-    m_LayerOffsets.clear();
-    m_LayerOffsets.shrink_to_fit();
+    m_LayerInfos.clear();
+    m_LayerInfos.shrink_to_fit();
 }
 
 //-----------------------------------------------------------------------------
@@ -193,6 +197,10 @@ void MapChip::Draw(SpriteRenderer& renderer, D3D12_GPU_DESCRIPTOR_HANDLE sampler
     {
         auto layer = m_Binary.GetLayer(l);
 
+        // レイヤーが非表示の場合は処理しない.
+        if (!m_LayerInfos[l].Visibility)
+            continue;
+
         // オフセット値を計算.
         const auto tileOffset = GetLayerTileOffset(l);
         const auto chipOffset = GetLayerChipOffset(l);
@@ -204,7 +212,7 @@ void MapChip::Draw(SpriteRenderer& renderer, D3D12_GPU_DESCRIPTOR_HANDLE sampler
                 auto tx = (x >= 0) ? x : columns - 1;
                 auto ty = (y >= 0) ? y : rows - 1;
 
-                // 番号を算出.
+                // 行番号と列番号を算出.
                 uint32_t idX, idY;
                 if (m_Clamp)
                 {
@@ -217,6 +225,7 @@ void MapChip::Draw(SpriteRenderer& renderer, D3D12_GPU_DESCRIPTOR_HANDLE sampler
                     idY = (ty + m_TileOffsetY + tileOffset.y) % rows;
                 }
 
+                // 配置タイル番号を取得.
                 auto id = idX + (idY * columns);
                 if (layer.Tiles[id] < firstId)
                     continue;
@@ -496,8 +505,8 @@ void MapChip::UpdateTileOffset()
 //-----------------------------------------------------------------------------
 void MapChip::SetLayerOffset(uint32_t index, const Vector2& offset)
 {
-    assert(index < m_LayerOffsets.size());
-    m_LayerOffsets[index] = offset;
+    assert(index < m_LayerInfos.size());
+    m_LayerInfos[index].Offset = offset;
 }
 
 //-----------------------------------------------------------------------------
@@ -505,8 +514,8 @@ void MapChip::SetLayerOffset(uint32_t index, const Vector2& offset)
 //-----------------------------------------------------------------------------
 const Vector2& MapChip::GetLayerOffset(uint32_t index) const
 {
-    assert(index < m_LayerOffsets.size());
-    return m_LayerOffsets[index];
+    assert(index < m_LayerInfos.size());
+    return m_LayerInfos[index].Offset;
 }
 
 //-----------------------------------------------------------------------------
@@ -514,11 +523,11 @@ const Vector2& MapChip::GetLayerOffset(uint32_t index) const
 //-----------------------------------------------------------------------------
 Int2 MapChip::GetLayerTileOffset(uint32_t index) const
 {
-    assert(index < m_LayerOffsets.size());
+    assert(index < m_LayerInfos.size());
     // オフセットは逆方向なのでマイナスになる.
     return Int2(
-        -int(m_LayerOffsets[index].x / m_DrawTileW),
-        -int(m_LayerOffsets[index].y / m_DrawTileH));
+        -int(m_LayerInfos[index].Offset.x / m_DrawTileW),
+        -int(m_LayerInfos[index].Offset.y / m_DrawTileH));
 }
 
 //-----------------------------------------------------------------------------
@@ -526,10 +535,28 @@ Int2 MapChip::GetLayerTileOffset(uint32_t index) const
 //-----------------------------------------------------------------------------
 Int2 MapChip::GetLayerChipOffset(uint32_t index) const
 {
-    assert(index < m_LayerOffsets.size());
+    assert(index < m_LayerInfos.size());
     return Int2(
-        int(fmod(m_LayerOffsets[index].x, float(m_DrawTileW))),
-        int(fmod(m_LayerOffsets[index].y, float(m_DrawTileH))));
+        int(fmod(m_LayerInfos[index].Offset.x, float(m_DrawTileW))),
+        int(fmod(m_LayerInfos[index].Offset.y, float(m_DrawTileH))));
+}
+
+//-----------------------------------------------------------------------------
+//      レイヤー表示フラグを設定します.
+//-----------------------------------------------------------------------------
+void MapChip::SetLayerVisibility(uint32_t index, bool value)
+{
+    assert(index < m_LayerInfos.size());
+    m_LayerInfos[index].Visibility = value;
+}
+
+//-----------------------------------------------------------------------------
+//      レイヤー表示フラグを取得します.
+//-----------------------------------------------------------------------------
+bool MapChip::IsLayerVisible(uint32_t index) const
+{
+    assert(index < m_LayerInfos.size());
+    return m_LayerInfos[index].Visibility;
 }
 
 //-----------------------------------------------------------------------------
