@@ -20,7 +20,7 @@ const char* ToString(DirectX::TEX_DIMENSION dim);
 //-----------------------------------------------------------------------------
 //! @brief      フォーマット列挙します.
 //-----------------------------------------------------------------------------
-bool EnumrateFormat(void* data, int index, const char** result);
+const char* EnumrateFormat(void* data, int index);
 
 //-----------------------------------------------------------------------------
 //! @brief      フォーマット数を取得します.

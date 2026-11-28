@@ -112,16 +112,15 @@ const char* ToString(DirectX::TEX_DIMENSION dim)
 //-----------------------------------------------------------------------------
 //      フォーマットを列挙します.
 //-----------------------------------------------------------------------------
-bool EnumrateFormat(void* data, int index, const char** result)
+const char* EnumrateFormat(void* data, int index)
 {
     if (index < 0)
-        return false;
+        return nullptr;
 
     if (index >= _countof(g_FormatTable))
-        return false;
+        return nullptr;
 
-    *result = g_FormatTable[index].Text;
-    return true;
+    return g_FormatTable[index].Text;
 }
 
 //-----------------------------------------------------------------------------

@@ -104,6 +104,7 @@ void LoadPixGpuCapturerDll()
     LPWSTR programFilesPath = nullptr;
     SHGetKnownFolderPath(FOLDERID_ProgramFiles, KF_FLAG_DEFAULT, NULL, &programFilesPath);
 
+    #if 0
     // プレビュー版からロードを試みる.
     {
         wchar_t pixSearchPath[MAX_PATH] = {};
@@ -113,6 +114,7 @@ void LoadPixGpuCapturerDll()
         if (LoadPixGpuCapturerDll(pixSearchPath))
         { return; }
     }
+    #endif
 
     // 正式版からロードを試みる.
     {
